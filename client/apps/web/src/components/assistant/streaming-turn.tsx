@@ -116,7 +116,7 @@ export function StreamingTurn({
             }
             return (
               <Fragment key={`tools-${group.steps[0].id}`}>
-                <ToolActivity steps={group.steps} live />
+                <ToolActivity steps={group.steps} live={active} folded />
                 <StepOutputs
                   outputs={outputs.forSteps(group.steps)}
                   onAnswer={onAnswer}

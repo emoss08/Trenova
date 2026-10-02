@@ -727,12 +727,15 @@ cell. A card is a `DescriptionList` with the same values, its prose set out belo
 A flag that does not hold — "stale: no" — is not drawn at all.
 
 **The conversation says what the agent did, in the words of what it did.** A person's
-message sits in a `bg-sunken` well under "You" — never their name and avatar, which read
-as someone else once the thread was shared. The reply runs open across the column under
-the agent's mark and name, once: a reply that took four model steps is saved as four
-messages, and `turnPlacements` heads the first and continues the rest beneath it, with
-how long the whole reply took beside the time. Both share the left edge; the difference
-is voice, not side.
+message is a `bg-sunken` bubble on the right (`data-side="right"`, at most 85% of the
+column), with no label — the side says who, and never their name and avatar, which read
+as someone else once the thread was shared; its time and actions show on hover. The reply
+runs open across the column on the left under the agent's mark and name, once: a reply that
+took four model steps is saved as four messages, and `turnPlacements` heads the first and
+continues the rest beneath it, with how long the whole reply took beside the time. On a
+wide column the thread centres a `max-w-3xl` reading measure. Rows present when a
+conversation opens rise once, staggered top-down over the last six (`openingStagger`), and
+never again on scroll-back.
 
 Tool calls are drawn by their **effect** — `lookup`, `change`, `navigate`, `discover`,
 `present`, `ask` — which the server sends on every call and `toolEffect` derives from the
@@ -741,7 +744,10 @@ records"); an action never does, because "opened a page" counted as "looked up 1
 is the report that started this. An action stands on its own line in ink with its mark in
 a small sunken well — "Opened Report library", "Ran Late loads", "Saved Shipments
 for Peak Distributing", "Proposed a change" — and a read is quieter, in muted text with a
-bare mark. The verb is the client's and translated; the server's one-line `summary` only
+bare mark. Once a reply has settled, its steps fold into one work line — "Worked through 6
+steps · 12s", with a danger mark when any did not go through — that opens onto the rows
+(`ToolActivity folded`, the summary from `workSummary`); while the reply is live the rows
+land one by one and fold up when it ends. The verb is the client's and translated; the server's one-line `summary` only
 ever supplies a name, and a count phrase from it ("3 customers") is read for its number,
 never shown. A line opens onto the call as labelled values — what was asked, what came
 back, list results named by their first few records — with the literal JSON behind a
@@ -756,7 +762,10 @@ begin, "Writing the answer…" or "Putting it into words…" while it streams �
 one of them from start to finish, so replies do not all read as the same machine while one
 reply never changes its words for no reason. The words change when the work does and each
 change rises into place; a step joins the list above when it lands, as a check on the confirm
-spring. Nothing else moves: no shimmer on "Thinking", no spinner on a card.
+spring. A reasoning disclosure reads "Thinking…" with a token-only sheen for exactly as long
+as the model is thinking and folds to "Thought for 4s" when it stops — the one sheen a
+working screen allows, because it describes work that is still going, like `breathe`.
+Nothing else moves: no spinner on a card.
 
 **A waiting decision takes the composer's place.** While a conversation has a proposal or a
 plan waiting on the person, the approval box stands in the composer's floating slot
@@ -778,9 +787,11 @@ approves, Esc opens the note, Alt+L decides later; Enter alone never approves), 
 out in the narrow panel. Decided later, the box folds into a `warning-subtle` pill above the
 composer that says how many wait and reopens it. One decision at a time, the oldest first.
 
-**The transcript keeps a line, not a card.** Each proposal or plan is one line in the
-conversation — "Proposed: … · Approved by you 8:52 PM", "Waiting — decide below" — with
-the outcome's mark, opening onto the preview and what came of it, read-only. "Approved"
+**The transcript keeps a quiet card per decision.** Each proposal or plan is one card in
+the conversation — the outcome's mark, "Proposed: …" with the record it is about, and the
+status line "Approved by you 8:52 PM" or "Waiting — decide below", a plan showing its steps
+with a mark each — opening onto the preview and what came of it, read-only; a waiting card
+offers "Open in approval box". "Approved"
 and "done" stay two facts on that line. A write the agent may make on its own (a report
 saved to the person's own list) is recorded at the `AutoExecute` tier and reads "Done on
 its own", never as approved or waiting. The note that starts the turn after a decision is

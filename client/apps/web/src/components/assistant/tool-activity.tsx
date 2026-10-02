@@ -43,6 +43,7 @@ import {
   refusalLabel,
   refusalTone,
   toolRefusal,
+  workSummary,
   type ActivityGroup,
   type ActivityLine,
   type ToolRefusal,
@@ -133,8 +134,24 @@ function groupDuration(group: ActivityGroup): number | null {
  * what happened in the words of what happened, and opens onto the call
  * itself — what was asked, what came back, and the raw payload behind a
  * second click.
+ *
+ * While a reply is being written the rows land one by one. Once it is saved
+ * a `folded` list is one quiet line — "Worked through 6 steps · 12s" — that
+ * opens onto the rows, so the answer is what the eye lands on and the work
+ * is there for whoever wants to check it.
  */
-export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?: boolean }) {
+export function ToolActivity({
+  steps,
+  live = false,
+  folded = false,
+}: {
+  steps: ToolStep[];
+  live?: boolean;
+  /** Draws a settled list as one summary line that opens onto the rows. */
+  folded?: boolean;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
   // While a reply is being written the step under way is told by the working
   // line beneath it; a step joins this list when it lands, with its check.
   // A hand-off is the exception: it opens as soon as the task is handed
@@ -152,7 +169,7 @@ export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?
     return null;
   }
 
-  return (
+  const rows = (
     <ol className="flex min-w-0 flex-col gap-0.5">
       {groups.map((group) =>
         group.effect === "delegate" ? (
@@ -167,6 +184,67 @@ export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?
         ),
       )}
     </ol>
+  );
+
+  if (!folded) {
+    return rows;
+  }
+
+  const failed = steps.some((step) => step.status === "failed");
+
+  // Live, the rows stand open with no line above them; the moment the reply
+  // settles they fold up under the summary, so the answer is what remains.
+  return (
+    <Collapsible
+      open={live || open}
+      onOpenChange={setOpen}
+      data-slot="work-log"
+      data-state={live ? "live" : open ? "open" : "closed"}
+      className="min-w-0"
+    >
+      {!live && (
+        <CollapsibleTrigger
+          className={cn(
+            "group/work ui-focus-ring rounded-control -mx-1.5 flex max-w-[calc(100%+0.75rem)] min-w-0 items-center gap-1.5 px-1.5 py-0.5 text-left text-xs transition-colors",
+            "text-foreground-muted hover:bg-surface-hover hover:text-foreground",
+          )}
+        >
+          <ChevronRightIcon
+            aria-hidden
+            className={cn("size-3 shrink-0 transition-transform duration-200", open && "rotate-90")}
+          />
+          <WorkMarks groups={groups} />
+          <span className="min-w-0 truncate">{workSummary(steps, t)}</span>
+          {failed && <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />}
+        </CollapsibleTrigger>
+      )}
+      <CollapsibleContent className="ease-settle h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0">
+        <div className={cn(!live && "border-border-subtle mt-1 ml-1.25 border-l pl-3")}>{rows}</div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/** The marks of the first few pieces of work, overlapped, so a folded line still says what kind of work it was. */
+const WORK_MARK_LIMIT = 3;
+
+function WorkMarks({ groups }: { groups: readonly ActivityGroup[] }) {
+  return (
+    <span aria-hidden className="flex shrink-0 items-center -space-x-1">
+      {groups.slice(0, WORK_MARK_LIMIT).map((group) => (
+        <WorkMark key={group.key} group={group} />
+      ))}
+    </span>
+  );
+}
+
+function WorkMark({ group }: { group: ActivityGroup }) {
+  const Icon = iconFor(group);
+
+  return (
+    <span className="bg-sunken ring-card flex size-4 items-center justify-center rounded-full ring-1">
+      <Icon className="text-foreground-muted size-2.5" />
+    </span>
   );
 }
 

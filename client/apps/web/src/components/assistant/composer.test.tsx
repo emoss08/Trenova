@@ -266,6 +266,38 @@ describe("Composer dictation", () => {
  * The footer used to list every key at once and wrapped into ragged lines
  * in the corner panel. It now says one thing, for what is happening.
  */
+/**
+ * The at sign is in the toolbar as well as on the keyboard: the button puts
+ * one in at the caret, with the space the words need, and the record search
+ * opens on it the way a typed one does.
+ */
+describe("Composer mention button", () => {
+  it("starts a record search from the toolbar", () => {
+    const { onDraftChange } = renderComposer({ onSearchMentions: async () => [] });
+
+    fireEvent.click(screen.getByRole("button", { name: "Name a record" }));
+
+    expect(onDraftChange).toHaveBeenCalledWith("@");
+  });
+
+  it("leaves a space before the at sign when the words need one", () => {
+    const { onDraftChange } = renderComposer({
+      draft: "Where is",
+      onSearchMentions: async () => [],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Name a record" }));
+
+    expect(onDraftChange).toHaveBeenCalledWith("Where is @");
+  });
+
+  it("is not offered where there is no search to name records from", () => {
+    renderComposer();
+
+    expect(screen.queryByRole("button", { name: "Name a record" })).toBeNull();
+  });
+});
+
 describe("Composer hints", () => {
   it("teaches the slash and the at sign on an empty, focused box, and nothing about sending", () => {
     renderComposer({ onSearchMentions: async () => [] });
@@ -299,6 +331,36 @@ describe("Composer hints", () => {
     fireEvent.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
 
     expect(await screen.findByText("New line")).toBeInTheDocument();
+  });
+
+  // The corner panel has no room for a line that says nothing yet; it
+  // unfolds with the first character and stays for anything that must be said.
+  it("folds the line away on a narrow, empty box and unfolds it once there is a draft", () => {
+    const { container, rerender } = renderComposer({ compact: true });
+
+    expect(container.querySelector("[data-collapsed]")).not.toBeNull();
+
+    rerender(
+      <Composer
+        onSend={() => {}}
+        onStop={() => {}}
+        active={false}
+        placeholder="Message Dispatch desk…"
+        draft="Where is PRO 1234?"
+        onDraftChange={() => {}}
+        suggestions={suggestions}
+        compact
+      />,
+    );
+
+    expect(container.querySelector("[data-collapsed]")).toBeNull();
+  });
+
+  it("keeps the line on a narrow box while a reply is being written", () => {
+    const { container } = renderComposer({ compact: true, active: true });
+
+    expect(screen.getByText("Replying. You can draft your next message.")).toBeInTheDocument();
+    expect(container.querySelector("[data-collapsed]")).toBeNull();
   });
 });
 

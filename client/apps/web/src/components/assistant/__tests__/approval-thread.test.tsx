@@ -198,7 +198,7 @@ function renderThread(expanded: boolean) {
   );
 }
 
-const composerBox = () => screen.queryByPlaceholderText("Message Billing assistant…");
+const composerBox = () => screen.queryByPlaceholderText("Ask Billing assistant…");
 
 describe.each([
   ["the Desk", true],
@@ -223,7 +223,8 @@ describe.each([
 
     await user.click(await screen.findByRole("button", { name: "Decide later" }));
 
-    expect(screen.queryByRole("region", { name: "Post invoice" })).toBeNull();
+    // The box leaves on its own motion; the composer stands once it has gone.
+    await waitFor(() => expect(screen.queryByRole("region", { name: "Post invoice" })).toBeNull());
     expect(composerBox()).toHaveValue("Also check April");
     expect(useAssistantStore.getState().deferredDecisions).toEqual(["proposal:aprop_1"]);
 
@@ -232,6 +233,20 @@ describe.each([
     expect(await screen.findByRole("region", { name: "Post invoice" })).toBeInTheDocument();
     expect(composerBox()).toBeNull();
     expect(useAssistantStore.getState().drafts.athr_1).toBe("Also check April");
+  });
+
+  it("offers the way back to the approval box from the record in the transcript", async () => {
+    const user = userEvent.setup();
+    serve([serverProposal()]);
+    renderThread(expanded);
+
+    await user.click(await screen.findByRole("button", { name: "Decide later" }));
+    await waitFor(() => expect(screen.queryByRole("region", { name: "Post invoice" })).toBeNull());
+
+    await user.click(screen.getByRole("button", { name: "Open in approval box" }));
+
+    expect(await screen.findByRole("region", { name: "Post invoice" })).toBeInTheDocument();
+    expect(useAssistantStore.getState().deferredDecisions).toEqual([]);
   });
 });
 
@@ -288,7 +303,7 @@ describe("the approval box in a conversation", () => {
     serve([serverProposal()]);
     renderThread(true);
 
-    await user.click(await screen.findByRole("button", { name: "Tell the agent" }));
+    await user.click(await screen.findByRole("button", { name: "Tell the agent instead" }));
     await user.type(screen.getByLabelText(/What should the agent do instead/), "Wait for April");
     await user.click(screen.getByRole("button", { name: "Send to the agent" }));
 

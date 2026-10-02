@@ -33,7 +33,7 @@ import {
   slotHint,
   type CommandEntry,
 } from "./composer-commands";
-import { composerHint } from "./composer-hint";
+import { composerHint, type ComposerHintKind } from "./composer-hint";
 import { ComposerHints } from "./composer-hints";
 import { FloatingSlot } from "./floating-slot";
 import { DictationControl } from "./dictation-control";
@@ -154,6 +154,15 @@ export function readyAttachments(
 
 /** A message on its way out of the box, drawn where the words were. */
 type SentGhost = { id: number; text: string; top: number };
+
+/** The hints that stay in view on a narrow, empty box: a problem, or what the microphone or the reply is doing. */
+const UNFOLDED_HINTS: ReadonlySet<ComposerHintKind> = new Set([
+  "issue",
+  "starting",
+  "listening",
+  "replying",
+  "choosing",
+]);
 
 /**
  * Where a person types.
@@ -505,6 +514,27 @@ export function Composer({
     setCaret(textareaRef.current?.selectionStart ?? 0);
   }, []);
 
+  // The at-sign button opens the record search the way typing one does: an
+  // @ goes in at the caret, after a space when the words need one.
+  const startMention = useCallback(() => {
+    const element = textareaRef.current;
+    const at = element?.selectionStart ?? draft.length;
+    const before = draft.slice(0, at);
+    const after = draft.slice(at);
+    const lead = before === "" || /\s$/.test(before) ? "" : " ";
+    const next = before + lead + "@" + after;
+    const position = before.length + lead.length + 1;
+    onDraftChange(next);
+    window.requestAnimationFrame(() => {
+      const box = textareaRef.current;
+      if (box) {
+        box.focus();
+        box.setSelectionRange(position, position);
+        setCaret(position);
+      }
+    });
+  }, [draft, onDraftChange]);
+
   const canAttach =
     onAttachFiles !== undefined && !disabled && attachments.length < MAX_ATTACHMENTS;
 
@@ -571,7 +601,7 @@ export function Composer({
             takeFiles(event.dataTransfer.files);
           }}
           className={cn(
-            "ui-field ui-container-focus-ring group/composer relative flex flex-col overflow-hidden rounded-lg",
+            "ui-field ui-lift-whisper ui-container-focus-ring group/composer relative flex flex-col overflow-hidden rounded-lg",
             "data-disabled:opacity-60",
             "data-dragging:border-brand data-dragging:border-dashed",
           )}
@@ -717,7 +747,7 @@ export function Composer({
             }
             // The box around it carries the one focus ring and the one
             // disabled treatment, so the field's own are switched off.
-            className="resize-none border-0 bg-transparent px-3 pt-2.5 pb-1 text-sm [--ring-width:0px] disabled:bg-transparent disabled:opacity-100 md:text-sm"
+            className="resize-none border-0 bg-transparent px-3.5 pt-3 pb-1 text-sm leading-relaxed [--ring-width:0px] disabled:bg-transparent disabled:opacity-100 md:text-sm"
           />
 
           {hint !== "" && (
@@ -726,7 +756,7 @@ export function Composer({
             </p>
           )}
 
-          <div className="flex items-center gap-1 px-1.5 pb-1.5">
+          <div className="flex items-center gap-1 px-2 pb-2">
             <div className="flex min-w-0 flex-1 items-center gap-0.5">
               {onAttachFiles && (
                 <>
@@ -764,6 +794,26 @@ export function Composer({
                     </TooltipContent>
                   </Tooltip>
                 </>
+              )}
+
+              {onSearchMentions && (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        className="text-foreground-muted hover:text-foreground rounded-full"
+                        disabled={disabled || active}
+                        onClick={startMention}
+                        aria-label={t("Name a record")}
+                      />
+                    }
+                  >
+                    <AtSignIcon className="size-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>{t("Name a record with @")}</TooltipContent>
+                </Tooltip>
               )}
 
               <DictationControl
@@ -859,6 +909,9 @@ export function Composer({
         canMention={onSearchMentions !== undefined}
         canAttach={onAttachFiles !== undefined}
         canDictate={dictation.supported}
+        // A narrow panel with nothing typed keeps the room; what the line
+        // would say about a problem or the microphone still has to be said.
+        collapsed={compact && draft.trim() === "" && !UNFOLDED_HINTS.has(hintKind)}
       />
     </FloatingSlot>
   );
