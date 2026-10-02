@@ -791,7 +791,7 @@ A run nobody is in has two identities, kept apart on purpose.
   minutes) and appends it, or "Ran by an agent" when the name cannot be read.
   `chk_audit_entries_principal_consistency` lets an agent row carry a user, never
   an API key, and never the user as its own principal (migration
-  `20261231007230_audit_agent_system_user`).
+  `20261231007250_audit_agent_system_user`).
 - **The system user executes the run's automatic writes.**
   `RequestActor.ExecutorUserID` is the person for a user principal and the
   carried system user for an agent, so `executed_by_user_id` on an automatic

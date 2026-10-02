@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	auditAgentSystemUserUp   = "20261231007230_audit_agent_system_user.tx.up.sql"
-	auditAgentSystemUserDown = "20261231007230_audit_agent_system_user.tx.down.sql"
+	auditAgentSystemUserUp   = "20261231007250_audit_agent_system_user.tx.up.sql"
+	auditAgentSystemUserDown = "20261231007250_audit_agent_system_user.tx.down.sql"
 )
 
 func TestAuditAgentSystemUserMigration_LetsAnAgentNameTheSystemUserItRanAs(t *testing.T) {
