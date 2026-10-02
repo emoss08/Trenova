@@ -72,6 +72,20 @@ func (a *RequestActor) PersonUserID() pulid.ID {
 	return pulid.Nil
 }
 
+func (a *RequestActor) ExecutorUserID() pulid.ID {
+	if a == nil {
+		return pulid.Nil
+	}
+
+	switch a.PrincipalType {
+	case PrincipalTypeUser, PrincipalTypeAgent:
+		return a.UserID
+	case "", PrincipalTypeAPIKey, PrincipalTypeSystem:
+	}
+
+	return pulid.Nil
+}
+
 // TenantInfo is the actor's tenant scope. Deriving it here rather than at each
 // call site keeps a caller from scoping a query to a tenant the actor does not
 // belong to.
@@ -128,8 +142,10 @@ func (a *RequestActor) AuditActor() AuditActor {
 		auditActor.APIKeyID = pulid.Nil
 	case PrincipalTypeAPIKey:
 		auditActor.UserID = pulid.Nil
-	case PrincipalTypeSystem, PrincipalTypeAgent:
+	case PrincipalTypeSystem:
 		auditActor.UserID = pulid.Nil
+		auditActor.APIKeyID = pulid.Nil
+	case PrincipalTypeAgent:
 		auditActor.APIKeyID = pulid.Nil
 	}
 
@@ -166,10 +182,12 @@ func (a *RequestActor) AuditActor() AuditActor {
 	}
 
 	if auditActor.PrincipalType == PrincipalTypeAgent {
-		auditActor.UserID = pulid.Nil
 		auditActor.APIKeyID = pulid.Nil
 		if auditActor.PrincipalID.IsNil() {
 			auditActor.PrincipalID = AgentPrincipalID
+		}
+		if auditActor.UserID == auditActor.PrincipalID {
+			auditActor.UserID = pulid.Nil
 		}
 	}
 

@@ -112,7 +112,7 @@ func (s *service) planTransferOwnership(
 	}
 
 	auditActor := actor.AuditActor()
-	if auditActor.PrincipalType == services.PrincipalTypeAPIKey || auditActor.UserID.IsNil() {
+	if actor.PersonUserID().IsNil() {
 		return nil, errortypes.NewValidationError(
 			"actor",
 			errortypes.ErrInvalidOperation,

@@ -149,6 +149,26 @@ func TestUpdate_RefusesAConsentChangeWithoutAPerson(t *testing.T) {
 	assert.Nil(t, controls.updated)
 }
 
+func TestUpdate_RefusesAConsentChangeFromAnAgentCarryingTheSystemUser(t *testing.T) {
+	t.Parallel()
+
+	svc, controls := newTestService(defaultControl())
+
+	_, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+		AITrainingConsent: boolPtr(true),
+	}, &services.RequestActor{
+		PrincipalType: services.PrincipalTypeAgent,
+		PrincipalID:   pulid.ID("agdef_dispatch"),
+		UserID:        pulid.ID("usr_system"),
+	})
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "aiTrainingConsent", multiErr.Errors[0].Field)
+	assert.Nil(t, controls.updated, "the system account an agent carries is not a person")
+}
+
 func TestUpdate_WithdrawingConsentIsRecorded(t *testing.T) {
 	t.Parallel()
 

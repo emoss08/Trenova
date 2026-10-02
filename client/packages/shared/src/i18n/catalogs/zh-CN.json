@@ -13966,6 +13966,8 @@
   "The sweep runs once a night at this hour and skips an agent whose instructions, tools, model and cases have not changed since its last run, until that run is older than the rerun period. Evaluation stops for the night when either budget is spent.": "扫描每晚于此时刻运行一次，若智能体的指令、工具、模型和用例自上次运行以来均未变更，便跳过该智能体，直到上次运行超过重新运行周期为止。任一预算用尽时，当晚的评估即停止。",
   "The sync ledger could not be loaded.": "无法加载同步台账。",
   "The system": "系统",
+  "The system account": "系统账户",
+  "The system account (Ran by {0})": "系统账户（由 {0} 运行）",
   "The system classified this as a rate confirmation, but no structured shipment fields were extracted.": "系统已将其分类为运价确认书，但未提取到任何结构化的运单字段。",
   "The system-generated code for the hazardous material.": "系统为此危险品生成的代码。",
   "The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.": "按各人所属场站列出团队，人数最多者优先。未分配场站者会如实列出，而非略去。",

@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUDIT_MAX_EXPORT_RANGE_SECONDS,
   DEFAULT_AUDIT_SCOPE,
+  auditActingAsLabel,
   auditEventRecordPath,
   auditKindLabel,
   auditOutcomeAttrs,
@@ -321,5 +322,31 @@ describe("auditEventRecordPath", () => {
     expect(auditEventRecordPath("Insight", "ins_1")).toBeNull();
     expect(auditEventRecordPath("shipment", "")).toBeNull();
     expect(auditEventRecordPath(null, "shp_1")).toBeNull();
+  });
+});
+
+describe("auditActingAsLabel", () => {
+  const unattended = {
+    principalType: "User" as const,
+    tier: "AutoExecute",
+    ownerKind: "AgentRun" as const,
+    onBehalfOfUserId: null,
+    agentName: "Dispatch Agent",
+  };
+
+  it("names the system account and the agent for an unattended automatic write", () => {
+    expect(auditActingAsLabel(t, unattended)).toBe("The system account (Ran by Dispatch Agent)");
+    expect(auditActingAsLabel(t, { ...unattended, agentName: null })).toBe("The system account");
+  });
+
+  it("keeps a person's write a person's", () => {
+    expect(auditActingAsLabel(t, { ...unattended, onBehalfOfUserId: "usr_1" })).toBe("A person");
+    expect(auditActingAsLabel(t, { ...unattended, tier: "ActWithApproval" })).toBe("A person");
+    expect(auditActingAsLabel(t, { ...unattended, ownerKind: "AssistantTurn" })).toBe("A person");
+  });
+
+  it("labels agent and system principals", () => {
+    expect(auditActingAsLabel(t, { ...unattended, principalType: "Agent" })).toBe("An agent");
+    expect(auditActingAsLabel(t, { ...unattended, principalType: "System" })).toBe("The system");
   });
 });

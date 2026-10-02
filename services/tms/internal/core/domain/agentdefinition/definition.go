@@ -130,13 +130,15 @@ type Definition struct {
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
+const IDPrefix = "agdef_"
+
 func (d *Definition) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("agdef_")
+			d.ID = pulid.MustNew(IDPrefix)
 		}
 		d.ApplyDefaults()
 		d.CreatedAt = now

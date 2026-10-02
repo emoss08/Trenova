@@ -120,18 +120,43 @@ func (e *Entry) Validate() error {
 		if e.PrincipalID != e.APIKeyID {
 			return errors.New("api key audit entries must use api key ID as principal ID")
 		}
-	case "system", "agent":
+	case "system":
 		if e.UserID.IsNotNil() {
-			return fmt.Errorf("%s audit entries cannot include a user ID", e.PrincipalType)
+			return errors.New("system audit entries cannot include a user ID")
 		}
 		if e.APIKeyID.IsNotNil() {
-			return fmt.Errorf("%s audit entries cannot include an api key ID", e.PrincipalType)
+			return errors.New("system audit entries cannot include an api key ID")
+		}
+	case "agent":
+		if e.APIKeyID.IsNotNil() {
+			return errors.New("agent audit entries cannot include an api key ID")
+		}
+		if e.UserID.IsNotNil() && e.UserID == e.PrincipalID {
+			return errors.New("agent audit entries cannot use the user ID as principal ID")
 		}
 	default:
 		return fmt.Errorf("unsupported principal type %q", e.PrincipalType)
 	}
 
 	return nil
+}
+
+func (e *Entry) CreditAgent(agentName string) {
+	credit := AgentCredit(agentName)
+	if strings.TrimSpace(e.Comment) == "" {
+		e.Comment = credit
+		return
+	}
+
+	e.Comment = e.Comment + " (" + credit + ")"
+}
+
+func AgentCredit(agentName string) string {
+	if name := strings.TrimSpace(agentName); name != "" {
+		return "Ran by " + name
+	}
+
+	return "Ran by an agent"
 }
 
 func (e *Entry) BeforeAppendModel(_ context.Context, query bun.Query) error {

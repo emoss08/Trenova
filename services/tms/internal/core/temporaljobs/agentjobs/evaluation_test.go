@@ -534,7 +534,8 @@ func TestOpenReplay_ABackgroundCaseReplaysAsTheAgentAttributedToTheSystemUser(t 
 
 	actor := opened.request.Actor
 	assert.Equal(t, serviceports.PrincipalTypeAgent, actor.PrincipalType)
-	assert.Equal(t, serviceports.AgentPrincipalID, actor.PrincipalID)
+	require.NotNil(t, opened.request.Definition)
+	assert.Equal(t, opened.request.Definition.ID, actor.PrincipalID)
 	assert.Equal(t, system, actor.UserID)
 	require.Len(t, w.contexts.requests, 1)
 	assert.Equal(t, serviceports.PrincipalTypeAgent, w.contexts.requests[0].Actor.PrincipalType)

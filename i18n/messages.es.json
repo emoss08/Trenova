@@ -20021,6 +20021,8 @@
   "The sweep runs once a night at this hour and skips an agent whose instructions, tools, model and cases have not changed since its last run, until that run is older than the rerun period. Evaluation stops for the night when either budget is spent.": "El barrido se ejecuta una vez cada noche a esta hora y omite un agente cuyas instrucciones, herramientas, modelo y casos no hayan cambiado desde su última ejecución, hasta que esa ejecución sea más antigua que el periodo de reejecución. La evaluación se detiene por esa noche cuando se agota cualquiera de los dos presupuestos.",
   "The sync ledger could not be loaded.": "No se pudo cargar el libro de sincronización.",
   "The system": "El sistema",
+  "The system account": "La cuenta del sistema",
+  "The system account (Ran by {0})": "La cuenta del sistema (ejecutado por {0})",
   "The system classified this as a rate confirmation, but no structured shipment fields were extracted.": "El sistema lo clasificó como una confirmación de tarifa, pero no se extrajo ningún campo estructurado del envío.",
   "The system-generated code for the hazardous material.": "El código del material peligroso generado por el sistema.",
   "The tamper-evident record of what agents did, for whom, and who decided": "El registro a prueba de manipulaciones de lo que hicieron los agentes, para quién y quién decidió",

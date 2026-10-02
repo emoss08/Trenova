@@ -204,7 +204,7 @@ was sampled, so the audit trail can always name it.
 | `agent_proposals.id` | minted in the dispatch activity (`PendingAction.ProposalID`); the insert mints one for an action from an older history | when the proposal is filed |
 | `agent_proposals.trace_id`, `.span_id`, `.step_key` | `proposalrecorder`, from the action | same |
 | `agent_proposals.executed_at` | the recorder, from `PendingAction.ExecutedAt` (when an automatic write ran); the executor for an approved one | at filing; at execution |
-| `agent_proposals.executed_by_user_id` | the recorder (the person in the conversation, for an automatic or simulated write they ran as; none for an unattended run); the executor (the approver, on success, failure and simulation) | same |
+| `agent_proposals.executed_by_user_id` | the recorder (the person in the conversation, for an automatic or simulated write they ran as; the instance's system user, for an automatic write of an unattended run); the executor (the approver, on success, failure and simulation) | same |
 | `agent_proposals.executed_target_version` | the recorder, from `PendingAction.ExecutedVersion`; the executor, read after the write | same |
 | `agent_decisions.trace_id` | `agentdecisionservice`, the `decide` span's trace | when the decision is recorded |
 | `agent_decisions.preview`, `.preview_digest`, `.preview_reviewed`, `.preview_target_version` | `agentdecisionservice`, from the preview settled for the decider (a plan's step: the plan's) | same |
@@ -275,10 +275,13 @@ recorded from the code before this change and replay against it.
 - **The tier source costs a trust read.** Telling a tier a person chose from
   one trust earned reads the trust ledger for every call on a tool the agent
   names a tier for.
-- **An unattended write names no person as its executor.** `executed_by_user_id`
-  is empty for an automatic write of a background run, which the AI audit trail
-  reads as the agent's. The record written names the instance's system user as
-  created-by or updated-by; see
+- **An unattended write names the system user, not a person, as its executor.**
+  `executed_by_user_id` on an automatic write of a background run is the
+  instance's system user (`RequestActor.ExecutorUserID`), so the AI audit trail
+  reads it as that account's write and keeps the agent on the row's
+  `agent_definition_id` and `agent_name`. Rows filed before this named nobody and
+  still derive as the agent's. The record written names the same account as
+  created-by or updated-by, and the audit log row says "Ran by" the agent; see
   [agent-runtime.md](agent-runtime.md#who-a-run-acts-as).
 - **An evaluation run by a quality suite** starts in the suite's trace; its
   spans re-parent to the evaluation's anchor and link to the suite's activity.
