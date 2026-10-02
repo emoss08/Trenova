@@ -112,3 +112,41 @@ func TestGenAI_IsSafeWhenMetricsAreOff(t *testing.T) {
 	var nilGenAI *metrics.GenAI
 	nilGenAI.RecordCall(t.Context(), &metrics.GenAICall{Operation: "chat"})
 }
+
+// How long a person waited for the first word is its own histogram, separate
+// from the call's duration, which runs to the end of the reply. A call that
+// streamed nothing records none.
+func TestGenAI_RecordsTheTimeToTheFirstTokenWhenThereWasOne(t *testing.T) {
+	t.Parallel()
+
+	reader := sdkmetric.NewManualReader()
+	genAI, err := metrics.NewGenAI(sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)))
+	require.NoError(t, err)
+
+	genAI.RecordCall(t.Context(), &metrics.GenAICall{
+		Operation:    "chat",
+		Provider:     "openai",
+		RequestModel: "model-a",
+		Task:         "AssistantChat",
+		Duration:     4 * time.Second,
+		FirstToken:   350 * time.Millisecond,
+	})
+	genAI.RecordCall(t.Context(), &metrics.GenAICall{
+		Operation:    "chat",
+		Provider:     "openai",
+		RequestModel: "model-a",
+		Task:         "AssistantChat",
+		Duration:     2 * time.Second,
+	})
+
+	recorded := collect(t, reader)
+	first, ok := recorded["trenova.gen_ai.client.time_to_first_token"]
+	require.True(t, ok)
+	assert.Equal(t, "s", first.Unit)
+	points := first.Data.(metricdata.Histogram[float64]).DataPoints
+	require.Len(t, points, 1)
+	assert.Equal(t, uint64(1), points[0].Count, "the call that streamed nothing is not counted")
+	assert.InDelta(t, 0.35, points[0].Sum, 0.0001)
+	task, _ := points[0].Attributes.Value(attribute.Key("trenova.ai.task"))
+	assert.Equal(t, "AssistantChat", task.AsString())
+}

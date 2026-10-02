@@ -157,7 +157,7 @@ func (t *settlementBulkTool[E]) Name() string { return t.name }
 func (t *settlementBulkTool[E]) Description() string { return t.description }
 
 func (t *settlementBulkTool[E]) SearchTerms() []string {
-	return []string{"every", "several", "many", "together", "bulk", "once"}
+	return []string{"every", "several", "many", "together", searchTermBulk, "once"}
 }
 
 func (t *settlementBulkTool[E]) ParamSchema() map[string]any {

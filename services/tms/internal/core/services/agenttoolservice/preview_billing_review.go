@@ -10,7 +10,12 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-var inReviewFields = []string{fieldStatus, "assignedBillerId", "reviewStartedAt", "reviewCompletedAt"}
+var inReviewFields = []string{
+	fieldStatus,
+	"assignedBillerId",
+	"reviewStartedAt",
+	"reviewCompletedAt",
+}
 
 var inReviewVolatileFields = []string{"reviewStartedAt"}
 

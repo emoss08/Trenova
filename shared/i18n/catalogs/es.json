@@ -6472,6 +6472,8 @@
   "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything.": "Estos resultados se truncaron al llegar al límite de filas. Restrinja los filtros o exporte en un formato más amplio para verlo todo.",
   "These settings were changed by someone else while you were editing. Reload and try again.": "Otra persona cambió esta configuración mientras la editabas. Vuelve a cargar e inténtalo de nuevo.",
   "They stay open until somebody records the outcome.": "Permanecen abiertos hasta que alguien registre el resultado.",
+  "Thinking style applies only to Anthropic Messages providers": "El estilo de razonamiento solo se aplica a los proveedores de Anthropic Messages",
+  "Thinking style is required": "El estilo de razonamiento es obligatorio",
   "This EDI carrier invoice already has an open match": "Esta factura EDI de transportista ya tiene una coincidencia abierta",
   "This EDI invoice repeats one the partner already sent; match the original instead": "Esta factura EDI repite una que el socio ya envió; concilie la original en su lugar",
   "This Idempotency-Key was already used for a different request; send a new key for a new request": "Esta Idempotency-Key ya se usó para otra solicitud; envíe una clave nueva para una solicitud nueva",

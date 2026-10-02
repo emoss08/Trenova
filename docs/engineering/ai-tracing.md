@@ -104,7 +104,11 @@ alike. `gen_ai.operation.name`, `gen_ai.provider.name` (`anthropic`, `openai`,
 (`stop`, `length`, `tool_calls`, `content_filter`), `server.address`,
 `error.type` (the usage row's error class); `trenova.ai.provider.id`,
 `trenova.ai.attempt`, `trenova.ai.failover`, `trenova.ai.cost_usd`,
-`trenova.ai.reasoning_tokens`, `trenova.ai.truncated`. Events:
+`trenova.ai.reasoning_tokens`, `trenova.ai.truncated`, and on a streamed chat
+attempt `trenova.ai.first_token_ms`: how long it took to stream the first text
+or thinking, also kept in the usage row's `first_token_ms` and the
+`trenova.gen_ai.client.time_to_first_token` histogram (labelled with
+`trenova.ai.task`); an attempt that streamed none has none. Events:
 `provider.busy_wait{wait_s}` for each wait on a provider answering 429 or 5xx,
 `provider.resting` when the attempt put the provider to rest.
 

@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	searchTermBulk = "bulk"
+
 	bulkAssignBillersDescription = "Assign one biller to several billing queue items in one call, " +
 		"so the person decides it once. Use it instead of assign_billing_queue_biller whenever " +
 		"more than one item is waiting, never one call per item. Each item is assigned exactly " +
@@ -71,7 +73,7 @@ func newAssignBillersTool(billing billingQueueDecider) serviceports.AgentTool {
 func (t *assignBillersTool) Name() string { return "assign_billing_queue_billers" }
 
 func (t *assignBillersTool) SearchTerms() []string {
-	return []string{"biller", "reviewer", "assign me", "start review", "bulk"}
+	return []string{"biller", "reviewer", "assign me", "start review", searchTermBulk}
 }
 
 func (t *assignBillersTool) Description() string { return bulkAssignBillersDescription }
@@ -159,7 +161,7 @@ func newTransitionItemsToInReviewTool(billing billingQueueDecider) serviceports.
 func (t *transitionItemsToInReviewTool) Name() string { return "transition_items_to_in_review" }
 
 func (t *transitionItemsToInReviewTool) SearchTerms() []string {
-	return []string{"review", "unblock", "bulk"}
+	return []string{"review", "unblock", searchTermBulk}
 }
 
 func (t *transitionItemsToInReviewTool) Description() string { return bulkInReviewDescription }
@@ -189,7 +191,7 @@ func (t *transitionItemsToInReviewTool) Policy() serviceports.ToolPolicy {
 // so a held item among ten waiting ones still puts the call before a person.
 func (t *transitionItemsToInReviewTool) tierLimit(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose

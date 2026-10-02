@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 )
 
 // anthropicModel is what a Claude model takes for thinking. The models differ
@@ -25,6 +27,10 @@ type anthropicModel struct {
 	// bindsPrefix models check that a replayed thinking block's system
 	// prompt, tools and earlier messages are unchanged since it was written.
 	bindsPrefix bool
+	// declared models think by effort because the operator said so, behind
+	// an id this cannot read. Which effort model it is is unknown, so None
+	// asks for the least every one of them accepts.
+	declared bool
 }
 
 var (
@@ -48,6 +54,25 @@ var (
 // A version past the newest named here is read as that newest one: the model
 // table moves faster than this code, and the newest constraints are the safe
 // ones to assume.
+// providerTraits is what the configured provider's model takes: read from its
+// id unless the operator said how it thinks.
+func providerTraits(provider *aiprovider.Provider) anthropicModel {
+	switch provider.ThinkingStyle {
+	case aiprovider.ThinkingStyleBudget:
+		return anthropicModel{}
+	case aiprovider.ThinkingStyleEffort:
+		traits := anthropicTraits(provider.Model)
+		if traits.adaptive {
+			return traits
+		}
+		return anthropicModel{adaptive: true, declared: true}
+	case aiprovider.ThinkingStyleAuto:
+		return anthropicTraits(provider.Model)
+	default:
+		return anthropicTraits(provider.Model)
+	}
+}
+
 func anthropicTraits(model string) anthropicModel {
 	id := strings.ToLower(strings.TrimSpace(model))
 	if at := strings.IndexByte(id, '@'); at >= 0 {

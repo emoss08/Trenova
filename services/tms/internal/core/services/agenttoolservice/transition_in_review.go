@@ -140,7 +140,10 @@ func (m *reviewMove) needsBiller() bool {
 // plan applies the move to a copy of the item, exactly as Execute applies it
 // to the record: the biller first, since a waiting item moves with them, then
 // the status change for an item the assignment did not move.
-func (m *reviewMove) plan(actor *serviceports.RequestActor, now int64) func(*billingqueue.BillingQueueItem) error {
+func (m *reviewMove) plan(
+	actor *serviceports.RequestActor,
+	now int64,
+) func(*billingqueue.BillingQueueItem) error {
 	return func(after *billingqueue.BillingQueueItem) error {
 		if m.needsBiller() {
 			if err := billingqueueservice.PlanAssignBiller(after, m.biller, now); err != nil {

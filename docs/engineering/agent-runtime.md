@@ -195,6 +195,13 @@ than any it names takes the newest known constraints.
   by default and the thinking panel would show nothing. Older models keep the token budget
   and its raised `max_tokens`; adaptive thinking raises `max_tokens` to
   `reasoningAnswerFloor`.
+- **Thinking style.** An Anthropic provider's thinking style (`aiprovider.ThinkingStyle`,
+  "Thinking style" on the provider form) overrides the id for a model the adapter cannot
+  read. Auto, the default, reads the id. Effort asks by effort whatever the id reads, and
+  Budget asks with a token budget. Behind an alias the adapter cannot tell which effort
+  model it is, so under a declared Effort None asks for adaptive thinking at low effort, the
+  least every such model accepts. Only an Anthropic provider may hold anything but Auto:
+  validation refuses it, and so does `ck_ai_providers_thinking_style_kind`.
 - **None and Off.** None is the least thinking the model allows. Opus 5.5, Fable and Mythos
   cannot stop thinking and Sonnet 5.5 refuses `disabled`, so they get adaptive at low
   effort; Opus 5 gets `disabled`; Opus and Sonnet 4.6 to 4.8 get nothing, which is no
@@ -525,8 +532,11 @@ returns the turn to watch. `POST /threads/:id/messages/` starts the same
 workflow and waits for its result; `POST /ask/` opens the hidden thread and
 starts a turn on it.
 
-1. **Prepare** reads the thread, history, files and mentions, checks budget and
-   room, and runs the scope guard. After the thread, every check and read runs
+1. **Prepare** runs as a local activity on the worker running the workflow
+   (`assistant-turn-prepare-local`), so the turn's first workflow task prepares
+   it and schedules the model call without a task-queue dispatch or a second
+   workflow task in between. It reads the thread, history, files and mentions,
+   checks budget and room, and runs the scope guard. After the thread, every check and read runs
    side by side (`checkTurn`); none writes, and a question failing several is
    told about the first in the old order (files, agent, page, budget, room,
    history), never about a cancellation. The guard's classifier runs beside the
@@ -722,6 +732,18 @@ still drifts, or one written after the tool budget was spent, ends with a note
 to check the card. Each is a `reply_regrounded` event in the run's trajectory.
 The LLM judge that scores the same thing stays in the evaluations.
 
+### History replay
+
+A turn replays the newest 120 messages, and their tool results are most of it.
+`replayHistory` (`agentruntime/messages.go`) keeps a result whole only while it
+is in the last three turns (a decision note is not a turn) and, newest first,
+within 48,000 characters; the rest are shortened to their first 320 characters
+inside a fence of their own, closed, with a note after it naming the tool to
+call again and saying not to quote what was left out. A result a proposal
+answered is replaced by its current outcome and never shortened. The figures of
+every shortened result travel with the turn (`TurnState.Evidence`), so the
+grounding guard above still counts them as read.
+
 ### The clock
 
 The system prompt names today's date only, so its cached prefix is the same all
@@ -731,6 +753,30 @@ unknown, for an agent that reads the clock. `ask_user` option labels that carry 
 date read "Tue Oct 6 (in 7 days)", counted from the turn's own clock
 (`TurnEffects.Now`) in that zone; a past date on a scheduling question adds a note
 telling the model so.
+
+### What a provider can cache
+
+A provider reuses the start of a prompt only while it is the same bytes, so a
+request is laid out stable first:
+
+- **Bytes.** Every request body, the tools and the replayed tool-call arguments
+  included, is encoded with sorted keys (`modeladapter.requestJSON`); a map in
+  Go's random order made every request different.
+- **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
+  shares first (rules, instructions, the tools when all are offered, delegates,
+  artifacts, the guide, how to answer) and the turn's own part after it (runtime
+  context, memories, a disclosed tool list, proposals waiting on a decision).
+  The turn carries the shared part's length (`TurnState.SystemStable`) to the
+  adapter. `agentdefinition.PromptVersion` names this shape (v3) on runs,
+  evaluation cases and fingerprints.
+- **Anthropic** gets three of its four marks: the last tool, the end of the
+  shared system part, and the last block of the conversation, which lets each
+  call of a tool loop read the exchange before it back from the cache.
+- **OpenAI** gets `prompt_cache_key`, a hash of organization, agent and version,
+  only when the provider is reached at `api.openai.com`; a server speaking the
+  same protocol elsewhere may refuse the field. Everything else (vLLM, Ollama,
+  Gemini, DeepSeek and the rest) caches prefixes on its own and needs only the
+  layout.
 
 ## Agent runs
 
@@ -791,7 +837,7 @@ A run nobody is in has two identities, kept apart on purpose.
   minutes) and appends it, or "Ran by an agent" when the name cannot be read.
   `chk_audit_entries_principal_consistency` lets an agent row carry a user, never
   an API key, and never the user as its own principal (migration
-  `20261231007230_audit_agent_system_user`).
+  `20261231007250_audit_agent_system_user`).
 - **The system user executes the run's automatic writes.**
   `RequestActor.ExecutorUserID` is the person for a user principal and the
   carried system user for an agent, so `executed_by_user_id` on an automatic
@@ -1066,6 +1112,11 @@ design — the run carries on — so this is the only place they show up.
 
 `gen_ai.client.token.usage` and `gen_ai.client.operation.duration` are recorded
 per provider attempt, with the GenAI semantic-convention buckets.
+`trenova.gen_ai.client.time_to_first_token` (and `first_token_ms` on the usage
+row) is how long an attempt took to stream its first text or thinking. Before it,
+`assistant_prepare_seconds{outcome}`, `assistant_guard_seconds{stage}` and
+`assistant_model_call_wait_seconds` time preparing the turn, the scope check and
+a model call's wait for a worker.
 
 Every run, turn, delegate's task and evaluation is one trace, named by its id and
 rooted in an `invoke_agent` span its finishing activity emits; model calls, each
@@ -1111,6 +1162,7 @@ before the change:
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
+| `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |

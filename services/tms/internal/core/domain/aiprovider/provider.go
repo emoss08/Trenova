@@ -72,6 +72,9 @@ type Provider struct {
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort"      bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
+	// ThinkingStyle says how a Claude model behind an id the adapter cannot
+	// read takes thinking. Auto reads the id.
+	ThinkingStyle ThinkingStyle `json:"thinkingStyle" bun:"thinking_style,type:VARCHAR(50),notnull,nullzero,default:'Auto'"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the
@@ -200,6 +203,28 @@ func (p *Provider) ResolvedBaseURL() string {
 	}
 
 	return p.Kind.DefaultBaseURL()
+}
+
+// Host is the host this provider is reached at, or empty when its address
+// does not parse.
+func (p *Provider) Host() string {
+	parsed, err := url.Parse(p.ResolvedBaseURL())
+	if err != nil {
+		return ""
+	}
+
+	return parsed.Hostname()
+}
+
+// openAIPlatformHost is where OpenAI serves its own API.
+const openAIPlatformHost = "api.openai.com"
+
+// OnOpenAIPlatform reports a Responses provider reached at OpenAI itself. It
+// takes request fields, such as a prompt cache key, that a server speaking
+// the same protocol elsewhere — Bedrock's mantle endpoint among them — may
+// refuse.
+func (p *Provider) OnOpenAIPlatform() bool {
+	return p.Kind == KindOpenAIResponses && p.Host() == openAIPlatformHost
 }
 
 func nonNegativePrice(label string) validation.RuleFunc {
@@ -382,6 +407,15 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Reasoning effort is required"),
 			domainvalidation.ValidEnum[ReasoningEffort]("Reasoning effort is invalid"),
 		),
+		validation.Field(&p.ThinkingStyle,
+			validation.Required.Error("Thinking style is required"),
+			domainvalidation.ValidEnum[ThinkingStyle]("Thinking style is invalid"),
+			validation.When(
+				p.Kind != KindAnthropicMessages,
+				validation.In(ThinkingStyleAuto).
+					Error("Thinking style applies only to Anthropic Messages providers"),
+			),
+		),
 		validation.Field(&p.InputCostPerMillion, validation.By(nonNegativePrice("Input cost"))),
 		validation.Field(&p.OutputCostPerMillion, validation.By(nonNegativePrice("Output cost"))),
 		validation.Field(&p.MaxTokens,
@@ -528,6 +562,9 @@ func (p *Provider) applyDefaults() {
 	}
 	if p.StructuredOutputMode == "" {
 		p.StructuredOutputMode = StructuredOutputPrompted
+	}
+	if p.ThinkingStyle == "" {
+		p.ThinkingStyle = ThinkingStyleAuto
 	}
 	if p.EmbeddingInputStyle == "" {
 		p.EmbeddingInputStyle = EmbeddingInputStyleNone

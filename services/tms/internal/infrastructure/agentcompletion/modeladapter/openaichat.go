@@ -447,7 +447,7 @@ func toChatToolCalls(calls []ToolCall, providerID pulid.ID, model string) []chat
 
 	out := make([]chatToolCall, 0, len(calls))
 	for _, call := range calls {
-		encoded, err := sonic.Marshal(call.Arguments)
+		encoded, err := requestJSON.Marshal(call.Arguments)
 		if err != nil {
 			encoded = []byte("{}")
 		}

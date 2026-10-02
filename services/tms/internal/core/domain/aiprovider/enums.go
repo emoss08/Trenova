@@ -293,6 +293,38 @@ func (e ReasoningEffort) IsValid() bool {
 	return slices.Contains(AllReasoningEfforts(), e)
 }
 
+// ThinkingStyle is how a Claude model is asked to think, for an Anthropic
+// provider whose model id does not say.
+//
+// Claude models from Opus 4.6 and Sonnet 4.6 on think by effort and refuse a
+// token budget with a 400; older ones take only the budget. The adapter reads
+// which from the model id, which works for the ids the Claude API, Bedrock and
+// Vertex use. A gateway's alias says nothing, and is read as an older model,
+// so an operator who knows the model behind it says which here.
+//
+// Auto reads the model id and is the default. Effort asks by effort whatever
+// the id reads; Budget asks with a token budget. Only the Anthropic protocol
+// takes either.
+type ThinkingStyle string
+
+const (
+	ThinkingStyleAuto   = ThinkingStyle("Auto")
+	ThinkingStyleEffort = ThinkingStyle("Effort")
+	ThinkingStyleBudget = ThinkingStyle("Budget")
+)
+
+func AllThinkingStyles() []ThinkingStyle {
+	return []ThinkingStyle{
+		ThinkingStyleAuto,
+		ThinkingStyleEffort,
+		ThinkingStyleBudget,
+	}
+}
+
+func (s ThinkingStyle) IsValid() bool {
+	return slices.Contains(AllThinkingStyles(), s)
+}
+
 // Enabled reports whether the provider should be asked to reason.
 func (e ReasoningEffort) Enabled() bool {
 	return e.IsValid() && e != ReasoningOff && e != ReasoningNone

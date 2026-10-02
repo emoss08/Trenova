@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
@@ -60,8 +61,9 @@ type ActivitiesParams struct {
 	Logger    *zap.Logger
 	Runtime   *agentruntime.Service
 	Steps     serviceports.RunStepLedger
-	Observer  ToolObserver   `optional:"true"`
-	Delegates DelegateOpener `optional:"true"`
+	Observer  ToolObserver      `optional:"true"`
+	Delegates DelegateOpener    `optional:"true"`
+	Metrics   *metrics.Registry `optional:"true"`
 }
 
 // Activities are a turn's effects, one activity each.
@@ -71,6 +73,7 @@ type Activities struct {
 	steps     serviceports.RunStepLedger
 	observer  ToolObserver
 	delegates DelegateOpener
+	metrics   *metrics.Assistant
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -80,6 +83,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		steps:     p.Steps,
 		observer:  p.Observer,
 		delegates: p.Delegates,
+		metrics:   metrics.AssistantFrom(p.Metrics),
 	}
 }
 
@@ -89,6 +93,13 @@ func (a *Activities) ModelCallActivity(
 	ctx context.Context,
 	in *ModelCallInput,
 ) (*agentruntime.ModelReply, error) {
+	// How long the call sat between being scheduled and a worker taking it:
+	// queue time the person spends watching nothing.
+	info := activity.GetInfo(ctx)
+	if !info.ScheduledTime.IsZero() && info.StartedTime.After(info.ScheduledTime) {
+		a.metrics.RecordModelCallWait(info.StartedTime.Sub(info.ScheduledTime).Seconds())
+	}
+
 	emit := func(serviceports.StreamEvent) {}
 	if in.Stream {
 		stream, events, err := OpenStream(ctx)

@@ -291,3 +291,23 @@ func TestApply_RefusesAPrivateNetworkTheServerDisallows(t *testing.T) {
 	require.NoError(t, svc.apply(provider, req), "an absent setting keeps self-hosted models working")
 	assert.True(t, provider.AllowPrivateNetwork)
 }
+
+// The thinking style an administrator picks is what is stored, and a request
+// that leaves it out, as a client from before the setting does, reads the id.
+func TestApply_KeepsTheThinkingStyleTheAdministratorChose(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
+	provider := testProvider(t, svc)
+	provider.Kind = aiprovider.KindAnthropicMessages
+	provider.Model = "acme-reasoner"
+	req := saveRequest(provider, "https://gateway.example.com", nil)
+	req.ThinkingStyle = aiprovider.ThinkingStyleEffort
+
+	require.NoError(t, svc.apply(provider, req))
+	assert.Equal(t, aiprovider.ThinkingStyleEffort, provider.ThinkingStyle)
+
+	req.ThinkingStyle = ""
+	require.NoError(t, svc.apply(provider, req))
+	assert.Equal(t, aiprovider.ThinkingStyleAuto, provider.ThinkingStyle)
+}

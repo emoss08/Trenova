@@ -3,7 +3,6 @@ package modeladapter
 import (
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 )
@@ -60,7 +59,7 @@ func WithSchemaInstruction(
 		return system
 	}
 
-	encoded, err := sonic.MarshalIndent(schema, "", "  ")
+	encoded, err := requestJSON.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return system
 	}

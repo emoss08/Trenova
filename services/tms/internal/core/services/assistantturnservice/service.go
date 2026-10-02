@@ -47,19 +47,8 @@ func New(p Params) *Service {
 		reader:    p.Reader,
 		canceller: p.Canceller,
 		realtime:  p.Realtime,
-		metrics:   assistantMetrics(p.Metrics),
+		metrics:   metrics.AssistantFrom(p.Metrics),
 	}
-}
-
-// assistantMetrics tolerates a service built without a registry, which a test
-// does and an install with metrics switched off does too. Every method on the
-// returned value is safe on a disabled collector.
-func assistantMetrics(registry *metrics.Registry) *metrics.Assistant {
-	if registry == nil {
-		return metrics.NewAssistant(nil, zap.NewNop(), false)
-	}
-
-	return registry.Assistant
 }
 
 // StartRequest opens a turn on a conversation.

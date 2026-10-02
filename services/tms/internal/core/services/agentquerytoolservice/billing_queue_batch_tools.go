@@ -175,12 +175,16 @@ func batchRowOf(detail *billingQueueDetail) billingQueueBatchRow {
 		InvoiceID:         detail.InvoiceID,
 		ShipmentID:        detail.ShipmentID,
 	}
-	if row.AssignedBiller == "" && !billingqueue.IsTerminalStatus(billingqueue.Status(detail.Status)) {
+	if row.AssignedBiller == "" &&
+		!billingqueue.IsTerminalStatus(billingqueue.Status(detail.Status)) {
 		row.AssignedBiller = noBillerLabel
 	}
 	if detail.Readiness != nil {
 		row.MissingDocuments = strings.Join(detail.Readiness.MissingDocuments, readinessSeparator)
-		row.ValidationFailures = strings.Join(detail.Readiness.ValidationFailures, readinessSeparator)
+		row.ValidationFailures = strings.Join(
+			detail.Readiness.ValidationFailures,
+			readinessSeparator,
+		)
 		row.Warnings = strings.Join(detail.Readiness.Warnings, readinessSeparator)
 	}
 

@@ -16,6 +16,9 @@ const (
 	// anthropicBindingBeta opens thinking.block_binding, which is a 400
 	// without it.
 	anthropicBindingBeta = "thinking-binding-controls-2026-08-01"
+
+	anthropicThinkingAdaptive = "adaptive"
+	anthropicFormatJSONSchema = "json_schema"
 )
 
 type anthropicAdapter struct{}
@@ -60,7 +63,7 @@ type anthropicBlockBinding struct {
 
 // applyThinking asks for thinking the way the configured model takes it.
 func (r *anthropicRequest) applyThinking(call *Call) {
-	model := anthropicTraits(call.Provider.Model)
+	model := providerTraits(call.Provider)
 	if !model.adaptive {
 		r.applyThinkingBudget(call)
 		return
@@ -69,15 +72,16 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 	effort := call.reasoning()
 	switch {
 	case effort.Enabled():
-		r.Thinking = &anthropicThinking{Type: "adaptive", Display: "summarized"}
+		r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive, Display: "summarized"}
 		r.config().Effort = anthropicEffort(effort)
 	case effort.Disabled():
 		// None is the least thinking the model allows. A model that always
-		// thinks, or refuses "disabled", thinks at low effort; one that takes
+		// thinks, refuses "disabled", or is an effort model the operator named
+		// behind an unreadable id, thinks at low effort; one that takes
 		// "disabled" is told so; the rest do not think unless asked.
 		switch {
-		case model.thinksAlways || model.disableRefused:
-			r.Thinking = &anthropicThinking{Type: "adaptive"}
+		case model.thinksAlways || model.disableRefused || model.declared:
+			r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive}
 			r.config().Effort = "low"
 		case model.disableNeedsLowEffort:
 			r.Thinking = &anthropicThinking{Type: "disabled"}
@@ -86,7 +90,8 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 	if model.bindsPrefix {
 		r.bindThinking()
 	}
-	if r.Thinking != nil && r.Thinking.Type == "adaptive" && r.MaxTokens < reasoningAnswerFloor {
+	if r.Thinking != nil && r.Thinking.Type == anthropicThinkingAdaptive &&
+		r.MaxTokens < reasoningAnswerFloor {
 		r.MaxTokens = reasoningAnswerFloor
 	}
 }
@@ -99,7 +104,7 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 // what these models do when told nothing.
 func (r *anthropicRequest) bindThinking() {
 	if r.Thinking == nil {
-		r.Thinking = &anthropicThinking{Type: "adaptive"}
+		r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive}
 	}
 	r.Thinking.BlockBinding = &anthropicBlockBinding{PrefixMismatchBehavior: "drop_block"}
 }
@@ -112,7 +117,7 @@ func anthropicHeaders(call *Call) map[string]string {
 		"x-api-key":         call.APIKey,
 		"anthropic-version": anthropicVersion,
 	}
-	if anthropicTraits(call.Provider.Model).bindsPrefix {
+	if providerTraits(call.Provider).bindsPrefix {
 		headers["anthropic-beta"] = anthropicBindingBeta
 	}
 
@@ -141,6 +146,11 @@ func anthropicEffort(effort aiprovider.ReasoningEffort) string {
 		return "medium"
 	case aiprovider.ReasoningHigh:
 		return "high"
+	case aiprovider.ReasoningOff,
+		aiprovider.ReasoningNone,
+		aiprovider.ReasoningMinimal,
+		aiprovider.ReasoningLow:
+		return "low"
 	default:
 		return "low"
 	}
@@ -272,8 +282,8 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	body := anthropicRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		System:    cachedSystem(call.Request.System),
-		Messages:  toAnthropicMessages(call.Request.Messages),
+		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
+		Messages:  cachedConversation(toAnthropicMessages(call.Request.Messages)),
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 	}
 	body.applyThinking(call)
@@ -281,7 +291,10 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
 		call.Provider.StructuredOutputMode == aiprovider.StructuredOutputJSONSchema {
-		body.config().Format = &anthropicOutputFormat{Type: "json_schema", Schema: schema}
+		body.config().Format = &anthropicOutputFormat{
+			Type:   anthropicFormatJSONSchema,
+			Schema: schema,
+		}
 	}
 
 	var envelope anthropicResponse
@@ -360,8 +373,8 @@ func (a anthropicAdapter) Stream(
 	body := anthropicRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		System:    cachedSystem(call.Request.System),
-		Messages:  toAnthropicMessages(call.Request.Messages),
+		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
+		Messages:  cachedConversation(toAnthropicMessages(call.Request.Messages)),
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 		Stream:    true,
 	}
@@ -641,20 +654,24 @@ func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 /*
 Where the prefix is worth keeping.
 
-Anthropic matches a cached prefix byte for byte and allows a handful of marks,
-so they go at the two boundaries that are both large and unchanging: the end of
-the tool schemas and the end of the system prompt. Those two are most of what a
-turn sends and every iteration of a tool loop resends them verbatim — the
-second call in a two-tool turn re-read the whole prompt and every schema before
-this.
+Anthropic matches a cached prefix byte for byte and allows four marks a
+request, so they go at the boundaries that are both large and stable: the end
+of the tool schemas, the end of the part of the system prompt every turn
+shares, and the end of the conversation.
+
+The system prompt leads with what never changes for an agent and ends with the
+turn's own context, so its mark sits where the shared part ends and a new page
+or memory no longer costs the rules and the tools.
+
+The conversation's mark is what a tool loop lives on. Each call resends the
+whole exchange one tool result longer, and the mark on the last block lets the
+next call read everything before that result back from the cache. A mark from
+an earlier call stays a valid place to read from, so the cache grows with the
+conversation rather than being rewritten by it.
 
 The marks go at the end of each block rather than the start, because what is
-cached is everything up to the mark. Nothing marks the conversation itself: it
-grows every turn, so a mark there caches a prefix that the next request has
-already moved past.
-
-An empty tool list or system prompt gets no mark. A breakpoint on nothing still
-costs a write.
+cached is everything up to the mark. An empty tool list, system prompt or
+conversation gets no mark: a breakpoint on nothing still costs a write.
 */
 func cachedTools(tools []anthropicTool) []anthropicTool {
 	if len(tools) == 0 {
@@ -666,14 +683,33 @@ func cachedTools(tools []anthropicTool) []anthropicTool {
 	return tools
 }
 
-func cachedSystem(system string) []anthropicBlock {
+func cachedSystem(system string, stable int) []anthropicBlock {
 	if system == "" {
 		return nil
 	}
+	if stable <= 0 || stable >= len(system) {
+		return []anthropicBlock{{
+			Type:         "text",
+			Text:         system,
+			CacheControl: ephemeralCache(),
+		}}
+	}
 
-	return []anthropicBlock{{
-		Type:         "text",
-		Text:         system,
-		CacheControl: ephemeralCache(),
-	}}
+	return []anthropicBlock{
+		{Type: "text", Text: system[:stable], CacheControl: ephemeralCache()},
+		{Type: "text", Text: system[stable:]},
+	}
+}
+
+func cachedConversation(messages []anthropicMessage) []anthropicMessage {
+	if len(messages) == 0 {
+		return messages
+	}
+	last := &messages[len(messages)-1]
+	if len(last.Content) == 0 {
+		return messages
+	}
+	last.Content[len(last.Content)-1].CacheControl = ephemeralCache()
+
+	return messages
 }

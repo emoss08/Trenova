@@ -72,9 +72,13 @@ type StructuredCompletionResult struct {
 type ChatCompletionRequest struct {
 	TenantInfo pagination.TenantInfo
 	System     string
-	Messages   []Message
-	Tools      []ToolSpec
-	MaxTokens  int
+	// SystemStable is how many leading bytes of System are the same on every
+	// turn, which a provider that caches by explicit mark can cache apart from
+	// the turn's own part. Zero treats the whole prompt as one.
+	SystemStable int
+	Messages     []Message
+	Tools        []ToolSpec
+	MaxTokens    int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.

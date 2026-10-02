@@ -142,3 +142,60 @@ func carriesAll(got, want []string) bool {
 
 	return true
 }
+
+func histogramSamples(t *testing.T, registry *prometheus.Registry, name string, labels ...string) uint64 {
+	t.Helper()
+
+	families, err := registry.Gather()
+	require.NoError(t, err)
+
+	for _, family := range families {
+		if family.GetName() != name {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			values := make([]string, 0, len(metric.GetLabel()))
+			for _, label := range metric.GetLabel() {
+				values = append(values, label.GetValue())
+			}
+			if carriesAll(values, labels) {
+				return metric.GetHistogram().GetSampleCount()
+			}
+		}
+	}
+
+	return 0
+}
+
+// The wait before the first token is spent in phases — preparing the turn,
+// checking the question, the model call waiting for a worker — and each is a
+// histogram of its own, so a slow turn says which part was slow.
+func TestAssistant_TimesEachPhaseBeforeTheFirstToken(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordPrepare("allowed", 0.4)
+	assistant.RecordPrepare("refused", 0.2)
+	assistant.RecordGuard("classifier", 0.3)
+	assistant.RecordModelCallWait(0.02)
+
+	assert.Equal(t, uint64(1), histogramSamples(t, registry, "trenova_assistant_prepare_seconds", "allowed"))
+	assert.Equal(t, uint64(1), histogramSamples(t, registry, "trenova_assistant_prepare_seconds", "refused"))
+	assert.Equal(t, uint64(1), histogramSamples(t, registry, "trenova_assistant_guard_seconds", "classifier"))
+	assert.Equal(t, uint64(1), histogramSamples(t, registry, "trenova_assistant_model_call_wait_seconds"))
+}
+
+func TestAssistant_PhaseTimingsAreSafeWithoutMetrics(t *testing.T) {
+	t.Parallel()
+
+	var nothing *Assistant
+	nothing.RecordPrepare("allowed", 1)
+	nothing.RecordGuard("classifier", 1)
+	nothing.RecordModelCallWait(1)
+
+	off := NewAssistant(nil, zap.NewNop(), false)
+	off.RecordPrepare("allowed", 1)
+	off.RecordGuard("classifier", 1)
+	off.RecordModelCallWait(1)
+}

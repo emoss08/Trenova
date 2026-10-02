@@ -107,6 +107,7 @@ func (s *Service) runChat(
 			attribution: req.Attribution,
 			tenant:      req.TenantInfo,
 			latency:     latency,
+			firstToken:  streamed.firstToken(started),
 			streamed:    sink != nil,
 			outcome:     chatOutcome(provider, result, streamed, attemptErr),
 			err:         attemptErr,
@@ -201,6 +202,25 @@ type chatStream struct {
 	cacheWriteTokens int
 	finishReason     string
 	thinkingDropped  int
+	// firstAt is when the first text or thinking reached the reader: how
+	// long a person watched nothing. Zero when none did.
+	firstAt time.Time
+}
+
+func (c *chatStream) markFirst() {
+	if c.firstAt.IsZero() {
+		c.firstAt = time.Now()
+	}
+}
+
+// firstToken is how long after started the first text or thinking arrived,
+// or zero when none did.
+func (c *chatStream) firstToken(started time.Time) time.Duration {
+	if c.firstAt.IsZero() {
+		return 0
+	}
+
+	return c.firstAt.Sub(started)
 }
 
 // attemptChat runs the turn on one provider. The returned stream says what
@@ -235,10 +255,12 @@ func (s *Service) attemptChat(
 		StreamClient: s.streamClientFor(provider),
 		StreamIdle:   s.ai.GetStreamIdleTimeout(),
 		Request: &modeladapter.Request{
-			System:    req.System,
-			Messages:  req.Messages,
-			Tools:     req.Tools,
-			MaxTokens: maxTokens,
+			System:       req.System,
+			SystemStable: req.SystemStable,
+			CacheKey:     promptCacheKey(req),
+			Messages:     req.Messages,
+			Tools:        req.Tools,
+			MaxTokens:    maxTokens,
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
 			// with JSON that parses, and invention there is only ever a bug.
@@ -250,6 +272,7 @@ func (s *Service) attemptChat(
 	// cut off before its usage frame reports no tokens, and thinking is
 	// billed as output all the same.
 	call.Reasoning = func(delta string) {
+		streamed.markFirst()
 		streamed.reasoningRunes += utf8.RuneCountInString(delta)
 		if req.ReasoningSink != nil {
 			req.ReasoningSink(delta)
@@ -273,7 +296,11 @@ func (s *Service) attemptChat(
 	}
 
 	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
-		resp, streamed.text, err = s.executeStreamWithRetry(ctx, streamer, call, sink, busy)
+		first := func(delta string) {
+			streamed.markFirst()
+			sink(delta)
+		}
+		resp, streamed.text, err = s.executeStreamWithRetry(ctx, streamer, call, first, busy)
 	} else {
 		resp, err = s.executeWithRetryNoticed(ctx, adapter, call, busy)
 		if err == nil && sink != nil && resp.Text != "" {

@@ -2111,7 +2111,7 @@
       "kind": "query",
       "domain": "ai-provider",
       "sourceFile": "src/operations/ai-provider/providers.graphql",
-      "hash": "sha256:59ca8e0065a874a31d83b6439010be456ad24912a224b7718273d2ae50dbfa42",
+      "hash": "sha256:34c633c35b3a5b33d99238f07fbee597b0a654bca74a4c8cf5d8a04c59e9118d",
       "rootFields": [
         "aiProviders"
       ],
@@ -2127,14 +2127,14 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AIProviderCards($input: DataTableConnectionInput!) {\n  aiProviders(input: $input) {\n    edges {\n      node {\n        ...AIProviderCardFields\n      }\n    }\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AIProviderCards($input: DataTableConnectionInput!) {\n  aiProviders(input: $input) {\n    edges {\n      node {\n        ...AIProviderCardFields\n      }\n    }\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  thinkingStyle\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AIProviderDetail",
       "kind": "query",
       "domain": "ai-provider",
       "sourceFile": "src/operations/ai-provider/providers.graphql",
-      "hash": "sha256:ae91e72c5f112a6aa1f37109bf70a6275196b1229a3459a30b58ee33d63bb356",
+      "hash": "sha256:a0c568ce3b9e29ef4c62b6a6f9c95c08b58f39862ecc50de6bf0f63c80db8103",
       "rootFields": [
         "aiProvider"
       ],
@@ -2149,7 +2149,7 @@
         "AIProviderCardFields"
       ],
       "usages": [],
-      "sdl": "query AIProviderDetail($id: ID!) {\n  aiProvider(id: $id) {\n    ...AIProviderCardFields\n  }\n}\n\nfragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AIProviderDetail($id: ID!) {\n  aiProvider(id: $id) {\n    ...AIProviderCardFields\n  }\n}\n\nfragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  thinkingStyle\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AIRetrievalFailedEntryTable",
@@ -22858,7 +22858,7 @@
         "AIProviderDetail"
       ],
       "usages": [],
-      "sdl": "fragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  thinkingStyle\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AIRetrievalFailedEntryFields",

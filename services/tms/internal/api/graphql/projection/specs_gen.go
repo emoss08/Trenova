@@ -1325,6 +1325,10 @@ func init() {
 				FieldMapKey: "reasoningEffort",
 			},
 			{
+				Name:        "thinkingStyle",
+				FieldMapKey: "thinkingStyle",
+			},
+			{
 				Name:        "extraBody",
 				FieldMapKey: "extraBody",
 			},

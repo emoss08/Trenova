@@ -3,6 +3,7 @@ package metrics
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -16,8 +17,10 @@ const (
 	//nolint:gosec // G101: an OpenTelemetry metric name, not a credential
 	genAITokenUsageName        = "gen_ai.client.token.usage"
 	genAIOperationDurationName = "gen_ai.client.operation.duration"
-	genAITokenTypeInput        = "input"
-	genAITokenTypeOutput       = "output"
+	//nolint:gosec // G101: an OpenTelemetry metric name, not a credential
+	genAIFirstTokenName  = "trenova.gen_ai.client.time_to_first_token"
+	genAITokenTypeInput  = "input"
+	genAITokenTypeOutput = "output"
 )
 
 var (
@@ -30,8 +33,9 @@ var (
 )
 
 type GenAI struct {
-	tokens   metric.Int64Histogram
-	duration metric.Float64Histogram
+	tokens     metric.Int64Histogram
+	duration   metric.Float64Histogram
+	firstToken metric.Float64Histogram
 }
 
 type GenAICall struct {
@@ -44,6 +48,12 @@ type GenAICall struct {
 	InputTokens   int64
 	OutputTokens  int64
 	Duration      time.Duration
+	// Task is what the call was for, which separates a chat turn's first
+	// token from a background job's.
+	Task string
+	// FirstToken is how long the call took to stream its first text or
+	// thinking; zero when it streamed none, and then nothing is recorded.
+	FirstToken time.Duration
 }
 
 type genAIOnce struct {
@@ -97,7 +107,19 @@ func NewGenAI(provider metric.MeterProvider) (*GenAI, error) {
 		return nil, err
 	}
 
-	return &GenAI{tokens: tokens, duration: duration}, nil
+	firstToken, err := meter.Float64Histogram(
+		genAIFirstTokenName,
+		metric.WithUnit("s"),
+		metric.WithDescription(
+			"Time from a GenAI call starting to its first streamed text or thinking",
+		),
+		metric.WithExplicitBucketBoundaries(genAIDurationBuckets...),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GenAI{tokens: tokens, duration: duration, firstToken: firstToken}, nil
 }
 
 func (g *GenAI) RecordCall(ctx context.Context, call *GenAICall) {
@@ -116,6 +138,11 @@ func (g *GenAI) RecordCall(ctx context.Context, call *GenAICall) {
 
 	durationAttrs := appendGenAIString(attrs, "error.type", call.ErrorType)
 	g.duration.Record(ctx, call.Duration.Seconds(), metric.WithAttributes(durationAttrs...))
+
+	if call.FirstToken > 0 {
+		firstAttrs := appendGenAIString(slices.Clone(attrs), "trenova.ai.task", call.Task)
+		g.firstToken.Record(ctx, call.FirstToken.Seconds(), metric.WithAttributes(firstAttrs...))
+	}
 
 	if call.ErrorType != "" && call.InputTokens == 0 && call.OutputTokens == 0 {
 		return

@@ -145,8 +145,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAIReasoningEffort2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐReasoningEffort),
 			},
 			{
-				Name:     "extraBody",
+				Name:     "thinkingStyle",
+				NonNull:  true,
 				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.Provider)
+					return obj.ThinkingStyle, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIThinkingStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐThinkingStyle),
+			},
+			{
+				Name:     "extraBody",
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.ExtraBody, nil
@@ -157,7 +167,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "inputCostPerMillion",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").InputCostPerMillion(ctx, obj)
@@ -168,7 +178,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "outputCostPerMillion",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").OutputCostPerMillion(ctx, obj)
@@ -178,7 +188,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "maxTokens",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.MaxTokens, nil
@@ -188,7 +198,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tasks",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.Tasks, nil
@@ -198,7 +208,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "priority",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.Priority, nil
@@ -207,7 +217,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "embeddingDimensions",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.EmbeddingDimensions, nil
@@ -217,7 +227,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "embeddingInputStyle",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.EmbeddingInputStyle, nil
@@ -257,7 +267,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.Version, nil
@@ -267,7 +277,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.CreatedAt, nil
@@ -277,7 +287,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.UpdatedAt, nil
@@ -310,7 +320,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIProviderConnection)
 					return obj.TotalCount, nil
@@ -385,7 +395,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latencyMs",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.TestOutcome)
 					return obj.LatencyMS, nil
@@ -405,7 +415,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "testedAt",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.TestOutcome)
 					return obj.TestedAt, nil
@@ -466,12 +476,13 @@ var (
 	errNoChild3  = errors.New("field of type Boolean does not have child fields")
 	errNoChild4  = errors.New("field of type AIStructuredOutputMode does not have child fields")
 	errNoChild5  = errors.New("field of type AIReasoningEffort does not have child fields")
-	errNoChild6  = errors.New("field of type JSON does not have child fields")
-	errNoChild7  = errors.New("field of type Decimal does not have child fields")
-	errNoChild8  = errors.New("field of type Int does not have child fields")
-	errNoChild9  = errors.New("field of type AITask does not have child fields")
-	errNoChild10 = errors.New("field of type AIEmbeddingInputStyle does not have child fields")
-	errNoChild11 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild6  = errors.New("field of type AIThinkingStyle does not have child fields")
+	errNoChild7  = errors.New("field of type JSON does not have child fields")
+	errNoChild8  = errors.New("field of type Decimal does not have child fields")
+	errNoChild9  = errors.New("field of type Int does not have child fields")
+	errNoChild10 = errors.New("field of type AITask does not have child fields")
+	errNoChild11 = errors.New("field of type AIEmbeddingInputStyle does not have child fields")
+	errNoChild12 = errors.New("field of type Timestamp does not have child fields")
 )
 
 func field_Query_aiProviders_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -592,6 +603,14 @@ func marshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdoma
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAIThinkingStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐThinkingStyle(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.ThinkingStyle) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

@@ -23701,6 +23701,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Auto — read it from the model ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Auto-accept within tolerance": {
     "sites": 1,
     "scope": [
@@ -28746,6 +28755,15 @@
     ]
   },
   "Budget stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Budget — older Claude models": {
     "sites": 1,
     "scope": [
       "ts"
@@ -62927,6 +62945,15 @@
       "domain/rateagreement"
     ]
   },
+  "Effort — Claude Opus 4.6, Sonnet 4.6 and later": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Egress class is invalid": {
     "sites": 1,
     "scope": [
@@ -83366,6 +83393,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "How the model is asked to think. Auto reads the model ID, which works for the IDs Anthropic, Bedrock and Vertex use. Behind a gateway alias the ID says nothing and is read as an older model, so a current model refuses every reasoning level; choose Effort for it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "How the money moved — ACH, cheque, fuel card.": {
@@ -113171,7 +113207,7 @@
       "routes/desk"
     ]
   },
-  "None — a reasoning model answers without thinking (fastest)": {
+  "None — the least thinking the model allows (fastest)": {
     "sites": 1,
     "scope": [
       "ts"
@@ -139805,7 +139841,7 @@
     ]
   },
   "Read the question": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -187592,6 +187628,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Thinking style": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Thinking style applies only to Anthropic Messages providers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Thinking style is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "Thinking…": {

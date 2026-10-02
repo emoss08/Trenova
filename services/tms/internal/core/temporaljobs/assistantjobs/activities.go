@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -74,6 +75,7 @@ type ActivitiesParams struct {
 	Notifications *notificationservice.Service
 	Trajectory    serviceports.AgentRunEventRecorder   `optional:"true"`
 	FollowUps     serviceports.DecisionFollowUpResumer `optional:"true"`
+	Metrics       *metrics.Registry                    `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -88,6 +90,7 @@ type Activities struct {
 	threads       replyThreads
 	notifications replyNotifications
 	followUps     serviceports.DecisionFollowUpResumer
+	metrics       *metrics.Assistant
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -99,6 +102,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		steps:      p.Steps,
 		trajectory: p.Trajectory,
 		followUps:  p.FollowUps,
+		metrics:    metrics.AssistantFrom(p.Metrics),
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
@@ -130,7 +134,9 @@ func (a *Activities) PrepareTurnActivity(
 		)
 	}
 
+	started := time.Now()
 	plan, err := a.assistant.PrepareTurn(ctx, payload.sendRequest(), &payload.Actor)
+	a.metrics.RecordPrepare(prepareOutcome(plan, err), time.Since(started).Seconds())
 	if err != nil {
 		if rejected(err) {
 			return nil, temporal.NewNonRetryableApplicationError(err.Error(), errTypeRejected, err)
@@ -140,6 +146,20 @@ func (a *Activities) PrepareTurnActivity(
 	}
 
 	return plan, nil
+}
+
+// prepareOutcome names how preparing a turn ended, for its timing.
+func prepareOutcome(plan *assistantservice.TurnPlan, err error) string {
+	switch {
+	case err != nil && rejected(err):
+		return "rejected"
+	case err != nil:
+		return "failed"
+	case plan.Refused():
+		return "refused"
+	default:
+		return "allowed"
+	}
 }
 
 // rejected reports an error that is an answer rather than a fault: something

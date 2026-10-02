@@ -405,7 +405,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
                       color: toneVar("muted"),
                     },
                     {
-                      label: t("None — a reasoning model answers without thinking (fastest)"),
+                      label: t("None — the least thinking the model allows (fastest)"),
                       value: "None",
                       color: toneVar("muted"),
                     },
@@ -419,6 +419,38 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
                   )}
                 />
               </FormControl>
+
+              {kind === "AnthropicMessages" && (
+                <FormControl cols="full">
+                  <SelectField
+                    name="thinkingStyle"
+                    control={control}
+                    label={t("Thinking style")}
+                    // Two ways of asking, not an ordering, so each takes its own
+                    // accent; Auto is the default and reads as neutral.
+                    options={[
+                      {
+                        label: t("Auto — read it from the model ID"),
+                        value: "Auto",
+                        color: toneVar("muted"),
+                      },
+                      {
+                        label: t("Effort — Claude Opus 4.6, Sonnet 4.6 and later"),
+                        value: "Effort",
+                        color: accentVar("teal"),
+                      },
+                      {
+                        label: t("Budget — older Claude models"),
+                        value: "Budget",
+                        color: accentVar("violet"),
+                      },
+                    ]}
+                    description={t(
+                      "How the model is asked to think. Auto reads the model ID, which works for the IDs Anthropic, Bedrock and Vertex use. Behind a gateway alias the ID says nothing and is read as an older model, so a current model refuses every reasoning level; choose Effort for it.",
+                    )}
+                  />
+                </FormControl>
+              )}
             </>
           )}
 

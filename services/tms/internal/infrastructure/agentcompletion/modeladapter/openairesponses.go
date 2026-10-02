@@ -37,6 +37,9 @@ type responsesRequest struct {
 	Include    []string            `json:"include,omitempty"`
 	Background bool                `json:"background,omitempty"`
 	Store      bool                `json:"store,omitempty"`
+	// PromptCacheKey keeps requests that share a prefix on the machines that
+	// cached it. OpenAI's own platform takes it; it is never sent elsewhere.
+	PromptCacheKey string `json:"prompt_cache_key,omitempty"`
 }
 
 // responsesItem is both a message and a function call or its output: this
@@ -142,7 +145,8 @@ type responsesUsage struct {
 	} `json:"input_tokens_details"`
 }
 
-func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
+// baseRequest is what a blocking and a streamed call send alike.
+func (a openAIResponsesAdapter) baseRequest(call *Call) responsesRequest {
 	body := responsesRequest{
 		Model:           call.Provider.Model,
 		MaxOutputTokens: call.Request.MaxTokens,
@@ -151,6 +155,23 @@ func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
 	}
 	body.applyReasoning(call)
 	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)
+	if call.Provider.OnOpenAIPlatform() {
+		body.PromptCacheKey = call.Request.CacheKey
+	}
+
+	return body
+}
+
+// streamRequestFor is the body of a streamed call.
+func (a openAIResponsesAdapter) streamRequestFor(call *Call) responsesRequest {
+	body := a.baseRequest(call)
+	body.Stream = true
+
+	return body
+}
+
+func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
+	body := a.baseRequest(call)
 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
@@ -335,15 +356,7 @@ func (a openAIResponsesAdapter) Stream(
 	call *Call,
 	sink StreamSink,
 ) (*Response, error) {
-	body := responsesRequest{
-		Model:           call.Provider.Model,
-		MaxOutputTokens: call.Request.MaxTokens,
-		Input:           toResponsesInput(call.Request.System, call.Request.Messages),
-		Tools:           toResponsesTools(call.Request.Tools),
-		Stream:          true,
-	}
-	body.applyReasoning(call)
-	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)
+	body := a.streamRequestFor(call)
 
 	stream, err := postStream(
 		ctx,
@@ -542,7 +555,7 @@ func toResponsesInput(system string, messages []Message) []responsesItem {
 				})
 			}
 			for _, tc := range msg.ToolCalls {
-				encoded, err := sonic.Marshal(tc.Arguments)
+				encoded, err := requestJSON.Marshal(tc.Arguments)
 				if err != nil {
 					encoded = []byte("{}")
 				}
