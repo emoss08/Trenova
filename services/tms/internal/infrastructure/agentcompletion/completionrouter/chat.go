@@ -200,6 +200,7 @@ type chatStream struct {
 	cacheReadTokens  int
 	cacheWriteTokens int
 	finishReason     string
+	thinkingDropped  int
 }
 
 // attemptChat runs the turn on one provider. The returned stream says what
@@ -297,6 +298,7 @@ func (s *Service) attemptChat(
 	streamed.cacheReadTokens = resp.CacheReadTokens
 	streamed.cacheWriteTokens = resp.CacheWriteTokens
 	streamed.finishReason = finishReason(resp)
+	streamed.thinkingDropped = resp.ThinkingDropped
 
 	return &serviceports.ChatCompletionResult{
 		Text:            resp.Text,
@@ -510,5 +512,6 @@ func chatOutcome(
 		CacheWriteTokens: streamed.cacheWriteTokens,
 		FinishReason:     streamed.finishReason,
 		Truncated:        result.Truncated,
+		ThinkingDropped:  streamed.thinkingDropped,
 	}
 }

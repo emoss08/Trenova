@@ -117,6 +117,9 @@ type Usage struct {
 	ReasoningTokens  int64
 	CostUSD          *decimal.Decimal
 	Truncated        bool
+	// ThinkingDropped is how many replayed thinking blocks the provider
+	// dropped because the conversation before them had changed.
+	ThinkingDropped int64
 }
 
 func StartModelCall(ctx context.Context, spec *ModelCallSpec) (context.Context, trace.Span) {
@@ -291,7 +294,7 @@ func RecordUsage(span trace.Span, usage *Usage) {
 		return
 	}
 
-	attrs := make([]attribute.KeyValue, 0, 9)
+	attrs := make([]attribute.KeyValue, 0, 10)
 	attrs = append(attrs,
 		GenAIUsageInputTokens.Int64(usage.InputTokens),
 		GenAIUsageOutputTokens.Int64(usage.OutputTokens),
@@ -306,6 +309,9 @@ func RecordUsage(span trace.Span, usage *Usage) {
 	}
 	if usage.ReasoningTokens > 0 {
 		attrs = append(attrs, AIReasoningTokens.Int64(usage.ReasoningTokens))
+	}
+	if usage.ThinkingDropped > 0 {
+		attrs = append(attrs, AIThinkingDropped.Int64(usage.ThinkingDropped))
 	}
 	if len(usage.FinishReasons) > 0 {
 		attrs = append(attrs, GenAIResponseFinishReasons.StringSlice(usage.FinishReasons))

@@ -11,7 +11,12 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-const anthropicVersion = "2023-06-01"
+const (
+	anthropicVersion = "2023-06-01"
+	// anthropicBindingBeta opens thinking.block_binding, which is a 400
+	// without it.
+	anthropicBindingBeta = "thinking-binding-controls-2026-08-01"
+)
 
 type anthropicAdapter struct{}
 
@@ -35,16 +40,89 @@ type anthropicRequest struct {
 	Thinking     *anthropicThinking     `json:"thinking,omitempty"`
 }
 
-// anthropicThinking turns extended thinking on with a token budget. The
-// budget must be below max_tokens, which the request builder guarantees.
+// anthropicThinking is how a request asks a model to think. A model from
+// before adaptive thinking takes a token budget ("enabled"); a current one
+// thinks by effort ("adaptive", the effort in output_config) and refuses a
+// budget outright. Display "summarized" asks for the readable summary, which
+// the current models leave out unless asked.
 type anthropicThinking struct {
-	Type         string `json:"type"`
-	BudgetTokens int    `json:"budget_tokens"`
+	Type         string                 `json:"type"`
+	BudgetTokens int                    `json:"budget_tokens,omitempty"`
+	Display      string                 `json:"display,omitempty"`
+	BlockBinding *anthropicBlockBinding `json:"block_binding,omitempty"`
 }
 
-// applyThinking asks for extended thinking at the provider's effort and
-// raises the reply ceiling so the budget fits under it with room to answer.
+// anthropicBlockBinding is what a model that binds each thinking block to the
+// conversation before it does with a block whose conversation changed.
+type anthropicBlockBinding struct {
+	PrefixMismatchBehavior string `json:"prefix_mismatch_behavior"`
+}
+
+// applyThinking asks for thinking the way the configured model takes it.
 func (r *anthropicRequest) applyThinking(call *Call) {
+	model := anthropicTraits(call.Provider.Model)
+	if !model.adaptive {
+		r.applyThinkingBudget(call)
+		return
+	}
+
+	effort := call.reasoning()
+	switch {
+	case effort.Enabled():
+		r.Thinking = &anthropicThinking{Type: "adaptive", Display: "summarized"}
+		r.config().Effort = anthropicEffort(effort)
+	case effort.Disabled():
+		// None is the least thinking the model allows. A model that always
+		// thinks, or refuses "disabled", thinks at low effort; one that takes
+		// "disabled" is told so; the rest do not think unless asked.
+		switch {
+		case model.thinksAlways || model.disableRefused:
+			r.Thinking = &anthropicThinking{Type: "adaptive"}
+			r.config().Effort = "low"
+		case model.disableNeedsLowEffort:
+			r.Thinking = &anthropicThinking{Type: "disabled"}
+		}
+	}
+	if model.bindsPrefix {
+		r.bindThinking()
+	}
+	if r.Thinking != nil && r.Thinking.Type == "adaptive" && r.MaxTokens < reasoningAnswerFloor {
+		r.MaxTokens = reasoningAnswerFloor
+	}
+}
+
+// bindThinking asks a model that binds each thinking block to the
+// conversation before it to drop a block whose conversation changed, rather
+// than refuse the request. Within a turn the replayed history holds still, but
+// a tool found mid-turn changes the tool list every earlier block was bound
+// to. The binding rides on a thinking object, so Off sends adaptive, which is
+// what these models do when told nothing.
+func (r *anthropicRequest) bindThinking() {
+	if r.Thinking == nil {
+		r.Thinking = &anthropicThinking{Type: "adaptive"}
+	}
+	r.Thinking.BlockBinding = &anthropicBlockBinding{PrefixMismatchBehavior: "drop_block"}
+}
+
+// anthropicHeaders are the headers a request to the configured model carries.
+// The binding beta goes only to the models that take it: a gateway in front
+// of an older one may refuse a beta it does not know.
+func anthropicHeaders(call *Call) map[string]string {
+	headers := map[string]string{
+		"x-api-key":         call.APIKey,
+		"anthropic-version": anthropicVersion,
+	}
+	if anthropicTraits(call.Provider.Model).bindsPrefix {
+		headers["anthropic-beta"] = anthropicBindingBeta
+	}
+
+	return headers
+}
+
+// applyThinkingBudget asks a model from before adaptive thinking to think
+// with a token budget, and raises the reply ceiling so the budget fits under
+// it with room to answer.
+func (r *anthropicRequest) applyThinkingBudget(call *Call) {
 	budget := call.reasoning().ThinkingBudget()
 	if budget == 0 {
 		return
@@ -53,6 +131,27 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 	if floor := budget + thinkingAnswerRoom; r.MaxTokens < floor {
 		r.MaxTokens = floor
 	}
+}
+
+// anthropicEffort is the effort a reasoning level asks a current model for.
+// These models have no "minimal"; low is the least.
+func anthropicEffort(effort aiprovider.ReasoningEffort) string {
+	switch effort {
+	case aiprovider.ReasoningMedium:
+		return "medium"
+	case aiprovider.ReasoningHigh:
+		return "high"
+	default:
+		return "low"
+	}
+}
+
+func (r *anthropicRequest) config() *anthropicOutputConfig {
+	if r.OutputConfig == nil {
+		r.OutputConfig = &anthropicOutputConfig{}
+	}
+
+	return r.OutputConfig
 }
 
 // anthropicMessage carries content as blocks rather than a string, since tool
@@ -105,7 +204,8 @@ func ephemeralCache() *anthropicCacheControl {
 }
 
 type anthropicOutputConfig struct {
-	Format anthropicOutputFormat `json:"format"`
+	Format *anthropicOutputFormat `json:"format,omitempty"`
+	Effort string                 `json:"effort,omitempty"`
 }
 
 type anthropicOutputFormat struct {
@@ -114,10 +214,33 @@ type anthropicOutputFormat struct {
 }
 
 type anthropicResponse struct {
-	Model      string           `json:"model"`
-	StopReason string           `json:"stop_reason"`
-	Content    []anthropicBlock `json:"content"`
-	Usage      anthropicUsage   `json:"usage"`
+	Model                string                         `json:"model"`
+	StopReason           string                         `json:"stop_reason"`
+	Content              []anthropicBlock               `json:"content"`
+	Usage                anthropicUsage                 `json:"usage"`
+	InputTransformations []anthropicInputTransformation `json:"input_transformations"`
+}
+
+// anthropicInputTransformation is a change the API made to the request before
+// the model read it, such as a thinking block it dropped because the
+// conversation before it had changed.
+type anthropicInputTransformation struct {
+	Type   string `json:"type"`
+	Path   string `json:"path"`
+	Reason string `json:"reason"`
+}
+
+// thinkingDropped counts the thinking blocks the API dropped from a request.
+// An entry that only allowed a mismatched block through is not a drop.
+func thinkingDropped(transformations []anthropicInputTransformation) int {
+	dropped := 0
+	for _, transformation := range transformations {
+		if transformation.Type == "thinking_dropped" {
+			dropped++
+		}
+	}
+
+	return dropped
 }
 
 type anthropicUsage struct {
@@ -158,9 +281,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
 		call.Provider.StructuredOutputMode == aiprovider.StructuredOutputJSONSchema {
-		body.OutputConfig = &anthropicOutputConfig{
-			Format: anthropicOutputFormat{Type: "json_schema", Schema: schema},
-		}
+		body.config().Format = &anthropicOutputFormat{Type: "json_schema", Schema: schema}
 	}
 
 	var envelope anthropicResponse
@@ -168,10 +289,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+"/v1/messages",
-		map[string]string{
-			"x-api-key":         call.APIKey,
-			"anthropic-version": anthropicVersion,
-		},
+		anthropicHeaders(call),
 		body,
 		&envelope,
 	)
@@ -193,6 +311,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		Truncated:        envelope.StopReason == "max_tokens",
 		Reasoning:        anthropicReasoning(envelope.Content),
 		OutputLimit:      body.MaxTokens,
+		ThinkingDropped:  thinkingDropped(envelope.InputTransformations),
 	}, nil
 }
 
@@ -203,8 +322,9 @@ type anthropicStreamEvent struct {
 	Type    string `json:"type"`
 	Index   int    `json:"index"`
 	Message *struct {
-		Model string         `json:"model"`
-		Usage anthropicUsage `json:"usage"`
+		Model                string                         `json:"model"`
+		Usage                anthropicUsage                 `json:"usage"`
+		InputTransformations []anthropicInputTransformation `json:"input_transformations"`
 	} `json:"message"`
 	ContentBlock *anthropicBlock `json:"content_block"`
 	Delta        *struct {
@@ -251,10 +371,7 @@ func (a anthropicAdapter) Stream(
 		ctx,
 		call,
 		call.Provider.ResolvedBaseURL()+"/v1/messages",
-		map[string]string{
-			"x-api-key":         call.APIKey,
-			"anthropic-version": anthropicVersion,
-		},
+		anthropicHeaders(call),
 		body,
 	)
 	if err != nil {
@@ -266,6 +383,7 @@ func (a anthropicAdapter) Stream(
 		model      string
 		usage      anthropicUsage
 		stopReason string
+		dropped    int
 		blocks     = map[int]*anthropicStreamBlock{}
 		order      []int
 	)
@@ -281,6 +399,7 @@ func (a anthropicAdapter) Stream(
 			if event.Message != nil {
 				model = event.Message.Model
 				usage.merge(&event.Message.Usage)
+				dropped = thinkingDropped(event.Message.InputTransformations)
 			}
 		case "content_block_start":
 			if event.ContentBlock == nil {
@@ -361,6 +480,7 @@ func (a anthropicAdapter) Stream(
 		Truncated:        stopReason == "max_tokens",
 		Reasoning:        anthropicReasoning(content),
 		OutputLimit:      body.MaxTokens,
+		ThinkingDropped:  dropped,
 	}, nil
 }
 
@@ -411,10 +531,25 @@ func replayThinking(trace *ReasoningTrace) []anthropicBlock {
 	return blocks
 }
 
+// toAnthropicMessages replays thinking only for the current turn's tool loop,
+// the assistant messages after the last user one. A thinking block is bound
+// to the conversation before it, and that conversation changes between turns:
+// the system prompt carries the turn's page, memories and date, and older tool
+// results are shortened. Replaying an earlier turn's block after such an edit
+// is a 400 on the models that check, while dropping a leading run of blocks
+// is an edit every model accepts, and most ignore earlier turns' thinking
+// anyway. A tool result needs its own turn's thinking before it, which stays.
 func toAnthropicMessages(messages []Message) []anthropicMessage {
 	out := make([]anthropicMessage, 0, len(messages))
+	currentTurn := 0
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].Role == RoleUser {
+			currentTurn = i + 1
+			break
+		}
+	}
 
-	for _, msg := range messages {
+	for i, msg := range messages {
 		switch msg.Role {
 		case RoleTool:
 			// A tool result is a user-role message carrying a tool_result block,
@@ -430,7 +565,9 @@ func toAnthropicMessages(messages []Message) []anthropicMessage {
 			})
 		case RoleAssistant:
 			blocks := make([]anthropicBlock, 0, len(msg.ToolCalls)+2)
-			blocks = append(blocks, replayThinking(msg.Reasoning)...)
+			if i >= currentTurn {
+				blocks = append(blocks, replayThinking(msg.Reasoning)...)
+			}
 			if strings.TrimSpace(msg.Content) != "" {
 				blocks = append(blocks, anthropicBlock{Type: "text", Text: msg.Content})
 			}

@@ -124,6 +124,7 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	usage.CacheWriteTokens = int64(outcome.CacheWriteTokens)
 	usage.ReasoningTokens = int64(outcome.ReasoningTokens)
 	usage.Truncated = outcome.Truncated
+	usage.ThinkingDropped = int64(outcome.ThinkingDropped)
 	if outcome.FinishReason != "" {
 		usage.FinishReasons = []string{outcome.FinishReason}
 	}

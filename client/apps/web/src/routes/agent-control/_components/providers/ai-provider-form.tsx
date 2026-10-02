@@ -415,7 +415,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
                     { label: t("High"), value: "High", color: accentVar("teal") },
                   ]}
                   description={t(
-                    "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Off sends nothing, so a model that reasons by default (GPT-5 and later) still thinks; choose None to stop it. Any setting but Off is rejected by a model that cannot reason.",
+                    "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Off sends nothing, so a model that reasons by default (GPT-5 and later, Claude Opus 5.5 and Fable) still thinks; choose None to stop it. Opus 5.5 and Fable cannot stop thinking, so None asks them for the least they allow. Any setting but Off is rejected by a model that cannot reason.",
                   )}
                 />
               </FormControl>
