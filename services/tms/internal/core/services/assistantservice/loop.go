@@ -53,22 +53,37 @@ type TurnResult struct {
 
 // admit asks the scope guard about a question and, when it may be answered,
 // builds the run request that answers it. A refused question gets no run
-// request: the point of guarding first is that the expensive call never
-// happens.
+// request: the point of guarding first is that the model is never called.
+//
+// The classifier and the context build run side by side. Neither needs the
+// other, both are network calls, and run one after the other the person
+// waited for their sum before the first token. Building the context writes
+// nothing, so a refusal simply discards it. A request the deterministic rules
+// refuse is refused before either starts.
 func (s *Service) admit(
 	ctx context.Context,
 	req *TurnRequest,
 ) (agentguard.Decision, *serviceports.RunRequest) {
-	decision := s.guard.Evaluate(ctx, agentguard.EvaluateRequest{
+	evaluate := agentguard.EvaluateRequest{
 		TenantInfo: req.Actor.TenantInfo(),
 		Input:      req.Input,
 		Recent:     recentTurns(req.History),
-	})
+	}
+	if !agentguard.EvaluateDeterministic(req.Input).Allowed {
+		return s.guard.Evaluate(ctx, evaluate), nil
+	}
+
+	verdict := make(chan agentguard.Decision, 1)
+	go func() {
+		verdict <- s.guard.Evaluate(ctx, evaluate)
+	}()
+
+	runtimeContext := s.buildContext(ctx, req)
+	decision := <-verdict
 	if !decision.Allowed {
 		return decision, nil
 	}
 
-	runtimeContext := s.buildContext(ctx, req)
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
 
 	return decision, &serviceports.RunRequest{

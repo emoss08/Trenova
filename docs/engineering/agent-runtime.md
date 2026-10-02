@@ -483,8 +483,11 @@ workflow and waits for its result; `POST /ask/` opens the hidden thread and
 starts a turn on it.
 
 1. **Prepare** reads the thread, history, files and mentions, checks budget and
-   room, and runs the scope guard. A refusal the person can act on is
-   non-retryable and its message reaches the reader as written.
+   room, and runs the scope guard. The guard's classifier runs beside the
+   context build (memories, retrieval embedding), which writes nothing, so a
+   refusal discards it; the classifier fails open after 3s. A refusal the
+   person can act on is non-retryable and its message reaches the reader as
+   written.
 2. **The loop** runs in workflow code, as above.
 3. **Finish** saves the turn, its proposals and artifacts, closes the turn's
    record and writes the trajectory. It claims one ledger key per attempt, after
