@@ -605,20 +605,7 @@ func (r *Router) setupMiddleware() {
 	r.s.router.Use(middleware.NewRequestMetaMiddleware())
 	r.s.router.Use(r.tenantBoundaryMiddleware.Track())
 	r.s.router.Use(middleware.NewCSRFBrowserGuard(r.cfg, r.errorHandler, r.l).Guard())
-	r.s.router.Use(
-		gzip.Gzip(
-			gzip.DefaultCompression,
-			gzip.WithExcludedPaths([]string{"/metrics", "/health"}),
-			gzip.WithExcludedPathsRegexs([]string{
-				`^/api/v1/documents/[^/]+/(download|view|preview)/$`,
-				// An event stream is flushed a frame at a time; compressing it
-				// adds a buffer between each frame and the reader.
-				`^/api/v1/realtime/stream/$`,
-				`^/api/v1/capture/device/stream/$`,
-				`^/api/v1/capture/pages/[^/]+/content/$`,
-			}),
-		),
-	)
+	r.s.router.Use(responseCompression())
 	r.s.router.Use(middleware.NewLocaleMiddleware().Resolve())
 	r.s.router.Use(middleware.NewTokenRedactionMiddleware())
 	r.s.router.Use(ginzap.Ginzap(r.l, time.RFC3339, true))
@@ -813,4 +800,21 @@ func (r *Router) publicGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	public := rg.Group("")
 	public.Use(r.rateLimiter.ByClientIP())
 	return public
+}
+
+func responseCompression() gin.HandlerFunc {
+	return gzip.Gzip(
+		gzip.DefaultCompression,
+		gzip.WithExcludedPaths([]string{"/metrics", "/health"}),
+		gzip.WithExcludedPathsRegexs([]string{
+			`^/api/v1/documents/[^/]+/(download|view|preview)/$`,
+			// An event stream is flushed a frame at a time; compressing it
+			// adds a buffer between each frame and the reader, which is what
+			// turned an assistant reply into clumps of text.
+			`^/api/v1/realtime/stream/$`,
+			`^/api/v1/assistant/turns/[^/]+/stream/$`,
+			`^/api/v1/capture/device/stream/$`,
+			`^/api/v1/capture/pages/[^/]+/content/$`,
+		}),
+	)
 }

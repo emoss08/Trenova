@@ -67,6 +67,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(aitraining.AllRetrainingSkipReasons()),
 		},
 		{
+			name:   "ck_ai_providers_reasoning_effort",
+			values: stringsOf(aiprovider.AllReasoningEfforts()),
+		},
+		{
 			name:   "ck_ai_retraining_cycles_structured_output_mode",
 			values: stringsOf(aiprovider.AllStructuredOutputModes()),
 		},

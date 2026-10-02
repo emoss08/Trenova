@@ -3,6 +3,7 @@ package agentruntimetest
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -299,6 +300,9 @@ func (r *StubActionRegistry) Descriptors() []serviceports.AgentToolDescriptor {
 type StubPermissions struct {
 	serviceports.PermissionEngine
 
+	// mu guards Requests: a turn asks its tool checks side by side.
+	mu sync.Mutex
+
 	Denied   map[string]bool
 	Requests []*serviceports.PermissionCheckRequest
 	// GrantedAgents are the agents restricted to roles that the person's
@@ -334,7 +338,9 @@ func (p *StubPermissions) Check(
 	_ context.Context,
 	req *serviceports.PermissionCheckRequest,
 ) (*serviceports.PermissionCheckResult, error) {
+	p.mu.Lock()
 	p.Requests = append(p.Requests, req)
+	p.mu.Unlock()
 	if p.Denied[req.Resource+":"+string(req.Operation)] {
 		return &serviceports.PermissionCheckResult{Allowed: false, Reason: "denied"}, nil
 	}

@@ -42,8 +42,9 @@ type chatRequest struct {
 	Tools          []chatTool          `json:"tools,omitempty"`
 	Stream         bool                `json:"stream"`
 	StreamOptions  *chatStreamOptions  `json:"stream_options,omitempty"`
-	// ReasoningEffort is sent only when the provider is configured to reason;
-	// a model without reasoning rejects the parameter with a 400.
+	// ReasoningEffort is sent only when the provider is configured to reason,
+	// or told explicitly not to; a model without reasoning rejects the
+	// parameter with a 400.
 	ReasoningEffort string   `json:"reasoning_effort,omitempty"`
 	Temperature     *float64 `json:"temperature,omitempty"`
 	TopP            *float64 `json:"top_p,omitempty"`

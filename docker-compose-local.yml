@@ -207,7 +207,7 @@ services:
         # Fairness is off by default in the server and on here, so a busy
         # organization cannot starve the others on a shared queue. The search
         # attributes let an operator find an organization's or a thread's work
-        # in the UI. Production needs the same two settings; see
+        # in the UI. Production needs the same settings; see
         # docs/engineering/agent-runtime.md.
         image: temporalio/temporal:1.9.1
         container_name: temporal
@@ -217,6 +217,9 @@ services:
             - --ip=0.0.0.0
             - --ui-port=8233
             - --dynamic-config-value=matching.enableFairness=true
+            # Every poll a turn's reader makes is an Update; the default cap of
+            # 2000 per workflow is a little over three minutes of streaming.
+            - --dynamic-config-value=history.maxTotalUpdates=20000
             - --search-attribute=TrenovaOrganizationId=Keyword
             - --search-attribute=TrenovaAIFeature=Keyword
             - --search-attribute=TrenovaThreadId=Keyword

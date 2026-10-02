@@ -1,4 +1,5 @@
 import type { AssistantLiveTurnList } from "@/types/assistant";
+import type { QueryState } from "@tanstack/react-query";
 
 const NO_THREADS: ReadonlySet<string> = new Set();
 
@@ -21,4 +22,28 @@ export function liveThreadIds(list: AssistantLiveTurnList | undefined): Readonly
  */
 export function liveReplyCount(list: AssistantLiveTurnList | undefined): number {
   return liveThreadIds(list).size;
+}
+
+/**
+ * Whether the cached live-turn list can be taken at its word that a
+ * conversation is producing no reply. Only a list the realtime connection is
+ * keeping current, that has loaded, and that no event has since marked stale
+ * says so; anything less is a question for the server.
+ */
+export function listSaysQuiet(
+  state: QueryState<AssistantLiveTurnList> | undefined,
+  threadId: string,
+  connected: boolean,
+): boolean {
+  if (
+    !connected ||
+    state === undefined ||
+    state.status !== "success" ||
+    state.isInvalidated ||
+    state.fetchStatus !== "idle"
+  ) {
+    return false;
+  }
+
+  return !liveThreadIds(state.data).has(threadId);
 }

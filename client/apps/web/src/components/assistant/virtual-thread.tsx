@@ -4,12 +4,21 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDownIcon } from "lucide-react";
 import { useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 export type VirtualThreadRow = {
   key: string;
   render: () => ReactNode;
 };
+
+/**
+ * One row's content. A row whose closure is the same one it was last time is
+ * not drawn again, so a reply growing at the bottom costs the rows above it
+ * nothing.
+ */
+const ThreadRowContent = memo(function ThreadRowContent({ render }: { render: () => ReactNode }) {
+  return render();
+});
 
 /** How far from the end still counts as reading the latest message. */
 const END_THRESHOLD = 96;
@@ -155,7 +164,7 @@ export function VirtualThread({
                 className={cn("absolute inset-x-0 top-0", rowClassName)}
                 style={{ transform: `translateY(${item.start}px)` }}
               >
-                {rows[item.index].render()}
+                <ThreadRowContent render={rows[item.index].render} />
               </div>
             ))}
           </div>

@@ -39,8 +39,14 @@ every other classifier failure, and for the same reason: the deterministic
 rules have run and passed, the system prompt still refuses off-domain work,
 and every tool call is authorized independently. An operator who wants the
 stricter posture sets RefuseWhenUnavailable.
+
+Three seconds, not eight. A classifier on a model that answers without
+reasoning returns a 256-token verdict well inside that; one that needs longer
+is a reasoning model left at its default effort, which the provider's None
+setting fixes, and every second past this one was a second of nothing on the
+screen.
 */
-const DefaultClassifierTimeout = 8 * time.Second
+const DefaultClassifierTimeout = 3 * time.Second
 
 type Service struct {
 	logger     *zap.Logger

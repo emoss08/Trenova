@@ -123,7 +123,8 @@ func (a *Activities) ModelCallActivity(
 			}, true)
 		}
 
-		emit = func(event serviceports.StreamEvent) { publish(event, false) }
+		var first firstWords
+		emit = func(event serviceports.StreamEvent) { publish(event, first.flush(event)) }
 	}
 
 	stopBeating := modelcall.Heartbeat(ctx)
@@ -139,6 +140,27 @@ func (a *Activities) ModelCallActivity(
 	}
 
 	return &reply, nil
+}
+
+// firstWords hurries the first piece of a model call's reply to the reader.
+// The stream's batch ticker starts with the first publish, so without a forced
+// flush the opening words of every call in a turn's loop waited a whole
+// interval before they were sent. Everything after the first piece is batched.
+type firstWords struct {
+	sent bool
+}
+
+func (f *firstWords) flush(event serviceports.StreamEvent) bool {
+	if f.sent {
+		return false
+	}
+	if event.Event != serviceports.AssistantEventDelta &&
+		event.Event != serviceports.AssistantEventReasoning {
+		return false
+	}
+	f.sent = true
+
+	return true
 }
 
 // FindToolsActivity answers find_tools for a turn held as data.

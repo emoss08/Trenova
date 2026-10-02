@@ -21238,7 +21238,7 @@
       "apps/web/components"
     ]
   },
-  "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.": {
+  "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Off sends nothing, so a model that reasons by default (GPT-5 and later) still thinks; choose None to stop it. Any setting but Off is rejected by a model that cannot reason.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -102180,6 +102180,15 @@
       "routes/commodity"
     ]
   },
+  "Minimal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Minimizes distance and may use less operationally preferred roads.": {
     "sites": 1,
     "scope": [
@@ -113097,6 +113106,15 @@
       "routes/desk"
     ]
   },
+  "None — a reasoning model answers without thinking (fastest)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Normal": {
     "sites": 1,
     "scope": [
@@ -116501,7 +116519,7 @@
       "routes/osha"
     ]
   },
-  "Off — answer directly": {
+  "Off — send no reasoning setting": {
     "sites": 1,
     "scope": [
       "ts"

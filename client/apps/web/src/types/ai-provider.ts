@@ -17,9 +17,11 @@ export const structuredOutputModeSchema = z.enum(["JSONSchema", "JSONMode", "Pro
 
 /**
  * How hard a model is asked to think before it answers. Off sends no
- * reasoning parameter, which models without reasoning reject outright.
+ * reasoning parameter, which models without reasoning reject outright; a model
+ * that reasons by default then reasons at its own default. None tells such a
+ * model not to reason, and Minimal asks for the least it allows.
  */
-export const reasoningEffortSchema = z.enum(["Off", "Low", "Medium", "High"]);
+export const reasoningEffortSchema = z.enum(["Off", "None", "Minimal", "Low", "Medium", "High"]);
 
 /**
  * Vendor request fields the endpoint takes that the protocol does not

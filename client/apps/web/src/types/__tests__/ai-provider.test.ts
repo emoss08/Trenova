@@ -42,3 +42,16 @@ describe("aiProviderSchema", () => {
     expect(parsed.tasks).toEqual(["AssistantChat", "General"]);
   });
 });
+
+/**
+ * The server's AIReasoningEffort enum (services/tms/internal/api/graphql/schema/aiprovider.graphqls)
+ * declares None and Minimal alongside Off: a model that reasons by default keeps reasoning
+ * when Off sends nothing, so a provider row saved as None must not be refused by the client.
+ */
+describe("aiProviderSchema reasoning effort", () => {
+  it.each(["Off", "None", "Minimal", "Low", "Medium", "High"])("accepts %s", (reasoningEffort) => {
+    const parsed = aiProviderSchema.parse({ ...unassignedProvider, reasoningEffort });
+
+    expect(parsed.reasoningEffort).toBe(reasoningEffort);
+  });
+});

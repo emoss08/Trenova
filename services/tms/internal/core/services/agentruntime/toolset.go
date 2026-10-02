@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -99,6 +100,9 @@ type toolSetRequest struct {
 	// delegates are the agents the turn may hand a task to.
 	delegates []agentdefinition.RuntimeDelegate
 	decisions bool
+	// extensions is what the turn already read of the organization's
+	// extensions; nil reads them again.
+	extensions *activeExtensions
 }
 
 // toolSet is the live set of tools a turn may call. It starts from the agent's
@@ -129,7 +133,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	if held == nil {
 		held = s.heldTools(req.definition)
 	}
-	allowed := s.permittedTools(ctx, req.actor, held)
+	allowed := s.permittedWith(ctx, req.actor, held, req.extensions)
 	if req.unattended {
 		allowed = s.withoutSelfScoped(allowed)
 	}
@@ -542,6 +546,21 @@ func (s *Service) permittedTools(
 	actor *serviceports.RequestActor,
 	names []string,
 ) []string {
+	return s.permittedWith(ctx, actor, names, nil)
+}
+
+// maxConcurrentToolChecks bounds how many permission checks one turn asks at
+// once, so an agent with a wide toolbox does not take the cache's whole pool.
+const maxConcurrentToolChecks = 8
+
+// permittedWith is permittedTools with the organization's extensions already
+// read, when the caller has them; nil reads them.
+func (s *Service) permittedWith(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	names []string,
+	extensions *activeExtensions,
+) []string {
 	// Never nil: the catalog reads nil as "everything", and a person who may
 	// use nothing must be offered nothing.
 	permitted := make([]string, 0, len(names))
@@ -552,10 +571,14 @@ func (s *Service) permittedTools(
 	// set up. Offering one it turned off would fail the call; naming one it
 	// never bought would read as a feature it has.
 	if touchesExtensions(names) {
-		names = onlyOffered(names, s.activeExtensions(ctx, actor))
+		if extensions == nil {
+			active := s.activeExtensions(ctx, actor)
+			extensions = &active
+		}
+		names = onlyOffered(names, *extensions)
 	}
 
-	verdicts := make(map[string]bool, len(names))
+	verdicts := s.toolVerdicts(ctx, actor, names)
 	for _, name := range names {
 		// A self-scoped tool touches only the person's own records, which any
 		// signed-in person may arrange; it needs no grant, and nobody but a
@@ -571,9 +594,60 @@ func (s *Service) permittedTools(
 		if !ok {
 			continue
 		}
+		if verdicts[resource.String()+":"+string(operation)] {
+			permitted = append(permitted, name)
+		}
+	}
+
+	return permitted
+}
+
+// toolGateCheck is one distinct permission the tools ask for.
+type toolGateCheck struct {
+	key       string
+	tool      string
+	resource  permission.Resource
+	operation permission.Operation
+}
+
+// toolVerdicts asks each distinct permission the named tools need once, side
+// by side: an agent with a wide toolbox holds dozens, and one after another
+// they were as many round trips before the model was called. A check that
+// fails withholds the tools behind it.
+func (s *Service) toolVerdicts(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	names []string,
+) map[string]bool {
+	checks := make([]toolGateCheck, 0, len(names))
+	seen := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		if serviceports.IsSelfScoped(s.toolNamed(name)) {
+			continue
+		}
+		resource, operation, ok := s.toolGate(name)
+		if !ok {
+			continue
+		}
 		key := resource.String() + ":" + string(operation)
-		allowed, checked := verdicts[key]
-		if !checked {
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		checks = append(checks, toolGateCheck{
+			key:       key,
+			tool:      name,
+			resource:  resource,
+			operation: operation,
+		})
+	}
+
+	allowed := make([]bool, len(checks))
+	var group errgroup.Group
+	group.SetLimit(maxConcurrentToolChecks)
+	for i := range checks {
+		check := checks[i]
+		group.Go(func() error {
 			result, err := s.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
 				PrincipalType:  actor.PrincipalType,
 				PrincipalID:    actor.PrincipalID,
@@ -581,22 +655,28 @@ func (s *Service) permittedTools(
 				APIKeyID:       actor.APIKeyID,
 				BusinessUnitID: actor.BusinessUnitID,
 				OrganizationID: actor.OrganizationID,
-				Resource:       resource.String(),
-				Operation:      operation,
+				Resource:       check.resource.String(),
+				Operation:      check.operation,
 			})
-			allowed = err == nil && result != nil && result.Allowed
 			if err != nil {
 				s.logger.Warn("could not check whether a tool may be offered; withholding it",
-					zap.String("tool", name), zap.Error(err))
+					zap.String("tool", check.tool), zap.Error(err))
+
+				return nil
 			}
-			verdicts[key] = allowed
-		}
-		if allowed {
-			permitted = append(permitted, name)
-		}
+			allowed[i] = result != nil && result.Allowed
+
+			return nil
+		})
+	}
+	_ = group.Wait()
+
+	verdicts := make(map[string]bool, len(checks))
+	for i, check := range checks {
+		verdicts[check.key] = allowed[i]
 	}
 
-	return permitted
+	return verdicts
 }
 
 // toolNamed is the registered tool behind a name, read or write, or nil.

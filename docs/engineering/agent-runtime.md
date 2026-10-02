@@ -483,8 +483,14 @@ workflow and waits for its result; `POST /ask/` opens the hidden thread and
 starts a turn on it.
 
 1. **Prepare** reads the thread, history, files and mentions, checks budget and
-   room, and runs the scope guard. A refusal the person can act on is
-   non-retryable and its message reaches the reader as written.
+   room, and runs the scope guard. After the thread, every check and read runs
+   side by side (`checkTurn`); none writes, and a question failing several is
+   told about the first in the old order (files, agent, page, budget, room,
+   history), never about a cancellation. The guard's classifier runs beside the
+   context build (memories, retrieval embedding), which writes nothing, so a
+   refusal discards it; the classifier fails open after 3s. A refusal the
+   person can act on is non-retryable and its message reaches the reader as
+   written.
 2. **The loop** runs in workflow code, as above.
 3. **Finish** saves the turn, its proposals and artifacts, closes the turn's
    record and writes the trajectory. It claims one ledger key per attempt, after
@@ -518,8 +524,13 @@ the turn as Failed.
 A run's events go to a **Workflow Stream** its own workflow hosts
 (`agentflow.HostStream`, on `go.temporal.io/sdk/contrib/workflowstreams`). The
 model activity publishes the reply as it streams, batched every 100 ms; the
-workflow publishes every other event. The stream exists as soon as the workflow
-does, so a reader can never attach ahead of it.
+workflow publishes every other event. The first piece of each model call's
+reply (text or thinking) is flushed at once rather than waiting for the batch
+ticker, which starts with it (`agentflow.firstWords`). The reader rests 5 ms,
+not the library's 100 ms, after each delivered batch
+(`turnstream.pollCooldown`); its poll waits on the workflow until there is
+something to return, so that costs no extra polls. The stream exists as soon as
+the workflow does, so a reader can never attach ahead of it.
 
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
@@ -1021,6 +1032,15 @@ adding a span, a trace attribute or a link column.**
 - **Server.** Workflow Streams uses Updates and Signals, on by default from
   server 1.29. Fairness needs `matching.enableFairness=true`. The local dev
   server (`temporalio/temporal`) sets it.
+- **Update limit.** Every poll a turn's reader makes is an Update on the turn's
+  workflow, about ten a second while a reply streams and one more per reader
+  tab. The server caps a workflow at `history.maxTotalUpdates` (default 2000),
+  which one reader reaches after a little over three minutes of streaming;
+  past it every poll is refused and the person is told the connection was lost
+  while the turn goes on finishing on the server. Set it to `20000` on
+  the namespace the workers use, as the local dev server does.
+  `history.maxInFlightUpdates` (default 10) bounds readers following one turn
+  at once and can stay.
 - **Workers.** Run the chat queue on workers of its own if the queue split is to
   mean anything. A worker that polls no heavy queue leaves heavy tools waiting;
   after fifteen minutes the model is told the tool could not be run.
