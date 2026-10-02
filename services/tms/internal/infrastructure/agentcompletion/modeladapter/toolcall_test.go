@@ -47,6 +47,8 @@ func callFor(kind aiprovider.Kind, baseURL string, req *Request) *Call {
 		Client: &http.Client{Timeout: 5 * time.Second},
 		Request: &Request{
 			System:       req.System,
+			SystemStable: req.SystemStable,
+			CacheKey:     req.CacheKey,
 			Messages:     req.Messages,
 			Tools:        req.Tools,
 			OutputSchema: req.OutputSchema,

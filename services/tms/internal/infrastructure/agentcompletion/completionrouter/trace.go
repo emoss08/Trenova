@@ -2,7 +2,6 @@ package completionrouter
 
 import (
 	"context"
-	"net/url"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -157,12 +156,7 @@ func serverAddress(provider *aiprovider.Provider) string {
 		return ""
 	}
 
-	parsed, err := url.Parse(provider.ResolvedBaseURL())
-	if err != nil {
-		return ""
-	}
-
-	return parsed.Hostname()
+	return provider.Host()
 }
 
 func recordBusyWait(ctx context.Context, wait time.Duration) {

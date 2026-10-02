@@ -18,6 +18,14 @@ import (
 // provider receives byte-identical instructions.
 type Request struct {
 	System string
+	// SystemStable is how many leading bytes of System are the same on every
+	// turn. Zero, or a value outside System, treats it as one block.
+	SystemStable int
+	// CacheKey groups requests that share a prompt prefix, for a provider
+	// that routes by one so they land where the prefix is cached. It names
+	// the organization and agent, never a person, and is only sent where the
+	// provider is known to take it.
+	CacheKey string
 	// Messages is the conversation so far. A one-shot completion sends a single
 	// user message; a tool loop sends the whole exchange back each turn, because
 	// these APIs are stateless.

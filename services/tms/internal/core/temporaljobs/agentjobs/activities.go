@@ -35,7 +35,7 @@ import (
 
 const (
 	maxSummaryChars = 2000
-	promptVersion   = "agent-definition/v2"
+	promptVersion   = agentdefinition.PromptVersion
 )
 
 type ActivitiesParams struct {

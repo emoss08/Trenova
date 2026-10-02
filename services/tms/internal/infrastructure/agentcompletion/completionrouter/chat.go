@@ -255,10 +255,12 @@ func (s *Service) attemptChat(
 		StreamClient: s.streamClientFor(provider),
 		StreamIdle:   s.ai.GetStreamIdleTimeout(),
 		Request: &modeladapter.Request{
-			System:    req.System,
-			Messages:  req.Messages,
-			Tools:     req.Tools,
-			MaxTokens: maxTokens,
+			System:       req.System,
+			SystemStable: req.SystemStable,
+			CacheKey:     promptCacheKey(req),
+			Messages:     req.Messages,
+			Tools:        req.Tools,
+			MaxTokens:    maxTokens,
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
 			// with JSON that parses, and invention there is only ever a bug.

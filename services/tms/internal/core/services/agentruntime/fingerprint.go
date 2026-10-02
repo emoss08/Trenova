@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	fingerprintPromptVersion   = "agent-definition/v2"
+	fingerprintPromptVersion   = agentdefinition.PromptVersion
 	canonicalOrganizationName  = "Canonical organization"
 	canonicalBusinessUnitName  = "Canonical business unit"
 	canonicalTimezone          = "UTC"

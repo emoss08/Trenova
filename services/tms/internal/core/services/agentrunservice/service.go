@@ -32,7 +32,7 @@ const (
 	SystemKeyBillingException   = "billing_exception"
 	SystemKeyDispatchAssignment = "dispatch_assignment"
 
-	definitionPromptVersion = "agent-definition/v2"
+	definitionPromptVersion = agentdefinition.PromptVersion
 	inlinePromptVersion     = "inline-v1"
 	provisionalHash         = "pending"
 	workflowIDPrefix        = "agent-run-"

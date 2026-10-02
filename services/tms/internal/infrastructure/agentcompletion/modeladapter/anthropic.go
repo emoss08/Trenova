@@ -272,8 +272,8 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	body := anthropicRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		System:    cachedSystem(call.Request.System),
-		Messages:  toAnthropicMessages(call.Request.Messages),
+		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
+		Messages:  cachedConversation(toAnthropicMessages(call.Request.Messages)),
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 	}
 	body.applyThinking(call)
@@ -360,8 +360,8 @@ func (a anthropicAdapter) Stream(
 	body := anthropicRequest{
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
-		System:    cachedSystem(call.Request.System),
-		Messages:  toAnthropicMessages(call.Request.Messages),
+		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
+		Messages:  cachedConversation(toAnthropicMessages(call.Request.Messages)),
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 		Stream:    true,
 	}
@@ -641,20 +641,24 @@ func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 /*
 Where the prefix is worth keeping.
 
-Anthropic matches a cached prefix byte for byte and allows a handful of marks,
-so they go at the two boundaries that are both large and unchanging: the end of
-the tool schemas and the end of the system prompt. Those two are most of what a
-turn sends and every iteration of a tool loop resends them verbatim — the
-second call in a two-tool turn re-read the whole prompt and every schema before
-this.
+Anthropic matches a cached prefix byte for byte and allows four marks a
+request, so they go at the boundaries that are both large and stable: the end
+of the tool schemas, the end of the part of the system prompt every turn
+shares, and the end of the conversation.
+
+The system prompt leads with what never changes for an agent and ends with the
+turn's own context, so its mark sits where the shared part ends and a new page
+or memory no longer costs the rules and the tools.
+
+The conversation's mark is what a tool loop lives on. Each call resends the
+whole exchange one tool result longer, and the mark on the last block lets the
+next call read everything before that result back from the cache. A mark from
+an earlier call stays a valid place to read from, so the cache grows with the
+conversation rather than being rewritten by it.
 
 The marks go at the end of each block rather than the start, because what is
-cached is everything up to the mark. Nothing marks the conversation itself: it
-grows every turn, so a mark there caches a prefix that the next request has
-already moved past.
-
-An empty tool list or system prompt gets no mark. A breakpoint on nothing still
-costs a write.
+cached is everything up to the mark. An empty tool list, system prompt or
+conversation gets no mark: a breakpoint on nothing still costs a write.
 */
 func cachedTools(tools []anthropicTool) []anthropicTool {
 	if len(tools) == 0 {
@@ -666,14 +670,33 @@ func cachedTools(tools []anthropicTool) []anthropicTool {
 	return tools
 }
 
-func cachedSystem(system string) []anthropicBlock {
+func cachedSystem(system string, stable int) []anthropicBlock {
 	if system == "" {
 		return nil
 	}
+	if stable <= 0 || stable >= len(system) {
+		return []anthropicBlock{{
+			Type:         "text",
+			Text:         system,
+			CacheControl: ephemeralCache(),
+		}}
+	}
 
-	return []anthropicBlock{{
-		Type:         "text",
-		Text:         system,
-		CacheControl: ephemeralCache(),
-	}}
+	return []anthropicBlock{
+		{Type: "text", Text: system[:stable], CacheControl: ephemeralCache()},
+		{Type: "text", Text: system[stable:]},
+	}
+}
+
+func cachedConversation(messages []anthropicMessage) []anthropicMessage {
+	if len(messages) == 0 {
+		return messages
+	}
+	last := &messages[len(messages)-1]
+	if len(last.Content) == 0 {
+		return messages
+	}
+	last.Content[len(last.Content)-1].CacheControl = ephemeralCache()
+
+	return messages
 }

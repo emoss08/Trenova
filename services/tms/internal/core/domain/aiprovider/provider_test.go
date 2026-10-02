@@ -452,3 +452,29 @@ func TestClampMaxTokens_KeepsAValueInTheSupportedRange(t *testing.T) {
 	assert.Equal(t, 2048, aiprovider.ClampMaxTokens(2048))
 	assert.Equal(t, 200000, aiprovider.ClampMaxTokens(400000))
 }
+
+// OpenAI's own platform takes request fields that an OpenAI-compatible server
+// may refuse, so it is told apart from them by the host it is reached at, not
+// by the protocol it speaks.
+func TestProvider_KnowsWhenItIsOpenAIsOwnPlatform(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		kind    aiprovider.Kind
+		baseURL string
+		host    string
+		openAI  bool
+	}{
+		{aiprovider.KindOpenAIResponses, "", "api.openai.com", true},
+		{aiprovider.KindOpenAIResponses, "https://api.openai.com/", "api.openai.com", true},
+		{aiprovider.KindOpenAIResponses, "https://bedrock-mantle.us-east-1.api.aws", "bedrock-mantle.us-east-1.api.aws", false},
+		{aiprovider.KindOpenAIChat, "https://api.openai.com", "api.openai.com", false},
+		{aiprovider.KindOpenAIChat, "http://10.0.0.5:8000/v1", "10.0.0.5", false},
+		{aiprovider.KindOpenAIResponses, "::not a url", "", false},
+	}
+	for _, tc := range cases {
+		provider := &aiprovider.Provider{Kind: tc.kind, BaseURL: tc.baseURL}
+		assert.Equal(t, tc.host, provider.Host(), tc.baseURL)
+		assert.Equal(t, tc.openAI, provider.OnOpenAIPlatform(), "%s %s", tc.kind, tc.baseURL)
+	}
+}

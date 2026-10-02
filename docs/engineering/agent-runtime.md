@@ -732,6 +732,30 @@ date read "Tue Oct 6 (in 7 days)", counted from the turn's own clock
 (`TurnEffects.Now`) in that zone; a past date on a scheduling question adds a note
 telling the model so.
 
+### What a provider can cache
+
+A provider reuses the start of a prompt only while it is the same bytes, so a
+request is laid out stable first:
+
+- **Bytes.** Every request body, the tools and the replayed tool-call arguments
+  included, is encoded with sorted keys (`modeladapter.requestJSON`); a map in
+  Go's random order made every request different.
+- **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
+  shares first (rules, instructions, the tools when all are offered, delegates,
+  artifacts, the guide, how to answer) and the turn's own part after it (runtime
+  context, memories, a disclosed tool list, proposals waiting on a decision).
+  The turn carries the shared part's length (`TurnState.SystemStable`) to the
+  adapter. `agentdefinition.PromptVersion` names this shape (v3) on runs,
+  evaluation cases and fingerprints.
+- **Anthropic** gets three of its four marks: the last tool, the end of the
+  shared system part, and the last block of the conversation, which lets each
+  call of a tool loop read the exchange before it back from the cache.
+- **OpenAI** gets `prompt_cache_key`, a hash of organization, agent and version,
+  only when the provider is reached at `api.openai.com`; a server speaking the
+  same protocol elsewhere may refuse the field. Everything else (vLLM, Ollama,
+  Gemini, DeepSeek and the rest) caches prefixes on its own and needs only the
+  layout.
+
 ## Agent runs
 
 `AgentRunWorkflow` runs one agent definition against its subject.
@@ -1066,6 +1090,11 @@ design — the run carries on — so this is the only place they show up.
 
 `gen_ai.client.token.usage` and `gen_ai.client.operation.duration` are recorded
 per provider attempt, with the GenAI semantic-convention buckets.
+`trenova.gen_ai.client.time_to_first_token` (and `first_token_ms` on the usage
+row) is how long an attempt took to stream its first text or thinking. Before it,
+`assistant_prepare_seconds{outcome}`, `assistant_guard_seconds{stage}` and
+`assistant_model_call_wait_seconds` time preparing the turn, the scope check and
+a model call's wait for a worker.
 
 Every run, turn, delegate's task and evaluation is one trace, named by its id and
 rooted in an `invoke_agent` span its finishing activity emits; model calls, each

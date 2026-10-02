@@ -25,7 +25,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const promptVersion = "agent-definition/v2"
+const promptVersion = agentdefinition.PromptVersion
 
 type caseStore interface {
 	Create(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)

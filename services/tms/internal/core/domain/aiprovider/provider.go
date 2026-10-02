@@ -202,6 +202,28 @@ func (p *Provider) ResolvedBaseURL() string {
 	return p.Kind.DefaultBaseURL()
 }
 
+// Host is the host this provider is reached at, or empty when its address
+// does not parse.
+func (p *Provider) Host() string {
+	parsed, err := url.Parse(p.ResolvedBaseURL())
+	if err != nil {
+		return ""
+	}
+
+	return parsed.Hostname()
+}
+
+// openAIPlatformHost is where OpenAI serves its own API.
+const openAIPlatformHost = "api.openai.com"
+
+// OnOpenAIPlatform reports a Responses provider reached at OpenAI itself. It
+// takes request fields, such as a prompt cache key, that a server speaking
+// the same protocol elsewhere — Bedrock's mantle endpoint among them — may
+// refuse.
+func (p *Provider) OnOpenAIPlatform() bool {
+	return p.Kind == KindOpenAIResponses && p.Host() == openAIPlatformHost
+}
+
 func nonNegativePrice(label string) validation.RuleFunc {
 	return func(value any) error {
 		price, _ := value.(*decimal.Decimal)

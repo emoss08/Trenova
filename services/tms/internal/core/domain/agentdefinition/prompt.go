@@ -186,81 +186,94 @@ type PendingProposal struct {
 	Rationale  string
 }
 
+// PromptVersion names the shape of the prompt BuildSystemPrompt writes. Runs,
+// evaluation cases and fingerprints record it, so a change in shape reads as
+// one deliberate change rather than every agent's prompt drifting at once. v3
+// moved the turn's own context after everything every turn shares.
+const PromptVersion = "agent-definition/v3"
+
+// SystemPrompt is a system prompt in the two parts a provider's prompt cache
+// cares about. Stable is the same on every turn of an agent for a person: the
+// rules, the instructions, the tools when all are offered, the agents it may
+// ask, how to answer. Volatile is the turn's own: its context, memories,
+// proposals waiting on a decision and the tools a disclosed turn ranked. The
+// prompt is Stable followed by Volatile, so a cache keyed on the prompt's start
+// is read back on every turn instead of missing at the first line that moved.
+type SystemPrompt struct {
+	Stable   string
+	Volatile string
+}
+
 func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
-	var builder strings.Builder
+	parts := d.BuildSystemPromptParts(rc)
 
-	builder.WriteString(safetyPreamble)
+	return parts.Stable + parts.Volatile
+}
 
-	builder.WriteString("\n\n## Organization instructions\n")
+func (d *Definition) BuildSystemPromptParts(rc RuntimeContext) SystemPrompt {
+	var stable, volatile strings.Builder
+	section := func(builder *strings.Builder, text string) {
+		if text == "" {
+			return
+		}
+		builder.WriteString("\n\n")
+		builder.WriteString(text)
+	}
+
+	stable.WriteString(safetyPreamble)
+
+	stable.WriteString("\n\n## Organization instructions\n")
 	instructions := strings.TrimSpace(d.Instructions)
 	if instructions == "" {
 		instructions = DefaultPersona
 	}
-	builder.WriteString(instructions)
+	stable.WriteString(instructions)
 
-	if section := d.buildGuardrailSection(); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
-
-	if section := d.buildContextSection(rc); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
-
-	if d.HasContextProvider(ContextMemory) {
-		recorded, outside := splitMemories(d.FitMemories(&rc))
-		if section := buildMemorySection(recorded); section != "" {
-			builder.WriteString("\n\n")
-			builder.WriteString(section)
-		}
-		if section := buildOutsideMemorySection(outside); section != "" {
-			builder.WriteString("\n\n")
-			builder.WriteString(section)
-		}
-	}
+	section(&stable, d.buildGuardrailSection())
 
 	// A disclosed turn always says so, whatever providers the agent carries:
 	// a model handed eight of forty tools and no word about find_tools reads
-	// the eight as the limit of what the system does.
+	// the eight as the limit of what the system does. Which eight follows
+	// the question, so a disclosed list belongs to the turn.
+	var disclosedTools string
 	if d.HasContextProvider(ContextTools) || rc.ToolsDisclosed {
-		if section := buildToolSection(rc.Tools, rc.ToolsDisclosed); section != "" {
-			builder.WriteString("\n\n")
-			builder.WriteString(section)
+		tools := buildToolSection(rc.Tools, rc.ToolsDisclosed)
+		if rc.ToolsDisclosed {
+			disclosedTools = tools
+		} else {
+			section(&stable, tools)
 		}
 	}
 
-	if section := buildDelegateSection(rc.Delegates); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
-
-	if section := buildPendingProposalSection(
-		rc.PendingProposals,
-		rc.DecisionRequests,
-	); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
+	section(&stable, buildDelegateSection(rc.Delegates))
 
 	if rc.Artifacts && d.OutputMode != OutputReport {
-		builder.WriteString("\n\n")
-		builder.WriteString(artifactSection)
+		section(&stable, artifactSection)
 	}
 
 	if rc.Guide {
-		builder.WriteString("\n\n")
-		builder.WriteString(guideSection)
+		section(&stable, guideSection)
 	}
 
-	builder.WriteString("\n\n")
 	if delegator := strings.TrimSpace(rc.DelegatedBy); delegator != "" {
-		builder.WriteString(buildDelegatedOutputSection(delegator))
+		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
-		builder.WriteString(d.buildOutputSection())
+		section(&stable, d.buildOutputSection())
 	}
 
-	return builder.String()
+	section(&volatile, d.buildContextSection(rc))
+
+	if d.HasContextProvider(ContextMemory) {
+		recorded, outside := splitMemories(d.FitMemories(&rc))
+		section(&volatile, buildMemorySection(recorded))
+		section(&volatile, buildOutsideMemorySection(outside))
+	}
+
+	section(&volatile, disclosedTools)
+
+	section(&volatile, buildPendingProposalSection(rc.PendingProposals, rc.DecisionRequests))
+
+	return SystemPrompt{Stable: stable.String(), Volatile: volatile.String()}
 }
 
 const (
