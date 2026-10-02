@@ -910,12 +910,16 @@ looks like: the briefing's headline, or how many decisions are waiting, or,
 when nothing is, "How can I help today?". Only that line is decided by figures,
 so only that line holds as a skeleton until they are in. The ask box carries
 the one colour on the page: a thin `BorderBeam` in the chosen agent's accent
-running once round its border, over a spring entrance. Below the fold sit what
-is waiting, who is replying, the watchtower and the briefing as a grid of flat
-cards, and a shelf of agents; the recent conversations are not listed again,
-because the rail carries them on every page. The page arrives once, in reading
-order, a beat apart on `animate-rise` — the dateline, the greeting a word at a
-time, the line under it, the ask box, then the rest — and then holds still.
+running once round its border, over a spring entrance. The questions the agent
+is good for are not chips under the box: they are written into the empty box
+itself, one at a time, typed, held, taken back and replaced (`useTypewriter`),
+and Tab takes the one on screen as the person's own without sending it. There
+is nothing below the box. The rail already carries what is waiting and what
+the watchtower has seen, and the headline says what the day looks like, so
+the front page is the greeting and the box, centred in the room. It arrives
+once, in reading order, a beat apart on `animate-rise` — the dateline, the
+greeting a word at a time, the line under it, the ask box — and then holds
+still.
 
 ## Checking your work
 

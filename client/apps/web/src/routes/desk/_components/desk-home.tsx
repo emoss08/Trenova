@@ -20,7 +20,6 @@ import { useQuery } from "@tanstack/react-query";
 import { BotIcon, PlugZapIcon } from "lucide-react";
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
-import { DeskLedger, LEDGER_WATCHTOWER_ROWS } from "./desk-ledger";
 import { DeskGreeting } from "./desk-greeting";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
@@ -74,32 +73,12 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
     Resource.AgentProposal,
     Operation.Read,
   );
-  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { data: attention } = useAttentionSummary();
   const briefingQuery = useQuery({ ...queries.briefing.today(), retry: false });
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
-  const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
-  const threadsById = useMemo(
-    () =>
-      new Map(
-        threads.map((thread) => [
-          thread.id,
-          { title: thread.title ?? "", agentDefinitionId: thread.agentDefinitionId },
-        ]),
-      ),
-    [threads],
-  );
-  const liveQuery = useQuery({ ...queries.assistant.activeTurns(), retry: false });
-  const live = liveQuery.data?.items ?? [];
-  const watchtowerQuery = useQuery({
-    ...queries.watchtower.feed({ unresolvedOnly: true, first: LEDGER_WATCHTOWER_ROWS }),
-    enabled: canWatch,
-    retry: false,
-  });
-  const watchtowerCounts = useQuery({ ...queries.watchtower.counts(), enabled: canWatch });
 
   const askable = useAskableAgent({ threads });
   const askRef = useRef<AgentAskHandle>(null);
@@ -148,8 +127,8 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
     (canDecide && summaryQuery.isPending);
 
   return (
-    <div className="w-full overflow-x-clip">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pt-10 pb-16 sm:px-10">
+    <div className="flex min-h-full w-full flex-col overflow-x-clip">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 pt-10 pb-[18vh] sm:px-10">
         <section
           ref={heroRef}
           aria-label={t("Ask an agent")}
@@ -188,40 +167,12 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
             ) : askable.choices.isError ? (
               <AgentsUnavailable onRetry={askable.choices.refetch} />
             ) : (
-              <div className="flex flex-col gap-3" aria-busy>
+              <div aria-busy>
                 <Skeleton className="rounded-surface h-26" />
-                <div className="flex justify-center gap-1.5">
-                  <Skeleton className="h-7 w-44 rounded-full" />
-                  <Skeleton className="h-7 w-52 rounded-full" />
-                  <Skeleton className="h-7 w-36 rounded-full" />
-                </div>
               </div>
             )}
           </div>
         </section>
-
-        {!noAgents && (
-          <DeskLedger
-            now={now}
-            agentsById={agentsById}
-            threads={threadsById}
-            canDecide={canDecide}
-            canWatch={canWatch}
-            waiting={waiting}
-            summary={{ pending: summaryQuery.isPending, data: summaryQuery.data }}
-            live={{ pending: liveQuery.isPending, items: live }}
-            watchtower={{
-              pending: watchtowerQuery.isPending,
-              items: watchtowerQuery.data?.items ?? [],
-              unseen: watchtowerCounts.data?.unseen ?? 0,
-              critical: watchtowerCounts.data?.unseenCritical ?? 0,
-            }}
-            briefing={briefing}
-            entrance={(step) => entrance(4 + step)}
-            className="animate-rise"
-            style={entrance(4)}
-          />
-        )}
       </div>
     </div>
   );
