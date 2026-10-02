@@ -675,28 +675,67 @@ describe("ApprovalDock for several changes of one kind", () => {
     await waitFor(() => expect(followUp).toHaveBeenCalledTimes(1));
   });
 
-  // The changes live behind Details: nothing is read until it opens, and an
-  // approval made without opening it is recorded as unreviewed, never as a
-  // review of previews the person did not see.
-  it("reads no preview and sends no digest while the details stay folded", async () => {
+  // The changes stay mounted behind Details while it is folded, so a batch is
+  // reviewed by default: each preview is read as the box arrives and approving
+  // without opening Details sends every digest.
+  it("reads each preview and sends its digest while the details stay folded", async () => {
     const user = userEvent.setup();
+    fetchProposalPreview.mockImplementation(async (request) =>
+      preview({ proposalId: request.id, digest: `sha256:${request.id}` }),
+    );
     decideMyProposals.mockResolvedValue([]);
     renderDock({ entry: batch(2) });
 
     expect(within(header()).getByText("2 changes")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "2 of them are not open; approving records them as approved without reviewing what they change.",
-      ),
-    ).toBeInTheDocument();
+    expect(details()).toHaveAttribute("aria-expanded", "false");
+    expect(fetchProposalPreview).toHaveBeenCalledWith(
+      { scope: "mine", id: "aprop_1", modifications: null },
+      expect.anything(),
+    );
+    expect(fetchProposalPreview).toHaveBeenCalledWith(
+      { scope: "mine", id: "aprop_2", modifications: null },
+      expect.anything(),
+    );
+    await waitFor(() => expect(approve()).toBeEnabled());
+    expect(screen.queryByText(/not previewed; approving records/)).toBeNull();
+    expect(screen.queryByRole("link", { name: "S-1001" })).toBeNull();
     await user.click(screen.getByRole("button", { name: "Approve all 2" }));
 
     await waitFor(() => expect(decideMyProposals).toHaveBeenCalledTimes(1));
-    expect(fetchProposalPreview).not.toHaveBeenCalled();
+    expect(details()).toHaveAttribute("aria-expanded", "false");
     expect(decideMyProposals.mock.calls[0][1]).toMatchObject({
       decision: "Accepted",
-      previewDigests: [],
+      previewDigests: [
+        { proposalId: "aprop_1", digest: "sha256:aprop_1" },
+        { proposalId: "aprop_2", digest: "sha256:aprop_2" },
+      ],
     });
+  });
+
+  it("says nothing is unreviewed while the folded previews are still loading", () => {
+    fetchProposalPreview.mockReturnValue(new Promise(() => {}));
+    renderDock({ entry: batch(2) });
+
+    expect(fetchProposalPreview).toHaveBeenCalledTimes(2);
+    expect(approve()).toBeDisabled();
+    expect(screen.queryByText(/not previewed; approving records/)).toBeNull();
+  });
+
+  it("counts a folded preview that could not be read as unreviewed", async () => {
+    fetchProposalPreview.mockImplementation(async (request) => {
+      if (request.id === "aprop_2") {
+        throw new Error("preview unavailable");
+      }
+      return preview({ proposalId: request.id, digest: `sha256:${request.id}` });
+    });
+    decideMyProposals.mockResolvedValue([]);
+    renderDock({ entry: batch(2) });
+
+    expect(
+      await screen.findByText(
+        "1 of them was not previewed; approving records it as approved without reviewing what it changes.",
+      ),
+    ).toBeInTheDocument();
   });
 
   // Past a few, each opens on demand; only what was open on screen sends a
@@ -712,7 +751,7 @@ describe("ApprovalDock for several changes of one kind", () => {
     expect(fetchProposalPreview).not.toHaveBeenCalled();
     expect(
       screen.getByText(
-        "6 of them are not open; approving records them as approved without reviewing what they change.",
+        "6 of them were not previewed; approving records them as approved without reviewing what they change.",
       ),
     ).toBeInTheDocument();
 

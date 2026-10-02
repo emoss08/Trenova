@@ -1019,12 +1019,12 @@ function BatchDock({
   const note = useDockNote();
   const afterDecision = useAfterDecision(threadId, entry, onDecided);
 
-  // A few changes are read open; past that each opens on demand. Only the
-  // previews actually open on screen send a digest: the rows live behind
-  // "Details" and read nothing until it is opened, so one the person never
-  // opened goes without one and is recorded as approved unreviewed, which
-  // is the truth. A preview once on screen keeps its digest when Details
-  // folds again.
+  // A few changes are read open; past that each opens on demand. The rows
+  // stay mounted behind "Details" while it is folded, so the ones read open
+  // load their previews at once and approving sends their digests: a batch
+  // is reviewed by default. A change past the first few that the person
+  // never opened goes without a digest and is recorded as approved
+  // unreviewed, which is the truth.
   const [open, setOpen] = useState<ReadonlySet<string>>(
     () => new Set(proposals.length <= BATCH_OPEN_LIMIT ? ids : []),
   );
@@ -1077,7 +1077,9 @@ function BatchDock({
       return next;
     });
 
-  const unreviewed = ids.filter((id) => !shown.has(id)).length;
+  const unreviewed = ids.filter(
+    (id) => !shown.has(id) && !(open.has(id) && loading.has(id)),
+  ).length;
 
   const decideMutation = useMutation({
     mutationFn: async ({ action, note: text }: DockAction): Promise<BatchOutcome> => {
@@ -1146,7 +1148,7 @@ function BatchDock({
         unreviewed > 0 && (
           <p className="text-foreground-muted text-xs">
             {t(
-              "{0, plural, one {# of them is not open; approving records it as approved without reviewing what it changes.} other {# of them are not open; approving records them as approved without reviewing what they change.}}",
+              "{0, plural, one {# of them was not previewed; approving records it as approved without reviewing what it changes.} other {# of them were not previewed; approving records them as approved without reviewing what they change.}}",
               unreviewed,
             )}
           </p>
@@ -1166,6 +1168,7 @@ function BatchDock({
           ))}
         </ul>
       }
+      keepDetailsMounted
       approveLabel={t("Approve all {0}", proposals.length)}
       rejectLabel={t("Reject all")}
       canApprove={!stillLoading}
@@ -1182,9 +1185,9 @@ function BatchDock({
 
 /**
  * One change of several decided together: its sentence, opening onto what it
- * would do. It reports the digest of the preview it has on screen, which is
- * the only digest the approval sends for it, and stops counting as loading
- * once it leaves the screen.
+ * would do. It reports the digest of the preview it has read open, folded
+ * behind "Details" or not, which is the only digest the approval sends for it,
+ * and stops counting as loading once it leaves the box.
  */
 function BatchRow({
   proposal,

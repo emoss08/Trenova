@@ -23695,7 +23695,7 @@
   "{0, plural, one {# move} other {# moves}}": "{0, plural, other {# 筆調度}}",
   "{0, plural, one {# mo} other {# mos}}": "{0, plural, other {# 個月}}",
   "{0, plural, one {# needs} other {# need}} attention": "{0, plural, other {# 項}}需要處理",
-  "{0, plural, one {# of them is not open; approving records it as approved without reviewing what it changes.} other {# of them are not open; approving records them as approved without reviewing what they change.}}": "{0, plural, other {其中 # 項未展開；核准後會記錄為未審查變更內容即核准。}}",
+  "{0, plural, one {# of them was not previewed; approving records it as approved without reviewing what it changes.} other {# of them were not previewed; approving records them as approved without reviewing what they change.}}": "{0, plural, other {其中 # 項未預覽；核准後會記錄為未審查變更內容即核准。}}",
   "{0, plural, one {# of them you have not opened; it is recorded as approved without reviewing what it changes.} other {# of them you have not opened; they are recorded as approved without reviewing what they change.}}": "{0, plural, other {其中 # 項您尚未開啟；將記錄為未檢視變更內容即核准。}}",
   "{0, plural, one {# open change} other {# open changes}}": "{0, plural, other {# 項待處理的變更}}",
   "{0, plural, one {# overridden} other {# overridden}}": "{0, plural, other {# 項已覆寫}}",

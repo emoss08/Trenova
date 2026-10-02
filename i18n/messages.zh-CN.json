@@ -23695,7 +23695,7 @@
   "{0, plural, one {# move} other {# moves}}": "{0, plural, other {# 笔调度}}",
   "{0, plural, one {# mo} other {# mos}}": "{0, plural, other {# 个月}}",
   "{0, plural, one {# needs} other {# need}} attention": "{0, plural, other {# 项}}需要处理",
-  "{0, plural, one {# of them is not open; approving records it as approved without reviewing what it changes.} other {# of them are not open; approving records them as approved without reviewing what they change.}}": "{0, plural, other {其中 # 项未展开；批准后会记录为未审核更改内容即批准。}}",
+  "{0, plural, one {# of them was not previewed; approving records it as approved without reviewing what it changes.} other {# of them were not previewed; approving records them as approved without reviewing what they change.}}": "{0, plural, other {其中 # 项未预览；批准后会记录为未审核更改内容即批准。}}",
   "{0, plural, one {# of them you have not opened; it is recorded as approved without reviewing what it changes.} other {# of them you have not opened; they are recorded as approved without reviewing what they change.}}": "{0, plural, other {其中 # 项您尚未打开；将记录为未查看变更内容即批准。}}",
   "{0, plural, one {# open change} other {# open changes}}": "{0, plural, other {# 项待处理的变更}}",
   "{0, plural, one {# overridden} other {# overridden}}": "{0, plural, other {# 项已覆盖}}",
