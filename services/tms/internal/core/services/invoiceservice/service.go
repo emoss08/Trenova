@@ -1561,6 +1561,19 @@ func (s *Service) publishInvalidation(
 	}
 }
 
+func (s *Service) publishInvoiceChange(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	actor servicesports.AuditActor,
+	action string,
+) {
+	realtimeinvalidation.PublishInvoiceAfterCommit(ctx, s.realtime, s.l, &realtimeinvalidation.InvoiceChange{
+		Invoice: entity,
+		Actor:   actor,
+		Action:  action,
+	})
+}
+
 func (s *Service) logBillingQueuePosted(
 	result *postedBillingQueueResult,
 	actor servicesports.AuditActor,

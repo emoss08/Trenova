@@ -1,6 +1,8 @@
 package invoiceadjustmentservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -10,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -49,6 +52,7 @@ type Params struct {
 	AccountingSync     servicesports.AccountingSyncEnqueuer `optional:"true"`
 	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
+	Realtime           servicesports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -81,6 +85,7 @@ type Service struct {
 	accountingSync     servicesports.AccountingSyncEnqueuer
 	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
 	accountingPolicy   *accountingcontrolpolicyservice.Service
+	realtime           servicesports.RealtimeService
 }
 
 type previewComputation struct {
@@ -141,5 +146,24 @@ func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic //
 		accountingSync:     p.AccountingSync,
 		customerLedgerRepo: p.CustomerLedgerRepo,
 		accountingPolicy:   p.AccountingPolicy,
+		realtime:           p.Realtime,
+	}
+}
+
+func (s *Service) publishAdjustedInvoices(
+	ctx context.Context,
+	actor *servicesports.RequestActor,
+	invoices ...*invoice.Invoice,
+) {
+	auditActor := actor.AuditActorOrSystem()
+	for _, entity := range invoices {
+		if entity == nil {
+			continue
+		}
+		realtimeinvalidation.PublishInvoiceAfterCommit(ctx, s.realtime, s.l, &realtimeinvalidation.InvoiceChange{
+			Invoice: entity,
+			Actor:   auditActor,
+			Action:  realtimeinvalidation.InvoiceActionUpdated,
+		})
 	}
 }

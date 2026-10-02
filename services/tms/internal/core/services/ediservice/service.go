@@ -49,6 +49,7 @@ type Params struct {
 	CarrierRepo         repositories.CarrierRepository      `optional:"true"`
 	ShipmentMoveRepo    repositories.ShipmentMoveRepository `optional:"true"`
 	ShipmentMoves       services.ShipmentMoveService        `optional:"true"`
+	Realtime            services.RealtimeService            `optional:"true"`
 	ShipmentSvc         services.ShipmentService
 	WorkflowStarter     services.WorkflowStarter
 	AuditService        services.AuditService
@@ -81,6 +82,7 @@ type Service struct {
 	carrierInvoiceRepo  repositories.EDICarrierInvoiceRepository
 	inboundFileRepo     repositories.EDIInboundFileRepository
 	invoiceRepo         repositories.InvoiceRepository
+	realtime            services.RealtimeService
 	shipmentEventRepo   repositories.ShipmentEventRepository
 	serviceFailureRepo  repositories.ServiceFailureRepository
 	shipmentLinkRepo    repositories.EDIShipmentLinkRepository
@@ -133,6 +135,7 @@ func New(p Params) *Service {
 		carrierInvoiceRepo:  p.CarrierInvoiceRepo,
 		inboundFileRepo:     p.InboundFileRepo,
 		invoiceRepo:         p.InvoiceRepo,
+		realtime:            p.Realtime,
 		shipmentEventRepo:   p.ShipmentEventRepo,
 		serviceFailureRepo:  p.ServiceFailureRepo,
 		shipmentLinkRepo:    p.ShipmentLinkRepo,

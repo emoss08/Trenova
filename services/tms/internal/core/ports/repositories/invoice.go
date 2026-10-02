@@ -180,7 +180,7 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		messageID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-	) error
+	) ([]*invoice.Invoice, error)
 	CreateDocumentShareToken(
 		ctx context.Context,
 		token *invoice.DocumentShareToken,

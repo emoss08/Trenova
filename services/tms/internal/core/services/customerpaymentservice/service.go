@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,6 +46,7 @@ type Params struct {
 	Validator          *Validator
 	AuditService       serviceports.AuditService
 	AccountingSync     serviceports.AccountingSyncEnqueuer `optional:"true"`
+	Realtime           serviceports.RealtimeService        `optional:"true"`
 }
 
 type Service struct {
@@ -60,6 +62,7 @@ type Service struct {
 	validator          *Validator
 	auditService       serviceports.AuditService
 	accountingSync     serviceports.AccountingSyncEnqueuer
+	realtime           serviceports.RealtimeService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -76,6 +79,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		validator:          p.Validator,
 		auditService:       p.AuditService,
 		accountingSync:     p.AccountingSync,
+		realtime:           p.Realtime,
 	}
 }
 
@@ -149,6 +153,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			if txErr != nil {
 				return txErr
 			}
+			s.publishInvoiceBalance(txCtx, inv, actor)
 			invoices[idx] = inv
 		}
 
@@ -371,6 +376,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 			if txErr != nil {
 				return txErr
 			}
+			s.publishInvoiceBalance(txCtx, updatedInvoice, actor)
 			invoices[idx] = updatedInvoice
 		}
 		updatedPayment, txErr := s.repo.Update(txCtx, payment)
@@ -521,6 +527,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 			if txErr != nil {
 				return txErr
 			}
+			s.publishInvoiceBalance(txCtx, updatedInvoice, actor)
 			invoices[idx] = updatedInvoice
 		}
 
@@ -789,4 +796,16 @@ func applicationLedgerEntries(
 		}
 	}
 	return entries
+}
+
+func (s *Service) publishInvoiceBalance(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	actor *serviceports.RequestActor,
+) {
+	realtimeinvalidation.PublishInvoiceAfterCommit(ctx, s.realtime, s.l, &realtimeinvalidation.InvoiceChange{
+		Invoice: entity,
+		Actor:   actor.AuditActorOrSystem(),
+		Action:  realtimeinvalidation.InvoiceActionBalance,
+	})
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +40,8 @@ type ActivitiesParams struct {
 	LateChargeService  services.LateChargeService        `optional:"true"`
 	LateChargeRepo     repositories.LateChargeRepository `optional:"true"`
 	BillingControlRepo repositories.BillingControlRepository
-	EDIService         services.EDIService `optional:"true"`
+	EDIService         services.EDIService      `optional:"true"`
+	Realtime           services.RealtimeService `optional:"true"`
 }
 
 type Activities struct {
@@ -57,6 +59,7 @@ type Activities struct {
 	lateChargeRepo     repositories.LateChargeRepository
 	billingControlRepo repositories.BillingControlRepository
 	ediService         services.EDIService
+	realtime           services.RealtimeService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -74,6 +77,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		lateChargeRepo:     p.LateChargeRepo,
 		billingControlRepo: p.BillingControlRepo,
 		ediService:         p.EDIService,
+		realtime:           p.Realtime,
 		logger:             p.Logger.Named("billing-activities"),
 	}
 }
@@ -290,6 +294,21 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		a.logger.Error("failed to log invoice PDF generation audit action",
 			zap.String("invoiceId", updated.ID.String()),
 			zap.Error(auditErr),
+		)
+	}
+	if publishErr := realtimeinvalidation.PublishInvoice(ctx, a.realtime, &realtimeinvalidation.InvoiceChange{
+		Invoice: updated,
+		Actor: services.AuditActor{
+			PrincipalType: payload.PrincipalType,
+			PrincipalID:   payload.PrincipalID,
+			UserID:        payload.UserID,
+			APIKeyID:      payload.APIKeyID,
+		},
+		Action: realtimeinvalidation.InvoiceActionPDFGenerated,
+	}); publishErr != nil {
+		a.logger.Warn("failed to publish invoice PDF generation",
+			zap.String("invoiceId", updated.ID.String()),
+			zap.Error(publishErr),
 		)
 	}
 

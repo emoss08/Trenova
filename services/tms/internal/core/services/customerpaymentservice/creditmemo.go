@@ -41,6 +41,7 @@ func (s *Service) ApplyCreditMemo(
 			if updateErr != nil {
 				return updateErr
 			}
+			s.publishInvoiceBalance(txCtx, updatedTarget, actor)
 			s.logInvoiceAudit(plan.targetsBefore[idx], updatedTarget, actor.UserID)
 		}
 
@@ -48,6 +49,7 @@ func (s *Service) ApplyCreditMemo(
 		if txErr != nil {
 			return txErr
 		}
+		s.publishInvoiceBalance(txCtx, updatedMemo, actor)
 		if txErr = s.repo.CreateCreditMemoApplications(txCtx, plan.applications); txErr != nil {
 			return txErr
 		}
@@ -96,10 +98,12 @@ func (s *Service) UnapplyCreditMemoApplication(
 		if txErr != nil {
 			return txErr
 		}
+		s.publishInvoiceBalance(txCtx, updatedTarget, actor)
 		updatedMemo, txErr := s.invoiceRepo.Update(txCtx, plan.memo)
 		if txErr != nil {
 			return txErr
 		}
+		s.publishInvoiceBalance(txCtx, updatedMemo, actor)
 		updated, txErr = s.repo.UpdateCreditMemoApplication(txCtx, plan.applications[0])
 		if txErr != nil {
 			return txErr

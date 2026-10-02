@@ -877,8 +877,8 @@ func (r *repository) SyncEmailAttemptsForMessage(
 	ctx context.Context,
 	messageID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+) ([]*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*invoice.Invoice, error) {
 		msg := new(email.Message)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -887,7 +887,7 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			Where("em.organization_id = ?", tenantInfo.OrgID).
 			Where("em.business_unit_id = ?", tenantInfo.BuID).
 			Scan(ctx); err != nil {
-			return dberror.HandleNotFoundError(err, "EmailMessage")
+			return nil, dberror.HandleNotFoundError(err, "EmailMessage")
 		}
 
 		attempts := make([]*invoice.EmailAttempt, 0)
@@ -898,10 +898,10 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			Where("inea.organization_id = ?", tenantInfo.OrgID).
 			Where("inea.business_unit_id = ?", tenantInfo.BuID).
 			Scan(ctx); err != nil {
-			return err
+			return nil, err
 		}
 		if len(attempts) == 0 {
-			return nil
+			return []*invoice.Invoice{}, nil
 		}
 
 		status := invoiceSendStatusForEmailMessage(msg)
@@ -911,7 +911,8 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			sentAt = &msg.SentAt
 		}
 
-		return r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		updated := make([]*invoice.Invoice, 0, len(attempts))
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(txCtx).
 				NewUpdate().
 				Model((*invoice.EmailAttempt)(nil)).
@@ -931,12 +932,20 @@ func (r *repository) SyncEmailAttemptsForMessage(
 				invoiceIDs[attempt.InvoiceID] = struct{}{}
 			}
 			for invoiceID := range invoiceIDs {
-				if err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo); err != nil {
+				entity, err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo)
+				if err != nil {
 					return err
+				}
+				if entity != nil {
+					updated = append(updated, entity)
 				}
 			}
 			return nil
 		})
+		if err != nil {
+			return nil, err
+		}
+		return updated, nil
 	})
 }
 
@@ -944,8 +953,8 @@ func (r *repository) syncInvoiceSendStatus(
 	ctx context.Context,
 	invoiceID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+) (*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
 		attempts := make([]*invoice.EmailAttempt, 0)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -954,26 +963,31 @@ func (r *repository) syncInvoiceSendStatus(
 			Where("inea.organization_id = ?", tenantInfo.OrgID).
 			Where("inea.business_unit_id = ?", tenantInfo.BuID).
 			Scan(ctx); err != nil {
-			return err
+			return nil, err
 		}
 		if len(attempts) == 0 {
-			return nil
+			return nil, nil
 		}
 
 		status, sentAt, lastError := invoiceSendStatusFromAttempts(attempts)
+		entity := new(invoice.Invoice)
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().
-			Model((*invoice.Invoice)(nil)).
+			Model(entity).
 			Set("send_status = ?", status).
 			Set("sent_at = ?", sentAt).
 			Set("last_send_error = ?", lastError).
 			Where("id = ?", invoiceID).
 			Where("organization_id = ?", tenantInfo.OrgID).
 			Where("business_unit_id = ?", tenantInfo.BuID).
+			Returning("*").
 			Exec(ctx); err != nil {
-			return fmt.Errorf("sync invoice send status: %w", err)
+			return nil, fmt.Errorf("sync invoice send status: %w", err)
 		}
-		return nil
+		if entity.ID.IsNil() {
+			return nil, nil
+		}
+		return entity, nil
 	})
 }
 

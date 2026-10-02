@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -45,6 +46,7 @@ type Params struct {
 	AuditService       services.AuditService
 	WorkflowStarter    services.WorkflowStarter
 	Storage            storage.Client
+	Realtime           services.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -58,6 +60,7 @@ type Service struct {
 	providerSenders    map[email.Provider]ProviderSender
 	workflowStarter    services.WorkflowStarter
 	storage            storage.Client
+	realtime           services.RealtimeService
 }
 
 type HandleProviderEventParams struct {
@@ -82,6 +85,7 @@ func New(p Params) *Service {
 		},
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,
+		realtime:        p.Realtime,
 	}
 }
 
@@ -859,15 +863,36 @@ func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {
 	if s.invoiceRepo == nil || msg == nil || msg.ID.IsNil() {
 		return
 	}
-	if err := s.invoiceRepo.SyncEmailAttemptsForMessage(ctx, msg.ID, pagination.TenantInfo{
+	updated, err := s.invoiceRepo.SyncEmailAttemptsForMessage(ctx, msg.ID, pagination.TenantInfo{
 		OrgID: msg.OrganizationID,
 		BuID:  msg.BusinessUnitID,
-	}); err != nil && s.l != nil {
-		s.l.Error(
-			"failed to sync invoice email attempts",
-			zap.Error(err),
-			zap.String("messageId", msg.ID.String()),
-		)
+	})
+	if err != nil {
+		if s.l != nil {
+			s.l.Error(
+				"failed to sync invoice email attempts",
+				zap.Error(err),
+				zap.String("messageId", msg.ID.String()),
+			)
+		}
+		return
+	}
+	for _, entity := range updated {
+		if publishErr := realtimeinvalidation.PublishInvoice(
+			ctx,
+			s.realtime,
+			&realtimeinvalidation.InvoiceChange{
+				Invoice: entity,
+				Actor:   services.SystemAuditActor(),
+				Action:  realtimeinvalidation.InvoiceActionSendUpdated,
+			},
+		); publishErr != nil && s.l != nil {
+			s.l.Warn(
+				"failed to publish invoice send status",
+				zap.Error(publishErr),
+				zap.String("invoiceId", entity.ID.String()),
+			)
+		}
 	}
 }
 

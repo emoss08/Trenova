@@ -1195,20 +1195,31 @@ func (_c *MockInvoiceRepository_UpdateEDISendStatus_Call) RunAndReturn(run func(
 }
 
 // SyncEmailAttemptsForMessage provides a mock function for the type MockInvoiceRepository
-func (_mock *MockInvoiceRepository) SyncEmailAttemptsForMessage(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) error {
+func (_mock *MockInvoiceRepository) SyncEmailAttemptsForMessage(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) ([]*invoice.Invoice, error) {
 	ret := _mock.Called(ctx, messageID, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncEmailAttemptsForMessage")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+	var r0 []*invoice.Invoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) ([]*invoice.Invoice, error)); ok {
+		return returnFunc(ctx, messageID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) []*invoice.Invoice); ok {
 		r0 = returnFunc(ctx, messageID, tenantInfo)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*invoice.Invoice)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, messageID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockInvoiceRepository_SyncEmailAttemptsForMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncEmailAttemptsForMessage'
@@ -1247,12 +1258,12 @@ func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Return(err error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
-	_c.Call.Return(err)
+func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Return(invoices []*invoice.Invoice, err error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+	_c.Call.Return(invoices, err)
 	return _c
 }
 
-func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) RunAndReturn(run func(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) RunAndReturn(run func(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) ([]*invoice.Invoice, error)) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }

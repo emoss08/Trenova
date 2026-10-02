@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -413,4 +414,39 @@ func TestDescribeSenderRejectionNamesWhereTheAddressIsSet(t *testing.T) {
 
 	plain := errors.New("network down")
 	require.Same(t, plain, svc.describeSenderRejection(t.Context(), msg, "", plain))
+}
+
+func TestSyncInvoiceAttemptsPublishesEachUpdatedInvoice(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	updated := &invoice.Invoice{
+		ID:             pulid.MustNew("inv_"),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Number:         "INV-1",
+		SendStatus:     invoice.SendStatusSent,
+	}
+
+	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	invoiceRepo.EXPECT().
+		SyncEmailAttemptsForMessage(mock.Anything, msg.ID, tenantInfo).
+		Return([]*invoice.Invoice{updated}, nil).
+		Once()
+
+	realtime := mocks.NewMockRealtimeService(t)
+	realtime.EXPECT().
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(
+			func(req *services.PublishResourceInvalidationRequest) bool {
+				return req.Resource == "invoice" &&
+					req.Action == "send.updated" &&
+					req.RecordID == updated.ID
+			},
+		)).
+		Return(nil).
+		Once()
+
+	svc := &Service{invoiceRepo: invoiceRepo, realtime: realtime, l: zap.NewNop()}
+	svc.syncInvoiceAttempts(t.Context(), msg)
 }

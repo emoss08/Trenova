@@ -342,6 +342,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	}
 
 	s.logAudit(updated, actor, permission.OpUpdate, "Invoice adjustment executed")
+	s.publishAdjustedInvoices(ctx, actor, lockedInvoice, creditMemoInvoice, replacementInvoice)
 	s.logAdjustmentEvent("invoice adjustment executed", updated, zap.InfoLevel)
 	return updated, nil
 }

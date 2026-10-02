@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -257,6 +258,7 @@ func (s *Service) Send(
 		updated,
 		"Invoice email delivery queued",
 	)
+	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), realtimeinvalidation.InvoiceActionSendUpdated)
 	return &servicesports.InvoiceSendResult{Invoice: updated, Plan: plan}, nil
 }
 
@@ -442,6 +444,7 @@ func (s *Service) SendFromWorkflow(
 		updated,
 		"Invoice email delivery attempted",
 	)
+	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), realtimeinvalidation.InvoiceActionSendUpdated)
 	return &servicesports.InvoiceSendResult{Invoice: updated, Plan: plan, Attempts: attempts}, nil
 }
 
@@ -520,6 +523,7 @@ func (s *Service) markInvoiceSendFailed(
 		updated,
 		"Invoice email delivery failed",
 	)
+	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), realtimeinvalidation.InvoiceActionSendUpdated)
 }
 
 // applySendSnapshot freezes what was sent onto the invoice.
