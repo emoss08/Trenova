@@ -111,7 +111,10 @@ function Cell({ column, value, first }: { column: DisplayColumn; value: unknown;
   if (value === null || value === undefined || value === "") {
     return <span className="dk-ax-none">—</span>;
   }
-  if (column.type === "status" || column.type === "enum") {
+  if (column.type === "enum") {
+    return <>{formatDisplayValue(column.type, value, t)}</>;
+  }
+  if (column.type === "status") {
     const text = formatDisplayValue(column.type, value, t);
     const phase = typeof value === "string" ? statusPhase(value) : null;
     return (
@@ -132,6 +135,11 @@ function Cell({ column, value, first }: { column: DisplayColumn; value: unknown;
 
 function cellText(column: DisplayColumn, value: unknown, t: TranslateFn): string {
   return value === null || value === undefined ? "" : formatDisplayValue(column.type, value, t);
+}
+
+/** A value's raw form, so a status is found by its code as well as its words. */
+function rawText(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
 }
 
 type Sort = { key: string; direction: 1 | -1 };
@@ -166,7 +174,7 @@ export function DeskTableBody({
     let shown = needle
       ? grid.rows.filter((row) =>
           grid.columns.some((column) =>
-            `${cellText(column, row.values[column.key], t)} ${String(row.values[column.key] ?? "")}`
+            `${cellText(column, row.values[column.key], t)} ${rawText(row.values[column.key])}`
               .toLowerCase()
               .includes(needle),
           ),

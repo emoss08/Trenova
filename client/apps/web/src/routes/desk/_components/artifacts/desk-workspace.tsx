@@ -251,10 +251,7 @@ function Provenance({
   previous: AssistantArtifact | null;
 }) {
   const t = useT();
-  const tool =
-    typeof artifact.payload.tool === "string" && artifact.payload.tool !== ""
-      ? artifact.payload.tool
-      : artifact.kind;
+  const tool = typeof artifact.payload.tool === "string" ? artifact.payload.tool : "";
   const tabular = artifact.kind === "table_view" || artifact.kind === "report_preview";
   const grid = tabular && !("path" in artifact.payload) ? gridOf(artifact) : null;
   const calls =
@@ -264,9 +261,13 @@ function Provenance({
   const changes =
     grid && previous ? changedCells(grid, gridOf(previous)).size : 0;
 
+  if (tool === "" && !grid && calls === 0) {
+    return null;
+  }
+
   return (
     <div className="dk-ax-prov dk-sm">
-      <code>{tool}</code>
+      {tool !== "" && <code>{tool}</code>}
       {grid && <span>{t("{0, plural, one {# row} other {# rows}}", grid.rowCount)}</span>}
       {calls > 0 && <span>{t("{0, plural, one {# call} other {# calls}}", calls)}</span>}
       {changes > 0 && <span className="dk-ax-chg">{t("{0} changed", changes)}</span>}
@@ -356,7 +357,6 @@ export function DeskWorkspace({
   const [versionByLineage, setVersionByLineage] = useState<Record<string, number>>({});
   const [fanning, setFanning] = useState(false);
   const [browsing, setBrowsing] = useState(false);
-  const [newest, setNewest] = useState<string | null>(null);
 
   const newestLive = liveArtifacts.ids.at(-1);
   const liveRevision = liveArtifacts.revision;
@@ -372,15 +372,19 @@ export function DeskWorkspace({
     }
   }, [liveRevision, newestLive, queryClient, setActiveArtifact, threadId]);
 
-  const newestLineage = lineageContaining(lineages, newestLive)?.id ?? null;
+  // A revision the stack has not settled on yet is one that just landed; the
+  // revision the workspace opened with is already settled, so reopening a
+  // conversation mid-turn does not flag anything as new.
+  const [settledRevision, setSettledRevision] = useState(liveRevision);
+  const arrived = liveRevision !== 0 && liveRevision !== settledRevision;
+  const newest = arrived ? (lineageContaining(lineages, newestLive)?.id ?? null) : null;
   useEffect(() => {
-    if (!newestLineage || liveRevision === 0) {
+    if (!arrived) {
       return;
     }
-    setNewest(newestLineage);
-    const timer = window.setTimeout(() => setNewest(null), NEW_MS);
+    const timer = window.setTimeout(() => setSettledRevision(liveRevision), NEW_MS);
     return () => window.clearTimeout(timer);
-  }, [liveRevision, newestLineage]);
+  }, [arrived, liveRevision]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -395,6 +399,7 @@ export function DeskWorkspace({
 
   const paneRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(700);
+  const hasArtifacts = active !== null;
   useLayoutEffect(() => {
     const element = paneRef.current;
     if (!element) {
@@ -403,7 +408,7 @@ export function DeskWorkspace({
     const observer = new ResizeObserver(() => setHeight(element.clientHeight));
     observer.observe(element);
     return () => observer.disconnect();
-  }, [active === null]);
+  }, [hasArtifacts]);
 
   const pinMutation = useApiMutation({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>

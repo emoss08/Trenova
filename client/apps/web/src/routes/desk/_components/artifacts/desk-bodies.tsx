@@ -136,7 +136,7 @@ export function DeskRateBody({ artifact }: { artifact: AssistantArtifact }) {
           </div>
         </div>
       )}
-      {rate.tieBreak !== "" && <p className="dk-ax-note">{t("Chosen on {0}", rate.tieBreak)}</p>}
+      {rate.tieBreak !== "" && <p className="dk-ax-note">{rate.tieBreak}</p>}
       <div className="dk-ax-ledger">
         {rate.components.map((component, index) => {
           const running = Number(component.runningTotal) || 0;

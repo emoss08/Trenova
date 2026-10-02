@@ -1,0 +1,159 @@
+import type { AssistantArtifact } from "@/types/assistant";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { describe, expect, it, vi } from "vitest";
+import { groupLineages, lineageContaining } from "../desk-lineage";
+import { changedCells, gridOf } from "../desk-table-body";
+import { DeskWorkspace } from "../desk-workspace";
+
+const state = vi.hoisted(() => ({ artifacts: [] as unknown[] }));
+
+vi.mock("@/lib/queries", () => ({
+  queries: {
+    assistant: {
+      artifacts: (threadId: string) => ({
+        queryKey: ["assistant", "artifacts", threadId],
+        queryFn: () => ({ results: state.artifacts }),
+      }),
+      proposals: (threadId: string) => ({
+        queryKey: ["assistant", "proposals", threadId],
+        queryFn: () => ({ results: [] }),
+      }),
+    },
+  },
+}));
+
+let clock = 1_790_000_000;
+
+function artifact(overrides: Partial<AssistantArtifact> & { id: string }): AssistantArtifact {
+  clock += 60;
+  return {
+    threadId: "athr_1",
+    messageId: "",
+    runId: "",
+    proposalId: "",
+    planId: "",
+    kind: "table_view",
+    status: "Ready",
+    title: "Workers",
+    payload: {},
+    sourceToolCallId: "",
+    pinned: false,
+    lineageId: "",
+    lineageSeq: 1,
+    createdAt: clock,
+    updatedAt: clock,
+    ...overrides,
+  };
+}
+
+function workers(id: string, status: string, overrides: Partial<AssistantArtifact> = {}) {
+  return artifact({
+    id,
+    payload: {
+      display: 1,
+      tool: "list_workers",
+      entity: "workers",
+      recordEntity: "worker",
+      columns: [
+        { key: "name", label: "Name", type: "text" },
+        { key: "status", label: "Status", type: "status" },
+      ],
+      rows: [
+        { id: "wrk_1", name: "Avery Lane", status },
+        { id: "wrk_2", name: "Dana Ortiz", status: "Active" },
+      ],
+      rowCount: 2,
+    },
+    ...overrides,
+  });
+}
+
+describe("groupLineages", () => {
+  it("folds later reads into the first artifact's lineage, pinned first then newest", () => {
+    const first = workers("art_1", "Active");
+    const card = artifact({ id: "art_2", kind: "entity_card", title: "SEED-SHP-003" });
+    const second = workers("art_3", "Inactive", { lineageId: "art_1", lineageSeq: 2 });
+    const pinned = artifact({ id: "art_0", kind: "document", title: "Brief", pinned: true, createdAt: 1 });
+
+    const lineages = groupLineages([first, card, second, pinned]);
+
+    expect(lineages.map((lineage) => lineage.id)).toEqual(["art_0", "art_1", "art_2"]);
+    expect(lineages[1].versions.map((version) => version.id)).toEqual(["art_1", "art_3"]);
+    expect(lineages[1].latest.id).toBe("art_3");
+    expect(lineageContaining(lineages, "art_3")?.id).toBe("art_1");
+  });
+});
+
+describe("changedCells", () => {
+  it("marks the cells that differ from the version before, row by record", () => {
+    const before = gridOf(workers("art_1", "Active"));
+    const after = gridOf(workers("art_3", "Inactive"));
+
+    const changed = changedCells(after, before);
+
+    expect(changed.size).toBe(1);
+    expect([...changed][0]).toMatch(/:status$/);
+    expect(changedCells(after, null).size).toBe(0);
+  });
+});
+
+function renderWorkspace(onClose = vi.fn()) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <DeskWorkspace threadId="athr_1" liveArtifacts={{ ids: [], revision: 0 }} onClose={onClose} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  return { onClose };
+}
+
+describe("DeskWorkspace", () => {
+  it("says what will land here before anything has", async () => {
+    state.artifacts = [];
+    const { onClose } = renderWorkspace();
+
+    expect(await screen.findByText("No artifacts yet")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Hide artifacts" }));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("opens the latest version and goes back to an earlier one", async () => {
+    state.artifacts = [
+      workers("art_1", "Active"),
+      workers("art_3", "Inactive", { lineageId: "art_1", lineageSeq: 2 }),
+    ];
+    renderWorkspace();
+
+    expect(await screen.findByText("Inactive")).toBeInTheDocument();
+    expect(screen.getByText("1 changed")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTitle("Versions"));
+    fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: /v1/ }));
+
+    expect(await screen.findByText("Version 1 of 2, read", { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText("Inactive")).not.toBeInTheDocument();
+  });
+
+  it("searches everything the conversation made with ⌘J", async () => {
+    state.artifacts = [
+      workers("art_1", "Active"),
+      artifact({ id: "art_2", kind: "document", title: "Storm brief", payload: { body: "Two loads." } }),
+    ];
+    renderWorkspace();
+    await screen.findByText("Storm brief", { selector: "h2" });
+
+    fireEvent.keyDown(window, { key: "j", metaKey: true });
+    const search = await screen.findByRole("textbox", { name: "Search artifacts" });
+    fireEvent.change(search, { target: { value: "work" } });
+
+    const titles = () =>
+      [...document.querySelectorAll(".dk-axb-rt b")].map((title) => title.textContent);
+    expect(titles()).toEqual(["Workers"]);
+    fireEvent.keyDown(search, { key: "Enter" });
+    expect(await screen.findByText("Avery Lane")).toBeInTheDocument();
+  });
+});

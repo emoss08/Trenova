@@ -12,7 +12,7 @@ export type ArtifactLineage = {
   latest: AssistantArtifact;
 };
 
-/** Groups artifacts by lineage, newest first, each with its versions oldest first. */
+/** Groups artifacts by lineage, pinned then newest first, each with its versions oldest first. */
 export function groupLineages(artifacts: readonly AssistantArtifact[]): ArtifactLineage[] {
   const byRoot = new Map<string, AssistantArtifact[]>();
   for (const artifact of artifacts) {
@@ -32,7 +32,14 @@ export function groupLineages(artifacts: readonly AssistantArtifact[]): Artifact
       );
       return { id, versions: ordered, latest: ordered[ordered.length - 1] };
     })
-    .sort((a, b) => b.latest.createdAt - a.latest.createdAt || b.id.localeCompare(a.id));
+    .sort((a, b) => {
+      const pinnedA = a.versions.some((version) => version.pinned);
+      const pinnedB = b.versions.some((version) => version.pinned);
+      if (pinnedA !== pinnedB) {
+        return pinnedA ? -1 : 1;
+      }
+      return b.latest.createdAt - a.latest.createdAt || b.id.localeCompare(a.id);
+    });
 }
 
 /** The lineage an artifact belongs to, by any of its versions' ids. */
