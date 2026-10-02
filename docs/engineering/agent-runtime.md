@@ -195,6 +195,13 @@ than any it names takes the newest known constraints.
   by default and the thinking panel would show nothing. Older models keep the token budget
   and its raised `max_tokens`; adaptive thinking raises `max_tokens` to
   `reasoningAnswerFloor`.
+- **Thinking style.** An Anthropic provider's thinking style (`aiprovider.ThinkingStyle`,
+  "Thinking style" on the provider form) overrides the id for a model the adapter cannot
+  read. Auto, the default, reads the id. Effort asks by effort whatever the id reads, and
+  Budget asks with a token budget. Behind an alias the adapter cannot tell which effort
+  model it is, so under a declared Effort None asks for adaptive thinking at low effort, the
+  least every such model accepts. Only an Anthropic provider may hold anything but Auto:
+  validation refuses it, and so does `ck_ai_providers_thinking_style_kind`.
 - **None and Off.** None is the least thinking the model allows. Opus 5.5, Fable and Mythos
   cannot stop thinking and Sonnet 5.5 refuses `disabled`, so they get adaptive at low
   effort; Opus 5 gets `disabled`; Opus and Sonnet 4.6 to 4.8 get nothing, which is no
