@@ -224,10 +224,11 @@ names the token to use instead.
 - Status maps declare a lifecycle **phase** (`draft`/`queued`/`active`/`awaiting`/`attention`/
   `complete`/`closed`/`failed`) and the tone follows, so a new status cannot pick a colour.
 - The product is drawn in ink: the primary button is `--ink` (the foreground colour), never
-  a hue. Every grey carries `--hue-neutral` (cool slate, 260). The brand is cobalt at 262
-  and is spent only on links, focus, selection and the active nav row or tab. The blue arc
-  is pinned apart — info 222 → sky 232 → brand 262 → indigo 283 — and so is the warm one —
-  danger 25 → warning 78 → amber 98.
+  a hue. The palette is Vercel's Geist: every grey is a true neutral (chroma 0), the canvas
+  is #fafafa under white panels, and the ink is #171717. The brand is Geist blue at 258 and
+  is spent only on links, focus and selection; the active nav row is a neutral fill and the
+  active tab is underlined in ink. The blue arc is pinned apart — info 222 → sky 232 →
+  brand 258 → indigo 283 — and so is the warm one — danger 25 → warning 76 → amber 98.
 - Labels are sentence case; no `uppercase tracking-wider` on section labels, column heads
   or badges. Form controls spend `ui-field`, filled controls `ui-press`, skeletons
   `ui-shimmer`. Motion answers an action — nothing loops on a working screen.

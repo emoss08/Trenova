@@ -174,7 +174,7 @@ function auditTheme(theme, p) {
 /**
  * Two arcs are crowded, and in each the colour has to carry the difference.
  *
- * Cobalt lives in the blue arc with the info tone and the sky and indigo
+ * The brand blue lives in the blue arc with the info tone and the sky and indigo
  * categories. A link and an "In transit" badge share a row in nearly every
  * table, so brand keeps 30 degrees from info and 20 from each category.
  *

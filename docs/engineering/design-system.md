@@ -45,36 +45,38 @@ Three, and each may only reference the one above it.
 Everything coloured in the product resolves to one of eleven hues, declared once
 in layer 1.
 
-`--hue-neutral: 260` is the spine, a cool slate. Every grey carries a trace of it
-— the canvas, the panels, the rules, the four text weights — low enough that a
-panel still reads as white and high enough that the ink reads as ink rather than
-as black. A grey at chroma exactly zero is the clearest sign a palette was
-inherited rather than chosen.
+The palette is Vercel's Geist, carried into OKLCH and held to the contrast and
+hue floors below. The greys are true neutrals, as Geist's are: chroma 0 across
+the canvas (#fafafa), the panels (white), the rules and the four text weights,
+with the ink at #171717 in light and #ededed in dark, where the canvas is
+#0a0a0a. `--hue-neutral` stays as a name so a grey written against it still
+resolves, but it carries no chroma.
 
 **The product is drawn in ink.** The primary action is `--ink`, the foreground
 colour with its own hover and pressed rungs, not a hue. That is what lets every
 colour left on screen mean something: a tone is a severity, an accent is a
 category, and the brand marks place and affordance.
 
-`--hue-brand: 262` is cobalt, and it is spent sparingly: links, the focus ring,
-selection (a selected row, selected text, a checked box), the active nav row and
-tab, the first chart series. It is never the primary button and never a severity.
+`--hue-brand: 258` is Geist blue, and it is spent sparingly: links, the focus
+ring, selection (a selected row, selected text, a checked box), the first chart
+series. As on Vercel, the active nav row is a neutral fill with the ink on it and
+the active tab is underlined in ink, not blue. It is never the primary button and never a severity.
 If you are about to write `bg-brand` on a button, you want `variant="default"`.
 
-Cobalt shares the blue arc with three other things, so that arc is pinned apart:
+Brand blue shares the blue arc with three other things, so that arc is pinned apart:
 
 ```
-info 222  →  sky 232  →  brand 262  →  indigo 283
+info 222  →  sky 232  →  brand 258  →  indigo 283
 ```
 
 Brand keeps 30° from info and 20° from each category. Info is a steel cyan at
-under half of cobalt's chroma for the same reason: a link and an "In transit"
+under half of the brand's chroma for the same reason: a link and an "In transit"
 badge share a row in nearly every table, and they must not read as one thing.
 
 The warm arc keeps its own floor:
 
 ```
-danger 25  →  warning 78  →  amber 98
+danger 25  →  warning 76  →  amber 98
 ```
 
 `pnpm lint:design` fails if any of those gaps closes.
@@ -276,7 +278,7 @@ ui-lift           something you could pick up: a floating composer, a card
 ui-lift-float     something over everything else: a switcher, a menu
 ```
 
-Each is a hairline ring plus a whisper of shadow at `--hue-neutral`, so it reads
+Each is a hairline ring plus a whisper of neutral shadow, so it reads
 as the surface occluding light rather than as grey smudge. The blur is small and
 the offset smaller: a lift should be felt before it is seen. In dark the shadow
 hue goes near-black, because a grey halo on an already dark surface reads as
