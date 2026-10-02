@@ -16,6 +16,7 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     allowPrivateNetwork: true,
     structuredOutputMode: "Prompted",
     reasoningEffort: "Off",
+    thinkingStyle: "Auto",
     extraBodyText: "",
     inputCostPerMillion: null,
     outputCostPerMillion: null,
@@ -168,4 +169,30 @@ describe("extra request fields", () => {
     expect(buildSavePayload(formValues({ extraBodyText: "7" }), false).extraBody).toBeNull();
     expect(buildSavePayload(formValues({ extraBodyText: "{oops" }), false).extraBody).toBeNull();
   });
+});
+
+/**
+ * The server refuses any thinking style but Auto on a protocol other than
+ * Anthropic Messages (aiprovider.Provider.Validate), and the field is shown only
+ * for that protocol. A style picked before the protocol changed must not ride
+ * along unseen and fail the save.
+ */
+describe("buildSavePayload thinking style", () => {
+  it("keeps the style chosen for an Anthropic provider", () => {
+    const payload = buildSavePayload(
+      formValues({ kind: "AnthropicMessages", thinkingStyle: "Effort" }),
+      false,
+    );
+
+    expect(payload.thinkingStyle).toBe("Effort");
+  });
+
+  it.each(["OpenAIChat", "OpenAIResponses", "Ollama"] as const)(
+    "sends Auto for a %s provider whatever the field holds",
+    (kind) => {
+      const payload = buildSavePayload(formValues({ kind, thinkingStyle: "Budget" }), false);
+
+      expect(payload.thinkingStyle).toBe("Auto");
+    },
+  );
 });

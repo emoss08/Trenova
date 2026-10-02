@@ -6472,6 +6472,8 @@
   "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything.": "结果已因行数上限被截断。请缩小筛选范围，或改用可容纳更多数据的格式导出以查看完整内容。",
   "These settings were changed by someone else while you were editing. Reload and try again.": "在你编辑期间，其他人更改了这些设置。请重新加载后重试。",
   "They stay open until somebody records the outcome.": "在有人记录结果之前，这些项目会维持开启状态。",
+  "Thinking style applies only to Anthropic Messages providers": "推理方式仅适用于 Anthropic Messages 提供方",
+  "Thinking style is required": "推理方式为必填项",
   "This EDI carrier invoice already has an open match": "此 EDI 承运商发票已有未结的比对",
   "This EDI invoice repeats one the partner already sent; match the original instead": "此 EDI 发票与合作伙伴之前发送的重复；请改为匹配原始发票",
   "This Idempotency-Key was already used for a different request; send a new key for a new request": "此 Idempotency-Key 已用于另一个请求；新请求请发送新的密钥",

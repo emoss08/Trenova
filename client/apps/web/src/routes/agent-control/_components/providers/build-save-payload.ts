@@ -51,6 +51,9 @@ export function buildSavePayload(
     extraBody: parseExtraBody(extraBodyText),
     embeddingDimensions: embeds ? parseEmbeddingDimensions(embeddingDimensionsChoice) : null,
     embeddingInputStyle: embeds ? rest.embeddingInputStyle : "None",
+    // The server takes a thinking style only for the Anthropic protocol, and
+    // the field is shown only for it.
+    thinkingStyle: rest.kind === "AnthropicMessages" ? rest.thinkingStyle : "Auto",
   };
 }
 

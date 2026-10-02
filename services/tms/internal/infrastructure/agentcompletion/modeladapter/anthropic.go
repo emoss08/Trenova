@@ -60,7 +60,7 @@ type anthropicBlockBinding struct {
 
 // applyThinking asks for thinking the way the configured model takes it.
 func (r *anthropicRequest) applyThinking(call *Call) {
-	model := anthropicTraits(call.Provider.Model)
+	model := providerTraits(call.Provider)
 	if !model.adaptive {
 		r.applyThinkingBudget(call)
 		return
@@ -73,10 +73,11 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 		r.config().Effort = anthropicEffort(effort)
 	case effort.Disabled():
 		// None is the least thinking the model allows. A model that always
-		// thinks, or refuses "disabled", thinks at low effort; one that takes
+		// thinks, refuses "disabled", or is an effort model the operator named
+		// behind an unreadable id, thinks at low effort; one that takes
 		// "disabled" is told so; the rest do not think unless asked.
 		switch {
-		case model.thinksAlways || model.disableRefused:
+		case model.thinksAlways || model.disableRefused || model.declared:
 			r.Thinking = &anthropicThinking{Type: "adaptive"}
 			r.config().Effort = "low"
 		case model.disableNeedsLowEffort:
@@ -112,7 +113,7 @@ func anthropicHeaders(call *Call) map[string]string {
 		"x-api-key":         call.APIKey,
 		"anthropic-version": anthropicVersion,
 	}
-	if anthropicTraits(call.Provider.Model).bindsPrefix {
+	if providerTraits(call.Provider).bindsPrefix {
 		headers["anthropic-beta"] = anthropicBindingBeta
 	}
 

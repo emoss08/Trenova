@@ -478,3 +478,45 @@ func TestProvider_KnowsWhenItIsOpenAIsOwnPlatform(t *testing.T) {
 		assert.Equal(t, tc.openAI, provider.OnOpenAIPlatform(), "%s %s", tc.kind, tc.baseURL)
 	}
 }
+
+func TestValidate_RejectsAnUnknownThinkingStyle(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	p.ThinkingStyle = "Telepathy"
+
+	assert.True(t, fieldErrors(t, p)["thinkingStyle"])
+}
+
+func TestValidate_DefaultsTheThinkingStyleToAuto(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	multiErr := errortypes.NewMultiError()
+	p.Validate(multiErr)
+
+	require.False(t, multiErr.HasErrors(), "expected no errors, got %v", multiErr.Errors)
+	assert.Equal(t, aiprovider.ThinkingStyleAuto, p.ThinkingStyle)
+}
+
+// Only the Anthropic protocol has two ways of asking for thinking; a style on
+// any other kind would be saved and silently ignored.
+func TestValidate_RejectsAThinkingStyleOnAnotherProtocol(t *testing.T) {
+	t.Parallel()
+
+	for _, style := range []aiprovider.ThinkingStyle{
+		aiprovider.ThinkingStyleEffort,
+		aiprovider.ThinkingStyleBudget,
+	} {
+		p := validProvider()
+		p.Kind = aiprovider.KindOpenAIResponses
+		p.Model = "gpt-6"
+		p.ThinkingStyle = style
+
+		assert.True(t, fieldErrors(t, p)["thinkingStyle"], style)
+	}
+
+	p := validProvider()
+	p.ThinkingStyle = aiprovider.ThinkingStyleEffort
+	assert.False(t, fieldErrors(t, p)["thinkingStyle"])
+}

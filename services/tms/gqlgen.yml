@@ -2251,6 +2251,9 @@ models:
   AIEmbeddingInputStyle:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.EmbeddingInputStyle
+  AIThinkingStyle:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.ThinkingStyle
   AIRetrievalSourceType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/airetrieval.SourceType

@@ -24,6 +24,13 @@ export const structuredOutputModeSchema = z.enum(["JSONSchema", "JSONMode", "Pro
 export const reasoningEffortSchema = z.enum(["Off", "None", "Minimal", "Low", "Medium", "High"]);
 
 /**
+ * How a Claude model is asked to think. Auto reads the model id; Effort and
+ * Budget say so for a model behind an id the server cannot read, such as a
+ * gateway's alias. Only Anthropic Messages providers take anything but Auto.
+ */
+export const thinkingStyleSchema = z.enum(["Auto", "Effort", "Budget"]);
+
+/**
  * Vendor request fields the endpoint takes that the protocol does not
  * define. The server stores JSONB and sends null when there are none; an
  * absent object and an empty one mean the same thing here, so both become
@@ -108,6 +115,7 @@ export const aiProviderSchema = z.object({
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
+  thinkingStyle: thinkingStyleSchema.default("Auto"),
   extraBody: extraBodySchema,
   inputCostPerMillion: pricePerMillionSchema,
   outputCostPerMillion: pricePerMillionSchema,
@@ -139,6 +147,7 @@ export const saveAIProviderRequestSchema = z.object({
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
+  thinkingStyle: thinkingStyleSchema.default("Auto"),
   extraBody: extraBodySchema,
   inputCostPerMillion: z.number().min(0).nullable().default(null),
   outputCostPerMillion: z.number().min(0).nullable().default(null),
@@ -223,6 +232,7 @@ export type AIProviderKind = z.infer<typeof aiProviderKindSchema>;
 export type AITask = z.infer<typeof aiTaskSchema>;
 export type StructuredOutputMode = z.infer<typeof structuredOutputModeSchema>;
 export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
+export type ThinkingStyle = z.infer<typeof thinkingStyleSchema>;
 export type SaveAIProviderRequest = z.infer<typeof saveAIProviderRequestSchema>;
 export type TestAIProviderResult = z.infer<typeof testAIProviderResultSchema>;
 export type AIProviderCatalog = z.infer<typeof aiProviderCatalogSchema>;

@@ -7702,6 +7702,18 @@ enum AIReasoningEffort {
 }
 
 """
+How a Claude model is asked to think. Auto reads the model id; Effort asks by
+effort, as Claude models from Opus 4.6 and Sonnet 4.6 on require; Budget asks
+with a token budget, as older ones require. Only Anthropic Messages providers
+take anything but Auto.
+"""
+enum AIThinkingStyle {
+  Auto
+  Effort
+  Budget
+}
+
+"""
 How an embedding endpoint is told whether a text is a stored document or a
 search query. None sends both the same way; VoyageInputType sends Voyage's
 input_type field; NomicPrefix adds the search_document and search_query
@@ -7758,6 +7770,8 @@ type AIProvider {
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   reasoningEffort: AIReasoningEffort!
+  "How a Claude model behind an id the system cannot read takes thinking."
+  thinkingStyle: AIThinkingStyle!
   """
   Vendor request fields this endpoint takes that the protocol does not
   define, merged under the fields this system sets. Null when the endpoint

@@ -316,6 +316,10 @@ func (s *Service) apply(
 	if provider.ReasoningEffort == "" {
 		provider.ReasoningEffort = aiprovider.ReasoningOff
 	}
+	provider.ThinkingStyle = req.ThinkingStyle
+	if provider.ThinkingStyle == "" {
+		provider.ThinkingStyle = aiprovider.ThinkingStyleAuto
+	}
 	provider.ExtraBody = req.ExtraBody
 	provider.EmbeddingDimensions = req.EmbeddingDimensions
 	provider.EmbeddingInputStyle = req.EmbeddingInputStyle

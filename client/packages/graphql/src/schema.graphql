@@ -536,6 +536,8 @@ type AIProvider {
   reasoningEffort: AIReasoningEffort!
   structuredOutputMode: AIStructuredOutputMode!
   tasks: [AITask!]!
+  """How a Claude model behind an id the system cannot read takes thinking."""
+  thinkingStyle: AIThinkingStyle!
   trusted: Boolean!
   updatedAt: Timestamp!
   version: Int!
@@ -818,6 +820,18 @@ enum AITask {
   OperationalInsights
   QueryCompose
   ScopeClassification
+}
+
+"""
+How a Claude model is asked to think. Auto reads the model id; Effort asks by
+effort, as Claude models from Opus 4.6 and Sonnet 4.6 on require; Budget asks
+with a token budget, as older ones require. Only Anthropic Messages providers
+take anything but Auto.
+"""
+enum AIThinkingStyle {
+  Auto
+  Budget
+  Effort
 }
 
 """

@@ -280,6 +280,7 @@ func (r *repository) Update(
 			Set(cols.AllowPrivateNetwork.Set(), entity.AllowPrivateNetwork).
 			Set(cols.StructuredOutputMode.Set(), entity.StructuredOutputMode).
 			Set(cols.ReasoningEffort.Set(), entity.ReasoningEffort).
+			Set(cols.ThinkingStyle.Set(), entity.ThinkingStyle).
 			Set(cols.ExtraBody.Set(), entity.ExtraBody).
 			Set(cols.InputCostPerMillion.Set(), entity.InputCostPerMillion).
 			Set(cols.OutputCostPerMillion.Set(), entity.OutputCostPerMillion).
