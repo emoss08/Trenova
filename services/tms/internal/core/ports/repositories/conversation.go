@@ -97,6 +97,12 @@ type ListThreadAttentionRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type ThreadAttentionRow struct {
+	PendingPlans        int
+	PendingProposalRuns []pulid.ID
+	LastTurnStatus      conversation.AssistantTurnStatus
+}
+
 type MarkThreadReadRequest struct {
 	ThreadID   pulid.ID
 	UserID     pulid.ID
@@ -108,7 +114,7 @@ type ConversationRepository interface {
 	ListThreadAttention(
 		ctx context.Context,
 		req ListThreadAttentionRequest,
-	) (map[pulid.ID]conversation.ThreadAttentionSignals, error)
+	) (map[pulid.ID]ThreadAttentionRow, error)
 	MarkThreadRead(ctx context.Context, req MarkThreadReadRequest) error
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)

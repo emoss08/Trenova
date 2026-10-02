@@ -16,6 +16,8 @@ interface DeskState {
   activeArtifactByThread: Record<string, string>;
   /** The note about the terms above the composer has been read or closed. */
   termsSeen: boolean;
+  /** The replies each conversation has pinned as chapters, in the order pinned. */
+  chaptersByThread: Record<string, string[]>;
 
   setRail: (rail: DeskRailState) => void;
   toggleRail: () => void;
@@ -23,6 +25,7 @@ interface DeskState {
   togglePane: () => void;
   setActiveArtifact: (threadId: string, artifactId: string | null) => void;
   markTermsSeen: () => void;
+  toggleChapter: (threadId: string, messageId: string) => void;
 }
 
 /** Remembered artifacts for the most recently visited conversations. */
@@ -53,6 +56,7 @@ export const useDeskStore = create<DeskState>()(
       pane: "open",
       activeArtifactByThread: {},
       termsSeen: false,
+      chaptersByThread: {},
 
       setRail: (rail) => set({ rail }),
       toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
@@ -67,6 +71,14 @@ export const useDeskStore = create<DeskState>()(
           ),
         })),
       markTermsSeen: () => set({ termsSeen: true }),
+      toggleChapter: (threadId, messageId) =>
+        set((state) => {
+          const current = state.chaptersByThread[threadId] ?? [];
+          const next = current.includes(messageId)
+            ? current.filter((id) => id !== messageId)
+            : [...current, messageId];
+          return { chaptersByThread: { ...state.chaptersByThread, [threadId]: next } };
+        }),
     }),
     {
       name: "trenova-desk",
@@ -75,6 +87,7 @@ export const useDeskStore = create<DeskState>()(
         pane: state.pane,
         activeArtifactByThread: state.activeArtifactByThread,
         termsSeen: state.termsSeen,
+        chaptersByThread: state.chaptersByThread,
       }),
     },
   ),

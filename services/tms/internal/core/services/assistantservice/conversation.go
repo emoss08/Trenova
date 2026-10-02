@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -157,7 +158,7 @@ func (s *Service) markAttention(
 		ids = append(ids, thread.ID)
 	}
 
-	signals, err := s.conversations.ListThreadAttention(ctx, repositories.ListThreadAttentionRequest{
+	rows, err := s.conversations.ListThreadAttention(ctx, repositories.ListThreadAttentionRequest{
 		ThreadIDs:  ids,
 		UserID:     userID,
 		TenantInfo: tenant,
@@ -166,8 +167,27 @@ func (s *Service) markAttention(
 		return err
 	}
 
+	runIDs := make([]pulid.ID, 0)
+	for _, row := range rows {
+		runIDs = append(runIDs, row.PendingProposalRuns...)
+	}
+	verdicts, err := s.shadow.ForRuns(ctx, tenant, sliceutils.Dedupe(runIDs))
+	if err != nil {
+		return err
+	}
+
 	for _, thread := range threads {
-		thread.ApplyAttention(signals[thread.ID])
+		row := rows[thread.ID]
+		pending := row.PendingPlans
+		for _, runID := range row.PendingProposalRuns {
+			if !verdicts[runID].Shadow() {
+				pending++
+			}
+		}
+		thread.ApplyAttention(conversation.ThreadAttentionSignals{
+			PendingDecisions: pending,
+			LastTurnStatus:   row.LastTurnStatus,
+		})
 	}
 
 	return nil

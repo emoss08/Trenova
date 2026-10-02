@@ -2020,3 +2020,11 @@
 .dk-sk-gh{width:60px;height:10px;margin:22px 10px 10px;border-radius:4px}
 .dk-sk-title{width:240px;height:14px;border-radius:5px}
 .dk-sk-cmp{width:100%;height:96px;border-radius:16px}
+
+/* confetti: the Trenova logo's colours */
+.dk-confetti i:nth-child(7n+1){background:oklch(0.679 0.175 251.0)}.dk-confetti i:nth-child(7n+2){background:oklch(0.573 0.236 276.0)}.dk-confetti i:nth-child(7n+3){background:oklch(0.615 0.270 307.0)}.dk-confetti i:nth-child(7n+4){background:oklch(0.673 0.233 1.9)}.dk-confetti i:nth-child(7n+5){background:oklch(0.724 0.187 48.9)}.dk-confetti i:nth-child(7n+6){background:oklch(0.854 0.157 84.1)}.dk-confetti i:nth-child(7n+7){background:oklch(0.723 0.192 149.6)}
+.dk-prose .dk-md{font-size:inherit;line-height:inherit;color:inherit}.dk-prose .dk-md p{margin:0}.dk-prose .dk-md p+p,.dk-prose .dk-md p+ul,.dk-prose .dk-md ul+p,.dk-prose .dk-md p+ol,.dk-prose .dk-md ol+p{margin-top:12px}.dk-prose .dk-md strong{font-weight:550;color:var(--dsk-fg)}.dk-prose .dk-md li{line-height:1.7}
+.dk-r.dk-cont>.dk-g,.dk-r.dk-cont>.dk-c,.dk-r.dk-cont>.dk-m{margin-top:12px}
+.dk-extra{margin-top:14px}
+.dk-abadge .dk-abadge-i{width:11px;height:11px;flex:none}
+.dk-dock-pill{align-self:center}
