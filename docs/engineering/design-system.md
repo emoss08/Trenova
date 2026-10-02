@@ -311,7 +311,7 @@ wrong here even before dark mode is considered.
 
 | State | Treatment |
 |---|---|
-| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas or the card; it sits below the surface in both themes |
+| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. In light it sits below the card, a well; in dark it is Vercel's #0a0a0a, the same as a panel, so on a panel the hairline is what draws the slot |
 | hover | hairline steps to `--border-strong`; the fill does not change |
 | focus | the one focus ring (`ui-focus-ring`, or `ui-container-focus-ring` when a child takes focus) |
 | open | a trigger whose popup is open holds that same ring (`data-pressed`, `data-popup-open`, `aria-expanded`) |

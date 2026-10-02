@@ -242,9 +242,10 @@ names the token to use instead.
 - Everything that floats from a trigger (menus, selects, popovers, hover cards, tooltips) is
   inverted — dark in light mode. The primitives set `dark` on the positioner; never write it
   by hand, and build popover content from tokens only. Dialogs and sheets follow the theme.
-- Form controls are filled: `--field` never matches the canvas or the card. Every control
-  spends `ui-field` (rest, hover, open and disabled in one place); a `Button`-built trigger
-  takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
+- Form controls are filled: `--field` never matches the canvas. In light it is a well below
+  the card; in dark it is Vercel's #0a0a0a, the panel fill, and the `--input` hairline
+  carries it on a panel. Every control spends `ui-field` (rest, hover, open and disabled in
+  one place); a `Button`-built trigger takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
   `@trenova/shared/lib/variants/field`. Never hand-write `border-input bg-muted` or a
   `data-pressed:ring-*` on a field.
 - Pages: always `PageLayout` with `pageHeaderProps` (never mount `PageHeader` by hand, never
