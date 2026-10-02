@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   AgentRunRow,
   AgentRunTranscript,
@@ -13,6 +13,13 @@ import { queries } from "@/lib/queries";
 import { AgentRunPanel } from "../agent-run-panel";
 import { transcriptBlocks } from "../run-transcript";
 import { RunTranscriptView } from "../run-transcript-view";
+
+const mocks = vi.hoisted(() => ({ download: vi.fn() }));
+
+vi.mock("@/services/agent-run", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/agent-run")>()),
+  downloadAgentRunTranscript: mocks.download,
+}));
 
 afterEach(cleanup);
 
@@ -174,6 +181,10 @@ describe("RunTranscriptView", () => {
 });
 
 describe("AgentRunPanel", () => {
+  beforeEach(() => {
+    mocks.download.mockReset();
+  });
+
   const row = {
     id: RUN,
     agentType: "AssistantChat",
@@ -201,6 +212,22 @@ describe("AgentRunPanel", () => {
     expect(screen.getByText("Not permitted")).toBeTruthy();
   });
 
+  it("downloads the run's transcript from its disclosure", async () => {
+    const user = userEvent.setup();
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+    client.setQueryData(queries.agentRun.transcript(RUN).queryKey, deniedRun());
+
+    render(wrap(<AgentRunPanel open onOpenChange={() => {}} mode="edit" row={row} />, client));
+
+    expect(screen.queryByRole("button", { name: "Download transcript" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Transcript" }));
+    await user.click(await screen.findByRole("button", { name: "Download transcript" }));
+
+    expect(mocks.download).toHaveBeenCalledExactlyOnceWith(RUN);
+  });
+
   it("says so when the run kept no transcript", async () => {
     const user = userEvent.setup();
     const client = new QueryClient({
@@ -212,5 +239,6 @@ describe("AgentRunPanel", () => {
     await user.click(screen.getByRole("button", { name: "Transcript" }));
 
     expect(await screen.findByText(/This run kept no transcript/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Download transcript" })).toBeNull();
   });
 });

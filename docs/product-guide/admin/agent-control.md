@@ -389,6 +389,17 @@ Keywords: download audit trail, AI audit export, CSV, JSON, auditor, compliance 
    **SHA-256**, **Chain** (**Complete** or **Filtered**) and when it **Expires**. Select
    **Download** on your own export to download it.
 
+### Read or download what an agent run did
+Keywords: run transcript, agent run log, what did the agent say, download transcript, background run, scheduled run
+1. Open [AI control](/admin/agent-control), select **Activity** in the rail and then **Runs**.
+2. Select a run to open it: its **Status**, what it was **Started by**, the **Model** and its
+   **Summary**.
+3. Open **Transcript** to read what the agent said and thought and each tool it called, with what
+   it sent and got back. A long run keeps its opening and its end; the stretch left out between
+   them is counted where it fell.
+4. Select **Download** to save the transcript as a Markdown file, laid out the way a downloaded
+   conversation is, with the number of messages left out stated in it.
+
 ### Find the trace of an agent's work
 Keywords: trace id, tracing, OpenTelemetry, Tempo, Jaeger, span
 1. Open [AI control](/admin/agent-control) and select **Activity** in the rail, then **Runs** or

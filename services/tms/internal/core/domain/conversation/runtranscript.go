@@ -86,3 +86,37 @@ func encodedSize(entry *agent.TranscriptMessage) int {
 
 	return len(encoded)
 }
+
+func MessageOfTranscript(entry *agent.TranscriptMessage) Message {
+	message := Message{
+		Role:              Role(entry.Role),
+		Kind:              MessageKind(entry.Kind),
+		Content:           entry.Content,
+		ToolCallID:        entry.ToolCallID,
+		ToolName:          entry.ToolName,
+		ToolFailed:        entry.ToolFailed,
+		ToolVerdict:       entry.ToolVerdict,
+		ToolSummary:       entry.ToolSummary,
+		AgentDefinitionID: entry.AgentDefinitionID,
+		DelegateCallID:    entry.DelegateCallID,
+		CreatedAt:         entry.CreatedAt,
+	}
+	if message.Kind == "" {
+		message.Kind = MessageKindMessage
+	}
+	if entry.Reasoning != "" {
+		message.Reasoning = &ReasoningTrace{Text: entry.Reasoning}
+	}
+	if len(entry.ToolCalls) > 0 {
+		message.ToolCalls = make([]ToolCallRecord, len(entry.ToolCalls))
+		for idx, call := range entry.ToolCalls {
+			message.ToolCalls[idx] = ToolCallRecord{
+				ID:        call.ID,
+				Name:      call.Name,
+				Arguments: call.Arguments,
+			}
+		}
+	}
+
+	return message
+}

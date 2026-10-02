@@ -522,9 +522,7 @@ type ListThreadMessagesRequest struct {
 // ThreadMessagesPage is one page of a thread in reading order, with what a
 // client needs to ask for the page above it and to say how long the
 // conversation has become.
-// ThreadTranscript is a conversation rendered as Markdown, with the name the
-// file should be saved under.
-type ThreadTranscript struct {
+type TranscriptFile struct {
 	FileName string
 	Body     string
 }
@@ -624,7 +622,7 @@ type AssistantService interface {
 	Transcript(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
-	) (*ThreadTranscript, error)
+	) (*TranscriptFile, error)
 	DeleteThread(ctx context.Context, req repositories.GetThreadRequest) error
 	// StartAsk opens the hidden thread a quick question is answered on. The
 	// answer is a turn like any other; the thread is listed only when the

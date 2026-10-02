@@ -30,6 +30,10 @@ type chatProposalStore interface {
 		ctx context.Context,
 		req repositories.ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
+	ListByRun(
+		ctx context.Context,
+		req repositories.ListAgentProposalsByRunRequest,
+	) ([]*agent.AgentProposal, error)
 }
 
 // Evidence on a chat proposal points at the conversation, because that is where

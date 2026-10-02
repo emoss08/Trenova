@@ -39,8 +39,9 @@ type Params struct {
 	Encryption *encryptionservice.Service
 	// Usage records every attempt. Optional so a router built without a
 	// database still answers; without it nothing is counted.
-	Usage   repositories.AIUsageRepository `optional:"true"`
-	Metrics *metrics.Registry              `optional:"true"`
+	Usage    repositories.AIUsageRepository         `optional:"true"`
+	Metrics  *metrics.Registry                      `optional:"true"`
+	Breakers repositories.ProviderBreakerRepository `optional:"true"`
 }
 
 type Service struct {
@@ -76,15 +77,17 @@ func New(p Params) serviceports.CompletionService {
 }
 
 func newService(p Params) *Service {
+	logger := p.Logger.Named("service.completion-router")
+
 	return &Service{
-		logger:        p.Logger.Named("service.completion-router"),
+		logger:        logger,
 		ai:            p.Config.GetAIConfig(),
 		repo:          p.Repo,
 		encryption:    p.Encryption,
 		usage:         p.Usage,
 		genAI:         p.Metrics.GenAI(),
 		adapters:      modeladapter.NewRegistry(),
-		health:        newProviderHealth(nil),
+		health:        newProviderHealth(nil).share(p.Breakers, logger),
 		pause:         pauseFor,
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
@@ -163,7 +166,7 @@ func (s *Service) candidatesFor(
 		}
 	}
 
-	ready, err := s.awake(usable)
+	ready, err := s.awake(ctx, usable)
 	if err != nil {
 		return nil, err
 	}
@@ -225,8 +228,11 @@ func (s *Service) usableFor(
 // awake drops the providers resting after repeated failures. When every one
 // of them is resting the caller is told so, with when the first is due back,
 // rather than sent through a list that will fail at each step.
-func (s *Service) awake(usable []*aiprovider.Provider) ([]*aiprovider.Provider, error) {
-	ready, resting, until := s.health.rested(usable)
+func (s *Service) awake(
+	ctx context.Context,
+	usable []*aiprovider.Provider,
+) ([]*aiprovider.Provider, error) {
+	ready, resting, until := s.health.rested(ctx, usable)
 	for _, provider := range resting {
 		s.logger.Debug("skipping provider resting after repeated failures",
 			zap.String("provider", provider.Name),

@@ -24,12 +24,12 @@ func TestProviderHealth_RestsAProviderAfterRepeatedUnavailability(t *testing.T) 
 	down := &modeladapter.TransportError{StatusCode: http.StatusBadGateway, Retryable: true}
 
 	for range breakerThreshold - 1 {
-		health.Observe(id, down)
+		health.Observe(t.Context(), id, down)
 	}
 	_, resting := health.Resting(id)
 	assert.False(t, resting, "short of the threshold the provider is still asked")
 
-	health.Observe(id, down)
+	health.Observe(t.Context(), id, down)
 	until, resting := health.Resting(id)
 	require.True(t, resting)
 	assert.Equal(t, now.Add(breakerCooldown), until)
@@ -50,8 +50,8 @@ func TestProviderHealth_IgnoresRejectionsAndCancellations(t *testing.T) {
 	rejected := &modeladapter.TransportError{StatusCode: http.StatusBadRequest, Retryable: false}
 
 	for range breakerThreshold * 2 {
-		health.Observe(id, rejected)
-		health.Observe(id, context.Canceled)
+		health.Observe(t.Context(), id, rejected)
+		health.Observe(t.Context(), id, context.Canceled)
 	}
 
 	_, resting := health.Resting(id)
@@ -65,11 +65,11 @@ func TestProviderHealth_ASuccessClearsTheCount(t *testing.T) {
 	id := pulid.MustNew("aiprv_")
 	down := &modeladapter.TransportError{StatusCode: http.StatusServiceUnavailable, Retryable: true}
 
-	health.Observe(id, down)
-	health.Observe(id, down)
-	health.Observe(id, nil)
-	health.Observe(id, down)
-	health.Observe(id, down)
+	health.Observe(t.Context(), id, down)
+	health.Observe(t.Context(), id, down)
+	health.Observe(t.Context(), id, nil)
+	health.Observe(t.Context(), id, down)
+	health.Observe(t.Context(), id, down)
 
 	_, resting := health.Resting(id)
 	assert.False(t, resting, "the count starts over after an answer")

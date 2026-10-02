@@ -116,6 +116,33 @@ cookbook's retry-from-HTTP-response recipe:
   Resting providers are asked again after their rest.
 - Everything else is retried on the policy's own backoff.
 
+### A rested provider is rested on every worker
+
+The completion router (`completionrouter/health.go`) rests a provider after
+three unavailability failures in a row (a 429, a 5xx, a timeout, an unreachable
+host) for a one-minute cooldown, so a turn stops paying for attempts on a
+provider that is down. The count of failures is per process; the rest is
+shared. When a worker opens the breaker it also writes `ai:breaker:{providerID}`
+to Redis with a TTL equal to the cooldown, through the
+`repositories.ProviderBreakerRepository` port
+(`redis/repositories/providerbreaker.go`, provided in `RedisRepositoriesModule`
+and injected `optional:"true"`). The key is the provider row's id, so a
+tenant-owned provider is its own breaker, and the value is a marker: nothing
+about the provider or its credentials is stored.
+
+Each call reads memory first, then asks the store once, in one pipelined
+`PTTL` round trip, about the providers memory does not already hold resting,
+and keeps what it finds in memory until that rest ends, so a provider rested
+elsewhere is not read again on this worker. The remaining TTL, not a
+timestamp, is what is read, so the workers' clocks need not agree. The store is
+best-effort: a read or write is bounded to 250 ms, a write outlives a caller
+that has gone, and a failure (other than the caller's own cancellation) is
+logged once as a warning, after which the worker carries on from memory alone
+and leaves the store for 30 seconds before asking it again; it logs at info
+when the store answers again. A completion is never failed or held up by the
+store. Without Redis (tests, a CLI) the router is built without the port and
+the breaker is exactly the in-memory one.
+
 The kind of failure travels in the error's details (`modelcall.Failure`), so
 whoever reads it afterwards — the saved turn, a request waiting on a one-shot
 call — still knows whether the provider refused, was unreachable, timed out, or
@@ -904,10 +931,30 @@ updating a run never carry it, and it is hidden from the run's JSON so a
 realtime invalidation never ships it. Read it through `AgentRun.transcript`,
 which checks the run read permission itself and loads through a per-request
 dataloader; AI Control's run panel shows it behind a Transcript disclosure, with
-the conversation's own tool rows. The transcript lives on the run row and goes
-with it: no sweep prunes runs or their events today, and the row is deleted
-only with its organization, by the existing cascade, so nothing has to keep the
-transcript and the event log in step.
+the conversation's own tool rows.
+
+The disclosure's **Download** saves it as a file:
+`GET /api/v1/agent-runs/:runID/transcript/`, gated on reading an agent run and
+read under the caller's tenant (another organization's run is not found). It is
+served by `assistantservice.Service.RunTranscript` through the narrow
+`AgentRunTranscriptService` port, as `text/markdown` with a server-chosen file
+name and `no-store`, exactly as a conversation's download is. Both documents
+come from one renderer in `assistantservice/transcript.go`
+(`renderTranscriptDocument`), which takes a message list, a heading and the
+proposals: a conversation passes its thread's messages, a run converts its
+stored entries back with `conversation.MessageOfTranscript` and passes the
+proposals it raised (`ListByRun`). The run's heading names its agent, trigger,
+status, start and finish and model; a message kept without its body says it was
+too long to keep; and the left-out middle is stated twice, in the heading's
+message count ("40 kept, 12 left out") and as a line where it fell, and a
+delegated task's steps on either side of that line are never joined across it. A golden file
+(`testdata/conversation_transcript.golden.md`) holds the conversation's
+download byte for byte, so a change to the shared renderer that moves it fails.
+
+The transcript lives on the run row and goes with it: no sweep prunes runs or
+their events today, and the row is deleted only with its organization, by the
+existing cascade, so nothing has to keep the transcript and the event log in
+step.
 
 An event's `occurred_at` is the instant the workflow emitted it
 (`StreamItem.At`, stamped with `workflow.Now`), not when the filing activity
@@ -1091,8 +1138,6 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 - **Search attributes are not set.** Organization, feature, thread and
   definition are carried in workflow ids, summaries and fairness keys; typed
   search attributes need registering on the server first.
-- **The provider circuit breaker is per worker.** Temporal's retries cover what
-  it compensated for; sharing it across workers is a separate change.
 - **A run's trace root is emitted when the run is filed.** A run parked in a
   decision wait shows its root once it is filed, not when the last proposal is
   decided, and a workflow evicted from the cache may never export its

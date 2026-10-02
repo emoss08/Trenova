@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e0eb99f3ee83b01b292a85ebb88bb1c5390ff8e030aadc221c275ac18e1b99a2",
+  "version": "sha256:7e303a0fd231786bcd095be8d62b8f781b0e75134459714d2a7fc0997a68480c",
   "modules": [
     {
       "id": "home",
@@ -2774,6 +2774,23 @@
             "Choose the **Format**, CSV or JSON, set **From** and **To**, and leave **Use current filters** on to carry the agent, person, evaluations and table filters into the file, or turn it off to export every row in the range.",
             "Select **Export**. A small export downloads at once and shows its rows, size and SHA-256; **Download again** fetches it again. A large one is written in the background: you are notified when it is ready, and **Open exports** shows it.",
             "Select **Exports** in the rail to see every export with its status, **Rows**, **Size**, **SHA-256**, **Chain** (**Complete** or **Filtered**) and when it **Expires**. Select **Download** on your own export to download it."
+          ]
+        },
+        {
+          "title": "Read or download what an agent run did",
+          "keywords": [
+            "run transcript",
+            "agent run log",
+            "what did the agent say",
+            "download transcript",
+            "background run",
+            "scheduled run"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control), select **Activity** in the rail and then **Runs**.",
+            "Select a run to open it: its **Status**, what it was **Started by**, the **Model** and its **Summary**.",
+            "Open **Transcript** to read what the agent said and thought and each tool it called, with what it sent and got back. A long run keeps its opening and its end; the stretch left out between them is counted where it fell.",
+            "Select **Download** to save the transcript as a Markdown file, laid out the way a downloaded conversation is, with the number of messages left out stated in it."
           ]
         },
         {

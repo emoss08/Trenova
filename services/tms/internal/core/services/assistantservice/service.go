@@ -59,6 +59,7 @@ var Module = fx.Module("assistant",
 		fx.As(fx.Self()),
 		fx.As(new(serviceports.AssistantService)),
 		fx.As(new(serviceports.PageAssistant)),
+		fx.As(new(serviceports.AgentRunTranscriptService)),
 	)),
 )
 

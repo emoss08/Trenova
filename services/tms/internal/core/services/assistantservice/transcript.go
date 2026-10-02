@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,6 +37,9 @@ const (
 
 	transcriptTimeLayout = "Jan 2, 2006 3:04:05 PM MST"
 	transcriptSlugLength = 60
+
+	transcriptTrimmedNote = "_Too long to keep in full: only who spoke and which tools " +
+		"were called are kept._\n\n"
 )
 
 // transcriptJSON lays JSON out for a reader, keys in order, so the same
@@ -46,7 +50,7 @@ var transcriptJSON = sonic.Config{SortMapKeys: true}.Froze()
 func (s *Service) Transcript(
 	ctx context.Context,
 	req repositories.GetThreadRequest,
-) (*services.ThreadTranscript, error) {
+) (*services.TranscriptFile, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
 		return nil, err
@@ -65,9 +69,9 @@ func (s *Service) Transcript(
 		return nil, err
 	}
 
-	return &services.ThreadTranscript{
+	return &services.TranscriptFile{
 		FileName: transcriptFileName(thread),
-		Body: renderTranscript(transcriptInput{
+		Body: renderTranscript(&transcriptInput{
 			Thread:     thread,
 			AgentName:  s.agentName(ctx, req, thread),
 			Delegates:  s.agentNames(ctx, req.TenantInfo, delegatedAgents(messages)),
@@ -151,12 +155,17 @@ func transcriptFileName(thread *conversation.Thread) string {
 	if slug == "" {
 		slug = "conversation"
 	}
-	id := thread.ID.String()
-	if len(id) > 8 {
-		id = id[len(id)-8:]
+
+	return slug + "-" + transcriptIDSuffix(thread.ID) + ".md"
+}
+
+func transcriptIDSuffix(id pulid.ID) string {
+	value := id.String()
+	if len(value) > 8 {
+		value = value[len(value)-8:]
 	}
 
-	return slug + "-" + strings.ToLower(id) + ".md"
+	return strings.ToLower(value)
 }
 
 type transcriptInput struct {
@@ -181,46 +190,117 @@ func delegatedAgents(messages []conversation.Message) []pulid.ID {
 	return ids
 }
 
-// delegateName is the name of an agent the conversation's agent handed a
-// task to, or a plain one when it has since been deleted.
-func (in *transcriptInput) delegateName(id pulid.ID) string {
-	if name := strings.TrimSpace(in.Delegates[id]); name != "" {
+func renderTranscript(in *transcriptInput) string {
+	title := strings.TrimSpace(in.Thread.Title)
+	if title == "" {
+		title = "Conversation"
+	}
+
+	facts := make([]transcriptFact, 0, 6)
+	facts = append(facts,
+		transcriptFact{Name: "Agent", Value: in.AgentName},
+		transcriptFact{Name: "Started", Value: transcriptTime(in.Thread.CreatedAt)},
+	)
+	if in.Thread.LastMessageAt > 0 {
+		facts = append(facts, transcriptFact{
+			Name:  "Last message",
+			Value: transcriptTime(in.Thread.LastMessageAt),
+		})
+	}
+	facts = append(facts,
+		transcriptFact{Name: "Messages", Value: strconv.Itoa(len(in.Messages))},
+		transcriptFact{Name: "Exported", Value: transcriptTime(in.ExportedAt)},
+		transcriptFact{Name: "Conversation id", Value: "`" + in.Thread.ID.String() + "`"},
+	)
+
+	return renderTranscriptDocument(&transcriptDocument{
+		Title:     title,
+		Facts:     facts,
+		AgentName: in.AgentName,
+		Delegates: in.Delegates,
+		Messages:  in.Messages,
+		Proposals: in.Proposals,
+	})
+}
+
+type transcriptFact struct {
+	Name  string
+	Value string
+}
+
+type transcriptGap struct {
+	At    int
+	Count int
+}
+
+type transcriptDocument struct {
+	Title     string
+	Facts     []transcriptFact
+	AgentName string
+	Delegates map[pulid.ID]string
+	Messages  []conversation.Message
+	Trimmed   []bool
+	Gap       transcriptGap
+	Empty     string
+	Proposals []*agent.AgentProposal
+}
+
+func (d *transcriptDocument) delegateName(id pulid.ID) string {
+	if name := strings.TrimSpace(d.Delegates[id]); name != "" {
 		return name
 	}
 
 	return "Another agent"
 }
 
-func renderTranscript(in transcriptInput) string {
+func (d *transcriptDocument) trimmed(idx int) bool {
+	return idx < len(d.Trimmed) && d.Trimmed[idx]
+}
+
+func (d *transcriptDocument) delegationEnd(start int) int {
+	callID := d.Messages[start].DelegateCallID
+	end := start + 1
+	for end < len(d.Messages) && d.Messages[end].Delegated() &&
+		d.Messages[end].DelegateCallID == callID && !d.gapAt(end) {
+		end++
+	}
+
+	return end
+}
+
+func (d *transcriptDocument) gapAt(idx int) bool {
+	return d.Gap.Count > 0 && d.Gap.At == idx
+}
+
+func renderTranscriptDocument(doc *transcriptDocument) string {
 	var b strings.Builder
-	b.Grow(4096 + len(in.Messages)*512)
+	b.Grow(4096 + len(doc.Messages)*512)
 
-	title := strings.TrimSpace(in.Thread.Title)
-	if title == "" {
-		title = "Conversation"
+	fmt.Fprintf(&b, "# %s\n\n", doc.Title)
+	for _, fact := range doc.Facts {
+		fmt.Fprintf(&b, "- **%s:** %s\n", fact.Name, fact.Value)
 	}
-	fmt.Fprintf(&b, "# %s\n\n", title)
-	fmt.Fprintf(&b, "- **Agent:** %s\n", in.AgentName)
-	fmt.Fprintf(&b, "- **Started:** %s\n", transcriptTime(in.Thread.CreatedAt))
-	if in.Thread.LastMessageAt > 0 {
-		fmt.Fprintf(&b, "- **Last message:** %s\n", transcriptTime(in.Thread.LastMessageAt))
-	}
-	fmt.Fprintf(&b, "- **Messages:** %d\n", len(in.Messages))
-	fmt.Fprintf(&b, "- **Exported:** %s\n", transcriptTime(in.ExportedAt))
-	fmt.Fprintf(&b, "- **Conversation id:** `%s`\n", in.Thread.ID.String())
 
-	for i := 0; i < len(in.Messages); {
-		message := &in.Messages[i]
+	if len(doc.Messages) == 0 && doc.Empty != "" {
+		writeSection(&b, "_"+doc.Empty+"_")
+	}
+
+	for i := 0; i <= len(doc.Messages); {
+		if doc.gapAt(i) {
+			writeSection(&b, transcriptGapNote(doc.Gap.Count))
+		}
+		if i == len(doc.Messages) {
+			break
+		}
+
+		message := &doc.Messages[i]
 		if message.Delegated() {
-			end := i + 1
-			for end < len(in.Messages) && in.Messages[end].Delegated() &&
-				in.Messages[end].DelegateCallID == message.DelegateCallID {
-				end++
-			}
+			end := doc.delegationEnd(i)
 			var section strings.Builder
-			writeTranscriptDelegation(
-				&section, in.Messages[i:end], in.delegateName(message.AgentDefinitionID),
-			)
+			writeTranscriptDelegation(&section, transcriptSteps{
+				Messages: doc.Messages[i:end],
+				Trimmed:  doc.trimmedRange(i, end),
+			}, doc.delegateName(message.AgentDefinitionID))
 			writeSection(&b, section.String())
 			i = end
 
@@ -228,15 +308,15 @@ func renderTranscript(in transcriptInput) string {
 		}
 
 		var section strings.Builder
-		writeTranscriptMessage(&section, message, in.AgentName)
+		writeTranscriptMessage(&section, message, doc.AgentName, doc.trimmed(i))
 		writeSection(&b, section.String())
 		i++
 	}
 
-	if len(in.Proposals) > 0 {
+	if len(doc.Proposals) > 0 {
 		var section strings.Builder
 		section.WriteString("## Proposals\n")
-		for _, proposal := range in.Proposals {
+		for _, proposal := range doc.Proposals {
 			writeTranscriptProposal(&section, proposal)
 		}
 		writeSection(&b, section.String())
@@ -245,13 +325,47 @@ func renderTranscript(in transcriptInput) string {
 	return b.String()
 }
 
+func (d *transcriptDocument) trimmedRange(start, end int) []bool {
+	if start >= len(d.Trimmed) {
+		return nil
+	}
+
+	return d.Trimmed[start:min(end, len(d.Trimmed))]
+}
+
+func transcriptGapNote(count int) string {
+	noun := "messages"
+	if count == 1 {
+		noun = "message"
+	}
+
+	return fmt.Sprintf(
+		"_%d %s left out here: the run kept its opening and its end within its size limit._",
+		count, noun,
+	)
+}
+
+type transcriptSteps struct {
+	Messages []conversation.Message
+	Trimmed  []bool
+}
+
+func (s transcriptSteps) trimmed(idx int) bool {
+	return idx < len(s.Trimmed) && s.Trimmed[idx]
+}
+
 func writeSection(b *strings.Builder, section string) {
 	b.WriteString("\n---\n\n")
 	b.WriteString(strings.TrimRight(section, "\n"))
 	b.WriteString("\n")
 }
 
-func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentName string) {
+func writeTranscriptMessage(
+	b *strings.Builder,
+	m *conversation.Message,
+	agentName string,
+	trimmed bool,
+) {
 	if m.Role == conversation.RoleUser && m.Kind == conversation.MessageKindDecisionNote {
 		writeTranscriptDecision(b, m)
 
@@ -265,6 +379,7 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 			fmt.Fprintf(b, "_On %s_\n\n", describePage(m.PageContext.Title, m.PageContext.Path))
 		}
 		writeRefusal(b, m, "Not answered")
+		writeTrimmed(b, trimmed)
 		writeText(b, m.Content)
 	case conversation.RoleAssistant:
 		fmt.Fprintf(b, "## %s · %s", agentName, transcriptTime(m.CreatedAt))
@@ -274,6 +389,7 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 		}
 		b.WriteString("\n\n")
 		writeRefusal(b, m, "Reply withheld")
+		writeTrimmed(b, trimmed)
 		if m.Reasoning.Readable() {
 			b.WriteString("<details>\n<summary>Reasoning</summary>\n\n")
 			writeQuoted(b, m.Reasoning.Text)
@@ -282,7 +398,9 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 		writeText(b, m.Content)
 		for _, call := range m.ToolCalls {
 			fmt.Fprintf(b, "**Called `%s`**\n\n", call.Name)
-			writeJSON(b, call.Arguments)
+			if !trimmed || call.Arguments != nil {
+				writeJSON(b, call.Arguments)
+			}
 		}
 	case conversation.RoleTool:
 		name := m.ToolName
@@ -299,6 +417,7 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 			b.WriteString(failedToolLabel(m.ToolVerdict))
 		}
 		b.WriteString("\n\n")
+		writeTrimmed(b, trimmed)
 		if fenced {
 			writeResult(b, payload)
 		} else {
@@ -306,13 +425,17 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 		}
 	default:
 		fmt.Fprintf(b, "## %s · %s\n\n", m.Role, transcriptTime(m.CreatedAt))
+		writeTrimmed(b, trimmed)
 		writeText(b, m.Content)
 	}
 }
 
-// writeTranscriptDelegation writes what another agent did on a task the
-// conversation's agent handed it, quoted under the call that handed it over:
-// the task, then each of its steps, in the order they happened.
+func writeTrimmed(b *strings.Builder, trimmed bool) {
+	if trimmed {
+		b.WriteString(transcriptTrimmedNote)
+	}
+}
+
 func failedToolLabel(verdict string) string {
 	switch verdict {
 	case aitrace.OutcomeDenied:
@@ -328,23 +451,27 @@ func failedToolLabel(verdict string) string {
 	}
 }
 
+// writeTranscriptDelegation writes what another agent did on a task the
+// conversation's agent handed it, quoted under the call that handed it over:
+// the task, then each of its steps, in the order they happened.
 func writeTranscriptDelegation(
 	b *strings.Builder,
-	steps []conversation.Message,
+	steps transcriptSteps,
 	agentName string,
 ) {
 	fmt.Fprintf(b, "## Handed to %s\n\n", agentName)
 
 	var inner strings.Builder
-	for idx := range steps {
-		step := &steps[idx]
+	for idx := range steps.Messages {
+		step := &steps.Messages[idx]
 		if step.Role == conversation.RoleUser {
 			fmt.Fprintf(&inner, "### Task · %s\n\n", transcriptTime(step.CreatedAt))
+			writeTrimmed(&inner, steps.trimmed(idx))
 			writeText(&inner, step.Content)
 
 			continue
 		}
-		writeTranscriptMessage(&inner, step, agentName)
+		writeTranscriptMessage(&inner, step, agentName, steps.trimmed(idx))
 	}
 
 	writeQuoted(b, inner.String())

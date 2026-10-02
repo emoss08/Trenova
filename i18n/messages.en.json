@@ -6766,6 +6766,15 @@
       "service/formulatemplateservice"
     ]
   },
+  "A tenant is required to read an agent run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "A tender waiting on review holds a carrier's acceptance, so withdrawing it is a proposal a person decides, as is one the service would refuse or that cannot be read; an active tender is withdrawn once a person approves it.": {
     "sites": 1,
     "scope": [
@@ -13702,6 +13711,15 @@
     "areas": [
       "service/agentquerytoolservice",
       "service/agentredteam"
+    ]
+  },
+  "Agent run transcripts are not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "Agent runs, proposals, and exception handling.": {
@@ -58606,7 +58624,7 @@
     ]
   },
   "Download": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -58714,12 +58732,13 @@
     ]
   },
   "Download transcript": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/desk"
     ]
   },

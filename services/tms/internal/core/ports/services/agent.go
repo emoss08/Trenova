@@ -72,6 +72,13 @@ type AgentRunService interface {
 	) (*agent.AgentRun, error)
 }
 
+type AgentRunTranscriptService interface {
+	RunTranscript(
+		ctx context.Context,
+		req repositories.GetAgentRunByIDRequest,
+	) (*TranscriptFile, error)
+}
+
 type AgentProposalService interface {
 	List(
 		ctx context.Context,

@@ -68,7 +68,7 @@ func (s *Service) runChat(
 	// A pinned provider that is resting is not tried anyway: the person
 	// chose it, but a choice of a provider that is down is a wait, not a
 	// reply, and the error names the wait.
-	usable, err = s.awake(usable)
+	usable, err = s.awake(ctx, usable)
 	if err != nil {
 		return nil, err
 	}
