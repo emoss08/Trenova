@@ -43,17 +43,22 @@ type responsesRequest struct {
 // protocol carries tool traffic as input items rather than as message roles.
 type responsesReasoning struct {
 	Effort  string `json:"effort"`
-	Summary string `json:"summary"`
+	Summary string `json:"summary,omitempty"`
 }
 
 // applyReasoning asks for reasoning at the provider's effort, with a summary
-// to show and the encrypted chain to replay on the next call.
+// to show and the encrypted chain to replay on the next call. None asks the
+// model not to reason, so there is neither a summary nor a chain to ask for.
 func (r *responsesRequest) applyReasoning(call *Call) {
-	effort := call.reasoning().Wire()
-	if effort == "" {
+	effort := call.reasoning()
+	if effort.Disabled() {
+		r.Reasoning = &responsesReasoning{Effort: effort.Wire()}
 		return
 	}
-	r.Reasoning = &responsesReasoning{Effort: effort, Summary: "auto"}
+	if !effort.Enabled() {
+		return
+	}
+	r.Reasoning = &responsesReasoning{Effort: effort.Wire(), Summary: "auto"}
 	r.Include = []string{"reasoning.encrypted_content"}
 }
 

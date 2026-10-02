@@ -33,8 +33,9 @@ type ollamaRequest struct {
 	Format  map[string]any `json:"format,omitempty"`
 	Stream  bool           `json:"stream"`
 	Options *ollamaOptions `json:"options,omitempty"`
-	// Think asks a thinking model to reason first and report it separately.
-	Think bool `json:"think,omitempty"`
+	// Think asks a thinking model to reason first and report it separately,
+	// or, set false, not to reason at all. Nil leaves the model's default.
+	Think *bool `json:"think,omitempty"`
 }
 
 type ollamaMessage struct {
@@ -93,7 +94,7 @@ func (a ollamaAdapter) Stream(
 		Messages: toOllamaMessages(call.Request.System, call.Request.Messages),
 		Tools:    toOllamaTools(call.Request.Tools),
 		Stream:   true,
-		Think:    call.reasoning().Enabled(),
+		Think:    ollamaThink(call.reasoning()),
 	}
 	if call.Request.MaxTokens > 0 {
 		body.Options = &ollamaOptions{NumPredict: call.Request.MaxTokens}
@@ -173,7 +174,7 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		// A streamed reply arrives as newline-delimited objects, which would not
 		// decode into a single response.
 		Stream: false,
-		Think:  call.reasoning().Enabled(),
+		Think:  ollamaThink(call.reasoning()),
 	}
 
 	if call.Request.MaxTokens > 0 {
@@ -315,4 +316,15 @@ func fromOllamaToolCalls(calls []ollamaToolCall) []ToolCall {
 	}
 
 	return out
+}
+
+func ollamaThink(effort aiprovider.ReasoningEffort) *bool {
+	switch {
+	case effort.Enabled():
+		return new(true)
+	case effort.Disabled():
+		return new(false)
+	default:
+		return nil
+	}
 }

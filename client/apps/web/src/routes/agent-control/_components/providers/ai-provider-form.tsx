@@ -395,20 +395,27 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
                   control={control}
                   label={t("Reasoning")}
                   // Off is the safe default: the reasoning parameter is refused by
-                  // models without it. The levels are a categorical scale of
+                  // models without it. None is what turns a reasoning-by-default
+                  // model's thinking off. The levels are a categorical scale of
                   // effort, not severities, so they take one accent.
                   options={[
                     {
-                      label: t("Off — answer directly"),
+                      label: t("Off — send no reasoning setting"),
                       value: "Off",
                       color: toneVar("muted"),
                     },
+                    {
+                      label: t("None — a reasoning model answers without thinking (fastest)"),
+                      value: "None",
+                      color: toneVar("muted"),
+                    },
+                    { label: t("Minimal"), value: "Minimal", color: accentVar("teal") },
                     { label: t("Low"), value: "Low", color: accentVar("teal") },
                     { label: t("Medium"), value: "Medium", color: accentVar("teal") },
                     { label: t("High"), value: "High", color: accentVar("teal") },
                   ]}
                   description={t(
-                    "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.",
+                    "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Off sends nothing, so a model that reasons by default (GPT-5 and later) still thinks; choose None to stop it. Any setting but Off is rejected by a model that cannot reason.",
                   )}
                 />
               </FormControl>

@@ -140,12 +140,16 @@ export type AiProviderKind =
 
 /**
  * How hard a model is asked to think before it answers. Off sends no reasoning
- * parameter, which models without reasoning reject outright.
+ * parameter, which models without reasoning reject outright; a model that reasons
+ * by default then reasons at its own default. None tells such a model not to
+ * reason, and Minimal asks for the least reasoning it allows.
  */
 export type AiReasoningEffort =
   | 'High'
   | 'Low'
   | 'Medium'
+  | 'Minimal'
+  | 'None'
   | 'Off';
 
 /** Where one source stands in the index under one embedding model. */

@@ -241,6 +241,30 @@ func TestOpenAIChatAdapter_SendsNoEffortWhenOff(t *testing.T) {
 	assert.False(t, sent)
 }
 
+// GPT-5-family models reason at their default effort when no effort is sent,
+// so a provider set to None has to say so on the wire.
+func TestOpenAIChatAdapter_SendsNoneExplicitly(t *testing.T) {
+	t.Parallel()
+
+	server, captured := streamServer(t, "text/event-stream", sse(
+		[2]string{
+			"",
+			`{"model":"m","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":"stop"}]}`,
+		},
+		[2]string{"", "[DONE]"},
+	))
+
+	_, _, _ = streamWithReasoning(t, NewOpenAIChatAdapter(), reasoningCall(
+		aiprovider.KindOpenAIChat,
+		server.URL,
+		aiprovider.ReasoningNone,
+		&Request{Messages: UserMessage("hi")},
+	))
+
+	assert.Equal(t, "none", (*captured)["reasoning_effort"])
+	assert.InDelta(t, 512, (*captured)["max_tokens"], 0, "no room is reserved for thinking")
+}
+
 // The chain of thought is never echoed back to a chat server: DeepSeek
 // rejects a request that carries reasoning_content in its messages.
 func TestToChatMessages_NeverReplaysReasoning(t *testing.T) {
@@ -354,6 +378,81 @@ func TestToResponsesInput_SendsASummaryOnEveryReplayedReasoningItemOnly(t *testi
 		assert.False(t, present, "item %d (%v) carries a summary", idx, item["type"])
 	}
 	assert.Equal(t, "reasoning", wire[2]["type"])
+}
+
+// None asks the Responses API not to reason, and asks for neither a summary
+// nor the encrypted chain, since there is nothing to summarise or replay.
+func TestOpenAIResponsesAdapter_SendsNoneWithoutSummaryOrChain(t *testing.T) {
+	t.Parallel()
+
+	server, captured := streamServer(t, "text/event-stream", sse(
+		[2]string{
+			"response.output_text.delta",
+			`{"type":"response.output_text.delta","delta":"Hi"}`,
+		},
+		[2]string{
+			"response.completed",
+			`{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"Hi"}]}],"usage":{"input_tokens":3,"output_tokens":1}}}`,
+		},
+	))
+
+	_, _, _ = streamWithReasoning(t, NewOpenAIResponsesAdapter(), reasoningCall(
+		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningNone,
+		&Request{Messages: UserMessage("hi")},
+	))
+
+	reasoning, _ := (*captured)["reasoning"].(map[string]any)
+	require.NotNil(t, reasoning)
+	assert.Equal(t, map[string]any{"effort": "none"}, reasoning)
+	_, included := (*captured)["include"]
+	assert.False(t, included)
+	assert.InDelta(t, 512, (*captured)["max_output_tokens"], 0, "no room is reserved for thinking")
+}
+
+func TestOpenAIResponsesAdapter_SendsMinimalWithTheChain(t *testing.T) {
+	t.Parallel()
+
+	server, captured := streamServer(t, "text/event-stream", sse(
+		[2]string{
+			"response.completed",
+			`{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"Hi"}]}],"usage":{"input_tokens":3,"output_tokens":1}}}`,
+		},
+	))
+
+	_, _, _ = streamWithReasoning(t, NewOpenAIResponsesAdapter(), reasoningCall(
+		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningMinimal,
+		&Request{Messages: UserMessage("hi")},
+	))
+
+	reasoning, _ := (*captured)["reasoning"].(map[string]any)
+	require.NotNil(t, reasoning)
+	assert.Equal(t, "minimal", reasoning["effort"])
+	assert.Equal(t, []any{"reasoning.encrypted_content"}, (*captured)["include"])
+}
+
+// A thinking Ollama model thinks unless told not to, so None sends
+// think:false rather than leaving the field out; Off still leaves it out.
+func TestOllamaAdapter_SendsThinkFalseOnlyForNone(t *testing.T) {
+	t.Parallel()
+
+	body := `{"model":"qwen","message":{"role":"assistant","content":"Hi"},"done":true,"done_reason":"stop","prompt_eval_count":1,"eval_count":1}` + "\n"
+
+	server, captured := streamServer(t, "application/x-ndjson", body)
+	_, _, _ = streamWithReasoning(t, NewOllamaAdapter(), reasoningCall(
+		aiprovider.KindOllama, server.URL, aiprovider.ReasoningNone,
+		&Request{Messages: UserMessage("hi")},
+	))
+	think, sent := (*captured)["think"]
+	require.True(t, sent)
+	assert.Equal(t, false, think)
+
+	offServer, offCaptured := streamServer(t, "application/x-ndjson", body)
+	_, _, _ = streamWithReasoning(t, NewOllamaAdapter(), reasoningCall(
+		aiprovider.KindOllama, offServer.URL, aiprovider.ReasoningOff,
+		&Request{Messages: UserMessage("hi")},
+	))
+	_, offSent := (*offCaptured)["think"]
+	assert.False(t, offSent)
 }
 
 // Ollama reports a thinking model's reasoning in its own field when asked.

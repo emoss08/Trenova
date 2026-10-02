@@ -262,32 +262,55 @@ func (t Task) Generates() bool {
 // reasoning_effort on a model without it. An operator turns this on for a
 // model they know reasons. Whatever is chosen, thinking a provider volunteers
 // unasked — DeepSeek-style reasoning_content — is still read and shown.
+//
+// Off is not "no thinking" on a model that reasons by default: the GPT-5
+// family and Ollama's thinking models reason at their own default effort when
+// nothing is sent, out of sight and before the first token. None tells such a
+// model not to reason; Minimal asks for the least reasoning it allows.
 type ReasoningEffort string
 
 const (
-	ReasoningOff    = ReasoningEffort("Off")
-	ReasoningLow    = ReasoningEffort("Low")
-	ReasoningMedium = ReasoningEffort("Medium")
-	ReasoningHigh   = ReasoningEffort("High")
+	ReasoningOff     = ReasoningEffort("Off")
+	ReasoningNone    = ReasoningEffort("None")
+	ReasoningMinimal = ReasoningEffort("Minimal")
+	ReasoningLow     = ReasoningEffort("Low")
+	ReasoningMedium  = ReasoningEffort("Medium")
+	ReasoningHigh    = ReasoningEffort("High")
 )
 
-func (e ReasoningEffort) IsValid() bool {
-	switch e {
-	case ReasoningOff, ReasoningLow, ReasoningMedium, ReasoningHigh:
-		return true
-	default:
-		return false
+func AllReasoningEfforts() []ReasoningEffort {
+	return []ReasoningEffort{
+		ReasoningOff,
+		ReasoningNone,
+		ReasoningMinimal,
+		ReasoningLow,
+		ReasoningMedium,
+		ReasoningHigh,
 	}
+}
+
+func (e ReasoningEffort) IsValid() bool {
+	return slices.Contains(AllReasoningEfforts(), e)
 }
 
 // Enabled reports whether the provider should be asked to reason.
 func (e ReasoningEffort) Enabled() bool {
-	return e.IsValid() && e != ReasoningOff
+	return e.IsValid() && e != ReasoningOff && e != ReasoningNone
+}
+
+// Disabled reports whether the provider should be told explicitly not to
+// reason, which differs from Off: Off says nothing at all.
+func (e ReasoningEffort) Disabled() bool {
+	return e == ReasoningNone
 }
 
 // Wire is the lower-case word the OpenAI-shaped protocols take.
 func (e ReasoningEffort) Wire() string {
 	switch e {
+	case ReasoningNone:
+		return "none"
+	case ReasoningMinimal:
+		return "minimal"
 	case ReasoningLow:
 		return "low"
 	case ReasoningMedium:
@@ -304,7 +327,7 @@ func (e ReasoningEffort) Wire() string {
 // own token ceiling, which the adapter raises to fit.
 func (e ReasoningEffort) ThinkingBudget() int {
 	switch e {
-	case ReasoningLow:
+	case ReasoningMinimal, ReasoningLow:
 		return 1024
 	case ReasoningMedium:
 		return 4096
