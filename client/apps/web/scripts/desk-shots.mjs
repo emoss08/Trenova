@@ -30,6 +30,7 @@ for (const story of stories) {
   const clip = process.env.CLIP?.split(",").map(Number);
   await page.screenshot({
     path: `${outDir}/${story}-${theme}.png`,
+    fullPage: process.env.FULLPAGE === "1",
     clip: clip && clip.length === 4 ? { x: clip[0], y: clip[1], width: clip[2], height: clip[3] } : undefined,
   });
   console.log("shot", story, theme);

@@ -1,4 +1,3 @@
-import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { BorderBeam } from "@trenova/shared/components/ui/border-beam";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -12,13 +11,25 @@ import {
   useImperativeHandle,
   useMemo,
   useState,
-  type CSSProperties,
   type FormEvent,
   type Ref,
 } from "react";
 import { AgentPicker } from "./agent-picker";
 import { AgentStarters } from "./agent-starters";
 import { agentSuggestions } from "./suggestions";
+
+/**
+ * The light that runs round the hero's ask box: violet at its head, through
+ * indigo and the brand cobalt, out to rose at its tail, so the one moving
+ * thing on the page carries a little spectrum rather than one flat hue.
+ */
+const HERO_BEAM = [
+  "var(--accent-violet)",
+  "var(--accent-indigo)",
+  "var(--brand)",
+  "color-mix(in oklch, var(--accent-rose) 70%, transparent)",
+  "color-mix(in oklch, var(--accent-rose) 10%, transparent)",
+] as const;
 
 const VARIANTS = {
   hero: { minHeight: 56, maxHeight: 220, starters: 4 },
@@ -98,7 +109,6 @@ export function AgentAsk({
 
   const hero = variant === "hero";
   const reduceMotion = useReducedMotion();
-  const accent = AGENT_ACCENTS[resolveAgentIdentity(agent).accent];
   const placeholder = t("Ask {0}…", agent.name);
   const ready = question.trim() !== "" && !disabled;
 
@@ -110,7 +120,6 @@ export function AgentAsk({
         initial={reduceMotion || !hero ? false : { opacity: 0, y: 12, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 26, mass: 0.9, delay: 0.18 }}
-        style={{ "--agent-accent": accent } as CSSProperties}
         className={cn(
           "ui-field ui-lift-whisper ui-container-focus-ring rounded-surface relative flex flex-col",
           hero ? "gap-1 p-2" : "gap-1 p-1.5",
@@ -118,13 +127,7 @@ export function AgentAsk({
         )}
       >
         {hero && !reduceMotion && (
-          <BorderBeam
-            duration={7}
-            borderWidth={1.5}
-            colorFrom="var(--agent-accent)"
-            colorTo="color-mix(in oklch, var(--agent-accent) 12%, transparent)"
-            className="opacity-80"
-          />
+          <BorderBeam duration={8} borderWidth={1.5} colors={HERO_BEAM} glow />
         )}
         <textarea
           ref={textareaRef}
