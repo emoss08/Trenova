@@ -65,6 +65,7 @@ const (
 	AILooped               = attribute.Key("trenova.ai.looped")
 	AIAttempts             = attribute.Key("trenova.ai.attempts")
 	AIFailover             = attribute.Key("trenova.ai.failover")
+	AIFirstTokenMs         = attribute.Key("trenova.ai.first_token_ms")
 	AIMidReplyRestarts     = attribute.Key("trenova.ai.mid_reply_restarts")
 	AIProviderID           = attribute.Key("trenova.ai.provider.id")
 	AIAttempt              = attribute.Key("trenova.ai.attempt")

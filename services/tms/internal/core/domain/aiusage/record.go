@@ -92,6 +92,11 @@ type AIUsageRecord struct {
 	Failover               bool               `json:"failover"               bun:"failover,type:BOOLEAN,notnull,default:false"`
 	CacheReadTokens        int                `json:"cacheReadTokens"        bun:"cache_read_tokens,type:INTEGER,notnull,default:0"`
 	CacheWriteTokens       int                `json:"cacheWriteTokens"       bun:"cache_write_tokens,type:INTEGER,notnull,default:0"`
+	// FirstTokenMs is how long the attempt took to write the first piece of
+	// its reply, text or thinking: how long a person watched nothing. Nil for
+	// an attempt that wrote nothing a person reads, a reply that was only tool
+	// calls or one that was not streamed.
+	FirstTokenMs *int64 `json:"firstTokenMs" bun:"first_token_ms,type:BIGINT,nullzero"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

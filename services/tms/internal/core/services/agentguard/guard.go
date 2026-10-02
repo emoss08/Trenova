@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"go.uber.org/fx"
@@ -23,6 +24,7 @@ type Params struct {
 	// service did before and what a test wants.
 	Verdicts repositories.ScopeVerdictCacheRepository `optional:"true"`
 	Config   *config.Config                           `optional:"true"`
+	Metrics  *metrics.Registry                        `optional:"true"`
 }
 
 /*
@@ -51,6 +53,7 @@ const DefaultClassifierTimeout = 3 * time.Second
 type Service struct {
 	logger     *zap.Logger
 	completion serviceports.CompletionService
+	metrics    *metrics.Assistant
 
 	// ClassifierTimeout is how long the scope check may take before the
 	// request proceeds on the deterministic verdict alone.
@@ -78,6 +81,7 @@ func New(p Params) *Service {
 	return &Service{
 		logger:            logger,
 		completion:        p.Completion,
+		metrics:           metrics.AssistantFrom(p.Metrics),
 		verdicts:          newVerdictCache(p.Verdicts, ai.GetVerdictCacheTTL(), logger),
 		ClassifierTimeout: DefaultClassifierTimeout,
 	}
@@ -142,7 +146,17 @@ func (s *Service) classifierTimeout() time.Duration {
 	return s.ClassifierTimeout
 }
 
+// Evaluate is the decision described above, timed and filed by the stage that
+// made it, so a slow question says whether the rules or the classifier held it.
 func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
+	started := time.Now()
+	decision := s.evaluate(ctx, req)
+	s.metrics.RecordGuard(string(decision.Stage), time.Since(started).Seconds())
+
+	return decision
+}
+
+func (s *Service) evaluate(ctx context.Context, req EvaluateRequest) Decision {
 	if decision := EvaluateDeterministic(req.Input); !decision.Allowed {
 		s.logger.Info("request refused by deterministic scope rule",
 			zap.String("rule", decision.MatchedRule),

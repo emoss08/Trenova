@@ -64,6 +64,9 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 
 	usage := attemptUsage(attempt, cost)
 	aitrace.RecordUsage(span, usage)
+	if attempt.firstToken > 0 {
+		span.SetAttributes(aitrace.AIFirstTokenMs.Int64(attempt.firstToken.Milliseconds()))
+	}
 	errorType := classifyError(attempt.err)
 	if attempt.err != nil {
 		aitrace.MarkFailed(span, errorType)
@@ -91,6 +94,8 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 		InputTokens:   usage.InputTokens,
 		OutputTokens:  usage.OutputTokens,
 		Duration:      attempt.latency,
+		Task:          string(attempt.task),
+		FirstToken:    attempt.firstToken,
 	})
 }
 
