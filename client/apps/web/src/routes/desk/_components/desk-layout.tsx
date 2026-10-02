@@ -8,7 +8,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
-import { useDeskStore } from "@/stores/desk-store";
+import { railIsOpen, useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifactEvent, AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -32,9 +32,9 @@ import { DownloadIcon, PanelRightIcon, PinIcon, Trash2Icon } from "lucide-react"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
-import { ArtifactsPane } from "./artifacts/artifacts-pane";
+import { DeskWorkspace } from "./desk-workspace";
 import { DESK_WIDE_QUERY } from "./desk-dimensions";
-import { DeskRail, RAIL_SHORTCUT } from "./desk-rail";
+import { DeskRail, DeskRailStrip, RAIL_SHORTCUT } from "./desk-rail";
 import { DeskColumns, DeskRailFold, DeskShell } from "./desk-shell";
 import { DeskTitleField } from "./desk-title-field";
 import { DeskWorkspaceEmpty } from "./desk-workspace-empty";
@@ -287,7 +287,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   );
 
   const workspaceOpen = activeThread !== null && pane === "open";
-  const railOpen = rail === "open";
+  const railOpen = railIsOpen(rail);
+  const workspaceSize = useDeskStore((state) => state.workspaceSize);
+  const setWorkspaceSize = useDeskStore((state) => state.setWorkspaceSize);
 
   const showRail = useCallback(() => {
     if (wide) {
@@ -317,6 +319,18 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       } else if (event.key === "\\" && activeThread !== null) {
         event.preventDefault();
         togglePane();
+      } else if (event.key === "k" || event.key === "K") {
+        const search = document.querySelector<HTMLInputElement>(
+          '[data-slot="desk-rail"] input[type="text"], [data-slot="desk-rail"] input:not([type])',
+        );
+        if (search) {
+          event.preventDefault();
+          if (wide) {
+            setRail("open");
+          }
+          search.focus();
+          search.select();
+        }
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -341,19 +355,42 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     <DeskContext.Provider value={value}>
       <DeskShell
         rail={
-          <DeskRailFold open={railOpen}>
-            <DeskRail
-              {...railProps}
-              collapse={{ label: t("Hide the rail"), shortcut: RAIL_SHORTCUT }}
-              onCollapse={() => setRail("closed")}
-            />
-          </DeskRailFold>
+          <DeskRailFold
+            open={railOpen}
+            rail={
+              <DeskRail
+                {...railProps}
+                collapse={{ label: t("Hide the rail"), shortcut: RAIL_SHORTCUT }}
+                onCollapse={() => setRail("collapsed")}
+              />
+            }
+            strip={
+              <DeskRailStrip
+                threads={threads}
+                isStarting={startMutation.isPending}
+                onStart={(agentId) => startMutation.mutate({ agentId })}
+                onExpand={() => setRail("open")}
+              />
+            }
+          />
         }
         railOpen={railOpen}
         onShowRail={showRail}
         accent={accent}
         working={working}
-        lead={activeThread ? <AgentTile agent={activeAgent} size="md" /> : undefined}
+        lead={
+          activeThread ? (
+            <span className="text-foreground-muted flex min-w-0 items-center gap-2 pl-1 text-sm">
+              <AgentTile agent={activeAgent} size="sm" />
+              <span className="hidden max-w-40 truncate sm:inline">
+                {activeAgent?.name ?? t("Agent unavailable")}
+              </span>
+              <span aria-hidden className="text-foreground-subtle">
+                /
+              </span>
+            </span>
+          ) : undefined
+        }
         title={
           activeThread ? (
             <DeskTitleField
@@ -409,12 +446,15 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       >
         <DeskColumns
           workspaceOpen={workspaceOpen}
+          workspaceSize={workspaceSize}
+          onWorkspaceResize={setWorkspaceSize}
           conversation={<Outlet />}
           workspace={
             activeThread ? (
-              <ArtifactsPane
+              <DeskWorkspace
                 key={activeThread.id}
                 threadId={activeThread.id}
+                agent={activeAgent}
                 liveArtifacts={liveArtifacts}
                 onClose={() => setPane("closed")}
                 className="h-full"

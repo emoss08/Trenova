@@ -13,7 +13,7 @@ import {
   FlaskConicalIcon,
   PauseCircleIcon,
 } from "lucide-react";
-import { useWatchedChange } from "./decision-chrome";
+import { proposalLabel, useWatchedChange } from "./decision-chrome";
 import { planStepState, type PlanPresentation, type PlanStepState } from "./plan-state";
 import { StepDependencyNote } from "./proposal-preview/plan-preview";
 import { ProposalPreview, type WouldFailActions } from "./proposal-preview/proposal-preview";
@@ -301,24 +301,39 @@ function PlanStep({
   attention: boolean;
   wouldFail?: WouldFailActions;
 }) {
+  const t = useT();
   const view = presentProposal(step);
   const stepState = planStepState(step);
+  const label = proposalLabel(step.toolName, step.arguments, t);
 
   return (
     <li className="flex items-start gap-2">
-      {settled ? (
-        <StepIcon state={stepState} />
-      ) : (
-        <span className="text-foreground-subtle w-4 shrink-0 text-right tabular-nums">
-          {step.planStep}.
-        </span>
-      )}
+      <span className="text-foreground-subtle w-3 shrink-0 text-right leading-5 tabular-nums">
+        {step.planStep}
+      </span>
+      <span aria-hidden className="text-foreground-subtle/60 leading-5 select-none">
+        ·
+      </span>
       <div className="min-w-0 flex-1">
         <span
-          className={cn("block", stepState === "skipped" && "text-foreground-subtle line-through")}
+          className={cn(
+            "flex min-w-0 items-center gap-2 leading-5",
+            stepState === "skipped" && "text-foreground-subtle line-through",
+          )}
         >
-          {view.summary}
+          <span className="text-foreground min-w-0 truncate">{label}</span>
+          {settled && (
+            <>
+              <span aria-hidden className="text-foreground-subtle/60 select-none">
+                ·
+              </span>
+              <StepIcon state={stepState} />
+            </>
+          )}
         </span>
+        {view.summary !== "" && view.summary !== label && (
+          <span className="text-foreground-muted block">{view.summary}</span>
+        )}
         {!settled && preview && (
           <div className="mt-1.5 flex flex-col gap-2">
             <StepDependencyNote preview={preview} />
@@ -345,7 +360,7 @@ function PlanStep({
 /** A step's mark; one that finishes while watched settles with the spring. */
 function StepIcon({ state }: { state: PlanStepState }) {
   const watched = useWatchedChange(state);
-  const className = cn("mt-px size-3.5 shrink-0", watched && "animate-confirm");
+  const className = cn("size-3.5 shrink-0", watched && "animate-confirm");
 
   switch (state) {
     case "failed":

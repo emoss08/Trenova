@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDownIcon, ChevronRightIcon, HourglassIcon, type LucideIcon } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { focusKeys } from "./approval-queue";
-import { OutcomeIcon, ProposedBy } from "./decision-chrome";
+import { OutcomeIcon, ProposedBy, proposalLabel } from "./decision-chrome";
 import {
   DecisionNoteLine,
   Highlights,
@@ -91,10 +91,10 @@ function DecisionRecordFrame({
       onOpenChange={setOpen}
       data-slot="decision-record"
       data-state={state}
-      className="border-border bg-card rounded-surface flex min-w-0 flex-col overflow-hidden border"
+      className="ring-foreground/10 bg-card flex min-w-0 flex-col overflow-hidden rounded-lg ring-1"
     >
       <CollapsibleTrigger className="hover:bg-surface-hover ui-inset-focus-ring flex w-full min-w-0 items-start gap-2.5 px-3 py-2 text-left text-xs transition-colors">
-        <span className="flex h-4 shrink-0 items-center">
+        <span className="flex h-5 shrink-0 items-center">
           {Mark ? (
             <Mark aria-hidden className="text-warning size-3.5 shrink-0" />
           ) : (
@@ -102,13 +102,13 @@ function DecisionRecordFrame({
           )}
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-foreground truncate font-medium">{title}</span>
+          <span className="text-foreground truncate text-sm leading-5 font-medium">{title}</span>
           <span className="text-foreground-muted truncate">{status}</span>
         </span>
         <ChevronRightIcon
           aria-hidden
           className={cn(
-            "text-foreground-subtle mt-px size-3.5 shrink-0 transition-transform duration-200",
+            "text-foreground-subtle mt-0.75 size-3.5 shrink-0 transition-transform duration-200",
             open && "rotate-90",
           )}
         />
@@ -117,11 +117,11 @@ function DecisionRecordFrame({
         <div className="flex min-w-0 flex-col px-3 pb-2 pl-9.5 empty:hidden">{body(open)}</div>
       )}
       {waiting && onOpenDecision && (
-        <div className="flex px-3 pb-2 pl-9.5">
+        <div className="flex px-3 pb-2 pl-8">
           <Button
             size="xs"
-            variant="outline"
-            className="text-foreground-muted hover:text-foreground"
+            variant="ghost"
+            className="text-foreground-muted hover:text-foreground -ml-2 text-xs"
             onClick={onOpenDecision}
           >
             {t("Open in approval box")}
@@ -192,7 +192,7 @@ export function ProposalRecord({
   return (
     <DecisionRecordFrame
       state={state}
-      title={t("Proposed: {0}", view.summary)}
+      title={proposalLabel(proposal.toolName, proposal.arguments, t)}
       status={status}
       defaultOpen={defaultOpen}
       onOpenDecision={openDecision}
@@ -200,6 +200,7 @@ export function ProposalRecord({
       {(open) => (
         <>
           <ProposedBy agentId={proposal.agentId} agentName={proposal.agentName} />
+          <p className="text-foreground">{view.summary}</p>
           <span className="block">
             <OutcomeLine proposal={proposal} state={state} />
           </span>
@@ -275,7 +276,7 @@ export function PlanRecord({
   return (
     <DecisionRecordFrame
       state={state}
-      title={t("Proposed: {0}", plan.title)}
+      title={plan.title}
       status={status}
       defaultOpen={defaultOpen}
       onOpenDecision={openDecision}

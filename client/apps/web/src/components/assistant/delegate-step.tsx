@@ -105,7 +105,7 @@ export function DelegateStep({
         <div
           data-slot="hand-off"
           data-working={running}
-          className="ui-agent-glow border-border bg-card relative flex min-w-0 flex-col overflow-hidden rounded-surface border"
+          className="ui-agent-glow ring-foreground/10 bg-card relative flex min-w-0 flex-col overflow-hidden rounded-lg ring-1"
           style={
             {
               "--agent-accent": agentSpineColor(identity),
@@ -128,7 +128,7 @@ export function DelegateStep({
               <span
                 key={headline}
                 className={cn(
-                  "min-w-0 truncate font-medium",
+                  "min-w-0 truncate text-sm leading-5 font-medium",
                   view.outcome === "declined" ? "text-danger" : "text-foreground",
                   live && changed && "animate-rise",
                 )}
@@ -400,25 +400,44 @@ function HandOffDetails({
           <ToolActivity steps={view.steps} />
         </section>
       )}
-      {view.reply.trim() !== "" && (
-        <section className="flex min-w-0 flex-col gap-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <h4 className="text-foreground-subtle font-medium">
-              {view.agentName !== "" ? t("What {0} found", view.agentName) : t("What it found")}
-            </h4>
-            {answerId !== null && (
-              <FeedbackControl
-                target={{ targetType: "DelegatedAnswer", targetId: answerId }}
-                className="ml-auto"
-              />
-            )}
-          </div>
-          <AiMarkdown
-            content={view.reply}
-            className="text-foreground-muted text-xs leading-relaxed"
-          />
-        </section>
-      )}
+      {view.reply.trim() !== "" && <FoundSection view={view} answerId={answerId} />}
     </div>
+  );
+}
+
+/**
+ * The other agent's answer, folded under its own line: "What Billing
+ * Manager found ›". The conversation's agent has already read it and said
+ * what matters in its reply, so the answer waits for whoever wants to check.
+ */
+function FoundSection({ view, answerId }: { view: DelegateView; answerId: string | null }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const label = view.agentName !== "" ? t("What {0} found", view.agentName) : t("What it found");
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 items-center gap-2">
+        <CollapsibleTrigger className="ui-focus-ring text-foreground-subtle hover:text-foreground rounded-control -mx-1.5 flex h-6 items-center gap-1.5 px-1.5 font-medium transition-colors">
+          <span>{label}</span>
+          <ChevronRightIcon
+            aria-hidden
+            className={cn("size-3 transition-transform duration-200", open && "rotate-90")}
+          />
+        </CollapsibleTrigger>
+        {answerId !== null && (
+          <FeedbackControl
+            target={{ targetType: "DelegatedAnswer", targetId: answerId }}
+            className="ml-auto"
+          />
+        )}
+      </div>
+      <CollapsibleContent className="ease-settle h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0">
+        <AiMarkdown
+          content={view.reply}
+          className="text-foreground-muted pb-1 text-xs leading-relaxed"
+        />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

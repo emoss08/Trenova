@@ -144,11 +144,14 @@ export function ToolActivity({
   steps,
   live = false,
   folded = false,
+  summary,
 }: {
   steps: ToolStep[];
   live?: boolean;
   /** Draws a settled list as one summary line that opens onto the rows. */
   folded?: boolean;
+  /** The folded line's words, when the reply knows them better: "Worked for 7s". */
+  summary?: string;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -205,21 +208,24 @@ export function ToolActivity({
       {!live && (
         <CollapsibleTrigger
           className={cn(
-            "group/work ui-focus-ring rounded-control -mx-1.5 flex max-w-[calc(100%+0.75rem)] min-w-0 items-center gap-1.5 px-1.5 py-0.5 text-left text-xs transition-colors",
+            "group/work ui-focus-ring rounded-control -mx-1.5 flex h-6 max-w-[calc(100%+0.75rem)] min-w-0 items-center gap-1.5 px-1.5 text-left text-xs transition-colors",
             "text-foreground-muted hover:bg-surface-hover hover:text-foreground",
           )}
         >
+          <WorkMarks groups={groups} />
+          <span className="min-w-0 truncate">{summary ?? workSummary(steps, t)}</span>
+          {failed && <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />}
           <ChevronRightIcon
             aria-hidden
-            className={cn("size-3 shrink-0 transition-transform duration-200", open && "rotate-90")}
+            className={cn(
+              "text-foreground-subtle size-3 shrink-0 transition-transform duration-200",
+              open && "rotate-90",
+            )}
           />
-          <WorkMarks groups={groups} />
-          <span className="min-w-0 truncate">{workSummary(steps, t)}</span>
-          {failed && <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />}
         </CollapsibleTrigger>
       )}
       <CollapsibleContent className="ease-settle h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0">
-        <div className={cn(!live && "border-border-subtle mt-1 ml-1.25 border-l pl-3")}>{rows}</div>
+        <div className={cn(!live && "border-border-subtle mt-1 ml-2 border-l pl-3")}>{rows}</div>
       </CollapsibleContent>
     </Collapsible>
   );

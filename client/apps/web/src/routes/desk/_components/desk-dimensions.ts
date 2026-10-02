@@ -4,7 +4,10 @@
  */
 
 /** The rail's width on a wide screen, in pixels; the fold animates to and from it. */
-export const DESK_RAIL_WIDTH = 272;
+export const DESK_RAIL_WIDTH = 264;
+
+/** The rail folded to a strip of its places, in pixels. */
+export const DESK_RAIL_STRIP_WIDTH = 52;
 
 /**
  * The workspace's width on a wide screen: never narrower than a readable

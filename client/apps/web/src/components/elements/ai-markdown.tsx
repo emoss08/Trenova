@@ -50,11 +50,11 @@ function CodeBlock({ className, children }: ComponentProps<"code">) {
   const lang = resolveLang(className);
 
   if (lang) {
-    return <ShikiCodeBlock code={code} lang={lang} className="my-2 text-xs" />;
+    return <ShikiCodeBlock code={code} lang={lang} className="my-2.5 rounded-lg text-xs" />;
   }
 
   return (
-    <pre className="bg-sunken scrollbar-overlay rounded-surface my-2.5 overflow-x-auto p-3 font-mono text-xs leading-relaxed">
+    <pre className="bg-sunken scrollbar-overlay my-2.5 overflow-x-auto rounded-lg p-3 font-mono text-xs leading-relaxed">
       <code>{code}</code>
     </pre>
   );
@@ -133,10 +133,10 @@ const components: Components = {
   h3: ({ children }) => <h4 className="mt-3 mb-1 text-sm font-semibold first:mt-0">{children}</h4>,
   h4: ({ children }) => <h5 className="mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h5>,
   ul: ({ children }) => (
-    <ul className="marker:text-foreground-subtle my-2 list-disc space-y-1 pl-5">{children}</ul>
+    <ul className="marker:text-foreground-subtle my-2.5 list-disc space-y-1.5 pl-5">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="marker:text-foreground-subtle my-2 list-decimal space-y-1 pl-5 marker:tabular-nums">
+    <ol className="marker:text-foreground-subtle my-2.5 list-decimal space-y-1.5 pl-5 marker:tabular-nums">
       {children}
     </ol>
   ),
@@ -152,7 +152,7 @@ const components: Components = {
   ),
   hr: () => <hr className="border-border-subtle my-4" />,
   table: ({ children }) => (
-    <div className="border-border scrollbar-overlay rounded-surface my-2.5 overflow-x-auto border">
+    <div className="ring-foreground/10 scrollbar-overlay my-3 overflow-x-auto rounded-lg ring-1">
       <table className="w-full border-collapse text-xs">{children}</table>
     </div>
   ),

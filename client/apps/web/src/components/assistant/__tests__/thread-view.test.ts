@@ -1,6 +1,6 @@
 import type { AssistantMessage } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { decisionHeadline, groupThread, turnPlacements } from "../thread-view";
+import { decisionHeadline, groupThread, replyFolds, turnPlacements } from "../thread-view";
 
 let sequence = 0;
 function message(overrides: Partial<AssistantMessage>): AssistantMessage {
@@ -232,5 +232,65 @@ describe("decisionHeadline", () => {
 
   it("is empty for a note with nothing on its first line", () => {
     expect(decisionHeadline("\nDecision on plan pl_1 (2 steps).")).toBe("");
+  });
+});
+
+/**
+ * A reply that took several model steps is saved as several messages, and
+ * drawing a work line under each read as four separate pieces of work. The
+ * reply's steps fold once, under its first message, in the order they ran.
+ */
+describe("replyFolds", () => {
+  it("gathers every step of a multi-message reply under its first message", () => {
+    const question = message({ role: "User", content: "Post them", createdAt: 1_700_001_000 });
+    const first = message({
+      role: "Assistant",
+      toolCalls: [{ id: "c1", name: "get_billing_queue_items", arguments: {} }],
+    });
+    const firstResult = message({ role: "Tool", toolCallId: "c1", toolName: "get_billing_queue_items" });
+    const second = message({
+      role: "Assistant",
+      toolCalls: [{ id: "c2", name: "assign_billing_queue_billers", arguments: {} }],
+    });
+    const secondResult = message({ role: "Tool", toolCallId: "c2", toolName: "assign_billing_queue_billers" });
+    const answer = message({ role: "Assistant", content: "Done." });
+
+    const folds = replyFolds(groupThread([question, first, firstResult, second, secondResult, answer]));
+
+    expect([...folds.keys()]).toEqual([first.id]);
+    expect(folds.get(first.id)?.map((exchange) => exchange.call.id)).toEqual(["c1", "c2"]);
+  });
+
+  it("starts a new fold after the person speaks again", () => {
+    const a = message({
+      role: "Assistant",
+      toolCalls: [{ id: "c1", name: "get_shipment", arguments: {} }],
+    });
+    const aResult = message({ role: "Tool", toolCallId: "c1", toolName: "get_shipment" });
+    const b = message({
+      role: "Assistant",
+      toolCalls: [{ id: "c2", name: "get_shipment", arguments: {} }],
+    });
+    const bResult = message({ role: "Tool", toolCallId: "c2", toolName: "get_shipment" });
+
+    const folds = replyFolds(
+      groupThread([
+        message({ role: "User", content: "One" }),
+        a,
+        aResult,
+        message({ role: "User", content: "Two" }),
+        b,
+        bResult,
+      ]),
+    );
+
+    expect(folds.get(a.id)?.map((exchange) => exchange.call.id)).toEqual(["c1"]);
+    expect(folds.get(b.id)?.map((exchange) => exchange.call.id)).toEqual(["c2"]);
+  });
+
+  it("gives a reply with no steps an empty fold", () => {
+    const only = message({ role: "Assistant", content: "Hello." });
+
+    expect(replyFolds(groupThread([message({ role: "User", content: "Hi" }), only])).get(only.id)).toEqual([]);
   });
 });

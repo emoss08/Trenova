@@ -58,10 +58,7 @@ export function StreamingTurn({
   const t = useT();
 
   const steps = useMemo(() => stepsFromSegments(turn.segments), [turn.segments]);
-  const outputs = useMemo(
-    () => outputsByStep(steps, onOpenArtifact ? turn.artifacts : []),
-    [steps, onOpenArtifact, turn.artifacts],
-  );
+  const outputs = useMemo(() => outputsByStep(steps), [steps]);
   const active = isTurnActive(turn);
   const answer = useMemo(
     () => turn.segments.map((segment) => (segment.kind === "text" ? segment.text : "")).join("\n"),
@@ -71,6 +68,9 @@ export function StreamingTurn({
 
   const hasBody = turn.segments.length > 0;
   const showFrame = hasBody || active;
+  const groups = useMemo(() => groupSegments(turn), [turn]);
+  const firstToolGroup = groups.findIndex((group) => group.kind === "tools");
+  const produced = onOpenArtifact ? turn.artifacts : NO_ARTIFACTS;
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,7 +91,7 @@ export function StreamingTurn({
 
       {showFrame && turn.status !== "refused" && (
         <AssistantTurn working={active}>
-          {groupSegments(turn).map((group, index) => {
+          {groups.map((group, index) => {
             if (group.kind === "reasoning") {
               return (
                 <ReasoningDisclosure
@@ -114,23 +114,25 @@ export function StreamingTurn({
                 </div>
               );
             }
+            // What the reply has produced so far is one row of chips under
+            // the first piece of work, as the saved reply draws it; a later
+            // step's product joins that row rather than opening another.
+            const first = index === firstToolGroup;
             return (
               <Fragment key={`tools-${group.steps[0].id}`}>
                 <ToolActivity steps={group.steps} live={active} folded />
-                <StepOutputs
-                  outputs={outputs.forSteps(group.steps)}
-                  onAnswer={onAnswer}
-                  onOpenArtifact={onOpenArtifact}
-                />
+                {first && produced.length > 0 && onOpenArtifact && (
+                  <ArtifactChips artifacts={produced} onOpen={onOpenArtifact} />
+                )}
+                <StepOutputs outputs={outputs.forSteps(group.steps)} onAnswer={onAnswer} />
               </Fragment>
             );
           })}
           {!active && answer !== "" && <SourcesFooter sources={sources} />}
-          <StepOutputs
-            outputs={outputs.unplaced}
-            onAnswer={onAnswer}
-            onOpenArtifact={onOpenArtifact}
-          />
+          {firstToolGroup === -1 && produced.length > 0 && onOpenArtifact && (
+            <ArtifactChips artifacts={produced} onOpen={onOpenArtifact} />
+          )}
+
           <WorkingLine turn={turn} steps={steps} active={active} />
         </AssistantTurn>
       )}
@@ -161,74 +163,51 @@ export function StreamingTurn({
 }
 
 type StepOutput = {
-  artifacts: AssistantArtifactEvent[];
   runs: ThreadReportRun[];
   asks: ThreadAskRequest[];
 };
 
-const NO_OUTPUT: StepOutput = { artifacts: [], runs: [], asks: [] };
+const NO_OUTPUT: StepOutput = { runs: [], asks: [] };
+const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
 
 /**
- * What each step produced besides its result: the artifacts it published,
- * the report runs it started and the questions it asked. The saved thread
- * shows these under the step that made them, before the words written after
- * it; the live turn places them the same way, so nothing moves when the reply
- * is saved. An artifact whose step this reader never saw is kept apart and
- * shown after the steps rather than dropped.
+ * What each step produced besides its result: the report runs it started and
+ * the questions it asked. The saved thread shows these under the step that
+ * made them, before the words written after it; the live turn places them the
+ * same way, so nothing moves when the reply is saved. The artifacts are one
+ * row for the whole reply, drawn apart from this.
  */
-function outputsByStep(
-  steps: readonly ToolStep[],
-  artifacts: readonly AssistantArtifactEvent[],
-): { forSteps: (group: readonly ToolStep[]) => StepOutput; unplaced: StepOutput } {
-  const known = new Set(steps.map((step) => step.id));
+function outputsByStep(steps: readonly ToolStep[]): {
+  forSteps: (group: readonly ToolStep[]) => StepOutput;
+} {
   const runs = reportRunOrigins(steps);
   const asks = new Map(askRequestsFromSteps(steps).map((ask) => [ask.callId, ask]));
-  const artifactsByStep = new Map<string, AssistantArtifactEvent[]>();
-  const unplaced: AssistantArtifactEvent[] = [];
-
-  for (const artifact of artifacts) {
-    if (artifact.sourceToolCallId !== "" && known.has(artifact.sourceToolCallId)) {
-      artifactsByStep.set(artifact.sourceToolCallId, [
-        ...(artifactsByStep.get(artifact.sourceToolCallId) ?? []),
-        artifact,
-      ]);
-    } else {
-      unplaced.push(artifact);
-    }
-  }
 
   return {
     forSteps: (group) => {
-      const output: StepOutput = { artifacts: [], runs: [], asks: [] };
+      const output: StepOutput = { runs: [], asks: [] };
       for (const step of group) {
-        output.artifacts.push(...(artifactsByStep.get(step.id) ?? []));
         output.runs.push(...(runs.get(step.id) ?? []));
         const ask = asks.get(step.id);
         if (ask) {
           output.asks.push(ask);
         }
       }
-      return output;
+      return output.runs.length === 0 && output.asks.length === 0 ? NO_OUTPUT : output;
     },
-    unplaced: unplaced.length > 0 ? { ...NO_OUTPUT, artifacts: unplaced } : NO_OUTPUT,
   };
 }
 
-/** A step's artifacts, report runs and questions, in the order the saved thread shows them. */
+/** A step's report runs and questions, in the order the saved thread shows them. */
 function StepOutputs({
   outputs,
   onAnswer,
-  onOpenArtifact,
 }: {
   outputs: StepOutput;
   onAnswer?: (value: string) => void;
-  onOpenArtifact?: (id: string) => void;
 }) {
   return (
     <>
-      {outputs.artifacts.length > 0 && onOpenArtifact && (
-        <ArtifactChips artifacts={outputs.artifacts} onOpen={onOpenArtifact} />
-      )}
       {outputs.runs.map((run) => (
         <ReportRunCard key={run.runId} run={run} />
       ))}

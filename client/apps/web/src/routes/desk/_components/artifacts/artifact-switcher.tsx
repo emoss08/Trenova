@@ -227,7 +227,8 @@ export function ArtifactSwitcher({
   arrived: boolean;
   onOpen: (id: string) => void;
   onPin: (id: string, pinned: boolean) => void;
-  onClose: () => void;
+  /** Folds the pane away; absent inside a frame that holds the fold itself. */
+  onClose?: () => void;
 }) {
   const t = useT();
   const [listOpen, setListOpen] = useState(false);
@@ -270,7 +271,7 @@ export function ArtifactSwitcher({
       data-arrived={arrived || undefined}
       onKeyDown={onKeyDown}
       className={cn(
-        "border-border-subtle bg-card flex h-12 shrink-0 items-center gap-1 border-b pr-1.5 pl-2",
+        "border-border-subtle bg-card flex h-11 shrink-0 items-center gap-1 border-b pr-1.5 pl-2",
         "ring-brand/40 ring-inset transition-[box-shadow] duration-700 ease-settle data-arrived:ring-1",
       )}
     >
@@ -278,8 +279,8 @@ export function ArtifactSwitcher({
         <ArtifactKindIcon kind={active.kind} className="size-3.5" />
       </span>
 
-      <div className="flex min-w-0 flex-1 flex-col items-start">
-        <h3 className="flex min-w-0 max-w-full items-center">
+      <div className="flex min-w-0 flex-1 flex-col items-stretch">
+        <h3 className="flex w-full min-w-0 items-center">
           <Popover open={listOpen} onOpenChange={setListOpen}>
             <PopoverTrigger
               render={
@@ -287,7 +288,7 @@ export function ArtifactSwitcher({
                   type="button"
                   aria-haspopup="listbox"
                   className={cn(
-                    "ui-focus-ring hover:bg-surface-hover -ml-1 flex h-6 min-w-0 max-w-full items-center gap-1 rounded-md px-1 transition-colors",
+                    "ui-focus-ring hover:bg-surface-hover -ml-1 flex h-6 max-w-full min-w-0 items-center gap-1 rounded-md px-1 text-left transition-colors",
                     listOpen && "bg-surface-hover",
                   )}
                 />
@@ -387,22 +388,24 @@ export function ArtifactSwitcher({
         <TooltipContent>{active.pinned ? t("Unpin") : t("Pin to the top")}</TooltipContent>
       </Tooltip>
 
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-foreground-subtle hover:text-foreground shrink-0"
-              aria-label={t("Hide artifacts")}
-              onClick={onClose}
-            />
-          }
-        >
-          <PanelRightCloseIcon className="size-4" />
-        </TooltipTrigger>
-        <TooltipContent>{t("Hide artifacts")}</TooltipContent>
-      </Tooltip>
+      {onClose && (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-foreground-subtle hover:text-foreground shrink-0"
+                aria-label={t("Hide artifacts")}
+                onClick={onClose}
+              />
+            }
+          >
+            <PanelRightCloseIcon className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>{t("Hide artifacts")}</TooltipContent>
+        </Tooltip>
+      )}
 
       <p role="status" aria-label={t("Open artifact")} aria-live="polite" className="sr-only">
         {t("{0}, {1}", active.title, position)}

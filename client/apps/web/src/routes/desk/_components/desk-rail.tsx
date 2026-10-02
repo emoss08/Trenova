@@ -1,8 +1,8 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { AgentPicker } from "@/components/assistant/agent-picker";
-import { LiveReplyLabel } from "@/components/assistant/live-reply-label";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { RECENT_AGENT_LIMIT } from "@/components/assistant/use-askable-agent";
+import { WorkingDot } from "@/components/assistant/voice/working-dot";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
@@ -12,7 +12,6 @@ import { queries } from "@/lib/queries";
 import { agentRecency } from "@/lib/recent-agents";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
@@ -20,7 +19,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { resolveUserTimezone } from "@trenova/shared/lib/date";
+import { formatShortAge, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -28,10 +27,12 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
+  ChevronDownIcon,
   HomeIcon,
   InboxIcon,
   MessageSquareIcon,
   PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   PinIcon,
   PlusIcon,
   RadarIcon,
@@ -39,6 +40,7 @@ import {
   Trash2Icon,
   TruckIcon,
   XIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, NavLink } from "react-router";
@@ -53,6 +55,8 @@ import {
 export const RAIL_SHORTCUT = "⌘B";
 /** The same keystroke as `aria-keyshortcuts` reads it, on either modifier. */
 export const RAIL_KEYSHORTCUTS = "Meta+B Control+B";
+/** The keystroke that focuses the search. */
+export const RAIL_SEARCH_SHORTCUT = "⌘K";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
@@ -81,18 +85,35 @@ export type DeskRailProps = {
   className?: string;
 };
 
+/** What the rail reads about the room: the counts on its places. */
+function useRailCounts() {
+  const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
+  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
+  const { data: attention } = useAttentionSummary();
+  const { data: watchtowerCounts } = useQuery({
+    ...queries.watchtower.counts(),
+    enabled: canWatch,
+  });
+
+  return {
+    canDecide,
+    canWatch,
+    decisions: attention?.agentDecisions ?? 0,
+    unseen: watchtowerCounts?.unseen ?? 0,
+    critical: watchtowerCounts?.unseenCritical ?? 0,
+  };
+}
+
 /**
  * The Desk's left rail: where the Desk can go and every conversation there is.
  *
- * It is the conversation's table of contents, which is why it reads top to
- * bottom the way a day does — the way out and the way in first, then the
+ * It reads top to bottom the way a day does — the way in first, then the
  * places, then the conversations shelved by when they were last touched,
- * what the person pinned above the calendar. A person scanning for "the one
- * from this morning" finds it under Today; one who remembers the agent reads
- * the mark on each row.
+ * what the person pinned above the calendar. Each row is a small card: the
+ * title, and under it who it is with and when. A conversation being answered
+ * says so in the agent's place.
  *
- * It folds to nothing with ⌘B and the width goes to the work, so the room is
- * never paying for a list nobody is reading. The fold is remembered.
+ * It folds to a strip of its places with ⌘B, and the fold is remembered.
  */
 export function DeskRail({
   threads,
@@ -115,15 +136,7 @@ export function DeskRail({
   const [now] = useState(nowInSeconds);
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
-  const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
-  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
-  const { data: attention } = useAttentionSummary();
-  const { data: watchtowerCounts } = useQuery({
-    ...queries.watchtower.counts(),
-    enabled: canWatch,
-  });
-  const decisions = attention?.agentDecisions ?? 0;
-  const unseen = watchtowerCounts?.unseen ?? 0;
+  const counts = useRailCounts();
   const liveThreadIds = useLiveThreadIds();
 
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
@@ -148,18 +161,13 @@ export function DeskRail({
         className,
       )}
     >
-      <div className="flex h-12 shrink-0 items-center gap-1 pr-2 pl-3">
+      <div className="flex h-11 shrink-0 items-center gap-1 pr-1.5 pl-3">
         <Link
           to="/desk"
           onClick={onNavigate}
           className="ui-focus-ring flex min-w-0 items-center gap-2 rounded-md py-1 pr-2"
         >
-          <span
-            aria-hidden
-            className="bg-ink text-ink-foreground flex size-6 shrink-0 items-center justify-center rounded-md"
-          >
-            <TruckIcon className="size-3.5" />
-          </span>
+          <DeskMark />
           <span className="truncate text-sm font-semibold">{t("Desk")}</span>
         </Link>
         <span className="flex-1" />
@@ -168,7 +176,7 @@ export function DeskRail({
         </RailAction>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-2 px-3 pt-1 pb-3">
+      <div className="flex shrink-0 flex-col gap-1.5 px-2 pt-1 pb-2">
         <NewConversationPicker threads={threads} disabled={isStarting} onStart={onStart} />
         <Input
           value={query}
@@ -188,51 +196,38 @@ export function DeskRail({
               >
                 <XIcon className="size-3" />
               </Button>
-            ) : null
+            ) : (
+              <Kbd className="text-2xs pointer-events-none">{RAIL_SEARCH_SHORTCUT}</Kbd>
+            )
           }
         />
       </div>
 
-      <nav aria-label={t("Desk")} className="flex shrink-0 flex-col gap-0.5 px-2">
+      <nav aria-label={t("Desk")} className="flex shrink-0 flex-col gap-px px-2">
         <RailLink to="/desk" end icon={HomeIcon} label={t("Today")} onNavigate={onNavigate} />
-        {canWatch && (
+        {counts.canWatch && (
           <RailLink
             to="/desk/watchtower"
             icon={RadarIcon}
             label={t("Watchtower")}
             onNavigate={onNavigate}
-            trailing={
-              unseen > 0 ? (
-                <Badge
-                  variant={
-                    watchtowerCounts && watchtowerCounts.unseenCritical > 0 ? "danger" : "neutral"
-                  }
-                  className="text-2xs h-4 px-1.5 tabular-nums"
-                >
-                  {unseen > 99 ? "99+" : unseen}
-                </Badge>
-              ) : null
-            }
+            count={counts.unseen}
+            urgent={counts.critical > 0}
           />
         )}
-        {canDecide && (
+        {counts.canDecide && (
           <RailLink
             to="/desk/decisions"
             icon={InboxIcon}
             label={t("Decisions")}
             onNavigate={onNavigate}
-            trailing={
-              decisions > 0 ? (
-                <Badge variant="warning" className="text-2xs h-4 px-1.5 tabular-nums">
-                  {decisions > 99 ? "99+" : decisions}
-                </Badge>
-              ) : null
-            }
+            count={counts.decisions}
+            urgent={counts.decisions > 0}
           />
         )}
       </nav>
 
-      <ScrollArea className="mt-3 min-h-0 flex-1" maskHeight={0}>
+      <ScrollArea className="mt-2 min-h-0 flex-1" maskHeight={12}>
         {isLoading ? (
           <RailListSkeleton />
         ) : listUnavailable ? (
@@ -254,6 +249,7 @@ export function DeskRail({
             agentsById={agentsById}
             activeThreadId={activeThreadId}
             liveThreadIds={liveThreadIds}
+            now={now}
             onDelete={onDelete}
             onTogglePin={onTogglePin}
             onNavigate={onNavigate}
@@ -261,7 +257,7 @@ export function DeskRail({
         )}
       </ScrollArea>
 
-      <footer className="border-desk-hairline flex shrink-0 items-center gap-2 border-t px-2 py-2">
+      <footer className="border-desk-hairline flex h-12 shrink-0 items-center gap-2 border-t px-2">
         <ResolvedUserAvatar
           userId={user?.id}
           name={user?.name}
@@ -278,25 +274,122 @@ export function DeskRail({
             <span className="text-muted-foreground truncate text-xs">{user.emailAddress}</span>
           )}
         </span>
+        <BackToTrenova />
+      </footer>
+    </div>
+  );
+}
+
+/**
+ * The rail folded to a strip: the way in, the places and the way out, as
+ * marks with their names in tooltips. The conversations are behind the
+ * unfold; a column of fifty untitled marks would say nothing.
+ */
+export function DeskRailStrip({
+  isStarting,
+  threads,
+  onStart,
+  onExpand,
+}: {
+  isStarting: boolean;
+  threads: AssistantThread[];
+  onStart: (agentId: string) => void;
+  onExpand: () => void;
+}) {
+  const t = useT();
+  const counts = useRailCounts();
+  const user = useAuthStore((state) => state.user);
+
+  return (
+    <div
+      data-slot="desk-rail-strip"
+      className="bg-desk-rail flex h-full w-full flex-col items-center overflow-hidden"
+    >
+      <div className="flex h-11 shrink-0 items-center">
+        <RailAction label={t("Show the rail")} shortcut={RAIL_SHORTCUT} onClick={onExpand}>
+          <PanelLeftOpenIcon className="size-4" />
+        </RailAction>
+      </div>
+      <div className="flex shrink-0 flex-col items-center gap-1 pt-1 pb-2">
+        <NewConversationPicker threads={threads} disabled={isStarting} onStart={onStart} compact />
+      </div>
+      <nav aria-label={t("Desk")} className="flex shrink-0 flex-col items-center gap-1">
+        <StripLink to="/desk" end icon={HomeIcon} label={t("Today")} />
+        {counts.canWatch && (
+          <StripLink
+            to="/desk/watchtower"
+            icon={RadarIcon}
+            label={t("Watchtower")}
+            count={counts.unseen}
+            urgent={counts.critical > 0}
+          />
+        )}
+        {counts.canDecide && (
+          <StripLink
+            to="/desk/decisions"
+            icon={InboxIcon}
+            label={t("Decisions")}
+            count={counts.decisions}
+            urgent={counts.decisions > 0}
+          />
+        )}
+      </nav>
+      <span className="flex-1" />
+      <div className="flex h-12 shrink-0 flex-col items-center justify-center gap-1">
         <Tooltip>
           <TooltipTrigger
             render={
-              <Link
-                to="/"
-                aria-label={t("Back to Trenova")}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                  "text-muted-foreground hover:text-foreground shrink-0",
-                )}
-              />
+              <span className="flex">
+                <ResolvedUserAvatar
+                  userId={user?.id}
+                  name={user?.name}
+                  profilePicUrl={user?.profilePicUrl}
+                  thumbnailUrl={user?.thumbnailUrl}
+                  className="size-7"
+                  fallbackClassName="bg-muted text-2xs font-medium text-muted-foreground"
+                />
+              </span>
             }
-          >
-            <ArrowLeftIcon className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent side="top">{t("Back to Trenova")}</TooltipContent>
+          />
+          <TooltipContent side="right">{user?.name ?? t("Signed in")}</TooltipContent>
         </Tooltip>
-      </footer>
+      </div>
     </div>
+  );
+}
+
+function DeskMark() {
+  return (
+    <span
+      aria-hidden
+      className="bg-ink text-ink-foreground flex size-6 shrink-0 items-center justify-center rounded-md"
+    >
+      <TruckIcon className="size-3.5" />
+    </span>
+  );
+}
+
+function BackToTrenova() {
+  const t = useT();
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Link
+            to="/"
+            aria-label={t("Back to Trenova")}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon-sm" }),
+              "text-muted-foreground hover:text-foreground shrink-0",
+            )}
+          />
+        }
+      >
+        <ArrowLeftIcon className="size-4" />
+      </TooltipTrigger>
+      <TooltipContent side="top">{t("Back to Trenova")}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -328,11 +421,29 @@ function RailAction({
       >
         {children}
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="flex items-center gap-2">
+      <TooltipContent side="right" className="flex items-center gap-2">
         {label}
         {shortcut && <Kbd>{shortcut}</Kbd>}
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+/** A count on a place: quiet figures, in the danger tone only when something is critical. */
+function RailCount({ count, urgent }: { count: number; urgent: boolean }) {
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <span
+      className={cn(
+        "ml-auto shrink-0 text-xs tabular-nums",
+        urgent ? "text-danger font-medium" : "text-foreground-subtle",
+      )}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
   );
 }
 
@@ -341,14 +452,16 @@ function RailLink({
   end,
   icon: Icon,
   label,
-  trailing,
+  count = 0,
+  urgent = false,
   onNavigate,
 }: {
   to: string;
   end?: boolean;
-  icon: typeof HomeIcon;
+  icon: LucideIcon;
   label: string;
-  trailing?: ReactNode;
+  count?: number;
+  urgent?: boolean;
   onNavigate?: () => void;
 }) {
   return (
@@ -374,10 +487,63 @@ function RailLink({
             )}
           />
           <span className="min-w-0 flex-1 truncate">{label}</span>
-          {trailing}
+          <RailCount count={count} urgent={urgent} />
         </>
       )}
     </NavLink>
+  );
+}
+
+function StripLink({
+  to,
+  end,
+  icon: Icon,
+  label,
+  count = 0,
+  urgent = false,
+}: {
+  to: string;
+  end?: boolean;
+  icon: LucideIcon;
+  label: string;
+  count?: number;
+  urgent?: boolean;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <NavLink
+            to={to}
+            end={end}
+            aria-label={label}
+            className={({ isActive }) =>
+              cn(
+                "ui-focus-ring relative flex size-9 items-center justify-center rounded-md transition-colors",
+                isActive
+                  ? "bg-surface-selected text-foreground"
+                  : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
+              )
+            }
+          />
+        }
+      >
+        <Icon className="size-4" />
+        {count > 0 && (
+          <span
+            aria-hidden
+            className={cn(
+              "absolute top-1.5 right-1.5 size-1.5 rounded-full",
+              urgent ? "bg-danger" : "bg-foreground-subtle",
+            )}
+          />
+        )}
+      </TooltipTrigger>
+      <TooltipContent side="right" className="flex items-center gap-2">
+        {label}
+        {count > 0 && <span className="tabular-nums opacity-70">{count > 99 ? "99+" : count}</span>}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -391,10 +557,12 @@ function NewConversationPicker({
   threads,
   disabled,
   onStart,
+  compact = false,
 }: {
   threads: AssistantThread[];
   disabled: boolean;
   onStart: (agentId: string) => void;
+  compact?: boolean;
 }) {
   const t = useT();
   const lastAgentId = useAssistantStore((state) => state.lastAgentId);
@@ -411,10 +579,17 @@ function NewConversationPicker({
       disabled={disabled}
       onSelect={(agent) => onStart(agent.id)}
       trigger={
-        <Button type="button" size="lg" className="w-full justify-start px-3 has-[>svg]:px-3">
-          <PlusIcon className="size-4" />
-          <span className="min-w-0 flex-1 truncate text-left">{t("New conversation")}</span>
-        </Button>
+        compact ? (
+          <Button type="button" size="icon" aria-label={t("New conversation")}>
+            <PlusIcon className="size-4" />
+          </Button>
+        ) : (
+          <Button type="button" className="h-9 w-full justify-start px-3 has-[>svg]:px-3">
+            <PlusIcon className="size-4" />
+            <span className="min-w-0 flex-1 truncate text-left">{t("New conversation")}</span>
+            <Kbd className="text-2xs bg-ink-foreground/15 text-ink-foreground/80 border-0">⌘N</Kbd>
+          </Button>
+        )
       }
     />
   );
@@ -433,8 +608,8 @@ function RailListSkeleton() {
   return (
     <div className="flex flex-col gap-1.5 px-3 py-1" aria-busy>
       <Skeleton className="mb-1 h-3 w-12" />
-      {Array.from({ length: 5 }, (_, index) => (
-        <Skeleton key={index} className="h-10" />
+      {Array.from({ length: 6 }, (_, index) => (
+        <Skeleton key={index} className="h-11" />
       ))}
     </div>
   );
@@ -463,6 +638,7 @@ function RailShelves({
   agentsById,
   activeThreadId,
   liveThreadIds,
+  now,
   onDelete,
   onTogglePin,
   onNavigate,
@@ -471,11 +647,11 @@ function RailShelves({
   agentsById: ReadonlyMap<string, AgentChoice>;
   activeThreadId: string | null;
   liveThreadIds: ReadonlySet<string>;
+  now: number;
   onDelete: (thread: AssistantThread) => void;
   onTogglePin: (thread: AssistantThread) => void;
   onNavigate?: () => void;
 }) {
-  const t = useT();
   // Where each shelf's first row stands in the whole list, so the stagger
   // runs down the rail rather than restarting at every heading.
   const starts: number[] = [];
@@ -485,35 +661,87 @@ function RailShelves({
   }, 0);
 
   return (
-    <div className="flex flex-col gap-4 px-2 pb-3">
+    <div className="flex flex-col gap-3 px-2 pb-3">
       {shelves.map((shelf, shelfIndex) => (
-        <section
+        <RailShelf
           key={shelf.key}
-          aria-label={shelfHeading(t, shelf.key)}
-          className="flex flex-col gap-0.5"
-        >
-          <h3 className="text-foreground-subtle flex items-center gap-1.5 px-2.5 pb-1 text-xs font-medium">
-            {shelf.key === "pinned" && <PinIcon className="size-3" />}
-            {shelfHeading(t, shelf.key)}
-          </h3>
-          {shelf.threads.map((thread, index) => (
-            <RailRow
-              key={thread.id}
-              thread={thread}
-              agent={agentsById.get(thread.agentDefinitionId) ?? null}
-              active={thread.id === activeThreadId}
-              live={liveThreadIds.has(thread.id)}
-              style={{
-                animationDelay: `${Math.min(starts[shelfIndex] + index, ROW_STAGGER_CAP) * ROW_STAGGER_MS}ms`,
-              }}
-              onDelete={() => onDelete(thread)}
-              onTogglePin={() => onTogglePin(thread)}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </section>
+          shelf={shelf}
+          start={starts[shelfIndex]}
+          agentsById={agentsById}
+          activeThreadId={activeThreadId}
+          liveThreadIds={liveThreadIds}
+          now={now}
+          onDelete={onDelete}
+          onTogglePin={onTogglePin}
+          onNavigate={onNavigate}
+        />
       ))}
     </div>
+  );
+}
+
+function RailShelf({
+  shelf,
+  start,
+  agentsById,
+  activeThreadId,
+  liveThreadIds,
+  now,
+  onDelete,
+  onTogglePin,
+  onNavigate,
+}: {
+  shelf: DeskThreadShelf;
+  start: number;
+  agentsById: ReadonlyMap<string, AgentChoice>;
+  activeThreadId: string | null;
+  liveThreadIds: ReadonlySet<string>;
+  now: number;
+  onDelete: (thread: AssistantThread) => void;
+  onTogglePin: (thread: AssistantThread) => void;
+  onNavigate?: () => void;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(true);
+  const heading = shelfHeading(t, shelf.key);
+
+  return (
+    <section aria-label={heading} className="flex flex-col gap-px">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="group/shelf ui-focus-ring text-foreground-subtle hover:text-foreground-muted flex h-6 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors"
+      >
+        {shelf.key === "pinned" && <PinIcon className="size-3" />}
+        <span>{heading}</span>
+        <span className="tabular-nums opacity-70">{shelf.threads.length}</span>
+        <ChevronDownIcon
+          aria-hidden
+          className={cn(
+            "ml-auto size-3 opacity-0 transition-[opacity,rotate] group-hover/shelf:opacity-100",
+            !open && "-rotate-90 opacity-100",
+          )}
+        />
+      </button>
+      {open &&
+        shelf.threads.map((thread, index) => (
+          <RailRow
+            key={thread.id}
+            thread={thread}
+            agent={agentsById.get(thread.agentDefinitionId) ?? null}
+            active={thread.id === activeThreadId}
+            live={liveThreadIds.has(thread.id)}
+            now={now}
+            style={{
+              animationDelay: `${Math.min(start + index, ROW_STAGGER_CAP) * ROW_STAGGER_MS}ms`,
+            }}
+            onDelete={() => onDelete(thread)}
+            onTogglePin={() => onTogglePin(thread)}
+            onNavigate={onNavigate}
+          />
+        ))}
+    </section>
   );
 }
 
@@ -522,6 +750,7 @@ function RailRow({
   agent,
   active,
   live,
+  now,
   style,
   onDelete,
   onTogglePin,
@@ -531,12 +760,14 @@ function RailRow({
   agent: AgentChoice | null;
   active: boolean;
   live: boolean;
+  now: number;
   style: CSSProperties;
   onDelete: () => void;
   onTogglePin: () => void;
   onNavigate?: () => void;
 }) {
   const t = useT();
+  const touched = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
 
   return (
     <div
@@ -544,39 +775,48 @@ function RailRow({
       style={style}
       className={cn(
         "group animate-rise relative flex items-center rounded-md transition-colors",
-        active ? "bg-surface-selected" : "hover:bg-surface-hover",
+        active
+          ? "bg-surface-selected ring-foreground/10 ring-1"
+          : "hover:bg-surface-hover",
       )}
     >
       <NavLink
         to={conversationPath(thread.id)}
         onClick={onNavigate}
-        className="ui-inset-focus-ring flex min-w-0 flex-1 flex-col gap-0.5 rounded-md py-1.5 pr-14 pl-2.5"
+        className="ui-inset-focus-ring flex min-w-0 flex-1 flex-col gap-0.5 rounded-md py-1.5 pr-2.5 pl-2.5 group-hover:pr-14 group-focus-within:pr-14"
       >
-        <span className={cn("truncate text-sm", active && "font-medium")}>
-          {thread.title || t("Untitled conversation")}
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className={cn("min-w-0 flex-1 truncate text-sm", active && "font-medium")}>
+            {thread.title || t("Untitled conversation")}
+          </span>
+          {thread.pinned && !active && (
+            <PinIcon aria-hidden className="text-foreground-subtle size-3 shrink-0" />
+          )}
         </span>
-        <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+        <span className="text-foreground-subtle flex min-w-0 items-center gap-1.5 text-xs">
+          <AgentTile agent={agent} size="xs" className="size-3.5" />
+          <span className="truncate">{agent?.name ?? t("Agent unavailable")}</span>
+          <span aria-hidden className="shrink-0">
+            ·
+          </span>
           {live ? (
-            <LiveReplyLabel />
+            <span className="text-foreground-muted flex shrink-0 items-center gap-1">
+              <WorkingDot working still />
+              {t("Replying")}
+            </span>
           ) : (
-            <>
-              <AgentTile agent={agent} size="xs" className="size-4" />
-              <span className="truncate">{agent?.name ?? t("Agent unavailable")}</span>
-            </>
+            <span className="shrink-0 tabular-nums">{formatShortAge(now - touched)}</span>
           )}
         </span>
       </NavLink>
-      <span className="absolute inset-y-0 right-1 flex items-center gap-0.5">
+      <span className="absolute inset-y-0 right-1 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
         <Button
           variant="ghost"
           size="icon-xs"
           aria-label={thread.pinned ? t("Unpin conversation") : t("Pin conversation")}
           aria-pressed={thread.pinned}
           className={cn(
-            "transition-opacity focus-visible:opacity-100",
-            thread.pinned
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+            thread.pinned ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
           onClick={onTogglePin}
         >
@@ -586,7 +826,7 @@ function RailRow({
           variant="ghost"
           size="icon-xs"
           aria-label={t("Delete conversation")}
-          className="text-muted-foreground hover:text-destructive opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
+          className="text-muted-foreground hover:text-destructive"
           onClick={onDelete}
         >
           <Trash2Icon className="size-3.5" />

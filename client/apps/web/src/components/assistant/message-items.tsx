@@ -43,14 +43,19 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { stepsFromExchanges } from "./activity";
+import { stepsFromExchanges, type ToolStep } from "./activity";
 import { askRequestsFrom } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
 import { PlanRecord, ProposalRecord } from "./decision-record";
 import type { PlanGroup } from "./plan-state";
 import { ReportRunCard } from "./report-run-card";
 import { reportRunsFrom } from "./report-runs";
-import { decisionHeadline, type ThreadEntry, type TurnPlacement } from "./thread-view";
+import {
+  decisionHeadline,
+  type ThreadEntry,
+  type ToolExchange,
+  type TurnPlacement,
+} from "./thread-view";
 import { ToolActivity } from "./tool-activity";
 import { CitationProvider, SourcesFooter } from "./web-citations";
 import type { WebSource } from "./web-sources";
@@ -80,9 +85,28 @@ export function AgentAvatar({
   return <AgentTile agent={agent} size={size} className={className} />;
 }
 
+/**
+ * Whether a page is worth naming beside a message. A record's page always is;
+ * a page with only a title is, unless it is the Desk itself, where the title
+ * is the application's own name and the conversation is the place the
+ * question was asked rather than what it is about.
+ */
+export function pageContextShown(
+  context: Pick<AssistantPageContext, "path" | "title" | "entityType"> | null | undefined,
+): context is AssistantPageContext {
+  if (!context) {
+    return false;
+  }
+  if (context.entityType !== "") {
+    return true;
+  }
+
+  return context.title !== "" && !/^\/desk(?:\/|$)/u.test(context.path);
+}
+
 /** Where the question was asked from, so an answer can be read against its page. */
 export function PageContextChip({ context }: { context: AssistantPageContext | null | undefined }) {
-  if (!context || (context.title === "" && context.entityType === "")) {
+  if (!pageContextShown(context)) {
     return null;
   }
 
@@ -134,7 +158,7 @@ export function TurnContextChips({
       {files.map((file) => (
         <li
           key={file.documentId}
-          className="border-border bg-surface inline-flex h-6 max-w-[16rem] items-center gap-1.5 rounded-full border px-2 text-xs"
+          className="ring-foreground/10 bg-card inline-flex h-6 max-w-[16rem] items-center gap-1.5 rounded-full px-2 text-xs ring-1"
         >
           <FileIcon className="text-muted-foreground size-3 shrink-0" />
           <span className="min-w-0 truncate">{file.fileName}</span>
@@ -143,7 +167,7 @@ export function TurnContextChips({
       {records.map((record) => (
         <li
           key={`${record.type}:${record.id}`}
-          className="border-border bg-surface inline-flex h-6 max-w-[16rem] items-center gap-1.5 rounded-full border px-2 text-xs"
+          className="ring-foreground/10 bg-card inline-flex h-6 max-w-[16rem] items-center gap-1.5 rounded-full px-2 text-xs ring-1"
           title={`${record.type.replaceAll("_", " ")} ${record.id}`}
         >
           <AtSignIcon className="text-muted-foreground size-3 shrink-0" />
@@ -207,7 +231,7 @@ export function UserTurn({
 
   return (
     <article data-side="right" className="group/turn flex min-w-0 flex-col items-end gap-1.5">
-      <div className="bg-sunken max-w-[85%] min-w-0 rounded-lg px-3.5 py-2 max-sm:max-w-full">
+      <div className="bg-sunken max-w-[85%] min-w-0 rounded-lg px-3.5 py-2.5 max-sm:max-w-full">
         <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{content}</p>
       </div>
       <TurnContextChips attachments={attachments} mentions={mentions} align="end" />
@@ -269,7 +293,7 @@ export function AssistantTurn({
 
   if (continued) {
     return (
-      <article className="group/turn relative -mt-2 flex min-w-0 flex-col gap-2.5">
+      <article className="group/turn relative -mt-3 flex min-w-0 flex-col gap-3">
         {(actions || feedback) && (
           <span className="absolute top-0 right-0 z-1 flex items-center gap-0.5">
             {actions && <TurnActions>{actions}</TurnActions>}
@@ -282,21 +306,20 @@ export function AssistantTurn({
   }
 
   return (
-    <article className="group/turn flex min-w-0 flex-col gap-2.5">
-      <header className="flex h-7 min-w-0 items-center gap-2 text-xs">
-        <AgentAvatar />
+    <article className="group/turn flex min-w-0 flex-col gap-3">
+      <header className="flex h-6 min-w-0 items-center gap-2">
+        <AgentAvatar size="sm" />
         <span className="text-foreground min-w-0 truncate text-sm font-medium">
           {agent?.name ?? t("Assistant")}
         </span>
-        {!working && (
-          <>
-            {at !== undefined && at > 0 && <TurnTime at={at} />}
-            {workedSeconds !== null && (
+        <span className="text-foreground-subtle flex min-w-0 items-center gap-1.5 text-xs">
+          {!working && at !== undefined && at > 0 && <TurnTime at={at} />}
+          {!working && workedSeconds !== null && (
+            <>
+              <Separator />
               <Tooltip>
                 <TooltipTrigger
-                  render={
-                    <span className="text-foreground-subtle shrink-0 cursor-default font-mono text-2xs tabular-nums" />
-                  }
+                  render={<span className="shrink-0 cursor-default tabular-nums" />}
                 >
                   {formatWorkDuration(workedSeconds)}
                 </TooltipTrigger>
@@ -304,10 +327,15 @@ export function AssistantTurn({
                   {t("Worked for {0}", formatWorkDuration(workedSeconds))}
                 </TooltipContent>
               </Tooltip>
-            )}
-          </>
-        )}
-        {meta}
+            </>
+          )}
+          {meta && (
+            <>
+              {!working && (at !== undefined || workedSeconds !== null) && <Separator />}
+              {meta}
+            </>
+          )}
+        </span>
         {(actions || feedback) && (
           <span className="ml-auto flex shrink-0 items-center gap-0.5">
             {actions && <TurnActions>{actions}</TurnActions>}
@@ -317,6 +345,15 @@ export function AssistantTurn({
       </header>
       {children}
     </article>
+  );
+}
+
+/** The dot between two facts on a header line. */
+function Separator() {
+  return (
+    <span aria-hidden className="text-foreground-subtle/60 shrink-0 select-none">
+      ·
+    </span>
   );
 }
 
@@ -336,7 +373,7 @@ export function AssistantProse({
   sources?: readonly WebSource[];
 }) {
   return (
-    <div className="min-w-0 text-sm leading-relaxed lg:max-w-prose">
+    <div className="min-w-0 max-w-prose text-sm leading-relaxed">
       <CitationProvider sources={sources}>
         {streaming ? <StreamingAiMarkdown content={content} /> : <AiMarkdown content={content} />}
       </CitationProvider>
@@ -504,8 +541,15 @@ export function AssistantEntry({
   sources = NO_SOURCES,
   listsSources = false,
   threadId,
+  runTools,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
+  /**
+   * Every step of the reply this entry heads, across the messages that
+   * continue it, so the work folds into one line under the header. Absent on
+   * a continuing message, whose steps are already in that fold.
+   */
+  runTools?: readonly ToolExchange[];
   /** The conversation the entry belongs to, so a waiting record can open the approval box. */
   threadId?: string;
   /** The web pages this reply found up to this step, cited or not. */
@@ -534,13 +578,19 @@ export function AssistantEntry({
   // rather than leaving the reader to ask again for the outcome.
   const reportRuns = reportRunsFrom(tools);
   const asks = askRequestsFrom(tools);
-  const steps = stepsFromExchanges(tools, message.createdAt);
+  const continued = placement?.continued ?? false;
+  const steps: ToolStep[] = runTools
+    ? stepsFromExchanges(runTools, message.createdAt)
+    : continued
+      ? []
+      : stepsFromExchanges(tools, message.createdAt);
+  const workedSeconds = placement?.workedSeconds ?? null;
 
   return (
     <AssistantTurn
       at={message.createdAt}
-      continued={placement?.continued ?? false}
-      workedSeconds={placement?.workedSeconds ?? null}
+      continued={continued}
+      workedSeconds={workedSeconds}
       meta={message.model !== "" ? <ModelNote message={message} /> : null}
       actions={
         message.content !== "" ? (
@@ -563,7 +613,13 @@ export function AssistantEntry({
       }
     >
       {message.reasoning?.text ? <ReasoningDisclosure text={message.reasoning.text} /> : null}
-      {steps.length > 0 && <ToolActivity steps={steps} folded />}
+      {steps.length > 0 && (
+        <ToolActivity
+          steps={steps}
+          folded
+          summary={workedSeconds !== null ? t("Worked for {0}", formatWorkDuration(workedSeconds)) : undefined}
+        />
+      )}
       {artifacts.length > 0 && onOpenArtifact && (
         <ArtifactChips artifacts={artifacts} onOpen={onOpenArtifact} />
       )}
@@ -599,10 +655,14 @@ export function AssistantEntry({
   );
 }
 
+/** How many of a reply's products are shown as chips before the rest fold into one. */
+export const ARTIFACT_CHIP_LIMIT = 4;
+
 /**
- * What a turn produced, as references the pane opens. The transcript points
- * at a table or a draft; it does not carry a second copy of it. Only the
- * kinds the pane can render are offered.
+ * What a reply produced, as one row of references the pane opens: a kind's
+ * mark and the title, and past four of them one more chip that counts the
+ * rest and opens the first of them, so the workspace's list takes over. The
+ * transcript points at a table or a draft; it does not carry a second copy.
  */
 export function ArtifactChips({
   artifacts,
@@ -612,29 +672,44 @@ export function ArtifactChips({
   onOpen: (id: string) => void;
 }) {
   const t = useT();
+  const shown = artifacts.slice(0, ARTIFACT_CHIP_LIMIT);
+  const hidden = artifacts.slice(ARTIFACT_CHIP_LIMIT);
 
   return (
-    <ul className="flex flex-wrap gap-1.5">
-      {artifacts.map((artifact) => (
-        <li key={artifact.id}>
-          <button
-            type="button"
-            onClick={() => onOpen(artifact.id)}
-            className="ui-focus-ring border-border hover:bg-surface-hover flex h-7 max-w-64 items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors"
-            aria-label={t("Open {0}", artifact.title)}
-          >
-            <ArtifactKindIcon
-              kind={artifact.kind}
-              className="text-muted-foreground size-3 shrink-0"
-            />
-            <span className="text-muted-foreground shrink-0">
-              {t(ARTIFACT_KINDS[artifact.kind].label)}
-            </span>
-            <span className="truncate">{artifact.title}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="flex min-w-0 items-start gap-2">
+      <span className="text-foreground-subtle h-6 shrink-0 text-xs leading-6">{t("Produced")}</span>
+      <ul className="flex min-w-0 flex-wrap gap-1.5" aria-label={t("Produced")}>
+        {shown.map((artifact) => (
+          <li key={artifact.id} className="min-w-0">
+            <button
+              type="button"
+              onClick={() => onOpen(artifact.id)}
+              className="ui-focus-ring ui-press ring-foreground/10 bg-card hover:bg-surface-hover text-foreground flex h-6 max-w-64 items-center gap-1.5 rounded-md px-2 text-xs ring-1 transition-colors"
+              aria-label={t("Open {0}", artifact.title)}
+              title={`${t(ARTIFACT_KINDS[artifact.kind].label)} · ${artifact.title}`}
+            >
+              <ArtifactKindIcon
+                kind={artifact.kind}
+                className="text-foreground-muted size-3 shrink-0"
+              />
+              <span className="truncate">{artifact.title}</span>
+            </button>
+          </li>
+        ))}
+        {hidden.length > 0 && (
+          <li>
+            <button
+              type="button"
+              onClick={() => onOpen(hidden[0].id)}
+              className="ui-focus-ring ui-press ring-foreground/10 text-foreground-muted hover:bg-surface-hover hover:text-foreground flex h-6 items-center rounded-md px-2 text-xs ring-1 transition-colors"
+              aria-label={t("{0, plural, one {Open # more} other {Open # more}}", hidden.length)}
+            >
+              {t("+{0} more", hidden.length)}
+            </button>
+          </li>
+        )}
+      </ul>
+    </div>
   );
 }
 
@@ -654,7 +729,7 @@ function ModelNote({ message }: { message: AssistantMessage }) {
     <Tooltip>
       <TooltipTrigger
         render={
-          <span className="text-foreground-subtle hidden max-w-32 cursor-default truncate border-b border-dotted border-current/40 sm:inline" />
+          <span className="text-foreground-subtle hidden max-w-32 cursor-default truncate sm:inline" />
         }
       >
         {message.model}
@@ -727,18 +802,17 @@ export function DecisionNote({ content, at }: { content: string; at?: number }) 
     <div
       role="note"
       aria-label={t("Decision")}
-      className="text-foreground-muted flex min-w-0 items-center gap-2.5 text-xs"
+      className="text-foreground-muted flex min-w-0 items-center gap-3 py-1 text-xs"
     >
-      <span aria-hidden className="bg-border-subtle h-px w-3 shrink-0" />
-      <span className="bg-sunken text-foreground-muted flex size-5 shrink-0 items-center justify-center rounded-full">
-        <Icon className="size-3" aria-hidden />
+      <span aria-hidden className="bg-border-subtle h-px min-w-4 flex-1" />
+      <span className="flex min-w-0 max-w-[80%] items-center gap-2">
+        <Icon className="text-foreground-subtle size-3 shrink-0" aria-hidden />
+        <span className="min-w-0 truncate" title={line || undefined}>
+          {line || t("Following up on your decision")}
+        </span>
+        {at !== undefined && at > 0 && <TurnTime at={at} />}
       </span>
-      <span className="text-foreground shrink-0 font-medium">{t("Decision")}</span>
-      <span className="min-w-0 truncate" title={line || undefined}>
-        {line || t("Following up on your decision")}
-      </span>
-      {at !== undefined && at > 0 && <TurnTime at={at} />}
-      <span aria-hidden className="bg-border-subtle h-px min-w-3 flex-1" />
+      <span aria-hidden className="bg-border-subtle h-px min-w-4 flex-1" />
     </div>
   );
 }

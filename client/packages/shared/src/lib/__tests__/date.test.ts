@@ -591,3 +591,22 @@ describe("formatISODateMedium", () => {
     expect(formatISODateMedium("2023-10-02T00:00:00Z", "No date")).toBe("No date");
   });
 });
+
+describe("formatShortAge", () => {
+  // A rail of forty conversations has room for "3h", not "3 hours ago", and
+  // "944h ago" for a conversation from six weeks back reads as a counter
+  // rather than a time.
+  it("names an age in the largest whole unit that fits a rail", async () => {
+    const { formatShortAge } = await import("../date");
+    expect(formatShortAge(0)).toBe("now");
+    expect(formatShortAge(45)).toBe("now");
+    expect(formatShortAge(90)).toBe("1m");
+    expect(formatShortAge(59 * 60)).toBe("59m");
+    expect(formatShortAge(3 * 3600 + 20 * 60)).toBe("3h");
+    expect(formatShortAge(26 * 3600)).toBe("1d");
+    expect(formatShortAge(13 * 86400)).toBe("13d");
+    expect(formatShortAge(944 * 3600)).toBe("5w");
+    expect(formatShortAge(400 * 86400)).toBe("1y");
+    expect(formatShortAge(-30)).toBe("now");
+  });
+});

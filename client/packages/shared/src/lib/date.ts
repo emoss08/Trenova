@@ -878,3 +878,20 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
     },
   ];
 }
+
+/**
+ * An age for a place with room for two or three characters: "now" under a
+ * minute, then the largest whole unit — "3m", "3h", "13d", "5w", "1y". A
+ * rail of forty conversations reads it at a glance where "944 hours ago"
+ * reads as a counter.
+ */
+export function formatShortAge(seconds: number): string {
+  const age = Math.max(0, Math.floor(seconds));
+  if (age < 60) return "now";
+  if (age < 3600) return `${Math.floor(age / 60)}m`;
+  if (age < 86400) return `${Math.floor(age / 3600)}h`;
+  if (age < 14 * 86400) return `${Math.floor(age / 86400)}d`;
+  if (age < 365 * 86400) return `${Math.floor(age / (7 * 86400))}w`;
+
+  return `${Math.floor(age / (365 * 86400))}y`;
+}

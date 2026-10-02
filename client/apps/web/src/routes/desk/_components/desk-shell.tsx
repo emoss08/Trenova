@@ -1,13 +1,23 @@
 import { EASE_SETTLE } from "@/lib/motion";
+import {
+  MAX_WORKSPACE_SIZE,
+  MIN_WORKSPACE_SIZE,
+  clampWorkspaceSize,
+} from "@/stores/desk-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@trenova/shared/components/ui/resizable";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { PanelLeftOpenIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
-import { DESK_RAIL_WIDTH, DESK_WORKSPACE_WIDTH } from "./desk-dimensions";
+import { DESK_RAIL_STRIP_WIDTH, DESK_RAIL_WIDTH } from "./desk-dimensions";
 import { RAIL_KEYSHORTCUTS, RAIL_SHORTCUT } from "./desk-rail";
 
 /** A fold arrives the way a sheet does; under reduced motion it is a cut. */
@@ -19,25 +29,18 @@ const CUT = { duration: 0 } as const;
  *
  * The Desk runs outside the app shell, so this is the only frame between the
  * window edge and the work: the rail down the left, and over the room beside
- * it one strip holding who you are talking to, what the conversation is
- * called, and what can be done to it. Everything else happens in the columns
- * below the strip.
+ * it one strip of 44px holding who you are talking to, what the conversation
+ * is called, and what can be done to it. It carries the agent's wash: while
+ * an agent is working the top of the room is lit in its accent, and when it
+ * stops the light goes out. That is the whole of the "something is
+ * happening" signal at this level.
  *
- * The strip is 48px and does not scroll, so the title and the agent stay put
- * while a long conversation runs underneath them. It carries the agent's
- * wash: while an agent is working the top of the room is lit in its accent,
- * and when it stops the light goes out over about half a second. That is the
- * whole of the "something is happening" signal at this level — no spinner,
- * no bar, just the room being awake.
- *
- * The strip's left edge is where the rail comes back from. With the rail
- * open on a wide screen there is nothing there, because the rail's own
- * header holds the fold; folded, or on a screen too narrow for a rail, the
- * control to open it stands first.
+ * With the rail open on a wide screen the strip starts at the agent; folded
+ * to its strip of places, or on a screen too narrow for a rail, the control
+ * to open it stands first.
  */
 export function DeskShell({
   rail,
-  railOpen,
   onShowRail,
   lead,
   title,
@@ -48,8 +51,8 @@ export function DeskShell({
 }: {
   /** The rail, already folded or unfolded; the shell only places it. */
   rail: ReactNode;
-  /** Whether the rail stands open beside the room on a wide screen. */
-  railOpen: boolean;
+  /** Whether the rail stands open beside the room on a wide screen; the strip holds the unfold there. */
+  railOpen?: boolean;
   /** Opens the rail: unfolds it on a wide screen, slides it in on a narrow one. */
   onShowRail: () => void;
   /** The agent's mark, when a conversation is open. */
@@ -74,7 +77,7 @@ export function DeskShell({
         <header
           data-working={working}
           className={cn(
-            "border-desk-hairline flex h-12 shrink-0 items-center gap-2 border-b pr-2 pl-2",
+            "border-desk-hairline flex h-11 shrink-0 items-center gap-1.5 border-b pr-2 pl-2",
             "ui-agent-glow",
           )}
         >
@@ -88,7 +91,7 @@ export function DeskShell({
                   aria-keyshortcuts={RAIL_KEYSHORTCUTS}
                   className={cn(
                     "text-muted-foreground hover:text-foreground shrink-0",
-                    railOpen && "lg:hidden",
+                    "lg:hidden",
                   )}
                   onClick={onShowRail}
                 />
@@ -102,9 +105,9 @@ export function DeskShell({
             </TooltipContent>
           </Tooltip>
 
-          {lead && <span className="flex shrink-0 items-center pl-0.5">{lead}</span>}
+          {lead && <span className="flex shrink-0 items-center">{lead}</span>}
 
-          <div className="min-w-0 flex-1">{title}</div>
+          <div className="flex min-w-0 flex-1 items-center">{title}</div>
 
           <div className="flex shrink-0 items-center gap-0.5">{actions}</div>
         </header>
@@ -116,86 +119,132 @@ export function DeskShell({
 }
 
 /**
- * The rail's place on a wide screen, folding to nothing and back.
+ * The rail's place on a wide screen: open, or folded to a strip of its places.
  *
- * The width animates rather than the display, so the conversation beside it
- * widens as the rail goes rather than jumping when it has gone. The rail
- * inside keeps its own width the whole way, so its rows are clipped by the
- * fold rather than reflowed by it. Folded, it is taken out of the tab order
- * and off the accessibility tree, because a column of links at zero width
- * is still a column of links to a keyboard.
+ * The width animates rather than the display, so the room beside it widens
+ * as the rail goes rather than jumping when it has gone. Both forms of the
+ * rail are rendered inside; which one shows is decided by the width, so the
+ * fold reads as the list sliding away behind the strip that stays.
  */
-export function DeskRailFold({ open, children }: { open: boolean; children: ReactNode }) {
+export function DeskRailFold({
+  open,
+  rail,
+  strip,
+}: {
+  open: boolean;
+  /** The rail at full width. */
+  rail: ReactNode;
+  /** The rail folded to its strip of places. */
+  strip: ReactNode;
+}) {
   const t = useT();
   const reduceMotion = useReducedMotion();
 
   return (
     <m.aside
       aria-label={t("Conversations")}
-      aria-hidden={!open}
-      inert={!open || undefined}
-      data-state={open ? "open" : "closed"}
+      data-state={open ? "open" : "collapsed"}
       initial={false}
-      animate={{ width: open ? DESK_RAIL_WIDTH : 0 }}
+      animate={{ width: open ? DESK_RAIL_WIDTH : DESK_RAIL_STRIP_WIDTH }}
       transition={reduceMotion ? CUT : FOLD}
-      className="hidden h-full shrink-0 overflow-hidden lg:block"
+      className="border-desk-hairline bg-desk-rail relative hidden h-full shrink-0 overflow-hidden border-r lg:block"
     >
       <div
-        className="border-desk-hairline h-full border-r"
+        aria-hidden={!open}
+        inert={!open || undefined}
+        className={cn(
+          "absolute inset-y-0 left-0 transition-opacity duration-200",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
         style={{ width: DESK_RAIL_WIDTH, minWidth: DESK_RAIL_WIDTH }}
       >
-        {children}
+        {rail}
+      </div>
+      <div
+        aria-hidden={open}
+        inert={open || undefined}
+        className={cn(
+          "absolute inset-y-0 left-0 transition-opacity duration-200",
+          open ? "pointer-events-none opacity-0" : "opacity-100",
+        )}
+        style={{ width: DESK_RAIL_STRIP_WIDTH, minWidth: DESK_RAIL_STRIP_WIDTH }}
+      >
+        {strip}
       </div>
     </m.aside>
   );
 }
 
 /**
- * The two columns of the room: the conversation and the work it produced.
+ * The two columns of the room: the conversation and the work it produced,
+ * with a handle between them.
  *
  * The split is the point of the room. The conversation is where you ask and
  * the workspace is where the answer lands, and they are both visible because
  * the alternative — a pane that slides over the thing you were reading —
- * makes you choose between the question and the answer.
- *
- * The conversation takes what the workspace leaves. The workspace is capped
- * so the conversation never has to carry prose past about 70 characters,
- * and floored so a table in it is never narrower than it can be read.
- * Folded with ⌘\, it gives its width back as it goes rather than leaving a
- * gap where it was; the pane inside keeps the floor of its width so the fold
- * reads as a curtain rather than a crush.
+ * makes you choose between the question and the answer. The handle lets a
+ * person reading a wide table give it the room, and the share they settle
+ * on is remembered. Folded with ⌘\, the workspace gives its width back.
  */
 export function DeskColumns({
   conversation,
   workspace,
   workspaceOpen,
+  workspaceSize,
+  onWorkspaceResize,
 }: {
   conversation: ReactNode;
   workspace: ReactNode;
   workspaceOpen: boolean;
+  /** The workspace's share of the columns, in percent. */
+  workspaceSize: number;
+  onWorkspaceResize: (size: number) => void;
 }) {
   const t = useT();
-  const reduceMotion = useReducedMotion();
+  const share = clampWorkspaceSize(workspaceSize);
+
+  if (!workspaceOpen) {
+    return (
+      <div className="flex min-h-0 flex-1">
+        <div className="bg-desk-column flex min-h-0 min-w-0 flex-1 flex-col">{conversation}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-0 flex-1">
-      <div className="bg-desk-column flex min-h-0 min-w-0 flex-1 flex-col">{conversation}</div>
-
-      <m.div
+    <ResizablePanelGroup
+      orientation="horizontal"
+      className="min-h-0 flex-1"
+      onLayoutChanged={(layout) => {
+        const next = layout["desk-workspace"];
+        if (typeof next === "number") {
+          onWorkspaceResize(next);
+        }
+      }}
+    >
+      <ResizablePanel
+        id="desk-conversation"
+        defaultSize={`${100 - share}`}
+        minSize={`${100 - MAX_WORKSPACE_SIZE}`}
+        className="bg-desk-column flex min-h-0 min-w-0 flex-col"
+      >
+        {conversation}
+      </ResizablePanel>
+      <ResizableHandle
+        aria-label={t("Resize the workspace")}
+        className="bg-desk-hairline data-[separator=hover]:bg-foreground/20 data-[separator=active]:bg-foreground/30 transition-colors"
+      />
+      <ResizablePanel
+        id="desk-workspace"
+        defaultSize={`${share}`}
+        minSize={`${MIN_WORKSPACE_SIZE}`}
+        maxSize={`${MAX_WORKSPACE_SIZE}`}
+        className="animate-materialise hidden min-h-0 min-w-0 lg:flex lg:flex-col"
         role="complementary"
         aria-label={t("Workspace")}
-        aria-hidden={!workspaceOpen}
-        inert={!workspaceOpen || undefined}
-        data-state={workspaceOpen ? "open" : "closed"}
-        initial={false}
-        animate={{ width: workspaceOpen ? DESK_WORKSPACE_WIDTH : 0 }}
-        transition={reduceMotion ? CUT : FOLD}
-        className="hidden min-h-0 shrink-0 overflow-hidden lg:flex lg:flex-col"
       >
-        <div className="border-desk-hairline flex h-full min-h-0 min-w-104 flex-1 flex-col border-l">
-          {workspace}
-        </div>
-      </m.div>
-    </div>
+        {workspace}
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }

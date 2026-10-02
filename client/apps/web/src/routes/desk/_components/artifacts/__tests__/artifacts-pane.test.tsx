@@ -188,30 +188,6 @@ describe("the artifacts pane", () => {
     await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
   });
 
-  it("shows a filmstrip only once there is more than one artifact", async () => {
-    listArtifacts.mockResolvedValue({
-      results: [documentArtifact("aart_only", "Morning brief", 10)],
-    });
-
-    const one = renderPane("athr_one");
-    await screen.findByRole("heading", { name: "Morning brief" });
-    expect(screen.queryByRole("group", { name: "Jump to an artifact" })).toBeNull();
-    one.unmount();
-
-    listArtifacts.mockResolvedValue({
-      results: [
-        documentArtifact("aart_old", "Morning brief", 10),
-        documentArtifact("aart_new", "Handover notes", 20),
-      ],
-    });
-    renderPane("athr_two");
-    const strip = await screen.findByRole("group", { name: "Jump to an artifact" });
-    expect(within(strip).getAllByRole("button")).toHaveLength(2);
-
-    await userEvent.click(within(strip).getByRole("button", { name: "Open Morning brief" }));
-    expect(await screen.findByRole("heading", { name: "Morning brief" })).toBeInTheDocument();
-  });
-
   it("re-reads the list and opens the newest when a turn produces something", async () => {
     listArtifacts.mockResolvedValue({
       results: [

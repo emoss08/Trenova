@@ -185,6 +185,33 @@ export function turnPlacements(entries: readonly ThreadEntry[]): Map<string, Tur
   return placements;
 }
 
+/**
+ * The steps of every reply, gathered under its first message. A reply of
+ * several model steps is saved as several assistant messages, each with the
+ * calls it made; drawn per message, one answer wore three or four work lines.
+ * The thread folds the whole reply's work into one line under the message
+ * that heads it, in the order the steps ran, and the messages that continue
+ * the reply carry none of their own. Keyed by the heading message's id.
+ */
+export function replyFolds(entries: readonly ThreadEntry[]): Map<string, ToolExchange[]> {
+  const folds = new Map<string, ToolExchange[]>();
+  let lead: ToolExchange[] | null = null;
+
+  for (const entry of entries) {
+    if (entry.kind !== "assistant") {
+      lead = null;
+      continue;
+    }
+    if (lead === null) {
+      lead = [];
+      folds.set(entry.message.id, lead);
+    }
+    lead.push(...entry.tools);
+  }
+
+  return folds;
+}
+
 const TOOL_IDENTIFIER = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/gu;
 
 /**

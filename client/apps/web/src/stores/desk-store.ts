@@ -4,8 +4,20 @@ import { persist } from "zustand/middleware";
 /** The artifacts pane: open beside the conversation, or folded away. */
 export type DeskPaneState = "open" | "closed";
 
-/** The rail: the Desk's table of contents, open along the left, or folded to nothing. */
-export type DeskRailState = "open" | "closed";
+/**
+ * The rail: the Desk's table of contents, open along the left, or folded to a
+ * strip of its places. "closed" is the old name of the strip, kept so a
+ * remembered fold still reads.
+ */
+export type DeskRailState = "open" | "collapsed" | "closed";
+
+/** What the workspace beside a conversation shows. */
+export type DeskWorkspaceTab = "artifacts" | "decisions" | "activity";
+
+/** The workspace's share of the room, in percent of the columns' width. */
+export const DEFAULT_WORKSPACE_SIZE = 42;
+export const MIN_WORKSPACE_SIZE = 24;
+export const MAX_WORKSPACE_SIZE = 70;
 
 interface DeskState {
   /** Whether the rail of conversations and places is showing along the left. */
@@ -14,12 +26,32 @@ interface DeskState {
   pane: DeskPaneState;
   /** The artifact each conversation last had open, so returning to it reopens the same one. */
   activeArtifactByThread: Record<string, string>;
+  /** How much of the room the workspace takes, remembered across conversations. */
+  workspaceSize: number;
+  /** The workspace tab last read. */
+  workspaceTab: DeskWorkspaceTab;
 
   setRail: (rail: DeskRailState) => void;
   toggleRail: () => void;
   setPane: (pane: DeskPaneState) => void;
   togglePane: () => void;
   setActiveArtifact: (threadId: string, artifactId: string | null) => void;
+  setWorkspaceSize: (size: number) => void;
+  setWorkspaceTab: (tab: DeskWorkspaceTab) => void;
+}
+
+/** Whether the rail stands open; anything else is the strip. */
+export function railIsOpen(rail: DeskRailState): boolean {
+  return rail === "open";
+}
+
+/** A workspace share kept inside what the room can give. */
+export function clampWorkspaceSize(size: number): number {
+  if (!Number.isFinite(size)) {
+    return DEFAULT_WORKSPACE_SIZE;
+  }
+
+  return Math.min(MAX_WORKSPACE_SIZE, Math.max(MIN_WORKSPACE_SIZE, Math.round(size)));
 }
 
 /** Remembered artifacts for the most recently visited conversations. */
@@ -49,9 +81,12 @@ export const useDeskStore = create<DeskState>()(
       rail: "open",
       pane: "open",
       activeArtifactByThread: {},
+      workspaceSize: DEFAULT_WORKSPACE_SIZE,
+      workspaceTab: "artifacts",
 
       setRail: (rail) => set({ rail }),
-      toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
+      toggleRail: () =>
+        set((state) => ({ rail: railIsOpen(state.rail) ? "collapsed" : "open" })),
       setPane: (pane) => set({ pane }),
       togglePane: () => set((state) => ({ pane: state.pane === "open" ? "closed" : "open" })),
       setActiveArtifact: (threadId, artifactId) =>
@@ -62,6 +97,8 @@ export const useDeskStore = create<DeskState>()(
             artifactId,
           ),
         })),
+      setWorkspaceSize: (size) => set({ workspaceSize: clampWorkspaceSize(size) }),
+      setWorkspaceTab: (tab) => set({ workspaceTab: tab }),
     }),
     {
       name: "trenova-desk",
@@ -69,6 +106,8 @@ export const useDeskStore = create<DeskState>()(
         rail: state.rail,
         pane: state.pane,
         activeArtifactByThread: state.activeArtifactByThread,
+        workspaceSize: state.workspaceSize,
+        workspaceTab: state.workspaceTab,
       }),
     },
   ),

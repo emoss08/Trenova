@@ -46,6 +46,8 @@ import { DeferredDecisionsPill } from "./deferred-decisions-pill";
 import { decisionRequestsFromSteps } from "./decision-requests";
 import { PlanRecord, ProposalRecord } from "./decision-record";
 import { stepsFromSegments } from "./activity";
+import { askRequestsFrom } from "./ask-requests";
+import { reportRunsFrom } from "./report-runs";
 import { DecisionFollowUpProvider } from "./decision-follow-up";
 import { useFollowNavigation } from "./follow-navigation";
 import { useApplyDraftEdits } from "./page-draft-edits";
@@ -58,6 +60,7 @@ import {
   PageContextChip,
   RefusalNotice,
   UserTurn,
+  pageContextShown,
 } from "./message-items";
 import {
   modelSwitchNotice,
@@ -70,7 +73,14 @@ import { StreamingTurn } from "./streaming-turn";
 import { agentSuggestions, type Suggestion } from "./suggestions";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
 import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
-import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
+import {
+  delegatedOwners,
+  groupThread,
+  replyFolds,
+  turnPlacements,
+  type ThreadEntry,
+  type TurnPlacement,
+} from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { useComposerContext } from "./use-composer-context";
@@ -347,6 +357,8 @@ export function MessageThread({
   const entries = useMemo(() => groupThread(messages), [messages]);
   // A reply of several steps is headed once and timed from its question.
   const placements = useMemo(() => turnPlacements(entries), [entries]);
+  // Its work is folded into one line under that heading, whatever the step.
+  const folds = useMemo(() => replyFolds(entries), [entries]);
   const answerIds = useMemo(() => answerMessageIds(entries), [entries]);
   const sourcesByMessage = useMemo(() => replyWebSources(entries), [entries]);
 
@@ -449,7 +461,22 @@ export function MessageThread({
         }
       }
     }
-    return byMessage;
+    // A reply produces one row of chips, under its heading message, however
+    // many steps it took to make them.
+    const byReply = new Map<string, AssistantArtifact[]>();
+    let lead: string | null = null;
+    for (const entry of entries) {
+      if (entry.kind !== "assistant") {
+        lead = null;
+        continue;
+      }
+      lead ??= entry.message.id;
+      const own = byMessage.get(entry.message.id);
+      if (own) {
+        byReply.set(lead, [...(byReply.get(lead) ?? []), ...own]);
+      }
+    }
+    return byReply;
   }, [artifacts, entries]);
 
   // A question typed at the Desk's front door arrives here, because the
@@ -579,17 +606,29 @@ export function MessageThread({
   // rows never depend on the reply in progress: every token changes the turn,
   // and a saved row whose closure is the same one is not drawn again.
   const savedRows = useMemo<VirtualThreadRow[]>(() => {
-    const list: VirtualThreadRow[] = withDayMarkers(entries, now, timezone).map((item) => {
+    const list: VirtualThreadRow[] = withDayMarkers(entries, now, timezone).flatMap((item) => {
       if (item.kind === "day") {
-        return {
-          key: item.key,
-          render: () => <DayDivider at={item.at} daysAgo={item.daysAgo} />,
-        };
+        return [
+          {
+            key: item.key,
+            render: () => <DayDivider at={item.at} daysAgo={item.daysAgo} />,
+          },
+        ];
       }
       const { entry } = item;
+      if (
+        entry.kind === "assistant" &&
+        silentContinuation(entry, placements.get(entry.message.id), {
+          proposals: proposalsByMessage.get(entry.message.id)?.length ?? 0,
+          plans: plansByMessage.get(entry.message.id)?.length ?? 0,
+          artifacts: artifactsByMessage.get(entry.message.id)?.length ?? 0,
+        })
+      ) {
+        return [];
+      }
       const arrived = arrivals.has(entry.message.id);
       const delay = openingDelays?.get(entry.message.id);
-      return {
+      const row: VirtualThreadRow = {
         key: entry.message.id,
         render: () => (
           <RiseOnce
@@ -631,11 +670,13 @@ export function MessageThread({
                 sources={sourcesByMessage.get(entry.message.id)?.sources}
                 listsSources={sourcesByMessage.get(entry.message.id)?.answer}
                 threadId={thread.id}
+                runTools={folds.get(entry.message.id)}
               />
             )}
           </RiseOnce>
         ),
       };
+      return [row];
     });
 
     // A proposal whose turn is no longer in the visible thread is shown here
@@ -661,6 +702,7 @@ export function MessageThread({
     arrivals,
     artifactsByMessage,
     entries,
+    folds,
     latestUserSequence,
     loosePlans,
     looseProposals,
@@ -777,7 +819,7 @@ export function MessageThread({
           <EmptyThread
             agent={agent}
             suggestions={suggestions}
-            pageContext={contextIncluded ? pageContext : null}
+            pageContext={contextIncluded && pageContextShown(pageContext) ? pageContext : null}
             onPick={(prompt) => void send(prompt, undefined, providerId)}
             onDismiss={dismissSuggestion}
           />
@@ -796,8 +838,8 @@ export function MessageThread({
           // The gutter on the left sits outside the scroll element so the
           // scrollbar stays at the edge; the one on the right is the column's own.
           className={expanded ? "pl-4 lg:pl-6" : "pl-3"}
-          contentClassName={expanded ? "max-w-3xl pt-5 pr-4 lg:pr-6" : "pt-4 pr-2"}
-          rowClassName={expanded ? "pb-5" : "pb-4"}
+          contentClassName={expanded ? "max-w-3xl pt-6 pr-4 lg:pr-6" : "pt-4 pr-2"}
+          rowClassName={expanded ? "pb-6" : "pb-4"}
         />
       )}
 
@@ -867,7 +909,7 @@ export function MessageThread({
             }
             agent={agent}
             onPickAgent={onPickAgent}
-            pageContext={pageContext}
+            pageContext={pageContextShown(pageContext) ? pageContext : null}
             contextIncluded={contextIncluded}
             onToggleContext={
               page === undefined ? () => setContextIncluded((value) => !value) : undefined
@@ -905,6 +947,33 @@ export function MessageThread({
         </DecisionFollowUpProvider>
       </ArtifactOpenerProvider>
     </AssistantAgentProvider>
+  );
+}
+
+/**
+ * Whether a message that continues a reply has nothing of its own to draw:
+ * its steps are in the fold under the reply's heading, and it says nothing,
+ * asks nothing, started no report and left no card. Such a row is left out
+ * rather than drawn as a blank line's worth of gap.
+ */
+export function silentContinuation(
+  entry: Extract<ThreadEntry, { kind: "assistant" }>,
+  placement: TurnPlacement | undefined,
+  attached: { proposals: number; plans: number; artifacts: number },
+): boolean {
+  if (!placement?.continued) {
+    return false;
+  }
+  const { message, tools } = entry;
+
+  return (
+    message.content.trim() === "" &&
+    !message.reasoning?.text &&
+    attached.proposals === 0 &&
+    attached.plans === 0 &&
+    attached.artifacts === 0 &&
+    askRequestsFrom(tools).length === 0 &&
+    reportRunsFrom(tools).length === 0
   );
 }
 
@@ -1003,7 +1072,7 @@ function EmptyThread({
         >
           <AgentAvatar size="xl" />
         </span>
-        <h2 className="text-base font-semibold">
+        <h2 className="text-lg font-semibold tracking-tight">
           {agent ? t("What do you need from {0}?", agent.name) : t("Start a conversation")}
         </h2>
         <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
@@ -1012,7 +1081,7 @@ function EmptyThread({
               "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.",
             )}
         </p>
-        {pageContext && (pageContext.title !== "" || pageContext.entityType !== "") && (
+        {pageContextShown(pageContext) && (
           <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
             {t("Can see")}
             <PageContextChip context={pageContext} />

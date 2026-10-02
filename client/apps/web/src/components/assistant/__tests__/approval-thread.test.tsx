@@ -210,7 +210,7 @@ describe.each([
 
     expect(await screen.findByRole("region", { name: "Post invoice" })).toBeInTheDocument();
     expect(composerBox()).toBeNull();
-    expect(screen.getByText(/Proposed: /)).toBeInTheDocument();
+    expect(screen.getAllByText(/Post invoice/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Waiting — decide below/)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /^approve$/i })).toHaveLength(1);
   });
@@ -369,7 +369,7 @@ describe("the transcript's record of a decision", () => {
     ]);
     renderThread(true);
 
-    const line = await screen.findByRole("button", { name: /Proposed: .*Rejected by you/ });
+    const line = await screen.findByRole("button", { name: /Post invoice.*Rejected by you/ });
     expect(screen.queryByRole("region")).toBeNull();
     expect(composerBox()).not.toBeNull();
 
@@ -392,7 +392,7 @@ describe("the transcript's record of a decision", () => {
     ]);
     renderThread(true);
 
-    const line = await screen.findByRole("button", { name: /Proposed: / });
+    const line = await screen.findByRole("button", { name: /Post invoice/ });
     expect(line).toHaveTextContent(/Approved/);
     expect(line).not.toHaveTextContent(/by you/);
   });

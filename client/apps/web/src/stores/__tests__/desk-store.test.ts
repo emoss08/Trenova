@@ -17,7 +17,7 @@ describe("the Desk rail", () => {
 
   it("folds and unfolds on a toggle", () => {
     useDeskStore.getState().toggleRail();
-    expect(useDeskStore.getState().rail).toBe("closed");
+    expect(useDeskStore.getState().rail).toBe("collapsed");
 
     useDeskStore.getState().toggleRail();
     expect(useDeskStore.getState().rail).toBe("open");
@@ -32,7 +32,7 @@ describe("the Desk rail", () => {
     useDeskStore.getState().setPane("closed");
     useDeskStore.getState().toggleRail();
 
-    expect(useDeskStore.getState()).toMatchObject({ rail: "closed", pane: "closed" });
+    expect(useDeskStore.getState()).toMatchObject({ rail: "collapsed", pane: "closed" });
   });
 
   it("is remembered between visits, beside the pane and the open artifacts", () => {
@@ -45,6 +45,8 @@ describe("the Desk rail", () => {
       rail: "closed",
       pane: "open",
       activeArtifactByThread: { thr_1: "art_1" },
+      workspaceSize: 42,
+      workspaceTab: "artifacts",
     });
   });
 });

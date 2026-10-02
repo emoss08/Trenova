@@ -29,7 +29,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNod
 import { toast } from "sonner";
 import { EASE_SETTLE, EASE_SWIFT } from "@/lib/motion";
 import type { ApprovalEntry } from "./approval-queue";
-import { ProposedBy } from "./decision-chrome";
+import { ProposedBy, proposalLabel } from "./decision-chrome";
 import { useDecisionFollowUp } from "./decision-follow-up";
 import { Highlights, StepList, previewsByStep } from "./decision-outcomes";
 import { FloatingSlot } from "./floating-slot";
@@ -404,7 +404,7 @@ function DockFrame({
           keepMounted={keepDetailsMounted}
           className={cn(
             "scrollbar-overlay min-w-0 overflow-y-auto px-3.5 pt-1",
-            compact ? "max-h-[min(40vh,20rem)]" : "max-h-[min(45vh,28rem)]",
+            compact ? "max-h-[min(40vh,16rem)]" : "max-h-[min(45vh,18rem)]",
           )}
         >
           <div className="flex min-w-0 flex-col gap-2.5 pb-1">{details}</div>
@@ -443,7 +443,7 @@ function DockFrame({
         </div>
       )}
 
-      <footer className="mt-2 flex flex-wrap items-center gap-1.5 px-3.5 pb-3">
+      <footer className="mt-2 flex flex-wrap items-center gap-1.5 px-3 pb-3">
         {onModify && !note.telling && (
           <IconAction
             icon={PencilIcon}
@@ -749,7 +749,11 @@ function ProposalDock({
 
   return (
     <DockFrame
-      title={view.title}
+      title={
+        hasPresenter(proposal.toolName)
+          ? view.title
+          : proposalLabel(proposal.toolName, proposal.arguments, t)
+      }
       subject={shown ? previewSubject(shown) : ""}
       figure={shown ? previewFigure(shown) : null}
       count={

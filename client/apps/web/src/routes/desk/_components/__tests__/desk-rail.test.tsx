@@ -148,8 +148,8 @@ describe("DeskRail", () => {
     });
 
     const shelves = screen
-      .getAllByRole("heading", { level: 3 })
-      .map((heading) => heading.textContent);
+      .getAllByRole("region")
+      .map((shelf) => shelf.getAttribute("aria-label"));
     expect(shelves).toEqual(["Pinned", "Today", "Previous 30 days"]);
 
     const today = screen.getByRole("region", { name: "Today" });
@@ -164,7 +164,7 @@ describe("DeskRail", () => {
 
     const row = screen.getByRole("link", { name: /Blocked invoices/ });
     expect(row).toHaveAttribute("aria-current", "page");
-    expect(row).toHaveTextContent("Writing a reply");
+    expect(row).toHaveTextContent("Replying");
   });
 
   it("narrows the list to the search, by title or agent, and says when nothing matches", () => {

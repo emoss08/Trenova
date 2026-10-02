@@ -20,7 +20,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { PanelRightCloseIcon } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArtifactFilmstrip } from "./artifact-filmstrip";
 import { orderArtifacts } from "./artifact-order";
 import { ArtifactSwitcher } from "./artifact-switcher";
 import { ComposedViewArtifact } from "./composed-view-artifact";
@@ -216,12 +215,15 @@ export function ArtifactsPane({
   threadId,
   liveArtifacts,
   onClose,
+  framed = false,
   className,
 }: {
   threadId: string;
   /** What a streaming turn has produced so far, so the pane opens the newest as it lands and follows the set. */
   liveArtifacts: LiveArtifacts;
   onClose: () => void;
+  /** Inside the workspace frame, which holds the tabs and the fold, so the pane draws neither. */
+  framed?: boolean;
   className?: string;
 }) {
   const t = useT();
@@ -299,7 +301,7 @@ export function ArtifactsPane({
         <ArtifactsLoading />
       ) : artifactsQuery.isError ? (
         <>
-          <PaneHeader onClose={onClose} />
+          {!framed && <PaneHeader onClose={onClose} />}
           <div className="p-3">
             <Alert size="sm" variant="destructive">
               <AlertDescription>
@@ -315,7 +317,7 @@ export function ArtifactsPane({
         </>
       ) : active === null ? (
         <>
-          <PaneHeader onClose={onClose} />
+          {!framed && <PaneHeader onClose={onClose} />}
           <ArtifactsEmpty />
         </>
       ) : (
@@ -326,13 +328,7 @@ export function ArtifactsPane({
             arrived={arrived}
             onOpen={open}
             onPin={pin}
-            onClose={onClose}
-          />
-          <ArtifactFilmstrip
-            artifacts={artifacts}
-            activeId={active.id}
-            threadId={threadId}
-            onOpen={open}
+            onClose={framed ? undefined : onClose}
           />
           <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             {/* Keyed on the artifact so opening one replays the arrival: the
