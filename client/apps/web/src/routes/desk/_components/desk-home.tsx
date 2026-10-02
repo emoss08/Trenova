@@ -16,7 +16,6 @@ import {
   formatShortAge,
   partOfDay,
   resolveUserTimezone,
-  skyPhase,
   toUserWallClock,
   type PartOfDay,
 } from "@trenova/shared/lib/date";
@@ -144,7 +143,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   );
   const hour = toUserWallClock(now, timezone)?.getHours() ?? 9;
   const dayPart = partOfDay(hour);
-  const sky = skyPhase(hour);
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
 
   const headline =
@@ -175,7 +173,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
           className="flex scroll-mt-6 flex-col items-center gap-7"
         >
           <DeskGreeting
-            sky={sky}
             greeting={greeting(t, dayPart, firstName)}
             dateline={dateline}
             isoDate={isoDate}
@@ -238,7 +235,9 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
                 {summaryQuery.isPending ? (
                   <CardSkeleton rows={3} />
                 ) : waiting === 0 ? (
-                  <CardEmpty>{t("Nothing is waiting on you. Every proposal has been decided.")}</CardEmpty>
+                  <CardEmpty>
+                    {t("Nothing is waiting on you. Every proposal has been decided.")}
+                  </CardEmpty>
                 ) : (
                   <ul className="flex flex-col gap-1.5">
                     {(summaryQuery.data?.byAgent ?? []).slice(0, NAMED_AGENTS).map((row) => (
@@ -356,7 +355,12 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
               {isLoading ? (
                 <CardSkeleton rows={4} />
               ) : (
-                <ul className={cn("flex flex-col gap-0.5", !briefing && "md:grid md:grid-cols-2 xl:grid-cols-3")}>
+                <ul
+                  className={cn(
+                    "flex flex-col gap-0.5",
+                    !briefing && "md:grid md:grid-cols-2 xl:grid-cols-3",
+                  )}
+                >
                   {shelf.map((agent) => (
                     <li key={agent.id}>
                       <button
@@ -378,7 +382,10 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
                   ))}
                   {agents.length > SHELF_AGENTS && (
                     <li className="text-foreground-subtle px-0 pt-1 text-xs">
-                      {t("{0, plural, one {and one more agent} other {and # more agents}}", agents.length - SHELF_AGENTS)}
+                      {t(
+                        "{0, plural, one {and one more agent} other {and # more agents}}",
+                        agents.length - SHELF_AGENTS,
+                      )}
                     </li>
                   )}
                 </ul>
@@ -489,7 +496,9 @@ function WatchtowerRow({ item, now }: { item: WatchtowerItem; now: number }) {
 
 function CardEmpty({ children }: { children: ReactNode }) {
   return (
-    <p className="text-foreground-subtle flex flex-1 items-center text-sm text-pretty">{children}</p>
+    <p className="text-foreground-subtle flex flex-1 items-center text-sm text-pretty">
+      {children}
+    </p>
   );
 }
 

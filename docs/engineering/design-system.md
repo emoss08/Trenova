@@ -898,29 +898,24 @@ is a wall once an organization has sixty. The questions under the box are the
 agent's own `starters`, from the server, and they trade places when the agent
 changes.
 
-The front page opens on a greeting under the day's own light (`DeskGreeting`
-in `routes/desk/_components/desk-greeting.tsx`), centred in the room with the
-ask box under it and nothing else above the fold. Behind the first lines sits
-`ui-daylight`, two soft pools of the part of the day in the person's timezone
-(`skyPhase`): dawn is `--daylight-sun` gold with rose further off, day is sky
-with a little gold, dusk is rose with violet, night is indigo with violet. Each
-pool is the categorical accent at `--daylight-strength` and fades to nothing
-inside its own box, so there is no edge to find, and the page is clipped at the
-window rather than the column so the light never stops at a line. The dateline
-leads with `SkyMark`, the same sky as a letter-sized glyph in solid shapes: the
-sun on the horizon, the sun high, the sun going down, a moon and a star, in
-`--foreground-subtle`. The headline under it is the page's one heading (600),
-in two lines: the greeting by name in ink, and under it in `--foreground-muted`
-what the day looks like — the briefing's headline, or how many decisions are
-waiting, or, when nothing is, "How can I help today?". Only the second line is
-decided by figures, so only the second line holds as a skeleton until they are
-in. Below the fold sit what is waiting and the briefing on one side and the
-agents on the other; the recent conversations are not listed again, because
-the rail carries them on every page. The page arrives once, in reading order, a
-beat apart on `animate-rise` — the light and the dateline, the greeting, the
-line under it, the ask box, then the rest — and then holds still. That wash is
-all the colour here: the agent's accent belongs to a conversation, and the
-front page has not started one.
+The front page opens on a greeting (`DeskGreeting` in
+`routes/desk/_components/desk-greeting.tsx`), centred in the room with the ask
+box under it and nothing else above the fold. It is set in type alone: no
+colour, no mark, no wash. The dateline is a small line of `font-mono` in
+`--foreground-subtle`, the way a date is set at the head of a letter. The
+greeting by name is the page's one heading, in `font-display` — Newsreader, the
+serif with an optical-size axis that is spent nowhere else — at 400, large and
+tight. Under it, in the body face and `--foreground-muted`, is what the day
+looks like: the briefing's headline, or how many decisions are waiting, or,
+when nothing is, "How can I help today?". Only that line is decided by figures,
+so only that line holds as a skeleton until they are in. The ask box carries
+the one colour on the page: a thin `BorderBeam` in the chosen agent's accent
+running once round its border, over a spring entrance. Below the fold sit what
+is waiting, who is replying, the watchtower and the briefing as a grid of flat
+cards, and a shelf of agents; the recent conversations are not listed again,
+because the rail carries them on every page. The page arrives once, in reading
+order, a beat apart on `animate-rise` — the dateline, the greeting a word at a
+time, the line under it, the ask box, then the rest — and then holds still.
 
 ## Checking your work
 

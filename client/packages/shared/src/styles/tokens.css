@@ -325,15 +325,6 @@
      ink and must read as a separate face of it rather than a hole. */
   --desk-drawer: color-mix(in oklch, var(--ink) 58%, var(--desk-canvas));
 
-  /* The sky over the Desk's greeting: a wash of the part of the day behind
-     the first line of the front page. It is weather, not decoration, so it is
-     the faintest colour on the page and fades out before it reaches anything
-     it could be mistaken for. The hues are the categorical accents; this is
-     how much of them reaches the canvas. */
-  --daylight-strength: 20%;
-  --daylight-sun: oklch(0.79 0.15 76);
-  --daylight-moon: oklch(0.58 0.13 var(--hue-indigo));
-
   /* Charts ---------------------------------------------------------------
      Eight series on the categorical hue family. Light and dark differ only in
      lightness, never in hue, so a series keeps its identity when the theme
@@ -677,12 +668,6 @@
   --desk-failed: var(--danger);
   --desk-drawer: color-mix(in oklch, var(--ink) 52%, var(--desk-canvas));
 
-  /* Colour on a near-black ground reads weaker at the same mix, so the sky
-     takes a little more of it. */
-  --daylight-strength: 20%;
-  --daylight-sun: oklch(0.84 0.14 84);
-  --daylight-moon: oklch(0.88 0.06 95);
-
   --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
   --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0 0 0 / 0.4);
   --lift-card:
@@ -758,6 +743,11 @@
   --font-mono: "Geist Mono", ui-monospace, "IBM Plex Mono", monospace;
   --font-table: "Geist Mono", ui-monospace, monospace;
   --font-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* The display face is Newsreader, a serif with an optical-size axis, spent
+     on the one place the product speaks to the person rather than about the
+     work: the Desk's greeting. Everything else stays in Geist. */
+  --font-display: "Newsreader Variable", "Iowan Old Style", Georgia, ui-serif, serif;
 
   /* Surfaces */
   --color-canvas: var(--canvas);
@@ -1129,8 +1119,6 @@
   --color-desk-await: var(--desk-await);
   --color-desk-failed: var(--desk-failed);
   --color-desk-drawer: var(--desk-drawer);
-  --color-daylight-sun: var(--daylight-sun);
-  --color-daylight-moon: var(--daylight-moon);
 }
 
 @keyframes land {
@@ -1896,43 +1884,6 @@
 @utility ui-desk-mark {
   --desk-accent: var(--agent-accent, var(--brand));
   --desk-light: color-mix(in oklch, var(--desk-accent), oklch(1 0 0) var(--desk-light-lift));
-}
-
-/* The part of the day behind the Desk's greeting: two soft pools of light
-   falling from above, the sky's own colour over the greeting and a second
-   hue further off, as a sky has. Each ellipse is sized in its box's own
-   proportions and ends inside it at the sides and the foot, so the light
-   fades to nothing before any edge the eye could find; the box's head sits
-   above the top of the page, where there is nothing to see. */
-@utility ui-daylight {
-  --daylight-near: var(--accent-sky);
-  --daylight-far: var(--daylight-sun);
-  background:
-    radial-gradient(
-      26% 50% at 27% 30%,
-      color-mix(in oklch, var(--daylight-near) var(--daylight-strength), transparent),
-      transparent
-    ),
-    radial-gradient(
-      32% 44% at 62% 22%,
-      color-mix(in oklch, var(--daylight-far) calc(var(--daylight-strength) * 0.6), transparent),
-      transparent
-    );
-
-  &[data-sky="dawn"] {
-    --daylight-near: var(--daylight-sun);
-    --daylight-far: var(--accent-rose);
-  }
-
-  &[data-sky="dusk"] {
-    --daylight-near: var(--accent-rose);
-    --daylight-far: var(--accent-violet);
-  }
-
-  &[data-sky="night"] {
-    --daylight-near: var(--accent-indigo);
-    --daylight-far: var(--accent-violet);
-  }
 }
 
 /* Reduced motion takes the loops and the travel, and keeps the state

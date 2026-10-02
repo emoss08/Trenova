@@ -24,8 +24,14 @@ vi.mock("@/lib/queries", () => ({
       activeTurns: () => ({ queryKey: ["active-turns"], queryFn: () => ({ items: [] }) }),
     },
     watchtower: {
-      counts: () => ({ queryKey: ["watchtower-counts"], queryFn: () => ({ unseen: 0, unseenCritical: 0 }) }),
-      feed: () => ({ queryKey: ["watchtower-feed"], queryFn: () => ({ items: [], endCursor: null, hasNextPage: false, seenAt: 0 }) }),
+      counts: () => ({
+        queryKey: ["watchtower-counts"],
+        queryFn: () => ({ unseen: 0, unseenCritical: 0 }),
+      }),
+      feed: () => ({
+        queryKey: ["watchtower-feed"],
+        queryFn: () => ({ items: [], endCursor: null, hasNextPage: false, seenAt: 0 }),
+      }),
     },
     briefing: {
       today: () => ({
@@ -89,13 +95,13 @@ function renderHome(props: Partial<DeskHomeProps> = {}) {
 }
 
 /**
- * The heading's first line, the greeting, is known before anything loads;
- * its second line is the one the figures decide, so that is the line held
- * as a skeleton rather than said and then taken back.
+ * The greeting is known before anything loads; the line under it is the one
+ * the figures decide, so that is the line held as a skeleton rather than
+ * said and then taken back.
  */
 async function expectHeadlineSkeleton() {
   const heading = await screen.findByRole("heading", { level: 1 });
-  const second = heading.querySelector('[data-slot="desk-headline"]');
+  const second = heading.parentElement?.querySelector('[data-slot="desk-headline"]');
   expect(second?.querySelector('[data-slot="skeleton"]')).not.toBeNull();
   expect(second).toHaveTextContent("");
   expect(heading).toHaveTextContent(/^Good (morning|afternoon|evening)$/);
@@ -154,8 +160,9 @@ describe("Desk home headline while its figures load", () => {
     renderHome({ isLoading: true });
 
     await expectHeadlineSkeleton();
-    expect(screen.getByText(/^Good (morning|afternoon|evening)$/).closest("header")).not.toBeNull();
-    expect(document.querySelector('[data-slot="desk-daylight"]')).not.toBeNull();
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading.closest("header")).not.toBeNull();
+    expect(heading).toHaveClass("font-display");
     expect(document.querySelector('[aria-busy] [data-slot="skeleton"]')).not.toBeNull();
   });
 
@@ -163,11 +170,10 @@ describe("Desk home headline while its figures load", () => {
     renderHome();
 
     expect(await screen.findByText("2 decisions are waiting on you.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      /^Good (morning|afternoon|evening)2 decisions are waiting on you\.$/,
-    );
-    expect(
-      screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]'),
-    ).toBeNull();
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading).toHaveTextContent(/^Good (morning|afternoon|evening)$/);
+    const second = heading.parentElement?.querySelector('[data-slot="desk-headline"]');
+    expect(second).toHaveTextContent("2 decisions are waiting on you.");
+    expect(second?.querySelector('[data-slot="skeleton"]')).toBeNull();
   });
 });

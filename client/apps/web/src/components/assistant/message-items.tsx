@@ -318,9 +318,7 @@ export function AssistantTurn({
             <>
               <Separator />
               <Tooltip>
-                <TooltipTrigger
-                  render={<span className="shrink-0 cursor-default tabular-nums" />}
-                >
+                <TooltipTrigger render={<span className="shrink-0 cursor-default tabular-nums" />}>
                   {formatWorkDuration(workedSeconds)}
                 </TooltipTrigger>
                 <TooltipContent>
@@ -617,7 +615,11 @@ export function AssistantEntry({
         <ToolActivity
           steps={steps}
           folded
-          summary={workedSeconds !== null ? t("Worked for {0}", formatWorkDuration(workedSeconds)) : undefined}
+          summary={
+            workedSeconds !== null
+              ? t("Worked for {0}", formatWorkDuration(workedSeconds))
+              : undefined
+          }
         />
       )}
       {artifacts.length > 0 && onOpenArtifact && (
@@ -683,7 +685,7 @@ export function ArtifactChips({
             <button
               type="button"
               onClick={() => onOpen(artifact.id)}
-              className="ui-focus-ring ui-press bg-info/35 text-foreground hover:bg-info/50 ring-info/40 flex h-5 max-w-56 items-center gap-1 rounded-full pr-2 pl-1.5 text-2xs font-medium ring-1 transition-colors"
+              className="ui-focus-ring ui-press bg-brand-subtle text-brand-subtle-foreground hover:bg-brand/15 ring-brand-border flex h-5 max-w-56 items-center gap-1 rounded-full pr-2 pl-1.5 text-2xs font-medium ring-1 transition-colors"
               aria-label={t("Open {0}", artifact.title)}
               title={`${t(ARTIFACT_KINDS[artifact.kind].label)} · ${artifact.title}`}
             >
@@ -697,7 +699,7 @@ export function ArtifactChips({
             <button
               type="button"
               onClick={() => onOpen(hidden[0].id)}
-              className="ui-focus-ring ui-press text-info-foreground hover:bg-info-subtle ring-info-border flex h-5 items-center rounded-full px-2 text-2xs font-medium ring-1 transition-colors"
+              className="ui-focus-ring ui-press text-brand-subtle-foreground hover:bg-brand-subtle ring-brand-border flex h-5 items-center rounded-full px-2 text-2xs font-medium ring-1 transition-colors"
               aria-label={t("{0, plural, one {Open # more} other {Open # more}}", hidden.length)}
             >
               {t("+{0} more", hidden.length)}

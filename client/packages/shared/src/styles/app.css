@@ -5,6 +5,8 @@
 @import "@fontsource-variable/geist";
 @import "@fontsource/ibm-plex-mono";
 @import "@fontsource/geist-mono";
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/newsreader/opsz-italic.css";
 
 /* The design tokens. Everything below this line consumes them and defines no
    colour, size or elevation of its own. See docs/engineering/design-system.md. */
