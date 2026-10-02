@@ -226,7 +226,11 @@ an untargeted step keeps the stop at the first failure.
 `decideMyProposals` is `decideAgentProposals` for proposals raised in the caller's own
 conversations (`AgentDecisionQueueService.DecideManyOwn`): every id passes
 `AssertOwnProposal` or nothing is decided, and each carries the digest of the preview the
-person had on screen.
+person had read. The approval box keeps a batch's rows mounted behind its folded **Details**
+(`keepDetailsMounted`), so the first five (`BATCH_OPEN_LIMIT`) read their previews as the box
+appears and an approval made without opening **Details** sends their digests: a batch is
+reviewed by default. A row past the first five reads its preview only once it is opened, and
+the box says how many were not previewed before such an approval records them unreviewed.
 
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it

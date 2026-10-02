@@ -736,14 +736,33 @@ A run nobody is in has two identities, kept apart on purpose.
   `UserID`, so a record the run creates or changes names that account in its
   created-by and updated-by columns instead of nobody, and a service that
   refused a write it had no user to attribute to (a shipment comment, a hold)
-  takes one the agent table allows. The audit log still
-  records the agent as the principal, and `executed_by_user_id` on a proposal
-  still names only the person who executed it: the AI audit trail reads a
-  proposal with an executor as a person's write.
+  takes one the agent table allows.
+- **The agent is named alongside.** The actor's `PrincipalID` is the agent
+  definition's id rather than the generic `agent`. The audit log row an
+  unattended write leaves is principal `agent` with that id, `user_id` the
+  system user, and a description that ends "(Ran by Dispatch Agent)":
+  `auditservice` reads the definition's name in the row's tenant (cached for ten
+  minutes) and appends it, or "Ran by an agent" when the name cannot be read.
+  `chk_audit_entries_principal_consistency` lets an agent row carry a user, never
+  an API key, and never the user as its own principal (migration
+  `20261231007230_audit_agent_system_user`).
+- **The system user executes the run's automatic writes.**
+  `RequestActor.ExecutorUserID` is the person for a user principal and the
+  carried system user for an agent, so `executed_by_user_id` on an automatic
+  write of an unattended run names the system user, in the recorder and in the
+  executor alike. The AI audit trail derives that execution as a `User`
+  principal write by the system account, with the agent on `agent_definition_id`
+  and `agent_name`, and looks for its audit log rows from the start of the run.
 
-The system user is resolved once per run, when the run is opened (and when an
-evaluation replays a background run or case). If it cannot be read, the attempt
-fails with a retryable error rather than running unattributed.
+A run with a person in it is unchanged: its actor is the person, so its writes,
+its audit log rows and its executions are theirs.
+
+The system user is resolved once per run, when the run is opened, again when its
+proposals are filed (only when it raised any), and when an evaluation replays a
+background run or case. If it cannot be read, the attempt fails with a retryable
+error rather than running unattributed. A scheduled run's start is recorded as
+the agent, by its definition, with no user: the scheduler, not the agent, opened
+it.
 
 ### Starting runs
 

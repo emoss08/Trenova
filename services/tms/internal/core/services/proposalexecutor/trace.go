@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -31,7 +30,7 @@ func startExecute(
 		ProposalID:        proposal.ID,
 		RunID:             proposal.RunID,
 		ToolName:          proposal.ToolName,
-		UserID:            executorOf(actor),
+		UserID:            actor.ExecutorUserID(),
 		ModificationCount: len(modifications),
 		ProposalTraceID:   proposal.TraceID,
 		ProposalSpanID:    proposal.SpanID,
@@ -89,14 +88,6 @@ func startWrite(
 	}
 
 	return aitrace.StartWrite(ctx, spec)
-}
-
-func executorOf(actor *services.RequestActor) pulid.ID {
-	if actor == nil || actor.PrincipalType != services.PrincipalTypeUser {
-		return pulid.Nil
-	}
-
-	return actor.UserID
 }
 
 func executeFailure(err error) string {

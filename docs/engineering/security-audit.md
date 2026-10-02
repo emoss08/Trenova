@@ -98,6 +98,18 @@ driver portal and attachment reads are covered as well as the documents API.
 Preview thumbnails are not recorded. A read with no user (a share link) is
 attributed to the system principal; the request metadata identifies the requester.
 
+## Writes an agent made
+
+A write made in a conversation is the person's: their row, principal
+`session_user`. A write an unattended agent run made is principal `agent` with the
+agent definition's id as `principal_id`, `user_id` the instance's system user, and a
+description ending "(Ran by Dispatch Agent)", the name `auditservice` reads for the
+definition. `chk_audit_entries_principal_consistency` allows a user on an `agent`
+row, never an API key, and never the user as the row's own principal; a `system`
+row still names no user. Rows written before
+`20261231007230_audit_agent_system_user` name the generic `agent` principal and no
+user. See [agent-runtime.md](agent-runtime.md#who-a-run-acts-as).
+
 ## Refused cross-tenant requests
 
 Three places refuse a request that reaches for another tenant, and each marks the

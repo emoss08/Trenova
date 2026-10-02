@@ -105,6 +105,40 @@ func TestEntry_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "agent principal allows the system user it ran as",
+			modify: func(e *Entry) {
+				e.PrincipalType = "agent"
+				e.PrincipalID = pulid.MustNew("agdef_")
+			},
+			wantErr: false,
+		},
+		{
+			name: "agent principal allows null user",
+			modify: func(e *Entry) {
+				e.PrincipalType = "agent"
+				e.PrincipalID = pulid.ID("agent")
+				e.UserID = pulid.Nil
+			},
+			wantErr: false,
+		},
+		{
+			name: "agent principal rejects its user as principal",
+			modify: func(e *Entry) {
+				e.PrincipalType = "agent"
+				e.PrincipalID = e.UserID
+			},
+			wantErr: true,
+		},
+		{
+			name: "agent principal rejects api key id",
+			modify: func(e *Entry) {
+				e.PrincipalType = "agent"
+				e.PrincipalID = pulid.MustNew("agdef_")
+				e.APIKeyID = pulid.MustNew("ak_")
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -122,6 +156,23 @@ func TestEntry_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEntry_CreditAgentNamesTheAgentInTheDescription(t *testing.T) {
+	t.Parallel()
+
+	described := validEntry()
+	described.Comment = "Shipment updated"
+	described.CreditAgent("Dispatch Agent")
+	assert.Equal(t, "Shipment updated (Ran by Dispatch Agent)", described.Comment)
+
+	bare := validEntry()
+	bare.CreditAgent("  Dispatch Agent ")
+	assert.Equal(t, "Ran by Dispatch Agent", bare.Comment)
+
+	unknown := validEntry()
+	unknown.CreditAgent("")
+	assert.Equal(t, "Ran by an agent", unknown.Comment)
 }
 
 func TestEntry_BeforeAppendModel(t *testing.T) {

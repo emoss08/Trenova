@@ -17,13 +17,13 @@ const (
 	maxCorrelationsPerPage = 5000
 )
 
-// CorrelationMatch is how an event is matched to the audit log rows written
+// CorrelationMatches are how an event is matched to the audit log rows written
 // for the same change: the record it touched, the principal the write was
 // audited as, and the event's time window. A decision is audited against its
 // proposal. Events that change nothing have no match.
-func CorrelationMatch(event *aiaudit.AIAuditEvent) (repositories.AuditEntryMatch, bool) {
+func CorrelationMatches(event *aiaudit.AIAuditEvent) []repositories.AuditEntryMatch {
 	if event == nil || event.WindowStart <= 0 {
-		return repositories.AuditEntryMatch{}, false
+		return nil
 	}
 
 	resource := event.EntityID
@@ -32,34 +32,49 @@ func CorrelationMatch(event *aiaudit.AIAuditEvent) (repositories.AuditEntryMatch
 		resource = event.ProposalID.String()
 	case aiaudit.KindToolCall:
 		if event.Outcome != aiaudit.OutcomeRan && event.Outcome != aiaudit.OutcomeFailed {
-			return repositories.AuditEntryMatch{}, false
+			return nil
 		}
 	case aiaudit.KindProposalExecuted, aiaudit.KindProposalExecutionFailed:
 	default:
-		return repositories.AuditEntryMatch{}, false
+		return nil
 	}
 	if resource == "" {
-		return repositories.AuditEntryMatch{}, false
+		return nil
 	}
 
-	var principal pulid.ID
+	principals := correlationPrincipals(event)
+	matches := make([]repositories.AuditEntryMatch, 0, len(principals))
+	for _, principal := range principals {
+		matches = append(matches, repositories.AuditEntryMatch{
+			ResourceID:  resource,
+			PrincipalID: principal,
+			WindowStart: event.WindowStart,
+			WindowEnd:   max(event.WindowEnd, event.WindowStart),
+		})
+	}
+
+	return matches
+}
+
+func correlationPrincipals(event *aiaudit.AIAuditEvent) []pulid.ID {
 	switch {
 	case event.PrincipalType == aiaudit.PrincipalUser && event.PrincipalID != "":
-		principal = pulid.ID(event.PrincipalID)
+		return []pulid.ID{pulid.ID(event.PrincipalID)}
 	case event.ActingUserID().IsNotNil():
-		principal = event.ActingUserID()
+		return []pulid.ID{event.ActingUserID()}
 	case event.PrincipalType == aiaudit.PrincipalAgent:
-		principal = serviceports.AgentPrincipalID
-	default:
-		return repositories.AuditEntryMatch{}, false
-	}
+		agentID := pulid.ID(event.PrincipalID)
+		if agentID.IsNil() || agentID == serviceports.AgentPrincipalID {
+			agentID = event.AgentDefinitionID
+		}
+		if agentID.IsNil() || agentID == serviceports.AgentPrincipalID {
+			return []pulid.ID{serviceports.AgentPrincipalID}
+		}
 
-	return repositories.AuditEntryMatch{
-		ResourceID:  resource,
-		PrincipalID: principal,
-		WindowStart: event.WindowStart,
-		WindowEnd:   max(event.WindowEnd, event.WindowStart),
-	}, true
+		return []pulid.ID{agentID, serviceports.AgentPrincipalID}
+	default:
+		return nil
+	}
 }
 
 func (m matchKey) holds(entry *audit.Entry) bool {
@@ -93,12 +108,10 @@ func Correlate(
 	keys := make([]matchKey, 0, len(events))
 	matches := make([]repositories.AuditEntryMatch, 0, len(events))
 	for _, event := range events {
-		match, ok := CorrelationMatch(event)
-		if !ok {
-			continue
+		for _, match := range CorrelationMatches(event) {
+			keys = append(keys, matchKey{eventID: event.ID, match: match})
+			matches = append(matches, match)
 		}
-		keys = append(keys, matchKey{eventID: event.ID, match: match})
-		matches = append(matches, match)
 	}
 
 	grouped := make(map[pulid.ID][]*audit.Entry, len(keys))

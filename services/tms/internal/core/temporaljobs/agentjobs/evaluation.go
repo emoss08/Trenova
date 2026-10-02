@@ -164,7 +164,7 @@ func (a *Activities) runSource(
 	if source.SubjectType == agent.SubjectAssistantThread {
 		actor, err = a.threadActor(ctx, tenant, source.SubjectID)
 	} else {
-		actor, err = a.unattendedActor(ctx, tenant)
+		actor, err = a.unattendedActor(ctx, tenant, definition)
 	}
 	if err != nil {
 		return nil, err
@@ -197,7 +197,7 @@ func (a *Activities) caseSource(
 
 	originals := expectedOriginals(evalCase)
 	if !evalCase.IsChat() {
-		actor, actorErr := a.unattendedActor(ctx, tenant)
+		actor, actorErr := a.unattendedActor(ctx, tenant, definition)
 		if actorErr != nil {
 			return nil, actorErr
 		}

@@ -47,7 +47,7 @@ func (s *Service) PlanReview(ctx context.Context, req *ReviewRequest) (*ReviewPl
 		return nil, multiErr
 	}
 
-	reviewerID := req.Actor.AuditActor().UserID
+	reviewerID := req.Actor.PersonUserID()
 	if reviewerID.IsNil() {
 		return nil, errortypes.NewAuthorizationError("Only a person can review a document")
 	}

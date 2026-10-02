@@ -203,3 +203,33 @@ func TestExecute_ToolsThatDoNotCarryTaintAreNotHandedIt(t *testing.T) {
 		principal(services.PrincipalTypeUser, orgID, buID)))
 	assert.Nil(t, tool.lastParams.Taint)
 }
+
+func TestExecute_AnUnattendedExecutionIsRecordedAgainstTheSystemUser(t *testing.T) {
+	t.Parallel()
+
+	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	tool := newEgressTool("assign_move", agent.EgressInternal)
+	repo := &fakeProposalRepo{}
+	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
+	proposal := taintedProposal(tool.name, orgID, buID)
+	proposal.Tainted = false
+	proposal.Taint = nil
+	proposal.EgressClass = agent.EgressInternal
+	proposal.HeldBy = nil
+
+	unattended := principal(services.PrincipalTypeAgent, orgID, buID)
+	unattended.UserID = pulid.MustNew("usr_")
+
+	require.NoError(t, executor.Execute(t.Context(), proposal, nil, unattended))
+	require.Len(t, repo.recorded, 1)
+	assert.Equal(t, agent.ProposalStatusExecuted, repo.recorded[0].status)
+	assert.Equal(t, unattended.UserID, repo.recorded[0].by,
+		"the system account the run carries is the executor")
+
+	bare := &fakeProposalRepo{}
+	tool = newEgressTool("assign_move", agent.EgressInternal)
+	require.NoError(t, newExecutor(tool, bare, &fakePermissions{allowed: true}).
+		Execute(t.Context(), proposal, nil, principal(services.PrincipalTypeAgent, orgID, buID)))
+	require.Len(t, bare.recorded, 1)
+	assert.True(t, bare.recorded[0].by.IsNil(), "an agent with no account names nobody")
+}

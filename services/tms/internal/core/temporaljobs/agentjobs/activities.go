@@ -217,7 +217,7 @@ func (a *Activities) runRequest(
 	subject *agentdefinition.RuntimeSubject,
 ) (*serviceports.RunRequest, error) {
 	tenant := payload.tenantInfo()
-	actor, err := a.unattendedActor(ctx, tenant)
+	actor, err := a.unattendedActor(ctx, tenant, definition)
 	if err != nil {
 		return nil, err
 	}
@@ -478,7 +478,6 @@ func (a *Activities) settleRun(
 	// otherwise have its proposals recorded a second time, and the person
 	// would be asked to approve the same change on two cards.
 	recorded, err := a.recordProposals(ctx, recordProposalsParams{
-		Actor:      agentActor(tenant),
 		Definition: p.Definition,
 		Run:        run,
 		Actions:    p.Outcome.Actions,
@@ -661,7 +660,7 @@ func (a *Activities) StartScheduledRunActivity(
 		Trigger:      definition.TriggerMode.RunTrigger(),
 		Slot:         payload.Slot,
 		TenantInfo:   tenant,
-	}, agentActor(tenant))
+	}, agentActorFor(tenant, definition))
 	if err != nil {
 		if errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
 			return &StartScheduledRunResult{Skipped: "slot_already_started"}, nil
@@ -721,6 +720,7 @@ func (a *Activities) announceRun(ctx context.Context, run *agent.AgentRun) {
 func (a *Activities) unattendedActor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
+	definition *agentdefinition.Definition,
 ) (*serviceports.RequestActor, error) {
 	system, err := a.users.GetSystemUser(ctx, "id")
 	if err != nil {
@@ -728,10 +728,22 @@ func (a *Activities) unattendedActor(
 			ToTemporalError()
 	}
 
-	actor := agentActor(tenant)
+	actor := agentActorFor(tenant, definition)
 	actor.UserID = system.ID
 
 	return actor, nil
+}
+
+func agentActorFor(
+	tenant pagination.TenantInfo,
+	definition *agentdefinition.Definition,
+) *serviceports.RequestActor {
+	actor := agentActor(tenant)
+	if definition != nil && definition.ID.IsNotNil() {
+		actor.PrincipalID = definition.ID
+	}
+
+	return actor
 }
 
 func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {
@@ -936,7 +948,6 @@ func (a *Activities) RemindPendingProposalsActivity(
 
 // recordProposalsParams groups what filing a run's proposed writes needs.
 type recordProposalsParams struct {
-	Actor      *serviceports.RequestActor
 	Definition *agentdefinition.Definition
 	Run        *agent.AgentRun
 	Actions    []serviceports.PendingAction
@@ -971,8 +982,15 @@ func (a *Activities) recordProposals(
 		return &proposalrecorder.RecordResult{Run: p.Run, Proposals: existing}, nil
 	}
 
+	actor := agentActorFor(p.TenantInfo, p.Definition)
+	if len(p.Actions) > 0 {
+		if actor, err = a.unattendedActor(ctx, p.TenantInfo, p.Definition); err != nil {
+			return nil, err
+		}
+	}
+
 	recorded, err := a.recorder.Record(ctx, &proposalrecorder.RecordRequest{
-		Actor:      p.Actor,
+		Actor:      actor,
 		Definition: p.Definition,
 		Run:        p.Run,
 		Actions:    p.Actions,

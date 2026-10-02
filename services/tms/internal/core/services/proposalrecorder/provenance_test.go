@@ -78,6 +78,44 @@ func TestRecord_KeepsWhoAnAutomaticWriteRanAsAndWhen(t *testing.T) {
 	assert.Equal(t, int64(9), *proposal.ExecutedTargetVersion)
 }
 
+func TestRecord_AnUnattendedAutomaticWriteIsExecutedByTheSystemUser(t *testing.T) {
+	t.Parallel()
+
+	systemUser := pulid.MustNew("usr_")
+	store := &capturingStore{}
+	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
+		Actor: &serviceports.RequestActor{
+			PrincipalType:  serviceports.PrincipalTypeAgent,
+			PrincipalID:    pulid.MustNew("agdef_"),
+			UserID:         systemUser,
+			OrganizationID: pulid.MustNew("org_"),
+			BusinessUnitID: pulid.MustNew("bu_"),
+		},
+		Run: &agent.AgentRun{ID: pulid.MustNew("arun_")},
+		Actions: []serviceports.PendingAction{
+			{
+				ToolName:  "assign_move",
+				Arguments: map[string]any{},
+				Rationale: "cover it",
+				Tier:      agent.TierAutoExecute,
+				Executed:  true,
+			},
+			{
+				ToolName:  "assign_move",
+				Arguments: map[string]any{},
+				Rationale: "cover the other one",
+				Tier:      agent.TierPropose,
+			},
+		},
+		Evidence: messageEvidence,
+	})
+	require.NoError(t, err)
+	require.Len(t, store.created, 2)
+	assert.Equal(t, systemUser, store.created[0].ExecutedByUserID,
+		"the system account the run carries is named as the executor")
+	assert.True(t, store.created[1].ExecutedByUserID.IsNil(), "a proposal that did not run has none")
+}
+
 func TestRecord_AnUnattendedWriteRanAsNoPerson(t *testing.T) {
 	t.Parallel()
 

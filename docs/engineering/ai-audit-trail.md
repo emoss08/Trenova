@@ -44,7 +44,7 @@ source row and moment, so projecting the same row twice writes nothing the secon
 | `ai_usage_records` | `ModelCall`: provider, model, tokens, cost, latency, attempt, failover and the masked error. The owner comes from the row's owner columns. Older rows fall back to `run_id`, then to the turn that was running in the thread at that moment, and are marked `reconstructed`. Evaluation calls get the purpose `Evaluation` | `usage:{id}` |
 | `agent_run_steps` (tool steps) | Settled: `ToolCall` with outcome `Ran` / `Proposed` / `Simulated` / `Failed` / `Denied` / `Refused`, plus tier, what held it, egress, tier source, proposal, record versions and redacted arguments. Still `Started` when its run or turn ended: `ToolCall` with outcome `Unknown` | `step:{owner}:{step_key}` |
 | `agent_run_events` | `tool_finished` failed with no step for that call: `ToolRefused`, outcome from the event's verdict (`Refused` when it has none). `delegate_started` / `delegate_finished`: `DelegationStarted` / `DelegationEnded` (`Completed` / `Exhausted` / `Refused` / `Declined` / `Stopped` / `Failed`) | `event:{id}` |
-| `agent_proposals` | `ProposalFiled`. `ProposalExecuted` / `ProposalExecutionFailed` / `ProposalSimulated`, with the principal set to the executing user, or the agent for auto-execution. `ProposalExpired`, with the principal set to the system | `proposal:{id}:filed`, `…:executed`, `…:expired` |
+| `agent_proposals` | `ProposalFiled`. `ProposalExecuted` / `ProposalExecutionFailed` / `ProposalSimulated`, with the principal set to the executing user (the instance's system user for an automatic write of an unattended run), or the agent for an auto-execution filed with no executor. `ProposalExpired`, with the principal set to the system | `proposal:{id}:filed`, `…:executed`, `…:expired` |
 | `agent_decisions` (proposal decisions) | `ProposalDecided` (`Accepted` / `Modified` / `Rejected`): who decided, the redacted modifications, and what they were shown: `result_summary` is "Reviewed preview sha256:…" when the decision named the digest of the preview it recorded, "Preview not reviewed; sha256:…" when it recorded one it did not name, and empty for a decision before previews; `version_before` is the target's version the preview was read at | `decision:{id}` |
 
 A call that did not run takes its outcome from the verdict the runtime recorded
@@ -63,6 +63,15 @@ own: a new outcome would need the `ck_ai_audit_events_outcome` check widened on
 both Postgres and the SQLite mirror, and `Refused` already means "turned away
 before it ran". Only the outcome value changes, never the canonical form, so no
 `hash_version` changes.
+
+An automatic write of an unattended run names the system user as its executor
+(`executed_by_user_id`; see [agent-runtime.md](agent-runtime.md#who-a-run-acts-as)). Its
+execution event is a `User` principal write by that account; the agent stays on
+`agent_definition_id` and `agent_name`, which the row already carried, and no person is put on
+`on_behalf_of_user_id`. Because no person is in the run, its window starts at the run's start,
+as an auto-execution without an executor's does. Only values change, never the canonical form,
+so no `hash_version` changes: rows already on the trail are never derived again, and an
+auto-execution filed before the change, with no executor, still derives as the agent's.
 
 The preview's digest and version ride fields the canonical form already hashes, so recording
 them changed no `hash_version`. The recorded preview itself is not read by the projector
@@ -263,7 +272,9 @@ The audit log has no column that names an AI event, and it does not need one.
 `AIAuditEvent.auditEntries` finds the audit log rows written:
 
 - for the same record (a decision is matched against its proposal);
-- by the same principal (the acting user, or the agent principal);
+- by the same principal (the acting user, matched on the row's principal or its user, so an
+  unattended execution finds the system user's rows; or, for an agent, its definition id and
+  the generic `agent` principal rows written before an unattended run named its agent);
 - inside the event's time window, with one second of slack at each end.
 
 Only tool calls that ran or failed, executions and decisions have a match. The lookup is

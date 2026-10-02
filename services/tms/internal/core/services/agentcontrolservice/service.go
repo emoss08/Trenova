@@ -131,7 +131,7 @@ func (s *Service) applyTrainingConsent(
 		return false
 	}
 
-	userID := actor.AuditActor().UserID
+	userID := actor.PersonUserID()
 	if userID.IsNil() {
 		me.Add(
 			"aiTrainingConsent",

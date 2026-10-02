@@ -24,6 +24,7 @@ import { HeldByChips } from "../safety/safety-badges";
 import { TraceLink } from "../trace-link";
 import { AuditOutcomeBadge } from "./audit-badges";
 import {
+  auditActingAsLabel,
   auditEventRecordPath,
   auditKindLabel,
   auditTierLabel,
@@ -144,13 +145,7 @@ export function AuditEventDetailSections({ event }: { event: AIAuditEventDetail 
           <DescriptionItem label={t("Decided by")}>
             {orEmpty(event.decidedBy?.name ?? event.decidedByUserName)}
           </DescriptionItem>
-          <DescriptionItem label={t("Acting as")}>
-            {event.principalType === "User"
-              ? t("A person")
-              : event.principalType === "Agent"
-                ? t("An agent")
-                : t("The system")}
-          </DescriptionItem>
+          <DescriptionItem label={t("Acting as")}>{auditActingAsLabel(t, event)}</DescriptionItem>
           <DescriptionItem label={t("Agent")}>
             {event.agentName || event.agent?.name ? (
               <span>

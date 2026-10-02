@@ -185962,6 +185962,24 @@
       "routes/agent-control"
     ]
   },
+  "The system account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The system account (Ran by {0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The system classified this as a rate confirmation, but no structured shipment fields were extracted.": {
     "sites": 1,
     "scope": [
@@ -219715,7 +219733,7 @@
       "apps/dash/_components"
     ]
   },
-  "{0, plural, one {# of them is not open; approving records it as approved without reviewing what it changes.} other {# of them are not open; approving records them as approved without reviewing what they change.}}": {
+  "{0, plural, one {# of them was not previewed; approving records it as approved without reviewing what it changes.} other {# of them were not previewed; approving records them as approved without reviewing what they change.}}": {
     "sites": 1,
     "scope": [
       "ts"
