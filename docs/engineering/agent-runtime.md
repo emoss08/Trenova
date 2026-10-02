@@ -521,8 +521,13 @@ the turn as Failed.
 A run's events go to a **Workflow Stream** its own workflow hosts
 (`agentflow.HostStream`, on `go.temporal.io/sdk/contrib/workflowstreams`). The
 model activity publishes the reply as it streams, batched every 100 ms; the
-workflow publishes every other event. The stream exists as soon as the workflow
-does, so a reader can never attach ahead of it.
+workflow publishes every other event. The first piece of each model call's
+reply (text or thinking) is flushed at once rather than waiting for the batch
+ticker, which starts with it (`agentflow.firstWords`). The reader rests 5 ms,
+not the library's 100 ms, after each delivered batch
+(`turnstream.pollCooldown`); its poll waits on the workflow until there is
+something to return, so that costs no extra polls. The stream exists as soon as
+the workflow does, so a reader can never attach ahead of it.
 
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
