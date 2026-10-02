@@ -16,6 +16,9 @@ const (
 	// anthropicBindingBeta opens thinking.block_binding, which is a 400
 	// without it.
 	anthropicBindingBeta = "thinking-binding-controls-2026-08-01"
+
+	anthropicThinkingAdaptive = "adaptive"
+	anthropicFormatJSONSchema = "json_schema"
 )
 
 type anthropicAdapter struct{}
@@ -69,7 +72,7 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 	effort := call.reasoning()
 	switch {
 	case effort.Enabled():
-		r.Thinking = &anthropicThinking{Type: "adaptive", Display: "summarized"}
+		r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive, Display: "summarized"}
 		r.config().Effort = anthropicEffort(effort)
 	case effort.Disabled():
 		// None is the least thinking the model allows. A model that always
@@ -78,7 +81,7 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 		// "disabled" is told so; the rest do not think unless asked.
 		switch {
 		case model.thinksAlways || model.disableRefused || model.declared:
-			r.Thinking = &anthropicThinking{Type: "adaptive"}
+			r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive}
 			r.config().Effort = "low"
 		case model.disableNeedsLowEffort:
 			r.Thinking = &anthropicThinking{Type: "disabled"}
@@ -87,7 +90,8 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 	if model.bindsPrefix {
 		r.bindThinking()
 	}
-	if r.Thinking != nil && r.Thinking.Type == "adaptive" && r.MaxTokens < reasoningAnswerFloor {
+	if r.Thinking != nil && r.Thinking.Type == anthropicThinkingAdaptive &&
+		r.MaxTokens < reasoningAnswerFloor {
 		r.MaxTokens = reasoningAnswerFloor
 	}
 }
@@ -100,7 +104,7 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 // what these models do when told nothing.
 func (r *anthropicRequest) bindThinking() {
 	if r.Thinking == nil {
-		r.Thinking = &anthropicThinking{Type: "adaptive"}
+		r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive}
 	}
 	r.Thinking.BlockBinding = &anthropicBlockBinding{PrefixMismatchBehavior: "drop_block"}
 }
@@ -142,6 +146,11 @@ func anthropicEffort(effort aiprovider.ReasoningEffort) string {
 		return "medium"
 	case aiprovider.ReasoningHigh:
 		return "high"
+	case aiprovider.ReasoningOff,
+		aiprovider.ReasoningNone,
+		aiprovider.ReasoningMinimal,
+		aiprovider.ReasoningLow:
+		return "low"
 	default:
 		return "low"
 	}
@@ -282,7 +291,10 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
 		call.Provider.StructuredOutputMode == aiprovider.StructuredOutputJSONSchema {
-		body.config().Format = &anthropicOutputFormat{Type: "json_schema", Schema: schema}
+		body.config().Format = &anthropicOutputFormat{
+			Type:   anthropicFormatJSONSchema,
+			Schema: schema,
+		}
 	}
 
 	var envelope anthropicResponse

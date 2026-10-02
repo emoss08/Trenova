@@ -204,13 +204,15 @@ type SystemPrompt struct {
 	Volatile string
 }
 
-func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
-	parts := d.BuildSystemPromptParts(rc)
+func (d *Definition) BuildSystemPrompt(
+	rc RuntimeContext, //nolint:gocritic // the long-standing signature its many callers build a literal for
+) string {
+	parts := d.BuildSystemPromptParts(&rc)
 
 	return parts.Stable + parts.Volatile
 }
 
-func (d *Definition) BuildSystemPromptParts(rc RuntimeContext) SystemPrompt {
+func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 	var stable, volatile strings.Builder
 	section := func(builder *strings.Builder, text string) {
 		if text == "" {
@@ -264,7 +266,7 @@ func (d *Definition) BuildSystemPromptParts(rc RuntimeContext) SystemPrompt {
 	section(&volatile, d.buildContextSection(rc))
 
 	if d.HasContextProvider(ContextMemory) {
-		recorded, outside := splitMemories(d.FitMemories(&rc))
+		recorded, outside := splitMemories(d.FitMemories(rc))
 		section(&volatile, buildMemorySection(recorded))
 		section(&volatile, buildOutsideMemorySection(outside))
 	}
@@ -401,7 +403,7 @@ func (d *Definition) buildGuardrailSection() string {
 	return strings.TrimRight(builder.String(), "\n")
 }
 
-func (d *Definition) buildContextSection(rc RuntimeContext) string {
+func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 	lines := make([]string, 0, 8)
 
 	if d.HasContextProvider(ContextOrganization) {

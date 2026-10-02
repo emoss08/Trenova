@@ -17,9 +17,10 @@ const (
 	//nolint:gosec // G101: an OpenTelemetry metric name, not a credential
 	genAITokenUsageName        = "gen_ai.client.token.usage"
 	genAIOperationDurationName = "gen_ai.client.operation.duration"
-	genAIFirstTokenName        = "trenova.gen_ai.client.time_to_first_token"
-	genAITokenTypeInput        = "input"
-	genAITokenTypeOutput       = "output"
+	//nolint:gosec // G101: an OpenTelemetry metric name, not a credential
+	genAIFirstTokenName  = "trenova.gen_ai.client.time_to_first_token"
+	genAITokenTypeInput  = "input"
+	genAITokenTypeOutput = "output"
 )
 
 var (
@@ -109,7 +110,9 @@ func NewGenAI(provider metric.MeterProvider) (*GenAI, error) {
 	firstToken, err := meter.Float64Histogram(
 		genAIFirstTokenName,
 		metric.WithUnit("s"),
-		metric.WithDescription("Time from a GenAI call starting to its first streamed text or thinking"),
+		metric.WithDescription(
+			"Time from a GenAI call starting to its first streamed text or thinking",
+		),
 		metric.WithExplicitBucketBoundaries(genAIDurationBuckets...),
 	)
 	if err != nil {

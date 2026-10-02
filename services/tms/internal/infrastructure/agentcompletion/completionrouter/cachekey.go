@@ -20,7 +20,9 @@ func promptCacheKey(req *serviceports.ChatCompletionRequest) string {
 			agent += "@" + strconv.FormatInt(*version, 10)
 		}
 	}
-	sum := sha256.Sum256([]byte("trenova/prompt-cache/v1|" + req.TenantInfo.OrgID.String() + "|" + agent))
+	sum := sha256.Sum256(
+		[]byte("trenova/prompt-cache/v1|" + req.TenantInfo.OrgID.String() + "|" + agent),
+	)
 
 	return hex.EncodeToString(sum[:16])
 }

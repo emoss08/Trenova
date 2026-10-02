@@ -66,6 +66,8 @@ func providerTraits(provider *aiprovider.Provider) anthropicModel {
 			return traits
 		}
 		return anthropicModel{adaptive: true, declared: true}
+	case aiprovider.ThinkingStyleAuto:
+		return anthropicTraits(provider.Model)
 	default:
 		return anthropicTraits(provider.Model)
 	}

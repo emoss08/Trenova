@@ -150,13 +150,13 @@ func (s *Service) classifierTimeout() time.Duration {
 // made it, so a slow question says whether the rules or the classifier held it.
 func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
 	started := time.Now()
-	decision := s.evaluate(ctx, req)
+	decision := s.evaluate(ctx, &req)
 	s.metrics.RecordGuard(string(decision.Stage), time.Since(started).Seconds())
 
 	return decision
 }
 
-func (s *Service) evaluate(ctx context.Context, req EvaluateRequest) Decision {
+func (s *Service) evaluate(ctx context.Context, req *EvaluateRequest) Decision {
 	if decision := EvaluateDeterministic(req.Input); !decision.Allowed {
 		s.logger.Info("request refused by deterministic scope rule",
 			zap.String("rule", decision.MatchedRule),
@@ -166,7 +166,7 @@ func (s *Service) evaluate(ctx context.Context, req EvaluateRequest) Decision {
 		return decision
 	}
 
-	result, err := s.classifyWithin(ctx, req)
+	result, err := s.classifyWithin(ctx, *req)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) && !s.RefuseWhenUnavailable {
 			// Named separately from the general failure because it is a

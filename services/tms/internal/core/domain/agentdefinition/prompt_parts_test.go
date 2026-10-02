@@ -32,8 +32,8 @@ func TestBuildSystemPromptParts_KeepsWhatEveryTurnSharesFirst(t *testing.T) {
 	}
 	second.Subject = &agentdefinition.RuntimeSubject{Type: agent.SubjectShipment, ID: "shp_2"}
 
-	a := d.BuildSystemPromptParts(first)
-	b := d.BuildSystemPromptParts(second)
+	a := d.BuildSystemPromptParts(&first)
+	b := d.BuildSystemPromptParts(&second)
 
 	require.NotEmpty(t, a.Stable)
 	require.NotEmpty(t, a.Volatile)
@@ -60,7 +60,7 @@ func TestBuildSystemPromptParts_PutsADisclosedToolListWithTheTurn(t *testing.T) 
 		{Name: "list_workers", Description: "List workers"},
 	}
 
-	parts := d.BuildSystemPromptParts(rc)
+	parts := d.BuildSystemPromptParts(&rc)
 
 	assert.NotContains(t, parts.Stable, "get_shipment")
 	assert.Contains(t, parts.Volatile, "get_shipment")

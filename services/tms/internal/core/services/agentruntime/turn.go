@@ -460,7 +460,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	})
 	taint, opened := openTaint(req, &runtimeContext, now)
 
-	prompt := definition.BuildSystemPromptParts(runtimeContext)
+	prompt := definition.BuildSystemPromptParts(&runtimeContext)
 
 	return &Turn{
 		s:            s,

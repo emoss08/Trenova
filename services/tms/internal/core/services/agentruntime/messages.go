@@ -82,9 +82,8 @@ func toAdapterMessages(
 func replayHistory(
 	history []conversation.Message,
 	outcomes []serviceports.ProposalOutcome,
-) ([]serviceports.Message, []string) {
-	messages := make([]serviceports.Message, 0, len(history)+1)
-	var shortened []string
+) (messages []serviceports.Message, shortened []string) {
+	messages = make([]serviceports.Message, 0, len(history)+1)
 	ledger := newProposalLedger(outcomes)
 
 	// The history is the newest N messages of the thread, and that cut lands
@@ -138,20 +137,12 @@ func replayHistory(
 				continue
 			}
 			delete(open, msg.ToolCallID)
-			content, current := ledger.currentContent(msg)
-			if _, keep := whole[idx]; !current && !keep {
-				if compacted := compactToolResult(content); compacted != content {
-					shortened = append(shortened, content)
-					content = compacted
-				}
+			_, keep := whole[idx]
+			replayed, original := replayToolResult(&history[idx], ledger, keep)
+			if original != "" {
+				shortened = append(shortened, original)
 			}
-			messages = append(messages, serviceports.Message{
-				Role:       serviceports.RoleTool,
-				Content:    content,
-				ToolCallID: msg.ToolCallID,
-				ToolName:   msg.ToolName,
-				IsError:    msg.ToolFailed,
-			})
+			messages = append(messages, replayed)
 		default:
 			if msg.Refused {
 				continue
@@ -164,6 +155,32 @@ func replayHistory(
 	}
 
 	return messages, shortened
+}
+
+// replayToolResult is a tool result as the model is sent it: the decision's
+// current wording for a proposal, and otherwise the stored result, shortened
+// unless keep. original is the stored text when it was shortened, and empty
+// when the result went whole.
+func replayToolResult(
+	msg *conversation.Message,
+	ledger *proposalLedger,
+	keep bool,
+) (replayed serviceports.Message, original string) {
+	content, current := ledger.currentContent(*msg)
+	if !current && !keep {
+		if compacted := compactToolResult(content); compacted != content {
+			original = content
+			content = compacted
+		}
+	}
+
+	return serviceports.Message{
+		Role:       serviceports.RoleTool,
+		Content:    content,
+		ToolCallID: msg.ToolCallID,
+		ToolName:   msg.ToolName,
+		IsError:    msg.ToolFailed,
+	}, original
 }
 
 // wholeResults is the tool results kept whole: those in the recent turns,
