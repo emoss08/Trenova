@@ -2,6 +2,9 @@ import type { SkyPhase } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { CSSProperties, ReactNode } from "react";
 
+/** The beat between one word of the greeting and the next. */
+const WORD_STEP_MS = 55;
+
 export type DeskGreetingProps = {
   /** The light outside in the person's timezone, which colours the wash and the mark. */
   sky: SkyPhase;
@@ -46,13 +49,6 @@ export function DeskGreeting({
       data-sky={sky}
       className={cn("relative isolate flex flex-col items-center gap-4 text-center", className)}
     >
-      <div
-        aria-hidden
-        data-slot="desk-daylight"
-        data-sky={sky}
-        className="ui-daylight animate-rise pointer-events-none absolute -top-32 left-1/2 -z-10 h-72 w-200 max-w-none -translate-x-1/2"
-        style={entrance(0)}
-      />
       <p
         className="text-foreground-subtle animate-rise flex items-center gap-2 text-sm"
         style={entrance(0)}
@@ -61,8 +57,8 @@ export function DeskGreeting({
         <time dateTime={isoDate}>{dateline}</time>
       </p>
       <h1 className="max-w-3xl text-2xl font-semibold text-balance sm:text-3xl">
-        <span className="animate-rise block" style={entrance(1)}>
-          {greeting}
+        <span className="block">
+          <RisingWords text={greeting} from={1} />
         </span>
         <span
           data-slot="desk-headline"
@@ -161,4 +157,27 @@ function SkyShapes({ sky }: { sky: SkyPhase }) {
         </>
       );
   }
+}
+
+/**
+ * A line that arrives a word at a time, each rising into place a beat after
+ * the one before it, so the greeting is read as it is said rather than
+ * appearing as a block. Under reduced motion the global rule cuts every
+ * rise, so the words simply stand.
+ */
+export function RisingWords({ text, from }: { text: string; from: number }) {
+  return (
+    <>
+      {text.split(" ").map((word, index) => (
+        <span
+          key={`${index}-${word}`}
+          className="animate-rise inline-block"
+          style={{ animationDelay: `${from * 45 + index * WORD_STEP_MS}ms` }}
+        >
+          {word}
+          {index < text.split(" ").length - 1 ? "\u00a0" : ""}
+        </span>
+      ))}
+    </>
+  );
 }

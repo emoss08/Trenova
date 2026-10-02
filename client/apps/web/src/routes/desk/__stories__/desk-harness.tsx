@@ -12,6 +12,7 @@ import { DeskWatchtowerPage } from "@/routes/desk/watchtower-page";
 import { useDeskStore } from "@/stores/desk-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { LazyMotion, domMax } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { RouterProvider, createMemoryRouter } from "react-router";
 import {
@@ -210,9 +211,11 @@ export function DeskStory({
   if (!ready) return null;
 
   return (
-    <div className="fixed inset-0">
-      <RouterProvider router={router} />
-    </div>
+    <LazyMotion features={domMax} strict>
+      <div className="fixed inset-0">
+        <RouterProvider router={router} />
+      </div>
+    </LazyMotion>
   );
 }
 

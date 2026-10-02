@@ -676,22 +676,18 @@ export function ArtifactChips({
   const hidden = artifacts.slice(ARTIFACT_CHIP_LIMIT);
 
   return (
-    <div className="flex min-w-0 items-start gap-2">
-      <span className="text-foreground-subtle h-6 shrink-0 text-xs leading-6">{t("Produced")}</span>
-      <ul className="flex min-w-0 flex-wrap gap-1.5" aria-label={t("Produced")}>
+    <div className="flex min-w-0 items-start gap-1.5">
+      <ul className="flex min-w-0 flex-wrap gap-1" aria-label={t("Produced")}>
         {shown.map((artifact) => (
           <li key={artifact.id} className="min-w-0">
             <button
               type="button"
               onClick={() => onOpen(artifact.id)}
-              className="ui-focus-ring ui-press ring-foreground/10 bg-card hover:bg-surface-hover text-foreground flex h-6 max-w-64 items-center gap-1.5 rounded-md px-2 text-xs ring-1 transition-colors"
+              className="ui-focus-ring ui-press bg-info/35 text-foreground hover:bg-info/50 ring-info/40 flex h-5 max-w-56 items-center gap-1 rounded-full pr-2 pl-1.5 text-2xs font-medium ring-1 transition-colors"
               aria-label={t("Open {0}", artifact.title)}
               title={`${t(ARTIFACT_KINDS[artifact.kind].label)} · ${artifact.title}`}
             >
-              <ArtifactKindIcon
-                kind={artifact.kind}
-                className="text-foreground-muted size-3 shrink-0"
-              />
+              <ArtifactKindIcon kind={artifact.kind} className="size-3 shrink-0 opacity-80" />
               <span className="truncate">{artifact.title}</span>
             </button>
           </li>
@@ -701,7 +697,7 @@ export function ArtifactChips({
             <button
               type="button"
               onClick={() => onOpen(hidden[0].id)}
-              className="ui-focus-ring ui-press ring-foreground/10 text-foreground-muted hover:bg-surface-hover hover:text-foreground flex h-6 items-center rounded-md px-2 text-xs ring-1 transition-colors"
+              className="ui-focus-ring ui-press text-info-foreground hover:bg-info-subtle ring-info-border flex h-5 items-center rounded-full px-2 text-2xs font-medium ring-1 transition-colors"
               aria-label={t("{0, plural, one {Open # more} other {Open # more}}", hidden.length)}
             >
               {t("+{0} more", hidden.length)}

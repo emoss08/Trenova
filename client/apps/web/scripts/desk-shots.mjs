@@ -27,7 +27,11 @@ for (const story of stories) {
   const url = `${base}/iframe.html?id=desk-desk--${story}&viewMode=story&globals=theme:${theme}`;
   await page.goto(url, { waitUntil: "networkidle" });
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${outDir}/${story}-${theme}.png` });
+  const clip = process.env.CLIP?.split(",").map(Number);
+  await page.screenshot({
+    path: `${outDir}/${story}-${theme}.png`,
+    clip: clip && clip.length === 4 ? { x: clip[0], y: clip[1], width: clip[2], height: clip[3] } : undefined,
+  });
   console.log("shot", story, theme);
 }
 await browser.close();
