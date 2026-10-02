@@ -68,6 +68,10 @@ type Response struct {
 	CacheWriteTokens int
 	OutputLimit      int
 	CutOffCall       *CutOffToolCall
+	// ThinkingDropped is how many replayed thinking blocks the provider
+	// dropped because the conversation before them had changed. Anthropic
+	// reports it; a recurring drop is an edit the harness should stop making.
+	ThinkingDropped int
 }
 
 func CacheSeparateFromInput(kind aiprovider.Kind) bool {

@@ -144,6 +144,7 @@ type runOutcome struct {
 	CacheWriteTokens int
 	FinishReason     string
 	Truncated        bool
+	ThinkingDropped  int
 	ProviderID       pulid.ID
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64
@@ -402,6 +403,7 @@ func (s *Service) attempt(
 		CacheWriteTokens: resp.CacheWriteTokens,
 		FinishReason:     finishReason(resp),
 		Truncated:        resp.Truncated,
+		ThinkingDropped:  resp.ThinkingDropped,
 		ProviderID:       provider.ID,
 		ProviderKind:     provider.Kind,
 	}, nil

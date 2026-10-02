@@ -223,6 +223,7 @@ func (s *Service) recordBackground(
 			CacheWriteTokens: result.Response.CacheWriteTokens,
 			FinishReason:     finishReason(result.Response),
 			Truncated:        result.Response.Truncated,
+			ThinkingDropped:  result.Response.ThinkingDropped,
 		}
 	}
 	if result.State == modeladapter.BackgroundFailed {

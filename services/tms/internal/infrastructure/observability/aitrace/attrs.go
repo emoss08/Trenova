@@ -70,6 +70,7 @@ const (
 	AIAttempt              = attribute.Key("trenova.ai.attempt")
 	AIReasoningTokens      = attribute.Key("trenova.ai.reasoning_tokens")
 	AITruncated            = attribute.Key("trenova.ai.truncated")
+	AIThinkingDropped      = attribute.Key("trenova.ai.thinking_dropped")
 	AIToolEffect           = attribute.Key("trenova.ai.tool.effect")
 	AIToolKind             = attribute.Key("trenova.ai.tool.kind")
 	AIStepKey              = attribute.Key("trenova.ai.step.key")
