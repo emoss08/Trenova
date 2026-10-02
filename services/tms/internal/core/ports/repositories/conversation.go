@@ -91,7 +91,25 @@ type MarkThreadTaintedRequest struct {
 	TaintedAt  int64
 }
 
+type ListThreadAttentionRequest struct {
+	ThreadIDs  []pulid.ID
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+type MarkThreadReadRequest struct {
+	ThreadID   pulid.ID
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+	ReadAt     int64
+}
+
 type ConversationRepository interface {
+	ListThreadAttention(
+		ctx context.Context,
+		req ListThreadAttentionRequest,
+	) (map[pulid.ID]conversation.ThreadAttentionSignals, error)
+	MarkThreadRead(ctx context.Context, req MarkThreadReadRequest) error
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)
 	// GetThreadOwned reads a thread within a tenant whoever owns it, so the

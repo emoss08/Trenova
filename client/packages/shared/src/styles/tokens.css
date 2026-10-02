@@ -329,6 +329,56 @@
      ink and must read as a separate face of it rather than a hole. */
   --desk-drawer: color-mix(in oklch, var(--ink) 58%, var(--desk-canvas));
 
+  /* Desk v2: the conversation room, Watchtower and Decisions. Most of the
+     palette is the app's own; the room keeps a softer ink for prose, a step
+     between muted and subtle text, and the dark-blue chip artifacts wear in a
+     reply. The vendor marks are the providers' brand colours, and the logo
+     ramp is the Trenova mark's, used only by the composer while an agent works. */
+  --dsk-canvas: var(--canvas);
+  --dsk-card: var(--card);
+  --dsk-raised: var(--raised);
+  --dsk-sunken: var(--surface-hover);
+  --dsk-field: var(--canvas);
+  --dsk-hover: var(--surface-hover);
+  --dsk-rail: var(--card);
+  --dsk-fg: var(--foreground);
+  --dsk-fg2: oklch(0.301 0 0);
+  --dsk-muted: oklch(0.42 0 0);
+  --dsk-subtle: var(--foreground-muted);
+  --dsk-faint: oklch(0.65 0 0);
+  --dsk-b-sub: var(--border-subtle);
+  --dsk-b: var(--border);
+  --dsk-b-strong: var(--border-strong);
+  --dsk-ink: var(--ink);
+  --dsk-ink-fg: var(--ink-foreground);
+  --dsk-ring: color-mix(in oklch, var(--ring) 24%, transparent);
+  --dsk-success: var(--success);
+  --dsk-success-sub: var(--success-subtle);
+  --dsk-success-fg: var(--success-foreground);
+  --dsk-warn: var(--warning);
+  --dsk-warn-sub: var(--warning-subtle);
+  --dsk-warn-fg: var(--warning-foreground);
+  --dsk-blue: oklch(0.573 0.235 260.1);
+  --dsk-blue-sub: oklch(0.961 0.019 255.5);
+  --dsk-blue-fg: oklch(0.539 0.233 261);
+  --dsk-agent: var(--foreground-muted);
+  --dsk-agent-sub: var(--surface-hover);
+  --dsk-agent-on: oklch(0.42 0 0);
+  --dsk-lift: var(--lift-whisper);
+  --dsk-lift-hi: var(--lift-float);
+  --dsk-on-solid: oklch(1 0 0);
+  --dsk-approve: oklch(0.627 0.170 149.2);
+  --dsk-mention: oklch(0.679 0.175 251.0);
+  --dsk-error: oklch(0.626 0.193 23.0);
+  --dsk-paper: oklch(0.985 0.004 91.4);
+  --dsk-paper-ink: oklch(0.863 0.009 264.5);
+  --dsk-paper-rule: oklch(0.922 0.006 264.5);
+  --dsk-vendor-anthropic: oklch(0.672 0.131 38.8);
+  --dsk-vendor-gemini: oklch(0.652 0.171 259.6);
+  --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
+  --dsk-vendor-groq: oklch(0.657 0.206 31.7);
+  --dsk-vendor-mistral: oklch(0.665 0.214 37.6);
+
   /* The sky over the Desk's greeting: a wash of the part of the day behind
      the first line of the front page. It is weather, not decoration, so it is
      the faintest colour on the page and fades out before it reaches anything
@@ -687,6 +737,51 @@
   --desk-failed: var(--danger);
   --desk-drawer: color-mix(in oklch, var(--ink) 52%, var(--desk-canvas));
 
+  --dsk-canvas: var(--card);
+  --dsk-card: var(--card);
+  --dsk-raised: var(--raised);
+  --dsk-sunken: var(--surface-hover);
+  --dsk-field: var(--card);
+  --dsk-hover: var(--surface-active);
+  --dsk-rail: var(--canvas);
+  --dsk-fg: var(--foreground);
+  --dsk-fg2: oklch(0.87 0 0);
+  --dsk-muted: var(--foreground-muted);
+  --dsk-subtle: var(--foreground-muted);
+  --dsk-faint: oklch(0.545 0 0);
+  --dsk-b-sub: var(--border-subtle);
+  --dsk-b: oklch(0.301 0 0);
+  --dsk-b-strong: oklch(0.39 0 0);
+  --dsk-ink: var(--ink);
+  --dsk-ink-fg: var(--ink-foreground);
+  --dsk-ring: color-mix(in oklch, var(--ring) 35%, transparent);
+  --dsk-success: var(--success);
+  --dsk-success-sub: var(--success-subtle);
+  --dsk-success-fg: var(--success-foreground);
+  --dsk-warn: var(--warning);
+  --dsk-warn-sub: var(--warning-subtle);
+  --dsk-warn-fg: var(--warning-foreground);
+  --dsk-blue: oklch(0.714 0.156 248.9);
+  --dsk-blue-sub: oklch(0.242 0.058 260.8);
+  --dsk-blue-fg: oklch(0.717 0.152 251);
+  --dsk-agent: var(--foreground-muted);
+  --dsk-agent-sub: var(--surface-active);
+  --dsk-agent-on: var(--foreground);
+  --dsk-lift: var(--lift-ring);
+  --dsk-lift-hi: var(--lift-float);
+  --dsk-on-solid: oklch(1 0 0);
+  --dsk-approve: oklch(0.627 0.170 149.2);
+  --dsk-mention: oklch(0.679 0.175 251.0);
+  --dsk-error: oklch(0.626 0.193 23.0);
+  --dsk-paper: oklch(0.985 0.004 91.4);
+  --dsk-paper-ink: oklch(0.863 0.009 264.5);
+  --dsk-paper-rule: oklch(0.922 0.006 264.5);
+  --dsk-vendor-anthropic: oklch(0.672 0.131 38.8);
+  --dsk-vendor-gemini: oklch(0.652 0.171 259.6);
+  --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
+  --dsk-vendor-groq: oklch(0.657 0.206 31.7);
+  --dsk-vendor-mistral: oklch(0.665 0.214 37.6);
+
   /* Colour on a near-black ground reads weaker at the same mix, so the sky
      takes a little more of it. */
   --daylight-strength: 20%;
@@ -768,6 +863,7 @@
   --font-mono: "Geist Mono", ui-monospace, "IBM Plex Mono", monospace;
   --font-table: "Geist Mono", ui-monospace, monospace;
   --font-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-newsreader: "Newsreader Variable", Georgia, serif;
 
   /* Surfaces */
   --color-canvas: var(--canvas);

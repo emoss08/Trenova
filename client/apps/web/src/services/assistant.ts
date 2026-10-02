@@ -174,6 +174,11 @@ export class AssistantService {
     await api.delete(`/assistant/threads/${id}/`);
   }
 
+  /** Marks everything in the conversation as seen by its owner. */
+  public async markThreadRead(id: AssistantThread["id"]) {
+    await api.post(`/assistant/threads/${id}/read/`);
+  }
+
   /**
    * One page of a thread: the newest `limit` messages, or with `before` the
    * page above the message carrying that sequence.

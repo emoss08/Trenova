@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -133,8 +135,51 @@ func (s *Service) ListThreads(
 	); err != nil {
 		return nil, err
 	}
+	if err = s.markAttention(ctx, req.UserID, req.TenantInfo, result.Items); err != nil {
+		return nil, err
+	}
 
 	return result, nil
+}
+
+func (s *Service) markAttention(
+	ctx context.Context,
+	userID pulid.ID,
+	tenant pagination.TenantInfo,
+	threads []*conversation.Thread,
+) error {
+	if len(threads) == 0 {
+		return nil
+	}
+
+	ids := make([]pulid.ID, 0, len(threads))
+	for _, thread := range threads {
+		ids = append(ids, thread.ID)
+	}
+
+	signals, err := s.conversations.ListThreadAttention(ctx, repositories.ListThreadAttentionRequest{
+		ThreadIDs:  ids,
+		UserID:     userID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, thread := range threads {
+		thread.ApplyAttention(signals[thread.ID])
+	}
+
+	return nil
+}
+
+func (s *Service) MarkThreadRead(ctx context.Context, req repositories.GetThreadRequest) error {
+	return s.conversations.MarkThreadRead(ctx, repositories.MarkThreadReadRequest{
+		ThreadID:   req.ID,
+		UserID:     req.UserID,
+		TenantInfo: req.TenantInfo,
+		ReadAt:     timeutils.NowUnix(),
+	})
 }
 
 func (s *Service) GetThread(

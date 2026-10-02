@@ -677,6 +677,7 @@ var ThreadColumns = struct {
 	Title               Column // "title" → qualified: "athr.title"
 	Status              Column // "status" → qualified: "athr.status"
 	LastMessageAt       Column // "last_message_at" → qualified: "athr.last_message_at"
+	LastReadAt          Column // "last_read_at" → qualified: "athr.last_read_at"
 	PreferredProviderID Column // "preferred_provider_id" → qualified: "athr.preferred_provider_id"
 	Origin              Column // "origin" → qualified: "athr.origin"
 	Pinned              Column // "pinned" → qualified: "athr.pinned"
@@ -696,6 +697,7 @@ var ThreadColumns = struct {
 	Title:               NewColumn("title", "athr"),
 	Status:              NewColumn("status", "athr"),
 	LastMessageAt:       NewColumn("last_message_at", "athr"),
+	LastReadAt:          NewColumn("last_read_at", "athr"),
 	PreferredProviderID: NewColumn("preferred_provider_id", "athr"),
 	Origin:              NewColumn("origin", "athr"),
 	Pinned:              NewColumn("pinned", "athr"),
@@ -721,6 +723,7 @@ var ThreadFieldMap = map[string]string{
 	"title":               "title",
 	"status":              "status",
 	"lastMessageAt":       "last_message_at",
+	"lastReadAt":          "last_read_at",
 	"preferredProviderId": "preferred_provider_id",
 	"origin":              "origin",
 	"pinned":              "pinned",
@@ -744,6 +747,7 @@ var ThreadInsertableColumns = []string{
 	"title",
 	"status",
 	"last_message_at",
+	"last_read_at",
 	"preferred_provider_id",
 	"origin",
 	"pinned",
@@ -829,6 +833,7 @@ var ThreadFilter = struct {
 	Title               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
 	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	LastMessageAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastMessageAt" → DB: "last_message_at"
+	LastReadAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastReadAt" → DB: "last_read_at"
 	PreferredProviderID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
 	Origin              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "origin" → DB: "origin"
 	Pinned              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinned" → DB: "pinned"
@@ -863,6 +868,9 @@ var ThreadFilter = struct {
 	},
 	LastMessageAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lastMessageAt", op, value)
+	},
+	LastReadAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastReadAt", op, value)
 	},
 	PreferredProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("preferredProviderId", op, value)

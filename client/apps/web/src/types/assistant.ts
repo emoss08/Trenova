@@ -641,6 +641,14 @@ export const assistantMessageSchema = z.object({
   createdAt: z.number(),
 });
 
+export const threadAttentionSchema = z.object({
+  pendingDecisions: z.number().default(0),
+  lastTurnFailed: z.boolean().default(false),
+  unread: z.boolean().default(false),
+});
+
+export type ThreadAttention = z.infer<typeof threadAttentionSchema>;
+
 export const assistantThreadSchema = z.object({
   id: z.string(),
   businessUnitId: z.string(),
@@ -650,6 +658,10 @@ export const assistantThreadSchema = z.object({
   title: z.string().optional().default(""),
   status: threadStatusSchema,
   lastMessageAt: z.number().default(0),
+  /** When the owner last looked at the conversation. */
+  lastReadAt: z.number().optional(),
+  /** What the conversation is waiting on; only the thread list carries it. */
+  attention: threadAttentionSchema.optional(),
   /** The model this conversation is set to. Empty means the org's own order. */
   preferredProviderId: optionalIdSchema,
   origin: threadOriginSchema.default("Panel"),

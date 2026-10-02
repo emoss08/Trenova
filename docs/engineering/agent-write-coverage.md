@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 259 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 51 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 52 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-958 writes: 499 GraphQL mutations and 459 REST writes, after merging 68 REST routes into the mutation they duplicate.
+959 writes: 499 GraphQL mutations and 460 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 376 |
-| Exempt | 582 |
+| Exempt | 583 |
 | — Security | 72 |
 | — Configuration | 259 |
 | — User preference | 27 |
 | — Infrastructure | 46 |
-| — Agent administration | 51 |
+| — Agent administration | 52 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
 | **Pending** | **0** |
-| Total | 958 |
+| Total | 959 |
 
 Of the 376 writes an agent should be able to make, 376 have a tool (100%).
 
@@ -144,7 +144,7 @@ The writes no tool performs yet, and what the tool would do.
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
-| assistant | 8 | 0 | 8 | 0 |
+| assistant | 9 | 0 | 9 | 0 |
 | auth | 6 | 0 | 6 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
@@ -477,6 +477,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/assistant/threads/`<br>assistanthandler.startThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/pin/`<br>assistanthandler.pinArtifact | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/messages/`<br>assistanthandler.sendMessage | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/threads/:threadID/read/`<br>assistanthandler.markThreadRead | Exempt, agent-administration: Marking a conversation read arranges the person's own Desk; it changes no record an agent acts on. |
 | `POST /api/v1/assistant/threads/:threadID/turns/`<br>assistanthandler.startTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/turns/:turnID/stop/`<br>assistanthandler.stopTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 

@@ -292,6 +292,9 @@ writes:
   "POST /api/v1/assistant/threads/:threadID/messages/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/read/":
+    exempt: agent-administration
+    reason: "Marking a conversation read arranges the person's own Desk; it changes no record an agent acts on."
   "POST /api/v1/assistant/threads/:threadID/turns/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."

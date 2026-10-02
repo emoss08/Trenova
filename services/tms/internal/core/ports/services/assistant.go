@@ -594,6 +594,7 @@ type AssistantService interface {
 		ctx context.Context,
 		req repositories.GetThreadRequest,
 	) (*conversation.Thread, error)
+	MarkThreadRead(ctx context.Context, req repositories.GetThreadRequest) error
 	ListThreadProposals(
 		ctx context.Context,
 		req repositories.GetThreadRequest,

@@ -14,12 +14,15 @@ interface DeskState {
   pane: DeskPaneState;
   /** The artifact each conversation last had open, so returning to it reopens the same one. */
   activeArtifactByThread: Record<string, string>;
+  /** The note about the terms above the composer has been read or closed. */
+  termsSeen: boolean;
 
   setRail: (rail: DeskRailState) => void;
   toggleRail: () => void;
   setPane: (pane: DeskPaneState) => void;
   togglePane: () => void;
   setActiveArtifact: (threadId: string, artifactId: string | null) => void;
+  markTermsSeen: () => void;
 }
 
 /** Remembered artifacts for the most recently visited conversations. */
@@ -49,6 +52,7 @@ export const useDeskStore = create<DeskState>()(
       rail: "open",
       pane: "open",
       activeArtifactByThread: {},
+      termsSeen: false,
 
       setRail: (rail) => set({ rail }),
       toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
@@ -62,6 +66,7 @@ export const useDeskStore = create<DeskState>()(
             artifactId,
           ),
         })),
+      markTermsSeen: () => set({ termsSeen: true }),
     }),
     {
       name: "trenova-desk",
@@ -69,6 +74,7 @@ export const useDeskStore = create<DeskState>()(
         rail: state.rail,
         pane: state.pane,
         activeArtifactByThread: state.activeArtifactByThread,
+        termsSeen: state.termsSeen,
       }),
     },
   ),

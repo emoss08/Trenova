@@ -511,6 +511,24 @@ export function formatSecondsAgo(seconds: number): string {
   return `${Math.floor(seconds / 3600)}h ago`;
 }
 
+/**
+ * An age at a glance, as the Desk writes it beside a row: "now" under a
+ * minute, then whole minutes, hours or days ("4m", "1h", "2d").
+ */
+export function formatCompactAge(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 60) {
+    return "now";
+  }
+  if (seconds < 3600) {
+    return `${Math.floor(seconds / 60)}m`;
+  }
+  if (seconds < 86400) {
+    return `${Math.floor(seconds / 3600)}h`;
+  }
+
+  return `${Math.floor(seconds / 86400)}d`;
+}
+
 export function formatDurationMs(durationInMs: number): string {
   if (durationInMs === undefined || durationInMs === null || isNaN(durationInMs)) {
     return "0m";

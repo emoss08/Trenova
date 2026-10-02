@@ -86,6 +86,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.deleteThread,
 	)
+	api.POST(
+		"/threads/:threadID/read/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.markThreadRead,
+	)
 	api.GET(
 		"/threads/:threadID/messages/",
 		h.pm.RequirePermission(resource, permission.OpRead),
@@ -297,6 +302,21 @@ func (h *Handler) getThread(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, thread)
+}
+
+func (h *Handler) markThreadRead(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.service.MarkThreadRead(c.Request.Context(), req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 type updateThreadRequest struct {

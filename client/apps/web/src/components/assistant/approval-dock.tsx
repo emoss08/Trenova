@@ -14,7 +14,7 @@ import { formatAltShortcut, formatShortcut } from "@trenova/shared/lib/shortcuts
 import { cn } from "@trenova/shared/lib/utils";
 import type { Tone } from "@/components/kpi/tone";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { decideMyPlan, decideMyProposal, decideMyProposals } from "@/lib/graphql/agent-decisions";
+import { decideMyPlan, decideMyProposal, } from "@/lib/graphql/agent-decisions";
 import type { ProposalPreview as ProposalPreviewData } from "@/lib/graphql/agent-preview";
 import {
   invalidateProposalViews,
@@ -28,15 +28,16 @@ import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { EASE_SETTLE, EASE_SWIFT } from "@/lib/motion";
+import { decideBatch, useAfterDecision, type BatchOutcome } from "./approval-actions";
 import type { ApprovalEntry } from "./approval-queue";
 import { ProposedBy } from "./decision-chrome";
-import { useDecisionFollowUp } from "./decision-follow-up";
+import { } from "./decision-follow-up";
 import { Highlights, StepList, previewsByStep } from "./decision-outcomes";
 import { FloatingSlot } from "./floating-slot";
 import { ProposalEditor, type EditorFocus, type ProposalEditorRequest } from "./proposal-editor";
 import { changedValues, draftFromArguments, validateDraft } from "./proposal-edits";
 import { previewFigure, previewSubject } from "./proposal-preview/preview-format";
-import { batchPreviewDigests, canApprove, gateDigest } from "./proposal-preview/preview-gate";
+import { canApprove, gateDigest } from "./proposal-preview/preview-gate";
 import {
   askAgentMessage,
   askAgentPlanMessage,
@@ -68,7 +69,6 @@ export const MAX_DECISION_NOTE_LENGTH = 2000;
 export const BATCH_OPEN_LIMIT = 5;
 
 /** The reason code a rejection of several proposals records; the server asks for one. */
-const BATCH_REJECT_REASON = "rejected_in_conversation";
 
 const NO_OUTCOMES: ReadonlyMap<string, string> = new Map();
 
@@ -580,28 +580,6 @@ function IconAction({
   );
 }
 
-/** What every kind of decision does once the server has recorded it. */
-function useAfterDecision(
-  threadId: string,
-  entry: ApprovalEntry,
-  onDecided?: DockEntryProps["onDecided"],
-) {
-  const queryClient = useQueryClient();
-  const followUp = useDecisionFollowUp();
-
-  return useCallback(
-    async (anchorId: string) => {
-      await invalidateProposalViews(queryClient, threadId);
-      // The server starts the turn in which the agent answers; the
-      // conversation picks it up rather than sending anything itself, so a
-      // note to the agent is answered once, by that turn.
-      followUp?.(anchorId);
-      onDecided?.(entry);
-    },
-    [entry, followUp, onDecided, queryClient, threadId],
-  );
-}
-
 type DockAction = { action: "approve" | "reject" | "tell"; note?: string };
 
 function ProposalDock({
@@ -1013,8 +991,6 @@ function PlanDock({
   );
 }
 
-type BatchOutcome = { approved: number; total: number; errors: string[] };
-
 function BatchDock({
   threadId,
   entry,
@@ -1095,31 +1071,12 @@ function BatchDock({
   ).length;
 
   const decideMutation = useMutation({
-    mutationFn: async ({ action, note: text }: DockAction): Promise<BatchOutcome> => {
-      const approving = action === "approve";
-      const results = await decideMyProposals(ids, {
-        decision: approving ? "Accepted" : "Rejected",
-        reasonCode: approving ? undefined : BATCH_REJECT_REASON,
-        previewDigests: approving ? batchPreviewDigests(ids, shown) : undefined,
-        note: approving ? undefined : text,
-      });
-      const failed = results.filter((result) => (result.error ?? "") !== "");
-      for (const result of results) {
-        if ((result.error ?? "") === "" || result.decision) {
-          markProposalDecided(queryClient, result.proposalId, approving ? "Accepted" : "Rejected");
-        }
-      }
-
-      return {
-        approved: results.length - failed.length,
-        total: results.length,
-        errors: failed.map((result) => {
-          const proposal = proposals.find((candidate) => candidate.id === result.proposalId);
-          const summary = proposal ? presentProposal(proposal).summary : "";
-          return summary === "" ? (result.error ?? "") : `${summary}: ${result.error ?? ""}`;
-        }),
-      };
-    },
+    mutationFn: ({ action, note: text }: DockAction): Promise<BatchOutcome> =>
+      decideBatch(queryClient, proposals, {
+        approving: action === "approve",
+        shownDigests: shown,
+        note: text,
+      }),
     onSuccess: async (outcome) => {
       if (outcome.errors.length > 0) {
         toast.warning(t("{0} of {1} went through", outcome.approved, outcome.total), {

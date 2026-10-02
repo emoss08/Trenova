@@ -38,6 +38,9 @@ type Thread struct {
 	// LastMessageAt orders a user's thread list without a join onto messages.
 	LastMessageAt int64 `json:"lastMessageAt" bun:"last_message_at,notnull,default:0"`
 
+	LastReadAt int64            `json:"lastReadAt"          bun:"last_read_at,notnull,default:0"`
+	Attention  *ThreadAttention `json:"attention,omitempty" bun:"-"`
+
 	// PreferredProviderID is the model the person chose for this conversation.
 	// Empty means the organization's priority order decides, which is the
 	// default and what every thread did before the picker existed.
