@@ -756,6 +756,10 @@ export const assistantArtifactSchema = z.object({
   /** The tool call that produced it, so the transcript can point at it. */
   sourceToolCallId: z.string().optional().default(""),
   pinned: z.boolean().default(false),
+  /** The first artifact of the lineage this one is a later version of; empty for the first. */
+  lineageId: optionalIdSchema,
+  /** This artifact's version within its lineage, from 1. */
+  lineageSeq: z.number().optional().default(1),
   createdAt: z.number(),
   updatedAt: z.number(),
 });

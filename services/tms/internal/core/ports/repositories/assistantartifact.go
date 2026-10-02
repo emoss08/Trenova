@@ -16,6 +16,13 @@ type ListArtifactsRequest struct {
 	Limit int
 }
 
+type LatestInLineageRequest struct {
+	ThreadID       pulid.ID
+	TenantInfo     pagination.TenantInfo
+	LineageKey     string
+	ExceptToolCall string
+}
+
 type ListArtifactsByToolCallsRequest struct {
 	ThreadID   pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -74,6 +81,10 @@ type AssistantArtifactRepository interface {
 	UpdateStatus(
 		ctx context.Context,
 		req UpdateArtifactStatusRequest,
+	) (*assistantartifact.Artifact, error)
+	LatestInLineage(
+		ctx context.Context,
+		req LatestInLineageRequest,
 	) (*assistantartifact.Artifact, error)
 	// FindByProposal reads the artifact that views a proposal, for the
 	// status to follow the decision.

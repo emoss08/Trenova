@@ -1,5 +1,4 @@
 import {
-  ArtifactKindIcon,
   ArtifactNotice,
   ARTIFACT_KINDS,
 } from "@/components/assistant/voice/artifact-chrome";
@@ -15,13 +14,14 @@ import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { PanelRightCloseIcon } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArtifactFilmstrip } from "./artifact-filmstrip";
 import { orderArtifacts } from "./artifact-order";
+import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
 import { ArtifactSwitcher } from "./artifact-switcher";
 import { ComposedViewArtifact } from "./composed-view-artifact";
 import { DecisionRequestArtifact } from "./decision-request-artifact";
@@ -52,23 +52,6 @@ export function defaultArtifactId(
   return newest?.id ?? null;
 }
 
-/**
- * The kinds this pane holds, in the order a conversation tends to produce
- * them, with the sentence that earns each one.
- *
- * An empty pane is the first thing a person sees on a new desk, so it is
- * doing the teaching: grey boxes said only that nothing was here, which they
- * could already see. Naming what will appear says what the pane is for and,
- * more usefully, what to ask for to fill it.
- */
-function artifactPromises(t: TranslateFn) {
-  return [
-    { kind: "table_view", example: t("Which shipments are in transit?") },
-    { kind: "report_run", example: t("Run the detention report for last week.") },
-    { kind: "entity_card", example: t("Show me shipment SEED-SHP-008.") },
-    { kind: "email_draft", example: t("Tell the customer their load is running late.") },
-  ] as const;
-}
 
 /** The pane's top line when there is no artifact to switch between: its name and the way to hide it. */
 function PaneHeader({ onClose }: { onClose: () => void }) {
@@ -93,43 +76,6 @@ function PaneHeader({ onClose }: { onClose: () => void }) {
         </TooltipTrigger>
         <TooltipContent>{t("Hide artifacts")}</TooltipContent>
       </Tooltip>
-    </div>
-  );
-}
-
-function ArtifactsEmpty() {
-  const t = useT();
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-5 py-8">
-      <div className="animate-rise max-w-80 space-y-1 text-center">
-        <p className="text-sm font-semibold">{t("Nothing here yet")}</p>
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          {t(
-            "What a turn makes — a table, a report, a record, a draft — opens here beside the conversation.",
-          )}
-        </p>
-      </div>
-
-      <ul className="grid w-full max-w-88 grid-cols-2 gap-2">
-        {artifactPromises(t).map(({ kind, example }, index) => (
-          <li
-            key={kind}
-            style={{ animationDelay: `${80 + index * 50}ms` }}
-            className="animate-materialise bg-sunken flex min-w-0 flex-col gap-2 rounded-lg p-3"
-          >
-            <span className="bg-card text-foreground-muted ring-foreground/10 flex size-7 shrink-0 items-center justify-center rounded-md ring-1">
-              <ArtifactKindIcon kind={kind} className="size-3.5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-xs font-medium">{t(ARTIFACT_KINDS[kind].label)}</span>
-              <span className="text-muted-foreground mt-0.5 line-clamp-2 block text-xs leading-snug">
-                {t("“{0}”", example)}
-              </span>
-            </span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -314,10 +260,7 @@ export function ArtifactsPane({
           </div>
         </>
       ) : active === null ? (
-        <>
-          <PaneHeader onClose={onClose} />
-          <ArtifactsEmpty />
-        </>
+        <DeskArtifactsEmpty onClose={onClose} />
       ) : (
         <>
           <ArtifactSwitcher

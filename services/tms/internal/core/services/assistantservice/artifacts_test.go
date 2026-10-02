@@ -52,6 +52,20 @@ func (r *stubArtifactRepo) Upsert(
 	return artifact, nil
 }
 
+func (r *stubArtifactRepo) LatestInLineage(
+	_ context.Context,
+	req repositories.LatestInLineageRequest,
+) (*assistantartifact.Artifact, error) {
+	var latest *assistantartifact.Artifact
+	for _, artifact := range r.upserts {
+		if artifact.LineageKey == req.LineageKey && artifact.SourceToolCallID != req.ExceptToolCall {
+			latest = artifact
+		}
+	}
+
+	return latest, nil
+}
+
 func (r *stubArtifactRepo) ListByThread(
 	_ context.Context,
 	_ repositories.ListArtifactsRequest,
@@ -620,4 +634,51 @@ func TestArtifactFromObservation_NavigationStaysInsideTheApp(t *testing.T) {
 			"name": "Somewhere",
 		})), path)
 	}
+}
+
+// The same list read again later in the conversation is the next version of
+// the table read before, so the pane offers one table with its history.
+func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubArtifactRepo{}
+	svc := &Service{logger: zap.NewNop(), artifacts: repo}
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	recorder := svc.newArtifactRecorder(
+		t.Context(),
+		&conversation.Thread{ID: pulid.MustNew("athr_")},
+		tenant,
+		testActor(),
+		nil,
+	)
+	rows := map[string]any{
+		"items":   []any{map[string]any{"id": "bqi_1", "number": "BQ-1", "status": "ReadyForReview"}},
+		"columns": []any{"number", "status"},
+		"count":   1,
+	}
+	read := func(callID string, status string) serviceports.ToolObservation {
+		return serviceports.ToolObservation{
+			Call: serviceports.ToolCall{
+				ID:        callID,
+				Name:      "list_billing_queue_items",
+				Arguments: map[string]any{"status": status},
+			},
+			Data: rows,
+		}
+	}
+
+	_, err := recorder.observe(read("call_1", "Ready"))
+	require.NoError(t, err)
+	_, err = recorder.observe(read("call_2", "Ready"))
+	require.NoError(t, err)
+	_, err = recorder.observe(read("call_3", "Posted"))
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 3)
+	first, second, other := repo.upserts[0], repo.upserts[1], repo.upserts[2]
+	assert.NotEmpty(t, first.LineageKey)
+	assert.True(t, first.LineageID.IsNil())
+	assert.Equal(t, first.ID, second.LineageID)
+	assert.Equal(t, 2, second.LineageSeq)
+	assert.True(t, other.LineageID.IsNil(), "a different query starts its own lineage")
 }

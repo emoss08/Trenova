@@ -2,7 +2,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Link, useParams } from "react-router";
+import { useEffect } from "react";
+import { Link, useParams, useSearchParams } from "react-router";
 import { DeskConversation } from "./_components/desk-conversation";
 import { useDesk } from "./_components/desk-layout";
 
@@ -11,6 +12,22 @@ export function DeskConversationPage() {
   const { threadId } = useParams<{ threadId: string }>();
   const desk = useDesk();
   const thread = desk.activeThread?.id === threadId ? desk.activeThread : null;
+
+  // A link to one artifact opens the conversation with that artifact beside it.
+  const [search, setSearch] = useSearchParams();
+  const linkedArtifact = search.get("a");
+  const { openArtifact } = desk;
+  useEffect(() => {
+    if (!thread || !linkedArtifact) {
+      return;
+    }
+    openArtifact(thread.id, linkedArtifact);
+    setSearch((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("a");
+      return next;
+    }, { replace: true });
+  }, [linkedArtifact, openArtifact, setSearch, thread]);
 
   if (desk.isLoading) {
     return (

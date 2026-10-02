@@ -30,6 +30,8 @@ function documentArtifact(body: unknown): AssistantArtifact {
     payload: { format: "markdown", body },
     sourceToolCallId: "call_1",
     pinned: false,
+    lineageId: "",
+    lineageSeq: 1,
     createdAt: 1,
     updatedAt: 1,
   };

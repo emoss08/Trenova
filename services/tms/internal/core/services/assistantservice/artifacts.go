@@ -148,6 +148,11 @@ func (r *artifactRecorder) observe(
 	if artifact == nil {
 		return nil, nil
 	}
+	artifact.LineageKey = assistantartifact.LineageKeyFor(
+		artifact.Kind,
+		observation.Call.Name,
+		observation.Call.Arguments,
+	)
 	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
 		return r.bunch(&observation, artifact)
 	}
@@ -266,6 +271,23 @@ func (r *artifactRecorder) artifacts() []services.AssistantArtifact {
 	return out
 }
 
+func (r *artifactRecorder) followLineage(artifact *assistantartifact.Artifact) {
+	if artifact.LineageKey == "" {
+		return
+	}
+	previous, err := r.repo.LatestInLineage(r.ctx, repositories.LatestInLineageRequest{
+		ThreadID:       r.thread.ID,
+		TenantInfo:     r.tenant,
+		LineageKey:     artifact.LineageKey,
+		ExceptToolCall: artifact.SourceToolCallID,
+	})
+	if err != nil {
+		r.logger.Warn("artifact lineage could not be read", zap.Error(err))
+		return
+	}
+	artifact.FollowLineage(previous)
+}
+
 func (r *artifactRecorder) save(
 	artifact *assistantartifact.Artifact,
 ) (*assistantartifact.Artifact, error) {
@@ -283,6 +305,8 @@ func (r *artifactRecorder) save(
 
 		return nil, multiErr
 	}
+
+	r.followLineage(artifact)
 
 	saved, err := r.repo.Upsert(r.ctx, artifact)
 	if err != nil {
@@ -1240,6 +1264,8 @@ func toAssistantArtifact(artifact *assistantartifact.Artifact) services.Assistan
 		Payload:          artifact.Payload,
 		SourceToolCallID: artifact.SourceToolCallID,
 		Pinned:           artifact.Pinned,
+		LineageID:        artifact.LineageID,
+		LineageSeq:       max(artifact.LineageSeq, 1),
 		CreatedAt:        artifact.CreatedAt,
 		UpdatedAt:        artifact.UpdatedAt,
 	}

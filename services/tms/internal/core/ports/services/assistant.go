@@ -198,8 +198,12 @@ type AssistantArtifact struct {
 	// so the transcript can point at it.
 	SourceToolCallID string `json:"sourceToolCallId"`
 	Pinned           bool   `json:"pinned"`
-	CreatedAt        int64  `json:"createdAt"`
-	UpdatedAt        int64  `json:"updatedAt"`
+	// LineageID names the first artifact of the lineage this one is a later
+	// version of, and LineageSeq its version number; empty and 1 for the first.
+	LineageID  pulid.ID `json:"lineageId"`
+	LineageSeq int      `json:"lineageSeq"`
+	CreatedAt  int64    `json:"createdAt"`
+	UpdatedAt  int64    `json:"updatedAt"`
 }
 
 // AssistantArtifactEvent announces an artifact as a turn produces it, so the

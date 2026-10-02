@@ -52,6 +52,10 @@ type Artifact struct {
 	SourceToolCallID string `json:"sourceToolCallId" bun:"source_tool_call_id,type:VARCHAR(200),notnull,default:''"`
 	Pinned           bool   `json:"pinned"           bun:"pinned,type:BOOLEAN,notnull,default:false"`
 
+	LineageKey string   `json:"lineageKey" bun:"lineage_key,type:VARCHAR(64),notnull,default:''"`
+	LineageID  pulid.ID `json:"lineageId"  bun:"lineage_id,type:VARCHAR(100),nullzero"`
+	LineageSeq int      `json:"lineageSeq" bun:"lineage_seq,type:INTEGER,notnull,default:1"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -73,6 +77,9 @@ func (a *Artifact) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		}
 		if a.Payload == nil {
 			a.Payload = map[string]any{}
+		}
+		if a.LineageSeq == 0 {
+			a.LineageSeq = 1
 		}
 		a.CreatedAt = now
 		a.UpdatedAt = now

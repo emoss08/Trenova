@@ -282,12 +282,15 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       } else if (key === "\\" && activeThread !== null) {
         event.preventDefault();
         togglePane();
+      } else if (key === "j" && activeThread !== null) {
+        event.preventDefault();
+        setPane("open");
       }
     };
     window.addEventListener("keydown", onKeyDown);
 
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeThread, navigate, togglePane]);
+  }, [activeThread, navigate, setPane, togglePane]);
 
   const value = useMemo<DeskContextValue>(
     () => ({

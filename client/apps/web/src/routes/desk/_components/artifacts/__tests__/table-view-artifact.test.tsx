@@ -55,6 +55,8 @@ function tableArtifact(rowCount: number, extra: Record<string, unknown> = {}): A
     },
     sourceToolCallId: "call_1",
     pinned: false,
+    lineageId: "",
+    lineageSeq: 1,
     createdAt: 1,
     updatedAt: 1,
   } as AssistantArtifact;

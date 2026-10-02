@@ -22,7 +22,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { ArtifactsPane } from "./artifacts/artifacts-pane";
+import { DeskWorkspace } from "./artifacts/desk-workspace";
 import { useDeskAttachments } from "./composer/desk-attachments";
 import { useDeskScans } from "./composer/desk-capture";
 import { DeskComposer } from "./composer/desk-composer";
@@ -652,17 +652,14 @@ export function DeskConversation({
                 </div>
               </div>
             </div>
-            <aside className="dk-sheet">
+            <aside className="dk-sheet" aria-label={t("Artifacts")}>
               {workspaceOpen && (
-                <div className="dk-panel">
-                  <ArtifactsPane
-                    key={thread.id}
-                    threadId={thread.id}
-                    liveArtifacts={desk.liveArtifacts}
-                    onClose={() => setWorkspaceOpen(false)}
-                    className="h-full"
-                  />
-                </div>
+                <DeskWorkspace
+                  key={thread.id}
+                  threadId={thread.id}
+                  liveArtifacts={desk.liveArtifacts}
+                  onClose={() => setWorkspaceOpen(false)}
+                />
               )}
             </aside>
           </div>

@@ -37,6 +37,12 @@ const PATHS = {
       <path d="M14 4.5v15" />
     </>
   ),
+  layout: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M9 9.5v10" />
+    </>
+  ),
   rail: (
     <>
       <rect x="3.5" y="4.5" width="17" height="15" rx="2" />

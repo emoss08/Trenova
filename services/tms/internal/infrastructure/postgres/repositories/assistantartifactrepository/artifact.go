@@ -102,6 +102,9 @@ func buildUpsert(db bun.IDB, artifact *assistantartifact.Artifact, target string
 		Set(cols.Title.SetExcluded()).
 		Set(cols.Payload.SetExcluded()).
 		Set(cols.SourceToolCallID.SetExcluded()).
+		Set(cols.LineageKey.SetExcluded()).
+		Set(cols.LineageID.SetExcluded()).
+		Set(cols.LineageSeq.SetExcluded()).
 		Set(cols.Version.IncConflict(1)).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Returning("*")
@@ -165,6 +168,40 @@ func (r *repository) GetByID(
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) LatestInLineage(
+	ctx context.Context,
+	req repositories.LatestInLineageRequest,
+) (*assistantartifact.Artifact, error) {
+	if req.LineageKey == "" {
+		return nil, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
+		cols := buncolgen.ArtifactColumns
+		entities := make([]*assistantartifact.Artifact, 0, 1)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+					Where(cols.ThreadID.Eq(), req.ThreadID).
+					Where(cols.LineageKey.Eq(), req.LineageKey).
+					Where(cols.SourceToolCallID.Ne(), req.ExceptToolCall)
+			}).
+			Order(cols.LineageSeq.OrderDesc(), cols.CreatedAt.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("read latest artifact in lineage: %w", err)
+		}
+		if len(entities) == 0 {
+			return nil, nil
+		}
+
+		return entities[0], nil
 	})
 }
 
