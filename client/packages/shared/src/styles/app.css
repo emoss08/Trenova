@@ -44,7 +44,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Selection is cobalt, the same colour that marks a selected row: both say
+  /* Selection is the brand blue, the same colour that marks a selected row: both say
      "this is what you have hold of". The ink stays the ink, so selected text
      reads at the contrast it had. */
   ::selection {
