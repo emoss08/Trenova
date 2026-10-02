@@ -219,6 +219,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/timesheetrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trackingeventrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tractorrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trailerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
@@ -394,6 +395,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	shipmentcommodityrepository.New,
 	shipmentcommentrepository.New,
 	shipmenteventrepository.New,
+	trackingeventrepository.New,
 	shipmentholdrepository.New,
 	shipmentimportchatrepository.New,
 	shipmentmoverepository.New,

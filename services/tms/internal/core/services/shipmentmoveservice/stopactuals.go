@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -52,7 +53,8 @@ func (s *service) RecordStopActual(
 
 		updatedMove, err = s.applyDerivedMoveStatus(
 			txCtx,
-			req,
+			req.TenantInfo,
+			req.MoveID,
 			plan.previousStatus,
 			plan.targetStatus,
 		)
@@ -66,22 +68,47 @@ func (s *service) RecordStopActual(
 		return nil, err
 	}
 
-	if updatedMove != nil && previousStatus != updatedMove.Status {
-		s.recordMoveEvent(ctx, shipmenteventservice.BuildMoveStatusChanged(
-			tenantRefForMoveTenant(req.TenantInfo),
-			updatedMove,
-			previousStatus,
-			actorForMoveTenant(req.TenantInfo),
-		))
-		s.evaluateServiceFailuresAfterMoveStatus(ctx, updatedMove.ShipmentID, req.TenantInfo)
-		s.notifyMoveObservers(ctx, req.TenantInfo, updatedMove, previousStatus)
-	}
-	if req.Action == repositories.StopActualActionDepart && updatedMove != nil {
-		s.flagDetentionCandidate(ctx, req, updatedMove)
-	}
-	s.publishStopActualEvent(ctx, req)
+	s.announceStopActuals(ctx, stopActualAnnouncement{
+		tenantInfo:     req.TenantInfo,
+		move:           updatedMove,
+		previousStatus: previousStatus,
+		actions:        []stopActualRecorded{{stopID: req.StopID, action: req.Action}},
+	})
 
 	return updatedMove, nil
+}
+
+type stopActualRecorded struct {
+	stopID pulid.ID
+	action repositories.StopActualAction
+}
+
+type stopActualAnnouncement struct {
+	tenantInfo     pagination.TenantInfo
+	move           *shipment.ShipmentMove
+	previousStatus shipment.MoveStatus
+	actions        []stopActualRecorded
+}
+
+func (s *service) announceStopActuals(ctx context.Context, a stopActualAnnouncement) {
+	ports.AfterCommit(ctx, func(committed context.Context) {
+		if a.move != nil && a.previousStatus != a.move.Status {
+			s.recordMoveEvent(committed, shipmenteventservice.BuildMoveStatusChanged(
+				tenantRefForMoveTenant(a.tenantInfo),
+				a.move,
+				a.previousStatus,
+				actorForMoveTenant(a.tenantInfo),
+			))
+			s.evaluateServiceFailuresAfterMoveStatus(committed, a.move.ShipmentID, a.tenantInfo)
+			s.notifyMoveObservers(committed, a.tenantInfo, a.move, a.previousStatus)
+		}
+		for _, recorded := range a.actions {
+			if recorded.action == repositories.StopActualActionDepart && a.move != nil {
+				s.flagDetentionCandidate(committed, a.tenantInfo, recorded.stopID, a.move)
+			}
+			s.publishStopActualEvent(committed, a.tenantInfo, a.move, recorded.action)
+		}
+	})
 }
 
 // defaultDetentionAlertThresholdMinutes is the fallback dwell time beyond
@@ -109,19 +136,20 @@ func (s *service) detentionAlertThreshold(
 
 func (s *service) flagDetentionCandidate(
 	ctx context.Context,
-	req *repositories.RecordStopActualRequest,
+	tenantInfo pagination.TenantInfo,
+	stopID pulid.ID,
 	move *shipment.ShipmentMove,
 ) {
 	if s.notifications == nil {
 		return
 	}
-	thresholdMinutes, enabled := s.detentionAlertThreshold(ctx, req.TenantInfo)
+	thresholdMinutes, enabled := s.detentionAlertThreshold(ctx, tenantInfo)
 	if !enabled {
 		return
 	}
 	var stop *shipment.Stop
 	for _, candidate := range move.Stops {
-		if candidate != nil && candidate.ID == req.StopID {
+		if candidate != nil && candidate.ID == stopID {
 			stop = candidate
 			break
 		}
@@ -142,9 +170,9 @@ func (s *service) flagDetentionCandidate(
 	if stop.Location != nil && stop.Location.Name != "" {
 		location = stop.Location.Name
 	}
-	buID := req.TenantInfo.BuID
+	buID := tenantInfo.BuID
 	entity := &notification.Notification{
-		OrganizationID: req.TenantInfo.OrgID,
+		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: &buID,
 		EventType:      "detention_candidate",
 		Priority:       notification.PriorityHigh,
@@ -171,13 +199,14 @@ func (s *service) flagDetentionCandidate(
 
 func (s *service) applyDerivedMoveStatus(
 	ctx context.Context,
-	req *repositories.RecordStopActualRequest,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
 	previousStatus, targetStatus shipment.MoveStatus,
 ) (*shipment.ShipmentMove, error) {
 	if targetStatus == previousStatus {
 		return s.repo.GetByID(ctx, &repositories.GetMoveByIDRequest{
-			MoveID:            req.MoveID,
-			TenantInfo:        req.TenantInfo,
+			MoveID:            moveID,
+			TenantInfo:        tenantInfo,
 			ExpandMoveDetails: true,
 		})
 	}
@@ -185,12 +214,12 @@ func (s *service) applyDerivedMoveStatus(
 	if !shipmentstate.CanTransitionMoveStatus(previousStatus, targetStatus) {
 		return nil, errortypes.NewBusinessError(
 			"Move status transition from {0} to {1} is not allowed", previousStatus, targetStatus,
-		).WithParam("moveId", req.MoveID.String())
+		).WithParam("moveId", moveID.String())
 	}
 
 	updatedMove, err := s.repo.UpdateStatus(ctx, &repositories.UpdateMoveStatusRequest{
-		TenantInfo: req.TenantInfo,
-		MoveID:     req.MoveID,
+		TenantInfo: tenantInfo,
+		MoveID:     moveID,
 		Status:     targetStatus,
 	})
 	if err != nil {
@@ -198,7 +227,7 @@ func (s *service) applyDerivedMoveStatus(
 	}
 	if err = s.advanceEquipmentContinuityForMove(
 		ctx,
-		req.TenantInfo,
+		tenantInfo,
 		updatedMove,
 		targetStatus,
 	); err != nil {
@@ -313,16 +342,21 @@ func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipment.MoveStatus 
 // wants the stop reads it back, so nothing here can go stale in transit.
 func (s *service) publishStopActualEvent(
 	ctx context.Context,
-	req *repositories.RecordStopActualRequest,
+	tenantInfo pagination.TenantInfo,
+	move *shipment.ShipmentMove,
+	action repositories.StopActualAction,
 ) {
+	if move == nil {
+		return
+	}
 	kind := agent.EventShipmentMoveArrived
-	if req.Action == repositories.StopActualActionDepart {
+	if action == repositories.StopActualActionDepart {
 		kind = agent.EventShipmentMoveDeparted
 	}
 
 	portservices.PublishAgentEvent(ctx, s.publisher, portservices.AgentEvent{
 		Kind:       kind,
-		SubjectID:  req.MoveID,
-		TenantInfo: req.TenantInfo,
+		SubjectID:  move.ID,
+		TenantInfo: tenantInfo,
 	})
 }
