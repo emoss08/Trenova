@@ -66,7 +66,7 @@ Callable after find_tools:
 - transfer_to_billing — Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews.
 - list_billing_queue_items — List billing queue items, the shipments waiting on a biller.
 - get_billing_queue_item — Open one billing queue item with its payer, shipment and the charges this payer is billed.
-- get_billing_queue_items — Open several billing queue items by id in one call, each with its payer, shipment, charges, whether it can be approved now and what blocks it, what its shipment still lacks for billing, and the invoice it made once approved.
+- get_billing_queue_items — Open several billing queue items by id in one call, each with what blocks its approval and what its shipment still lacks for billing.
 - assign_billing_queue_billers — Assign one biller to several billing queue items in one call, so the person decides it once.
 - transition_items_to_in_review — Move several billing queue items into review in one call, so the person decides it once.
 - hold_billing_queue_item — Put a billing queue item on hold, with a note saying what it waits on.

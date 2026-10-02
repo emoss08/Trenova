@@ -525,8 +525,9 @@ func billerProperty() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeString,
 		toolschema.KeyDescription: "The biller's user id, when the person named one or " +
-			"the customer's default biller is the assignedBillerId on another of its " +
-			"items. Leave it out to assign the person who asked. Never guess one.",
+			"the customer's default biller is the assignedBillerId get_billing_queue_item " +
+			"shows on another of its items. Leave it out to assign the person who asked. " +
+			"Never guess one.",
 	}
 }
 

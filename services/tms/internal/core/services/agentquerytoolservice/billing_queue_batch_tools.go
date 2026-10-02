@@ -54,9 +54,9 @@ func (t *getBillingQueueItemsTool) SearchTerms() []string {
 }
 
 func (t *getBillingQueueItemsTool) Description() string {
-	return "Open several billing queue items by id in one call, each with its payer, " +
-		"shipment, charges, whether it can be approved now and what blocks it, what its " +
-		"shipment still lacks for billing, and the invoice it made once approved. Use it " +
+	return "Open several billing queue items by id in one call, each with what blocks its " +
+		"approval and what its shipment still lacks for billing. Each row also carries the " +
+		"payer, shipment, charges, biller and the invoice it made once approved. Use it " +
 		"instead of calling get_billing_queue_item once per item: to check a queue before " +
 		"assigning, moving into review, approving or posting it. Up to 50; an id that is not " +
 		"a queue item of this organization is named in the note. Amounts are left out, and " +

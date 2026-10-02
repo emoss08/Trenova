@@ -54,10 +54,9 @@ var families = [...][]string{
 		"list_billing_queue_items",
 		"get_billing_queue_items",
 		"assign_billing_queue_billers",
-		"approve_billing_queue_items",
+		"transition_items_to_in_review",
 	},
 	{"approve_billing_queue_items", "post_invoices", "send_invoices", "get_invoices"},
-	{"get_billing_queue_items", "transition_items_to_in_review", "hold_billing_queue_item"},
 }
 
 // indexFamilies maps each family member to the others, in family order.

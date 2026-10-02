@@ -2268,12 +2268,12 @@
     },
     {
       "name": "assign_billing_queue_biller",
-      "description": "Assign the biller who reviews a billing queue item. An item still waiting for review moves into review with them. Take the biller from the item's customer's default biller or the person who asked; never guess a user id.",
+      "description": "Assign the biller who reviews a billing queue item. An item still waiting for review moves into review with them. Leave billerId out to assign the person who asked, which is what \"assign me\", \"start reviewing\" or \"get these ready to post\" means; name a biller only when they named one or the customer's default biller is on another of its items. Never guess a user id. For more than one item, call assign_billing_queue_billers once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "billerId": {
-            "description": "The biller's user id: the assignedBillerId get_billing_queue_item shows on this or another of the customer's items, or the person who asked. Never guess one.",
+            "description": "The biller's user id, when the person named one or the customer's default biller is the assignedBillerId get_billing_queue_item shows on another of its items. Leave it out to assign the person who asked. Never guess one.",
             "type": "string"
           },
           "billingQueueItemId": {
@@ -2282,8 +2282,7 @@
           }
         },
         "required": [
-          "billingQueueItemId",
-          "billerId"
+          "billingQueueItemId"
         ],
         "type": "object"
       },
@@ -2311,6 +2310,62 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else."
+      }
+    },
+    {
+      "name": "assign_billing_queue_billers",
+      "description": "Assign one biller to several billing queue items in one call, so the person decides it once. Use it instead of assign_billing_queue_biller whenever more than one item is waiting, never one call per item. Each item is assigned exactly as assign_billing_queue_biller would: an item waiting for review moves into review with the biller. Leave billerId out to assign the person who asked, which is what \"assign me\", \"start reviewing these\" or \"get these ready to post\" means. An item the queue would refuse (posted, canceled) is reported and the rest still go. Up to 50 items.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billerId": {
+            "description": "The biller's user id, when the person named one or the customer's default biller is the assignedBillerId get_billing_queue_item shows on another of its items. Leave it out to assign the person who asked. Never guess one.",
+            "type": "string"
+          },
+          "billingQueueItemIds": {
+            "description": "The billing queue items, by id from list_billing_queue_items, get_billing_queue_items or get_billing_queue_item. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "billing_queue"
+          }
+        },
+        "required": [
+          "billingQueueItemIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "biller",
+        "reviewer",
+        "assign me",
+        "start review",
+        "bulk"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "assign",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Names who reviews several items inside Trenova, each exactly as assign_billing_queue_biller would; it creates no money and is changed by assigning someone else."
       }
     },
     {
@@ -10872,6 +10927,57 @@
         ],
         "type": "object"
       },
+      "policy": {
+        "kind": "query",
+        "resource": "billing_queue",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_billing_queue_items",
+      "description": "Open several billing queue items by id in one call, each with what blocks its approval and what its shipment still lacks for billing. Each row also carries the payer, shipment, charges, biller and the invoice it made once approved. Use it instead of calling get_billing_queue_item once per item: to check a queue before assigning, moving into review, approving or posting it. Up to 50; an id that is not a queue item of this organization is named in the note. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemIds": {
+            "description": "The items' ids, from list_billing_queue_items, the page you are on or the proposals that named them.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "billingQueueItemIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "billing queue",
+        "review",
+        "approve",
+        "post",
+        "batch",
+        "readiness"
+      ],
       "policy": {
         "kind": "query",
         "resource": "billing_queue",
@@ -31428,12 +31534,16 @@
     },
     {
       "name": "transition_item_to_in_review",
-      "description": "Move a blocked billing queue item into the InReview state so a biller can work it.",
+      "description": "Move a billing queue item into review so a biller can work it: one waiting for review, on hold, in exception or sent back to operations. Review needs a biller on the item, so one with nobody is assigned the person who asked, or the billerId you name. For more than one item, call transition_items_to_in_review once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "billerId": {
+            "description": "The biller's user id, when the person named one or the customer's default biller is the assignedBillerId get_billing_queue_item shows on another of its items. Leave it out to assign the person who asked. Never guess one.",
+            "type": "string"
+          },
           "billingQueueItemId": {
-            "description": "The billing queue item to move to InReview: this run's subject, the record on the page, or one list_billing_queue_items found. Never guess one.",
+            "description": "The billing queue item to move into review: this run's subject, the record on the page, or one list_billing_queue_items found. Never guess one.",
             "type": "string"
           }
         },
@@ -31463,6 +31573,61 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Moves the run's billing queue item into review inside Trenova; nothing is sent anywhere."
+      }
+    },
+    {
+      "name": "transition_items_to_in_review",
+      "description": "Move several billing queue items into review in one call, so the person decides it once. Use it instead of transition_item_to_in_review whenever more than one item needs a biller's attention, never one call per item. Each item moves exactly as transition_item_to_in_review would: one with no biller is assigned the person who asked, or the billerId you name. An item the queue would refuse is reported and the rest still go. Up to 50 items.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billerId": {
+            "description": "The biller's user id, when the person named one or the customer's default biller is the assignedBillerId get_billing_queue_item shows on another of its items. Leave it out to assign the person who asked. Never guess one.",
+            "type": "string"
+          },
+          "billingQueueItemIds": {
+            "description": "The billing queue items, by id from list_billing_queue_items, get_billing_queue_items or get_billing_queue_item. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "billing_queue"
+          }
+        },
+        "required": [
+          "billingQueueItemIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "review",
+        "unblock",
+        "bulk"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "run",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "condition": "An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person. A set is held to what its most guarded item allows.",
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves several billing queue items into review inside Trenova, each exactly as transition_item_to_in_review would; nothing is sent anywhere."
       }
     },
     {
