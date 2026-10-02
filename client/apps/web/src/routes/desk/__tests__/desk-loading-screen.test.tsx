@@ -30,7 +30,7 @@ describe("Desk first load", () => {
     expect(shell?.HydrateFallback).toBe(DeskLoadingScreen);
   });
 
-  it("shows the desk visitor rather than the app-wide card while the Desk's loaders run", async () => {
+  it("shows the Desk's own frame rather than the app-wide card while its loaders run", async () => {
     const router = createMemoryRouter(
       [
         {
@@ -53,11 +53,11 @@ describe("Desk first load", () => {
 
     const status = await screen.findByRole("status");
     expect(status).toHaveTextContent("Opening the desk");
-    expect(status.querySelector('[data-slot="desk-loading-mark"]')).not.toBeNull();
     expect(screen.queryByText("App-wide loading card")).toBeNull();
     expect(screen.queryByText("The Desk")).toBeNull();
-    expect(document.querySelector('[data-slot="desk-loading-screen"]')).toHaveClass(
-      "bg-desk-canvas",
-    );
+    const frame = document.querySelector('[data-slot="desk-loading-screen"]');
+    expect(frame).toHaveClass("dsk");
+    expect(frame?.querySelector(".dk-sb")).not.toBeNull();
+    expect(frame?.querySelector(".dk-top")).not.toBeNull();
   });
 });

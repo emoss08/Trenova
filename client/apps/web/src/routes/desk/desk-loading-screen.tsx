@@ -1,4 +1,5 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useT } from "@trenova/shared/i18n/use-t";
 import "./_styles/desk-v2.css";
 
 /**
@@ -7,8 +8,13 @@ import "./_styles/desk-v2.css";
  * loading card, so nothing jumps when the Desk takes over.
  */
 export function DeskLoadingScreen() {
+  const t = useT();
+
   return (
     <main data-slot="desk-loading-screen" className="dsk" aria-busy>
+      <span role="status" className="sr-only">
+        {t("Opening the desk")}
+      </span>
       <aside className="dk-sb" aria-hidden>
         <div className="dk-sb-top">
           <Skeleton className="dk-sk-logo" />

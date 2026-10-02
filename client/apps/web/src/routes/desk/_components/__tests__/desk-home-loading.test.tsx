@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskHome, type DeskHomeProps } from "../desk-home";
@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   permissionsLoading: false,
   briefing: { settled: true, value: null as unknown },
   summary: { isPending: false, total: 2 },
+  agent: null as unknown,
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -27,6 +28,9 @@ vi.mock("@/lib/queries", () => ({
           state.briefing.settled ? state.briefing.value : new Promise(() => undefined),
       }),
     },
+    assistant: {
+      myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
+    },
   },
 }));
 
@@ -44,25 +48,22 @@ vi.mock("@/hooks/use-attention", () => ({
   useAttentionSummary: () => ({ data: undefined }),
 }));
 
-vi.mock("@/components/assistant/use-active-turns", () => ({
-  useLiveThreadIds: () => new Set<string>(),
-}));
-
 vi.mock("@/components/assistant/use-askable-agent", () => ({
   useAskableAgent: () => ({
-    agent: null,
+    agent: state.agent,
     choose: () => undefined,
-    recency: { ids: [], lastUsedAt: {} },
-    choices: { isLoading: true, isError: false, recent: [], items: [], refetch: () => undefined },
+    recency: { ids: [], lastUsedAt: new Map() },
+    choices: { isLoading: false, isError: false, recent: [], items: [], refetch: () => undefined },
     noneAvailable: false,
   }),
 }));
 
-vi.mock("../desk-agent-directory", () => ({ DeskAgentDirectory: () => null }));
-vi.mock("../desk-decisions-callout", () => ({ DeskDecisionsCallout: () => null }));
-vi.mock("../briefing-panel", () => ({ BriefingPanel: () => null }));
-
-const agent = { id: "agent-1", name: "Dispatch" } as DeskHomeProps["agents"][number];
+const agent = {
+  id: "agent-1",
+  name: "Dispatch",
+  description: "Assigns drivers",
+  starters: [{ label: "Late loads", prompt: "Which loads are late?" }],
+} as unknown as DeskHomeProps["agents"][number];
 
 function renderHome(props: Partial<DeskHomeProps> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -84,19 +85,18 @@ function renderHome(props: Partial<DeskHomeProps> = {}) {
 }
 
 /**
- * The heading's first line, the greeting, is known before anything loads;
- * its second line is the one the figures decide, so that is the line held
- * as a skeleton rather than said and then taken back.
+ * The greeting is known before anything loads; the line under it is the one
+ * the figures decide, so that is the line held as a skeleton rather than said
+ * and then taken back.
  */
 async function expectHeadlineSkeleton() {
   const heading = await screen.findByRole("heading", { level: 1 });
-  const second = heading.querySelector('[data-slot="desk-headline"]');
-  expect(second?.querySelector('[data-slot="skeleton"]')).not.toBeNull();
-  expect(second).toHaveTextContent("");
-  expect(heading).toHaveTextContent(/^Good (morning|afternoon|evening)$/);
+  expect(heading).toHaveTextContent(/^Good (morning|afternoon|evening)/);
+  const headline = document.querySelector('[data-slot="desk-headline"]');
+  expect(headline?.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+  expect(headline).toHaveTextContent("");
   expect(screen.queryByText(/waiting on you/)).toBeNull();
   expect(screen.queryByText("How can I help today?")).toBeNull();
-  expect(document.querySelector('[data-slot="desk-loading-mark"]')).toBeNull();
 }
 
 beforeEach(() => {
@@ -104,6 +104,7 @@ beforeEach(() => {
   state.permissionsLoading = false;
   state.briefing = { settled: true, value: null };
   state.summary = { isPending: false, total: 2 };
+  state.agent = agent;
 });
 
 describe("Desk home headline while its figures load", () => {
@@ -140,29 +141,48 @@ describe("Desk home headline while its figures load", () => {
     renderHome();
 
     expect(await screen.findByText("How can I help today?")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]'),
-    ).toBeNull();
   });
 
-  it("keeps the rest of the page, with the ask box as its own skeleton, while it waits", async () => {
-    renderHome({ isLoading: true });
+  it("opens on the briefing's headline when the morning's briefing wrote one", async () => {
+    state.briefing = { settled: true, value: { headline: "Three loads sit under a storm warning." } };
+    renderHome();
 
-    await expectHeadlineSkeleton();
-    expect(screen.getByText(/^Good (morning|afternoon|evening)$/).closest("header")).not.toBeNull();
-    expect(document.querySelector('[data-slot="desk-daylight"]')).not.toBeNull();
-    expect(document.querySelector('[aria-busy] [data-slot="skeleton"]')).not.toBeNull();
+    expect(await screen.findByText("Three loads sit under a storm warning.")).toBeInTheDocument();
   });
 
   it("opens on the headline its figures support once everything is in", async () => {
     renderHome();
 
     expect(await screen.findByText("2 decisions are waiting on you.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      /^Good (morning|afternoon|evening)2 decisions are waiting on you\.$/,
-    );
-    expect(
-      screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]'),
-    ).toBeNull();
+  });
+});
+
+describe("Desk home composer", () => {
+  it("starts a conversation with the chosen agent and the question typed", async () => {
+    const onStart = vi.fn();
+    renderHome({ onStart });
+
+    const box = await screen.findByRole("textbox", { name: "Message Dispatch" });
+    fireEvent.change(box, { target: { value: "Who is free near Joliet?" } });
+    fireEvent.keyDown(box, { key: "Enter" });
+
+    expect(onStart).toHaveBeenCalledWith("agent-1", "Who is free near Joliet?");
+  });
+
+  it("asks a starter question outright with its shortcut", async () => {
+    const onStart = vi.fn();
+    renderHome({ onStart });
+
+    const box = await screen.findByRole("textbox", { name: "Message Dispatch" });
+    fireEvent.keyDown(box, { key: "1", metaKey: true });
+
+    expect(onStart).toHaveBeenCalledWith("agent-1", "Which loads are late?");
+  });
+
+  it("says no agents are available instead of offering a box nobody answers", async () => {
+    renderHome({ agents: [] });
+
+    expect(await screen.findByText("No agents are available.")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 });

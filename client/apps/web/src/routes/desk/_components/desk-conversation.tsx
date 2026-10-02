@@ -1,4 +1,5 @@
 import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
+import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activity";
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
 import { DecisionFollowUpProvider } from "@/components/assistant/decision-follow-up";
@@ -8,7 +9,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
-import type { AssistantThread } from "@/types/assistant";
+import type { AssistantArtifact, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort, formatUnixTime } from "@trenova/shared/lib/date";
@@ -44,6 +45,9 @@ export type DeskConversationProps = {
   agentsUnavailable: boolean;
   onStartNew?: () => void;
 };
+
+const NO_STEPS: ToolStep[] = [];
+const NO_ARTIFACTS: AssistantArtifact[] = [];
 
 /** How long the green "Approved" row holds before the composer has the room again. */
 const APPROVED_HOLD_MS = 1100;
@@ -224,12 +228,88 @@ export function DeskConversation({
       </>
     ) : null;
 
-  let firstRow = true;
-  const isFirst = () => {
-    const value = firstRow;
-    firstRow = false;
-    return value;
-  };
+  const replySteps = useMemo(() => {
+    const byEntry = new Map<string, ToolStep[]>();
+    let steps: ToolStep[] = [];
+    let askedAt = 0;
+    for (const entry of entries) {
+      if (entry.kind === "user") {
+        steps = [];
+        askedAt = entry.message.createdAt;
+      } else if (entry.kind === "assistant") {
+        steps = [...steps, ...stepsFromExchanges(entry.tools, askedAt)];
+        byEntry.set(entry.message.id, steps);
+      }
+    }
+    return byEntry;
+  }, [entries]);
+
+  // A step that only looked something up has no words of its own; what it
+  // made is shown under the reply's text that follows it, where the design
+  // puts a reply's artifacts, or on its last step when no text follows.
+  const rowArtifacts = useMemo(() => {
+    const byEntry = new Map<string, AssistantArtifact[]>();
+    let carried: AssistantArtifact[] = [];
+    let lastReply: string | null = null;
+    const settle = () => {
+      if (carried.length > 0 && lastReply !== null) {
+        byEntry.set(lastReply, [...(byEntry.get(lastReply) ?? []), ...carried]);
+      }
+      carried = [];
+      lastReply = null;
+    };
+    for (const entry of entries) {
+      if (entry.kind === "user") {
+        settle();
+        continue;
+      }
+      if (entry.kind !== "assistant") {
+        continue;
+      }
+      const own = model.artifactsByMessage.get(entry.message.id) ?? [];
+      if (entry.message.content === "") {
+        carried = [...carried, ...own];
+      } else {
+        byEntry.set(entry.message.id, [...carried, ...own]);
+        carried = [];
+      }
+      lastReply = entry.message.id;
+    }
+    settle();
+    return byEntry;
+  }, [entries, model.artifactsByMessage]);
+
+  // Which rows open the conversation, and which reply steps carry their
+  // reply's time: worked out before drawing, from what each row will show.
+  const layout = useMemo(() => {
+    const first = new Set<string>();
+    const headed = new Set<string>();
+    let seenFirst = false;
+    let replyHeaded = false;
+    for (const entry of entries) {
+      if (entry.kind === "decision") {
+        continue;
+      }
+      if (entry.kind === "assistant") {
+        const shown = replyShows(entry, (rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS).length);
+        if (!shown) {
+          continue;
+        }
+        if (!replyHeaded || !(placements.get(entry.message.id)?.continued ?? false)) {
+          headed.add(entry.message.id);
+        }
+        replyHeaded = true;
+      } else if (entry.kind === "user") {
+        replyHeaded = false;
+      }
+      if (!seenFirst) {
+        first.add(entry.message.id);
+        seenFirst = true;
+      }
+    }
+    return { first, headed, any: seenFirst };
+  }, [entries, placements, rowArtifacts]);
+  const isFirst = (id: string) => layout.first.has(id);
 
   return (
     <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
@@ -242,14 +322,14 @@ export function DeskConversation({
                   {entries.map((entry) => {
                     if (entry.kind === "user") {
                       return (
-                        <DeskRow key={entry.message.id} kind="question" first={isFirst()}>
+                        <DeskRow key={entry.message.id} kind="question" first={isFirst(entry.message.id)}>
                           <DeskQuestion text={entry.message.content} />
                         </DeskRow>
                       );
                     }
                     if (entry.kind === "declined") {
                       return (
-                        <DeskRow key={entry.message.id} kind="question" first={isFirst()}>
+                        <DeskRow key={entry.message.id} kind="question" first={isFirst(entry.message.id)}>
                           <DeskQuestion
                             text={entry.message.content}
                             muted
@@ -260,7 +340,7 @@ export function DeskConversation({
                     }
                     if (entry.kind === "refusal") {
                       return (
-                        <DeskRow key={entry.message.id} kind="event" first={isFirst()}>
+                        <DeskRow key={entry.message.id} kind="event" first={isFirst(entry.message.id)}>
                           <DeskErrorCard
                             tone="neutral"
                             icon="shield"
@@ -273,22 +353,24 @@ export function DeskConversation({
                     if (entry.kind === "decision") {
                       return null;
                     }
-                    const own = model.artifactsByMessage.get(entry.message.id) ?? [];
+                    const own = rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS;
                     if (!replyShows(entry, own.length)) {
                       return null;
                     }
-                    const continued = placements.get(entry.message.id)?.continued ?? false;
+                    const continued = !layout.headed.has(entry.message.id);
                     return (
                       <DeskRow
                         key={entry.message.id}
                         kind={continued ? "continued" : "reply"}
-                        first={isFirst()}
+                        first={isFirst(entry.message.id)}
                         time={
                           continued ? undefined : turnTime(entry.message.createdAt, timezone, t)
                         }
                       >
                         <DeskReply
                           entry={entry}
+                          steps={replySteps.get(entry.message.id) ?? NO_STEPS}
+                          threadArtifacts={artifacts}
                           artifacts={own}
                           activeArtifactId={workspaceOpen ? activeArtifactId : null}
                           latestUserSequence={model.latestUserSequence}
@@ -301,7 +383,7 @@ export function DeskConversation({
                     );
                   })}
                   {turn && !turn.followUp && turn.userContent !== "" && (
-                    <DeskRow kind="question" first={isFirst()}>
+                    <DeskRow kind="question" first={!layout.any}>
                       <DeskQuestion
                         text={turn.userContent}
                         muted={turn.status === "refused"}
@@ -312,7 +394,7 @@ export function DeskConversation({
                   {turn && live !== "" && (
                     <DeskRow
                       kind="reply"
-                      first={isFirst()}
+                      first={!layout.any}
                       time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
                     >
                       <DeskStreamingReply text={live} />
@@ -324,7 +406,7 @@ export function DeskConversation({
                     </DeskRow>
                   )}
                   {turn?.status === "error" && (
-                    <DeskRow kind="event" first={isFirst()}>
+                    <DeskRow kind="event" first={!layout.any}>
                       <DeskErrorCard
                         tone="err"
                         compact

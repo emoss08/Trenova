@@ -105,8 +105,8 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
         <div className="dk-home-in">
           <div className="dk-date">{dateline}</div>
           <h1 className="dk-greet">{greeting(t, partOfDay(hour), firstName)}</h1>
-          <p className="dk-headline">
-            {headlinePending ? <span className="dk-headline-sk ui-shimmer" /> : headline}
+          <p className="dk-headline" data-slot="desk-headline">
+            {headlinePending ? <span className="dk-headline-sk ui-shimmer" data-slot="skeleton" /> : headline}
           </p>
           {noAgents ? (
             <div className="dk-ec-offmsg dk-home-none">

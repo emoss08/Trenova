@@ -70,11 +70,17 @@ export function DeskAgentPicker({
     if (!open) {
       return;
     }
-    setQuery("");
-    setHighlighted(0);
     const timer = window.setTimeout(() => inputRef.current?.focus(), 30);
     return () => window.clearTimeout(timer);
   }, [open]);
+
+  const toggle = () => {
+    if (!open) {
+      setQuery("");
+      setHighlighted(0);
+    }
+    setOpen(!open);
+  };
 
   useEffect(() => {
     listRef.current
@@ -109,10 +115,7 @@ export function DeskAgentPicker({
     }
   };
 
-  let index = -1;
-  const row = (candidate: AgentChoice, isRecent: boolean) => {
-    index += 1;
-    const position = index;
+  const row = (candidate: AgentChoice, isRecent: boolean, position: number) => {
     const selected = candidate.id === agent.id;
     const used = lastUsedAt?.get(candidate.id);
     return (
@@ -152,7 +155,7 @@ export function DeskAgentPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={t("Asking {0}. Choose another agent", agent.name)}
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggle}
       >
         <DeskAgentTile key={agent.id} agent={agent} size="xs" className="dk-at-confirm" />
         <span className="dk-ap-bn">{agent.name}</span>
@@ -194,11 +197,11 @@ export function DeskAgentPicker({
             ) : (
               <>
                 {recent.length > 0 && <div className="dk-ap-h">{t("Recent")}</div>}
-                {recent.map((candidate) => row(candidate, true))}
+                {recent.map((candidate, index) => row(candidate, true, index))}
                 {recent.length > 0 && rest.length > 0 && (
                   <div className="dk-ap-h">{t("All agents")}</div>
                 )}
-                {rest.map((candidate) => row(candidate, false))}
+                {rest.map((candidate, index) => row(candidate, false, recent.length + index))}
                 {flat.length === 0 && (
                   <div className="dk-ap-empty">{t("No agents match “{0}”", query)}</div>
                 )}

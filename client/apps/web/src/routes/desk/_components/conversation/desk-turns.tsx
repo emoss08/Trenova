@@ -1,3 +1,4 @@
+import type { ToolStep } from "@/components/assistant/activity";
 import { askRequestsFrom } from "@/components/assistant/ask-requests";
 import { ChoicePrompt } from "@/components/assistant/choice-prompt";
 import { ReportRunCard } from "@/components/assistant/report-run-card";
@@ -8,7 +9,9 @@ import { AiMarkdown, StreamingAiMarkdown } from "@/components/elements/ai-markdo
 import type { AssistantArtifact } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
+import { citeSteps, withCitations } from "./citations";
+import { useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
 
 /** Where a row sits in the conversation's three columns: time, words, margin. */
@@ -103,6 +106,8 @@ export function DeskArtifactBadges({
 /** A saved reply: its words, what it produced, and the actions under it. */
 export function DeskReply({
   entry,
+  steps,
+  threadArtifacts,
   artifacts,
   activeArtifactId,
   latestUserSequence,
@@ -112,6 +117,10 @@ export function DeskReply({
   onOpenArtifact,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
+  /** Every step the reply has taken so far, from its question on; the numbers cite them. */
+  steps: readonly ToolStep[];
+  /** The conversation's artifacts, so a cited step can offer the one it made. */
+  threadArtifacts: readonly AssistantArtifact[];
   artifacts: readonly AssistantArtifact[];
   activeArtifactId: string | null;
   latestUserSequence: number;
@@ -123,12 +132,18 @@ export function DeskReply({
   const { message, tools } = entry;
   const asks = askRequestsFrom(tools);
   const reportRuns = reportRunsFrom(tools);
+  const citations = useMemo(() => citeSteps(message.content, steps), [message.content, steps]);
+  const cited = useMemo(
+    () => withCitations(message.content, citations),
+    [citations, message.content],
+  );
+  const overrides = useCitationOverrides(citations, threadArtifacts, onOpenArtifact);
 
   return (
     <>
       {message.content !== "" && (
         <div className="dk-prose">
-          <AiMarkdown content={message.content} className="dk-md" />
+          <AiMarkdown content={cited} className="dk-md" overrides={overrides} />
         </div>
       )}
       <DeskArtifactBadges artifacts={artifacts} activeId={activeArtifactId} onOpen={onOpenArtifact} />

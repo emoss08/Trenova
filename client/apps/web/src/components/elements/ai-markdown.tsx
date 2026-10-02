@@ -77,7 +77,7 @@ export type MarkdownLinkRenderer = (href: string, children: ReactNode) => ReactN
 
 export const MarkdownLinkContext = createContext<MarkdownLinkRenderer | null>(null);
 
-function MarkdownLink({ href, children }: ComponentProps<"a">) {
+export function MarkdownLink({ href, children }: ComponentProps<"a">) {
   const inRouter = useInRouterContext();
   const renderLink = use(MarkdownLinkContext);
   if (inRouter && isAppPath(href)) {
@@ -198,13 +198,18 @@ const components: Components = {
 export const AiMarkdown = memo(function AiMarkdown({
   content,
   className,
+  overrides,
 }: {
   content: string;
   className?: string;
+  /** Elements a surface draws its own way, such as a link it reads as something else. */
+  overrides?: Components;
 }) {
+  const merged = useMemo(() => (overrides ? { ...components, ...overrides } : components), [overrides]);
+
   return (
     <div className={cn("text-sm wrap-break-word", className)}>
-      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={merged}>
         {content}
       </ReactMarkdown>
     </div>
@@ -214,9 +219,15 @@ export const AiMarkdown = memo(function AiMarkdown({
 const REMARK_PLUGINS = [remarkGfm];
 
 /** One top-level block, parsed again only when its own text changes. */
-const MarkdownBlock = memo(function MarkdownBlock({ content }: { content: string }) {
+const MarkdownBlock = memo(function MarkdownBlock({
+  content,
+  merged,
+}: {
+  content: string;
+  merged: Components;
+}) {
   return (
-    <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
+    <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={merged}>
       {content}
     </ReactMarkdown>
   );
@@ -232,11 +243,14 @@ const MarkdownBlock = memo(function MarkdownBlock({ content }: { content: string
 export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
   content,
   className,
+  overrides,
 }: {
   content: string;
   className?: string;
+  overrides?: Components;
 }) {
   const blocks = useMemo(() => splitMarkdownBlocks(content), [content]);
+  const merged = useMemo(() => (overrides ? { ...components, ...overrides } : components), [overrides]);
 
   return (
     <div className={cn("text-sm wrap-break-word", className)}>
@@ -244,7 +258,7 @@ export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
         // oxlint-disable-next-line react/no-array-index-key -- blocks only ever grow at the end
         <Fragment key={index}>
           {index > 0 && "\n"}
-          <MarkdownBlock content={block} />
+          <MarkdownBlock content={block} merged={merged} />
         </Fragment>
       ))}
     </div>
