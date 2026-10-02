@@ -508,6 +508,33 @@ describe("reduceTurn artifacts", () => {
     expect(state.artifacts[0].status).toBe("Ready");
   });
 
+  it("drops an artifact the turn withdrew", () => {
+    // A card a later read folded into a table is deleted on the server; the
+    // live pane must drop it too, or eleven reads leave eleven cards beside
+    // the one table that replaced them until the thread is reloaded.
+    const state = run([
+      accepted,
+      artifactEvent("art_1", "Ready"),
+      artifactEvent("art_2", "Ready"),
+      { event: "artifact_removed", data: { id: "art_1" } },
+    ]);
+    expect(state.artifacts.map((artifact) => artifact.id)).toEqual(["art_2"]);
+  });
+
+  it("ignores a withdrawal of an artifact it never saw", () => {
+    const state = run([
+      accepted,
+      artifactEvent("art_2", "Ready"),
+      { event: "artifact_removed", data: { id: "art_9" } },
+    ]);
+    expect(state.artifacts.map((artifact) => artifact.id)).toEqual(["art_2"]);
+  });
+
+  it("parses the artifact_removed frame", () => {
+    const parsed = parseAssistantStreamEvent("artifact_removed", JSON.stringify({ id: "art_1" }));
+    expect(parsed).toEqual({ event: "artifact_removed", data: { id: "art_1" } });
+  });
+
   it("parses the artifact frame", () => {
     const parsed = parseAssistantStreamEvent(
       "artifact",

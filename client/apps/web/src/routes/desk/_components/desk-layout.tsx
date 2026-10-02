@@ -8,7 +8,7 @@ import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
-import type { AssistantThread } from "@/types/assistant";
+import type { AssistantArtifactEvent, AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
@@ -61,13 +61,23 @@ export type DeskContextValue = {
   togglePin: (thread: AssistantThread) => void;
   /** Told while a turn is running, so the room can light up for it. */
   setWorking: (working: boolean) => void;
-  /** Told each artifact a streaming turn announces, so the workspace opens on it. */
-  noteLiveArtifact: (artifactId: string) => void;
+  /** Told what a streaming turn has produced so far, so the workspace opens on the newest and follows the set. */
+  noteLiveArtifacts: (artifacts: readonly AssistantArtifactEvent[]) => void;
   /** Opens an artifact the transcript referred to. */
   openArtifact: (threadId: string, artifactId: string) => void;
 };
 
 const DeskContext = createContext<DeskContextValue | null>(null);
+
+/** What a streaming turn has produced so far, and how many times that has changed. */
+export type LiveArtifacts = {
+  /** The artifacts the turn still holds, newest last. */
+  ids: readonly string[];
+  /** Bumped on every change to the set, so a reader re-reads it even when the newest id stays. */
+  revision: number;
+};
+
+const NO_LIVE_ARTIFACTS: LiveArtifacts = { ids: [], revision: 0 };
 
 export function useDesk(): DeskContextValue {
   const value = useContext(DeskContext);
@@ -104,7 +114,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   const [deleting, setDeleting] = useState<AssistantThread | null>(null);
   const [working, setWorking] = useState(false);
-  const [liveArtifactIds, setLiveArtifactIds] = useState<string[]>([]);
+  const [liveArtifacts, setLiveArtifacts] = useState<LiveArtifacts>(NO_LIVE_ARTIFACTS);
 
   const threadsQuery = useQuery(queries.assistant.threads());
   const agentsQuery = useQuery(queries.assistant.myAgents());
@@ -142,7 +152,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   if (seenThreadId !== activeThreadId) {
     setSeenThreadId(activeThreadId);
     setWorking(false);
-    setLiveArtifactIds([]);
+    setLiveArtifacts(NO_LIVE_ARTIFACTS);
   }
 
   // An unlisted conversation is cached on its own, so a rename or a pin has
@@ -201,10 +211,15 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   });
 
   // A turn that produces something opens the workspace on it, even if it was
-  // folded away: the person asked for the thing it holds.
-  const noteLiveArtifact = useCallback(
-    (artifactId: string) => {
-      setLiveArtifactIds((ids) => (ids.includes(artifactId) ? ids : [...ids, artifactId]));
+  // folded away: the person asked for the thing it holds. Every change to the
+  // set — a table growing, a card withdrawn — is a new revision, so the pane
+  // reads the set again rather than only when a new id arrives.
+  const noteLiveArtifacts = useCallback(
+    (artifacts: readonly AssistantArtifactEvent[]) => {
+      setLiveArtifacts((live) => ({
+        ids: artifacts.map((artifact) => artifact.id),
+        revision: live.revision + 1,
+      }));
       setPane("open");
     },
     [setPane],
@@ -231,7 +246,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       remove: setDeleting,
       togglePin: (thread) => pinMutation.mutate(thread),
       setWorking,
-      noteLiveArtifact,
+      noteLiveArtifacts,
       openArtifact,
     }),
     [
@@ -240,7 +255,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsById,
       agentsQuery.isError,
       agentsQuery.isLoading,
-      noteLiveArtifact,
+      noteLiveArtifacts,
       openArtifact,
       pinMutation,
       startMutation,
@@ -350,7 +365,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
               <ArtifactsPane
                 key={activeThread.id}
                 threadId={activeThread.id}
-                liveArtifactIds={liveArtifactIds}
+                liveArtifacts={liveArtifacts}
                 onClose={() => setPane("closed")}
                 className="h-full"
               />

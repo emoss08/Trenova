@@ -115,7 +115,7 @@ export function MessageThread({
   onStartNew,
   artifacts = NO_SAVED_ARTIFACTS,
   onOpenArtifact,
-  onLiveArtifact,
+  onLiveArtifacts,
   onWorkingChange,
   onNavigate,
   openingQuestion,
@@ -136,8 +136,12 @@ export function MessageThread({
   /** What the conversation produced, when the surface has a pane to open it in. */
   artifacts?: AssistantArtifact[];
   onOpenArtifact?: (id: string) => void;
-  /** Told each artifact a streaming turn announces, as it lands. */
-  onLiveArtifact?: (id: string) => void;
+  /**
+   * Told what a streaming turn has produced so far, each time that changes:
+   * an artifact landing, one revised, or one withdrawn because a later read
+   * folded it into a table. The newest is last.
+   */
+  onLiveArtifacts?: (artifacts: readonly AssistantArtifactEvent[]) => void;
   /** Told while a turn is running, for surfaces that show it outside the thread. */
   onWorkingChange?: (working: boolean) => void;
   /**
@@ -369,14 +373,15 @@ export function MessageThread({
   }, [isActive, onWorkingChange]);
   useEffect(() => () => onWorkingChange?.(false), [onWorkingChange]);
 
-  // An artifact announced mid-turn is handed to the pane at once, so the
-  // table opens while the sentence about it is still arriving.
-  const liveArtifactId = turn?.artifacts.at(-1)?.id ?? null;
+  // What the turn has produced is handed to the pane as it changes, so the
+  // table opens while the sentence about it is still arriving, grows as
+  // later reads join it, and the cards it replaced leave with it.
+  const liveArtifacts = turn?.artifacts ?? NO_ARTIFACTS;
   useEffect(() => {
-    if (liveArtifactId !== null) {
-      onLiveArtifact?.(liveArtifactId);
+    if (liveArtifacts.length > 0) {
+      onLiveArtifacts?.(liveArtifacts);
     }
-  }, [liveArtifactId, onLiveArtifact]);
+  }, [liveArtifacts, onLiveArtifacts]);
 
   // "Take me there": a page the assistant opened is followed as it arrives.
   useFollowNavigation(turn?.artifacts ?? NO_ARTIFACTS, onNavigate);

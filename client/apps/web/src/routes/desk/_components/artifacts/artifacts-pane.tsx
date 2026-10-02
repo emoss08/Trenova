@@ -8,6 +8,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useDeskStore } from "@/stores/desk-store";
+import type { LiveArtifacts } from "../desk-layout";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -184,13 +185,13 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
  */
 export function ArtifactsPane({
   threadId,
-  liveArtifactIds,
+  liveArtifacts,
   onClose,
   className,
 }: {
   threadId: string;
-  /** Artifacts a streaming turn has announced, so the pane opens the newest as it lands. */
-  liveArtifactIds: readonly string[];
+  /** What a streaming turn has produced so far, so the pane opens the newest as it lands and follows the set. */
+  liveArtifacts: LiveArtifacts;
   onClose: () => void;
   className?: string;
 }) {
@@ -205,17 +206,22 @@ export function ArtifactsPane({
   const active = artifacts.find((artifact) => artifact.id === activeId) ?? null;
 
   // A turn that just produced something opens it: the reader asked for a
-  // table and the table is what they are waiting for.
-  const newestLive = liveArtifactIds.at(-1);
+  // table and the table is what they are waiting for. Every revision of the
+  // set re-reads the list, so a table that grew with a later read shows its
+  // new rows and a card that read folded away leaves the row of tabs.
+  const newestLive = liveArtifacts.ids.at(-1);
+  const liveRevision = liveArtifacts.revision;
   useEffect(() => {
-    if (!newestLive) {
+    if (liveRevision === 0) {
       return;
     }
     void queryClient.invalidateQueries({
       queryKey: queries.assistant.artifacts(threadId).queryKey,
     });
-    setActiveArtifact(threadId, newestLive);
-  }, [newestLive, queryClient, setActiveArtifact, threadId]);
+    if (newestLive) {
+      setActiveArtifact(threadId, newestLive);
+    }
+  }, [liveRevision, newestLive, queryClient, setActiveArtifact, threadId]);
 
   const pinMutation = useApiMutation({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>

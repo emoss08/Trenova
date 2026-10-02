@@ -24,7 +24,7 @@ function renderPane(threadId = "athr_1") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <ArtifactsPane threadId={threadId} liveArtifactIds={[]} onClose={() => undefined} />
+      <ArtifactsPane threadId={threadId} liveArtifacts={{ ids: [], revision: 0 }} onClose={() => undefined} />
     </QueryClientProvider>,
   );
 }

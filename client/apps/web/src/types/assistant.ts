@@ -748,6 +748,16 @@ export const assistantArtifactEventSchema = z.object({
 });
 
 /**
+ * An artifact the turn withdrew: a record card a later read of the same tool
+ * folded into one table. The server has deleted it, so a reader drops it from
+ * what the turn produced rather than leaving it beside the table that
+ * replaced it.
+ */
+export const assistantArtifactRemovedEventSchema = z.object({
+  id: z.string(),
+});
+
+/**
  * One entry in the model picker.
  *
  * A provider record also holds the endpoint and an encrypted key; neither is
@@ -1139,6 +1149,7 @@ export type AssistantStreamEvent =
   | { event: "delegate_retrying"; data: z.infer<typeof assistantDelegateRetryingEventSchema> }
   | { event: "delegate_finished"; data: z.infer<typeof assistantDelegateFinishedEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
+  | { event: "artifact_removed"; data: z.infer<typeof assistantArtifactRemovedEventSchema> }
   | { event: "thread"; data: AssistantThread }
   /**
    * The saved turn, or null when the ending was rebuilt from the turn's record
@@ -1195,6 +1206,8 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantDelegateFinishedEventSchema.parse(data) };
     case "artifact":
       return { event, data: assistantArtifactEventSchema.parse(data) };
+    case "artifact_removed":
+      return { event, data: assistantArtifactRemovedEventSchema.parse(data) };
     case "thread":
       return { event, data: assistantThreadSchema.parse(data) };
     case "done":
