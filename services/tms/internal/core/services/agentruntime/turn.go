@@ -368,7 +368,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	if len(runtimeContext.Tools) == 0 {
 		runtimeContext.Tools = s.ToolSummaries(definition)
 	}
-	granted := s.activeExtensions(ctx, req.Actor).grants()
+	active := s.activeExtensions(ctx, req.Actor)
+	granted := active.grants()
 	runtimeContext.Tools = withSummaries(runtimeContext.Tools, s.summarize(definition, granted))
 
 	// Another agent's steps on a task this one handed it are never replayed:
@@ -408,6 +409,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		publishes:  req.KeepsDocuments(),
 		delegates:  delegates,
 		decisions:  pendingDecisions(req.Proposals),
+		extensions: &active,
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
