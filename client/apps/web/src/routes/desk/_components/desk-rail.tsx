@@ -1,4 +1,3 @@
-import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { AgentPicker } from "@/components/assistant/agent-picker";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { RECENT_AGENT_LIMIT } from "@/components/assistant/use-askable-agent";
@@ -17,9 +16,15 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatShortAge, resolveUserTimezone } from "@trenova/shared/lib/date";
+import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -27,7 +32,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
-  ChevronDownIcon,
+  EllipsisIcon,
   HomeIcon,
   InboxIcon,
   MessageSquareIcon,
@@ -222,7 +227,6 @@ export function DeskRail({
             label={t("Decisions")}
             onNavigate={onNavigate}
             count={counts.decisions}
-            urgent={counts.decisions > 0}
           />
         )}
       </nav>
@@ -249,7 +253,6 @@ export function DeskRail({
             agentsById={agentsById}
             activeThreadId={activeThreadId}
             liveThreadIds={liveThreadIds}
-            now={now}
             onDelete={onDelete}
             onTogglePin={onTogglePin}
             onNavigate={onNavigate}
@@ -330,7 +333,6 @@ export function DeskRailStrip({
             icon={InboxIcon}
             label={t("Decisions")}
             count={counts.decisions}
-            urgent={counts.decisions > 0}
           />
         )}
       </nav>
@@ -638,7 +640,6 @@ function RailShelves({
   agentsById,
   activeThreadId,
   liveThreadIds,
-  now,
   onDelete,
   onTogglePin,
   onNavigate,
@@ -647,7 +648,6 @@ function RailShelves({
   agentsById: ReadonlyMap<string, AgentChoice>;
   activeThreadId: string | null;
   liveThreadIds: ReadonlySet<string>;
-  now: number;
   onDelete: (thread: AssistantThread) => void;
   onTogglePin: (thread: AssistantThread) => void;
   onNavigate?: () => void;
@@ -661,7 +661,7 @@ function RailShelves({
   }, 0);
 
   return (
-    <div className="flex flex-col gap-3 px-2 pb-3">
+    <div className="flex flex-col gap-4 px-2 pb-3">
       {shelves.map((shelf, shelfIndex) => (
         <RailShelf
           key={shelf.key}
@@ -670,7 +670,6 @@ function RailShelves({
           agentsById={agentsById}
           activeThreadId={activeThreadId}
           liveThreadIds={liveThreadIds}
-          now={now}
           onDelete={onDelete}
           onTogglePin={onTogglePin}
           onNavigate={onNavigate}
@@ -686,7 +685,6 @@ function RailShelf({
   agentsById,
   activeThreadId,
   liveThreadIds,
-  now,
   onDelete,
   onTogglePin,
   onNavigate,
@@ -696,61 +694,49 @@ function RailShelf({
   agentsById: ReadonlyMap<string, AgentChoice>;
   activeThreadId: string | null;
   liveThreadIds: ReadonlySet<string>;
-  now: number;
   onDelete: (thread: AssistantThread) => void;
   onTogglePin: (thread: AssistantThread) => void;
   onNavigate?: () => void;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(true);
   const heading = shelfHeading(t, shelf.key);
 
   return (
     <section aria-label={heading} className="flex flex-col gap-px">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="group/shelf ui-focus-ring text-foreground-subtle hover:text-foreground-muted flex h-6 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors"
-      >
-        {shelf.key === "pinned" && <PinIcon className="size-3" />}
-        <span>{heading}</span>
-        <span className="tabular-nums opacity-70">{shelf.threads.length}</span>
-        <ChevronDownIcon
-          aria-hidden
-          className={cn(
-            "ml-auto size-3 opacity-0 transition-[opacity,rotate] group-hover/shelf:opacity-100",
-            !open && "-rotate-90 opacity-100",
-          )}
+      <h3 className="text-foreground-subtle flex h-7 items-center px-2.5 text-xs font-medium">
+        {heading}
+      </h3>
+      {shelf.threads.map((thread, index) => (
+        <RailRow
+          key={thread.id}
+          thread={thread}
+          agent={agentsById.get(thread.agentDefinitionId) ?? null}
+          active={thread.id === activeThreadId}
+          live={liveThreadIds.has(thread.id)}
+          style={{
+            animationDelay: `${Math.min(start + index, ROW_STAGGER_CAP) * ROW_STAGGER_MS}ms`,
+          }}
+          onDelete={() => onDelete(thread)}
+          onTogglePin={() => onTogglePin(thread)}
+          onNavigate={onNavigate}
         />
-      </button>
-      {open &&
-        shelf.threads.map((thread, index) => (
-          <RailRow
-            key={thread.id}
-            thread={thread}
-            agent={agentsById.get(thread.agentDefinitionId) ?? null}
-            active={thread.id === activeThreadId}
-            live={liveThreadIds.has(thread.id)}
-            now={now}
-            style={{
-              animationDelay: `${Math.min(start + index, ROW_STAGGER_CAP) * ROW_STAGGER_MS}ms`,
-            }}
-            onDelete={() => onDelete(thread)}
-            onTogglePin={() => onTogglePin(thread)}
-            onNavigate={onNavigate}
-          />
-        ))}
+      ))}
     </section>
   );
 }
 
+/**
+ * One conversation: its title, on one line, and nothing else. Which agent
+ * it is with is in the row's tooltip and the search, not on every row; a
+ * reply being written is a dot before the title; the pin and the delete
+ * are behind one "more" control that shows on hover. A list of fifty of
+ * these should read as a list of titles, not a table.
+ */
 function RailRow({
   thread,
   agent,
   active,
   live,
-  now,
   style,
   onDelete,
   onTogglePin,
@@ -760,78 +746,74 @@ function RailRow({
   agent: AgentChoice | null;
   active: boolean;
   live: boolean;
-  now: number;
   style: CSSProperties;
   onDelete: () => void;
   onTogglePin: () => void;
   onNavigate?: () => void;
 }) {
   const t = useT();
-  const touched = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const title = thread.title || t("Untitled conversation");
 
   return (
     <div
       data-thread-row
+      data-state={menuOpen ? "open" : undefined}
       style={style}
       className={cn(
-        "group animate-rise relative flex items-center rounded-md transition-colors",
+        "group animate-rise relative flex h-8 items-center rounded-md transition-colors",
         active
-          ? "bg-surface-selected ring-foreground/10 ring-1"
-          : "hover:bg-surface-hover",
+          ? "bg-surface-selected"
+          : "hover:bg-surface-hover data-[state=open]:bg-surface-hover",
       )}
     >
       <NavLink
         to={conversationPath(thread.id)}
         onClick={onNavigate}
-        className="ui-inset-focus-ring flex min-w-0 flex-1 flex-col gap-0.5 rounded-md py-1.5 pr-2.5 pl-2.5 group-hover:pr-14 group-focus-within:pr-14"
+        title={agent ? t("With {0}", agent.name) : undefined}
+        className={cn(
+          "ui-inset-focus-ring flex h-full min-w-0 flex-1 items-center gap-2 rounded-md pr-8 pl-2.5 text-sm",
+          active ? "text-foreground" : "text-foreground-muted group-hover:text-foreground",
+        )}
       >
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className={cn("min-w-0 flex-1 truncate text-sm", active && "font-medium")}>
-            {thread.title || t("Untitled conversation")}
-          </span>
-          {thread.pinned && !active && (
-            <PinIcon aria-hidden className="text-foreground-subtle size-3 shrink-0" />
-          )}
-        </span>
-        <span className="text-foreground-subtle flex min-w-0 items-center gap-1.5 text-xs">
-          <AgentTile agent={agent} size="xs" className="size-3.5" />
-          <span className="truncate">{agent?.name ?? t("Agent unavailable")}</span>
-          <span aria-hidden className="shrink-0">
-            ·
-          </span>
-          {live ? (
-            <span className="text-foreground-muted flex shrink-0 items-center gap-1">
-              <WorkingDot working still />
-              {t("Replying")}
-            </span>
-          ) : (
-            <span className="shrink-0 tabular-nums">{formatShortAge(now - touched)}</span>
-          )}
-        </span>
+        {live && (
+          <>
+            <WorkingDot working className="shrink-0" />
+            <span className="sr-only">{t("Replying")}</span>
+          </>
+        )}
+        <span className="min-w-0 flex-1 truncate">{title}</span>
       </NavLink>
-      <span className="absolute inset-y-0 right-1 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={thread.pinned ? t("Unpin conversation") : t("Pin conversation")}
-          aria-pressed={thread.pinned}
-          className={cn(
-            thread.pinned ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-          )}
-          onClick={onTogglePin}
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t("Conversation actions")}
+              className={cn(
+                "text-foreground-subtle hover:text-foreground absolute right-1 opacity-0 transition-opacity",
+                "group-hover:opacity-100 group-focus-within:opacity-100 data-[popup-open]:opacity-100",
+              )}
+            />
+          }
         >
-          <PinIcon className="size-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={t("Delete conversation")}
-          className="text-muted-foreground hover:text-destructive"
-          onClick={onDelete}
-        >
-          <Trash2Icon className="size-3.5" />
-        </Button>
-      </span>
+          <EllipsisIcon className="size-3.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="right" sideOffset={6} className="min-w-44">
+          <DropdownMenuItem
+            onClick={onTogglePin}
+            startContent={<PinIcon className="size-4" />}
+            title={thread.pinned ? t("Unpin conversation") : t("Pin conversation")}
+          />
+          <DropdownMenuItem
+            color="danger"
+            onClick={onDelete}
+            startContent={<Trash2Icon className="size-4" />}
+            title={t("Delete conversation")}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

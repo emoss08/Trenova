@@ -137,7 +137,7 @@ beforeEach(() => {
  * on hover.
  */
 describe("DeskRail", () => {
-  it("shelves conversations by recency with pinned ones first, naming the agent on each row", () => {
+  it("shelves conversations by recency with pinned ones first, titles alone on each row", () => {
     const now = Math.floor(Date.now() / 1000);
     renderRail({
       threads: [
@@ -147,15 +147,14 @@ describe("DeskRail", () => {
       ],
     });
 
-    const shelves = screen
-      .getAllByRole("region")
-      .map((shelf) => shelf.getAttribute("aria-label"));
+    const shelves = screen.getAllByRole("region").map((shelf) => shelf.getAttribute("aria-label"));
     expect(shelves).toEqual(["Pinned", "Today", "Previous 30 days"]);
 
     const today = screen.getByRole("region", { name: "Today" });
     const row = within(today).getByRole("link", { name: /Untitled conversation/ });
     expect(row).toHaveAttribute("href", "/desk/t/b");
-    expect(row).toHaveTextContent("Dispatch desk");
+    expect(row).toHaveTextContent(/^Untitled conversation$/);
+    expect(row).toHaveAttribute("title", "With Dispatch desk");
   });
 
   it("marks the open conversation and says when a reply is being written", () => {
@@ -184,14 +183,16 @@ describe("DeskRail", () => {
     expect(screen.getByText("No conversations match that search.")).toBeInTheDocument();
   });
 
-  it("hands the row's pin and delete to the room", () => {
+  it("hands the row's pin and delete to the room", async () => {
     const item = thread({ id: "a" });
     const { handlers } = renderRail({ threads: [item] });
 
-    fireEvent.click(screen.getByRole("button", { name: "Pin conversation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Conversation actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Pin conversation" }));
     expect(handlers.onTogglePin).toHaveBeenCalledWith(item);
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete conversation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Conversation actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete conversation" }));
     expect(handlers.onDelete).toHaveBeenCalledWith(item);
   });
 
