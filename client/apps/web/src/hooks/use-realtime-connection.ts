@@ -254,7 +254,10 @@ export function useRealtimeConnection() {
         return;
       }
 
-      const { roots: queryKeys, activeOnly } = invalidationFor(evt);
+      const { roots: queryKeys, activeOnly, activeRoots } = invalidationFor(evt);
+      if (activeRoots.length > 0) {
+        enqueueInvalidation(activeRoots, true);
+      }
       if (queryKeys.length === 0) return;
       if (activeOnly) {
         enqueueInvalidation(queryKeys, true);

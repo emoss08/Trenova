@@ -104,6 +104,21 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   workers: ["worker-list", "dispatch-board"],
   "audit-logs": ["audit-entry-list"],
   billing_queue: ["billing-queue-list", "billingQueue"],
+  // Every change to an invoice: its own page (detail, send plan, email
+  // attempts), the lists and register that show it, the billing queue item it
+  // came from, and the receivables read from its balance.
+  invoice: [
+    "invoice",
+    "invoice-list",
+    "invoice-register",
+    "invoice-register-list",
+    "invoice-adjustment",
+    "billingQueue",
+    "billing-queue-list",
+    "ar",
+    "customerPayment",
+    "customer-payment-list",
+  ],
   "billing-transfer-run": [
     "billing-transfer-run",
     "billing-transfer-active-run",
@@ -179,6 +194,24 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   telematicsEvent: ["telematics"],
 };
 
+/**
+ * Resources whose events refetch only what a screen is showing. A billing
+ * team sends, posts and applies payments all day; refetching every cached
+ * invoice and queue list on each of those would cost more than it shows, so
+ * hidden lists are only marked stale and refetch when they are next opened.
+ */
+export const ACTIVE_ONLY_RESOURCES: ReadonlySet<string> = new Set(["invoice", "billing_queue"]);
+
+/**
+ * Caches a resource also reaches, but only where they are on screen. A
+ * shipment's or order's charges feed the allocated totals on its open billing
+ * queue items, which are rewritten without a billing queue event of their own.
+ */
+export const RESOURCE_ACTIVE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
+  shipments: ["billing-queue-list", "billingQueue"],
+  orders: ["billing-queue-list", "billingQueue"],
+};
+
 export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
   shipments: new Set(["status", "proNumber", "moves", "updatedAt"]),
   users: new Set([
@@ -246,6 +279,8 @@ export interface Invalidation {
   roots: QueryKeyRoot[];
   /** Refetch only queries a screen is showing; the rest refetch when shown. */
   activeOnly: boolean;
+  /** Further roots that refetch only where they are on screen. */
+  activeRoots: QueryKeyRoot[];
 }
 
 /**
@@ -265,9 +300,13 @@ export function invalidationFor(event: ResourceInvalidationEvent): Invalidation 
     if (batchId) {
       roots.push(["capture", "batch", batchId]);
     }
-    return { roots, activeOnly: true };
+    return { roots, activeOnly: true, activeRoots: [] };
   }
-  return { roots: RESOURCE_QUERY_KEY_MAP[event.resource] ?? [], activeOnly: false };
+  return {
+    roots: RESOURCE_QUERY_KEY_MAP[event.resource] ?? [],
+    activeOnly: ACTIVE_ONLY_RESOURCES.has(event.resource),
+    activeRoots: RESOURCE_ACTIVE_QUERY_KEY_MAP[event.resource] ?? [],
+  };
 }
 
 export function isBulkAction(action: string) {

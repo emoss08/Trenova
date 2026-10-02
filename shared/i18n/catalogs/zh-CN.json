@@ -3381,6 +3381,7 @@
   "Invoice {0} has been voided and cannot be {1}": "发票 {0} 已作废，无法{1}",
   "Invoice {0} has no open balance to dispute": "发票 {0} 没有可供提出争议的未结余额",
   "Invoice {0} has payments or credits applied. Unapply them before voiding it": "发票 {0} 已核销付款或贷项。请先取消核销再作废",
+  "Invoice {0} is already being sent. Wait for that send to finish; if it has not finished within {1} minutes, you can send it again.": "发票 {0} 正在发送中。请等待此次发送完成；如果 {1} 分钟内仍未完成，您可以再次发送。",
   "Invoice {0} is already voided": "发票 {0} 已作废",
   "Invoice {0} is attached ({1}).": "随函附上发票 {0}（{1}）。",
   "Invoice {0} is attached.": "随函附上发票 {0}。",

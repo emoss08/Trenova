@@ -25,6 +25,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useInvoiceDeliveryToasts } from "@/hooks/use-invoice-delivery-toasts";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
 import type { InvoiceArContext } from "@/lib/graphql/invoice";
 import { ApiRequestError } from "@trenova/shared/lib/api";
@@ -181,6 +182,7 @@ export default function InvoiceDetailPane({
           </div>
         </div>
 
+        <InvoiceDeliveryAnnouncer invoice={invoice} />
         {isVoided ? <VoidedNotice invoice={invoice} /> : null}
 
         {invoice.status === "Draft" ? null : <AccountingSyncStateLine objectId={invoice.id} />}
@@ -326,6 +328,11 @@ export default function InvoiceDetailPane({
       </Tabs>
     </div>
   );
+}
+
+function InvoiceDeliveryAnnouncer({ invoice }: { invoice: Invoice }) {
+  useInvoiceDeliveryToasts(invoice);
+  return null;
 }
 
 function VoidedNotice({ invoice }: { invoice: Invoice }) {

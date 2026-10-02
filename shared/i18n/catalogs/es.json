@@ -3381,6 +3381,7 @@
   "Invoice {0} has been voided and cannot be {1}": "La factura {0} se anuló y no se puede {1}",
   "Invoice {0} has no open balance to dispute": "La factura {0} no tiene saldo pendiente que disputar",
   "Invoice {0} has payments or credits applied. Unapply them before voiding it": "La factura {0} tiene pagos o créditos aplicados. Desaplíquelos antes de anularla",
+  "Invoice {0} is already being sent. Wait for that send to finish; if it has not finished within {1} minutes, you can send it again.": "La factura {0} ya se está enviando. Espere a que termine ese envío; si no ha terminado en {1} minutos, puede enviarla de nuevo.",
   "Invoice {0} is already voided": "La factura {0} ya está anulada",
   "Invoice {0} is attached ({1}).": "Se adjunta la factura {0} ({1}).",
   "Invoice {0} is attached.": "Se adjunta la factura {0}.",

@@ -167,6 +167,33 @@ The web app handles events in `hooks/use-realtime-connection.ts`
 (`RESOURCE_QUERY_KEY_MAP` decides what each resource invalidates) and refetches
 its core keys on `reset`.
 
+`ACTIVE_ONLY_RESOURCES` marks resources whose events refetch only the queries a
+screen is showing; the rest are marked stale and refetch when next opened.
+`RESOURCE_ACTIVE_QUERY_KEY_MAP` names extra caches a resource reaches that way,
+such as the open billing queue when a shipment's or order's charges change.
+
+## Invoices and the billing queue
+
+Every write that changes an invoice publishes resource `invoice` through
+`realtimeinvalidation.PublishInvoice` (or `PublishInvoiceAfterCommit` inside a
+transaction), with a small snapshot as the entity: `id`, `number`, `status`,
+`sendStatus`, `lastSendError`, `pdfDocumentId`, `ediSendStatus`. The action says
+what changed:
+
+| Action | Published by |
+|---|---|
+| `created`, `updated` | the invoice service (create, post, void, memo, consolidation), executed adjustments |
+| `pdf.generated` | the billing worker when a PDF finishes |
+| `send.updated` | `Send`, `SendFromWorkflow`, a failed send, and the email worker syncing the provider's answer |
+| `edi.updated` | EDI 210 delivery status |
+| `balance.updated` | payment application, unapplication and credit memos |
+
+In the web app an `invoice` event reaches the invoice page, the invoice list and
+register, adjustments, the billing queue, receivables and customer payments,
+refetching only what is on screen. The open invoice also toasts the outcomes its
+viewer is waiting on (PDF ready, emailed, partly emailed, failed) through
+`useInvoiceDeliveryToasts`, announcing each change of status once.
+
 ## Operating it
 
 Prometheus metrics are under `trenova_realtime_*`: open connections, opens by

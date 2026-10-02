@@ -89023,6 +89023,15 @@
       "service/accountingdriftservice"
     ]
   },
+  "Invoice {0} is already being sent. Wait for that send to finish; if it has not finished within {1} minutes, you can send it again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "Invoice {0} is already voided": {
     "sites": 1,
     "scope": [
@@ -220229,6 +220238,15 @@
       "routes/fleet-safety"
     ]
   },
+  "{0} PDF is ready": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "{0} SSO is not configured": {
     "sites": 1,
     "scope": [
@@ -220933,6 +220951,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} could not be emailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "{0} could not be re-rated with the current template": {
@@ -224807,6 +224834,15 @@
       "service/accountingmappingservice"
     ]
   },
+  "{0} was emailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "{0} was never sent to {1}, so there is nothing to send again": {
     "sites": 1,
     "scope": [
@@ -224832,6 +224868,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} was only partly emailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "{0} was unavailable; the fallback provider answered instead.": {
