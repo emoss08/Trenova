@@ -20,6 +20,7 @@ import {
   MapPinIcon,
   MapPinOffIcon,
   PaperclipIcon,
+  PlusIcon,
   SquareIcon,
   XIcon,
 } from "lucide-react";
@@ -34,6 +35,13 @@ import {
   type CommandEntry,
 } from "./composer-commands";
 import { composerHint, type ComposerHintKind } from "./composer-hint";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
 import { ComposerHints } from "./composer-hints";
 import { FloatingSlot } from "./floating-slot";
 import { DictationControl } from "./dictation-control";
@@ -733,7 +741,7 @@ export function Composer({
                   : placeholder
             }
             disabled={disabled}
-            minRows={1}
+            minRows={compact ? 1 : 2}
             maxRows={compact ? 5 : 8}
             aria-label={t("Message the assistant")}
             aria-controls={commandsOpen ? listId : mentionsOpen ? mentionListId : undefined}
@@ -747,7 +755,7 @@ export function Composer({
             }
             // The box around it carries the one focus ring and the one
             // disabled treatment, so the field's own are switched off.
-            className="resize-none border-0 bg-transparent px-3.5 pt-3 pb-1 text-sm leading-relaxed [--ring-width:0px] disabled:bg-transparent disabled:opacity-100 md:text-sm"
+            className="resize-none border-0 bg-transparent px-4 pt-3.5 pb-1 text-sm leading-relaxed [--ring-width:0px] disabled:bg-transparent disabled:opacity-100 md:text-sm"
           />
 
           {hint !== "" && (
@@ -756,81 +764,33 @@ export function Composer({
             </p>
           )}
 
-          <div className="flex items-center gap-1 px-2 pb-2">
-            <div className="flex min-w-0 flex-1 items-center gap-0.5">
+          <div className="flex items-center gap-1 px-2.5 pb-2.5">
+            <div className="flex min-w-0 flex-1 items-center gap-1">
               {onAttachFiles && (
-                <>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="sr-only"
-                    tabIndex={-1}
-                    aria-hidden
-                    onChange={(event) => {
-                      takeFiles(event.target.files);
-                      event.target.value = "";
-                    }}
-                  />
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          className="text-foreground-muted hover:text-foreground rounded-full"
-                          disabled={!canAttach}
-                          onClick={() => fileInputRef.current?.click()}
-                          aria-label={t("Attach a file")}
-                        />
-                      }
-                    >
-                      <PaperclipIcon className="size-4" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {attachments.length >= MAX_ATTACHMENTS
-                        ? t("Up to {0} files per message", MAX_ATTACHMENTS)
-                        : t("Attach a file")}
-                    </TooltipContent>
-                  </Tooltip>
-                </>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden
+                  onChange={(event) => {
+                    takeFiles(event.target.files);
+                    event.target.value = "";
+                  }}
+                />
               )}
-
-              {onSearchMentions && (
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="text-foreground-muted hover:text-foreground rounded-full"
-                        disabled={disabled || active}
-                        onClick={startMention}
-                        aria-label={t("Name a record")}
-                      />
-                    }
-                  >
-                    <AtSignIcon className="size-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>{t("Name a record with @")}</TooltipContent>
-                </Tooltip>
-              )}
-
-              <DictationControl
-                availability={dictation.availability}
-                phase={dictation.phase}
-                issue={dictation.issue}
-                stream={dictation.stream}
-                disabled={disabled}
-                onToggle={dictation.toggleFromDraft}
-              />
-
-              {pageContext && onToggleContext && (
-                <ContextChip
-                  context={pageContext}
-                  included={contextIncluded}
-                  compact={compact}
-                  onToggle={onToggleContext}
+              {(onAttachFiles || onSearchMentions) && (
+                <ComposerMoreMenu
+                  canAttach={onAttachFiles !== undefined && canAttach}
+                  attachNote={
+                    attachments.length >= MAX_ATTACHMENTS
+                      ? t("Up to {0} files per message", MAX_ATTACHMENTS)
+                      : undefined
+                  }
+                  canMention={onSearchMentions !== undefined && !disabled && !active}
+                  onAttach={() => fileInputRef.current?.click()}
+                  onMention={startMention}
                 />
               )}
 
@@ -859,9 +819,7 @@ export function Composer({
                   </TooltipContent>
                 </Tooltip>
               )}
-            </div>
 
-            <div className="flex shrink-0 items-center gap-1">
               {onPickProvider && (
                 <ModelPicker
                   options={providers}
@@ -871,6 +829,26 @@ export function Composer({
                   compact={compact}
                 />
               )}
+
+              {pageContext && onToggleContext && (
+                <ContextChip
+                  context={pageContext}
+                  included={contextIncluded}
+                  compact={compact}
+                  onToggle={onToggleContext}
+                />
+              )}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1">
+              <DictationControl
+                availability={dictation.availability}
+                phase={dictation.phase}
+                issue={dictation.issue}
+                stream={dictation.stream}
+                disabled={disabled}
+                onToggle={dictation.toggleFromDraft}
+              />
 
               <SendControl
                 active={active}
@@ -1053,6 +1031,60 @@ function ContextChip({
  * the same control doing its other job. Empty, it rests unfilled; the first
  * character arms it and the arrow settles in with a small spring.
  */
+/**
+ * What else can go with the message, behind one control: a file, a record
+ * named with @. One quiet "+" where three icons stood, so the row reads as
+ * who you are asking and how, and the extras wait until they are wanted.
+ */
+function ComposerMoreMenu({
+  canAttach,
+  attachNote,
+  canMention,
+  onAttach,
+  onMention,
+}: {
+  canAttach: boolean;
+  attachNote?: string;
+  canMention: boolean;
+  onAttach: () => void;
+  onMention: () => void;
+}) {
+  const t = useT();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-label={t("Add to the message")}
+            className="text-foreground-muted hover:text-foreground data-popup-open:bg-surface-active data-popup-open:text-foreground rounded-full"
+          />
+        }
+      >
+        <PlusIcon className="size-4 transition-transform duration-200 ease-settle group-data-popup-open:rotate-45" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" side="top" sideOffset={8} className="min-w-52">
+        <DropdownMenuItem
+          disabled={!canAttach}
+          onClick={onAttach}
+          startContent={<PaperclipIcon className="size-4" />}
+          title={t("Attach a file")}
+          description={attachNote}
+        />
+        <DropdownMenuItem
+          disabled={!canMention}
+          onClick={onMention}
+          startContent={<AtSignIcon className="size-4" />}
+          title={t("Name a record")}
+          endContent={<DropdownMenuShortcut>@</DropdownMenuShortcut>}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function SendControl({
   active,
   armed,

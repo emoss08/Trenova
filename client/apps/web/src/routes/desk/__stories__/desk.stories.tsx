@@ -26,3 +26,6 @@ export const ConversationDecisionsTab: Story = {
 export const ConversationActivityTab: Story = {
   args: { path: `/desk/t/${THREAD_ID}`, tab: "activity" },
 };
+export const ConversationComposer: Story = {
+  args: { path: `/desk/t/${THREAD_ID}`, decisions: "settled" },
+};

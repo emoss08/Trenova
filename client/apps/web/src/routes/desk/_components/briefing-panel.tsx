@@ -32,7 +32,7 @@ export function BriefingPanel({ briefing }: { briefing: Briefing }) {
   }
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="bg-card ring-foreground/10 flex flex-col gap-3 rounded-lg p-4 ring-1">
       <div className="flex items-center gap-2">
         <h2 className="text-muted-foreground text-xs font-medium">{t("Your day")}</h2>
         {briefing.narrated && (
@@ -49,7 +49,7 @@ export function BriefingPanel({ briefing }: { briefing: Briefing }) {
         />
       </div>
 
-      <div className="border-desk-hairline rounded-surface divide-desk-hairline divide-y border">
+      <div className="divide-border-subtle -mx-4 -mb-4 divide-y border-t border-border-subtle">
         {sections.map((section, index) => (
           <SectionRow key={section.key} briefingId={briefing.id} section={section} index={index} />
         ))}

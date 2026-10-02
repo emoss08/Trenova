@@ -50,7 +50,7 @@ export function DeskGreeting({
         aria-hidden
         data-slot="desk-daylight"
         data-sky={sky}
-        className="ui-daylight animate-rise pointer-events-none absolute -top-40 left-1/2 -z-10 h-96 w-240 max-w-none -translate-x-1/2"
+        className="ui-daylight animate-rise pointer-events-none absolute -top-32 left-1/2 -z-10 h-72 w-200 max-w-none -translate-x-1/2"
         style={entrance(0)}
       />
       <p
@@ -60,13 +60,13 @@ export function DeskGreeting({
         <SkyMark sky={sky} className="size-4" />
         <time dateTime={isoDate}>{dateline}</time>
       </p>
-      <h1 className="max-w-3xl text-3xl font-semibold text-balance sm:text-4xl">
+      <h1 className="max-w-3xl text-2xl font-semibold text-balance sm:text-3xl">
         <span className="animate-rise block" style={entrance(1)}>
           {greeting}
         </span>
         <span
           data-slot="desk-headline"
-          className="text-foreground-muted animate-rise mt-1.5 block"
+          className="text-foreground-muted animate-rise mt-1 block text-xl font-medium sm:text-2xl"
           style={entrance(2)}
         >
           {headline}

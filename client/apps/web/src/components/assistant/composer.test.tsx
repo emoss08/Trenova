@@ -272,21 +272,29 @@ describe("Composer dictation", () => {
  * opens on it the way a typed one does.
  */
 describe("Composer mention button", () => {
-  it("starts a record search from the toolbar", () => {
+  // The extras wait behind one "+" control, so the row reads as who you are
+  // asking and how; opening it offers the record search.
+  async function openMore() {
+    fireEvent.click(screen.getByRole("button", { name: "Add to the message" }));
+
+    return screen.findByRole("menuitem", { name: /Name a record/ });
+  }
+
+  it("starts a record search from the toolbar", async () => {
     const { onDraftChange } = renderComposer({ onSearchMentions: async () => [] });
 
-    fireEvent.click(screen.getByRole("button", { name: "Name a record" }));
+    fireEvent.click(await openMore());
 
     expect(onDraftChange).toHaveBeenCalledWith("@");
   });
 
-  it("leaves a space before the at sign when the words need one", () => {
+  it("leaves a space before the at sign when the words need one", async () => {
     const { onDraftChange } = renderComposer({
       draft: "Where is",
       onSearchMentions: async () => [],
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Name a record" }));
+    fireEvent.click(await openMore());
 
     expect(onDraftChange).toHaveBeenCalledWith("Where is @");
   });
@@ -294,7 +302,8 @@ describe("Composer mention button", () => {
   it("is not offered where there is no search to name records from", () => {
     renderComposer();
 
-    expect(screen.queryByRole("button", { name: "Name a record" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add to the message" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /Name a record/ })).toBeNull();
   });
 });
 

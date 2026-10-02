@@ -20,6 +20,13 @@ vi.mock("@/hooks/use-permission", () => ({
 
 vi.mock("@/lib/queries", () => ({
   queries: {
+    assistant: {
+      activeTurns: () => ({ queryKey: ["active-turns"], queryFn: () => ({ items: [] }) }),
+    },
+    watchtower: {
+      counts: () => ({ queryKey: ["watchtower-counts"], queryFn: () => ({ unseen: 0, unseenCritical: 0 }) }),
+      feed: () => ({ queryKey: ["watchtower-feed"], queryFn: () => ({ items: [], endCursor: null, hasNextPage: false, seenAt: 0 }) }),
+    },
     briefing: {
       today: () => ({
         queryKey: ["briefing-today", state.briefing.settled],
@@ -58,8 +65,6 @@ vi.mock("@/components/assistant/use-askable-agent", () => ({
   }),
 }));
 
-vi.mock("../desk-agent-directory", () => ({ DeskAgentDirectory: () => null }));
-vi.mock("../desk-decisions-callout", () => ({ DeskDecisionsCallout: () => null }));
 vi.mock("../briefing-panel", () => ({ BriefingPanel: () => null }));
 
 const agent = { id: "agent-1", name: "Dispatch" } as DeskHomeProps["agents"][number];

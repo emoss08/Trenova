@@ -12,6 +12,7 @@ const stories = [
   "conversation-no-workspace",
   "conversation-decisions-tab",
   "conversation-activity-tab",
+  "conversation-composer",
   "decisions",
   "watchtower",
 ].filter((s) => only.length === 0 || only.includes(s));

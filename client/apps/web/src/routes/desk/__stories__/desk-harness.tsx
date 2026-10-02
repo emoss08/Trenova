@@ -24,6 +24,7 @@ import {
   PENDING_SUMMARY,
   PLANS,
   PROPOSALS,
+  PROPOSAL_PREVIEW,
   PROVIDERS,
   THREADS,
   THREAD_ID,
@@ -60,6 +61,10 @@ function graphql(operationName: string, variables: Record<string, unknown>): Jso
       return { pendingDecisionSummary: PENDING_SUMMARY };
     case "PendingDecisions":
       return { pendingDecisions: page([]) };
+    case "MyProposalPreview":
+      return { myProposalPreview: PROPOSAL_PREVIEW };
+    case "MyAIFeedback":
+      return { myAIFeedback: null };
     default:
       console.warn("[desk story] unmocked GraphQL operation", operationName, variables);
       return {};
@@ -83,7 +88,7 @@ function rest(method: string, path: string): { status: number; body: Json } {
     return ok({ results: path.includes(THREAD_ID) ? MESSAGES : [], hasMore: false, total: MESSAGES.length, limit: 50 });
   }
   if (/\/assistant\/threads\/[^/]+\/proposals\//.test(path)) {
-    return ok({ results: path.includes(THREAD_ID) ? PROPOSALS : [] });
+    return ok({ results: path.includes(THREAD_ID) ? servedProposals : [] });
   }
   if (/\/assistant\/threads\/[^/]+\/plans\//.test(path)) {
     return ok({ results: path.includes(THREAD_ID) ? PLANS : [] });
@@ -103,6 +108,9 @@ function rest(method: string, path: string): { status: number; body: Json } {
   console.warn("[desk story] unmocked request", method, path);
   return { status: 404, body: { error: "not mocked" } };
 }
+
+/** Which of the fixture's proposals a story serves. */
+let servedProposals = PROPOSALS;
 
 let installed = false;
 function installFetchStub() {
@@ -153,6 +161,8 @@ export type DeskStoryOptions = {
   pane?: "open" | "closed";
   /** Which workspace tab is open. */
   tab?: "artifacts" | "decisions" | "activity";
+  /** Whether a proposal is still waiting on the person, which puts the approval box in the composer's place. */
+  decisions?: "waiting" | "settled";
 };
 
 /** The Desk at a path, with every store and request it reads answered. */
@@ -161,15 +171,20 @@ export function DeskStory({
   rail = "open",
   pane = "open",
   tab = "artifacts",
+  decisions = "waiting",
 }: DeskStoryOptions) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
+    servedProposals =
+      decisions === "waiting"
+        ? PROPOSALS
+        : PROPOSALS.filter((proposal) => proposal.status !== "Pending");
     installFetchStub();
     useAuthStore.setState({ user: USER as never, isAuthenticated: true } as never);
     usePermissionStore.setState(ALLOW_ALL as never);
     useDeskStore.setState({ rail, pane, workspaceTab: tab } as never);
     setReady(true);
-  }, [rail, pane, tab]);
+  }, [rail, pane, tab, decisions]);
 
   const router = useMemo(
     () =>

@@ -1,14 +1,19 @@
 import { AgentAsk, type AgentAskHandle } from "@/components/assistant/agent-ask";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
+import { WorkingDot } from "@/components/assistant/voice/working-dot";
+import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
+import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import type { WatchtowerItem } from "@/lib/graphql/watchtower";
 import { queries } from "@/lib/queries";
 import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
+  formatShortAge,
   partOfDay,
   resolveUserTimezone,
   skyPhase,
@@ -19,18 +24,29 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { BotIcon, PlugZapIcon } from "lucide-react";
-import { useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  ArrowRightIcon,
+  BotIcon,
+  InboxIcon,
+  PlugZapIcon,
+  RadarIcon,
+  type LucideIcon,
+} from "lucide-react";
+import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { BriefingPanel } from "./briefing-panel";
-import { DeskAgentDirectory } from "./desk-agent-directory";
-import { DeskDecisionsCallout } from "./desk-decisions-callout";
 import { DeskGreeting } from "./desk-greeting";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 /** The beat between one part of the page arriving and the next. */
 const ENTRANCE_STEP_MS = 45;
+/** Agents shown on the shelf before the rest are counted. */
+const SHELF_AGENTS = 6;
+/** Watchtower items the card shows before the rest are counted. */
+const WATCHTOWER_ROWS = 4;
+/** Agents named under the waiting count before the rest are counted. */
+const NAMED_AGENTS = 3;
 
 export type DeskHomeProps = {
   agents: AgentChoice[];
@@ -57,30 +73,17 @@ function entrance(step: number): CSSProperties {
 }
 
 /**
- * The Desk's front page.
+ * The Desk's front page: the question first, then the day around it.
  *
- * It opens on the question. The Desk is a workspace you talk to, so the
- * first screen is a greeting over the box you talk into, centred in the room
- * with the chosen agent's own questions under it — and nothing else until
- * the person scrolls. Below that fold sit what is waiting on them and the
- * morning's briefing on one side, and the agents they could ask on the
- * other. The conversations they left off in are on the rail, where they
- * are on every page of the Desk, so the front page does not list them twice.
+ * It opens on the box you talk into, under a greeting that says what the
+ * day looks like in one line, and under that the desk itself: what is
+ * waiting on you, what is being answered right now, what the watchtower
+ * has seen, the morning's page, and the agents you could ask. Every figure
+ * is one the rest of the product already shows, and every card opens onto
+ * the page that holds its rows. Nothing here is a model's sentence unless
+ * the briefing wrote it and checked it.
  *
- * The headline's second line is composed from counts, never written by a
- * model, unless the morning's briefing wrote one and checked every figure in
- * it; when nothing is waiting it asks the question the page is for. A front
- * page that opens with a sentence nobody can trace is one people stop reading.
- *
- * The greeting sits under the day's own light: a soft wash of dawn, daylight,
- * dusk or night behind the first lines, and a small mark of the same sky
- * leading the dateline, both read from the person's own timezone.
- *
- * Everything arrives once, in reading order, a beat apart, and then holds
- * still. Nothing here moves again unless the person does something. Until
- * the headline's figures are known — the agents and conversations, the
- * briefing, and what is waiting on someone who decides — its second line is
- * a skeleton, so the page never opens on a sentence it is about to take back.
+ * Everything arrives once, in reading order, a beat apart, and holds still.
  */
 export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: DeskHomeProps) {
   const t = useT();
@@ -91,16 +94,22 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
     Resource.AgentProposal,
     Operation.Read,
   );
+  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { data: attention } = useAttentionSummary();
-  // The briefing is written on a schedule, so before that hour there simply
-  // is none. That is an ordinary answer, not a failure, and the page reads
-  // the same without it.
   const briefingQuery = useQuery({ ...queries.briefing.today(), retry: false });
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
+  const liveQuery = useQuery({ ...queries.assistant.activeTurns(), retry: false });
+  const live = liveQuery.data?.items ?? [];
+  const watchtowerQuery = useQuery({
+    ...queries.watchtower.feed({ unresolvedOnly: true, first: WATCHTOWER_ROWS }),
+    enabled: canWatch,
+    retry: false,
+  });
+  const watchtowerCounts = useQuery({ ...queries.watchtower.counts(), enabled: canWatch });
 
   const askable = useAskableAgent({ threads });
   const askRef = useRef<AgentAskHandle>(null);
@@ -109,7 +118,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
 
   const chooseAgent = (agent: AgentChoice) => {
     askable.choose(agent);
-    heroRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     askRef.current?.focus();
   };
 
@@ -123,7 +132,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
       }).format(new Date(now * 1000)),
     [now, timezone],
   );
-  // The same day, machine-readable, for the <time> that carries it.
   const isoDate = useMemo(
     () =>
       new Intl.DateTimeFormat("en-CA", {
@@ -139,11 +147,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const sky = skyPhase(hour);
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
 
-  // The briefing's headline when there is one: it was written from figures
-  // gathered before a word of it, and every number in it was checked against
-  // them. The computed sentence is what a morning reads like before the page
-  // has been written, and the question is what it reads like when nothing
-  // needs saying.
   const headline =
     briefing?.headline ||
     (canDecide && waiting > 0
@@ -155,24 +158,21 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
         ? t("Nothing is running here yet.")
         : t("How can I help today?"));
 
-  const showDecisions = canDecide && waiting > 0;
-  const showAside = showDecisions || briefing !== null;
-  const showAgents = !noAgents;
   const headlinePending =
     isLoading ||
     permissionsLoading ||
     briefingQuery.isPending ||
     (canDecide && summaryQuery.isPending);
 
-  // The sky's wash reaches past the column on both sides and is clipped only
-  // at the window's edge, never at the column's, so it has no edge to see.
+  const shelf = agents.slice(0, SHELF_AGENTS);
+
   return (
     <div className="w-full overflow-x-clip">
-      <div className="mx-auto flex w-full max-w-5xl flex-col px-6 sm:px-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pt-10 pb-16 sm:px-10">
         <section
           ref={heroRef}
           aria-label={t("Ask an agent")}
-          className="flex min-h-[calc(100dvh-8rem)] scroll-mt-6 flex-col items-center justify-center gap-10 py-16"
+          className="flex scroll-mt-6 flex-col items-center gap-7"
         >
           <DeskGreeting
             sky={sky}
@@ -184,7 +184,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
               headlinePending ? (
                 <Skeleton
                   data-part="headline-skeleton"
-                  className="mx-auto h-9 w-3/4 max-w-md align-middle"
+                  className="mx-auto h-7 w-3/4 max-w-md align-middle"
                 />
               ) : (
                 headline
@@ -220,45 +220,285 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
           </div>
         </section>
 
-        {(showAside || showAgents) && (
+        {!noAgents && (
           <section
             aria-label={t("Waiting on you, your day and your agents")}
-            className={cn(
-              "grid grid-cols-1 gap-x-12 gap-y-10 pb-16",
-              showAside && showAgents && "lg:grid-cols-[19rem_minmax(0,1fr)]",
-            )}
+            className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-12"
           >
-            {showAside && (
-              <aside
-                className="animate-rise flex min-w-0 flex-col gap-8 lg:sticky lg:top-6 lg:self-start"
-                style={entrance(4)}
+            {canDecide && (
+              <DeskCard
+                step={4}
+                icon={InboxIcon}
+                title={t("Waiting on you")}
+                figure={waiting}
+                to="/desk/decisions"
+                action={t("Review decisions")}
+                className="xl:col-span-4"
               >
-                {showDecisions && (
-                  <DeskDecisionsCallout
-                    waiting={waiting}
-                    byAgent={summaryQuery.data?.byAgent ?? []}
-                    oldestAt={summaryQuery.data?.oldestAt ?? null}
-                    agentsById={agentsById}
-                    now={now}
-                  />
+                {summaryQuery.isPending ? (
+                  <CardSkeleton rows={3} />
+                ) : waiting === 0 ? (
+                  <CardEmpty>{t("Nothing is waiting on you. Every proposal has been decided.")}</CardEmpty>
+                ) : (
+                  <ul className="flex flex-col gap-1.5">
+                    {(summaryQuery.data?.byAgent ?? []).slice(0, NAMED_AGENTS).map((row) => (
+                      <li key={row.agentDefinitionId} className="flex items-center gap-2 text-sm">
+                        <AgentTile
+                          agent={
+                            agentsById.get(row.agentDefinitionId) ?? {
+                              id: row.agentDefinitionId,
+                              name: row.agentName,
+                            }
+                          }
+                          size="xs"
+                        />
+                        <span className="min-w-0 flex-1 truncate">
+                          {row.agentName || t("Retired agent")}
+                        </span>
+                        <span className="text-foreground-subtle tabular-nums">{row.count}</span>
+                      </li>
+                    ))}
+                    {(summaryQuery.data?.byAgent.length ?? 0) > NAMED_AGENTS && (
+                      <li className="text-foreground-subtle pl-6 text-xs">
+                        {t(
+                          "{0, plural, one {and one more agent} other {and # more agents}}",
+                          (summaryQuery.data?.byAgent.length ?? 0) - NAMED_AGENTS,
+                        )}
+                      </li>
+                    )}
+                    {summaryQuery.data?.oldestAt ? (
+                      <li className="text-foreground-subtle pt-1 text-xs tabular-nums">
+                        {t("Oldest {0}", formatShortAge(now - summaryQuery.data.oldestAt))}
+                      </li>
+                    ) : null}
+                  </ul>
                 )}
-                {briefing && <BriefingPanel briefing={briefing} />}
-              </aside>
+              </DeskCard>
             )}
 
-            {showAgents && (
-              <div className="animate-rise min-w-0" style={entrance(5)}>
-                <DeskAgentDirectory
-                  recency={askable.recency}
-                  selectedId={askable.agent?.id ?? null}
-                  disabled={isStarting}
-                  onChoose={chooseAgent}
-                />
+            <DeskCard
+              step={5}
+              icon={BotIcon}
+              title={t("Replying now")}
+              figure={live.length}
+              className="xl:col-span-4"
+            >
+              {liveQuery.isPending ? (
+                <CardSkeleton rows={2} />
+              ) : live.length === 0 ? (
+                <CardEmpty>{t("No agent is writing a reply right now.")}</CardEmpty>
+              ) : (
+                <ul className="flex flex-col gap-1">
+                  {live.map((turn) => {
+                    const thread = threads.find((item) => item.id === turn.threadId);
+                    const agent = thread ? agentsById.get(thread.agentDefinitionId) : null;
+
+                    return (
+                      <li key={turn.turnId}>
+                        <Link
+                          to={conversationPath(turn.threadId)}
+                          className="ui-focus-ring hover:bg-surface-hover -mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors"
+                        >
+                          <WorkingDot working still />
+                          <span className="min-w-0 flex-1 truncate">
+                            {turn.threadTitle || thread?.title || t("Untitled conversation")}
+                          </span>
+                          <span className="text-foreground-subtle flex shrink-0 items-center gap-1.5 text-xs">
+                            <AgentTile agent={agent ?? null} size="xs" className="size-3.5" />
+                            {formatShortAge(now - turn.startedAt)}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </DeskCard>
+
+            {canWatch && (
+              <DeskCard
+                step={6}
+                icon={RadarIcon}
+                title={t("Watchtower")}
+                figure={watchtowerCounts.data?.unseen ?? 0}
+                figureTone={(watchtowerCounts.data?.unseenCritical ?? 0) > 0 ? "danger" : undefined}
+                to="/desk/watchtower"
+                action={t("Open the watchtower")}
+                className="xl:col-span-4"
+              >
+                {watchtowerQuery.isPending ? (
+                  <CardSkeleton rows={3} />
+                ) : (watchtowerQuery.data?.items.length ?? 0) === 0 ? (
+                  <CardEmpty>{t("Nothing unresolved. The watchtower is quiet.")}</CardEmpty>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {watchtowerQuery.data?.items.slice(0, WATCHTOWER_ROWS).map((item) => (
+                      <WatchtowerRow key={item.id} item={item} now={now} />
+                    ))}
+                  </ul>
+                )}
+              </DeskCard>
+            )}
+
+            {briefing && (
+              <div className="animate-rise xl:col-span-7" style={entrance(7)}>
+                <BriefingPanel briefing={briefing} />
               </div>
             )}
+
+            <DeskCard
+              step={8}
+              icon={BotIcon}
+              title={t("Agents")}
+              figure={agents.length}
+              className={cn(briefing ? "xl:col-span-5" : "xl:col-span-12")}
+            >
+              {isLoading ? (
+                <CardSkeleton rows={4} />
+              ) : (
+                <ul className={cn("flex flex-col gap-0.5", !briefing && "md:grid md:grid-cols-2 xl:grid-cols-3")}>
+                  {shelf.map((agent) => (
+                    <li key={agent.id}>
+                      <button
+                        type="button"
+                        disabled={isStarting}
+                        onClick={() => chooseAgent(agent)}
+                        className="group/agent ui-focus-ring hover:bg-surface-hover -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-md px-2 py-2 text-left transition-colors disabled:opacity-60"
+                      >
+                        <AgentTile agent={agent} size="sm" />
+                        <span className="grid min-w-0 flex-1 leading-tight">
+                          <span className="truncate text-sm font-medium">{agent.name}</span>
+                          <span className="text-foreground-subtle truncate text-xs">
+                            {agent.description}
+                          </span>
+                        </span>
+                        <ArrowRightIcon className="text-foreground-subtle size-3.5 shrink-0 opacity-0 transition-[opacity,translate] group-hover/agent:translate-x-0.5 group-hover/agent:opacity-100" />
+                      </button>
+                    </li>
+                  ))}
+                  {agents.length > SHELF_AGENTS && (
+                    <li className="text-foreground-subtle px-0 pt-1 text-xs">
+                      {t("{0, plural, one {and one more agent} other {and # more agents}}", agents.length - SHELF_AGENTS)}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </DeskCard>
           </section>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * One card of the desk: a quiet frame with a mark, a title, the one figure
+ * that matters, and the way to the page behind it.
+ */
+function DeskCard({
+  step,
+  icon: Icon,
+  title,
+  figure,
+  figureTone,
+  to,
+  action,
+  className,
+  children,
+}: {
+  step: number;
+  icon: LucideIcon;
+  title: string;
+  figure?: number;
+  figureTone?: "danger";
+  to?: string;
+  action?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-label={title}
+      style={entrance(step)}
+      className={cn(
+        "animate-rise bg-card ring-foreground/10 flex min-h-40 flex-col gap-3 rounded-lg p-4 ring-1",
+        className,
+      )}
+    >
+      <header className="flex items-center gap-2">
+        <Icon className="text-foreground-subtle size-4 shrink-0" />
+        <h2 className="text-foreground-muted min-w-0 flex-1 truncate text-sm font-medium">
+          {title}
+        </h2>
+        {figure !== undefined && (
+          <span
+            className={cn(
+              "text-lg font-semibold tabular-nums",
+              figureTone === "danger" ? "text-danger" : "text-foreground",
+            )}
+          >
+            {figure > 999 ? "999+" : figure}
+          </span>
+        )}
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      {to && action && (
+        <Button
+          nativeButton={false}
+          variant="ghost"
+          size="sm"
+          render={<Link to={to} />}
+          className="group/card text-foreground-muted hover:text-foreground -mx-2 -mb-1.5 justify-start px-2"
+        >
+          {action}
+          <ArrowRightIcon className="size-3.5 transition-transform group-hover/card:translate-x-0.5" />
+        </Button>
+      )}
+    </section>
+  );
+}
+
+function WatchtowerRow({ item, now }: { item: WatchtowerItem; now: number }) {
+  return (
+    <li>
+      <Link
+        to={item.path || "/desk/watchtower"}
+        className="ui-focus-ring hover:bg-surface-hover -mx-2 flex items-start gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors"
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "mt-1.5 size-1.5 shrink-0 rounded-full",
+            item.severity === "Critical"
+              ? "bg-danger"
+              : item.severity === "Warning"
+                ? "bg-warning"
+                : "bg-foreground-subtle",
+          )}
+        />
+        <span className="grid min-w-0 flex-1 leading-tight">
+          <span className="truncate">{item.title}</span>
+          <span className="text-foreground-subtle truncate text-xs">
+            {item.kindLabel} · {formatShortAge(now - item.occurredAt)}
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function CardEmpty({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-foreground-subtle flex flex-1 items-center text-sm text-pretty">{children}</p>
+  );
+}
+
+function CardSkeleton({ rows }: { rows: number }) {
+  return (
+    <div className="flex flex-col gap-2" aria-busy>
+      {Array.from({ length: rows }, (_, index) => (
+        <Skeleton key={index} className="h-5" style={{ width: `${90 - index * 15}%` }} />
+      ))}
     </div>
   );
 }

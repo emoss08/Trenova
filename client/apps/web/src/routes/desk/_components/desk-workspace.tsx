@@ -28,7 +28,9 @@ import {
   PanelRightCloseIcon,
   XIcon,
 } from "lucide-react";
+import { m, useReducedMotion } from "motion/react";
 import { useMemo, type ReactNode } from "react";
+import { EASE_SETTLE } from "@/lib/motion";
 import { ArtifactsPane } from "./artifacts/artifacts-pane";
 import type { LiveArtifacts } from "./desk-layout";
 
@@ -58,6 +60,7 @@ export function DeskWorkspace({ threadId, agent, liveArtifacts, onClose, classNa
   const t = useT();
   const tab = useDeskStore((state) => state.workspaceTab);
   const setTab = useDeskStore((state) => state.setWorkspaceTab);
+  const reduceMotion = useReducedMotion();
 
   const artifactsQuery = useQuery(queries.assistant.artifacts(threadId));
   const proposalsQuery = useQuery(queries.assistant.proposals(threadId));
@@ -97,15 +100,25 @@ export function DeskWorkspace({ threadId, agent, liveArtifacts, onClose, classNa
                 className={cn(
                   "ui-focus-ring relative flex h-7 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors",
                   selected
-                    ? "bg-surface-selected text-foreground font-medium"
+                    ? "text-foreground font-medium"
                     : "text-foreground-muted hover:bg-surface-hover hover:text-foreground",
                 )}
               >
-                {item.label}
+                {selected && (
+                  <m.span
+                    layoutId={`desk-workspace-tab-${threadId}`}
+                    aria-hidden
+                    transition={
+                      reduceMotion ? { duration: 0 } : { duration: 0.24, ease: EASE_SETTLE }
+                    }
+                    className="bg-surface-selected absolute inset-0 rounded-md"
+                  />
+                )}
+                <span className="relative">{item.label}</span>
                 {item.count > 0 && (
                   <span
                     className={cn(
-                      "text-xs tabular-nums",
+                      "relative text-xs tabular-nums",
                       item.attention ? "text-warning font-medium" : "text-foreground-subtle",
                     )}
                   >
