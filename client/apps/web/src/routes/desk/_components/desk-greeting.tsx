@@ -5,15 +5,17 @@ import type { CSSProperties, ReactNode } from "react";
 export type DeskGreetingProps = {
   /** The light outside in the person's timezone, which colours the wash and the mark. */
   sky: SkyPhase;
+  /** The first line of the headline: the time of day, and the person by name. */
   greeting: string;
   /** The day, as the person reads it. */
   dateline: string;
   /** The same day, machine-readable, for the `<time>` that carries it. */
   isoDate: string;
+  /** The second line of the headline: what the day looks like, or the question the page asks. */
   headline: ReactNode;
-  lede: ReactNode;
   /** Staggers each line in behind the one above it, in reading order. */
   entrance: (step: number) => CSSProperties;
+  className?: string;
 };
 
 /**
@@ -21,11 +23,14 @@ export type DeskGreetingProps = {
  *
  * Behind the first lines sits a wash of the part of the day, a pool of dawn
  * amber, daylight blue, dusk rose or night indigo that fades out long before
- * it reaches anything else, and the greeting leads with a small mark of the
- * same sky. That is all the colour here. The greeting is a label, the date
- * beside it quieter, and the headline under both is the page's one heading.
+ * it reaches anything else, and the dateline leads with a small mark of the
+ * same sky. That is all the colour here. The headline is two lines of one
+ * heading: the greeting in ink, and under it, quieter, what the day looks
+ * like — or, when nothing is waiting, the question the page is for.
  *
- * Every line rises in once, a beat apart, and then holds still.
+ * It stands centred, because the page is a room to be entered rather than
+ * a column to be read, and every line rises in once, a beat apart, and then
+ * holds still.
  */
 export function DeskGreeting({
   sky,
@@ -33,43 +38,40 @@ export function DeskGreeting({
   dateline,
   isoDate,
   headline,
-  lede,
   entrance,
+  className,
 }: DeskGreetingProps) {
   return (
-    <header data-sky={sky} className="relative isolate flex flex-col gap-3">
+    <header
+      data-sky={sky}
+      className={cn("relative isolate flex flex-col items-center gap-4 text-center", className)}
+    >
       <div
         aria-hidden
         data-slot="desk-daylight"
         data-sky={sky}
-        className="ui-daylight animate-rise pointer-events-none absolute -top-28 -left-40 -z-10 h-96 w-240 max-w-none"
+        className="ui-daylight animate-rise pointer-events-none absolute -top-40 left-1/2 -z-10 h-96 w-240 max-w-none -translate-x-1/2"
         style={entrance(0)}
       />
       <p
-        className="animate-rise flex flex-wrap items-center gap-x-2 gap-y-0.5 text-base"
+        className="text-foreground-subtle animate-rise flex items-center gap-2 text-sm"
         style={entrance(0)}
       >
-        <SkyMark sky={sky} className="-ml-px size-4" />
-        <span className="text-foreground font-medium">{greeting}</span>
-        <span aria-hidden className="text-foreground-subtle">
-          ·
+        <SkyMark sky={sky} className="size-4" />
+        <time dateTime={isoDate}>{dateline}</time>
+      </p>
+      <h1 className="max-w-3xl text-3xl font-semibold text-balance sm:text-4xl">
+        <span className="animate-rise block" style={entrance(1)}>
+          {greeting}
         </span>
-        <time dateTime={isoDate} className="text-foreground-subtle">
-          {dateline}
-        </time>
-      </p>
-      <h1
-        className="animate-rise max-w-2xl text-3xl font-semibold text-balance"
-        style={entrance(1)}
-      >
-        {headline}
+        <span
+          data-slot="desk-headline"
+          className="text-foreground-muted animate-rise mt-1.5 block"
+          style={entrance(2)}
+        >
+          {headline}
+        </span>
       </h1>
-      <p
-        className="text-foreground-muted animate-rise max-w-xl text-base text-pretty"
-        style={entrance(2)}
-      >
-        {lede}
-      </p>
     </header>
   );
 }

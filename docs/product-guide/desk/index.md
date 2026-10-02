@@ -11,7 +11,7 @@ covers:
 ---
 
 ## What it's for
-The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box with the agent it will ask and a few starter questions that agent can answer, **Your day** (a short briefing), a link to changes **Waiting on your decision**, **Agents** (every agent you can ask, the ones you use most first, with **Search agents** and a filter for agents made from a template or built by hand), and **Where you left off** with your recent conversations. **Conversations** at the top lists your conversations, grouped by agent with pinned ones first, plus **New conversation** and links to **Watchtower** and **Decisions**.
+The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box with the agent it will ask and a few starter questions that agent can answer, and below it **Your day** (a short briefing), a link to changes **Waiting on your decision**, and **Agents** (every agent you can ask, the ones you use most first, with **Search agents** and a filter for agents made from a template or built by hand). The rail down the left holds **New conversation**, **Search conversations**, links to **Today**, **Watchtower** and **Decisions**, and every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, the previous 7 days, the previous 30 days and older). The control at the top of the rail folds it away to make room (or press ⌘B / Ctrl+B), and the control at the top left of the page brings it back.
 
 Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in your conversation they wait in the approval box at its foot, and they are also listed on [Decisions](/desk/decisions).
 
@@ -34,13 +34,13 @@ Keywords: approve in chat, review agent change, preview before approving, what w
 
 ### Start a conversation without asking a question yet
 Keywords: new chat, blank conversation
-1. Open [Desk](/desk) and select **Conversations** at the top.
-2. Select **New conversation**, then search for and pick the agent.
+1. Open [Desk](/desk).
+2. Select **New conversation** in the rail (if the rail is folded, open it with the control at the top left, or press ⌘B / Ctrl+B), then search for and pick the agent.
 
 ### Go back to an earlier conversation
 Keywords: find chat, previous conversation, conversation history
 1. Open [Desk](/desk).
-2. Select a conversation under **Where you left off**, or find it in the left list with **Search conversations**.
+2. Select the conversation in the rail, where conversations are grouped by when they were last used with pinned ones first, or find it with **Search conversations**.
 
 ### Move, shrink or hide the assistant on any page
 Keywords: assistant covers the screen, move chat button, hide AI button, assistant too big, resize assistant, assistant in the way

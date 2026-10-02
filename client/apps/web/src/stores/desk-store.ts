@@ -4,12 +4,19 @@ import { persist } from "zustand/middleware";
 /** The artifacts pane: open beside the conversation, or folded away. */
 export type DeskPaneState = "open" | "closed";
 
+/** The rail: the Desk's table of contents, open along the left, or folded to nothing. */
+export type DeskRailState = "open" | "closed";
+
 interface DeskState {
+  /** Whether the rail of conversations and places is showing along the left. */
+  rail: DeskRailState;
   /** Whether the artifacts pane is showing beside a conversation. */
   pane: DeskPaneState;
   /** The artifact each conversation last had open, so returning to it reopens the same one. */
   activeArtifactByThread: Record<string, string>;
 
+  setRail: (rail: DeskRailState) => void;
+  toggleRail: () => void;
   setPane: (pane: DeskPaneState) => void;
   togglePane: () => void;
   setActiveArtifact: (threadId: string, artifactId: string | null) => void;
@@ -39,9 +46,12 @@ export function rememberActiveArtifact(
 export const useDeskStore = create<DeskState>()(
   persist(
     (set) => ({
+      rail: "open",
       pane: "open",
       activeArtifactByThread: {},
 
+      setRail: (rail) => set({ rail }),
+      toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
       setPane: (pane) => set({ pane }),
       togglePane: () => set((state) => ({ pane: state.pane === "open" ? "closed" : "open" })),
       setActiveArtifact: (threadId, artifactId) =>
@@ -56,6 +66,7 @@ export const useDeskStore = create<DeskState>()(
     {
       name: "trenova-desk",
       partialize: (state) => ({
+        rail: state.rail,
         pane: state.pane,
         activeArtifactByThread: state.activeArtifactByThread,
       }),

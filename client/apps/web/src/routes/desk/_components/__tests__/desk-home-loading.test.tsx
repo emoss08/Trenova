@@ -60,7 +60,6 @@ vi.mock("@/components/assistant/use-askable-agent", () => ({
 
 vi.mock("../desk-agent-directory", () => ({ DeskAgentDirectory: () => null }));
 vi.mock("../desk-decisions-callout", () => ({ DeskDecisionsCallout: () => null }));
-vi.mock("../desk-recent-conversations", () => ({ DeskRecentConversations: () => null }));
 vi.mock("../briefing-panel", () => ({ BriefingPanel: () => null }));
 
 const agent = { id: "agent-1", name: "Dispatch" } as DeskHomeProps["agents"][number];
@@ -84,11 +83,19 @@ function renderHome(props: Partial<DeskHomeProps> = {}) {
   );
 }
 
+/**
+ * The heading's first line, the greeting, is known before anything loads;
+ * its second line is the one the figures decide, so that is the line held
+ * as a skeleton rather than said and then taken back.
+ */
 async function expectHeadlineSkeleton() {
   const heading = await screen.findByRole("heading", { level: 1 });
-  expect(heading.querySelector('[data-slot="skeleton"]')).not.toBeNull();
-  expect(heading).toHaveTextContent("");
+  const second = heading.querySelector('[data-slot="desk-headline"]');
+  expect(second?.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+  expect(second).toHaveTextContent("");
+  expect(heading).toHaveTextContent(/^Good (morning|afternoon|evening)$/);
   expect(screen.queryByText(/waiting on you/)).toBeNull();
+  expect(screen.queryByText("How can I help today?")).toBeNull();
   expect(document.querySelector('[data-slot="desk-loading-mark"]')).toBeNull();
 }
 
@@ -132,8 +139,10 @@ describe("Desk home headline while its figures load", () => {
     state.summary.isPending = true;
     renderHome();
 
-    expect(await screen.findByText("Nothing is waiting on you.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]')).toBeNull();
+    expect(await screen.findByText("How can I help today?")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]'),
+    ).toBeNull();
   });
 
   it("keeps the rest of the page, with the ask box as its own skeleton, while it waits", async () => {
@@ -141,6 +150,7 @@ describe("Desk home headline while its figures load", () => {
 
     await expectHeadlineSkeleton();
     expect(screen.getByText(/^Good (morning|afternoon|evening)$/).closest("header")).not.toBeNull();
+    expect(document.querySelector('[data-slot="desk-daylight"]')).not.toBeNull();
     expect(document.querySelector('[aria-busy] [data-slot="skeleton"]')).not.toBeNull();
   });
 
@@ -148,6 +158,11 @@ describe("Desk home headline while its figures load", () => {
     renderHome();
 
     expect(await screen.findByText("2 decisions are waiting on you.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]')).toBeNull();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      /^Good (morning|afternoon|evening)2 decisions are waiting on you\.$/,
+    );
+    expect(
+      screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]'),
+    ).toBeNull();
   });
 });

@@ -1,7 +1,8 @@
 import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
-import { conversationPath } from "@/lib/conversation-path";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -22,23 +23,19 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
+import { Sheet, SheetContent, SheetTitle } from "@trenova/shared/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  ChevronsUpDownIcon,
-  DownloadIcon,
-  PanelRightIcon,
-  PinIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { DownloadIcon, PanelRightIcon, PinIcon, Trash2Icon } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ArtifactsPane } from "./artifacts/artifacts-pane";
-import { DeskDirectory } from "./desk-directory";
-import { DeskColumns, DeskShell } from "./desk-shell";
+import { DESK_WIDE_QUERY } from "./desk-dimensions";
+import { DeskRail, RAIL_SHORTCUT } from "./desk-rail";
+import { DeskColumns, DeskRailFold, DeskShell } from "./desk-shell";
 import { DeskTitleField } from "./desk-title-field";
 import { DeskWorkspaceEmpty } from "./desk-workspace-empty";
 
@@ -79,6 +76,9 @@ export type LiveArtifacts = {
 
 const NO_LIVE_ARTIFACTS: LiveArtifacts = { ids: [], revision: 0 };
 
+/** The keystroke that folds the workspace, as it is shown beside the control. */
+const WORKSPACE_SHORTCUT = "⌘\\";
+
 export function useDesk(): DeskContextValue {
   const value = useContext(DeskContext);
   if (value === null) {
@@ -89,13 +89,13 @@ export function useDesk(): DeskContextValue {
 }
 
 /**
- * The Desk itself: one room, the whole window, a conversation on the left
- * and what it produced on the right.
+ * The Desk itself: one room, the whole window — the rail down the left, the
+ * conversation in the middle and what it produced on the right.
  *
  * The frame owns everything that outlives a single page inside it — the
  * conversations, the agents, the delete confirmation, and the state of the
- * workspace — because all three pages of the Desk share them and none of
- * them should reload when you move between them.
+ * rail and the workspace — because all the pages of the Desk share them and
+ * none of them should reload when you move between them.
  *
  * It also owns the header, which means the header can say what the open
  * conversation is without the conversation having to draw a title bar of
@@ -105,8 +105,13 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const t = useT();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const wide = useMediaQuery(DESK_WIDE_QUERY);
   const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
   const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
+  const rail = useDeskStore((state) => state.rail);
+  const setRail = useDeskStore((state) => state.setRail);
+  const toggleRail = useDeskStore((state) => state.toggleRail);
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
   const togglePane = useDeskStore((state) => state.togglePane);
@@ -115,6 +120,10 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const [deleting, setDeleting] = useState<AssistantThread | null>(null);
   const [working, setWorking] = useState(false);
   const [liveArtifacts, setLiveArtifacts] = useState<LiveArtifacts>(NO_LIVE_ARTIFACTS);
+  // On a narrow screen the rail is a sheet over the room rather than a column
+  // beside it, and whether that sheet is open is this visit's business, not
+  // a habit to remember.
+  const [railSheetOpen, setRailSheetOpen] = useState(false);
 
   const threadsQuery = useQuery(queries.assistant.threads());
   const agentsQuery = useQuery(queries.assistant.myAgents());
@@ -155,6 +164,17 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     setLiveArtifacts(NO_LIVE_ARTIFACTS);
   }
 
+  // A sheet left open while the window grows into a wide one would sit over
+  // the rail it stands in for. Adjusted during render rather than in an
+  // effect, so the first wide frame is already without it.
+  const [seenWide, setSeenWide] = useState(wide);
+  if (seenWide !== wide) {
+    setSeenWide(wide);
+    if (wide) {
+      setRailSheetOpen(false);
+    }
+  }
+
   // An unlisted conversation is cached on its own, so a rename or a pin has
   // to refresh that copy as well as the list.
   const refreshThreads = useCallback(
@@ -178,6 +198,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         setOpeningQuestion({ threadId: thread.id, text: question });
       }
       await refreshThreads();
+      setRailSheetOpen(false);
       void navigate(conversationPath(thread.id));
     },
     resourceName: "Conversation",
@@ -266,17 +287,34 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   );
 
   const workspaceOpen = activeThread !== null && pane === "open";
+  const railOpen = rail === "open";
 
-  // The one shortcut the room has. A person reading a wide table wants the
-  // conversation out of the way and then wants it back a sentence later, and
-  // reaching for a button in the corner each time is the sort of friction
-  // that makes a workspace feel like a web page.
-  useEffect(() => {
-    if (activeThread === null) {
-      return;
+  const showRail = useCallback(() => {
+    if (wide) {
+      setRail("open");
+    } else {
+      setRailSheetOpen(true);
     }
+  }, [setRail, wide]);
+
+  // The room's two shortcuts. ⌘B folds the rail, as it does the sidebar in
+  // the rest of the app; ⌘\ folds the workspace. A person reading a wide
+  // table wants the conversation out of the way and then wants it back a
+  // sentence later, and reaching for a button in the corner each time is
+  // the sort of friction that makes a workspace feel like a web page.
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "\\" && (event.metaKey || event.ctrlKey)) {
+      if (event.defaultPrevented || !(event.metaKey || event.ctrlKey) || event.altKey) {
+        return;
+      }
+      if (event.key === "b" || event.key === "B") {
+        event.preventDefault();
+        if (wide) {
+          toggleRail();
+        } else {
+          setRailSheetOpen((open) => !open);
+        }
+      } else if (event.key === "\\" && activeThread !== null) {
         event.preventDefault();
         togglePane();
       }
@@ -284,14 +322,38 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     window.addEventListener("keydown", onKeyDown);
 
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeThread, togglePane]);
+  }, [activeThread, togglePane, toggleRail, wide]);
+
+  const railProps = {
+    threads,
+    agents,
+    activeThreadId,
+    isLoading: threadsQuery.isLoading || agentsQuery.isLoading,
+    listUnavailable: threadsQuery.isError,
+    isStarting: startMutation.isPending,
+    onStart: (agentId: string) => startMutation.mutate({ agentId }),
+    onDelete: setDeleting,
+    onTogglePin: (thread: AssistantThread) => pinMutation.mutate(thread),
+    onRetry: () => void threadsQuery.refetch(),
+  };
 
   return (
     <DeskContext.Provider value={value}>
       <DeskShell
+        rail={
+          <DeskRailFold open={railOpen}>
+            <DeskRail
+              {...railProps}
+              collapse={{ label: t("Hide the rail"), shortcut: RAIL_SHORTCUT }}
+              onCollapse={() => setRail("closed")}
+            />
+          </DeskRailFold>
+        }
+        railOpen={railOpen}
+        onShowRail={showRail}
         accent={accent}
         working={working}
-        lead={<AgentTile agent={activeAgent} size="md" />}
+        lead={activeThread ? <AgentTile agent={activeAgent} size="md" /> : undefined}
         title={
           activeThread ? (
             <DeskTitleField
@@ -305,56 +367,44 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
               onCommit={(title) => renameMutation.mutate({ id: activeThread.id, title })}
             />
           ) : (
-            <span className="truncate px-2 text-sm font-medium">{t("Desk")}</span>
+            <span className="truncate px-1.5 text-sm font-medium">{pageName(t, pathname)}</span>
           )
         }
         actions={
-          <>
-            <DeskSwitcher
-              threads={threads}
-              agents={agents}
-              activeThreadId={activeThreadId}
-              isLoading={threadsQuery.isLoading || agentsQuery.isLoading}
-              isStarting={startMutation.isPending}
-              onStart={(agentId) => startMutation.mutate({ agentId })}
-              onDelete={setDeleting}
-              onTogglePin={(thread) => pinMutation.mutate(thread)}
-            />
-
-            {activeThread && (
-              <>
-                <span aria-hidden className="bg-desk-hairline mx-1 h-5 w-px" />
-                <HeaderAction
-                  label={activeThread.pinned ? t("Unpin conversation") : t("Pin conversation")}
-                  pressed={activeThread.pinned}
-                  onClick={() => pinMutation.mutate(activeThread)}
-                >
-                  <PinIcon className="size-4" />
-                </HeaderAction>
-                <HeaderAction
-                  label={t("Download transcript")}
-                  onClick={() => downloadAssistantTranscript(activeThread.id)}
-                >
-                  <DownloadIcon className="size-4" />
-                </HeaderAction>
-                <HeaderAction
-                  label={t("Delete conversation")}
-                  destructive
-                  onClick={() => setDeleting(activeThread)}
-                >
-                  <Trash2Icon className="size-4" />
-                </HeaderAction>
-                <HeaderAction
-                  label={pane === "open" ? t("Hide the workspace") : t("Show the workspace")}
-                  pressed={pane === "open"}
-                  hint="⌘\"
-                  onClick={togglePane}
-                >
-                  <PanelRightIcon className="size-4" />
-                </HeaderAction>
-              </>
-            )}
-          </>
+          activeThread && (
+            <>
+              <HeaderAction
+                label={activeThread.pinned ? t("Unpin conversation") : t("Pin conversation")}
+                pressed={activeThread.pinned}
+                onClick={() => pinMutation.mutate(activeThread)}
+              >
+                <PinIcon className="size-4" />
+              </HeaderAction>
+              <HeaderAction
+                label={t("Download transcript")}
+                onClick={() => downloadAssistantTranscript(activeThread.id)}
+              >
+                <DownloadIcon className="size-4" />
+              </HeaderAction>
+              <HeaderAction
+                label={t("Delete conversation")}
+                destructive
+                onClick={() => setDeleting(activeThread)}
+              >
+                <Trash2Icon className="size-4" />
+              </HeaderAction>
+              <span aria-hidden className="bg-desk-hairline mx-1 hidden h-5 w-px lg:block" />
+              <HeaderAction
+                label={pane === "open" ? t("Hide the workspace") : t("Show the workspace")}
+                pressed={pane === "open"}
+                hint={WORKSPACE_SHORTCUT}
+                className="hidden lg:inline-flex"
+                onClick={togglePane}
+              >
+                <PanelRightIcon className="size-4" />
+              </HeaderAction>
+            </>
+          )
         }
       >
         <DeskColumns
@@ -375,6 +425,25 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           }
         />
       </DeskShell>
+
+      <Sheet open={railSheetOpen && !wide} onOpenChange={setRailSheetOpen}>
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className={cn(
+            "bg-desk-rail gap-0 rounded-none border-0 p-0",
+            "data-[side=left]:w-[min(100vw_-_3rem,17rem)] data-[side=left]:sm:max-w-none",
+          )}
+        >
+          <SheetTitle className="sr-only">{t("Conversations")}</SheetTitle>
+          <DeskRail
+            {...railProps}
+            collapse={{ label: t("Close") }}
+            onCollapse={() => setRailSheetOpen(false)}
+            onNavigate={() => setRailSheetOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>
@@ -406,30 +475,16 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   );
 }
 
-/** The directory, behind the one control that opens it. */
-function DeskSwitcher(props: Omit<Parameters<typeof DeskDirectory>[0], "onNavigate">) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
+/** What the strip calls the page when no conversation is open. */
+function pageName(t: ReturnType<typeof useT>, pathname: string): string {
+  if (pathname.startsWith("/desk/decisions")) {
+    return t("Decisions");
+  }
+  if (pathname.startsWith("/desk/watchtower")) {
+    return t("Watchtower");
+  }
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground h-8 gap-1.5 px-2"
-          >
-            <span className="text-xs">{t("Conversations")}</span>
-            <ChevronsUpDownIcon className="size-3.5" />
-          </Button>
-        }
-      />
-      <PopoverContent align="end" sideOffset={8} className="ui-lift-float w-88 p-0">
-        <DeskDirectory {...props} onNavigate={() => setOpen(false)} />
-      </PopoverContent>
-    </Popover>
-  );
+  return t("Today");
 }
 
 function HeaderAction({
@@ -437,6 +492,7 @@ function HeaderAction({
   hint,
   pressed,
   destructive = false,
+  className,
   onClick,
   children,
 }: {
@@ -445,6 +501,7 @@ function HeaderAction({
   hint?: string;
   pressed?: boolean;
   destructive?: boolean;
+  className?: string;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -460,6 +517,7 @@ function HeaderAction({
             className={cn(
               pressed ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               destructive && "hover:text-destructive",
+              className,
             )}
             onClick={onClick}
           />
@@ -469,7 +527,7 @@ function HeaderAction({
       </TooltipTrigger>
       <TooltipContent side="bottom" className="flex items-center gap-2">
         {label}
-        {hint && <kbd className="text-2xs opacity-70">{hint}</kbd>}
+        {hint && <Kbd>{hint}</Kbd>}
       </TooltipContent>
     </Tooltip>
   );
