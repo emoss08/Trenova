@@ -8,9 +8,12 @@ import type {
   AssistantStreamEvent,
   SendMessageResult,
 } from "@/types/assistant";
+import { useRealtimeStore } from "@/stores/realtime-store";
+import type { AssistantLiveTurnList } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { listSaysQuiet } from "./active-turns";
 import { appendToHistory, continuesHistory, type ThreadHistory } from "./thread-history";
 import { registerTurnReader } from "./turn-readers";
 import {
@@ -145,6 +148,11 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   // whose numbers skip ahead means something was saved that the client never
   // saw, an aborted turn most often, and that is fetched rather than papered
   // over. Nothing cached also fetches fresh.
+  //
+  // Once the saved rows are in the history the reply is on screen from the
+  // cache, so the lists that only move with it (markers, proposals, plans,
+  // artifacts, the sidebar) refresh behind it rather than holding the
+  // streaming copy up, and the reply shown twice, until the slowest returns.
   const absorbTurn = useCallback(
     async (result: SendMessageResult | null) => {
       const key = queries.assistant.messages(threadId).queryKey;
@@ -156,7 +164,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         queryClient.setQueryData<ThreadHistory>(key, (history) =>
           appendToHistory(history, result.messages),
         );
-        await Promise.all([
+        void Promise.all([
           queryClient.invalidateQueries({
             queryKey: queries.assistant.activeTurns().queryKey,
           }),
@@ -365,8 +373,20 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         // the agent answering a decision made elsewhere, most often — is
         // followed to its end first. Asking over it used to fail with "already
         // working on a reply" while nothing on screen said anything was.
+        //
+        // The question is on screen from the click, not from the end of that
+        // check, and the check is skipped when the live list the realtime
+        // connection keeps current already says the conversation is quiet.
         if (!following()) {
-          const running = await activeTurn();
+          setTurn(initial);
+          const quiet = listSaysQuiet(
+            queryClient.getQueryState<AssistantLiveTurnList>(
+              queries.assistant.activeTurns().queryKey,
+            ),
+            threadId,
+            useRealtimeStore.getState().connectionState === "connected",
+          );
+          const running = quiet ? null : await activeTurn();
           if (running !== null && !following() && !pending.stopped) {
             await followActive(running);
           }
