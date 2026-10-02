@@ -30,6 +30,8 @@ const (
 	verbMoveIntoReview    = "move into review"
 	pastMovedIntoReview   = "moved into review"
 	unchangedAlreadyThere = "is already where the call would leave it"
+	// artifactBillingQueueItem is the record-link key of what the twins report.
+	artifactBillingQueueItem = "billing_queue_item"
 )
 
 // assignBillersTool is assign_billing_queue_biller over a set of items: one
@@ -83,6 +85,7 @@ func (t *assignBillersTool) ParamSchema() map[string]any {
 func (t *assignBillersTool) Policy() serviceports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
+	policy.Artifact = artifactBillingQueueItem
 	policy.Rationale = "Names who reviews several items inside Trenova, each exactly as " +
 		"assign_billing_queue_biller would; it creates no money and is changed by " +
 		"assigning someone else."
@@ -170,6 +173,7 @@ func (t *transitionItemsToInReviewTool) ParamSchema() map[string]any {
 func (t *transitionItemsToInReviewTool) Policy() serviceports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
+	policy.Artifact = artifactBillingQueueItem
 	policy.Condition = &serviceports.TierCondition{
 		Description: inReviewConditionDescription + " A set is held to what its most " +
 			"guarded item allows.",
