@@ -34,6 +34,7 @@ import {
   DeskApprovedCard,
   type ApprovedNote,
 } from "./conversation/desk-approval-card";
+import { useDeskSetting } from "@/stores/desk-settings-store";
 import { DeskConfetti } from "./conversation/desk-confetti";
 import {
   DeskArtifactBadges,
@@ -108,6 +109,8 @@ export function DeskConversation({
   const t = useT();
   const desk = useDesk();
   const reduceMotion = useReducedMotion();
+  const celebrate = useDeskSetting("celebrate");
+  const motion = useDeskSetting("motion");
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const opening = useOpeningQuestion(thread.id);
   const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
@@ -242,7 +245,7 @@ export function DeskConversation({
 
   const onApproved = (note: ApprovedNote) => {
     setApproved(note);
-    if (!reduceMotion) {
+    if (!reduceMotion && celebrate === "confetti" && motion === "full") {
       setBurst(Date.now());
     }
   };

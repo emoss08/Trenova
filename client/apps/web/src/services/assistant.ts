@@ -13,6 +13,8 @@ import {
   toolTrustListSchema,
   assistantMessagePageSchema,
   mentionCandidateListSchema,
+  deskSearchResultListSchema,
+  type DeskSearchKind,
   type MentionSearchType,
   assistantArtifactListSchema,
   assistantArtifactSchema,
@@ -217,6 +219,23 @@ export class AssistantService {
     const params = new URLSearchParams({ query, type });
     const response = await api.get(`/assistant/mentions/?${params.toString()}`, { signal });
     const parsed = await safeParse(mentionCandidateListSchema, response, "Assistant Mentions");
+
+    return parsed.results;
+  }
+
+  /**
+   * The person's own conversations, what was said in them and what they
+   * produced. With nothing typed, the conversations and artifacts that are
+   * recent.
+   */
+  public async searchDesk(
+    query: string,
+    kind: DeskSearchKind,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const params = new URLSearchParams({ query, kind });
+    const response = await api.get(`/assistant/search/?${params.toString()}`, { signal });
+    const parsed = await safeParse(deskSearchResultListSchema, response, "Desk Search");
 
     return parsed.results;
   }

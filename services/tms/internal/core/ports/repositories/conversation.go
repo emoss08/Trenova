@@ -124,8 +124,32 @@ type MentionRow struct {
 	Subtitle string `bun:"subtitle"`
 }
 
+// SearchDeskRequest searches what one person has in the Desk: their
+// conversations, what was said in them, and what they produced.
+type SearchDeskRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	Query      string
+	// Kinds is any of chat, msg, art and dec.
+	Kinds        []string
+	LimitPerKind int
+}
+
+type DeskSearchRow struct {
+	Kind         string   `bun:"kind"`
+	ID           string   `bun:"id"`
+	ThreadID     pulid.ID `bun:"thread_id"`
+	AgentID      pulid.ID `bun:"agent_id"`
+	Title        string   `bun:"title"`
+	ThreadTitle  string   `bun:"thread_title"`
+	ArtifactKind string   `bun:"artifact_kind"`
+	Status       string   `bun:"status"`
+	At           int64    `bun:"at"`
+}
+
 type ConversationRepository interface {
 	SearchMentions(ctx context.Context, req SearchMentionsRequest) ([]MentionRow, error)
+	SearchDesk(ctx context.Context, req SearchDeskRequest) ([]DeskSearchRow, error)
 	ListThreadAttention(
 		ctx context.Context,
 		req ListThreadAttentionRequest,

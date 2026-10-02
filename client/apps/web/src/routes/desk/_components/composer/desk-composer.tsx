@@ -6,6 +6,7 @@ import {
 import type { Suggestion } from "@/components/assistant/suggestions";
 import { useComposerDictation } from "@/components/assistant/use-composer-dictation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -111,8 +112,10 @@ export function DeskComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [menu, setMenu] = useState<"menu" | "capture" | null>(null);
   const markTermsSeen = useDeskStore((state) => state.markTermsSeen);
+  const settings = useDeskSettingsStore((state) => state.settings);
   const empty = value === "";
-  const typing = home && presets.length > 0 && empty && !disabled;
+  const typing =
+    home && settings.presets === "on" && presets.length > 0 && empty && !disabled;
   const typed = useTypewriter(presets, typing);
   const dictation = useComposerDictation({ draft: value, onDraftChange: onChange });
 
@@ -151,7 +154,7 @@ export function DeskComposer({
     textareaRef,
     onSendText: send,
     suggestions,
-    enabled: !typing,
+    enabled: !typing && settings.slash === "on",
   });
   const mention = useDeskMentions({
     value,
@@ -159,7 +162,7 @@ export function DeskComposer({
     textareaRef,
     mentions,
     onMentionsChange: onMentionsChange ?? (() => undefined),
-    enabled: onMentionsChange !== undefined,
+    enabled: onMentionsChange !== undefined && settings.mentions === "on",
   });
 
   useEffect(() => {
@@ -196,8 +199,11 @@ export function DeskComposer({
       return;
     }
     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-      event.preventDefault();
-      send(value);
+      const withModifier = event.metaKey || event.ctrlKey;
+      if ((settings.send === "mod") === withModifier) {
+        event.preventDefault();
+        send(value);
+      }
     }
   };
 
@@ -348,7 +354,7 @@ export function DeskComposer({
         {extras}
         <span className="flex-1" />
         {model}
-        {!lock && <DeskDictate dictation={dictation} disabled={busy || disabled} />}
+        {!lock && settings.mic === "on" && <DeskDictate dictation={dictation} disabled={busy || disabled} />}
         {busy ? (
           <button
             type="button"

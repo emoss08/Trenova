@@ -1,4 +1,5 @@
 import type { AssistantArtifact } from "@/types/assistant";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
 
 const ICONS = {
@@ -184,6 +185,32 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
 
 export function deskArtKindLabel(kind: DeskArtKind): string {
   return KIND_LABELS[kind];
+}
+
+/** The kind's name in the reader's language. */
+export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
+  switch (kind) {
+    case "table":
+      return t("Table");
+    case "record":
+      return t("Record");
+    case "rate":
+      return t("Rate explanation");
+    case "email":
+      return t("Email draft");
+    case "plan":
+      return t("Plan");
+    case "report":
+      return t("Report");
+    case "diff":
+      return t("Run diff");
+    case "doc":
+      return t("Document");
+    case "view":
+      return t("View");
+    case "decision":
+      return t("Decision");
+  }
 }
 
 /** The kinds in the order the browser's filters list them. */

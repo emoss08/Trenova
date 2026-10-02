@@ -1,3 +1,4 @@
+import { useDeskSetting } from "@/stores/desk-settings-store";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
@@ -78,7 +79,8 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
-  const askable = useAskableAgent({ threads });
+  const preferredAgent = useDeskSetting("agent");
+  const askable = useAskableAgent({ threads, preferId: preferredAgent });
   const noAgents = !isLoading && (agents.length === 0 || askable.noneAvailable);
   const [draft, setDraft] = useState("");
   const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);

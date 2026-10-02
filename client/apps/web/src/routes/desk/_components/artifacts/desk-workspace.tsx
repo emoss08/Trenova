@@ -24,7 +24,7 @@ import {
   ArtIcon,
   DeskArtKindIcon,
   deskArtKind,
-  deskArtKindLabel,
+  deskArtKindName,
 } from "./desk-art-kinds";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
@@ -135,7 +135,7 @@ function ArtStack({
             <span className="dk-ax-ct">
               <b>{artifact.title}</b>
               <span>
-                {t(deskArtKindLabel(kind))} · {shortTime(artifact.createdAt)}
+                {deskArtKindName(kind, t)} · {shortTime(artifact.createdAt)}
               </span>
             </span>
             {lineage.id === newest && <span className="dk-ax-new">{t("New")}</span>}

@@ -563,6 +563,7 @@
 .dk-srch-empty b{font-weight:500;font-size:13.5px}.dk-srch-empty span{font-size:12px;color:var(--dsk-subtle)}
 .dk-srch-ft{display:flex;align-items:center;gap:14px;height:38px;padding:0 16px;border-top:1px solid var(--dsk-b-sub);font-size:11px;color:var(--dsk-subtle);background:color-mix(in srgb,var(--dsk-sunken) 50%,var(--dsk-raised))}
 .dk-srch-ft>span{display:inline-flex;align-items:center;gap:4px}
+.dk-srch-in,.dk-srch-f,.dk-srch-ft{flex:none}
 @keyframes dk-srchin{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes dk-srchout{to{opacity:0;transform:translateY(-6px) scale(.98)}}
 @keyframes dk-srchr{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}

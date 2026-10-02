@@ -494,6 +494,29 @@ export const mentionCandidateListSchema = z.object({
 
 export type MentionCandidateRecord = z.infer<typeof mentionCandidateSchema>;
 
+/** What the Desk's search palette looks through. */
+export const deskSearchKinds = ["all", "chat", "msg", "art", "dec"] as const;
+export type DeskSearchKind = (typeof deskSearchKinds)[number];
+
+/** One conversation, message, artifact or decision the search palette found. */
+export const deskSearchResultSchema = z.object({
+  kind: z.enum(["chat", "msg", "art", "dec"]),
+  id: z.string(),
+  threadId: z.string(),
+  agentId: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+  threadTitle: z.string().optional().default(""),
+  artifactKind: z.string().optional().default(""),
+  status: z.string().optional().default(""),
+  at: z.number().optional().default(0),
+});
+
+export const deskSearchResultListSchema = z.object({
+  results: z.array(deskSearchResultSchema).default([]),
+});
+
+export type DeskSearchResult = z.infer<typeof deskSearchResultSchema>;
+
 /** A record the person named from the composer; mirrors the server's EntityRef. */
 export const entityRefSchema = z.object({
   type: z.string(),

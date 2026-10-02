@@ -7,6 +7,7 @@ import {
   DeskArtKindIcon,
   deskArtKind,
   deskArtKindLabel,
+  deskArtKindName,
   type DeskArtKind,
 } from "./desk-art-kinds";
 import type { ArtifactLineage } from "./desk-lineage";
@@ -221,7 +222,7 @@ export function DeskArtifactBrowser({
             <span className={cn("dk-ax-ki", `dk-k-${candidate}`)}>
               <DeskArtKindIcon kind={candidate} size={11} />
             </span>
-            {t(deskArtKindLabel(candidate))} <i>{counts.get(candidate)}</i>
+            {deskArtKindName(candidate, t)} <i>{counts.get(candidate)}</i>
           </button>
         ))}
       </div>
@@ -250,7 +251,7 @@ export function DeskArtifactBrowser({
                         <span className="dk-axb-rt">
                           <b>{highlight(lineage.latest.title, needle)}</b>
                           <span>
-                            {t(deskArtKindLabel(itemKind))}
+                            {deskArtKindName(itemKind, t)}
                             {toolOf(lineage) !== "" && <> · {highlight(toolOf(lineage), needle)}</>}
                           </span>
                         </span>

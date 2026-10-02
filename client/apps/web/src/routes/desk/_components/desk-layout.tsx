@@ -8,16 +8,20 @@ import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifactEvent, AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { DeskStartExtras } from "./desk-home";
 import { DeskRail, type DeskPlace } from "./desk-rail";
+import { DeskSearchPalette } from "./desk-search";
+import { DeskSettingsDialog, deskSettingsClasses } from "./desk-settings";
 import { DeskTopBar } from "./desk-topbar";
 
 export type DeskContextValue = {
@@ -124,6 +128,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const [newArtifact, setNewArtifact] = useState(false);
   const [searching, setSearching] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const settings = useDeskSettingsStore((state) => state.settings);
 
   const threadsQuery = useQuery(queries.assistant.threads());
   const agentsQuery = useQuery(queries.assistant.myAgents());
@@ -163,6 +168,21 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     setLiveArtifacts(NO_LIVE_ARTIFACTS);
     setNewArtifact(false);
     setArtifactCount(0);
+  }
+
+  // Coming into the Desk, someone who asked to pick up where they left off
+  // lands in their latest conversation. Only on the way in: the Today link
+  // still leads to Today afterwards.
+  const [entered, setEntered] = useState(activeThreadId !== null || pathname !== "/desk");
+  if (!entered && threadsQuery.isSuccess) {
+    setEntered(true);
+    const latest = threads.reduce<AssistantThread | null>(
+      (best, thread) => (best === null || thread.lastMessageAt > best.lastMessageAt ? thread : best),
+      null,
+    );
+    if (settings.start === "last" && latest !== null) {
+      void navigate(conversationPath(latest.id), { replace: true });
+    }
   }
 
   const refreshThreads = useCallback(
@@ -236,15 +256,21 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   // A turn that produces something opens the workspace on it, even if it was
   // folded away: the person asked for the thing it holds.
+  // Unless the person would rather open it themselves, in which case the
+  // top bar only marks that something arrived.
   const noteLiveArtifacts = useCallback(
     (artifacts: readonly AssistantArtifactEvent[]) => {
       setLiveArtifacts((live) => ({
         ids: artifacts.map((artifact) => artifact.id),
         revision: live.revision + 1,
       }));
-      setNewArtifact(true);
+      const { autoOpen, artNotify } = useDeskSettingsStore.getState().settings;
+      if (artifacts.length > 0 && autoOpen === "on") {
+        setPane("open");
+      }
+      setNewArtifact(artNotify === "on");
     },
-    [],
+    [setPane],
   );
 
   const openArtifact = useCallback(
@@ -340,7 +366,11 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   return (
     <DeskContext.Provider value={value}>
-      <div className="dsk" data-searching={searching || undefined} data-settings={settingsOpen || undefined}>
+      <div
+        className={cn("dsk", deskSettingsClasses(settings))}
+        data-searching={searching || undefined}
+        data-settings={settingsOpen || undefined}
+      >
         <DeskRail
           place={place}
           threads={threads}
@@ -371,6 +401,12 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           />
           <Outlet />
         </div>
+        {searching && (
+          <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />
+        )}
+        {settingsOpen && (
+          <DeskSettingsDialog agents={agents} onClose={() => setSettingsOpen(false)} />
+        )}
       </div>
     </DeskContext.Provider>
   );

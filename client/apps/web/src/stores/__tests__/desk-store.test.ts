@@ -41,10 +41,11 @@ describe("the Desk rail", () => {
 
     const partialize = useDeskStore.persist.getOptions().partialize;
     expect(partialize).toBeDefined();
-    expect(partialize?.(useDeskStore.getState())).toEqual({
+    expect(partialize?.(useDeskStore.getState())).toMatchObject({
       rail: "closed",
       pane: "open",
       activeArtifactByThread: { thr_1: "art_1" },
+      sharePage: true,
     });
   });
 });

@@ -604,6 +604,11 @@ type AssistantService interface {
 		actor RequestActor,
 		req MentionSearchRequest,
 	) ([]MentionCandidate, error)
+	SearchDesk(
+		ctx context.Context,
+		actor RequestActor,
+		req DeskSearchRequest,
+	) ([]DeskSearchResult, error)
 	ListThreadProposals(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
@@ -676,6 +681,27 @@ type AssistantProviderOption struct {
 type MentionSearchRequest struct {
 	Query string
 	Kind  string
+}
+
+// DeskSearchRequest searches a person's own Desk. Kind is chat, msg, art,
+// dec or empty for all of them; an empty query lists what is recent.
+type DeskSearchRequest struct {
+	Query string
+	Kind  string
+}
+
+// DeskSearchResult is one conversation, message, artifact or decision. For a
+// message Title is the part of it around what matched.
+type DeskSearchResult struct {
+	Kind         string   `json:"kind"`
+	ID           string   `json:"id"`
+	ThreadID     pulid.ID `json:"threadId"`
+	AgentID      pulid.ID `json:"agentId"`
+	Title        string   `json:"title"`
+	ThreadTitle  string   `json:"threadTitle"`
+	ArtifactKind string   `json:"artifactKind"`
+	Status       string   `json:"status"`
+	At           int64    `json:"at"`
 }
 
 type MentionCandidate struct {

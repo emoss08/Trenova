@@ -41,6 +41,11 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listActiveTurns({ signal }),
   }),
+  deskSearch: (query: string, kind: DeskSearchKind) => ({
+    queryKey: [query, kind],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.searchDesk(query, kind, { signal }),
+  }),
   providers: () => ({
     queryKey: ["assistant-providers"],
     queryFn: () => apiService.assistantService.listProviders(),

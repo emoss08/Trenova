@@ -61,6 +61,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// records themselves.
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
 	api.GET("/mentions/", h.pm.RequirePermission(resource, permission.OpRead), h.searchMentions)
+	api.GET("/search/", h.pm.RequirePermission(resource, permission.OpRead), h.searchDesk)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting
@@ -585,6 +586,33 @@ func (h *Handler) searchMentions(c *gin.Context) {
 		c.Request.Context(),
 		requestActorFromAuthContext(authCtx),
 		serviceports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": results})
+}
+
+type searchDeskQuery struct {
+	Query string `form:"query"`
+	Kind  string `form:"kind"`
+}
+
+func (h *Handler) searchDesk(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var query searchDeskQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	results, err := h.service.SearchDesk(
+		c.Request.Context(),
+		requestActorFromAuthContext(authCtx),
+		serviceports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)

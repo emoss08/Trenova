@@ -1,3 +1,4 @@
+import { useDeskSetting } from "@/stores/desk-settings-store";
 import {
   cancelCaptureRequest,
   createCaptureRequest,
@@ -210,9 +211,11 @@ export function DeskCapturePanel({
   const profilesQuery = useQuery(queries.capture.availableProfiles());
   const devices = devicesQuery.data ?? [];
   const typesQuery = useDocumentTypeOptions(devices.length > 0);
-  const [deviceId, setDeviceId] = useState<string | null>(null);
+  const preferredDevice = useDeskSetting("scanDevice");
+  const preferredProfile = useDeskSetting("scanProfile");
+  const [deviceId, setDeviceId] = useState<string | null>(preferredDevice || null);
   const [source, setSource] = useState("");
-  const [profileId, setProfileId] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(preferredProfile || null);
   const [documentTypeId, setDocumentTypeId] = useState("");
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
