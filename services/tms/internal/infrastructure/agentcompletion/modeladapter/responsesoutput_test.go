@@ -17,7 +17,7 @@ func TestSplitResponsesOutput_DoesNotMistakeReasoningForTheAnswer(t *testing.T) 
 	envelope := &responsesEnvelope{Output: []responsesItem{
 		{
 			Type:    "reasoning",
-			Summary: []responsesSummaryPart{{Type: "summary_text", Text: "weighing the statuses"}},
+			Summary: &[]responsesSummaryPart{{Type: "summary_text", Text: "weighing the statuses"}},
 			Content: []responsesMessagePart{
 				{Type: "reasoning_text", Text: "weighing the statuses"},
 			},

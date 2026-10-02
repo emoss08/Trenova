@@ -320,6 +320,42 @@ func TestToResponsesInput_ReplaysTheReasoningItemAheadOfItsCalls(t *testing.T) {
 	assert.Equal(t, "function_call", items[2].Type)
 }
 
+// The Responses API refuses a replayed reasoning item without a summary
+// ("Missing required parameter: 'input[N].summary'"), even an empty one, while
+// a message item must not carry the field at all.
+func TestToResponsesInput_SendsASummaryOnEveryReplayedReasoningItemOnly(t *testing.T) {
+	t.Parallel()
+
+	items := toResponsesInput("be brief", []Message{
+		{Role: RoleUser, Content: "hold it"},
+		{
+			Role:      RoleAssistant,
+			Content:   "Placing the hold.",
+			ToolCalls: []ToolCall{{ID: "call_1", Name: "place_hold", Arguments: map[string]any{}}},
+			Reasoning: &ReasoningTrace{Signature: "rs_1"},
+		},
+		{Role: RoleTool, ToolCallID: "call_1", Content: "{}"},
+	})
+
+	encoded, err := sonic.Marshal(items)
+	require.NoError(t, err)
+
+	var wire []map[string]any
+	require.NoError(t, sonic.Unmarshal(encoded, &wire))
+	require.Len(t, wire, 6)
+
+	for idx, item := range wire {
+		summary, present := item["summary"]
+		if item["type"] == "reasoning" {
+			require.True(t, present, "reasoning item %d has no summary", idx)
+			assert.Equal(t, []any{}, summary)
+			continue
+		}
+		assert.False(t, present, "item %d (%v) carries a summary", idx, item["type"])
+	}
+	assert.Equal(t, "reasoning", wire[2]["type"])
+}
+
 // Ollama reports a thinking model's reasoning in its own field when asked.
 func TestOllamaAdapter_ReadsThinkingAndAsksForItWhenConfigured(t *testing.T) {
 	t.Parallel()

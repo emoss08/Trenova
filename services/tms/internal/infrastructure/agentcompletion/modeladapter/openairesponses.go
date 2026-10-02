@@ -70,10 +70,12 @@ type responsesItem struct {
 
 	// reasoning. A function call is refused when replayed without the
 	// reasoning item that produced it, so the id and encrypted content go
-	// back ahead of the calls exactly as they came.
-	ID               string                 `json:"id,omitempty"`
-	Summary          []responsesSummaryPart `json:"summary,omitempty"`
-	EncryptedContent string                 `json:"encrypted_content,omitempty"`
+	// back ahead of the calls exactly as they came. Summary is a pointer
+	// because a reasoning item must always carry it, empty or not, while a
+	// message item must never carry it at all.
+	ID               string                  `json:"id,omitempty"`
+	Summary          *[]responsesSummaryPart `json:"summary,omitempty"`
+	EncryptedContent string                  `json:"encrypted_content,omitempty"`
 
 	// function_call
 	CallID    string `json:"call_id,omitempty"`
@@ -453,7 +455,7 @@ func responsesReasoningOf(envelope *responsesEnvelope) *ReasoningTrace {
 			continue
 		}
 		found = true
-		for _, part := range item.Summary {
+		for _, part := range item.summaryParts() {
 			if text.Len() > 0 && part.Text != "" {
 				text.WriteString("\n\n")
 			}
@@ -483,8 +485,16 @@ func replayReasoning(trace *ReasoningTrace) []responsesItem {
 		Type:             "reasoning",
 		ID:               trace.Signature,
 		EncryptedContent: trace.Encrypted,
-		Summary:          []responsesSummaryPart{},
+		Summary:          &[]responsesSummaryPart{},
 	}}
+}
+
+func (i *responsesItem) summaryParts() []responsesSummaryPart {
+	if i.Summary == nil {
+		return nil
+	}
+
+	return *i.Summary
 }
 
 // responsesTruncated reads the Responses API's two ways of saying the output
