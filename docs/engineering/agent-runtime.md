@@ -722,6 +722,18 @@ still drifts, or one written after the tool budget was spent, ends with a note
 to check the card. Each is a `reply_regrounded` event in the run's trajectory.
 The LLM judge that scores the same thing stays in the evaluations.
 
+### History replay
+
+A turn replays the newest 120 messages, and their tool results are most of it.
+`replayHistory` (`agentruntime/messages.go`) keeps a result whole only while it
+is in the last three turns (a decision note is not a turn) and, newest first,
+within 48,000 characters; the rest are shortened to their first 320 characters
+inside a fence of their own, closed, with a note after it naming the tool to
+call again and saying not to quote what was left out. A result a proposal
+answered is replaced by its current outcome and never shortened. The figures of
+every shortened result travel with the turn (`TurnState.Evidence`), so the
+grounding guard above still counts them as read.
+
 ### The clock
 
 The system prompt names today's date only, so its cached prefix is the same all

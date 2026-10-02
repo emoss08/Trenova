@@ -61,11 +61,30 @@ const recentToolTurns = 3
 // Enough to see what the call returned; not enough to carry a listing.
 const compactedToolResultChars = 320
 
+// wholeToolResultBudget is how much of the recent turns' tool results is kept
+// whole, newest first. Three turns that each read several long listings were
+// otherwise resent in full on every call after them.
+const wholeToolResultBudget = 48_000
+
 func toAdapterMessages(
 	history []conversation.Message,
 	outcomes []serviceports.ProposalOutcome,
 ) []serviceports.Message {
+	messages, _ := replayHistory(history, outcomes)
+
+	return messages
+}
+
+// replayHistory is the conversation as the model is sent it, and the results
+// it shortened as they were stored, which the grounding guard still counts as
+// read: a figure quoted from one is not invented because the replay left it
+// out.
+func replayHistory(
+	history []conversation.Message,
+	outcomes []serviceports.ProposalOutcome,
+) ([]serviceports.Message, []string) {
 	messages := make([]serviceports.Message, 0, len(history)+1)
+	var shortened []string
 	ledger := newProposalLedger(outcomes)
 
 	// The history is the newest N messages of the thread, and that cut lands
@@ -79,7 +98,7 @@ func toAdapterMessages(
 	}
 	history = history[start:]
 
-	recentFrom := recentTurnStart(history, recentToolTurns)
+	whole := wholeResults(history, recentTurnStart(history, recentToolTurns))
 
 	// A call and its result are replayed together or not at all. A refused
 	// assistant turn is left out, so a result answering one of its calls
@@ -120,8 +139,11 @@ func toAdapterMessages(
 			}
 			delete(open, msg.ToolCallID)
 			content, current := ledger.currentContent(msg)
-			if !current && idx < recentFrom {
-				content = compactToolResult(content)
+			if _, keep := whole[idx]; !current && !keep {
+				if compacted := compactToolResult(content); compacted != content {
+					shortened = append(shortened, content)
+					content = compacted
+				}
 			}
 			messages = append(messages, serviceports.Message{
 				Role:       serviceports.RoleTool,
@@ -141,7 +163,27 @@ func toAdapterMessages(
 		}
 	}
 
-	return messages
+	return messages, shortened
+}
+
+// wholeResults is the tool results kept whole: those in the recent turns,
+// newest first, while they fit wholeToolResultBudget.
+func wholeResults(history []conversation.Message, recentFrom int) map[int]struct{} {
+	whole := make(map[int]struct{})
+	kept := 0
+	for idx := len(history) - 1; idx >= recentFrom; idx-- {
+		if history[idx].Role != conversation.RoleTool {
+			continue
+		}
+		size := len(history[idx].Content)
+		if kept+size > wholeToolResultBudget {
+			continue
+		}
+		kept += size
+		whole[idx] = struct{}{}
+	}
+
+	return whole
 }
 
 // answeredCalls is the set of tool call ids a recorded result answers.
@@ -161,7 +203,10 @@ func answeredCalls(history []conversation.Message) map[string]struct{} {
 func recentTurnStart(history []conversation.Message, turns int) int {
 	seen := 0
 	for idx := len(history) - 1; idx >= 0; idx-- {
-		if history[idx].Role != conversation.RoleUser || history[idx].Refused {
+		// A decision note is the person's answer arriving as a message, not
+		// a turn of questions, so it does not push results out of the window.
+		if history[idx].Role != conversation.RoleUser || history[idx].Refused ||
+			history[idx].Kind == conversation.MessageKindDecisionNote {
 			continue
 		}
 		seen++
@@ -176,21 +221,54 @@ func recentTurnStart(history []conversation.Message, turns int) int {
 // compactToolResult cuts an older result to its opening and says what was
 // left out. A result already short enough is returned as it is: the note
 // would be longer than what it replaced.
+//
+// A fenced result is shortened inside a fence of its own, closed, with the
+// note after it. Cutting the stored text lost the close tag and left the note
+// inside data the model is told never to take instructions from.
 func compactToolResult(content string) string {
-	if len(content) <= compactedToolResultChars {
+	tool, payload, fenced := UnfenceToolResult(content)
+	if !fenced {
+		return compactText(content, "call the tool again if the current details matter")
+	}
+	if len(payload) <= compactedToolResultChars {
 		return content
 	}
 
-	cut := compactedToolResultChars
-	for cut > 0 && !utf8.RuneStart(content[cut]) {
+	head := payload[:runeCut(payload, compactedToolResultChars)]
+	trailer := ""
+	if closeAt := strings.Index(content, "\n"+untrustedCloseTag); closeAt >= 0 {
+		trailer = content[closeAt+len("\n"+untrustedCloseTag):]
+	}
+
+	return FenceToolResult(tool, head) +
+		trailer +
+		fmt.Sprintf("\n[This result, from earlier in the conversation, was shortened: "+
+			"%d more characters were left out of the replay. "+
+			"Do not quote or count anything from the part left out; call %s again "+
+			"if the current details matter.]", len(payload)-len(head), tool)
+}
+
+func compactText(content, remedy string) string {
+	if len(content) <= compactedToolResultChars {
+		return content
+	}
+	cut := runeCut(content, compactedToolResultChars)
+
+	return fmt.Sprintf(
+		"%s\n[%d more characters from earlier in the conversation elided; %s]",
+		content[:cut], len(content)-cut, remedy,
+	)
+}
+
+// runeCut is limit, walked back to the start of a rune so a cut is never
+// invalid UTF-8.
+func runeCut(text string, limit int) int {
+	cut := limit
+	for cut > 0 && !utf8.RuneStart(text[cut]) {
 		cut--
 	}
 
-	return fmt.Sprintf(
-		"%s\n[%d more characters from earlier in the conversation elided; "+
-			"call the tool again if the current details matter]",
-		content[:cut], len(content)-cut,
-	)
+	return cut
 }
 
 // rationaleInput is everything the runtime knows about why a tool was

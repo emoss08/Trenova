@@ -37,7 +37,10 @@ type Turn struct {
 	// turn of the agent for the person, which a provider can cache.
 	systemStable int
 	messages     []serviceports.Message
-	tools        *toolSet
+	// evidence is the figures of the tool results the replay shortened, which
+	// the grounding guard still counts as read.
+	evidence []string
+	tools    *toolSet
 	// held is every tool the agent holds, taken when the turn opened. The
 	// loop decides from it whether a call is dispatched or refused, and in
 	// workflow code that decision has to replay the same way: working it out
@@ -209,7 +212,11 @@ type TurnState struct {
 	// from before it was kept has none, and the whole prompt is cached as one.
 	SystemStable int                    `json:"systemStable,omitempty"`
 	Messages     []serviceports.Message `json:"messages"`
-	Tools        ToolSetState           `json:"tools"`
+	// Evidence is the figures of the tool results the replay shortened. A
+	// state from before it was kept has none, and its replay shortened the
+	// same results without them.
+	Evidence []string     `json:"evidence,omitempty"`
+	Tools    ToolSetState `json:"tools"`
 	// Held is every tool the agent holds, as the turn opened. A state from
 	// before it was kept has none, and the turn works it out again.
 	Held      []string               `json:"held,omitempty"`
@@ -256,6 +263,7 @@ func (t *Turn) State() TurnState {
 		System:          t.system,
 		SystemStable:    t.systemStable,
 		Messages:        t.messages,
+		Evidence:        slices.Clone(t.evidence),
 		Tools:           t.tools.state(),
 		Held:            slices.Clone(t.held),
 		Failures:        maps.Clone(t.repeats.failures),
@@ -318,6 +326,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		system:       state.System,
 		systemStable: state.SystemStable,
 		messages:     state.Messages,
+		evidence:     state.Evidence,
 		tools:        restoreToolSet(state.Tools),
 		held:         held,
 		repeats:      &repeatGuard{failures: failures},
@@ -436,7 +445,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		s.seedFromLedger(ctx, req, repeats)
 	}
 
-	messages := toAdapterMessages(history, req.Proposals)
+	messages, shortened := replayHistory(history, req.Proposals)
 	now := timeutils.NowUnix()
 	input := req.Input
 	if req.Delegation == nil {
@@ -460,6 +469,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		system:       prompt.Stable + prompt.Volatile,
 		systemStable: len(prompt.Stable),
 		messages:     messages,
+		evidence:     figuresOf(shortened),
 		tools:        tools,
 		held:         held,
 		repeats:      repeats,
