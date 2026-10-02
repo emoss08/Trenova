@@ -52,9 +52,12 @@ func TestRecordAssistantTurnHistories(t *testing.T) {
 	require.NoError(t, err)
 	defer c.Close()
 
+	// answered-with-a-tool-read and answered-nobody-watching were recorded
+	// before turns prepared locally (assistant-turn-prepare-local) and stay
+	// as the histories of executions that began before it.
 	turns := []recordedTurn{
-		{name: "answered-with-a-tool-read", drained: true},
-		{name: "answered-nobody-watching"},
+		{name: "prepared-locally-with-a-tool-read", drained: true},
+		{name: "prepared-locally-nobody-watching"},
 	}
 
 	out := filepath.Join("testdata", "replay")

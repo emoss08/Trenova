@@ -525,8 +525,11 @@ returns the turn to watch. `POST /threads/:id/messages/` starts the same
 workflow and waits for its result; `POST /ask/` opens the hidden thread and
 starts a turn on it.
 
-1. **Prepare** reads the thread, history, files and mentions, checks budget and
-   room, and runs the scope guard. After the thread, every check and read runs
+1. **Prepare** runs as a local activity on the worker running the workflow
+   (`assistant-turn-prepare-local`), so the turn's first workflow task prepares
+   it and schedules the model call without a task-queue dispatch or a second
+   workflow task in between. It reads the thread, history, files and mentions,
+   checks budget and room, and runs the scope guard. After the thread, every check and read runs
    side by side (`checkTurn`); none writes, and a question failing several is
    told about the first in the old order (files, agent, page, budget, room,
    history), never about a cancellation. The guard's classifier runs beside the
@@ -1152,6 +1155,7 @@ before the change:
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
+| `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
