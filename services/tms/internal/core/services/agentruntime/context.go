@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -76,19 +77,78 @@ func (b *ContextBuilder) Build(
 	}
 
 	b.describeTrenova(&rc, req)
-	if delegator := strings.TrimSpace(req.DelegatedBy); delegator != "" {
-		rc.DelegatedBy = delegator
-	} else {
-		rc.Delegates = b.delegates(ctx, req)
-	}
-
 	tenant := req.Actor.TenantInfo()
 
-	// The organization is read on every build, not only when the prompt wants
-	// its name. Its timezone is what every tool means by "today", and a tool
-	// draws the day boundary in UTC unless it is told otherwise — so an agent
-	// whose prompt providers happened not to include the organization got a
-	// clock a few hours off in every date filter it ran.
+	// The organization, the person, the agents this one may hand work to and
+	// the memories read from different places, and none needs another's
+	// answer; one after the other, the embedding the memories wait on waited
+	// behind every read before it. Each runs on its own and writes only its
+	// own result, which is put together below in the order it always was.
+	var (
+		wg        sync.WaitGroup
+		delegates []agentdefinition.RuntimeDelegate
+		org       organizationContext
+		user      *userContext
+		memories  *serviceports.MemoryContext
+	)
+	delegator := strings.TrimSpace(req.DelegatedBy)
+	if delegator == "" {
+		wg.Go(func() { delegates = b.delegates(ctx, req) })
+	}
+	wg.Go(func() { org = b.describeOrganization(ctx, definition, tenant) })
+	if definition.HasContextProvider(agentdefinition.ContextUser) {
+		wg.Go(func() { user = b.describeUser(ctx, req.Actor.PersonUserID(), tenant) })
+	}
+	// Memory is read for every agent that asks for it, scoped to the
+	// organization, to the agent's own tools, and to the records the turn is
+	// about: a correction to assign_move belongs in the prompt of an agent
+	// that can assign, and what was recorded about Acme belongs in a turn
+	// about one of Acme's shipments. The prompt keeps what its budget holds.
+	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
+		records := rc.MemoryRecords()
+		wg.Go(func() { memories = b.readMemories(ctx, req, records, tenant) })
+	}
+	wg.Wait()
+
+	if delegator != "" {
+		rc.DelegatedBy = delegator
+	} else {
+		rc.Delegates = delegates
+	}
+	rc.Timezone = org.timezone
+	rc.OrganizationName = org.name
+	rc.BusinessUnitName = org.businessUnit
+	if user != nil {
+		rc.User = user.user
+		if rc.Timezone == "" {
+			rc.Timezone = user.timezone
+		}
+	}
+	if memories != nil {
+		rc.Memories = memories.Memories
+		rc.MemorySubjects = memories.Subjects
+	}
+
+	return rc, nil
+}
+
+// organizationContext is what the turn is told about the organization.
+type organizationContext struct {
+	timezone     string
+	name         string
+	businessUnit string
+}
+
+// describeOrganization is read on every build, not only when the prompt
+// wants its name. Its timezone is what every tool means by "today", and a
+// tool draws the day boundary in UTC unless it is told otherwise — so an
+// agent whose prompt providers happened not to include the organization got a
+// clock a few hours off in every date filter it ran.
+func (b *ContextBuilder) describeOrganization(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+	tenant pagination.TenantInfo,
+) organizationContext {
 	describe := definition.HasContextProvider(agentdefinition.ContextOrganization) ||
 		definition.HasContextProvider(agentdefinition.ContextClock)
 	org, err := b.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
@@ -100,45 +160,44 @@ func (b *ContextBuilder) Build(
 			zap.String("organization", tenant.OrgID.String()),
 			zap.Error(err),
 		)
-	} else {
-		rc.Timezone = org.Timezone
-		if describe {
-			rc.OrganizationName = org.Name
-			if org.BusinessUnit != nil {
-				rc.BusinessUnitName = org.BusinessUnit.Name
-			}
+
+		return organizationContext{}
+	}
+
+	described := organizationContext{timezone: org.Timezone}
+	if describe {
+		described.name = org.Name
+		if org.BusinessUnit != nil {
+			described.businessUnit = org.BusinessUnit.Name
 		}
 	}
 
-	if definition.HasContextProvider(agentdefinition.ContextUser) {
-		b.describeUser(ctx, &rc, req.Actor.PersonUserID(), tenant)
+	return described
+}
+
+func (b *ContextBuilder) readMemories(
+	ctx context.Context,
+	req *serviceports.RuntimeContextRequest,
+	records []agent.EntityRef,
+	tenant pagination.TenantInfo,
+) *serviceports.MemoryContext {
+	memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
+		TenantInfo:        tenant,
+		AgentDefinitionID: req.Definition.ID,
+		ToolNames:         req.Definition.EffectiveToolNames(),
+		Records:           records,
+		Query:             b.memoryQuery(ctx, &req.Query),
+	})
+	if err != nil {
+		b.logger.Warn("agent context: memory lookup failed",
+			zap.String("organization", tenant.OrgID.String()),
+			zap.Error(err),
+		)
+
+		return nil
 	}
 
-	// Memory is read for every agent that asks for it, scoped to the
-	// organization, to the agent's own tools, and to the records the turn is
-	// about: a correction to assign_move belongs in the prompt of an agent
-	// that can assign, and what was recorded about Acme belongs in a turn
-	// about one of Acme's shipments. The prompt keeps what its budget holds.
-	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
-		memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
-			TenantInfo:        tenant,
-			AgentDefinitionID: definition.ID,
-			ToolNames:         definition.EffectiveToolNames(),
-			Records:           rc.MemoryRecords(),
-			Query:             b.memoryQuery(ctx, &req.Query),
-		})
-		if err != nil {
-			b.logger.Warn("agent context: memory lookup failed",
-				zap.String("organization", tenant.OrgID.String()),
-				zap.Error(err),
-			)
-		} else if memories != nil {
-			rc.Memories = memories.Memories
-			rc.MemorySubjects = memories.Subjects
-		}
-	}
-
-	return rc, nil
+	return memories
 }
 
 // describeTrenova names the page the person is on from the product guide, and
@@ -269,14 +328,20 @@ func (b *ContextBuilder) memoryQuery(
 	return query
 }
 
+// userContext is what the turn is told about the person, and their timezone
+// for when the organization has none.
+type userContext struct {
+	user     *agentdefinition.RuntimeUser
+	timezone string
+}
+
 func (b *ContextBuilder) describeUser(
 	ctx context.Context,
-	rc *agentdefinition.RuntimeContext,
 	person pulid.ID,
 	tenant pagination.TenantInfo,
-) {
+) *userContext {
 	if person.IsNil() {
-		return
+		return nil
 	}
 
 	user, err := b.users.GetByID(ctx, repositories.GetUserByIDRequest{
@@ -289,7 +354,7 @@ func (b *ContextBuilder) describeUser(
 			zap.Error(err),
 		)
 
-		return
+		return nil
 	}
 
 	roles := make([]string, 0, len(user.Assignments))
@@ -298,12 +363,12 @@ func (b *ContextBuilder) describeUser(
 			roles = append(roles, assignment.Role.Name)
 		}
 	}
-	rc.User = &agentdefinition.RuntimeUser{
-		Name:  user.Name,
-		Email: user.EmailAddress,
-		Roles: roles,
-	}
-	if rc.Timezone == "" {
-		rc.Timezone = user.Timezone
+	return &userContext{
+		user: &agentdefinition.RuntimeUser{
+			Name:  user.Name,
+			Email: user.EmailAddress,
+			Roles: roles,
+		},
+		timezone: user.Timezone,
 	}
 }
