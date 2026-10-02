@@ -470,6 +470,7 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 		"list_billing_queue_items",
 		"get_billing_queue_item",
 	}
+	assistantReads := []string{"get_billing_queue_items"}
 	moneyless := []string{
 		"send_billing_item_back_to_ops",
 		"move_billing_item_to_exception",
@@ -479,7 +480,8 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 		"transfer_to_billing",
 		"approve_billing_queue_item",
 		"cancel_billing_queue_item",
-		"assign_billing_queue_biller",
+		"assign_billing_queue_billers",
+		"transition_items_to_in_review",
 		"post_invoice",
 		"send_invoice",
 		"approve_billing_queue_items",
@@ -488,8 +490,12 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 	}
 
 	assistant := agentdefinition.TemplateBillingAssistant.StarterTools()
-	for _, tool := range slices.Concat(reads, moneyless, personal) {
+	for _, tool := range slices.Concat(reads, assistantReads, moneyless, personal) {
 		assert.Contains(t, assistant, tool)
+	}
+	for _, single := range []string{"assign_billing_queue_biller", "transition_item_to_in_review"} {
+		assert.NotContains(t, assistant, single,
+			"the assistant holds the twin, which takes one item as well as fifty")
 	}
 
 	desk := agentdefinition.TemplateBillingException.StarterTools()

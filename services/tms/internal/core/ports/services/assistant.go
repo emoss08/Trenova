@@ -217,6 +217,11 @@ type AssistantArtifactEvent struct {
 	Draft *pagedraft.Edit `json:"draft,omitempty"`
 }
 
+// AssistantArtifactRemovedEvent names an artifact the turn withdrew.
+type AssistantArtifactRemovedEvent struct {
+	ID pulid.ID `json:"id"`
+}
+
 // ProposalHold names the switch holding a proposal and, when it is an agent's
 // own, which agent.
 type ProposalHold struct {
@@ -238,7 +243,12 @@ const (
 	AssistantEventToolFinished = "tool_finished"
 	AssistantEventRetrying     = "retrying"
 	AssistantEventArtifact     = "artifact"
-	AssistantEventDone         = "done"
+	// AssistantEventArtifactRemoved withdraws an artifact the turn announced:
+	// a record card a later read of the same tool folded into one table. The
+	// server has deleted it, so a reader drops it rather than keeping it
+	// beside the table that replaced it.
+	AssistantEventArtifactRemoved = "artifact_removed"
+	AssistantEventDone            = "done"
 	// AssistantEventThread names the conversation a quick question was
 	// answered on, before the turn begins, so the reader can keep it even
 	// when the answer fails partway.

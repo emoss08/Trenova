@@ -98,6 +98,7 @@ func coreToolProviders() []any {
 		newGetInvoicesTool,
 		newListBillingQueueItemsTool,
 		newGetBillingQueueItemTool,
+		newGetBillingQueueItemsTool,
 		newListBillingTransferCandidatesTool,
 		newGetDetentionOccurrenceTool,
 		newGetCarrierIntelEventTool,

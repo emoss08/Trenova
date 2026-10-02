@@ -328,6 +328,15 @@ func (r *artifactRecorder) remember(saved *assistantartifact.Artifact) {
 	r.recorded = append(r.recorded, saved)
 }
 
+// forget drops an artifact from what the turn produced, once a table has
+// taken its place: the turn reports the table, and the message the card
+// came from is tied to nothing that no longer exists.
+func (r *artifactRecorder) forget(id pulid.ID) {
+	r.recorded = slices.DeleteFunc(r.recorded, func(recorded *assistantartifact.Artifact) bool {
+		return recorded.ID == id
+	})
+}
+
 // shownArtifact is how the model is told what the person now sees.
 func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact {
 	return &services.ShownArtifact{

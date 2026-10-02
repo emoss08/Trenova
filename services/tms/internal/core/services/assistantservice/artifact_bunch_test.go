@@ -192,3 +192,36 @@ func TestArtifactFromObservation_ABatchGetIsATable(t *testing.T) {
 	assert.Equal(t, "invoices", artifact.Payload["entity"])
 	assert.Len(t, artifact.Payload["rows"], 2)
 }
+
+func TestBunch_TheCardsATableReplacedAreWithdrawnFromTheReader(t *testing.T) {
+	t.Parallel()
+
+	repo := &bunchingRepo{}
+	svc := &Service{logger: zap.NewNop(), artifacts: repo}
+	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	var events []serviceports.StreamEvent
+	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(),
+		func(event serviceports.StreamEvent) { events = append(events, event) })
+
+	_, err := recorder.observe(invoiceRead("call_1", "INV-1"))
+	require.NoError(t, err)
+	card := repo.current()[0]
+	_, err = recorder.observe(invoiceRead("call_2", "INV-2", "call_1"))
+	require.NoError(t, err)
+	table := repo.current()[0]
+
+	removed := make([]pulid.ID, 0, 1)
+	for _, event := range events {
+		if event.Event == serviceports.AssistantEventArtifactRemoved {
+			data, ok := event.Data.(serviceports.AssistantArtifactRemovedEvent)
+			require.True(t, ok)
+			removed = append(removed, data.ID)
+		}
+	}
+	assert.Equal(t, []pulid.ID{card.ID}, removed,
+		"a reader watching the turn is told the card left, or it keeps it beside the table")
+
+	require.Len(t, recorder.recorded, 1, "the turn reports the table, not the card it replaced")
+	assert.Equal(t, table.ID, recorder.recorded[0].ID)
+}

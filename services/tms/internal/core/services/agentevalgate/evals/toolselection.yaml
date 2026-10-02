@@ -801,7 +801,11 @@ cases:
   - request: charge late fees on everything past due as of the end of the month
     expect: [assess_late_charges]
   - request: assign Sarah as the biller on the queue item for load 9921
-    expect: [assign_billing_queue_biller]
+    expect: [assign_billing_queue_biller, assign_billing_queue_billers]
+  - request: assign me as the biller on all of these billing queue items
+    expect: [assign_billing_queue_billers]
+  - request: check these billing queue items before we post them
+    expect: [get_billing_queue_items, list_billing_queue_items]
   - request: that billing queue item is a duplicate, cancel it so it never gets billed
     expect: [cancel_billing_queue_item]
   - request: park the billing item until the lumper receipt shows up
@@ -811,7 +815,9 @@ cases:
   - request: kick this billing item back to operations to fix the missing stop times
     expect: [send_billing_item_back_to_ops]
   - request: unblock the billing queue item and move it into review so a biller can work it
-    expect: [transition_item_to_in_review]
+    expect: [transition_item_to_in_review, transition_items_to_in_review]
+  - request: move all of the waiting billing queue items into review
+    expect: [transition_items_to_in_review, assign_billing_queue_billers]
   - request: send yesterday's delivered loads over to the billing queue
     expect: [transfer_to_billing]
   - request: bill the statement customer's open period now instead of waiting for month end

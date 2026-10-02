@@ -405,3 +405,92 @@ func TestListBillingTransferCandidates_SaysTheTotalsCoverOnlyThisPage(t *testing
 	assert.Equal(t, []candidateTotal{{Currency: "USD", Count: 1, Amount: "10.00"}}, totals.Transfer)
 	assert.Empty(t, totals.Refused)
 }
+
+// Posting a queue used to mean one get_billing_queue_item per item, which
+// spent the turn's tool budget on eleven reads and left eleven cards. One
+// call reads the set, says what blocks each item, and lands as one table.
+func TestGetBillingQueueItems_ReadsASetAndSaysWhatBlocksEach(t *testing.T) {
+	t.Parallel()
+
+	waiting := queueItem(billingqueue.StatusReadyForReview)
+	waiting.Number = "INV-3001"
+	waiting.AssignedBillerID = nil
+	waiting.AssignedBiller = nil
+	ready := queueItem(billingqueue.StatusInReview)
+	ready.Number = "INV-3002"
+	held := queueItem(billingqueue.StatusInReview)
+	held.Number = "INV-3003"
+	held.DetentionHolds = []*billingqueue.DetentionHold{{
+		OccurrenceID:   pulid.MustNew("dto_"),
+		LocationName:   "Cold Storage DC",
+		BillableAmount: decimal.RequireFromString("150.00"),
+	}}
+	queue := &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{waiting, ready, held}}
+	tool := &getBillingQueueItemsTool{
+		items: queue,
+		readiness: &fakeReadiness{readiness: &serviceports.ShipmentBillingReadiness{
+			MissingRequirements: []serviceports.ShipmentBillingRequirement{
+				{DocumentTypeName: "Proof of Delivery"},
+			},
+		}},
+		invoices: &fakeQueueInvoices{},
+		access:   newFieldAccess(&fakePermissions{}),
+	}
+	missing := pulid.MustNew("bqi_")
+
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		paramBillingQueueItemIDs: []any{
+			waiting.ID.String(), ready.ID.String(), held.ID.String(), missing.String(),
+		},
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+
+	outcome := result.(*gatedOutcome)
+	assert.Equal(t, 3, outcome.Count)
+	assert.Contains(t, outcome.Columns, "approvalBlockedBy")
+	assert.Contains(t, outcome.Columns, "missingDocuments")
+	assert.Contains(t, outcome.Note, missing.String())
+	rows := outcome.Items.([]billingQueueBatchRow)
+	require.Len(t, rows, 3)
+
+	assert.Equal(t, "INV-3001", rows[0].Number)
+	assert.False(t, rows[0].CanApprove)
+	assert.Contains(t, rows[0].ApprovalBlockedBy, "must be in review")
+	assert.Equal(t, "no biller", rows[0].AssignedBiller)
+	assert.Equal(t, "Proof of Delivery", rows[0].MissingDocuments)
+
+	assert.Equal(t, "INV-3002", rows[1].Number)
+	assert.True(t, rows[1].CanApprove)
+	assert.Empty(t, rows[1].ApprovalBlockedBy)
+	assert.Equal(t, "1850.00", rows[1].Amount)
+
+	assert.Equal(t, "INV-3003", rows[2].Number)
+	assert.False(t, rows[2].CanApprove)
+	assert.Contains(t, rows[2].ApprovalBlockedBy, "detention")
+	assert.Equal(t, 1, rows[2].DetentionHolds)
+	assert.Equal(t, 1, rows[2].Charges)
+}
+
+func TestGetBillingQueueItems_WithholdsAmountsAtInternal(t *testing.T) {
+	t.Parallel()
+
+	item := queueItem(billingqueue.StatusInReview)
+	tool := &getBillingQueueItemsTool{
+		items:     &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{item}},
+		readiness: &fakeReadiness{},
+		invoices:  &fakeQueueInvoices{},
+		access:    newFieldAccess(&fakePermissions{}),
+	}
+
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		paramBillingQueueItemIDs: []any{item.ID.String()},
+	}, ""))
+	require.NoError(t, err)
+
+	outcome := result.(*gatedOutcome)
+	rows := outcome.Items.([]billingQueueBatchRow)
+	require.Len(t, rows, 1)
+	assert.Empty(t, rows[0].Amount)
+	assert.Contains(t, outcome.Withheld, "amounts")
+	assert.NotContains(t, outcome.Columns, "amount", "a withheld column is not promised")
+}
