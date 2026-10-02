@@ -1013,6 +1013,15 @@ adding a span, a trace attribute or a link column.**
 - **Server.** Workflow Streams uses Updates and Signals, on by default from
   server 1.29. Fairness needs `matching.enableFairness=true`. The local dev
   server (`temporalio/temporal`) sets it.
+- **Update limit.** Every poll a turn's reader makes is an Update on the turn's
+  workflow, about ten a second while a reply streams and one more per reader
+  tab. The server caps a workflow at `history.maxTotalUpdates` (default 2000),
+  which one reader reaches after a little over three minutes of streaming;
+  past it every poll is refused and the person is told the connection was lost
+  while the turn goes on finishing on the server. Set it to `20000` on
+  the namespace the workers use, as the local dev server does.
+  `history.maxInFlightUpdates` (default 10) bounds readers following one turn
+  at once and can stay.
 - **Workers.** Run the chat queue on workers of its own if the queue split is to
   mean anything. A worker that polls no heavy queue leaves heavy tools waiting;
   after fifteen minutes the model is told the tool could not be run.
