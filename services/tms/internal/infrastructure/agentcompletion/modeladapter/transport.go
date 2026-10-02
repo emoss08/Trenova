@@ -94,7 +94,7 @@ func postJSON(
 	body any,
 	out any,
 ) error {
-	encoded, err := sonic.Marshal(body)
+	encoded, err := requestJSON.Marshal(body)
 	if err != nil {
 		return fmt.Errorf("encode provider request: %w", err)
 	}

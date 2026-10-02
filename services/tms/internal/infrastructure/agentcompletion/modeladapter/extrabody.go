@@ -28,7 +28,7 @@ func mergeExtraBody(body any, provider *aiprovider.Provider) (any, error) {
 		return body, nil
 	}
 
-	encoded, err := sonic.Marshal(body)
+	encoded, err := requestJSON.Marshal(body)
 	if err != nil {
 		return nil, err
 	}

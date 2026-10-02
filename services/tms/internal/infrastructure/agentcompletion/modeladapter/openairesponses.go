@@ -542,7 +542,7 @@ func toResponsesInput(system string, messages []Message) []responsesItem {
 				})
 			}
 			for _, tc := range msg.ToolCalls {
-				encoded, err := sonic.Marshal(tc.Arguments)
+				encoded, err := requestJSON.Marshal(tc.Arguments)
 				if err != nil {
 					encoded = []byte("{}")
 				}
