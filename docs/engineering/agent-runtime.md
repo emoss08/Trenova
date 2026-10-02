@@ -160,7 +160,7 @@ keep a small ceiling from ending every turn partway through a tool call:
 
 - **Room to answer.** The OpenAI Chat and Responses adapters send at least
   `reasoningAnswerFloor` (the thinking floor plus `thinkingAnswerRoom`, the room Anthropic's
-  adapter keeps after its thinking budget) when the provider is set to reason, or when the
+  adapter keeps after its thinking budget on a model that still takes one) when the provider is set to reason, or when the
   conversation carries this protocol's reasoning, which is how a model that thinks without
   being asked shows itself. A call that does not reason keeps the configured ceiling. Every
   adapter reports the limit it sent as `ChatCompletionResult.OutputLimit`.
@@ -177,6 +177,49 @@ keep a small ceiling from ending every turn partway through a tool call:
 
 The retry is one more model activity, so it is behind the `agent-loop-cut-off-call-retry`
 gate, asked only of a completion that meets the condition.
+
+### Thinking on Claude
+
+Claude models differ in how they are asked to think, and the Anthropic adapter reads which
+kind it is talking to from the configured model id (`anthropicTraits` in
+`modeladapter/anthropicmodels.go`). The id may be the Claude API's plain one, Bedrock's
+`anthropic.`-prefixed one (with an inference profile's region in front, and its `-v1:0`
+version), Vertex's `@date` one, or a dated snapshot. An id it cannot read, such as a
+gateway's alias, keeps the budget behaviour every model took before, and a version newer
+than any it names takes the newest known constraints.
+
+- **Effort or budget.** Opus and Sonnet 4.6 and later, and every Fable and Mythos, think by
+  effort: `thinking: {type: "adaptive", display: "summarized"}` with `output_config.effort`
+  low, medium or high (Minimal asks for low, the least they have). `budget_tokens` is a 400
+  on most of them. Display is asked for because these models leave the readable summary out
+  by default and the thinking panel would show nothing. Older models keep the token budget
+  and its raised `max_tokens`; adaptive thinking raises `max_tokens` to
+  `reasoningAnswerFloor`.
+- **None and Off.** None is the least thinking the model allows. Opus 5.5, Fable and Mythos
+  cannot stop thinking and Sonnet 5.5 refuses `disabled`, so they get adaptive at low
+  effort; Opus 5 gets `disabled`; Opus and Sonnet 4.6 to 4.8 get nothing, which is no
+  thinking there. Off sends nothing and the model's own default applies, so a model that
+  always thinks still does.
+- **Only this turn's thinking goes back.** A thinking block is bound to the conversation
+  before it, and that changes every turn: the system prompt carries the turn's page,
+  memories and date, and older tool results are shortened in replay. So
+  `toAnthropicMessages` replays thinking only for the assistant messages after the last
+  user message, the current tool loop, which a tool result needs. Earlier turns' thinking
+  is dropped on every model; removing a leading run of blocks is an edit the API accepts,
+  and most models ignore earlier turns' thinking anyway.
+- **A changed block is dropped, not refused.** Fable 5.1, Opus 5.5 and Sonnet 5.5 check a
+  replayed block's prefix (system, tools and earlier messages), and for accounts created on
+  or after 2026-08-31 a mismatch is a 400. Within a turn a tool found mid-turn still
+  changes the tool list, and a failover changes the model, so those requests send
+  `thinking.block_binding.prefix_mismatch_behavior: "drop_block"` with the
+  `anthropic-beta: thinking-binding-controls-2026-08-01` header. The header goes only to
+  those models, since a gateway in front of an older one may refuse an unknown beta, and
+  Off sends `{type: "adaptive"}` there so the binding has a thinking object to ride on.
+- **Drops are counted.** The API lists each dropped block in `input_transformations`
+  (`message_start` when streaming). The adapter counts the `thinking_dropped` entries into
+  `Response.ThinkingDropped`, and the attempt span carries it as
+  `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
+  conversation it should hold still.
 
 OpenAI-compatible servers that do not parse a model's tool-call template return it as text.
 The chat adapter lifts it (`modeladapter.liftInlineToolCalls`): a whole GLM call
