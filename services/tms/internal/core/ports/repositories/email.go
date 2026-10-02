@@ -86,6 +86,7 @@ type EmailRepository interface {
 		email.Purpose,
 	) (*email.Profile, error)
 	CreateMessage(context.Context, *email.Message) (*email.Message, error)
+	CreateMessageOnce(context.Context, *email.Message) (*email.Message, bool, error)
 	UpdateMessage(context.Context, *email.Message) (*email.Message, error)
 	GetMessage(context.Context, GetEmailEntityRequest) (*email.Message, error)
 	GetMessageByProviderID(

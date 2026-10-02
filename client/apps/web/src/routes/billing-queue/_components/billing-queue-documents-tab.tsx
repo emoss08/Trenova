@@ -27,6 +27,7 @@ import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { BillingQueueDocumentsEmpty } from "./billing-queue-documents-empty";
+import { UnmetRequirementNote } from "@/components/documents/unmet-requirement-note";
 
 function getFileIcon(fileType: string) {
   if (fileType.startsWith("image/")) return ImageIcon;
@@ -173,14 +174,17 @@ export function BillingQueueDocumentsTab({
                   ) : (
                     <CircleDashedIcon className="text-muted-foreground size-3.5 shrink-0" />
                   )}
-                  <span
-                    className={cn(
-                      "truncate",
-                      req.satisfied ? "text-muted-foreground" : "font-medium",
-                    )}
-                  >
-                    {req.documentTypeName}
-                  </span>
+                  <div className="min-w-0">
+                    <span
+                      className={cn(
+                        "block truncate",
+                        req.satisfied ? "text-muted-foreground" : "font-medium",
+                      )}
+                    >
+                      {req.documentTypeName}
+                    </span>
+                    <UnmetRequirementNote requirement={req} />
+                  </div>
                 </div>
                 {!req.satisfied && isEditable && (
                   <Button

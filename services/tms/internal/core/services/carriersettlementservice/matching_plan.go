@@ -201,12 +201,22 @@ func (s *Service) PlanMatchDecision(
 	switch req.Decision {
 	case MatchDecisionAccept:
 		plan.Refusal = PlanAcceptMatch(plan.After, req.Note, userID, now)
+		if plan.Refusal == nil {
+			if err = s.planAcceptRefusal(ctx, req.TenantInfo, plan, false); err != nil {
+				return nil, err
+			}
+		}
 	case MatchDecisionAcceptWithVariance:
 		plan.Refusal = PlanAcceptWithVariance(plan.After, &VarianceResolution{
 			Note:       req.Note,
 			UserID:     userID,
 			ResolvedAt: now,
 		})
+		if plan.Refusal == nil {
+			if err = s.planAcceptRefusal(ctx, req.TenantInfo, plan, true); err != nil {
+				return nil, err
+			}
+		}
 		if plan.Refusal == nil {
 			plan.Adjustment = VarianceAdjustmentEvent(req.TenantInfo, match, now)
 		}
@@ -220,6 +230,22 @@ func (s *Service) PlanMatchDecision(
 		)
 	}
 	return plan, nil
+}
+
+func (s *Service) planAcceptRefusal(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	plan *MatchDecisionPlan,
+	withVariance bool,
+) error {
+	verdict, err := s.acceptGuard(ctx, tenantInfo, plan.Before, withVariance)
+	if err != nil {
+		return err
+	}
+	if verdict.refused() {
+		plan.Refusal = verdict.refusal
+	}
+	return nil
 }
 
 func (s *Service) PerformMatchDecision(
@@ -337,6 +363,13 @@ func (s *Service) ediMatchSource(
 			"Link the EDI invoice to a carrier before matching",
 		)
 	}
+	if invoice.DuplicateOfID.IsNotNil() {
+		return nil, errortypes.NewValidationError(
+			"ediCarrierInvoiceId",
+			errortypes.ErrDuplicate,
+			"This EDI invoice repeats one the partner already sent; match the original instead",
+		)
+	}
 
 	source := requestedMatchSource(req)
 	source.invoice = invoice
@@ -419,6 +452,17 @@ func (s *Service) draftMatch(ctx context.Context, req *CreateMatchRequest) (*mat
 		return nil, err
 	}
 
+	possibleDuplicateOfID, err := s.screenDuplicateMatch(
+		ctx,
+		req.TenantInfo,
+		source.carrierID,
+		source.invoiceNumber,
+		assignment.ID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
@@ -433,6 +477,7 @@ func (s *Service) draftMatch(ctx context.Context, req *CreateMatchRequest) (*mat
 			invoiceNumber:          source.invoiceNumber,
 			invoiceTotalMinor:      source.invoiceTotalMinor,
 			matchedVia:             carriersettlement.MatchViaManual,
+			possibleDuplicateOfID:  possibleDuplicateOfID,
 		},
 		assignment:     assignment,
 		invoice:        source.invoice,
@@ -457,6 +502,7 @@ func newInvoiceMatch(
 		Status:                 matchStatusForVariance(varianceMinor, toleranceMinor),
 		MatchedVia:             seed.matchedVia,
 		InvoiceNumber:          seed.invoiceNumber,
+		PossibleDuplicateOfID:  seed.possibleDuplicateOfID,
 		InvoiceTotalMinor:      seed.invoiceTotalMinor,
 		ExpectedTotalMinor:     expectedTotalMinor,
 		VarianceMinor:          varianceMinor,

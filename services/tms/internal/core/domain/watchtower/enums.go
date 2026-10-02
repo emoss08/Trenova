@@ -23,6 +23,7 @@ const (
 	SourceInboundMessage         = SourceKind("InboundMessage")
 	SourceWorkerCredential       = SourceKind("WorkerCredential")
 	SourceMoveCoverage           = SourceKind("MoveCoverage")
+	SourceTelematicsStopVisit    = SourceKind("TelematicsStopVisit")
 	SourceAgentQualityRegression = SourceKind("AgentQualityRegression")
 	SourceAccountingSync         = SourceKind("AccountingSync")
 )
@@ -46,6 +47,7 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceInboundMessage:         permission.ResourceInboundMessage,
 	SourceWorkerCredential:       permission.ResourceWorker,
 	SourceMoveCoverage:           permission.ResourceShipmentMove,
+	SourceTelematicsStopVisit:    permission.ResourceShipmentMove,
 	SourceAgentQualityRegression: permission.ResourceAgentEvalSuite,
 	SourceAccountingSync:         permission.ResourceAccountingSync,
 }
@@ -96,6 +98,8 @@ func (k SourceKind) Label() string {
 		return "Credential expiring"
 	case SourceMoveCoverage:
 		return "Coverage at risk"
+	case SourceTelematicsStopVisit:
+		return "Stop visit not recorded"
 	case SourceAgentQualityRegression:
 		return "Agent quality regressed"
 	case SourceAccountingSync:
@@ -122,6 +126,7 @@ func AllSourceKinds() []SourceKind {
 		SourceInboundMessage,
 		SourceWorkerCredential,
 		SourceMoveCoverage,
+		SourceTelematicsStopVisit,
 		SourceAgentQualityRegression,
 		SourceAccountingSync,
 	}
@@ -182,6 +187,7 @@ func (k SourceKind) OverseesAgents() bool {
 		SourceInboundMessage,
 		SourceWorkerCredential,
 		SourceMoveCoverage,
+		SourceTelematicsStopVisit,
 		SourceAccountingSync:
 		return false
 	default:

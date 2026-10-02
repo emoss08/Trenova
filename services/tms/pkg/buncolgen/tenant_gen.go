@@ -1197,6 +1197,7 @@ var CarrierSettlementControlColumns = struct {
 	VarianceToleranceMinor                  Column // "variance_tolerance_minor" → qualified: "carstlc.variance_tolerance_minor"
 	AutoMatchInboundInvoices                Column // "auto_match_inbound_invoices" → qualified: "carstlc.auto_match_inbound_invoices"
 	AutoAcceptWithinTolerance               Column // "auto_accept_within_tolerance" → qualified: "carstlc.auto_accept_within_tolerance"
+	HoldUntilInvoiceMatched                 Column // "hold_until_invoice_matched" → qualified: "carstlc.hold_until_invoice_matched"
 	DefaultAPAccountID                      Column // "default_ap_account_id" → qualified: "carstlc.default_ap_account_id"
 	DefaultPurchasedTransportationAccountID Column // "default_purchased_transportation_account_id" → qualified: "carstlc.default_purchased_transportation_account_id"
 	Version                                 Column // "version" → qualified: "carstlc.version"
@@ -1215,6 +1216,7 @@ var CarrierSettlementControlColumns = struct {
 	VarianceToleranceMinor:                  NewColumn("variance_tolerance_minor", "carstlc"),
 	AutoMatchInboundInvoices:                NewColumn("auto_match_inbound_invoices", "carstlc"),
 	AutoAcceptWithinTolerance:               NewColumn("auto_accept_within_tolerance", "carstlc"),
+	HoldUntilInvoiceMatched:                 NewColumn("hold_until_invoice_matched", "carstlc"),
 	DefaultAPAccountID:                      NewColumn("default_ap_account_id", "carstlc"),
 	DefaultPurchasedTransportationAccountID: NewColumn("default_purchased_transportation_account_id", "carstlc"),
 	Version:                                 NewColumn("version", "carstlc"),
@@ -1239,6 +1241,7 @@ var CarrierSettlementControlFieldMap = map[string]string{
 	"varianceToleranceMinor":                  "variance_tolerance_minor",
 	"autoMatchInboundInvoices":                "auto_match_inbound_invoices",
 	"autoAcceptWithinTolerance":               "auto_accept_within_tolerance",
+	"holdUntilInvoiceMatched":                 "hold_until_invoice_matched",
 	"defaultApAccountId":                      "default_ap_account_id",
 	"defaultPurchasedTransportationAccountId": "default_purchased_transportation_account_id",
 	"version":                                 "version",
@@ -1261,6 +1264,7 @@ var CarrierSettlementControlInsertableColumns = []string{
 	"variance_tolerance_minor",
 	"auto_match_inbound_invoices",
 	"auto_accept_within_tolerance",
+	"hold_until_invoice_matched",
 	"default_ap_account_id",
 	"default_purchased_transportation_account_id",
 	"version",
@@ -1343,6 +1347,7 @@ var CarrierSettlementControlFilter = struct {
 	VarianceToleranceMinor                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceToleranceMinor" → DB: "variance_tolerance_minor"
 	AutoMatchInboundInvoices                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoMatchInboundInvoices" → DB: "auto_match_inbound_invoices"
 	AutoAcceptWithinTolerance               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAcceptWithinTolerance" → DB: "auto_accept_within_tolerance"
+	HoldUntilInvoiceMatched                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "holdUntilInvoiceMatched" → DB: "hold_until_invoice_matched"
 	DefaultAPAccountID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultApAccountId" → DB: "default_ap_account_id"
 	DefaultPurchasedTransportationAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultPurchasedTransportationAccountId" → DB: "default_purchased_transportation_account_id"
 	Version                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -1384,6 +1389,9 @@ var CarrierSettlementControlFilter = struct {
 	},
 	AutoAcceptWithinTolerance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoAcceptWithinTolerance", op, value)
+	},
+	HoldUntilInvoiceMatched: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("holdUntilInvoiceMatched", op, value)
 	},
 	DefaultAPAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("defaultApAccountId", op, value)

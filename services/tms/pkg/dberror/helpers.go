@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/uptrace/bun/driver/pgdriver"
+	sqlitedriver "modernc.org/sqlite"
 )
 
 var ErrCheckRowNil = errors.New("check rows affected: result is nil")
@@ -161,6 +162,23 @@ func IsNotNullConstraintViolation(err error) bool {
 
 func IsCheckConstraintViolation(err error) bool {
 	return ExtractCode(err) == pgerrcode.CheckViolation
+}
+
+func DriverError(err error) error {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+		return pgErr
+	}
+
+	var pgDriverErr pgdriver.Error
+	if errors.As(err, &pgDriverErr) {
+		return pgDriverErr
+	}
+
+	if sqliteErr, ok := errors.AsType[*sqlitedriver.Error](err); ok {
+		return sqliteErr
+	}
+
+	return nil
 }
 
 func IsRowLevelSecurityViolation(err error) bool {

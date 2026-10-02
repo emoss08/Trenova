@@ -318,6 +318,7 @@ fragment ShipmentFields on Shipment {
   entryMethod
   proNumber
   bol
+  externalReference
   cancelReason
   otherChargeAmount
   freightChargeAmount
@@ -933,6 +934,10 @@ query ShipmentBillingReadiness($shipmentId: ID!) {
       satisfied
       documentCount
       documentIds
+      ineligibleDocuments {
+        documentId
+        standing
+      }
     }
     missingRequirements {
       documentTypeId
@@ -941,6 +946,10 @@ query ShipmentBillingReadiness($shipmentId: ID!) {
       satisfied
       documentCount
       documentIds
+      ineligibleDocuments {
+        documentId
+        standing
+      }
     }
     validationFailures {
       field

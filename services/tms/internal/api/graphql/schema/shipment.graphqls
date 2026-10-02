@@ -222,6 +222,8 @@ type Shipment {
   entryMethod: ShipmentEntryMethod
   proNumber: String!
   bol: String
+  "The customer's own identifier for the load, such as an EDI 204 shipment ID or an order number; unique per customer among live shipments."
+  externalReference: String
   cancelReason: String!
   otherChargeAmount: Decimal!
   freightChargeAmount: Decimal!
@@ -742,6 +744,15 @@ type ShipmentBillingRequirement {
   satisfied: Boolean!
   documentCount: Int!
   documentIds: [String!]!
+  "Documents of this type that are attached but do not satisfy it: rejected, expired, awaiting review or archived."
+  ineligibleDocuments: [ShipmentBillingIneligibleDocument!]!
+}
+
+"A document attached to a shipment that does not count toward its billing requirement."
+type ShipmentBillingIneligibleDocument {
+  documentId: String!
+  "Why it does not count: rejected, expired, pending_review or inactive."
+  standing: String!
 }
 
 "One payer's standing on a shipment."
@@ -1608,6 +1619,8 @@ input ShipmentInput {
   entryMethod: ShipmentEntryMethod = Manual
   proNumber: String
   bol: String
+  "The customer's own identifier for the load. A second live shipment for the same customer with this reference is refused."
+  externalReference: String
   cancelReason: String
   otherChargeAmount: Decimal = "0"
   freightChargeAmount: Decimal = "0"

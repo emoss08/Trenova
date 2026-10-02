@@ -4,6 +4,7 @@ import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { SectionPanel } from "@/components/section-panel";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { CarrierInvoiceMatchStatusBadge } from "@trenova/shared/components/status-badge";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -482,8 +483,19 @@ function InvoiceList({
             <span className="font-mono text-xs font-medium">
               {invoice.invoiceNumber || t("No invoice #")}
             </span>
-            <span className="rounded-full border px-2 py-0.5 text-2xs uppercase">
-              {invoice.reconciliationStatus}
+            <span className="flex shrink-0 items-center gap-1">
+              {invoice.duplicateOfId && (
+                <Badge
+                  variant="danger"
+                  className="h-4 px-1 text-3xs"
+                  title={t("The partner sent this invoice number before; the earlier copy counts")}
+                >
+                  {t("Repeat")}
+                </Badge>
+              )}
+              <span className="rounded-full border px-2 py-0.5 text-2xs uppercase">
+                {invoice.reconciliationStatus}
+              </span>
             </span>
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
@@ -574,6 +586,25 @@ function MatchList({
                 >
                   {t("Auto-matched")}
                 </Badge>
+              )}
+              {match.duplicateOfMatchId ? (
+                <Badge
+                  variant="danger"
+                  className="h-4 px-1 text-3xs"
+                  title={t("Another live match already holds this invoice number")}
+                >
+                  {t("Duplicate")}
+                </Badge>
+              ) : (
+                match.possibleDuplicateOfId && (
+                  <Badge
+                    variant="warning"
+                    className="h-4 px-1 text-3xs"
+                    title={t("The load already had an invoice match when this one was made")}
+                  >
+                    {t("Possible duplicate")}
+                  </Badge>
+                )
               )}
               {wasAutoAccepted(match) && (
                 <Badge
@@ -805,6 +836,29 @@ function MatchDetail({
           {t("created {0}", formatSettlementDate(match.createdAt))}
         </span>
       </div>
+
+      {match.duplicateOfMatchId ? (
+        <Alert size="sm" variant="destructive">
+          <AlertTitle>{t("Duplicate invoice")}</AlertTitle>
+          <AlertDescription>
+            {t(
+              "Another live match already holds invoice {0} from this carrier. Reject one of them; this match cannot be accepted while the other stands.",
+              match.invoiceNumber,
+            )}
+          </AlertDescription>
+        </Alert>
+      ) : (
+        match.possibleDuplicateOfId && (
+          <Alert size="sm" variant="warning">
+            <AlertTitle>{t("Possible duplicate")}</AlertTitle>
+            <AlertDescription>
+              {t(
+                "This load already had a carrier invoice match when this one was made. Check that the carrier is not billing the same freight twice before accepting it.",
+              )}
+            </AlertDescription>
+          </Alert>
+        )
+      )}
 
       <div className="grid gap-3 lg:grid-cols-2">
         <SectionPanel title={t("Carrier invoice")}>

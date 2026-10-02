@@ -362,7 +362,7 @@ func (s *Service) Upload(
 		}
 	}
 	s.recordDocumentUploadUsage(ctx, log, createdDoc, req.TenantInfo, &req.Actor)
-	s.publishDocumentInvalidation(ctx, createdDoc, &req.Actor)
+	s.publishDocumentInvalidation(ctx, createdDoc, &req.Actor, permission.OpCreate)
 
 	return &UploadResult{Document: createdDoc}, nil
 }
@@ -371,6 +371,7 @@ func (s *Service) publishDocumentInvalidation(
 	ctx context.Context,
 	doc *document.Document,
 	actor *services.RequestActor,
+	operation permission.Operation,
 ) {
 	if s.realtime == nil || doc == nil {
 		return
@@ -379,11 +380,11 @@ func (s *Service) publishDocumentInvalidation(
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,
 		Resource:       permission.ResourceDocument.String(),
-		Action:         string(permission.OpCreate),
+		Action:         string(operation),
 		RecordID:       doc.ID,
 		Entity: map[string]string{
-			"resourceId":   doc.ResourceID,
-			"resourceType": doc.ResourceType,
+			metadataResourceID:   doc.ResourceID,
+			metadataResourceType: doc.ResourceType,
 		},
 	}
 	if actor != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,8 +26,9 @@ type RecordInboundFreightInvoiceRequest struct {
 }
 
 type RecordInboundFreightInvoiceResult struct {
-	Invoice  *edi.CarrierInvoice
-	Warnings []string
+	Invoice         *edi.CarrierInvoice
+	Warnings        []string
+	AlreadyRecorded bool
 }
 
 func (s *Service) RecordInboundFreightInvoice(
@@ -42,6 +44,14 @@ func (s *Service) RecordInboundFreightInvoice(
 	}
 
 	entity := carrierInvoiceFromPayload(req.Partner, req.Message, req.Payload)
+	if recorded, err := s.recordedCarrierInvoice(
+		ctx,
+		req.Partner,
+		entity,
+	); err != nil ||
+		recorded != nil {
+		return recorded, err
+	}
 	warnings := make([]string, 0, 2)
 	notes := make([]string, 0, 2)
 
@@ -75,6 +85,15 @@ func (s *Service) RecordInboundFreightInvoice(
 
 	invoice, err := s.carrierInvoiceRepo.CreateCarrierInvoice(ctx, entity)
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			recorded, lookupErr := s.recordedCarrierInvoice(ctx, req.Partner, entity)
+			if lookupErr != nil {
+				return nil, lookupErr
+			}
+			if recorded != nil {
+				return recorded, nil
+			}
+		}
 		return nil, err
 	}
 
@@ -100,6 +119,63 @@ func (s *Service) RecordInboundFreightInvoice(
 		)
 	}
 	return &RecordInboundFreightInvoiceResult{Invoice: invoice, Warnings: warnings}, nil
+}
+
+func (s *Service) recordedCarrierInvoice(
+	ctx context.Context,
+	partner *edi.EDIPartner,
+	incoming *edi.CarrierInvoice,
+) (*RecordInboundFreightInvoiceResult, error) {
+	existing, err := s.carrierInvoiceRepo.GetCarrierInvoiceByNumber(
+		ctx,
+		&repositories.GetEDICarrierInvoiceByNumberRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: incoming.OrganizationID,
+				BuID:  incoming.BusinessUnitID,
+			},
+			PartnerID:     partner.ID,
+			InvoiceNumber: incoming.InvoiceNumber,
+		},
+	)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil result means the invoice is new
+		}
+		return nil, err
+	}
+
+	warning := fmt.Sprintf(
+		"carrier invoice %s from partner %s was already recorded; this copy was not recorded again",
+		existing.InvoiceNumber,
+		partner.Code,
+	)
+	if !sameInvoiceTotal(existing.TotalAmount, incoming.TotalAmount) {
+		warning += fmt.Sprintf(
+			" even though its total differs (recorded %s, resent %s); review the invoice with the carrier",
+			invoiceTotalText(existing.TotalAmount),
+			invoiceTotalText(incoming.TotalAmount),
+		)
+	}
+
+	return &RecordInboundFreightInvoiceResult{
+		Invoice:         existing,
+		Warnings:        []string{warning},
+		AlreadyRecorded: true,
+	}, nil
+}
+
+func sameInvoiceTotal(recorded, resent decimal.NullDecimal) bool {
+	if recorded.Valid != resent.Valid {
+		return false
+	}
+	return !recorded.Valid || recorded.Decimal.Equal(resent.Decimal)
+}
+
+func invoiceTotalText(total decimal.NullDecimal) string {
+	if !total.Valid {
+		return "none"
+	}
+	return total.Decimal.StringFixed(2)
 }
 
 func carrierInvoiceFromPayload(

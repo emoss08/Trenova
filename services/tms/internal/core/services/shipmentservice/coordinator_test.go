@@ -1108,40 +1108,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 }
 
 func cloneShipment(source *shipment.Shipment) *shipment.Shipment {
-	if source == nil {
-		return nil
-	}
-
-	clone := *source
-	clone.Moves = make([]*shipment.ShipmentMove, 0, len(source.Moves))
-
-	for _, move := range source.Moves {
-		if move == nil {
-			clone.Moves = append(clone.Moves, nil)
-			continue
-		}
-
-		moveClone := *move
-		moveClone.Stops = make([]*shipment.Stop, 0, len(move.Stops))
-		if move.Assignment != nil {
-			assignmentClone := *move.Assignment
-			moveClone.Assignment = &assignmentClone
-		}
-
-		for _, stop := range move.Stops {
-			if stop == nil {
-				moveClone.Stops = append(moveClone.Stops, nil)
-				continue
-			}
-
-			stopClone := *stop
-			moveClone.Stops = append(moveClone.Stops, &stopClone)
-		}
-
-		clone.Moves = append(clone.Moves, &moveClone)
-	}
-
-	return &clone
+	return source.CloneMoveGraph()
 }
 
 func completedShipmentForCoordinator() *shipment.Shipment {

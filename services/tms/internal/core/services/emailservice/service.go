@@ -303,10 +303,14 @@ func (s *Service) Send(
 		BodyTextSize:   int64(len(req.Text)),
 		BodyHTMLSize:   int64(len(req.HTML)),
 	}
-	msg, err = s.repo.CreateMessage(ctx, msg)
+	stored, created, err := s.repo.CreateMessageOnce(ctx, msg)
 	if err != nil {
 		return nil, err
 	}
+	if !created {
+		return s.replaySend(ctx, req, msg, stored)
+	}
+	msg = stored
 	if err = s.persistAttachments(ctx, msg, req.Attachments); err != nil {
 		if _, updateErr := s.markFailed(ctx, msg, err); updateErr != nil {
 			return nil, updateErr
@@ -327,6 +331,93 @@ func (s *Service) Send(
 		return nil, err
 	}
 	return msg, nil
+}
+
+func (s *Service) replaySend(
+	ctx context.Context,
+	req *services.SendEmailRequest,
+	requested *email.Message,
+	stored *email.Message,
+) (*email.Message, error) {
+	if !stored.SameRecipientsAs(requested) {
+		return nil, errortypes.NewBusinessError(
+			"This email was already sent to different recipients under the same idempotency key",
+		)
+	}
+	stored.Replayed = true
+
+	switch stored.Status {
+	case email.MessageStatusQueued:
+		if err := s.startSendWorkflow(
+			ctx,
+			stored,
+			req.HTML,
+			req.Text,
+			req.Headers,
+			req.OpenTracking,
+		); err != nil {
+			return nil, err
+		}
+		return stored, nil
+	case email.MessageStatusFailed:
+		return s.resendFailed(ctx, req, stored)
+	case email.MessageStatusSending,
+		email.MessageStatusSent,
+		email.MessageStatusDelivered,
+		email.MessageStatusBounced,
+		email.MessageStatusComplained,
+		email.MessageStatusOpened,
+		email.MessageStatusClicked,
+		email.MessageStatusSuppressed:
+		return stored, nil
+	default:
+		return stored, nil
+	}
+}
+
+func (s *Service) resendFailed(
+	ctx context.Context,
+	req *services.SendEmailRequest,
+	stored *email.Message,
+) (*email.Message, error) {
+	if len(req.Attachments) > 0 {
+		existing, err := s.repo.ListAttachments(ctx, repositories.ListEmailAttachmentsRequest{
+			MessageID:  stored.ID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(existing) == 0 {
+			if err = s.persistAttachments(ctx, stored, req.Attachments); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	stored.Status = email.MessageStatusQueued
+	stored.LastError = ""
+	stored.FailedAt = 0
+	stored.UpdatedAt = timeutils.NowUnix()
+	requeued, err := s.repo.UpdateMessage(ctx, stored)
+	if err != nil {
+		return nil, err
+	}
+	requeued.Replayed = true
+	if err = s.startSendWorkflow(
+		ctx,
+		requeued,
+		req.HTML,
+		req.Text,
+		req.Headers,
+		req.OpenTracking,
+	); err != nil {
+		if _, updateErr := s.markFailed(ctx, requeued, err); updateErr != nil {
+			return nil, updateErr
+		}
+		return nil, err
+	}
+	return requeued, nil
 }
 
 func (s *Service) TestSend(

@@ -41,7 +41,8 @@ type Params struct {
 	DispatchControlRepo repositories.DispatchControlRepository
 	CustomFieldValues   *customfieldservice.ValuesService
 	Logger              *zap.Logger
-	ProviderOverride    services.TelematicsProvider `optional:"true"`
+	ProviderOverride    services.TelematicsProvider  `optional:"true"`
+	Watchtower          services.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
@@ -59,6 +60,7 @@ type Service struct {
 	dispatchControlRepo repositories.DispatchControlRepository
 	customFieldValues   *customfieldservice.ValuesService
 	providerOverride    services.TelematicsProvider
+	watchtower          services.WatchtowerProjector
 	l                   *zap.Logger
 }
 
@@ -78,6 +80,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		dispatchControlRepo: p.DispatchControlRepo,
 		customFieldValues:   p.CustomFieldValues,
 		providerOverride:    p.ProviderOverride,
+		watchtower:          p.Watchtower,
 		l:                   p.Logger.Named("telematics-service"),
 	}
 }

@@ -812,33 +812,43 @@ var TelematicsEventTable = TableInfo{
 //	q.Where(TelematicsEventColumns.ID.Eq(), id)           // WHERE tlev.id = ?
 //	q.Order(TelematicsEventColumns.CreatedAt.OrderDesc())  // ORDER BY tlev.created_at DESC
 var TelematicsEventColumns = struct {
-	ID             Column // "id" → qualified: "tlev.id"
-	OrganizationID Column // "organization_id" → qualified: "tlev.organization_id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "tlev.business_unit_id"
-	Provider       Column // "provider" → qualified: "tlev.provider"
-	EventID        Column // "event_id" → qualified: "tlev.event_id"
-	EventType      Column // "event_type" → qualified: "tlev.event_type"
-	OccurredAt     Column // "occurred_at" → qualified: "tlev.occurred_at"
-	TractorID      Column // "tractor_id" → qualified: "tlev.tractor_id"
-	WorkerID       Column // "worker_id" → qualified: "tlev.worker_id"
-	LocationID     Column // "location_id" → qualified: "tlev.location_id"
-	AddressName    Column // "address_name" → qualified: "tlev.address_name"
-	Payload        Column // "payload" → qualified: "tlev.payload"
-	CreatedAt      Column // "created_at" → qualified: "tlev.created_at"
+	ID                Column // "id" → qualified: "tlev.id"
+	OrganizationID    Column // "organization_id" → qualified: "tlev.organization_id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "tlev.business_unit_id"
+	Provider          Column // "provider" → qualified: "tlev.provider"
+	EventID           Column // "event_id" → qualified: "tlev.event_id"
+	EventType         Column // "event_type" → qualified: "tlev.event_type"
+	OccurredAt        Column // "occurred_at" → qualified: "tlev.occurred_at"
+	TractorID         Column // "tractor_id" → qualified: "tlev.tractor_id"
+	WorkerID          Column // "worker_id" → qualified: "tlev.worker_id"
+	LocationID        Column // "location_id" → qualified: "tlev.location_id"
+	AddressName       Column // "address_name" → qualified: "tlev.address_name"
+	Payload           Column // "payload" → qualified: "tlev.payload"
+	CreatedAt         Column // "created_at" → qualified: "tlev.created_at"
+	StopOutcome       Column // "stop_outcome" → qualified: "tlev.stop_outcome"
+	StopVisit         Column // "stop_visit" → qualified: "tlev.stop_visit"
+	ShipmentMoveID    Column // "shipment_move_id" → qualified: "tlev.shipment_move_id"
+	StopID            Column // "stop_id" → qualified: "tlev.stop_id"
+	StopOutcomeReason Column // "stop_outcome_reason" → qualified: "tlev.stop_outcome_reason"
 }{
-	ID:             NewColumn("id", "tlev"),
-	OrganizationID: NewColumn("organization_id", "tlev"),
-	BusinessUnitID: NewColumn("business_unit_id", "tlev"),
-	Provider:       NewColumn("provider", "tlev"),
-	EventID:        NewColumn("event_id", "tlev"),
-	EventType:      NewColumn("event_type", "tlev"),
-	OccurredAt:     NewColumn("occurred_at", "tlev"),
-	TractorID:      NewColumn("tractor_id", "tlev"),
-	WorkerID:       NewColumn("worker_id", "tlev"),
-	LocationID:     NewColumn("location_id", "tlev"),
-	AddressName:    NewColumn("address_name", "tlev"),
-	Payload:        NewColumn("payload", "tlev"),
-	CreatedAt:      NewColumn("created_at", "tlev"),
+	ID:                NewColumn("id", "tlev"),
+	OrganizationID:    NewColumn("organization_id", "tlev"),
+	BusinessUnitID:    NewColumn("business_unit_id", "tlev"),
+	Provider:          NewColumn("provider", "tlev"),
+	EventID:           NewColumn("event_id", "tlev"),
+	EventType:         NewColumn("event_type", "tlev"),
+	OccurredAt:        NewColumn("occurred_at", "tlev"),
+	TractorID:         NewColumn("tractor_id", "tlev"),
+	WorkerID:          NewColumn("worker_id", "tlev"),
+	LocationID:        NewColumn("location_id", "tlev"),
+	AddressName:       NewColumn("address_name", "tlev"),
+	Payload:           NewColumn("payload", "tlev"),
+	CreatedAt:         NewColumn("created_at", "tlev"),
+	StopOutcome:       NewColumn("stop_outcome", "tlev"),
+	StopVisit:         NewColumn("stop_visit", "tlev"),
+	ShipmentMoveID:    NewColumn("shipment_move_id", "tlev"),
+	StopID:            NewColumn("stop_id", "tlev"),
+	StopOutcomeReason: NewColumn("stop_outcome_reason", "tlev"),
 }
 
 // TelematicsEventFieldMap maps JSON API field names to database column names.
@@ -846,19 +856,24 @@ var TelematicsEventColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by TelematicsEvent.GetStaticFieldMap().
 var TelematicsEventFieldMap = map[string]string{
-	"id":             "id",
-	"organizationId": "organization_id",
-	"businessUnitId": "business_unit_id",
-	"provider":       "provider",
-	"eventId":        "event_id",
-	"eventType":      "event_type",
-	"occurredAt":     "occurred_at",
-	"tractorId":      "tractor_id",
-	"workerId":       "worker_id",
-	"locationId":     "location_id",
-	"addressName":    "address_name",
-	"payload":        "payload",
-	"createdAt":      "created_at",
+	"id":                "id",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"provider":          "provider",
+	"eventId":           "event_id",
+	"eventType":         "event_type",
+	"occurredAt":        "occurred_at",
+	"tractorId":         "tractor_id",
+	"workerId":          "worker_id",
+	"locationId":        "location_id",
+	"addressName":       "address_name",
+	"payload":           "payload",
+	"createdAt":         "created_at",
+	"stopOutcome":       "stop_outcome",
+	"stopVisit":         "stop_visit",
+	"shipmentMoveId":    "shipment_move_id",
+	"stopId":            "stop_id",
+	"stopOutcomeReason": "stop_outcome_reason",
 }
 
 // TelematicsEventInsertableColumns lists column names suitable for INSERT statements on the "telematics_events" table.
@@ -877,6 +892,11 @@ var TelematicsEventInsertableColumns = []string{
 	"address_name",
 	"payload",
 	"created_at",
+	"stop_outcome",
+	"stop_visit",
+	"shipment_move_id",
+	"stop_id",
+	"stop_outcome_reason",
 }
 
 // TelematicsEventScopeTenant restricts a query to a single tenant by adding:
@@ -929,19 +949,24 @@ func TelematicsEventApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery)
 //	TelematicsEventFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var TelematicsEventFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	Provider       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
-	EventID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventId" → DB: "event_id"
-	EventType      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventType" → DB: "event_type"
-	OccurredAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "occurredAt" → DB: "occurred_at"
-	TractorID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tractorId" → DB: "tractor_id"
-	WorkerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
-	LocationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locationId" → DB: "location_id"
-	AddressName    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressName" → DB: "address_name"
-	Payload        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Provider          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	EventID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventId" → DB: "event_id"
+	EventType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventType" → DB: "event_type"
+	OccurredAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "occurredAt" → DB: "occurred_at"
+	TractorID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tractorId" → DB: "tractor_id"
+	WorkerID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
+	LocationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locationId" → DB: "location_id"
+	AddressName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressName" → DB: "address_name"
+	Payload           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	StopOutcome       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stopOutcome" → DB: "stop_outcome"
+	StopVisit         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stopVisit" → DB: "stop_visit"
+	ShipmentMoveID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentMoveId" → DB: "shipment_move_id"
+	StopID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stopId" → DB: "stop_id"
+	StopOutcomeReason func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stopOutcomeReason" → DB: "stop_outcome_reason"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -981,6 +1006,21 @@ var TelematicsEventFilter = struct {
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)
+	},
+	StopOutcome: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("stopOutcome", op, value)
+	},
+	StopVisit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("stopVisit", op, value)
+	},
+	ShipmentMoveID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentMoveId", op, value)
+	},
+	StopID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("stopId", op, value)
+	},
+	StopOutcomeReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("stopOutcomeReason", op, value)
 	},
 }
 

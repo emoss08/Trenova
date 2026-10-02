@@ -68,8 +68,9 @@ func (s *Service) GenerateBatch(
 	carrierIDs, err := s.costEventRepo.ListCarrierIDsWithPendingEvents(
 		ctx,
 		repositories.ListCarriersWithPendingEventsRequest{
-			TenantInfo: req.TenantInfo,
-			PeriodEnd:  bounds.PeriodEnd,
+			TenantInfo:              req.TenantInfo,
+			PeriodEnd:               bounds.PeriodEnd,
+			HoldUntilInvoiceMatched: control.HoldUntilInvoiceMatched,
 		},
 	)
 	if err != nil {
@@ -254,13 +255,18 @@ func (s *Service) buildSettlement(
 	ctx context.Context,
 	req *GenerateForCarrierRequest,
 ) (*carriersettlement.CarrierSettlement, []*carriersettlement.CostEvent, error) {
+	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, nil, err
+	}
 	events, err := s.costEventRepo.ListPendingByCarrier(
 		ctx,
 		&repositories.ListPendingCostEventsRequest{
-			TenantInfo:   req.TenantInfo,
-			CarrierID:    req.CarrierID,
-			PeriodEnd:    req.PeriodEnd,
-			ReleasedFrom: req.ReleasedFrom,
+			TenantInfo:              req.TenantInfo,
+			CarrierID:               req.CarrierID,
+			PeriodEnd:               req.PeriodEnd,
+			ReleasedFrom:            req.ReleasedFrom,
+			HoldUntilInvoiceMatched: control.HoldUntilInvoiceMatched,
 		},
 	)
 	if err != nil {

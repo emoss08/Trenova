@@ -21,6 +21,7 @@ var Module = fx.Module("watchtower-sources",
 		asSource(NewInboundMessageSource),
 		asSource(NewQualityRegressionSource),
 		asSource(NewAccountingSyncSource),
+		asSource(NewTelematicsStopVisitSource),
 	),
 )
 

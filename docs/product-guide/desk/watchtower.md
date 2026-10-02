@@ -9,7 +9,7 @@ related:
 ---
 
 ## What it's for
-Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, and similar events. Each item shows its severity, what kind of event it is, a short summary and how long ago it happened, and new items since your last visit are marked. From an item you can open the record, ask an agent about it, or hand it to the agents that watch that kind of event.
+Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, telematics arrivals and departures that could not be recorded on their stop, and similar events. Each item shows its severity, what kind of event it is, a short summary and how long ago it happened, and new items since your last visit are marked. From an item you can open the record, ask an agent about it, or hand it to the agents that watch that kind of event.
 
 ## Tasks
 

@@ -3869,6 +3869,15 @@
       "template/notification.dash.load_unassigned"
     ]
   },
+  "A load's carrier cost stays out of settlements until its carrier invoice match is resolved, and a settlement with unmatched loads cannot be approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
+    ]
+  },
   "A local date and time such as 2026-10-01T08:00 is required": {
     "sites": 2,
     "scope": [
@@ -5179,6 +5188,33 @@
       "domain/edi"
     ]
   },
+  "A rejected document must record when it was rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
+  "A rejected document must record why it was rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
+  "A rejected document no longer counts toward the shipment's billing requirements. Upload a replacement or approve it later to restore it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A rejected reversal must record when it was rejected": {
     "sites": 1,
     "scope": [
@@ -5286,6 +5322,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "A request with this Idempotency-Key is still being processed; retry once it finishes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
     ]
   },
   "A required course is past due, expired, failed or never assigned.": {
@@ -6039,6 +6084,15 @@
       "domain/pagedraft"
     ]
   },
+  "A shipment in the billing queue cannot be canceled. Send it back to operations from the billing queue first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentstate"
+    ]
+  },
   "A shipment invoice must name the shipment it bills": {
     "sites": 1,
     "scope": [
@@ -6073,6 +6127,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "A shipment with status {0} cannot be canceled.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentstate"
     ]
   },
   "A short classification code for the reversal reason.": {
@@ -6317,6 +6380,24 @@
     ],
     "areas": [
       "service/agentplanservice"
+    ]
+  },
+  "A stop outcome for review must name its move": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
+    ]
+  },
+  "A stop outcome for review must say why": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
     ]
   },
   "A stop was reached late, or missed, and a service failure was opened on the shipment.": {
@@ -8348,6 +8429,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Accept it as proof for billing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Accept load": {
@@ -16464,6 +16554,15 @@
       "domain/edi"
     ]
   },
+  "An archived document cannot be reviewed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
   "An archived plan cannot be enrolled in, and archiving is refused while anybody is still enrolled.": {
     "sites": 1,
     "scope": [
@@ -17174,6 +17273,15 @@
       "service/orderservice"
     ]
   },
+  "An invoiced shipment cannot be canceled. Credit or void its invoice first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentstate"
+    ]
+  },
   "An item about an agent's own work stays on the feed for a person to clear": {
     "sites": 1,
     "scope": [
@@ -17642,6 +17750,33 @@
       "packages/shared/lib"
     ]
   },
+  "Another live match already holds invoice {0} from this carrier. Reject one of them; this match cannot be accepted while the other stands.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
+  "Another live match already holds this invoice number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
+  "Another live shipment for this customer now uses this shipment's customer reference; change one of them before restoring this shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
   "Another mailbox already listens on this address": {
     "sites": 1,
     "scope": [
@@ -17658,6 +17793,15 @@
     ],
     "areas": [
       "service/captureservice"
+    ]
+  },
+  "Another record already uses these values. Refresh and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/helpers"
     ]
   },
   "Another template is already the organization default for this kind. Clear that one first.": {
@@ -19072,6 +19216,15 @@
       "routes/org-structure"
     ]
   },
+  "Approval failed: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).": {
     "sites": 1,
     "scope": [
@@ -19181,7 +19334,7 @@
     ]
   },
   "Approve": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -19382,6 +19535,15 @@
     ]
   },
   "Approve detention charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approve document": {
     "sites": 1,
     "scope": [
       "ts"
@@ -19627,7 +19789,7 @@
     ]
   },
   "Approved": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -24540,11 +24702,12 @@
     ]
   },
   "Awaiting review": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/carrier-monitoring"
     ]
   },
@@ -29693,7 +29856,7 @@
     ]
   },
   "Cancel": {
-    "sites": 274,
+    "sites": 275,
     "scope": [
       "ts"
     ],
@@ -48217,6 +48380,42 @@
       "domain/documenttemplate"
     ]
   },
+  "Customer reference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Customer reference cannot be longer than 100 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Customer reference {0} is already used by another shipment for this customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
+  "Customer reference {0} is already used by shipment {1} for this customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
   "Customer short pay": {
     "sites": 1,
     "scope": [
@@ -50584,6 +50783,15 @@
     "areas": [
       "domain/agent",
       "domain/formulatemplate"
+    ]
+  },
+  "Decision must be approve or reject": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/documentservice"
     ]
   },
   "Decision timeout cannot exceed 30 days": {
@@ -57247,6 +57455,15 @@
       "apps/web/components"
     ]
   },
+  "Document approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Document attached": {
     "sites": 1,
     "scope": [
@@ -57494,7 +57711,7 @@
     ]
   },
   "Document is required": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go"
     ],
@@ -57506,7 +57723,8 @@
       "domain/extractionshadow",
       "domain/invoice",
       "domain/invoiceadjustment",
-      "domain/shipmentimportchat"
+      "domain/shipmentimportchat",
+      "service/documentservice"
     ]
   },
   "Document kind": {
@@ -57736,6 +57954,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Document rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Document request is required": {
@@ -60286,7 +60513,7 @@
     ]
   },
   "Duplicate": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -60297,6 +60524,7 @@
       "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
+      "routes/carrier-invoice-matching",
       "routes/formula-template",
       "routes/reports",
       "routes/shipment",
@@ -60400,6 +60628,15 @@
     ],
     "areas": [
       "domain/fuelpurchase"
+    ]
+  },
+  "Duplicate invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "Duplicate journal source event": {
@@ -65047,6 +65284,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Enter customer reference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Enter days": {
@@ -81700,6 +81946,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Hold pay until the invoice is matched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
+    ]
+  },
   "Hold placed": {
     "sites": 1,
     "scope": [
@@ -83718,7 +83973,7 @@
     ]
   },
   "Idempotency key cannot be longer than 255 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -83738,6 +83993,24 @@
       "domain/email",
       "domain/invoiceadjustment",
       "service/invoiceadjustmentservice"
+    ]
+  },
+  "Idempotency-Key cannot be used on a request body larger than {0} bytes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
+    ]
+  },
+  "Idempotency-Key must be 1 to {0} printable characters without spaces": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
     ]
   },
   "Identification Code": {
@@ -88976,6 +89249,15 @@
     ],
     "areas": [
       "template/notification.invoice_shared"
+    ]
+  },
+  "Invoice {0} from this carrier is already matched; reject that match first if this one replaces it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
     ]
   },
   "Invoice {0} from {1}": {
@@ -117813,6 +118095,15 @@
       "service/aifeedbackservice"
     ]
   },
+  "Only a person can review a document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/documentservice"
+    ]
+  },
   "Only a person has a home page to change": {
     "sites": 1,
     "scope": [
@@ -119162,6 +119453,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Only the current version of a document can be reviewed. Review the latest version instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
     ]
   },
   "Only the dashboard owner can delete this dashboard": {
@@ -131750,6 +132050,15 @@
       "domain/worker"
     ]
   },
+  "Possible duplicate": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
   "Post": {
     "sites": 1,
     "scope": [
@@ -139900,7 +140209,7 @@
     ]
   },
   "Reason": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "ts"
     ],
@@ -143758,7 +144067,7 @@
     ]
   },
   "Reject": {
-    "sites": 29,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -143854,6 +144163,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Reject document": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Reject expense": {
@@ -144021,7 +144339,7 @@
     ]
   },
   "Rejected": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -144093,6 +144411,15 @@
       "apps/web/components"
     ]
   },
+  "Rejected: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Rejected{0}": {
     "sites": 1,
     "scope": [
@@ -144144,6 +144471,15 @@
       "routes/invoice",
       "routes/invoice-approval",
       "routes/journal-reversal"
+    ]
+  },
+  "Rejection reason cannot be longer than 1000 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
     ]
   },
   "Rejection reason is required": {
@@ -145510,6 +145846,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Repeat": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "Repeat every": {
@@ -155328,6 +155673,15 @@
       "packages/shared/types"
     ]
   },
+  "Say why the document is rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
   "Say why the event is being amended": {
     "sites": 2,
     "scope": [
@@ -165094,12 +165448,13 @@
     ]
   },
   "Shipment not found": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/shipmentstate",
       "routes/billing-queue",
       "service/shipmentservice"
     ]
@@ -171077,6 +171432,15 @@
       "domain/detention"
     ]
   },
+  "Stop it counting toward billing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Stop monitoring": {
     "sites": 2,
     "scope": [
@@ -171138,6 +171502,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Stop outcome reason cannot be longer than 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
     ]
   },
   "Stop pay": {
@@ -171283,6 +171656,24 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Stop visit is required with a stop outcome": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
+    ]
+  },
+  "Stop visit not recorded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
     ]
   },
   "Stop {0}": {
@@ -178947,6 +179338,15 @@
       "routes/billing-queue"
     ]
   },
+  "The customer's own order or load number. No other live shipment for this customer can use the same one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "The customer's purchase order number, shown on their invoice.": {
     "sites": 1,
     "scope": [
@@ -181536,6 +181936,15 @@
       "domain/permission"
     ]
   },
+  "The load already had an invoice match when this one was made": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
   "The load is back in the unassigned lane.": {
     "sites": 1,
     "scope": [
@@ -182644,6 +183053,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "The partner sent this invoice number before; the earlier copy counts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "The partner's AS2 identifier that we address outbound messages to.": {
@@ -184053,6 +184471,15 @@
       "go/other"
     ]
   },
+  "The request body could not be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
+    ]
+  },
   "The request the agent composed. Required: this is the substance of the message.": {
     "sites": 1,
     "scope": [
@@ -184069,6 +184496,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The request with this Idempotency-Key already completed with status {0}, and its response was too large to keep for replay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
     ]
   },
   "The requesting driver is required": {
@@ -186980,6 +187416,24 @@
       "service/carriersettlementservice"
     ]
   },
+  "This EDI invoice repeats one the partner already sent; match the original instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
+  "This Idempotency-Key was already used for a different request; send a new key for a new request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
+    ]
+  },
   "This Trenova server has no web address configured (app.webBaseUrl), so {0} cannot send people back after they sign in. Ask the server's administrator to set it.": {
     "sites": 2,
     "scope": [
@@ -188099,6 +188553,15 @@
       "service/agenttoolservice"
     ]
   },
+  "This document is already approved.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
   "This document is already attached to a shipment.": {
     "sites": 1,
     "scope": [
@@ -188126,6 +188589,15 @@
       "go/other"
     ]
   },
+  "This document is already rejected.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
   "This document is available for classification, search, and extracted-text review, but it does not produce a shipment draft.": {
     "sites": 1,
     "scope": [
@@ -188151,6 +188623,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This document is past its expiration date. Upload a current version instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
     ]
   },
   "This driver": {
@@ -188232,6 +188713,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "This email was already sent to different recipients under the same idempotency key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/emailservice"
     ]
   },
   "This employment": {
@@ -188620,6 +189110,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "This idempotency key already names a {0} document, not a {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/ediservice"
     ]
   },
   "This import has already been {0}": {
@@ -189092,6 +189591,15 @@
       "go/other"
     ]
   },
+  "This load already had a carrier invoice match when this one was made. Check that the carrier is not billing the same freight twice before accepting it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
   "This load has been canceled": {
     "sites": 1,
     "scope": [
@@ -189110,6 +189618,15 @@
       "service/shipmentmoveservice"
     ]
   },
+  "This load's carrier cost was already adjusted for invoice {0}; accepting this variance too would pay the difference twice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
   "This looks like a repeating lane": {
     "sites": 1,
     "scope": [
@@ -189117,6 +189634,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This match repeats invoice {0}, which another match already holds; reject one of them before accepting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
     ]
   },
   "This matrix has no axes, so nothing can ever look a rate up in it.": {
@@ -199203,6 +199729,42 @@
       "domain/document"
     ]
   },
+  "Uploaded copy has expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Uploaded copy is archived": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Uploaded copy is awaiting review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Uploaded copy was rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Uploaded document records and intelligence output": {
     "sites": 1,
     "scope": [
@@ -205654,6 +206216,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "What is wrong with it, such as an illegible signature or the wrong load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What it did": {
@@ -217156,7 +217727,7 @@
       "go"
     ],
     "areas": [
-      "service/shipmentservice"
+      "domain/shipmentstate"
     ]
   },
   "shipment is not canceled": {
@@ -222782,6 +223353,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} load(s) on this settlement are still waiting on a resolved carrier invoice match; resolve the matches or recalculate the settlement before approving": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
     ]
   },
   "{0} location": {

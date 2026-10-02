@@ -1,5 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -64,6 +65,7 @@ const getDefaultValues = (): ShipmentCreateInput => {
   return {
     status: "New",
     bol: "",
+    externalReference: "",
     serviceTypeId: "",
     shipmentTypeId: "",
     customerId: "",
@@ -126,6 +128,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
   const t = useT();
 
   const defaultValues = getDefaultValues();
+  const withIdempotencyKey = useIdempotencyKey();
   const createForm = useForm({
     resolver: zodResolver(shipmentCreateSchema),
     defaultValues,
@@ -252,7 +255,11 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       queryKey="shipment-list"
       title={t("Shipment")}
       formComponent={<ShipmentForm />}
-      mutationFn={(values) => apiService.shipmentService.create(values as ShipmentCreateInput)}
+      mutationFn={(values) =>
+        withIdempotencyKey(values, (idempotencyKey) =>
+          apiService.shipmentService.create(values as ShipmentCreateInput, { idempotencyKey }),
+        )
+      }
       useDock
     />
   );

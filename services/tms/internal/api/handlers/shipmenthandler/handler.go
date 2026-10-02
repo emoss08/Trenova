@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -487,6 +488,7 @@ func (h *Handler) get(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body shipment.Shipment true "Shipment payload"
+// @Param Idempotency-Key header string false "Client key that makes a retried create return the first result instead of booking another shipment"
 // @Success 201 {object} shipment.Shipment
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -515,6 +517,8 @@ func (h *Handler) create(c *gin.Context) {
 			return
 		}
 	}
+
+	entity.IdempotencyKey, _ = idempotency.KeyFrom(c.Request.Context())
 
 	actor := actorutil.FromAuthContext(authCtx)
 	created, err := h.service.Create(c.Request.Context(), entity, actor)

@@ -378,6 +378,74 @@ func (_c *MockEDIMessageRepository_GetMessageByID_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// GetMessageByIdempotencyKey provides a mock function for the type MockEDIMessageRepository
+func (_mock *MockEDIMessageRepository) GetMessageByIdempotencyKey(ctx context.Context, req repositories.GetEDIMessageByIdempotencyKeyRequest) (*edi.EDIMessage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMessageByIdempotencyKey")
+	}
+
+	var r0 *edi.EDIMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIMessageByIdempotencyKeyRequest) (*edi.EDIMessage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIMessageByIdempotencyKeyRequest) *edi.EDIMessage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIMessageByIdempotencyKeyRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMessageRepository_GetMessageByIdempotencyKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMessageByIdempotencyKey'
+type MockEDIMessageRepository_GetMessageByIdempotencyKey_Call struct {
+	*mock.Call
+}
+
+// GetMessageByIdempotencyKey is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIMessageByIdempotencyKeyRequest
+func (_e *MockEDIMessageRepository_Expecter) GetMessageByIdempotencyKey(ctx any, req any) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
+	return &MockEDIMessageRepository_GetMessageByIdempotencyKey_Call{Call: _e.mock.On("GetMessageByIdempotencyKey", ctx, req)}
+}
+
+func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) Run(run func(ctx context.Context, req repositories.GetEDIMessageByIdempotencyKeyRequest)) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIMessageByIdempotencyKeyRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIMessageByIdempotencyKeyRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
+	_c.Call.Return(eDIMessage, err)
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIMessageByIdempotencyKeyRequest) (*edi.EDIMessage, error)) *MockEDIMessageRepository_GetMessageByIdempotencyKey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetOutboundMessageByAS2MessageID provides a mock function for the type MockEDIMessageRepository
 func (_mock *MockEDIMessageRepository) GetOutboundMessageByAS2MessageID(ctx context.Context, as2MessageID string) (*edi.EDIMessage, error) {
 	ret := _mock.Called(ctx, as2MessageID)

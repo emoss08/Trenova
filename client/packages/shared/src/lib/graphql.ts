@@ -1,5 +1,6 @@
 import { withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
 import { isRecord } from "@trenova/shared/lib/utils";
 import type {
   GraphQLExecutableDocument,
@@ -41,6 +42,7 @@ type GraphQLRequestBody<TVariables> = {
 
 type GraphQLRequestParams<TVariables = Record<string, unknown>> = {
   document: GraphQLExecutableDocument;
+  idempotencyKey?: string;
   operationName?: string;
   signal?: AbortSignal;
   variables?: TVariables;
@@ -48,6 +50,7 @@ type GraphQLRequestParams<TVariables = Record<string, unknown>> = {
 
 type TypedGraphQLRequestParams<TDocument extends TypedGraphQLDocument<unknown, never>> = {
   document: TDocument;
+  idempotencyKey?: string;
   operationName?: string;
   signal?: AbortSignal;
   variables?: VariablesOf<TDocument>;
@@ -494,6 +497,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
 ): Promise<GraphQLResult<TData>>;
 export async function requestGraphQLResult<TData, TVariables = Record<string, unknown>>({
   document,
+  idempotencyKey,
   operationName,
   signal,
   variables,
@@ -507,7 +511,11 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
   const response = await fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
     body: JSON.stringify(body),
     credentials: "include",
-    headers: await withCsrfHeader("POST", { "Content-Type": "application/json" }, "/graphql"),
+    headers: await withCsrfHeader(
+      "POST",
+      withIdempotencyKeyHeader({ "Content-Type": "application/json" }, idempotencyKey),
+      "/graphql",
+    ),
     method: "POST",
     signal,
   });

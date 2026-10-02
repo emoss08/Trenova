@@ -208,6 +208,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
 		h.restoreVersion,
 	)
+	api.POST(
+		"/:documentID/approve/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpApprove),
+		h.approve,
+	)
+	api.POST(
+		"/:documentID/reject/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpReject),
+		h.reject,
+	)
 	api.GET(
 		"/:documentID/shipment-draft/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
@@ -1215,6 +1225,52 @@ func (h *Handler) reextractDocumentContent(c *gin.Context) {
 	}
 
 	c.Status(http.StatusAccepted)
+}
+
+func (h *Handler) approve(c *gin.Context) {
+	h.review(c, document.ReviewDecisionApprove, "")
+}
+
+type rejectDocumentRequest struct {
+	Reason string `json:"reason"`
+}
+
+func (h *Handler) reject(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(rejectDocumentRequest)
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	h.review(c, document.ReviewDecisionReject, req.Reason)
+}
+
+func (h *Handler) review(c *gin.Context, decision document.ReviewDecision, reason string) {
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	reviewed, err := h.service.Review(c.Request.Context(), &documentservice.ReviewRequest{
+		DocumentID: documentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		Decision: decision,
+		Reason:   reason,
+		Actor:    requestActorFromAuthContext(authCtx),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, reviewed)
 }
 
 type attachToShipmentRequest struct {

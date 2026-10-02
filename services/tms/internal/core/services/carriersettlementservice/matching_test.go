@@ -32,6 +32,7 @@ func setupMatchingTest(t *testing.T) *matchingDeps {
 	matches := mocks.NewMockCarrierInvoiceMatchRepository(t)
 	control := mocks.NewMockCarrierSettlementControlRepository(t)
 	audit := mocks.NewMockAuditService(t)
+	expectNoDuplicateMatches(matches)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		costEventRepo:     costEvents,
@@ -48,6 +49,13 @@ func setupMatchingTest(t *testing.T) *matchingDeps {
 		audit:       audit,
 		svc:         svc,
 	}
+}
+
+func expectNoDuplicateMatches(matches *mocks.MockCarrierInvoiceMatchRepository) {
+	matches.On("GetLiveByCarrierInvoiceNumber", mock.Anything, mock.Anything).
+		Return(nil, nil).Maybe()
+	matches.On("ListLiveByAssignment", mock.Anything, mock.Anything).
+		Return([]*carriersettlement.InvoiceMatch{}, nil).Maybe()
 }
 
 func matchingActor() *serviceports.RequestActor {

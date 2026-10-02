@@ -3,6 +3,7 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { pageAssistantThreadKey } from "@/components/assistant/page-assistant";
 import { apiService } from "@/services/api";
 import { shipmentCreateSchema } from "@trenova/shared/types/shipment";
@@ -174,6 +175,7 @@ export function ImportWorkspace() {
     return "upload";
   }, [createdShipmentId, importedDraft, uploadedDocumentId, reconciliationInitialized]);
 
+  const withIdempotencyKey = useIdempotencyKey();
   const createShipment = useMutation({
     mutationFn: async () => {
       const requiredValues = requiredFieldsForm.getValues();
@@ -200,7 +202,9 @@ export function ImportWorkspace() {
       }
 
       const parsed = shipmentCreateSchema.parse(input);
-      const shipment = await apiService.shipmentService.create(parsed);
+      const shipment = await withIdempotencyKey(parsed, (idempotencyKey) =>
+        apiService.shipmentService.create(parsed, { idempotencyKey }),
+      );
       const shipmentId = shipment.id;
       if (!shipmentId) {
         throw new Error("Shipment was created without an ID");

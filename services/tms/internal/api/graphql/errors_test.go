@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql/errcode"
@@ -11,6 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tenantboundary"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -105,4 +109,45 @@ func TestErrorPresenter_UnknownErrorsAreSystemErrors(t *testing.T) {
 	presented := present(context.Background(), errors.New("boom"))
 	require.NotNil(t, presented)
 	assert.Equal(t, string(errortypes.ErrSystemError), presented.Extensions["code"])
+}
+
+func TestErrorPresenter_UniqueViolationIsADuplicateConflict(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(presenterTestConfig())
+	ctx := gqlctx.WithRequestID(t.Context(), "req-dup")
+
+	presented := present(ctx, fmt.Errorf("insert customer: %w", &pgconn.PgError{
+		Code:           pgerrcode.UniqueViolation,
+		ConstraintName: "uq_customers_code",
+		Message:        "duplicate key value violates unique constraint",
+	}))
+
+	require.NotNil(t, presented)
+	assert.Equal(t, string(errortypes.ErrDuplicate), presented.Extensions["code"])
+	assert.Equal(t,
+		"https://api.test/problems/"+string(helpers.ProblemTypeConflict),
+		presented.Extensions["type"],
+	)
+	assert.NotContains(t, presented.Message, "uq_customers_code")
+}
+
+func TestErrorPresenter_RowLevelSecurityViolationIsForbidden(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(presenterTestConfig())
+	tracker := tenantboundary.NewTracker()
+	ctx := tenantboundary.With(gqlctx.WithRequestID(t.Context(), "req-rls"), tracker)
+
+	presented := present(ctx, &pgconn.PgError{
+		Code:    pgerrcode.InsufficientPrivilege,
+		Message: `new row violates row-level security policy for table "shipments"`,
+	})
+
+	require.NotNil(t, presented)
+	assert.Equal(t,
+		"https://api.test/problems/"+string(helpers.ProblemTypeAuthorization),
+		presented.Extensions["type"],
+	)
+	assert.Len(t, tracker.Violations(), 1)
 }

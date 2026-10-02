@@ -1701,3 +1701,151 @@ func TestDocumentHandler_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
 }
+
+func reviewableTestDocument(id pulid.ID, status document.Status) *document.Document {
+	return &document.Document{
+		ID:                id,
+		OrganizationID:    testutil.TestOrgID,
+		BusinessUnitID:    testutil.TestBuID,
+		LineageID:         id,
+		VersionNumber:     1,
+		IsCurrentVersion:  true,
+		FileName:          "pod.pdf",
+		OriginalName:      "pod.pdf",
+		FileSize:          2048,
+		FileType:          "application/pdf",
+		StoragePath:       "org/shipment/pod.pdf",
+		CryptoMode:        "envelope_v1",
+		CryptoVersion:     1,
+		Status:            status,
+		ResourceID:        "shp_1",
+		ResourceType:      "shipment",
+		ProcessingProfile: document.ProcessingProfileNone,
+		UploadedByID:      testutil.TestUserID,
+		Version:           4,
+	}
+}
+
+func serveDocumentReview(
+	t *testing.T,
+	repo *mocks.MockDocumentRepository,
+	path string,
+	body map[string]any,
+) *testutil.GinTestContext {
+	t.Helper()
+
+	deps := setupHandler(t, repo, &mockStorageClient{})
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath(path).
+		WithDefaultAuthContext()
+	if body != nil {
+		ginCtx = ginCtx.WithJSONBody(body)
+	}
+
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	return ginCtx
+}
+
+func TestDocumentHandler_Reject_Success(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	repo := mocks.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(reviewableTestDocument(docID, document.StatusActive), nil).
+		Once()
+	repo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(doc *document.Document) bool {
+		return doc.ID == docID &&
+			doc.Status == document.StatusRejected &&
+			doc.RejectionReason == "Signature is illegible" &&
+			doc.RejectedByID == testutil.TestUserID &&
+			doc.RejectedAt != nil &&
+			doc.Version == 4
+	})).
+		RunAndReturn(func(_ context.Context, doc *document.Document) (*document.Document, error) {
+			return doc, nil
+		}).
+		Once()
+
+	ginCtx := serveDocumentReview(
+		t,
+		repo,
+		"/api/v1/documents/"+docID.String()+"/reject/",
+		map[string]any{"reason": "Signature is illegible"},
+	)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, "Rejected", resp["status"])
+	assert.Equal(t, "Signature is illegible", resp["rejectionReason"])
+}
+
+func TestDocumentHandler_Reject_RequiresReason(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	repo := mocks.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(reviewableTestDocument(docID, document.StatusActive), nil).
+		Once()
+
+	ginCtx := serveDocumentReview(
+		t,
+		repo,
+		"/api/v1/documents/"+docID.String()+"/reject/",
+		map[string]any{"reason": "   "},
+	)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+}
+
+func TestDocumentHandler_Approve_ClearsRejection(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	rejectedAt := int64(100)
+	rejected := reviewableTestDocument(docID, document.StatusRejected)
+	rejected.RejectedByID = pulid.MustNew("usr_")
+	rejected.RejectedAt = &rejectedAt
+	rejected.RejectionReason = "Blurred"
+
+	repo := mocks.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(rejected, nil).Once()
+	repo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(doc *document.Document) bool {
+		return doc.Status == document.StatusActive &&
+			doc.ApprovedByID == testutil.TestUserID &&
+			doc.ApprovedAt != nil &&
+			doc.RejectedAt == nil &&
+			doc.RejectionReason == ""
+	})).
+		RunAndReturn(func(_ context.Context, doc *document.Document) (*document.Document, error) {
+			return doc, nil
+		}).
+		Once()
+
+	ginCtx := serveDocumentReview(t, repo, "/api/v1/documents/"+docID.String()+"/approve/", nil)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, "Active", resp["status"])
+}
+
+func TestDocumentHandler_Approve_RefusesSupersededVersion(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	superseded := reviewableTestDocument(docID, document.StatusActive)
+	superseded.IsCurrentVersion = false
+
+	repo := mocks.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(superseded, nil).Once()
+
+	ginCtx := serveDocumentReview(t, repo, "/api/v1/documents/"+docID.String()+"/approve/", nil)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, ginCtx.ResponseCode())
+}

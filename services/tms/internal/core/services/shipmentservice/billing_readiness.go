@@ -971,13 +971,28 @@ func buildDocumentRequirements(
 		return []services.ShipmentBillingRequirement{}
 	}
 
-	documentsByType := make(map[pulid.ID][]*document.Document, len(documentTypes))
+	now := timeutils.NowUnix()
+	accepted := make(map[pulid.ID][]string, len(documentTypes))
+	ineligible := make(
+		map[pulid.ID][]services.ShipmentBillingIneligibleDocument,
+		len(documentTypes),
+	)
 	for _, doc := range docs {
 		if doc == nil || doc.DocumentTypeID == nil {
 			continue
 		}
 
-		documentsByType[*doc.DocumentTypeID] = append(documentsByType[*doc.DocumentTypeID], doc)
+		typeID := *doc.DocumentTypeID
+		standing := doc.StandingAt(now)
+		if standing == document.StandingAccepted {
+			accepted[typeID] = append(accepted[typeID], doc.ID.String())
+			continue
+		}
+
+		ineligible[typeID] = append(ineligible[typeID], services.ShipmentBillingIneligibleDocument{
+			DocumentID: doc.ID.String(),
+			Standing:   standing,
+		})
 	}
 
 	requirements := make([]services.ShipmentBillingRequirement, 0, len(documentTypes))
@@ -986,19 +1001,23 @@ func buildDocumentRequirements(
 			continue
 		}
 
-		matches := documentsByType[docType.ID]
-		documentIDs := make([]string, 0, len(matches))
-		for _, doc := range matches {
-			documentIDs = append(documentIDs, doc.ID.String())
+		documentIDs := accepted[docType.ID]
+		if documentIDs == nil {
+			documentIDs = []string{}
+		}
+		rejected := ineligible[docType.ID]
+		if rejected == nil {
+			rejected = []services.ShipmentBillingIneligibleDocument{}
 		}
 
 		requirements = append(requirements, services.ShipmentBillingRequirement{
-			DocumentTypeID:   docType.ID.String(),
-			DocumentTypeCode: docType.Code,
-			DocumentTypeName: docType.Name,
-			Satisfied:        len(matches) > 0,
-			DocumentCount:    len(matches),
-			DocumentIDs:      documentIDs,
+			DocumentTypeID:      docType.ID.String(),
+			DocumentTypeCode:    docType.Code,
+			DocumentTypeName:    docType.Name,
+			Satisfied:           len(documentIDs) > 0,
+			DocumentCount:       len(documentIDs),
+			DocumentIDs:         documentIDs,
+			IneligibleDocuments: rejected,
 		})
 	}
 

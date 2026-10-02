@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:36480d9f78b257f1e1d3926bc6599cafc3f70766c7fe11c1fe1b168f39f0a9c4"
+const Version = "sha256:716bbe2888c392c9666760e126e6350bf1739d0a130d110c6f522db0d288643c"
 
 var Default = indexed(defaultCatalog)
 
@@ -16162,6 +16162,16 @@ var defaultCatalog = Catalog{
 					Key:          "bol",
 					Column:       buncolgen.NewColumn("bol", "sp"),
 					Label:        "BOL",
+					Type:         FieldString,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "externalReference",
+					Column:       buncolgen.NewColumn("external_reference", "sp"),
+					Label:        "Customer Reference",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},

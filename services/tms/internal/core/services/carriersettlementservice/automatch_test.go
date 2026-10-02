@@ -35,6 +35,7 @@ func setupAutoMatchTest(t *testing.T) *autoMatchDeps {
 	control := mocks.NewMockCarrierSettlementControlRepository(t)
 	invoices := mocks.NewMockEDICarrierInvoiceRepository(t)
 	audit := mocks.NewMockAuditService(t)
+	expectNoDuplicateMatches(matches)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		assignmentRepo:    assignments,

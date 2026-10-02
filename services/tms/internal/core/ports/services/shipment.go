@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -54,12 +55,18 @@ type ShipmentServiceFailureBillingContext struct {
 }
 
 type ShipmentBillingRequirement struct {
-	DocumentTypeID   string   `json:"documentTypeId"`
-	DocumentTypeCode string   `json:"documentTypeCode"`
-	DocumentTypeName string   `json:"documentTypeName"`
-	Satisfied        bool     `json:"satisfied"`
-	DocumentCount    int      `json:"documentCount"`
-	DocumentIDs      []string `json:"documentIds"`
+	DocumentTypeID      string                              `json:"documentTypeId"`
+	DocumentTypeCode    string                              `json:"documentTypeCode"`
+	DocumentTypeName    string                              `json:"documentTypeName"`
+	Satisfied           bool                                `json:"satisfied"`
+	DocumentCount       int                                 `json:"documentCount"`
+	DocumentIDs         []string                            `json:"documentIds"`
+	IneligibleDocuments []ShipmentBillingIneligibleDocument `json:"ineligibleDocuments"`
+}
+
+type ShipmentBillingIneligibleDocument struct {
+	DocumentID string            `json:"documentId"`
+	Standing   document.Standing `json:"standing"`
 }
 
 // ShipmentBillingPayerReadiness is one payer's standing on a shipment: what

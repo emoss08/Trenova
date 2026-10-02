@@ -1274,6 +1274,9 @@ var InvoiceMatchColumns = struct {
 	Status                 Column // "status" → qualified: "cim.status"
 	MatchedVia             Column // "matched_via" → qualified: "cim.matched_via"
 	InvoiceNumber          Column // "invoice_number" → qualified: "cim.invoice_number"
+	InvoiceNumberKey       Column // "invoice_number_key" → qualified: "cim.invoice_number_key"
+	DuplicateOfMatchID     Column // "duplicate_of_match_id" → qualified: "cim.duplicate_of_match_id"
+	PossibleDuplicateOfID  Column // "possible_duplicate_of_id" → qualified: "cim.possible_duplicate_of_id"
 	InvoiceTotalMinor      Column // "invoice_total_minor" → qualified: "cim.invoice_total_minor"
 	ExpectedTotalMinor     Column // "expected_total_minor" → qualified: "cim.expected_total_minor"
 	VarianceMinor          Column // "variance_minor" → qualified: "cim.variance_minor"
@@ -1297,6 +1300,9 @@ var InvoiceMatchColumns = struct {
 	Status:                 NewColumn("status", "cim"),
 	MatchedVia:             NewColumn("matched_via", "cim"),
 	InvoiceNumber:          NewColumn("invoice_number", "cim"),
+	InvoiceNumberKey:       NewColumn("invoice_number_key", "cim"),
+	DuplicateOfMatchID:     NewColumn("duplicate_of_match_id", "cim"),
+	PossibleDuplicateOfID:  NewColumn("possible_duplicate_of_id", "cim"),
 	InvoiceTotalMinor:      NewColumn("invoice_total_minor", "cim"),
 	ExpectedTotalMinor:     NewColumn("expected_total_minor", "cim"),
 	VarianceMinor:          NewColumn("variance_minor", "cim"),
@@ -1326,6 +1332,8 @@ var InvoiceMatchFieldMap = map[string]string{
 	"status":                 "status",
 	"matchedVia":             "matched_via",
 	"invoiceNumber":          "invoice_number",
+	"duplicateOfMatchId":     "duplicate_of_match_id",
+	"possibleDuplicateOfId":  "possible_duplicate_of_id",
 	"invoiceTotalMinor":      "invoice_total_minor",
 	"expectedTotalMinor":     "expected_total_minor",
 	"varianceMinor":          "variance_minor",
@@ -1353,6 +1361,9 @@ var InvoiceMatchInsertableColumns = []string{
 	"status",
 	"matched_via",
 	"invoice_number",
+	"invoice_number_key",
+	"duplicate_of_match_id",
+	"possible_duplicate_of_id",
 	"invoice_total_minor",
 	"expected_total_minor",
 	"variance_minor",
@@ -1440,6 +1451,8 @@ var InvoiceMatchFilter = struct {
 	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	MatchedVia             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedVia" → DB: "matched_via"
 	InvoiceNumber          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumber" → DB: "invoice_number"
+	DuplicateOfMatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "duplicateOfMatchId" → DB: "duplicate_of_match_id"
+	PossibleDuplicateOfID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "possibleDuplicateOfId" → DB: "possible_duplicate_of_id"
 	InvoiceTotalMinor      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceTotalMinor" → DB: "invoice_total_minor"
 	ExpectedTotalMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedTotalMinor" → DB: "expected_total_minor"
 	VarianceMinor          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceMinor" → DB: "variance_minor"
@@ -1486,6 +1499,12 @@ var InvoiceMatchFilter = struct {
 	},
 	InvoiceNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceNumber", op, value)
+	},
+	DuplicateOfMatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("duplicateOfMatchId", op, value)
+	},
+	PossibleDuplicateOfID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("possibleDuplicateOfId", op, value)
 	},
 	InvoiceTotalMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceTotalMinor", op, value)

@@ -95,3 +95,30 @@ func (_mock *MockCarrierInvoiceMatchRepository) Update(ctx context.Context, enti
 	}
 	return r0, ret.Error(1)
 }
+
+func (_mock *MockCarrierInvoiceMatchRepository) GetLiveByCarrierInvoiceNumber(ctx context.Context, req *repositories.GetLiveCarrierInvoiceMatchByNumberRequest) (*carriersettlement.InvoiceMatch, error) {
+	ret := _mock.Called(ctx, req)
+	var r0 *carriersettlement.InvoiceMatch
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*carriersettlement.InvoiceMatch)
+	}
+	return r0, ret.Error(1)
+}
+
+func (_mock *MockCarrierInvoiceMatchRepository) ListLiveByAssignment(ctx context.Context, req repositories.ListLiveCarrierInvoiceMatchesByAssignmentRequest) ([]*carriersettlement.InvoiceMatch, error) {
+	ret := _mock.Called(ctx, req)
+	var r0 []*carriersettlement.InvoiceMatch
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]*carriersettlement.InvoiceMatch)
+	}
+	return r0, ret.Error(1)
+}
+
+func (_mock *MockCarrierInvoiceMatchRepository) ListResolvedAssignmentIDs(ctx context.Context, req repositories.ListResolvedMatchAssignmentsRequest) ([]pulid.ID, error) {
+	ret := _mock.Called(ctx, req)
+	var r0 []pulid.ID
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]pulid.ID)
+	}
+	return r0, ret.Error(1)
+}

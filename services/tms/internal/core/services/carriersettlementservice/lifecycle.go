@@ -108,6 +108,13 @@ func (s *Service) approveInternal(
 		if txErr = PlanApprove(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
 			return txErr
 		}
+		hold, holdErr := s.approvalHoldGuard(txCtx, tenantInfo, settlementID)
+		if holdErr != nil {
+			return holdErr
+		}
+		if hold.refused() {
+			return hold.refusal
+		}
 		updated, txErr = s.settlementRepo.Update(txCtx, entity)
 		return txErr
 	})

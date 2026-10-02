@@ -11,6 +11,8 @@ import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { Document } from "@trenova/shared/types/document";
 import {
+  BanIcon,
+  CircleCheckIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
   EyeIcon,
@@ -21,7 +23,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LazyImage } from "../image";
+import { canApproveDocument, canRejectDocument } from "@/lib/document-review";
 import { DocumentFileTypeIcon } from "./document-file-type-icon";
+import { DocumentReviewBadge } from "./document-review-badge";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 interface DocumentGridCardProps {
@@ -31,7 +35,10 @@ interface DocumentGridCardProps {
   onDelete?: (document: Document) => void;
   onInspect?: (document: Document) => void;
   onVersions?: (document: Document) => void;
+  onApprove?: (document: Document) => void;
+  onReject?: (document: Document) => void;
   isDeleting?: boolean;
+  isReviewing?: boolean;
   className?: string;
   isSelected?: boolean;
   onSelect?: (documentId: string) => void;
@@ -58,7 +65,10 @@ export function DocumentGridCard({
   onDelete,
   onInspect,
   onVersions,
+  onApprove,
+  onReject,
   isDeleting = false,
+  isReviewing = false,
   className,
   isSelected = false,
   onSelect,
@@ -76,7 +86,13 @@ export function DocumentGridCard({
   const isGeneratingThumbnail = document.previewStatus === "Pending";
   const isPreviewUnavailable = document.previewStatus === "Failed";
   const hasActions = Boolean(
-    (canPreview && onPreview) || onDownload || onInspect || onVersions || onDelete,
+    (canPreview && onPreview) ||
+      onDownload ||
+      onInspect ||
+      onVersions ||
+      onDelete ||
+      (onApprove && canApproveDocument(document)) ||
+      (onReject && canRejectDocument(document)),
   );
 
   useEffect(() => {
@@ -152,6 +168,7 @@ export function DocumentGridCard({
         {documentTypeName && (
           <p className="text-muted-foreground truncate text-xs">{documentTypeName}</p>
         )}
+        <DocumentReviewBadge document={document} className="mt-0.5" />
         {document.versionNumber > 1 && onVersions && (
           <button
             type="button"
@@ -239,6 +256,25 @@ export function DocumentGridCard({
                   description={t("View document history")}
                   startContent={<HistoryIcon className="size-3.5" />}
                   onClick={() => onVersions(document)}
+                />
+              )}
+              {onApprove && canApproveDocument(document) && (
+                <DropdownMenuItem
+                  title={t("Approve")}
+                  description={t("Accept it as proof for billing")}
+                  startContent={<CircleCheckIcon className="size-3.5" />}
+                  disabled={isReviewing}
+                  onClick={() => onApprove(document)}
+                />
+              )}
+              {onReject && canRejectDocument(document) && (
+                <DropdownMenuItem
+                  title={t("Reject")}
+                  description={t("Stop it counting toward billing")}
+                  color="danger"
+                  startContent={<BanIcon className="size-3.5" />}
+                  disabled={isReviewing}
+                  onClick={() => onReject(document)}
                 />
               )}
               {onDelete && (

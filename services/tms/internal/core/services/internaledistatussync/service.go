@@ -327,11 +327,12 @@ func (o *Observer) applyChange(
 
 	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
 		return o.shipmentRepo.Cancel(ctx, &repositories.CancelShipmentRequest{
-			TenantInfo:   tenantInfo,
-			ShipmentID:   result.oppositeSide.shipmentID,
-			CanceledByID: result.canceledByID,
-			CanceledAt:   timeutils.NowUnix(),
-			CancelReason: result.cancelReason,
+			TenantInfo:      tenantInfo,
+			ShipmentID:      result.oppositeSide.shipmentID,
+			CanceledByID:    result.canceledByID,
+			CanceledAt:      timeutils.NowUnix(),
+			CancelReason:    result.cancelReason,
+			ExpectedVersion: result.opposite.Version,
 		})
 	}
 
@@ -475,6 +476,11 @@ func prepareTransferChange(change *edi.TransferChange, result syncContext) {
 	now := timeutils.NowUnix()
 	change.AppliedAt = &now
 
+	var cancelBlocker error
+	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
+		cancelBlocker = shipmentstate.ValidateCancel(result.opposite)
+	}
+
 	switch {
 	case result.link.Status != edi.ShipmentLinkStatusActive:
 		change.Status = edi.TransferChangeStatusIgnored
@@ -498,6 +504,12 @@ func prepareTransferChange(change *edi.TransferChange, result syncContext) {
 		change.AppliedAt = nil
 		change.Payload["conflictReason"] = change.ConflictReason
 		change.Payload["conflicts"] = result.lifecyclePlan.Conflicts
+	case cancelBlocker != nil:
+		change.Status = edi.TransferChangeStatusPendingReview
+		change.ConflictStatus = edi.TransferChangeConflictConflict
+		change.ConflictReason = "Cannot cancel linked shipment: " + cancelBlocker.Error()
+		change.AppliedAt = nil
+		change.Payload["conflictReason"] = change.ConflictReason
 	case result.changeType != edi.TransferChangeTypeShipmentLifecycle214 &&
 		!shipmentstate.CanTransitionShipmentStatus(result.opposite.Status, result.next):
 		change.Status = edi.TransferChangeStatusPendingReview

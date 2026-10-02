@@ -93,16 +93,44 @@ func (s *Service) AutoMatchInboundInvoice(
 		), nil
 	}
 
+	if invoice.DuplicateOfID.IsNotNil() {
+		return autoMatchSkipped(invoice, "it repeats an invoice the partner already sent"), nil
+	}
+
+	possibleDuplicateOfID, err := s.screenDuplicateMatch(
+		ctx,
+		req.TenantInfo,
+		invoice.CarrierID,
+		invoice.InvoiceNumber,
+		assignment.ID,
+	)
+	if err != nil {
+		if isDuplicateRefusal(err) {
+			return autoMatchSkipped(
+				invoice,
+				"the carrier's invoice with this number is already matched",
+			), nil
+		}
+		return nil, err
+	}
+
 	invoiceID := invoice.ID
 	created, err := s.createInvoiceMatch(ctx, &invoiceMatchSeed{
-		tenantInfo:          req.TenantInfo,
-		ediCarrierInvoiceID: &invoiceID,
-		carrierID:           invoice.CarrierID,
-		invoiceNumber:       invoice.InvoiceNumber,
-		invoiceTotalMinor:   money.MinorUnits(invoice.TotalAmount.Decimal),
-		matchedVia:          carriersettlement.MatchViaAuto,
+		tenantInfo:            req.TenantInfo,
+		ediCarrierInvoiceID:   &invoiceID,
+		carrierID:             invoice.CarrierID,
+		invoiceNumber:         invoice.InvoiceNumber,
+		invoiceTotalMinor:     money.MinorUnits(invoice.TotalAmount.Decimal),
+		matchedVia:            carriersettlement.MatchViaAuto,
+		possibleDuplicateOfID: possibleDuplicateOfID,
 	}, assignment, control.VarianceToleranceMinor)
 	if err != nil {
+		if isDuplicateRefusal(err) {
+			return autoMatchSkipped(
+				invoice,
+				"the carrier's invoice with this number is already matched",
+			), nil
+		}
 		return nil, err
 	}
 	s.logInvoiceMatchAudit(ctx, created, nil, pulid.Nil, permission.OpCreate,
@@ -113,8 +141,14 @@ func (s *Service) AutoMatchInboundInvoice(
 		Status:  string(created.Status),
 	}
 	final := created
+	if created.IsPossibleDuplicate() {
+		result.Warnings = append(result.Warnings, fmt.Sprintf(
+			"carrier invoice %s was matched to a load that already has an invoice match; it is left for review as a possible duplicate",
+			invoice.InvoiceNumber,
+		))
+	}
 	if created.Status == carriersettlement.InvoiceMatchStatusMatched &&
-		control.AutoAcceptWithinTolerance {
+		control.AutoAcceptWithinTolerance && !created.IsPossibleDuplicate() {
 		resolved, resolveErr := s.autoAcceptMatch(ctx, created)
 		if resolveErr != nil {
 			s.l.Error("failed to auto-accept carrier invoice match",

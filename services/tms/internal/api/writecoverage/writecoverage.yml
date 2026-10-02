@@ -719,11 +719,17 @@ writes:
   # document
   "DELETE /api/v1/documents/:documentID/":
     tools: [delete_documents]
+  "POST /api/v1/documents/:documentID/approve/":
+    exempt: attestation
+    reason: "Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve."
   "POST /api/v1/documents/:documentID/attach-to-shipment/":
     tools: [attach_document_to_shipment]
   "POST /api/v1/documents/:documentID/import-assistant/thread/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/documents/:documentID/reject/":
+    exempt: attestation
+    reason: "Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it."
   "POST /api/v1/documents/:documentID/restore/":
     tools: [restore_document_version]
   "POST /api/v1/documents/:documentID/shipment-draft/reextract/":

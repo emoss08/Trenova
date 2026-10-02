@@ -49,6 +49,22 @@ export default function ShipmentGeneralInformation() {
       render: () => <BOLField />,
     },
     {
+      name: "externalReference",
+      cols: "full",
+      render: () => (
+        <InputField
+          control={control}
+          name="externalReference"
+          label={t("Customer reference")}
+          placeholder={t("Enter customer reference")}
+          description={t(
+            "The customer's own order or load number. No other live shipment for this customer can use the same one.",
+          )}
+          maxLength={100}
+        />
+      ),
+    },
+    {
       name: "temperatureMin",
       capability: CAPABILITIES.temperatureControl,
       render: ({ required }) => (

@@ -25,6 +25,11 @@ type GetEDIMessageByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetEDIMessageByIdempotencyKeyRequest struct {
+	TenantInfo     pagination.TenantInfo
+	IdempotencyKey string
+}
+
 type CreateEDIMessageWithDiagnosticsRequest struct {
 	Message     *edi.EDIMessage                  `json:"message"`
 	Diagnostics []*edi.EDIMessageValidationError `json:"diagnostics"`
@@ -147,6 +152,10 @@ type EDIMessageRepository interface {
 		req *ListEDIMessagesRequest,
 	) (*pagination.CursorListResult[*edi.EDIMessage], error)
 	GetMessageByID(ctx context.Context, req GetEDIMessageByIDRequest) (*edi.EDIMessage, error)
+	GetMessageByIdempotencyKey(
+		ctx context.Context,
+		req GetEDIMessageByIdempotencyKeyRequest,
+	) (*edi.EDIMessage, error)
 	CreateMessageWithDiagnostics(
 		ctx context.Context,
 		req CreateEDIMessageWithDiagnosticsRequest,

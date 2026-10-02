@@ -14,7 +14,10 @@ interface DocumentListProps {
   onDelete?: (document: Document) => void;
   onInspect?: (document: Document) => void;
   onVersions?: (document: Document) => void;
+  onApprove?: (document: Document) => void;
+  onReject?: (document: Document) => void;
   deletingId?: string | null;
+  reviewingId?: string | null;
   isLoading?: boolean;
   className?: string;
   selectedIds?: Set<string>;
@@ -80,7 +83,10 @@ export function DocumentList({
   onDelete,
   onInspect,
   onVersions,
+  onApprove,
+  onReject,
   deletingId,
+  reviewingId,
   isLoading = false,
   className,
   selectedIds,
@@ -107,7 +113,10 @@ export function DocumentList({
             onDelete={onDelete}
             onInspect={onInspect}
             onVersions={onVersions}
+            onApprove={onApprove}
+            onReject={onReject}
             isDeleting={deletingId === document.id}
+            isReviewing={reviewingId === document.id}
             isSelected={selectedIds?.has(document.id)}
             onSelect={onSelectDocument}
             documentTypeName={
@@ -130,7 +139,10 @@ export function DocumentList({
           onDelete={onDelete}
           onInspect={onInspect}
           onVersions={onVersions}
+          onApprove={onApprove}
+          onReject={onReject}
           isDeleting={deletingId === document.id}
+          isReviewing={reviewingId === document.id}
           isSelected={selectedIds?.has(document.id)}
           onSelect={onSelectDocument}
           documentTypeName={

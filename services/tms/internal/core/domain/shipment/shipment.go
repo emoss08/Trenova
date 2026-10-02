@@ -2,6 +2,7 @@ package shipment
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
@@ -93,6 +94,8 @@ type Shipment struct {
 	EntryMethod               EntryMethod           `json:"entryMethod"                bun:"entry_method,type:shipment_entry_method_enum,notnull,default:'Manual'"`
 	ProNumber                 string                `json:"proNumber"                  bun:"pro_number,type:VARCHAR(100),notnull"`
 	BOL                       string                `json:"bol"                        bun:"bol,type:VARCHAR(100),nullzero"`
+	ExternalReference         string                `json:"externalReference"          bun:"external_reference,type:VARCHAR(100),nullzero"`
+	IdempotencyKey            string                `json:"-"                          bun:"idempotency_key,type:VARCHAR(64),nullzero"`
 	CancelReason              string                `json:"cancelReason"               bun:"cancel_reason,type:VARCHAR(100),nullzero"`
 	OtherChargeAmount         decimal.NullDecimal   `json:"otherChargeAmount"          bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	FreightChargeAmount       decimal.NullDecimal   `json:"freightChargeAmount"        bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
@@ -214,6 +217,10 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 		s,
 		validation.Field(&s.ServiceTypeID, validation.Required.Error("Service type is required")),
 		validation.Field(&s.CustomerID, validation.Required.Error("Customer is required")),
+		validation.Field(&s.ExternalReference,
+			validation.RuneLength(0, MaxExternalReferenceLength).
+				Error("Customer reference cannot be longer than 100 characters"),
+		),
 		validation.Field(
 			&s.Status,
 			validation.Required.Error("Status is required"),
@@ -655,6 +662,7 @@ func (s *Shipment) IsNew() bool {
 
 func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+	s.ExternalReference = strings.TrimSpace(s.ExternalReference)
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -671,3 +679,5 @@ func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+const MaxExternalReferenceLength = 100

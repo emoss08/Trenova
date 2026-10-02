@@ -289,6 +289,8 @@ type SecurityConfig struct {
 	Encryption EncryptionConfig      `mapstructure:"encryption"`
 	GraphQL    GraphQLSecurityConfig `mapstructure:"graphql"`
 
+	Idempotency IdempotencyConfig `mapstructure:"idempotency"`
+
 	PasswordReset PasswordResetConfig `mapstructure:"passwordReset"`
 }
 
@@ -340,6 +342,46 @@ const (
 	defaultGraphQLCostBudgetBurst                 = 3_000_000
 	defaultGraphQLCostBudgetCleanupInterval       = 5 * time.Minute
 )
+
+const (
+	defaultIdempotencyRecordTTL        = 24 * time.Hour
+	defaultIdempotencyLockTTL          = 2 * time.Minute
+	defaultIdempotencyStoreTimeout     = 500 * time.Millisecond
+	defaultIdempotencyMaxRequestBytes  = 4 << 20
+	defaultIdempotencyMaxResponseBytes = 1 << 20
+)
+
+type IdempotencyConfig struct {
+	Disabled         bool          `mapstructure:"disabled"`
+	RecordTTL        time.Duration `mapstructure:"recordTTL"`
+	LockTTL          time.Duration `mapstructure:"lockTTL"`
+	StoreTimeout     time.Duration `mapstructure:"storeTimeout"`
+	MaxRequestBytes  int64         `mapstructure:"maxRequestBytes"  validate:"omitempty,min=1024"`
+	MaxResponseBytes int           `mapstructure:"maxResponseBytes" validate:"omitempty,min=1024"`
+}
+
+func (c *IdempotencyConfig) GetRecordTTL() time.Duration {
+	return timeutils.WithDefaultDuration(c.RecordTTL, defaultIdempotencyRecordTTL)
+}
+
+func (c *IdempotencyConfig) GetLockTTL() time.Duration {
+	return timeutils.WithDefaultDuration(c.LockTTL, defaultIdempotencyLockTTL)
+}
+
+func (c *IdempotencyConfig) GetStoreTimeout() time.Duration {
+	return timeutils.WithDefaultDuration(c.StoreTimeout, defaultIdempotencyStoreTimeout)
+}
+
+func (c *IdempotencyConfig) GetMaxRequestBytes() int64 {
+	if c.MaxRequestBytes <= 0 {
+		return defaultIdempotencyMaxRequestBytes
+	}
+	return c.MaxRequestBytes
+}
+
+func (c *IdempotencyConfig) GetMaxResponseBytes() int {
+	return intutils.WithDefault(c.MaxResponseBytes, defaultIdempotencyMaxResponseBytes)
+}
 
 type GraphQLSecurityConfig struct {
 	MaxRequestBodyBytes    int64                   `mapstructure:"maxRequestBodyBytes"    validate:"omitempty,min=1024"`

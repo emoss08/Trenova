@@ -40,6 +40,8 @@ function match(overrides: Partial<CarrierInvoiceMatchRow> = {}): CarrierInvoiceM
     carrierAssignmentId: "casn_01",
     carrierSettlementId: null,
     adjustmentCostEventId: null,
+    duplicateOfMatchId: null,
+    possibleDuplicateOfId: null,
     status: "Matched",
     matchedVia: "Manual",
     invoiceNumber: "INV-MANUAL",
@@ -88,6 +90,7 @@ function control(overrides: Record<string, unknown> = {}) {
     varianceToleranceMinor: 500,
     autoMatchInboundInvoices: true,
     autoAcceptWithinTolerance: false,
+    holdUntilInvoiceMatched: false,
     ...overrides,
   };
 }
@@ -196,5 +199,35 @@ describe("MatchingWorkspace provenance surfaces", () => {
     const status = await screen.findByTestId("carrier-match-automation-status");
     expect(status).toHaveTextContent("Auto-match: Off");
     expect(status).toHaveTextContent("Auto-accept within tolerance: Off");
+  });
+});
+
+describe("MatchingWorkspace duplicate surfaces", () => {
+  beforeEach(() => {
+    mocks.fetchEdiCarrierInvoices.mockResolvedValue({ items: [] });
+    mocks.fetchCarrierSettlementControl.mockResolvedValue(control());
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it("marks a repeated invoice number as a duplicate and a second invoice on a load as a possible one", async () => {
+    mocks.fetchCarrierInvoiceMatches.mockResolvedValue({
+      items: [
+        match({ id: "cim_dup", invoiceNumber: "INV-DUP", duplicateOfMatchId: "cim_first" }),
+        match({ id: "cim_maybe", invoiceNumber: "INV-MAYBE", possibleDuplicateOfId: "cim_first" }),
+        match(),
+      ],
+    });
+
+    renderWorkspace();
+    await openMatchesTab();
+    const list = within(await screen.findByTestId("carrier-match-list"));
+
+    await waitFor(() => expect(list.getByText("Duplicate")).toBeInTheDocument());
+    expect(list.getAllByText("Duplicate")).toHaveLength(1);
+    expect(list.getAllByText("Possible duplicate")).toHaveLength(1);
   });
 });

@@ -10763,6 +10763,8 @@ type CarrierSettlementControl {
   autoMatchInboundInvoices: Boolean!
   "When on (and auto-match is on), auto-created matches within the variance tolerance are resolved into the settlement pool without review."
   autoAcceptWithinTolerance: Boolean!
+  "When on, a load's carrier cost stays out of settlements until a carrier invoice match for its assignment is resolved, and a settlement holding unmatched cost cannot be approved."
+  holdUntilInvoiceMatched: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
   version: Int!
@@ -10818,6 +10820,8 @@ type EdiCarrierInvoice {
   varianceAmount: Decimal
   reconciliationStatus: String!
   reconciliationNotes: String!
+  "Set when the partner sent this invoice number before; the earlier copy is the one that counts."
+  duplicateOfId: ID
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -10846,6 +10850,10 @@ type CarrierInvoiceMatch {
   carrierAssignmentId: ID!
   carrierSettlementId: ID
   adjustmentCostEventId: ID
+  "Set when another live match already holds this invoice number; this one cannot be accepted while that one stands."
+  duplicateOfMatchId: ID
+  "Set when the load already had an invoice match when this one was made; it is never accepted automatically."
+  possibleDuplicateOfId: ID
   status: CarrierInvoiceMatchStatus!
   matchedVia: CarrierInvoiceMatchVia!
   invoiceNumber: String!
@@ -10910,6 +10918,8 @@ input UpdateCarrierSettlementControlInput {
   varianceToleranceMinor: Int!
   autoMatchInboundInvoices: Boolean!
   autoAcceptWithinTolerance: Boolean!
+  "Omitted leaves the current setting as it is."
+  holdUntilInvoiceMatched: Boolean
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
 }
@@ -23696,6 +23706,8 @@ type Shipment {
   entryMethod: ShipmentEntryMethod
   proNumber: String!
   bol: String
+  "The customer's own identifier for the load, such as an EDI 204 shipment ID or an order number; unique per customer among live shipments."
+  externalReference: String
   cancelReason: String!
   otherChargeAmount: Decimal!
   freightChargeAmount: Decimal!
@@ -24216,6 +24228,15 @@ type ShipmentBillingRequirement {
   satisfied: Boolean!
   documentCount: Int!
   documentIds: [String!]!
+  "Documents of this type that are attached but do not satisfy it: rejected, expired, awaiting review or archived."
+  ineligibleDocuments: [ShipmentBillingIneligibleDocument!]!
+}
+
+"A document attached to a shipment that does not count toward its billing requirement."
+type ShipmentBillingIneligibleDocument {
+  documentId: String!
+  "Why it does not count: rejected, expired, pending_review or inactive."
+  standing: String!
 }
 
 "One payer's standing on a shipment."
@@ -25082,6 +25103,8 @@ input ShipmentInput {
   entryMethod: ShipmentEntryMethod = Manual
   proNumber: String
   bol: String
+  "The customer's own identifier for the load. A second live shipment for the same customer with this reference is refused."
+  externalReference: String
   cancelReason: String
   otherChargeAmount: Decimal = "0"
   freightChargeAmount: Decimal = "0"
@@ -26636,6 +26659,7 @@ enum WatchtowerSourceKind {
   InboundMessage
   WorkerCredential
   MoveCoverage
+  TelematicsStopVisit
   AgentQualityRegression
   AccountingSync
 }

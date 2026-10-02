@@ -149,6 +149,10 @@ func shipmentDraftSchema() map[string]any {
 			"bol": stringProperty("The customer's BOL or reference. It must be unique among "+
 				"open shipments, so never reuse one from another shipment. Optional unless the "+
 				"customer's billing requires a BOL; leave it out when none is known.", 100),
+			"externalReference": stringProperty("The customer's own order or load number, "+
+				"as it appears on their tender, email or rate confirmation. One live shipment "+
+				"per customer may carry it, so a second booking of the same order is refused; "+
+				"leave it out when the customer gave none.", 100),
 			fieldPieces: integerProperty(
 				"The total piece or handling-unit count.",
 				0,

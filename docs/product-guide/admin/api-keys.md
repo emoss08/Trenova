@@ -58,3 +58,8 @@ Keywords: disable API key, delete token, cut off access
 Viewing the page needs read access to API keys. Creating a key needs create access to API keys,
 and editing, rotating or revoking one needs update access. Requests made with a key are limited to
 the permissions granted to that key.
+
+A system that retries writes can send an `Idempotency-Key` header (a unique string, such as a
+UUID, per write). Repeating a request with the same key within 24 hours returns the first response,
+marked `Idempotent-Replayed: true`, instead of applying the write again. A shipment created with a
+key is never created twice for that key.

@@ -6776,6 +6776,14 @@ func init() {
 				FieldMapKey: "adjustmentCostEventId",
 			},
 			{
+				Name:        "duplicateOfMatchId",
+				FieldMapKey: "duplicateOfMatchId",
+			},
+			{
+				Name:        "possibleDuplicateOfId",
+				FieldMapKey: "possibleDuplicateOfId",
+			},
+			{
 				Name:        "status",
 				FieldMapKey: "status",
 			},
@@ -7383,6 +7391,10 @@ func init() {
 			{
 				Name:        "autoAcceptWithinTolerance",
 				FieldMapKey: "autoAcceptWithinTolerance",
+			},
+			{
+				Name:        "holdUntilInvoiceMatched",
+				FieldMapKey: "holdUntilInvoiceMatched",
 			},
 			{
 				Name:        "defaultApAccountId",
@@ -10739,6 +10751,10 @@ func init() {
 			{
 				Name:        "reconciliationNotes",
 				FieldMapKey: "reconciliationNotes",
+			},
+			{
+				Name:        "duplicateOfId",
+				FieldMapKey: "duplicateOfId",
 			},
 			{
 				Name:        "version",
@@ -20747,6 +20763,10 @@ func init() {
 			{
 				Name:        "bol",
 				FieldMapKey: "bol",
+			},
+			{
+				Name:        "externalReference",
+				FieldMapKey: "externalReference",
 			},
 			{
 				Name:        "cancelReason",

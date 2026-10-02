@@ -59,6 +59,8 @@ var CarrierInvoiceColumns = struct {
 	CustomerID           Column // "customer_id" → qualified: "ecinv.customer_id"
 	CarrierID            Column // "carrier_id" → qualified: "ecinv.carrier_id"
 	InvoiceNumber        Column // "invoice_number" → qualified: "ecinv.invoice_number"
+	InvoiceNumberKey     Column // "invoice_number_key" → qualified: "ecinv.invoice_number_key"
+	DuplicateOfID        Column // "duplicate_of_id" → qualified: "ecinv.duplicate_of_id"
 	InvoiceDate          Column // "invoice_date" → qualified: "ecinv.invoice_date"
 	DeliveryDate         Column // "delivery_date" → qualified: "ecinv.delivery_date"
 	ShipmentReference    Column // "shipment_reference" → qualified: "ecinv.shipment_reference"
@@ -88,6 +90,8 @@ var CarrierInvoiceColumns = struct {
 	CustomerID:           NewColumn("customer_id", "ecinv"),
 	CarrierID:            NewColumn("carrier_id", "ecinv"),
 	InvoiceNumber:        NewColumn("invoice_number", "ecinv"),
+	InvoiceNumberKey:     NewColumn("invoice_number_key", "ecinv"),
+	DuplicateOfID:        NewColumn("duplicate_of_id", "ecinv"),
 	InvoiceDate:          NewColumn("invoice_date", "ecinv"),
 	DeliveryDate:         NewColumn("delivery_date", "ecinv"),
 	ShipmentReference:    NewColumn("shipment_reference", "ecinv"),
@@ -123,6 +127,7 @@ var CarrierInvoiceFieldMap = map[string]string{
 	"customerId":           "customer_id",
 	"carrierId":            "carrier_id",
 	"invoiceNumber":        "invoice_number",
+	"duplicateOfId":        "duplicate_of_id",
 	"invoiceDate":          "invoice_date",
 	"deliveryDate":         "delivery_date",
 	"shipmentReference":    "shipment_reference",
@@ -156,6 +161,8 @@ var CarrierInvoiceInsertableColumns = []string{
 	"customer_id",
 	"carrier_id",
 	"invoice_number",
+	"invoice_number_key",
+	"duplicate_of_id",
 	"invoice_date",
 	"delivery_date",
 	"shipment_reference",
@@ -247,6 +254,7 @@ var CarrierInvoiceFilter = struct {
 	CustomerID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
 	CarrierID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierId" → DB: "carrier_id"
 	InvoiceNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumber" → DB: "invoice_number"
+	DuplicateOfID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "duplicateOfId" → DB: "duplicate_of_id"
 	InvoiceDate          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDate" → DB: "invoice_date"
 	DeliveryDate         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryDate" → DB: "delivery_date"
 	ShipmentReference    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentReference" → DB: "shipment_reference"
@@ -295,6 +303,9 @@ var CarrierInvoiceFilter = struct {
 	},
 	InvoiceNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceNumber", op, value)
+	},
+	DuplicateOfID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("duplicateOfId", op, value)
 	},
 	InvoiceDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceDate", op, value)
@@ -2117,6 +2128,7 @@ var EDIMessageColumns = struct {
 	AckReceivedAt            Column // "ack_received_at" → qualified: "emsg.ack_received_at"
 	AckLastError             Column // "ack_last_error" → qualified: "emsg.ack_last_error"
 	GeneratedByID            Column // "generated_by_id" → qualified: "emsg.generated_by_id"
+	IdempotencyKey           Column // "idempotency_key" → qualified: "emsg.idempotency_key"
 	GeneratedAt              Column // "generated_at" → qualified: "emsg.generated_at"
 	Version                  Column // "version" → qualified: "emsg.version"
 	CreatedAt                Column // "created_at" → qualified: "emsg.created_at"
@@ -2161,6 +2173,7 @@ var EDIMessageColumns = struct {
 	AckReceivedAt:            NewColumn("ack_received_at", "emsg"),
 	AckLastError:             NewColumn("ack_last_error", "emsg"),
 	GeneratedByID:            NewColumn("generated_by_id", "emsg"),
+	IdempotencyKey:           NewColumn("idempotency_key", "emsg"),
 	GeneratedAt:              NewColumn("generated_at", "emsg"),
 	Version:                  NewColumn("version", "emsg"),
 	CreatedAt:                NewColumn("created_at", "emsg"),
@@ -2259,6 +2272,7 @@ var EDIMessageInsertableColumns = []string{
 	"ack_received_at",
 	"ack_last_error",
 	"generated_by_id",
+	"idempotency_key",
 	"generated_at",
 	"version",
 	"created_at",

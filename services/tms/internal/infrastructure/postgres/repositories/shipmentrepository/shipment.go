@@ -2,6 +2,9 @@ package shipmentrepository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -527,6 +530,7 @@ func (r *repository) Update(
 					sp.CreatedAt.Bare(),
 					sp.BillingTransferStatus.Bare(),
 					sp.TransferredToBillingAt.Bare(),
+					sp.IdempotencyKey.Bare(),
 				).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 					return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
@@ -776,7 +780,12 @@ func (r *repository) Cancel(
 				Set(sp.Version.Inc(1)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 					return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-						Where(sp.ID.Eq(), req.ShipmentID)
+						Where(sp.ID.Eq(), req.ShipmentID).
+						Where(sp.Version.Eq(), req.ExpectedVersion).
+						Where(sp.Status.NotIn(), bun.List([]shipment.Status{
+							shipment.StatusCanceled,
+							shipment.StatusInvoiced,
+						}))
 				}).
 				Returning("*").
 				Exec(c)
@@ -815,14 +824,16 @@ func (r *repository) Uncancel(
 		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			results, err := tx.NewUpdate().
 				Model(entity).
-				Set(sp.Status.Set(), shipment.StatusNew).
+				Set(sp.Status.Set(), restoredShipmentStatus(req)).
 				Set(sp.CanceledAt.Set(), nil).
 				Set(sp.CanceledByID.Set(), pulid.Nil).
 				Set(sp.CancelReason.Set(), "").
 				Set(sp.Version.Inc(1)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 					return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-						Where(sp.ID.Eq(), req.ShipmentID)
+						Where(sp.ID.Eq(), req.ShipmentID).
+						Where(sp.Version.Eq(), req.ExpectedVersion).
+						Where(sp.Status.Eq(), shipment.StatusCanceled)
 				}).
 				Returning("*").
 				Exec(c)
@@ -838,7 +849,7 @@ func (r *repository) Uncancel(
 				return err
 			}
 
-			return r.uncancelShipmentComponents(c, tx, req.ShipmentID)
+			return r.uncancelShipmentComponents(c, tx, req)
 		})
 		if err != nil {
 			return nil, dberror.MapRetryableTransactionError(
@@ -882,6 +893,76 @@ func (r *repository) TransferOwnership(
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) FindByExternalReference(
+	ctx context.Context,
+	req *repositories.ExternalReferenceCheckRequest,
+) (*repositories.DuplicateBOLResult, error) {
+	reference := strings.TrimSpace(req.ExternalReference)
+	if reference == "" || req.CustomerID.IsNil() {
+		return nil, nil //nolint:nilnil // no reference never collides
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*repositories.DuplicateBOLResult, error) {
+			sp := buncolgen.ShipmentColumns
+			found := new(repositories.DuplicateBOLResult)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
+				Model((*shipment.Shipment)(nil)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+						Where(sp.CustomerID.Eq(), req.CustomerID).
+						Where(sp.ExternalReference.Expr("lower({})")+" = lower(?)", reference).
+						Where(sp.Status.Ne(), shipment.StatusCanceled)
+					if req.ShipmentID.IsNotNil() {
+						sq = sq.Where(sp.ID.Ne(), req.ShipmentID)
+					}
+					return sq
+				}).
+				Limit(1)
+			if err := query.Scan(ctx, found); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, nil
+				}
+				return nil, err
+			}
+			return found, nil
+		},
+	)
+}
+
+func (r *repository) FindIDByIdempotencyKey(
+	ctx context.Context,
+	req *repositories.IdempotencyKeyLookupRequest,
+) (pulid.ID, error) {
+	if req.IdempotencyKey == "" {
+		return pulid.Nil, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
+		sp := buncolgen.ShipmentColumns
+		var id pulid.ID
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			Column(sp.ID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(sp.IdempotencyKey.Eq(), req.IdempotencyKey)
+			}).
+			Limit(1).
+			Scan(ctx, &id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pulid.Nil, nil
+		}
+		if err != nil {
+			return pulid.Nil, err
+		}
+		return id, nil
 	})
 }
 

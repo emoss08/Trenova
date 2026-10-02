@@ -94,6 +94,7 @@ type ShipmentPageRequest = {
 
 type ShipmentGraphQLParams<TVariables> = {
   document: GraphQLExecutableDocument;
+  idempotencyKey?: string;
   operationName: string;
   signal?: AbortSignal;
   variables?: TVariables;
@@ -290,9 +291,13 @@ export async function listShipmentEventsGraphQL(
   return data.shipmentEvents as ShipmentEventFieldsFragment[];
 }
 
-export async function createShipmentGraphQL(payload: ShipmentCreateInput): Promise<Shipment> {
+export async function createShipmentGraphQL(
+  payload: ShipmentCreateInput,
+  options: { idempotencyKey?: string } = {},
+): Promise<Shipment> {
   const data = await requestShipmentGraphQL({
     document: CreateShipmentDocument,
+    idempotencyKey: options.idempotencyKey,
     operationName: "CreateShipment",
     variables: {
       input: toShipmentInput(payload),
@@ -678,6 +683,7 @@ function toShipmentInput(
     entryMethod: payload.entryMethod,
     proNumber: payload.proNumber,
     bol: payload.bol,
+    externalReference: payload.externalReference || undefined,
     cancelReason: payload.cancelReason,
     otherChargeAmount: String(payload.otherChargeAmount ?? "0"),
     freightChargeAmount: String(payload.freightChargeAmount ?? "0"),

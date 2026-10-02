@@ -89,6 +89,29 @@ func (r *repository) GetCarrierInvoiceByID(
 	})
 }
 
+func (r *repository) GetCarrierInvoiceByNumber(
+	ctx context.Context,
+	req *repositories.GetEDICarrierInvoiceByNumberRequest,
+) (*edi.CarrierInvoice, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
+		entity := new(edi.CarrierInvoice)
+		cols := buncolgen.CarrierInvoiceColumns
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+			Where(cols.InvoiceNumberKey.Eq(), edi.InvoiceNumberKey(req.InvoiceNumber)).
+			Where(cols.DuplicateOfID.IsNull()).
+			Apply(buncolgen.CarrierInvoiceApplyTenant(req.TenantInfo)).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "CarrierInvoice")
+		}
+		return entity, nil
+	})
+}
+
 func (r *repository) CreateCarrierInvoice(
 	ctx context.Context,
 	entity *edi.CarrierInvoice,

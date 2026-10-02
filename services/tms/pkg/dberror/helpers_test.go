@@ -561,3 +561,14 @@ func TestIsRowLevelSecurityViolation(t *testing.T) {
 	assert.False(t, IsRowLevelSecurityViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
 	assert.False(t, IsRowLevelSecurityViolation(errors.New("plain")))
 }
+
+func TestDriverErrorUnwrapsToTheDriversOwnError(t *testing.T) {
+	t.Parallel()
+
+	pgErr := &pgconn.PgError{Code: pgerrcode.UniqueViolation}
+	wrapped := errortypes.NewDatabaseError("insert failed").WithInternal(fmt.Errorf("exec: %w", pgErr))
+
+	assert.Same(t, pgErr, DriverError(wrapped))
+	assert.NoError(t, DriverError(errors.New("plain")))
+	assert.NoError(t, DriverError(nil))
+}

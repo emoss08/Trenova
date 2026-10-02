@@ -7073,6 +7073,10 @@ type CarrierInvoiceMatch {
   createdAt: Timestamp!
   currencyCode: String!
   documentAiExtractionId: ID
+  """
+  Set when another live match already holds this invoice number; this one cannot be accepted while that one stands.
+  """
+  duplicateOfMatchId: ID
   ediCarrierInvoiceId: ID
   expectedTotalMinor: Int!
   id: ID!
@@ -7080,6 +7084,10 @@ type CarrierInvoiceMatch {
   invoiceTotalMinor: Int!
   matchedVia: CarrierInvoiceMatchVia!
   organizationId: ID!
+  """
+  Set when the load already had an invoice match when this one was made; it is never accepted automatically.
+  """
+  possibleDuplicateOfId: ID
   resolutionNote: String!
   resolvedAt: Timestamp
   resolvedById: ID
@@ -7346,6 +7354,10 @@ type CarrierSettlementControl {
   createdAt: Timestamp!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
+  """
+  When on, a load's carrier cost stays out of settlements until a carrier invoice match for its assignment is resolved, and a settlement holding unmatched cost cannot be approved.
+  """
+  holdUntilInvoiceMatched: Boolean!
   id: ID!
   organizationId: ID!
   payDelayDays: Int!
@@ -10556,6 +10568,10 @@ type EdiCarrierInvoice {
   createdAt: Timestamp!
   currencyCode: String!
   deliveryDate: Timestamp
+  """
+  Set when the partner sent this invoice number before; the earlier copy is the one that counts.
+  """
+  duplicateOfId: ID
   expectedAmount: Decimal
   id: ID!
   invoiceDate: Timestamp
@@ -21226,6 +21242,10 @@ type Shipment {
   customerId: ID!
   enteredById: ID
   entryMethod: ShipmentEntryMethod
+  """
+  The customer's own identifier for the load, such as an EDI 204 shipment ID or an order number; unique per customer among live shipments.
+  """
+  externalReference: String
   formulaTemplate: ShipmentFormulaTemplate
   formulaTemplateId: ID!
   freightChargeAmount: Decimal!
@@ -21445,6 +21465,15 @@ type ShipmentAxleWeight {
   weight: Int!
 }
 
+"""
+A document attached to a shipment that does not count toward its billing requirement.
+"""
+type ShipmentBillingIneligibleDocument {
+  documentId: String!
+  """Why it does not count: rejected, expired, pending_review or inactive."""
+  standing: String!
+}
+
 """One payer's standing on a shipment."""
 type ShipmentBillingPayerReadiness {
   creditHold: Boolean!
@@ -21494,6 +21523,10 @@ type ShipmentBillingRequirement {
   documentTypeCode: String!
   documentTypeId: String!
   documentTypeName: String!
+  """
+  Documents of this type that are attached but do not satisfy it: rejected, expired, awaiting review or archived.
+  """
+  ineligibleDocuments: [ShipmentBillingIneligibleDocument!]!
   satisfied: Boolean!
 }
 
@@ -22244,6 +22277,10 @@ input ShipmentInput {
   customerId: ID!
   enteredById: ID
   entryMethod: ShipmentEntryMethod = Manual
+  """
+  The customer's own identifier for the load. A second live shipment for the same customer with this reference is refused.
+  """
+  externalReference: String
   formulaTemplateId: ID!
   """
   How the freight charge is divided among payers. Omit to leave the split
@@ -23976,6 +24013,8 @@ input UpdateCarrierSettlementControlInput {
   autoPostOnApprove: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
+  """Omitted leaves the current setting as it is."""
+  holdUntilInvoiceMatched: Boolean
   payDelayDays: Int!
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
@@ -24625,6 +24664,7 @@ enum WatchtowerSourceKind {
   Insight
   MoveCoverage
   ServiceFailure
+  TelematicsStopVisit
   WeatherAlert
   WorkerCredential
 }

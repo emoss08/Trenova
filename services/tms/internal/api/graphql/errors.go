@@ -41,6 +41,7 @@ func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
 			return gqlErr
 		}
 
+		err = helpers.NormalizeDatabaseError(ctx, classifier, err)
 		locale := i18n.FromContext(ctx)
 		problemType := classifier.Classify(err)
 		gqlErr.Message = sanitizer.SanitizeMessage(err, problemType).Localize(locale)

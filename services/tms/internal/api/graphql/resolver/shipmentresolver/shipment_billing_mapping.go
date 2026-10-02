@@ -159,7 +159,23 @@ func shipmentBillingRequirementToModel(
 		Satisfied:        item.Satisfied,
 		DocumentCount:    item.DocumentCount,
 		DocumentIds:      item.DocumentIDs,
+		IneligibleDocuments: shipmentBillingIneligibleDocumentsToModel(
+			item.IneligibleDocuments,
+		),
 	}
+}
+
+func shipmentBillingIneligibleDocumentsToModel(
+	items []services.ShipmentBillingIneligibleDocument,
+) []*gqlmodel.ShipmentBillingIneligibleDocument {
+	out := make([]*gqlmodel.ShipmentBillingIneligibleDocument, 0, len(items))
+	for _, item := range items {
+		out = append(out, &gqlmodel.ShipmentBillingIneligibleDocument{
+			DocumentID: item.DocumentID,
+			Standing:   string(item.Standing),
+		})
+	}
+	return out
 }
 
 func bulkTransferToBillingToModel(

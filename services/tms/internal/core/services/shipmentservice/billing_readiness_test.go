@@ -413,3 +413,87 @@ func TestBuildShipmentBillingReadiness_ReturnToOperationsBlocksManualProgressFor
 	assert.False(t, readiness.CanMarkReadyToInvoice)
 	assert.False(t, readiness.ShouldAutoMarkReadyToInvoice)
 }
+
+func TestBuildDocumentRequirements_CountsOnlyAcceptedDocuments(t *testing.T) {
+	t.Parallel()
+
+	pod := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "POD", Name: "Proof of Delivery"}
+	bol := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "BOL", Name: "Bill of Lading"}
+	expiredAt := int64(1)
+	rejectedAt := int64(100)
+
+	rejectedPOD := &document.Document{
+		ID:              pulid.MustNew("doc_"),
+		DocumentTypeID:  &pod.ID,
+		Status:          document.StatusRejected,
+		RejectedAt:      &rejectedAt,
+		RejectionReason: "Signature is illegible",
+	}
+	expiredBOL := &document.Document{
+		ID:             pulid.MustNew("doc_"),
+		DocumentTypeID: &bol.ID,
+		Status:         document.StatusActive,
+		ExpirationDate: &expiredAt,
+	}
+	activeBOL := &document.Document{
+		ID:             pulid.MustNew("doc_"),
+		DocumentTypeID: &bol.ID,
+		Status:         document.StatusActive,
+	}
+
+	requirements := buildDocumentRequirements(
+		[]*documenttype.DocumentType{pod, bol},
+		[]*document.Document{rejectedPOD, expiredBOL, activeBOL},
+	)
+
+	require.Len(t, requirements, 2)
+	byCode := make(map[string]int, len(requirements))
+	for i, requirement := range requirements {
+		byCode[requirement.DocumentTypeCode] = i
+	}
+
+	podRequirement := requirements[byCode["POD"]]
+	assert.False(t, podRequirement.Satisfied)
+	assert.Zero(t, podRequirement.DocumentCount)
+	assert.Empty(t, podRequirement.DocumentIDs)
+	require.Len(t, podRequirement.IneligibleDocuments, 1)
+	assert.Equal(t, rejectedPOD.ID.String(), podRequirement.IneligibleDocuments[0].DocumentID)
+	assert.Equal(t, document.StandingRejected, podRequirement.IneligibleDocuments[0].Standing)
+
+	bolRequirement := requirements[byCode["BOL"]]
+	assert.True(t, bolRequirement.Satisfied)
+	assert.Equal(t, []string{activeBOL.ID.String()}, bolRequirement.DocumentIDs)
+	require.Len(t, bolRequirement.IneligibleDocuments, 1)
+	assert.Equal(t, document.StandingExpired, bolRequirement.IneligibleDocuments[0].Standing)
+}
+
+func TestBuildShipmentBillingReadiness_RejectedPODBlocksReadyToInvoice(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.ID = pulid.MustNew("shp_")
+	entity.Status = shipment.StatusCompleted
+
+	pod := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "POD", Name: "Proof of Delivery"}
+	rejectedAt := int64(100)
+
+	readiness := buildShipmentBillingReadiness(
+		entity,
+		&customer.CustomerBillingProfile{DocumentTypes: []*documenttype.DocumentType{pod}},
+		&tenant.BillingControl{
+			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
+		},
+		[]*document.Document{{
+			ID:              pulid.MustNew("doc_"),
+			DocumentTypeID:  &pod.ID,
+			Status:          document.StatusRejected,
+			RejectedAt:      &rejectedAt,
+			RejectionReason: "Wrong load",
+		}},
+	)
+
+	require.NotNil(t, readiness)
+	require.Len(t, readiness.MissingRequirements, 1)
+	assert.Equal(t, "POD", readiness.MissingRequirements[0].DocumentTypeCode)
+	assert.False(t, readiness.CanMarkReadyToInvoice)
+}

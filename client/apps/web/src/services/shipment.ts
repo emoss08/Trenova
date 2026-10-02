@@ -80,8 +80,8 @@ export class ShipmentService {
     return safeParse(shipmentSchema, response, "Shipment");
   }
 
-  public async create(payload: ShipmentCreateInput) {
-    const response = await createShipmentGraphQL(shipmentCreateSchema.parse(payload));
+  public async create(payload: ShipmentCreateInput, options: { idempotencyKey?: string } = {}) {
+    const response = await createShipmentGraphQL(shipmentCreateSchema.parse(payload), options);
     return safeParse(shipmentSchema, response, "Shipment");
   }
 

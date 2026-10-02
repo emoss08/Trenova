@@ -11,6 +11,7 @@ import (
 	coreports "github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -327,7 +328,12 @@ func (s *Service) ProcessLoadTenderApproval(
 			return s.failTransferInTransaction(txCtx, transfer, err)
 		}
 
-		createdShipment, err := s.shipmentSvc.Create(txCtx, targetShipment, payload.Actor)
+		var createdShipment *shipment.Shipment
+		err = dbtx.Savepoint(txCtx, s.db, func(spCtx context.Context) error {
+			created, createErr := s.shipmentSvc.Create(spCtx, targetShipment, payload.Actor)
+			createdShipment = created
+			return createErr
+		})
 		if err != nil {
 			processingErr = err
 			return s.failTransferInTransaction(txCtx, transfer, err)

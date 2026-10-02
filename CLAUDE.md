@@ -385,6 +385,15 @@ paths) and set `AudienceUserID` for anything addressed to one person. **Read
 `realtimeservice`, `infrastructure/realtimebroker`, the stream endpoint, or the
 browser `realtimeClient`**, and before adding a presence or typing scope.
 
+## Idempotency
+
+A write sent with an `Idempotency-Key` header is claimed in Redis by
+`IdempotencyMiddleware` and its response replayed for a repeat; a 5xx or transient
+GraphQL error releases the key. Shipment create also stores the scoped key under a
+partial unique index, so it stays exactly-once when Redis is down. **Read
+[docs/engineering/idempotency.md](docs/engineering/idempotency.md) before changing the
+middleware, `pkg/idempotency`, or adding a write that must be safe to retry.**
+
 ## AI Training Export
 
 Operators export consenting organizations' AI corrections for fine-tuning with

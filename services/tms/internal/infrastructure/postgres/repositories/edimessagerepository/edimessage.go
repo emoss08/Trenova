@@ -134,6 +134,25 @@ func (r *repository) GetMessageByID(
 	})
 }
 
+func (r *repository) GetMessageByIdempotencyKey(
+	ctx context.Context,
+	req repositories.GetEDIMessageByIdempotencyKeyRequest,
+) (*edi.EDIMessage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
+		entity := new(edi.EDIMessage)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(buncolgen.EDIMessageColumns.IdempotencyKey.Eq(), req.IdempotencyKey).
+			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+		}
+		return entity, nil
+	})
+}
+
 func (r *repository) CreateMessageWithDiagnostics(
 	ctx context.Context,
 	req repositories.CreateEDIMessageWithDiagnosticsRequest,

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -159,6 +160,7 @@ type invoiceMatchSeed struct {
 	invoiceNumber          string
 	invoiceTotalMinor      int64
 	matchedVia             carriersettlement.MatchVia
+	possibleDuplicateOfID  *pulid.ID
 }
 
 func matchStatusForVariance(
@@ -180,7 +182,14 @@ func (s *Service) createInvoiceMatch(
 	if err != nil {
 		return nil, err
 	}
-	return s.invoiceMatchRepo.Create(ctx, match)
+	created, err := s.invoiceMatchRepo.Create(ctx, match)
+	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, errDuplicateInvoiceNumber(seed.invoiceNumber)
+		}
+		return nil, err
+	}
+	return created, nil
 }
 
 func (s *Service) resolveMatchAssignment(
@@ -235,6 +244,9 @@ func (s *Service) AcceptMatch(
 	if err != nil {
 		return nil, err
 	}
+	if err = s.checkAcceptable(ctx, tenantInfo, match, false); err != nil {
+		return nil, err
+	}
 	previous := *match
 	if err = PlanAcceptMatch(match, note, actor.UserID, timeutils.NowUnix()); err != nil {
 		return nil, err
@@ -271,6 +283,9 @@ func (s *Service) AcceptWithVariance(
 		return nil, err
 	}
 	if err = CheckAcceptWithVariance(match); err != nil {
+		return nil, err
+	}
+	if err = s.checkAcceptable(ctx, tenantInfo, match, true); err != nil {
 		return nil, err
 	}
 

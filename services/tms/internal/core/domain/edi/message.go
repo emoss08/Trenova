@@ -60,6 +60,7 @@ type EDIMessage struct {
 	AckReceivedAt            *int64                      `json:"ackReceivedAt"            bun:"ack_received_at,type:BIGINT,nullzero"`
 	AckLastError             string                      `json:"ackLastError"             bun:"ack_last_error,type:TEXT,nullzero"`
 	GeneratedByID            pulid.ID                    `json:"generatedById"            bun:"generated_by_id,type:VARCHAR(100),nullzero"`
+	IdempotencyKey           string                      `json:"-"                        bun:"idempotency_key,type:VARCHAR(255),nullzero"`
 	GeneratedAt              int64                       `json:"generatedAt"              bun:"generated_at,type:BIGINT,notnull"`
 	Version                  int64                       `json:"version"                  bun:"version,type:BIGINT,notnull"`
 	CreatedAt                int64                       `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -235,6 +236,10 @@ func (m *EDIMessage) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Business unit is required"),
 		),
 		validation.Field(&m.EDIPartnerID, validation.Required.Error("Partner is required")),
+		validation.Field(&m.IdempotencyKey,
+			validation.Length(0, maxIdempotencyKeyLength).
+				Error("Idempotency key cannot be longer than 255 characters"),
+		),
 		validation.Field(&m.DocumentTypeID,
 			validation.Required.Error("Document type is required"),
 		),

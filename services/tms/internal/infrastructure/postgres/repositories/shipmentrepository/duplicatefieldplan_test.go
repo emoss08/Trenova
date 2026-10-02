@@ -31,6 +31,14 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"Status":    {setByCopy, "every copy re-enters the lifecycle at New"},
 	"ProNumber": {setByCopy, "the caller supplies the pro number through ShipmentCopySpec"},
 	"BOL":       {setByCopy, "derived from the source BOL with a copy suffix"},
+	"ExternalReference": {
+		intentionallyDropped,
+		"the customer's reference names one live shipment, so a copy is a different load",
+	},
+	"IdempotencyKey": {
+		intentionallyDropped,
+		"the key names the one request that booked the original; a copy is not a retry of it",
+	},
 	"EnteredByID": {
 		setByCopy,
 		"attributed to the user who requested the duplicate, not the original enterer",

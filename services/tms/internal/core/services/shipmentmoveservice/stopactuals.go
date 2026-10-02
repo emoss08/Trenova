@@ -3,7 +3,6 @@ package shipmentmoveservice
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -219,7 +218,7 @@ func applyStopActual(
 		return nil, errortypes.NewBusinessError("This load is already completed")
 	}
 
-	stops := activeStopsBySequence(move)
+	stops := move.ActiveStopsBySequence()
 	var stop *shipment.Stop
 	for _, candidate := range stops {
 		if candidate.ID == req.StopID {
@@ -282,19 +281,8 @@ func applyStopActual(
 	return stop, nil
 }
 
-func activeStopsBySequence(move *shipment.ShipmentMove) []*shipment.Stop {
-	stops := make([]*shipment.Stop, 0, len(move.Stops))
-	for _, stop := range move.Stops {
-		if stop != nil && stop.Status != shipment.StopStatusCanceled {
-			stops = append(stops, stop)
-		}
-	}
-	sort.SliceStable(stops, func(i, j int) bool { return stops[i].Sequence < stops[j].Sequence })
-	return stops
-}
-
 func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipment.MoveStatus {
-	stops := activeStopsBySequence(move)
+	stops := move.ActiveStopsBySequence()
 	if len(stops) == 0 {
 		return move.Status
 	}

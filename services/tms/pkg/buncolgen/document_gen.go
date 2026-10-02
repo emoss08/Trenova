@@ -78,6 +78,9 @@ var DocumentColumns = struct {
 	UploadedByID          Column // "uploaded_by_id" → qualified: "doc.uploaded_by_id"
 	ApprovedByID          Column // "approved_by_id" → qualified: "doc.approved_by_id"
 	ApprovedAt            Column // "approved_at" → qualified: "doc.approved_at"
+	RejectedByID          Column // "rejected_by_id" → qualified: "doc.rejected_by_id"
+	RejectedAt            Column // "rejected_at" → qualified: "doc.rejected_at"
+	RejectionReason       Column // "rejection_reason" → qualified: "doc.rejection_reason"
 	PreviewStoragePath    Column // "preview_storage_path" → qualified: "doc.preview_storage_path"
 	PreviewStatus         Column // "preview_status" → qualified: "doc.preview_status"
 	ContentStatus         Column // "content_status" → qualified: "doc.content_status"
@@ -121,6 +124,9 @@ var DocumentColumns = struct {
 	UploadedByID:          NewColumn("uploaded_by_id", "doc"),
 	ApprovedByID:          NewColumn("approved_by_id", "doc"),
 	ApprovedAt:            NewColumn("approved_at", "doc"),
+	RejectedByID:          NewColumn("rejected_by_id", "doc"),
+	RejectedAt:            NewColumn("rejected_at", "doc"),
+	RejectionReason:       NewColumn("rejection_reason", "doc"),
 	PreviewStoragePath:    NewColumn("preview_storage_path", "doc"),
 	PreviewStatus:         NewColumn("preview_status", "doc"),
 	ContentStatus:         NewColumn("content_status", "doc"),
@@ -170,6 +176,9 @@ var DocumentFieldMap = map[string]string{
 	"uploadedById":          "uploaded_by_id",
 	"approvedById":          "approved_by_id",
 	"approvedAt":            "approved_at",
+	"rejectedById":          "rejected_by_id",
+	"rejectedAt":            "rejected_at",
+	"rejectionReason":       "rejection_reason",
 	"previewStoragePath":    "preview_storage_path",
 	"previewStatus":         "preview_status",
 	"contentStatus":         "content_status",
@@ -215,6 +224,9 @@ var DocumentInsertableColumns = []string{
 	"uploaded_by_id",
 	"approved_by_id",
 	"approved_at",
+	"rejected_by_id",
+	"rejected_at",
+	"rejection_reason",
 	"preview_storage_path",
 	"preview_status",
 	"content_status",
@@ -322,6 +334,9 @@ var DocumentFilter = struct {
 	UploadedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "uploadedById" → DB: "uploaded_by_id"
 	ApprovedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
 	ApprovedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
+	RejectedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejectedById" → DB: "rejected_by_id"
+	RejectedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejectedAt" → DB: "rejected_at"
+	RejectionReason       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejectionReason" → DB: "rejection_reason"
 	PreviewStoragePath    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewStoragePath" → DB: "preview_storage_path"
 	PreviewStatus         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewStatus" → DB: "preview_status"
 	ContentStatus         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentStatus" → DB: "content_status"
@@ -420,6 +435,15 @@ var DocumentFilter = struct {
 	},
 	ApprovedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("approvedAt", op, value)
+	},
+	RejectedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rejectedById", op, value)
+	},
+	RejectedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rejectedAt", op, value)
+	},
+	RejectionReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rejectionReason", op, value)
 	},
 	PreviewStoragePath: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("previewStoragePath", op, value)

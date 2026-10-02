@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -21,11 +22,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -46,6 +49,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
+	DB                   ports.DBConnection
 	Repo                 repositories.ShipmentRepository
 	OrderRepo            repositories.OrderRepository
 	CacheRepo            repositories.ShipmentCacheRepository
@@ -83,6 +87,7 @@ type Params struct {
 
 type service struct {
 	l                    *zap.Logger
+	db                   ports.DBConnection
 	repo                 repositories.ShipmentRepository
 	orderRepo            repositories.OrderRepository
 	cacheRepo            repositories.ShipmentCacheRepository
@@ -122,6 +127,7 @@ type service struct {
 func New(p Params) *service { //nolint:gocritic // stable API shape
 	return &service{
 		l:                    p.Logger.Named("service.shipment"),
+		db:                   p.DB,
 		repo:                 p.Repo,
 		orderRepo:            p.OrderRepo,
 		cacheRepo:            p.CacheRepo,
@@ -280,6 +286,10 @@ func (s *service) Create(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
+	if existing, found, err := s.findIdempotentCreate(ctx, entity); err != nil || found {
+		return existing, err
+	}
+
 	prepared, err := s.prepareCreate(ctx, entity, auditActor.UserID)
 	if err != nil {
 		return nil, err
@@ -290,65 +300,109 @@ func (s *service) Create(
 		entity.ID = pulid.MustNew("shp_")
 	}
 
-	createdEntity, err := s.repo.Create(ctx, entity)
+	var createdEntity *shipment.Shipment
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		created, txErr := s.persistCreate(txCtx, entity, prepared, actor)
+		createdEntity = created
+		return txErr
+	})
 	if err != nil {
+		if isIdempotencyKeyConflict(err) {
+			existing, found, findErr := s.findIdempotentCreate(ctx, entity)
+			if findErr != nil || found {
+				return existing, findErr
+			}
+		}
+		if mapped := externalReferenceConflict(err, entity); mapped != nil {
+			return nil, mapped
+		}
 		log.Error("failed to create shipment", zap.Error(err))
 		return nil, err
 	}
 
+	ports.AfterCommit(ctx, func(committed context.Context) {
+		s.announceCreated(committed, createdEntity, auditActor)
+	})
+
+	return createdEntity, nil
+}
+
+func (s *service) persistCreate(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	prepared *createPreparation,
+	actor *services.RequestActor,
+) (*shipment.Shipment, error) {
+	auditActor := actor.AuditActor()
+	created, err := s.repo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = s.commercial.CommitContractRating(
-		ctx, createdEntity, prepared.rating, auditActor.UserID,
+		ctx, created, prepared.rating, auditActor.UserID,
 	); err != nil {
 		return nil, err
 	}
 
-	if createdEntity.RateQuoteID != nil {
-		createdEntity, err = s.repo.Update(ctx, createdEntity)
-		if err != nil {
-			log.Error("failed to link shipment to its rate quote", zap.Error(err))
-			return nil, err
+	if created.RateQuoteID != nil {
+		if created, err = s.repo.Update(ctx, created); err != nil {
+			return nil, fmt.Errorf("link shipment to its rate quote: %w", err)
 		}
 	}
 
-	s.recordCapabilityDeviations(ctx, createdEntity, prepared.advisories)
-	s.syncPermits(ctx, createdEntity, actor)
+	if err = s.recordCapabilityDeviations(ctx, created, prepared.advisories); err != nil {
+		return nil, err
+	}
+	if err = s.syncPermits(ctx, created, actor); err != nil {
+		return nil, err
+	}
 
-	if err = s.logShipmentAction(
-		createdEntity,
+	if err = s.eventService.Record(ctx, shipmenteventservice.BuildShipmentCreated(
+		tenantRefForShipment(created),
+		created,
+		auditActor,
+	)); err != nil {
+		return nil, fmt.Errorf("record shipment created event: %w", err)
+	}
+
+	return created, nil
+}
+
+func (s *service) announceCreated(
+	ctx context.Context,
+	created *shipment.Shipment,
+	auditActor services.AuditActor,
+) {
+	if err := s.logShipmentAction(
+		created,
 		auditActor,
 		permission.OpCreate,
 		nil,
-		createdEntity,
+		created,
 		auditservice.WithComment("Shipment created"),
 	); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
+		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
+	if err := s.publishShipmentInvalidation(
 		ctx,
-		createdEntity,
+		created,
 		auditActor,
 		"created",
-		createdEntity,
+		created,
 	); err != nil {
-		log.Warn("failed to publish realtime invalidation", zap.Error(err))
+		s.l.Warn("failed to publish realtime invalidation", zap.Error(err))
 	}
 
-	s.recordShipmentEvent(ctx, shipmenteventservice.BuildShipmentCreated(
-		tenantRefForShipment(createdEntity),
-		createdEntity,
-		auditActor,
-	))
 	services.PublishAgentEvent(ctx, s.agentEvents, services.AgentEvent{
 		Kind:      agent.EventShipmentCreated,
-		SubjectID: createdEntity.ID,
+		SubjectID: created.ID,
 		TenantInfo: pagination.TenantInfo{
-			OrgID: createdEntity.OrganizationID,
-			BuID:  createdEntity.BusinessUnitID,
+			OrgID: created.OrganizationID,
+			BuID:  created.BusinessUnitID,
 		},
 	})
-
-	return createdEntity, nil
 }
 
 func (s *service) Update( //nolint:cyclop // legacy workflow
@@ -463,15 +517,28 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	if err = s.checkDuplicateBOLsWithControl(ctx, control, req); err != nil {
 		return nil, err
 	}
+	if err = s.checkExternalReference(ctx, entity); err != nil {
+		return nil, err
+	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
+		if mapped := externalReferenceConflict(err, entity); mapped != nil {
+			return nil, mapped
+		}
 		s.l.Error("failed to update shipment", zap.Error(err))
 		return nil, err
 	}
 
-	s.recordCapabilityDeviations(ctx, updatedEntity, advisories)
-	s.syncPermits(ctx, updatedEntity, actor)
+	if err = s.recordCapabilityDeviations(ctx, updatedEntity, advisories); err != nil {
+		log.Error("failed to record capability deviations", zap.Error(err))
+	}
+	if err = s.syncPermits(ctx, updatedEntity, actor); err != nil {
+		log.Error("failed to sync permit requirements; dispatch may not be blocked",
+			zap.String("shipmentId", updatedEntity.ID.String()),
+			zap.Error(err),
+		)
+	}
 
 	if err = s.advanceContinuityForCompletedMoves(ctx, original, updatedEntity); err != nil {
 		return nil, err
@@ -981,19 +1048,29 @@ func (s *service) Cancel(
 		zap.String("shipmentID", req.ShipmentID.String()),
 	)
 
-	updatedEntity, err := s.repo.Cancel(ctx, req)
+	var updatedEntity *shipment.Shipment
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		canceled, txErr := s.repo.Cancel(txCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+
+		if s.continuityRepo != nil {
+			if txErr = s.continuityRepo.RollbackCurrentByShipment(txCtx,
+				repositories.RollbackEquipmentContinuityByShipmentRequest{
+					TenantInfo: req.TenantInfo,
+					ShipmentID: req.ShipmentID,
+				}); txErr != nil {
+				return txErr
+			}
+		}
+
+		updatedEntity = canceled
+		return nil
+	})
 	if err != nil {
 		log.Error("failed to cancel shipment", zap.Error(err))
 		return nil, err
-	}
-	if s.continuityRepo != nil {
-		if err = s.continuityRepo.RollbackCurrentByShipment(ctx,
-			repositories.RollbackEquipmentContinuityByShipmentRequest{
-				TenantInfo: req.TenantInfo,
-				ShipmentID: req.ShipmentID,
-			}); err != nil {
-			return nil, err
-		}
 	}
 
 	if err = s.logShipmentAction(
@@ -1037,7 +1114,7 @@ func (s *service) Uncancel(
 	req *repositories.UncancelShipmentRequest,
 	actor *services.RequestActor,
 ) (*shipment.Shipment, error) {
-	original, err := s.planUncancel(ctx, req)
+	original, _, err := s.planUncancel(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -1052,6 +1129,16 @@ func (s *service) Uncancel(
 
 	updatedEntity, err := s.repo.Uncancel(ctx, req)
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) &&
+			dberror.ExtractConstraintName(err) == externalReferenceConstraint {
+			multiErr := errortypes.NewMultiError()
+			multiErr.Add(
+				"externalReference",
+				errortypes.ErrDuplicate,
+				"Another live shipment for this customer now uses this shipment's customer reference; change one of them before restoring this shipment",
+			)
+			return nil, multiErr
+		}
 		log.Error("failed to uncancel shipment", zap.Error(err))
 		return nil, err
 	}

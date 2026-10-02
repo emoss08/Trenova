@@ -219,6 +219,9 @@ type Document struct {
 	UploadedByID          pulid.ID            `json:"uploadedById"          bun:"uploaded_by_id,type:VARCHAR(100),notnull"`
 	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero"`
 	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero"`
+	RejectedByID          pulid.ID            `json:"rejectedById"          bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
+	RejectedAt            *int64              `json:"rejectedAt"            bun:"rejected_at,type:BIGINT,nullzero"`
+	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero"`
 	PreviewStoragePath    string              `json:"previewStoragePath"    bun:"preview_storage_path,type:VARCHAR(500),nullzero"`
 	PreviewStatus         PreviewStatus       `json:"previewStatus"         bun:"preview_status,type:document_preview_status_enum,notnull,nullzero,default:'Unsupported'"`
 	ContentStatus         ContentStatus       `json:"contentStatus"         bun:"content_status,type:document_content_status_enum,notnull,nullzero,default:'Pending'"`
@@ -428,6 +431,18 @@ func (d *Document) Validate(multiErr *errortypes.MultiError) {
 			validation.When(d.ApprovedAt != nil, validation.Required.Error(
 				"An approved document must record who approved it",
 			)),
+		),
+		validation.Field(&d.RejectedAt,
+			validation.When(d.Status == StatusRejected, validation.Required.Error(
+				"A rejected document must record when it was rejected",
+			)),
+		),
+		validation.Field(&d.RejectionReason,
+			validation.When(d.Status == StatusRejected, validation.Required.Error(
+				"A rejected document must record why it was rejected",
+			)),
+			validation.Length(0, MaxRejectionReasonLength).
+				Error("Rejection reason cannot be longer than 1000 characters"),
 		),
 	))
 }

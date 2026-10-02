@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/internal/core/services/edix12inspect"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -435,6 +436,10 @@ func (s *Service) GenerateDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
 ) (*edi.EDIMessage, error) {
+	if existing, found, err := s.generatedDocument(ctx, req); err != nil || found {
+		return existing, err
+	}
+
 	resolved, err := s.resolveGenerateContext(ctx, req)
 	if err != nil {
 		return nil, err
@@ -504,6 +509,7 @@ func (s *Service) GenerateDocument(
 		PayloadSnapshot:          resolved.payload,
 		AckStatus:                generatedMessageAckStatus(resolved.profile),
 		GeneratedByID:            req.GeneratedByID,
+		IdempotencyKey:           req.IdempotencyKey,
 	}
 	messageDiagnostics := make([]*edi.EDIMessageValidationError, 0, len(diagnostics))
 	for _, diagnostic := range diagnostics {
@@ -525,6 +531,15 @@ func (s *Service) GenerateDocument(
 		},
 	)
 	if err != nil {
+		if req.IdempotencyKey != "" && dberror.IsUniqueConstraintViolation(err) {
+			existing, found, lookupErr := s.generatedDocument(ctx, req)
+			if lookupErr != nil {
+				return nil, lookupErr
+			}
+			if found {
+				return existing, nil
+			}
+		}
 		return nil, err
 	}
 	if !req.SuppressTenderRecipientUpsert {
@@ -542,6 +557,48 @@ func (s *Service) GenerateDocument(
 		}
 	}
 	return created, nil
+}
+
+func (s *Service) generatedDocument(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+) (*edi.EDIMessage, bool, error) {
+	if req.IdempotencyKey == "" {
+		return nil, false, nil
+	}
+
+	existing, err := s.messageRepo.GetMessageByIdempotencyKey(
+		ctx,
+		repositories.GetEDIMessageByIdempotencyKeyRequest{
+			TenantInfo:     req.TenantInfo,
+			IdempotencyKey: req.IdempotencyKey,
+		},
+	)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	if existing.TransactionSet != req.TransactionSet {
+		return nil, false, errortypes.NewBusinessError(
+			"This idempotency key already names a {0} document, not a {1}",
+			existing.TransactionSet,
+			req.TransactionSet,
+		)
+	}
+
+	if !req.DisableDeliveryQueue {
+		if err = s.queueMessageForDelivery(ctx, existing); err != nil {
+			s.l.Warn(
+				"failed to queue EDI message for delivery",
+				zap.String("messageId", existing.ID.String()),
+				zap.Error(err),
+			)
+		}
+	}
+
+	return existing, true, nil
 }
 
 func generatedMessageAckStatus(

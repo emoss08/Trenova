@@ -381,6 +381,42 @@ func (r *repository) CreateMessage(
 	})
 }
 
+func (r *repository) CreateMessageOnce(
+	ctx context.Context,
+	entity *email.Message,
+) (*email.Message, bool, error) {
+	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*email.Message, bool, error) {
+		res, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			On("CONFLICT (organization_id, business_unit_id, idempotency_key) DO NOTHING").
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return nil, false, err
+		}
+		if rows > 0 {
+			return entity, true, nil
+		}
+
+		existing := new(email.Message)
+		err = r.db.DBForContext(ctx).NewSelect().
+			Model(existing).
+			Where("em.organization_id = ?", entity.OrganizationID).
+			Where("em.business_unit_id = ?", entity.BusinessUnitID).
+			Where("em.idempotency_key = ?", entity.IdempotencyKey).
+			Scan(ctx)
+		if err != nil {
+			return nil, false, dberror.HandleNotFoundError(err, "EmailMessage")
+		}
+		return existing, false, nil
+	})
+}
+
 func (r *repository) UpdateMessage(
 	ctx context.Context,
 	entity *email.Message,

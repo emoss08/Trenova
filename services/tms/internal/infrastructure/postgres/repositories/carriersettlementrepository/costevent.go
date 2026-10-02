@@ -196,9 +196,18 @@ func (r *costEventRepository) ListPendingByCarrier(
 				sq = buncolgen.CostEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.CarrierID.Eq(), req.CarrierID).
 					WhereGroup(" AND ", func(status *bun.SelectQuery) *bun.SelectQuery {
-						status = status.Where(
-							cols.Status.Eq(),
-							carriersettlement.CostEventStatusPending,
+						status = status.WhereGroup(
+							" AND ",
+							func(pending *bun.SelectQuery) *bun.SelectQuery {
+								pending = pending.Where(
+									cols.Status.Eq(),
+									carriersettlement.CostEventStatusPending,
+								)
+								if req.HoldUntilInvoiceMatched {
+									pending = r.whereInvoiceMatched(ctx, pending)
+								}
+								return pending
+							},
 						)
 						if req.ReleasedFrom.IsNil() {
 							return status
@@ -231,6 +240,58 @@ func (r *costEventRepository) ListPendingByCarrier(
 	})
 }
 
+func (r *costEventRepository) resolvedInvoiceMatch(ctx context.Context) *bun.SelectQuery {
+	cols := buncolgen.CostEventColumns
+	matchCols := buncolgen.InvoiceMatchColumns
+	return r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*carriersettlement.InvoiceMatch)(nil)).
+		ColumnExpr("1").
+		Where(matchCols.CarrierAssignmentID.EqColumn(cols.CarrierAssignmentID)).
+		Where(matchCols.OrganizationID.EqColumn(cols.OrganizationID)).
+		Where(matchCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+		Where(matchCols.Status.Eq(), carriersettlement.InvoiceMatchStatusResolved)
+}
+
+func (r *costEventRepository) whereInvoiceMatched(
+	ctx context.Context,
+	sq *bun.SelectQuery,
+) *bun.SelectQuery {
+	cols := buncolgen.CostEventColumns
+	return sq.WhereGroup(" AND ", func(held *bun.SelectQuery) *bun.SelectQuery {
+		return held.
+			Where(cols.CarrierAssignmentID.IsNull()).
+			WhereOr("EXISTS (?)", r.resolvedInvoiceMatch(ctx))
+	})
+}
+
+func (r *costEventRepository) CountAwaitingInvoiceMatch(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	settlementID pulid.ID,
+) (int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.CostEventColumns
+		var count int
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*carriersettlement.CostEvent)(nil)).
+			ColumnExpr("COUNT(DISTINCT "+cols.CarrierAssignmentID.Qualified()+")").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CostEventScopeTenant(sq, tenantInfo).
+					Where(cols.SettlementID.Eq(), settlementID).
+					Where(cols.Status.NotEq(), carriersettlement.CostEventStatusVoided).
+					Where(cols.CarrierAssignmentID.IsNotNull()).
+					Where("NOT EXISTS (?)", r.resolvedInvoiceMatch(ctx))
+			}).
+			Scan(ctx, &count)
+		if err != nil {
+			return 0, fmt.Errorf("count carrier cost events awaiting an invoice match: %w", err)
+		}
+		return count, nil
+	})
+}
+
 func (r *costEventRepository) ListCarrierIDsWithPendingEvents(
 	ctx context.Context,
 	req repositories.ListCarriersWithPendingEventsRequest,
@@ -243,9 +304,13 @@ func (r *costEventRepository) ListCarrierIDsWithPendingEvents(
 			Model((*carriersettlement.CostEvent)(nil)).
 			ColumnExpr("DISTINCT "+cols.CarrierID.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CostEventScopeTenant(sq, req.TenantInfo).
+				sq = buncolgen.CostEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), carriersettlement.CostEventStatusPending).
 					Where(cols.EventDate.Lt(), req.PeriodEnd)
+				if req.HoldUntilInvoiceMatched {
+					sq = r.whereInvoiceMatched(ctx, sq)
+				}
+				return sq
 			}).
 			Scan(ctx, &ids)
 		if err != nil {

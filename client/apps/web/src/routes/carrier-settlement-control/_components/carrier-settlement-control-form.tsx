@@ -55,6 +55,7 @@ export default function CarrierSettlementControlForm() {
       varianceTolerance: data.varianceToleranceMinor / 100,
       autoMatchInboundInvoices: data.autoMatchInboundInvoices,
       autoAcceptWithinTolerance: data.autoAcceptWithinTolerance,
+      holdUntilInvoiceMatched: data.holdUntilInvoiceMatched,
       defaultApAccountId: data.defaultApAccountId ?? null,
       defaultPurchasedTransportationAccountId: data.defaultPurchasedTransportationAccountId ?? null,
     },
@@ -74,6 +75,7 @@ export default function CarrierSettlementControlForm() {
         varianceToleranceMinor: Math.round(values.varianceTolerance * 100),
         autoMatchInboundInvoices: values.autoMatchInboundInvoices,
         autoAcceptWithinTolerance: values.autoAcceptWithinTolerance,
+        holdUntilInvoiceMatched: values.holdUntilInvoiceMatched,
         defaultApAccountId: values.defaultApAccountId || undefined,
         defaultPurchasedTransportationAccountId:
           values.defaultPurchasedTransportationAccountId || undefined,
@@ -262,6 +264,16 @@ function MatchingCard() {
               disabled={!autoMatchInboundInvoices}
               description={t(
                 "Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match.",
+              )}
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="holdUntilInvoiceMatched"
+              label={t("Hold pay until the invoice is matched")}
+              description={t(
+                "A load's carrier cost stays out of settlements until its carrier invoice match is resolved, and a settlement with unmatched loads cannot be approved.",
               )}
             />
           </FormControl>

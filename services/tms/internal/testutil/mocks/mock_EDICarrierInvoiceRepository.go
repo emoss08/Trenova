@@ -176,6 +176,74 @@ func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call) RunAndRetu
 	return _c
 }
 
+// GetCarrierInvoiceByNumber provides a mock function for the type MockEDICarrierInvoiceRepository
+func (_mock *MockEDICarrierInvoiceRepository) GetCarrierInvoiceByNumber(ctx context.Context, req *repositories.GetEDICarrierInvoiceByNumberRequest) (*edi.CarrierInvoice, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCarrierInvoiceByNumber")
+	}
+
+	var r0 *edi.CarrierInvoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDICarrierInvoiceByNumberRequest) (*edi.CarrierInvoice, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDICarrierInvoiceByNumberRequest) *edi.CarrierInvoice); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.CarrierInvoice)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetEDICarrierInvoiceByNumberRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCarrierInvoiceByNumber'
+type MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call struct {
+	*mock.Call
+}
+
+// GetCarrierInvoiceByNumber is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetEDICarrierInvoiceByNumberRequest
+func (_e *MockEDICarrierInvoiceRepository_Expecter) GetCarrierInvoiceByNumber(ctx any, req any) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
+	return &MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call{Call: _e.mock.On("GetCarrierInvoiceByNumber", ctx, req)}
+}
+
+func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) Run(run func(ctx context.Context, req *repositories.GetEDICarrierInvoiceByNumberRequest)) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetEDICarrierInvoiceByNumberRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetEDICarrierInvoiceByNumberRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) Return(carrierInvoice *edi.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
+	_c.Call.Return(carrierInvoice, err)
+	return _c
+}
+
+func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetEDICarrierInvoiceByNumberRequest) (*edi.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListCarrierInvoices provides a mock function for the type MockEDICarrierInvoiceRepository
 func (_mock *MockEDICarrierInvoiceRepository) ListCarrierInvoices(ctx context.Context, req *repositories.ListEDICarrierInvoicesRequest) (*pagination.ListResult[*edi.CarrierInvoice], error) {
 	ret := _mock.Called(ctx, req)
