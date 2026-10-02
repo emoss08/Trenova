@@ -50961,7 +50961,7 @@
     ]
   },
   "Decision": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -57687,7 +57687,7 @@
     ]
   },
   "Document": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -57701,6 +57701,7 @@
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/customer-statement",
+      "routes/desk",
       "routes/journal-review",
       "routes/shipment",
       "routes/worker",
@@ -63630,6 +63631,15 @@
     ],
     "areas": [
       "service/tenderservice"
+    ]
+  },
+  "Email draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Email invoices": {
@@ -131673,7 +131683,7 @@
     ]
   },
   "Plan": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -131684,6 +131694,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/benefits",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -139012,6 +139023,15 @@
       "routes/worker"
     ]
   },
+  "Rate explanation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rate formula templates": {
     "sites": 1,
     "scope": [
@@ -142686,13 +142706,14 @@
     ]
   },
   "Record": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/escrow-account",
       "routes/time-attendance",
       "routes/worker"
@@ -147360,7 +147381,7 @@
     ]
   },
   "Report": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -147370,6 +147391,7 @@
       "apps/web/config",
       "domain/homelayout",
       "routes/agent-control",
+      "routes/desk",
       "routes/home",
       "routes/reports",
       "service/agentsubjectservice"
@@ -153993,6 +154015,15 @@
     ],
     "areas": [
       "domain/report"
+    ]
+  },
+  "Run diff": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Run document operations": {
@@ -175132,13 +175163,14 @@
     ]
   },
   "Table": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/types",
+      "routes/desk",
       "routes/home",
       "routes/reports",
       "routes/shipment",
@@ -203846,12 +203878,13 @@
     ]
   },
   "View": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "View AI providers": {
