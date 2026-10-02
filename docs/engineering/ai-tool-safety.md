@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 551.
+Tools listed: 554.
 
 ## The model
 
@@ -59,9 +59,9 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 189 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 190 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 7 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 219 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 221 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 33 |
@@ -92,6 +92,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get ar aging (`get_ar_aging`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get bank receipt (`get_bank_receipt`) | Reads only | Automatic | — | Always, from bank receipt | Reads a bank receipt whose memo the payer wrote; nothing changes and nothing is sent. |
 | Get billing queue item (`get_billing_queue_item`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get billing queue items (`get_billing_queue_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get carrier (`get_carrier`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get carrier intel event (`get_carrier_intel_event`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get carrier settlement (`get_carrier_settlement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -289,6 +290,7 @@ Changes records only people inside the organization see.
 | Approve worker PTO (`approve_worker_pto`) | Inside the organization | Automatic | — | — | Books approved time off; the worker is told it was approved but reads no text the model wrote. |
 | Archive worker credential (`archive_worker_credential`) | Inside the organization | Propose | — | — | Retires a credential inside Trenova, which can take the worker off dispatch; the archived row stays on file, and a new credential is recorded to replace it. |
 | Assign billing queue biller (`assign_billing_queue_biller`) | Inside the organization | Automatic | — | — | Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else. |
+| Assign billing queue billers (`assign_billing_queue_billers`) | Inside the organization | Automatic | — | — | Names who reviews several items inside Trenova, each exactly as assign_billing_queue_biller would; it creates no money and is changed by assigning someone else. |
 | Assign fuel card (`assign_fuel_card`) | Inside the organization | Ask first | — | — | Changes which tractor a card's purchases count against inside Trenova; nothing is sent, and assigning it again changes it back. |
 | Assign move (`assign_move`) | Inside the organization | Automatic | — | — | Assigns a driver and tractor to a move; the driver sees the assignment but no text the model wrote. |
 | Assign worker shift (`assign_worker_shift`) | Inside the organization | Ask first | — | — | Changes a worker's standing schedule inside Trenova; nothing is sent, and end_worker_shift_assignment or a new assignment changes it back. |
@@ -458,6 +460,7 @@ Changes records only people inside the organization see.
 | Transfer shipment ownership (`transfer_shipment_ownership`) | Inside the organization | Ask first | — | — | Changes who owns a shipment inside Trenova; nothing is sent, and it is transferred back the same way. |
 | Transfer to billing (`transfer_to_billing`) | Inside the organization | Automatic | — | — | Hands delivered shipments to the billing queue inside Trenova, by the checks the transfer dialog makes; a biller, or the organization's own auto-approve rule, still decides every item. |
 | Transition item to in review (`transition_item_to_in_review`) | Inside the organization | Automatic | An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person. | — | Moves the run's billing queue item into review inside Trenova; nothing is sent anywhere. |
+| Transition items to in review (`transition_items_to_in_review`) | Inside the organization | Automatic | An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person. A set is held to what its most guarded item allows. | — | Moves several billing queue items into review inside Trenova, each exactly as transition_item_to_in_review would; nothing is sent anywhere. |
 | Triage bank receipt work item (`triage_bank_receipt_work_item`) | Inside the organization | Automatic | — | — | Changes who works a reconciliation item and says it is being looked into; it moves no money and the item is reassigned the same way. |
 | Unassign moves (`unassign_moves`) | Inside the organization | Automatic | Only one move at a time, still freshly assigned, is taken off its driver without a decision; several moves, a move the service would refuse and a move that cannot be read each wait for a person. | — | Takes the driver off a move that has not started, inside Trenova; the driver is told the load was taken off them but sees no text the model wrote, and assigning the move again undoes it. |
 | Uncancel shipment (`uncancel_shipment`) | Inside the organization | Ask first | — | — | Puts a canceled shipment back to New inside Trenova; nothing is sent, and canceling it again undoes it. |
