@@ -1,7 +1,17 @@
 import { isAppPath } from "@/lib/app-path";
+import { splitMarkdownBlocks } from "@/lib/markdown-blocks";
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { cn } from "@trenova/shared/lib/utils";
-import { Children, createContext, memo, use, type ComponentProps, type ReactNode } from "react";
+import {
+  Children,
+  createContext,
+  Fragment,
+  memo,
+  use,
+  useMemo,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import { Link, useInRouterContext } from "react-router";
 import remarkGfm from "remark-gfm";
@@ -177,9 +187,49 @@ export const AiMarkdown = memo(function AiMarkdown({
 }) {
   return (
     <div className={cn("text-sm wrap-break-word", className)}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
         {content}
       </ReactMarkdown>
+    </div>
+  );
+});
+
+const REMARK_PLUGINS = [remarkGfm];
+
+/** One top-level block, parsed again only when its own text changes. */
+const MarkdownBlock = memo(function MarkdownBlock({ content }: { content: string }) {
+  return (
+    <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
+      {content}
+    </ReactMarkdown>
+  );
+});
+
+/**
+ * AiMarkdown for a reply still arriving. Parsing the whole reply on every
+ * token costs the square of its length; cut into its top-level blocks, every
+ * block but the last is final and parsed once. The blocks are siblings in one
+ * container, joined by the line break one parse puts between them, so what is
+ * drawn is what one parse would draw.
+ */
+export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
+  content,
+  className,
+}: {
+  content: string;
+  className?: string;
+}) {
+  const blocks = useMemo(() => splitMarkdownBlocks(content), [content]);
+
+  return (
+    <div className={cn("text-sm wrap-break-word", className)}>
+      {blocks.map((block, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- blocks only ever grow at the end
+        <Fragment key={index}>
+          {index > 0 && "\n"}
+          <MarkdownBlock content={block} />
+        </Fragment>
+      ))}
     </div>
   );
 });

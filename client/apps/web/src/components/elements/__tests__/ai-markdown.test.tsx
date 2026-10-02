@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
-import { AiMarkdown } from "../ai-markdown";
+import { AiMarkdown, StreamingAiMarkdown } from "../ai-markdown";
 
 afterEach(cleanup);
 
@@ -79,5 +79,60 @@ describe("images in a reply", () => {
 
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getByRole("link", { name: "image" })).toBeInTheDocument();
+  });
+});
+
+/**
+ * A streaming reply is parsed block by block so only the block still arriving
+ * is parsed again on each token. What it draws has to be what the whole reply
+ * parsed at once draws, or the answer would shift when the saved copy
+ * replaces the streamed one.
+ */
+describe("a reply still streaming", () => {
+  const reply = [
+    "## Loads at risk",
+    "",
+    "Three loads are **late** to pick up. See [the board](/dispatch/board).",
+    "",
+    "- S1 at Dallas",
+    "- S2 at Austin",
+    "",
+    "- S3 at Waco",
+    "",
+    "```",
+    "select *",
+    "",
+    "from shipments",
+    "```",
+    "",
+    "| Load | ETA |",
+    "| --- | --- |",
+    "| S1 | 14:00 |",
+    "",
+    "> Weather on I-35.",
+    "",
+    "1. call the shipper",
+    "",
+    "2. reschedule",
+    "",
+    "---",
+    "",
+    "Done.",
+  ].join("\n");
+
+  function drawn(node: React.ReactNode): string {
+    const { container, unmount } = render(<MemoryRouter>{node}</MemoryRouter>);
+    const html = container.innerHTML;
+    unmount();
+    return html;
+  }
+
+  it("draws exactly what the whole reply parsed at once draws", () => {
+    for (const end of [reply.length, reply.indexOf("- S3"), reply.indexOf("from shipments")]) {
+      const text = reply.slice(0, end);
+      expect(drawn(<StreamingAiMarkdown content={text} />)).toBe(
+        drawn(<AiMarkdown content={text} />),
+      );
+    }
   });
 });

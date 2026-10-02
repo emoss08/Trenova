@@ -89,6 +89,9 @@ const COMPOSER_FADE_COMPACT = 24;
 /** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
 const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
 
+/** A stable empty list, so a thread given no artifacts keeps its rows between renders. */
+const NO_SAVED_ARTIFACTS: AssistantArtifact[] = [];
+
 /**
  * A conversation that belongs to a page: the import or formula assistant.
  * The page's unsaved work rides on every turn, and the changes the assistant
@@ -110,7 +113,7 @@ export function MessageThread({
   expanded,
   onPickAgent,
   onStartNew,
-  artifacts = [],
+  artifacts = NO_SAVED_ARTIFACTS,
   onOpenArtifact,
   onLiveArtifact,
   onWorkingChange,
@@ -247,14 +250,19 @@ export function MessageThread({
   });
   // A plan's steps are shown inside the plan and nowhere else; only the
   // proposals outside any plan are grouped under their turns on their own.
+  // Memoized so the thread's rows, which depend on the groups, are not rebuilt
+  // on every render of a reply in progress.
   const {
     byMessage: plansByMessage,
     orphans: loosePlans,
     standalone,
-  } = groupPlans(plansQuery.data?.results ?? [], proposalsQuery.data?.results ?? [], messages);
-  const { byMessage: proposalsByMessage, orphans: looseProposals } = groupProposalsByMessage(
-    standalone,
-    messages,
+  } = useMemo(
+    () => groupPlans(plansQuery.data?.results ?? [], proposalsQuery.data?.results ?? [], messages),
+    [messages, plansQuery.data, proposalsQuery.data],
+  );
+  const { byMessage: proposalsByMessage, orphans: looseProposals } = useMemo(
+    () => groupProposalsByMessage(standalone, messages),
+    [messages, standalone],
   );
 
   // What waits on the person is asked at the foot of the thread, in the
@@ -534,8 +542,10 @@ export function MessageThread({
   const composerContext = useComposerContext(thread.id);
 
   // Every row is a closure over its entry, keyed by the message it shows, so
-  // the window can measure and place it without knowing what it is.
-  const rows = useMemo<VirtualThreadRow[]>(() => {
+  // the window can measure and place it without knowing what it is. The saved
+  // rows never depend on the reply in progress: every token changes the turn,
+  // and a saved row whose closure is the same one is not drawn again.
+  const savedRows = useMemo<VirtualThreadRow[]>(() => {
     const list: VirtualThreadRow[] = withDayMarkers(entries, now, timezone).map((item) => {
       if (item.kind === "day") {
         return {
@@ -604,30 +614,12 @@ export function MessageThread({
       });
     }
 
-    if (turn) {
-      list.push({
-        key: "turn-in-progress",
-        render: () => (
-          <div className="animate-rise">
-            <StreamingTurn
-              turn={turn}
-              onRetry={readOnly ? undefined : retry}
-              onDismiss={dismiss}
-              onAnswer={answer}
-              onOpenArtifact={onOpenArtifact}
-            />
-          </div>
-        ),
-      });
-    }
-
     return list;
   }, [
     answer,
     answerIds,
     arrivals,
     artifactsByMessage,
-    dismiss,
     entries,
     latestUserSequence,
     loosePlans,
@@ -640,11 +632,33 @@ export function MessageThread({
     proposalsByMessage,
     providerId,
     readOnly,
-    retry,
     send,
     timezone,
-    turn,
   ]);
+
+  const rows = useMemo<VirtualThreadRow[]>(() => {
+    if (!turn) {
+      return savedRows;
+    }
+
+    return [
+      ...savedRows,
+      {
+        key: "turn-in-progress",
+        render: () => (
+          <div className="animate-rise">
+            <StreamingTurn
+              turn={turn}
+              onRetry={readOnly ? undefined : retry}
+              onDismiss={dismiss}
+              onAnswer={answer}
+              onOpenArtifact={onOpenArtifact}
+            />
+          </div>
+        ),
+      },
+    ];
+  }, [answer, dismiss, onOpenArtifact, readOnly, retry, savedRows, turn]);
 
   // The server starts the turn in which the agent reports a decision, once
   // the change has run, wherever the decision was made. This view only has to

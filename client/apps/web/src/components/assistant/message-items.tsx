@@ -6,7 +6,7 @@ import {
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AiMarkdown } from "@/components/elements/ai-markdown";
+import { AiMarkdown, StreamingAiMarkdown } from "@/components/elements/ai-markdown";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatUnixDateTimeMedium, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
@@ -312,7 +312,7 @@ export function AssistantProse({
   return (
     <div className="min-w-0 text-sm leading-relaxed">
       <CitationProvider sources={sources}>
-        <AiMarkdown content={content} />
+        {streaming ? <StreamingAiMarkdown content={content} /> : <AiMarkdown content={content} />}
       </CitationProvider>
       {streaming && (
         <span
