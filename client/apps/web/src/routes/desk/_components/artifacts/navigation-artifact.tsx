@@ -6,6 +6,7 @@ import { ArrowUpRightIcon, CompassIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { navigationFrom } from "./artifact-payloads";
+import { ArtifactScroll } from "./artifact-section";
 
 /**
  * Where the assistant took the person.
@@ -24,7 +25,7 @@ export function NavigationArtifact({ artifact }: { artifact: AssistantArtifact }
   }
 
   return (
-    <div className="animate-rise flex min-h-0 flex-1 flex-col p-4">
+    <ArtifactScroll className="justify-center">
       <div className="border-border-subtle flex items-center gap-3 rounded-lg border p-3">
         <span className="bg-sunken text-foreground-muted flex size-9 shrink-0 items-center justify-center rounded-md">
           <CompassIcon className="size-4" />
@@ -40,6 +41,6 @@ export function NavigationArtifact({ artifact }: { artifact: AssistantArtifact }
           <ArrowUpRightIcon className="size-3.5" />
         </Button>
       </div>
-    </div>
+    </ArtifactScroll>
   );
 }

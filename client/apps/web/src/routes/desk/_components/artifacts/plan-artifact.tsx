@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useMemo } from "react";
 import { planFrom } from "./artifact-payloads";
+import { ArtifactScroll, ArtifactSection } from "./artifact-section";
 
 /**
  * A plan as a checklist: the plan's own record, read from the plan and its
@@ -29,7 +30,7 @@ export function PlanArtifact({ artifact }: { artifact: AssistantArtifact }) {
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+    <ArtifactScroll>
       {summary.summary !== "" && (
         <p className="text-muted-foreground text-sm leading-relaxed">{summary.summary}</p>
       )}
@@ -38,27 +39,38 @@ export function PlanArtifact({ artifact }: { artifact: AssistantArtifact }) {
       ) : plan ? (
         <PlanRecord plan={plan} steps={steps} defaultOpen />
       ) : (
-        <ol className="flex flex-col gap-1.5 text-sm">
-          {summary.steps.map((step) => (
-            <li key={step.proposalId || step.step} className="flex gap-2">
-              <span className="text-muted-foreground w-5 shrink-0 text-right tabular-nums">
-                {step.step}.
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="font-medium">{step.toolName}</span>
-                {step.rationale !== "" && (
-                  <span className="text-muted-foreground block text-xs">{step.rationale}</span>
-                )}
-              </span>
-            </li>
-          ))}
-          {summary.steps.length === 0 && (
-            <li className="text-muted-foreground text-xs">
+        <ArtifactSection
+          title={t("Steps")}
+          hint={
+            summary.stepCount > 0
+              ? t("{0, plural, one {# step} other {# steps}}", summary.stepCount)
+              : undefined
+          }
+          inset={false}
+        >
+          {summary.steps.length === 0 ? (
+            <p className="text-muted-foreground px-3 py-2.5 text-xs">
               {t("The plan behind this is no longer in the conversation.")}
-            </li>
+            </p>
+          ) : (
+            <ol className="divide-border-subtle flex flex-col divide-y text-sm">
+              {summary.steps.map((step) => (
+                <li key={step.proposalId || step.step} className="flex gap-2 px-3 py-2">
+                  <span className="text-muted-foreground w-5 shrink-0 text-right text-xs tabular-nums">
+                    {step.step}.
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-medium">{step.toolName}</span>
+                    {step.rationale !== "" && (
+                      <span className="text-muted-foreground block text-xs">{step.rationale}</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ol>
           )}
-        </ol>
+        </ArtifactSection>
       )}
-    </div>
+    </ArtifactScroll>
   );
 }

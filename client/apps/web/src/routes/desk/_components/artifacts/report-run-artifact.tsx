@@ -4,6 +4,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useMemo } from "react";
 import { reportRunFrom } from "./artifact-payloads";
+import { ArtifactScroll } from "./artifact-section";
 
 /**
  * A run the assistant started. The card follows the run itself and mints
@@ -21,8 +22,8 @@ export function ReportRunArtifact({ artifact }: { artifact: AssistantArtifact })
   }
 
   return (
-    <div className="p-3">
+    <ArtifactScroll>
       <ReportRunCard run={run} />
-    </div>
+    </ArtifactScroll>
   );
 }

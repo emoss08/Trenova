@@ -1,5 +1,6 @@
 import {
   RECORD_ID_KEY,
+  formatDisplayValue,
   projectColumns,
   projectRecord,
   projectValue,
@@ -13,6 +14,7 @@ import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/
 import { isAppPath } from "@/lib/app-path";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
 /*
  * The server stores each artifact's payload in the shape the tool published
@@ -106,6 +108,8 @@ export type TableViewArtifact = {
   rows: TableViewRow[];
   rowCount: number;
   truncated: boolean;
+  /** How many tool calls the server read this table together from; zero for one search's result. */
+  calls: number;
 };
 
 function singular(plural: string): string {
@@ -191,7 +195,69 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
     // The count is what the search found; the rows are what fitted in the
     // payload. A table that says 400 above 200 rows has to say why.
     truncated: rowCount > rows.length,
+    calls: bunchedCallCount(payload),
   };
+}
+
+/**
+ * How many calls a table the server read together was made from. The server
+ * folds one record after another into one table and lists the calls it
+ * folded; a table it did not fold was one search and counts no calls.
+ */
+function bunchedCallCount(payload: Record<string, unknown>): number {
+  if (payload.bunched !== true) {
+    return 0;
+  }
+  const calls = listOf(payload.calls).filter(
+    (call): call is string => typeof call === "string" && call !== "",
+  ).length;
+
+  return calls > 0 ? calls : numberOf(payload.rowCount) || listOf(payload.rows).length;
+}
+
+/**
+ * What the provenance line adds for an artifact whose title does not say how
+ * it was made: a table read together from several calls says so, because
+ * "Billing queue item (11)" alone reads as one search's result.
+ */
+export function artifactProvenanceNote(artifact: AssistantArtifact, t: TranslateFn): string {
+  if (artifact.kind !== "table_view") {
+    return "";
+  }
+  const calls = bunchedCallCount(artifact.payload);
+
+  return calls > 0 ? t("Read together from {0, plural, one {# call} other {# calls}}", calls) : "";
+}
+
+/**
+ * The rows a few typed letters keep: any cell, read as a person reads it, that
+ * contains them. A status matches its words and its code, so "transit" and
+ * "InTransit" both find a shipment on the road.
+ */
+export function filterTableRows(
+  rows: readonly TableViewRow[],
+  columns: readonly DisplayColumn[],
+  query: string,
+  t: TranslateFn,
+): TableViewRow[] {
+  const needle = query.trim().toLocaleLowerCase();
+  if (needle === "") {
+    return [...rows];
+  }
+
+  return rows.filter((row) =>
+    columns.some((column) => {
+      const value = row.values[column.key];
+      if (value === undefined || value === null) {
+        return false;
+      }
+      if (formatDisplayValue(column.type, value, t).toLocaleLowerCase().includes(needle)) {
+        return true;
+      }
+
+      return typeof value === "string" && value.toLocaleLowerCase().includes(needle);
+    }),
+  );
 }
 
 export type TableSort = { key: string; direction: "asc" | "desc" };

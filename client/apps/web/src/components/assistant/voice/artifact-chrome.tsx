@@ -57,7 +57,10 @@ export const ARTIFACT_KINDS: Record<
 };
 
 /** Where an artifact is, as a tone: severity, not category. */
-const STATUS_TONE: Record<ArtifactStatus, "neutral" | "info" | "success" | "danger"> = {
+export const ARTIFACT_STATUS_TONE: Record<
+  ArtifactStatus,
+  "neutral" | "info" | "success" | "danger"
+> = {
   Pending: "info",
   Ready: "neutral",
   Failed: "danger",
@@ -77,6 +80,29 @@ export function artifactStatusLabel(status: ArtifactStatus, t: (s: string) => st
   }
 }
 
+/** The status badge as every artifact surface draws it: only when the status is not Ready. */
+export function ArtifactStatusBadge({
+  status,
+  className,
+}: {
+  status: ArtifactStatus;
+  className?: string;
+}) {
+  const t = useT();
+  if (status === "Ready") {
+    return null;
+  }
+
+  return (
+    <Badge
+      variant={ARTIFACT_STATUS_TONE[status]}
+      className={cn("animate-rise h-4 shrink-0 px-1.5 text-2xs", className)}
+    >
+      {artifactStatusLabel(status, t)}
+    </Badge>
+  );
+}
+
 export function ArtifactKindIcon({ kind, className }: { kind: ArtifactKind; className?: string }) {
   const Icon = ARTIFACT_KINDS[kind].icon;
 
@@ -92,11 +118,14 @@ export function ArtifactKindIcon({ kind, className }: { kind: ArtifactKind; clas
 export function ArtifactProvenance({
   kind,
   createdAt,
+  note,
   className,
 }: {
   kind: ArtifactKind;
   /** Unix seconds; zero or absent leaves the time out. */
   createdAt?: number;
+  /** How it was made, when the kind alone does not say: "Read together from 11 calls". */
+  note?: string;
   className?: string;
 }) {
   const t = useT();
@@ -122,6 +151,14 @@ export function ArtifactProvenance({
           >
             {formatRelativeTime(Math.min(0, createdAt - now))}
           </time>
+        </>
+      )}
+      {note !== undefined && note !== "" && (
+        <>
+          <span aria-hidden className="shrink-0 px-1">
+            ·
+          </span>
+          <span className="truncate">{note}</span>
         </>
       )}
     </p>
@@ -199,14 +236,7 @@ export function ArtifactChrome({
           </h3>
           <ArtifactProvenance kind={kind} createdAt={createdAt} />
         </div>
-        {status !== "Ready" && (
-          <Badge
-            variant={STATUS_TONE[status]}
-            className="animate-rise h-4 shrink-0 px-1.5 text-2xs"
-          >
-            {artifactStatusLabel(status, t)}
-          </Badge>
-        )}
+        <ArtifactStatusBadge status={status} />
         {actions}
         {onPin && (
           <Tooltip>
