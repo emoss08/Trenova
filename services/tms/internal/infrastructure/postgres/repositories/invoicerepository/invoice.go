@@ -969,7 +969,7 @@ func (r *repository) syncInvoiceSendStatus(
 			return nil, nil
 		}
 
-		status, sentAt, lastError := invoiceSendStatusFromAttempts(attempts)
+		status, sentAt, lastError := invoiceSendStatusFromAttempts(invoice.LatestSendAttempts(attempts))
 		entity := new(invoice.Invoice)
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().

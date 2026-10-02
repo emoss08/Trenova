@@ -565,6 +565,25 @@ func (r *repository) CreateEvent(ctx context.Context, entity *email.Event) (bool
 	})
 }
 
+func (r *repository) ListEventRecipients(
+	ctx context.Context,
+	req repositories.ListEmailEventRecipientsRequest,
+) ([]string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
+		recipients := make([]string, 0)
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model((*email.Event)(nil)).
+			ColumnExpr("DISTINCT lower(ee.recipient)").
+			Where("ee.organization_id = ?", req.TenantInfo.OrgID).
+			Where("ee.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("ee.message_id = ?", req.MessageID).
+			Where("ee.type = ?", req.Type).
+			Where("ee.recipient IS NOT NULL").
+			Scan(ctx, &recipients)
+		return recipients, err
+	})
+}
+
 func (r *repository) ListSuppressions(
 	ctx context.Context,
 	req *repositories.ListEmailSuppressionsRequest,

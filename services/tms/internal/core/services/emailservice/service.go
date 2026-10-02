@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
@@ -648,40 +649,100 @@ func (s *Service) HandleProviderEvent(
 	if err != nil {
 		return err
 	}
-	now := timeutils.NowUnix()
-	switch event.Type {
-	case email.EventTypeDelivered:
-		msg.Status = email.MessageStatusDelivered
-		msg.DeliveredAt = now
-	case email.EventTypeOpened:
-		msg.Status = email.MessageStatusOpened
-	case email.EventTypeClicked:
-		msg.Status = email.MessageStatusClicked
-	case email.EventTypeBounced:
-		msg.Status = email.MessageStatusBounced
-		msg.FailedAt = now
-	case email.EventTypeComplained:
-		msg.Status = email.MessageStatusComplained
-		msg.FailedAt = now
-	case email.EventTypeFailed:
-		msg.Status = email.MessageStatusFailed
-		msg.FailedAt = now
-	}
-	if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
+	changed, err := s.applyProviderEvent(ctx, msg, event, tenantInfo)
+	if err != nil {
 		return err
 	}
-	s.syncInvoiceAttempts(ctx, msg)
-	if params.SuppressionReason != "" {
-		_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
-			BusinessUnitID: tenantInfo.BuID,
-			OrganizationID: tenantInfo.OrgID,
-			EmailAddress:   event.Recipient,
-			Reason:         params.SuppressionReason,
-			Provider:       event.Provider,
-			SourceEventID:  event.ProviderEventID,
-		})
+	if changed {
+		if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
+			return err
+		}
+		s.syncInvoiceAttempts(ctx, msg)
 	}
+	if params.SuppressionReason == "" || strings.TrimSpace(event.Recipient) == "" {
+		return nil
+	}
+	_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		EmailAddress:   event.Recipient,
+		Reason:         params.SuppressionReason,
+		Provider:       event.Provider,
+		SourceEventID:  event.ProviderEventID,
+	})
 	return err
+}
+
+func (s *Service) applyProviderEvent(
+	ctx context.Context,
+	msg *email.Message,
+	event *email.Event,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	next, changed := email.NextMessageStatus(msg.Status, event.Type)
+	if !changed {
+		return false, nil
+	}
+	now := timeutils.NowUnix()
+	if next == email.MessageStatusBounced {
+		bounced, err := s.bouncedRecipients(ctx, msg, event, tenantInfo)
+		if err != nil {
+			return false, err
+		}
+		if remaining := unbouncedRecipients(msg, bounced); len(remaining) > 0 {
+			msg.LastError = "Bounced for " + strings.Join(bounced, ", ")
+			return true, nil
+		}
+		msg.LastError = "Bounced for every recipient"
+	}
+	msg.Status = next
+	switch {
+	case next == email.MessageStatusDelivered:
+		msg.DeliveredAt = now
+	case next.IsFailure():
+		msg.FailedAt = now
+	}
+	return true, nil
+}
+
+func (s *Service) bouncedRecipients(
+	ctx context.Context,
+	msg *email.Message,
+	event *email.Event,
+	tenantInfo pagination.TenantInfo,
+) ([]string, error) {
+	if strings.TrimSpace(event.Recipient) == "" {
+		return nil, nil
+	}
+	recipients, err := s.repo.ListEventRecipients(ctx, repositories.ListEmailEventRecipientsRequest{
+		MessageID:  msg.ID,
+		Type:       email.EventTypeBounced,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return stringutils.NormalizeEmailList(recipients), nil
+}
+
+func unbouncedRecipients(msg *email.Message, bounced []string) []string {
+	if len(bounced) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(bounced))
+	for _, address := range bounced {
+		seen[address] = struct{}{}
+	}
+	all := stringutils.NormalizeEmailList(
+		slices.Concat(msg.ToRecipients, msg.CCRecipients, msg.BCCRecipients),
+	)
+	remaining := make([]string, 0, len(all))
+	for _, address := range all {
+		if _, ok := seen[address]; !ok {
+			remaining = append(remaining, address)
+		}
+	}
+	return remaining
 }
 
 func (s *Service) ListMessages(

@@ -770,6 +770,74 @@ func (_c *MockEmailRepository_GetMessageByIdempotencyKey_Call) RunAndReturn(run 
 	return _c
 }
 
+// ListEventRecipients provides a mock function for the type MockEmailRepository
+func (_mock *MockEmailRepository) ListEventRecipients(context1 context.Context, listEmailEventRecipientsRequest repositories.ListEmailEventRecipientsRequest) ([]string, error) {
+	ret := _mock.Called(context1, listEmailEventRecipientsRequest)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEventRecipients")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListEmailEventRecipientsRequest) ([]string, error)); ok {
+		return returnFunc(context1, listEmailEventRecipientsRequest)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListEmailEventRecipientsRequest) []string); ok {
+		r0 = returnFunc(context1, listEmailEventRecipientsRequest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListEmailEventRecipientsRequest) error); ok {
+		r1 = returnFunc(context1, listEmailEventRecipientsRequest)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEmailRepository_ListEventRecipients_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEventRecipients'
+type MockEmailRepository_ListEventRecipients_Call struct {
+	*mock.Call
+}
+
+// ListEventRecipients is a helper method to define mock.On call
+//   - context1 context.Context
+//   - listEmailEventRecipientsRequest repositories.ListEmailEventRecipientsRequest
+func (_e *MockEmailRepository_Expecter) ListEventRecipients(context1 any, listEmailEventRecipientsRequest any) *MockEmailRepository_ListEventRecipients_Call {
+	return &MockEmailRepository_ListEventRecipients_Call{Call: _e.mock.On("ListEventRecipients", context1, listEmailEventRecipientsRequest)}
+}
+
+func (_c *MockEmailRepository_ListEventRecipients_Call) Run(run func(context1 context.Context, listEmailEventRecipientsRequest repositories.ListEmailEventRecipientsRequest)) *MockEmailRepository_ListEventRecipients_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListEmailEventRecipientsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListEmailEventRecipientsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEmailRepository_ListEventRecipients_Call) Return(recipients []string, err error) *MockEmailRepository_ListEventRecipients_Call {
+	_c.Call.Return(recipients, err)
+	return _c
+}
+
+func (_c *MockEmailRepository_ListEventRecipients_Call) RunAndReturn(run func(context1 context.Context, listEmailEventRecipientsRequest repositories.ListEmailEventRecipientsRequest) ([]string, error)) *MockEmailRepository_ListEventRecipients_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMessageByProviderID provides a mock function for the type MockEmailRepository
 func (_mock *MockEmailRepository) GetMessageByProviderID(context1 context.Context, getEmailMessageByProviderIDRequest repositories.GetEmailMessageByProviderIDRequest) (*email.Message, error) {
 	ret := _mock.Called(context1, getEmailMessageByProviderIDRequest)

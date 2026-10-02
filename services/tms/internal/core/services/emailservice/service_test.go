@@ -258,6 +258,14 @@ type handleProviderEventRepo struct {
 	updatedMessage          *email.Message
 	providerMessageIDLookup string
 	suppressions            []*email.Suppression
+	bouncedRecipients       []string
+}
+
+func (r *handleProviderEventRepo) ListEventRecipients(
+	_ context.Context,
+	_ repositories.ListEmailEventRecipientsRequest,
+) ([]string, error) {
+	return r.bouncedRecipients, nil
 }
 
 func (r *handleProviderEventRepo) GetMessage(
@@ -449,4 +457,59 @@ func TestSyncInvoiceAttemptsPublishesEachUpdatedInvoice(t *testing.T) {
 
 	svc := &Service{invoiceRepo: invoiceRepo, realtime: realtime, l: zap.NewNop()}
 	svc.syncInvoiceAttempts(t.Context(), msg)
+}
+
+func TestHandleProviderEventBouncesTheMessageOnlyWhenEveryRecipientBounced(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	msg.Status = email.MessageStatusDelivered
+	msg.ToRecipients = []string{"ap@customer.example.com", "billing@customer.example.com"}
+	event := testEmailEvent(tenantInfo, email.EventTypeBounced)
+	event.MessageID = msg.ID
+	event.Recipient = "ap@customer.example.com"
+	repo := &handleProviderEventRepo{
+		message:           msg,
+		bouncedRecipients: []string{"AP@customer.example.com"},
+	}
+	svc := &Service{repo: repo}
+
+	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+		TenantInfo:        tenantInfo,
+		Event:             event,
+		SuppressionReason: email.SuppressionReasonHardBounce,
+	}))
+	require.Equal(t, email.MessageStatusDelivered, repo.updatedMessage.Status)
+	require.Equal(t, "Bounced for ap@customer.example.com", repo.updatedMessage.LastError)
+	require.Len(t, repo.suppressions, 1)
+
+	repo.bouncedRecipients = []string{"ap@customer.example.com", "billing@customer.example.com"}
+	second := testEmailEvent(tenantInfo, email.EventTypeBounced)
+	second.MessageID = msg.ID
+	second.Recipient = "billing@customer.example.com"
+	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+		TenantInfo: tenantInfo,
+		Event:      second,
+	}))
+	require.Equal(t, email.MessageStatusBounced, repo.updatedMessage.Status)
+}
+
+func TestHandleProviderEventIgnoresALateEventThatWouldMoveStatusBackwards(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	msg.Status = email.MessageStatusOpened
+	event := testEmailEvent(tenantInfo, email.EventTypeDelivered)
+	event.MessageID = msg.ID
+	repo := &handleProviderEventRepo{message: msg}
+	svc := &Service{repo: repo}
+
+	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+		TenantInfo: tenantInfo,
+		Event:      event,
+	}))
+	require.Nil(t, repo.updatedMessage)
+	require.Equal(t, email.MessageStatusOpened, msg.Status)
 }
