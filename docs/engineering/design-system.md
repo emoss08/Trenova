@@ -48,8 +48,9 @@ in layer 1.
 The palette is Vercel's Geist, carried into OKLCH and held to the contrast and
 hue floors below. The greys are true neutrals, as Geist's are: chroma 0 across
 the canvas (#fafafa), the panels (white), the rules and the four text weights,
-with the ink at #171717 in light and #ededed in dark, where the canvas is
-#0a0a0a. `--hue-neutral` stays as a name so a grey written against it still
+with the ink at #171717 in light and #ededed in dark. Dark is Vercel's black:
+the page is #000, panels are #0a0a0a with a #242424 hairline, and the active nav
+row and hover fills are #1f1f1f and #1a1a1a. `--hue-neutral` stays as a name so a grey written against it still
 resolves, but it carries no chroma.
 
 **The product is drawn in ink.** The primary action is `--ink`, the foreground
