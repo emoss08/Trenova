@@ -30,6 +30,7 @@ vi.mock("@/lib/queries", () => ({
     },
     assistant: {
       myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
+      providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
     },
   },
 }));
@@ -166,7 +167,11 @@ describe("Desk home composer", () => {
     fireEvent.change(box, { target: { value: "Who is free near Joliet?" } });
     fireEvent.keyDown(box, { key: "Enter" });
 
-    expect(onStart).toHaveBeenCalledWith("agent-1", "Who is free near Joliet?");
+    expect(onStart).toHaveBeenCalledWith("agent-1", "Who is free near Joliet?", {
+      files: [],
+      mentions: [],
+      providerId: "",
+    });
   });
 
   it("asks a starter question outright with its shortcut", async () => {
@@ -176,7 +181,11 @@ describe("Desk home composer", () => {
     const box = await screen.findByRole("textbox", { name: "Message Dispatch" });
     fireEvent.keyDown(box, { key: "1", metaKey: true });
 
-    expect(onStart).toHaveBeenCalledWith("agent-1", "Which loads are late?");
+    expect(onStart).toHaveBeenCalledWith("agent-1", "Which loads are late?", {
+      files: [],
+      mentions: [],
+      providerId: "",
+    });
   });
 
   it("says no agents are available instead of offering a box nobody answers", async () => {

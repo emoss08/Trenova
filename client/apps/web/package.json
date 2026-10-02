@@ -23,9 +23,7 @@
     "deploy": "pnpm run build && wrangler deploy",
     "doctor": "npx react-doctor@latest",
     "guide:generate": "node scripts/product-guide/generate.mjs",
-    "guide:check": "node scripts/product-guide/generate.mjs --check",
-    "desk-visitor:generate": "node scripts/desk-visitor/generate.mjs",
-    "desk-visitor:check": "node scripts/desk-visitor/generate.mjs --check"
+    "guide:check": "node scripts/product-guide/generate.mjs --check"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

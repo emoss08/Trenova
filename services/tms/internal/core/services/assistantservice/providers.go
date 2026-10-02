@@ -42,11 +42,14 @@ func (s *Service) SelectableProviders(
 		}
 
 		options = append(options, serviceports.AssistantProviderOption{
-			ID:      provider.ID,
-			Name:    provider.Name,
-			Kind:    string(provider.Kind),
-			Model:   provider.Model,
-			Trusted: provider.Trusted,
+			ID:          provider.ID,
+			Name:        provider.Name,
+			Kind:        string(provider.Kind),
+			Model:       provider.Model,
+			Trusted:     provider.Trusted,
+			Vendor:      provider.Vendor(),
+			Reasoning:   string(provider.ReasoningEffort),
+			Unavailable: provider.FailedLastTest(),
 		})
 	}
 

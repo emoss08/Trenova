@@ -110,7 +110,22 @@ type MarkThreadReadRequest struct {
 	ReadAt     int64
 }
 
+type SearchMentionsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	Query        string
+	Kinds        []string
+	LimitPerKind int
+}
+
+type MentionRow struct {
+	Type     string `bun:"type"`
+	ID       string `bun:"id"`
+	Label    string `bun:"label"`
+	Subtitle string `bun:"subtitle"`
+}
+
 type ConversationRepository interface {
+	SearchMentions(ctx context.Context, req SearchMentionsRequest) ([]MentionRow, error)
 	ListThreadAttention(
 		ctx context.Context,
 		req ListThreadAttentionRequest,

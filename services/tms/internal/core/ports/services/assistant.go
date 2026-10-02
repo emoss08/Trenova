@@ -595,6 +595,11 @@ type AssistantService interface {
 		req repositories.GetThreadRequest,
 	) (*conversation.Thread, error)
 	MarkThreadRead(ctx context.Context, req repositories.GetThreadRequest) error
+	SearchMentions(
+		ctx context.Context,
+		actor RequestActor,
+		req MentionSearchRequest,
+	) ([]MentionCandidate, error)
 	ListThreadProposals(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
@@ -658,7 +663,22 @@ type AssistantProviderOption struct {
 	Model string `json:"model"`
 	// Trusted is shown because it decides whether this choice can serve work
 	// that reaches financial records.
-	Trusted bool `json:"trusted"`
+	Trusted     bool   `json:"trusted"`
+	Vendor      string `json:"vendor"`
+	Reasoning   string `json:"reasoning"`
+	Unavailable bool   `json:"unavailable"`
+}
+
+type MentionSearchRequest struct {
+	Query string
+	Kind  string
+}
+
+type MentionCandidate struct {
+	Type     string `json:"type"`
+	ID       string `json:"id"`
+	Label    string `json:"label"`
+	Subtitle string `json:"subtitle"`
 }
 
 // DecisionFollowUpRequest names a decision on a proposal or a plan an agent

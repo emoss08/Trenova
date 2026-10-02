@@ -289,12 +289,13 @@
     ]
   },
   "+{0} more": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/invoice",
       "routes/shipment",
@@ -21101,6 +21102,15 @@
       "routes/admin"
     ]
   },
+  "Ask {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Ask {0}…": {
     "sites": 2,
     "scope": [
@@ -21147,12 +21157,13 @@
     ]
   },
   "Asked from": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/capture"
+      "routes/capture",
+      "routes/desk"
     ]
   },
   "Asked you to choose": {
@@ -22820,11 +22831,12 @@
     ]
   },
   "Attach files": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -23525,7 +23537,7 @@
     ]
   },
   "Auto": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -23533,6 +23545,7 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/carrier-invoice-matching",
+      "routes/desk",
       "routes/profile.tsx",
       "routes/shipment",
       "routes/worker"
@@ -24935,7 +24948,7 @@
     ]
   },
   "Back": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -24944,6 +24957,7 @@
       "routes/admin",
       "routes/auth",
       "routes/billing-queue",
+      "routes/desk",
       "routes/inbox",
       "routes/journal-entry",
       "routes/worker"
@@ -25386,12 +25400,13 @@
     ]
   },
   "Balanced": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/journal-entry",
       "routes/manual-journal"
     ]
@@ -30187,6 +30202,15 @@
     "areas": [
       "routes/agent-control",
       "routes/reports"
+    ]
+  },
+  "Cancel scan": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Cancel shipment": {
@@ -35932,12 +35956,13 @@
     ]
   },
   "Choose which model answers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Choose which organizations this user can access in the current business unit.": {
@@ -38901,12 +38926,13 @@
     ]
   },
   "Commands": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Commands and starter questions": {
@@ -40083,13 +40109,23 @@
     ]
   },
   "Computer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/capture"
+      "routes/capture",
+      "routes/desk"
+    ]
+  },
+  "Computer's default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Computers": {
@@ -41412,12 +41448,13 @@
     ]
   },
   "Connected": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Connected on": {
@@ -51144,6 +51181,15 @@
       "domain/insight"
     ]
   },
+  "Deep reasoning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "DeepInfra": {
     "sites": 1,
     "scope": [
@@ -54237,7 +54283,7 @@
     ]
   },
   "Desk": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -54255,7 +54301,34 @@
       "routes/desk"
     ]
   },
+  "Desk can see {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Desk can't read .{0} files": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Desk settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Desk will be asked": {
     "sites": 1,
     "scope": [
       "ts"
@@ -55198,12 +55271,13 @@
     ]
   },
   "Dictate": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Dictation could not start. Try again.": {
@@ -55231,6 +55305,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Dictation isn't available in this browser": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Dictation needs a secure (HTTPS) connection.": {
@@ -58081,12 +58164,13 @@
     ]
   },
   "Document type": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/document-packet-rule",
       "routes/document-type",
       "routes/edi",
@@ -58610,6 +58694,15 @@
       "apps/web/components"
     ]
   },
+  "Done scanning": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Done {0}": {
     "sites": 1,
     "scope": [
@@ -58674,12 +58767,13 @@
     ]
   },
   "Download Trenova Capture": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Download again": {
@@ -60283,6 +60377,15 @@
       "apps/web/components"
     ]
   },
+  "Drop here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Drop here to make it top level": {
     "sites": 1,
     "scope": [
@@ -60302,12 +60405,13 @@
     ]
   },
   "Drop to attach": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Drops the case without recording an outcome. The invoice stops reading Disputed.": {
@@ -62183,6 +62287,15 @@
     ],
     "areas": [
       "service/agentguard"
+    ]
+  },
+  "Earlier kinds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Earlier messages": {
@@ -66282,12 +66395,13 @@
     ]
   },
   "Esc": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Escalated for review": {
@@ -70075,6 +70189,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Explain what's on this page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Explain who this package is for and any negotiated terms so future admins know when to apply it.": {
@@ -86590,6 +86713,15 @@
       "routes/capture"
     ]
   },
+  "Install Trenova Capture, sign in from its tray icon, and approve the code it shows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Install a development build": {
     "sites": 1,
     "scope": [
@@ -94298,6 +94430,15 @@
       "domain/trailer"
     ]
   },
+  "Let Desk decide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Let Trenova Capture update itself": {
     "sites": 1,
     "scope": [
@@ -97639,6 +97780,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Looking for your computers…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Looking things up…": {
@@ -101636,6 +101786,15 @@
       "template/notification.dash.dispatch_message"
     ]
   },
+  "Message full": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Message is queued for delivery to the trading partner.": {
     "sites": 1,
     "scope": [
@@ -103982,6 +104141,15 @@
       "domain/worker"
     ]
   },
+  "More kinds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "More memories than agents can use well": {
     "sites": 1,
     "scope": [
@@ -104806,13 +104974,14 @@
     ]
   },
   "My scanners": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/capture",
+      "routes/desk",
       "routes/intake"
     ]
   },
@@ -108896,6 +109065,15 @@
       "apps/web/components"
     ]
   },
+  "No command called “/{0}”. Press Esc to send it as text.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No comment on this shipment matches the filters you have set.": {
     "sites": 1,
     "scope": [
@@ -108957,6 +109135,15 @@
     ],
     "areas": [
       "routes/loads.tsx"
+    ]
+  },
+  "No computer is set up to scan for you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No computer is set up to scan for you yet. Install Trenova Capture, sign in from its tray icon, and approve the code it shows.": {
@@ -110699,6 +110886,15 @@
       "routes/formula-template"
     ]
   },
+  "No models match “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No models match.": {
     "sites": 1,
     "scope": [
@@ -110988,6 +111184,15 @@
       "routes/shipment"
     ]
   },
+  "No page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No page snapshots defined. Add pages if the document has page-specific content.": {
     "sites": 1,
     "scope": [
@@ -110995,6 +111200,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No pages came through": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No pairings to propose": {
@@ -111548,6 +111762,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No records match “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No records matched this cell.": {
@@ -113537,12 +113760,13 @@
     ]
   },
   "Not connected": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-monitoring"
+      "routes/carrier-monitoring",
+      "routes/desk"
     ]
   },
   "Not counted": {
@@ -114149,6 +114373,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Not sharing a page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not started": {
@@ -120019,6 +120252,15 @@
       "service/tableconfigurationservice"
     ]
   },
+  "Only {0} more will fit · up to {1} per message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Op": {
     "sites": 1,
     "scope": [
@@ -122868,13 +123110,14 @@
     ]
   },
   "Organization default": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/desk",
       "routes/detention-policy",
       "routes/reports"
     ]
@@ -124872,6 +125115,24 @@
       "apps/web/components"
     ]
   },
+  "PDF, images, CSV or Excel · up to {0} files, {1} MB each": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "PDF, images, CSV, Excel · up to {0} files, {1} MB each": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "PHMSA registered": {
     "sites": 1,
     "scope": [
@@ -125325,13 +125586,14 @@
     ]
   },
   "Page": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/desk"
     ]
   },
   "Page URL cannot be longer than 500 characters": {
@@ -125536,6 +125798,15 @@
       "routes/intake"
     ]
   },
+  "Pages are arriving from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Pages are still arriving from the scanner": {
     "sites": 1,
     "scope": [
@@ -125606,6 +125877,15 @@
     ],
     "areas": [
       "service/captureservice"
+    ]
+  },
+  "Pages scan on your computer and attach to this message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Pages you open show up here.": {
@@ -134176,12 +134456,13 @@
     ]
   },
   "Primary": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -136936,6 +137217,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Put the pages in the scanner after you start.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Put the waiting decisions off and bring back the message box": {
@@ -140981,12 +141271,13 @@
     ]
   },
   "Reasoning": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Reasoning effort is required": {
@@ -141786,6 +142077,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Recommended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Recommended action": {
@@ -144925,6 +145225,24 @@
       "routes/driver-pay-event"
     ]
   },
+  "Release to attach": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Release to attach to your message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Released": {
     "sites": 1,
     "scope": [
@@ -145119,7 +145437,7 @@
     ]
   },
   "Remove": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -145128,6 +145446,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier",
+      "routes/desk",
       "routes/detention-policy",
       "routes/dispatch-console",
       "routes/edi",
@@ -145452,6 +145771,15 @@
       "go/other"
     ]
   },
+  "Remove it to send the rest": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Remove leading and trailing spaces.": {
     "sites": 1,
     "scope": [
@@ -145760,14 +146088,15 @@
     ]
   },
   "Remove {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Remove {0} from the comparison": {
@@ -149960,6 +150289,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Retry or remove it to send with this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Retry these": {
@@ -156163,6 +156501,15 @@
       "apps/web/lib"
     ]
   },
+  "Scan from Capture": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Scan from a record's Documents tab, or print into Trenova from any program, and the pages land here.": {
     "sites": 1,
     "scope": [
@@ -156188,6 +156535,24 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Scan paper on {0} straight into this message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Scan paper straight into this message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Scan profile": {
@@ -156218,13 +156583,14 @@
     ]
   },
   "Scan settings": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Scan the back of every page as well as the front.": {
@@ -156282,12 +156648,13 @@
     ]
   },
   "Scanner": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Scanner name must be 1 to 255 characters": {
@@ -156309,12 +156676,13 @@
     ]
   },
   "Scanning": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/desk"
     ]
   },
   "Scanning and printing": {
@@ -157819,6 +158187,15 @@
       "routes/home"
     ]
   },
+  "Search models": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Search models...": {
     "sites": 1,
     "scope": [
@@ -157826,6 +158203,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Search models…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Search must be at most 200 characters": {
@@ -161072,6 +161458,15 @@
       "routes/dash-control"
     ]
   },
+  "Self-hosted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Self-service is not available": {
     "sites": 1,
     "scope": [
@@ -162206,6 +162601,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Sent with each message so the agent knows what you're looking at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Sent {0}": {
@@ -164415,6 +164819,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Share this page with Desk": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Share with everyone who can read this report": {
@@ -170442,12 +170855,13 @@
     ]
   },
   "Start scan": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Start sending": {
@@ -170547,6 +170961,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Start typing a load, customer, invoice or driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Start typing an expression and the result appears here.": {
@@ -170782,6 +171205,15 @@
       "routes/worker"
     ]
   },
+  "Starting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Starts": {
     "sites": 2,
     "scope": [
@@ -170825,6 +171257,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Starts when {0} connects.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Starts with": {
@@ -171806,12 +172247,13 @@
     ]
   },
   "Stop dictating": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Stop field": {
@@ -173766,6 +174208,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Switching re-reads this conversation before the next reply.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Switching to automatic model choice. The next model will read the whole conversation again before answering, which can take longer and cost more.": {
@@ -177672,6 +178123,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The agent won't see what you're looking at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The agent's reason.": {
@@ -183421,6 +183881,15 @@
       "routes/agent-control"
     ]
   },
+  "The page you came from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The pages could not be uploaded": {
     "sites": 1,
     "scope": [
@@ -185351,6 +185820,15 @@
     ],
     "areas": [
       "service/accountingconnectionservice"
+    ]
+  },
+  "The scan couldn't be started": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The scan starts on the computer you choose, and its pages are filed onto this record as they arrive. Anything Trenova cannot place waits in Intake.": {
@@ -189218,6 +189696,15 @@
       "routes/worker"
     ]
   },
+  "This endpoint failed its last health check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This ends employment": {
     "sites": 2,
     "scope": [
@@ -190200,6 +190687,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "This message is full · {0} files max": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This month": {
@@ -193546,6 +194042,15 @@
       "routes/agent-control"
     ]
   },
+  "Too large · max {0} MB": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Too long": {
     "sites": 1,
     "scope": [
@@ -196740,7 +197245,7 @@
     ]
   },
   "Try again": {
-    "sites": 45,
+    "sites": 47,
     "scope": [
       "ts"
     ],
@@ -197945,13 +198450,14 @@
     ]
   },
   "Unavailable": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Uncancel": {
@@ -199696,12 +200202,22 @@
     ]
   },
   "Up to {0} files per message": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "Up to {0} files per message · {1} not added": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/desk"
     ]
   },
   "Upcoming approved days": {
@@ -200114,14 +200630,24 @@
     ]
   },
   "Upload failed": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/desk",
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Upload from computer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Upload logo": {
@@ -200367,6 +200893,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Uploading · {0}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Uploading...": {
@@ -204776,6 +205311,15 @@
       "routes/accounting-sync"
     ]
   },
+  "Waiting for scanner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Waiting for the candidate to answer": {
     "sites": 1,
     "scope": [
@@ -204786,12 +205330,13 @@
     ]
   },
   "Waiting for the files to finish uploading": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Waiting for the indexer to reach it": {
@@ -204883,6 +205428,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Waiting for {0} · put the pages in the scanner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waiting on the colleague": {
@@ -207657,6 +208211,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What's in these?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "What's in this?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What's it for? A quick note helps your manager plan coverage.": {
@@ -212738,6 +213310,15 @@
       "routes/home"
     ]
   },
+  "You're not on a page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "You're offline": {
     "sites": 1,
     "scope": [
@@ -213295,6 +213876,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "Your organization's admins choose which models are available.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Your organization's name, as the recipient knows it.": {
@@ -216706,6 +217296,15 @@
       "routes/reports"
     ]
   },
+  "fill every slot to ask": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "filter is required": {
     "sites": 1,
     "scope": [
@@ -217723,6 +218322,15 @@
       "apps/web/components"
     ]
   },
+  "or drop files anywhere": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "org · {0}": {
     "sites": 1,
     "scope": [
@@ -218513,7 +219121,7 @@
     ]
   },
   "the agent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -218872,6 +219480,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "type it as plain text": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {
@@ -220353,12 +220970,13 @@
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/intake"
     ]
   },
@@ -221023,6 +221641,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {Drop to attach # file} other {Drop to attach # files}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {File # document} other {File # documents}}": {
@@ -222380,6 +223007,15 @@
       "apps/web/components"
     ]
   },
+  "{0} didn't pick up the scan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} disconnected": {
     "sites": 1,
     "scope": [
@@ -222698,6 +223334,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} files can't be sent · remove them to send the rest": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} files can't be sent · retry or remove them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} filter value is invalid": {
@@ -223928,6 +224582,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "{0} isn't connected. The scan waits a few minutes for it to come online.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} issued": {
@@ -228286,6 +228949,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "⌘U": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   }
 }

@@ -6,10 +6,18 @@ import { reportRunsFrom } from "@/components/assistant/report-runs";
 import type { ThreadEntry } from "@/components/assistant/thread-view";
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
 import { AiMarkdown, StreamingAiMarkdown } from "@/components/elements/ai-markdown";
-import type { AssistantArtifact } from "@/types/assistant";
+import type {
+  AssistantArtifact,
+  AssistantEntityRef,
+  AssistantMessageAttachment,
+  AssistantPageContext,
+} from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, type ReactNode } from "react";
+import { DeskMentionText } from "../composer/desk-mentions";
+import { DeskPageSent } from "../composer/desk-page-chip";
+import { DeskMessageAttachments } from "../composer/desk-uploads";
 import { citeSteps, withCitations } from "./citations";
 import { useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
@@ -52,21 +60,42 @@ export function questionSize(text: string): "short" | "mid" | "long" {
 }
 
 /** What the person asked, as the heading of the exchange it opens. */
-export function DeskQuestion({ text, muted = false, tag }: { text: string; muted?: boolean; tag?: string }) {
+export function DeskQuestion({
+  text,
+  muted = false,
+  tag,
+  mentions,
+  attachments,
+  page,
+}: {
+  text: string;
+  muted?: boolean;
+  tag?: string;
+  /** The records the question named with @, drawn as chips where they were named. */
+  mentions?: readonly AssistantEntityRef[] | null;
+  /** The files the question carried. */
+  attachments?: readonly AssistantMessageAttachment[] | null;
+  /** The page it was asked from. */
+  page?: AssistantPageContext | null;
+}) {
   const size = questionSize(text);
 
   return (
-    <div
-      className={cn(
-        "dk-q",
-        size === "mid" && "dk-mid",
-        size === "long" && "dk-long",
-        muted && "dk-ec-q dk-muted",
-      )}
-    >
-      {text}
-      {tag && <span className="dk-ec-qtag">{tag}</span>}
-    </div>
+    <>
+      <div
+        className={cn(
+          "dk-q",
+          size === "mid" && "dk-mid",
+          size === "long" && "dk-long",
+          muted && "dk-ec-q dk-muted",
+        )}
+      >
+        {mentions && mentions.length > 0 ? <DeskMentionText text={text} mentions={mentions} /> : text}
+        {tag && <span className="dk-ec-qtag">{tag}</span>}
+      </div>
+      {attachments && attachments.length > 0 && <DeskMessageAttachments attachments={attachments} />}
+      <DeskPageSent context={page} />
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifactEvent, AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
+import type { DeskStartExtras } from "./desk-home";
 import { DeskRail, type DeskPlace } from "./desk-rail";
 import { DeskTopBar } from "./desk-topbar";
 
@@ -32,7 +34,7 @@ export type DeskContextValue = {
   isLoading: boolean;
   isStarting: boolean;
   /** Opens a conversation, optionally with the question that prompted it. */
-  start: (agentId: string, question?: string) => void;
+  start: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
   remove: (thread: AssistantThread) => void;
   togglePin: (thread: AssistantThread) => void;
   /** Told while a turn is running, so the room can light up for it. */
@@ -102,6 +104,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
+  const setHandoff = useDeskHandoffStore((state) => state.setHandoff);
   const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
@@ -172,10 +175,18 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   );
 
   const startMutation = useApiMutation({
-    mutationFn: ({ agentId }: { agentId: string; question?: string }) =>
+    mutationFn: ({ agentId }: { agentId: string; question?: string; extras?: DeskStartExtras }) =>
       apiService.assistantService.startThread(agentId, { origin: "Desk" }),
-    onSuccess: async (thread, { agentId, question }) => {
+    onSuccess: async (thread, { agentId, question, extras }) => {
       setLastAgentId(agentId);
+      if (extras && (extras.files.length > 0 || extras.mentions.length > 0 || extras.providerId)) {
+        setHandoff({
+          threadId: thread.id,
+          files: extras.files,
+          mentions: extras.mentions,
+          providerId: extras.providerId,
+        });
+      }
       // Handed over rather than sent here: the conversation is the only
       // place that knows the thread is empty and that history has loaded,
       // which is what keeps a reload from asking the same question twice.
@@ -287,7 +298,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsUnavailable: agentsQuery.isError,
       isLoading: threadsQuery.isLoading || agentsQuery.isLoading || unlistedQuery.isLoading,
       isStarting: startMutation.isPending,
-      start: (agentId, question) => startMutation.mutate({ agentId, question }),
+      start: (agentId, question, extras) => startMutation.mutate({ agentId, question, extras }),
       remove: (thread) => deleteMutation.mutate(thread.id),
       togglePin: (thread) => pinMutation.mutate(thread),
       setWorking,

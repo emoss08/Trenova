@@ -3,11 +3,16 @@ import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activi
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
 import { DecisionFollowUpProvider } from "@/components/assistant/decision-follow-up";
+import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
+import { readyAttachments } from "@/components/assistant/composer";
+import { useAskableAgent } from "@/components/assistant/use-askable-agent";
+import { useComposerContext } from "@/components/assistant/use-composer-context";
 import { useOpeningQuestion } from "@/components/assistant/use-opening-question";
 import { useThreadModel } from "@/components/assistant/use-thread-model";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +23,12 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { ArtifactsPane } from "./artifacts/artifacts-pane";
+import { useDeskAttachments } from "./composer/desk-attachments";
+import { useDeskScans } from "./composer/desk-capture";
 import { DeskComposer } from "./composer/desk-composer";
+import { DeskModelPicker } from "./composer/desk-model-picker";
+import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
+import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
 import {
   DeskApprovalCard,
   DeskApprovedCard,
@@ -62,6 +72,11 @@ function turnTime(at: number, timezone: string, t: TranslateFn): string {
   }
 
   return formatUnixDateTimeShort(at, { timezone });
+}
+
+/** A conversation nobody can send to takes no files either. */
+function lockedForFiles(thread: AssistantThread, agentsUnavailable: boolean): boolean {
+  return !thread.canContinue || agentsUnavailable;
 }
 
 /** Whether a saved reply has anything of its own to show besides the work behind it. */
@@ -110,6 +125,53 @@ export function DeskConversation({
     openWidget();
   }, [openWidget, setActiveThreadId, thread.id]);
 
+  const deskPage = useDeskPage();
+  const askable = useAskableAgent({ threads: desk.threads });
+  const composerContext = useComposerContext(thread.id);
+  const scans = useDeskScans(thread.id);
+  const attachments = useDeskAttachments(composerContext, scans);
+
+  // Files and records from the front page, handed over with the question
+  // that started this conversation: the files upload here, and the question
+  // waits for them before it goes.
+  const handoff = useDeskHandoffStore((state) =>
+    state.handoff?.threadId === thread.id ? state.handoff : null,
+  );
+  const setHandoff = useDeskHandoffStore((state) => state.setHandoff);
+  const handedOver = useRef(false);
+  const { attachFiles } = composerContext;
+  useEffect(() => {
+    if (!handoff || handedOver.current) {
+      return;
+    }
+    handedOver.current = true;
+    if (handoff.files.length > 0) {
+      attachFiles(handoff.files);
+    }
+  }, [attachFiles, handoff]);
+  const openingHold =
+    handoff !== null &&
+    (composerContext.attachments.length < handoff.files.length ||
+      composerContext.attachments.some((item) => item.status === "uploading"));
+  const openingPayload = useMemo(
+    () =>
+      handoff
+        ? { attachments: readyAttachments(composerContext.attachments), mentions: handoff.mentions }
+        : undefined,
+    [composerContext.attachments, handoff],
+  );
+  const { clear: clearComposerContext } = composerContext;
+  const { clear: clearAttachments } = attachments;
+  const { onOpeningQuestionSent } = opening;
+  const openingSent = useCallback(() => {
+    onOpeningQuestionSent();
+    if (handoff) {
+      setHandoff(null);
+      clearComposerContext();
+      clearAttachments();
+    }
+  }, [clearAttachments, clearComposerContext, handoff, onOpeningQuestionSent, setHandoff]);
+
   const model = useThreadModel({
     thread,
     agent,
@@ -119,9 +181,20 @@ export function DeskConversation({
     onWorkingChange: desk.setWorking,
     onNavigate: carryConversation,
     openingQuestion: opening.openingQuestion,
-    onOpeningQuestionSent: opening.onOpeningQuestionSent,
+    onOpeningQuestionSent: openingSent,
+    openingHold,
+    openingPayload,
+    pageContextSource: deskPage.context,
   });
   const { entries, placements, turn, isActive } = model;
+
+  const { setProviderId } = model;
+  const handoffProvider = handoff?.providerId ?? "";
+  useEffect(() => {
+    if (handoffProvider !== "") {
+      setProviderId(handoffProvider);
+    }
+  }, [handoffProvider, setProviderId]);
 
   const { setArtifactCount, openArtifact: openInDesk, setWorkspaceOpen, workspaceOpen } = desk;
   useEffect(() => setArtifactCount(artifacts.length), [artifacts.length, setArtifactCount]);
@@ -134,6 +207,20 @@ export function DeskConversation({
   const replies = entries.filter((entry) => entry.kind === "assistant").length;
   const ownMessages = entries.filter((entry) => entry.kind === "user").length + (turn ? 1 : 0);
   const { scrollRef, away, unread, jumpToLatest } = useStickToBottom({ replies, ownMessages });
+
+  const drag = useDeskDrop(lockedForFiles(thread, agentsUnavailable) ? null : attachments.add);
+  useEffect(() => {
+    const room = scrollRef.current?.closest(".dsk");
+    room?.classList.toggle("dk-dragging", drag.on);
+    return () => room?.classList.remove("dk-dragging");
+  }, [drag.on, scrollRef]);
+  const { onDraftChange } = model;
+  const explainPage = useCallback(() => {
+    const explain = SLASH_COMMANDS.find((command) => command.name === "explain");
+    if (explain) {
+      onDraftChange(fillCommand(explain, []));
+    }
+  }, [onDraftChange]);
 
   const [approved, setApproved] = useState<ApprovedNote | null>(null);
   const [burst, setBurst] = useState<number | null>(null);
@@ -323,7 +410,12 @@ export function DeskConversation({
                     if (entry.kind === "user") {
                       return (
                         <DeskRow key={entry.message.id} kind="question" first={isFirst(entry.message.id)}>
-                          <DeskQuestion text={entry.message.content} />
+                          <DeskQuestion
+                            text={entry.message.content}
+                            mentions={entry.message.mentions}
+                            attachments={entry.message.attachments}
+                            page={entry.message.pageContext}
+                          />
                         </DeskRow>
                       );
                     }
@@ -432,6 +524,7 @@ export function DeskConversation({
                   )}
                 </div>
               </div>
+              <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
               {burst !== null && <DeskConfetti key={burst} seed={burst % 1000} />}
               <div className={cn("dk-jump", jumping && "dk-show", isActive && jumping && "dk-live")}>
                 <button
@@ -501,17 +594,47 @@ export function DeskConversation({
                     <DeskComposer
                       value={model.draft}
                       onChange={model.onDraftChange}
-                      onSend={(content) =>
-                        void model.send(content, undefined, model.providerId, {
-                          attachments: [],
-                          mentions: [],
-                        })
-                      }
+                      onSend={(content, payload) => {
+                        void model.send(content, undefined, model.providerId, payload);
+                        composerContext.clear();
+                        attachments.clear();
+                      }}
                       onStop={model.stop}
                       agent={agent}
+                      onAgentChange={(next) => {
+                        if (next.id !== agent?.id) {
+                          desk.start(next.id, model.draft.trim() || undefined);
+                          model.onDraftChange("");
+                        }
+                      }}
+                      recentAgentIds={askable.recency.ids}
+                      agentLastUsedAt={askable.recency.lastUsedAt}
                       busy={isActive}
                       status={status}
                       lock={lock}
+                      attachments={attachments}
+                      scans={scans}
+                      mentions={composerContext.mentions}
+                      onMentionsChange={composerContext.setMentions}
+                      suggestions={model.suggestions}
+                      drag={drag}
+                      extras={
+                        <DeskPageChip
+                          page={deskPage.page}
+                          share={deskPage.share}
+                          onShareChange={deskPage.setShare}
+                          onExplain={explainPage}
+                        />
+                      }
+                      model={
+                        <DeskModelPicker
+                          options={model.providers}
+                          value={model.providerId}
+                          onChange={model.setProviderId}
+                          hasReplies={replies > 0}
+                          disabled={isActive}
+                        />
+                      }
                     />
                     <div className="dk-hint">
                       {showCard ? (

@@ -32,6 +32,7 @@ function toComposerAttachment(
     documentId: document?.id,
     contentType: document?.contentType ?? upload.file.type,
     error: upload.error,
+    file: upload.file,
   };
 }
 
@@ -47,7 +48,7 @@ export function useComposerContext(threadId: string) {
   );
   const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);
 
-  const { uploads, uploadFiles, cancelUpload, removeUpload, clearAll } = useDocumentUpload({
+  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearAll } = useDocumentUpload({
     resourceId: threadId,
     resourceType: ATTACHMENT_RESOURCE_TYPE,
     processingProfile: "assistant_attachment",
@@ -110,6 +111,7 @@ export function useComposerContext(threadId: string) {
     attachments,
     attachFiles,
     removeAttachment,
+    retryAttachment: retryUpload,
     mentions,
     setMentions,
     searchMentions,

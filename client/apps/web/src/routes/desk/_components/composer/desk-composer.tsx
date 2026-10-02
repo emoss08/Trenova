@@ -1,10 +1,24 @@
+import {
+  activeMentions,
+  readyAttachments,
+  type ComposerPayload,
+} from "@/components/assistant/composer";
+import type { Suggestion } from "@/components/assistant/suggestions";
+import { useComposerDictation } from "@/components/assistant/use-composer-dictation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { useDeskStore } from "@/stores/desk-store";
+import type { AssistantEntityRef } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { DeskIcon } from "../desk-icons";
 import { DeskAgentPicker } from "./desk-agent-picker";
+import { MAX_ATTACHMENTS, type DeskAttachments } from "./desk-attachments";
+import { DeskCapturePanel, type DeskScans } from "./desk-capture";
+import { DeskDictate } from "./desk-dictate";
+import { DeskMentionMirror, DeskMentionPicker, useDeskMentions } from "./desk-mentions";
+import { DeskSlashMenu, DeskSlashMirror, useDeskSlash } from "./desk-slash";
+import { DeskAttachMenu, DeskAttachRow, DeskDropGhosts, type DragState } from "./desk-uploads";
 import { useTypewriter } from "./use-typewriter";
 
 /** What the composer says it is doing while an agent works. */
@@ -16,10 +30,13 @@ export type DeskComposerStatus = {
   extra?: string;
 };
 
+const NO_MENTIONS: AssistantEntityRef[] = [];
+const NO_SUGGESTIONS: Suggestion[] = [];
+
 export type DeskComposerProps = {
   value: string;
   onChange: (value: string) => void;
-  onSend: (content: string) => void;
+  onSend: (content: string, payload: ComposerPayload) => void;
   onStop?: () => void;
   agent: AgentChoice | null;
   onAgentChange?: (agent: AgentChoice) => void;
@@ -35,12 +52,21 @@ export type DeskComposerProps = {
   placeholder?: string;
   /** Replaces the text box with a read-only line saying why nothing can be sent. */
   lock?: ReactNode;
-  /** Controls between the agent and the model: the page Desk can see, for one. */
+  /** Controls after the agent: the page Desk can see, for one. */
   extras?: ReactNode;
   /** The model picker, on the right before dictation and send. */
   model?: ReactNode;
-  /** The dictation control, beside send. */
-  dictation?: ReactNode;
+  /** Files on the message. Without them there is no attach button. */
+  attachments?: DeskAttachments;
+  /** Scans into the message from Capture, when there is a conversation to scan into. */
+  scans?: DeskScans | null;
+  /** Records named with @. */
+  mentions?: readonly AssistantEntityRef[];
+  onMentionsChange?: (mentions: AssistantEntityRef[]) => void;
+  /** The agent's starter questions, listed after the commands when a slash opens. */
+  suggestions?: readonly Suggestion[];
+  /** Files dragged over the Desk. */
+  drag?: DragState;
 };
 
 /**
@@ -51,7 +77,9 @@ export type DeskComposerProps = {
  * work appears in the conversation until the reply starts. On the front page
  * the ring turns slowly at rest and the placeholder types out the agent's own
  * starter questions: Tab drops the one on screen into the box and ⌘1–⌘3 asks
- * it outright. Enter sends, Shift+Enter breaks a line.
+ * it outright. A slash lists commands, an @ names a record, the plus attaches
+ * files or scans paper, and the microphone writes what is said into the box.
+ * Enter sends, Shift+Enter breaks a line.
  */
 export function DeskComposer({
   value,
@@ -71,27 +99,87 @@ export function DeskComposer({
   lock,
   extras,
   model,
-  dictation,
+  attachments,
+  scans,
+  mentions = NO_MENTIONS,
+  onMentionsChange,
+  suggestions = NO_SUGGESTIONS,
+  drag,
 }: DeskComposerProps) {
   const t = useT();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [menu, setMenu] = useState<"menu" | "capture" | null>(null);
   const markTermsSeen = useDeskStore((state) => state.markTermsSeen);
   const empty = value === "";
   const typing = home && presets.length > 0 && empty && !disabled;
   const typed = useTypewriter(presets, typing);
-  const canSend = value.trim() !== "" && !busy && !disabled && !lock;
+  const dictation = useComposerDictation({ draft: value, onDraftChange: onChange });
+
+  const uploading = attachments?.uploading ?? false;
+  const ready = attachments?.ready ?? [];
+  const blocked = (attachments?.failed ?? 0) > 0;
+  const canSend =
+    (value.trim() !== "" || ready.length > 0) &&
+    !uploading &&
+    !blocked &&
+    !busy &&
+    !disabled &&
+    !lock;
 
   const send = (content: string) => {
-    const text = content.trim();
-    if (text === "" || busy || disabled || lock) {
+    let text = content.trim();
+    if (text === "" && ready.length > 0) {
+      text = ready.length > 1 ? t("What's in these?") : t("What's in this?");
+    }
+    if (text === "" || busy || disabled || lock || uploading || blocked) {
       return;
     }
+    dictation.release();
     markTermsSeen();
-    onSend(text);
+    onSend(text, {
+      attachments: readyAttachments(ready),
+      mentions: activeMentions(text, mentions),
+    });
     onChange("");
+    onMentionsChange?.([]);
   };
 
+  const slash = useDeskSlash({
+    value,
+    onChange,
+    textareaRef,
+    onSendText: send,
+    suggestions,
+    enabled: !typing,
+  });
+  const mention = useDeskMentions({
+    value,
+    onChange,
+    textareaRef,
+    mentions,
+    onMentionsChange: onMentionsChange ?? (() => undefined),
+    enabled: onMentionsChange !== undefined,
+  });
+
+  useEffect(() => {
+    if (!attachments || lock) {
+      return;
+    }
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "u") {
+        event.preventDefault();
+        fileInputRef.current?.click();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [attachments, lock]);
+
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mention.onKeyDown(event) || slash.onKeyDown(event)) {
+      return;
+    }
     if (typing && event.key === "Tab" && !event.shiftKey) {
       event.preventDefault();
       onChange(typed.full);
@@ -113,8 +201,25 @@ export function DeskComposer({
     }
   };
 
+  const dropping = Boolean(drag?.on) && !lock && attachments !== undefined;
+  const full = attachments?.full ?? false;
+
   return (
-    <div className={cn("dk-cmp", busy && "dk-busy", home && "dk-hm", lock && "dk-ec dk-off")}>
+    <div
+      className={cn(
+        "dk-cmp",
+        busy && "dk-busy",
+        home && "dk-hm",
+        lock && "dk-ec dk-off",
+        dropping && "dk-drop-on",
+        dropping && drag?.hot && "dk-drop-hot",
+      )}
+    >
+      {dropping && (
+        <span className={cn("dk-drop-tag", full && "dk-full")}>
+          {full ? t("Message full") : drag?.hot ? t("Release to attach") : t("Drop here")}
+        </span>
+      )}
       <span className="dk-cmp-ring" aria-hidden />
       {busy && status && (
         <div className="dk-cmp-st dk-ec-st" key={status.text} role="status">
@@ -134,15 +239,27 @@ export function DeskComposer({
           )}
         </div>
       )}
+      {attachments && !lock && <DeskAttachRow attachments={attachments} />}
+      {dropping && drag && (
+        <DeskDropGhosts count={drag.count} taken={attachments?.items.length ?? 0} />
+      )}
       {lock ? (
         <div className="dk-ec-offmsg">{lock}</div>
       ) : (
         <div className="dk-cmp-ta">
+          <DeskMentionPicker mentions={mention} />
+          <DeskSlashMenu slash={slash} agentName={agent?.name ?? t("the agent")} />
+          {slash.parsed && slash.started ? (
+            <DeskSlashMirror slash={slash} />
+          ) : (
+            <DeskMentionMirror value={value} mentions={mentions} />
+          )}
           <textarea
             ref={textareaRef}
             rows={2}
             value={value}
             disabled={disabled}
+            className={slash.parsed && slash.started ? "dk-sl-on" : undefined}
             placeholder={
               typing
                 ? ""
@@ -150,7 +267,16 @@ export function DeskComposer({
                   (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
             }
             aria-label={agent ? t("Message {0}", agent.name) : t("Message the Desk")}
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => {
+              if (dictation.phase !== "idle") {
+                dictation.release();
+              }
+              onChange(event.target.value);
+              mention.detect(event.target.value, event.target.selectionStart);
+            }}
+            onSelect={(event) =>
+              mention.detect(event.currentTarget.value, event.currentTarget.selectionStart)
+            }
             onKeyDown={onKeyDown}
           />
           {typing && (
@@ -168,6 +294,48 @@ export function DeskComposer({
         </div>
       )}
       <div className="dk-cmp-b">
+        {attachments && (
+          <span className="relative">
+            <button
+              type="button"
+              className={cn("dk-ib", menu && "dk-on")}
+              title={full ? t("Up to {0} files per message", MAX_ATTACHMENTS) : t("Attach files")}
+              aria-label={t("Attach files")}
+              data-attach-toggle
+              disabled={Boolean(lock) || full}
+              onClick={() => setMenu((current) => (current ? null : "menu"))}
+            >
+              <DeskIcon name="plus" size={16} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={(event) => {
+                if (event.target.files) {
+                  attachments.add(event.target.files);
+                }
+                event.target.value = "";
+              }}
+            />
+            {menu && (
+              <DeskAttachMenu
+                onPickFiles={attachments.add}
+                onScan={scans ? () => setMenu("capture") : undefined}
+                onClose={() => setMenu(null)}
+              >
+                {menu === "capture" && scans ? (
+                  <DeskCapturePanel
+                    scans={scans}
+                    onBack={() => setMenu("menu")}
+                    onStarted={() => setMenu(null)}
+                  />
+                ) : undefined}
+              </DeskAttachMenu>
+            )}
+          </span>
+        )}
         {agent && onAgentChange && (
           <DeskAgentPicker
             agent={agent}
@@ -178,9 +346,9 @@ export function DeskComposer({
           />
         )}
         {extras}
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         {model}
-        {dictation}
+        {!lock && <DeskDictate dictation={dictation} disabled={busy || disabled} />}
         {busy ? (
           <button
             type="button"
@@ -196,11 +364,15 @@ export function DeskComposer({
             type="button"
             className="dk-send"
             disabled={!canSend}
-            title={t("Send")}
+            title={uploading ? t("Waiting for the files to finish uploading") : t("Send")}
             aria-label={t("Send")}
             onClick={() => send(value)}
           >
-            <DeskIcon name="up" size={15} stroke={2.2} />
+            {uploading ? (
+              <span className="dk-send-wait" />
+            ) : (
+              <DeskIcon name="up" size={15} stroke={2.2} />
+            )}
           </button>
         )}
       </div>

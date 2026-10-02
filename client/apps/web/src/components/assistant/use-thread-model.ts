@@ -5,7 +5,7 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import type {
   AssistantArtifact,
   AssistantArtifactEvent,
-  
+  AssistantPageContext,
   AssistantPlan,
   AssistantProposal,
   AssistantThread,
@@ -30,6 +30,7 @@ import {
   holdsFocus,
   type ApprovalEntry,
 } from "./approval-queue";
+import type { ComposerPayload } from "./composer";
 import { decisionRequestsFromSteps } from "./decision-requests";
 import { stepsFromSegments } from "./activity";
 import { useFollowNavigation } from "./follow-navigation";
@@ -37,7 +38,7 @@ import { useApplyDraftEdits } from "./page-draft-edits";
 import { modelSwitchNotice } from "./model-switch";
 import { groupPlans } from "./plan-state";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
-import { agentSuggestions, } from "./suggestions";
+import { agentSuggestions } from "./suggestions";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
 import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
@@ -78,6 +79,15 @@ export type ThreadModelOptions = {
   onNavigate?: () => void;
   openingQuestion?: string;
   onOpeningQuestionSent?: () => void;
+  /** Keeps the opening question back, while the files it carries finish uploading. */
+  openingHold?: boolean;
+  /** What the opening question carries besides its words. */
+  openingPayload?: ComposerPayload;
+  /**
+   * Where the page context comes from, in place of the page the person is on:
+   * the Desk is a page of its own, so it sends the page they came from.
+   */
+  pageContextSource?: () => AssistantPageContext | null;
   page?: PageBinding;
   pageRequest?: PageRequest | null;
   onPageRequestSent?: (key: string) => void;
@@ -99,6 +109,9 @@ export function useThreadModel({
   onNavigate,
   openingQuestion,
   onOpeningQuestionSent,
+  openingHold = false,
+  openingPayload,
+  pageContextSource,
   page,
   pageRequest,
   onPageRequestSent,
@@ -282,8 +295,11 @@ export function useThreadModel({
       const context = getPageContext();
       return context === null ? null : { ...context, draft: readDraft() };
     }
+    if (pageContextSource !== undefined) {
+      return pageContextSource();
+    }
     return contextIncluded ? getPageContext() : null;
-  }, [contextIncluded, getPageContext, readDraft]);
+  }, [contextIncluded, getPageContext, pageContextSource, readDraft]);
   const { turn, isActive, send, rejoin, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
@@ -358,6 +374,7 @@ export function useThreadModel({
   useEffect(() => {
     if (
       readOnly ||
+      openingHold ||
       !shouldSendOpeningQuestion({
         question: pendingQuestion,
         alreadySent: openingSent.current,
@@ -369,11 +386,13 @@ export function useThreadModel({
     }
     openingSent.current = true;
     onOpeningQuestionSent?.();
-    void send(pendingQuestion, undefined, providerId);
+    void send(pendingQuestion, undefined, providerId, openingPayload);
   }, [
     history.isLoading,
     messages.length,
     onOpeningQuestionSent,
+    openingHold,
+    openingPayload,
     pendingQuestion,
     providerId,
     readOnly,

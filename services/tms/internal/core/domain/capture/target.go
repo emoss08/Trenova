@@ -26,6 +26,16 @@ func FileableResources() []permission.Resource {
 	return slices.Clone(fileableResources)
 }
 
+const ResourceAssistantThread = "assistant_thread"
+
+func IsCaptureTarget(resourceType string) bool {
+	return IsFileableResource(resourceType) || resourceType == ResourceAssistantThread
+}
+
+func (t Target) IsAssistantThread() bool {
+	return t.ResourceType == ResourceAssistantThread
+}
+
 // IsFileableResource reports whether a record kind may receive a capture.
 func IsFileableResource(resourceType string) bool {
 	return slices.Contains(fileableResources, permission.Resource(resourceType))
@@ -74,7 +84,7 @@ func (t Target) Validate(multiErr *errortypes.MultiError, fields TargetFields, r
 		multiErr.Add(fields.Type, errortypes.ErrRequired, "Record kind is required")
 	case !hasID:
 		multiErr.Add(fields.ID, errortypes.ErrRequired, "Record is required")
-	case !IsFileableResource(t.ResourceType):
+	case !IsCaptureTarget(t.ResourceType):
 		multiErr.Add(fields.Type, errortypes.ErrInvalid,
 			"Captured documents cannot be filed onto that kind of record")
 	}

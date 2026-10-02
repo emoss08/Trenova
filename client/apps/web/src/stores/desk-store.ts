@@ -18,6 +18,8 @@ interface DeskState {
   termsSeen: boolean;
   /** The replies each conversation has pinned as chapters, in the order pinned. */
   chaptersByThread: Record<string, string[]>;
+  /** Whether questions asked at the Desk carry the page the person came from. */
+  sharePage: boolean;
 
   setRail: (rail: DeskRailState) => void;
   toggleRail: () => void;
@@ -26,6 +28,7 @@ interface DeskState {
   setActiveArtifact: (threadId: string, artifactId: string | null) => void;
   markTermsSeen: () => void;
   toggleChapter: (threadId: string, messageId: string) => void;
+  setSharePage: (sharePage: boolean) => void;
 }
 
 /** Remembered artifacts for the most recently visited conversations. */
@@ -57,6 +60,7 @@ export const useDeskStore = create<DeskState>()(
       activeArtifactByThread: {},
       termsSeen: false,
       chaptersByThread: {},
+      sharePage: true,
 
       setRail: (rail) => set({ rail }),
       toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
@@ -71,6 +75,7 @@ export const useDeskStore = create<DeskState>()(
           ),
         })),
       markTermsSeen: () => set({ termsSeen: true }),
+      setSharePage: (sharePage) => set({ sharePage }),
       toggleChapter: (threadId, messageId) =>
         set((state) => {
           const current = state.chaptersByThread[threadId] ?? [];
@@ -88,6 +93,7 @@ export const useDeskStore = create<DeskState>()(
         activeArtifactByThread: state.activeArtifactByThread,
         termsSeen: state.termsSeen,
         chaptersByThread: state.chaptersByThread,
+        sharePage: state.sharePage,
       }),
     },
   ),

@@ -12,6 +12,8 @@ import {
   toolCatalogSchema,
   toolTrustListSchema,
   assistantMessagePageSchema,
+  mentionCandidateListSchema,
+  type MentionSearchType,
   assistantArtifactListSchema,
   assistantArtifactSchema,
   assistantLiveTurnListSchema,
@@ -203,6 +205,22 @@ export class AssistantService {
    * A refused turn comes back as a normal result with `refused` set, not as an
    * error: the turn was processed, recorded, and explained.
    */
+  /**
+   * Records a person can name with @ from the composer, of one kind or of
+   * every kind they may read, matched on what the record is called.
+   */
+  public async searchMentions(
+    query: string,
+    type: MentionSearchType,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const params = new URLSearchParams({ query, type });
+    const response = await api.get(`/assistant/mentions/?${params.toString()}`, { signal });
+    const parsed = await safeParse(mentionCandidateListSchema, response, "Assistant Mentions");
+
+    return parsed.results;
+  }
+
   /** The models this organization has made available to the assistant. */
   public async listProviders() {
     const response = await api.get("/assistant/providers/");

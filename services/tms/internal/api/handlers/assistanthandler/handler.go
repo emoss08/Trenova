@@ -60,6 +60,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// response is a projection, so this does not widen access to the provider
 	// records themselves.
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
+	api.GET("/mentions/", h.pm.RequirePermission(resource, permission.OpRead), h.searchMentions)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting
@@ -564,6 +565,33 @@ func (r *sendMessageRequest) provider() (pulid.ID, bool) {
 
 func (r *sendMessageRequest) page() *agent.PageContext {
 	return r.Context.page()
+}
+
+type searchMentionsQuery struct {
+	Query string `form:"query"`
+	Type  string `form:"type"`
+}
+
+func (h *Handler) searchMentions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var query searchMentionsQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	results, err := h.service.SearchMentions(
+		c.Request.Context(),
+		requestActorFromAuthContext(authCtx),
+		serviceports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": results})
 }
 
 func (h *Handler) listProviders(c *gin.Context) {

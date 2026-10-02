@@ -3,7 +3,7 @@ import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
-import type { AssistantThread } from "@/types/assistant";
+import type { AssistantEntityRef, AssistantThread } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   partOfDay,
@@ -16,7 +16,12 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
+import { useDeskAttachments, useHeldAttachments } from "./composer/desk-attachments";
 import { DeskComposer } from "./composer/desk-composer";
+import { DeskModelPicker } from "./composer/desk-model-picker";
+import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
+import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
 import { DeskTermsNote } from "./desk-terms-note";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
@@ -27,7 +32,14 @@ export type DeskHomeProps = {
   threads: AssistantThread[];
   isLoading: boolean;
   isStarting: boolean;
-  onStart: (agentId: string, question?: string) => void;
+  onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
+};
+
+/** What a question asked at the front page carries to the conversation it starts. */
+export type DeskStartExtras = {
+  files: File[];
+  mentions: AssistantEntityRef[];
+  providerId: string;
 };
 
 function greeting(t: TranslateFn, dayPart: PartOfDay, firstName: string): string {
@@ -69,6 +81,14 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const askable = useAskableAgent({ threads });
   const noAgents = !isLoading && (agents.length === 0 || askable.noneAvailable);
   const [draft, setDraft] = useState("");
+  const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);
+  const [providerId, setProviderId] = useState("");
+  const providersQuery = useQuery(queries.assistant.providers());
+  const held = useHeldAttachments();
+  const attachments = useDeskAttachments(held);
+  const deskPage = useDeskPage();
+  const drag = useDeskDrop(noAgents ? null : attachments.add);
+  const explain = SLASH_COMMANDS.find((command) => command.name === "explain");
 
   const dateline = useMemo(
     () =>
@@ -101,6 +121,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
 
   return (
     <div className="dk-home-w">
+      <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
       <div className="dk-home">
         <div className="dk-home-in">
           <div className="dk-date">{dateline}</div>
@@ -136,9 +157,39 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
                 busy={false}
                 disabled={isStarting || askable.agent === null}
                 presets={askable.agent?.starters?.map((starter) => starter.prompt) ?? []}
-                onSend={(content) => {
+                suggestions={askable.agent?.starters?.map((starter) => ({
+                  label: starter.label,
+                  prompt: starter.prompt,
+                }))}
+                attachments={attachments}
+                mentions={mentions}
+                onMentionsChange={setMentions}
+                drag={drag}
+                extras={
+                  <DeskPageChip
+                    page={deskPage.page}
+                    share={deskPage.share}
+                    onShareChange={deskPage.setShare}
+                    onExplain={explain ? () => setDraft(fillCommand(explain, [])) : undefined}
+                  />
+                }
+                model={
+                  <DeskModelPicker
+                    options={providersQuery.data ?? []}
+                    value={providerId}
+                    onChange={setProviderId}
+                    hasReplies={false}
+                  />
+                }
+                onSend={(content, payload) => {
                   if (askable.agent) {
-                    onStart(askable.agent.id, content);
+                    onStart(askable.agent.id, content, {
+                      files: held.files(),
+                      mentions: payload.mentions,
+                      providerId,
+                    });
+                    held.clear();
+                    attachments.clear();
                   }
                 }}
               />

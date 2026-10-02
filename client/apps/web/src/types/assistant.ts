@@ -476,6 +476,24 @@ export const pageContextSchema = z.object({
   draft: pageDraftSchema.nullish().catch(null),
 });
 
+/** The kinds of record the composer's @ search can be narrowed to. */
+export const mentionSearchTypes = ["all", "shipment", "customer", "invoice", "worker", "carrier"] as const;
+export type MentionSearchType = (typeof mentionSearchTypes)[number];
+
+/** A record the @ search offers. */
+export const mentionCandidateSchema = z.object({
+  type: z.string(),
+  id: z.string(),
+  label: z.string(),
+  subtitle: z.string().optional().default(""),
+});
+
+export const mentionCandidateListSchema = z.object({
+  results: z.array(mentionCandidateSchema).default([]),
+});
+
+export type MentionCandidateRecord = z.infer<typeof mentionCandidateSchema>;
+
 /** A record the person named from the composer; mirrors the server's EntityRef. */
 export const entityRefSchema = z.object({
   type: z.string(),
@@ -782,6 +800,12 @@ export const assistantProviderOptionSchema = z.object({
   kind: z.string(),
   model: z.string(),
   trusted: z.boolean().default(false),
+  /** The company behind the endpoint, read from where it points; empty when nobody publishes it. */
+  vendor: z.string().optional(),
+  /** The reasoning effort the endpoint is asked for. */
+  reasoning: z.string().optional(),
+  /** The endpoint failed its last connection test. */
+  unavailable: z.boolean().optional(),
 });
 
 export const assistantProviderListSchema = z.object({

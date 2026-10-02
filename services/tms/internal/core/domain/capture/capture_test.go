@@ -120,8 +120,13 @@ func TestTargetValidate(t *testing.T) {
 		{name: "id without kind", target: capture.Target{ResourceID: &id}, fields: []string{"targetType"}},
 		{
 			name:   "unfileable kind",
-			target: capture.Target{ResourceType: "assistant_thread", ResourceID: &id},
+			target: capture.Target{ResourceType: "invoice", ResourceID: &id},
 			fields: []string{"targetType"},
+		},
+		{
+			name:     "scan into a conversation",
+			target:   capture.Target{ResourceType: "assistant_thread", ResourceID: &id},
+			required: true,
 		},
 		{
 			name:     "shipment",
@@ -139,6 +144,13 @@ func TestTargetValidate(t *testing.T) {
 			assert.ElementsMatch(t, tt.fields, errorFields(multiErr))
 		})
 	}
+}
+
+func TestAssistantThreadIsATargetButNotAFilingDestination(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, capture.IsCaptureTarget(capture.ResourceAssistantThread))
+	assert.False(t, capture.IsFileableResource(capture.ResourceAssistantThread))
 }
 
 func TestFileableResourcesAreRealResources(t *testing.T) {

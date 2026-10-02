@@ -52,6 +52,8 @@ export type ComposerAttachment = {
   documentId?: string;
   contentType?: string;
   error?: string;
+  /** The file as picked, for a preview of an image before it is sent. */
+  file?: File;
 };
 
 /** A record the mention search offers. */

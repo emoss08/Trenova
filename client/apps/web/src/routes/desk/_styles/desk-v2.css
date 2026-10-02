@@ -2028,3 +2028,6 @@
 .dk-extra{margin-top:14px}
 .dk-abadge .dk-abadge-i{width:11px;height:11px;flex:none}
 .dk-dock-pill{align-self:center}
+
+.dk-mn-fw.dk-r,.dk-mn-fw.dk-l{display:block}
+.dk-mn-ar.dk-r,.dk-mn-ar.dk-l{display:grid}

@@ -151,6 +151,11 @@ func autoFileable(
 	ready := make([]pulid.ID, 0, len(items))
 	for _, item := range items {
 		suggestion := item.Suggestion()
+		if suggestion.IsAssistantThread() && suggestion.HasRecord() &&
+			item.SuggestionSource == capture.SuggestionRequest && batch.RequestID != nil {
+			ready = append(ready, item.ID)
+			continue
+		}
 		if !suggestion.HasRecord() || suggestion.DocumentTypeID == nil {
 			continue
 		}

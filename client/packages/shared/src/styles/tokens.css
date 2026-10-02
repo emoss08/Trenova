@@ -378,6 +378,9 @@
   --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
   --dsk-vendor-groq: oklch(0.657 0.206 31.7);
   --dsk-vendor-mistral: oklch(0.665 0.214 37.6);
+  --dsk-gem-1: oklch(0.651 0.178 259.1);
+  --dsk-gem-2: oklch(0.651 0.191 295.9);
+  --dsk-gem-3: oklch(0.731 0.166 7.7);
 
   /* The sky over the Desk's greeting: a wash of the part of the day behind
      the first line of the front page. It is weather, not decoration, so it is
@@ -781,6 +784,9 @@
   --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
   --dsk-vendor-groq: oklch(0.657 0.206 31.7);
   --dsk-vendor-mistral: oklch(0.665 0.214 37.6);
+  --dsk-gem-1: oklch(0.651 0.178 259.1);
+  --dsk-gem-2: oklch(0.651 0.191 295.9);
+  --dsk-gem-3: oklch(0.731 0.166 7.7);
 
   /* Colour on a near-black ground reads weaker at the same mix, so the sky
      takes a little more of it. */

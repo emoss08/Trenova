@@ -99,6 +99,38 @@ const PATHS = {
       <path d="M12 11v5.5M12 7.5v.01" />
     </>
   ),
+  headset: (
+    <>
+      <path d="M4.5 14v-2a7.5 7.5 0 0 1 15 0v2" />
+      <rect x="4" y="13.5" width="4" height="5.5" rx="1.5" />
+      <rect x="16" y="13.5" width="4" height="5.5" rx="1.5" />
+    </>
+  ),
+  compass: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M15.5 8.5l-2 5-5 2 2-5z" />
+    </>
+  ),
+  route: (
+    <>
+      <circle cx="6" cy="18" r="2" />
+      <circle cx="18" cy="6" r="2" />
+      <path d="M8 18h7.5a3 3 0 0 0 0-6h-7a3 3 0 0 1 0-6H16" />
+    </>
+  ),
+  scanner: (
+    <>
+      <path d="M4 15h16v4H4zM6 15V9l4-4h8v10" />
+      <path d="M8 18h.01" />
+    </>
+  ),
+  file: (
+    <>
+      <path d="M6 3.5h8l4 4v13H6z" />
+      <path d="M14 3.5v4h4M9 13h6M9 16.5h4" />
+    </>
+  ),
   lock: (
     <>
       <rect x="5" y="11" width="14" height="9" rx="2" />

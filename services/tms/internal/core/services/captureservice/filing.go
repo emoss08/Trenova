@@ -614,13 +614,17 @@ func (s *Service) stageFiling(
 	if item.FiledDocTypeID != nil {
 		docTypeID = item.FiledDocTypeID.String()
 	}
+	profile := document.ProcessingProfileCapture
+	if item.FiledType == capture.ResourceAssistantThread {
+		profile = document.ProcessingProfileAssistantAttachment
+	}
 
 	session, err := s.uploads.CreateSession(ctx, &services.CreateSessionRequest{
 		TenantInfo:        tenantInfo,
 		Actor:             *services.UserActor(tenantInfo),
 		ResourceID:        item.FiledID.String(),
 		ResourceType:      item.FiledType,
-		ProcessingProfile: string(document.ProcessingProfileCapture),
+		ProcessingProfile: string(profile),
 		FileName:          itemFileName(batch, item),
 		FileSize:          int64(len(pdf)),
 		ContentType:       capture.PageContentType,
