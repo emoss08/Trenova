@@ -35,16 +35,51 @@ type anthropicRequest struct {
 	Thinking     *anthropicThinking     `json:"thinking,omitempty"`
 }
 
-// anthropicThinking turns extended thinking on with a token budget. The
-// budget must be below max_tokens, which the request builder guarantees.
+// anthropicThinking is how a request asks a model to think. A model from
+// before adaptive thinking takes a token budget ("enabled"); a current one
+// thinks by effort ("adaptive", the effort in output_config) and refuses a
+// budget outright. Display "summarized" asks for the readable summary, which
+// the current models leave out unless asked.
 type anthropicThinking struct {
 	Type         string `json:"type"`
-	BudgetTokens int    `json:"budget_tokens"`
+	BudgetTokens int    `json:"budget_tokens,omitempty"`
+	Display      string `json:"display,omitempty"`
 }
 
-// applyThinking asks for extended thinking at the provider's effort and
-// raises the reply ceiling so the budget fits under it with room to answer.
+// applyThinking asks for thinking the way the configured model takes it.
 func (r *anthropicRequest) applyThinking(call *Call) {
+	model := anthropicTraits(call.Provider.Model)
+	if !model.adaptive {
+		r.applyThinkingBudget(call)
+		return
+	}
+
+	effort := call.reasoning()
+	switch {
+	case effort.Enabled():
+		r.Thinking = &anthropicThinking{Type: "adaptive", Display: "summarized"}
+		r.config().Effort = anthropicEffort(effort)
+	case effort.Disabled():
+		// None is the least thinking the model allows. A model that always
+		// thinks, or refuses "disabled", thinks at low effort; one that takes
+		// "disabled" is told so; the rest do not think unless asked.
+		switch {
+		case model.thinksAlways || model.disableRefused:
+			r.Thinking = &anthropicThinking{Type: "adaptive"}
+			r.config().Effort = "low"
+		case model.disableNeedsLowEffort:
+			r.Thinking = &anthropicThinking{Type: "disabled"}
+		}
+	}
+	if r.Thinking != nil && r.Thinking.Type == "adaptive" && r.MaxTokens < reasoningAnswerFloor {
+		r.MaxTokens = reasoningAnswerFloor
+	}
+}
+
+// applyThinkingBudget asks a model from before adaptive thinking to think
+// with a token budget, and raises the reply ceiling so the budget fits under
+// it with room to answer.
+func (r *anthropicRequest) applyThinkingBudget(call *Call) {
 	budget := call.reasoning().ThinkingBudget()
 	if budget == 0 {
 		return
@@ -53,6 +88,27 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 	if floor := budget + thinkingAnswerRoom; r.MaxTokens < floor {
 		r.MaxTokens = floor
 	}
+}
+
+// anthropicEffort is the effort a reasoning level asks a current model for.
+// These models have no "minimal"; low is the least.
+func anthropicEffort(effort aiprovider.ReasoningEffort) string {
+	switch effort {
+	case aiprovider.ReasoningMedium:
+		return "medium"
+	case aiprovider.ReasoningHigh:
+		return "high"
+	default:
+		return "low"
+	}
+}
+
+func (r *anthropicRequest) config() *anthropicOutputConfig {
+	if r.OutputConfig == nil {
+		r.OutputConfig = &anthropicOutputConfig{}
+	}
+
+	return r.OutputConfig
 }
 
 // anthropicMessage carries content as blocks rather than a string, since tool
@@ -105,7 +161,8 @@ func ephemeralCache() *anthropicCacheControl {
 }
 
 type anthropicOutputConfig struct {
-	Format anthropicOutputFormat `json:"format"`
+	Format *anthropicOutputFormat `json:"format,omitempty"`
+	Effort string                 `json:"effort,omitempty"`
 }
 
 type anthropicOutputFormat struct {
@@ -158,9 +215,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
 		call.Provider.StructuredOutputMode == aiprovider.StructuredOutputJSONSchema {
-		body.OutputConfig = &anthropicOutputConfig{
-			Format: anthropicOutputFormat{Type: "json_schema", Schema: schema},
-		}
+		body.config().Format = &anthropicOutputFormat{Type: "json_schema", Schema: schema}
 	}
 
 	var envelope anthropicResponse
