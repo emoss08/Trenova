@@ -36,8 +36,9 @@ type bunchedRecord struct {
 }
 
 type bunchParts struct {
-	table *assistantartifact.Artifact
-	cards []*assistantartifact.Artifact
+	table  *assistantartifact.Artifact
+	cards  []*assistantartifact.Artifact
+	tables []*assistantartifact.Artifact
 }
 
 func (r *artifactRecorder) bunch(
@@ -130,10 +131,139 @@ func partsOf(earlier []*assistantartifact.Artifact, tool string) bunchParts {
 			}
 		case artifact.Kind == assistantartifact.KindEntityCard:
 			parts.cards = append(parts.cards, artifact)
+		case artifact.Kind == assistantartifact.KindTableView:
+			parts.tables = append(parts.tables, artifact)
 		}
 	}
 
 	return parts
+}
+
+// bunchTables folds a list or search result into the turn's table for the
+// same tool. Eleven searches for eleven shipments used to be eleven tables
+// in the pane, each a row long; they are one table, with every row once,
+// keyed by the turn's first call of the tool, and the tables it replaced
+// are withdrawn from the reader.
+func (r *artifactRecorder) bunchTables(
+	observation *services.ToolObservation,
+	table *assistantartifact.Artifact,
+) (*services.ShownArtifact, error) {
+	earlier, err := r.repo.ListByToolCalls(r.ctx, &repositories.ListArtifactsByToolCallsRequest{
+		ThreadID:   r.thread.ID,
+		TenantInfo: r.tenant,
+		CallIDs:    observation.Earlier,
+	})
+	if err != nil {
+		r.logger.Warn("the turn's earlier tables could not be read to bunch them",
+			zap.String("thread", r.thread.ID.String()),
+			zap.Error(err),
+		)
+
+		return r.keep(table)
+	}
+
+	parts := partsOf(earlier, observation.Call.Name)
+	if parts.table == nil && len(parts.tables) == 0 {
+		return r.keep(table)
+	}
+
+	merged := mergeTables(observation.Call.Name, parts, table)
+	saved, err := r.save(merged)
+	if err != nil {
+		return nil, err
+	}
+
+	r.retire(parts.tables)
+
+	return shownArtifact(saved), nil
+}
+
+// mergeTables lays the turn's tables of one tool end to end: the columns are
+// the union in first-seen order, a row that names a record already in the
+// table is not repeated, and what each search looked for is kept so the
+// footer can still say so.
+func mergeTables(
+	tool string,
+	parts bunchParts,
+	table *assistantartifact.Artifact,
+) *assistantartifact.Artifact {
+	sources := make([]*assistantartifact.Artifact, 0, len(parts.tables)+2)
+	if parts.table != nil {
+		sources = append(sources, parts.table)
+	}
+	sources = append(sources, parts.tables...)
+	sources = append(sources, table)
+
+	first := sources[0]
+	entity := typeutils.StringOfTrimmed(first.Payload[payloadEntity])
+	recordEntity := typeutils.StringOfTrimmed(first.Payload["recordEntity"])
+	var id pulid.ID
+	if parts.table != nil {
+		id = parts.table.ID
+	}
+
+	var columns []assistantartifact.DisplayColumn
+	rows := make([]any, 0, len(sources))
+	calls := make([]string, 0, len(sources))
+	searched := make([]string, 0, len(sources))
+	seen := make(map[string]struct{}, len(sources))
+	for _, source := range sources {
+		for _, call := range append(
+			stringsOf(source.Payload[payloadCalls]), source.SourceToolCallID,
+		) {
+			if call != "" && !slices.Contains(calls, call) {
+				calls = append(calls, call)
+			}
+		}
+		for _, term := range stringsOf(source.Payload["searchedFor"]) {
+			if !slices.Contains(searched, term) {
+				searched = append(searched, term)
+			}
+		}
+		for _, column := range columnsFrom(source.Payload[payloadColumns]) {
+			if !slices.ContainsFunc(columns, func(have assistantartifact.DisplayColumn) bool {
+				return have.Key == column.Key
+			}) {
+				columns = append(columns, column)
+			}
+		}
+		for _, row := range rowsFrom(source.Payload[payloadRows]) {
+			record, _ := row.(map[string]any)
+			if recordID := typeutils.StringOfTrimmed(record[recordIDKey]); recordID != "" {
+				if _, dup := seen[recordID]; dup {
+					continue
+				}
+				seen[recordID] = struct{}{}
+			}
+			rows = append(rows, row)
+		}
+	}
+
+	payload := map[string]any{
+		payloadDisplay:  assistantartifact.DisplayVersion,
+		payloadTool:     tool,
+		payloadEntity:   entity,
+		payloadColumns:  columns,
+		payloadRows:     rows,
+		payloadRowCount: len(rows),
+		"searchedFor":   searched,
+		payloadBunched:  true,
+		payloadCalls:    calls,
+	}
+	if recordEntity != "" {
+		payload["recordEntity"] = recordEntity
+	}
+	fitRows(payload, payloadRows)
+
+	return &assistantartifact.Artifact{
+		ID:     id,
+		Kind:   assistantartifact.KindTableView,
+		Status: assistantartifact.StatusReady,
+		Title: artifactTitle(fmt.Sprintf("%s (%d)",
+			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)), len(rows))),
+		Payload:          payload,
+		SourceToolCallID: first.SourceToolCallID,
+	}
 }
 
 func bunchTable(
@@ -275,7 +405,14 @@ func columnsFrom(value any) []assistantartifact.DisplayColumn {
 }
 
 func rowsFrom(value any) []any {
-	rows, _ := value.([]any)
+	if rows, ok := value.([]any); ok {
+		return rows
+	}
+
+	var rows []any
+	if !decodeDisplay(value, &rows) {
+		return nil
+	}
 
 	return rows
 }

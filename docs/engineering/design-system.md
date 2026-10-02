@@ -859,11 +859,14 @@ places (Today, Watchtower, Decisions, each with what is waiting at it), then
 every conversation shelved by when it was last touched — Pinned above the
 calendar, then Today, Yesterday, Previous 7 days, Previous 30 days, Older
 (`groupDeskThreadsByRecency`, counted on the reader's own calendar) — and the
-signed-in person at the foot with the way back to Trenova. Each row carries
-the agent's mark and name under its title, says "Writing a reply" with a still
-`WorkingDot` while a turn runs, and keeps its pin and delete within reach of a
-keyboard though a pointer only sees them on hover. The open row is
-`bg-surface-selected`.
+signed-in person at the foot with the way back to Trenova. Each row is one
+line, its title alone, in `--foreground-muted` until hovered: the agent is in
+the row's tooltip and the search rather than on every row, a reply being
+written is a `WorkingDot` before the title, and the pin and the delete sit
+behind one "more" control that a pointer sees on hover and a keyboard reaches
+in order. The shelf labels are plain text with no count and no fold. A list of
+fifty of these reads as a list of titles, not a table. The open row is
+`bg-surface-selected`, flat.
 
 The rail is the conversation's table of contents, and a table of contents is
 read by glancing at it, which is why it is a column rather than a switcher

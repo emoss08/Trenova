@@ -289,7 +289,7 @@
     ]
   },
   "+{0} more": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -2141,6 +2141,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A change the agent proposes waits here for you, and what became of it stays.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from": {
@@ -10359,7 +10368,7 @@
     ]
   },
   "Activity": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -10370,6 +10379,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/invoice",
       "routes/shipment"
     ]
@@ -12216,6 +12226,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Add to the message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Add type": {
     "sites": 1,
     "scope": [
@@ -13833,15 +13852,14 @@
     ]
   },
   "Agents": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/agent-control",
-      "routes/desk"
+      "routes/agent-control"
     ]
   },
   "Agents and assistant": {
@@ -14281,7 +14299,7 @@
     ]
   },
   "All": {
-    "sites": 19,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -14293,7 +14311,6 @@
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
       "routes/carrier-settlement-workspace",
-      "routes/desk",
       "routes/dispatch-console",
       "routes/edi",
       "routes/random-testing",
@@ -19798,7 +19815,7 @@
     ]
   },
   "Approved": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -19813,6 +19830,7 @@
       "routes/agent-control",
       "routes/carrier-settlement",
       "routes/carrier-settlement-workspace",
+      "routes/desk",
       "routes/driver-expense",
       "routes/driver-settlement",
       "routes/formula-template",
@@ -20691,7 +20709,7 @@
     ]
   },
   "Artifacts": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -22017,13 +22035,14 @@
     ]
   },
   "Assistant": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -22811,7 +22830,7 @@
     ]
   },
   "Attach a file": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -36937,7 +36956,7 @@
     ]
   },
   "Clear filters": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -36946,7 +36965,6 @@
       "packages/shared/components",
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
-      "routes/desk",
       "routes/detention-desk",
       "routes/home",
       "routes/insights",
@@ -37011,7 +37029,7 @@
     ]
   },
   "Clear search": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -42864,6 +42882,15 @@
       "routes/agent-control"
     ]
   },
+  "Conversation actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Conversation deleted": {
     "sites": 2,
     "scope": [
@@ -47702,14 +47729,13 @@
     ]
   },
   "Custom": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "apps/web/types",
-      "routes/desk",
       "routes/fuel-management"
     ]
   },
@@ -50532,6 +50558,15 @@
       "service/reporting"
     ]
   },
+  "Decide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Decide here:": {
     "sites": 1,
     "scope": [
@@ -50750,7 +50785,7 @@
     ]
   },
   "Decision": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -50807,7 +50842,7 @@
     ]
   },
   "Decisions": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -54205,7 +54240,7 @@
     ]
   },
   "Desk": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -67275,6 +67310,15 @@
       "routes/agent-control"
     ]
   },
+  "Every call the agent makes is listed here in order, with what it was about and how long it took.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.": {
     "sites": 1,
     "scope": [
@@ -71620,7 +71664,7 @@
     ]
   },
   "Failed": {
-    "sites": 40,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -71634,6 +71678,7 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/edi",
       "routes/formula-template",
       "routes/invoice-adjustment-batch"
@@ -77494,15 +77539,6 @@
       "routes/agent-control"
     ]
   },
-  "From templates": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "From the Resend webhook. You can add it later; until then the mailbox refuses deliveries.": {
     "sites": 1,
     "scope": [
@@ -81649,7 +81685,7 @@
     ]
   },
   "Hide the workspace": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -90902,15 +90938,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Jump to an artifact": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Jump to date": {
@@ -104949,15 +104976,6 @@
       "apps/web/components"
     ]
   },
-  "Name a record with @": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Name and code identify the checklist; the trigger decides when it starts on its own.": {
     "sites": 1,
     "scope": [
@@ -106518,7 +106536,7 @@
     ]
   },
   "New conversation": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -108184,23 +108202,13 @@
       "routes/agent-control"
     ]
   },
-  "No agents match this filter.": {
+  "No agents match “{0}”.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
-    ]
-  },
-  "No agents match “{0}”.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "No agents yet": {
@@ -109174,6 +109182,15 @@
       "routes/edi"
     ]
   },
+  "No decisions yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No decisions yet. The ledger starts with the first proposal someone decides on.": {
     "sites": 1,
     "scope": [
@@ -109219,15 +109236,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "No description yet.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "No detention in this window": {
@@ -114777,6 +114785,15 @@
       "routes/worker"
     ]
   },
+  "Nothing looked up yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing matched": {
     "sites": 1,
     "scope": [
@@ -116955,15 +116972,6 @@
     ],
     "areas": [
       "routes/journal-review"
-    ]
-  },
-  "Oldest {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Ollama": {
@@ -121048,14 +121056,13 @@
     ]
   },
   "Open {0}": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/carrier-sourcing",
-      "routes/desk",
       "routes/inbox",
       "routes/worker"
     ]
@@ -133222,6 +133229,15 @@
       "apps/web/components"
     ]
   },
+  "Press Tab to ask: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Press j to open the first one, and keep pressing it to work down the list.": {
     "sites": 1,
     "scope": [
@@ -134643,6 +134659,15 @@
       "routes/shipment"
     ]
   },
+  "Produced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Produces": {
     "sites": 1,
     "scope": [
@@ -135386,15 +135411,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Proposed: {0}": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Proposes only": {
@@ -144498,7 +144514,7 @@
     ]
   },
   "Rejected": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -144510,6 +144526,7 @@
       "packages/shared/components",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/desk",
       "routes/driver-expense",
       "routes/edi",
       "routes/formula-template",
@@ -146540,6 +146557,15 @@
       "domain/email"
     ]
   },
+  "Replying": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Replying. You can draft your next message.": {
     "sites": 1,
     "scope": [
@@ -148410,6 +148436,15 @@
       "apps/web/components"
     ]
   },
+  "Resize the workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Resolution": {
     "sites": 7,
     "scope": [
@@ -149588,7 +149623,7 @@
     ]
   },
   "Retired agent": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -150771,15 +150806,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Review decisions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Review draft invoices, confirm billing details, and post completed charges": {
@@ -157046,14 +157072,13 @@
     ]
   },
   "Search agents": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
-      "routes/desk"
+      "routes/agent-control"
     ]
   },
   "Search and retrieval": {
@@ -166577,7 +166602,7 @@
     ]
   },
   "Show more": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -166658,7 +166683,7 @@
     ]
   },
   "Show the rail": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -166802,13 +166827,12 @@
     ]
   },
   "Showing {0} of {1}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue",
-      "routes/desk"
+      "routes/billing-queue"
     ]
   },
   "Showing {0} of {1} {2}": {
@@ -167291,7 +167315,7 @@
     ]
   },
   "Signed in": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -167651,7 +167675,7 @@
     ]
   },
   "Skipped": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -167661,6 +167685,7 @@
       "domain/fuelpurchase",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -168143,15 +168168,6 @@
     ],
     "areas": [
       "packages/shared/components"
-    ]
-  },
-  "Some of this wording was written by a model and checked against the figures": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Some of what this changes is hidden by your data access.": {
@@ -174033,6 +174049,15 @@
       "routes/worker"
     ]
   },
+  "Tab": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Table": {
     "sites": 7,
     "scope": [
@@ -177479,7 +177504,7 @@
     ]
   },
   "The agents could not be loaded.": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -192929,7 +192954,7 @@
     ]
   },
   "Today": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -196459,7 +196484,7 @@
     ]
   },
   "Try again": {
-    "sites": 47,
+    "sites": 46,
     "scope": [
       "ts"
     ],
@@ -204447,13 +204472,14 @@
     ]
   },
   "Waiting": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/scheduling",
       "routes/shipment"
     ]
@@ -204640,24 +204666,6 @@
     "areas": [
       "routes/inbox",
       "service/briefingservice"
-    ]
-  },
-  "Waiting on you, your day and your agents": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "Waiting on your decision": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Waiting on your decision. Nothing has changed yet.": {
@@ -205145,7 +205153,7 @@
     ]
   },
   "Watchtower": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -208167,15 +208175,6 @@
       "routes/agent-control"
     ]
   },
-  "Where the agent came from": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Where the agent stands against its caps could not be read.": {
     "sites": 1,
     "scope": [
@@ -209972,6 +209971,15 @@
       "routes/agent-control"
     ]
   },
+  "With {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Withdraw": {
     "sites": 4,
     "scope": [
@@ -210296,7 +210304,7 @@
     ]
   },
   "Worked for {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -210888,7 +210896,7 @@
     ]
   },
   "Workspace": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -212769,15 +212777,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Your day": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Your details, sessions and security": {
@@ -218373,6 +218372,15 @@
       "apps/web/components"
     ]
   },
+  "to ask this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "to choose": {
     "sites": 1,
     "scope": [
@@ -220720,6 +220728,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {Open # more} other {Open # more}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {Ran # lookup} other {Ran # lookups}}": {
     "sites": 1,
     "scope": [
@@ -220826,15 +220843,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {and one more agent} other {and # more agents}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "{0, plural, one {gave up after # try} other {gave up after # tries}}": {
@@ -225956,6 +225964,15 @@
       "routes/shipment"
     ]
   },
+  "{0} {1} into {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} {1} on {2}": {
     "sites": 1,
     "scope": [
@@ -227883,6 +227900,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "⌘N": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   }
 }

@@ -648,19 +648,26 @@ Exactly one of the three parameters is given.
 ### Reads bunch into one table
 
 Every `get_*` call used to leave its own entity card, so checking five
-invoices put five cards beside the conversation. The loop remembers, per turn,
-the calls of each `get_*` tool that succeeded and hands them to the next call
-of that tool (`DispatchCall.Earlier`, carried to the observer as
-`ToolObservation.Earlier`). A first call still makes its card; a later one
-folds the turn's earlier cards of that tool into one `table_view` artifact
-keyed by the turn's first call of the tool (`payload.bunched`, with the calls
-it covers), adds its own row, and removes the cards it replaced. The cards a
-table replaced are deleted and withdrawn from the reader with `artifact_removed`, which the
-client's reducer drops from the live turn, so eleven reads leave one table beside the
-conversation and not eleven cards next to it. When the turn
-is saved, a card a table covers is not tied back to its message. A `get_*`
-result that is already rows and columns (`get_invoices`) is a table from the
-start. `Earlier` is activity input, not a workflow decision, so the recorded
+invoices put five cards beside the conversation, and every `search_*` or
+`list_*` call left its own table, so eleven searches for eleven shipments put
+eleven tables a row long in the pane. The loop remembers, per turn, the calls
+of each `get_*`, `list_*` and `search_*` tool that succeeded
+(`bunchedToolPrefixes` in `turn.go`) and hands them to the next call of that
+tool (`DispatchCall.Earlier`, carried to the observer as
+`ToolObservation.Earlier`). A first call still makes its card or table; a
+later one folds the turn's earlier artifacts of that tool into one
+`table_view` keyed by the turn's first call of the tool (`payload.bunched`,
+with the calls it covers) and removes what it replaced. Cards contribute
+their fields as a row each (`bunchTable`); tables are laid end to end
+(`mergeTables`), the columns the union in first-seen order, a row whose
+record is already in the table not repeated, and each search's terms kept in
+`searchedFor` so the footer still says what was looked for. Whatever a table
+replaced is deleted and withdrawn from the reader with `artifact_removed`,
+which the client's reducer drops from the live turn, so eleven reads leave
+one table beside the conversation. When the turn is saved, an artifact a
+table covers is not tied back to its message. A `get_*` result that is
+already rows and columns (`get_invoices`) is a table from the start.
+`Earlier` is activity input, not a workflow decision, so the recorded
 histories replay unchanged.
 
 ### What the reply may claim

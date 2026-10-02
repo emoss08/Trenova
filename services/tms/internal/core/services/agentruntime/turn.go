@@ -794,10 +794,19 @@ func (s *Service) FindFor(
 	return FoundTools{Content: answer.Content, Loaded: loaded, Found: answer.Found}
 }
 
-const getToolPrefix = "get_"
+// bunchedToolPrefixes name the read tools whose results the reader folds into
+// one artifact per turn and tool: a run of single-record gets becomes one
+// table, and so does a run of lists or searches of one thing.
+var bunchedToolPrefixes = []string{"get_", "list_", "search_"}
+
+func bunchesByTool(name string) bool {
+	return slices.ContainsFunc(bunchedToolPrefixes, func(prefix string) bool {
+		return strings.HasPrefix(name, prefix)
+	})
+}
 
 func (t *Turn) earlier(name string) []string {
-	if !strings.HasPrefix(name, getToolPrefix) {
+	if !bunchesByTool(name) {
 		return nil
 	}
 
@@ -805,7 +814,7 @@ func (t *Turn) earlier(name string) []string {
 }
 
 func (t *Turn) noteShown(call *serviceports.ToolCall) {
-	if !strings.HasPrefix(call.Name, getToolPrefix) || call.ID == "" {
+	if !bunchesByTool(call.Name) || call.ID == "" {
 		return
 	}
 	if t.shown == nil {

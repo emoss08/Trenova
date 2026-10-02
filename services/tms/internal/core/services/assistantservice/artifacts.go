@@ -148,8 +148,13 @@ func (r *artifactRecorder) observe(
 	if artifact == nil {
 		return nil, nil
 	}
-	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
-		return r.bunch(&observation, artifact)
+	if len(observation.Earlier) > 0 {
+		switch artifact.Kind {
+		case assistantartifact.KindEntityCard:
+			return r.bunch(&observation, artifact)
+		case assistantartifact.KindTableView:
+			return r.bunchTables(&observation, artifact)
+		}
 	}
 
 	saved, err := r.save(artifact)

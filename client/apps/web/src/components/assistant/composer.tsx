@@ -24,6 +24,7 @@ import {
   SquareIcon,
   XIcon,
 } from "lucide-react";
+import { BorderBeam } from "@trenova/shared/components/ui/border-beam";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
@@ -114,6 +115,14 @@ export type ComposerProps = {
 };
 
 /** How long the send control holds its confirmation after a message leaves. */
+/** The light round the composer while a reply is being written: the brand and its neighbours. */
+const REPLY_BEAM = [
+  "var(--accent-violet)",
+  "var(--brand)",
+  "color-mix(in oklch, var(--accent-sky) 60%, transparent)",
+  "color-mix(in oklch, var(--accent-sky) 8%, transparent)",
+] as const;
+
 const CONFIRM_MS = 320;
 
 /** How long a mention query waits for typing to settle before searching. */
@@ -614,6 +623,11 @@ export function Composer({
             "data-dragging:border-brand data-dragging:border-dashed",
           )}
         >
+          {/* While the agent writes, a light runs round the box, so the one
+              thing on the page that is working is seen to be working. */}
+          {active && !reduceMotion && (
+            <BorderBeam duration={5} borderWidth={1.5} colors={REPLY_BEAM} className="z-20" />
+          )}
           <AnimatePresence initial={false}>
             {commandsOpen && (
               <m.div

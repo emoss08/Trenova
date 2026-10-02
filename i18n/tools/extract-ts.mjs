@@ -16,7 +16,14 @@ const SOURCE_ROOTS = [
   "client/packages/shared/src",
 ];
 
-const SKIP_DIR = new Set(["node_modules", "generated", "__tests__", "__snapshots__", "dist"]);
+const SKIP_DIR = new Set([
+  "node_modules",
+  "generated",
+  "__tests__",
+  "__stories__",
+  "__snapshots__",
+  "dist",
+]);
 const SKIP_FILE = /\.(test|spec|stories)\.[jt]sx?$/;
 
 const PARSER_PLUGINS = ["typescript", "jsx", "decorators-legacy", "explicitResourceManagement"];

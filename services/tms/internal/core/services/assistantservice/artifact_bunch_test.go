@@ -225,3 +225,77 @@ func TestBunch_TheCardsATableReplacedAreWithdrawnFromTheReader(t *testing.T) {
 	require.Len(t, recorder.recorded, 1, "the turn reports the table, not the card it replaced")
 	assert.Equal(t, table.ID, recorder.recorded[0].ID)
 }
+
+func shipmentSearch(callID, pro string, earlier ...string) serviceports.ToolObservation {
+	return serviceports.ToolObservation{
+		Call: serviceports.ToolCall{ID: callID, Name: "search_shipments"},
+		Data: map[string]any{
+			"count":       1,
+			"columns":     []any{"id", "proNumber", "status", "customerName"},
+			"searchedFor": []any{"text matching " + pro},
+			"items": []any{
+				map[string]any{
+					"id":           "shp_" + pro,
+					"proNumber":    pro,
+					"status":       "ReadyToInvoice",
+					"customerName": "Peak Distributing",
+				},
+			},
+		},
+		Earlier: earlier,
+	}
+}
+
+// Eleven searches for eleven shipments used to be eleven tables a row long.
+// They are one table for the turn and the tool, keyed by its first call,
+// with every shipment once and each search's terms kept.
+func TestBunchTables_RepeatedSearchesOfOneToolBecomeOneTable(t *testing.T) {
+	t.Parallel()
+
+	recorder, repo, _ := bunchingRecorder(t)
+	_, err := recorder.observe(shipmentSearch("call_1", "S-1"))
+	require.NoError(t, err)
+	first := repo.current()[0]
+	assert.Equal(t, assistantartifact.KindTableView, first.Kind)
+	assert.Nil(t, first.Payload[payloadBunched], "one search is one table as it was")
+
+	shown, err := recorder.observe(shipmentSearch("call_2", "S-2", "call_1"))
+	require.NoError(t, err)
+	require.NotNil(t, shown)
+	assert.Equal(t, string(assistantartifact.KindTableView), shown.Kind)
+	assert.Equal(t, []pulid.ID{first.ID}, repo.deleted, "the first table is folded into the second")
+
+	_, err = recorder.observe(shipmentSearch("call_3", "S-2", "call_1", "call_2"))
+	require.NoError(t, err)
+
+	live := repo.current()
+	require.Len(t, live, 1, "one table for the turn and tool, not one per search")
+	table := live[0]
+	assert.Equal(t, "call_1", table.SourceToolCallID)
+	assert.Equal(t, "Shipments (2)", table.Title, "a shipment found twice is one row")
+	assert.Equal(t, true, table.Payload[payloadBunched])
+	assert.Equal(t, []string{"call_1", "call_2", "call_3"}, table.Payload[payloadCalls])
+	assert.Equal(t,
+		[]string{"text matching S-1", "text matching S-2"},
+		table.Payload["searchedFor"],
+	)
+	assert.Equal(t, 2, table.Payload[payloadRowCount])
+
+	rows := table.Payload[payloadRows].([]any)
+	pros := make([]any, 0, len(rows))
+	for _, row := range rows {
+		pros = append(pros, row.(map[string]any)["proNumber"])
+	}
+	assert.Equal(t, []any{"S-1", "S-2"}, pros)
+}
+
+func TestBunchTables_AnEarlierCallWithNoTableKeepsTheNewTable(t *testing.T) {
+	t.Parallel()
+
+	recorder, repo, _ := bunchingRecorder(t)
+	shown, err := recorder.observe(shipmentSearch("call_2", "S-2", "call_9"))
+	require.NoError(t, err)
+	assert.Equal(t, string(assistantartifact.KindTableView), shown.Kind)
+	assert.Empty(t, repo.deleted)
+	assert.Nil(t, repo.current()[0].Payload[payloadBunched])
+}
