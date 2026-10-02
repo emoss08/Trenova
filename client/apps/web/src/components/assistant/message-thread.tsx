@@ -19,9 +19,19 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { ArrowRightIcon, InfoIcon, XIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EASE_SETTLE } from "@/lib/motion";
+import { InfoIcon } from "lucide-react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { AgentStarters } from "./agent-starters";
 import { ApprovalDock } from "./approval-dock";
 import {
   approvalQueue,
@@ -67,7 +77,7 @@ import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
-import { AgentGutter } from "./voice/agent-gutter";
+import { AgentGutter, agentSpineColor } from "./voice/agent-gutter";
 import { replyWebSources } from "./web-sources";
 
 /**
@@ -85,6 +95,15 @@ const COMPOSER_CLEARANCE = 16;
  */
 const COMPOSER_FADE = 40;
 const COMPOSER_FADE_COMPACT = 24;
+
+/**
+ * How many of the rows a thread opens on rise one after another, from the
+ * top of the window down, and how far apart. The list is anchored to its
+ * end, so the last few rows are the ones in view; anything above them is
+ * off screen and rises at once if it is ever drawn.
+ */
+const OPENING_STAGGER_ROWS = 6;
+const OPENING_STAGGER_MS = 30;
 
 /** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
 const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
@@ -115,7 +134,7 @@ export function MessageThread({
   onStartNew,
   artifacts = NO_SAVED_ARTIFACTS,
   onOpenArtifact,
-  onLiveArtifact,
+  onLiveArtifacts,
   onWorkingChange,
   onNavigate,
   openingQuestion,
@@ -136,8 +155,12 @@ export function MessageThread({
   /** What the conversation produced, when the surface has a pane to open it in. */
   artifacts?: AssistantArtifact[];
   onOpenArtifact?: (id: string) => void;
-  /** Told each artifact a streaming turn announces, as it lands. */
-  onLiveArtifact?: (id: string) => void;
+  /**
+   * Told what a streaming turn has produced so far, each time that changes:
+   * an artifact landing, one revised, or one withdrawn because a later read
+   * folded it into a table. The newest is last.
+   */
+  onLiveArtifacts?: (artifacts: readonly AssistantArtifactEvent[]) => void;
   /** Told while a turn is running, for surfaces that show it outside the thread. */
   onWorkingChange?: (working: boolean) => void;
   /**
@@ -178,8 +201,17 @@ export function MessageThread({
   // is an arrival to this reader, and only arrivals rise into place: a page
   // of older history or a row scrolling back into the window does not.
   const openedAt = useRef<number | null>(null);
+  // The rows on screen when the thread opens rise into place once, one after
+  // another; a row scrolling back into the window later does not, and nor
+  // does a page of older history. Which rows have had their rise is kept by
+  // message id, so a window that redraws a row never repeats it.
+  const [openingDelays, setOpeningDelays] = useState<ReadonlyMap<string, number> | null>(null);
+  const risen = useRef(new Set<string>());
   if (openedAt.current === null && !history.isLoading) {
     openedAt.current = highestSequence(messages);
+  }
+  if (openingDelays === null && !history.isLoading) {
+    setOpeningDelays(openingStagger(messages.map((message) => message.id)));
   }
   const arrivals = useMemo(
     () => arrivedSince(openedAt.current ?? Number.POSITIVE_INFINITY, messages),
@@ -369,14 +401,15 @@ export function MessageThread({
   }, [isActive, onWorkingChange]);
   useEffect(() => () => onWorkingChange?.(false), [onWorkingChange]);
 
-  // An artifact announced mid-turn is handed to the pane at once, so the
-  // table opens while the sentence about it is still arriving.
-  const liveArtifactId = turn?.artifacts.at(-1)?.id ?? null;
+  // What the turn has produced is handed to the pane as it changes, so the
+  // table opens while the sentence about it is still arriving, grows as
+  // later reads join it, and the cards it replaced leave with it.
+  const liveArtifacts = turn?.artifacts ?? NO_ARTIFACTS;
   useEffect(() => {
-    if (liveArtifactId !== null) {
-      onLiveArtifact?.(liveArtifactId);
+    if (liveArtifacts.length > 0) {
+      onLiveArtifacts?.(liveArtifacts);
     }
-  }, [liveArtifactId, onLiveArtifact]);
+  }, [liveArtifacts, onLiveArtifacts]);
 
   // "Take me there": a page the assistant opened is followed as it arrives.
   useFollowNavigation(turn?.artifacts ?? NO_ARTIFACTS, onNavigate);
@@ -466,24 +499,24 @@ export function MessageThread({
   // The composer floats over the bottom of the thread, so the last message has
   // to be padded clear of it and the jump-to-latest button lifted above it. The
   // textarea grows to eight rows, which is why this is measured, not a constant.
-  const composerRef = useRef<HTMLDivElement>(null);
   const [composerHeight, setComposerHeight] = useState(0);
-
-  useEffect(() => {
-    const element = composerRef.current;
+  const composerObserver = useRef<ResizeObserver | null>(null);
+  // The read-only notice, the approval box and the composer are different
+  // elements, and one leaves on its own motion while the next arrives; the
+  // one on screen is the one measured, whichever element it is.
+  const composerRef = useCallback((element: HTMLDivElement | null) => {
+    composerObserver.current?.disconnect();
+    composerObserver.current = null;
     if (!element || typeof ResizeObserver === "undefined") {
       return;
     }
-
     const observer = new ResizeObserver(([entry]) => {
       setComposerHeight(entry.target.getBoundingClientRect().height);
     });
     observer.observe(element);
-
-    return () => observer.disconnect();
-    // The read-only notice, the approval box and the composer are different
-    // elements; the one on screen is the one measured.
-  }, [readOnly, showDock]);
+    composerObserver.current = observer;
+  }, []);
+  useEffect(() => () => composerObserver.current?.disconnect(), []);
 
   const threadFull = history.length.state === "full";
   const block = composerBlock({
@@ -555,10 +588,16 @@ export function MessageThread({
       }
       const { entry } = item;
       const arrived = arrivals.has(entry.message.id);
+      const delay = openingDelays?.get(entry.message.id);
       return {
         key: entry.message.id,
         render: () => (
-          <div className={cn(arrived && "animate-rise")}>
+          <RiseOnce
+            id={entry.message.id}
+            rise={arrived || delay !== undefined}
+            delay={delay ?? 0}
+            risen={risen.current}
+          >
             {entry.kind === "user" ? (
               <UserTurn
                 content={entry.message.content}
@@ -591,9 +630,10 @@ export function MessageThread({
                 ratable={answerIds.has(entry.message.id)}
                 sources={sourcesByMessage.get(entry.message.id)?.sources}
                 listsSources={sourcesByMessage.get(entry.message.id)?.answer}
+                threadId={thread.id}
               />
             )}
-          </div>
+          </RiseOnce>
         ),
       };
     });
@@ -604,13 +644,13 @@ export function MessageThread({
     for (const group of loosePlans) {
       list.push({
         key: `plan-${group.plan.id}`,
-        render: () => <PlanRecord plan={group.plan} steps={group.steps} />,
+        render: () => <PlanRecord plan={group.plan} steps={group.steps} threadId={thread.id} />,
       });
     }
     for (const proposal of looseProposals) {
       list.push({
         key: `proposal-${proposal.id}`,
-        render: () => <ProposalRecord proposal={proposal} />,
+        render: () => <ProposalRecord proposal={proposal} threadId={thread.id} />,
       });
     }
 
@@ -626,6 +666,7 @@ export function MessageThread({
     looseProposals,
     now,
     onOpenArtifact,
+    openingDelays,
     placements,
     sourcesByMessage,
     plansByMessage,
@@ -633,6 +674,7 @@ export function MessageThread({
     providerId,
     readOnly,
     send,
+    thread.id,
     timezone,
   ]);
 
@@ -751,92 +793,101 @@ export function MessageThread({
             0,
             composerHeight - (expanded ? COMPOSER_FADE : COMPOSER_FADE_COMPACT),
           )}
-          className={expanded ? "pl-4" : "pl-3"}
-          contentClassName={expanded ? "max-w-3xl pt-5" : "pt-4"}
+          // The gutter on the left sits outside the scroll element so the
+          // scrollbar stays at the edge; the one on the right is the column's own.
+          className={expanded ? "pl-4 lg:pl-6" : "pl-3"}
+          contentClassName={expanded ? "max-w-3xl pt-5 pr-4 lg:pr-6" : "pt-4 pr-2"}
           rowClassName={expanded ? "pb-5" : "pb-4"}
         />
       )}
 
-      {showDock ? (
-        <ApprovalDock
-          ref={composerRef}
-          threadId={thread.id}
-          entry={current.entry}
-          position={current.index + 1}
-          total={queue.length}
-          compact={!expanded}
-          canTell={canTell}
-          onDefer={deferAll}
-          onDecided={decided}
-        />
-      ) : block === "read-only" ? (
-        <ReadOnlyThreadNotice
-          ref={composerRef}
-          reason={thread.cannotContinueReason}
-          compact={!expanded}
-          notice={pill}
-        />
-      ) : (
-        <Composer
-          ref={composerRef}
-          onSend={(content, payload) => {
-            composerContext.clear();
-            void send(content, undefined, providerId, payload);
-          }}
-          onStop={stop}
-          active={isActive}
-          disabled={block !== null}
-          disabledReason={
-            block === "full"
-              ? t("This conversation is full. Start a new one to continue.")
-              : block === "agents-unavailable"
-                ? t(
-                    "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.",
-                  )
-                : t("This agent has been disabled, so the conversation cannot continue.")
-          }
-          notice={
-            <>
-              {pill}
-              {history.length.state !== "open" ? (
-                <ThreadLengthNotice
-                  state={history.length.state}
-                  total={history.total}
-                  limit={history.limit}
-                  onStartNew={onStartNew}
-                />
-              ) : switchNotice ? (
-                <ModelSwitchNotice notice={switchNotice} />
-              ) : null}
-            </>
-          }
-          placeholder={
-            agent
-              ? t("Message {0}…", agent.name)
-              : t("Ask about a shipment, a driver, or how to do something…")
-          }
-          agent={agent}
-          onPickAgent={onPickAgent}
-          pageContext={pageContext}
-          contextIncluded={contextIncluded}
-          onToggleContext={
-            page === undefined ? () => setContextIncluded((value) => !value) : undefined
-          }
-          providers={providers}
-          providerId={providerId}
-          onPickProvider={setProviderId}
-          suggestions={suggestions}
-          attachments={composerContext.attachments}
-          onAttachFiles={composerContext.attachFiles}
-          onRemoveAttachment={composerContext.removeAttachment}
-          mentions={composerContext.mentions}
-          onMentionsChange={composerContext.setMentions}
-          onSearchMentions={composerContext.searchMentions}
-          draft={draft}
-          onDraftChange={onDraftChange}
-          compact={!expanded}
-        />
-      )}
+      {/* The approval box leaves on its own motion while the composer takes
+          its place beneath it; the three stand-ins share one slot. */}
+      <AnimatePresence>
+        {showDock ? (
+          <ApprovalDock
+            key="dock"
+            ref={composerRef}
+            threadId={thread.id}
+            entry={current.entry}
+            position={current.index + 1}
+            total={queue.length}
+            compact={!expanded}
+            canTell={canTell}
+            onDefer={deferAll}
+            onDecided={decided}
+          />
+        ) : block === "read-only" ? (
+          <ReadOnlyThreadNotice
+            key="read-only"
+            ref={composerRef}
+            reason={thread.cannotContinueReason}
+            compact={!expanded}
+            notice={pill}
+          />
+        ) : (
+          <Composer
+            key="composer"
+            ref={composerRef}
+            onSend={(content, payload) => {
+              composerContext.clear();
+              void send(content, undefined, providerId, payload);
+            }}
+            onStop={stop}
+            active={isActive}
+            disabled={block !== null}
+            disabledReason={
+              block === "full"
+                ? t("This conversation is full. Start a new one to continue.")
+                : block === "agents-unavailable"
+                  ? t(
+                      "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.",
+                    )
+                  : t("This agent has been disabled, so the conversation cannot continue.")
+            }
+            notice={
+              <>
+                {pill}
+                {history.length.state !== "open" ? (
+                  <ThreadLengthNotice
+                    state={history.length.state}
+                    total={history.total}
+                    limit={history.limit}
+                    onStartNew={onStartNew}
+                  />
+                ) : switchNotice ? (
+                  <ModelSwitchNotice notice={switchNotice} />
+                ) : null}
+              </>
+            }
+            placeholder={
+              agent
+                ? t("Ask {0}…", agent.name)
+                : t("Ask about a shipment, a driver, or how to do something…")
+            }
+            agent={agent}
+            onPickAgent={onPickAgent}
+            pageContext={pageContext}
+            contextIncluded={contextIncluded}
+            onToggleContext={
+              page === undefined ? () => setContextIncluded((value) => !value) : undefined
+            }
+            providers={providers}
+            providerId={providerId}
+            onPickProvider={setProviderId}
+            suggestions={suggestions}
+            attachments={composerContext.attachments}
+            onAttachFiles={composerContext.attachFiles}
+            onRemoveAttachment={composerContext.removeAttachment}
+            mentions={composerContext.mentions}
+            onMentionsChange={composerContext.setMentions}
+            onSearchMentions={composerContext.searchMentions}
+            draft={draft}
+            onDraftChange={onDraftChange}
+            compact={!expanded}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 
@@ -858,10 +909,59 @@ export function MessageThread({
 }
 
 /**
- * The first thing a reader sees in a new conversation: what this agent is
- * for, what it can see, and a few questions it is good at. The questions are
- * a list, not chips: each is a sentence a person can read and choose, and
- * closing one is a decision that is remembered.
+ * A row rising into place, once. The rise is decided on the row's first
+ * draw and remembered by id, so a window that redraws the row later — the
+ * reader scrolling away and back — finds it already risen and leaves it.
+ */
+function RiseOnce({
+  id,
+  rise,
+  delay,
+  risen,
+  children,
+}: {
+  id: string;
+  rise: boolean;
+  delay: number;
+  risen: Set<string>;
+  children: ReactNode;
+}) {
+  const [animate] = useState(() => rise && !risen.has(id));
+  useEffect(() => {
+    if (animate) {
+      risen.add(id);
+    }
+  }, [animate, id, risen]);
+
+  return (
+    <div
+      className={cn(animate && "animate-rise")}
+      style={animate && delay > 0 ? { animationDelay: `${delay}ms` } : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** When each of the rows a thread opens on rises, by message id: the last few, top down. */
+export function openingStagger(ids: readonly string[]): ReadonlyMap<string, number> {
+  const delays = new Map<string, number>();
+  const first = Math.max(0, ids.length - OPENING_STAGGER_ROWS);
+  for (let index = first; index < ids.length; index += 1) {
+    delays.set(ids[index], (index - first) * OPENING_STAGGER_MS);
+  }
+  for (let index = 0; index < first; index += 1) {
+    delays.set(ids[index], 0);
+  }
+
+  return delays;
+}
+
+/**
+ * The first thing a reader sees in a new conversation: the agent's mark in
+ * its own light, what the agent is for, what it can see, and a few
+ * questions it is good at. The questions are chips that rise one after
+ * another, and closing one is a decision that is remembered.
  */
 function EmptyThread({
   agent,
@@ -880,18 +980,33 @@ function EmptyThread({
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-end gap-5 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-5 px-4 py-8">
       <m.div
-        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="flex flex-col gap-2"
+        transition={{ duration: 0.24, ease: EASE_SETTLE }}
+        className="flex flex-col items-center gap-3 text-center"
       >
-        <AgentAvatar size="lg" />
-        <p className="text-base font-semibold">
+        {/* The mark sits at the head of its own light, the way it does at
+            the head of a thread, so the room reads as this agent's before a
+            word is said. */}
+        <span
+          aria-hidden
+          className="ui-agent-glow flex h-16 w-40 items-start justify-center"
+          style={
+            {
+              "--agent-accent": agentSpineColor(agent),
+              "--agent-glow-rest": 0.9,
+              "--agent-glow-extent": "100%",
+            } as CSSProperties
+          }
+        >
+          <AgentAvatar size="xl" />
+        </span>
+        <h2 className="text-base font-semibold">
           {agent ? t("What do you need from {0}?", agent.name) : t("Start a conversation")}
-        </p>
-        <p className="text-muted-foreground text-sm leading-relaxed">
+        </h2>
+        <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
           {agent?.description ||
             t(
               "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.",
@@ -906,35 +1021,13 @@ function EmptyThread({
       </m.div>
 
       {suggestions.length > 0 && (
-        <ul className="flex flex-col gap-1">
-          {suggestions.map((suggestion, index) => (
-            <m.li
-              key={suggestion.prompt}
-              initial={reduceMotion ? false : { opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.18, delay: 0.05 + index * 0.04 }}
-              className="group/suggestion flex items-center gap-1"
-            >
-              <button
-                type="button"
-                onClick={() => onPick(suggestion.prompt)}
-                className="hover:bg-surface-hover ui-focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors"
-              >
-                <ArrowRightIcon className="text-muted-foreground size-3.5 shrink-0 transition-transform group-hover/suggestion:translate-x-0.5" />
-                <span className="min-w-0 flex-1 truncate">{t(suggestion.label)}</span>
-              </button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label={t("Dismiss suggestion")}
-                className="text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/suggestion:opacity-100 focus-visible:opacity-100"
-                onClick={() => onDismiss(suggestion.prompt)}
-              >
-                <XIcon className="size-3" />
-              </Button>
-            </m.li>
-          ))}
-        </ul>
+        <AgentStarters
+          agentKey={agent?.id ?? ""}
+          suggestions={suggestions}
+          onPick={(suggestion) => onPick(suggestion.prompt)}
+          onDismiss={(suggestion) => onDismiss(suggestion.prompt)}
+          className="justify-center"
+        />
       )}
     </div>
   );

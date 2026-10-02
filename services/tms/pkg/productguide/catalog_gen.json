@@ -1,5 +1,5 @@
 {
-  "version": "sha256:29b767b6ecdbee273d506f5202f72ebec352264d4c4bae59acdf7bfbcd6db7e7",
+  "version": "sha256:4a6e5096bcc482f96528b4595daa3e7774fcab6c435281c0efa9b828c145b891",
   "modules": [
     {
       "id": "home",
@@ -8090,7 +8090,7 @@
         "Desk"
       ],
       "description": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app.",
-      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box with the agent it will ask and a few starter questions that agent can answer, **Your day** (a short briefing), a link to changes **Waiting on your decision**, **Agents** (every agent you can ask, the ones you use most first, with **Search agents** and a filter for agents made from a template or built by hand), and **Where you left off** with your recent conversations. **Conversations** at the top lists your conversations, grouped by agent with pinned ones first, plus **New conversation** and links to **Watchtower** and **Decisions**.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in your conversation they wait in the approval box at its foot, and they are also listed on [Decisions](/desk/decisions).",
+      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box with the agent it will ask and a few starter questions that agent can answer, and below it **Your day** (a short briefing), a link to changes **Waiting on your decision**, and **Agents** (every agent you can ask, the ones you use most first, with **Search agents** and a filter for agents made from a template or built by hand). The rail down the left holds **New conversation**, **Search conversations**, links to **Today**, **Watchtower** and **Decisions**, and every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, the previous 7 days, the previous 30 days and older). The control at the top of the rail folds it away to make room (or press ⌘B / Ctrl+B), and the control at the top left of the page brings it back.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in your conversation they wait in the approval box at its foot, and they are also listed on [Decisions](/desk/decisions).",
       "requires": [
         {
           "resource": "assistant",
@@ -8148,8 +8148,8 @@
             "blank conversation"
           ],
           "steps": [
-            "Open [Desk](/desk) and select **Conversations** at the top.",
-            "Select **New conversation**, then search for and pick the agent."
+            "Open [Desk](/desk).",
+            "Select **New conversation** in the rail (if the rail is folded, open it with the control at the top left, or press ⌘B / Ctrl+B), then search for and pick the agent."
           ]
         },
         {
@@ -8161,7 +8161,7 @@
           ],
           "steps": [
             "Open [Desk](/desk).",
-            "Select a conversation under **Where you left off**, or find it in the left list with **Search conversations**."
+            "Select the conversation in the rail, where conversations are grouped by when they were last used with pinned ones first, or find it with **Search conversations**."
           ]
         },
         {

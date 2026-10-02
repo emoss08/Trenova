@@ -10,18 +10,24 @@ import type { ReactNode } from "react";
  */
 export function FloatingSlot({
   compact = false,
+  raised = false,
   className,
   children,
   ref,
 }: {
   compact?: boolean;
+  /** Stands above another slot while that one takes its place: the box on its way out. */
+  raised?: boolean;
   /** Classes for the column the slot's content stands in. */
   className?: string;
   children: ReactNode;
   ref?: React.Ref<HTMLDivElement>;
 }) {
   return (
-    <div ref={ref} className="pointer-events-none absolute inset-x-0 bottom-0 z-10">
+    <div
+      ref={ref}
+      className={cn("pointer-events-none absolute inset-x-0 bottom-0", raised ? "z-20" : "z-10")}
+    >
       <div
         aria-hidden
         className={cn(

@@ -135,10 +135,3 @@ func (t *tenderToRoutingGuideTool) Validate(
 ) error {
 	return previewValidates(ctx, t, &params)
 }
-
-func (t *transitionToInReviewTool) Validate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
-) error {
-	return previewValidates(ctx, t, &params)
-}

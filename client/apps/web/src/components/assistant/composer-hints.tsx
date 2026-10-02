@@ -45,6 +45,8 @@ export type ComposerHintsProps = {
   canMention: boolean;
   canAttach: boolean;
   canDictate: boolean;
+  /** Folds the line away: a narrow panel with nothing typed has no room to spend on it. */
+  collapsed?: boolean;
 };
 
 /**
@@ -63,11 +65,19 @@ export function ComposerHints({
   canMention,
   canAttach,
   canDictate,
+  collapsed = false,
 }: ComposerHintsProps) {
   const t = useT();
 
   return (
-    <div className="text-foreground-subtle flex h-6 items-center gap-2 pl-1 text-xs">
+    <div
+      data-collapsed={collapsed || undefined}
+      className={cn(
+        "text-foreground-subtle ease-settle flex items-center gap-2 overflow-hidden pl-1 text-xs transition-[height,opacity] duration-200",
+        collapsed ? "h-0 opacity-0" : "h-6 opacity-100",
+      )}
+      aria-hidden={collapsed || undefined}
+    >
       {/* Only a problem is announced; the keyboard hints change with focus
           and typing, and reading each one aloud would be noise. */}
       <span role="status" className="sr-only">

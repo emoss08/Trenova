@@ -377,9 +377,9 @@ writes:
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "mutation assignBillingQueueBiller":
-    tools: [assign_billing_queue_biller]
+    tools: [assign_billing_queue_biller, assign_billing_queue_billers]
   "mutation updateBillingQueueStatus":
-    tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
+    tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review, transition_items_to_in_review]
 
   # billingtransfer
   "mutation cancelBillingTransferRun":

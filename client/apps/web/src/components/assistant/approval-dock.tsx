@@ -6,7 +6,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
-import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -24,15 +23,11 @@ import {
 } from "@/lib/proposal-cache";
 import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  ChevronRightIcon,
-  ClockIcon,
-  PencilIcon,
-  TriangleAlertIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronRightIcon, PencilIcon, TriangleAlertIcon, type LucideIcon } from "lucide-react";
+import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { EASE_SETTLE, EASE_SWIFT } from "@/lib/motion";
 import type { ApprovalEntry } from "./approval-queue";
 import { ProposedBy } from "./decision-chrome";
 import { useDecisionFollowUp } from "./decision-follow-up";
@@ -108,12 +103,26 @@ export type ApprovalDockProps = {
  *
  * Keys: ⌘/Ctrl+Enter approves, Esc opens or closes the note to the agent,
  * Alt+L decides later. Enter alone never approves.
+ *
+ * It is drawn as the composer's stand-in: the same floating card, rising
+ * from where the box stood, with the title and the record on one line, the
+ * byline and the sentence under it, and the answers in one row on the right
+ * with Approve last, in ink.
  */
 export function ApprovalDock({ ref, compact = false, ...props }: ApprovalDockProps) {
+  const reduceMotion = useReducedMotion();
+
+  // On its way out the whole slot fades, above the composer arriving under
+  // it, so the box reads as lifting away from where the composer stands.
   return (
-    <FloatingSlot ref={ref} compact={compact}>
-      <DockEntry key={props.entry.key} compact={compact} {...props} />
-    </FloatingSlot>
+    <m.div
+      exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0 }}
+      transition={{ duration: 0.18, ease: EASE_SWIFT }}
+    >
+      <FloatingSlot ref={ref} compact={compact} raised>
+        <DockEntry key={props.entry.key} compact={compact} {...props} />
+      </FloatingSlot>
+    </m.div>
   );
 }
 
@@ -247,6 +256,7 @@ function DockFrame({
   onDefer,
 }: DockFrameProps) {
   const t = useT();
+  const reduceMotion = useReducedMotion();
   const titleId = useId();
   const noteId = useId();
   const sectionRef = useRef<HTMLElement>(null);
@@ -320,21 +330,28 @@ function DockFrame({
     }
   };
 
+  // The box rises from where the composer stood and settles; leaving, it
+  // sinks the same way. A decision arriving in a box already open takes
+  // the same rise, so the next one reads as the next one.
   return (
-    <section
+    <m.section
       ref={sectionRef}
       tabIndex={-1}
       aria-labelledby={titleId}
       data-slot="approval-dock"
       onKeyDown={onKeyDown}
-      className="ui-lift bg-card ring-foreground/10 flex min-w-0 flex-col overflow-hidden rounded-lg ring-1 outline-none"
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: 12 }}
+      transition={{ duration: 0.24, ease: EASE_SETTLE }}
+      className="ui-lift-whisper bg-card ring-foreground/10 flex min-w-0 flex-col overflow-hidden rounded-lg ring-1 outline-none"
     >
       <Collapsible
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         className="flex min-w-0 flex-col"
       >
-        <div className="flex min-w-0 flex-col gap-1 px-3 pt-2.5">
+        <div className="flex min-w-0 flex-col gap-1 px-3.5 pt-3">
           <header className="flex min-w-0 items-center gap-2">
             <h3 className="min-w-0 flex-1 truncate text-sm">
               <span id={titleId} className="font-semibold">
@@ -386,7 +403,7 @@ function DockFrame({
         <CollapsibleContent
           keepMounted={keepDetailsMounted}
           className={cn(
-            "scrollbar-overlay min-w-0 overflow-y-auto px-3 pt-1",
+            "scrollbar-overlay min-w-0 overflow-y-auto px-3.5 pt-1",
             compact ? "max-h-[min(40vh,20rem)]" : "max-h-[min(45vh,28rem)]",
           )}
         >
@@ -394,10 +411,10 @@ function DockFrame({
         </CollapsibleContent>
       </Collapsible>
 
-      <div className="flex min-w-0 flex-col gap-2 px-3 pt-2 empty:hidden">{attention}</div>
+      <div className="flex min-w-0 flex-col gap-2 px-3.5 pt-2 empty:hidden">{attention}</div>
 
       {note.telling && (
-        <div className="flex flex-col gap-1.5 px-3 pt-2">
+        <div className="flex flex-col gap-1.5 px-3.5 pt-2">
           <label htmlFor={noteId} className="text-foreground-muted text-xs">
             {t("What should the agent do instead? It reads this and answers here.")}
           </label>
@@ -426,86 +443,90 @@ function DockFrame({
         </div>
       )}
 
-      <footer className="mt-2 flex flex-wrap items-center gap-1.5 px-3 pb-2.5">
-        {note.telling ? (
-          <>
-            <Button
-              size="sm"
-              onClick={sendNote}
-              disabled={!canSend}
-              isLoading={pending === "tell"}
-              aria-keyshortcuts="Enter"
-            >
-              {t("Send to the agent")}
-              <KeyHint compact={compact}>↵</KeyHint>
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={closeNote}
-              disabled={busy}
-              aria-keyshortcuts="Escape"
-            >
-              {t("Cancel")}
-              <KeyHint compact={compact}>Esc</KeyHint>
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              size="sm"
-              onClick={approve}
-              disabled={busy || !approvable}
-              isLoading={pending === "approve"}
-              aria-keyshortcuts="Meta+Enter Control+Enter"
-            >
-              {approveLabel}
-              <KeyHint compact={compact}>{formatShortcut("↵")}</KeyHint>
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onReject}
-              disabled={busy}
-              isLoading={pending === "reject"}
-            >
-              {rejectLabel}
-            </Button>
-            {canTell && (
+      <footer className="mt-2 flex flex-wrap items-center gap-1.5 px-3.5 pb-3">
+        {onModify && !note.telling && (
+          <IconAction
+            icon={PencilIcon}
+            label={t("Modify")}
+            onClick={onModify}
+            disabled={busy || modifyDisabled}
+          />
+        )}
+        <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          {note.telling ? (
+            <>
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => note.open()}
+                onClick={closeNote}
                 disabled={busy}
                 aria-keyshortcuts="Escape"
               >
-                {t("Tell the agent")}
+                {t("Cancel")}
                 <KeyHint compact={compact}>Esc</KeyHint>
               </Button>
-            )}
-          </>
-        )}
-        <span className="ml-auto flex items-center gap-0.5">
-          {onModify && !note.telling && (
-            <IconAction
-              icon={PencilIcon}
-              label={t("Modify")}
-              onClick={onModify}
-              disabled={busy || modifyDisabled}
-            />
+              <Button
+                size="sm"
+                onClick={sendNote}
+                disabled={!canSend}
+                isLoading={pending === "tell"}
+                aria-keyshortcuts="Enter"
+              >
+                {t("Send to the agent")}
+                <KeyHint compact={compact}>↵</KeyHint>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onDefer}
+                disabled={busy}
+                aria-label={t("Decide later")}
+                aria-keyshortcuts="Alt+L"
+                className="text-foreground-muted"
+              >
+                {t("Later")}
+                <KeyHint compact={compact}>{formatAltShortcut("L")}</KeyHint>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onReject}
+                disabled={busy}
+                isLoading={pending === "reject"}
+              >
+                {rejectLabel}
+              </Button>
+              {canTell && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => note.open()}
+                  disabled={busy}
+                  aria-keyshortcuts="Escape"
+                >
+                  {compact ? t("Tell the agent") : t("Tell the agent instead")}
+                  <KeyHint compact={compact}>Esc</KeyHint>
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={approve}
+                disabled={busy || !approvable}
+                isLoading={pending === "approve"}
+                aria-keyshortcuts="Meta+Enter Control+Enter"
+              >
+                {approveLabel}
+                <KeyHint compact={compact}>{formatShortcut("↵")}</KeyHint>
+              </Button>
+            </>
           )}
-          <IconAction
-            icon={ClockIcon}
-            label={t("Decide later")}
-            shortcut={formatAltShortcut("L")}
-            keyshortcuts="Alt+L"
-            onClick={onDefer}
-            disabled={busy}
-          />
         </span>
       </footer>
       {overlay}
-    </section>
+    </m.section>
   );
 }
 
@@ -530,15 +551,11 @@ function KeyHint({ compact, children }: { compact: boolean; children: ReactNode 
 function IconAction({
   icon: Icon,
   label,
-  shortcut,
-  keyshortcuts,
   onClick,
   disabled,
 }: {
   icon: LucideIcon;
   label: string;
-  shortcut?: string;
-  keyshortcuts?: string;
   onClick: () => void;
   disabled: boolean;
 }) {
@@ -550,7 +567,6 @@ function IconAction({
             size="icon-sm"
             variant="ghost"
             aria-label={label}
-            aria-keyshortcuts={keyshortcuts}
             onClick={onClick}
             disabled={disabled}
             className="text-foreground-muted"
@@ -559,10 +575,7 @@ function IconAction({
       >
         <Icon className="size-3.5" />
       </TooltipTrigger>
-      <TooltipContent className="flex items-center gap-1.5">
-        {label}
-        {shortcut !== undefined && <Kbd>{shortcut}</Kbd>}
-      </TooltipContent>
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }
@@ -942,8 +955,8 @@ function PlanDock({
 
   return (
     <DockFrame
-      title={plan.title}
-      count={t("{0, plural, one {# change} other {# changes}}", plan.stepCount)}
+      title={t("{0, plural, one {Approve # change} other {Approve # changes}}", plan.stepCount)}
+      subject={plan.title}
       position={position}
       total={total}
       compact={compact}
@@ -1129,8 +1142,8 @@ function BatchDock({
 
   return (
     <DockFrame
-      title={title}
-      count={t("{0, plural, one {# change} other {# changes}}", proposals.length)}
+      title={t("{0, plural, one {Approve # change} other {Approve # changes}}", proposals.length)}
+      subject={title}
       position={position}
       total={total}
       compact={compact}

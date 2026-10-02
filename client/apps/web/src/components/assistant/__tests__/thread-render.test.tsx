@@ -13,7 +13,7 @@ import {
   assistantThreadSchema,
   type AssistantMessage,
 } from "@/types/assistant";
-import { MessageThread } from "../message-thread";
+import { MessageThread, openingStagger } from "../message-thread";
 import { advanceTurn, initialTurnState, type TurnState } from "../turn-stream";
 
 type Row = { key: string; render: () => ReactNode };
@@ -185,5 +185,29 @@ describe("the thread while a reply streams", () => {
       expect(after.get(key)?.render, key).toBe(before.get(key)?.render);
     }
     expect(after.get("turn-in-progress")?.render).not.toBe(before.get("turn-in-progress")?.render);
+  });
+});
+
+/**
+ * The rows a thread opens on rise one after another from the top of the
+ * window down. The list is anchored to its end, so the last few rows are
+ * the ones in view; the rest are above the window and rise at once.
+ */
+describe("openingStagger", () => {
+  it("staggers the last rows top down and leaves the rest without a wait", () => {
+    const delays = openingStagger(["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8"]);
+
+    expect(delays.get("m1")).toBe(0);
+    expect(delays.get("m2")).toBe(0);
+    expect(delays.get("m3")).toBe(0);
+    expect(delays.get("m4")).toBe(30);
+    expect(delays.get("m8")).toBe(150);
+  });
+
+  it("starts from the first row of a short thread", () => {
+    const delays = openingStagger(["m1", "m2"]);
+
+    expect(delays.get("m1")).toBe(0);
+    expect(delays.get("m2")).toBe(30);
   });
 });

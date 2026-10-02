@@ -1,13 +1,14 @@
 import {
-  ArtifactChrome,
   ArtifactKindIcon,
   ArtifactNotice,
   ARTIFACT_KINDS,
 } from "@/components/assistant/voice/artifact-chrome";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { EASE_SETTLE } from "@/lib/motion";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useDeskStore } from "@/stores/desk-store";
+import type { LiveArtifacts } from "../desk-layout";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -16,24 +17,27 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { PanelRightCloseIcon, PinIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useId, useMemo } from "react";
+import { PanelRightCloseIcon } from "lucide-react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArtifactFilmstrip } from "./artifact-filmstrip";
+import { orderArtifacts } from "./artifact-order";
+import { ArtifactSwitcher } from "./artifact-switcher";
+import { ComposedViewArtifact } from "./composed-view-artifact";
+import { DecisionRequestArtifact } from "./decision-request-artifact";
 import { DocumentArtifact } from "./document-artifact";
 import { EmailDraftArtifact } from "./email-draft-artifact";
 import { EntityCardArtifact } from "./entity-card-artifact";
-import { DecisionRequestArtifact } from "./decision-request-artifact";
 import { NavigationArtifact } from "./navigation-artifact";
 import { PlanArtifact } from "./plan-artifact";
+import { RateExplanationArtifact } from "./rate-explanation-artifact";
 import { ReportPreviewArtifact } from "./report-preview-artifact";
 import { ReportRunArtifact } from "./report-run-artifact";
-import { ComposedViewArtifact } from "./composed-view-artifact";
-import { RateExplanationArtifact } from "./rate-explanation-artifact";
 import { RunDiffArtifact } from "./run-diff-artifact";
 import { TableViewArtifact } from "./table-view-artifact";
 
-/** The house settle curve, for the tab indicator that motion drives. */
-const EASE_SETTLE = [0.16, 1, 0.3, 1] as const;
+/** How long the header wears the mark of a new artifact landing, before it fades. */
+const ARRIVAL_MS = 1200;
 
 /** The artifact to show when the person has not picked one: the newest. */
 export function defaultArtifactId(
@@ -66,33 +70,60 @@ function artifactPromises(t: TranslateFn) {
   ] as const;
 }
 
+/** The pane's top line when there is no artifact to switch between: its name and the way to hide it. */
+function PaneHeader({ onClose }: { onClose: () => void }) {
+  const t = useT();
+
+  return (
+    <div className="border-border-subtle flex h-12 shrink-0 items-center gap-2 border-b pr-1.5 pl-3">
+      <span className="text-sm font-medium">{t("Artifacts")}</span>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-foreground-subtle hover:text-foreground ml-auto"
+              aria-label={t("Hide artifacts")}
+              onClick={onClose}
+            />
+          }
+        >
+          <PanelRightCloseIcon className="size-4" />
+        </TooltipTrigger>
+        <TooltipContent>{t("Hide artifacts")}</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
 function ArtifactsEmpty() {
   const t = useT();
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col justify-center gap-5 px-5 py-6">
-      <div className="animate-rise space-y-1">
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-5 py-8">
+      <div className="animate-rise max-w-80 space-y-1 text-center">
         <p className="text-sm font-semibold">{t("Nothing here yet")}</p>
-        <p className="text-muted-foreground max-w-80 text-xs leading-relaxed">
+        <p className="text-muted-foreground text-xs leading-relaxed">
           {t(
             "What a turn makes — a table, a report, a record, a draft — opens here beside the conversation.",
           )}
         </p>
       </div>
 
-      <ul className="divide-border-subtle flex flex-col divide-y">
+      <ul className="grid w-full max-w-88 grid-cols-2 gap-2">
         {artifactPromises(t).map(({ kind, example }, index) => (
           <li
             key={kind}
-            style={{ animationDelay: `${60 + index * 45}ms` }}
-            className="animate-land flex items-center gap-3 py-2.5"
+            style={{ animationDelay: `${80 + index * 50}ms` }}
+            className="animate-materialise bg-sunken flex min-w-0 flex-col gap-2 rounded-lg p-3"
           >
-            <span className="bg-sunken text-foreground-subtle flex size-7 shrink-0 items-center justify-center rounded-md">
+            <span className="bg-card text-foreground-muted ring-foreground/10 flex size-7 shrink-0 items-center justify-center rounded-md ring-1">
               <ArtifactKindIcon kind={kind} className="size-3.5" />
             </span>
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0">
               <span className="block text-xs font-medium">{t(ARTIFACT_KINDS[kind].label)}</span>
-              <span className="text-muted-foreground block truncate text-xs">
+              <span className="text-muted-foreground mt-0.5 line-clamp-2 block text-xs leading-snug">
                 {t("“{0}”", example)}
               </span>
             </span>
@@ -103,33 +134,31 @@ function ArtifactsEmpty() {
   );
 }
 
-/** The pane's shape while the list loads: the tab row and one framed artifact. */
+/** The pane's shape while the list loads: the switcher, the strip and one body. */
 function ArtifactsLoading() {
   const t = useT();
 
   return (
-    <div
-      role="status"
-      aria-label={t("Loading artifacts")}
-      className="flex min-h-0 flex-1 flex-col gap-2 px-3 pb-3"
-    >
-      <div className="flex gap-1">
-        <Skeleton className="h-7 w-28 rounded-full" />
-        <Skeleton className="h-7 w-20 rounded-full" />
+    <div role="status" aria-label={t("Loading artifacts")} className="flex min-h-0 flex-1 flex-col">
+      <div className="border-border-subtle flex h-12 shrink-0 items-center gap-2 border-b pr-1.5 pl-2">
+        <Skeleton className="size-7 rounded-md" />
+        <div className="flex flex-1 flex-col gap-1.5">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-2 w-24" />
+        </div>
+        <Skeleton className="h-3 w-8" />
+        <Skeleton className="size-7 rounded-md" />
+        <Skeleton className="size-7 rounded-md" />
       </div>
-      <div className="border-border flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
-        <div className="border-border-subtle flex h-12 items-center gap-2.5 border-b px-3">
-          <Skeleton className="size-7 rounded-md" />
-          <div className="flex flex-1 flex-col gap-1.5">
-            <Skeleton className="h-3 w-40" />
-            <Skeleton className="h-2 w-24" />
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 p-3">
-          <Skeleton className="h-6" />
-          <Skeleton className="h-6" />
-          <Skeleton className="h-6 w-3/4" />
-        </div>
+      <div className="border-border-subtle flex h-10 shrink-0 items-center gap-1 border-b px-2">
+        <Skeleton className="size-8 rounded-md" />
+        <Skeleton className="size-8 rounded-md" />
+        <Skeleton className="size-8 rounded-md" />
+      </div>
+      <div className="flex flex-col gap-2 p-4">
+        <Skeleton className="h-6" />
+        <Skeleton className="h-6" />
+        <Skeleton className="h-6 w-3/4" />
       </div>
     </div>
   );
@@ -178,26 +207,30 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
 }
 
 /**
- * What the conversation produced, beside it. A row of what there is, pinned
- * first, and the one that is open rendered whole underneath. The transcript
- * refers to these; this is where they are read.
+ * What the conversation produced, beside it. A switcher over everything
+ * there is, pinned first and newest first, a strip of their marks, and the
+ * one that is open rendered whole underneath. The transcript refers to
+ * these; this is where they are read.
  */
 export function ArtifactsPane({
   threadId,
-  liveArtifactIds,
+  liveArtifacts,
   onClose,
   className,
 }: {
   threadId: string;
-  /** Artifacts a streaming turn has announced, so the pane opens the newest as it lands. */
-  liveArtifactIds: readonly string[];
+  /** What a streaming turn has produced so far, so the pane opens the newest as it lands and follows the set. */
+  liveArtifacts: LiveArtifacts;
   onClose: () => void;
   className?: string;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
   const artifactsQuery = useQuery(queries.assistant.artifacts(threadId));
-  const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
+  const artifacts = useMemo(
+    () => orderArtifacts(artifactsQuery.data?.results ?? []),
+    [artifactsQuery.data],
+  );
 
   const remembered = useDeskStore((state) => state.activeArtifactByThread[threadId]);
   const setActiveArtifact = useDeskStore((state) => state.setActiveArtifact);
@@ -205,17 +238,37 @@ export function ArtifactsPane({
   const active = artifacts.find((artifact) => artifact.id === activeId) ?? null;
 
   // A turn that just produced something opens it: the reader asked for a
-  // table and the table is what they are waiting for.
-  const newestLive = liveArtifactIds.at(-1);
+  // table and the table is what they are waiting for. Every revision of the
+  // set re-reads the list, so a table that grew with a later read shows its
+  // new rows and a card that read folded away leaves the list. The header
+  // marks the landing for a moment, once, and then rests.
+  const newestLive = liveArtifacts.ids.at(-1);
+  const liveRevision = liveArtifacts.revision;
   useEffect(() => {
-    if (!newestLive) {
+    if (liveRevision === 0) {
       return;
     }
     void queryClient.invalidateQueries({
       queryKey: queries.assistant.artifacts(threadId).queryKey,
     });
-    setActiveArtifact(threadId, newestLive);
-  }, [newestLive, queryClient, setActiveArtifact, threadId]);
+    if (newestLive) {
+      setActiveArtifact(threadId, newestLive);
+    }
+  }, [liveRevision, newestLive, queryClient, setActiveArtifact, threadId]);
+  // A revision the header has not yet settled on is one that just landed;
+  // the revision the pane mounted with is already settled, so reopening a
+  // conversation mid-turn does not flash.
+  const [settledRevision, setSettledRevision] = useState(liveRevision);
+  const arrived =
+    liveRevision !== 0 && newestLive !== undefined && liveRevision !== settledRevision;
+  useEffect(() => {
+    if (!arrived) {
+      return;
+    }
+    const timer = window.setTimeout(() => setSettledRevision(liveRevision), ARRIVAL_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [arrived, liveRevision]);
 
   const pinMutation = useApiMutation({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
@@ -229,171 +282,80 @@ export function ArtifactsPane({
     (id: string) => setActiveArtifact(threadId, id),
     [setActiveArtifact, threadId],
   );
+  const pin = useCallback(
+    (id: string, pinned: boolean) => pinMutation.mutate({ id, pinned }),
+    [pinMutation],
+  );
 
   const reduceMotion = useReducedMotion();
-  const idBase = useId();
-  const panelId = `${idBase}-panel`;
-  const tabId = (artifactId: string) => `${idBase}-tab-${artifactId}`;
-
-  // The arrows walk the tabs, as a tab list does everywhere else.
-  const onTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const count = artifacts.length;
-    if (count === 0) {
-      return;
-    }
-    const current = Math.max(
-      0,
-      artifacts.findIndex((artifact) => artifact.id === activeId),
-    );
-    let next: number;
-    switch (event.key) {
-      case "ArrowRight":
-        next = (current + 1) % count;
-        break;
-      case "ArrowLeft":
-        next = (current - 1 + count) % count;
-        break;
-      case "Home":
-        next = 0;
-        break;
-      case "End":
-        next = count - 1;
-        break;
-      default:
-        return;
-    }
-    event.preventDefault();
-    const target = artifacts[next];
-    open(target.id);
-    document.getElementById(tabId(target.id))?.focus();
-  };
 
   return (
     <aside
       data-slot="artifacts-pane"
       aria-label={t("Artifacts")}
-      className={cn("bg-desk-canvas flex min-h-0 min-w-0 flex-col", className)}
+      className={cn("bg-card flex min-h-0 min-w-0 flex-col", className)}
     >
-      <div className="flex h-11 shrink-0 items-center gap-2 pr-1.5 pl-3">
-        <span className="text-sm font-medium">{t("Artifacts")}</span>
-        {artifacts.length > 0 && (
-          <span className="text-muted-foreground text-xs tabular-nums">{artifacts.length}</span>
-        )}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground hover:text-foreground ml-auto"
-                aria-label={t("Hide artifacts")}
-                onClick={onClose}
-              />
-            }
-          >
-            <PanelRightCloseIcon className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent>{t("Hide artifacts")}</TooltipContent>
-        </Tooltip>
-      </div>
-
       {artifactsQuery.isLoading ? (
         <ArtifactsLoading />
       ) : artifactsQuery.isError ? (
-        <div className="px-3">
-          <Alert size="sm" variant="destructive">
-            <AlertDescription>
-              {t("This conversation's artifacts could not be loaded.")}
-            </AlertDescription>
-            <AlertAction>
-              <Button variant="outline" size="xs" onClick={() => void artifactsQuery.refetch()}>
-                {t("Try again")}
-              </Button>
-            </AlertAction>
-          </Alert>
-        </div>
-      ) : artifacts.length === 0 ? (
-        <ArtifactsEmpty />
+        <>
+          <PaneHeader onClose={onClose} />
+          <div className="p-3">
+            <Alert size="sm" variant="destructive">
+              <AlertDescription>
+                {t("This conversation's artifacts could not be loaded.")}
+              </AlertDescription>
+              <AlertAction>
+                <Button variant="outline" size="xs" onClick={() => void artifactsQuery.refetch()}>
+                  {t("Try again")}
+                </Button>
+              </AlertAction>
+            </Alert>
+          </div>
+        </>
+      ) : active === null ? (
+        <>
+          <PaneHeader onClose={onClose} />
+          <ArtifactsEmpty />
+        </>
       ) : (
         <>
-          <div className="scrollbar-overlay shrink-0 overflow-x-auto">
-            <div
-              role="tablist"
-              aria-label={t("Artifacts")}
-              onKeyDown={onTabKeyDown}
-              className="flex gap-0.5 px-3 pb-2"
-            >
-              {artifacts.map((artifact, index) => {
-                const selected = artifact.id === activeId;
-
-                return (
-                  <button
-                    key={artifact.id}
-                    type="button"
-                    role="tab"
-                    id={tabId(artifact.id)}
-                    aria-selected={selected}
-                    aria-controls={panelId}
-                    tabIndex={selected ? 0 : -1}
-                    onClick={() => open(artifact.id)}
-                    // Staggered so a conversation's output reads as a row
-                    // being dealt rather than a block appearing.
-                    style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-                    className={cn(
-                      "animate-land ui-focus-ring relative flex h-7 max-w-56 shrink-0 items-center",
-                      "rounded-full px-2.5 text-xs transition-colors",
-                      selected
-                        ? "text-foreground"
-                        : "text-foreground-muted hover:text-foreground hover:bg-surface-hover",
-                    )}
-                  >
-                    {/* One indicator that slides to the tab picked, so the
-                        eye follows the choice instead of hunting for it. */}
-                    {selected && (
-                      <m.span
-                        layoutId={`artifact-tab-${threadId}`}
-                        aria-hidden
-                        transition={
-                          reduceMotion ? { duration: 0 } : { duration: 0.24, ease: EASE_SETTLE }
-                        }
-                        className="bg-card ring-foreground/10 absolute inset-0 rounded-full ring-1"
-                      />
-                    )}
-                    <span className="relative flex min-w-0 items-center gap-1.5">
-                      {artifact.pinned && <PinIcon className="size-3 shrink-0" />}
-                      <ArtifactKindIcon kind={artifact.kind} className="size-3 shrink-0" />
-                      <span className="truncate">{artifact.title}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div
-            id={panelId}
-            role="tabpanel"
-            aria-labelledby={active ? tabId(active.id) : undefined}
-            className="flex min-h-0 flex-1 flex-col px-3 pb-3"
-          >
-            {active && (
-              <ArtifactChrome
-                // Keyed on the artifact so opening one replays the arrival:
-                // it comes in from the conversation that made it rather than
-                // fading in where it stands, which is what makes the two
-                // columns read as one motion instead of two panes.
+          <ArtifactSwitcher
+            artifacts={artifacts}
+            active={active}
+            arrived={arrived}
+            onOpen={open}
+            onPin={pin}
+            onClose={onClose}
+          />
+          <ArtifactFilmstrip
+            artifacts={artifacts}
+            activeId={active.id}
+            threadId={threadId}
+            onOpen={open}
+          />
+          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {/* Keyed on the artifact so opening one replays the arrival: the
+                one leaving lifts away and the one picked settles into place,
+                which is what makes the switch read as turning a page rather
+                than repainting a panel. */}
+            <AnimatePresence mode="wait" initial={false}>
+              <m.div
                 key={active.id}
-                kind={active.kind}
-                title={active.title}
-                status={active.status}
-                createdAt={active.createdAt}
-                pinned={active.pinned}
-                onPin={(pinned) => pinMutation.mutate({ id: active.id, pinned })}
-                className="animate-materialise min-h-0 flex-1"
+                data-slot="artifact-body"
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={
+                  reduceMotion
+                    ? { opacity: 0, transition: { duration: 0 } }
+                    : { opacity: 0, y: -8, transition: { duration: 0.12, ease: EASE_SETTLE } }
+                }
+                transition={{ duration: 0.22, ease: EASE_SETTLE }}
+                className="flex min-h-0 min-w-0 flex-1 flex-col"
               >
                 <ArtifactBody artifact={active} />
-              </ArtifactChrome>
-            )}
+              </m.div>
+            </AnimatePresence>
           </div>
         </>
       )}

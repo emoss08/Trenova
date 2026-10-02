@@ -47,6 +47,8 @@ type recordBatch struct {
 	past        string
 	shared      []string
 	single      singleRecordTool
+	// needsPerson is the refusal a run from anything but a person's approval
+	// gets; nil when the single tool may run on its own, so the twin may too.
 	needsPerson error
 	unchanged   string
 	labels      recordLabels
@@ -289,7 +291,7 @@ func (b *recordBatch) Execute(
 	if err := guardExecute(tool, *params); err != nil {
 		return nil, err
 	}
-	if !params.ApprovedFromProposal() {
+	if b.needsPerson != nil && !params.ApprovedFromProposal() {
 		return nil, b.needsPerson
 	}
 

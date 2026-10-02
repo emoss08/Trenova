@@ -11,6 +11,7 @@ import {
   summaryCount,
   toolEffect,
   toolRefusal,
+  workSummary,
   type ToolStep,
 } from "../activity";
 import type { ToolExchange } from "../thread-view";
@@ -257,6 +258,50 @@ describe("describeActivity", () => {
 
     expect(result.phrase).toBe("Looked up Peak Distributing");
     expect(result.failure).toBe("1 failed");
+  });
+});
+
+/**
+ * Once a reply is saved its work folds into one line: how many steps it took,
+ * how many did not go through, and how long the measured ones added up to.
+ */
+describe("workSummary", () => {
+  it("counts the steps and adds up their time", () => {
+    expect(
+      workSummary(
+        [
+          step({ name: "get_customer", durationSeconds: 4 }),
+          step({ name: "update_shipment", durationSeconds: 8 }),
+        ],
+        t,
+      ),
+    ).toBe("Worked through 2 steps · 12s");
+  });
+
+  it("says one step in the singular and leaves out a time nobody measured", () => {
+    expect(workSummary([step({ name: "get_customer" })], t)).toBe("Worked through 1 step");
+  });
+
+  it("adds up only the steps that were timed", () => {
+    expect(
+      workSummary(
+        [step({ name: "get_customer" }), step({ name: "get_shipment", durationSeconds: 3 })],
+        t,
+      ),
+    ).toBe("Worked through 2 steps · 3s");
+  });
+
+  it("counts the steps that did not go through", () => {
+    expect(
+      workSummary(
+        [
+          step({ name: "get_customer", durationSeconds: 1 }),
+          step({ name: "update_shipment", status: "failed", durationSeconds: 2 }),
+          step({ name: "update_worker", status: "failed", verdict: "denied", durationSeconds: 2 }),
+        ],
+        t,
+      ),
+    ).toBe("Worked through 3 steps · 2 didn't go through · 5s");
   });
 });
 

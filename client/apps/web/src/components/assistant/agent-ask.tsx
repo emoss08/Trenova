@@ -87,7 +87,7 @@ export function AgentAsk({
   };
 
   const hero = variant === "hero";
-  const placeholder = t("Ask {0} anything about your operation", agent.name);
+  const placeholder = t("Ask {0}…", agent.name);
   const ready = question.trim() !== "" && !disabled;
 
   return (
@@ -96,7 +96,7 @@ export function AgentAsk({
         onSubmit={onSubmit}
         aria-busy={disabled || undefined}
         className={cn(
-          "ui-field ui-container-focus-ring rounded-surface flex flex-col",
+          "ui-field ui-lift-whisper ui-container-focus-ring rounded-surface flex flex-col",
           hero ? "gap-1 p-2" : "gap-1 p-1.5",
           disabled && "opacity-70",
         )}

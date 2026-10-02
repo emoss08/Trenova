@@ -57,6 +57,25 @@ func billingQueueFor(
 			return item, nil
 		}).
 		Maybe()
+	billing.EXPECT().
+		AssignBiller(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			req *serviceports.AssignBillerRequest,
+			_ *serviceports.RequestActor,
+		) (*billingqueue.BillingQueueItem, error) {
+			if err := guard.write(); err != nil {
+				return nil, err
+			}
+			if err := billingqueueservice.PlanAssignBiller(
+				item, req.BillerID, timeutils.NowUnix(),
+			); err != nil {
+				return nil, err
+			}
+
+			return item, nil
+		}).
+		Maybe()
 
 	return billing
 }
@@ -86,10 +105,14 @@ func TestTransitionToInReview_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Equal(t, "Exception", fieldByPath(t, change, "status").Before)
 	assert.Equal(t, "InReview", fieldByPath(t, change, "status").After)
 	assert.True(t, fieldByPath(t, change, "reviewStartedAt").Volatile)
+	biller := fieldByPath(t, change, "assignedBillerId")
+	require.NotNil(t, biller.AfterRef, "an item with nobody on it goes to the person asking")
+	assert.Equal(t, params.Actor.UserID, biller.AfterRef.ID)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	requireUpdateParity(t, change, &before, item,
-		toolpreview.Only(inReviewFields...), toolpreview.Volatile(inReviewVolatileFields...))
+		toolpreview.Only(inReviewFields...), toolpreview.Volatile(inReviewVolatileFields...),
+		toolpreview.WithRefs(decisionRefs))
 }
 
 // An unattended run is an agent principal, and moving an item into review is

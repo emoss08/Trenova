@@ -17,7 +17,7 @@ import {
   FlaskConicalIcon,
   HourglassIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { currentActivity, type ToolStep } from "./activity";
 import { useArtifactOpener } from "./artifact-opener";
@@ -39,6 +39,7 @@ import {
 import { ToolActivity } from "./tool-activity";
 import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
 import { delegatedAnswerId } from "@/components/ai-feedback/feedback-targets";
+import { agentSpineColor } from "./voice/agent-gutter";
 import { ArtifactKindIcon } from "./voice/artifact-chrome";
 import { WorkingDot } from "./voice/working-dot";
 
@@ -101,58 +102,73 @@ export function DelegateStep({
   return (
     <li className={cn("min-w-0", live && "animate-land")}>
       <Collapsible open={open} onOpenChange={setOpen}>
-        <CollapsibleTrigger
-          disabled={!expandable}
-          className={cn(
-            "group/handoff ui-focus-ring -mx-1.5 flex w-[calc(100%+0.75rem)] min-w-0 items-center gap-2 rounded-control px-1.5 py-1 text-left text-xs transition-colors",
-            "hover:bg-surface-hover disabled:cursor-default disabled:hover:bg-transparent",
-          )}
+        <div
+          data-slot="hand-off"
+          data-working={running}
+          className="ui-agent-glow border-border bg-card relative flex min-w-0 flex-col overflow-hidden rounded-surface border"
+          style={
+            {
+              "--agent-accent": agentSpineColor(identity),
+              // The other agent's light at the head of its own card: faint
+              // at rest so the card says whose, full while it is working.
+              "--agent-glow-rest": 0.4,
+              "--agent-glow-extent": "96px",
+            } as CSSProperties
+          }
         >
-          <AgentTile agent={identity} size="xs" />
-          <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
-            <span
-              key={headline}
-              className={cn(
-                "min-w-0 shrink-0 truncate",
-                view.outcome === "declined" ? "text-danger" : "text-foreground",
-                live && changed && "animate-rise",
-              )}
-            >
-              {headline}
-            </span>
-            {view.task !== "" && (
-              <span className="text-foreground-subtle min-w-0 flex-1 truncate">{view.task}</span>
+          <CollapsibleTrigger
+            disabled={!expandable}
+            className={cn(
+              "group/handoff ui-inset-focus-ring flex w-full min-w-0 items-center gap-2.5 px-2.5 py-2 text-left text-xs transition-colors",
+              "disabled:cursor-default",
             )}
-          </span>
-          {settled && step.durationSeconds !== null && (
-            <span className="text-foreground-subtle shrink-0 font-mono text-2xs tabular-nums">
-              {formatWorkDuration(step.durationSeconds)}
-            </span>
-          )}
-          {expandable && (
-            <ChevronRightIcon
-              aria-hidden
-              className={cn(
-                "text-foreground-subtle size-3 shrink-0 transition-[rotate]",
-                open && "rotate-90",
+          >
+            <AgentTile agent={identity} size="md" />
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span
+                key={headline}
+                className={cn(
+                  "min-w-0 truncate font-medium",
+                  view.outcome === "declined" ? "text-danger" : "text-foreground",
+                  live && changed && "animate-rise",
+                )}
+              >
+                {headline}
+              </span>
+              {view.task !== "" && (
+                <span className="text-foreground-subtle min-w-0 truncate">{view.task}</span>
               )}
-            />
-          )}
-        </CollapsibleTrigger>
+            </span>
+            {settled && step.durationSeconds !== null && (
+              <span className="text-foreground-subtle text-2xs shrink-0 font-mono tabular-nums">
+                {formatWorkDuration(step.durationSeconds)}
+              </span>
+            )}
+            {expandable && (
+              <ChevronRightIcon
+                aria-hidden
+                className={cn(
+                  "text-foreground-subtle size-3.5 shrink-0 transition-[rotate]",
+                  open && "rotate-90",
+                )}
+              />
+            )}
+          </CollapsibleTrigger>
 
-        <div className="flex min-w-0 flex-col gap-1 pl-7">
-          {running ? (
-            <HandOffProgress view={view} />
-          ) : (
-            <HandOffSummary view={view} arrived={live && changed} />
+          <div className="flex min-w-0 flex-col gap-1 px-2.5 pl-12 empty:hidden">
+            {running ? (
+              <HandOffProgress view={view} />
+            ) : (
+              <HandOffSummary view={view} arrived={live && changed} />
+            )}
+          </div>
+
+          {expandable && (
+            <CollapsibleContent className="ease-settle h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0">
+              <HandOffDetails view={view} running={running} answerId={answerId} />
+            </CollapsibleContent>
           )}
         </div>
-
-        {expandable && (
-          <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-settle data-ending-style:h-0 data-starting-style:h-0">
-            <HandOffDetails view={view} running={running} answerId={answerId} />
-          </CollapsibleContent>
-        )}
       </Collapsible>
     </li>
   );
@@ -177,7 +193,7 @@ function HandOffProgress({ view }: { view: DelegateView }) {
       <div
         role="status"
         aria-live="polite"
-        className="text-foreground-muted flex h-6 min-w-0 items-center gap-2 text-xs"
+        className="text-foreground-muted flex h-6 min-w-0 items-center gap-2 pb-1 text-xs"
       >
         <WorkingDot working still className="mx-0.75" />
         <span key={label} className="animate-rise min-w-0 truncate">
@@ -369,7 +385,7 @@ function HandOffDetails({
   const t = useT();
 
   return (
-    <div className="flex min-w-0 flex-col gap-2.5 pt-1 pb-2 pl-7 text-xs">
+    <div className="border-border-subtle mx-2.5 mb-2 flex min-w-0 flex-col gap-2.5 border-t pt-2.5 text-xs">
       {view.task !== "" && (
         <section className="flex min-w-0 flex-col gap-1">
           <h4 className="text-foreground-subtle font-medium">{t("Task")}</h4>
@@ -387,7 +403,9 @@ function HandOffDetails({
       {view.reply.trim() !== "" && (
         <section className="flex min-w-0 flex-col gap-1">
           <div className="flex min-w-0 items-center gap-2">
-            <h4 className="text-foreground-subtle font-medium">{t("Its answer")}</h4>
+            <h4 className="text-foreground-subtle font-medium">
+              {view.agentName !== "" ? t("What {0} found", view.agentName) : t("What it found")}
+            </h4>
             {answerId !== null && (
               <FeedbackControl
                 target={{ targetType: "DelegatedAnswer", targetId: answerId }}

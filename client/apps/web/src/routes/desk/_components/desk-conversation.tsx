@@ -63,7 +63,7 @@ export function DeskConversation({
       onStartNew={onStartNew}
       artifacts={artifacts}
       onOpenArtifact={openArtifact}
-      onLiveArtifact={desk.noteLiveArtifact}
+      onLiveArtifacts={desk.noteLiveArtifacts}
       onWorkingChange={desk.setWorking}
       onNavigate={carryConversation}
       openingQuestion={opening.openingQuestion}

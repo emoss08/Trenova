@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -497,8 +498,11 @@ func (t *assignBillerTool) SearchTerms() []string {
 
 func (t *assignBillerTool) Description() string {
 	return "Assign the biller who reviews a billing queue item. An item still waiting for " +
-		"review moves into review with them. Take the biller from the item's customer's " +
-		"default biller or the person who asked; never guess a user id."
+		"review moves into review with them. Leave billerId out to assign the person who " +
+		"asked, which is what \"assign me\", \"start reviewing\" or \"get these ready to " +
+		"post\" means; name a biller only when they named one or the customer's default " +
+		"biller is on another of its items. Never guess a user id. For more than one item, " +
+		"call assign_billing_queue_billers once with all of them instead."
 }
 
 func (t *assignBillerTool) ParamSchema() map[string]any {
@@ -510,16 +514,53 @@ func (t *assignBillerTool) ParamSchema() map[string]any {
 				toolschema.KeyDescription: "The billing queue item, from " +
 					"list_billing_queue_items or get_billing_queue_item.",
 			},
-			paramBillerID: map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The biller's user id: the assignedBillerId " +
-					"get_billing_queue_item shows on this or another of the customer's items, " +
-					"or the person who asked. Never guess one.",
-			},
+			paramBillerID: billerProperty(),
 		},
-		toolschema.KeyRequired:             []string{paramBillingQueueItemID, paramBillerID},
+		toolschema.KeyRequired:             []string{paramBillingQueueItemID},
 		toolschema.KeyAdditionalProperties: false,
 	}
+}
+
+func billerProperty() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeString,
+		toolschema.KeyDescription: "The biller's user id, when the person named one or " +
+			"the customer's default biller is the assignedBillerId get_billing_queue_item " +
+			"shows on another of its items. Leave it out to assign the person who asked. " +
+			"Never guess one.",
+	}
+}
+
+// billerOf reads the biller a call names, or the person asking when it names
+// none. An unattended agent is nobody's biller, so a call from one that
+// names nobody is refused with the parameter it needs.
+func billerOf(params *serviceports.ToolExecuteParams) (biller pulid.ID, asker bool, err error) {
+	named, ok, err := optionalPulid(params.Params, paramBillerID)
+	if err != nil {
+		return pulid.Nil, false, errortypes.NewValidationError(
+			paramBillerID, errortypes.ErrInvalid, "billerId is not a valid user id",
+		)
+	}
+	if ok {
+		return named, false, nil
+	}
+	if params.Actor == nil || params.Actor.IsAgent() || params.Actor.UserID.IsNil() {
+		return pulid.Nil, false, errortypes.NewValidationError(
+			paramBillerID, errortypes.ErrRequired,
+			"billerId is required: nobody is asking in person, so name the biller",
+		)
+	}
+
+	return params.Actor.UserID, true, nil
+}
+
+// billerClause says who the item goes to in a preview's summary.
+func billerClause(asker bool) string {
+	if asker {
+		return "the person who asked"
+	}
+
+	return "a biller"
 }
 
 func (t *assignBillerTool) Policy() serviceports.ToolPolicy {
@@ -555,7 +596,7 @@ func (t *assignBillerTool) request(
 	if err != nil {
 		return nil, err
 	}
-	billerID, err := requirePulid(params.Params, paramBillerID)
+	billerID, _, err := billerOf(params)
 	if err != nil {
 		return nil, err
 	}

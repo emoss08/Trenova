@@ -1,11 +1,16 @@
-import { toneVar } from "@/components/kpi/tone";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
-import { runDiffFrom, type RunDiffChangeArtifact } from "./artifact-payloads";
+import {
+  runDiffFrom,
+  type RunDiffChangeArtifact,
+  type RunDiffMeasureArtifact,
+} from "./artifact-payloads";
+import { ArtifactScroll, ArtifactSection } from "./artifact-section";
 
 const RUN_STAMP = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" } as const;
 
@@ -38,22 +43,35 @@ function changeLabel(kind: string, t: (s: string) => string): string {
 }
 
 /** A signed figure reads as a direction; an unsigned one has to be read twice. */
-function deltaTone(delta: string): "success" | "danger" | "muted" {
+function deltaClass(delta: string): string {
   if (delta.startsWith("-")) {
-    return "danger";
+    return "text-danger";
   }
   if (delta === "" || delta === "0") {
-    return "muted";
+    return "text-muted-foreground";
   }
 
-  return "success";
+  return "text-success";
+}
+
+function Movement({ measure }: { measure: RunDiffMeasureArtifact }) {
+  return (
+    <span className="tabular-nums">
+      <span className="text-muted-foreground">{measure.before}</span>
+      <span aria-hidden className="text-muted-foreground px-1">
+        →
+      </span>
+      <span>{measure.after}</span>
+      <span className={cn("pl-1.5", deltaClass(measure.delta))}>{measure.delta}</span>
+    </span>
+  );
 }
 
 function ChangeRow({ change, t }: { change: RunDiffChangeArtifact; t: (s: string) => string }) {
   const variant = CHANGE_TONE[change.kind] ?? "neutral";
 
   return (
-    <div className="border-border/60 space-y-1 border-b py-2">
+    <li className="flex flex-col gap-1 px-3 py-2">
       <div className="flex items-start justify-between gap-2">
         <span className="text-xs">{change.keyValues.filter(Boolean).join(" · ")}</span>
         <Badge variant={variant}>{changeLabel(change.kind, t)}</Badge>
@@ -64,23 +82,14 @@ function ChangeRow({ change, t }: { change: RunDiffChangeArtifact; t: (s: string
       {change.measures.map((measure) => (
         <div key={measure.column} className="flex items-baseline justify-between gap-2 text-xs">
           <span className="text-muted-foreground">{measure.label}</span>
-          <span className="tabular-nums">
-            {change.kind === "Changed" ? (
-              <>
-                <span className="text-muted-foreground">{measure.before}</span>
-                <span className="text-muted-foreground px-1">→</span>
-                <span>{measure.after}</span>
-                <span className="pl-1.5" style={{ color: toneVar(deltaTone(measure.delta)) }}>
-                  {measure.delta}
-                </span>
-              </>
-            ) : (
-              measure.after
-            )}
-          </span>
+          {change.kind === "Changed" ? (
+            <Movement measure={measure} />
+          ) : (
+            <span className="tabular-nums">{measure.after}</span>
+          )}
         </div>
       ))}
-    </div>
+    </li>
   );
 }
 
@@ -107,9 +116,9 @@ export function RunDiffArtifact({ artifact }: { artifact: AssistantArtifact }) {
   ].filter((count) => count.value > 0);
 
   return (
-    <div className="scrollbar-overlay flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+    <ArtifactScroll>
       <div className="space-y-0.5">
-        <p className="text-xs font-medium">
+        <p className="text-sm font-semibold">
           {diff.after.reportName !== "" ? diff.after.reportName : t("Report")}
         </p>
         <p className="text-muted-foreground text-xs">
@@ -119,20 +128,18 @@ export function RunDiffArtifact({ artifact }: { artifact: AssistantArtifact }) {
             formatUnixInUserTimezone(diff.before.generatedAt, RUN_STAMP),
           )}
         </p>
-        <p className="text-muted-foreground text-xs">
-          {t("Matched on {0}", diff.keys.join(", "))}
-        </p>
+        <p className="text-muted-foreground text-xs">{t("Matched on {0}", diff.keys.join(", "))}</p>
       </div>
 
       {counts.length > 0 && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
+        <ul className="grid grid-cols-3 gap-2">
           {counts.map((count) => (
-            <span key={count.label} className="text-xs">
-              <span className="tabular-nums">{count.value}</span>
-              <span className="text-muted-foreground pl-1">{count.label}</span>
-            </span>
+            <li key={count.label} className="bg-sunken flex flex-col rounded-lg px-3 py-2">
+              <span className="text-base font-semibold tabular-nums">{count.value}</span>
+              <span className="text-muted-foreground text-xs">{count.label}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {/* A row cap on either side means a row reported gone may simply be past
@@ -147,36 +154,39 @@ export function RunDiffArtifact({ artifact }: { artifact: AssistantArtifact }) {
         </Alert>
       )}
 
-      {diff.changes.length === 0 ? (
-        <p className="text-muted-foreground text-xs">
-          {diff.note !== "" ? diff.note : t("Nothing moved between these two runs.")}
-        </p>
-      ) : (
-        <div>
-          {diff.changes.map((change, index) => (
-            <ChangeRow key={`${change.key}-${index}`} change={change} t={t} />
-          ))}
-        </div>
-      )}
+      <ArtifactSection
+        title={t("Changes")}
+        hint={diff.changes.length > 0 ? diff.changes.length : undefined}
+        inset={false}
+      >
+        {diff.changes.length === 0 ? (
+          <p className="text-muted-foreground px-3 py-2.5 text-xs">
+            {diff.note !== "" ? diff.note : t("Nothing moved between these two runs.")}
+          </p>
+        ) : (
+          <ul className="divide-border-subtle flex flex-col divide-y">
+            {diff.changes.map((change, index) => (
+              <ChangeRow key={`${change.key}-${index}`} change={change} t={t} />
+            ))}
+          </ul>
+        )}
+      </ArtifactSection>
 
       {diff.totals.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-xs font-medium">{t("Totals")}</p>
-          {diff.totals.map((total) => (
-            <div key={total.column} className="flex items-baseline justify-between gap-2 text-xs">
-              <span className="text-muted-foreground">{total.label}</span>
-              <span className="tabular-nums">
-                <span className="text-muted-foreground">{total.before}</span>
-                <span className="text-muted-foreground px-1">→</span>
-                <span>{total.after}</span>
-                <span className="pl-1.5" style={{ color: toneVar(deltaTone(total.delta)) }}>
-                  {total.delta}
-                </span>
-              </span>
-            </div>
-          ))}
-        </div>
+        <ArtifactSection title={t("Totals")} inset={false}>
+          <ul className="divide-border-subtle flex flex-col divide-y">
+            {diff.totals.map((total) => (
+              <li
+                key={total.column}
+                className="flex items-baseline justify-between gap-2 px-3 py-1.5 text-xs"
+              >
+                <span className="text-muted-foreground">{total.label}</span>
+                <Movement measure={total} />
+              </li>
+            ))}
+          </ul>
+        </ArtifactSection>
       )}
-    </div>
+    </ArtifactScroll>
   );
 }

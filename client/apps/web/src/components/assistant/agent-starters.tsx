@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon, XIcon } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { Suggestion } from "./suggestions";
 
@@ -11,6 +11,8 @@ export type AgentStartersProps = {
   disabled?: boolean;
   size?: "comfortable" | "compact";
   onPick: (suggestion: Suggestion) => void;
+  /** Lets a question be put away for good; offered as a small cross on the chip. */
+  onDismiss?: (suggestion: Suggestion) => void;
   className?: string;
 };
 
@@ -28,6 +30,7 @@ export function AgentStarters({
   disabled = false,
   size = "comfortable",
   onPick,
+  onDismiss,
   className,
 }: AgentStartersProps) {
   const t = useT();
@@ -48,6 +51,7 @@ export function AgentStarters({
               ease: [0.16, 1, 0.3, 1],
               delay: reduceMotion ? 0 : index * 0.035,
             }}
+            className="group/starter relative flex items-center"
           >
             <button
               type="button"
@@ -59,6 +63,7 @@ export function AgentStarters({
                 "ring-foreground/10 hover:bg-surface-hover hover:text-foreground ring-1 transition-colors",
                 "disabled:pointer-events-none disabled:opacity-50",
                 size === "compact" ? "h-6 px-2.5 text-xs" : "h-7 px-3 text-sm",
+                onDismiss && "group-focus-within/starter:pr-6 group-hover/starter:pr-6",
               )}
             >
               <span className="max-w-72 truncate">{t(suggestion.label)}</span>
@@ -72,6 +77,20 @@ export function AgentStarters({
                 )}
               />
             </button>
+            {onDismiss && (
+              <button
+                type="button"
+                disabled={disabled}
+                aria-label={t("Dismiss “{0}”", t(suggestion.label))}
+                onClick={() => onDismiss(suggestion)}
+                className={cn(
+                  "ui-focus-ring text-foreground-subtle hover:text-foreground hover:bg-surface-active absolute right-1.5 flex size-4 items-center justify-center rounded-full transition-[opacity,color,background-color]",
+                  "opacity-0 group-hover/starter:opacity-100 focus-visible:opacity-100",
+                )}
+              >
+                <XIcon aria-hidden className="size-2.5" />
+              </button>
+            )}
           </m.li>
         ))}
       </AnimatePresence>

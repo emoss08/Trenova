@@ -181,8 +181,14 @@ func (t *assignBillerTool) Preview(
 		return nil, err
 	}
 
+	_, asker, err := billerOf(&params)
+	if err != nil {
+		return nil, err
+	}
+
 	return plan.preview(fmt.Sprintf(
-		"Would assign a biller to billing queue item %s (now %s).",
+		"Would assign %s to billing queue item %s (now %s).",
+		billerClause(asker),
 		item.Number,
 		item.Status,
 	)), nil

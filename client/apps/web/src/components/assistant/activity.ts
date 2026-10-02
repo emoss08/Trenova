@@ -1,4 +1,5 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatWorkDuration } from "@/lib/ai-usage-format";
 import type { AssistantMessage, DelegateReport, ToolEffect, ToolVerdict } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
@@ -865,6 +866,37 @@ function webLine(group: ActivityGroup, t: TranslateFn): ActivityLine {
     failure,
     state: "done",
   };
+}
+
+/**
+ * A saved reply's work in one line: how many steps it took, how many did not
+ * go through, and how long the timed ones added up to. The time is left out
+ * when no step was timed, rather than said as nothing.
+ */
+export function workSummary(steps: readonly ToolStep[], t: TranslateFn): string {
+  let failed = 0;
+  let seconds = 0;
+  let timed = false;
+  for (const step of steps) {
+    if (step.status === "failed") {
+      failed += 1;
+    }
+    if (step.durationSeconds !== null) {
+      seconds += step.durationSeconds;
+      timed = true;
+    }
+  }
+  const parts = [
+    t("{0, plural, one {Worked through # step} other {Worked through # steps}}", steps.length),
+  ];
+  if (failed > 0) {
+    parts.push(t("{0} didn't go through", failed));
+  }
+  if (timed) {
+    parts.push(formatWorkDuration(seconds));
+  }
+
+  return parts.join(" · ");
 }
 
 /**

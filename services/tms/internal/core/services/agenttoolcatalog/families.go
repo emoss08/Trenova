@@ -50,6 +50,13 @@ var families = [...][]string{
 	{"accept_field", "accept_all_confident", "set_field_value"},
 	{"list_locations", "set_stop_location", "set_stop_schedule", "create_location"},
 	{"list_formula_templates", "set_required_field"},
+	{
+		"list_billing_queue_items",
+		"get_billing_queue_items",
+		"assign_billing_queue_billers",
+		"transition_items_to_in_review",
+	},
+	{"approve_billing_queue_items", "post_invoices", "send_invoices", "get_invoices"},
 }
 
 // indexFamilies maps each family member to the others, in family order.

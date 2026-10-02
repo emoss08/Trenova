@@ -3,6 +3,7 @@ import { RequestedDecisionRecords } from "@/components/assistant/decision-record
 import { ArtifactNotice } from "@/components/assistant/voice/artifact-chrome";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ArtifactScroll } from "./artifact-section";
 
 /**
  * A decision the assistant asked the person to make. The decision lives on
@@ -25,8 +26,8 @@ export function DecisionRequestArtifact({ artifact }: { artifact: AssistantArtif
   }
 
   return (
-    <div className="animate-rise flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+    <ArtifactScroll>
       <RequestedDecisionRecords request={request} threadId={artifact.threadId} />
-    </div>
+    </ArtifactScroll>
   );
 }

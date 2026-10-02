@@ -98,7 +98,7 @@ describe("DelegateStep", () => {
     renderStep(false);
 
     expect(screen.getByText("What it did")).toBeTruthy();
-    expect(screen.getByText("Its answer")).toBeTruthy();
+    expect(screen.getByText("What Shipment Desk found")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Shipment Desk/, expanded: true })).toBeTruthy();
   });
 

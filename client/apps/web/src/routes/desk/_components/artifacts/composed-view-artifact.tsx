@@ -6,6 +6,7 @@ import { ArrowUpRightIcon, TriangleAlertIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { composedViewFrom } from "./artifact-payloads";
+import { ArtifactScroll, ArtifactSection } from "./artifact-section";
 
 /**
  * A view somebody described, as something to open.
@@ -27,45 +28,53 @@ export function ComposedViewArtifact({ artifact }: { artifact: AssistantArtifact
   }
 
   return (
-    <div className="animate-rise flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-      <p className="text-sm leading-relaxed">{view.explanation}</p>
+    <ArtifactScroll>
+      {view.explanation !== "" && <p className="text-sm leading-relaxed">{view.explanation}</p>}
 
       {view.terms.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
-          {view.terms.map((term) => (
-            <li
-              key={term}
-              className="bg-sunken text-foreground-muted rounded-full px-2 py-0.5 text-xs"
-            >
-              {term}
-            </li>
-          ))}
-        </ul>
+        <ArtifactSection
+          title={t("Narrowed to")}
+          hint={
+            view.filterCount > 0
+              ? t("{0, plural, one {# filter} other {# filters}}", view.filterCount)
+              : undefined
+          }
+        >
+          <ul className="flex flex-wrap gap-1.5">
+            {view.terms.map((term) => (
+              <li
+                key={term}
+                className="bg-sunken text-foreground-muted rounded-full px-2 py-0.5 text-xs"
+              >
+                {term}
+              </li>
+            ))}
+          </ul>
+        </ArtifactSection>
       )}
 
       {/* A view that quietly lost a condition looks like an answer, so what it
           could not express sits next to what it could. */}
       {view.unresolved.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-warning flex items-center gap-1.5 text-xs font-medium">
-            <TriangleAlertIcon className="size-3" />
-            {t("Not included")}
-          </p>
-          <ul className="space-y-1.5">
+        <ArtifactSection title={t("Not included")} inset={false}>
+          <ul className="divide-border-subtle flex flex-col divide-y">
             {view.unresolved.map((entry) => (
-              <li key={entry.phrase} className="text-xs">
-                <span className="block">{entry.phrase}</span>
-                <span className="text-muted-foreground block">{entry.reason}</span>
+              <li key={entry.phrase} className="flex items-start gap-2 px-3 py-2 text-xs">
+                <TriangleAlertIcon aria-hidden className="text-warning mt-px size-3 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block">{entry.phrase}</span>
+                  <span className="text-muted-foreground block">{entry.reason}</span>
+                </span>
               </li>
             ))}
           </ul>
-        </div>
+        </ArtifactSection>
       )}
 
       <Button size="sm" className="self-start" render={<Link to={view.path} />}>
         <ArrowUpRightIcon className="size-3.5" />
         {t("Open the table")}
       </Button>
-    </div>
+    </ArtifactScroll>
   );
 }

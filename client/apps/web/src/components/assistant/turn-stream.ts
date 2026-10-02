@@ -498,6 +498,12 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       return { ...state, artifacts };
     }
 
+    case "artifact_removed":
+      return {
+        ...state,
+        artifacts: state.artifacts.filter((artifact) => artifact.id !== event.data.id),
+      };
+
     case "thread":
       return { ...state, thread: event.data };
 

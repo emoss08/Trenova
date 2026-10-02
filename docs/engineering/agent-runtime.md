@@ -654,7 +654,10 @@ of that tool (`DispatchCall.Earlier`, carried to the observer as
 `ToolObservation.Earlier`). A first call still makes its card; a later one
 folds the turn's earlier cards of that tool into one `table_view` artifact
 keyed by the turn's first call of the tool (`payload.bunched`, with the calls
-it covers), adds its own row, and removes the cards it replaced. When the turn
+it covers), adds its own row, and removes the cards it replaced. The cards a
+table replaced are deleted and withdrawn from the reader with `artifact_removed`, which the
+client's reducer drops from the live turn, so eleven reads leave one table beside the
+conversation and not eleven cards next to it. When the turn
 is saved, a card a table covers is not tied back to its message. A `get_*`
 result that is already rows and columns (`get_invoices`) is a table from the
 start. `Earlier` is activity input, not a workflow decision, so the recorded
@@ -1144,7 +1147,10 @@ decisions, posting and sending), their tiers, and why approving, canceling, post
 sending always stop at a proposal a person approves, are described in
 [agent-billing-tools.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-billing-tools.md). An agent principal may move a billing
 queue item into review, onto hold, into exception or back to operations; the queue refuses
-it every other status.
+it every other status. The steps over a set of items (`assign_billing_queue_billers`,
+`transition_items_to_in_review`, `approve_billing_queue_items`, `post_invoices`,
+`send_invoices`) are one call and one card each, and a biller nobody named is the person
+asking; see [proposal-previews.md](proposal-previews.md#bulk-twins-of-single-record-tools).
 
 Three chat templates that act as the person hold the money tools: the billing assistant (up
 to an invoice in the customer's hands, and its corrections), the receivables assistant (what

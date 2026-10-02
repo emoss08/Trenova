@@ -11,6 +11,7 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useMemo } from "react";
 import { emailDraftFrom } from "./artifact-payloads";
+import { ArtifactScroll, ArtifactSection, ArtifactWell } from "./artifact-section";
 
 /**
  * An outbound message as a draft a person can read whole: who it goes to,
@@ -43,7 +44,7 @@ export function EmailDraftArtifact({ artifact }: { artifact: AssistantArtifact }
   const rendered = preview !== undefined && previewSendsMessage(preview);
 
   return (
-    <div className="animate-rise flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+    <ArtifactScroll>
       {previewQuery.isPending && artifact.proposalId !== "" ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-4 w-1/2" />
@@ -53,29 +54,30 @@ export function EmailDraftArtifact({ artifact }: { artifact: AssistantArtifact }
       ) : rendered ? (
         <ProposalPreview preview={preview} density="full" />
       ) : (
-        <>
-          <DescriptionList layout="inline">
-            <DescriptionItem label={t("Kind")}>{humanizeToolName(draft.tool)}</DescriptionItem>
-            {draft.to.length > 0 && (
-              <DescriptionItem label={t("To")}>
-                <span className="break-words">{draft.to.join(", ")}</span>
-              </DescriptionItem>
-            )}
-            {draft.subject !== "" && (
-              <DescriptionItem label={t("Subject")}>{draft.subject}</DescriptionItem>
-            )}
-          </DescriptionList>
+        <ArtifactSection title={t("Message")} hint={humanizeToolName(draft.tool)}>
+          <div className="flex flex-col gap-3">
+            <DescriptionList layout="inline" className="text-xs">
+              {draft.to.length > 0 && (
+                <DescriptionItem label={t("To")} valueClassName="text-xs">
+                  <span className="break-words">{draft.to.join(", ")}</span>
+                </DescriptionItem>
+              )}
+              {draft.subject !== "" && (
+                <DescriptionItem label={t("Subject")} valueClassName="text-xs">
+                  {draft.subject}
+                </DescriptionItem>
+              )}
+            </DescriptionList>
 
-          {draft.body !== "" ? (
-            <div className="bg-sunken rounded-lg px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
-              {draft.body}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              {t("The message is written from the organization's template when it is sent.")}
-            </p>
-          )}
-        </>
+            {draft.body !== "" ? (
+              <ArtifactWell>{draft.body}</ArtifactWell>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {t("The message is written from the organization's template when it is sent.")}
+              </p>
+            )}
+          </div>
+        </ArtifactSection>
       )}
 
       {draft.rationale !== "" && (
@@ -91,6 +93,6 @@ export function EmailDraftArtifact({ artifact }: { artifact: AssistantArtifact }
           {t("The proposal behind this draft is no longer in the conversation.")}
         </p>
       )}
-    </div>
+    </ArtifactScroll>
   );
 }

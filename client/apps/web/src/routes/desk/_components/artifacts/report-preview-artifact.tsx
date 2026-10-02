@@ -3,6 +3,7 @@ import { ResultGrid } from "@/routes/reports/_components/result-grid";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useMemo } from "react";
 import { reportPreviewFrom } from "./artifact-payloads";
+import { ArtifactFooter } from "./artifact-section";
 
 /**
  * A preview as a table: the same grid the report builder uses, so a column
@@ -22,7 +23,7 @@ export function ReportPreviewArtifact({ artifact }: { artifact: AssistantArtifac
         emptyMessage={t("The preview returned no rows.")}
         className="min-h-0 flex-1"
       />
-      <p className="text-foreground-subtle border-border-subtle bg-sunken flex h-8 shrink-0 items-center gap-2 border-t px-3 text-xs tabular-nums">
+      <ArtifactFooter>
         <span className="truncate">
           {t("{0, plural, one {# row} other {# rows}}", preview.rowCount)}
           {preview.dataset !== "" ? ` · ${preview.dataset}` : ""}
@@ -30,7 +31,7 @@ export function ReportPreviewArtifact({ artifact }: { artifact: AssistantArtifac
         {preview.truncated && (
           <span className="shrink-0">· {t("Cut short; the full set needs a run.")}</span>
         )}
-      </p>
+      </ArtifactFooter>
     </div>
   );
 }

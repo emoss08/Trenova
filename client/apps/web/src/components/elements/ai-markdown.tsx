@@ -54,7 +54,7 @@ function CodeBlock({ className, children }: ComponentProps<"code">) {
   }
 
   return (
-    <pre className="bg-muted my-2 overflow-x-auto rounded-md p-3 font-mono text-xs leading-relaxed">
+    <pre className="bg-sunken scrollbar-overlay rounded-surface my-2.5 overflow-x-auto p-3 font-mono text-xs leading-relaxed">
       <code>{code}</code>
     </pre>
   );
@@ -116,40 +116,57 @@ function MarkdownImage({ src, alt }: ComponentProps<"img">) {
   return <MarkdownLink href={src}>{label}</MarkdownLink>;
 }
 
+/**
+ * The type a reply is set in. Headings carry the heading weight and keep the
+ * case they were written in; a table takes the house row rhythm and
+ * hairlines, so a reply's figures read like a table anywhere else in the
+ * product; a list breathes a little between its items.
+ */
 const components: Components = {
-  p: ({ children }) => <p className="my-1.5 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
+  p: ({ children }) => <p className="my-2 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
-    <h3 className="mt-3 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
+    <h3 className="mt-4 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
   ),
   h2: ({ children }) => (
-    <h3 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
+    <h3 className="mt-3.5 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
   ),
-  h3: ({ children }) => <h4 className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</h4>,
+  h3: ({ children }) => <h4 className="mt-3 mb-1 text-sm font-semibold first:mt-0">{children}</h4>,
   h4: ({ children }) => <h5 className="mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h5>,
-  ul: ({ children }) => <ul className="my-1.5 list-disc space-y-0.5 pl-5">{children}</ul>,
-  ol: ({ children }) => <ol className="my-1.5 list-decimal space-y-0.5 pl-5">{children}</ol>,
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  ul: ({ children }) => (
+    <ul className="marker:text-foreground-subtle my-2 list-disc space-y-1 pl-5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="marker:text-foreground-subtle my-2 list-decimal space-y-1 pl-5 marker:tabular-nums">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="pl-0.5 leading-relaxed">{children}</li>,
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em>{children}</em>,
   a: ({ href, children }) => <MarkdownLink href={href}>{children}</MarkdownLink>,
   img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
   blockquote: ({ children }) => (
-    <blockquote className="border-border text-muted-foreground my-2 border-l-2 pl-3">
+    <blockquote className="border-border text-muted-foreground my-2.5 border-l-2 pl-3">
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="border-border my-3" />,
+  hr: () => <hr className="border-border-subtle my-4" />,
   table: ({ children }) => (
-    <div className="my-2 overflow-x-auto rounded-md border">
+    <div className="border-border scrollbar-overlay rounded-surface my-2.5 overflow-x-auto border">
       <table className="w-full border-collapse text-xs">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-muted/60">{children}</thead>,
+  thead: ({ children }) => <thead className="bg-sunken">{children}</thead>,
   th: ({ children }) => (
-    <th className="border-border border-b px-2 py-1.5 text-left font-medium">{children}</th>
+    <th className="border-border-subtle text-foreground-muted h-(--row-head-h) border-b px-(--cell-px) text-left align-middle font-medium whitespace-nowrap">
+      {children}
+    </th>
   ),
+  tr: ({ children }) => <tr className="last:[&>td]:border-b-0">{children}</tr>,
   td: ({ children }) => (
-    <td className="border-border border-b px-2 py-1.5 align-top last:border-b-0">{children}</td>
+    <td className="border-border-subtle h-(--row-h-compact) border-b px-(--cell-px) py-1 align-top tabular-nums">
+      {children}
+    </td>
   ),
   code: ({ className, children, ...props }) => {
     const isBlock = typeof className === "string" && className.includes("language-");
@@ -160,7 +177,7 @@ const components: Components = {
 
     return (
       <code
-        className="bg-muted rounded-md px-1 py-0.5 font-mono text-[0.85em]"
+        className="bg-sunken rounded-control px-1 py-0.5 font-mono text-[0.85em]"
         {...(props as ComponentProps<"code">)}
       >
         {children}

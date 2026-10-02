@@ -35,7 +35,14 @@ import {
   ShieldAlertIcon,
   XIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { stepsFromExchanges } from "./activity";
 import { askRequestsFrom } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
@@ -49,6 +56,16 @@ import { CitationProvider, SourcesFooter } from "./web-citations";
 import type { WebSource } from "./web-sources";
 
 const TIME_FORMAT = { hour: "numeric", minute: "2-digit" } as const;
+
+/**
+ * The sheen that crosses "Thinking…" while a thought arrives: the muted ink
+ * with the full ink passing through it, so the words stay readable in both
+ * themes. It moves with the shimmer loop and stops when the thought does.
+ */
+const THINKING_SHEEN: CSSProperties = {
+  backgroundImage:
+    "linear-gradient(100deg, var(--foreground-muted) 35%, var(--foreground) 50%, var(--foreground-muted) 65%)",
+};
 
 /** The agent's face in the thread: one mark, used everywhere it speaks. */
 export function AgentAvatar({
@@ -99,9 +116,12 @@ export function PageContextChip({ context }: { context: AssistantPageContext | n
 export function TurnContextChips({
   attachments,
   mentions,
+  align = "start",
 }: {
   attachments?: readonly AssistantMessageAttachment[] | null;
   mentions?: readonly AssistantEntityRef[] | null;
+  /** Which edge the chips gather at: a person's sit on the right with their words. */
+  align?: "start" | "end";
 }) {
   const files = attachments ?? [];
   const records = mentions ?? [];
@@ -110,7 +130,7 @@ export function TurnContextChips({
   }
 
   return (
-    <ul className="flex flex-wrap gap-1.5">
+    <ul className={cn("flex max-w-full flex-wrap gap-1.5", align === "end" && "justify-end")}>
       {files.map((file) => (
         <li
           key={file.documentId}
@@ -150,7 +170,7 @@ function TurnTime({ at }: { at: number }) {
 /** The actions a turn offers, shown when the pointer or focus is on it. */
 function TurnActions({ children }: { children: ReactNode }) {
   return (
-    <span className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/turn:opacity-100 has-[:focus-visible]:opacity-100">
+    <span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/turn:opacity-100 has-[:focus-visible]:opacity-100">
       {children}
     </span>
   );
@@ -159,10 +179,12 @@ function TurnActions({ children }: { children: ReactNode }) {
 /**
  * A person's message, or the one they are about to send.
  *
- * It is held in a quiet well and labelled "You", and the reply below it runs
- * open across the column. The difference is one of voice, not of side: both
- * share the left edge, so the eye never crosses the panel, and the question
- * reads as the thing given while the answer reads as the work done with it.
+ * It sits on the right as a bubble in a quiet well, and the reply below it
+ * runs open across the column from the left under the agent's mark. The side
+ * says who is speaking, so the bubble carries no name: a label read as
+ * someone else once the thread was shared, and "You" said nothing the
+ * alignment does not. When it was said, and what else it carried, wait under
+ * it; the time and the actions come forward on hover.
  */
 export function UserTurn({
   content,
@@ -181,13 +203,21 @@ export function UserTurn({
   onResend?: () => void;
 }) {
   const t = useT();
+  const timed = sentAt !== undefined && sentAt > 0;
 
   return (
-    <article className="group/turn flex min-w-0 flex-col gap-1.5">
-      <header className="flex h-5 min-w-0 items-center gap-2 text-xs">
-        <span className="text-foreground shrink-0 font-medium">{t("You")}</span>
-        {sentAt !== undefined && sentAt > 0 && <TurnTime at={sentAt} />}
+    <article data-side="right" className="group/turn flex min-w-0 flex-col items-end gap-1.5">
+      <div className="bg-sunken max-w-[85%] min-w-0 rounded-lg px-3.5 py-2 max-sm:max-w-full">
+        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{content}</p>
+      </div>
+      <TurnContextChips attachments={attachments} mentions={mentions} align="end" />
+      <footer className="flex h-5 max-w-full min-w-0 items-center justify-end gap-2 text-xs">
         <PageContextChip context={pageContext} />
+        {timed && (
+          <span className="opacity-0 transition-opacity group-focus-within/turn:opacity-100 group-hover/turn:opacity-100">
+            <TurnTime at={sentAt} />
+          </span>
+        )}
         <TurnActions>
           <IconAction label={t("Copy")} done={t("Copied")} onClick={() => copyText(content)}>
             <CopyIcon className="size-3" />
@@ -198,11 +228,7 @@ export function UserTurn({
             </IconAction>
           )}
         </TurnActions>
-      </header>
-      <div className="bg-sunken w-fit max-w-full rounded-lg px-3 py-2">
-        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{content}</p>
-      </div>
-      <TurnContextChips attachments={attachments} mentions={mentions} />
+      </footer>
     </article>
   );
 }
@@ -310,7 +336,7 @@ export function AssistantProse({
   sources?: readonly WebSource[];
 }) {
   return (
-    <div className="min-w-0 text-sm leading-relaxed">
+    <div className="min-w-0 text-sm leading-relaxed lg:max-w-prose">
       <CitationProvider sources={sources}>
         {streaming ? <StreamingAiMarkdown content={content} /> : <AiMarkdown content={content} />}
       </CitationProvider>
@@ -380,25 +406,41 @@ function IconAction({
  * What the model thought, shown apart from what it said.
  *
  * Open while the thinking is still arriving, because that is the minute a
- * heavy model would otherwise spend looking hung. Folded away once the answer
- * begins: the reasoning is there for whoever wants to check the answer
- * against it, not in the way of reading the answer. The fold is animated so
- * the answer rising into its place reads as the thought giving way to it.
+ * heavy model would otherwise spend looking hung; the line says "Thinking…"
+ * with a sheen moving across the words, the one moment the product shimmers,
+ * and it stops when the thought does. Folded away once the answer begins,
+ * into how long it took: the reasoning is there for whoever wants to check
+ * the answer against it, not in the way of reading the answer. The fold is
+ * animated so the answer rising into its place reads as the thought giving
+ * way to it.
  */
 export function ReasoningDisclosure({
   text,
   streaming = false,
+  seconds = null,
 }: {
   text: string;
   streaming?: boolean;
+  /** How long the thinking took, when it was timed; a live thought times itself. */
+  seconds?: number | null;
 }) {
   const t = useT();
   const [open, setOpen] = useState(streaming);
   const wasStreaming = useRef(streaming);
+  // A live thought is timed from the first word to the last, so the fold can
+  // say how long it was; a saved thought keeps whatever it was given.
+  const startedAt = useRef<number | null>(null);
+  const [timed, setTimed] = useState<number | null>(null);
 
   useEffect(() => {
+    if (streaming && startedAt.current === null) {
+      startedAt.current = Date.now();
+    }
     if (wasStreaming.current && !streaming) {
       setOpen(false);
+      if (startedAt.current !== null) {
+        setTimed(Math.round((Date.now() - startedAt.current) / 1000));
+      }
     }
     wasStreaming.current = streaming;
   }, [streaming]);
@@ -407,6 +449,13 @@ export function ReasoningDisclosure({
     return null;
   }
 
+  const took = seconds ?? timed;
+  const label = streaming
+    ? t("Thinking…")
+    : took !== null
+      ? t("Thought for {0}", formatWorkDuration(took))
+      : t("Thought it through");
+
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="min-w-0">
       <CollapsibleTrigger className="group/reasoning text-foreground-muted hover:text-foreground ui-focus-ring -mx-1.5 flex items-center gap-1.5 rounded-control px-1.5 py-0.5 text-xs transition-colors">
@@ -414,12 +463,20 @@ export function ReasoningDisclosure({
           className={cn("size-3 transition-transform duration-200", open && "rotate-90")}
           aria-hidden
         />
-        <span key={streaming ? "thinking" : "thought"} className={cn(!streaming && "animate-rise")}>
-          {streaming ? t("Thinking it through") : t("Thought it through")}
+        <span
+          key={streaming ? "thinking" : "thought"}
+          className={cn(
+            streaming
+              ? "animate-shimmer bg-[length:200%_100%] bg-clip-text text-transparent"
+              : "animate-rise",
+          )}
+          style={streaming ? THINKING_SHEEN : undefined}
+        >
+          {label}
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-settle data-ending-style:h-0 data-starting-style:h-0">
-        <div className="text-foreground-muted pt-1.5 pb-1 pl-4.5 text-xs leading-relaxed whitespace-pre-wrap">
+        <div className="text-foreground-muted border-border-subtle mt-1 ml-1.25 border-l pt-0.5 pb-1 pl-3 text-xs leading-relaxed whitespace-pre-wrap">
           {text}
           {streaming && (
             <span
@@ -446,8 +503,11 @@ export function AssistantEntry({
   ratable = false,
   sources = NO_SOURCES,
   listsSources = false,
+  threadId,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
+  /** The conversation the entry belongs to, so a waiting record can open the approval box. */
+  threadId?: string;
   /** The web pages this reply found up to this step, cited or not. */
   sources?: readonly WebSource[];
   /** This step is the reply's answer, and lists the sources under it. */
@@ -503,7 +563,7 @@ export function AssistantEntry({
       }
     >
       {message.reasoning?.text ? <ReasoningDisclosure text={message.reasoning.text} /> : null}
-      {steps.length > 0 && <ToolActivity steps={steps} />}
+      {steps.length > 0 && <ToolActivity steps={steps} folded />}
       {artifacts.length > 0 && onOpenArtifact && (
         <ArtifactChips artifacts={artifacts} onOpen={onOpenArtifact} />
       )}
@@ -521,12 +581,17 @@ export function AssistantEntry({
         />
       ))}
       {(plans.length > 0 || proposals.length > 0) && (
-        <div className="-mx-1.5 flex flex-col">
+        <div className="flex flex-col gap-2">
           {plans.map((group) => (
-            <PlanRecord key={group.plan.id} plan={group.plan} steps={group.steps} />
+            <PlanRecord
+              key={group.plan.id}
+              plan={group.plan}
+              steps={group.steps}
+              threadId={threadId}
+            />
           ))}
           {proposals.map((proposal) => (
-            <ProposalRecord key={proposal.id} proposal={proposal} />
+            <ProposalRecord key={proposal.id} proposal={proposal} threadId={threadId} />
           ))}
         </div>
       )}
@@ -630,17 +695,16 @@ export function DeclinedTurn({ content, sentAt }: { content: string; sentAt: num
   const t = useT();
 
   return (
-    <article className="flex min-w-0 flex-col gap-1.5">
-      <header className="flex h-5 min-w-0 items-center gap-2 text-xs">
-        <span className="text-foreground-muted shrink-0 font-medium">{t("You")}</span>
-        {sentAt > 0 && <TurnTime at={sentAt} />}
-        <span className="text-foreground-subtle shrink-0">· {t("Not answered")}</span>
-      </header>
-      <div className="border-border-subtle w-fit max-w-full rounded-lg border border-dashed px-3 py-2">
+    <article data-side="right" className="flex min-w-0 flex-col items-end gap-1.5">
+      <div className="border-border-subtle max-w-[85%] min-w-0 rounded-lg border border-dashed px-3.5 py-2 max-sm:max-w-full">
         <p className="text-foreground-muted text-sm leading-relaxed break-words whitespace-pre-wrap">
           {content}
         </p>
       </div>
+      <footer className="text-foreground-subtle flex h-5 min-w-0 items-center justify-end gap-2 text-xs">
+        <span className="shrink-0">{t("Not answered")}</span>
+        {sentAt > 0 && <TurnTime at={sentAt} />}
+      </footer>
     </article>
   );
 }
