@@ -405,23 +405,15 @@ func TestDescribeSenderRejectionNamesWhereTheAddressIsSet(t *testing.T) {
 		l: zap.NewNop(),
 	}
 
-	err := svc.describeSenderRejection(t.Context(), msg, "", &SenderRejectedError{
+	err := svc.describeSenderRejection(t.Context(), msg, &SenderRejectedError{
 		Provider:  email.ProviderResend,
 		Rejection: SenderDomainUnverified,
 	})
 	require.ErrorContains(t, err, "from mailbox@trenova.app")
 	require.ErrorContains(t, err, `the sender email of the "Billing" email profile`)
 
-	err = svc.describeSenderRejection(
-		t.Context(),
-		msg,
-		"the From address on the Email profile tab of customer ACME",
-		&SenderRejectedError{Provider: email.ProviderResend, Rejection: SenderDomainUnverified},
-	)
-	require.ErrorContains(t, err, "This address comes from the From address on the Email profile tab of customer ACME.")
-
 	plain := errors.New("network down")
-	require.Same(t, plain, svc.describeSenderRejection(t.Context(), msg, "", plain))
+	require.Same(t, plain, svc.describeSenderRejection(t.Context(), msg, plain))
 }
 
 func TestSyncInvoiceAttemptsPublishesEachUpdatedInvoice(t *testing.T) {

@@ -202,6 +202,7 @@ type CustomerEmailProfile {
   subject: String!
   comment: String!
   fromEmail: String!
+    @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   toRecipients: String!
   ccRecipients: String!
   bccRecipients: String!

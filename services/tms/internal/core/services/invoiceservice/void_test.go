@@ -176,6 +176,10 @@ func TestVoidInvoiceDraftRebillReleasesQueueItemsForRebilling(t *testing.T) {
 		Status: billingqueue.StatusApproved,
 	}
 	queueRepo := mocks.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
 			return req.Rebill &&
@@ -217,6 +221,10 @@ func TestVoidInvoiceDraftDoNotRebillCancelsQueueItems(t *testing.T) {
 		Once()
 
 	queueRepo := mocks.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
 			return !req.Rebill && req.InvoiceID == f.invoiceID
@@ -483,6 +491,10 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 		Once()
 
 	queueRepo := mocks.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().ReleaseForInvoice(mock.Anything, mock.Anything).
 		Return([]*billingqueue.BillingQueueItem{}, nil).
 		Once()

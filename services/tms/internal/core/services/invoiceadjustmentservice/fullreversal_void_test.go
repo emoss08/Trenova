@@ -75,6 +75,10 @@ func TestVoidReversedInvoiceDefaultsToDoNotRebillWithTheAdjustmentReason(t *test
 			return updated, nil
 		}).
 		Once()
+	invoiceRepo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
 			return !req.Rebill &&
@@ -112,6 +116,10 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 		RunAndReturn(func(_ context.Context, updated *invoice.Invoice) (*invoice.Invoice, error) {
 			return updated, nil
 		}).
+		Once()
+	invoiceRepo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
 		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {

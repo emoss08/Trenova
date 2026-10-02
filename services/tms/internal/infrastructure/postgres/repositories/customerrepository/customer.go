@@ -527,7 +527,6 @@ func (r *repository) saveEmailProfile(
 		On("CONFLICT (customer_id, organization_id, business_unit_id) DO UPDATE").
 		Set("subject = EXCLUDED.subject").
 		Set("comment = EXCLUDED.comment").
-		Set("from_email = EXCLUDED.from_email").
 		Set("to_recipients = EXCLUDED.to_recipients").
 		Set("cc_recipients = EXCLUDED.cc_recipients").
 		Set("bcc_recipients = EXCLUDED.bcc_recipients").

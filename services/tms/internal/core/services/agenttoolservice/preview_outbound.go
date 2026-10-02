@@ -70,9 +70,16 @@ func warnSuppressedRecipients(preview *agent.ToolPreview, sender *serviceports.E
 		return
 	}
 
-	toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
-		"The email would not be sent: "+strings.Join(sender.Suppressed, ", ")+
-			" is on the organization's suppression list.",
+	listed := strings.Join(sender.Suppressed, ", ")
+	if sender.Refused {
+		toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
+			"The email would not be sent: every recipient ("+listed+
+				") is on the organization's suppression list.",
+			sender.Suppressed...)
+		return
+	}
+	toolpreview.Warn(preview, agent.PreviewWarningRecipientSkipped,
+		listed+" is on the organization's suppression list and would be skipped.",
 		sender.Suppressed...)
 }
 

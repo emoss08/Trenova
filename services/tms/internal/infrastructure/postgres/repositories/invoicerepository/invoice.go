@@ -1089,6 +1089,31 @@ func (r *repository) GetDocumentShareToken(
 	})
 }
 
+func (r *repository) RevokeDocumentShareTokens(
+	ctx context.Context,
+	req repositories.RevokeInvoiceDocumentShareTokensRequest,
+) (int64, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := buncolgen.DocumentShareTokenColumns
+		now := timeutils.NowUnix()
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*invoice.DocumentShareToken)(nil)).
+			Set(cols.RevokedAt.Set(), now).
+			Set(cols.UpdatedAt.Set(), now).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.DocumentShareTokenScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.InvoiceID.Eq(), req.InvoiceID).
+					Where(cols.RevokedAt.IsNull())
+			}).
+			Exec(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("revoke invoice document share tokens: %w", err)
+		}
+		return result.RowsAffected()
+	})
+}
+
 func (r *repository) UpdateDocumentShareToken(
 	ctx context.Context,
 	token *invoice.DocumentShareToken,

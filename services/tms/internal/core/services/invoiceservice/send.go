@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -37,11 +38,12 @@ func (s *Service) PlanSend(
 		return nil, err
 	}
 	deliveryProfile, err := s.resolveDeliveryProfile(ctx, resolveDeliveryProfileParams{
-		Entity:                      entity,
-		TenantInfo:                  req.TenantInfo,
-		IncludeShipmentDetails:      true,
-		IncludeCustomer:             true,
-		IncludeCustomerEmailProfile: true,
+		Entity:                        entity,
+		TenantInfo:                    req.TenantInfo,
+		IncludeShipmentDetails:        true,
+		IncludeCustomer:               true,
+		IncludeCustomerEmailProfile:   true,
+		IncludeCustomerBillingProfile: true,
 	})
 	if err != nil {
 		return nil, err
@@ -69,12 +71,12 @@ func (s *Service) PlanSend(
 	}
 
 	body := wording.Body.Value
-	if deliveryProfile.Email != nil && deliveryProfile.Email.IncludeShipmentDetail {
+	shipmentDetail := includedShipmentDetail(entity, deliveryProfile)
+	if shipmentDetail != "" {
 		body = appendShipmentDetail(body, entity, deliveryProfile.Shipment)
 	}
-	fromEmail, fromErr := resolveFromEmail(profile, deliveryProfile.Email)
+	fromEmail := billingSenderEmail(profile)
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
-	senderNotice := describeInvoiceSender(profile, deliveryProfile.Customer, fromEmail)
 
 	plan := &servicesports.InvoiceSendPlan{
 		EDI:                s.ediPlanFor(ctx, entity, req.TenantInfo),
@@ -88,7 +90,6 @@ func (s *Service) PlanSend(
 		Errors:               make([]string, 0),
 		Recipients:           recipients,
 		FromEmail:            fromEmail,
-		FromEmailOrigin:      senderNotice.Origin,
 		Headers:              headers,
 		OpenTracking:         deliveryProfile.Email != nil && deliveryProfile.Email.ReadReceipt,
 		Subject:              wording.Subject.Value,
@@ -96,16 +97,14 @@ func (s *Service) PlanSend(
 		InvoicePDFDocumentID: entity.PDFDocumentID,
 		// Only the template tier produces HTML. A draft or a profile comment is
 		// free text, and the send path wraps it the way it always has.
-		BodyHTML:     wording.HTML,
+		BodyHTML:     withShipmentDetailHTML(wording.HTML, shipmentDetail),
 		FromTemplate: wording.FromTemplate,
 	}
 	plan.Warnings = append(plan.Warnings, templateWarnings("subject", wording.Subject.Unknown)...)
 	plan.Warnings = append(plan.Warnings, templateWarnings("body", wording.Body.Unknown)...)
-	if senderNotice.Warning != "" {
-		plan.Warnings = append(plan.Warnings, senderNotice.Warning)
-	}
-	if fromErr != nil {
-		plan.Errors = append(plan.Errors, fromErr.Error())
+	plan.Errors = append(plan.Errors, sendEligibilityErrors(entity, deliveryProfile.Customer)...)
+	if err = s.checkSuppressedRecipients(ctx, plan, profile, req.TenantInfo); err != nil {
+		return nil, err
 	}
 	if profile == nil {
 		plan.Errors = append(
@@ -351,20 +350,19 @@ func (s *Service) SendFromWorkflow(
 		var sendErr error
 		if linkErr == nil && attachmentErr == nil {
 			message, sendErr = s.emailService.Send(ctx, &servicesports.SendEmailRequest{
-				TenantInfo:      req.TenantInfo,
-				ProfileID:       profile.ID,
-				Purpose:         email.PurposeBilling,
-				To:              plan.Recipients.To,
-				CC:              plan.Recipients.CC,
-				BCC:             plan.Recipients.BCC,
-				FromEmail:       plan.FromEmail,
-				FromEmailOrigin: plan.FromEmailOrigin,
-				Subject:         partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
-				HTML:            partHTML,
-				Text:            partBody,
-				Attachments:     emailAttachments,
-				Headers:         plan.Headers,
-				OpenTracking:    plan.OpenTracking,
+				TenantInfo:   req.TenantInfo,
+				ProfileID:    profile.ID,
+				Purpose:      email.PurposeBilling,
+				To:           plan.Recipients.To,
+				CC:           plan.Recipients.CC,
+				BCC:          plan.Recipients.BCC,
+				FromEmail:    plan.FromEmail,
+				Subject:      partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
+				HTML:         partHTML,
+				Text:         partBody,
+				Attachments:  emailAttachments,
+				Headers:      plan.Headers,
+				OpenTracking: plan.OpenTracking,
 				IdempotencyKey: fmt.Sprintf(
 					"invoice-%s-part-%d-%d",
 					entity.ID,
@@ -534,6 +532,59 @@ func (s *Service) markInvoiceSendFailed(
 // frozen copy would come back through the ad-hoc {number} engine rather than
 // html/template, losing the layout with it. What was actually sent is still
 // recoverable from the email message and the send attempts.
+func (s *Service) checkSuppressedRecipients(
+	ctx context.Context,
+	plan *servicesports.InvoiceSendPlan,
+	profile *email.Profile,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.emailSenders == nil || profile == nil || len(plan.Recipients.To) == 0 {
+		return nil
+	}
+	sender, err := s.emailSenders.ResolveSender(ctx, &servicesports.SendEmailRequest{
+		TenantInfo: tenantInfo,
+		ProfileID:  profile.ID,
+		Purpose:    email.PurposeBilling,
+		To:         plan.Recipients.To,
+		CC:         plan.Recipients.CC,
+		BCC:        plan.Recipients.BCC,
+	})
+	if err != nil {
+		return err
+	}
+	if sender == nil || len(sender.Suppressed) == 0 {
+		return nil
+	}
+	listed := strings.Join(sender.Suppressed, ", ")
+	if sender.Refused {
+		plan.Errors = append(
+			plan.Errors,
+			"Every To recipient is on the suppression list after a hard bounce or complaint: "+listed+
+				". Remove them from the suppression list or change the recipients.",
+		)
+		return nil
+	}
+	plan.Warnings = append(
+		plan.Warnings,
+		listed+" is on the suppression list after a hard bounce or complaint and will be skipped.",
+	)
+	return nil
+}
+
+func sendEligibilityErrors(entity *invoice.Invoice, cus *customer.Customer) []string {
+	errs := make([]string, 0, 2)
+	if entity.Status != invoice.StatusPosted {
+		errs = append(errs, "Post the invoice before sending it. Draft invoices are never emailed.")
+	}
+	if cus != nil && cus.BillingProfile != nil && !cus.BillingProfile.EmailInvoiceEnabled {
+		errs = append(
+			errs,
+			"Email delivery is turned off for this customer. Turn on Email invoice in the customer's billing profile to send it.",
+		)
+	}
+	return errs
+}
+
 func refuseSendInFlight(entity *invoice.Invoice, now int64) error {
 	if entity.SendStatus != invoice.SendStatusSending {
 		return nil
@@ -552,13 +603,6 @@ func applySendSnapshot(entity *invoice.Invoice, plan *servicesports.InvoiceSendP
 	entity.SendStatus = invoice.SendStatusSending
 	entity.LastSendError = ""
 	entity.LastSendWarning = strings.Join(plan.Warnings, "; ")
-	if !plan.FromTemplate {
-		entity.EmailSubjectSnapshot = plan.Subject
-		entity.EmailBodySnapshot = plan.Body
-	}
-	entity.EmailToSnapshot = plan.Recipients.To
-	entity.EmailCCSnapshot = plan.Recipients.CC
-	entity.EmailBCCSnapshot = plan.Recipients.BCC
 }
 
 // partBodyHTML picks the HTML for one message of a send.

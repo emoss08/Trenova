@@ -88,6 +88,13 @@ func tokenHash(raw string) string {
 	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
+func (s *Service) linkBaseURL(requestBaseURL string) string {
+	if s.webBaseURL != "" {
+		return s.webBaseURL
+	}
+	return requestBaseURL
+}
+
 func signedDocumentURL(baseURL, token string) string {
 	baseURL = strings.TrimRight(baseURL, "/")
 	if baseURL == "" {

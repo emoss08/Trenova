@@ -215,7 +215,6 @@ type InvoiceSendPlan struct {
 	Errors               []string               `json:"errors"`
 	Recipients           InvoiceSendRecipients  `json:"recipients"`
 	FromEmail            string                 `json:"fromEmail"`
-	FromEmailOrigin      string                 `json:"fromEmailOrigin,omitempty"`
 	Headers              map[string]string      `json:"headers"`
 	OpenTracking         bool                   `json:"openTracking"`
 	Subject              string                 `json:"subject"`
@@ -230,14 +229,8 @@ type InvoiceSendPlan struct {
 	// profile, because those are free text and the send path wraps them itself.
 	BodyHTML string `json:"bodyHtml"`
 
-	// FromTemplate says the wording is the organization's template rather than a
-	// stored draft.
-	//
-	// The send path needs it for two decisions: whether to use BodyHTML, and
-	// whether to freeze this wording into the invoice's draft columns. Freezing a
-	// template render would mean a later edit to the template never reaches a
-	// re-sent invoice, and the frozen copy would come back through the ad-hoc
-	// engine instead of html/template.
+	// FromTemplate says the wording is the organization's template rather than
+	// free text, which decides whether the send path uses BodyHTML.
 	FromTemplate bool `json:"fromTemplate"`
 }
 

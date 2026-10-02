@@ -200,6 +200,7 @@ type Resolver struct {
 	commodity                          *commodityresolver.CommodityResolver
 	customer                           *carrierintelligenceresolver.CustomerResolver
 	customerBillingProfile             *customerresolver.CustomerBillingProfileResolver
+	customerEmailProfile               *customerresolver.CustomerEmailProfileResolver
 	customerPayment                    *customerpaymentresolver.CustomerPaymentResolver
 	customerPaymentApplication         *customerpaymentresolver.CustomerPaymentApplicationResolver
 	dOTRandomDraw                      *workerdrugalcoholresolver.DOTRandomDrawResolver
@@ -1023,6 +1024,7 @@ func FromServices(s *Services) *Resolver {
 		commodity:                    &commodityresolver.CommodityResolver{Deps: commodityDeps},
 		customer:                     &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps},
 		customerBillingProfile:       &customerresolver.CustomerBillingProfileResolver{Deps: customerDeps},
+		customerEmailProfile:         &customerresolver.CustomerEmailProfileResolver{Deps: customerDeps},
 		customerPayment:              &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps},
 		customerPaymentApplication:   &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps},
 		dOTRandomDraw:                &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps},
@@ -1673,6 +1675,10 @@ func (r *Resolver) Customer() generated.CustomerResolver {
 
 func (r *Resolver) CustomerBillingProfile() generated.CustomerBillingProfileResolver {
 	return r.customerBillingProfile
+}
+
+func (r *Resolver) CustomerEmailProfile() generated.CustomerEmailProfileResolver {
+	return r.customerEmailProfile
 }
 
 func (r *Resolver) CustomerPayment() generated.CustomerPaymentResolver {

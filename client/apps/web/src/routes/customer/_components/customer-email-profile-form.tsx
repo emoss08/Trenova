@@ -16,7 +16,7 @@ export function CustomerEmailProfileForm() {
       <FormSection
         title={t("Email delivery")}
         description={t(
-          "Configure how invoices are emailed to this customer's accounts payable team",
+          "Who receives this customer's invoices. Invoices are always sent from the sender on your organization's Billing email profile.",
         )}
       >
         <FormGroup cols={2}>
@@ -27,18 +27,7 @@ export function CustomerEmailProfileForm() {
               label={t("Subject line")}
               placeholder={t("e.g., Invoice #{number} from {company}")}
               description={t(
-                "Email subject used when sending invoices. Supports {number}, {customer}, and {company}.",
-              )}
-            />
-          </FormControl>
-          <FormControl>
-            <InputField
-              control={control}
-              name="emailProfile.fromEmail"
-              label={t("From address")}
-              placeholder={t("e.g., billing@yourcompany.com")}
-              description={t(
-                "The sender address that appears on invoice emails. Must be a verified email domain in your organization's email settings.",
+                "Replaces the subject from your invoice email template. Supports {number}, {customer}, {company}, {invoiceTotal}, {dueDate}, {shipmentPro} and {shipmentBol}.",
               )}
             />
           </FormControl>
@@ -49,7 +38,7 @@ export function CustomerEmailProfileForm() {
               label={t("To recipients")}
               placeholder={t("e.g., ap@customer.com, billing@customer.com")}
               description={t(
-                "Primary recipient addresses for invoice delivery. Separate multiple addresses with commas.",
+                "Required when invoices are emailed to this customer. Separate multiple addresses with commas.",
               )}
             />
           </FormControl>
@@ -90,7 +79,7 @@ export function CustomerEmailProfileForm() {
               label={t("Attachment filename")}
               placeholder={t("e.g., Invoice-{number}-{customer}.pdf")}
               description={t(
-                "Filename for the PDF invoice attachment. Supports {number}, {customer}, and {company}.",
+                "Filename for the PDF invoice attachment. Supports {number}, {customer} and {company}.",
               )}
             />
           </FormControl>
@@ -101,7 +90,7 @@ export function CustomerEmailProfileForm() {
               label={t("Email body")}
               placeholder={t("e.g., Please find invoice {number} attached for {customer}.")}
               description={t(
-                "Default message included in the email body above the invoice details. Supports {number}, {customer}, and {company}.",
+                "Leave empty to use your invoice email template. Text here replaces the template's message for this customer. Supports {number}, {customer}, {company}, {invoiceTotal} and {dueDate}.",
               )}
             />
           </FormControl>
@@ -114,7 +103,7 @@ export function CustomerEmailProfileForm() {
             <SwitchField
               control={control}
               name="emailProfile.includeShipmentDetail"
-              label={t("Include Shipment Details")}
+              label={t("Include shipment details")}
               description={t(
                 "Append a detailed breakdown of each shipment (origin, destination, dates, charges) in the email body below the invoice summary.",
               )}
@@ -127,7 +116,7 @@ export function CustomerEmailProfileForm() {
               name="emailProfile.readReceipt"
               label={t("Request read receipt")}
               description={t(
-                "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.",
+                "Ask the recipient's email client for a read confirmation and track when the email is opened. Many mail servers ignore read receipt requests, so opens are the more reliable signal.",
               )}
               position="left"
             />

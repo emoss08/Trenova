@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -84,6 +85,8 @@ type Params struct {
 	EDICommunicationProfileRepo repositories.EDICommunicationProfileRepository   `optional:"true"`
 	LateChargeRepo              repositories.LateChargeRepository                `optional:"true"`
 	AccountingSync              servicesports.AccountingSyncEnqueuer             `optional:"true"`
+	EmailSenders                servicesports.EmailSenderResolver                `optional:"true"`
+	Config                      *config.Config                                   `optional:"true"`
 }
 
 type Service struct {
@@ -127,6 +130,8 @@ type Service struct {
 	ediCommunicationProfileRepo repositories.EDICommunicationProfileRepository
 	lateChargeRepo              repositories.LateChargeRepository
 	accountingSync              servicesports.AccountingSyncEnqueuer
+	emailSenders                servicesports.EmailSenderResolver
+	webBaseURL                  string
 }
 
 type existingInvoiceLookupResult struct {
@@ -201,7 +206,16 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
 		lateChargeRepo:              p.LateChargeRepo,
 		accountingSync:              p.AccountingSync,
+		emailSenders:                p.EmailSenders,
+		webBaseURL:                  webBaseURL(p.Config),
 	}
+}
+
+func webBaseURL(cfg *config.Config) string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.App.GetWebBaseURL()
 }
 
 func (s *Service) List(
@@ -478,6 +492,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 	}
 
 	var posted *invoice.Invoice
+	newlyPosted := false
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, getErr := s.repo.GetByID(txCtx, repositories.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
@@ -509,10 +524,13 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return nil
 		}
 
+		entity.PDFDocumentID = pulid.Nil
+		entity.PDFDocument = nil
 		updated, updateErr := s.repo.Update(txCtx, entity)
 		if updateErr != nil {
 			return updateErr
 		}
+		newlyPosted = true
 
 		legs, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo)
 		if shipErr != nil {
@@ -562,8 +580,32 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		return nil, err
 	}
 	s.enqueueEDIAfterPost(ctx, posted, req.TenantInfo, actor)
+	if newlyPosted {
+		s.generatePDFAfterPost(ctx, posted, req.TenantInfo, actor)
+	}
 
 	return posted, nil
+}
+
+func (s *Service) generatePDFAfterPost(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+	actor *servicesports.RequestActor,
+) {
+	if entity == nil || s.workflowStarter == nil || !s.workflowStarter.Enabled() {
+		return
+	}
+	if _, err := s.GeneratePDF(ctx, &servicesports.InvoicePreviewRequest{
+		InvoiceID:  entity.ID,
+		TenantInfo: tenantInfo,
+	}, actor); err != nil {
+		s.l.Warn(
+			"failed to start invoice PDF generation after post",
+			zap.String("invoiceId", entity.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *Service) notifyReconciliationWarning(

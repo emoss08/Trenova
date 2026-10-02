@@ -106,6 +106,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  CustomerEmailProfile:
+    - fromEmail
   AICorrection:
     - accuracy
   ExtractionRollout:

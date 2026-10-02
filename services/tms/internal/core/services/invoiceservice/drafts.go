@@ -38,7 +38,7 @@ func (s *Service) UpdateDraft(
 	if err != nil {
 		return nil, err
 	}
-	if err = refuseNonDraftUpdate(entity); err != nil {
+	if err = refuseDeliveryUpdate(entity, req); err != nil {
 		return nil, err
 	}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"html"
-	"net/mail"
 	"path/filepath"
 	"strings"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -143,78 +141,11 @@ func templateWarnings(field string, unknown []string) []string {
 	return warnings
 }
 
-func resolveFromEmail(
-	profile *email.Profile,
-	emailProfile *customer.CustomerEmailProfile,
-) (string, error) {
+func billingSenderEmail(profile *email.Profile) string {
 	if profile == nil {
-		return "", nil
+		return ""
 	}
-	fromEmail := strings.TrimSpace(profile.SenderEmail)
-	if emailProfile == nil || strings.TrimSpace(emailProfile.FromEmail) == "" {
-		return fromEmail, nil
-	}
-	override := strings.TrimSpace(emailProfile.FromEmail)
-	parsed, err := mail.ParseAddress(override)
-	if err != nil || parsed.Address != override {
-		return fromEmail, errortypes.NewValidationError(
-			"fromEmail",
-			errortypes.ErrInvalid,
-			"Customer invoice sender email is invalid",
-		)
-	}
-	return override, nil
-}
-
-type invoiceSenderNotice struct {
-	Origin  string
-	Warning string
-}
-
-func describeInvoiceSender(
-	profile *email.Profile,
-	cus *customer.Customer,
-	fromEmail string,
-) invoiceSenderNotice {
-	fromEmail = strings.TrimSpace(fromEmail)
-	if profile == nil || fromEmail == "" {
-		return invoiceSenderNotice{}
-	}
-	profileSender := strings.TrimSpace(profile.SenderEmail)
-	if strings.EqualFold(fromEmail, profileSender) {
-		return invoiceSenderNotice{}
-	}
-	customerName := invoiceCustomerLabel(cus)
-	notice := invoiceSenderNotice{
-		Origin: "the From address on the Email profile tab of customer " + customerName,
-	}
-	fromDomain := stringutils.EmailDomain(fromEmail)
-	if fromDomain == "" || fromDomain == stringutils.EmailDomain(profileSender) {
-		return notice
-	}
-	notice.Warning = fmt.Sprintf(
-		"Invoices to %s are sent from %s, the From address on the customer's Email profile tab, "+
-			"instead of the Billing email profile's sender %s. The email provider will refuse "+
-			"the send unless %s is verified with it.",
-		customerName,
-		fromEmail,
-		profileSender,
-		fromDomain,
-	)
-	return notice
-}
-
-func invoiceCustomerLabel(cus *customer.Customer) string {
-	if cus == nil {
-		return "on this invoice"
-	}
-	if name := strings.TrimSpace(cus.Name); name != "" {
-		return name
-	}
-	if code := strings.TrimSpace(cus.Code); code != "" {
-		return code
-	}
-	return "on this invoice"
+	return strings.TrimSpace(profile.SenderEmail)
 }
 
 func resolveDeliveryHeaders(
@@ -323,7 +254,10 @@ func (s *Service) partBodyHTML(ctx context.Context, p *partBodyHTMLParams) strin
 				zap.String("invoiceId", p.Entity.ID.String()),
 				zap.Error(err))
 		} else {
-			rendered = wording.HTML
+			rendered = withShipmentDetailHTML(
+				wording.HTML,
+				includedShipmentDetail(p.Entity, p.Profile),
+			)
 		}
 	}
 
@@ -333,6 +267,20 @@ func (s *Service) partBodyHTML(ctx context.Context, p *partBodyHTMLParams) strin
 	}
 
 	return rendered
+}
+
+func includedShipmentDetail(entity *invoice.Invoice, profile *invoiceDeliveryProfile) string {
+	if profile == nil || profile.Email == nil || !profile.Email.IncludeShipmentDetail {
+		return ""
+	}
+	return shipmentDetailBlock(entity, profile.Shipment)
+}
+
+func withShipmentDetailHTML(rendered, detail string) string {
+	if rendered == "" || detail == "" {
+		return rendered
+	}
+	return rendered + bodyHTML(detail)
 }
 
 func bodyHTML(body string) string {

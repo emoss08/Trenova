@@ -312,6 +312,7 @@ type ResolverRoot interface {
 	Commodity() CommodityResolver
 	Customer() CustomerResolver
 	CustomerBillingProfile() CustomerBillingProfileResolver
+	CustomerEmailProfile() CustomerEmailProfileResolver
 	CustomerPayment() CustomerPaymentResolver
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
 	DOTRandomDraw() DOTRandomDrawResolver
@@ -939,6 +940,10 @@ type CustomerBillingProfileResolver interface {
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
+}
+
+type CustomerEmailProfileResolver interface {
+	FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error)
 }
 
 type CustomerPaymentResolver interface {
@@ -3143,6 +3148,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Commodity":                          func() any { return r.Commodity() },
 			"Customer":                           func() any { return r.Customer() },
 			"CustomerBillingProfile":             func() any { return r.CustomerBillingProfile() },
+			"CustomerEmailProfile":               func() any { return r.CustomerEmailProfile() },
 			"CustomerPayment":                    func() any { return r.CustomerPayment() },
 			"CustomerPaymentApplication":         func() any { return r.CustomerPaymentApplication() },
 			"DOTRandomDraw":                      func() any { return r.DOTRandomDraw() },
@@ -6014,7 +6020,7 @@ Something the person deciding should know. The code is translated by the
 client; the message is the English fallback, with its arguments in order.
 """
 type AgentPreviewWarning {
-  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned or rate_coverage."
+  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned, rate_coverage or recipient_skipped."
   code: String!
   args: [String!]!
   message: String!
@@ -11541,6 +11547,7 @@ type CustomerEmailProfile {
   subject: String!
   comment: String!
   fromEmail: String!
+    @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   toRecipients: String!
   ccRecipients: String!
   bccRecipients: String!

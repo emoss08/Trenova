@@ -152,3 +152,7 @@ func (r *QueryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 		},
 	})
 }
+
+func (r *CustomerEmailProfileResolver) FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error) {
+	return "", nil
+}

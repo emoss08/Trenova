@@ -1531,3 +1531,71 @@ func (_c *MockInvoiceRepository_StampExchangeRate_Call) RunAndReturn(run func(ct
 	_c.Call.Return(run)
 	return _c
 }
+
+// RevokeDocumentShareTokens provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) RevokeDocumentShareTokens(ctx context.Context, req repositories.RevokeInvoiceDocumentShareTokensRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeDocumentShareTokens")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.RevokeInvoiceDocumentShareTokensRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.RevokeInvoiceDocumentShareTokensRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.RevokeInvoiceDocumentShareTokensRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_RevokeDocumentShareTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeDocumentShareTokens'
+type MockInvoiceRepository_RevokeDocumentShareTokens_Call struct {
+	*mock.Call
+}
+
+// RevokeDocumentShareTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.RevokeInvoiceDocumentShareTokensRequest
+func (_e *MockInvoiceRepository_Expecter) RevokeDocumentShareTokens(ctx any, req any) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
+	return &MockInvoiceRepository_RevokeDocumentShareTokens_Call{Call: _e.mock.On("RevokeDocumentShareTokens", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_RevokeDocumentShareTokens_Call) Run(run func(ctx context.Context, req repositories.RevokeInvoiceDocumentShareTokensRequest)) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.RevokeInvoiceDocumentShareTokensRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.RevokeInvoiceDocumentShareTokensRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_RevokeDocumentShareTokens_Call) Return(value int64, err error) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_RevokeDocumentShareTokens_Call) RunAndReturn(run func(ctx context.Context, req repositories.RevokeInvoiceDocumentShareTokensRequest) (int64, error)) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
+	_c.Call.Return(run)
+	return _c
+}

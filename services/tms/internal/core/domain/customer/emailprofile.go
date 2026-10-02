@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -23,7 +22,6 @@ type CustomerEmailProfile struct {
 
 	Subject               string `json:"subject"               bun:"subject,type:VARCHAR(255)"`
 	Comment               string `json:"comment"               bun:"comment,type:TEXT"`
-	FromEmail             string `json:"fromEmail"             bun:"from_email,type:VARCHAR(255)"`
 	ToRecipients          string `json:"toRecipients"          bun:"to_recipients,type:TEXT"`
 	CCRecipients          string `json:"ccRecipients"          bun:"cc_recipients,type:TEXT,nullzero"`
 	BCCRecipients         string `json:"bccRecipients"         bun:"bcc_recipients,type:TEXT,nullzero"`
@@ -72,6 +70,13 @@ func (e *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Qu
 }
 
 func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {
+	p.ValidateForDelivery(multiErr, true)
+}
+
+func (p *CustomerEmailProfile) ValidateForDelivery(
+	multiErr *errortypes.MultiError,
+	emailDeliveryEnabled bool,
+) {
 	// Tenancy and the owning customer are stamped when the customer is
 	// written, so they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
@@ -79,16 +84,13 @@ func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, maxEmailSubjectLength).
 				Error("Subject cannot be longer than 255 characters"),
 		),
-		validation.Field(&p.FromEmail,
-			validation.Required.Error("From email is required"),
-			is.EmailFormat.Error("From email must be a valid email address"),
-			validation.Length(1, maxEmailAddressLength).
-				Error("From email cannot be longer than 255 characters"),
-		),
 		// The recipient columns are comma separated lists, so an empty element
 		// would address a message to nobody halfway down the list.
 		validation.Field(&p.ToRecipients,
-			validation.Required.Error("At least one recipient is required"),
+			validation.When(
+				emailDeliveryEnabled,
+				validation.Required.Error("At least one recipient is required to email invoices"),
+			),
 			validation.By(domaintypes.ValidateStringOrCommaSeparated),
 		),
 		validation.Field(&p.CCRecipients,
@@ -106,6 +108,5 @@ func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {
 
 const (
 	maxEmailSubjectLength   = 255
-	maxEmailAddressLength   = 255
 	maxAttachmentNameLength = 255
 )

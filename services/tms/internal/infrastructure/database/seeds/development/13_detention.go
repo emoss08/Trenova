@@ -766,7 +766,6 @@ func (s *DetentionSeed) ensureNoticeRecipients(
 				Model((*customer.CustomerEmailProfile)(nil)).
 				Set("to_recipients = ?", recipients[0]+","+recipients[1]).
 				Set("cc_recipients = ?", "ap@"+def.domain).
-				Set("from_email = ?", "billing@trenova.example.com").
 				Set("updated_at = ?", timeutils.NowUnix()).
 				Where("id = ?", existing.ID).
 				Exec(ctx); err != nil {
@@ -785,7 +784,6 @@ func (s *DetentionSeed) ensureNoticeRecipients(
 			CustomerID:     cust.ID,
 			Subject:        "Shipment documentation",
 			Comment:        "Detention notices and rate confirmations for " + cust.Name,
-			FromEmail:      "billing@trenova.example.com",
 			ToRecipients:   recipients[0] + "," + recipients[1],
 			CCRecipients:   "ap@" + def.domain,
 			AttachmentName: "shipment-documents.pdf",

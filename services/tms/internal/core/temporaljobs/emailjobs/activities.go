@@ -50,12 +50,11 @@ func (a *Activities) SendEmailActivity(
 			OrgID: payload.OrganizationID,
 			BuID:  payload.BusinessUnitID,
 		},
-		MessageID:       payload.MessageID,
-		HTML:            payload.HTML,
-		Text:            payload.Text,
-		Headers:         payload.Headers,
-		OpenTracking:    payload.OpenTracking,
-		FromEmailOrigin: payload.FromEmailOrigin,
+		MessageID:    payload.MessageID,
+		HTML:         payload.HTML,
+		Text:         payload.Text,
+		Headers:      payload.Headers,
+		OpenTracking: payload.OpenTracking,
 	})
 	if err != nil {
 		logger.Error("Failed to send email", "messageId", payload.MessageID.String(), "error", err)

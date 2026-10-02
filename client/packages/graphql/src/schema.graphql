@@ -8294,7 +8294,7 @@ type CustomerEmailProfile {
   comment: String!
   createdAt: Timestamp!
   customerId: ID!
-  fromEmail: String!
+  fromEmail: String! @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   id: ID!
   includeShipmentDetail: Boolean!
   organizationId: ID!

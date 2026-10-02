@@ -6,13 +6,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 var _ services.EmailSenderResolver = (*Service)(nil)
 
 // ResolveSender reads the profile Send would use and the recipients it would
-// refuse, and sends nothing.
+// skip, and sends nothing.
 func (s *Service) ResolveSender(
 	ctx context.Context,
 	req *services.SendEmailRequest,
@@ -22,7 +22,7 @@ func (s *Service) ResolveSender(
 		return nil, err
 	}
 
-	suppressed, err := s.suppressedRecipients(ctx, req.TenantInfo, req.To, false)
+	split, err := s.splitSuppressed(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,8 @@ func (s *Service) ResolveSender(
 		Email:      senderEmail(req, profile),
 		Name:       profile.SenderName,
 		ReplyTo:    profile.ReplyToEmail,
-		Suppressed: suppressed,
+		Suppressed: split.Suppressed,
+		Refused:    len(split.To) == 0 && len(req.To) > 0,
 	}, nil
 }
 
@@ -44,28 +45,50 @@ func senderEmail(req *services.SendEmailRequest, profile *email.Profile) string 
 	return profile.SenderEmail
 }
 
-// suppressedRecipients lists the recipients the suppression list refuses.
-// Send stops at the first one; a preview names every one.
-func (s *Service) suppressedRecipients(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	recipients []string,
-	firstOnly bool,
-) ([]string, error) {
-	var suppressed []string
-	for _, recipient := range recipients {
-		refused, err := s.repo.HasSuppression(ctx, tenantInfo, recipient)
-		if err != nil {
-			return nil, err
-		}
-		if !refused {
-			continue
-		}
-		suppressed = append(suppressed, recipient)
-		if firstOnly {
-			return suppressed, nil
-		}
-	}
+type suppressionSplit struct {
+	To         []string
+	CC         []string
+	BCC        []string
+	Suppressed []string
+}
 
-	return suppressed, nil
+func (s *Service) splitSuppressed(
+	ctx context.Context,
+	req *services.SendEmailRequest,
+) (*suppressionSplit, error) {
+	split := &suppressionSplit{}
+	seen := make(map[string]bool)
+	keep := func(recipients []string) ([]string, error) {
+		kept := make([]string, 0, len(recipients))
+		for _, recipient := range recipients {
+			normalized := stringutils.NormalizeEmailAddress(recipient)
+			refused, checked := seen[normalized]
+			if !checked {
+				var err error
+				refused, err = s.repo.HasSuppression(ctx, req.TenantInfo, recipient)
+				if err != nil {
+					return nil, err
+				}
+				seen[normalized] = refused
+				if refused {
+					split.Suppressed = append(split.Suppressed, recipient)
+				}
+			}
+			if !refused {
+				kept = append(kept, recipient)
+			}
+		}
+		return kept, nil
+	}
+	var err error
+	if split.To, err = keep(req.To); err != nil {
+		return nil, err
+	}
+	if split.CC, err = keep(req.CC); err != nil {
+		return nil, err
+	}
+	if split.BCC, err = keep(req.BCC); err != nil {
+		return nil, err
+	}
+	return split, nil
 }

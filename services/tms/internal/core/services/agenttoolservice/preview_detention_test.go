@@ -137,6 +137,7 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 			Email:      "notices@carrier.test",
 			Name:       "Carrier Billing",
 			Suppressed: []string{"ap@acme.test"},
+			Refused:    true,
 		},
 	}}
 	tool := newSendDetentionNoticeTool(det)

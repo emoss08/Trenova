@@ -1052,7 +1052,6 @@ var CustomerEmailProfileColumns = struct {
 	CustomerID            Column // "customer_id" → qualified: "cem.customer_id"
 	Subject               Column // "subject" → qualified: "cem.subject"
 	Comment               Column // "comment" → qualified: "cem.comment"
-	FromEmail             Column // "from_email" → qualified: "cem.from_email"
 	ToRecipients          Column // "to_recipients" → qualified: "cem.to_recipients"
 	CCRecipients          Column // "cc_recipients" → qualified: "cem.cc_recipients"
 	BCCRecipients         Column // "bcc_recipients" → qualified: "cem.bcc_recipients"
@@ -1069,7 +1068,6 @@ var CustomerEmailProfileColumns = struct {
 	CustomerID:            NewColumn("customer_id", "cem"),
 	Subject:               NewColumn("subject", "cem"),
 	Comment:               NewColumn("comment", "cem"),
-	FromEmail:             NewColumn("from_email", "cem"),
 	ToRecipients:          NewColumn("to_recipients", "cem"),
 	CCRecipients:          NewColumn("cc_recipients", "cem"),
 	BCCRecipients:         NewColumn("bcc_recipients", "cem"),
@@ -1092,7 +1090,6 @@ var CustomerEmailProfileFieldMap = map[string]string{
 	"customerId":            "customer_id",
 	"subject":               "subject",
 	"comment":               "comment",
-	"fromEmail":             "from_email",
 	"toRecipients":          "to_recipients",
 	"ccRecipients":          "cc_recipients",
 	"bccRecipients":         "bcc_recipients",
@@ -1113,7 +1110,6 @@ var CustomerEmailProfileInsertableColumns = []string{
 	"customer_id",
 	"subject",
 	"comment",
-	"from_email",
 	"to_recipients",
 	"cc_recipients",
 	"bcc_recipients",
@@ -1194,7 +1190,6 @@ var CustomerEmailProfileFilter = struct {
 	CustomerID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
 	Subject               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
 	Comment               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
-	FromEmail             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromEmail" → DB: "from_email"
 	ToRecipients          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toRecipients" → DB: "to_recipients"
 	CCRecipients          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ccRecipients" → DB: "cc_recipients"
 	BCCRecipients         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bccRecipients" → DB: "bcc_recipients"
@@ -1222,9 +1217,6 @@ var CustomerEmailProfileFilter = struct {
 	},
 	Comment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("comment", op, value)
-	},
-	FromEmail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("fromEmail", op, value)
 	},
 	ToRecipients: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("toRecipients", op, value)

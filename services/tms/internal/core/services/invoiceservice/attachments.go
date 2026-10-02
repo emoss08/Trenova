@@ -105,7 +105,7 @@ func (s *Service) materializePartLinks(
 		if err != nil {
 			return body, linked, err
 		}
-		link.URL = signedDocumentURL(req.BaseURL, rawToken)
+		link.URL = signedDocumentURL(s.linkBaseURL(req.BaseURL), rawToken)
 		body += "\n\nSupporting document link: " + link.FileName + "\n" + link.URL
 		linked = append(linked, &invoice.EmailAttemptAttachment{
 			DocumentID:   link.DocumentID,

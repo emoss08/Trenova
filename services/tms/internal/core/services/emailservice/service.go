@@ -282,13 +282,17 @@ func (s *Service) Send(
 	if err != nil {
 		return nil, err
 	}
-	suppressed, err := s.suppressedRecipients(ctx, req.TenantInfo, req.To, true)
+	split, err := s.splitSuppressed(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if len(suppressed) > 0 {
-		return nil, errortypes.NewBusinessError("recipient is suppressed: {0}", suppressed[0])
+	if len(split.To) == 0 {
+		return nil, errortypes.NewBusinessError(
+			"Every To recipient is on the suppression list: {0}",
+			strings.Join(split.Suppressed, ", "),
+		)
 	}
+	req.To, req.CC, req.BCC = split.To, split.CC, split.BCC
 
 	if req.IdempotencyKey == "" {
 		req.IdempotencyKey = newIdempotencyKey()
@@ -437,7 +441,7 @@ func (s *Service) SendPersisted(
 		},
 	})
 	if err != nil {
-		return s.markFailed(ctx, msg, s.describeSenderRejection(ctx, msg, req.FromEmailOrigin, err))
+		return s.markFailed(ctx, msg, s.describeSenderRejection(ctx, msg, err))
 	}
 
 	msg.Status = email.MessageStatusSent
@@ -599,12 +603,11 @@ func (s *Service) startSendWorkflow(
 				BusinessUnitID: msg.BusinessUnitID,
 				Timestamp:      timeutils.NowUnix(),
 			},
-			MessageID:       msg.ID,
-			HTML:            req.HTML,
-			Text:            req.Text,
-			Headers:         req.Headers,
-			OpenTracking:    req.OpenTracking,
-			FromEmailOrigin: req.FromEmailOrigin,
+			MessageID:    msg.ID,
+			HTML:         req.HTML,
+			Text:         req.Text,
+			Headers:      req.Headers,
+			OpenTracking: req.OpenTracking,
 		},
 	)
 	return err
@@ -878,7 +881,6 @@ func (s *Service) markFailed(
 func (s *Service) describeSenderRejection(
 	ctx context.Context,
 	msg *email.Message,
-	origin string,
 	err error,
 ) error {
 	var rejected *SenderRejectedError
@@ -886,10 +888,7 @@ func (s *Service) describeSenderRejection(
 		return err
 	}
 	rejected.Address = msg.FromEmail
-	rejected.Origin = strings.TrimSpace(origin)
-	if rejected.Origin == "" {
-		rejected.Origin = s.profileSenderOrigin(ctx, msg)
-	}
+	rejected.Origin = s.profileSenderOrigin(ctx, msg)
 	return rejected
 }
 
