@@ -46,12 +46,23 @@ Everything coloured in the product resolves to one of eleven hues, declared once
 in layer 1.
 
 The palette is Vercel's Geist, carried into OKLCH and held to the contrast and
-hue floors below. The greys are true neutrals, as Geist's are: chroma 0 across
-the canvas (#fafafa), the panels (white), the rules and the four text weights,
-with the ink at #171717 in light and #ededed in dark. Dark is Vercel's black:
-the page is #000, panels are #0a0a0a with a #242424 hairline, and the active nav
-row and hover fills are #1f1f1f and #1a1a1a. `--hue-neutral` stays as a name so a grey written against it still
-resolves, but it carries no chroma.
+hue floors below. The greys are true neutrals, as Geist's are, and the two
+themes mirror each other step for step:
+
+| Role | Light | Dark |
+|---|---|---|
+| Page, sidebar, wells inside a panel | #fafafa | #000 |
+| Panels and form fields | #fff | #0a0a0a |
+| Panel hairline (`--border`) | #e5e5e5 | #242424 |
+| Dividers (`--border-subtle`) | #ebebeb | #1f1f1f |
+| Hover | #f2f2f2 | #1a1a1a |
+| Active nav row | #ebebeb | #1f1f1f |
+| Ink | #171717 | #ededed |
+
+Light's hairline is one step darker than Geist's #ebebeb because
+`pnpm lint:design` requires a panel outline to clear 1.2:1 against the page.
+`--hue-neutral` stays as a name so a grey written against it still resolves, but
+it carries no chroma.
 
 **The product is drawn in ink.** The primary action is `--ink`, the foreground
 colour with its own hover and pressed rungs, not a hue. That is what lets every
@@ -311,7 +322,7 @@ wrong here even before dark mode is considered.
 
 | State | Treatment |
 |---|---|
-| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. In light it sits below the card, a well; in dark it is Vercel's #0a0a0a, the same as a panel, so on a panel the hairline is what draws the slot |
+| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. It is Vercel's panel fill in both themes, white in light and #0a0a0a in dark, so on a panel the hairline is what draws the slot |
 | hover | hairline steps to `--border-strong`; the fill does not change |
 | focus | the one focus ring (`ui-focus-ring`, or `ui-container-focus-ring` when a child takes focus) |
 | open | a trigger whose popup is open holds that same ring (`data-pressed`, `data-popup-open`, `aria-expanded`) |
