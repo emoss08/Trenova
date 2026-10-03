@@ -1,5 +1,8 @@
 import { decisionRequestOf } from "@/components/assistant/decision-requests";
-import { RequestedDecisionRecords } from "@/components/assistant/decision-record";
+import { presentProposal } from "@/components/assistant/proposal-presenters";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { decideMyPlan, decideMyProposal, decideMyProposals } from "@/lib/graphql/agent-decisions";
+import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { DisplayValue } from "@/components/assistant/display-value";
 import {
   formatDisplayValue,
@@ -7,11 +10,10 @@ import {
   statusPhase,
 } from "@/components/assistant/readable-values";
 import { ReportRunCard } from "@/components/assistant/report-run-card";
-import { AiMarkdown } from "@/components/elements/ai-markdown";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { queries } from "@/lib/queries";
 import type { AssistantArtifact, AssistantProposal } from "@/types/assistant";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
@@ -19,7 +21,6 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   composedViewFrom,
-  documentFrom,
   emailDraftFrom,
   entityCardFrom,
   navigationFrom,
@@ -257,30 +258,6 @@ export function DeskRateBody({ artifact }: { artifact: AssistantArtifact }) {
   );
 }
 
-/** A write-up the agent published, read as it was written. */
-export function DeskDocBody({ artifact }: { artifact: AssistantArtifact }) {
-  const t = useT();
-  const document = useMemo(() => documentFrom(artifact), [artifact]);
-  if (document.body.trim() === "") {
-    return <Notice>{t("This document is empty.")}</Notice>;
-  }
-  return (
-    <article className="dk-ax-pad dk-ax-doc">
-      <h2>{artifact.title}</h2>
-      <p className="dk-ax-dm">
-        {t(
-          "Written {0}",
-          new Date(artifact.updatedAt * 1000).toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-          }),
-        )}
-      </p>
-      <AiMarkdown content={document.body} />
-    </article>
-  );
-}
-
 /** What moved between two runs of a report: the counts, the totals and each change. */
 export function DeskDiffBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
@@ -424,9 +401,15 @@ export function DeskPlanBody({ artifact }: { artifact: AssistantArtifact }) {
   );
 }
 
-/** A message waiting to go: who it goes to, what it says and why it is worded so. Sending is decided in the approval box. */
+/**
+ * A message waiting to go: who it goes to, what it says and why it is worded
+ * so. The subject and body can be changed here; "Send for approval" records
+ * the decision on the proposal behind the draft, with the changes as its
+ * modifications, the same way the approval box does.
+ */
 export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
+  const queryClient = useQueryClient();
   const draft = useMemo(() => emailDraftFrom(artifact), [artifact]);
   const proposalsQuery = useQuery({
     ...queries.assistant.proposals(artifact.threadId),
@@ -436,6 +419,10 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
     (candidate) => candidate.id === artifact.proposalId,
   );
   const { copy, isCopied: copied } = useCopyToClipboard();
+  const [subject, setSubject] = useState(draft.subject);
+  const [body, setBody] = useState(draft.body);
+  const subjectKey = typeof artifact.payload.subject === "string" ? "subject" : "";
+  const bodyKey = typeof artifact.payload.body === "string" ? "body" : "";
   const state =
     artifact.status === "Sent" || proposal?.status === "Executed"
       ? "sent"
@@ -444,6 +431,23 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
         : proposal
           ? "decided"
           : "unknown";
+  const editable = state === "waiting";
+
+  const sendMutation = useApiMutation({
+    mutationFn: () => {
+      const modifications: Record<string, unknown> = {};
+      if (subjectKey && subject !== draft.subject) modifications[subjectKey] = subject;
+      if (bodyKey && body !== draft.body) modifications[bodyKey] = body;
+      const changed = Object.keys(modifications).length > 0;
+      return decideMyProposal(artifact.proposalId, {
+        decision: changed ? "Modified" : "Accepted",
+        reasonCode: changed ? "modified_from_desk" : "",
+        ...(changed ? { modifications } : {}),
+      });
+    },
+    onSuccess: () => invalidateProposalViews(queryClient, artifact.threadId),
+    resourceName: "Draft",
+  });
 
   return (
     <div className="dk-ax-mail">
@@ -459,14 +463,21 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
       )}
       <div className="dk-ax-mrow">
         <span>{t("Subject")}</span>
-        <input value={draft.subject} readOnly aria-label={t("Subject")} />
+        <input
+          value={subject}
+          readOnly={!editable || subjectKey === ""}
+          onChange={(event) => setSubject(event.target.value)}
+          aria-label={t("Subject")}
+        />
       </div>
       <textarea
         value={
-          draft.body ||
-          t("The message is written from the organization's template when it is sent.")
+          bodyKey === ""
+            ? t("The message is written from the organization's template when it is sent.")
+            : body
         }
-        readOnly
+        readOnly={!editable || bodyKey === ""}
+        onChange={(event) => setBody(event.target.value)}
         spellCheck={false}
         aria-label={t("Message")}
       />
@@ -480,7 +491,7 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
         <button
           type="button"
           className="dk-ax-btn dk-ghost"
-          onClick={() => void copy(`${draft.subject}\n\n${draft.body}`)}
+          onClick={() => void copy(`${subject}\n\n${body}`)}
         >
           <ArtIcon name={copied ? "check" : "copy"} size={13} />
           {copied ? t("Copied") : t("Copy")}
@@ -491,10 +502,22 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
             <ArtIcon name="check" size={13} stroke={2.4} />
             {t("Sent")}
           </span>
+        ) : sendMutation.isSuccess || (state === "decided" && proposal?.status !== "Rejected") ? (
+          <span className="dk-ax-sent">
+            <ArtIcon name="check" size={13} stroke={2.4} />
+            {t("Sent for approval")}
+          </span>
         ) : state === "waiting" ? (
-          <span className="dk-ax-sent dk-wait">{t("Waiting on your approval")}</span>
+          <button
+            type="button"
+            className="dk-ax-btn dk-ink"
+            disabled={sendMutation.isPending || artifact.proposalId === ""}
+            onClick={() => sendMutation.mutate()}
+          >
+            {t("Send for approval")}
+          </button>
         ) : state === "decided" ? (
-          <span className="dk-ax-sent">{t("Decided")}</span>
+          <span className="dk-ax-sent dk-wait">{t("Set aside")}</span>
         ) : null}
       </div>
     </div>
@@ -525,7 +548,22 @@ export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
           <div className="dk-ax-vbar">
             <span>{humanizeToolName(view.entity)}</span>
             <em>{t("{0, plural, one {# filter} other {# filters}}", view.filterCount)}</em>
+            {view.count !== null && (
+              <b>{t("{0, plural, one {# result} other {# results}}", view.count)}</b>
+            )}
           </div>
+          {view.preview.map((row) => (
+            <div key={row.id} className="dk-ax-vrow">
+              <span className="dk-ax-id">{row.id}</span>
+              <span>{row.label}</span>
+              {row.status !== "" && (
+                <span className={cn("dk-ax-pill", PHASE_PILL[statusPhase(row.status) ?? ""])}>
+                  <i />
+                  {row.status}
+                </span>
+              )}
+            </div>
+          ))}
         </div>
         {view.unresolved.map((entry) => (
           <div key={entry.phrase} className="dk-ax-warn">
@@ -571,16 +609,142 @@ function splitTerms(
     .map((part) => ({ text: part, term: terms.includes(part) }));
 }
 
-/** A decision the agent asked for: the proposal's record, which follows the decision wherever it is made. */
+/** Where a decision stands, read from the proposals or plan behind it. */
+function decisionState(statuses: readonly string[]): "pending" | "approved" | "dismissed" {
+  if (statuses.length === 0 || statuses.some((status) => status === "Pending")) {
+    return "pending";
+  }
+  return statuses.some((status) => status === "Rejected" || status === "Expired")
+    ? "dismissed"
+    : "approved";
+}
+
+const DECISION_ROWS = 8;
+
+/**
+ * A decision the agent asked for: what it covers, each change, and the way to
+ * make it here. Approving and setting aside go through the same decision
+ * mutations as the approval box, and the state follows the proposals however
+ * they are decided.
+ */
 export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
+  const queryClient = useQueryClient();
   const request = decisionRequestOf({ proposalId: artifact.proposalId, ...artifact.payload });
+  const proposalsQuery = useQuery(queries.assistant.proposals(artifact.threadId));
+  const plansQuery = useQuery({
+    ...queries.assistant.plans(artifact.threadId),
+    enabled: request !== null && request.planId !== "",
+  });
+  const all = proposalsQuery.data?.results ?? [];
+  const plan =
+    request?.planId !== ""
+      ? (plansQuery.data?.results.find((candidate) => candidate.id === request?.planId) ?? null)
+      : null;
+  const proposals =
+    request === null
+      ? []
+      : plan !== null
+        ? all
+            .filter((proposal) => proposal.planId === plan.id)
+            .sort((a, b) => a.planStep - b.planStep)
+        : request.proposalIds
+            .map((id) => all.find((candidate) => candidate.id === id))
+            .filter((proposal): proposal is AssistantProposal => proposal !== undefined);
+  const state =
+    plan !== null
+      ? plan.status === "Pending"
+        ? "pending"
+        : plan.status === "Rejected" || plan.status === "Expired"
+          ? "dismissed"
+          : "approved"
+      : decisionState(proposals.map((proposal) => proposal.status));
+  const ids = proposals
+    .filter((proposal) => proposal.status === "Pending")
+    .map((proposal) => proposal.id);
+
+  const decide = useApiMutation({
+    mutationFn: async (decision: "Accepted" | "Rejected") => {
+      const input = { decision, reasonCode: decision === "Rejected" ? "not_now" : "" };
+      if (plan !== null) {
+        await decideMyPlan(plan.id, input);
+      } else if (ids.length === 1) {
+        await decideMyProposal(ids[0], input);
+      } else {
+        await decideMyProposals(ids, input);
+      }
+    },
+    onSuccess: () => invalidateProposalViews(queryClient, artifact.threadId),
+    resourceName: "Decision",
+  });
+
   if (artifact.proposalId === "" || request === null) {
     return <Notice>{t("This decision no longer names a proposal.")}</Notice>;
   }
+  if (proposalsQuery.isPending) {
+    return <Notice>{t("Loading…")}</Notice>;
+  }
+
+  const first = proposals[0];
+  const view = first ? presentProposal(first) : null;
+  const scope = [
+    view?.summary ?? "",
+    first ? humanizeToolName(first.toolName) : "",
+    t("{0, plural, one {# change} other {# changes}}", proposals.length),
+  ].filter(Boolean);
+
   return (
-    <div className="dk-ax-pad dk-ax-dec">
-      <RequestedDecisionRecords request={request} threadId={artifact.threadId} />
+    <div className={cn("dk-ax-pad dk-ax-dec", `dk-s-${state}`)}>
+      <div className="dk-ax-dech">
+        <b>{artifact.title}</b>
+        <span className={cn("dk-ax-dst", state !== "pending" && `dk-${state}`)}>
+          {state === "pending"
+            ? t("Waiting on you")
+            : state === "approved"
+              ? t("Approved")
+              : t("Set aside")}
+        </span>
+      </div>
+      <p className="dk-ax-note">{scope.join(" · ")}</p>
+      <div className="dk-ax-decl">
+        {proposals.slice(0, DECISION_ROWS).map((proposal) => {
+          const shown = presentProposal(proposal);
+          const [lead, change] = shown.highlights;
+          return (
+            <div key={proposal.id}>
+              <span className="dk-ax-id">{lead ? String(lead.value) : proposal.id.slice(-8)}</span>
+              <span>{shown.title}</span>
+              <s>{change ? change.label : ""}</s>
+              <i>→</i>
+              <em>{change ? String(change.value) : humanizeToolName(proposal.status)}</em>
+            </div>
+          );
+        })}
+        {proposals.length > DECISION_ROWS && (
+          <div className="dk-ax-decm">{t("+ {0} more", proposals.length - DECISION_ROWS)}</div>
+        )}
+      </div>
+      {state === "pending" && ids.length + (plan !== null ? 1 : 0) > 0 && (
+        <div className="dk-ax-acts">
+          <button
+            type="button"
+            className="dk-ax-btn dk-ghost"
+            disabled={decide.isPending}
+            onClick={() => decide.mutate("Rejected")}
+          >
+            {t("Not now")}
+          </button>
+          <span className="flex-1" />
+          <button
+            type="button"
+            className="dk-ax-btn dk-ink"
+            disabled={decide.isPending}
+            onClick={() => decide.mutate("Accepted")}
+          >
+            {t("{0, plural, one {Approve # change} other {Approve # changes}}", proposals.length)}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

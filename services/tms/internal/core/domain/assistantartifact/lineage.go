@@ -13,6 +13,7 @@ var versionedKinds = map[Kind]bool{
 	KindReportPreview:   true,
 	KindRateExplanation: true,
 	KindRunDiff:         true,
+	KindExtraction:      true,
 }
 
 // LineageKeyFor names what an artifact is a view of, so reading the same

@@ -12,7 +12,9 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { artifactCsvUrl } from "@/services/assistant";
+import { downloadFromUrl } from "@trenova/shared/lib/utils";
 import { reportPreviewFrom, tableViewFrom } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
 
@@ -234,11 +236,27 @@ export function DeskReportBars({ artifact, bars }: { artifact: AssistantArtifact
     grid.totals?.[column.key] ?? grid.rows.reduce((total, row) => total + figure(row, column), 0);
   const columns = bars.extra ? [bars.bar, bars.extra] : [bars.bar];
 
+  const preview = reportPreviewFrom(artifact);
+  const definitionId =
+    typeof artifact.payload.definitionId === "string" ? artifact.payload.definitionId : "";
+  const fullReport = definitionId
+    ? `/reports/explore/${definitionId}`
+    : `/desk/c/${artifact.threadId}/a/${artifact.slug || artifact.lineageId || artifact.id}/page`;
+
   return (
     <div className="dk-ax-pad dk-ax-rep">
       <div className="dk-ax-repm">
-        <span>{columns.map((column) => column.label).join(" · ")}</span>
-        <span>{t("{0, plural, one {# row} other {# rows}}", grid.rowCount)}</span>
+        <span>
+          {humanizeDataset(preview.dataset) || columns.map((column) => column.label).join(" · ")}
+        </span>
+        <span>
+          {t(
+            "{0, plural, one {# row} other {# rows}} · top {1} by {2}",
+            grid.rowCount,
+            grid.rows.length,
+            bars.bar.label.toLowerCase(),
+          )}
+        </span>
       </div>
       <div className={cn("dk-ax-bars", !bars.extra && "dk-one")}>
         {grid.rows.map((row, index) => (
@@ -271,8 +289,32 @@ export function DeskReportBars({ artifact, bars }: { artifact: AssistantArtifact
           ))}
         </div>
       </div>
+      <div className="dk-ax-acts">
+        <button
+          type="button"
+          className="dk-ax-btn dk-ghost"
+          onClick={() => downloadFromUrl(artifactCsvUrl(artifact.threadId, artifact.id))}
+        >
+          <ArtIcon name="dl" size={13} />
+          {t("Download CSV")}
+        </button>
+        <Link
+          className="dk-ax-btn dk-ghost"
+          to={fullReport}
+          target={definitionId ? undefined : "_blank"}
+        >
+          <ArtIcon name="ext" size={13} />
+          {t("Open full report")}
+        </Link>
+      </div>
     </div>
   );
+}
+
+/** A dataset's key as a reader names it: "shipment_stops" as "Shipment stops". */
+function humanizeDataset(dataset: string): string {
+  const words = dataset.replace(/[_.-]+/gu, " ").trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "";
 }
 
 type Sort = { key: string; direction: 1 | -1 };
@@ -294,6 +336,7 @@ export function DeskTableBody({
   versions?: ReactNode;
 }) {
   const t = useT();
+  const navigate = useNavigate();
   const grid = useMemo(() => gridOf(artifact), [artifact]);
   const changed = useMemo(
     () => changedCells(grid, previous ? gridOf(previous) : null),
@@ -389,7 +432,11 @@ export function DeskTableBody({
             {rows.map((row, index) => (
               <tr
                 key={`${row.key}:${artifact.id}`}
-                style={{ animationDelay: `${Math.min(index, 14) * 18}ms` }}
+                style={{
+                  animationDelay: `${Math.min(index, 14) * 18}ms`,
+                  cursor: row.path !== "" ? "pointer" : undefined,
+                }}
+                onClick={row.path !== "" ? () => void navigate(row.path) : undefined}
               >
                 {grid.columns.map((column, at) => (
                   <td
@@ -404,7 +451,11 @@ export function DeskTableBody({
                 ))}
                 <td className="dk-go">
                   {row.path !== "" && (
-                    <Link to={row.path} aria-label={t("Open this record")}>
+                    <Link
+                      to={row.path}
+                      aria-label={t("Open this record")}
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <ArtIcon name="ext" size={12} />
                     </Link>
                   )}
@@ -418,7 +469,7 @@ export function DeskTableBody({
                 {grid.columns.map((column, at) => (
                   <td key={column.key} className={isFigureType(column.type) ? "dk-ar" : undefined}>
                     {at === 0 ? (
-                      t("{0, plural, one {# row} other {# rows}}", rows.length)
+                      t("{0, plural, one {# item} other {# items}}", rows.length)
                     ) : totals[column.key] != null && isFigureType(column.type) ? (
                       <span className="dk-ax-num">
                         {formatDisplayValue(column.type, totals[column.key], t)}

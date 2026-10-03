@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -21,9 +22,13 @@ import (
 type stubArtifactRepo struct {
 	repositories.AssistantArtifactRepository
 
-	upserts []*assistantartifact.Artifact
-	listed  []*assistantartifact.Artifact
-	stored  map[pulid.ID]*assistantartifact.Artifact
+	upserts   []*assistantartifact.Artifact
+	listed    []*assistantartifact.Artifact
+	stored    map[pulid.ID]*assistantartifact.Artifact
+	inserted  []*assistantartifact.Artifact
+	paged     []repositories.ListArtifactsRequest
+	questions map[pulid.ID]string
+	arguments map[string]map[string]any
 }
 
 func (r *stubArtifactRepo) GetByID(
@@ -66,11 +71,98 @@ func (r *stubArtifactRepo) LatestInLineage(
 	return latest, nil
 }
 
-func (r *stubArtifactRepo) ListByThread(
+func (r *stubArtifactRepo) ListPage(
 	_ context.Context,
-	_ repositories.ListArtifactsRequest,
+	req repositories.ListArtifactsRequest,
+) (*repositories.ArtifactPage, error) {
+	r.paged = append(r.paged, req)
+
+	return &repositories.ArtifactPage{Artifacts: r.listed, Total: len(r.listed)}, nil
+}
+
+func (r *stubArtifactRepo) TakenSlugs(
+	_ context.Context,
+	_ pulid.ID,
+	_ pagination.TenantInfo,
+	_ string,
+) (map[string]bool, error) {
+	taken := map[string]bool{}
+	for _, artifact := range r.upserts {
+		taken[artifact.Slug] = true
+	}
+
+	return taken, nil
+}
+
+// ListLineage reads a lineage from what was stored and what was written,
+// oldest first.
+func (r *stubArtifactRepo) ListLineage(
+	_ context.Context,
+	req repositories.LineageRequest,
 ) ([]*assistantartifact.Artifact, error) {
-	return r.listed, nil
+	all := make([]*assistantartifact.Artifact, 0, len(r.stored)+len(r.upserts)+len(r.inserted))
+	for _, artifact := range r.stored {
+		all = append(all, artifact)
+	}
+	all = append(all, r.upserts...)
+	all = append(all, r.inserted...)
+
+	root := pulid.Nil
+	for _, artifact := range all {
+		if artifact.ID == req.ID {
+			root = artifact.LineageID
+			if root.IsNil() {
+				root = artifact.ID
+			}
+		}
+	}
+	if root.IsNil() {
+		return nil, errortypes.NewNotFoundError("Artifact not found")
+	}
+	var lineage []*assistantartifact.Artifact
+	for _, artifact := range all {
+		if artifact.ID == root || artifact.LineageID == root {
+			lineage = append(lineage, artifact)
+		}
+	}
+	slices.SortFunc(lineage, func(a, b *assistantartifact.Artifact) int {
+		return a.LineageSeq - b.LineageSeq
+	})
+
+	return lineage, nil
+}
+
+func (r *stubArtifactRepo) InsertVersion(
+	_ context.Context,
+	artifact *assistantartifact.Artifact,
+) (*assistantartifact.Artifact, error) {
+	artifact.ID = pulid.MustNew("art_")
+	r.inserted = append(r.inserted, artifact)
+
+	return artifact, nil
+}
+
+func (r *stubArtifactRepo) TurnQuestions(
+	_ context.Context,
+	_ pulid.ID,
+	_ pagination.TenantInfo,
+	messageIDs []pulid.ID,
+) (map[pulid.ID]string, error) {
+	out := map[pulid.ID]string{}
+	for _, id := range messageIDs {
+		out[id] = r.questions[id]
+	}
+
+	return out, nil
+}
+
+func (r *stubArtifactRepo) ToolCallArguments(
+	_ context.Context,
+	_ pulid.ID,
+	_ pagination.TenantInfo,
+	callID string,
+) (map[string]any, error) {
+	return r.arguments[callID], nil
 }
 
 func observation(name string, data any) serviceports.ToolObservation {
@@ -404,11 +496,13 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 		}},
 	}
 
-	listed, err := svc.ListThreadArtifacts(
+	page, err := svc.ListThreadArtifacts(
 		t.Context(),
 		repositories.GetThreadRequest{ID: thread.ID},
+		serviceports.ListArtifactsOptions{},
 	)
 	require.NoError(t, err)
+	listed := page.Results
 	require.Len(t, listed, 3)
 	assert.Equal(t, assistantartifact.StatusSent, listed[0].Status)
 	assert.Equal(t, assistantartifact.StatusFailed, listed[1].Status)

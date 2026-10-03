@@ -1,7 +1,8 @@
 import type { AssistantArtifact } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { useDeskStore } from "@/stores/desk-store";
 import { describe, expect, it, vi } from "vitest";
 import { groupLineages, lineageContaining } from "../desk-lineage";
 import { changedCells, gridOf } from "../desk-table-body";
@@ -13,8 +14,12 @@ vi.mock("@/lib/queries", () => ({
   queries: {
     assistant: {
       artifacts: (threadId: string) => ({
-        queryKey: ["assistant", "artifacts", threadId],
-        queryFn: () => ({ results: state.artifacts }),
+        queryKey: ["assistant-artifacts", threadId],
+        queryFn: () => page(),
+      }),
+      artifactLineage: (threadId: string, id: string) => ({
+        queryKey: ["assistant-artifacts", threadId, "lineage", id],
+        queryFn: () => ({ results: [] }),
       }),
       proposals: (threadId: string) => ({
         queryKey: ["assistant", "proposals", threadId],
@@ -24,7 +29,28 @@ vi.mock("@/lib/queries", () => ({
   },
 }));
 
-let clock = 1_790_000_000;
+function page(needle = "") {
+  const results = (state.artifacts as AssistantArtifact[]).filter((artifact) =>
+    artifact.title.toLowerCase().includes(needle.toLowerCase()),
+  );
+  return {
+    results,
+    total: results.length,
+    nextCursor: "",
+    counts: { all: results.length, pinned: 0, families: { table: results.length } },
+  };
+}
+
+vi.mock("@/services/api", () => ({
+  apiService: {
+    assistantService: {
+      listArtifacts: (_threadId: string, options: { q?: string }) =>
+        Promise.resolve(page(options.q ?? "")),
+    },
+  },
+}));
+
+let clock = Math.floor(Date.now() / 1000) - 3600;
 
 function artifact(overrides: Partial<AssistantArtifact> & { id: string }): AssistantArtifact {
   clock += 60;
@@ -42,6 +68,8 @@ function artifact(overrides: Partial<AssistantArtifact> & { id: string }): Assis
     pinned: false,
     lineageId: "",
     lineageSeq: 1,
+    slug: overrides.id,
+    turn: "",
     createdAt: clock,
     updatedAt: clock,
     ...overrides,
@@ -75,7 +103,13 @@ describe("groupLineages", () => {
     const first = workers("art_1", "Active");
     const card = artifact({ id: "art_2", kind: "entity_card", title: "SEED-SHP-003" });
     const second = workers("art_3", "Inactive", { lineageId: "art_1", lineageSeq: 2 });
-    const pinned = artifact({ id: "art_0", kind: "document", title: "Brief", pinned: true, createdAt: 1 });
+    const pinned = artifact({
+      id: "art_0",
+      kind: "document",
+      title: "Brief",
+      pinned: true,
+      createdAt: 1,
+    });
 
     const lineages = groupLineages([first, card, second, pinned]);
 
@@ -104,7 +138,11 @@ function renderWorkspace(onClose = vi.fn()) {
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <DeskWorkspace threadId="athr_1" liveArtifacts={{ ids: [], revision: 0 }} onClose={onClose} />
+        <DeskWorkspace
+          threadId="athr_1"
+          liveArtifacts={{ ids: [], revision: 0 }}
+          onClose={onClose}
+        />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -134,26 +172,47 @@ describe("DeskWorkspace", () => {
     fireEvent.click(screen.getByTitle("Versions"));
     fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: /v1/ }));
 
-    expect(await screen.findByText("Version 1 of 2, read", { exact: false })).toBeInTheDocument();
+    expect(await screen.findAllByText("Active")).not.toHaveLength(0);
     expect(screen.queryByText("Inactive")).not.toBeInTheDocument();
   });
 
-  it("searches everything the conversation made with ⌘J", async () => {
+  it("searches everything the conversation made, on the server", async () => {
     state.artifacts = [
       workers("art_1", "Active"),
-      artifact({ id: "art_2", kind: "document", title: "Storm brief", payload: { body: "Two loads." } }),
+      artifact({
+        id: "art_2",
+        kind: "document",
+        title: "Storm brief",
+        payload: { body: "Two loads." },
+      }),
     ];
     renderWorkspace();
     await screen.findByText("Storm brief", { selector: "h2" });
 
-    fireEvent.keyDown(window, { key: "j", metaKey: true });
+    act(() => useDeskStore.getState().setBrowsing(true));
     const search = await screen.findByRole("textbox", { name: "Search artifacts" });
     fireEvent.change(search, { target: { value: "work" } });
 
     const titles = () =>
       [...document.querySelectorAll(".dk-axb-rt b")].map((title) => title.textContent);
-    expect(titles()).toEqual(["Workers"]);
+    await waitFor(() => expect(titles()).toEqual(["Workers"]));
     fireEvent.keyDown(search, { key: "Enter" });
     expect(await screen.findByText("Avery Lane")).toBeInTheDocument();
+  });
+
+  it("fans the stack on a click and folds it on Esc without closing the pane", async () => {
+    state.artifacts = [workers("art_1", "Active"), artifact({ id: "art_2", title: "Rates" })];
+    act(() => useDeskStore.getState().setBrowsing(false));
+    const { onClose } = renderWorkspace();
+    await screen.findByText("Avery Lane");
+
+    const front = screen.getByTitle("Switch artifact");
+    expect(document.querySelector(".dk-ax-stack.dk-fan")).toBeNull();
+    fireEvent.click(front);
+    expect(document.querySelector(".dk-ax-stack.dk-fan")).not.toBeNull();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(document.querySelector(".dk-ax-stack.dk-fan")).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

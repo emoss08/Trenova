@@ -301,6 +301,10 @@ export type ComposedViewArtifact = {
   terms: string[];
   filterCount: number;
   unresolved: { phrase: string; reason: string }[];
+  /** How many records the view holds, when the view was counted. */
+  count: number | null;
+  /** The first records it holds, to read before opening it. */
+  preview: { id: string; label: string; status: string }[];
 };
 
 export function composedViewFrom(artifact: AssistantArtifact): ComposedViewArtifact | null {
@@ -321,6 +325,15 @@ export function composedViewFrom(artifact: AssistantArtifact): ComposedViewArtif
       .filter(isRecord)
       .map((entry) => ({ phrase: stringOf(entry.phrase), reason: stringOf(entry.reason) }))
       .filter((entry) => entry.phrase !== ""),
+    count: typeof artifact.payload.count === "number" ? artifact.payload.count : null,
+    preview: listOf(artifact.payload.preview)
+      .filter(isRecord)
+      .map((row) => ({
+        id: stringOf(row.id),
+        label: stringOf(row.label),
+        status: stringOf(row.status),
+      }))
+      .filter((row) => row.id !== ""),
   };
 }
 
@@ -486,11 +499,53 @@ export function emailDraftFrom(artifact: AssistantArtifact): EmailDraftArtifact 
 
 export type DocumentArtifact = {
   body: string;
+  /** What kind of write-up it is: "Brief", "Handover". */
+  docType: string;
+  /** Who wrote it, and what from. */
+  author: string;
+  basis: string;
+  /** Who wrote this version: the agent, or a person editing on the Desk. */
+  editedBy: "agent" | "person";
+  editor: string;
+  versionNote: string;
+  sources: DocumentSource[];
+};
+
+/** What a citation mark in a document points to. */
+export type DocumentSource = {
+  n: number;
+  tool: string;
+  label: string;
+  detail: string;
+  artifactId: string;
 };
 
 /** A write-up the agent published: markdown, read as it was written. */
 export function documentFrom(artifact: AssistantArtifact): DocumentArtifact {
-  return { body: stringOf(artifact.payload.body) };
+  const payload = artifact.payload;
+  const sources = Array.isArray(payload.sources) ? payload.sources : [];
+  return {
+    body: stringOf(payload.body),
+    docType: stringOf(payload.docType),
+    author: stringOf(payload.author),
+    basis: stringOf(payload.basis),
+    editedBy: payload.editedBy === "person" ? "person" : "agent",
+    editor: stringOf(payload.editor),
+    versionNote: stringOf(payload.versionNote),
+    sources: sources
+      .filter(
+        (source): source is Record<string, unknown> =>
+          typeof source === "object" && source !== null,
+      )
+      .map((source) => ({
+        n: numberOf(source.n),
+        tool: stringOf(source.tool),
+        label: stringOf(source.label),
+        detail: stringOf(source.detail),
+        artifactId: stringOf(source.artifactId),
+      }))
+      .filter((source) => source.n > 0 && source.label !== ""),
+  };
 }
 
 /** One end of a shipment's route, and the time that matters there. */

@@ -9,6 +9,7 @@ import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { commandJ } from "./artifacts/desk-workspace-state";
 import { useDeskStore } from "@/stores/desk-store";
 import {
   LOOKUP_ARTIFACT_KINDS,
@@ -348,7 +349,10 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         togglePane();
       } else if (key === "j" && activeThread !== null) {
         event.preventDefault();
-        setPane("open");
+        const { pane: current, browsing, setBrowsing } = useDeskStore.getState();
+        const next = commandJ({ open: current === "open", browsing });
+        setBrowsing(next.browsing);
+        setPane(next.open ? "open" : "closed");
       }
     };
     window.addEventListener("keydown", onKeyDown);

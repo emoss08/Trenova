@@ -2001,6 +2001,18 @@ export const routes: RouteObject[] = [
         loader: protectedLoader,
         children: [
           {
+            // An artifact on a page of its own, without the conversation.
+            path: "/desk/c/:threadId/a/:slug/page",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Assistant, Operation.Read),
+            ),
+            async lazy() {
+              const { DeskArtifactPage } = await import("@/routes/desk/artifact-page");
+              return { Component: DeskArtifactPage };
+            },
+          },
+          {
             path: "/desk",
             loader: combineLoaders(
               protectedLoader,
@@ -2024,6 +2036,15 @@ export const routes: RouteObject[] = [
                 async lazy() {
                   const { DeskConversationPage } = await import("@/routes/desk/conversation-page");
                   return { Component: DeskConversationPage };
+                },
+              },
+              {
+                // A link to one artifact, named by its slug: the conversation
+                // opens with it beside it.
+                path: "c/:threadId/a/:slug",
+                async lazy() {
+                  const { DeskArtifactLinkPage } = await import("@/routes/desk/artifact-link-page");
+                  return { Component: DeskArtifactLinkPage };
                 },
               },
               {

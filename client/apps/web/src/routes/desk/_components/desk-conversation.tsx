@@ -291,7 +291,8 @@ export function DeskConversation({
   }, [handoffProvider, setProviderId]);
 
   const { setArtifactCount, openArtifact: openInDesk, setWorkspaceOpen, workspaceOpen } = desk;
-  useEffect(() => setArtifactCount(artifacts.length), [artifacts.length, setArtifactCount]);
+  const artifactTotal = artifactsQuery.data?.counts.all ?? artifacts.length;
+  useEffect(() => setArtifactCount(artifactTotal), [artifactTotal, setArtifactCount]);
 
   const togglePin = useCallback(
     (messageId: string) => toggleChapter(thread.id, messageId),
@@ -550,6 +551,20 @@ export function DeskConversation({
       void send(queued.content, undefined, providerId, queued.payload);
     }
   }, [online, queued, send, providerId]);
+  // A question an artifact asked on the person's behalf goes as theirs, once
+  // the conversation is free to take it.
+  const pendingAsk = useDeskStore((state) => state.asks[thread.id] ?? null);
+  const takeAsk = useDeskStore((state) => state.takeAsk);
+  const busyForAsk = isActive;
+  useEffect(() => {
+    if (pendingAsk === null || busyForAsk || !online) {
+      return;
+    }
+    const question = takeAsk(thread.id);
+    if (question) {
+      void send(question, undefined, providerId);
+    }
+  }, [busyForAsk, online, pendingAsk, providerId, send, takeAsk, thread.id]);
   const [pickerSignal, setPickerSignal] = useState(0);
   const [agentPickerSignal, setAgentPickerSignal] = useState(0);
   // A question the guard turned away: its card offers to ask another agent

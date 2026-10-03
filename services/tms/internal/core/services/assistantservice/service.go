@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -58,6 +59,14 @@ type Params struct {
 	// Notifier tells the people who run AI Control that someone asked for
 	// more room: access to an agent, more allowance, more budget.
 	Notifications *notificationservice.Service `optional:"true"`
+	// Completion rewrites a passage of a document a person asked to change,
+	// with the same models the conversation's agent uses.
+	Completion serviceports.StructuredCompleter `optional:"true"`
+	// Reports re-runs a report preview whole for its download, and Queries
+	// re-runs the list a table was read from; PDFs prints a document.
+	Reports *reporting.Service                  `optional:"true"`
+	Queries serviceports.AgentQueryToolRegistry `optional:"true"`
+	PDFs    serviceports.PDFRenderer            `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -100,10 +109,14 @@ type Service struct {
 	agentControls repositories.AgentControlRepository
 	users         repositories.UserRepository
 	notifier      raiseNotifier
+	completion    serviceports.StructuredCompleter
+	reports       *reporting.Service
+	queries       serviceports.AgentQueryToolRegistry
+	pdfs          serviceports.PDFRenderer
 }
 
 func New(p Params) *Service {
-	return &Service{
+	s := &Service{
 		logger:        p.Logger.Named("service.assistant"),
 		guard:         p.Guard,
 		runtime:       p.Runtime,
@@ -131,7 +144,13 @@ func New(p Params) *Service {
 		agentControls: p.AgentControls,
 		users:         p.Users,
 		notifier:      raiseNotifierOf(p.Notifications),
+		completion:    p.Completion,
+		queries:       p.Queries,
+		pdfs:          p.PDFs,
+		reports:       p.Reports,
 	}
+
+	return s
 }
 
 // raiseNotifierOf keeps a missing notification service nil as an interface,

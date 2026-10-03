@@ -25,6 +25,7 @@ import {
   ReceiptTextIcon,
   ScrollTextIcon,
   TableIcon,
+  ScanTextIcon,
 } from "@trenova/shared/components/icons";
 import { useId, useState, type ReactNode } from "react";
 
@@ -54,6 +55,7 @@ export const ARTIFACT_KINDS: Record<
   navigation: { label: "Page", icon: Compass03Icon },
   draft_edit: { label: "Draft change", icon: PencilLineIcon },
   decision_request: { label: "Decision", icon: GavelIcon },
+  extraction: { label: "Extraction", icon: ScanTextIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

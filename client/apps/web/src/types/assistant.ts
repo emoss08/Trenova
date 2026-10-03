@@ -107,6 +107,7 @@ export const artifactKindSchema = z.enum([
   "navigation",
   "draft_edit",
   "decision_request",
+  "extraction",
 ]);
 
 /**
@@ -121,6 +122,7 @@ export const LOOKUP_ARTIFACT_KINDS: ReadonlySet<string> = new Set([
   "report_preview",
   "rate_explanation",
   "run_diff",
+  "extraction",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);
@@ -900,6 +902,10 @@ export const assistantArtifactSchema = z.object({
   lineageId: optionalIdSchema,
   /** This artifact's version within its lineage, from 1. */
   lineageSeq: z.number().optional().default(1),
+  /** The lineage's name in a link, the same for every version. */
+  slug: z.string().optional().default(""),
+  /** The question asked in the turn that made it. */
+  turn: z.string().optional().default(""),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
@@ -907,6 +913,23 @@ export const assistantArtifactSchema = z.object({
 export const assistantArtifactListSchema = z.object({
   results: z.array(assistantArtifactSchema),
 });
+
+/** How many of a conversation's lineages match, in all, pinned and per family. */
+export const artifactCountsSchema = z.object({
+  all: z.number().default(0),
+  pinned: z.number().default(0),
+  families: z.preprocess((value) => value ?? {}, z.record(z.string(), z.number())),
+});
+
+/** One page of a conversation's artifacts by lineage, every version of each. */
+export const assistantArtifactPageSchema = z.object({
+  results: z.array(assistantArtifactSchema),
+  total: z.number().default(0),
+  nextCursor: z.string().optional().default(""),
+  counts: artifactCountsSchema.default({ all: 0, pinned: 0, families: {} }),
+});
+
+export const documentRewriteSchema = z.object({ text: z.string() });
 
 /** An artifact as a streamed turn announces it, before the pane reads it whole. */
 export const assistantArtifactEventSchema = z.object({
@@ -1485,6 +1508,7 @@ export type CreatedSchedule = z.infer<typeof createdScheduleSchema>;
 export type AssistantLiveTurn = z.infer<typeof assistantLiveTurnSchema>;
 export type AssistantLiveTurnList = z.infer<typeof assistantLiveTurnListSchema>;
 export type AssistantArtifact = z.infer<typeof assistantArtifactSchema>;
+export type AssistantArtifactPage = z.infer<typeof assistantArtifactPageSchema>;
 export type ArtifactKind = z.infer<typeof artifactKindSchema>;
 export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;
 export type AssistantArtifactEvent = z.infer<typeof assistantArtifactEventSchema>;

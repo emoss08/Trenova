@@ -71,10 +71,26 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["assistant-plans", threadId],
     queryFn: () => apiService.assistantService.listPlans(threadId),
   }),
+  // The first page of a conversation's artifacts by lineage, pinned and
+  // newest first: what the transcript points at and the stack is built from.
+  // Every artifact query of a thread shares this key's prefix, so one
+  // invalidation refreshes them all.
   artifacts: (threadId: string) => ({
     queryKey: ["assistant-artifacts", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listArtifacts(threadId, { signal }),
+      apiService.assistantService.listArtifacts(threadId, { signal, limit: ARTIFACT_FIRST_PAGE }),
+  }),
+  // Every version of one lineage, for an artifact a link or the store names
+  // that the first page does not hold.
+  artifactLineage: (threadId: string, artifactId: string) => ({
+    queryKey: ["assistant-artifacts", threadId, "lineage", artifactId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.artifactLineage(threadId, artifactId, { signal }),
+  }),
+  artifactBySlug: (threadId: string, slug: string) => ({
+    queryKey: ["assistant-artifacts", threadId, "slug", slug],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.artifactBySlug(threadId, slug, { signal }),
   }),
   // The organization's agents with everything an administrator configures;
   // AI Control only. Chat surfaces read myAgents.
@@ -152,3 +168,6 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: () => apiService.agentDefinitionService.templates(),
   }),
 });
+
+/** How many lineages the first page of a conversation's artifacts holds. */
+export const ARTIFACT_FIRST_PAGE = 100;

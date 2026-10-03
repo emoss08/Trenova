@@ -60,6 +60,24 @@ const ICONS = {
       <path d="M9 12l2 2 4-4" />
     </>
   ),
+  extract: (
+    <>
+      <path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" />
+      <path d="M8 10h8M8 14h5" />
+    </>
+  ),
+  alert: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 8v4.5M12 15.8v.01" />
+    </>
+  ),
+  mail: (
+    <>
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+      <path d="M4 7l8 6 8-6" />
+    </>
+  ),
   pin: <path d="M9 4h6l-1 5 3 3H7l3-3zM12 12v8" />,
   dl: <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14" />,
   ext: (
@@ -137,7 +155,8 @@ export type DeskArtKind =
   | "diff"
   | "doc"
   | "view"
-  | "decision";
+  | "decision"
+  | "extract";
 
 const KIND_LABELS: Record<DeskArtKind, string> = {
   table: "Table",
@@ -150,6 +169,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = {
   doc: "Document",
   view: "View",
   decision: "Decision",
+  extract: "Extraction",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -175,6 +195,8 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
       return "view";
     case "decision_request":
       return "decision";
+    case "extraction":
+      return "extract";
     case "document":
     case "briefing":
     case "draft_edit":
@@ -211,6 +233,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("View");
     case "decision":
       return t("Decision");
+    case "extract":
+      return t("Extraction");
   }
 }
 

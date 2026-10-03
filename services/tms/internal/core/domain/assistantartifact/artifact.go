@@ -55,6 +55,9 @@ type Artifact struct {
 	LineageKey string   `json:"lineageKey" bun:"lineage_key,type:VARCHAR(64),notnull,default:''"`
 	LineageID  pulid.ID `json:"lineageId"  bun:"lineage_id,type:VARCHAR(100),nullzero"`
 	LineageSeq int      `json:"lineageSeq" bun:"lineage_seq,type:INTEGER,notnull,default:1"`
+	// Slug names the lineage in a link, the same for every version of it and
+	// unique among the conversation's artifacts.
+	Slug string `json:"slug" bun:"slug,type:VARCHAR(80),notnull,default:''"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -183,17 +183,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// Artifacts are part of what the conversation produced, read with it;
 	// pinning one is the reader arranging their own pane, which is the same
 	// kind of act as naming the conversation and gated the same way.
-	api.GET(
-		"/threads/:threadID/artifacts/",
-		h.pm.RequirePermission(resource, permission.OpRead),
-		h.listThreadArtifacts,
-	)
 	api.POST(
 		"/threads/:threadID/artifacts/:artifactID/pin/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.pinArtifact,
 	)
 	h.registerScheduleRoutes(api, resource)
+	h.registerArtifactRoutes(api, resource)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
@@ -424,22 +420,6 @@ func (h *Handler) updateThread(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, thread)
-}
-
-func (h *Handler) listThreadArtifacts(c *gin.Context) {
-	req, err := threadRequest(c)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	artifacts, err := h.service.ListThreadArtifacts(c.Request.Context(), req)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"results": artifacts})
 }
 
 type pinArtifactRequest struct {

@@ -20,6 +20,14 @@ interface DeskState {
   chaptersByThread: Record<string, string[]>;
   /** Whether questions asked at the Desk carry the page the person came from. */
   sharePage: boolean;
+  /** Whether the pane shows every artifact to search rather than the open one. Not kept. */
+  browsing: boolean;
+  /**
+   * A question an artifact asked the agent on the person's behalf, such as
+   * "create a shipment from this document", waiting for its conversation to
+   * send it. Not kept.
+   */
+  asks: Record<string, string>;
 
   setRail: (rail: DeskRailState) => void;
   toggleRail: () => void;
@@ -29,6 +37,9 @@ interface DeskState {
   markTermsSeen: () => void;
   toggleChapter: (threadId: string, messageId: string) => void;
   setSharePage: (sharePage: boolean) => void;
+  setBrowsing: (browsing: boolean) => void;
+  askAgent: (threadId: string, question: string) => void;
+  takeAsk: (threadId: string) => string | null;
 }
 
 /** Remembered artifacts for the most recently visited conversations. */
@@ -54,13 +65,15 @@ export function rememberActiveArtifact(
 
 export const useDeskStore = create<DeskState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       rail: "open",
       pane: "open",
       activeArtifactByThread: {},
       termsSeen: false,
       chaptersByThread: {},
       sharePage: true,
+      browsing: false,
+      asks: {},
 
       setRail: (rail) => set({ rail }),
       toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
@@ -76,6 +89,19 @@ export const useDeskStore = create<DeskState>()(
         })),
       markTermsSeen: () => set({ termsSeen: true }),
       setSharePage: (sharePage) => set({ sharePage }),
+      setBrowsing: (browsing) => set({ browsing }),
+      askAgent: (threadId, question) =>
+        set((state) => ({ asks: { ...state.asks, [threadId]: question } })),
+      takeAsk: (threadId) => {
+        const question = get().asks[threadId] ?? null;
+        if (question !== null) {
+          set((state) => {
+            const { [threadId]: _taken, ...rest } = state.asks;
+            return { asks: rest };
+          });
+        }
+        return question;
+      },
       toggleChapter: (threadId, messageId) =>
         set((state) => {
           const current = state.chaptersByThread[threadId] ?? [];

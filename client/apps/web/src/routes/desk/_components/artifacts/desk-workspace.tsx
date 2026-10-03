@@ -1,11 +1,12 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
+import { artifactCsvUrl } from "@/services/assistant";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn, downloadTextFile, slugify } from "@trenova/shared/lib/utils";
+import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
 import {
   useCallback,
   useEffect,
@@ -18,7 +19,6 @@ import {
 import { toast } from "sonner";
 import type { LiveArtifacts } from "../desk-layout";
 import { useOutsideDismiss } from "../use-outside-dismiss";
-import { tableViewCsv } from "./artifact-export";
 import { tableViewFrom } from "./artifact-payloads";
 import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
@@ -26,7 +26,6 @@ import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
 import {
   DeskDecisionBody,
   DeskDiffBody,
-  DeskDocBody,
   DeskEmailBody,
   DeskPlanBody,
   DeskRateBody,
@@ -34,7 +33,10 @@ import {
   DeskReportRunBody,
   DeskViewBody,
 } from "./desk-bodies";
+import { DeskDocBody } from "./desk-doc-body";
+import { DeskExtractBody } from "./desk-extract-body";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
+import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
 import {
   DeskReportBars,
   DeskTableBody,
@@ -51,15 +53,27 @@ function shortTime(at: number): string {
   return new Date(at * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-/** Where an artifact opens: its conversation, with the artifact named. */
-export function artifactLink(artifact: AssistantArtifact): string {
-  return `/desk/t/${artifact.threadId}?a=${artifact.lineageId || artifact.id}`;
+/** Where an artifact opens: its conversation, with the artifact named by its slug. */
+export function artifactLink(
+  artifact: Pick<AssistantArtifact, "threadId" | "slug" | "id" | "lineageId">,
+): string {
+  return `/desk/c/${artifact.threadId}/a/${artifact.slug || artifact.lineageId || artifact.id}`;
 }
+
+/** The artifact on a page of its own, the whole of it and nothing else. */
+export function artifactPageLink(
+  artifact: Pick<AssistantArtifact, "threadId" | "slug" | "id" | "lineageId">,
+): string {
+  return `${artifactLink(artifact)}/page`;
+}
+
+/** The session's recently opened lineages per conversation; gone with the tab. */
+const recentByThread = new Map<string, string[]>();
 
 /**
  * The artifacts as a stack of cards: the open one in front, the rest peeking
- * behind it. Pointing at the stack fans them out to pick from, with the way
- * to everything at the bottom.
+ * behind it. A click on the front card fans them out to pick from, with the
+ * way to everything at the bottom; a click outside or Esc folds them back.
  */
 function ArtStack({
   lineages,
@@ -82,31 +96,25 @@ function ArtStack({
 }) {
   const t = useT();
   const [fan, setFan] = useState(false);
-  const timer = useRef<number | undefined>(undefined);
+  const rootRef = useRef<HTMLDivElement>(null);
   const order = [active, ...lineages.filter((lineage) => lineage.id !== active.id)];
   const count = order.length;
   const gap = Math.max(34, Math.min(54, (height - 40) / (count + 1)));
   const open = () => {
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => {
-      setFan(true);
-      onFan(true);
-    }, 110);
+    setFan(true);
+    onFan(true);
   };
-  const close = () => {
-    window.clearTimeout(timer.current);
+  const close = useCallback(() => {
     setFan(false);
     onFan(false);
-  };
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  }, [onFan]);
+  // Esc folds the fan and goes no further: the pane stays open.
+  useOutsideDismiss(rootRef, fan, close);
 
   return (
     <div
+      ref={rootRef}
       className={cn("dk-ax-stack", fan && "dk-fan")}
-      onMouseEnter={open}
-      onMouseLeave={close}
-      onFocus={open}
-      onBlur={(event) => !event.currentTarget.contains(event.relatedTarget) && close()}
       style={{ "--dk-fanh": `${count * gap + 52}px` } as CSSProperties}
     >
       {order.map((lineage, index) => {
@@ -124,9 +132,15 @@ function ArtStack({
               lineage.id === newest && "dk-nw",
             )}
             onClick={() => {
+              if (index === 0 && !fan) {
+                open();
+                return;
+              }
               onPick(lineage.id);
               close();
             }}
+            title={index === 0 && !fan ? t("Switch artifact") : undefined}
+            aria-expanded={index === 0 ? fan : undefined}
             tabIndex={index === 0 || fan ? 0 : -1}
             style={{
               zIndex: count - index,
@@ -280,14 +294,20 @@ function Provenance({
   );
 }
 
-function ArtifactBody({
+export function ArtifactBody({
   artifact,
   previous,
   versions,
+  lineage,
+  onOpenArtifact,
 }: {
   artifact: AssistantArtifact;
   previous: AssistantArtifact | null;
   versions: React.ReactNode;
+  /** Every version, for a document's own version list. */
+  lineage: ArtifactLineage;
+  /** Opens another of the conversation's artifacts, from a citation or a row. */
+  onOpenArtifact: (id: string) => void;
 }) {
   const t = useT();
   switch (artifact.kind) {
@@ -322,7 +342,16 @@ function ArtifactBody({
       return <DeskDiffBody artifact={artifact} />;
     case "document":
     case "briefing":
-      return <DeskDocBody artifact={artifact} />;
+      return (
+        <DeskDocBody
+          key={lineage.id}
+          lineage={lineage}
+          shown={artifact}
+          onOpenArtifact={onOpenArtifact}
+        />
+      );
+    case "extraction":
+      return <DeskExtractBody artifact={artifact} />;
     case "navigation":
     case "dashboard_ref":
       return <DeskViewBody artifact={artifact} />;
@@ -337,16 +366,37 @@ function ArtifactBody({
   }
 }
 
+/** Reads the lineage the store remembers when the first page does not hold it. */
+function useRememberedLineage(
+  threadId: string,
+  lineages: readonly ArtifactLineage[],
+  remembered: string | undefined,
+  loaded: boolean,
+): ArtifactLineage | null {
+  const inPage = lineageContaining(lineages, remembered);
+  const lineageQuery = useQuery({
+    ...queries.assistant.artifactLineage(threadId, remembered ?? ""),
+    enabled: loaded && remembered !== undefined && inPage === null,
+    retry: false,
+  });
+  if (inPage) {
+    return inPage;
+  }
+  const versions = lineageQuery.data?.results ?? [];
+  return versions.length > 0 ? (groupLineages(versions)[0] ?? null) : null;
+}
+
 /**
  * Everything a conversation made, beside it.
  *
- * The open artifact sits in front of a small stack of the others; pointing at
- * the stack fans them out, and ⌘J opens all of them to search. Under the
- * stack is where the artifact came from, then the artifact itself drawn for
- * its kind, then a line to link, pin, export or open it on its own page. A
- * table read again later in the conversation is one artifact with versions:
- * the latest shows, the earlier ones are a click away, and the cells that
- * changed since the version before are marked.
+ * The open artifact sits in front of a small stack of the others: the newest,
+ * the pinned and the ones opened lately. A click on it fans them out, and ⌘J
+ * opens all of them to search. Under the stack is where the artifact came
+ * from, then the artifact itself drawn for its kind, then a line to link,
+ * pin, export or open it on its own page. A table read again later in the
+ * conversation is one artifact with versions: the latest shows, the earlier
+ * ones are a click away, and the cells that changed since the version before
+ * are marked.
  */
 export function DeskWorkspace({
   threadId,
@@ -364,14 +414,22 @@ export function DeskWorkspace({
     () => groupLineages(artifactsQuery.data?.results ?? []),
     [artifactsQuery.data],
   );
+  const total = Math.max(artifactsQuery.data?.counts.all ?? 0, lineages.length);
   const remembered = useDeskStore((state) => state.activeArtifactByThread[threadId]);
   const setActiveArtifact = useDeskStore((state) => state.setActiveArtifact);
-  const active = lineageContaining(lineages, remembered) ?? lineages[0] ?? null;
+  const browsing = useDeskStore((state) => state.browsing);
+  const setBrowsing = useDeskStore((state) => state.setBrowsing);
+  const rememberedLineage = useRememberedLineage(
+    threadId,
+    lineages,
+    remembered,
+    artifactsQuery.isSuccess,
+  );
+  const active = rememberedLineage ?? lineages[0] ?? null;
 
   const [versionByLineage, setVersionByLineage] = useState<Record<string, number>>({});
   const [fanning, setFanning] = useState(false);
-  const [browsing, setBrowsing] = useState(false);
-
+  const [recent, setRecent] = useState<string[]>(() => recentByThread.get(threadId) ?? []);
   const newestLive = liveArtifacts.ids.at(-1);
   const liveRevision = liveArtifacts.revision;
   useEffect(() => {
@@ -400,17 +458,6 @@ export function DeskWorkspace({
     return () => window.clearTimeout(timer);
   }, [arrived, liveRevision]);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
-        event.preventDefault();
-        setBrowsing((value) => !value);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const paneRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(700);
   const hasArtifacts = active !== null;
@@ -432,9 +479,19 @@ export function DeskWorkspace({
     resourceName: "Artifact",
   });
 
+  // Opening one remembers it for the stack, with the one it replaces, for
+  // as long as the tab is open.
+  const activeId = active?.id ?? null;
   const open = useCallback(
-    (id: string) => setActiveArtifact(threadId, id),
-    [setActiveArtifact, threadId],
+    (id: string) => {
+      setActiveArtifact(threadId, id);
+      setRecent((current) => {
+        const next = pushRecent(activeId ? pushRecent(current, activeId) : current, id);
+        recentByThread.set(threadId, next);
+        return next;
+      });
+    },
+    [activeId, setActiveArtifact, threadId],
   );
 
   if (artifactsQuery.isLoading) {
@@ -483,13 +540,17 @@ export function DeskWorkspace({
   const index = Math.min(versionByLineage[active.id] ?? last, last);
   const artifact = active.versions[index];
   const previous = index > 0 ? active.versions[index - 1] : null;
-  const position = lineages.findIndex((lineage) => lineage.id === active.id);
   const go = (step: number) => {
-    const next = lineages[(position + step + lineages.length) % lineages.length];
-    open(next.id);
+    const next = stepLineage(
+      lineages.some((lineage) => lineage.id === active.id) ? lineages : [active, ...lineages],
+      active.id,
+      step,
+    );
+    if (next) open(next);
   };
+  const isDocument = artifact.kind === "document" || artifact.kind === "briefing";
   const versions =
-    active.versions.length > 1 ? (
+    active.versions.length > 1 && !isDocument ? (
       <VersionPicker
         lineage={active}
         index={index}
@@ -504,21 +565,15 @@ export function DeskWorkspace({
     void navigator.clipboard?.writeText(window.location.origin + link);
     toast.success(t("Link copied"));
   };
-  const exportCsv = () => {
-    if (artifact.kind === "table_view") {
-      downloadTextFile(
-        tableViewCsv(tableViewFrom(artifact), t),
-        `${slugify(artifact.title) || "artifact"}.csv`,
-        "text/csv",
-      );
-    }
-  };
+  const older = olderNote(artifact.createdAt, artifact.turn, new Date());
+  const pinned = active.versions.some((version) => version.pinned);
 
   return (
     <div className={cn("dk-apx", fanning && "dk-fanning", browsing && "dk-browsing")} ref={paneRef}>
       {browsing ? (
         <DeskArtifactBrowser
-          lineages={lineages}
+          threadId={threadId}
+          total={total}
           activeId={active.id}
           onPick={(id) => {
             open(id);
@@ -534,10 +589,10 @@ export function DeskWorkspace({
         <>
           <div className="dk-ax-top">
             <ArtStack
-              lineages={lineages.slice(0, 8)}
+              lineages={stackLineages(lineages, active, recent)}
               active={active}
               newest={newest}
-              total={lineages.length}
+              total={total}
               height={height}
               onPick={open}
               onFan={setFanning}
@@ -573,50 +628,57 @@ export function DeskWorkspace({
               </button>
             </div>
           </div>
-          <div className="dk-ax-body" key={artifact.id}>
-            {index !== last && (
+          <div className="dk-ax-body" key={isDocument ? active.id : artifact.id}>
+            {older && (
               <div className="dk-ax-oldnote">
-                {t(
-                  "Version {0} of {1}, read {2}",
-                  index + 1,
-                  last + 1,
-                  shortTime(artifact.createdAt),
-                )}
+                {older.turn
+                  ? older.day === "yesterday"
+                    ? t("From yesterday · {0}", older.turn)
+                    : t("From {0} · {1}", older.day, older.turn)
+                  : older.day === "yesterday"
+                    ? t("From yesterday")
+                    : t("From {0}", older.day)}
               </div>
             )}
             <Provenance artifact={artifact} previous={previous} />
-            <ArtifactBody artifact={artifact} previous={previous} versions={versions} />
+            <ArtifactBody
+              artifact={artifact}
+              previous={previous}
+              versions={versions}
+              lineage={active}
+              onOpenArtifact={open}
+            />
           </div>
           <div className="dk-ax-foot">
             <button type="button" className="dk-ax-link" onClick={copyLink} title={t("Copy link")}>
               <ArtIcon name="copy" size={12} />
               <span>
-                desk/t/…/a/<b>{slugify(artifact.title) || artifact.id}</b>
+                desk/c/{threadId.slice(-4).toLowerCase()}/a/<b>{artifact.slug || artifact.id}</b>
               </span>
             </button>
             <span className="flex-1" />
             <button
               type="button"
-              className={cn("dk-ax-ib", artifact.pinned && "dk-on")}
-              title={artifact.pinned ? t("Unpin") : t("Pin to conversation")}
-              aria-pressed={artifact.pinned}
-              onClick={() => pinMutation.mutate({ id: artifact.id, pinned: !artifact.pinned })}
+              className={cn("dk-ax-ib", pinned && "dk-on")}
+              title={pinned ? t("Unpin") : t("Pin to conversation")}
+              aria-pressed={pinned}
+              onClick={() => pinMutation.mutate({ id: artifact.id, pinned: !pinned })}
             >
               <ArtIcon name="pin" size={14} />
             </button>
-            {tabular && artifact.kind === "table_view" && (
+            {tabular && (
               <button
                 type="button"
                 className="dk-ax-ib"
                 title={t("Export CSV")}
-                onClick={exportCsv}
+                onClick={() => downloadFromUrl(artifactCsvUrl(threadId, artifact.id))}
               >
                 <ArtIcon name="dl" size={14} />
               </button>
             )}
             <a
               className="dk-ax-ib"
-              href={link}
+              href={artifactPageLink(artifact)}
               target="_blank"
               rel="noreferrer"
               title={t("Open on its own page")}

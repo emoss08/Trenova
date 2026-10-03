@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"io"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -208,8 +209,68 @@ type AssistantArtifact struct {
 	// version of, and LineageSeq its version number; empty and 1 for the first.
 	LineageID  pulid.ID `json:"lineageId"`
 	LineageSeq int      `json:"lineageSeq"`
-	CreatedAt  int64    `json:"createdAt"`
-	UpdatedAt  int64    `json:"updatedAt"`
+	// Slug names the lineage in a link; the same for every version.
+	Slug string `json:"slug"`
+	// Turn is the question the person asked in the turn that made the
+	// artifact, so an artifact from an earlier day says which turn it was.
+	Turn      string `json:"turn,omitempty"`
+	CreatedAt int64  `json:"createdAt"`
+	UpdatedAt int64  `json:"updatedAt"`
+}
+
+// ListArtifactsOptions is one page of a conversation's artifacts and what
+// narrows it, all decided on the server so a long conversation pages rather
+// than truncates.
+type ListArtifactsOptions struct {
+	Limit      int
+	Cursor     string
+	Query      string
+	Family     assistantartifact.Family
+	PinnedOnly bool
+}
+
+// AssistantArtifactPage is one page of lineages, every version of each, how
+// many lineages match in all and how they split by family.
+type AssistantArtifactPage struct {
+	Results    []AssistantArtifact         `json:"results"`
+	Total      int                         `json:"total"`
+	NextCursor string                      `json:"nextCursor,omitempty"`
+	Counts     repositories.ArtifactCounts `json:"counts"`
+}
+
+// DocumentRewriteMode is how a person asked a passage to change.
+type DocumentRewriteMode string
+
+const (
+	DocumentRewriteShorter DocumentRewriteMode = "shorter"
+	DocumentRewritePlainer DocumentRewriteMode = "plain"
+	DocumentRewriteAsk     DocumentRewriteMode = "ask"
+)
+
+// DocumentRewriteRequest is a passage of a document to rewrite and how. The
+// suggestion is not saved; accepting it saves a new version.
+type DocumentRewriteRequest struct {
+	Text   string              `json:"text"`
+	Mode   DocumentRewriteMode `json:"mode"`
+	Prompt string              `json:"prompt"`
+}
+
+type DocumentRewriteSuggestion struct {
+	Text string `json:"text"`
+}
+
+// SaveDocumentVersionRequest is a person's edit of a document, kept as its
+// next version.
+type SaveDocumentVersionRequest struct {
+	Body string `json:"body"`
+	Note string `json:"note"`
+}
+
+// ArtifactFile is an artifact rendered as a file to download.
+type ArtifactFile struct {
+	FileName    string
+	ContentType string
+	Body        []byte
 }
 
 // AssistantArtifactEvent announces an artifact as a turn produces it, so the
@@ -637,7 +698,57 @@ type AssistantService interface {
 	ListThreadArtifacts(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
+		opts ListArtifactsOptions,
+	) (*AssistantArtifactPage, error)
+	// ArtifactLineage reads every version of the lineage an artifact belongs
+	// to, oldest first, and ArtifactBySlug the lineage a link names.
+	ArtifactLineage(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
 	) ([]AssistantArtifact, error)
+	ArtifactBySlug(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		slug string,
+	) ([]AssistantArtifact, error)
+	SaveDocumentVersion(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		version SaveDocumentVersionRequest,
+	) (*AssistantArtifact, error)
+	RestoreDocumentVersion(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+	) (*AssistantArtifact, error)
+	RewriteDocument(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		rewrite DocumentRewriteRequest,
+	) (*DocumentRewriteSuggestion, error)
+	// ExportArtifactCSV writes a table or report preview whole, read again
+	// from its source rather than from the rows the pane holds.
+	ExportArtifactCSV(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		sink io.Writer,
+	) error
+	ArtifactCSVName(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+	) (string, error)
+	// ExportDocument renders a document as a PDF or a Word file.
+	ExportDocument(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		format string,
+	) (*ArtifactFile, error)
 	PinArtifact(
 		ctx context.Context,
 		req repositories.GetThreadRequest,

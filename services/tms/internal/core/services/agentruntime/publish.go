@@ -14,6 +14,10 @@ const (
 
 	maxDocumentTitleRunes = 120
 	maxDocumentBodyBytes  = 60000
+	maxDocumentTypeRunes  = 40
+	maxDocumentBasisRunes = 120
+	maxDocumentSources    = 30
+	maxSourceTextRunes    = 160
 )
 
 // publishArtifactDescription is a constant for the same reason
@@ -25,7 +29,9 @@ const publishArtifactDescription = "Publish a written document beside the conver
 	"a screen: put the full text here in markdown and reply with two or three sentences " +
 	"pointing to it. Not for a list or a single record you looked up (those are shown to " +
 	"the person already, and the tool result says so). To revise a document you published, " +
-	"pass its artifactId with the whole new text."
+	"pass its artifactId with the whole new text; the earlier text is kept as a version. " +
+	"Cite what a sentence rests on with a footnote mark like [^1] and list each mark " +
+	"under sources."
 
 // publishArtifactSpec is the third tool the runtime answers itself. It is
 // offered only where there is somewhere to publish to: a conversation with a
@@ -46,6 +52,40 @@ func publishArtifactSpec() serviceports.ToolSpec {
 					"type": "string",
 					"description": "The whole document in markdown: headings, lists and " +
 						"tables. Only facts your tools returned.",
+				},
+				"docType": map[string]any{
+					"type": "string",
+					"description": "What kind of write-up it is, in a word or two: " +
+						"\"Brief\", \"Summary\", \"Handover\".",
+				},
+				"basis": map[string]any{
+					"type": "string",
+					"description": "What it was written from, in a few words: " +
+						"\"from 42 loads and 3 weather alerts\".",
+				},
+				"sources": map[string]any{
+					"type": "array",
+					"description": "What the body's [^N] marks point to, one entry per " +
+						"number. Only tools you called in this conversation.",
+					"items": map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"n":     map[string]any{"type": "integer"},
+							"tool":  map[string]any{"type": "string", "description": "The tool that found it."},
+							"label": map[string]any{"type": "string", "description": "What it is, in a few words."},
+							"detail": map[string]any{
+								"type":        "string",
+								"description": "One more line: a time, a scope.",
+							},
+							"artifactId": map[string]any{
+								"type": "string",
+								"description": "The artifact that shows it, when its result " +
+									"named one.",
+							},
+						},
+						"required":             []string{"n", "tool", "label"},
+						"additionalProperties": false,
+					},
 				},
 				"artifactId": map[string]any{
 					"type": "string",
@@ -98,6 +138,9 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 		}
 	}
 
+	sources, sourceProblems := publishedSources(arguments["sources"])
+	problems = append(problems, sourceProblems...)
+
 	if len(problems) > 0 {
 		return failedOutcome(
 			"Tool %q was not run: %s.",
@@ -112,8 +155,67 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 			Title:      title,
 			Body:       body,
 			ArtifactID: revises,
+			DocType:    clipRunes(stringArg(arguments, "docType"), maxDocumentTypeRunes),
+			Basis:      clipRunes(stringArg(arguments, "basis"), maxDocumentBasisRunes),
+			Sources:    sources,
 		},
 	}
+}
+
+// publishedSources reads the sources a document cites. A source without a
+// number or a label cannot be shown, and is a problem the model can fix.
+func publishedSources(raw any) ([]serviceports.PublishedSource, []string) {
+	entries, ok := raw.([]any)
+	if !ok || len(entries) == 0 {
+		return nil, nil
+	}
+	if len(entries) > maxDocumentSources {
+		return nil, []string{fmt.Sprintf("at most %d sources", maxDocumentSources)}
+	}
+
+	sources := make([]serviceports.PublishedSource, 0, len(entries))
+	seen := map[int]bool{}
+	for _, entry := range entries {
+		fields, isObject := entry.(map[string]any)
+		if !isObject {
+			return nil, []string{"each source is an object with n, tool and label"}
+		}
+		n, isNumber := fields["n"].(float64)
+		if !isNumber {
+			if whole, isInt := fields["n"].(int); isInt {
+				n, isNumber = float64(whole), true
+			}
+		}
+		label := clipRunes(stringArg(fields, "label"), maxSourceTextRunes)
+		if !isNumber || n < 1 || n != float64(int(n)) || label == "" {
+			return nil, []string{"each source needs a whole number n from 1 and a label"}
+		}
+		if seen[int(n)] {
+			return nil, []string{fmt.Sprintf("source %d is listed twice", int(n))}
+		}
+		seen[int(n)] = true
+		source := serviceports.PublishedSource{
+			N:      int(n),
+			Tool:   clipRunes(stringArg(fields, "tool"), maxSourceTextRunes),
+			Label:  label,
+			Detail: clipRunes(stringArg(fields, "detail"), maxSourceTextRunes),
+		}
+		if id, err := pulid.Parse(strings.TrimSpace(stringArg(fields, "artifactId"))); err == nil {
+			source.ArtifactID = id
+		}
+		sources = append(sources, source)
+	}
+
+	return sources, nil
+}
+
+func clipRunes(text string, most int) string {
+	text = strings.TrimSpace(text)
+	if utf8.RuneCountInString(text) <= most {
+		return text
+	}
+
+	return string([]rune(text)[:most])
 }
 
 // publishedContent is what the model reads after its document was kept.

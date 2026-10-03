@@ -66,6 +66,7 @@ var ArtifactColumns = struct {
 	LineageKey       Column // "lineage_key" → qualified: "aart.lineage_key"
 	LineageID        Column // "lineage_id" → qualified: "aart.lineage_id"
 	LineageSeq       Column // "lineage_seq" → qualified: "aart.lineage_seq"
+	Slug             Column // "slug" → qualified: "aart.slug"
 	Version          Column // "version" → qualified: "aart.version"
 	CreatedAt        Column // "created_at" → qualified: "aart.created_at"
 	UpdatedAt        Column // "updated_at" → qualified: "aart.updated_at"
@@ -87,6 +88,7 @@ var ArtifactColumns = struct {
 	LineageKey:       NewColumn("lineage_key", "aart"),
 	LineageID:        NewColumn("lineage_id", "aart"),
 	LineageSeq:       NewColumn("lineage_seq", "aart"),
+	Slug:             NewColumn("slug", "aart"),
 	Version:          NewColumn("version", "aart"),
 	CreatedAt:        NewColumn("created_at", "aart"),
 	UpdatedAt:        NewColumn("updated_at", "aart"),
@@ -114,6 +116,7 @@ var ArtifactFieldMap = map[string]string{
 	"lineageKey":       "lineage_key",
 	"lineageId":        "lineage_id",
 	"lineageSeq":       "lineage_seq",
+	"slug":             "slug",
 	"version":          "version",
 	"createdAt":        "created_at",
 	"updatedAt":        "updated_at",
@@ -139,6 +142,7 @@ var ArtifactInsertableColumns = []string{
 	"lineage_key",
 	"lineage_id",
 	"lineage_seq",
+	"slug",
 	"version",
 	"created_at",
 	"updated_at",
@@ -224,6 +228,7 @@ var ArtifactFilter = struct {
 	LineageKey       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageKey" → DB: "lineage_key"
 	LineageID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageId" → DB: "lineage_id"
 	LineageSeq       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageSeq" → DB: "lineage_seq"
+	Slug             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "slug" → DB: "slug"
 	Version          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -278,6 +283,9 @@ var ArtifactFilter = struct {
 	},
 	LineageSeq: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lineageSeq", op, value)
+	},
+	Slug: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("slug", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

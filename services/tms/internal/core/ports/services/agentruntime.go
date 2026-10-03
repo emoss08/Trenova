@@ -257,6 +257,22 @@ type PublishedDocument struct {
 	Title      string
 	Body       string
 	ArtifactID pulid.ID
+	// DocType is what kind of write-up it is ("Brief", "Handover"), Basis
+	// what it was written from ("from 42 loads and 3 weather alerts"), and
+	// Sources what its citation marks point to.
+	DocType string
+	Basis   string
+	Sources []PublishedSource
+}
+
+// PublishedSource is one source a document cites as [^N]: the tool that
+// found it, what it is, and the artifact that shows it when there is one.
+type PublishedSource struct {
+	N          int      `json:"n"`
+	Tool       string   `json:"tool"`
+	Label      string   `json:"label"`
+	Detail     string   `json:"detail,omitempty"`
+	ArtifactID pulid.ID `json:"artifactId,omitempty"`
 }
 
 // ToolObserver is told about each tool call as it finishes, and answers with

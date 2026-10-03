@@ -18,7 +18,9 @@ import {
   type DeskSearchKind,
   type MentionSearchType,
   assistantArtifactListSchema,
+  assistantArtifactPageSchema,
   assistantArtifactSchema,
+  documentRewriteSchema,
   assistantLiveTurnListSchema,
   agentBudgetStatusSchema,
   assistantPlanListSchema,
@@ -51,6 +53,29 @@ import {
 export function assistantTranscriptUrl(threadId: AssistantThread["id"]): string {
   return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/transcript/`;
 }
+
+/** A table or report preview, read again from its source as a whole CSV. */
+export function artifactCsvUrl(threadId: string, artifactId: string): string {
+  return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/artifacts/${encodeURIComponent(artifactId)}/export.csv`;
+}
+
+/** A document version printed as a PDF or written as a Word file. */
+export function artifactDocumentUrl(
+  threadId: string,
+  artifactId: string,
+  format: "pdf" | "docx",
+): string {
+  return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/artifacts/${encodeURIComponent(artifactId)}/export/?format=${format}`;
+}
+
+/** What narrows a page of a conversation's artifacts, on the server. */
+export type ArtifactListParams = {
+  cursor?: string;
+  limit?: number;
+  q?: string;
+  kind?: string;
+  pinned?: boolean;
+};
 
 export function downloadAssistantTranscript(threadId: AssistantThread["id"]): void {
   downloadFromUrl(assistantTranscriptUrl(threadId));
@@ -162,11 +187,79 @@ export class AssistantService {
    * than taken from the send response: an artifact outlives the turn, and a
    * draft's status follows the decision made on it anywhere.
    */
-  public async listArtifacts(threadId: AssistantThread["id"], options?: { signal?: AbortSignal }) {
-    const response = await api.get(`/assistant/threads/${threadId}/artifacts/`, {
+  public async listArtifacts(
+    threadId: AssistantThread["id"],
+    options?: { signal?: AbortSignal } & ArtifactListParams,
+  ) {
+    const params = new URLSearchParams();
+    if (options?.cursor) params.set("cursor", options.cursor);
+    if (options?.limit) params.set("limit", String(options.limit));
+    if (options?.q) params.set("q", options.q);
+    if (options?.kind) params.set("kind", options.kind);
+    if (options?.pinned) params.set("pinned", "true");
+    const query = params.toString();
+    const response = await api.get(
+      `/assistant/threads/${threadId}/artifacts/${query ? `?${query}` : ""}`,
+      { signal: options?.signal },
+    );
+    return safeParse(assistantArtifactPageSchema, response, "Assistant Artifact");
+  }
+
+  /** Every version of the lineage an artifact belongs to, oldest first. */
+  public async artifactLineage(
+    threadId: AssistantThread["id"],
+    artifactId: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    const response = await api.get(`/assistant/threads/${threadId}/artifacts/${artifactId}/`, {
       signal: options?.signal,
     });
     return safeParse(assistantArtifactListSchema, response, "Assistant Artifact");
+  }
+
+  /** The lineage a link names by its slug. */
+  public async artifactBySlug(
+    threadId: AssistantThread["id"],
+    slug: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    const response = await api.get(
+      `/assistant/threads/${threadId}/artifacts/by-slug/${encodeURIComponent(slug)}/`,
+      { signal: options?.signal },
+    );
+    return safeParse(assistantArtifactListSchema, response, "Assistant Artifact");
+  }
+
+  public async saveDocumentVersion(
+    threadId: AssistantThread["id"],
+    artifactId: string,
+    body: { body: string; note: string },
+  ) {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/versions/`,
+      body,
+    );
+    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
+  }
+
+  public async restoreDocumentVersion(threadId: AssistantThread["id"], artifactId: string) {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/restore/`,
+      {},
+    );
+    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
+  }
+
+  public async rewriteDocument(
+    threadId: AssistantThread["id"],
+    artifactId: string,
+    body: { text: string; mode: "shorter" | "plain" | "ask"; prompt: string },
+  ) {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/rewrite/`,
+      body,
+    );
+    return safeParse(documentRewriteSchema, response, "Document Rewrite");
   }
 
   public async pinArtifact(

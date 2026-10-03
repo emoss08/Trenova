@@ -675,11 +675,19 @@ func (a *Activities) extractViaFitz(
 		recordHeartbeatIfActivity(ctx, page)
 		pageText, textErr := doc.Text(page)
 		if textErr == nil && strings.TrimSpace(pageText) != "" {
-			pages = append(pages, &PageExtractionResult{
+			native := &PageExtractionResult{
 				PageNumber: page + 1,
 				SourceKind: documentcontent.SourceKindNative,
 				Text:       pageText,
-			})
+			}
+			if layout, ok := doc.(pageHTML); ok {
+				if markup, htmlErr := layout.HTML(page, false); htmlErr == nil {
+					if lines := fitzLayout(markup); len(lines) > 0 {
+						native.Metadata = map[string]any{documentcontent.MetadataLines: lines}
+					}
+				}
+			}
+			pages = append(pages, native)
 			continue
 		}
 
@@ -757,7 +765,7 @@ func (a *Activities) runOCRPage(
 		}
 	}
 
-	text, confidence, err := a.runOCR(ctx, ocrInput, ext)
+	text, confidence, raw, err := a.runOCR(ctx, ocrInput, ext)
 	if err != nil {
 		return &page, err
 	}
@@ -769,6 +777,9 @@ func (a *Activities) runOCRPage(
 	}
 	page.Metadata["ocrLanguage"] = a.cfg.GetOCRLanguage()
 	page.Metadata["ocrConfidence"] = confidence
+	if lines := tesseractLayout(raw, page.Width, page.Height); len(lines) > 0 {
+		page.Metadata[documentcontent.MetadataLines] = lines
+	}
 
 	return &page, nil
 }
@@ -777,19 +788,19 @@ func (a *Activities) runOCR(
 	ctx context.Context,
 	imageData []byte,
 	ext string,
-) (text string, confidence float64, err error) {
+) (text string, confidence float64, raw string, err error) {
 	tmpFile, err := os.CreateTemp("", "trenova-ocr-*"+ext)
 	if err != nil {
-		return "", 0, err
+		return "", 0, "", err
 	}
 	defer os.Remove(tmpFile.Name())
 
 	if _, err = tmpFile.Write(imageData); err != nil {
 		tmpFile.Close()
-		return "", 0, err
+		return "", 0, "", err
 	}
 	if err = tmpFile.Close(); err != nil {
-		return "", 0, err
+		return "", 0, "", err
 	}
 
 	ocrCtx, cancel := context.WithTimeout(ctx, a.cfg.GetOCRTimeout())
@@ -808,13 +819,13 @@ func (a *Activities) runOCR(
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if ocrCtx.Err() != nil {
-			return "", 0, fmt.Errorf(
+			return "", 0, "", fmt.Errorf(
 				"ocr command timed out after %s: %w",
 				a.cfg.GetOCRTimeout(),
 				ocrCtx.Err(),
 			)
 		}
-		return "", 0, fmt.Errorf(
+		return "", 0, "", fmt.Errorf(
 			"ocr command failed: %w: %s",
 			err,
 			strings.TrimSpace(string(output)),
@@ -823,10 +834,10 @@ func (a *Activities) runOCR(
 
 	text, confidence, err = parseTesseractTSV(string(output))
 	if err != nil {
-		return "", 0, err
+		return "", 0, "", err
 	}
 
-	return text, confidence, nil
+	return text, confidence, string(output), nil
 }
 
 func (a *Activities) markFailed(

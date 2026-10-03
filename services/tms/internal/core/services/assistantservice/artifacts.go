@@ -32,16 +32,17 @@ import (
 // mapper reads each result in its JSON form, exactly as the model does, so
 // it depends on the tool's contract rather than on its Go types.
 const (
-	toolPreviewReport = "preview_report"
-	toolRunReport     = "run_report"
-	toolGetReportRun  = "get_report_run"
-	getToolPrefix     = "get_"
-	listToolPrefix    = "list_"
-	searchToolPrefix  = "search_"
-	toolComposeView   = "compose_table_view"
-	toolExplainRate   = "explain_rate"
-	toolCompareRuns   = "compare_report_runs"
-	toolOpenPage      = "open_page"
+	toolPreviewReport    = "preview_report"
+	toolRunReport        = "run_report"
+	toolGetReportRun     = "get_report_run"
+	getToolPrefix        = "get_"
+	listToolPrefix       = "list_"
+	searchToolPrefix     = "search_"
+	toolComposeView      = "compose_table_view"
+	toolExplainRate      = "explain_rate"
+	toolCompareRuns      = "compare_report_runs"
+	toolOpenPage         = "open_page"
+	toolGetShipmentDraft = "get_shipment_draft"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -93,6 +94,9 @@ type artifactRecorder struct {
 	actor     services.AuditActor
 	emit      services.AssistantStreamEmitter
 	recorded  []*assistantartifact.Artifact
+	// svc reads what an artifact needs beyond the tool's result: the agent
+	// a document is credited to, the pages an extraction was read from.
+	svc *Service
 }
 
 // newArtifactRecorder returns nil when there is nowhere to keep artifacts,
@@ -122,6 +126,7 @@ func (s *Service) newArtifactRecorder(
 		tenant:    tenant,
 		actor:     actor.AuditActorOrSystem(),
 		emit:      emit,
+		svc:       s,
 	}
 }
 
@@ -143,6 +148,16 @@ func (r *artifactRecorder) observe(
 	}
 	if request, ok := observation.Data.(services.DecisionRequest); ok {
 		return r.requestDecision(observation.Call.ID, request)
+	}
+	if observation.Call.Name == toolGetShipmentDraft && !observation.Failed {
+		if extraction := r.extraction(observation); extraction != nil {
+			saved, err := r.save(extraction)
+			if err != nil {
+				return nil, nil
+			}
+
+			return shownArtifact(saved), nil
+		}
 	}
 
 	artifact := artifactFromObservation(observation)
@@ -187,14 +202,14 @@ func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifa
 	})
 }
 
-// publish keeps a document the model wrote. A revision replaces the text of a
-// document this conversation already holds, in place, so the pane keeps one
-// brief rather than a stack of drafts of it.
+// publish keeps a document the model wrote. A revision is the next version
+// of a document this conversation already holds: the pane keeps one brief
+// with its versions, and the text it replaced can be read and restored.
 func (r *artifactRecorder) publish(
 	callID string,
 	document services.PublishedDocument,
 ) (*services.ShownArtifact, error) {
-	artifact := documentArtifact(callID, document)
+	artifact := documentArtifact(callID, document, r.author())
 
 	if !document.ArtifactID.IsNil() {
 		existing, err := r.repo.GetByID(r.ctx, repositories.GetArtifactRequest{
@@ -205,10 +220,11 @@ func (r *artifactRecorder) publish(
 			existing.Kind != assistantartifact.KindDocument {
 			return nil, errUnknownDocument
 		}
-		artifact.ID = existing.ID
-		artifact.MessageID = existing.MessageID
-		artifact.SourceToolCallID = existing.SourceToolCallID
-		artifact.Pinned = existing.Pinned
+		latest := r.latestVersion(existing)
+		artifact.FollowLineage(latest)
+		artifact.Slug = latest.Slug
+		artifact.Pinned = latest.Pinned
+		artifact.Payload[assistantartifact.DocumentVersionNote] = "Revised"
 	}
 
 	saved, err := r.save(artifact)
@@ -217,6 +233,42 @@ func (r *artifactRecorder) publish(
 	}
 
 	return shownArtifact(saved), nil
+}
+
+// latestVersion is the newest version of the lineage an artifact belongs to,
+// or the artifact itself when its lineage cannot be read.
+func (r *artifactRecorder) latestVersion(
+	artifact *assistantartifact.Artifact,
+) *assistantartifact.Artifact {
+	versions, err := r.repo.ListLineage(r.ctx, repositories.LineageRequest{
+		ThreadID:   r.thread.ID,
+		TenantInfo: r.tenant,
+		ID:         artifact.ID,
+	})
+	if err != nil || len(versions) == 0 {
+		return artifact
+	}
+
+	latest := versions[0]
+	for _, version := range versions[1:] {
+		if version.LineageSeq > latest.LineageSeq {
+			latest = version
+		}
+	}
+
+	return latest
+}
+
+// author is the name a document is credited to: the conversation's agent.
+func (r *artifactRecorder) author() string {
+	if r.svc == nil {
+		return ""
+	}
+
+	return r.svc.agentName(r.ctx, repositories.GetThreadRequest{
+		ID:         r.thread.ID,
+		TenantInfo: r.tenant,
+	}, r.thread)
 }
 
 // adopt takes on artifacts kept earlier in the turn, where the tools that made
@@ -403,9 +455,11 @@ func (r *artifactRecorder) save(
 
 	// The same lookup run again over data that has not changed shows what the
 	// last version shows; the reply points to that one instead of a copy.
-	if previous := r.followLineage(artifact); sameView(previous, artifact) {
+	previous := r.followLineage(artifact)
+	if sameView(previous, artifact) {
 		return previous, nil
 	}
+	r.assignSlug(artifact, previous)
 
 	saved, err := r.repo.Upsert(r.ctx, artifact)
 	if err != nil {
@@ -669,18 +723,50 @@ var (
 	errDocumentNotKept = errors.New("it could not be saved")
 )
 
-// documentArtifact is a write-up the model published, kept as markdown.
+// documentArtifact is a write-up the model published, kept as markdown with
+// what the Desk sets around it: its type, who wrote it and from what, and the
+// sources its citation marks point to.
 func documentArtifact(
 	callID string,
 	document services.PublishedDocument,
+	author string,
 ) *assistantartifact.Artifact {
+	sources := make([]assistantartifact.DocumentSource, 0, len(document.Sources))
+	for _, source := range document.Sources {
+		shown := assistantartifact.DocumentSource{
+			N:      source.N,
+			Tool:   source.Tool,
+			Label:  source.Label,
+			Detail: source.Detail,
+		}
+		if !source.ArtifactID.IsNil() {
+			shown.ArtifactID = source.ArtifactID.String()
+		}
+		sources = append(sources, shown)
+	}
+	slices.SortFunc(sources, func(a, b assistantartifact.DocumentSource) int {
+		return cmp.Compare(a.N, b.N)
+	})
+	docType := strings.TrimSpace(document.DocType)
+	if docType == "" {
+		docType = "Document"
+	}
+
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindDocument,
 		Status: assistantartifact.StatusReady,
 		Title:  artifactTitle(document.Title),
 		Payload: map[string]any{
-			"format": "markdown",
-			"body":   document.Body,
+			assistantartifact.DocumentFormat:      "markdown",
+			assistantartifact.DocumentBody:        document.Body,
+			assistantartifact.DocumentType:        docType,
+			assistantartifact.DocumentAuthor:      author,
+			assistantartifact.DocumentBasis:       strings.TrimSpace(document.Basis),
+			assistantartifact.DocumentSources:     sources,
+			assistantartifact.DocumentCitations:   assistantartifact.CitedNumbers(document.Body),
+			assistantartifact.DocumentEditedBy:    assistantartifact.DocumentEditedByAgent,
+			assistantartifact.DocumentEditor:      author,
+			assistantartifact.DocumentVersionNote: "First draft",
 		},
 		SourceToolCallID: callID,
 	}
@@ -702,7 +788,7 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 	name := observation.Call.Name
 	switch {
 	case name == toolPreviewReport:
-		return previewArtifact(observation.Call.ID, result)
+		return previewArtifact(observation.Call.ID, result, observation.Call.Arguments)
 	case name == toolRunReport || name == toolGetReportRun:
 		return runArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, getToolPrefix) && isRowSet(result):
@@ -995,7 +1081,11 @@ func stringsOf(value any) []string {
 	return out
 }
 
-func previewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+func previewArtifact(
+	callID string,
+	result map[string]any,
+	arguments map[string]any,
+) *assistantartifact.Artifact {
 	rows, _ := result["rows"].([]any)
 	payload := map[string]any{
 		"name":      typeutils.StringOfTrimmed(result["name"]),
@@ -1005,6 +1095,15 @@ func previewArtifact(callID string, result map[string]any) *assistantartifact.Ar
 		"rows":      rows,
 		"totals":    result["totals"],
 		"truncated": typeutils.BoolOf(result["truncated"]),
+		"tool":      toolPreviewReport,
+	}
+	// A saved or built-in report can be opened whole where reports live; an
+	// inline definition has nowhere but its own page.
+	if id := typeutils.StringOfTrimmed(arguments["definitionId"]); id != "" {
+		payload["definitionId"] = id
+	}
+	if key := typeutils.StringOfTrimmed(arguments["reportKey"]); key != "" {
+		payload["reportKey"] = key
 	}
 	fitRows(payload, "rows")
 
@@ -1346,41 +1445,10 @@ func toAssistantArtifact(artifact *assistantartifact.Artifact) services.Assistan
 		Pinned:           artifact.Pinned,
 		LineageID:        artifact.LineageID,
 		LineageSeq:       max(artifact.LineageSeq, 1),
+		Slug:             artifact.Slug,
 		CreatedAt:        artifact.CreatedAt,
 		UpdatedAt:        artifact.UpdatedAt,
 	}
-}
-
-// ListThreadArtifacts reads a thread's artifacts with each draft's and
-// plan's status read from the proposal or plan it views, so the pane shows
-// a draft as sent the moment the decision ran, without a second write.
-func (s *Service) ListThreadArtifacts(
-	ctx context.Context,
-	req repositories.GetThreadRequest,
-) ([]services.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
-		return nil, err
-	}
-	if s.artifacts == nil {
-		return []services.AssistantArtifact{}, nil
-	}
-
-	artifacts, err := s.artifacts.ListByThread(ctx, repositories.ListArtifactsRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	s.followDecisions(ctx, req, artifacts)
-
-	out := make([]services.AssistantArtifact, 0, len(artifacts))
-	for _, artifact := range artifacts {
-		out = append(out, toAssistantArtifact(artifact))
-	}
-
-	return out, nil
 }
 
 // followDecisions overlays each draft's and plan's status from the record
