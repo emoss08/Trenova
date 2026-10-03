@@ -4547,7 +4547,7 @@
     },
     {
       "name": "compose_table_view",
-      "description": "Turn a description of what someone wants to see into a filtered, sorted view of one of the application's tables, and give back the link that opens it. Use it when the answer is a list a person should work from rather than a few rows to read out: \"the shipments still in transit that were due yesterday\", \"drivers whose medical card lapses this month\". The view opens live, so it stays correct after you have stopped talking. Anything the description asked for that the table cannot express comes back named, so say so rather than implying it applied.",
+      "description": "Turn a description of what someone wants to see into a filtered, sorted view of one of the application's tables. The view is shown beside the conversation with its count and first rows and opens the live table; point to it rather than pasting its rows or a link. Use it when the answer is a list a person should work from rather than a few rows to read out: \"the shipments still in transit that were due yesterday\", \"drivers whose medical card lapses this month\". The view opens live, so it stays correct after you have stopped talking. Anything the description asked for that the table cannot express comes back named, so say so rather than implying it applied.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

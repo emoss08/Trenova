@@ -641,8 +641,6 @@ earlier ones allowed.
 - **Short billing queues**: a list of twelve rows or fewer is answered as a
   markdown table in the reply, except the billing queue, which always opens
   as the selectable table the design draws.
-- **View artifact**: shows the view's filters and its link, without a row
-  count or preview, because composing a view no longer runs it.
 - **Email draft**: "Send for approval" hands the edited wording to the
   decision card on the composer, which approves with it as a modification;
   the wording is held in the page, so an edit sent and not approved before a

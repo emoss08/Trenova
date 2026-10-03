@@ -633,20 +633,65 @@ permissions, and wrong by the time anybody reads them.
 The rate is a ledger, because a price read aloud is a wall of figures nobody
 can check against an invoice.
 */
-func TestArtifactFromObservation_ADescribedViewIsALinkNotAnArtifact(t *testing.T) {
+func TestArtifactFromObservation_ADescribedViewIsAViewToOpen(t *testing.T) {
 	t.Parallel()
 
-	// A view opens a page; the reply links to it where it mentions it, and
-	// nothing is added beside the conversation.
+	// A view opens a page. The card beside the conversation says what it was
+	// narrowed to, how many rows it holds, the first few, and what was left
+	// out, so the reply can point to it rather than reprint it.
+	unresolved := []any{map[string]any{"phrase": "near Dallas", "reason": "no location filter"}}
+	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
+		"entity":      "shipments",
+		"path":        "/shipments?fieldFilters=%5B%5D",
+		"explanation": "shipments where status equals InTransit",
+		"terms":       []any{"status equals InTransit"},
+		"filterCount": float64(1),
+		"unresolved":  unresolved,
+		"count":       float64(100),
+		"countCapped": true,
+		"columns":     []any{"proNumber", "customer", "status"},
+		"items": []any{
+			map[string]any{"id": "shp_1", "proNumber": "P1", "customer": "Acme", "status": "InTransit"},
+			map[string]any{"id": "shp_2", "proNumber": "P2", "customer": "Globex", "status": "InTransit"},
+		},
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
+	assert.Equal(t, assistantartifact.StatusReady, artifact.Status)
+	assert.Equal(t, "Shipments where status equals InTransit", artifact.Title)
+	assert.Equal(t, "/shipments?fieldFilters=%5B%5D", artifact.Payload["path"])
+	assert.Equal(t, []string{"status equals InTransit"}, artifact.Payload["terms"])
+	assert.Equal(t, float64(1), artifact.Payload["filterCount"])
+	assert.Equal(t, unresolved, artifact.Payload["unresolved"])
+	assert.Equal(t, float64(100), artifact.Payload["rowCount"])
+	assert.Equal(t, true, artifact.Payload["countCapped"])
+	assert.Equal(t, "shipment", artifact.Payload["recordEntity"])
+	columns, ok := artifact.Payload["columns"].([]assistantartifact.DisplayColumn)
+	require.True(t, ok)
+	assert.Equal(t, "proNumber", columns[0].Key)
+	assert.Len(t, artifact.Payload["rows"], 2)
+
+	// The rows are a preview of the live table, never the answer to reprint.
+	assert.True(t, actionableTable(artifact))
+}
+
+// A view composed for a table with no list to run it through still opens;
+// it just has no count or preview to show.
+func TestArtifactFromObservation_AnUncountedViewStillOpens(t *testing.T) {
+	t.Parallel()
+
 	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
 		"entity":      "shipments",
 		"path":        "/shipments?fieldFilters=%5B%5D",
 		"explanation": "shipments where status equals InTransit",
 		"filterCount": float64(1),
-		"link":        "[shipments where status equals InTransit](/shipments?fieldFilters=%5B%5D)",
 	}))
 
-	assert.Nil(t, artifact)
+	require.NotNil(t, artifact)
+	assert.Equal(t, "/shipments?fieldFilters=%5B%5D", artifact.Payload["path"])
+	assert.NotContains(t, artifact.Payload, "rowCount")
+	assert.NotContains(t, artifact.Payload, "rows")
 }
 
 // A view with no link is not a view, whatever else the result carries.

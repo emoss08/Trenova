@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 /*
@@ -28,11 +27,22 @@ question asked in two places, and answering it twice would mean two vocabularies
 and one of them tested. Both go through tablequeryservice, which goes through
 filtercatalog, which is also what the list tools compile against.
 
-What comes back is a view, not rows: the filters, the sort, and the path that
-opens the real table with them applied. That matters because a table the person
-opens is live, sortable, exportable and permission-checked on every page, where
-rows pasted into a conversation are a snapshot nobody can act on.
+What comes back is a view: the filters, the sort, and the path that opens the
+real table with them applied. That matters because a table the person opens is
+live, sortable, exportable and permission-checked on every page, where rows
+pasted into a conversation are a snapshot nobody can act on. The view is run
+once through the table's own list, for how many rows it holds and the first
+few, so the card beside the conversation says what opening it will show.
 */
+
+const (
+	// viewCountLimit is how far a view is counted; past it the card says
+	// "100+". Counting further would read the table to say a number nobody
+	// acts on before opening it.
+	viewCountLimit = 100
+	// viewPreviewRows is how many rows the card shows under the count.
+	viewPreviewRows = 5
+)
 
 // tableComposer is the slice of the compose service these tools use.
 type tableComposer interface {
@@ -45,6 +55,9 @@ type tableComposer interface {
 type composeTableViewTool struct {
 	composer tableComposer
 	catalog  *filtercatalog.Catalog
+	// lists is the list tool for each resource, set when the registry is
+	// built, which runs a view the way listing that table would.
+	lists map[permission.Resource]*listTool
 }
 
 func newComposeTableViewTool(
@@ -58,7 +71,9 @@ func (t *composeTableViewTool) Name() string { return "compose_table_view" }
 
 func (t *composeTableViewTool) Description() string {
 	return "Turn a description of what someone wants to see into a filtered, sorted view " +
-		"of one of the application's tables, and give back the link that opens it. Use it " +
+		"of one of the application's tables. The view is shown beside the conversation with " +
+		"its count and first rows and opens the live table; point to it rather than " +
+		"pasting its rows or a link. Use it " +
 		"when the answer is a list a person should work from rather than a few rows to " +
 		"read out: \"the shipments still in transit that were due yesterday\", \"drivers " +
 		"whose medical card lapses this month\". The view opens live, so it stays correct " +
@@ -113,15 +128,28 @@ type tableViewResult struct {
 	// lost a condition looks like an answer.
 	Unresolved  []unresolvedTermRow `json:"unresolved,omitempty"`
 	FilterCount int                 `json:"filterCount"`
-	// Link is the view as a markdown link, ready to put in the reply: the
-	// page opens with these filters applied. Nothing else shows the view.
-	Link string `json:"link,omitempty"`
-	Note string `json:"note,omitempty"`
+	// Count is how many rows the view holds, up to viewCountLimit, and
+	// CountCapped says there are more than that. Columns and Items are the
+	// first rows, in the list's own shape. All four are absent when the table
+	// has no list to run the view through.
+	Count       *int     `json:"count,omitempty"`
+	CountCapped bool     `json:"countCapped,omitempty"`
+	Columns     []string `json:"columns,omitempty"`
+	Items       any      `json:"items,omitempty"`
+	// WithheldByAccess names the fields the reader's access hides, which the
+	// preview leaves out as the table does.
+	WithheldByAccess []string `json:"withheldByAccess,omitempty"`
 }
 
-// markdownLinkText is a name made safe to sit between a link's brackets.
-func markdownLinkText(name string) string {
-	return strings.NewReplacer("[", "", "]", "").Replace(strings.TrimSpace(name))
+// previewItems is the first n rows of a list's items, whatever slice type
+// the list returns them as.
+func previewItems(items any, n int) any {
+	rows, ok := items.([]any)
+	if !ok || len(rows) <= n {
+		return items
+	}
+
+	return rows[:n]
 }
 
 type unresolvedTermRow struct {
@@ -169,14 +197,18 @@ func (t *composeTableViewTool) Query(
 		Terms:       composed.Terms,
 		FilterCount: len(composed.FieldFilters),
 	}
-	if result.Path != "" {
-		label := composed.Explanation
-		if label == "" {
-			label = stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(resource.Entity))
+	if list := t.lists[resource.Resource]; list != nil && result.Path != "" {
+		run, runErr := list.runView(ctx, params, composed.Query, composed.FieldFilters,
+			composed.Sort, viewCountLimit)
+		if runErr != nil {
+			return nil, runErr
 		}
-		result.Link = "[" + markdownLinkText(stringutils.Ellipsize(label, 80)) + "](" + result.Path + ")"
-		result.Note = "Put link in your reply where you mention the view, with words that say " +
-			"what it shows; it opens the table with these filters. It is not shown anywhere else."
+		count := run.outcome.Count
+		result.Count = &count
+		result.CountCapped = run.more
+		result.Columns = run.outcome.Columns
+		result.Items = previewItems(run.outcome.Items, viewPreviewRows)
+		result.WithheldByAccess = run.withheld
 	}
 	for _, unresolved := range composed.Unresolved {
 		result.Unresolved = append(result.Unresolved, unresolvedTermRow{

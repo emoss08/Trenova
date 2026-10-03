@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -197,4 +198,101 @@ func TestComposeTableView_OffersOnlyTheTablesItCanBuild(t *testing.T) {
 	properties, _ := schema["properties"].(map[string]any)
 	entity, _ := properties["entity"].(map[string]any)
 	assert.Equal(t, []string{"shipments"}, entity["enum"])
+}
+
+/*
+A view is run once through the table's own list, so the card beside the
+conversation can say how many rows opening it will show and what the first
+few are. The fake list below stands in for list_shipments: what matters here
+is that the view's own filters reach the fetch, and that the count stops at
+its limit rather than reading the whole table.
+*/
+
+type viewRow struct {
+	ID        string `json:"id"`
+	ProNumber string `json:"proNumber"`
+	Status    string `json:"status"`
+}
+
+func viewRows(n int) []any {
+	rows := make([]any, 0, n)
+	for i := range n {
+		n := strconv.Itoa(i)
+		rows = append(rows, &viewRow{ID: "shp_" + n, ProNumber: "P" + n, Status: "InTransit"})
+	}
+
+	return rows
+}
+
+func runnableViewTool(rows []any) (*composeTableViewTool, *capturedList) {
+	capture := &capturedList{rows: rows}
+	list := buildListTool(&listSpec{
+		name:         "list_shipments",
+		entityPlural: "shipments",
+		summary:      "List shipments.",
+		resource:     permission.ResourceShipment,
+		fields: []listField{
+			{Name: "status", Kind: filterEnum, Values: []string{"InTransit"}},
+		},
+		fetch: capture.fetch,
+	})
+	tool, _ := viewTool(composed())
+	tool.lists = map[permission.Resource]*listTool{permission.ResourceShipment: list}
+
+	return tool, capture
+}
+
+func TestComposeTableView_CountsAndPreviewsTheViewThroughItsList(t *testing.T) {
+	t.Parallel()
+
+	tool, capture := runnableViewTool(viewRows(3))
+	view := compose(t, tool, map[string]any{
+		"entity":      "shipments",
+		"description": "still in transit",
+	})
+
+	require.NotNil(t, view.Count)
+	assert.Equal(t, 3, *view.Count)
+	assert.False(t, view.CountCapped)
+	assert.Equal(t, []string{"id", "proNumber", "status"}, view.Columns)
+	assert.Len(t, view.Items, 3)
+
+	// The list read the view's own filters, and one row past the count limit
+	// so it can say whether there are more.
+	require.NotNil(t, capture.opts)
+	assert.Equal(t, composed().FieldFilters, capture.opts.FieldFilters)
+	assert.Equal(t, viewCountLimit+1, capture.opts.Pagination.Limit)
+}
+
+// Past the limit the count stops and says so; the preview is only the first
+// few rows, never the hundred it counted.
+func TestComposeTableView_StopsCountingAtTheLimit(t *testing.T) {
+	t.Parallel()
+
+	tool, _ := runnableViewTool(viewRows(viewCountLimit + 1))
+	view := compose(t, tool, map[string]any{
+		"entity":      "shipments",
+		"description": "still in transit",
+	})
+
+	require.NotNil(t, view.Count)
+	assert.Equal(t, viewCountLimit, *view.Count)
+	assert.True(t, view.CountCapped)
+	assert.Len(t, view.Items, viewPreviewRows)
+}
+
+// A table with no list to run the view through still gets its view; it just
+// has nothing to count.
+func TestComposeTableView_LeavesTheCountOutWithoutAList(t *testing.T) {
+	t.Parallel()
+
+	tool, _ := viewTool(composed())
+	view := compose(t, tool, map[string]any{
+		"entity":      "shipments",
+		"description": "still in transit",
+	})
+
+	assert.Nil(t, view.Count)
+	assert.Nil(t, view.Items)
+	assert.NotEmpty(t, view.Path)
 }

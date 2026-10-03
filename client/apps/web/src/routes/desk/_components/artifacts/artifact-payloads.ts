@@ -307,39 +307,64 @@ export type ComposedViewArtifact = {
   terms: string[];
   filterCount: number;
   unresolved: { phrase: string; reason: string }[];
-  /** How many records the view holds, when the view was counted. */
+  /** How many records the view holds, when the view was counted; null for one stored before views were. */
   count: number | null;
+  /** The count stopped at its limit, so there are more than it says. */
+  countCapped: boolean;
+  /**
+   * The columns a preview row shows, in the card's three places: the first
+   * column as the row's name, one to read beside it, and its status at the
+   * end when it has one. Empty when the view was not run.
+   */
+  columns: DisplayColumn[];
   /** The first records it holds, to read before opening it. */
-  preview: { id: string; label: string; status: string }[];
+  preview: TableViewRow[];
 };
+
+/**
+ * The columns a view's preview row has room for. The card draws a row as a
+ * name, a line beside it and a mark at the end, so a table of many columns is
+ * read down to the three that say most: its first column, its status when it
+ * has one, and the next column between them.
+ */
+function previewColumns(columns: readonly DisplayColumn[]): DisplayColumn[] {
+  const [first, ...rest] = columns;
+  if (!first) {
+    return [];
+  }
+  const end = rest.find((column) => column.type === "status") ?? rest[1];
+  const middle = rest.find((column) => column !== end);
+
+  return [first, middle, end].filter((column): column is DisplayColumn => column !== undefined);
+}
 
 export function composedViewFrom(artifact: AssistantArtifact): ComposedViewArtifact | null {
   const path = stringOf(artifact.payload.path);
   if (path === "") {
     return null;
   }
+  const payload = artifact.payload;
+  const table = listOf(payload.rows).length > 0 ? tableViewFrom(artifact) : null;
 
   return {
-    entity: stringOf(artifact.payload.entity),
+    entity: stringOf(payload.entity),
     path,
-    explanation: stringOf(artifact.payload.explanation),
-    terms: listOf(artifact.payload.terms).filter(
+    explanation: stringOf(payload.explanation),
+    terms: listOf(payload.terms).filter(
       (term): term is string => typeof term === "string" && term !== "",
     ),
-    filterCount: numberOf(artifact.payload.filterCount),
-    unresolved: listOf(artifact.payload.unresolved)
+    filterCount: numberOf(payload.filterCount),
+    unresolved: listOf(payload.unresolved)
       .filter(isRecord)
       .map((entry) => ({ phrase: stringOf(entry.phrase), reason: stringOf(entry.reason) }))
       .filter((entry) => entry.phrase !== ""),
-    count: typeof artifact.payload.count === "number" ? artifact.payload.count : null,
-    preview: listOf(artifact.payload.preview)
-      .filter(isRecord)
-      .map((row) => ({
-        id: stringOf(row.id),
-        label: stringOf(row.label),
-        status: stringOf(row.status),
-      }))
-      .filter((row) => row.id !== ""),
+    count:
+      typeof payload.rowCount === "number" && Number.isFinite(payload.rowCount)
+        ? payload.rowCount
+        : null,
+    countCapped: payload.countCapped === true,
+    columns: table ? previewColumns(table.columns) : [],
+    preview: table?.rows ?? [],
   };
 }
 

@@ -34,6 +34,7 @@ import { ArtIcon } from "./desk-art-kinds";
 import { DeskBillingItem } from "./desk-billing-item";
 import { useDeskBillingStore } from "./desk-billing-store";
 import { DeskRecordView } from "./desk-record-view";
+import { Cell } from "./desk-table-body";
 
 const PHASE_PILL: Record<string, string> = {
   failed: "dk-warn",
@@ -583,19 +584,20 @@ export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
             <span>{humanizeToolName(view.entity)}</span>
             <em>{t("{0, plural, one {# filter} other {# filters}}", view.filterCount)}</em>
             {view.count !== null && (
-              <b>{t("{0, plural, one {# result} other {# results}}", view.count)}</b>
+              <b>
+                {view.countCapped
+                  ? t("{0}+ results", view.count)
+                  : t("{0, plural, one {# result} other {# results}}", view.count)}
+              </b>
             )}
           </div>
           {view.preview.map((row) => (
-            <div key={row.id} className="dk-ax-vrow">
-              <span className="dk-ax-id">{row.id}</span>
-              <span>{row.label}</span>
-              {row.status !== "" && (
-                <span className={cn("dk-ax-pill", PHASE_PILL[statusPhase(row.status) ?? ""])}>
-                  <i />
-                  {row.status}
+            <div key={row.key} className="dk-ax-vrow">
+              {view.columns.map((column, index) => (
+                <span key={column.key}>
+                  <Cell column={column} value={row.values[column.key]} first={index === 0} />
                 </span>
-              )}
+              ))}
             </div>
           ))}
         </div>
@@ -603,7 +605,7 @@ export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
           <div key={entry.phrase} className="dk-ax-warn">
             <ArtIcon name="warn" size={13} />
             <span>
-              {t("Left out")} <b>“{entry.phrase}”</b>. {entry.reason}
+              {t("Left out")} <b>“{entry.phrase}”</b>. {asSentence(entry.reason)}
             </span>
           </div>
         ))}
@@ -626,6 +628,12 @@ export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
     );
   }
   return <Notice>{t("This view no longer names a page.")}</Notice>;
+}
+
+/** A reason as the warning reads it: one sentence, closed with a full stop. */
+export function asSentence(text: string): string {
+  const trimmed = text.trim();
+  return trimmed === "" || /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
 }
 
 function splitTerms(

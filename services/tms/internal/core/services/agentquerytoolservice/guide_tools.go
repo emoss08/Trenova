@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -288,4 +289,9 @@ func (t *openPageTool) Query(
 		Note: "The app has not moved. Offer the page in one short sentence with the markdown " +
 			"link in link, so the person can open it if they want to; do not say you took them there.",
 	}, nil
+}
+
+// markdownLinkText is a name made safe to sit between a link's brackets.
+func markdownLinkText(name string) string {
+	return strings.NewReplacer("[", "", "]", "").Replace(strings.TrimSpace(name))
 }

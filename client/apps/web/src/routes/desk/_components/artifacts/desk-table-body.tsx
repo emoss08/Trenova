@@ -124,7 +124,16 @@ const PHASE_DOT: Record<string, string> = {
   draft: "",
 };
 
-function Cell({ column, value, first }: { column: DisplayColumn; value: unknown; first: boolean }) {
+/** One cell as the table draws it; a first column that names its row reads as an id. */
+export function Cell({
+  column,
+  value,
+  first,
+}: {
+  column: DisplayColumn;
+  value: unknown;
+  first: boolean;
+}) {
   const t = useT();
   if (value === null || value === undefined || value === "") {
     return <span className="dk-ax-none">—</span>;

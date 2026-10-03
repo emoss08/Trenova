@@ -536,8 +536,16 @@ func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact
 // design draws it with a checkbox column and a bulk bar, which a markdown
 // table in the reply could never offer.
 func actionableTable(artifact *assistantartifact.Artifact) bool {
-	return artifact.Kind == assistantartifact.KindTableView &&
-		typeutils.StringOfTrimmed(artifact.Payload["recordEntity"]) == billingQueueRecordEntity
+	if artifact.Kind != assistantartifact.KindTableView {
+		return false
+	}
+	// A composed view opens the live table; its rows are a preview of that,
+	// never the answer to reprint.
+	if _, opens := artifact.Payload["path"]; opens {
+		return true
+	}
+
+	return typeutils.StringOfTrimmed(artifact.Payload["recordEntity"]) == billingQueueRecordEntity
 }
 
 func (r *artifactRecorder) requestDecision(
@@ -817,6 +825,8 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return runDiffArtifact(observation.Call.ID, result)
 	case name == toolOpenPage:
 		return navigationArtifact(observation.Call.ID, result)
+	case name == toolComposeView:
+		return composedViewArtifact(observation.Call.ID, result)
 	case pagedraft.IsEditTool(name):
 		return draftEditArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
@@ -894,10 +904,56 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 
 // composedViewArtifact is a described view as something to open.
 //
-// The pane shows what it was narrowed to and what could not be, with the link
-// to the live table. It is a table_view like a list result, because to the
-// reader it is the same thing arrived at a different way — except that this
-// one opens rather than being a snapshot.
+// The pane shows what it was narrowed to and what could not be, how many rows
+// it holds and the first few, with the link to the live table. It is a
+// table_view like a list result, because to the reader it is the same thing
+// arrived at a different way — except that this one opens rather than being a
+// snapshot, which its path says.
+func composedViewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	path := typeutils.StringOfTrimmed(result["path"])
+	if !assistantartifact.IsAppPath(path) {
+		return nil
+	}
+
+	entity := typeutils.StringOfTrimmed(result["entity"])
+	payload := map[string]any{
+		"display":     assistantartifact.DisplayVersion,
+		"entity":      entity,
+		"path":        path,
+		"explanation": typeutils.StringOfTrimmed(result["explanation"]),
+		"terms":       stringsOf(result["terms"]),
+		"filterCount": result["filterCount"],
+		"unresolved":  result["unresolved"],
+	}
+	if count, counted := result["count"]; counted {
+		payload["rowCount"] = count
+		payload["countCapped"] = typeutils.BoolOf(result["countCapped"])
+	}
+	if rows, ok := result["items"].([]any); ok && len(rows) > 0 {
+		projection := projectTable(entity, stringsOf(result["columns"]), rows)
+		if len(projection.columns) > 0 {
+			payload["columns"] = projection.columns
+			payload["rows"] = projection.rows
+			if projection.recordEntity != "" {
+				payload["recordEntity"] = projection.recordEntity
+			}
+			fitRows(payload, "rows")
+		}
+	}
+
+	title := typeutils.StringOfTrimmed(result["explanation"])
+	if title == "" {
+		title = stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity))
+	}
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindTableView,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(stringutils.CapitalizeFirst(title)),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
 
 // rateArtifact is the ledger behind a price.
 //
