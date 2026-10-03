@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -115,7 +116,17 @@ func (s *Service) assertWithinBudget(
 		return err
 	}
 	if refusal.Refused() {
-		return errortypes.NewBusinessError(refusal.Message(definition.Name))
+		refused := errortypes.NewBusinessError(refusal.Message(definition.Name))
+		// The Desk says which cap, when it lifts and who can raise it, so it
+		// gets the figures as well as the sentence.
+		refused.Params = map[string]string{
+			"code":     "agent_budget",
+			"cap":      refusal.Cap,
+			"spent":    refusal.Spent,
+			"limit":    refusal.Limit,
+			"resetsAt": strconv.FormatInt(refusal.ResetsAt, 10),
+		}
+		return refused
 	}
 
 	return nil

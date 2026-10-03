@@ -68,6 +68,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// one needs.
 	api.POST("/ask/", h.pm.RequirePermission(resource, permission.OpCreate), h.ask)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
+	api.GET(
+		"/threads/:threadID/budget/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.threadBudget,
+	)
 	// Renaming, pinning and deleting a conversation need no more than being
 	// allowed to use the assistant.
 	//
@@ -304,6 +309,22 @@ func (h *Handler) getThread(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, thread)
+}
+
+func (h *Handler) threadBudget(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	budget, err := h.service.ThreadBudget(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, budget)
 }
 
 func (h *Handler) markThreadRead(c *gin.Context) {

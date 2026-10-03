@@ -49,6 +49,9 @@ type Params struct {
 	Runs         repositories.AgentRunRepository     `optional:"true"`
 	SystemAgents serviceports.SystemAgentProvisioner `optional:"true"`
 	PageThreads  repositories.PageThreadRepository   `optional:"true"`
+	// AgentControls holds the per-person allowance; without it nobody is
+	// limited.
+	AgentControls repositories.AgentControlRepository `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -88,6 +91,7 @@ type Service struct {
 	runs          repositories.AgentRunRepository
 	systemAgents  serviceports.SystemAgentProvisioner
 	pageThreads   repositories.PageThreadRepository
+	agentControls repositories.AgentControlRepository
 }
 
 func New(p Params) *Service {
@@ -116,5 +120,6 @@ func New(p Params) *Service {
 		runs:          p.Runs,
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,
+		agentControls: p.AgentControls,
 	}
 }

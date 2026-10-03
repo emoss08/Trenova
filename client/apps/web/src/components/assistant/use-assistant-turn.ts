@@ -1,7 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { followTurn, runTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
+import {
+  followTurn,
+  runTurn,
+  stopTurnQuietly,
+  turnFailureDetail,
+  turnLimitOf,
+} from "./follow-turn";
 import type { ActiveTurn } from "@/services/assistant";
 import type {
   AssistantPageContext,
@@ -24,6 +30,7 @@ import {
   type TurnContext,
   type TurnFailureCause,
   type TurnFailureKind,
+  type TurnLimit,
   type TurnState,
 } from "./turn-stream";
 
@@ -85,7 +92,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   );
 
   const fail = useCallback(
-    (cause: TurnFailureCause, detail?: string) => {
+    (cause: TurnFailureCause, detail?: string, limit: TurnLimit | null = null) => {
       setTurn((state) => {
         if (!state || !isTurnActive(state)) {
           return state;
@@ -95,6 +102,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           ...state,
           status: "error",
           error: detail && detail !== "" ? `${message} ${detail}` : message,
+          limit,
         };
       });
     },
@@ -254,7 +262,11 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           return;
         }
         release();
-        fail("failed", turnFailureDetail(error, t("The connection to the assistant was lost.")));
+        fail(
+          "failed",
+          turnFailureDetail(error, t("The connection to the assistant was lost.")),
+          turnLimitOf(error),
+        );
         void refreshThread();
         return;
       }

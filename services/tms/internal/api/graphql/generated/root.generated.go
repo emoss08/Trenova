@@ -5294,6 +5294,8 @@ type AgentControl {
   aiTrainingConsentChangedAt: Timestamp
   "Who last turned training consent on or off."
   aiTrainingConsentChangedById: ID
+  "Questions one person may ask the agents each calendar month (UTC); 0 is unlimited."
+  personMonthlyMessages: Int!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -5588,6 +5590,8 @@ input AgentControlInput {
   promotionThreshold: Int
   "Absent leaves training consent as it is. Only a signed-in person can change it."
   aiTrainingConsent: Boolean
+  "Absent leaves the per-person monthly allowance as it is; 0 is unlimited."
+  personMonthlyMessages: Int
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int

@@ -143,6 +143,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
+				Name:     "personMonthlyMessages",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.AgentControl)
+					return obj.PersonMonthlyMessages, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
 				Name:     "billingAgentEnabled",
 				NonNull:  true,
 				ChildErr: errNoChild1,
@@ -3653,7 +3663,7 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "billingAgentEnabled", "decisionTimeoutSeconds"}
+	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "personMonthlyMessages", "billingAgentEnabled", "decisionTimeoutSeconds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3688,6 +3698,13 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.AiTrainingConsent = data
+		case "personMonthlyMessages":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("personMonthlyMessages"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PersonMonthlyMessages = data
 		case "billingAgentEnabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingAgentEnabled"))
 			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)

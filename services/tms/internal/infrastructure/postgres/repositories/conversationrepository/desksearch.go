@@ -114,3 +114,25 @@ func (r *repository) SearchDesk(
 		return out, nil
 	})
 }
+
+func (r *repository) CountQuestionsSince(
+	ctx context.Context,
+	req repositories.CountQuestionsSinceRequest,
+) (int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		var count int
+		err := r.db.DBForContext(ctx).NewRaw(`
+SELECT count(*)
+FROM assistant_messages AS m
+JOIN assistant_threads AS t ON t.id = m.thread_id
+	AND t.organization_id = m.organization_id AND t.business_unit_id = m.business_unit_id
+WHERE m.organization_id = ? AND m.business_unit_id = ? AND t.user_id = ?
+	AND m.role = 'User' AND m.kind = 'Message' AND m.created_at >= ?`,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID, req.UserID, req.Since,
+		).Scan(ctx, &count)
+		if err != nil {
+			return 0, fmt.Errorf("count questions: %w", err)
+		}
+		return count, nil
+	})
+}

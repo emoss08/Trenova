@@ -117,6 +117,7 @@ func (r *repository) Update(
 			Set(cols.ShadowMode.Set(), entity.ShadowMode).
 			Set(cols.EarnedAutonomy.Set(), entity.EarnedAutonomy).
 			Set(cols.PromotionThreshold.Set(), entity.PromotionThreshold).
+			Set(cols.PersonMonthlyMessages.Set(), entity.PersonMonthlyMessages).
 			Set(cols.AITrainingConsent.Set(), entity.AITrainingConsent).
 			Set(cols.AITrainingConsentChangedAt.Set(), entity.AITrainingConsentChangedAt).
 			Set(cols.AITrainingConsentChangedByID.Set(), entity.AITrainingConsentChangedByID).

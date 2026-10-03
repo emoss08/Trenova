@@ -763,6 +763,7 @@ func retryEvent(notice serviceports.ChatRetryNotice) serviceports.StreamEvent {
 			Reason:      notice.Reason,
 			Kind:        notice.Kind,
 			WaitSeconds: notice.WaitSeconds,
+			MaxAttempts: notice.MaxAttempts,
 		},
 	}
 }

@@ -479,6 +479,11 @@ const (
 	maxRetryWait   = 15 * time.Second
 )
 
+// busyAttempts is how many times a busy provider is asked in all.
+func (s *Service) busyAttempts() int {
+	return max(max(1, s.ai.GetMaxRetries()), maxBusyAttempts)
+}
+
 // retryWait decides whether one more attempt on the same provider is worth
 // it after err, and how long to wait first.
 //

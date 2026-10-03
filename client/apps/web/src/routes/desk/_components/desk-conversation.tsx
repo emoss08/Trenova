@@ -2,6 +2,8 @@ import { AssistantAgentProvider } from "@/components/agent-identity/agent-contex
 import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activity";
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
+import { ArtifactLinkContext, type ArtifactLinkRenderer } from "@/components/elements/ai-markdown";
+import { withArtifactRefs } from "@/lib/artifact-ref";
 import { DecisionFollowUpProvider } from "@/components/assistant/decision-follow-up";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { readyAttachments } from "@/components/assistant/composer";
@@ -37,7 +39,7 @@ import {
 import { useDeskSetting } from "@/stores/desk-settings-store";
 import { DeskConfetti } from "./conversation/desk-confetti";
 import {
-  DeskArtifactBadges,
+  DeskInlineArtifact,
   DeskQuestion,
   DeskReply,
   DeskRow,
@@ -47,6 +49,7 @@ import { composerStatus, streamingText } from "./conversation/turn-status";
 import { useStickToBottom } from "./conversation/use-stick-to-bottom";
 import { DeskErrorButton, DeskErrorCard } from "./desk-error-card";
 import { DeskIcon } from "./desk-icons";
+import { DeskLimitCard, DeskLimitNote } from "./desk-limits";
 import { useDesk } from "./desk-layout";
 import { DeskTermsNote } from "./desk-terms-note";
 
@@ -114,10 +117,9 @@ export function DeskConversation({
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const opening = useOpeningQuestion(thread.id);
   const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
+  const budgetQuery = useQuery({ ...queries.assistant.threadBudget(thread.id), staleTime: 60_000 });
   const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
-  const activeArtifactId = useDeskStore(
-    (state) => state.activeArtifactByThread[thread.id] ?? null,
-  );
+  const activeArtifactId = useDeskStore((state) => state.activeArtifactByThread[thread.id] ?? null);
   const chapters = useDeskStore((state) => state.chaptersByThread[thread.id]);
   const toggleChapter = useDeskStore((state) => state.toggleChapter);
 
@@ -190,6 +192,17 @@ export function DeskConversation({
     pageContextSource: deskPage.context,
   });
   const { entries, placements, turn, isActive } = model;
+
+  // Each reply spends from the caps, so the warning above the composer is
+  // read again once one ends rather than waiting out its staleness.
+  const wasActive = useRef(isActive);
+  const refetchBudget = budgetQuery.refetch;
+  useEffect(() => {
+    if (wasActive.current && !isActive) {
+      void refetchBudget();
+    }
+    wasActive.current = isActive;
+  }, [isActive, refetchBudget]);
 
   const { setProviderId } = model;
   const handoffProvider = handoff?.providerId ?? "";
@@ -312,8 +325,7 @@ export function DeskConversation({
       <>
         <DeskIcon name="lock" size={13} stroke={2} />
         <span>
-          <b>{t("This agent has been turned off.")}</b>{" "}
-          {t("You can still read this conversation.")}
+          <b>{t("This agent has been turned off.")}</b> {t("You can still read this conversation.")}
         </span>
       </>
     ) : null;
@@ -381,7 +393,10 @@ export function DeskConversation({
         continue;
       }
       if (entry.kind === "assistant") {
-        const shown = replyShows(entry, (rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS).length);
+        const shown = replyShows(
+          entry,
+          (rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS).length,
+        );
         if (!shown) {
           continue;
         }
@@ -401,272 +416,324 @@ export function DeskConversation({
   }, [entries, placements, rowArtifacts]);
   const isFirst = (id: string) => layout.first.has(id);
 
+  // A reply names an artifact in its sentence by id; the badge is drawn from
+  // the conversation's artifacts, and from the ones the reply being written
+  // has just made. An id the conversation never made stays words.
+  const liveArtifacts = turn?.artifacts;
+  const knownArtifacts = useMemo(() => {
+    const known = new Map<string, Pick<AssistantArtifact, "id" | "kind" | "title">>();
+    for (const artifact of liveArtifacts ?? []) known.set(artifact.id, artifact);
+    for (const artifact of artifacts) known.set(artifact.id, artifact);
+    return known;
+  }, [artifacts, liveArtifacts]);
+  const activeInline = workspaceOpen ? activeArtifactId : null;
+  const renderArtifactLink = useCallback<ArtifactLinkRenderer>(
+    (id, children) => {
+      const artifact = knownArtifacts.get(id);
+      return artifact ? (
+        <DeskInlineArtifact artifact={artifact} active={activeInline === id} onOpen={openArtifact}>
+          {children}
+        </DeskInlineArtifact>
+      ) : null;
+    },
+    [activeInline, knownArtifacts, openArtifact],
+  );
+
   return (
     <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
       <ArtifactOpenerProvider onOpen={openArtifact}>
-        <DecisionFollowUpProvider value={model.followUpDecision}>
-          <div className={cn("dk-stage", workspaceOpen && "dk-open")} onKeyDown={onKeyDown}>
-            <div className={cn("dk-room", isActive && "dk-lit")}>
-              <div className="dk-scroll" ref={scrollRef} tabIndex={0}>
-                <div className="dk-grid dk-flow">
-                  {entries.map((entry) => {
-                    if (entry.kind === "user") {
+        <ArtifactLinkContext value={renderArtifactLink}>
+          <DecisionFollowUpProvider value={model.followUpDecision}>
+            <div className={cn("dk-stage", workspaceOpen && "dk-open")} onKeyDown={onKeyDown}>
+              <div className={cn("dk-room", isActive && "dk-lit")}>
+                <div className="dk-scroll" ref={scrollRef} tabIndex={0}>
+                  <div className="dk-grid dk-flow">
+                    {entries.map((entry) => {
+                      if (entry.kind === "user") {
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="question"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskQuestion
+                              text={entry.message.content}
+                              mentions={entry.message.mentions}
+                              attachments={entry.message.attachments}
+                              page={entry.message.pageContext}
+                            />
+                          </DeskRow>
+                        );
+                      }
+                      if (entry.kind === "declined") {
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="question"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskQuestion
+                              text={entry.message.content}
+                              muted
+                              tag={t("Not sent to the agent")}
+                            />
+                          </DeskRow>
+                        );
+                      }
+                      if (entry.kind === "refusal") {
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="event"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskErrorCard
+                              tone="neutral"
+                              icon="shield"
+                              title={t(
+                                "This is outside what {0} can do",
+                                agent?.name ?? t("the agent"),
+                              )}
+                              sub={entry.message.content}
+                            />
+                          </DeskRow>
+                        );
+                      }
+                      if (entry.kind === "decision") {
+                        return null;
+                      }
+                      const own = rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS;
+                      if (!replyShows(entry, own.length)) {
+                        return null;
+                      }
+                      const continued = !layout.headed.has(entry.message.id);
                       return (
-                        <DeskRow key={entry.message.id} kind="question" first={isFirst(entry.message.id)}>
-                          <DeskQuestion
-                            text={entry.message.content}
-                            mentions={entry.message.mentions}
-                            attachments={entry.message.attachments}
-                            page={entry.message.pageContext}
+                        <DeskRow
+                          key={entry.message.id}
+                          kind={continued ? "continued" : "reply"}
+                          first={isFirst(entry.message.id)}
+                          time={
+                            continued ? undefined : turnTime(entry.message.createdAt, timezone, t)
+                          }
+                        >
+                          <DeskReply
+                            entry={entry}
+                            steps={replySteps.get(entry.message.id) ?? NO_STEPS}
+                            threadArtifacts={artifacts}
+                            artifacts={own}
+                            latestUserSequence={model.latestUserSequence}
+                            chapter={chapterOf(entry.message.id)}
+                            onTogglePin={() => toggleChapter(thread.id, entry.message.id)}
+                            onAnswer={model.answer}
+                            onOpenArtifact={openArtifact}
                           />
                         </DeskRow>
                       );
-                    }
-                    if (entry.kind === "declined") {
-                      return (
-                        <DeskRow key={entry.message.id} kind="question" first={isFirst(entry.message.id)}>
-                          <DeskQuestion
-                            text={entry.message.content}
-                            muted
-                            tag={t("Not sent to the agent")}
-                          />
-                        </DeskRow>
-                      );
-                    }
-                    if (entry.kind === "refusal") {
-                      return (
-                        <DeskRow key={entry.message.id} kind="event" first={isFirst(entry.message.id)}>
-                          <DeskErrorCard
-                            tone="neutral"
-                            icon="shield"
-                            title={t("This is outside what {0} can do", agent?.name ?? t("the agent"))}
-                            sub={entry.message.content}
-                          />
-                        </DeskRow>
-                      );
-                    }
-                    if (entry.kind === "decision") {
-                      return null;
-                    }
-                    const own = rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS;
-                    if (!replyShows(entry, own.length)) {
-                      return null;
-                    }
-                    const continued = !layout.headed.has(entry.message.id);
-                    return (
-                      <DeskRow
-                        key={entry.message.id}
-                        kind={continued ? "continued" : "reply"}
-                        first={isFirst(entry.message.id)}
-                        time={
-                          continued ? undefined : turnTime(entry.message.createdAt, timezone, t)
-                        }
-                      >
-                        <DeskReply
-                          entry={entry}
-                          steps={replySteps.get(entry.message.id) ?? NO_STEPS}
-                          threadArtifacts={artifacts}
-                          artifacts={own}
-                          activeArtifactId={workspaceOpen ? activeArtifactId : null}
-                          latestUserSequence={model.latestUserSequence}
-                          chapter={chapterOf(entry.message.id)}
-                          onTogglePin={() => toggleChapter(thread.id, entry.message.id)}
-                          onAnswer={model.answer}
-                          onOpenArtifact={openArtifact}
+                    })}
+                    {turn && !turn.followUp && turn.userContent !== "" && (
+                      <DeskRow kind="question" first={!layout.any}>
+                        <DeskQuestion
+                          text={turn.userContent}
+                          muted={turn.status === "refused"}
+                          tag={turn.status === "refused" ? t("Not sent to the agent") : undefined}
                         />
                       </DeskRow>
-                    );
-                  })}
-                  {turn && !turn.followUp && turn.userContent !== "" && (
-                    <DeskRow kind="question" first={!layout.any}>
-                      <DeskQuestion
-                        text={turn.userContent}
-                        muted={turn.status === "refused"}
-                        tag={turn.status === "refused" ? t("Not sent to the agent") : undefined}
-                      />
-                    </DeskRow>
-                  )}
-                  {turn && live !== "" && (
-                    <DeskRow
-                      kind="reply"
-                      first={!layout.any}
-                      time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
-                    >
-                      <DeskStreamingReply text={live} />
-                      <DeskArtifactBadges
-                        artifacts={turn.artifacts}
-                        activeId={workspaceOpen ? activeArtifactId : null}
-                        onOpen={openArtifact}
-                      />
-                    </DeskRow>
-                  )}
-                  {turn?.status === "error" && (
-                    <DeskRow kind="event" first={!layout.any}>
-                      <DeskErrorCard
-                        tone="err"
-                        compact
-                        title={
-                          live !== "" ? t("Reply stopped partway") : t("The reply didn't come through")
-                        }
-                        sub={turn.error ?? t("Nothing was changed.")}
-                        actions={
-                          <>
-                            {model.retry && (
-                              <DeskErrorButton ink onClick={() => void model.retry?.()}>
-                                <DeskIcon name="replay" size={12} />
-                                {t("Try again")}
-                              </DeskErrorButton>
-                            )}
-                            <DeskErrorButton onClick={() => void model.dismiss()}>
-                              {t("Dismiss")}
-                            </DeskErrorButton>
-                          </>
-                        }
-                      />
-                    </DeskRow>
-                  )}
-                </div>
-              </div>
-              <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
-              {burst !== null && <DeskConfetti key={burst} seed={burst % 1000} />}
-              <div className={cn("dk-jump", jumping && "dk-show", isActive && jumping && "dk-live")}>
-                <button
-                  type="button"
-                  className="dk-jump-b"
-                  onClick={jumpToLatest}
-                  tabIndex={jumping ? 0 : -1}
-                >
-                  {isActive && jumping ? (
-                    <>
-                      <span className="dk-jump-d" />
-                      {t("Agent is replying")}
-                    </>
-                  ) : unread > 0 ? (
-                    <>
-                      <span className="dk-jump-n">{unread}</span>
-                      {t("{0, plural, one {New reply} other {New replies}}", unread)}
-                    </>
-                  ) : (
-                    t("Jump to latest")
-                  )}
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    <path d="M12 5v14M6 13l6 6 6-6" />
-                  </svg>
-                </button>
-              </div>
-              <div className="dk-dock">
-                <div className="dk-grid">
-                  <div className="dk-g" />
-                  <div className="dk-c">
-                    {!pending && approved === null && <DeskTermsNote />}
-                    {approved && <DeskApprovedCard note={approved} />}
-                    {showCard && model.current && (
-                      <DeskApprovalCard
-                        key={model.current.entry.key}
-                        threadId={thread.id}
-                        entry={model.current.entry}
-                        approveRef={approveRef}
-                        onReview={reviewEntry}
-                        onDefer={model.deferAll}
-                        onDecided={model.decided}
-                        onApproved={onApproved}
-                      />
                     )}
-                    {pending && model.current === null && approved === null && (
-                      <button
-                        type="button"
-                        className="dk-bt dk-sm dk-dock-pill"
-                        onClick={model.resumeAll}
+                    {turn && live !== "" && (
+                      <DeskRow
+                        kind="reply"
+                        first={!layout.any}
+                        time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
                       >
-                        {t(
-                          "{0, plural, one {# change waits on you} other {# changes wait on you}}",
-                          model.queue.length,
-                        )}
-                      </button>
+                        <DeskStreamingReply text={withArtifactRefs(live, turn.artifacts)} />
+                      </DeskRow>
                     )}
-                    <DeskComposer
-                      value={model.draft}
-                      onChange={model.onDraftChange}
-                      onSend={(content, payload) => {
-                        void model.send(content, undefined, model.providerId, payload);
-                        composerContext.clear();
-                        attachments.clear();
-                      }}
-                      onStop={model.stop}
-                      agent={agent}
-                      onAgentChange={(next) => {
-                        if (next.id !== agent?.id) {
-                          desk.start(next.id, model.draft.trim() || undefined);
-                          model.onDraftChange("");
-                        }
-                      }}
-                      recentAgentIds={askable.recency.ids}
-                      agentLastUsedAt={askable.recency.lastUsedAt}
-                      busy={isActive}
-                      status={status}
-                      lock={lock}
-                      attachments={attachments}
-                      scans={scans}
-                      mentions={composerContext.mentions}
-                      onMentionsChange={composerContext.setMentions}
-                      suggestions={model.suggestions}
-                      drag={drag}
-                      extras={
-                        <DeskPageChip
-                          page={deskPage.page}
-                          share={deskPage.share}
-                          onShareChange={deskPage.setShare}
-                          onExplain={explainPage}
+                    {turn?.status === "error" && turn.limit !== null && (
+                      <DeskRow kind="event" first={!layout.any}>
+                        <DeskLimitCard
+                          limit={turn.limit}
+                          timezone={timezone}
+                          onDismiss={() => void model.dismiss()}
                         />
-                      }
-                      model={
-                        <DeskModelPicker
-                          options={model.providers}
-                          value={model.providerId}
-                          onChange={model.setProviderId}
-                          hasReplies={replies > 0}
-                          disabled={isActive}
+                      </DeskRow>
+                    )}
+                    {turn?.status === "error" && turn.limit === null && (
+                      <DeskRow kind="event" first={!layout.any}>
+                        <DeskErrorCard
+                          tone="err"
+                          compact
+                          title={
+                            live !== ""
+                              ? t("Reply stopped partway")
+                              : t("The reply didn't come through")
+                          }
+                          sub={turn.error ?? t("Nothing was changed.")}
+                          actions={
+                            <>
+                              {model.retry && (
+                                <DeskErrorButton ink onClick={() => void model.retry?.()}>
+                                  <DeskIcon name="replay" size={12} />
+                                  {t("Try again")}
+                                </DeskErrorButton>
+                              )}
+                              <DeskErrorButton onClick={() => void model.dismiss()}>
+                                {t("Dismiss")}
+                              </DeskErrorButton>
+                            </>
+                          }
                         />
-                      }
-                    />
-                    <div className="dk-hint">
-                      {showCard ? (
-                        <span>
-                          {t("Press")} <span className="dk-kbd">⌘↵</span> {t("to approve")}
-                        </span>
-                      ) : (
-                        <span>
-                          {t("Desk can make mistakes. Check important details before you act on them.")}
-                        </span>
-                      )}
-                    </div>
+                      </DeskRow>
+                    )}
                   </div>
-                  <div className="dk-m" />
+                </div>
+                <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
+                {burst !== null && <DeskConfetti key={burst} seed={burst % 1000} />}
+                <div
+                  className={cn("dk-jump", jumping && "dk-show", isActive && jumping && "dk-live")}
+                >
+                  <button
+                    type="button"
+                    className="dk-jump-b"
+                    onClick={jumpToLatest}
+                    tabIndex={jumping ? 0 : -1}
+                  >
+                    {isActive && jumping ? (
+                      <>
+                        <span className="dk-jump-d" />
+                        {t("Agent is replying")}
+                      </>
+                    ) : unread > 0 ? (
+                      <>
+                        <span className="dk-jump-n">{unread}</span>
+                        {t("{0, plural, one {New reply} other {New replies}}", unread)}
+                      </>
+                    ) : (
+                      t("Jump to latest")
+                    )}
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M12 5v14M6 13l6 6 6-6" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="dk-dock">
+                  <div className="dk-grid">
+                    <div className="dk-g" />
+                    <div className="dk-c">
+                      {!pending && approved === null && <DeskTermsNote />}
+                      {approved && <DeskApprovedCard note={approved} />}
+                      {showCard && model.current && (
+                        <DeskApprovalCard
+                          key={model.current.entry.key}
+                          threadId={thread.id}
+                          entry={model.current.entry}
+                          approveRef={approveRef}
+                          onReview={reviewEntry}
+                          onDefer={model.deferAll}
+                          onDecided={model.decided}
+                          onApproved={onApproved}
+                        />
+                      )}
+                      {pending && model.current === null && approved === null && (
+                        <button
+                          type="button"
+                          className="dk-bt dk-sm dk-dock-pill"
+                          onClick={model.resumeAll}
+                        >
+                          {t(
+                            "{0, plural, one {# change waits on you} other {# changes wait on you}}",
+                            model.queue.length,
+                          )}
+                        </button>
+                      )}
+                      {budgetQuery.data && (
+                        <DeskLimitNote budget={budgetQuery.data} timezone={timezone} />
+                      )}
+                      <DeskComposer
+                        value={model.draft}
+                        onChange={model.onDraftChange}
+                        onSend={(content, payload) => {
+                          void model.send(content, undefined, model.providerId, payload);
+                          composerContext.clear();
+                          attachments.clear();
+                        }}
+                        onStop={model.stop}
+                        agent={agent}
+                        onAgentChange={(next) => {
+                          if (next.id !== agent?.id) {
+                            desk.start(next.id, model.draft.trim() || undefined);
+                            model.onDraftChange("");
+                          }
+                        }}
+                        recentAgentIds={askable.recency.ids}
+                        agentLastUsedAt={askable.recency.lastUsedAt}
+                        busy={isActive}
+                        status={status}
+                        lock={lock}
+                        attachments={attachments}
+                        scans={scans}
+                        mentions={composerContext.mentions}
+                        onMentionsChange={composerContext.setMentions}
+                        suggestions={model.suggestions}
+                        drag={drag}
+                        extras={
+                          <DeskPageChip
+                            page={deskPage.page}
+                            share={deskPage.share}
+                            onShareChange={deskPage.setShare}
+                            onExplain={explainPage}
+                          />
+                        }
+                        model={
+                          <DeskModelPicker
+                            options={model.providers}
+                            value={model.providerId}
+                            onChange={model.setProviderId}
+                            hasReplies={replies > 0}
+                            disabled={isActive}
+                          />
+                        }
+                      />
+                      <div className="dk-hint">
+                        {showCard ? (
+                          <span>
+                            {t("Press")} <span className="dk-kbd">⌘↵</span> {t("to approve")}
+                          </span>
+                        ) : (
+                          <span>
+                            {t(
+                              "Desk can make mistakes. Check important details before you act on them.",
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="dk-m" />
+                  </div>
                 </div>
               </div>
+              <aside className="dk-sheet" aria-label={t("Artifacts")}>
+                {workspaceOpen && (
+                  <DeskWorkspace
+                    key={thread.id}
+                    threadId={thread.id}
+                    liveArtifacts={desk.liveArtifacts}
+                    onClose={() => setWorkspaceOpen(false)}
+                  />
+                )}
+              </aside>
             </div>
-            <aside className="dk-sheet" aria-label={t("Artifacts")}>
-              {workspaceOpen && (
-                <DeskWorkspace
-                  key={thread.id}
-                  threadId={thread.id}
-                  liveArtifacts={desk.liveArtifacts}
-                  onClose={() => setWorkspaceOpen(false)}
-                />
-              )}
-            </aside>
-          </div>
-        </DecisionFollowUpProvider>
+          </DecisionFollowUpProvider>
+        </ArtifactLinkContext>
       </ArtifactOpenerProvider>
     </AssistantAgentProvider>
   );

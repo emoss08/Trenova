@@ -395,7 +395,8 @@ func writeTranscriptMessage(
 			writeQuoted(b, m.Reasoning.Text)
 			b.WriteString("\n</details>\n\n")
 		}
-		writeText(b, m.Content)
+		// A transcript cannot open an artifact, so a link to one keeps its words.
+		writeText(b, agentruntime.StripArtifactLinks(m.Content))
 		for _, call := range m.ToolCalls {
 			fmt.Fprintf(b, "**Called `%s`**\n\n", call.Name)
 			if !trimmed || call.Arguments != nil {

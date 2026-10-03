@@ -2,6 +2,7 @@ import { ApiRequestError } from "@trenova/shared/lib/api";
 import { apiService } from "@/services/api";
 import { AssistantStreamError, type StartedTurn } from "@/services/assistant";
 import type { AssistantStreamEvent } from "@/types/assistant";
+import type { TurnLimit } from "./turn-stream";
 
 /**
  * How long to wait before reattaching to a turn whose connection dropped.
@@ -210,4 +211,36 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
       { once: true },
     );
   });
+}
+
+/**
+ * The usage cap a refusal names, read from the figures the server sends with
+ * it. Null for any other failure.
+ */
+export function turnLimitOf(error: unknown): TurnLimit | null {
+  if (!(error instanceof ApiRequestError)) {
+    return null;
+  }
+  const params = error.data.params;
+  if (!params) {
+    return null;
+  }
+  const resetsAt = Number(params.resetsAt ?? 0);
+  const at = Number.isFinite(resetsAt) ? resetsAt : 0;
+  if (params.code === "person_allowance") {
+    return {
+      kind: "person_allowance",
+      used: params.used ?? "",
+      limit: params.limit ?? "",
+      resetsAt: at,
+    };
+  }
+  if (
+    params.code === "agent_budget" &&
+    (params.cap === "monthly_budget" || params.cap === "daily_runs")
+  ) {
+    return { kind: params.cap, used: params.spent ?? "", limit: params.limit ?? "", resetsAt: at };
+  }
+
+  return null;
 }

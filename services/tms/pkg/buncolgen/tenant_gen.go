@@ -519,6 +519,7 @@ var AgentControlColumns = struct {
 	AITrainingConsent            Column // "ai_training_consent" → qualified: "agc.ai_training_consent"
 	AITrainingConsentChangedAt   Column // "ai_training_consent_changed_at" → qualified: "agc.ai_training_consent_changed_at"
 	AITrainingConsentChangedByID Column // "ai_training_consent_changed_by_id" → qualified: "agc.ai_training_consent_changed_by_id"
+	PersonMonthlyMessages        Column // "person_monthly_messages" → qualified: "agc.person_monthly_messages"
 	Version                      Column // "version" → qualified: "agc.version"
 	CreatedAt                    Column // "created_at" → qualified: "agc.created_at"
 	UpdatedAt                    Column // "updated_at" → qualified: "agc.updated_at"
@@ -534,6 +535,7 @@ var AgentControlColumns = struct {
 	AITrainingConsent:            NewColumn("ai_training_consent", "agc"),
 	AITrainingConsentChangedAt:   NewColumn("ai_training_consent_changed_at", "agc"),
 	AITrainingConsentChangedByID: NewColumn("ai_training_consent_changed_by_id", "agc"),
+	PersonMonthlyMessages:        NewColumn("person_monthly_messages", "agc"),
 	Version:                      NewColumn("version", "agc"),
 	CreatedAt:                    NewColumn("created_at", "agc"),
 	UpdatedAt:                    NewColumn("updated_at", "agc"),
@@ -555,6 +557,7 @@ var AgentControlFieldMap = map[string]string{
 	"aiTrainingConsent":            "ai_training_consent",
 	"aiTrainingConsentChangedAt":   "ai_training_consent_changed_at",
 	"aiTrainingConsentChangedById": "ai_training_consent_changed_by_id",
+	"personMonthlyMessages":        "person_monthly_messages",
 	"version":                      "version",
 	"createdAt":                    "created_at",
 	"updatedAt":                    "updated_at",
@@ -574,6 +577,7 @@ var AgentControlInsertableColumns = []string{
 	"ai_training_consent",
 	"ai_training_consent_changed_at",
 	"ai_training_consent_changed_by_id",
+	"person_monthly_messages",
 	"version",
 	"created_at",
 	"updated_at",
@@ -653,6 +657,7 @@ var AgentControlFilter = struct {
 	AITrainingConsent            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiTrainingConsent" → DB: "ai_training_consent"
 	AITrainingConsentChangedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiTrainingConsentChangedAt" → DB: "ai_training_consent_changed_at"
 	AITrainingConsentChangedByID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiTrainingConsentChangedById" → DB: "ai_training_consent_changed_by_id"
+	PersonMonthlyMessages        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "personMonthlyMessages" → DB: "person_monthly_messages"
 	Version                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -689,6 +694,9 @@ var AgentControlFilter = struct {
 	},
 	AITrainingConsentChangedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("aiTrainingConsentChangedById", op, value)
+	},
+	PersonMonthlyMessages: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("personMonthlyMessages", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

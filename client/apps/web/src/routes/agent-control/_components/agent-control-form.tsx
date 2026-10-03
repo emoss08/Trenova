@@ -15,16 +15,20 @@ import {
 import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { AwardIcon, DatabaseIcon, PauseCircleIcon } from "lucide-react";
+import { AwardIcon, DatabaseIcon, GaugeIcon, PauseCircleIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { promotionThresholdOptions } from "./agent-control-options";
+import { personAllowanceOptions, promotionThresholdOptions } from "./agent-control-options";
 import { TrainingExportHistory } from "./training-export-history";
 
 type ControlPatch = Partial<
   Pick<
     AgentControlInput,
-    "shadowMode" | "earnedAutonomy" | "promotionThreshold" | "aiTrainingConsent"
+    | "shadowMode"
+    | "earnedAutonomy"
+    | "promotionThreshold"
+    | "aiTrainingConsent"
+    | "personMonthlyMessages"
   >
 >;
 
@@ -38,6 +42,7 @@ function controlInput(current: AgentControl, patch: ControlPatch): AgentControlI
     shadowMode: patch.shadowMode ?? current.shadowMode,
     earnedAutonomy: patch.earnedAutonomy ?? current.earnedAutonomy,
     promotionThreshold: patch.promotionThreshold ?? current.promotionThreshold,
+    personMonthlyMessages: patch.personMonthlyMessages ?? current.personMonthlyMessages,
     ...(patch.aiTrainingConsent === undefined
       ? {}
       : { aiTrainingConsent: patch.aiTrainingConsent }),
@@ -65,6 +70,8 @@ export default function AgentControlForm() {
             ? t("Corrections will be shared for model training")
             : t("Corrections will no longer be shared for model training"),
         );
+      } else if (patch.personMonthlyMessages !== undefined) {
+        toast.success(t("Monthly allowance saved"));
       } else {
         toast.success(t("Promotion threshold saved"));
       }
@@ -88,6 +95,22 @@ export default function AgentControlForm() {
   const onThreshold = useCallback(
     (value: string) => mutation.mutate({ promotionThreshold: Number(value) }),
     [mutation],
+  );
+
+  const onAllowance = useCallback(
+    (value: string) => mutation.mutate({ personMonthlyMessages: Number(value) }),
+    [mutation],
+  );
+
+  const allowanceLocked = !canUpdate || mutation.isPending;
+  const allowanceItems = useMemo(
+    () =>
+      personAllowanceOptions(data.personMonthlyMessages).map((value) => ({
+        value: String(value),
+        label: value === 0 ? t("Unlimited") : value.toLocaleString(),
+        disabled: allowanceLocked,
+      })),
+    [data.personMonthlyMessages, allowanceLocked, t],
   );
 
   const thresholdLocked = !canUpdate || !data.earnedAutonomy || mutation.isPending;
@@ -171,6 +194,36 @@ export default function AgentControlForm() {
               value={String(data.promotionThreshold)}
               onValueChange={onThreshold}
               items={thresholdItems}
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card size="sm" className="gap-3 px-4 py-3">
+        <div className="flex items-start gap-3">
+          <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+            <GaugeIcon className="size-4" />
+          </span>
+          <div className="max-w-prose">
+            <p className="text-sm font-semibold">{t("Monthly allowance per person")}</p>
+            <p className="text-muted-foreground text-xs">
+              {t(
+                "How many questions each person may ask the agents in a calendar month. When someone reaches it, Desk tells them and says when it refreshes; it warns them as they get close. Each agent's own budget and daily limit still apply.",
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 pl-12">
+          <span className="text-muted-foreground text-xs">
+            {t("Questions per person each month")}
+          </span>
+          <div className="w-full max-w-sm">
+            <SegmentedControl<string>
+              fullWidth
+              aria-label={t("Monthly allowance per person")}
+              value={String(data.personMonthlyMessages)}
+              onValueChange={onAllowance}
+              items={allowanceItems}
             />
           </div>
         </div>

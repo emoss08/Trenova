@@ -15,3 +15,18 @@ export function promotionThresholdOptions(current: number): ThresholdOption[] {
 
   return [...values].sort((a, b) => a - b).map((value) => ({ value, label: String(value) }));
 }
+
+/**
+ * How many questions one person may ask the agents in a month. Nought is
+ * unlimited and comes first, since it is where every organization starts.
+ */
+export const PERSON_ALLOWANCE_PRESETS = [0, 100, 250, 500, 1000] as const;
+
+export function personAllowanceOptions(current: number): number[] {
+  const values = new Set<number>(PERSON_ALLOWANCE_PRESETS);
+  if (Number.isInteger(current) && current >= 0) {
+    values.add(current);
+  }
+
+  return [...values].sort((a, b) => a - b);
+}

@@ -477,7 +477,14 @@ export const pageContextSchema = z.object({
 });
 
 /** The kinds of record the composer's @ search can be narrowed to. */
-export const mentionSearchTypes = ["all", "shipment", "customer", "invoice", "worker", "carrier"] as const;
+export const mentionSearchTypes = [
+  "all",
+  "shipment",
+  "customer",
+  "invoice",
+  "worker",
+  "carrier",
+] as const;
 export type MentionSearchType = (typeof mentionSearchTypes)[number];
 
 /** A record the @ search offers. */
@@ -493,6 +500,26 @@ export const mentionCandidateListSchema = z.object({
 });
 
 export type MentionCandidateRecord = z.infer<typeof mentionCandidateSchema>;
+
+/** Where a conversation's agent and its asker stand against their usage caps. */
+export const threadBudgetSchema = z.object({
+  agentName: z.string().optional().default(""),
+  spentUsd: z.string().optional().default(""),
+  limitUsd: z.string().optional().default(""),
+  share: z.number().optional().default(0),
+  near: z.boolean().optional().default(false),
+  monthStart: z.number().optional().default(0),
+  resetsAt: z.number().optional().default(0),
+  runsToday: z.number().optional().default(0),
+  dailyRunLimit: z.number().optional().default(0),
+  person: z
+    .object({ used: z.number(), limit: z.number(), resetsAt: z.number() })
+    .nullable()
+    .optional()
+    .default(null),
+});
+
+export type ThreadBudget = z.infer<typeof threadBudgetSchema>;
 
 /** What the Desk's search palette looks through. */
 export const deskSearchKinds = ["all", "chat", "msg", "art", "dec"] as const;
@@ -1169,7 +1196,19 @@ export const assistantDelegateTextEventSchema = z.object({
   text: z.string(),
 });
 
-export const assistantErrorEventSchema = z.object({ message: z.string() });
+/** The usage cap that turned a question away, when one did. */
+export const turnLimitSchema = z.object({
+  kind: z.enum(["monthly_budget", "daily_runs", "person_allowance"]),
+  used: z.string().optional().default(""),
+  limit: z.string().optional().default(""),
+  resetsAt: z.number().optional().default(0),
+});
+
+export const assistantErrorEventSchema = z.object({
+  message: z.string(),
+  /** Set when a usage cap turned the question away. */
+  limit: turnLimitSchema.nullish().catch(null),
+});
 
 /**
  * The model died partway through its reply and the turn is starting over,

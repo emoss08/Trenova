@@ -5,6 +5,7 @@ import { ReportRunCard } from "@/components/assistant/report-run-card";
 import { reportRunsFrom } from "@/components/assistant/report-runs";
 import type { ThreadEntry } from "@/components/assistant/thread-view";
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
+import { withArtifactRefs } from "@/lib/artifact-ref";
 import { AiMarkdown, StreamingAiMarkdown } from "@/components/elements/ai-markdown";
 import type {
   AssistantArtifact,
@@ -90,45 +91,48 @@ export function DeskQuestion({
           muted && "dk-ec-q dk-muted",
         )}
       >
-        {mentions && mentions.length > 0 ? <DeskMentionText text={text} mentions={mentions} /> : text}
+        {mentions && mentions.length > 0 ? (
+          <DeskMentionText text={text} mentions={mentions} />
+        ) : (
+          text
+        )}
         {tag && <span className="dk-ec-qtag">{tag}</span>}
       </div>
-      {attachments && attachments.length > 0 && <DeskMessageAttachments attachments={attachments} />}
+      {attachments && attachments.length > 0 && (
+        <DeskMessageAttachments attachments={attachments} />
+      )}
       <DeskPageSent context={page} />
     </>
   );
 }
 
-/** The artifacts a reply produced, as dark-blue badges that open them in the workspace. */
-export function DeskArtifactBadges({
-  artifacts,
-  activeId,
+/**
+ * An artifact a reply names inside its sentence, as the same dark-blue badge
+ * the list under a reply uses, sized to sit in a line of text. Its words are
+ * the reply's, so the sentence still reads; the icon says what kind it is.
+ */
+export function DeskInlineArtifact({
+  artifact,
+  active,
   onOpen,
+  children,
 }: {
-  artifacts: readonly Pick<AssistantArtifact, "id" | "kind" | "title">[];
-  activeId: string | null;
+  artifact: Pick<AssistantArtifact, "id" | "kind" | "title">;
+  active: boolean;
   onOpen: (id: string) => void;
+  children: ReactNode;
 }) {
   const t = useT();
-  if (artifacts.length === 0) {
-    return null;
-  }
-
   return (
-    <div className="dk-abadges">
-      {artifacts.map((artifact) => (
-        <button
-          key={artifact.id}
-          type="button"
-          className={cn("dk-abadge", activeId === artifact.id && "dk-on")}
-          aria-label={t("Open {0}", artifact.title)}
-          onClick={() => onOpen(artifact.id)}
-        >
-          <ArtifactKindIcon kind={artifact.kind} className="dk-abadge-i" />
-          <span>{artifact.title}</span>
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      className={cn("dk-abadge dk-inline", active && "dk-on")}
+      aria-label={t("Open {0}", artifact.title)}
+      onClick={() => onOpen(artifact.id)}
+    >
+      <ArtifactKindIcon kind={artifact.kind} className="dk-abadge-i" />
+      <span>{children}</span>
+    </button>
   );
 }
 
@@ -138,7 +142,6 @@ export function DeskReply({
   steps,
   threadArtifacts,
   artifacts,
-  activeArtifactId,
   latestUserSequence,
   chapter,
   onTogglePin,
@@ -151,7 +154,6 @@ export function DeskReply({
   /** The conversation's artifacts, so a cited step can offer the one it made. */
   threadArtifacts: readonly AssistantArtifact[];
   artifacts: readonly AssistantArtifact[];
-  activeArtifactId: string | null;
   latestUserSequence: number;
   chapter: number;
   onTogglePin: () => void;
@@ -162,20 +164,21 @@ export function DeskReply({
   const asks = askRequestsFrom(tools);
   const reportRuns = reportRunsFrom(tools);
   const citations = useMemo(() => citeSteps(message.content, steps), [message.content, steps]);
+  // Every artifact the reply made is opened from its words: one it named
+  // where it named it, any other at the end of its last sentence.
   const cited = useMemo(
-    () => withCitations(message.content, citations),
-    [citations, message.content],
+    () => withArtifactRefs(withCitations(message.content, citations), artifacts),
+    [artifacts, citations, message.content],
   );
   const overrides = useCitationOverrides(citations, threadArtifacts, onOpenArtifact);
 
   return (
     <>
-      {message.content !== "" && (
+      {cited !== "" && (
         <div className="dk-prose">
           <AiMarkdown content={cited} className="dk-md" overrides={overrides} />
         </div>
       )}
-      <DeskArtifactBadges artifacts={artifacts} activeId={activeArtifactId} onOpen={onOpenArtifact} />
       {reportRuns.map((run) => (
         <div key={run.runId} className="dk-extra">
           <ReportRunCard run={run} />

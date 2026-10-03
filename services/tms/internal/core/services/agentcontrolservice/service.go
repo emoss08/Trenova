@@ -82,6 +82,9 @@ func (s *Service) Update(
 	if req.PromotionThreshold != nil {
 		control.PromotionThreshold = *req.PromotionThreshold
 	}
+	if req.PersonMonthlyMessages != nil {
+		control.PersonMonthlyMessages = *req.PersonMonthlyMessages
+	}
 
 	me := errortypes.NewMultiError()
 	consentChanged := s.applyTrainingConsent(control, req.AITrainingConsent, actor, me)

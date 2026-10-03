@@ -447,6 +447,7 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		BillingAgentEnabled:    input.BillingAgentEnabled,
 		DecisionTimeoutSeconds: input.DecisionTimeoutSeconds,
 		AITrainingConsent:      input.AiTrainingConsent,
+		PersonMonthlyMessages:  input.PersonMonthlyMessages,
 		TenantInfo:             base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }

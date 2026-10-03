@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -74,6 +73,7 @@ func (s *Service) runChat(
 	}
 
 	var lastErr error
+	var failures []serviceports.ChatProviderFailure
 	queue := append(make([]*aiprovider.Provider, 0, len(usable)+maxMidReplyRetries), usable...)
 	midReplyRetries := 0
 	for idx := 0; idx < len(queue); idx++ {
@@ -117,6 +117,9 @@ func (s *Service) runChat(
 		})
 		if attemptErr == nil {
 			result.LatencyMs = latency.Milliseconds()
+			if first := firstOtherThan(failures, provider.ID); first != nil {
+				result.FallbackFrom = first
+			}
 			result.CostUSD = provider.CostFor(result.InputTokens, result.OutputTokens)
 
 			return result, nil
@@ -154,13 +157,15 @@ func (s *Service) runChat(
 					)
 					if req.RetrySink != nil {
 						req.RetrySink(serviceports.ChatRetryNotice{
-							Attempt:  midReplyRetries,
-							Provider: queue[idx+1].Name,
-							Reason:   attemptErr.Error(),
-							Kind:     serviceports.RetryKindRestart,
+							Attempt:     midReplyRetries,
+							Provider:    queue[idx+1].Name,
+							Reason:      attemptErr.Error(),
+							Kind:        serviceports.RetryKindRestart,
+							MaxAttempts: maxMidReplyRetries + 1,
 						})
 					}
 					lastErr = attemptErr
+					failures = append(failures, providerFailure(provider, attemptErr))
 
 					continue
 				}
@@ -181,13 +186,83 @@ func (s *Service) runChat(
 		}
 
 		lastErr = attemptErr
+		failures = append(failures, providerFailure(provider, attemptErr))
 		s.logger.Warn("chat provider attempt failed, falling through",
 			zap.String("provider", provider.Name),
 			zap.Error(attemptErr),
 		)
 	}
 
-	return nil, fmt.Errorf("every configured chat provider failed: %w", lastErr)
+	return nil, &serviceports.ChatProvidersFailedError{
+		Failures: distinctFailures(failures),
+		Err:      lastErr,
+	}
+}
+
+// providerFailure names what went wrong with one provider in words a reader
+// can act on: a provider that is busy is worth asking again later, one that
+// timed out may be slow today, and anything else is a fault to look at.
+func providerFailure(provider *aiprovider.Provider, err error) serviceports.ChatProviderFailure {
+	status := "Failed"
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		status = "Timed out"
+	case unavailability(err):
+		status = "Overloaded"
+	case modeladapter.IsRetryable(err):
+		status = "Unavailable"
+	}
+	detail := ""
+	if err != nil {
+		detail = err.Error()
+	}
+	if runes := []rune(detail); len(runes) > maxFailureDetail {
+		detail = string(runes[:maxFailureDetail]) + "…"
+	}
+
+	return serviceports.ChatProviderFailure{
+		ProviderID: provider.ID,
+		Name:       provider.Name,
+		Model:      provider.Model,
+		Status:     status,
+		Detail:     detail,
+	}
+}
+
+// maxFailureDetail keeps a provider's error to a line a reader can take in.
+const maxFailureDetail = 160
+
+// distinctFailures keeps the last word from each provider: one asked twice
+// is listed once, as it ended.
+func distinctFailures(failures []serviceports.ChatProviderFailure) []serviceports.ChatProviderFailure {
+	out := make([]serviceports.ChatProviderFailure, 0, len(failures))
+	seen := make(map[pulid.ID]int, len(failures))
+	for _, failure := range failures {
+		if at, ok := seen[failure.ProviderID]; ok {
+			out[at] = failure
+			continue
+		}
+		seen[failure.ProviderID] = len(out)
+		out = append(out, failure)
+	}
+
+	return out
+}
+
+// firstOtherThan is the first provider that failed before the one that
+// answered, which is the one the reader expected to hear from.
+func firstOtherThan(
+	failures []serviceports.ChatProviderFailure,
+	answered pulid.ID,
+) *serviceports.ChatProviderFailure {
+	for idx := range failures {
+		if failures[idx].ProviderID != answered {
+			failure := failures[idx]
+			return &failure
+		}
+	}
+
+	return nil
 }
 
 // chatStream is what one attempt put in front of the reader before it ended.
@@ -292,6 +367,7 @@ func (s *Service) attemptChat(
 			Reason:      cause.Error(),
 			Kind:        serviceports.RetryKindBusy,
 			WaitSeconds: int(wait.Round(time.Second).Seconds()),
+			MaxAttempts: s.busyAttempts(),
 		})
 	}
 

@@ -379,7 +379,9 @@ type AgentControlInput struct {
 	// Absent leaves the promotion threshold as it is; 1 to 1000 approvals.
 	PromotionThreshold *int `json:"promotionThreshold,omitempty"`
 	// Absent leaves training consent as it is. Only a signed-in person can change it.
-	AiTrainingConsent      *bool `json:"aiTrainingConsent,omitempty"`
+	AiTrainingConsent *bool `json:"aiTrainingConsent,omitempty"`
+	// Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
+	PersonMonthlyMessages  *int  `json:"personMonthlyMessages,omitempty"`
 	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
 	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }

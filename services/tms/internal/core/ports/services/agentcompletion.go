@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/shopspring/decimal"
 	"time"
@@ -113,6 +114,9 @@ type ChatRetryNotice struct {
 	Kind RetryKind
 	// WaitSeconds is how long the router is waiting before a busy retry.
 	WaitSeconds int
+	// MaxAttempts is how many times the provider is asked in all before the
+	// router gives up on it, so the reader can be told "attempt 2 of 4".
+	MaxAttempts int
 }
 
 // RetryKind names why a turn is being retried.
@@ -152,6 +156,36 @@ type ChatCompletionResult struct {
 	CostUSD     *decimal.Decimal
 	OutputLimit int
 	CutOffCall  *CutOffToolCall
+	// FallbackFrom is the provider asked first when another one answered:
+	// the reader is told which model replied and which one didn't.
+	FallbackFrom *ChatProviderFailure
+}
+
+// ChatProviderFailure is one provider that was asked and didn't answer.
+type ChatProviderFailure struct {
+	ProviderID pulid.ID `json:"providerId"`
+	Name       string   `json:"name"`
+	Model      string   `json:"model"`
+	// Status is a short word for what went wrong: Overloaded, Timed out,
+	// Unavailable or Failed.
+	Status string `json:"status"`
+	Detail string `json:"detail"`
+}
+
+// ChatProvidersFailedError is returned when every provider in the order was
+// asked and none answered. It names each, so the reader is told more than
+// that something failed.
+type ChatProvidersFailedError struct {
+	Failures []ChatProviderFailure
+	Err      error
+}
+
+func (e *ChatProvidersFailedError) Error() string {
+	return fmt.Sprintf("every configured chat provider failed: %v", e.Err)
+}
+
+func (e *ChatProvidersFailedError) Unwrap() error {
+	return e.Err
 }
 
 type CutOffToolCall struct {

@@ -272,6 +272,18 @@ function delegateScope(data: { delegateCallId?: string }): string {
   return data.delegateCallId ?? "";
 }
 
+/**
+ * A cap that stopped a question before it was asked: the agent's monthly
+ * budget, its daily run count, or the person's own monthly allowance.
+ */
+export type TurnLimit = {
+  kind: "monthly_budget" | "daily_runs" | "person_allowance";
+  used: string;
+  limit: string;
+  /** When the cap lifts, in epoch seconds; 0 when the server did not say. */
+  resetsAt: number;
+};
+
 export type TurnState = {
   status: TurnStatus;
   userContent: string;
@@ -280,6 +292,8 @@ export type TurnState = {
   refusal: { message: string; reason: string; category: string } | null;
   segments: TurnSegment[];
   error: string | null;
+  /** Set when the question was refused because a usage cap was reached. */
+  limit: TurnLimit | null;
   result: SendMessageResult | null;
   /** Set while the reply is starting over after a model died partway. */
   retrying: TurnRetry | null;
@@ -318,6 +332,7 @@ export function initialTurnState(
     refusal: null,
     segments: [],
     error: null,
+    limit: null,
     result: null,
     retrying: null,
     artifacts: [],
@@ -516,7 +531,12 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       return { ...state, status: "done", result: event.data };
 
     case "error":
-      return { ...state, status: "error", error: event.data.message };
+      return {
+        ...state,
+        status: "error",
+        error: event.data.message,
+        limit: event.data.limit ?? null,
+      };
 
     default:
       return state;

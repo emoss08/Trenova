@@ -139,6 +139,8 @@ type modelFailure struct {
 	NoProvider    bool     `json:"noProvider,omitempty"`
 	SchemaInvalid bool     `json:"schemaInvalid,omitempty"`
 	Refusal       *refusal `json:"refusal,omitempty"`
+	// Providers are the providers asked, when every one of them failed.
+	Providers []serviceports.ChatProviderFailure `json:"providers,omitempty"`
 }
 
 // refusal is a business error as data: the message key the error handler
@@ -172,6 +174,11 @@ func modelFailureOf(err error) modelFailure {
 		detail.Refusal = &refusal{Message: business.Message, Args: args, Details: business.Details}
 	}
 
+	var exhausted *serviceports.ChatProvidersFailedError
+	if errors.As(err, &exhausted) {
+		detail.Providers = exhausted.Failures
+	}
+
 	return detail
 }
 
@@ -194,6 +201,8 @@ type Failure struct {
 	// Refusal is a business error, kept whole so the person is told what
 	// they would have been told had the call run in their request.
 	Refusal *refusal `json:"refusal,omitempty"`
+	// Providers are the providers asked, when every one of them failed.
+	Providers []serviceports.ChatProviderFailure `json:"providers,omitempty"`
 }
 
 // FailureOf reads why a run ended from the error workflow code was handed.
@@ -220,6 +229,7 @@ func FailureOf(err error) *Failure {
 			failure.NoProvider = detail.NoProvider
 			failure.SchemaInvalid = detail.SchemaInvalid
 			failure.Refusal = detail.Refusal
+			failure.Providers = detail.Providers
 		}
 	}
 

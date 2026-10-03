@@ -36,6 +36,11 @@ export const assistant = createQueryKeys("assistant", {
   }),
   // Every reply the person's conversations are still writing. Kept fresh by
   // the "assistant_turns" realtime event and by the turn hooks, not polled.
+  threadBudget: (threadId: string) => ({
+    queryKey: ["assistant-thread-budget", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.threadBudget(threadId, { signal }),
+  }),
   activeTurns: () => ({
     queryKey: ["assistant-active-turns"],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>

@@ -198,6 +198,7 @@ func (w *Workflows) answer(
 	if err := prepare(ctx, payload, &plan); err != nil {
 		finish.Failure = modelcall.FailureOf(err)
 		finish.Rejection = rejectionOf(err)
+		finish.RejectionParams = rejectionDetails(err)
 
 		return finish
 	}
@@ -243,6 +244,20 @@ func rejectionOf(err error) string {
 	}
 
 	return ""
+}
+
+// rejectionDetails are the figures a refusal carried, nil when it carried none.
+func rejectionDetails(err error) map[string]string {
+	var appErr *temporal.ApplicationError
+	if !errors.As(err, &appErr) || appErr.Type() != errTypeRejected || !appErr.HasDetails() {
+		return nil
+	}
+	var params map[string]string
+	if appErr.Details(&params) != nil || len(params) == 0 {
+		return nil
+	}
+
+	return params
 }
 
 func withPriority(

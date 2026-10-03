@@ -1000,7 +1000,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/control.graphql",
-      "hash": "sha256:cd563025c7cab3cccde8facd8817fb14d5e144c41c6c47214970a4a67833e00a",
+      "hash": "sha256:bfd36ffb28b2d85c9f6720c07c230b726efa4fcf7d07537dad18faf7841447cc",
       "rootFields": [
         "agentControl"
       ],
@@ -1009,7 +1009,7 @@
         "AgentControlFields"
       ],
       "usages": [],
-      "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  aiTrainingConsent\n  aiTrainingConsentChangedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  personMonthlyMessages\n  aiTrainingConsent\n  aiTrainingConsentChangedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentDefinitionCards",
@@ -19025,7 +19025,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/control.graphql",
-      "hash": "sha256:b86ee623bcf6bbc1b1b4471e5dfb96ce75da9de979b96146ad30bf44a603bf25",
+      "hash": "sha256:3cb3858ecc09300046d55c8b9edb5b8b174e0076adc94f2c5f3309831b529d5a",
       "rootFields": [
         "updateAgentControl"
       ],
@@ -19040,7 +19040,7 @@
         "AgentControlFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  aiTrainingConsent\n  aiTrainingConsentChangedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  personMonthlyMessages\n  aiTrainingConsent\n  aiTrainingConsentChangedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateAgentEvalCase",
@@ -22390,7 +22390,7 @@
         "UpdateAgentControl"
       ],
       "usages": [],
-      "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  aiTrainingConsent\n  aiTrainingConsentChangedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  personMonthlyMessages\n  aiTrainingConsent\n  aiTrainingConsentChangedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentDefinitionCardFields",
@@ -26551,6 +26551,11 @@
           "defaultValue": null
         },
         {
+          "name": "personMonthlyMessages",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
           "name": "promotionThreshold",
           "type": "Int",
           "defaultValue": null
@@ -26561,7 +26566,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input AgentControlInput {\n  \"\"\"\n  Absent leaves training consent as it is. Only a signed-in person can change it.\n  \"\"\"\n  aiTrainingConsent: Boolean\n  billingAgentEnabled: Boolean @deprecated(reason: \"Enable or disable the billing exception agent definition instead\")\n  decisionTimeoutSeconds: Int @deprecated(reason: \"Set decisionTimeoutSeconds on the agent definition instead\")\n  \"\"\"Absent leaves the organization's earned autonomy switch as it is.\"\"\"\n  earnedAutonomy: Boolean\n  \"\"\"Absent leaves the promotion threshold as it is; 1 to 1000 approvals.\"\"\"\n  promotionThreshold: Int\n  shadowMode: Boolean!\n}"
+      "sdl": "input AgentControlInput {\n  \"\"\"\n  Absent leaves training consent as it is. Only a signed-in person can change it.\n  \"\"\"\n  aiTrainingConsent: Boolean\n  billingAgentEnabled: Boolean @deprecated(reason: \"Enable or disable the billing exception agent definition instead\")\n  decisionTimeoutSeconds: Int @deprecated(reason: \"Set decisionTimeoutSeconds on the agent definition instead\")\n  \"\"\"Absent leaves the organization's earned autonomy switch as it is.\"\"\"\n  earnedAutonomy: Boolean\n  \"\"\"\n  Absent leaves the per-person monthly allowance as it is; 0 is unlimited.\n  \"\"\"\n  personMonthlyMessages: Int\n  \"\"\"Absent leaves the promotion threshold as it is; 1 to 1000 approvals.\"\"\"\n  promotionThreshold: Int\n  shadowMode: Boolean!\n}"
     },
     "AgentEvalCaseStatus": {
       "kind": "enum",

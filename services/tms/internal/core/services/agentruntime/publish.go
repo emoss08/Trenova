@@ -123,7 +123,7 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 
 	return FenceToolResult(publishArtifactName, encoded) +
 		"\n\n[The person can open this document beside the conversation. Reply in two or " +
-		"three sentences that point to it; do not repeat its text.]"
+		"three sentences that point to it; do not repeat its text." + artifactRefNote(shown) + "]"
 }
 
 // shownNote tells the model that a result it is reading is already in front
@@ -133,7 +133,7 @@ func shownNote(shown *serviceports.ShownArtifact) string {
 	return fmt.Sprintf("\n\n[Shown to the person as %s titled %q, which they can open beside "+
 		"the conversation. Answer with what matters (the count, the few rows or fields that "+
 		"answer the question, anything that needs attention) and refer to it rather than "+
-		"repeating it.]", artifactNoun(shown.Kind), shown.Title)
+		"repeating it.%s]", artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
 }
 
 func artifactNoun(kind string) string {

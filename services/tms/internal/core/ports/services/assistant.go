@@ -429,6 +429,8 @@ type AssistantRetryingEvent struct {
 	// the wait, for the reader.
 	Kind        RetryKind `json:"kind,omitempty"`
 	WaitSeconds int       `json:"waitSeconds,omitempty"`
+	// MaxAttempts is how many times the provider is asked in all.
+	MaxAttempts int `json:"maxAttempts,omitempty"`
 	// AgentID and DelegateCallID are set when it is another agent's reply
 	// starting over, on a task this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
@@ -482,6 +484,11 @@ type AssistantMessageEvent struct {
 	Content   string                        `json:"content"`
 	ToolCalls []conversation.ToolCallRecord `json:"toolCalls"`
 	Model     string                        `json:"model"`
+	// ProviderID is the provider that answered; FallbackFrom the one asked
+	// first, when that one didn't. Truncated says the reply stopped partway.
+	ProviderID   pulid.ID                       `json:"providerId,omitempty"`
+	FallbackFrom *conversation.ProviderFallback `json:"fallbackFrom,omitempty"`
+	Truncated    bool                           `json:"truncated,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's message, on a
 	// task this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
@@ -609,6 +616,7 @@ type AssistantService interface {
 		actor RequestActor,
 		req DeskSearchRequest,
 	) ([]DeskSearchResult, error)
+	ThreadBudget(ctx context.Context, req repositories.GetThreadRequest) (*ThreadBudget, error)
 	ListThreadProposals(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
@@ -681,6 +689,30 @@ type AssistantProviderOption struct {
 type MentionSearchRequest struct {
 	Query string
 	Kind  string
+}
+
+// ThreadBudget is where a conversation's agent stands against its monthly
+// budget and daily run cap. LimitUSD is empty when the agent has no budget.
+type ThreadBudget struct {
+	AgentName     string  `json:"agentName"`
+	SpentUSD      string  `json:"spentUsd"`
+	LimitUSD      string  `json:"limitUsd"`
+	Share         float64 `json:"share"`
+	Near          bool    `json:"near"`
+	MonthStart    int64   `json:"monthStart"`
+	ResetsAt      int64   `json:"resetsAt"`
+	RunsToday     int     `json:"runsToday"`
+	DailyRunLimit int     `json:"dailyRunLimit"`
+	// Person is the asker's own monthly allowance, nil when unlimited.
+	Person *PersonAllowance `json:"person"`
+}
+
+// PersonAllowance is how many questions one person has asked this month
+// against how many their organization allows.
+type PersonAllowance struct {
+	Used     int   `json:"used"`
+	Limit    int   `json:"limit"`
+	ResetsAt int64 `json:"resetsAt"`
 }
 
 // DeskSearchRequest searches a person's own Desk. Kind is chat, msg, art,

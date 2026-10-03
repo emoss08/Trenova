@@ -1,4 +1,5 @@
 import { isAppPath } from "@/lib/app-path";
+import { artifactRefId } from "@/lib/artifact-ref";
 import { splitMarkdownBlocks } from "@/lib/markdown-blocks";
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { cn } from "@trenova/shared/lib/utils";
@@ -12,7 +13,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import ReactMarkdown, { type Components } from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform, type Components } from "react-markdown";
 import { Link, useInRouterContext } from "react-router";
 import remarkGfm from "remark-gfm";
 
@@ -77,9 +78,24 @@ export type MarkdownLinkRenderer = (href: string, children: ReactNode) => ReactN
 
 export const MarkdownLinkContext = createContext<MarkdownLinkRenderer | null>(null);
 
+/**
+ * Draws an artifact a reply names in its sentence, or returns null when the
+ * surface does not know that artifact, which leaves the link its words.
+ */
+export type ArtifactLinkRenderer = (id: string, children: ReactNode) => ReactNode | null;
+
+export const ArtifactLinkContext = createContext<ArtifactLinkRenderer | null>(null);
+
 export function MarkdownLink({ href, children }: ComponentProps<"a">) {
   const inRouter = useInRouterContext();
   const renderLink = use(MarkdownLinkContext);
+  const renderArtifact = use(ArtifactLinkContext);
+  const artifactId = artifactRefId(href);
+  if (artifactId !== null || href?.startsWith("artifact:")) {
+    const drawn =
+      artifactId !== null && renderArtifact ? renderArtifact(artifactId, children) : null;
+    return drawn ?? <span className="font-medium">{children}</span>;
+  }
   if (inRouter && isAppPath(href)) {
     return (
       <Link to={href} className={LINK_CLASS}>
@@ -205,11 +221,14 @@ export const AiMarkdown = memo(function AiMarkdown({
   /** Elements a surface draws its own way, such as a link it reads as something else. */
   overrides?: Components;
 }) {
-  const merged = useMemo(() => (overrides ? { ...components, ...overrides } : components), [overrides]);
+  const merged = useMemo(
+    () => (overrides ? { ...components, ...overrides } : components),
+    [overrides],
+  );
 
   return (
     <div className={cn("text-sm wrap-break-word", className)}>
-      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={merged}>
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={merged} urlTransform={urlTransform}>
         {content}
       </ReactMarkdown>
     </div>
@@ -217,6 +236,15 @@ export const AiMarkdown = memo(function AiMarkdown({
 });
 
 const REMARK_PLUGINS = [remarkGfm];
+
+/**
+ * react-markdown empties any address with a scheme it does not know, which
+ * would turn a link to an artifact into an empty one. That scheme is kept;
+ * it never reaches the browser as an address, only as a badge or as words.
+ */
+function urlTransform(url: string): string {
+  return artifactRefId(url) !== null ? url : defaultUrlTransform(url);
+}
 
 /** One top-level block, parsed again only when its own text changes. */
 const MarkdownBlock = memo(function MarkdownBlock({
@@ -227,7 +255,7 @@ const MarkdownBlock = memo(function MarkdownBlock({
   merged: Components;
 }) {
   return (
-    <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={merged}>
+    <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={merged} urlTransform={urlTransform}>
       {content}
     </ReactMarkdown>
   );
@@ -250,7 +278,10 @@ export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
   overrides?: Components;
 }) {
   const blocks = useMemo(() => splitMarkdownBlocks(content), [content]);
-  const merged = useMemo(() => (overrides ? { ...components, ...overrides } : components), [overrides]);
+  const merged = useMemo(
+    () => (overrides ? { ...components, ...overrides } : components),
+    [overrides],
+  );
 
   return (
     <div className={cn("text-sm wrap-break-word", className)}>

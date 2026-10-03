@@ -118,11 +118,14 @@ type FinishTurnInput struct {
 	Plan *assistantservice.TurnPlan `json:"plan,omitempty"`
 	// Rejection is why the question was turned away, written for the person
 	// who asked.
-	Rejection string                        `json:"rejection,omitempty"`
-	Run       *serviceports.RunResult       `json:"run,omitempty"`
-	Failure   *modelcall.Failure            `json:"failure,omitempty"`
-	Artifacts []*assistantartifact.Artifact `json:"artifacts,omitempty"`
-	Events    []temporaltype.StreamItem     `json:"events,omitempty"`
+	Rejection string `json:"rejection,omitempty"`
+	// RejectionParams are the figures the refusal carried, such as which
+	// usage cap and when it lifts.
+	RejectionParams map[string]string             `json:"rejectionParams,omitempty"`
+	Run             *serviceports.RunResult       `json:"run,omitempty"`
+	Failure         *modelcall.Failure            `json:"failure,omitempty"`
+	Artifacts       []*assistantartifact.Artifact `json:"artifacts,omitempty"`
+	Events          []temporaltype.StreamItem     `json:"events,omitempty"`
 }
 
 // TurnEnding is how the turn ended: its result, and the last event its reader

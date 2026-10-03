@@ -5,6 +5,7 @@ fragment AgentControlFields on AgentControl {
   shadowMode
   earnedAutonomy
   promotionThreshold
+  personMonthlyMessages
   aiTrainingConsent
   aiTrainingConsentChangedAt
   version

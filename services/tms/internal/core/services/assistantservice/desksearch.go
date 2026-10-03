@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -97,6 +98,7 @@ func (s *Service) SearchDesk(
 // deskSnippet is a message on one line, starting a little before the first
 // place it matches so the match is in view.
 func deskSnippet(content, query string) string {
+	content = agentruntime.StripArtifactLinks(content)
 	text := []rune(strings.Join(strings.Fields(content), " "))
 	start := 0
 	if query != "" {

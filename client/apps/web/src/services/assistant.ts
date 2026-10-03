@@ -14,6 +14,7 @@ import {
   assistantMessagePageSchema,
   mentionCandidateListSchema,
   deskSearchResultListSchema,
+  threadBudgetSchema,
   type DeskSearchKind,
   type MentionSearchType,
   assistantArtifactListSchema,
@@ -172,6 +173,12 @@ export class AssistantService {
   public async getThread(id: AssistantThread["id"]) {
     const response = await api.get(`/assistant/threads/${id}/`);
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
+  }
+
+  /** How close the thread's agent, and the person asking, are to their caps. */
+  public async threadBudget(id: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
+    const response = await api.get(`/assistant/threads/${id}/budget/`, { signal });
+    return safeParse(threadBudgetSchema, response, "Assistant Thread Budget");
   }
 
   public async deleteThread(id: AssistantThread["id"]) {

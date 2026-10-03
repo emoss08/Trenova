@@ -91,10 +91,14 @@ type Message struct {
 	// did not reason out loud or the provider was not asked to let it.
 	Reasoning *ReasoningTrace `json:"reasoning" bun:"reasoning,type:JSONB,nullzero"`
 
-	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
-	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
-	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
-	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
+	Model string `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
+	// Truncated says the provider stopped partway through this reply, and
+	// FallbackFrom names the provider asked first when another one answered.
+	Truncated    bool              `json:"truncated,omitempty"    bun:"truncated,type:BOOLEAN,notnull,default:false"`
+	FallbackFrom *ProviderFallback `json:"fallbackFrom,omitempty" bun:"fallback_from,type:JSONB,nullzero"`
+	ProviderID   pulid.ID          `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
+	InputTokens  int               `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
+	OutputTokens int               `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
 	LatencyMs int64            `json:"latencyMs"    bun:"latency_ms,type:BIGINT,nullzero"`
@@ -241,4 +245,13 @@ func (m *Message) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0).Error("Output tokens cannot be negative"),
 		),
 	))
+}
+
+// ProviderFallback is the provider a reply was asked of first, and why it did
+// not give it.
+type ProviderFallback struct {
+	ProviderID pulid.ID `json:"providerId"`
+	Name       string   `json:"name"`
+	Model      string   `json:"model"`
+	Status     string   `json:"status"`
 }

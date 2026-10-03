@@ -212,6 +212,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			Reasoning:    completion.Reasoning,
 			Model:        completion.ModelIdentifier,
 			ProviderID:   completion.ProviderID,
+			FallbackFrom: fallbackOf(completion),
 			InputTokens:  completion.InputTokens,
 			OutputTokens: completion.OutputTokens,
 			LatencyMs:    completion.LatencyMs,
@@ -230,9 +231,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		fx.Emit(serviceports.StreamEvent{
 			Event: serviceports.AssistantEventMessage,
 			Data: serviceports.AssistantMessageEvent{
-				Content:   assistantTurn.Content,
-				ToolCalls: s.callsWithEffects(assistantTurn.ToolCalls),
-				Model:     assistantTurn.Model,
+				Content:      assistantTurn.Content,
+				ToolCalls:    s.callsWithEffects(assistantTurn.ToolCalls),
+				Model:        assistantTurn.Model,
+				ProviderID:   assistantTurn.ProviderID,
+				FallbackFrom: assistantTurn.FallbackFrom,
 			},
 		})
 
@@ -641,6 +644,8 @@ func (s *Service) finish(
 		Reasoning:    completion.Reasoning,
 		Model:        completion.ModelIdentifier,
 		ProviderID:   completion.ProviderID,
+		Truncated:    completion.Truncated,
+		FallbackFrom: fallbackOf(completion),
 		InputTokens:  completion.InputTokens,
 		OutputTokens: completion.OutputTokens,
 		LatencyMs:    completion.LatencyMs,
@@ -649,6 +654,21 @@ func (s *Service) finish(
 	})
 
 	return result
+}
+
+// fallbackOf is the provider asked first, when another one gave the reply.
+func fallbackOf(completion *serviceports.ChatCompletionResult) *conversation.ProviderFallback {
+	if completion == nil || completion.FallbackFrom == nil {
+		return nil
+	}
+	from := completion.FallbackFrom
+
+	return &conversation.ProviderFallback{
+		ProviderID: from.ProviderID,
+		Name:       from.Name,
+		Model:      from.Model,
+		Status:     from.Status,
+	}
 }
 
 // cannedCompletion stands a fixed line in for a reply the model could not

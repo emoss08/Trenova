@@ -294,7 +294,9 @@ type UpdateAgentControlRequest struct {
 	BillingAgentEnabled    *bool
 	DecisionTimeoutSeconds *int
 	AITrainingConsent      *bool
-	TenantInfo             pagination.TenantInfo
+	// PersonMonthlyMessages is absent to leave the allowance as it is.
+	PersonMonthlyMessages *int
+	TenantInfo            pagination.TenantInfo
 }
 
 type AgentControlService interface {

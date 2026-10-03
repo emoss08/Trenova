@@ -135,6 +135,12 @@ type SearchDeskRequest struct {
 	LimitPerKind int
 }
 
+type CountQuestionsSinceRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	Since      int64
+}
+
 type DeskSearchRow struct {
 	Kind         string   `bun:"kind"`
 	ID           string   `bun:"id"`
@@ -150,6 +156,9 @@ type DeskSearchRow struct {
 type ConversationRepository interface {
 	SearchMentions(ctx context.Context, req SearchMentionsRequest) ([]MentionRow, error)
 	SearchDesk(ctx context.Context, req SearchDeskRequest) ([]DeskSearchRow, error)
+	// CountQuestionsSince counts what one person asked the agents from since
+	// on, across all their conversations.
+	CountQuestionsSince(ctx context.Context, req CountQuestionsSinceRequest) (int, error)
 	ListThreadAttention(
 		ctx context.Context,
 		req ListThreadAttentionRequest,

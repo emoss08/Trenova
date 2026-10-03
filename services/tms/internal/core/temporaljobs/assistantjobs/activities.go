@@ -139,7 +139,11 @@ func (a *Activities) PrepareTurnActivity(
 	a.metrics.RecordPrepare(prepareOutcome(plan, err), time.Since(started).Seconds())
 	if err != nil {
 		if rejected(err) {
-			return nil, temporal.NewNonRetryableApplicationError(err.Error(), errTypeRejected, err)
+			// The refusal's figures travel with it, so a usage cap reaches the
+			// reader as the cap it is rather than as a sentence.
+			return nil, temporal.NewNonRetryableApplicationError(
+				err.Error(), errTypeRejected, err, rejectionParams(err),
+			)
 		}
 
 		return nil, fmt.Errorf("prepare this turn: %w", err)
@@ -165,6 +169,17 @@ func prepareOutcome(plan *assistantservice.TurnPlan, err error) string {
 // rejected reports an error that is an answer rather than a fault: something
 // the person asked for that cannot be done, which asking again will not
 // change.
+// rejectionParams are the figures a refusal carries for the client, empty
+// for one that carries none.
+func rejectionParams(err error) map[string]string {
+	var business *errortypes.BusinessError
+	if errors.As(err, &business) && len(business.Params) > 0 {
+		return business.Params
+	}
+
+	return map[string]string{}
+}
+
 func rejected(err error) bool {
 	return errortypes.IsBusinessError(err) ||
 		errortypes.IsMultiError(err) ||
@@ -346,11 +361,18 @@ func (a *Activities) finish(
 				in.Failure.Err(), nil
 		}
 		if in.Rejection != "" {
-			return failedEnding(conversation.AssistantTurnStatusFailed, in.Rejection),
-				errors.New(in.Rejection), nil
+			ending := failedEnding(conversation.AssistantTurnStatusFailed, in.Rejection)
+			if limit := usageLimit(in.RejectionParams); limit != nil {
+				ending.Event.Data = map[string]any{
+					"message": in.Rejection,
+					"code":    errorCodeUsageLimit,
+					"limit":   limit,
+				}
+			}
+			return ending, errors.New(in.Rejection), nil
 		}
 
-		return failedEnding(conversation.AssistantTurnStatusFailed, failedMessage),
+		return failedEndingFor(conversation.AssistantTurnStatusFailed, failedMessage, in.Failure),
 			in.Failure.Err(), nil
 	}
 
@@ -377,7 +399,7 @@ func (a *Activities) finish(
 	case conversation.AssistantTurnStatusStopped:
 		return failedEnding(status, stoppedMessage), cause, nil
 	case conversation.AssistantTurnStatusFailed:
-		return failedEnding(status, failedMessage), cause, nil
+		return failedEndingFor(status, failedMessage, in.Failure), cause, nil
 	default:
 		return &TurnEnding{
 			Result: AssistantTurnResult{
@@ -415,6 +437,65 @@ func failedEnding(status conversation.AssistantTurnStatus, message string) *Turn
 			Event: serviceports.AssistantEventError,
 			Data:  map[string]any{"message": message},
 		},
+	}
+}
+
+// failedEndingFor is a failed ending that says why, where the failure knows:
+// no model is set up, or every model asked was down and which ones.
+func failedEndingFor(
+	status conversation.AssistantTurnStatus,
+	message string,
+	failure *modelcall.Failure,
+) *TurnEnding {
+	ending := failedEnding(status, message)
+	if failure == nil {
+		return ending
+	}
+	data := map[string]any{"message": message}
+	switch {
+	case failure.NoProvider:
+		data["code"] = errorCodeNoProvider
+	case len(failure.Providers) > 0:
+		data["code"] = errorCodeNoModelAnswered
+		data["providers"] = failure.Providers
+	default:
+		return ending
+	}
+	ending.Event.Data = data
+
+	return ending
+}
+
+// The codes on a failed turn's error event, for a client that shows each
+// differently.
+const (
+	errorCodeNoProvider      = "no_provider"
+	errorCodeNoModelAnswered = "no_model_answered"
+	// errorCodeUsageLimit is a question a usage cap turned away: the agent's
+	// monthly budget or daily runs, or the person's own monthly allowance.
+	errorCodeUsageLimit = "usage_limit"
+)
+
+// usageLimit is the cap a refusal names, in the shape the client reads, or
+// nil when the refusal was not a usage cap.
+func usageLimit(params map[string]string) map[string]any {
+	var kind, used string
+	switch {
+	case params["code"] == "person_allowance":
+		kind, used = "person_allowance", params["used"]
+	case params["code"] == "agent_budget" &&
+		(params["cap"] == "monthly_budget" || params["cap"] == "daily_runs"):
+		kind, used = params["cap"], params["spent"]
+	default:
+		return nil
+	}
+	resetsAt, _ := strconv.ParseInt(params["resetsAt"], 10, 64)
+
+	return map[string]any{
+		"kind":     kind,
+		"used":     used,
+		"limit":    params["limit"],
+		"resetsAt": resetsAt,
 	}
 }
 
