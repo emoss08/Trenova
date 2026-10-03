@@ -13558,6 +13558,7 @@
 .dk-why em {
   font-style: normal;
   color: var(--dsk-subtle);
+}
 /* dock: pinned facts ("Keeping in mind") */
 .dk-fx {
   display: flex;
