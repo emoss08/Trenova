@@ -24,7 +24,7 @@ import type {
   StopType,
 } from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -348,7 +348,7 @@ export function SplitMoveDialog({
             <div className="flex flex-col gap-6 px-1 py-4">
               {hasAssignment && (
                 <div className="flex shrink-0 items-start gap-2 rounded-lg border border-info-border bg-info-subtle p-3 dark:border-info-border dark:bg-info-subtle/50">
-                  <InfoIcon className="mt-0.5 size-4 shrink-0 text-info-foreground" />
+                  <InfoCircleIcon className="mt-0.5 size-4 shrink-0 text-info-foreground" />
                   <p className="text-xs text-info-foreground">
                     {t(
                       "The current assignment will remain on the original move. The new move will be unassigned.",

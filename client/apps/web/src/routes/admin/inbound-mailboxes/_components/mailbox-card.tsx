@@ -5,7 +5,12 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { KeyRoundIcon, MailIcon, PencilIcon, RefreshCwIcon } from "lucide-react";
+import {
+  Edit02Icon,
+  Key01Icon,
+  Mail01Icon,
+  RefreshCw02Icon,
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { reviewPolicyLabel } from "./mailbox-form-dialog";
 
@@ -35,7 +40,7 @@ export function MailboxCard({
       <header className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-muted text-foreground-muted flex size-9 shrink-0 items-center justify-center rounded-md">
-            <MailIcon className="size-4" aria-hidden />
+            <Mail01Icon className="size-4" aria-hidden />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <h3 className="truncate text-sm font-semibold">{mailbox.name}</h3>
@@ -87,15 +92,15 @@ export function MailboxCard({
         {canEdit && (
           <>
             <Button size="sm" variant="outline" onClick={onSecret}>
-              <KeyRoundIcon className="size-3.5" />
+              <Key01Icon className="size-3.5" />
               {mailbox.hasSigningSecret ? t("Replace secret") : t("Set signing secret")}
             </Button>
             <Button size="sm" variant="outline" onClick={onRotate}>
-              <RefreshCwIcon className="size-3.5" />
+              <RefreshCw02Icon className="size-3.5" />
               {t("Rotate URL")}
             </Button>
             <Button size="sm" variant="outline" onClick={onEdit}>
-              <PencilIcon className="size-3.5" />
+              <Edit02Icon className="size-3.5" />
               {t("Edit")}
             </Button>
           </>

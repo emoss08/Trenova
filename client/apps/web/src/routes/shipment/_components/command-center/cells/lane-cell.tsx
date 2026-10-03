@@ -7,7 +7,7 @@ import {
 } from "@/lib/shipment-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { ArrowRight } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { useCommandCenterStore } from "../store";
 
 type LaneToneClass =
@@ -56,7 +56,7 @@ export function LaneCell({ shipment }: { shipment: Shipment }) {
         >
           {originCode}
         </span>
-        <ArrowRight className="text-muted-foreground size-3 shrink-0" />
+        <ArrowRightIcon className="text-muted-foreground size-3 shrink-0" />
         <span className="font-table truncate text-xs font-semibold tabular-nums">
           {destinationCode}
         </span>

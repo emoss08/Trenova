@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { FieldRow } from "./field-row";
 import type { ReconciliationField } from "./types";
 

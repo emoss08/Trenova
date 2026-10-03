@@ -3,7 +3,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { toTitleCase } from "@trenova/shared/lib/utils";
 import type { ProvisioningAuditRecord } from "@trenova/shared/types/iam";
-import { ActivityIcon } from "lucide-react";
+import { ActivityIcon } from "@trenova/shared/components/icons";
 import { memo } from "react";
 import { ActivityItem, EmptyState, PanelHeader } from "../security-access/shared";
 

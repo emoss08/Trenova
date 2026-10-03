@@ -29,7 +29,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { pluralize } from "@trenova/shared/lib/utils";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
-import { CheckCircle2Icon, RouteIcon, SettingsIcon } from "lucide-react";
+import { CheckCircleIcon, RouteIcon, Settings01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -142,7 +142,7 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
 
         {ret.problems.length === 0 ? (
           <div className="text-muted-foreground flex items-center gap-2 text-xs">
-            <CheckCircle2Icon className="size-3.5 text-success-foreground" />
+            <CheckCircleIcon className="size-3.5 text-success-foreground" />
             {t("The computation flagged nothing on this quarter.")}
           </div>
         ) : (
@@ -167,7 +167,7 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
 
         {hasUnattributed ? (
           <Alert variant="warning">
-            <SettingsIcon className="size-4" />
+            <Settings01Icon className="size-4" />
             <AlertTitle>{t("Some moves were never broken down by jurisdiction")}</AlertTitle>
             <AlertDescription>
               {t("Routed miles are only split state by state while")}{" "}

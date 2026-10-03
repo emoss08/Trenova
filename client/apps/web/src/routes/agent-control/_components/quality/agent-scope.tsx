@@ -2,7 +2,7 @@ import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { QUALITY_STALE_MS } from "./quality-model";
 
 /**
@@ -22,7 +22,7 @@ export function AgentScope({ agentId, onClear }: { agentId: string; onClear: () 
         {t("Showing {0} only", name)}
       </p>
       <Button variant="ghost" size="xs" onClick={onClear}>
-        <XIcon className="size-3.5" />
+        <XCloseIcon className="size-3.5" />
         {t("Show every agent")}
       </Button>
     </div>

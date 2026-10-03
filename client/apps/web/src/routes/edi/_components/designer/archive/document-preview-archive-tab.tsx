@@ -37,15 +37,15 @@ import type {
 } from "@trenova/shared/types/edi";
 import {
   ClipboardCheckIcon,
-  CopyIcon,
-  DatabaseIcon,
-  DownloadIcon,
+  Copy01Icon,
+  Database01Icon,
+  Download01Icon,
   EyeIcon,
-  FileCode2Icon,
+  FileCode02Icon,
   PlayIcon,
-  RefreshCwIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+  RefreshCw02Icon,
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { formatUnix } from "../../edi-display-utils";
@@ -267,7 +267,7 @@ export function DocumentPreviewArchiveTab() {
   return (
     <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] gap-3 overflow-hidden">
       <aside className="bg-background flex min-h-0 flex-col overflow-hidden rounded-md border">
-        <PanelHeader icon={<ShieldCheckIcon />} title={t("Document profile")} />
+        <PanelHeader icon={<ShieldTickIcon />} title={t("Document profile")} />
         <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
           <div className="flex flex-col gap-3 p-3">
             <ControlledEDIPartnerAutocompleteField
@@ -407,7 +407,7 @@ export function DocumentPreviewArchiveTab() {
               isLoading={saveProfileMutation.isPending}
               disabled={!partnerId}
             >
-              <ShieldCheckIcon className="size-4" />
+              <ShieldTickIcon className="size-4" />
               {t("Save profile")}
             </Button>
           </div>
@@ -425,11 +425,11 @@ export function DocumentPreviewArchiveTab() {
                 className="border-border grid w-fit grid-cols-2 border-b px-2"
               >
                 <TabsTrigger value="preview">
-                  <FileCode2Icon data-icon="inline-start" />
+                  <FileCode02Icon data-icon="inline-start" />
                   {t("Preview")}
                 </TabsTrigger>
                 <TabsTrigger value="archive">
-                  <DatabaseIcon data-icon="inline-start" />
+                  <Database01Icon data-icon="inline-start" />
                   {t("Archive")}
                 </TabsTrigger>
               </TabsList>
@@ -466,7 +466,7 @@ export function DocumentPreviewArchiveTab() {
                   isLoading={previewMutation.isPending}
                   disabled={(!profileId && !partnerId) || !hasSourceValue}
                 >
-                  <RefreshCwIcon className="size-4" />
+                  <RefreshCw02Icon className="size-4" />
                   {t("Preview provisional controls")}
                 </Button>
                 <Button
@@ -852,7 +852,7 @@ function MessageArchive({
                         title={t("Copy control numbers")}
                         onClick={() => copyControlNumbers(message)}
                       >
-                        <CopyIcon className="size-4" />
+                        <Copy01Icon className="size-4" />
                       </Button>
                       <Button
                         type="button"
@@ -874,7 +874,7 @@ function MessageArchive({
                           downloadTextFile(buildX12Filename(message), message.rawX12, "text/plain")
                         }
                       >
-                        <DownloadIcon className="size-4" />
+                        <Download01Icon className="size-4" />
                       </Button>
                     </div>
                   </TableCell>

@@ -13,7 +13,7 @@ import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/
 import { cn } from "@trenova/shared/lib/utils";
 import type { JournalEntryLine } from "@/types/journal-entry";
 import type { ManualJournalLine } from "@/types/manual-journal";
-import { CheckCircle2Icon, ScaleIcon } from "lucide-react";
+import { CheckCircleIcon, Scales01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -67,9 +67,9 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
         </span>
         <span className="flex items-center gap-1.5">
           {isBalanced ? (
-            <CheckCircle2Icon className="size-4 text-success-foreground" />
+            <CheckCircleIcon className="size-4 text-success-foreground" />
           ) : hasAmounts ? (
-            <ScaleIcon className="size-4 text-danger-foreground" />
+            <Scales01Icon className="size-4 text-danger-foreground" />
           ) : null}
           <AmountDisplay
             value={difference}

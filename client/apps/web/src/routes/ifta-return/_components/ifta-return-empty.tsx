@@ -3,7 +3,7 @@ import { quarterLabel, type IftaPeriodKey } from "@/lib/ifta-return";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
-import { PlayIcon } from "lucide-react";
+import { PlayIcon } from "@trenova/shared/components/icons";
 
 /**
  * The workspace as it will look once the quarter has been generated: the five

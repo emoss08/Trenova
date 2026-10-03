@@ -6,7 +6,7 @@ import type { DetentionPolicyRow } from "@/lib/graphql/detention-policy-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { detentionPolicySchema, type DetentionPolicy } from "@trenova/shared/types/detention";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FlaskConicalIcon, HistoryIcon, ScaleIcon } from "lucide-react";
+import { Beaker02Icon, ClockRewindIcon, Scales01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { DetentionBacktest } from "./detention-backtest";
@@ -82,19 +82,19 @@ export function DetentionPolicyPanel({
       {
         value: "terms",
         label: t("Terms"),
-        icon: ScaleIcon,
+        icon: Scales01Icon,
         content: <DetentionPolicyForm />,
       },
       {
         value: "preview",
         label: t("Live preview"),
-        icon: FlaskConicalIcon,
+        icon: Beaker02Icon,
         content: <DetentionPolicyPreview />,
       },
       {
         value: "backtest",
         label: t("Backtest"),
-        icon: HistoryIcon,
+        icon: ClockRewindIcon,
         content: <DetentionBacktest />,
       },
     ],

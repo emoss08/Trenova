@@ -25,10 +25,10 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  DownloadIcon,
+  Download01Icon,
   FileSpreadsheetIcon,
   PlayIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PayrollRunsEmpty } from "./time-attendance-empty";
@@ -370,7 +370,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
             isLoading={downloading}
             onClick={() => void download()}
           >
-            <DownloadIcon className="size-3.5" />
+            <Download01Icon className="size-3.5" />
             {t("CSV")}
           </Button>
           <Button size="sm" variant="ghost" onClick={onVoid}>

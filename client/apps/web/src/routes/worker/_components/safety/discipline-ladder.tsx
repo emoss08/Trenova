@@ -14,7 +14,12 @@ import {
   type DisciplinaryLevel,
   type DisciplinaryStatus,
 } from "@trenova/shared/types/worker-safety";
-import { CheckIcon, GavelIcon, TriangleAlertIcon, UndoIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckIcon,
+  FlipBackwardIcon,
+  GavelIcon,
+} from "@trenova/shared/components/icons";
 
 type DisciplineLadderProps = {
   ladder: DisciplinaryLadder;
@@ -62,9 +67,7 @@ export function DisciplineLadder({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5">
-            <h4 className="text-muted-foreground text-xs font-semibold">
-              {t("Discipline")}
-            </h4>
+            <h4 className="text-muted-foreground text-xs font-semibold">{t("Discipline")}</h4>
             <InfoPopover title={t("Discipline ladder")}>
               {t(
                 "Six rungs from coaching to termination. The next step is one rung above the highest action still active, and drops back as actions expire or are rescinded. It is a suggestion, not a rule: any rung can be issued, and a rung that ends employment is flagged before it is.",
@@ -86,7 +89,7 @@ export function DisciplineLadder({
             onClick={onIssue}
           >
             {ladder.atFinalStep ? (
-              <TriangleAlertIcon className="size-3.5" />
+              <AlertTriangleIcon className="size-3.5" />
             ) : (
               <GavelIcon className="size-3.5" />
             )}
@@ -165,9 +168,7 @@ export function DisciplineLadder({
                       {DISCIPLINARY_STATUS_LABELS[status] ?? status}
                     </Badge>
                     {action.acknowledgedAt ? (
-                      <span className="text-xs text-muted-foreground">
-                        {t("Acknowledged")}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{t("Acknowledged")}</span>
                     ) : null}
                   </p>
                   <p className="text-xs">{action.reason}</p>
@@ -195,7 +196,7 @@ export function DisciplineLadder({
                           {
                             id: "rescind",
                             label: `Rescind ${meta.label}`,
-                            icon: UndoIcon,
+                            icon: FlipBackwardIcon,
                             disabled: busy,
                             destructive: true,
                             onSelect: () => onRescind(action),

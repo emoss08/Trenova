@@ -7,7 +7,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { EdiSummaryDocument } from "@trenova/graphql/generated/graphql";
 import type { ResultOf } from "@graphql-typed-document-node/core";
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { InfoTile } from "../panel/edi-panel-primitives";

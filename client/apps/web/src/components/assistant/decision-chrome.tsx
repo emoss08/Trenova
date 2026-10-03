@@ -3,12 +3,12 @@ import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  CircleAlertIcon,
-  CircleCheckIcon,
-  CircleSlashIcon,
-  FlaskConicalIcon,
+  AlertCircleIcon,
+  Beaker02Icon,
+  CheckCircleIcon,
   PauseCircleIcon,
-} from "lucide-react";
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { proposedByOther, type ProposalPresentation } from "./proposal-state";
 import { WorkingDot } from "./voice/working-dot";
@@ -41,14 +41,14 @@ export function OutcomeIcon({
 
   switch (state) {
     case "failed":
-      return <CircleAlertIcon key={state} aria-hidden className={cn(glyph, "text-danger")} />;
+      return <AlertCircleIcon key={state} aria-hidden className={cn(glyph, "text-danger")} />;
     case "done":
-      return <CircleCheckIcon key={state} aria-hidden className={cn(glyph, "text-success")} />;
+      return <CheckCircleIcon key={state} aria-hidden className={cn(glyph, "text-success")} />;
     case "running":
       return <WorkingDot working />;
     case "simulated":
       return (
-        <FlaskConicalIcon key={state} aria-hidden className={cn(glyph, "text-foreground-muted")} />
+        <Beaker02Icon key={state} aria-hidden className={cn(glyph, "text-foreground-muted")} />
       );
     case "held":
       return (
@@ -56,7 +56,11 @@ export function OutcomeIcon({
       );
     default:
       return (
-        <CircleSlashIcon key={state} aria-hidden className={cn(glyph, "text-foreground-subtle")} />
+        <SlashCircle01Icon
+          key={state}
+          aria-hidden
+          className={cn(glyph, "text-foreground-subtle")}
+        />
       );
   }
 }

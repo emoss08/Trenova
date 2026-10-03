@@ -20,7 +20,7 @@ import {
 import type { DriverPayEventStatus } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { PauseIcon } from "lucide-react";
+import { PauseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";

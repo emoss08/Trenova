@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { cn } from "@trenova/shared/lib/utils";
 import { Command as CommandPrimitive } from "cmdk";
-import { CheckIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import * as React from "react";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
@@ -69,7 +69,7 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div data-slot="command-input-wrapper" className="flex h-8 items-center gap-2 border-b px-2">
-      <SearchIcon className="size-3.5 shrink-0 opacity-50" />
+      <SearchLgIcon className="size-3.5 shrink-0 opacity-50" />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(

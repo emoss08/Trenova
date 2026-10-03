@@ -23,7 +23,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { CertificationWatch } from "./certification-watch";
 import { ExceptionsInbox } from "./exceptions-inbox";

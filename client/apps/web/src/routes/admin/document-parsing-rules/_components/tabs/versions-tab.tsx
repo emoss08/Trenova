@@ -8,7 +8,13 @@ import { apiService } from "@/services/api";
 import type { RuleVersion } from "@/types/document-parsing-rule";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GitBranchIcon, LayersIcon, MapPinIcon, PlusIcon, TextIcon } from "lucide-react";
+import {
+  AlignLeftIcon,
+  GitBranch01Icon,
+  LayersThree01Icon,
+  MarkerPin01Icon,
+  PlusIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { VersionDetail } from "../version-detail/version-detail";
@@ -134,7 +140,7 @@ function VersionList({
       {sortedVersions.length === 0 && (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-12 text-center">
           <div className="bg-muted flex size-10 items-center justify-center rounded-full">
-            <GitBranchIcon className="text-muted-foreground size-5" />
+            <GitBranch01Icon className="text-muted-foreground size-5" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">{t("No versions yet")}</p>
@@ -167,15 +173,15 @@ function VersionList({
                 </div>
                 <div className="text-muted-foreground flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1">
-                    <LayersIcon className="size-3" />
+                    <LayersThree01Icon className="size-3" />
                     {parserLabel}
                   </span>
                   <span className="flex items-center gap-1">
-                    <TextIcon className="size-3" />
+                    <AlignLeftIcon className="size-3" />
                     {t("{0, plural, one {# field} other {# fields}}", fieldCount)}
                   </span>
                   <span className="flex items-center gap-1">
-                    <MapPinIcon className="size-3" />
+                    <MarkerPin01Icon className="size-3" />
                     {t("{0, plural, one {# stop} other {# stops}}", stopCount)}
                   </span>
                 </div>
@@ -183,8 +189,7 @@ function VersionList({
               <div className="flex items-center gap-2">
                 <Badge
                   variant={
-                    STATUS_BADGE_VARIANT[v.status as keyof typeof STATUS_BADGE_VARIANT] ??
-                    "neutral"
+                    STATUS_BADGE_VARIANT[v.status as keyof typeof STATUS_BADGE_VARIANT] ?? "neutral"
                   }
                 >
                   {v.status}

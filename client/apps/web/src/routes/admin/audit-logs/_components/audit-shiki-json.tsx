@@ -6,7 +6,7 @@ import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { highlightCode } from "@/lib/shiki";
 import { cn } from "@trenova/shared/lib/utils";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const SHIKI_THEME_LIGHT = "vitesse-light";
@@ -225,7 +225,7 @@ export function ShikiJsonBlock({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("Search JSON...")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               className="h-6 bg-transparent text-xs"
             />
           </div>
@@ -257,7 +257,7 @@ export function ShikiJsonBlock({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("Search JSON...")}
-            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             rightElement={
               debouncedQuery ? (
                 <span className="text-muted-foreground pr-1 text-2xs">

@@ -10,7 +10,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { formatFileSize } from "@trenova/shared/lib/utils";
-import { DownloadIcon } from "lucide-react";
+import { Download01Icon } from "@trenova/shared/components/icons";
 import { CaptureDevelopmentInstallPanel } from "./development-install-panel";
 
 type CaptureDownloadPanelProps = {
@@ -82,7 +82,7 @@ export function CaptureDownloadPanel({
   return (
     <SectionPanel
       title={t("Install Trenova Capture")}
-      icon={<DownloadIcon aria-hidden />}
+      icon={<Download01Icon aria-hidden />}
       hint={t("Version {0}", release.version)}
       action={
         <Button
@@ -96,7 +96,7 @@ export function CaptureDownloadPanel({
             />
           }
         >
-          <DownloadIcon className="size-3.5" aria-hidden />
+          <Download01Icon className="size-3.5" aria-hidden />
           {t("Download Trenova Capture")}
         </Button>
       }

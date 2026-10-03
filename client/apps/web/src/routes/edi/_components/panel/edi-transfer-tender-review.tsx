@@ -8,11 +8,11 @@ import type { EDIMappingResolution } from "@trenova/shared/types/edi";
 import {
   ArrowRightIcon,
   CalendarClockIcon,
-  DollarSignIcon,
-  MapPinIcon,
+  CurrencyDollarIcon,
+  MarkerPin01Icon,
   PackageIcon,
   RouteIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import {
   findMapping,
@@ -148,10 +148,16 @@ export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) 
                 </div>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                <Badge variant="neutral" appearance="outline">{move.loaded ? t("Loaded") : t("Empty")}</Badge>
-                <Badge variant="neutral" appearance="outline">{t("{0} stops", move.stops.length)}</Badge>
+                <Badge variant="neutral" appearance="outline">
+                  {move.loaded ? t("Loaded") : t("Empty")}
+                </Badge>
+                <Badge variant="neutral" appearance="outline">
+                  {t("{0} stops", move.stops.length)}
+                </Badge>
                 {move.distance && (
-                  <Badge variant="neutral" appearance="outline">{t("{0} mi", move.distance.toLocaleString())}</Badge>
+                  <Badge variant="neutral" appearance="outline">
+                    {t("{0} mi", move.distance.toLocaleString())}
+                  </Badge>
                 )}
               </div>
             </div>
@@ -190,7 +196,7 @@ function TenderStopCard({
       {!isLast && <div className="bg-border absolute top-7 -bottom-3 left-[13.5px] w-px" />}
       <div className="relative z-10 flex flex-col items-center">
         <div className="bg-muted flex size-7 items-center justify-center rounded-full border">
-          <MapPinIcon className="size-3.5" />
+          <MarkerPin01Icon className="size-3.5" />
         </div>
       </div>
       <div className="bg-muted/20 rounded-md border p-3">
@@ -201,7 +207,9 @@ function TenderStopCard({
               <span className="text-muted-foreground text-xs">
                 {t("Stop {0}", stop.sequence + 1)}
               </span>
-              <Badge variant="neutral" appearance="outline">{stop.scheduleType}</Badge>
+              <Badge variant="neutral" appearance="outline">
+                {stop.scheduleType}
+              </Badge>
             </div>
             <div className="mt-2 truncate text-sm font-medium">{formatStopName(stop, mapping)}</div>
             {stopAddress && (
@@ -252,7 +260,7 @@ export function TenderFreightReview({ transfer, mappingRows }: TenderReviewProps
         })}
       </ReviewSection>
       <ReviewSection
-        icon={<DollarSignIcon className="size-4" />}
+        icon={<CurrencyDollarIcon className="size-4" />}
         title={t("Additional charges")}
         count={payload.additionalCharges?.length ?? 0}
         empty={t("No additional charges were included in this tender.")}
@@ -293,7 +301,9 @@ function ReviewSection({
           {icon}
           {title}
         </div>
-        <Badge variant="neutral" appearance="outline">{count}</Badge>
+        <Badge variant="neutral" appearance="outline">
+          {count}
+        </Badge>
       </div>
       <div className="space-y-2 p-3">
         {count === 0 ? <EDIEmptyState message={empty} /> : children}

@@ -2,12 +2,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { DocumentPacketItem, DocumentPacketSummary } from "@trenova/shared/types/document";
 import {
   AlertTriangleIcon,
-  CheckCircle2Icon,
+  CheckCircleIcon,
   ChevronDownIcon,
   ClockIcon,
-  FileWarningIcon,
+  FileAlertIcon,
   XCircleIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
@@ -45,11 +45,11 @@ function getStatusBadgeVariant(
 function getStatusIcon(status: DocumentPacketItem["status"]) {
   switch (status) {
     case "Complete":
-      return <CheckCircle2Icon className="size-4 text-accent-teal-on-subtle" />;
+      return <CheckCircleIcon className="size-4 text-accent-teal-on-subtle" />;
     case "Missing":
       return <XCircleIcon className="size-4 text-danger-foreground" />;
     case "Expired":
-      return <FileWarningIcon className="size-4 text-accent-rose-on-subtle" />;
+      return <FileAlertIcon className="size-4 text-accent-rose-on-subtle" />;
     case "ExpiringSoon":
       return <ClockIcon className="size-4 text-warning-foreground" />;
     case "NeedsReview":

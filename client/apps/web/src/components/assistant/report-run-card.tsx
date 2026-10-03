@@ -4,12 +4,12 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { downloadReportRun, isReportRunActive, useReportRun } from "@/hooks/use-reports";
 import {
-  CircleAlertIcon,
-  CircleCheckIcon,
-  CircleSlashIcon,
-  DownloadIcon,
+  AlertCircleIcon,
+  CheckCircleIcon,
+  Download01Icon,
   FileSpreadsheetIcon,
-} from "lucide-react";
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import type { ThreadReportRun } from "./report-runs";
 import { WorkingDot } from "./voice/working-dot";
 
@@ -70,7 +70,7 @@ export function ReportRunCard({ run }: { run: ThreadReportRun }) {
           className={cn("shrink-0", landed && "animate-rise")}
           onClick={() => downloadReportRun({ id: run.runId })}
         >
-          <DownloadIcon className="size-3.5" />
+          <Download01Icon className="size-3.5" />
           {t("Download")}
         </Button>
       )}
@@ -160,11 +160,11 @@ function StatusMark({
     <span className="bg-sunken relative flex size-8 shrink-0 items-center justify-center rounded-md">
       <span key={settled ? status : "working"} className={cn("flex", landed && "animate-confirm")}>
         {settled && status === "succeeded" ? (
-          <CircleCheckIcon className={cn(glyph, "text-success")} />
+          <CheckCircleIcon className={cn(glyph, "text-success")} />
         ) : settled && status === "failed" ? (
-          <CircleAlertIcon className={cn(glyph, "text-danger")} />
+          <AlertCircleIcon className={cn(glyph, "text-danger")} />
         ) : settled && (status === "canceled" || status === "expired") ? (
-          <CircleSlashIcon className={cn(glyph, "text-warning")} />
+          <SlashCircle01Icon className={cn(glyph, "text-warning")} />
         ) : (
           <FileSpreadsheetIcon className={cn(glyph, "text-foreground-muted")} />
         )}

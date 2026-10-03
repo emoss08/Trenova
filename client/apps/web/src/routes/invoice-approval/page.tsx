@@ -28,7 +28,12 @@ import {
   type InvoiceApprovalQueueItem,
 } from "@/lib/graphql/invoice-adjustment";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, ExternalLinkIcon, SearchIcon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  LinkExternal01Icon,
+  SearchLgIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -185,7 +190,7 @@ export function InvoiceApprovalPage() {
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
               placeholder={t("Search invoice, customer, reason...")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
             <Select
@@ -535,7 +540,7 @@ function ApprovalDetail({
                     type="button"
                     onClick={() => setShowRejectForm(true)}
                   >
-                    <XIcon className="size-3.5" />
+                    <XCloseIcon className="size-3.5" />
                     {t("Reject")}
                   </Button>
                 </div>
@@ -629,7 +634,7 @@ function ArtifactLink({ to, label }: { to: string; label: string }) {
       className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 hover:underline"
     >
       {label}
-      <ExternalLinkIcon className="size-2.5" />
+      <LinkExternal01Icon className="size-2.5" />
     </Link>
   );
 }

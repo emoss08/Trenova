@@ -3,7 +3,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Command as CommandPrimitive } from "cmdk";
-import { ArrowLeftIcon, SearchIcon, XIcon } from "lucide-react";
+import { ArrowLeftIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { PALETTE_ENTITIES } from "./palette-entities";
 import type { PaletteScope } from "./palette-model";
 import { isRecordScope } from "./palette-model";
@@ -36,7 +36,7 @@ function Chip({
         onClick={onRemove}
         className="flex size-4 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100"
       >
-        <XIcon className="size-3" />
+        <XCloseIcon className="size-3" />
       </button>
     </span>
   );
@@ -128,7 +128,7 @@ export function PaletteInput({
         ) : busy ? (
           <Spinner className="text-foreground-subtle size-4 shrink-0" />
         ) : (
-          <SearchIcon className="text-foreground-subtle size-4 shrink-0" strokeWidth={1.75} />
+          <SearchLgIcon className="text-foreground-subtle size-4 shrink-0" strokeWidth={1.75} />
         )}
         {actionsFor && (
           <span className="bg-sunken text-foreground-muted ring-border-subtle max-w-48 shrink-0 truncate rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset">

@@ -19,7 +19,12 @@ import { apiService } from "@/services/api";
 import { useNavigationStore } from "@/stores/navigation-store";
 import type { ToggleFavoriteRequest } from "@/types/page-favorite";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, PanelLeftIcon, Star } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  LayoutLeftIcon,
+  Star01Icon,
+} from "@trenova/shared/components/icons";
 import React from "react";
 import { Link, useLocation, useNavigation } from "react-router";
 import { toast } from "sonner";
@@ -63,7 +68,7 @@ export function HistoryNavigation() {
               disabled={!canGoBack}
               aria-label={t("Go back")}
             >
-              <ChevronLeft className="size-3.5" />
+              <ChevronLeftIcon className="size-3.5" />
             </Button>
           }
         />
@@ -80,7 +85,7 @@ export function HistoryNavigation() {
               disabled={!canGoForward}
               aria-label={t("Go forward")}
             >
-              <ChevronRight className="size-3.5" />
+              <ChevronRightIcon className="size-3.5" />
             </Button>
           }
         />
@@ -147,8 +152,11 @@ export function FavoriteToggle({ className }: { className?: string }) {
           />
         }
       >
-        <Star
-          className={cn("size-3 transition-colors", isFavorited && "fill-warning text-warning-foreground")}
+        <Star01Icon
+          className={cn(
+            "size-3 transition-colors",
+            isFavorited && "fill-warning text-warning-foreground",
+          )}
         />
       </TooltipTrigger>
       <TooltipContent>
@@ -228,7 +236,7 @@ export function SidebarToggle() {
           />
         }
       >
-        <PanelLeftIcon className="size-3.5" />
+        <LayoutLeftIcon className="size-3.5" />
       </TooltipTrigger>
       <TooltipContent>
         {label} ({formatShortcut("B")})

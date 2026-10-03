@@ -13,7 +13,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { formatHours } from "@trenova/shared/lib/timesheet";
 import { cn, initials } from "@trenova/shared/lib/utils";
-import { AlertTriangleIcon, SquareIcon, TimerIcon, UsersIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ClockStopwatchIcon,
+  SquareIcon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 /** The length of the meter: a working day, the point past which a punch reads as forgotten. */
@@ -74,7 +79,7 @@ export function ClockBoard({
     >
       <header className="border-border flex min-h-9 flex-wrap items-center justify-between gap-2 border-b px-3 py-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <TimerIcon className="text-muted-foreground size-3.5" aria-hidden />
+          <ClockStopwatchIcon className="text-muted-foreground size-3.5" aria-hidden />
           <h3 id="clock-board-heading" className="text-sm font-semibold">
             {t("On the clock now")}
           </h3>
@@ -101,7 +106,7 @@ export function ClockBoard({
           aria-pressed={teamOnly}
           onClick={() => onTeamOnlyChange(!teamOnly)}
         >
-          <UsersIcon className="size-3" />
+          <Users01Icon className="size-3" />
           {t("My team")}
         </Button>
       </header>

@@ -4,7 +4,12 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { commentPriorityChoices, commentTypeChoices } from "@trenova/shared/lib/comment-choices";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ListFilterIcon, SearchIcon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  FilterLinesIcon,
+  SearchLgIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import type { ShipmentCommentFilter } from "@/types/shipment-comment";
 
@@ -144,7 +149,7 @@ export function CommentsToolbar({
             value={filters.search}
             onChange={(event) => onFiltersChange({ ...filters, search: event.target.value })}
             placeholder={t("Search comments…")}
-            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             className="h-7 pl-7 text-xs"
             aria-label={t("Search comments")}
           />
@@ -161,7 +166,7 @@ export function CommentsToolbar({
                 size="xs"
                 className="h-7 gap-1.5 px-2 text-xs"
               >
-                <ListFilterIcon className="size-3.5" />
+                <FilterLinesIcon className="size-3.5" />
                 {t("Filter")}
                 {activeCount > 0 && (
                   <span className="bg-brand text-2xs rounded-full px-1.5 font-medium text-foreground-on-solid">
@@ -239,7 +244,7 @@ export function CommentsToolbar({
               onClick={pill.onRemove}
             >
               {t(pill.label)}
-              <XIcon className="size-2.5" />
+              <XCloseIcon className="size-2.5" />
             </button>
           ))}
           <Button

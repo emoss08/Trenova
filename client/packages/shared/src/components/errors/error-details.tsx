@@ -13,7 +13,7 @@ import {
   parseStackFrames,
 } from "@trenova/shared/lib/error-presentation";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ChevronRightIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, ChevronRightIcon, Copy01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type CopyState = "idle" | "copied" | "failed";
@@ -75,7 +75,7 @@ export function ErrorReference({ traceId, className }: ErrorReferenceProps) {
         {state === "copied" ? (
           <CheckIcon className="animate-confirm size-3" />
         ) : (
-          <CopyIcon className="size-3" />
+          <Copy01Icon className="size-3" />
         )}
       </Button>
     </div>
@@ -156,7 +156,7 @@ export function ErrorDetails({
           {state === "copied" ? (
             <CheckIcon className="animate-confirm size-3.5" />
           ) : (
-            <CopyIcon className="size-3.5" />
+            <Copy01Icon className="size-3.5" />
           )}
           {copyLabel}
         </Button>

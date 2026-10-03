@@ -6,7 +6,7 @@ import {
   PopoverTrigger,
 } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 
 type InfoPopoverProps = {
@@ -33,11 +33,11 @@ export function InfoPopover({ title, children, className }: InfoPopoverProps) {
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
               "text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors",
-"ui-focus-ring",
+              "ui-focus-ring",
               className,
             )}
           >
-            <InfoIcon className="size-3" />
+            <InfoCircleIcon className="size-3" />
           </button>
         }
       />

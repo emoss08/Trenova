@@ -30,7 +30,7 @@ import {
 } from "@dnd-kit/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { CalendarClockIcon, CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon, CalendarClockIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -650,7 +650,7 @@ function TimelineErrorState({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-      <CircleAlertIcon className="text-destructive size-6" />
+      <AlertCircleIcon className="text-destructive size-6" />
       <p className="text-sm font-semibold">{t("Couldn't load the timeline")}</p>
       <p className="text-muted-foreground max-w-sm text-xs">
         {t("Something went wrong while fetching shipments for this window.")}

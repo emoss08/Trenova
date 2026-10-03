@@ -5,7 +5,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { fetchMyLoadPayEstimate } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
-import { ArrowLeftIcon, CheckIcon, CopyIcon, NavigationIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CheckIcon,
+  Copy01Icon,
+  NavigationPointer01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { AssignmentResponseCard } from "../_components/assignment-response-card";
@@ -43,7 +48,7 @@ function CopyChip({ label, value }: { label: string; value: string }) {
       {copied ? (
         <CheckIcon className="size-3 text-success-foreground" />
       ) : (
-        <CopyIcon className="size-3 text-muted-foreground" />
+        <Copy01Icon className="size-3 text-muted-foreground" />
       )}
       {label} <span className="font-mono">{value}</span>
     </button>
@@ -159,7 +164,7 @@ export function DashLoadDetailPage() {
               rel="noreferrer"
               className="flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground"
             >
-              <NavigationIcon className="size-3" />
+              <NavigationPointer01Icon className="size-3" />
               {t("Next stop")}
             </a>
           ) : null}

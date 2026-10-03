@@ -25,7 +25,7 @@ import {
 } from "@trenova/shared/lib/scheduling";
 import { formatHours } from "@trenova/shared/lib/timesheet";
 import { cn, initials } from "@trenova/shared/lib/utils";
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 const SECONDS_IN_DAY = 86400;
@@ -396,10 +396,7 @@ function RotaCell({
       {mode === "block" ? null : day.scheduled ? (
         <>
           <span
-            className={cn(
-              "leading-none font-medium tabular-nums",
-              mode === "time" && "text-xs",
-            )}
+            className={cn("leading-none font-medium tabular-nums", mode === "time" && "text-xs")}
           >
             {minutesToClock(day.startMinute)}
           </span>

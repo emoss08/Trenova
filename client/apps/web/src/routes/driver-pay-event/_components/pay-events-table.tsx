@@ -20,7 +20,7 @@ import {
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { PauseIcon, PlayIcon } from "lucide-react";
+import { PauseIcon, PlayIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns, invalidatePayEventQueries } from "./pay-event-columns";

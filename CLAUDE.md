@@ -254,8 +254,13 @@ names the token to use instead.
   Figures are `KpiStrip`/`KpiStripItem`, titled blocks are `SectionPanel`, read-only
   label/value is `DescriptionList`, inline callouts are `<Alert size="sm">`, and dialogs take
   `size` rather than an arbitrary max-width. See "Page anatomy" in the design-system doc.
+- Icons come from `@trenova/shared/components/icons`: every Untitled UI icon as `<Name>Icon`
+  (`Truck01Icon`, `SearchLgIcon`) plus Trenova's custom set drawn on the same grid, typed
+  `IconComponent`. Never import `lucide-react` or `@untitledui/icons` directly; lint refuses both.
+  A missing icon is drawn into the custom set, not borrowed from another library. See "Icons" in the
+  design-system doc.
 - Machine suggestions are marked with `AssistMark` from `@trenova/shared/components/ui/assist-mark`
-  (a real `LucideIcon`). Never import `Sparkles`, `WandSparkles` or `Wand2`.
+  (a real `IconComponent`). The sparkle and magic-wand glyphs are not exported; never draw one.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
   The whole `rounded-*` scale points at them; a badge is `rounded-full`.
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no

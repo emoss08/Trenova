@@ -3,19 +3,19 @@ import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   ArrowUpRightIcon,
-  BookOpenTextIcon,
-  CalendarDaysIcon,
+  BookOpen02Icon,
+  CalendarDateIcon,
   CheckIcon,
-  CopyIcon,
+  Copy01Icon,
   CornerDownLeftIcon,
-  DownloadIcon,
+  Download01Icon,
   EyeIcon,
-  FolderOpenIcon,
-  LinkIcon,
-  PinIcon,
+  FolderIcon,
+  Link01Icon,
+  Pin01Icon,
   PinOffIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 import type { PaletteAction, PaletteItem, PaletteRecord } from "./palette-model";
 
 /**
@@ -50,7 +50,7 @@ function linkActions(href: string, context: ActionContext, t: TranslateFn): Pale
     {
       id: ACTION_COPY_LINK,
       label: t("Copy link"),
-      icon: LinkIcon,
+      icon: Link01Icon,
       intent: { type: "copy-link", href },
       shortcut: [mod, "L"],
     },
@@ -61,7 +61,7 @@ function copyIdAction(label: string, text: string, context: ActionContext): Pale
   return {
     id: ACTION_COPY_ID,
     label,
-    icon: CopyIcon,
+    icon: Copy01Icon,
     intent: { type: "copy", text },
     shortcut: [context.mac ? "⌥" : "Alt", "C"],
   };
@@ -123,7 +123,7 @@ function recordActions(
         actions.push({
           id: "copy-bol",
           label: t("Copy BOL"),
-          icon: CopyIcon,
+          icon: Copy01Icon,
           intent: { type: "copy", text: record.metadata.bol },
         });
       }
@@ -144,7 +144,7 @@ function recordActions(
         actions.push({
           id: "customer-ledger",
           label: t("Open customer ledger"),
-          icon: BookOpenTextIcon,
+          icon: BookOpen02Icon,
           intent: { type: "navigate", href: `${CUSTOMER_LEDGER_PATH}?${params.toString()}` },
         });
       }
@@ -168,19 +168,19 @@ function recordActions(
         {
           id: "worker-compliance",
           label: t("Open compliance"),
-          icon: ShieldCheckIcon,
+          icon: ShieldTickIcon,
           intent: { type: "navigate", href: tab("compliance") },
         },
         {
           id: "worker-pto",
           label: t("Open time off"),
-          icon: CalendarDaysIcon,
+          icon: CalendarDateIcon,
           intent: { type: "navigate", href: tab("pto") },
         },
         {
           id: "worker-documents",
           label: t("Open documents"),
-          icon: FolderOpenIcon,
+          icon: FolderIcon,
           intent: { type: "navigate", href: tab("documents") },
         },
         ...linkActions(record.href, context, t),
@@ -200,13 +200,13 @@ function recordActions(
         {
           id: "document-download",
           label: t("Download"),
-          icon: DownloadIcon,
+          icon: Download01Icon,
           intent: { type: "open-document", documentId: record.id, disposition: "download" },
         },
         {
           id: "document-record",
           label: t("Open the record it's attached to"),
-          icon: FolderOpenIcon,
+          icon: FolderIcon,
           intent: { type: "navigate", href: record.href },
         },
         ...linkActions(record.href, context, t),
@@ -243,7 +243,7 @@ export function buildItemActions(
         {
           id: "toggle-pin",
           label: pinned ? t("Unpin page") : t("Pin page"),
-          icon: pinned ? PinOffIcon : PinIcon,
+          icon: pinned ? PinOffIcon : Pin01Icon,
           intent: { type: "toggle-pin", pageUrl: item.page.href, pageTitle: item.page.title },
         },
       ];

@@ -3,7 +3,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { DriverType } from "@trenova/shared/types/worker";
-import { ChevronDownIcon, MapPinIcon, RouteIcon, TruckIcon, UsersIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  MarkerPin01Icon,
+  RouteIcon,
+  Truck01Icon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -33,10 +39,10 @@ const DRIVER_TYPE_LABELS: Record<DriverType, string> = {
 };
 
 const DRIVER_TYPE_ICONS: Record<DriverType, React.ReactNode> = {
-  Local: <MapPinIcon className="size-3" />,
+  Local: <MarkerPin01Icon className="size-3" />,
   Regional: <RouteIcon className="size-3" />,
-  OTR: <TruckIcon className="size-3" />,
-  Team: <UsersIcon className="size-3" />,
+  OTR: <Truck01Icon className="size-3" />,
+  Team: <Users01Icon className="size-3" />,
 };
 
 type EditableDriverTypeBadgeProps = {

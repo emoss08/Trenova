@@ -11,7 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KeyRoundIcon, MonitorIcon } from "lucide-react";
+import { Key01Icon, Monitor01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
@@ -96,7 +96,7 @@ export function CaptureDevicesPage() {
               nativeButton={false}
               render={<Link to="/capture/pair" />}
             >
-              <KeyRoundIcon className="size-3.5" aria-hidden />
+              <Key01Icon className="size-3.5" aria-hidden />
               {t("Enter a pairing code")}
             </Button>
           ) : undefined,
@@ -108,7 +108,7 @@ export function CaptureDevicesPage() {
 
       <SectionPanel
         title={t("Paired computers")}
-        icon={<MonitorIcon aria-hidden />}
+        icon={<Monitor01Icon aria-hidden />}
         count={activeCount}
       >
         {devicesQuery.isLoading ? (

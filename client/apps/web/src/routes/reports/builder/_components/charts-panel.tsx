@@ -23,7 +23,7 @@ import {
   type ReportChartType,
   type ReportIR,
 } from "@/types/report";
-import { ChartColumnIcon, PlusIcon, XIcon } from "lucide-react";
+import { BarChart07Icon, PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { outputColumnChoices, type CatalogIndex } from "./builder-state";
 
 type ChartsPanelProps = {
@@ -163,7 +163,7 @@ function ChartEditor({
   return (
     <div className="border-border flex flex-col gap-2 rounded-md border p-2">
       <div className="flex items-center gap-1.5">
-        <ChartColumnIcon className="text-muted-foreground size-3.5" />
+        <BarChart07Icon className="text-muted-foreground size-3.5" />
         <Input
           className="h-7 flex-1"
           value={chart.title ?? ""}
@@ -177,7 +177,7 @@ function ChartEditor({
           onClick={onRemove}
           aria-label={t("Remove chart")}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
         </Button>
       </div>
 

@@ -21,7 +21,7 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { UserPlus, UsersIcon, WalletIcon } from "lucide-react";
+import { UserPlus01Icon, Users01Icon, Wallet02Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { PayProfileForm } from "./pay-profile-form";
@@ -203,13 +203,13 @@ function PayProfileEditPanel({
         {
           value: "profile",
           label: t("Profile"),
-          icon: WalletIcon,
+          icon: Wallet02Icon,
           content: <PayProfileForm />,
         },
         {
           value: "assigned-drivers",
           label: t("Assigned drivers"),
-          icon: UsersIcon,
+          icon: Users01Icon,
           content: <AssignedDriversSection profileId={row.id} />,
         },
       ]}
@@ -246,7 +246,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
           </p>
         </div>
         <Button type="button" size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
-          <UserPlus className="size-3.5" />
+          <UserPlus01Icon className="size-3.5" />
           {t("Assign driver")}
         </Button>
       </div>

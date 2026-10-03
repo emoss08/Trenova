@@ -26,14 +26,14 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  CheckCircle2Icon,
-  FlaskConicalIcon,
-  PencilIcon,
+  Beaker02Icon,
+  CheckCircleIcon,
+  Edit02Icon,
   PlayIcon,
   PlusIcon,
-  Trash2Icon,
+  Trash01Icon,
   XCircleIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -80,7 +80,7 @@ function ScenarioRow({
         <div className="flex items-center gap-1.5">
           {result &&
             (result.passed ? (
-              <CheckCircle2Icon className="size-3.5 shrink-0 text-success-foreground" />
+              <CheckCircleIcon className="size-3.5 shrink-0 text-success-foreground" />
             ) : (
               <XCircleIcon className="text-destructive size-3.5 shrink-0" />
             ))}
@@ -108,7 +108,7 @@ function ScenarioRow({
                 onClick={onEdit}
                 aria-label={`Edit scenario ${scenario.name}`}
               >
-                <PencilIcon className="size-3" />
+                <Edit02Icon className="size-3" />
               </Button>
             }
           />
@@ -125,7 +125,7 @@ function ScenarioRow({
                 className="hover:text-destructive"
                 aria-label={`Delete scenario ${scenario.name}`}
               >
-                <Trash2Icon className="size-3" />
+                <Trash01Icon className="size-3" />
               </Button>
             }
           />
@@ -227,7 +227,7 @@ export function StudioScenariosPane({
   if (!templateId) {
     return (
       <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-4 text-center text-sm">
-        <FlaskConicalIcon className="size-8 opacity-40" />
+        <Beaker02Icon className="size-8 opacity-40" />
         <span>{t("Save the template first, then pin its behaviour with test scenarios.")}</span>
       </div>
     );
@@ -237,7 +237,7 @@ export function StudioScenariosPane({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
-          <FlaskConicalIcon className="text-muted-foreground size-4" />
+          <Beaker02Icon className="text-muted-foreground size-4" />
           <span className="text-sm font-semibold">{t("Scenarios")}</span>
           {results && (
             <Badge
@@ -296,7 +296,7 @@ export function StudioScenariosPane({
 
           {!isLoading && (scenarios?.length ?? 0) === 0 && (
             <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
-              <FlaskConicalIcon className="size-8 opacity-40" />
+              <Beaker02Icon className="size-8 opacity-40" />
               <span>
                 {t(
                   "No scenarios yet. Add one to pin what this formula must produce — approval requires every scenario to pass. A green preview can be pinned in one click.",

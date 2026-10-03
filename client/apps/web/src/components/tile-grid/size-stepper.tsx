@@ -1,8 +1,8 @@
 import { Button } from "@trenova/shared/components/ui/button";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 
 export type SizeStepperProps = {
-  icon: LucideIcon;
+  icon: IconComponent;
   label: string;
   value: number;
   min: number;

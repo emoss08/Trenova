@@ -8,7 +8,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { RateAgreementRule } from "@trenova/shared/types/rate";
-import { HistoryIcon } from "lucide-react";
+import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type LaneHistoryPopoverProps = {
@@ -51,7 +51,7 @@ export function LaneHistoryPopover({
       <PopoverTrigger
         render={
           <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-1.5">
-            <HistoryIcon className="size-3" />
+            <ClockRewindIcon className="size-3" />
             <span className="text-2xs">{t("History")}</span>
           </Button>
         }

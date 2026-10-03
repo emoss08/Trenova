@@ -16,7 +16,7 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { cancelFuelCardSchema, type CancelFuelCardValues } from "@trenova/shared/types/fuel-card";
-import { BanIcon } from "lucide-react";
+import { SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -82,7 +82,7 @@ export function CancelFuelCardDialog({
           >
             <AlertDialogHeader>
               <AlertDialogMedia className="bg-danger-subtle text-destructive">
-                <BanIcon />
+                <SlashCircle01Icon />
               </AlertDialogMedia>
               <AlertDialogTitle>
                 {t(

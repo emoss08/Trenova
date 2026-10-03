@@ -21,7 +21,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { InfoIcon, PlusIcon, XIcon } from "lucide-react";
+import { InfoCircleIcon, PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 const NO_RECENT: readonly string[] = [];
@@ -124,7 +124,7 @@ export function RoleAgentsSection({ roleId }: { roleId: string }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Alert size="sm">
-          <InfoIcon />
+          <InfoCircleIcon />
           <AlertDescription>
             {t(
               "Agents open to everyone who can use the assistant are included for this role automatically and need not be added.",
@@ -139,7 +139,7 @@ export function RoleAgentsSection({ roleId }: { roleId: string }) {
           </div>
         ) : agentsQuery.isError ? (
           <Alert variant="destructive" size="sm">
-            <InfoIcon />
+            <InfoCircleIcon />
             <AlertDescription className="flex flex-wrap items-center gap-2">
               {t("The agents this role grants could not be loaded.")}
               <Button
@@ -229,7 +229,7 @@ function RoleAgentRow({
         disabled={disabled}
         onClick={onRemove}
       >
-        <XIcon className="size-3" />
+        <XCloseIcon className="size-3" />
       </Button>
     </li>
   );

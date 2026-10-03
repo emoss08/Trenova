@@ -23,7 +23,7 @@ import { billTypeChoices, invoiceScopeChoices, invoiceStatusChoices } from "@/li
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { invoiceSidebarSearchParamsParser } from "../use-invoice-state";
@@ -143,7 +143,7 @@ export function InvoiceSidebar({
       <div className="flex flex-col gap-1.5 border-b p-2">
         <Input
           placeholder={t("Search invoice, PRO, bill-to...")}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           value={query}
           onChange={(event) => void setSearchParams({ query: event.target.value })}
           className="h-7 text-xs"

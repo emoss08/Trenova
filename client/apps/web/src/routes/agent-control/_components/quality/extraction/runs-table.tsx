@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleStopIcon } from "lucide-react";
+import { StopCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { isRunActive } from "./extraction-model";
@@ -42,7 +42,7 @@ export function RunsTable() {
     {
       id: "cancel",
       label: t("Cancel run"),
-      icon: CircleStopIcon,
+      icon: StopCircleIcon,
       variant: "destructive",
       onClick: (row) => cancel.mutate(row.original.id),
       hidden: (row) => !canUpdate || !isRunActive(row.original.status),

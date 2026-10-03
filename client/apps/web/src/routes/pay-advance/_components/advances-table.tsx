@@ -19,7 +19,7 @@ import {
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { BanIcon } from "lucide-react";
+import { SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./advance-columns";
@@ -70,7 +70,7 @@ export default function AdvancesTable() {
       {
         id: "write-off",
         label: t("Write off"),
-        icon: BanIcon,
+        icon: SlashCircle01Icon,
         variant: "destructive",
         onClick: openWriteOffDialog,
       },

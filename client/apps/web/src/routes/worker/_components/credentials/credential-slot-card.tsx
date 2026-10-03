@@ -8,12 +8,12 @@ import { cn } from "@trenova/shared/lib/utils";
 import { CREDENTIAL_CATEGORY_LABELS } from "@trenova/shared/types/worker-credential";
 import {
   ArchiveIcon,
+  Edit02Icon,
   PaperclipIcon,
-  PencilIcon,
   PlusIcon,
-  RefreshCwIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+  RefreshCw02Icon,
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 
 export type CredentialSlotPermissions = {
   canCreate: boolean;
@@ -74,7 +74,7 @@ export function CredentialSlotRow({
       actions.push({
         id: "verify",
         label: `Verify ${type.name}`,
-        icon: ShieldCheckIcon,
+        icon: ShieldTickIcon,
         disabled: verifying,
         onSelect: () => onVerify(item),
       });
@@ -83,7 +83,7 @@ export function CredentialSlotRow({
       actions.push({
         id: "edit",
         label: `Edit ${type.name}`,
-        icon: PencilIcon,
+        icon: Edit02Icon,
         onSelect: () => onEdit(item),
       });
     }
@@ -91,7 +91,7 @@ export function CredentialSlotRow({
       actions.push({
         id: "renew",
         label: `Renew ${type.name}`,
-        icon: RefreshCwIcon,
+        icon: RefreshCw02Icon,
         onSelect: () => onRenew(item),
       });
     }
@@ -121,7 +121,7 @@ export function CredentialSlotRow({
           {credential ? (
             verified ? (
               <span className="flex shrink-0 items-center gap-1">
-                <ShieldCheckIcon className="size-3" />
+                <ShieldTickIcon className="size-3" />
                 <span>{t("Verified")}</span>
                 {credential.verifiedBy?.name ? (
                   <span>{t("by {0}", credential.verifiedBy.name)}</span>

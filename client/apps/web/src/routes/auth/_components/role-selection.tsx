@@ -5,7 +5,7 @@ import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PermissionManifest } from "@trenova/shared/types/permission";
 import type { RoleSummary } from "@trenova/shared/types/role";
-import { ShieldIcon } from "lucide-react";
+import { Shield01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AuthCardBody } from "./auth-card";
 import { AuthSubmit } from "./auth-field";
@@ -143,7 +143,7 @@ export function RoleSelection({
             selected={selectedRoleIds.includes(role.id)}
             disabled={isActivating}
             onSelect={() => toggleRole(role.id)}
-            leading={<ShieldIcon className="size-3.5" />}
+            leading={<Shield01Icon className="size-3.5" />}
             name={role.name}
             meta={role.description || undefined}
             chip={role.isSystem ? "System" : "Custom"}

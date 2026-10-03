@@ -7,7 +7,7 @@ import type {
   EDIX12Inspection,
   EDIX12Segment,
 } from "@trenova/shared/types/edi";
-import { CopyIcon } from "lucide-react";
+import { Copy01Icon } from "@trenova/shared/components/icons";
 
 export default function FormattedViewTab({
   inspection,
@@ -30,7 +30,7 @@ export default function FormattedViewTab({
           variant="outline"
           onClick={() => void copy(inspection.formatted, { withToast: true })}
         >
-          <CopyIcon className="size-4" />
+          <Copy01Icon className="size-4" />
           {t("Copy formatted")}
         </Button>
       </div>
@@ -47,7 +47,11 @@ export default function FormattedViewTab({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
                 <span className="text-sm">{segment.name}</span>
-                {isControlSegment(segment) ? <Badge variant="neutral" appearance="outline">{t("Control")}</Badge> : null}
+                {isControlSegment(segment) ? (
+                  <Badge variant="neutral" appearance="outline">
+                    {t("Control")}
+                  </Badge>
+                ) : null}
                 {segment.malformed ? <Badge variant="danger">{t("Malformed")}</Badge> : null}
                 {segmentDiagnostics.length > 0 ? (
                   <Badge variant="warning">{segmentDiagnostics.length}</Badge>

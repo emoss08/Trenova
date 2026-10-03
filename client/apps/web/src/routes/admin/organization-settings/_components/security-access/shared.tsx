@@ -8,7 +8,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { cn, toTitleCase } from "@trenova/shared/lib/utils";
 import type { IdentityProviderFormValues } from "@trenova/shared/types/iam";
-import { AlertTriangleIcon, KeyRoundIcon, SearchIcon } from "lucide-react";
+import { AlertTriangleIcon, Key01Icon, SearchLgIcon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 import { Controller, type Control } from "react-hook-form";
 import { riskVariant } from "./utils";
@@ -40,7 +40,7 @@ export function ConsoleToolbar({
               value={search}
               placeholder={searchPlaceholder}
               onChange={(event) => onSearchChange(event.target.value)}
-              leftElement={<SearchIcon className="text-muted-foreground size-3" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3" />}
             />
           </div>
           {action}
@@ -112,7 +112,7 @@ export function ProviderLogo({ name }: { name: string }) {
   if (lowerName.includes("okta")) {
     return <OktaLogo className="h-5 w-auto" />;
   }
-  return <KeyRoundIcon className="text-primary size-5" />;
+  return <Key01Icon className="text-primary size-5" />;
 }
 
 export function ToggleRow({

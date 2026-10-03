@@ -5,7 +5,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import type { FuelSurchargeDetail } from "@trenova/shared/types/shipment";
-import { AlertTriangle, FuelIcon } from "lucide-react";
+import { AlertTriangleIcon, FuelIcon } from "@trenova/shared/components/icons";
 
 function DetailRow({ label, value }: { label: string; value: string | null }) {
   if (value === null) return null;
@@ -96,7 +96,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
 
         {(detail.usedFallback || detail.stale) && (
           <Alert variant="warning" size="sm">
-            <AlertTriangle />
+            <AlertTriangleIcon />
             <AlertDescription>
               {detail.stale
                 ? t("Rated with a price more than 3 weeks old.")

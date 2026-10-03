@@ -4,7 +4,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { ReportIrInput, ReportPreview } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReportIR } from "@/types/report";
-import { CircleAlertIcon, Table2Icon } from "lucide-react";
+import { AlertCircleIcon, TableIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useState } from "react";
 import { DrillThroughSheet, type DrillTarget } from "../../_components/drill-through-sheet";
@@ -58,7 +58,7 @@ export function PreviewGrid({
     return (
       <CenteredState>
         <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
-          <Table2Icon className="text-muted-foreground size-5" strokeWidth={1.75} />
+          <TableIcon className="text-muted-foreground size-5" strokeWidth={1.75} />
         </div>
         <div className="text-center">
           <p className="text-sm font-medium">{t("Live preview")}</p>
@@ -74,7 +74,7 @@ export function PreviewGrid({
     return (
       <CenteredState>
         <div className="bg-danger-subtle flex size-10 items-center justify-center rounded-lg">
-          <CircleAlertIcon className="text-destructive size-5" strokeWidth={1.75} />
+          <AlertCircleIcon className="text-destructive size-5" strokeWidth={1.75} />
         </div>
         <div className="text-center">
           <p className="text-sm font-medium">{t("The preview couldn't be compiled")}</p>

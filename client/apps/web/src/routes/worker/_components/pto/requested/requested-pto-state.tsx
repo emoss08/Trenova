@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { TriangleAlert } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 
 export function RequestedPTOOverviewSkeleton() {
   return (
@@ -40,7 +40,7 @@ export function RequestedPTOErrorState() {
 
   return (
     <div className="border-border flex size-full flex-col items-center justify-center gap-1 overflow-hidden rounded-md border p-3">
-      <TriangleAlert className="mt-0.5 size-5 text-danger-foreground" />
+      <AlertTriangleIcon className="mt-0.5 size-5 text-danger-foreground" />
       <div className="flex flex-col items-center text-center">
         <p className="font-medium text-danger-foreground">{t("Error loading PTO requests")}</p>
         <p className="text-muted-foreground mt-1 text-xs">

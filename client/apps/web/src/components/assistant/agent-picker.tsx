@@ -9,7 +9,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { CheckIcon, ChevronsUpDownIcon, SearchIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronSelectorVerticalIcon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import {
   useEffect,
   useId,
@@ -106,7 +110,7 @@ export function AgentPicker({
               className="animate-confirm"
             />
             <span className="min-w-0 truncate text-sm">{agent?.name ?? t("Choose an agent")}</span>
-            <ChevronsUpDownIcon className="text-muted-foreground size-3.5" />
+            <ChevronSelectorVerticalIcon className="text-muted-foreground size-3.5" />
           </>
         )}
       </PopoverTrigger>
@@ -294,7 +298,7 @@ export function AgentPickerList({
           aria-activedescendant={activeIndex >= 0 ? optionId(activeIndex) : undefined}
           aria-autocomplete="list"
           className="h-8 text-sm"
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           rightElement={
             choices.isRefreshing ? (
               <Spinner className="text-muted-foreground mr-1 size-3.5" />

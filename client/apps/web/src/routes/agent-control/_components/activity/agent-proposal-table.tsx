@@ -11,7 +11,7 @@ import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, PencilIcon, XIcon } from "lucide-react";
+import { CheckIcon, Edit02Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ProposalEditor, type ProposalEditorRequest } from "@/components/assistant/proposal-editor";
@@ -116,7 +116,7 @@ export default function AgentProposalTable() {
     {
       id: "modify",
       label: t("Approve with changes"),
-      icon: PencilIcon,
+      icon: Edit02Icon,
       onClick: modify,
       hidden: (row) =>
         !canDecide ||
@@ -126,7 +126,7 @@ export default function AgentProposalTable() {
     {
       id: "reject",
       label: t("Reject"),
-      icon: XIcon,
+      icon: XCloseIcon,
       variant: "destructive",
       onClick: (row) => decide(row, "Rejected"),
       hidden: (row) => !canDecide || row.original.status !== "Pending",

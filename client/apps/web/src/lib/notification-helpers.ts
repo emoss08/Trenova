@@ -1,6 +1,11 @@
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatDistanceToNowStrict, isToday, isYesterday } from "date-fns";
-import { CircleAlertIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  InfoCircleIcon,
+} from "@trenova/shared/components/icons";
 import { createElement } from "react";
 
 export function formatTimestamp(unixSeconds: number): string {
@@ -32,22 +37,22 @@ export const PRIORITY_CONFIG: Record<
   { icon: React.ReactNode; badge: BadgeVariant; dot: string }
 > = {
   critical: {
-    icon: createElement(CircleAlertIcon, { className: "size-4 text-danger-foreground" }),
+    icon: createElement(AlertCircleIcon, { className: "size-4 text-danger-foreground" }),
     badge: "danger",
     dot: "bg-danger",
   },
   high: {
-    icon: createElement(TriangleAlertIcon, { className: "size-4 text-warning-foreground" }),
+    icon: createElement(AlertTriangleIcon, { className: "size-4 text-warning-foreground" }),
     badge: "warning",
     dot: "bg-warning",
   },
   medium: {
-    icon: createElement(InfoIcon, { className: "size-4 text-info-foreground" }),
+    icon: createElement(InfoCircleIcon, { className: "size-4 text-info-foreground" }),
     badge: "info",
     dot: "bg-info",
   },
   low: {
-    icon: createElement(CircleCheckIcon, { className: "size-4 text-muted-foreground" }),
+    icon: createElement(CheckCircleIcon, { className: "size-4 text-muted-foreground" }),
     badge: "neutral",
     dot: "bg-muted-foreground",
   },

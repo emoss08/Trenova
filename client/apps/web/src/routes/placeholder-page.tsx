@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { ConstructionIcon } from "lucide-react";
+import { ConstructionIcon } from "@trenova/shared/components/icons";
 import { useLocation } from "react-router";
 
 export function PlaceholderPage() {

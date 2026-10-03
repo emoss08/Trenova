@@ -3,7 +3,7 @@ import { QueryLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { lazy } from "react";
 
 const BillingControlForm = lazy(() => import("./_components/billing-control-form"));
@@ -31,7 +31,7 @@ function BillingControlAlert() {
 
   return (
     <Alert variant="warning" size="sm">
-      <TriangleAlertIcon />
+      <AlertTriangleIcon />
       <AlertTitle>{t("Critical financial configuration")}</AlertTitle>
       <AlertDescription>
         {t(

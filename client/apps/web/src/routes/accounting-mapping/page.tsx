@@ -41,7 +41,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
@@ -248,7 +248,7 @@ export function AccountingMappingsPage() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t("Search mappings")}
               aria-label={t("Search mappings")}
-              leftElement={<SearchIcon className="text-foreground-subtle size-3.5" />}
+              leftElement={<SearchLgIcon className="text-foreground-subtle size-3.5" />}
               className="h-7 text-xs"
             />
             <Select

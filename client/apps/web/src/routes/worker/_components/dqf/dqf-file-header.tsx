@@ -6,7 +6,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { dqfSectionProgress, dqfSectionTab, type DQFSectionValue } from "@trenova/shared/lib/dqf";
 import { cn } from "@trenova/shared/lib/utils";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type DQFFileHeaderProps = {

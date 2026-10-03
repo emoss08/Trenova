@@ -8,7 +8,7 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { MoreHorizontalIcon } from "lucide-react";
+import { DotsHorizontalIcon } from "@trenova/shared/components/icons";
 
 export function ActionsCell({
   row,
@@ -28,7 +28,7 @@ export function ActionsCell({
         <DropdownMenuTrigger
           render={
             <Button variant="ghost" size="icon-xs" aria-label={t("Row actions")}>
-              <MoreHorizontalIcon className="size-4" />
+              <DotsHorizontalIcon className="size-4" />
             </Button>
           }
         />

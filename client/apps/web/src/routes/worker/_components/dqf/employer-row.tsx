@@ -11,7 +11,12 @@ import {
   verificationTone,
 } from "@trenova/shared/lib/dqf";
 import { cn } from "@trenova/shared/lib/utils";
-import { PencilIcon, RepeatIcon, SendIcon, Trash2Icon } from "lucide-react";
+import {
+  Edit02Icon,
+  Repeat01Icon,
+  Send01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 
 export type EmployerPermissions = { canUpdate: boolean; canDelete: boolean };
 
@@ -65,7 +70,7 @@ export function EmployerRow({
     actions.push({
       id: "request",
       label: t("Send the request"),
-      icon: SendIcon,
+      icon: Send01Icon,
       disabled: busy,
       onSelect: () => onRequest(verification),
     });
@@ -74,7 +79,7 @@ export function EmployerRow({
     actions.push({
       id: "chase",
       label: t("Chase again"),
-      icon: RepeatIcon,
+      icon: Repeat01Icon,
       disabled: busy,
       onSelect: () => onFollowUp(verification),
     });
@@ -88,7 +93,7 @@ export function EmployerRow({
           : next.action === "drugAlcohol"
             ? "Record the drug and alcohol history"
             : `Edit ${verification.employerName}`,
-      icon: PencilIcon,
+      icon: Edit02Icon,
       onSelect: () => onEdit(verification),
     });
   }
@@ -96,7 +101,7 @@ export function EmployerRow({
     actions.push({
       id: "delete",
       label: `Remove ${verification.employerName}`,
-      icon: Trash2Icon,
+      icon: Trash01Icon,
       destructive: true,
       disabled: busy,
       onSelect: () => onDelete(verification),

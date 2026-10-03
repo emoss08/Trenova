@@ -10,7 +10,7 @@ import {
   type DriverSettlementRow,
 } from "@/lib/graphql/driver-settlement";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { RefreshCcw, Zap } from "lucide-react";
+import { RefreshCcw02Icon, ZapIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -174,7 +174,7 @@ export default function Workspace() {
               onClick={refresh}
               aria-label={t("Refresh workspace data")}
             >
-              <RefreshCcw className="size-3.5" />
+              <RefreshCcw02Icon className="size-3.5" />
               {t("Refresh")}
             </Button>
             <Button
@@ -185,7 +185,7 @@ export default function Workspace() {
                 "Pay a driver immediately — builds, approves, posts, and pays an off-cycle settlement in one pass",
               )}
             >
-              <Zap className="size-3.5" />
+              <ZapIcon className="size-3.5" />
               {t("Pay now")}
             </Button>
             <Button

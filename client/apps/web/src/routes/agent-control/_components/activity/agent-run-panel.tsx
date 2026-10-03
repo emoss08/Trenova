@@ -21,7 +21,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { ChevronRightIcon, CircleAlertIcon, DownloadIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  ChevronRightIcon,
+  Download01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { agentTypeLabel, RunStatusBadge, TriggerBadge } from "./agent-badges";
 import { RunTranscriptView } from "./run-transcript-view";
@@ -111,7 +115,7 @@ function TranscriptDisclosure({ runId, active }: { runId: string; active: boolea
         <div className="border-border border-t p-3">
           {transcript.isError ? (
             <Alert variant="destructive" size="sm">
-              <CircleAlertIcon />
+              <AlertCircleIcon />
               <AlertDescription>
                 {t("The transcript could not be loaded. Try again shortly.")}
               </AlertDescription>
@@ -132,7 +136,7 @@ function TranscriptDisclosure({ runId, active }: { runId: string; active: boolea
                     aria-label={t("Download transcript")}
                     onClick={() => downloadAgentRunTranscript(runId)}
                   >
-                    <DownloadIcon className="size-3" />
+                    <Download01Icon className="size-3" />
                     {t("Download")}
                   </Button>
                 </div>

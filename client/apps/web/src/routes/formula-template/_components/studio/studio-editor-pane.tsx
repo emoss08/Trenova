@@ -25,11 +25,11 @@ import {
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import {
   ChevronDownIcon,
-  CodeIcon,
-  FileCode2,
-  MessageCircleQuestionIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+  Code01Icon,
+  FileCode02Icon,
+  MessageQuestionCircleIcon,
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState, type Ref } from "react";
 import { Controller, useFormContext, useFormState, useWatch } from "react-hook-form";
 import { BreakdownDefinitionEditor } from "../breakdown-definition-editor";
@@ -98,7 +98,7 @@ export function StudioEditorPane({
             render={
               <button type="button" className="flex w-full items-center justify-between">
                 <SectionHeader
-                  icon={FileCode2}
+                  icon={FileCode02Icon}
                   title={t("Template details")}
                   description={t("Name, type, and description")}
                 />
@@ -164,7 +164,7 @@ export function StudioEditorPane({
 
         <div className="flex items-center justify-between gap-2">
           <SectionHeader
-            icon={CodeIcon}
+            icon={Code01Icon}
             title={t("Expression")}
             description={t("The formula that computes the charge")}
           />
@@ -209,14 +209,14 @@ export function StudioEditorPane({
             disabled={!expression?.trim()}
             className="gap-1.5"
           >
-            <MessageCircleQuestionIcon className="size-3" />
+            <MessageQuestionCircleIcon className="size-3" />
             {t("Explain formula")}
           </Button>
         </div>
 
         <Separator />
         <SectionHeader
-          icon={ShieldCheckIcon}
+          icon={ShieldTickIcon}
           title={t("Charge policy")}
           description={t(
             "Clamp the calculated charge to a range, then round it to what gets billed",

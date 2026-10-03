@@ -35,12 +35,12 @@ import {
 } from "@trenova/shared/types/self-service";
 import {
   AlertTriangleIcon,
-  FileTextIcon,
-  PenLineIcon,
-  ShieldCheckIcon,
-  UploadCloudIcon,
-  XIcon,
-} from "lucide-react";
+  Edit03Icon,
+  File06Icon,
+  ShieldTickIcon,
+  UploadCloud02Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -48,9 +48,9 @@ import { toast } from "sonner";
 type Source = "text" | "document";
 
 const SOURCE_ITEMS = [
-  { value: "text", label: "Write it here", icon: PenLineIcon },
-  { value: "document", label: "Attach a document", icon: FileTextIcon },
-] satisfies { value: Source; label: string; icon: typeof PenLineIcon }[];
+  { value: "text", label: "Write it here", icon: Edit03Icon },
+  { value: "document", label: "Attach a document", icon: File06Icon },
+] satisfies { value: Source; label: string; icon: typeof Edit03Icon }[];
 
 const AUDIENCE_OPTIONS = POLICY_AUDIENCE_ORDER.map((value) => ({
   value,
@@ -307,13 +307,13 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   <div className="flex flex-col gap-1.5">
                     {documentId ? (
                       <div className="bg-muted/30 flex items-center gap-3 rounded-lg border p-3">
-                        <FileTextIcon className="text-muted-foreground size-4 shrink-0" />
+                        <File06Icon className="text-muted-foreground size-4 shrink-0" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">
                             {attachedName ?? t("Attached document")}
                           </span>
                           <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                            <ShieldCheckIcon className="size-3" />
+                            <ShieldTickIcon className="size-3" />
                             {t("Its checksum is copied onto every signature")}
                           </span>
                         </span>
@@ -333,7 +333,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                           aria-label={t("Remove the attached document")}
                           onClick={detach}
                         >
-                          <XIcon className="size-3.5" />
+                          <XCloseIcon className="size-3.5" />
                         </Button>
                       </div>
                     ) : (
@@ -359,7 +359,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                           bodyError && "border-danger-border",
                         )}
                       >
-                        <UploadCloudIcon
+                        <UploadCloud02Icon
                           className={cn(
                             "size-5 transition-transform",
                             dragging && "-translate-y-0.5",

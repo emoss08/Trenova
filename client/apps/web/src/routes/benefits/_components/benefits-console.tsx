@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { BenefitPlanDialog } from "./benefit-plan-dialog";
 import { BenefitsEmpty } from "./benefits-empty";

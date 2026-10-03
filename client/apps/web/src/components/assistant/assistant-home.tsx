@@ -6,7 +6,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
-import { BotIcon, ChevronRightIcon, PlugZapIcon } from "lucide-react";
+import { BotIcon, ChevronRightIcon, PlugIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { AgentAsk } from "./agent-ask";
@@ -74,7 +74,7 @@ export function AssistantHome({
             nativeButton={false}
             render={<Link to="/admin/agent-control" onClick={closeWidget} />}
           >
-            <PlugZapIcon className="size-3.5" />
+            <PlugIcon className="size-3.5" />
             {t("Open AI control")}
           </Button>
         )}

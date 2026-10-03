@@ -12,7 +12,7 @@ import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { apiService } from "@/services/api";
 import type { SaveAgentDefinitionRequest } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
-import { EyeIcon } from "lucide-react";
+import { EyeIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type PromptPreviewSheetProps = {

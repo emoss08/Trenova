@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { LayersIcon, ListChecksIcon } from "lucide-react";
+import { LayersThree01Icon, ListChecksIcon } from "@trenova/shared/components/icons";
 import type { BillingQueueView } from "../use-billing-queue-state";
 
 const VIEWS: readonly {
@@ -19,7 +19,7 @@ const VIEWS: readonly {
     key: "statements",
     label: "Statements",
     hint: "Watch each customer's period build toward one invoice",
-    Icon: LayersIcon,
+    Icon: LayersThree01Icon,
   },
 ];
 
@@ -60,9 +60,7 @@ export function BillingQueueViewSwitch({
             onClick={() => onChange(key)}
             className={cn(
               "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              active
-                ? "bg-card text-foreground"
-                : "text-muted-foreground hover:text-foreground",
+              active ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Icon className="size-3.5" />

@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { ImportRowFilter } from "@/lib/fuel-purchase-import";
@@ -129,7 +129,7 @@ export function FeedRunDetailDialog({
             disabled={!batch || held === 0}
             title={held === 0 ? "This run has nothing waiting" : undefined}
           >
-            <RefreshCwIcon className="size-4" />
+            <RefreshCw02Icon className="size-4" />
             {t("Work rows out again")}
           </Button>
         </DialogFooter>

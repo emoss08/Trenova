@@ -11,7 +11,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { AlertTriangleIcon, RadioTowerIcon } from "lucide-react";
+import { AlertTriangleIcon, Signal01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { invoiceEdiSendBlocker } from "./invoice-actions-menu";
 
@@ -75,7 +75,7 @@ export function InvoiceEdiDeliveryCard({
             disabled={Boolean(blocker) || send.isPending}
             onClick={() => send.mutate()}
           >
-            <RadioTowerIcon className="size-3.5" />
+            <Signal01Icon className="size-3.5" />
             {sent ? t("Resend EDI") : t("Send EDI")}
           </Button>
         ) : null}

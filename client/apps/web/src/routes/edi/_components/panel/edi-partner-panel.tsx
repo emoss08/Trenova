@@ -14,12 +14,12 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Building2Icon,
-  CircleCheckBigIcon,
-  GitBranchIcon,
+  Building07Icon,
+  CheckCircleBrokenIcon,
+  GitBranch01Icon,
   HandshakeIcon,
   ListChecksIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -177,7 +177,7 @@ function CreatePartnerPanel({
       <Tabs value={activeTab} onValueChange={setActiveTab} className="min-h-0">
         <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="external">
-            <Building2Icon className="size-4" />
+            <Building07Icon className="size-4" />
             {t("External partner")}
           </TabsTrigger>
           <TabsTrigger value="internal">
@@ -342,11 +342,11 @@ function PartnerEditPanel({
               {t("Details")}
             </TabsTrigger>
             <TabsTrigger value="mappings">
-              <GitBranchIcon className="size-4" />
+              <GitBranch01Icon className="size-4" />
               {t("Mappings")}
             </TabsTrigger>
             <TabsTrigger value="readiness">
-              <CircleCheckBigIcon className="size-4" />
+              <CheckCircleBrokenIcon className="size-4" />
               {t("Readiness")}
             </TabsTrigger>
           </TabsList>

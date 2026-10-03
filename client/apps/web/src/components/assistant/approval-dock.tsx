@@ -14,7 +14,7 @@ import { formatAltShortcut, formatShortcut } from "@trenova/shared/lib/shortcuts
 import { cn } from "@trenova/shared/lib/utils";
 import type { Tone } from "@/components/kpi/tone";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { decideMyPlan, decideMyProposal, } from "@/lib/graphql/agent-decisions";
+import { decideMyPlan, decideMyProposal } from "@/lib/graphql/agent-decisions";
 import type { ProposalPreview as ProposalPreviewData } from "@/lib/graphql/agent-preview";
 import {
   invalidateProposalViews,
@@ -23,7 +23,12 @@ import {
 } from "@/lib/proposal-cache";
 import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRightIcon, PencilIcon, TriangleAlertIcon, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ChevronRightIcon,
+  Edit02Icon,
+  type IconComponent,
+} from "@trenova/shared/components/icons";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -31,7 +36,7 @@ import { EASE_SETTLE, EASE_SWIFT } from "@/lib/motion";
 import { decideBatch, useAfterDecision, type BatchOutcome } from "./approval-actions";
 import type { ApprovalEntry } from "./approval-queue";
 import { ProposedBy } from "./decision-chrome";
-import { } from "./decision-follow-up";
+import {} from "./decision-follow-up";
 import { Highlights, StepList, previewsByStep } from "./decision-outcomes";
 import { FloatingSlot } from "./floating-slot";
 import { ProposalEditor, type EditorFocus, type ProposalEditorRequest } from "./proposal-editor";
@@ -369,7 +374,7 @@ function DockFrame({
             )}
             {permanent && (
               <Badge variant="warning" className="shrink-0">
-                <TriangleAlertIcon aria-hidden />
+                <AlertTriangleIcon aria-hidden />
                 {t("Permanent")}
               </Badge>
             )}
@@ -446,7 +451,7 @@ function DockFrame({
       <footer className="mt-2 flex flex-wrap items-center gap-1.5 px-3.5 pb-3">
         {onModify && !note.telling && (
           <IconAction
-            icon={PencilIcon}
+            icon={Edit02Icon}
             label={t("Modify")}
             onClick={onModify}
             disabled={busy || modifyDisabled}
@@ -554,7 +559,7 @@ function IconAction({
   onClick,
   disabled,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   label: string;
   onClick: () => void;
   disabled: boolean;

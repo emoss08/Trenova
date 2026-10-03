@@ -1,5 +1,10 @@
 import type { GlobalSearchEntityType } from "@/services/global-search";
-import { FileTextIcon, TruckIcon, UserRoundIcon, BuildingIcon } from "lucide-react";
+import {
+  Building03Icon,
+  File06Icon,
+  Truck01Icon,
+  User01Icon,
+} from "@trenova/shared/components/icons";
 import type { PaletteIcon } from "./palette-model";
 
 export interface PaletteEntityPresentation {
@@ -19,25 +24,25 @@ export interface PaletteEntityPresentation {
  */
 export const PALETTE_ENTITIES: Record<GlobalSearchEntityType, PaletteEntityPresentation> = {
   shipment: {
-    icon: TruckIcon,
+    icon: Truck01Icon,
     label: "Shipment",
     pluralLabel: "Shipments",
     tileClass: "bg-accent-teal-subtle text-accent-teal-on-subtle ring-accent-teal-border",
   },
   customer: {
-    icon: BuildingIcon,
+    icon: Building03Icon,
     label: "Customer",
     pluralLabel: "Customers",
     tileClass: "bg-accent-violet-subtle text-accent-violet-on-subtle ring-accent-violet-border",
   },
   worker: {
-    icon: UserRoundIcon,
+    icon: User01Icon,
     label: "Worker",
     pluralLabel: "Workers",
     tileClass: "bg-accent-sky-subtle text-accent-sky-on-subtle ring-accent-sky-border",
   },
   document: {
-    icon: FileTextIcon,
+    icon: File06Icon,
     label: "Document",
     pluralLabel: "Documents",
     tileClass: "bg-accent-amber-subtle text-accent-amber-on-subtle ring-accent-amber-border",

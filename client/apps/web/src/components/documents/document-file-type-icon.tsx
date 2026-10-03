@@ -1,5 +1,11 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { FileCodeIcon, FileIcon, FileSpreadsheetIcon, FileTextIcon, ImageIcon } from "lucide-react";
+import {
+  File04Icon,
+  File06Icon,
+  FileCode01Icon,
+  FileSpreadsheetIcon,
+  Image01Icon,
+} from "@trenova/shared/components/icons";
 import { getFileCategory } from "./document-utils";
 
 type IconSize = "sm" | "md" | "lg" | "xl";
@@ -18,16 +24,16 @@ const sizeClasses: Record<IconSize, { container: string; icon: string }> = {
   xl: { container: "size-16", icon: "size-8" },
 };
 
-const categoryStyles: Record<string, { bg: string; text: string; icon: typeof FileIcon }> = {
+const categoryStyles: Record<string, { bg: string; text: string; icon: typeof File04Icon }> = {
   pdf: {
     bg: "bg-danger-subtle",
     text: "text-danger-foreground",
-    icon: FileTextIcon,
+    icon: File06Icon,
   },
   image: {
     bg: "bg-accent-violet-subtle",
     text: "text-accent-violet-on-subtle",
-    icon: ImageIcon,
+    icon: Image01Icon,
   },
   spreadsheet: {
     bg: "bg-success-subtle",
@@ -37,17 +43,17 @@ const categoryStyles: Record<string, { bg: string; text: string; icon: typeof Fi
   document: {
     bg: "bg-info-subtle",
     text: "text-info-foreground",
-    icon: FileTextIcon,
+    icon: File06Icon,
   },
   data: {
     bg: "bg-warning-subtle",
     text: "text-warning-foreground",
-    icon: FileCodeIcon,
+    icon: FileCode01Icon,
   },
   default: {
     bg: "bg-muted",
     text: "text-muted-foreground",
-    icon: FileIcon,
+    icon: File04Icon,
   },
 };
 

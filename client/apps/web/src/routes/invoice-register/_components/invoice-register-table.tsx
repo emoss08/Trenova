@@ -8,7 +8,11 @@ import {
 import { InvoiceVoidDialog } from "@/routes/invoice/_components/invoice-void-dialog";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { BanIcon, ExternalLinkIcon, TruckIcon } from "lucide-react";
+import {
+  LinkExternal01Icon,
+  SlashCircle01Icon,
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { shipmentPanelPath } from "@/lib/shipment-utils";
@@ -33,13 +37,13 @@ export default function InvoiceRegisterTable() {
       {
         id: "open",
         label: t("Open in workspace"),
-        icon: ExternalLinkIcon,
+        icon: LinkExternal01Icon,
         onClick: (row) => openInvoice(row.original),
       },
       {
         id: "shipment",
         label: t("View shipment"),
-        icon: TruckIcon,
+        icon: Truck01Icon,
         hidden: (row) => !row.original.shipmentId,
         onClick: (row) => {
           if (row.original.shipmentId) {
@@ -50,7 +54,7 @@ export default function InvoiceRegisterTable() {
       {
         id: "void",
         label: t("Void"),
-        icon: BanIcon,
+        icon: SlashCircle01Icon,
         variant: "destructive",
         // An invoice with cash applied cannot be voided; the dialog explains
         // the rest once the AR context loads.

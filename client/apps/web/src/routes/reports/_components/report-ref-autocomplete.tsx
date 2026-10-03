@@ -5,7 +5,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import type { GraphQLSelectOptionsConfig } from "@/lib/graphql/select-options";
 import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { FieldValues } from "react-hook-form";
 
@@ -223,7 +223,7 @@ export function ReportRefMultiAutocomplete({
                 aria-label={t("Remove value")}
                 onClick={() => onChange(values.filter((v) => v !== id))}
               >
-                <XIcon className="size-3" />
+                <XCloseIcon className="size-3" />
               </Button>
             </Badge>
           ))}

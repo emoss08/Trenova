@@ -10,7 +10,7 @@ import {
   fetchMyRecentPayEvents,
 } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRightIcon, ReceiptTextIcon } from "lucide-react";
+import { ChevronRightIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { Link } from "react-router";
 import { LoadCard } from "../_components/load-card";
@@ -99,9 +99,7 @@ export function DashHomePage() {
         transition={{ duration: 0.22, ease: "easeOut" }}
         className="relative overflow-hidden rounded-2xl border border-border bg-sunken p-5 text-foreground-subtle"
       >
-        <p className="text-xs font-medium text-foreground-subtle">
-          {t("Earned this period")}
-        </p>
+        <p className="text-xs font-medium text-foreground-subtle">{t("Earned this period")}</p>
         {period.isPending ? (
           <Skeleton className="mt-2 h-10 w-40 bg-surface-active" />
         ) : period.data ? (
@@ -137,17 +135,13 @@ export function DashHomePage() {
             className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
           >
             <div>
-              <p className="text-xs font-medium text-muted-foreground">
-                {t("Drive left")}
-              </p>
+              <p className="text-xs font-medium text-muted-foreground">{t("Drive left")}</p>
               <p className="mt-0.5 text-lg font-semibold tabular-nums">
                 {formatClockDurationMs(hos.data.driveRemainingMs)}
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">
-                {t("Shift left")}
-              </p>
+              <p className="text-xs font-medium text-muted-foreground">{t("Shift left")}</p>
               <p className="mt-0.5 text-lg font-semibold tabular-nums">
                 {formatClockDurationMs(hos.data.shiftRemainingMs)}
               </p>

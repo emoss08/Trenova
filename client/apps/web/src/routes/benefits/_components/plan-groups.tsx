@@ -6,9 +6,8 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { formatMinor } from "@trenova/shared/lib/benefits";
 import { headcountShare } from "@trenova/shared/lib/org-structure";
 import { cn } from "@trenova/shared/lib/utils";
-import { PencilLineIcon, UsersIcon } from "lucide-react";
+import { PencilLineIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-
 
 type PlanGroupsProps = {
   plans: readonly BenefitPlanRow[];
@@ -45,9 +44,7 @@ export function PlanGroups({
           <ul className="bg-card divide-y overflow-hidden rounded-lg border">
             {group.plans.map(({ plan, cost }) => {
               return (
-                <li
-                  key={plan.id}
-                >
+                <li key={plan.id}>
                   <PlanRow
                     plan={plan}
                     cost={cost}
@@ -159,7 +156,7 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
         </dl>
         <div className="flex items-center gap-1">
           <Button size="xs" variant="outline" onClick={onOpenRoster}>
-            <UsersIcon className="size-3" />
+            <Users01Icon className="size-3" />
             {t("Who is on it")}
           </Button>
           {canUpdate ? (

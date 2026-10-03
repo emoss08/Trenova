@@ -6,7 +6,7 @@ import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Document, DocumentShipmentDraft } from "@trenova/shared/types/document";
 import { m } from "motion/react";
-import { AlertCircleIcon, CheckIcon, LoaderCircleIcon } from "lucide-react";
+import { AlertCircleIcon, CheckIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 
 type ProcessingPhaseProps = {
   document: Document | null | undefined;
@@ -129,9 +129,7 @@ function StepDot({ state }: { state: StepState }) {
             <CheckIcon className="size-2.5 stroke-[3] text-foreground-on-solid" />
           </m.div>
         )}
-        {state === "active" && (
-          <LoaderCircleIcon className="text-foreground/70 size-2.5 animate-spin" />
-        )}
+        {state === "active" && <SpinnerIcon className="text-foreground/70 size-2.5 animate-spin" />}
         {state === "error" && <AlertCircleIcon className="text-destructive size-2.5" />}
       </div>
       {/* Pulse ring on active */}
@@ -253,7 +251,7 @@ export function ProcessingPhase({
                     onClick={onRetryExtraction}
                     disabled={isRetrying}
                   >
-                    {isRetrying && <LoaderCircleIcon className="size-3.5 animate-spin" />}
+                    {isRetrying && <SpinnerIcon className="size-3.5 animate-spin" />}
                     {t("Retry")}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={onReplaceFile}>

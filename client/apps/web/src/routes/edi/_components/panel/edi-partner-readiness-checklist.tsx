@@ -6,7 +6,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { apiService } from "@/services/api";
 import type { EDIPartner } from "@trenova/shared/types/edi";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2Icon, CircleIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckCircleIcon, CircleIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 const READINESS_LINKS: Record<string, { label: string; to: string } | undefined> = {
@@ -77,7 +77,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
       </div>
       {!data.ready && exchangeEnabled && (
         <Alert variant="warning" size="sm">
-          <TriangleAlertIcon />
+          <AlertTriangleIcon />
           <AlertDescription>
             {t(
               "This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
@@ -95,7 +95,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
           return (
             <div key={item.key} className="flex items-center gap-3 p-3">
               {item.complete ? (
-                <CheckCircle2Icon className="size-4 shrink-0 text-success-foreground" />
+                <CheckCircleIcon className="size-4 shrink-0 text-success-foreground" />
               ) : (
                 <CircleIcon className="text-muted-foreground size-4 shrink-0" />
               )}

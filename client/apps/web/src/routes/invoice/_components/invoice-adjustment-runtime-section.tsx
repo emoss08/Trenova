@@ -26,9 +26,9 @@ import {
   AlertTriangleIcon,
   CheckIcon,
   ChevronDownIcon,
-  ExternalLinkIcon,
-  XIcon,
-} from "lucide-react";
+  LinkExternal01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -344,7 +344,7 @@ function InvoiceAdjustmentLatestCard({
                 type="button"
                 onClick={() => setShowRejectForm(true)}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
                 {t("Reject")}
               </Button>
             </div>
@@ -394,7 +394,7 @@ function ArtifactLink({ to, label }: { to: string; label: string }) {
       className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 hover:underline"
     >
       {label}
-      <ExternalLinkIcon className="size-2.5" />
+      <LinkExternal01Icon className="size-2.5" />
     </Link>
   );
 }

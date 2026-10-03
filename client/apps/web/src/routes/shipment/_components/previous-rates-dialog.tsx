@@ -13,7 +13,7 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { GetPreviousRatesRequest, PreviousRateSummary } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
-import { HistoryIcon } from "lucide-react";
+import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type PreviousRatesDialogProps = {
@@ -36,7 +36,7 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <HistoryIcon className="size-4" />
+            <ClockRewindIcon className="size-4" />
             {t("Previous rates")}
           </DialogTitle>
           <DialogDescription>
@@ -50,7 +50,7 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
             </div>
           ) : !rates || rates.items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <HistoryIcon className="text-muted-foreground/40 mb-2 size-6" />
+              <ClockRewindIcon className="text-muted-foreground/40 mb-2 size-6" />
               <p className="text-muted-foreground text-sm">
                 {t("No previous rates found for this lane")}
               </p>

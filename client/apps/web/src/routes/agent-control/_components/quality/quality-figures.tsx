@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { QUALITY_STALE_MS, formatShare, formatUsd } from "./quality-model";
 
 /**
@@ -19,7 +19,7 @@ export function QualityFigures() {
   if (overview.isError) {
     return (
       <Alert variant="destructive" size="sm">
-        <CircleAlertIcon />
+        <AlertCircleIcon />
         <AlertDescription>
           {t("How well agents are doing could not be loaded. Try again shortly.")}
         </AlertDescription>

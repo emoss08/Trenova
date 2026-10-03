@@ -6,7 +6,7 @@ import { apiService } from "@/services/api";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import type { ShipmentComment } from "@/types/shipment-comment";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState, useQueryStates } from "nuqs";
 import { useEffect, useMemo, useRef } from "react";
 

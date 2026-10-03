@@ -16,7 +16,12 @@ import type {
   PublicRateConfirmationStop,
 } from "@trenova/shared/types/rate-confirmation";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2Icon, CircleSlashIcon, ClockIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useParams } from "react-router";
 
@@ -152,7 +157,7 @@ function InvalidLinkCard() {
 
   return (
     <StatusCard
-      icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
+      icon={<SlashCircle01Icon className="text-muted-foreground size-8" aria-hidden />}
       title={t("This rate confirmation link is no longer valid")}
       body={t(
         "The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.",
@@ -208,7 +213,7 @@ export function RateConfirmationPublicPage() {
   if (submitted) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="size-8 text-success-foreground" aria-hidden />}
+        icon={<CheckCircleIcon className="size-8 text-success-foreground" aria-hidden />}
         title={t("Rate confirmed")}
         body={t("Thank you — your signature has been recorded and the broker has been notified.")}
       />
@@ -218,7 +223,7 @@ export function RateConfirmationPublicPage() {
   } else if (submitError === "unavailable") {
     content = (
       <StatusCard
-        icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
+        icon={<AlertTriangleIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Temporarily unavailable")}
         body={t(
           "Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.",
@@ -261,7 +266,7 @@ export function RateConfirmationPublicPage() {
         <ThrottledCard />
       ) : kind === "unavailable" ? (
         <StatusCard
-          icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
+          icon={<AlertTriangleIcon className="text-muted-foreground size-8" aria-hidden />}
           title={t("Temporarily unavailable")}
           body={t(
             "The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment.",
@@ -286,7 +291,7 @@ export function RateConfirmationPublicPage() {
   } else if (previewQuery.data?.confirmed) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
+        icon={<CheckCircleIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Already confirmed")}
         body={t(
           "This rate confirmation has already been signed. Contact the broker if anything changed.",

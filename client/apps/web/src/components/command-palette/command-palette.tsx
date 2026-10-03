@@ -11,7 +11,7 @@ import { rankByFuzzyScore } from "@trenova/shared/lib/fuzzy-score";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
-import { SearchXIcon } from "lucide-react";
+import { SearchXIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { prefetchRecordPreview } from "./_components/preview/preview-queries";
 import { PalettePreview } from "./_components/preview/palette-preview";

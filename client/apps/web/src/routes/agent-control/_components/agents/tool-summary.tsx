@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
-import { PencilLineIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
+import { PencilLineIcon, Sliders01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import {
   TIER_LABEL,
@@ -99,7 +99,7 @@ export function ToolSummary({
                   onClick={() => remove(tool.name)}
                   className="text-muted-foreground hover:text-foreground ui-focus-ring flex h-full items-center rounded-r-full px-1.5"
                 >
-                  <XIcon className="size-3" />
+                  <XCloseIcon className="size-3" />
                 </button>
               </span>
             );
@@ -146,7 +146,7 @@ export function ToolSummary({
       <div className="flex items-center justify-between gap-3 px-3 py-2">
         <p className="text-muted-foreground min-w-0 truncate text-xs">{totals}</p>
         <Button type="button" size="xs" variant="outline" onClick={() => setOpen(true)}>
-          <SlidersHorizontalIcon className="size-3" />
+          <Sliders01Icon className="size-3" />
           {chosenCount === 0 ? t("Choose tools") : t("Change tools")}
         </Button>
       </div>

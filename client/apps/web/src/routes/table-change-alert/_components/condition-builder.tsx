@@ -4,7 +4,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import type { TCASubscriptionFormValues } from "@/types/table-change-alert";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { type Control, useFieldArray, useWatch } from "react-hook-form";
 
 const OPERATOR_OPTIONS = [
@@ -83,7 +83,7 @@ function ConditionRow({
         onClick={onRemove}
         aria-label={t("Remove condition")}
       >
-        <TrashIcon className="size-3.5" />
+        <Trash01Icon className="size-3.5" />
       </Button>
     </div>
   );

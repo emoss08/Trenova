@@ -10,7 +10,7 @@ import {
 } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { CheckIcon, GripVerticalIcon } from "lucide-react";
+import { CheckIcon, GripVerticalIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef } from "react";
 import { useUnassignedShipments } from "./use-work-queues";
 

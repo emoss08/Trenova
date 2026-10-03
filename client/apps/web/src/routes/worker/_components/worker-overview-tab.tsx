@@ -30,10 +30,7 @@ import {
   groupConcernsBySeverity,
   workerStandingMeta,
 } from "@trenova/shared/lib/worker-standing";
-import {
-  CheckIcon,
-  ChevronRightIcon,
-} from "lucide-react";
+import { CheckIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 
 type WorkerOverviewTabProps = {
   workerId: string;

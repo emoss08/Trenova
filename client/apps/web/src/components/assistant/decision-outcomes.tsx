@@ -7,12 +7,12 @@ import type {
 } from "@/lib/graphql/agent-preview";
 import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import {
-  CircleAlertIcon,
-  CircleCheckIcon,
-  CircleSlashIcon,
-  FlaskConicalIcon,
+  AlertCircleIcon,
+  Beaker02Icon,
+  CheckCircleIcon,
   PauseCircleIcon,
-} from "lucide-react";
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { useWatchedChange } from "./decision-chrome";
 import { planStepState, type PlanPresentation, type PlanStepState } from "./plan-state";
 import { StepDependencyNote } from "./proposal-preview/plan-preview";
@@ -349,9 +349,9 @@ function StepIcon({ state }: { state: PlanStepState }) {
 
   switch (state) {
     case "failed":
-      return <CircleAlertIcon key={state} className={cn(className, "text-danger")} />;
+      return <AlertCircleIcon key={state} className={cn(className, "text-danger")} />;
     case "done":
-      return <CircleCheckIcon key={state} className={cn(className, "text-success")} />;
+      return <CheckCircleIcon key={state} className={cn(className, "text-success")} />;
     case "running":
       return (
         <span className="flex size-3.5 shrink-0 items-center justify-center pt-px">
@@ -359,9 +359,9 @@ function StepIcon({ state }: { state: PlanStepState }) {
         </span>
       );
     case "simulated":
-      return <FlaskConicalIcon key={state} className={cn(className, "text-foreground-muted")} />;
+      return <Beaker02Icon key={state} className={cn(className, "text-foreground-muted")} />;
     default:
-      return <CircleSlashIcon key={state} className={cn(className, "text-foreground-subtle")} />;
+      return <SlashCircle01Icon key={state} className={cn(className, "text-foreground-subtle")} />;
   }
 }
 

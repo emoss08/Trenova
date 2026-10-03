@@ -1,5 +1,5 @@
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon } from "@trenova/shared/components/icons";
 import { KpiStripItem } from "./kpi/kpi-strip";
 import type { Tone } from "./kpi/tone";
 

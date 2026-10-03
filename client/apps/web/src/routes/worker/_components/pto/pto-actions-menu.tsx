@@ -27,7 +27,7 @@ import { formatRange } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { useMutation } from "@tanstack/react-query";
-import { CircleCheckIcon, EllipsisIcon } from "lucide-react";
+import { CheckCircleIcon, DotsHorizontalIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { canApplyPTOAction } from "./pto-actions";
@@ -92,7 +92,7 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
               className={className ?? "size-6"}
               aria-label={t("PTO actions")}
             >
-              <EllipsisIcon />
+              <DotsHorizontalIcon />
             </Button>
           }
         />
@@ -131,7 +131,7 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <CircleCheckIcon />
+              <CheckCircleIcon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Approve PTO request")}</AlertDialogTitle>
             <AlertDialogDescription>

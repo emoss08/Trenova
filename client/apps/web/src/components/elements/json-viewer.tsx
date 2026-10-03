@@ -4,7 +4,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -149,7 +149,7 @@ function JsonNode({
             aria-label={`Copy path ${path}`}
             className="text-muted-foreground hover:text-foreground ml-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
           >
-            {copied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
+            {copied ? <CheckIcon className="size-3" /> : <Copy01Icon className="size-3" />}
           </button>
         )}
       </div>
@@ -211,7 +211,7 @@ function JsonNode({
             aria-label={`Copy path ${path}`}
             className="text-muted-foreground hover:text-foreground ml-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
           >
-            {copied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
+            {copied ? <CheckIcon className="size-3" /> : <Copy01Icon className="size-3" />}
           </button>
         )}
       </div>

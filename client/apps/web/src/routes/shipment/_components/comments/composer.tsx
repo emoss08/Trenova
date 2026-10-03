@@ -16,7 +16,13 @@ import {
 } from "@trenova/shared/lib/comment-choices";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Document } from "@trenova/shared/types/document";
-import { EyeIcon, FlagIcon, PaperclipIcon, SendIcon, TagIcon } from "lucide-react";
+import {
+  EyeIcon,
+  Flag01Icon,
+  PaperclipIcon,
+  Send01Icon,
+  Tag01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -205,7 +211,7 @@ export function CommentComposer({
           <>
             <CommentOptionPill
               label={t("Type")}
-              icon={<TagIcon className="size-3" />}
+              icon={<Tag01Icon className="size-3" />}
               value={commentType}
               options={commentTypeChoices}
               onChange={setCommentType}
@@ -219,7 +225,7 @@ export function CommentComposer({
             />
             <CommentOptionPill
               label={t("Priority")}
-              icon={<FlagIcon className="size-3" />}
+              icon={<Flag01Icon className="size-3" />}
               value={priority}
               options={commentPriorityChoices}
               onChange={setPriority}
@@ -255,7 +261,7 @@ export function CommentComposer({
             </>
           ) : (
             <>
-              <SendIcon className="size-3.5" />
+              <Send01Icon className="size-3.5" />
               {!compact && t("Send")}
             </>
           )}

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 
 const GHOST_TILES = 4;
 const CHART_POINTS = "0,34 18,30 36,31 54,24 72,26 90,18 108,20 126,14 144,16 162,10 180,12";

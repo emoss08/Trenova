@@ -19,7 +19,7 @@ import { DistanceProfileService } from "@/services/distance-profile";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircleIcon, Loader2Icon, TrashIcon } from "lucide-react";
+import { CheckCircleBrokenIcon, SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./distance-profile-columns";
@@ -79,14 +79,14 @@ export default function DistanceProfileTable() {
     {
       id: "set-default",
       label: t("Set default"),
-      icon: CheckCircleIcon,
+      icon: CheckCircleBrokenIcon,
       disabled: (row) => row.original.isDefault || row.original.status !== "Active",
       onClick: handleSetDefault,
     },
     {
       id: "delete",
       label: t("Delete"),
-      icon: TrashIcon,
+      icon: Trash01Icon,
       variant: "destructive",
       disabled: (row) => row.original.isDefault,
       onClick: handleDelete,
@@ -116,7 +116,7 @@ export default function DistanceProfileTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <TrashIcon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete distance profile")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -136,7 +136,7 @@ export default function DistanceProfileTable() {
               }}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              {deleteMutation.isPending && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
               {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,13 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrentUserTime } from "@trenova/shared/lib/date";
-import { Dot } from "lucide-react";
+import { DotIcon } from "@trenova/shared/components/icons";
 import React from "react";
 
 export function SystemInformation() {
   return (
     <div className="font-table text-muted-foreground ml-auto flex items-center gap-1 px-3 text-center text-xs">
       <SystemStatus />
-      <Dot className="text-muted-foreground size-2.5" />
+      <DotIcon className="text-muted-foreground size-2.5" />
       <UserCurrentTime />
     </div>
   );

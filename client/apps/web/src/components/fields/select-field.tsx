@@ -6,7 +6,7 @@ import type {
   SelectOptionGroup,
   WarningProps,
 } from "@trenova/shared/types/fields";
-import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import React, { useMemo, useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -253,7 +253,7 @@ function SelectInputActions({
           className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
         >
           <span className="sr-only">{t("Clear")}</span>
-          <XIcon className="size-4" />
+          <XCloseIcon className="size-4" />
         </span>
       )}
       <ChevronDownIcon

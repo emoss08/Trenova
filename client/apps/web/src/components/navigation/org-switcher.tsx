@@ -15,7 +15,11 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { UserOrganization } from "@trenova/shared/types/organization";
 import { useQuery } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronSelectorVerticalIcon,
+  SpinnerIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 function OrgLogo({
@@ -35,7 +39,7 @@ function OrgLogo({
   if (isSwitching) {
     return (
       <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md">
-        <Loader2 className="size-3 animate-spin" />
+        <SpinnerIcon className="size-3 animate-spin" />
       </div>
     );
   }
@@ -186,7 +190,9 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
                 onClick={() => handleSwitch(org)}
                 disabled={switchMutation.isPending || org.isCurrent}
                 className={cn(org.isCurrent && "bg-accent")}
-                endContent={org.isCurrent ? <Check className="text-primary size-4" /> : undefined}
+                endContent={
+                  org.isCurrent ? <CheckIcon className="text-primary size-4" /> : undefined
+                }
               />
             ))}
           </DropdownMenuGroup>
@@ -211,7 +217,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
         }
       >
         {rowContent}
-        <ChevronsUpDown className="text-muted-foreground size-3.5 shrink-0" />
+        <ChevronSelectorVerticalIcon className="text-muted-foreground size-3.5 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="start" sideOffset={6} className="w-60">
         <DropdownMenuGroup>
@@ -224,7 +230,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
               onClick={() => handleSwitch(org)}
               disabled={switchMutation.isPending || org.isCurrent}
               className={cn(org.isCurrent && "bg-accent")}
-              endContent={org.isCurrent ? <Check className="text-primary size-4" /> : undefined}
+              endContent={org.isCurrent ? <CheckIcon className="text-primary size-4" /> : undefined}
             />
           ))}
         </DropdownMenuGroup>

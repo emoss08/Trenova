@@ -23,7 +23,11 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { formatFileSize } from "@trenova/shared/lib/utils";
-import { CircleAlertIcon, CircleCheckIcon, HourglassIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  Hourglass01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -258,7 +262,7 @@ function ExportTrailForm({
 
       {request.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {graphQLErrorMessage(request.error, t("The export could not be requested."))}
           </AlertDescription>
@@ -283,7 +287,7 @@ function ExportOutcomeNotice({ outcome }: { outcome: ExportOutcome }) {
   if (outcome.kind === "failed") {
     return (
       <Alert variant="destructive" size="sm">
-        <CircleAlertIcon />
+        <AlertCircleIcon />
         <AlertTitle>{t("The export failed")}</AlertTitle>
         <AlertDescription>{outcome.message}</AlertDescription>
       </Alert>
@@ -293,7 +297,7 @@ function ExportOutcomeNotice({ outcome }: { outcome: ExportOutcome }) {
   if (outcome.kind === "running") {
     return (
       <Alert variant="info" size="sm">
-        <HourglassIcon />
+        <Hourglass01Icon />
         <AlertTitle>{t("Running — you'll be notified")}</AlertTitle>
         <AlertDescription>
           {t(
@@ -308,7 +312,7 @@ function ExportOutcomeNotice({ outcome }: { outcome: ExportOutcome }) {
   return (
     <div className="flex flex-col gap-2">
       <Alert variant="success" size="sm">
-        <CircleCheckIcon />
+        <CheckCircleIcon />
         <AlertTitle>{t("The file is ready")}</AlertTitle>
         <AlertDescription>
           {t(
@@ -328,7 +332,7 @@ function ExportOutcomeNotice({ outcome }: { outcome: ExportOutcome }) {
       ) : null}
       {outcome.downloadError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>{outcome.downloadError}</AlertDescription>
         </Alert>
       ) : null}

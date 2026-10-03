@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { GripVerticalIcon } from "lucide-react";
+import { GripVerticalIcon } from "@trenova/shared/components/icons";
 import { Group, Panel, Separator } from "react-resizable-panels";
 
 function ResizablePanelGroup({ className, ...props }: React.ComponentProps<typeof Group>) {

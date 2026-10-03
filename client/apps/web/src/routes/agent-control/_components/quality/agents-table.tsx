@@ -8,7 +8,7 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ListChecksIcon, ThumbsDownIcon } from "lucide-react";
+import { ListChecksIcon, ThumbsDownIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { AgentQualityPanel } from "./agent-quality-panel";

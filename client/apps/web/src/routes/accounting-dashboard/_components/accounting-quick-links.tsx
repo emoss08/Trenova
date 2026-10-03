@@ -1,27 +1,27 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
-  BanknoteIcon,
-  BarChart3Icon,
-  BookOpenIcon,
+  BankNote01Icon,
+  BarChart07Icon,
+  BookOpen01Icon,
   ClipboardListIcon,
-  FileTextIcon,
-  HandCoinsIcon,
-  ScaleIcon,
-  Undo2Icon,
-  UsersIcon,
-} from "lucide-react";
+  CoinsHandIcon,
+  File06Icon,
+  FlipBackwardIcon,
+  Scales01Icon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 const QUICK_LINKS = [
-  { label: "Customer payments", to: "/accounting/ar/payments", icon: HandCoinsIcon },
-  { label: "AR aging", to: "/accounting/ar/aging", icon: UsersIcon },
+  { label: "Customer payments", to: "/accounting/ar/payments", icon: CoinsHandIcon },
+  { label: "AR aging", to: "/accounting/ar/aging", icon: Users01Icon },
   { label: "Open items", to: "/accounting/ar/open-items", icon: ClipboardListIcon },
-  { label: "Customer ledger", to: "/accounting/ar/customer-ledger", icon: BookOpenIcon },
-  { label: "Manual journals", to: "/accounting/manual-journals", icon: FileTextIcon },
-  { label: "Journal reversals", to: "/accounting/journal-reversals", icon: Undo2Icon },
-  { label: "Bank receipts", to: "/accounting/reconciliation/bank-receipts", icon: BanknoteIcon },
-  { label: "Trial balance", to: "/accounting/reports/trial-balance", icon: BarChart3Icon },
-  { label: "Balance sheet", to: "/accounting/reports/balance-sheet", icon: ScaleIcon },
+  { label: "Customer ledger", to: "/accounting/ar/customer-ledger", icon: BookOpen01Icon },
+  { label: "Manual journals", to: "/accounting/manual-journals", icon: File06Icon },
+  { label: "Journal reversals", to: "/accounting/journal-reversals", icon: FlipBackwardIcon },
+  { label: "Bank receipts", to: "/accounting/reconciliation/bank-receipts", icon: BankNote01Icon },
+  { label: "Trial balance", to: "/accounting/reports/trial-balance", icon: BarChart07Icon },
+  { label: "Balance sheet", to: "/accounting/reports/balance-sheet", icon: Scales01Icon },
 ] as const;
 
 export function AccountingQuickLinks() {

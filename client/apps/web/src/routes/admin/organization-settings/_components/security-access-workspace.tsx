@@ -6,11 +6,11 @@ import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import {
   ActivityIcon,
-  KeyRoundIcon,
-  ShieldCheckIcon,
-  type LucideIcon,
-  UsersRoundIcon,
-} from "lucide-react";
+  type IconComponent,
+  Key01Icon,
+  ShieldTickIcon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { Activity, useCallback, useMemo } from "react";
 import { ProvisioningTab } from "./provisioning-tab";
@@ -24,11 +24,11 @@ import { identityProviderQueryKey } from "./security-access/utils";
 const securityTabs: Array<{
   value: SecurityTabValue;
   label: string;
-  Icon: LucideIcon;
+  Icon: IconComponent;
 }> = [
-  { value: "sign-in", label: "Sign-in", Icon: KeyRoundIcon },
-  { value: "provisioning", label: "Provisioning", Icon: UsersRoundIcon },
-  { value: "policies", label: "Policies", Icon: ShieldCheckIcon },
+  { value: "sign-in", label: "Sign-in", Icon: Key01Icon },
+  { value: "provisioning", label: "Provisioning", Icon: Users01Icon },
+  { value: "policies", label: "Policies", Icon: ShieldTickIcon },
   { value: "activity", label: "Activity", Icon: ActivityIcon },
 ];
 

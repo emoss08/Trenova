@@ -6,7 +6,7 @@ import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
-import { CircleAlertIcon, SearchIcon } from "lucide-react";
+import { AlertCircleIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useId, useMemo, useState } from "react";
 import {
   SUBSET_FILTER_THRESHOLD,
@@ -104,7 +104,7 @@ export function RecordSubsetField({
             onChange={(event) => setFilter(event.target.value)}
             placeholder={t("Filter by name")}
             aria-label={t("Filter {0}", fieldName)}
-            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           />
         )}
         <span className="text-muted-foreground text-xs tabular-nums" aria-live="polite">
@@ -147,7 +147,7 @@ export function RecordSubsetField({
 
       {keptCount === 0 && (
         <Alert size="sm" variant="destructive">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t("Keep at least one, or reject the proposal instead.")}
           </AlertDescription>

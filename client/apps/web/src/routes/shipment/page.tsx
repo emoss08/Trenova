@@ -9,7 +9,7 @@ import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusIcon, RefreshCwIcon } from "lucide-react";
+import { PlusIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { createLoader, useQueryStates } from "nuqs";
 import { lazy, useCallback, useMemo, useState } from "react";
 import type { CommandCenterTableSummary } from "./_components/command-center/command-center-table";
@@ -123,7 +123,7 @@ export function ShipmentsPage() {
               isLoading={isRefreshing}
               loadingText={t("Refreshing")}
             >
-              <RefreshCwIcon className="size-3.5" />
+              <RefreshCw02Icon className="size-3.5" />
               {t("Refresh")}
             </Button>
             {canCreateShipment && (

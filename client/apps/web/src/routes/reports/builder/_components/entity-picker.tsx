@@ -2,17 +2,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalog, ReportCatalogEntity } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronRightIcon, SearchIcon } from "lucide-react";
+import { ChevronRightIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { CategoryTile } from "../../_components/report-card-chrome";
 
-function EntityTile({
-  entity,
-  onSelect,
-}: {
-  entity: ReportCatalogEntity;
-  onSelect: () => void;
-}) {
+function EntityTile({ entity, onSelect }: { entity: ReportCatalogEntity; onSelect: () => void }) {
   const t = useT();
 
   const accessibleFields = entity.fields.filter((field) => field.accessible).length;
@@ -84,7 +78,7 @@ export function EntityPicker({
               autoFocus
               className="pl-8"
               placeholder={t("Search entities...")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -100,9 +94,7 @@ export function EntityPicker({
           {grouped.map(([category, entities]) => {
             return (
               <div key={category}>
-                <p className="text-xs text-muted-foreground mb-2 font-medium">
-                  {category}
-                </p>
+                <p className="text-xs text-muted-foreground mb-2 font-medium">{category}</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {entities.map((entity) => (
                     <EntityTile

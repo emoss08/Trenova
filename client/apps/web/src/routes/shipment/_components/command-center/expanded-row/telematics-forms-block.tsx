@@ -12,7 +12,11 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, pluralize } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDownIcon, ClipboardListIcon, OctagonAlertIcon } from "lucide-react";
+import {
+  AlertOctagonIcon,
+  ChevronDownIcon,
+  ClipboardListIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 const STALE_TIME_MS = 60_000;
@@ -22,7 +26,7 @@ function FormsErrorState({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
-      <OctagonAlertIcon className="text-destructive mx-auto size-5" />
+      <AlertOctagonIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{t("Telematics forms could not be loaded")}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
         {t("Try again")}

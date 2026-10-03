@@ -6,7 +6,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { MailOpenIcon } from "lucide-react";
+import { Mail04Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { classificationLabel } from "./_components/classification";
@@ -335,7 +335,7 @@ function NothingOpen({ waiting }: { waiting: number }) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-      <MailOpenIcon className="text-foreground-subtle size-8" aria-hidden />
+      <Mail04Icon className="text-foreground-subtle size-8" aria-hidden />
       <p className="text-sm font-medium">
         {waiting > 0
           ? t(

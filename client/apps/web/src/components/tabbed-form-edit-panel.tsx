@@ -18,7 +18,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { Suspense, useCallback, useEffect, useRef, type LazyExoticComponent } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
@@ -301,7 +301,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                     />
                   }
                 >
-                  <XIcon className="size-4" />
+                  <XCloseIcon className="size-4" />
                   <span className="sr-only">{t("Close panel")}</span>
                 </Dialog.Close>
               </div>

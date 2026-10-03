@@ -21,12 +21,12 @@ import {
 } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  CircleCheckIcon,
-  CircleHelpIcon,
-  MoveRightIcon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from "lucide-react";
+  AlertTriangleIcon,
+  ArrowNarrowRightIcon,
+  CheckCircleIcon,
+  HelpCircleIcon,
+  XOctagonIcon,
+} from "@trenova/shared/components/icons";
 import {
   formatMiles,
   formatMinutesSpan,
@@ -39,25 +39,25 @@ import { ScoreBreakdown } from "./score-breakdown";
 
 const VERDICT_BANNER: Record<
   string,
-  { Icon: typeof CircleCheckIcon; panelClass: string; iconClass: string }
+  { Icon: typeof CheckCircleIcon; panelClass: string; iconClass: string }
 > = {
   feasible: {
-    Icon: CircleCheckIcon,
+    Icon: CheckCircleIcon,
     panelClass: "bg-success-subtle",
     iconClass: "text-success-foreground",
   },
   tight: {
-    Icon: TriangleAlertIcon,
+    Icon: AlertTriangleIcon,
     panelClass: "bg-warning-subtle",
     iconClass: "text-warning-foreground",
   },
   infeasible: {
-    Icon: OctagonXIcon,
+    Icon: XOctagonIcon,
     panelClass: "bg-danger-subtle",
     iconClass: "text-danger-foreground",
   },
   unknown: {
-    Icon: CircleHelpIcon,
+    Icon: HelpCircleIcon,
     panelClass: "bg-muted/60",
     iconClass: "text-muted-foreground",
   },
@@ -225,7 +225,7 @@ export function PreflightDialog({
               </div>
               <div aria-hidden className="text-muted-foreground/50 flex items-center">
                 <span className="w-6 border-t border-dashed border-current" />
-                <MoveRightIcon className="size-3.5" />
+                <ArrowNarrowRightIcon className="size-3.5" />
               </div>
               <div className="flex min-w-0 flex-col items-end gap-0.5 text-right">
                 <span className="truncate text-xs leading-none font-semibold">

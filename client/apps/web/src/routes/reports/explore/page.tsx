@@ -3,7 +3,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useCannedReports, useReportDefinition } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useSearchParams, useParams } from "react-router";
 import { ExploreView } from "./_components/explore-view";
 
@@ -19,7 +19,7 @@ function ExploreSkeleton() {
 function ExploreError({ error }: { error: unknown }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
-      <CircleAlertIcon className="text-destructive size-8" />
+      <AlertCircleIcon className="text-destructive size-8" />
       <p className="text-muted-foreground text-sm">
         {graphQLErrorMessage(error, "Failed to load this report")}
       </p>
@@ -30,7 +30,7 @@ function ExploreError({ error }: { error: unknown }) {
 function NotFound({ what }: { what: string }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
-      <CircleAlertIcon className="text-muted-foreground size-8" />
+      <AlertCircleIcon className="text-muted-foreground size-8" />
       <p className="text-muted-foreground text-sm">{what}</p>
     </div>
   );

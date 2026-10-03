@@ -43,13 +43,13 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import {
   AlertTriangleIcon,
   CheckIcon,
-  DownloadIcon,
-  FileTextIcon,
-  MailIcon,
+  Download01Icon,
+  File06Icon,
+  Mail01Icon,
   PackageCheckIcon,
   ReceiptTextIcon,
-  SendIcon,
-} from "lucide-react";
+  Send01Icon,
+} from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { lazy, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -171,7 +171,7 @@ export default function InvoiceDetailPane({
               </span>
             ) : isVoided ? null : (
               <Button size="sm" onClick={() => postInvoice(invoice.id)} disabled={isPosting}>
-                <SendIcon className="size-3.5" />
+                <Send01Icon className="size-3.5" />
                 {t("Post invoice")}
               </Button>
             )}
@@ -308,7 +308,7 @@ export default function InvoiceDetailPane({
                             billedShipmentCount,
                           )
                     }
-                    icons={[FileTextIcon, ReceiptTextIcon, PackageCheckIcon]}
+                    icons={[File06Icon, ReceiptTextIcon, PackageCheckIcon]}
                     className="max-w-xl border-none p-8 shadow-none"
                   />
                 </div>
@@ -433,7 +433,7 @@ function InvoiceDeliveryTab({
               <div className="flex flex-wrap items-center gap-2">
                 {hasGeneratedPDF ? (
                   <Button size="sm" variant="outline" onClick={() => void reprintPDF()}>
-                    <DownloadIcon className="size-3.5" />
+                    <Download01Icon className="size-3.5" />
                     {t("Reprint")}
                   </Button>
                 ) : null}
@@ -443,7 +443,7 @@ function InvoiceDeliveryTab({
                   onClick={() => generateMutation.mutate()}
                   disabled={generateMutation.isPending}
                 >
-                  <FileTextIcon className="size-3.5" />
+                  <File06Icon className="size-3.5" />
                   {pdfActionLabel}
                 </Button>
                 <Tooltip>
@@ -455,7 +455,7 @@ function InvoiceDeliveryTab({
                           onClick={() => sendMutation.mutate()}
                           disabled={!canSend || sendMutation.isPending}
                         >
-                          <MailIcon className="size-3.5" />
+                          <Mail01Icon className="size-3.5" />
                           {invoice.sendStatus === "Sent" ? t("Resend") : t("Send")}
                         </Button>
                       </span>

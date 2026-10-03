@@ -7,7 +7,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { CatalogFragment, CatalogOperation, CatalogSelection } from "@/types/graphql-catalog";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { FileCodeIcon } from "lucide-react";
+import { FileCode01Icon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useMemo } from "react";
 import { referencedTypeNames } from "./catalog";
@@ -84,11 +84,7 @@ function DocumentHeader({
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-xs text-muted-foreground/70 font-medium">
-      {children}
-    </span>
-  );
+  return <span className="text-xs text-muted-foreground/70 font-medium">{children}</span>;
 }
 
 function Chips({ values, onSelect }: { values: string[]; onSelect?: (name: string) => void }) {
@@ -123,7 +119,7 @@ function UsagesTab({ usages }: { usages: string[] }) {
   if (usages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FileCodeIcon className="text-muted-foreground size-6" />
+        <FileCode01Icon className="text-muted-foreground size-6" />
         <p className="mt-2 text-sm font-medium">{t("No references found")}</p>
         <p className="text-muted-foreground mt-1 text-xs">
           {t("This document is not referenced by any TypeScript source in")}{" "}
@@ -141,7 +137,7 @@ function UsagesTab({ usages }: { usages: string[] }) {
             key={usage}
             className="border-border/60 bg-muted/30 flex items-center gap-2 rounded-md border px-2.5 py-1.5"
           >
-            <FileCodeIcon className="text-muted-foreground size-3.5 shrink-0" />
+            <FileCode01Icon className="text-muted-foreground size-3.5 shrink-0" />
             <span className="truncate font-mono text-xs">{usage}</span>
           </li>
         ))}
@@ -359,7 +355,7 @@ export function DetailPanel({
     <div className="relative flex h-full flex-col items-center justify-center overflow-hidden text-center">
       <div className="text-border/70 pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] [background-size:14px_14px]" />
       <div className="relative flex flex-col items-center">
-        <FileCodeIcon className="text-muted-foreground size-8" />
+        <FileCode01Icon className="text-muted-foreground size-8" />
         <p className="mt-3 text-sm font-medium">{t("Select an operation")}</p>
         <p className="text-muted-foreground mt-1 max-w-xs text-xs">
           {t("Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.")}

@@ -8,9 +8,9 @@ import {
   AlertTriangleIcon,
   CheckIcon,
   ClockIcon,
-  FileWarningIcon,
-  type LucideIcon,
-} from "lucide-react";
+  FileAlertIcon,
+  type IconComponent,
+} from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useExceptionShipments } from "./use-work-queues";
 
@@ -30,10 +30,10 @@ type DerivedException = {
   actionLabel: string;
 };
 
-const KIND_ICON: Record<ExceptionKind, LucideIcon> = {
+const KIND_ICON: Record<ExceptionKind, IconComponent> = {
   "eta-slip": AlertTriangleIcon,
   detention: ClockIcon,
-  "doc-issue": FileWarningIcon,
+  "doc-issue": FileAlertIcon,
 };
 
 function severityFor(s: Shipment): Severity {

@@ -3,7 +3,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { useUpdateStore } from "@/stores/update-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ExternalLinkIcon, XIcon } from "lucide-react";
+import { LinkExternal01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 
 export function LatestChange() {
@@ -57,7 +57,7 @@ export function LatestChange() {
           size="sm"
           variant="link"
         >
-          <ExternalLinkIcon className="size-3" />
+          <LinkExternal01Icon className="size-3" />
         </Button>
       )}
       <Button
@@ -66,7 +66,7 @@ export function LatestChange() {
         size="icon-sm"
         variant="ghost"
       >
-        <XIcon className="text-muted-foreground size-3.5" />
+        <XCloseIcon className="text-muted-foreground size-3.5" />
       </Button>
     </div>
   );

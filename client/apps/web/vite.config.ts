@@ -180,7 +180,7 @@ export default defineConfig({
             { name: "zod", test: /zod/ },
             { name: "lodash", test: /lodash/ },
             { name: "toast", test: /sonner/ },
-            { name: "icons", test: /lucide-react/ },
+            { name: "icons", test: /@untitledui[\\/]icons/ },
             { name: "pdfjs", test: /pdfjs-dist/ },
             // Must precede phone-utils: `react-phone-number-input/flags` is
             // the barrel over the flag components and is imported lazily, so it

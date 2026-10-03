@@ -32,7 +32,7 @@ import {
 } from "@trenova/shared/lib/simulation";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import type { RateAgreement, RateSimulation } from "@trenova/shared/types/rate";
-import { ArrowRightIcon, FlaskConicalIcon, PlayIcon } from "lucide-react";
+import { ArrowRightIcon, Beaker02Icon, PlayIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
@@ -219,7 +219,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         <SimulationReading simulation={simulation} />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-          <FlaskConicalIcon className="text-muted-foreground mb-3 size-8" />
+          <Beaker02Icon className="text-muted-foreground mb-3 size-8" />
           <p className="text-sm font-medium">{t("No simulation has run yet")}</p>
           <p className="text-muted-foreground mt-1 max-w-sm text-xs">
             {t(
@@ -365,11 +365,7 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
               value={String(summary.increasedCount)}
               tone="success"
             />
-            <StatTile
-              label={t("Decreased")}
-              value={String(summary.decreasedCount)}
-              tone="danger"
-            />
+            <StatTile label={t("Decreased")} value={String(summary.decreasedCount)} tone="danger" />
             <StatTile
               label={t("Errors")}
               value={String(summary.errorCount)}

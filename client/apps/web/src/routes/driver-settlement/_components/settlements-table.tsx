@@ -15,7 +15,7 @@ import type { BulkSettlementActionType } from "@trenova/graphql/generated/graphq
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon, CircleDollarSignIcon } from "lucide-react";
+import { CheckCircleIcon, CurrencyDollarCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./settlement-columns";
@@ -96,7 +96,7 @@ export default function SettlementsTable() {
         type: "select",
         label: t("Lifecycle action"),
         loadingLabel: t("Running..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: settlementLifecycleChoices,
         onSelect: (rows, value) => runLifecycleAction(rows, value as BulkSettlementActionType),
         clearSelectionOnSuccess: true,
@@ -104,7 +104,7 @@ export default function SettlementsTable() {
       {
         id: "mark-paid",
         label: t("Mark paid"),
-        icon: CircleDollarSignIcon,
+        icon: CurrencyDollarCircleIcon,
         onClick: openMarkPaidDialog,
       },
     ],

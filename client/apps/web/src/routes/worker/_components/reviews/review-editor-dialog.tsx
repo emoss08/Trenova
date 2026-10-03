@@ -34,7 +34,7 @@ import {
   type CreateReviewFormValues,
   type ReviewDraftFormValues,
 } from "@trenova/shared/types/performance-review";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import {
   FormProvider,
@@ -516,7 +516,7 @@ function GoalsSection() {
             aria-label={`Remove goal ${index + 1}`}
             onClick={() => goals.remove(index)}
           >
-            <Trash2Icon className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         </div>
       ))}

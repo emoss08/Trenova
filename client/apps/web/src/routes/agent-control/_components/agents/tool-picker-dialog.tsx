@@ -15,7 +15,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
-import { PencilLineIcon, RotateCcwIcon, SearchIcon } from "lucide-react";
+import { PencilLineIcon, RefreshCcw01Icon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { tierWithin } from "./agent-form-schema";
 import {
@@ -144,7 +144,7 @@ export function ToolPickerDialog({
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("Search tools")}
               className="h-8"
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               aria-label={t("Search tools")}
             />
             <span className="text-muted-foreground text-xs tabular-nums">
@@ -279,7 +279,7 @@ function ToolRow({
           ) : null}
           {tool.kind === "action" && tool.reversible && (
             <span className="text-muted-foreground inline-flex items-center gap-0.5 text-2xs">
-              <RotateCcwIcon className="size-2.5" />
+              <RefreshCcw01Icon className="size-2.5" />
               {t("Reversible")}
             </span>
           )}

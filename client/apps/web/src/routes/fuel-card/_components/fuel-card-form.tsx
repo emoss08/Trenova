@@ -12,7 +12,7 @@ import { fuelCardProviderChoices, fuelCardStatusChoices } from "@/lib/choices";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { FuelCardFormValues } from "@trenova/shared/types/fuel-card";
-import { BanIcon } from "lucide-react";
+import { SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useFormContext } from "react-hook-form";
 
 const EDITABLE_STATUS_OPTIONS = fuelCardStatusChoices.filter(
@@ -35,7 +35,7 @@ export function FuelCardForm({ isEdit, cancelled = false, cancelReason }: FuelCa
     <div className="flex flex-col gap-6">
       {locked ? (
         <Alert>
-          <BanIcon className="size-4" />
+          <SlashCircle01Icon className="size-4" />
           <AlertTitle>{t("This card is cancelled")}</AlertTitle>
           <AlertDescription>
             {t(

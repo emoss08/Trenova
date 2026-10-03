@@ -30,7 +30,7 @@ import {
   type PermitRequirement,
   type WaiveRequirementInput,
 } from "@trenova/shared/types/permit";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -321,7 +321,7 @@ export function PermitWaiveDialog({
         </DialogHeader>
 
         <Alert variant="warning" size="sm">
-          <TriangleAlertIcon />
+          <AlertTriangleIcon />
           <AlertDescription>
             {t(
               "Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.",

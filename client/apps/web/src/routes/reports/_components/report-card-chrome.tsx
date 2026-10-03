@@ -2,34 +2,34 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
 import {
-  FileChartColumnIcon,
+  File07Icon,
+  type IconComponent,
   ReceiptTextIcon,
-  ShieldCheckIcon,
-  TruckIcon,
-  WrenchIcon,
-  type LucideIcon,
-} from "lucide-react";
+  ShieldTickIcon,
+  Tool01Icon,
+  Truck01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 
 type CategoryChrome = {
-  icon: LucideIcon;
+  icon: IconComponent;
   tile: string;
 };
 
 const CATEGORY_CHROME: Record<string, CategoryChrome> = {
-  operations: { icon: TruckIcon, tile: "bg-info-subtle text-info-foreground" },
+  operations: { icon: Truck01Icon, tile: "bg-info-subtle text-info-foreground" },
   billing: {
     icon: ReceiptTextIcon,
     tile: "bg-success-subtle text-success-foreground",
   },
-  compliance: { icon: ShieldCheckIcon, tile: "bg-warning-subtle text-warning-foreground" },
-  fleet: { icon: WrenchIcon, tile: "bg-accent-violet/10 text-accent-violet-on-subtle" },
+  compliance: { icon: ShieldTickIcon, tile: "bg-warning-subtle text-warning-foreground" },
+  fleet: { icon: Tool01Icon, tile: "bg-accent-violet/10 text-accent-violet-on-subtle" },
 };
 
 const DEFAULT_CHROME: CategoryChrome = {
-  icon: FileChartColumnIcon,
+  icon: File07Icon,
   tile: "bg-muted text-muted-foreground",
 };
 
@@ -105,7 +105,7 @@ export function ReportGridEmptyState({
   description,
   action,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   description: string;
   action?: ReactNode;
@@ -291,7 +291,7 @@ export function ReportGridEmpty({
       action={
         onClearFilters ? (
           <Button variant="outline" size="sm" onClick={onClearFilters}>
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
             {t("Clear filters")}
           </Button>
         ) : (

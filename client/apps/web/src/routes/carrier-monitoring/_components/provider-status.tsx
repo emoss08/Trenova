@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
-import { PlayIcon, SettingsIcon } from "lucide-react";
+import { PlayIcon, Settings01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { integrationSettingsPath, monitoringHealth } from "./monitoring-health";
@@ -116,7 +116,7 @@ export function ProviderStatus({ status, canManage }: ProviderStatusProps) {
         nativeButton={false}
         render={<Link to={integrationSettingsPath(status.provider.provider)} />}
       >
-        <SettingsIcon className="size-3.5" />
+        <Settings01Icon className="size-3.5" />
         {t("Settings")}
       </Button>
     </div>

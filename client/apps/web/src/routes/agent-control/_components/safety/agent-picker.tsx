@@ -3,7 +3,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 const NO_RECENT: readonly string[] = [];

@@ -12,16 +12,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  ArrowDownUpIcon,
+  AlertTriangleIcon,
   CalendarIcon,
+  ChevronCollapseVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronsDownUpIcon,
-  ChevronsUpDownIcon,
-  Rows2Icon,
-  Rows3Icon,
-  TriangleAlertIcon,
-} from "lucide-react";
+  ChevronSelectorVerticalIcon,
+  Rows02Icon,
+  Rows03Icon,
+  SwitchVertical01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { TimelineDensity } from "./constants";
 import { formatRangeLabel, isTodayAnchor, ZOOM_OPTIONS } from "./time-scale";
@@ -179,7 +179,7 @@ export function TimelineToolbar({
               />
             }
           >
-            <ArrowDownUpIcon className={cn("size-3.5", sort !== "name" && "text-brand")} />
+            <SwitchVertical01Icon className={cn("size-3.5", sort !== "name" && "text-brand")} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-40">
             <DropdownMenuRadioGroup
@@ -203,7 +203,7 @@ export function TimelineToolbar({
           title={isCompact ? "Switch to comfortable rows" : "Switch to compact rows"}
           onClick={() => onDensityChange(isCompact ? "comfortable" : "compact")}
         >
-          {isCompact ? <Rows2Icon className="size-3.5" /> : <Rows3Icon className="size-3.5" />}
+          {isCompact ? <Rows02Icon className="size-3.5" /> : <Rows03Icon className="size-3.5" />}
         </Button>
 
         <Button
@@ -215,9 +215,9 @@ export function TimelineToolbar({
           onClick={onToggleCollapseAll}
         >
           {allCollapsed ? (
-            <ChevronsUpDownIcon className="size-3.5" />
+            <ChevronSelectorVerticalIcon className="size-3.5" />
           ) : (
-            <ChevronsDownUpIcon className="size-3.5" />
+            <ChevronCollapseVerticalIcon className="size-3.5" />
           )}
         </Button>
       </div>
@@ -234,7 +234,7 @@ export function TimelineToolbar({
             className="border-warning-border bg-warning-subtle text-warning inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-2xs"
             title={t("Narrow the window or filters to see everything at once.")}
           >
-            <TriangleAlertIcon className="size-3" />
+            <AlertTriangleIcon className="size-3" />
             {t("Showing first {0} of {1} shipments", shipmentCount, totalCount)}
           </span>
         )}

@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
 import { EASE_SETTLE } from "@/lib/motion";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Fragment, useMemo } from "react";
 import {
@@ -138,7 +138,7 @@ export function StreamingTurn({
       {turn.status === "error" && (
         <AssistantTurn>
           <Alert variant="destructive" size="sm">
-            <CircleAlertIcon className="size-4" />
+            <AlertCircleIcon className="size-4" />
             <AlertTitle>{t("The assistant could not finish")}</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
               <p>{turn.error}</p>

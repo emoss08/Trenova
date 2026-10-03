@@ -1,7 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { CreditCardIcon, MailIcon, RadarIcon, UserIcon } from "lucide-react";
+import {
+  CreditCard01Icon,
+  Mail01Icon,
+  RadarIcon,
+  User01Icon,
+} from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { CustomerBillingProfileForm } from "./customer-billing-profile-form";
 import { CustomerBrokerIntelligence } from "./customer-broker-intelligence";
@@ -26,15 +31,15 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
       <div className="border-border border-b px-4">
         <TabsList variant="underline">
           <TabsTab value="general">
-            <UserIcon className="size-4" />
+            <User01Icon className="size-4" />
             {t("General")}
           </TabsTab>
           <TabsTab value="billing">
-            <CreditCardIcon className="size-4" />
+            <CreditCard01Icon className="size-4" />
             {t("Billing profile")}
           </TabsTab>
           <TabsTab value="email">
-            <MailIcon className="size-4" />
+            <Mail01Icon className="size-4" />
             {t("Email profile")}
           </TabsTab>
           {customerId ? (

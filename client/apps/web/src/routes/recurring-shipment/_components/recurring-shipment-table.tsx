@@ -8,7 +8,7 @@ import { apiService } from "@/services/api";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { HistoryIcon, PauseIcon, ZapIcon } from "lucide-react";
+import { ClockRewindIcon, PauseIcon, ZapIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./recurring-shipment-columns";
@@ -83,7 +83,7 @@ export default function RecurringShipmentTable() {
       {
         id: "view-runs",
         label: t("View history"),
-        icon: HistoryIcon,
+        icon: ClockRewindIcon,
         onClick: (row) => {
           setRunsSeries(row.original);
           setRunsOpen(true);

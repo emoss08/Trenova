@@ -27,7 +27,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { SOURCE_LABEL, estimateExceedsBudget } from "./retrieval-model";
 
@@ -95,7 +95,7 @@ function ReindexConfirm({
 
       {estimate.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>{t("The cost estimate could not be loaded.")}</AlertDescription>
         </Alert>
       ) : estimate.data ? (
@@ -182,7 +182,7 @@ function EstimateDetails({ estimate }: { estimate: AIRetrievalReindexEstimate })
       ) : null}
       {estimateExceedsBudget(estimate) ? (
         <Alert variant="warning" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t(
               "This could cost more than is left of this month's budget. Indexing pauses when the budget is spent and resumes next month or when the budget is raised.",

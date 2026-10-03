@@ -18,7 +18,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { getEndOfDay } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { HandCoinsIcon, XIcon } from "lucide-react";
+import { CoinsHandIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -134,7 +134,7 @@ export function AROpenItemsPage() {
             size="sm"
             onClick={() => void navigate("/accounting/ar/payments?panelType=create")}
           >
-            <HandCoinsIcon className="size-4" />
+            <CoinsHandIcon className="size-4" />
             {t("Record payment")}
           </Button>
         ) : undefined,
@@ -242,7 +242,7 @@ export function AROpenItemsPage() {
                   onClick={() => setRowSelection({})}
                   className="h-7 text-xs"
                 >
-                  <XIcon className="size-3.5" />
+                  <XCloseIcon className="size-3.5" />
                   {t("Clear")}
                 </Button>
                 {canRecordPayment ? (
@@ -252,7 +252,7 @@ export function AROpenItemsPage() {
                     disabled={!selection.singleCustomerId}
                     className="h-7 text-xs"
                   >
-                    <HandCoinsIcon className="size-3.5" />
+                    <CoinsHandIcon className="size-3.5" />
                     {t("Apply payment")}
                   </Button>
                 ) : null}

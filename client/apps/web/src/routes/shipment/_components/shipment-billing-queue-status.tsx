@@ -5,7 +5,7 @@ import {
 } from "@trenova/shared/components/status-badge";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 export function ShipmentBillingQueueBadge({ status }: { status?: BillingQueueStatus | null }) {
@@ -34,7 +34,7 @@ export function ShipmentBillingQueueStatus({ shipment }: { shipment: Shipment })
         className="text-2xs text-primary inline-flex items-center gap-0.5 underline-offset-4 hover:underline"
       >
         {t("View in billing queue")}
-        <ExternalLinkIcon className="size-3" />
+        <LinkExternal01Icon className="size-3" />
       </Link>
     </div>
   );

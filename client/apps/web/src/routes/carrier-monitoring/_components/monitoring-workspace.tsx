@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components
 import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlugZapIcon, RefreshCwIcon } from "lucide-react";
+import { PlugIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, type ReactNode } from "react";
 import { Link } from "react-router";
@@ -230,7 +230,7 @@ function MonitoringBody({ status, canUpdate, canManage }: MonitoringBodyProps) {
               nativeButton={false}
               render={<Link to={CARRIER_INTEL_INTEGRATIONS_PATH} />}
             >
-              <PlugZapIcon className="size-3.5" />
+              <PlugIcon className="size-3.5" />
               {t("Connect a provider")}
             </Button>
           }
@@ -346,7 +346,7 @@ export function MonitoringWorkspace() {
             className="h-8 text-xs"
             onClick={() => void statusQuery.refetch()}
           >
-            <RefreshCwIcon className="size-3.5" />
+            <RefreshCw02Icon className="size-3.5" />
             {t("Retry")}
           </Button>
         }
@@ -367,7 +367,7 @@ export function MonitoringWorkspace() {
             nativeButton={false}
             render={<Link to={CARRIER_INTEL_INTEGRATIONS_PATH} />}
           >
-            <PlugZapIcon className="size-3.5" />
+            <PlugIcon className="size-3.5" />
             {t("Open integrations")}
           </Button>
         }

@@ -3,14 +3,14 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CalendarClockIcon,
-  CircleSlashIcon,
-  LockIcon,
+  type IconComponent,
+  Lock01Icon,
   PowerOffIcon,
-  type LucideIcon,
-} from "lucide-react";
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { FloatingSlot } from "./floating-slot";
 
-type Notice = { icon: LucideIcon; text: string };
+type Notice = { icon: IconComponent; text: string };
 
 /**
  * What the notice says for each reason the server gives. A thread served
@@ -30,13 +30,13 @@ export function readOnlyThreadNotice(
       };
     case "NoAccess":
       return {
-        icon: LockIcon,
+        icon: Lock01Icon,
         text: t(
           "You no longer have access to this agent. An administrator can give one of your roles access to it.",
         ),
       };
     case "AgentDeleted":
-      return { icon: CircleSlashIcon, text: t("This agent was removed.") };
+      return { icon: SlashCircle01Icon, text: t("This agent was removed.") };
     case "AgentNotConversational":
       return {
         icon: CalendarClockIcon,
@@ -45,7 +45,7 @@ export function readOnlyThreadNotice(
         ),
       };
     default:
-      return { icon: LockIcon, text: t("This conversation can no longer continue.") };
+      return { icon: Lock01Icon, text: t("This conversation can no longer continue.") };
   }
 }
 

@@ -5,8 +5,6 @@ import type {
   AssistantArtifact,
   AssistantArtifactEvent,
   AssistantPageContext,
-  
-  
   AssistantThread,
 } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -14,7 +12,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { EASE_SETTLE } from "@/lib/motion";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
   useCallback,
@@ -42,10 +40,7 @@ import {
   RefusalNotice,
   UserTurn,
 } from "./message-items";
-import {
-  
-  type ModelSwitchNotice as ModelSwitchNoticeValue,
-} from "./model-switch";
+import { type ModelSwitchNotice as ModelSwitchNoticeValue } from "./model-switch";
 import { ReadOnlyThreadNotice } from "./read-only-thread-notice";
 import { StreamingTurn } from "./streaming-turn";
 import { type Suggestion } from "./suggestions";
@@ -80,7 +75,6 @@ const COMPOSER_FADE_COMPACT = 24;
  */
 const OPENING_STAGGER_ROWS = 6;
 const OPENING_STAGGER_MS = 30;
-
 
 export function MessageThread({
   thread,
@@ -155,7 +149,7 @@ export function MessageThread({
   });
   const {
     t,
-    
+
     dismissSuggestion,
     draft,
     onDraftChange,
@@ -165,8 +159,7 @@ export function MessageThread({
     providers,
     providerId,
     setProviderId,
-    
-    
+
     switchNotice,
     plansByMessage,
     loosePlans,
@@ -189,20 +182,20 @@ export function MessageThread({
     turn,
     isActive,
     send,
-    
+
     stop,
     dismiss,
     retry,
     artifactsByMessage,
     answer,
     showDock,
-    
+
     block,
     isEmpty,
     suggestions,
     composerContext,
     followUpDecision,
-    
+
     canTell,
   } = model;
 
@@ -662,7 +655,7 @@ function ModelSwitchNotice({ notice }: { notice: ModelSwitchNoticeValue }) {
 
   return (
     <div className="text-muted-foreground flex items-center gap-2 px-1 text-xs">
-      <InfoIcon className="text-info size-3.5 shrink-0" />
+      <InfoCircleIcon className="text-info size-3.5 shrink-0" />
       <span>
         {notice.to
           ? t(

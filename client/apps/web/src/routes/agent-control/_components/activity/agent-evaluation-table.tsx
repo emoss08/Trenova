@@ -7,7 +7,7 @@ import {
 } from "@/lib/graphql/agent-evaluations";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { EyeIcon } from "lucide-react";
+import { EyeIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { getEvaluationColumns } from "./agent-evaluation-columns";
 import { EvaluationDetailDialog } from "./evaluation-detail-dialog";

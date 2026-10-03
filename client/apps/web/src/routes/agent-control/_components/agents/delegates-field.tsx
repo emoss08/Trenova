@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useController, useFormContext } from "react-hook-form";
 import type { AgentFormValues } from "./agent-form-schema";
@@ -230,7 +230,7 @@ function DelegateRow({
           className="text-muted-foreground hover:text-foreground shrink-0"
           onClick={onRemove}
         >
-          <XIcon className="size-3" />
+          <XCloseIcon className="size-3" />
         </Button>
       </div>
       {error && (

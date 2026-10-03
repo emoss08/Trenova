@@ -10,7 +10,12 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { serverBaseUrl } from "@trenova/shared/lib/api-url";
-import { CheckIcon, CopyIcon, ExternalLinkIcon, WrenchIcon } from "lucide-react";
+import {
+  CheckIcon,
+  Copy01Icon,
+  LinkExternal01Icon,
+  Tool01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 /**
@@ -27,7 +32,7 @@ export function CaptureDevelopmentInstallPanel() {
   return (
     <SectionPanel
       title={t("Install a development build")}
-      icon={<WrenchIcon aria-hidden />}
+      icon={<Tool01Icon aria-hidden />}
       hint={t("Development server")}
     >
       <ol className="flex list-decimal flex-col gap-3 py-3 pr-3 pl-8 text-sm">
@@ -45,7 +50,7 @@ export function CaptureDevelopmentInstallPanel() {
               className="ui-focus-ring text-brand inline-flex items-center gap-1 hover:underline"
             >
               {t("Trenova Capture builds")}
-              <ExternalLinkIcon className="size-3.5" aria-hidden />
+              <LinkExternal01Icon className="size-3.5" aria-hidden />
             </a>
             <span className="text-foreground-muted inline-flex items-center gap-1.5 text-xs">
               {t("Artifact")}
@@ -76,7 +81,7 @@ export function CaptureDevelopmentInstallPanel() {
               {isCopied ? (
                 <CheckIcon className="size-3.5" aria-hidden />
               ) : (
-                <CopyIcon className="size-3.5" aria-hidden />
+                <Copy01Icon className="size-3.5" aria-hidden />
               )}
             </Button>
           </div>

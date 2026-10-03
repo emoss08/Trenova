@@ -8,7 +8,7 @@ import type {
   StandardTemplate,
 } from "@trenova/shared/types/formula-template";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CopyIcon, LayoutTemplateIcon } from "lucide-react";
+import { Copy01Icon, LayoutAlt01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -62,7 +62,7 @@ export function StarterTemplatePicker() {
     <div className="bg-muted/30 space-y-3 rounded-lg border p-3">
       <div className="space-y-2">
         <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-          <LayoutTemplateIcon className="size-3" />
+          <LayoutAlt01Icon className="size-3" />
           {t("Start from a standard")}
         </div>
         {standards.isPending ? (
@@ -103,7 +103,7 @@ export function StarterTemplatePicker() {
 
       <div className="space-y-2 border-t pt-3">
         <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-          <CopyIcon className="size-3" />
+          <Copy01Icon className="size-3" />
           {t("Or copy an existing template")}
         </div>
         <ControlledFormulaTemplateAutocompleteField

@@ -3,7 +3,11 @@ import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleto
 import { Button } from "@trenova/shared/components/ui/button";
 import { GOOGLE_MAPS_ERROR_MESSAGE } from "@trenova/shared/lib/constants";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
-import { MapPinOffIcon, SettingsIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  MarkerPinOffIcon,
+  Settings01Icon,
+} from "@trenova/shared/components/icons";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useNavigate } from "react-router";
@@ -52,9 +56,9 @@ function MapErrorFallback({ error }: { error: Error }) {
         <div className="flex max-w-sm flex-col items-center gap-3 text-center">
           <div className="border-border bg-background flex size-10 items-center justify-center rounded-lg border">
             {isConfigError ? (
-              <MapPinOffIcon className="text-muted-foreground size-5" />
+              <MarkerPinOffIcon className="text-muted-foreground size-5" />
             ) : (
-              <TriangleAlertIcon className="text-muted-foreground size-5" />
+              <AlertTriangleIcon className="text-muted-foreground size-5" />
             )}
           </div>
           <div className="space-y-1">
@@ -73,7 +77,7 @@ function MapErrorFallback({ error }: { error: Error }) {
           </div>
           {isConfigError && (
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/integrations")}>
-              <SettingsIcon className="size-3.5" />
+              <Settings01Icon className="size-3.5" />
               {t("Configure integration")}
             </Button>
           )}

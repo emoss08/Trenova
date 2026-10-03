@@ -24,10 +24,10 @@ import {
   CheckIcon,
   ChevronDownIcon,
   MinusIcon,
-  SearchIcon,
+  SearchLgIcon,
   SearchXIcon,
-  XIcon,
-} from "lucide-react";
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 
@@ -212,7 +212,7 @@ export function RolePermissionMatrix({
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Input
-            leftElement={<SearchIcon className="text-muted-foreground size-4" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-4" />}
             placeholder={t("Search resources...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -225,7 +225,7 @@ export function RolePermissionMatrix({
                   onClick={() => setSearchQuery("")}
                   className="text-muted-foreground hover:text-foreground cursor-pointer"
                 >
-                  <XIcon className="size-3.5" />
+                  <XCloseIcon className="size-3.5" />
                 </Button>
               )
             }

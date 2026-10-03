@@ -20,7 +20,12 @@ import { apiService } from "@/services/api";
 import type { RuleSet } from "@/types/document-parsing-rule";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon, FileTextIcon, PlusIcon, SearchIcon } from "lucide-react";
+import {
+  CheckCircleIcon,
+  File06Icon,
+  PlusIcon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -62,7 +67,7 @@ export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
     <div className="flex h-full flex-col">
       <div className="space-y-2 border-b p-3">
         <Input
-          leftElement={<SearchIcon className="text-muted-foreground size-4" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-4" />}
           placeholder={t("Search rule sets...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -147,7 +152,7 @@ function RuleSetCard({
                 <TooltipTrigger
                   render={
                     <span className="inline-flex shrink-0">
-                      <CircleCheckIcon className="size-3.5 text-success-foreground" />
+                      <CheckCircleIcon className="size-3.5 text-success-foreground" />
                     </span>
                   }
                 />
@@ -195,7 +200,7 @@ function RuleSetEmptyState({ onCreateClick }: { onCreateClick?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
       <div className="bg-muted flex size-10 items-center justify-center rounded-full">
-        <FileTextIcon className="text-muted-foreground size-5" />
+        <File06Icon className="text-muted-foreground size-5" />
       </div>
       <div className="space-y-1">
         <p className="text-sm font-medium">{t("No rule sets yet")}</p>

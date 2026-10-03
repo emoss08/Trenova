@@ -46,7 +46,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/compon
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { MoreHorizontalIcon, SaveIcon, SearchIcon, SettingsIcon, TrashIcon } from "lucide-react";
+import {
+  DotsHorizontalIcon,
+  Save01Icon,
+  SearchLgIcon,
+  Settings01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { expect, userEvent, within } from "storybook/test";
 
@@ -76,7 +82,7 @@ function StatefulControls() {
   return (
     <>
       <Section title="Inputs">
-        <Input className="max-w-64" placeholder="Search shipments" leftElement={<SearchIcon />} />
+        <Input className="max-w-64" placeholder="Search shipments" leftElement={<SearchLgIcon />} />
         <Textarea className="max-w-80" placeholder="Add a carrier note" minRows={3} />
         <Select
           value={status}
@@ -101,12 +107,12 @@ function StatefulControls() {
 
       <Section title="Buttons and Badges">
         <Button>
-          <SaveIcon data-icon="inline-start" />
+          <Save01Icon data-icon="inline-start" />
           Save
         </Button>
         <Button variant="outline">Cancel</Button>
         <Button variant="destructive">
-          <TrashIcon data-icon="inline-start" />
+          <Trash01Icon data-icon="inline-start" />
           Delete
         </Button>
         <Button isLoading loadingText="Saving" />
@@ -163,7 +169,7 @@ function OverlayControls() {
         <DropdownMenuTrigger
           render={
             <Button variant="outline">
-              <MoreHorizontalIcon data-icon="inline-start" />
+              <DotsHorizontalIcon data-icon="inline-start" />
               Actions
             </Button>
           }
@@ -174,7 +180,7 @@ function OverlayControls() {
             <DropdownMenuItem title="Open" description="View shipment details" />
             <DropdownMenuItem
               title="Configure"
-              startContent={<SettingsIcon />}
+              startContent={<Settings01Icon />}
               endContent={<DropdownMenuShortcut>⌘K</DropdownMenuShortcut>}
             />
           </DropdownMenuGroup>

@@ -6,7 +6,7 @@ import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatPtoDays, ptoTypeMeta } from "@trenova/shared/lib/pto";
 import { cn } from "@trenova/shared/lib/utils";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
-import { CalendarRangeIcon, ClockIcon, WalletIcon } from "lucide-react";
+import { CalendarRangeIcon, ClockIcon, Wallet02Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { PTOActionsMenu } from "../pto-actions-menu";
 import { ptoDaysOf, ptoDecision } from "../pto-columns";
@@ -73,7 +73,7 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
           </span>
         </Fact>
         {pto.balanceAfterDays != null ? (
-          <Fact icon={WalletIcon} label={t("Balance after")}>
+          <Fact icon={Wallet02Icon} label={t("Balance after")}>
             <span>{t("Balance after")}</span>
             <span className="ml-auto tabular-nums">
               {t("{0} days", formatPtoDays(pto.balanceAfterDays))}

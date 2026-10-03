@@ -10,7 +10,12 @@ import { formatRange, fromUserWallClock, toUserWallClock } from "@trenova/shared
 import { fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 import { cn } from "@trenova/shared/lib/utils";
 import { endOfDay, startOfDay } from "date-fns";
-import { BotIcon, CalendarIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import {
+  BotIcon,
+  CalendarIcon,
+  ChevronDownIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useId, useState, type ReactNode } from "react";
 import type { DateRange } from "react-day-picker";
 import {
@@ -254,7 +259,7 @@ function AuditAgentPicker({
           className={cn(fieldTriggerClass, "h-8 rounded-l-none border-l-0 px-2")}
           onClick={() => onChange(null)}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
         </Button>
       ) : null}
     </div>

@@ -16,7 +16,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import type { ImportTemplatesResponse } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileUpIcon, UploadIcon } from "lucide-react";
+import { FileUploadIcon, Upload01Icon } from "@trenova/shared/components/icons";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -146,7 +146,7 @@ export function ImportTemplateDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileUpIcon className="size-4" />
+            <FileUploadIcon className="size-4" />
             {t("Import templates")}
           </DialogTitle>
           <DialogDescription>
@@ -170,7 +170,7 @@ export function ImportTemplateDialog({
             onClick={() => fileInputRef.current?.click()}
             className="w-full gap-2"
           >
-            <UploadIcon className="size-4" />
+            <Upload01Icon className="size-4" />
             {parsed ? parsed.filename : t("Choose export file...")}
           </Button>
 

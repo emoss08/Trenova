@@ -15,7 +15,7 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ScanLineIcon, SlidersHorizontalIcon } from "lucide-react";
+import { ScanIcon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { BatchList } from "./_components/batch-list";
@@ -168,7 +168,7 @@ export function IntakePage() {
               className="shrink-0"
               onClick={() => setFiltersOpen(true)}
             >
-              <SlidersHorizontalIcon aria-hidden />
+              <Sliders01Icon aria-hidden />
               {t("Filters")}
               {narrowedBy > 0 && (
                 <Badge variant="brand" className="tabular-nums">
@@ -277,7 +277,7 @@ function NothingOpen({ waiting }: { waiting: number }) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-      <ScanLineIcon className="text-foreground-subtle size-8" aria-hidden />
+      <ScanIcon className="text-foreground-subtle size-8" aria-hidden />
       <p className="text-sm font-medium">
         {waiting > 0
           ? t(

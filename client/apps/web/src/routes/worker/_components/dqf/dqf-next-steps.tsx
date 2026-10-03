@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DQFNextStep } from "@trenova/shared/lib/dqf";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ChevronRightIcon } from "lucide-react";
+import { CheckIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 
 type DQFNextStepsProps = {
   steps: readonly DQFNextStep[];
@@ -29,9 +29,7 @@ export function DQFNextSteps({ steps, busyId, onStep }: DQFNextStepsProps) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
-        <h4 className="text-muted-foreground text-xs font-semibold">
-          {t("Next steps")}
-        </h4>
+        <h4 className="text-muted-foreground text-xs font-semibold">{t("Next steps")}</h4>
         {steps.length > 0 ? (
           <span className="text-muted-foreground font-mono text-xs tabular-nums">
             {steps.length}

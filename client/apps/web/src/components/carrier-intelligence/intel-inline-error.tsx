@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 
 export type IntelInlineErrorProps = {
   error: unknown;
@@ -37,7 +37,7 @@ export function IntelInlineError({ error, title, onRetry, className }: IntelInli
       </div>
       {onRetry && kind !== "forbidden" ? (
         <Button type="button" variant="ghost" size="sm" onClick={onRetry}>
-          <RefreshCwIcon className="size-3.5" aria-hidden />
+          <RefreshCw02Icon className="size-3.5" aria-hidden />
           {t("Try again")}
         </Button>
       ) : null}

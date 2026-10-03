@@ -5,7 +5,7 @@ import { JournalLineItemsTable } from "@/components/accounting/journal-line-item
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
 import type { JournalEntryLine } from "@/types/journal-entry";
-import { ChevronRightIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { recordPath } from "@/config/record-links";
 import { Link } from "react-router";
@@ -75,7 +75,7 @@ export function JournalEntryPostingCard({
         {entry.isReversal ? <Badge variant="warning">{t("Reversal")}</Badge> : null}
         {!isBalanced ? (
           <span className="inline-flex items-center gap-1 text-xs text-danger-foreground">
-            <TriangleAlertIcon className="size-3" />
+            <AlertTriangleIcon className="size-3" />
             {t("Out of balance")}
           </span>
         ) : null}

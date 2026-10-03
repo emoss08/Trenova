@@ -3,7 +3,7 @@ import { useOnlineStatus } from "@trenova/shared/hooks/use-online-status";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { type ErrorDescription, describeError } from "@trenova/shared/lib/error-presentation";
 import { cn } from "@trenova/shared/lib/utils";
-import { LogInIcon, RefreshCwIcon, RotateCcwIcon } from "lucide-react";
+import { LogIn01Icon, RefreshCcw01Icon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ERROR_ICONS, ERROR_TONE_WELL, errorCopy } from "./error-copy";
 import { ErrorDetails, ErrorReference } from "./error-details";
@@ -71,7 +71,7 @@ function ErrorActions({ description, onRetry, size, extra }: ErrorActionsProps) 
     return (
       <>
         <Button size={size} onClick={reloadPage}>
-          <RefreshCwIcon />
+          <RefreshCw02Icon />
           {t("Reload page")}
         </Button>
         {extra}
@@ -83,7 +83,7 @@ function ErrorActions({ description, onRetry, size, extra }: ErrorActionsProps) 
     return (
       <>
         <Button size={size} onClick={reloadPage}>
-          <LogInIcon />
+          <LogIn01Icon />
           {t("Sign in again")}
         </Button>
         {extra}
@@ -99,7 +99,7 @@ function ErrorActions({ description, onRetry, size, extra }: ErrorActionsProps) 
     return (
       <>
         <Button size={size} onClick={reloadPage}>
-          <RefreshCwIcon />
+          <RefreshCw02Icon />
           {t("Reload page")}
         </Button>
         {extra}
@@ -110,7 +110,7 @@ function ErrorActions({ description, onRetry, size, extra }: ErrorActionsProps) 
   return (
     <>
       <Button size={size} variant={description.retryable ? "default" : "outline"} onClick={onRetry}>
-        <RotateCcwIcon />
+        <RefreshCcw01Icon />
         {t("Try again")}
       </Button>
       {description.retryable ? (

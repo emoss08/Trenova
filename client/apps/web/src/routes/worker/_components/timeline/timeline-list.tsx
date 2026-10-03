@@ -8,7 +8,7 @@ import {
   EMPLOYMENT_VALUE_HIDDEN_KEYS,
   EMPLOYMENT_VALUE_LABELS,
 } from "@trenova/shared/types/worker-employment";
-import { ArrowRightIcon, PaperclipIcon, PencilLineIcon } from "lucide-react";
+import { ArrowRightIcon, PaperclipIcon, PencilLineIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { employmentEventMeta } from "./employment-event-meta";
 

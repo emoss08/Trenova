@@ -1,6 +1,6 @@
 import { isNavGroup, type NavGroup, type NavItem, type NavModule } from "@/config/navigation.types";
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { SettingsIcon } from "lucide-react";
+import { Settings01Icon } from "@trenova/shared/components/icons";
 
 type PaletteIconComponent = React.ComponentType<{
   className?: string;
@@ -154,7 +154,7 @@ export function buildRouteCommandGroups(
       subtitle,
       link.href,
       group,
-      SettingsIcon,
+      Settings01Icon,
       ["administration", group, title],
     );
 

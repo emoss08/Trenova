@@ -24,7 +24,7 @@ import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SearchIcon, SlidersHorizontalIcon } from "lucide-react";
+import { SearchLgIcon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   CARRIER_INTEL_EVENT_SOURCES,
@@ -277,7 +277,7 @@ export function InboxToolbar({
         onChange={(event) => setSearch(event.target.value)}
         placeholder={t("Search carrier, USDOT or change")}
         aria-label={t("Search events")}
-        leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+        leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
         inputContainerClassName="w-full sm:w-64"
         className="h-8 text-xs md:text-xs"
       />
@@ -356,7 +356,7 @@ export function InboxToolbar({
               <Button type="button" variant="ghost" size="icon" aria-label={t("Display options")} />
             }
           >
-            <SlidersHorizontalIcon className="size-3.5" />
+            <Sliders01Icon className="size-3.5" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuGroup>

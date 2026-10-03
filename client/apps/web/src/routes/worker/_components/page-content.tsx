@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { CalendarIcon, UsersIcon } from "lucide-react";
+import { CalendarIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { PTOBalanceSummaryCard } from "./pto/pto-balance-summary-card";
@@ -33,7 +33,7 @@ export default function WorkersContent() {
     >
       <TabsList variant="underline">
         <TabsTab value="workers">
-          <UsersIcon size={16} aria-hidden="true" />
+          <Users01Icon size={16} aria-hidden="true" />
           {t("Workers")}
         </TabsTab>
         <TabsTab value="pto">

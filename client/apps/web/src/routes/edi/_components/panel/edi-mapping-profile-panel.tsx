@@ -23,7 +23,7 @@ import type { EDIMappingProfileItem } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, Trash2Icon } from "lucide-react";
+import { CheckIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { FieldValues } from "react-hook-form";
 import { toast } from "sonner";
@@ -190,7 +190,7 @@ export function MappingProfilePanel({
                             size="icon-sm"
                             onClick={() => deleteMutation.mutate(entry.id!)}
                           >
-                            <Trash2Icon />
+                            <Trash01Icon />
                           </Button>
                         )}
                       </TableCell>

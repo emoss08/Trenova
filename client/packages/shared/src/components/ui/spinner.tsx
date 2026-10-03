@@ -1,31 +1,36 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { LoaderCircleIcon, LoaderIcon, LoaderPinwheelIcon, type LucideProps } from "lucide-react";
+import {
+  type IconProps,
+  Loading02Icon,
+  Loading03Icon,
+  SpinnerIcon,
+} from "@trenova/shared/components/icons";
 
 type SpinnerVariantProps = Omit<SpinnerProps, "variant">;
 
 const Default = ({ className, ...props }: SpinnerVariantProps) => (
-  <LoaderIcon className={cn("animate-spin", className)} {...props} />
+  <Loading02Icon className={cn("animate-spin", className)} {...props} />
 );
 
 const Circle = ({ className, ...props }: SpinnerVariantProps) => (
-  <LoaderCircleIcon className={cn("animate-spin", className)} {...props} />
+  <SpinnerIcon className={cn("animate-spin", className)} {...props} />
 );
 
 const Pinwheel = ({ className, ...props }: SpinnerVariantProps) => (
-  <LoaderPinwheelIcon className={cn("animate-spin", className)} {...props} />
+  <Loading03Icon className={cn("animate-spin", className)} {...props} />
 );
 
 const CircleFilled = ({ className, size = 24, ...props }: SpinnerVariantProps) => (
   <div className="relative" style={{ width: size, height: size }}>
     <div className="absolute inset-0 rotate-180">
-      <LoaderCircleIcon
+      <SpinnerIcon
         className={cn("animate-spin", className, "text-foreground opacity-20")}
         size={size}
         {...props}
       />
     </div>
-    <LoaderCircleIcon className={cn("relative animate-spin", className)} size={size} {...props} />
+    <SpinnerIcon className={cn("relative animate-spin", className)} size={size} {...props} />
   </div>
 );
 
@@ -212,7 +217,7 @@ const Infinite = ({ size = 24, ...props }: SpinnerVariantProps) => {
   );
 };
 
-export type SpinnerProps = LucideProps & {
+export type SpinnerProps = IconProps & {
   variant?:
     | "default"
     | "circle"

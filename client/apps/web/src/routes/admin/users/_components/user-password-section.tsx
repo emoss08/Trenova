@@ -6,7 +6,7 @@ import { handleMutationError } from "@/hooks/use-api-mutation";
 import { resetUserPassword } from "@/lib/user-api";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { LockIcon } from "lucide-react";
+import { Lock01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
     <div className="space-y-4">
       {isLocked && (
         <Alert variant="destructive" size="sm">
-          <LockIcon />
+          <Lock01Icon />
           <AlertTitle>{t("Account locked")}</AlertTitle>
           <AlertDescription>
             {t("This account has been locked due to too many failed login attempts.")}

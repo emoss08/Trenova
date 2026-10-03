@@ -26,7 +26,7 @@ import {
 } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { Building2Icon, ScanLineIcon, SendIcon } from "lucide-react";
+import { Building07Icon, ScanIcon, Send01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { formatMiles, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
@@ -130,7 +130,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
   return (
     <div className="bg-muted/30 flex flex-col gap-1.5 border-b px-2.5 py-2">
       <div className="flex items-center gap-1.5">
-        <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+        <Building07Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
         <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
         <Badge variant="success" className="h-4 shrink-0 rounded-md px-1 text-3xs">
           {t("Carrier")}
@@ -171,7 +171,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
               className="h-6 px-2 text-2xs"
               onClick={() => setVerifyOpen(true)}
             >
-              <ScanLineIcon className="size-3" aria-hidden />
+              <ScanIcon className="size-3" aria-hidden />
               {t("Verify equipment")}
             </Button>
           </PermissionGate>
@@ -333,7 +333,7 @@ function MoveInspector({
                   disabled={isAssigning}
                   onClick={() => openCarrierAssign(move)}
                 >
-                  <Building2Icon className="size-3" aria-hidden />
+                  <Building07Icon className="size-3" aria-hidden />
                   {t("Assign to carrier")}
                 </Button>
               </PermissionGate>
@@ -347,7 +347,7 @@ function MoveInspector({
                   disabled={isAssigning}
                   onClick={() => openTender(move)}
                 >
-                  <SendIcon className="size-3" aria-hidden />
+                  <Send01Icon className="size-3" aria-hidden />
                   {t("Tender to carriers")}
                 </Button>
               </PermissionGate>

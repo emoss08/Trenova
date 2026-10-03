@@ -22,7 +22,7 @@ import type {
   FixtureFieldAssertionOperator,
   FixtureFormValues,
 } from "@/types/document-parsing-rule";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 
 const REVIEW_STATUS_OPTIONS = [
@@ -360,7 +360,7 @@ function FieldAssertionsEditorInner({
                   onClick={() => removeField(fieldKey)}
                   aria-label={`Remove ${fieldKey} assertions`}
                 >
-                  <XIcon className="size-4" />
+                  <XCloseIcon className="size-4" />
                 </Button>
               )}
             </div>
@@ -439,9 +439,7 @@ function FieldAssertionRow({
       <div className="flex items-start gap-2">
         <div className="grid flex-1 gap-2 md:grid-cols-[180px_minmax(0,1fr)]">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground font-medium">
-              {t("Operator")}
-            </label>
+            <label className="text-xs text-muted-foreground font-medium">{t("Operator")}</label>
             <select
               value={assertion.operator}
               onChange={(event) =>
@@ -517,7 +515,7 @@ function FieldAssertionRow({
             onClick={onRemove}
             aria-label={t("Remove assertion")}
           >
-            <XIcon className="size-4" />
+            <XCloseIcon className="size-4" />
           </Button>
         )}
       </div>

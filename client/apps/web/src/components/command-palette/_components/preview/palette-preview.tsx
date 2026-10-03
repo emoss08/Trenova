@@ -5,7 +5,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { lazy, Suspense } from "react";
 import { commandGroupLabel } from "../../palette-commands";
 import { BRAND_TILE_CLASS, NEUTRAL_TILE_CLASS } from "../../palette-entities";
@@ -175,7 +175,7 @@ export function PalettePreview({
       return (
         <PreviewFrame
           key={item.key}
-          icon={CircleAlertIcon}
+          icon={AlertCircleIcon}
           tileClass={NEUTRAL_TILE_CLASS}
           title={item.attention.label}
           subtitle={item.attention.module}

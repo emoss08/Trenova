@@ -25,7 +25,7 @@ import type {
 } from "@/types/fiscal-year";
 import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 

@@ -16,7 +16,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { Undo2Icon } from "lucide-react";
+import { FlipBackwardIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BriefingBar } from "./_components/briefing-bar";
@@ -207,7 +207,7 @@ function DivergenceChip({
         onClick={onReset}
         disabled={pending}
       >
-        <Undo2Icon className="size-2.5" />
+        <FlipBackwardIcon className="size-2.5" />
         {t("Reset")}
       </Button>
     </div>

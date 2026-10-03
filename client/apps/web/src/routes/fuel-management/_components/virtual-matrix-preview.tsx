@@ -13,7 +13,7 @@ import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
-import { PencilRuler } from "lucide-react";
+import { RulerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -249,7 +249,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
           disabled={disabled}
           className="gap-1.5"
         >
-          <PencilRuler className="size-3.5" />
+          <RulerIcon className="size-3.5" />
           {t("Customize bands")}
         </Button>
       </CardHeader>

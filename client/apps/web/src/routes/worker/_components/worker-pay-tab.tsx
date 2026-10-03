@@ -22,7 +22,7 @@ import {
 import { formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
 import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleDollarSign, Wallet } from "lucide-react";
+import { CurrencyDollarCircleIcon, Wallet02Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -78,7 +78,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
           </p>
         </div>
         <Button size="sm" onClick={() => setAssignOpen(true)}>
-          <Wallet className="size-3.5" />
+          <Wallet02Icon className="size-3.5" />
           {assignment ? t("Change profile") : t("Assign profile")}
         </Button>
       </div>
@@ -87,7 +87,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
         <CurrentAssignmentCard assignment={assignment} onEnd={() => setEndOpen(true)} />
       ) : (
         <div className="rounded-lg border border-dashed p-6 text-center">
-          <CircleDollarSign className="text-muted-foreground mx-auto size-6" />
+          <CurrencyDollarCircleIcon className="text-muted-foreground mx-auto size-6" />
           <p className="mt-2 text-sm font-medium">{t("No pay profile assigned")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
             {t(
@@ -100,9 +100,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
       {earnings && (
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-xs font-medium">
-              {t("Unsettled earnings")}
-            </p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Unsettled earnings")}</p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.accruedGrossMinor} variant="positive" />
             </p>
@@ -114,9 +112,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-xs font-medium">
-              {t("Outstanding advances")}
-            </p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Outstanding advances")}</p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay
                 value={earnings.outstandingAdvances}
@@ -128,9 +124,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-xs font-medium">
-              {t("Escrow balance")}
-            </p>
+            <p className="text-muted-foreground text-xs font-medium">{t("Escrow balance")}</p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.escrowBalanceMinor} />
             </p>

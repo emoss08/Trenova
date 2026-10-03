@@ -11,16 +11,16 @@ import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { Document } from "@trenova/shared/types/document";
 import {
-  BanIcon,
-  CircleCheckIcon,
-  DownloadIcon,
-  EllipsisVerticalIcon,
+  CheckCircleIcon,
+  ClockRewindIcon,
+  DotsVerticalIcon,
+  Download01Icon,
   EyeIcon,
-  HistoryIcon,
-  LoaderCircleIcon,
   ScanSearchIcon,
-  Trash2Icon,
-} from "lucide-react";
+  SlashCircle01Icon,
+  SpinnerIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { LazyImage } from "../image";
 import { canApproveDocument, canRejectDocument } from "@/lib/document-review";
@@ -87,12 +87,12 @@ export function DocumentGridCard({
   const isPreviewUnavailable = document.previewStatus === "Failed";
   const hasActions = Boolean(
     (canPreview && onPreview) ||
-      onDownload ||
-      onInspect ||
-      onVersions ||
-      onDelete ||
-      (onApprove && canApproveDocument(document)) ||
-      (onReject && canRejectDocument(document)),
+    onDownload ||
+    onInspect ||
+    onVersions ||
+    onDelete ||
+    (onApprove && canApproveDocument(document)) ||
+    (onReject && canRejectDocument(document)),
   );
 
   useEffect(() => {
@@ -134,7 +134,7 @@ export function DocumentGridCard({
             className="flex flex-col items-center justify-center gap-2"
             title={t("Generating thumbnail...")}
           >
-            <LoaderCircleIcon className="text-muted-foreground size-8 animate-spin" />
+            <SpinnerIcon className="text-muted-foreground size-8 animate-spin" />
             <span className="text-muted-foreground text-xs">{t("Generating preview...")}</span>
           </div>
         ) : isPreviewUnavailable ? (
@@ -214,7 +214,7 @@ export function DocumentGridCard({
                     event.stopPropagation();
                   }}
                 >
-                  <EllipsisVerticalIcon className="size-3.5" />
+                  <DotsVerticalIcon className="size-3.5" />
                 </Button>
               }
             />
@@ -238,7 +238,7 @@ export function DocumentGridCard({
                 <DropdownMenuItem
                   title={t("Download")}
                   description={t("Save the original file")}
-                  startContent={<DownloadIcon className="size-3.5" />}
+                  startContent={<Download01Icon className="size-3.5" />}
                   onClick={() => onDownload(document)}
                 />
               )}
@@ -254,7 +254,7 @@ export function DocumentGridCard({
                 <DropdownMenuItem
                   title={t("Versions")}
                   description={t("View document history")}
-                  startContent={<HistoryIcon className="size-3.5" />}
+                  startContent={<ClockRewindIcon className="size-3.5" />}
                   onClick={() => onVersions(document)}
                 />
               )}
@@ -262,7 +262,7 @@ export function DocumentGridCard({
                 <DropdownMenuItem
                   title={t("Approve")}
                   description={t("Accept it as proof for billing")}
-                  startContent={<CircleCheckIcon className="size-3.5" />}
+                  startContent={<CheckCircleIcon className="size-3.5" />}
                   disabled={isReviewing}
                   onClick={() => onApprove(document)}
                 />
@@ -272,7 +272,7 @@ export function DocumentGridCard({
                   title={t("Reject")}
                   description={t("Stop it counting toward billing")}
                   color="danger"
-                  startContent={<BanIcon className="size-3.5" />}
+                  startContent={<SlashCircle01Icon className="size-3.5" />}
                   disabled={isReviewing}
                   onClick={() => onReject(document)}
                 />
@@ -282,7 +282,7 @@ export function DocumentGridCard({
                   title={t("Delete")}
                   description={t("Remove this document")}
                   color="danger"
-                  startContent={<Trash2Icon className="size-3.5" />}
+                  startContent={<Trash01Icon className="size-3.5" />}
                   disabled={isDeleting}
                   onClick={() => onDelete(document)}
                 />

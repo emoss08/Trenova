@@ -27,7 +27,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { DetentionPolicy } from "@trenova/shared/types/detention";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
 import { DetentionTierEditor } from "./detention-tier-editor";
 
@@ -299,7 +299,7 @@ export function DetentionPolicyForm() {
 
         {lateArrivalRule === "Forfeit" && (
           <Alert variant="warning" size="sm" className="mt-3">
-            <TriangleAlertIcon />
+            <AlertTriangleIcon />
             <AlertTitle>{t("Check the contract")}</AlertTitle>
             <AlertDescription>
               {t(

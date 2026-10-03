@@ -11,7 +11,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { csaBasicLabel } from "@trenova/shared/lib/csa";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ViolationDialog } from "./violation-dialog";
@@ -119,7 +119,7 @@ export function ViolationList({
                     onClick={() => removeMutation.mutate(violation.id)}
                     aria-label={`Remove ${violation.description}`}
                   >
-                    <Trash2Icon className="size-3" />
+                    <Trash01Icon className="size-3" />
                   </Button>
                 ) : null}
               </span>

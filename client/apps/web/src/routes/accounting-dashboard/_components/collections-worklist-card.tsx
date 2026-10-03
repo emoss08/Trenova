@@ -6,7 +6,7 @@ import type { ARWorklistItem } from "@/lib/graphql/accounts-receivable";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2Icon } from "lucide-react";
+import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 const SEVERITY_STYLES: Record<string, string> = {
@@ -49,7 +49,7 @@ export function CollectionsWorklistCard() {
           </div>
         ) : rows.length === 0 ? (
           <div className="text-muted-foreground flex h-56 flex-col items-center justify-center gap-2 text-sm">
-            <CheckCircle2Icon className="size-5 text-success-foreground" />
+            <CheckCircleIcon className="size-5 text-success-foreground" />
             {t("Nothing needs attention right now")}
           </div>
         ) : (

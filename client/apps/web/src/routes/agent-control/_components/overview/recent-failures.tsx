@@ -3,7 +3,7 @@ import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/dat
 import { SectionPanel } from "@/components/section-panel";
 import { toneVar } from "@/components/kpi/tone";
 import type { AIUsageSummary } from "@/lib/graphql/ai-usage";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 
 export type UsageFailure = AIUsageSummary["recentFailures"][number];
 
@@ -33,7 +33,7 @@ export function RecentFailures({ failures }: { failures: readonly UsageFailure[]
         {failures.map((failure) => (
           <li key={`${failure.at}-${failure.providerId}-${failure.model}`} className="px-3 py-2">
             <div className="flex items-center gap-2 text-xs">
-              <CircleAlertIcon
+              <AlertCircleIcon
                 aria-hidden
                 className="size-3.5 shrink-0"
                 style={{ color: toneVar("danger") }}

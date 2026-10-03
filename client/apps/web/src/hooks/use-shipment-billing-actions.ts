@@ -6,14 +6,19 @@ import { SHIPMENT_LIST_KEY } from "@/routes/shipment/_components/shipment-querie
 import { apiService } from "@/services/api";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQueryClient } from "@tanstack/react-query";
-import { BanknoteArrowUpIcon, CheckCircle2Icon, SendIcon, type LucideIcon } from "lucide-react";
+import {
+  BankNote01Icon,
+  CheckCircleIcon,
+  type IconComponent,
+  Send01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
 export type ShipmentBillingAction = {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   isAvailable: (shipment: Shipment) => boolean;
   /** Never rejects: a failure has already been reported to the user when it settles. */
   run: (shipmentId: string) => Promise<void>;
@@ -76,7 +81,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
       markReadyToBill: {
         id: "mark-ready-to-bill",
         label: t("Mark ready to bill"),
-        icon: CheckCircle2Icon,
+        icon: CheckCircleIcon,
         isAvailable: canMarkShipmentReadyToBill,
         run: async (shipmentId) => {
           await markReadyToBill(shipmentId).catch(() => undefined);
@@ -85,7 +90,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
       markReadyAndTransferToBilling: {
         id: "mark-ready-and-transfer-to-billing",
         label: t("Mark ready & transfer to billing"),
-        icon: BanknoteArrowUpIcon,
+        icon: BankNote01Icon,
         isAvailable: canMarkShipmentReadyToBill,
         run: async (shipmentId) => {
           await markReadyToBill(shipmentId)
@@ -96,7 +101,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
       transferToBilling: {
         id: "transfer-to-billing",
         label: t("Transfer to billing"),
-        icon: SendIcon,
+        icon: Send01Icon,
         isAvailable: canTransferShipmentToBilling,
         run: async (shipmentId) => {
           await transferToBilling(shipmentId).catch(() => undefined);

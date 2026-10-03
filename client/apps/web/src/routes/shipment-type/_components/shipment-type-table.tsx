@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { CircleCheckIcon } from "lucide-react";
+import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./shipment-type-columns";
@@ -75,7 +75,7 @@ export default function ShipmentTypeTable() {
         type: "select",
         label: t("Update status"),
         loadingLabel: t("Updating..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,

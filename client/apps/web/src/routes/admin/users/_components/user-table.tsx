@@ -9,7 +9,7 @@ import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-tabl
 import { Resource } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon, LayersPlus } from "lucide-react";
+import { CheckCircleIcon, LayersTwo01Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
@@ -56,7 +56,7 @@ export default function UserTable() {
         type: "select",
         label: t("Update status"),
         loadingLabel: t("Updating..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
@@ -83,7 +83,7 @@ export default function UserTable() {
       {
         id: "manage-memberships",
         label: t("Manage memberships"),
-        icon: LayersPlus,
+        icon: LayersTwo01Icon,
         onClick: handleManageMemberships,
         hidden: (row) => row.original.status === "Inactive",
       },

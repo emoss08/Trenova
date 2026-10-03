@@ -27,7 +27,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { ClipboardCheckIcon, ExternalLinkIcon, RefreshCwIcon, SearchIcon } from "lucide-react";
+import {
+  ClipboardCheckIcon,
+  LinkExternal01Icon,
+  RefreshCw02Icon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
 
@@ -195,7 +200,7 @@ function ReviewDetailSheet({
                     nativeButton={false}
                     render={<Link to={carrierPanelPath(item.carrierId, "intelligence")} />}
                   >
-                    <ExternalLinkIcon className="size-3.5" />
+                    <LinkExternal01Icon className="size-3.5" />
                     {t("Open carrier")}
                   </Button>
                 ) : null}
@@ -291,7 +296,7 @@ export function ReviewQueue({ canUpdate }: ReviewQueueProps) {
           className="h-8 text-xs"
           onClick={() => void queueQuery.refetch()}
         >
-          <RefreshCwIcon className="size-3.5" />
+          <RefreshCw02Icon className="size-3.5" />
           {t("Retry")}
         </Button>
       </div>
@@ -350,7 +355,7 @@ export function ReviewQueue({ canUpdate }: ReviewQueueProps) {
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t("Search carrier or USDOT")}
           aria-label={t("Search carriers awaiting review")}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           inputContainerClassName="w-full sm:w-64"
           className="h-8 text-xs md:text-xs"
         />
@@ -370,7 +375,7 @@ export function ReviewQueue({ canUpdate }: ReviewQueueProps) {
             isLoading={queueQuery.isRefetching}
             onClick={() => void queueQuery.refetch()}
           >
-            <RefreshCwIcon className="size-3.5" />
+            <RefreshCw02Icon className="size-3.5" />
           </Button>
         </div>
       </div>

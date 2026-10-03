@@ -13,7 +13,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { jurisdictionRuleSchema, type JurisdictionRule } from "@/types/jurisdiction-rule";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { BadgeCheckIcon } from "lucide-react";
+import { CheckVerified01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -196,7 +196,7 @@ function JurisdictionRuleEditPanel({
                 </p>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={() => setVerifyOpen(true)}>
-                <BadgeCheckIcon className="size-3.5" />
+                <CheckVerified01Icon className="size-3.5" />
                 {t("Verify")}
               </Button>
             </div>

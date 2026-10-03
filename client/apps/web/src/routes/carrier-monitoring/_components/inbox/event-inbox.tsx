@@ -29,7 +29,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { EventDetail } from "./event-detail";
@@ -364,7 +364,7 @@ export function EventInbox({ canUpdate, scopeCounts }: EventInboxProps) {
           className="h-8 text-xs"
           onClick={() => void eventsQuery.refetch()}
         >
-          <RefreshCwIcon className="size-3.5" />
+          <RefreshCw02Icon className="size-3.5" />
           {t("Retry")}
         </Button>
       </div>
@@ -464,7 +464,7 @@ export function EventInbox({ canUpdate, scopeCounts }: EventInboxProps) {
               className="h-8 text-xs"
               onClick={() => void deepLinkQuery.refetch()}
             >
-              <RefreshCwIcon className="size-3.5" />
+              <RefreshCw02Icon className="size-3.5" />
               {t("Retry")}
             </Button>
             {closeDetail}

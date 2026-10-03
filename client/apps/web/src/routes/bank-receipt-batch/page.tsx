@@ -11,7 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, UploadIcon } from "lucide-react";
+import { ArrowRightIcon, Upload01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ImportBatchDialog } from "./_components/import-batch-dialog";
@@ -61,7 +61,7 @@ export function BankReceiptBatchPage() {
         description: t("View and create bank receipt import batches."),
         actions: (
           <Button size="sm" onClick={() => setDialogOpen(true)}>
-            <UploadIcon className="size-3.5" />
+            <Upload01Icon className="size-3.5" />
             {t("Import batch")}
           </Button>
         ),
@@ -100,7 +100,7 @@ export function BankReceiptBatchPage() {
           columns={BATCH_COLUMNS}
           action={
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
-              <UploadIcon className="size-3.5" />
+              <Upload01Icon className="size-3.5" />
               {t("Import a batch")}
             </Button>
           }

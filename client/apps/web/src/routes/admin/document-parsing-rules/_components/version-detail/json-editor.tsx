@@ -14,7 +14,13 @@ import { json } from "@codemirror/lang-json";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
-import { CheckIcon, AlertTriangleIcon, RefreshCwIcon, UploadIcon, InfoIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckIcon,
+  InfoCircleIcon,
+  RefreshCw02Icon,
+  Upload01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -112,7 +118,7 @@ export function JsonEditor() {
   return (
     <div className="space-y-3">
       <div className="border-muted bg-muted/30 flex items-start gap-2 rounded-md border p-2.5">
-        <InfoIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+        <InfoCircleIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
         <p className="text-muted-foreground text-xs">
           {t(
             "The JSON editor and the Rule Builder share the same underlying data. Edits made here must be applied to take effect in the builder, and vice versa. Use “Refresh from Builder” to pull the latest builder state into this editor.",
@@ -133,7 +139,7 @@ export function JsonEditor() {
                     </>
                   ) : (
                     <>
-                      <UploadIcon className="size-3.5" />
+                      <Upload01Icon className="size-3.5" />
                       {t("Apply changes")}
                     </>
                   )}
@@ -156,7 +162,7 @@ export function JsonEditor() {
                   onClick={handleRefresh}
                   className="gap-1"
                 >
-                  <RefreshCwIcon className="size-3.5" />
+                  <RefreshCw02Icon className="size-3.5" />
                   {t("Refresh from builder")}
                 </Button>
               }

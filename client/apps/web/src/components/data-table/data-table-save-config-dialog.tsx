@@ -22,7 +22,7 @@ import {
 } from "@/types/table-configuration";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { GlobeIcon, LockIcon } from "lucide-react";
+import { Globe02Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,13 +45,13 @@ export function useVisibilityOptions() {
       value: "Private",
       label: t("Private"),
       description: t("Only you can see this view"),
-      icon: <LockIcon />,
+      icon: <Lock01Icon />,
     },
     {
       value: "Public",
       label: t("Public"),
       description: t("Anyone in your organization can use this view"),
-      icon: <GlobeIcon />,
+      icon: <Globe02Icon />,
     },
   ];
 }

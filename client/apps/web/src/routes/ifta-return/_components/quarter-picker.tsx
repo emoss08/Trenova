@@ -16,7 +16,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import type { IftaReturnStatus } from "@trenova/shared/types/fuel-ifta-enums";
-import { CalendarClockIcon } from "lucide-react";
+import { CalendarClockIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type QuarterValue = "1" | "2" | "3" | "4";
@@ -89,7 +89,9 @@ export function QuarterPicker({
         {status ? (
           <IftaReturnStatusBadge status={status} />
         ) : (
-          <Badge variant="neutral" appearance="outline">{t("Not generated")}</Badge>
+          <Badge variant="neutral" appearance="outline">
+            {t("Not generated")}
+          </Badge>
         )}
         {amendmentNumber > 0 ? (
           <Badge variant="info">{t("Amendment {0}", amendmentNumber)}</Badge>

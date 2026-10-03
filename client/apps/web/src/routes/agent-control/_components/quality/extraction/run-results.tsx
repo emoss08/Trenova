@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { formatShare } from "../quality-model";
 import { ResultStatusBadge } from "./extraction-badges";

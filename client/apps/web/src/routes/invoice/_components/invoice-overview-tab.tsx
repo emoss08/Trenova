@@ -15,7 +15,7 @@ import { getDestinationLocation, getOriginLocation, shipmentPanelPath } from "@/
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentLineage } from "@/types/invoice-adjustment";
-import { ExternalLinkIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { InvoiceAdjustmentRuntimeSection } from "./invoice-adjustment-runtime-section";
 import { InvoiceArContextSection } from "./invoice-ar-context-section";
@@ -53,7 +53,7 @@ export function InvoiceOverviewTab({
         />
         {invoice.offCycleReason ? (
           <Alert variant="warning" size="sm">
-            <TriangleAlertIcon />
+            <AlertTriangleIcon />
             <AlertTitle>{t("Billed outside this customer's statement")}</AlertTitle>
             <AlertDescription>{invoice.offCycleReason}</AlertDescription>
           </Alert>
@@ -113,7 +113,7 @@ export function InvoiceOverviewTab({
                       className="inline-flex items-center gap-1 hover:underline"
                     >
                       {invoice.shipmentProNumber || invoice.shipmentId.slice(0, 12)}
-                      <ExternalLinkIcon className="size-2.5" />
+                      <LinkExternal01Icon className="size-2.5" />
                     </Link>
                   </DescriptionItem>
                 ) : null}
@@ -124,7 +124,7 @@ export function InvoiceOverviewTab({
                       className="inline-flex items-center gap-1 hover:underline"
                     >
                       {invoice.orderNumber || invoice.orderId.slice(0, 12)}
-                      <ExternalLinkIcon className="size-2.5" />
+                      <LinkExternal01Icon className="size-2.5" />
                     </Link>
                   </DescriptionItem>
                 ) : null}
@@ -135,7 +135,7 @@ export function InvoiceOverviewTab({
                       className="inline-flex items-center gap-1 hover:underline"
                     >
                       {t("Queue item")}
-                      <ExternalLinkIcon className="size-2.5" />
+                      <LinkExternal01Icon className="size-2.5" />
                     </Link>
                   </DescriptionItem>
                 ) : (
@@ -340,7 +340,7 @@ function MemoDetailsCard({ invoice }: { invoice: Invoice }) {
               aria-label={t("Referenced invoice")}
             >
               {t("Open invoice")}
-              <ExternalLinkIcon className="size-2.5" />
+              <LinkExternal01Icon className="size-2.5" />
             </Link>
           </DescriptionItem>
         ) : null}

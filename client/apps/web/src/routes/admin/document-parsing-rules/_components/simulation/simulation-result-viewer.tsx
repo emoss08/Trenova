@@ -9,7 +9,12 @@ import {
 } from "@trenova/shared/components/ui/card";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import type { DocumentParsingAnalysis, SimulationResult } from "@/types/document-parsing-rule";
-import { AlertTriangleIcon, CheckCircle2Icon, MapPinIcon, XCircleIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  MarkerPin01Icon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
@@ -27,7 +32,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           className="gap-1.5 px-3 py-1 text-sm"
         >
           {result.matched ? (
-            <CheckCircle2Icon className="size-3.5" />
+            <CheckCircleIcon className="size-3.5" />
           ) : (
             <XCircleIcon className="size-3.5" />
           )}
@@ -38,7 +43,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           className="gap-1.5 px-3 py-1 text-sm"
         >
           {result.validationPassed ? (
-            <CheckCircle2Icon className="size-3.5" />
+            <CheckCircleIcon className="size-3.5" />
           ) : (
             <XCircleIcon className="size-3.5" />
           )}
@@ -157,7 +162,7 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
                 {analysis.stops?.map((stop, i) => (
                   <div key={i} className="rounded-md border p-3">
                     <div className="mb-2 flex items-center gap-2">
-                      <MapPinIcon className="text-muted-foreground size-3.5" />
+                      <MarkerPin01Icon className="text-muted-foreground size-3.5" />
                       <Badge variant="info" className="capitalize">
                         {stop.role}
                       </Badge>

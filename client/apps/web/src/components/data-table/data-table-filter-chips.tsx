@@ -7,7 +7,7 @@ import type {
   FilterItem,
   SingleFilterItem,
 } from "@trenova/shared/types/data-table";
-import { SearchIcon, XIcon } from "lucide-react";
+import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 
 type DataTableFilterChipsProps = {
   filters: FilterItem[];
@@ -53,7 +53,7 @@ function FilterChip({ label, onRemove }: { label: React.ReactNode; onRemove: () 
         onClick={onRemove}
         aria-label={t("Remove filter")}
       >
-        <XIcon className="size-3" />
+        <XCloseIcon className="size-3" />
       </Button>
     </span>
   );
@@ -85,7 +85,7 @@ export default function DataTableFilterChips({
         <FilterChip
           label={
             <span className="flex items-center gap-1">
-              <SearchIcon className="text-muted-foreground size-3" />
+              <SearchLgIcon className="text-muted-foreground size-3" />
               <span className="max-w-40 truncate font-medium">{query}</span>
             </span>
           }

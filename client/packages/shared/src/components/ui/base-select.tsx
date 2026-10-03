@@ -1,7 +1,12 @@
 import { cn } from "@trenova/shared/lib/utils";
 import { Select as SelectPrimitive } from "@base-ui/react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, X } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import * as React from "react";
 import { isValidElement, type ReactNode } from "react";
 
@@ -103,7 +108,7 @@ function SelectClear({ className, children, onClick, ...props }: React.Component
       onClick={handleClick}
       {...props}
     >
-      {children ? children : <X />}
+      {children ? children : <XCloseIcon />}
     </button>
   );
 }

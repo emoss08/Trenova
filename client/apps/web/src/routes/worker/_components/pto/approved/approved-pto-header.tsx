@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
-import { BarChart3Icon, CalendarDaysIcon } from "lucide-react";
+import { BarChart07Icon, CalendarDateIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { PTOFilterPopover } from "../pto-filter-popover";
 import { HeaderContent } from "../pto-header-components";
@@ -13,8 +13,8 @@ import {
 } from "../use-pto-state";
 
 const VIEW_ITEMS = [
-  { value: "chart" as const, label: "Chart", icon: BarChart3Icon },
-  { value: "calendar" as const, label: "Calendar", icon: CalendarDaysIcon },
+  { value: "chart" as const, label: "Chart", icon: BarChart07Icon },
+  { value: "calendar" as const, label: "Calendar", icon: CalendarDateIcon },
 ];
 
 export function ApprovedPTOHeader() {

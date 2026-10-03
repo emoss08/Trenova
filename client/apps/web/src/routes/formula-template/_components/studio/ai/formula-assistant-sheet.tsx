@@ -26,7 +26,13 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { VariableDefinition } from "@trenova/shared/types/formula-template";
-import { AlertTriangleIcon, CheckCircle2Icon, CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  PlusIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { nanoid } from "nanoid";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -226,7 +232,7 @@ function FormulaProposalCard({
           aria-label={t("Dismiss proposal")}
           onClick={onDismiss}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
         </Button>
       </div>
 
@@ -260,7 +266,7 @@ function FormulaProposalCard({
       )}
 
       <Alert variant={proposal.check.valid ? "success" : "warning"} size="sm">
-        {proposal.check.valid ? <CheckCircle2Icon /> : <AlertTriangleIcon />}
+        {proposal.check.valid ? <CheckCircleIcon /> : <AlertTriangleIcon />}
         <AlertDescription>
           {proposal.check.valid
             ? Number.isFinite(checkedAmount) && proposal.check.result !== ""

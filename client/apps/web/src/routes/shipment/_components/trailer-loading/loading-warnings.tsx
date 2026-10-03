@@ -1,11 +1,15 @@
 import { cn } from "@trenova/shared/lib/utils";
 import type { LoadingWarning } from "@/types/loading-optimization";
-import { AlertCircleIcon, AlertTriangleIcon, InfoIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  InfoCircleIcon,
+} from "@trenova/shared/components/icons";
 
 const severityConfig = {
   error: { icon: AlertCircleIcon, color: "text-destructive" },
   warning: { icon: AlertTriangleIcon, color: "text-warning" },
-  info: { icon: InfoIcon, color: "text-muted-foreground" },
+  info: { icon: InfoCircleIcon, color: "text-muted-foreground" },
 } as const;
 
 export function LoadingWarnings({ warnings }: { warnings: LoadingWarning[] }) {

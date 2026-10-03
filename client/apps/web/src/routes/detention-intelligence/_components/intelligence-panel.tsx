@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { RotateCwIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, RefreshCw01Icon } from "@trenova/shared/components/icons";
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
@@ -66,14 +66,14 @@ export function PanelError({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
-      <TriangleAlertIcon className="size-5 text-warning-foreground" />
+      <AlertTriangleIcon className="size-5 text-warning-foreground" />
       <p className="text-muted-foreground max-w-[20rem] text-xs">
         {t(
           "These figures could not be loaded. The window may be too wide, or the aggregation timed out.",
         )}
       </p>
       <Button type="button" size="sm" variant="outline" className="h-7" onClick={onRetry}>
-        <RotateCwIcon className="mr-1.5 size-3.5" />
+        <RefreshCw01Icon className="mr-1.5 size-3.5" />
         {t("Try again")}
       </Button>
     </div>
@@ -143,7 +143,7 @@ export function PanelExpandToggle({
     <button
       type="button"
       onClick={onToggle}
- className="ui-focus-ring text-2xs text-muted-foreground hover:text-foreground ml-auto rounded-sm font-medium transition-colors outline-none"
+      className="ui-focus-ring text-2xs text-muted-foreground hover:text-foreground ml-auto rounded-sm font-medium transition-colors outline-none"
     >
       {expanded ? t("Show fewer") : t("Show {0} more {1}", hiddenCount, noun)}
     </button>

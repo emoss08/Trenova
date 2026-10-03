@@ -6,7 +6,12 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
-import { MapPinIcon, TruckIcon, UserIcon, XIcon } from "lucide-react";
+import {
+  MarkerPin01Icon,
+  Truck01Icon,
+  User01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 
 const POSITION_MAX_AGE_SECONDS = 3600;
@@ -161,7 +166,7 @@ function VehicleMarker({
             boxShadow: "0 0 0 1px rgba(255,255,255,0.85)",
           }}
         >
-          <TruckIcon className="size-3" style={{ color: "var(--brand-foreground)" }} />
+          <Truck01Icon className="size-3" style={{ color: "var(--brand-foreground)" }} />
         </span>
         <span
           aria-hidden
@@ -210,7 +215,7 @@ function VehicleDetailCard({
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-foreground flex items-center gap-1.5 truncate text-sm font-semibold">
-                <TruckIcon className="text-muted-foreground size-3.5 shrink-0" />
+                <Truck01Icon className="text-muted-foreground size-3.5 shrink-0" />
                 {position.tractorCode}
                 {stale && (
                   <span className="bg-warning-subtle text-warning rounded-md px-1 py-px text-2xs font-semibold">
@@ -220,7 +225,7 @@ function VehicleDetailCard({
               </span>
               {position.primaryWorkerName && (
                 <span className="text-2xs text-muted-foreground flex items-center gap-1">
-                  <UserIcon className="size-3" />
+                  <User01Icon className="size-3" />
                   {position.primaryWorkerName}
                 </span>
               )}
@@ -232,7 +237,7 @@ function VehicleDetailCard({
                 className="text-muted-foreground hover:text-foreground rounded-md"
                 aria-label={t("Close vehicle info")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </button>
             )}
           </div>
@@ -264,7 +269,7 @@ function VehicleDetailCard({
             <>
               <Separator />
               <div className="flex items-start gap-2">
-                <MapPinIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+                <MarkerPin01Icon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
                 <span className="text-2xs text-foreground min-w-0 leading-relaxed">
                   {position.formattedLocation}
                 </span>

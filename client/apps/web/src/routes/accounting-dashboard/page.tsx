@@ -7,7 +7,7 @@ import { AR_DASHBOARD_HISTORY_WEEKS, receivablesHaveActivity } from "@/lib/ar-da
 import { queries } from "@/lib/queries";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { HandCoinsIcon } from "lucide-react";
+import { CoinsHandIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { AccountingDashboardEmpty } from "./_components/accounting-dashboard-empty";
 import { AccountingQuickLinks } from "./_components/accounting-quick-links";
@@ -39,7 +39,7 @@ export function AccountingDashboardPage() {
         actions: canRecordPayment ? (
           <Link to="/accounting/ar/payments?panelType=create">
             <Button size="sm">
-              <HandCoinsIcon className="size-4" />
+              <CoinsHandIcon className="size-4" />
               {t("Record payment")}
             </Button>
           </Link>

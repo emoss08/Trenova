@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { CheckCheckIcon, Trash2Icon, XIcon } from "lucide-react";
+import { CheckDoubleIcon, Trash01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 
 interface DocumentBulkActionDockProps {
@@ -49,7 +49,7 @@ export function DocumentBulkActionDock({
                     <span className="text-background text-sm font-medium tabular-nums">
                       {t("{0} selected", selectedCount)}
                     </span>{" "}
-                    <XIcon className="text-background size-3" />
+                    <XCloseIcon className="text-background size-3" />
                   </Button>
                 }
               />
@@ -63,7 +63,7 @@ export function DocumentBulkActionDock({
                   className="text-background hover:bg-accent/20 hover:text-background dark:hover:bg-accent/20 h-7 gap-1.5 px-2"
                   onClick={onSelectAll}
                 >
-                  <CheckCheckIcon className="size-4" />
+                  <CheckDoubleIcon className="size-4" />
                   {t("Select all")}
                 </Button>
               )}
@@ -74,7 +74,7 @@ export function DocumentBulkActionDock({
                 className="h-7 gap-1.5 px-2"
                 onClick={onDelete}
               >
-                {isDeleting ? <Spinner /> : <Trash2Icon className="size-4" />}
+                {isDeleting ? <Spinner /> : <Trash01Icon className="size-4" />}
                 {isDeleting ? t("Deleting...") : t("Delete")}
               </Button>
             </div>

@@ -22,7 +22,13 @@ import { apiService } from "@/services/api";
 import type { PanelMode } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, BotIcon, PlusIcon, SearchIcon, WrenchIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  BotIcon,
+  PlusIcon,
+  SearchLgIcon,
+  Tool01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { filterAgents, groupAgentsByTrigger } from "./agent-roster";
@@ -109,7 +115,7 @@ export default function AgentsTab() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("Search agents")}
             className="h-8"
-            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             aria-label={t("Search agents")}
           />
           <div className="flex items-center gap-3">
@@ -135,7 +141,7 @@ export default function AgentsTab() {
       ) : agents.length === 0 ? (
         <div className="flex justify-center py-6">
           <EmptyState
-            icons={[BotIcon, AssistMark, WrenchIcon]}
+            icons={[BotIcon, AssistMark, Tool01Icon]}
             title={t("No agents yet")}
             description={t(
               "An agent is a set of instructions, a choice of tools and a trigger. Build one from a template in a minute, or write exactly the agent your operation needs.",

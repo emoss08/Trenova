@@ -14,15 +14,15 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  CheckCircle2Icon,
+  CheckCircleIcon,
   CircleDashedIcon,
-  FileIcon,
-  FileTextIcon,
-  ImageIcon,
-  RefreshCwIcon,
-  TrashIcon,
-  UploadIcon,
-} from "lucide-react";
+  File04Icon,
+  File06Icon,
+  Image01Icon,
+  RefreshCw02Icon,
+  Trash01Icon,
+  Upload01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -30,9 +30,9 @@ import { BillingQueueDocumentsEmpty } from "./billing-queue-documents-empty";
 import { UnmetRequirementNote } from "@/components/documents/unmet-requirement-note";
 
 function getFileIcon(fileType: string) {
-  if (fileType.startsWith("image/")) return ImageIcon;
-  if (fileType === "application/pdf") return FileTextIcon;
-  return FileIcon;
+  if (fileType.startsWith("image/")) return Image01Icon;
+  if (fileType === "application/pdf") return File06Icon;
+  return File04Icon;
 }
 
 function formatSize(bytes: number) {
@@ -154,9 +154,7 @@ export function BillingQueueDocumentsTab({
       {billingReadiness && billingReadiness.requirements.length > 0 && (
         <div className="shrink-0 border-b px-3 py-2">
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-muted-foreground text-xs font-medium">
-              {requirementTitle}
-            </span>
+            <span className="text-muted-foreground text-xs font-medium">{requirementTitle}</span>
             <span className="text-muted-foreground text-xs tabular-nums">
               {billingReadiness.requirements.length - billingReadiness.missingRequirements.length}/
               {billingReadiness.requirements.length}
@@ -170,7 +168,7 @@ export function BillingQueueDocumentsTab({
               >
                 <div className="flex min-w-0 items-center gap-1.5">
                   {req.satisfied ? (
-                    <CheckCircle2Icon className="size-3.5 shrink-0 text-success-foreground" />
+                    <CheckCircleIcon className="size-3.5 shrink-0 text-success-foreground" />
                   ) : (
                     <CircleDashedIcon className="text-muted-foreground size-3.5 shrink-0" />
                   )}
@@ -211,7 +209,7 @@ export function BillingQueueDocumentsTab({
             />
           </div>
           <Button size="sm" variant="outline" onClick={() => setUploadOpen(true)}>
-            <UploadIcon className="size-3.5" />
+            <Upload01Icon className="size-3.5" />
             {t("Upload")}
           </Button>
         </div>
@@ -282,7 +280,7 @@ export function BillingQueueDocumentsTab({
                                 setUploadOpen(true);
                               }}
                             >
-                              <RefreshCwIcon className="size-3" />
+                              <RefreshCw02Icon className="size-3" />
                             </Button>
                           }
                         />
@@ -301,7 +299,7 @@ export function BillingQueueDocumentsTab({
                                 deleteDocument(doc.id);
                               }}
                             >
-                              <TrashIcon className="size-3" />
+                              <Trash01Icon className="size-3" />
                             </Button>
                           }
                         />

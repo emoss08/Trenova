@@ -16,13 +16,13 @@ import {
   ArrowUpIcon,
   AtSignIcon,
   CornerDownLeftIcon,
-  FileIcon,
-  MapPinIcon,
-  MapPinOffIcon,
+  File04Icon,
+  MarkerPin01Icon,
+  MarkerPinOffIcon,
   PaperclipIcon,
   SquareIcon,
-  XIcon,
-} from "lucide-react";
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
@@ -1026,9 +1026,9 @@ function ContextChip({
                   className="flex"
                 >
                   {included ? (
-                    <MapPinIcon className="size-3" />
+                    <MarkerPin01Icon className="size-3" />
                   ) : (
-                    <MapPinOffIcon className="size-3" />
+                    <MarkerPinOffIcon className="size-3" />
                   )}
                 </m.span>
               </AnimatePresence>
@@ -1159,7 +1159,7 @@ function AttachmentChip({
       )}
       title={failed ? attachment.error : undefined}
     >
-      <FileIcon className="size-3 shrink-0" />
+      <File04Icon className="size-3 shrink-0" />
       <span className="min-w-0 truncate">{attachment.name}</span>
       <span className="text-muted-foreground shrink-0 tabular-nums">
         {failed
@@ -1175,7 +1175,7 @@ function AttachmentChip({
           aria-label={t("Remove {0}", attachment.name)}
           className="text-muted-foreground hover:text-foreground hover:bg-surface-hover ui-focus-ring inline-flex size-5 shrink-0 items-center justify-center rounded-full transition-colors"
         >
-          <XIcon className="size-3" />
+          <XCloseIcon className="size-3" />
         </button>
       )}
     </m.li>

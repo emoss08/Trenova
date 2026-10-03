@@ -21,7 +21,12 @@ import {
   type TrainingDelivery,
 } from "@trenova/shared/types/worker-training";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, ClockIcon, ExternalLinkIcon, GraduationCapIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ClockIcon,
+  GraduationHat01Icon,
+  LinkExternal01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -53,7 +58,7 @@ export function TrainingCard() {
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <GraduationCapIcon className="size-4 text-muted-foreground" />
+          <GraduationHat01Icon className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold">{t("Training")}</h2>
         </div>
         {attention > 0 ? (
@@ -167,9 +172,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
             </span>
           ) : null}
           {awaitingResult ? (
-            <span className="text-warning-foreground">
-              {t("Waiting for your result")}
-            </span>
+            <span className="text-warning-foreground">{t("Waiting for your result")}</span>
           ) : null}
           {item.score ? (
             <span className="tabular-nums">{t("Score {0}%", Number(item.score).toFixed(0))}</span>
@@ -188,7 +191,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
                   if (open && item.status === "Assigned") start.mutate();
                 }}
               >
-                <ExternalLinkIcon className="size-3.5" />
+                <LinkExternal01Icon className="size-3.5" />
                 {t("Open course")}
               </a>
             ) : null}

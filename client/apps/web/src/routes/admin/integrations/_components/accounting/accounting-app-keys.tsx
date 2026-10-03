@@ -34,7 +34,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { toSentenceFragment } from "@trenova/shared/lib/utils";
-import { CheckIcon, CopyIcon, KeyRoundIcon } from "lucide-react";
+import { CheckIcon, Copy01Icon, Key01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -84,7 +84,7 @@ export function AccountingAppKeys({
   return (
     <SectionPanel
       title={appName}
-      icon={<KeyRoundIcon />}
+      icon={<Key01Icon />}
       hint={
         app.activeSource === "Tenant"
           ? t("Your own app")
@@ -491,7 +491,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
           className="h-7 px-2"
           onClick={() => void copy(value)}
         >
-          {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
+          {isCopied ? <CheckIcon className="size-3.5" /> : <Copy01Icon className="size-3.5" />}
           <span className="sr-only">{t("Copy {0}", label)}</span>
         </Button>
       </div>

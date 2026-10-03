@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { Dialog } from "@base-ui/react/dialog";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 
 const PANEL_SIZES = {
   sm: "400px",
@@ -78,7 +78,7 @@ export function DataTablePanelContainer({
                   />
                 }
               >
-                <XIcon className="size-4" />
+                <XCloseIcon className="size-4" />
                 <span className="sr-only">{t("Close panel")}</span>
               </Dialog.Close>
             </div>

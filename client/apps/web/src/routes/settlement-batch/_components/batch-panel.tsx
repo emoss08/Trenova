@@ -31,7 +31,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
-import { Download, TriangleAlert } from "lucide-react";
+import { AlertTriangleIcon, Download01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
@@ -206,7 +206,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
           disabled={exportMutation.isPending}
           onClick={() => exportMutation.mutate()}
         >
-          <Download className="size-3.5" />
+          <Download01Icon className="size-3.5" />
           {t("Export payroll CSV")}
         </Button>
       </div>
@@ -220,7 +220,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
           <p className="text-muted-foreground text-xs font-medium">{t("Exceptions")}</p>
           <p className="mt-1 flex items-center gap-1 text-sm font-semibold tabular-nums">
             {data.exceptionCount > 0 && (
-              <TriangleAlert className="size-3.5 text-warning-foreground" />
+              <AlertTriangleIcon className="size-3.5 text-warning-foreground" />
             )}
             {data.exceptionCount}
           </p>
@@ -269,7 +269,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
                       status={settlement.status as DriverSettlementStatus}
                     />
                     {settlement.hasExceptions && (
-                      <TriangleAlert className="size-3 text-warning-foreground" />
+                      <AlertTriangleIcon className="size-3 text-warning-foreground" />
                     )}
                   </div>
                 </td>

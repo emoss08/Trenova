@@ -9,7 +9,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ChargeAllocation } from "@trenova/shared/types/shipment";
-import { SplitIcon, UserRoundIcon } from "lucide-react";
+import { SplitIcon, User01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { type FieldValues, useForm, useFormContext, useWatch } from "react-hook-form";
 
@@ -120,7 +120,7 @@ export function ChargePayerControl({
           }
         >
           {single || rows.length === 0 ? (
-            <UserRoundIcon className="size-3" />
+            <User01Icon className="size-3" />
           ) : (
             <SplitIcon className="size-3" />
           )}

@@ -1,16 +1,16 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CircleCheckIcon,
+  ClockStopwatchIcon,
   EyeIcon,
-  InboxIcon,
-  LayersIcon,
-  TimerIcon,
-  TriangleAlertIcon,
-  XIcon,
-} from "lucide-react";
+  Inbox01Icon,
+  LayersThree01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import type { TimelineExceptionSummary, TimelineFocus } from "./use-timeline-data";
 
 type ChipTone = "destructive" | "warning";
@@ -19,12 +19,12 @@ const CHIP_CONFIG: readonly {
   id: TimelineFocus;
   label: string;
   tone: ChipTone;
-  Icon: typeof TimerIcon;
+  Icon: typeof ClockStopwatchIcon;
 }[] = [
-  { id: "late", label: "Late", tone: "destructive", Icon: TriangleAlertIcon },
-  { id: "dwelling", label: "Dwelling", tone: "warning", Icon: TimerIcon },
-  { id: "overlaps", label: "Overlaps", tone: "warning", Icon: LayersIcon },
-  { id: "unassigned", label: "Unassigned", tone: "warning", Icon: InboxIcon },
+  { id: "late", label: "Late", tone: "destructive", Icon: AlertTriangleIcon },
+  { id: "dwelling", label: "Dwelling", tone: "warning", Icon: ClockStopwatchIcon },
+  { id: "overlaps", label: "Overlaps", tone: "warning", Icon: LayersThree01Icon },
+  { id: "unassigned", label: "Unassigned", tone: "warning", Icon: Inbox01Icon },
   { id: "watch", label: "Watch", tone: "warning", Icon: EyeIcon },
 ] as const;
 
@@ -71,7 +71,7 @@ export function ExceptionStrip({
       <span className="text-muted-foreground text-2xs font-semibold">{t("Attention")}</span>
       {allClear ? (
         <span className="text-muted-foreground inline-flex items-center gap-1 text-2xs">
-          <CircleCheckIcon className="text-success size-3" />
+          <CheckCircleIcon className="text-success size-3" />
           {t("All clear in this window")}
         </span>
       ) : (
@@ -126,7 +126,7 @@ export function ExceptionStrip({
             onClick={() => onFocusChange(null)}
             className="text-muted-foreground hover:bg-muted hover:text-foreground ml-0.5 flex size-5 items-center justify-center rounded-md transition-colors"
           >
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
           </button>
         </div>
       )}

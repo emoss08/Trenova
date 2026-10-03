@@ -30,7 +30,13 @@ import { fixtureSchema, type Fixture, type FixtureFormValues } from "@/types/doc
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftIcon, ChevronDownIcon, FileTextIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ChevronDownIcon,
+  File06Icon,
+  PlusIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -134,7 +140,7 @@ function FixtureForm({
                 <AlertDialogTrigger
                   render={
                     <Button type="button" variant="ghost" size="icon" className="text-destructive">
-                      <TrashIcon className="size-4" />
+                      <Trash01Icon className="size-4" />
                     </Button>
                   }
                 />
@@ -246,7 +252,7 @@ function FixtureForm({
             <div className="space-y-2">
               {pageFields.length === 0 && (
                 <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">
-                  <FileTextIcon className="text-muted-foreground size-5" />
+                  <File06Icon className="text-muted-foreground size-5" />
                   <p className="text-muted-foreground text-xs">
                     {t(
                       "No page snapshots defined. Add pages if the document has page-specific content.",
@@ -279,7 +285,7 @@ function FixtureForm({
                             removePage(idx);
                           }}
                         >
-                          <TrashIcon className="text-destructive size-3.5" />
+                          <Trash01Icon className="text-destructive size-3.5" />
                         </Button>
                         <ChevronDownIcon className="size-4 transition-transform [[data-state=open]>&]:rotate-180" />
                       </div>

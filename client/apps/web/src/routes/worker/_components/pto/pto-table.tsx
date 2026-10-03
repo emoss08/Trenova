@@ -18,7 +18,7 @@ import {
 import type { DockAction, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { PTOBulkAction } from "@trenova/shared/types/worker";
-import { BanIcon, CircleCheckIcon, CircleXIcon } from "lucide-react";
+import { CheckCircleIcon, SlashCircle01Icon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -107,7 +107,7 @@ export default function PTODataTable() {
       actions.push({
         id: "approve",
         label: PTO_ACTION_LABELS.Approve.label,
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         onClick: (rows) => openAction(rows, "Approve"),
       });
     }
@@ -115,7 +115,7 @@ export default function PTODataTable() {
       actions.push({
         id: "reject",
         label: PTO_ACTION_LABELS.Reject.label,
-        icon: CircleXIcon,
+        icon: XCircleIcon,
         onClick: (rows) => openAction(rows, "Reject"),
       });
     }
@@ -123,7 +123,7 @@ export default function PTODataTable() {
       actions.push({
         id: "cancel",
         label: PTO_ACTION_LABELS.Cancel.label,
-        icon: BanIcon,
+        icon: SlashCircle01Icon,
         variant: "destructive",
         onClick: (rows) => openAction(rows, "Cancel"),
       });
@@ -137,7 +137,7 @@ export default function PTODataTable() {
       actions.push({
         id: "approve",
         label: PTO_ACTION_LABELS.Approve.label,
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         group: "decision",
         hidden: (row) => !canApplyPTOAction(row.original.status, "Approve"),
         onClick: (row) => openAction([row.original], "Approve"),
@@ -147,7 +147,7 @@ export default function PTODataTable() {
       actions.push({
         id: "reject",
         label: PTO_ACTION_LABELS.Reject.label,
-        icon: CircleXIcon,
+        icon: XCircleIcon,
         group: "decision",
         hidden: (row) => !canApplyPTOAction(row.original.status, "Reject"),
         onClick: (row) => openAction([row.original], "Reject"),
@@ -157,7 +157,7 @@ export default function PTODataTable() {
       actions.push({
         id: "cancel",
         label: PTO_ACTION_LABELS.Cancel.label,
-        icon: BanIcon,
+        icon: SlashCircle01Icon,
         variant: "destructive",
         hidden: (row) => !canApplyPTOAction(row.original.status, "Cancel"),
         onClick: (row) => openAction([row.original], "Cancel"),
@@ -193,7 +193,7 @@ export default function PTODataTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <CircleCheckIcon />
+              <CheckCircleIcon />
             </AlertDialogMedia>
             <AlertDialogTitle>
               {t("Approve {0, plural, one {# PTO request} other {# PTO requests}}", approvalCount)}

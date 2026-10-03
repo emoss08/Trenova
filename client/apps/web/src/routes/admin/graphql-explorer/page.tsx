@@ -19,7 +19,7 @@ import { ExplorerSkeleton } from "./_components/explorer-skeleton";
 import { ListPanel } from "./_components/list-panel";
 import { CatalogProvider, useCatalogQuery } from "./_components/use-catalog";
 import type { CatalogSelection } from "@/types/graphql-catalog";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
@@ -77,7 +77,7 @@ function CatalogLoadError({
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3">
-      <CircleAlertIcon className="text-destructive/60 size-5" />
+      <AlertCircleIcon className="text-destructive/60 size-5" />
       <div className="text-center">
         <p className="text-foreground text-sm font-medium">{t("Operation catalog unavailable")}</p>
         <p className="text-muted-foreground mt-0.5 max-w-80 text-xs">{message}</p>

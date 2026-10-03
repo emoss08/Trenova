@@ -5,7 +5,7 @@ import type {
   EDITemplateElementBaseSource,
   EDITemplateTransformStep,
 } from "@trenova/shared/types/edi";
-import { ShuffleIcon, Trash2Icon } from "lucide-react";
+import { Shuffle01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import {
   createTransformStep,
   getTransformOperationDefinition,
@@ -43,7 +43,7 @@ export function TransformPipelineEditor({
   return (
     <div className="space-y-3 rounded-md border p-2">
       <div className="flex items-center gap-2 text-xs font-semibold">
-        <ShuffleIcon className="size-4" />
+        <Shuffle01Icon className="size-4" />
         {t("Transform pipeline")}
       </div>
       <ControlledSelectField
@@ -206,7 +206,7 @@ function TransformStepEditor({
             {t("Down")}
           </Button>
           <Button type="button" variant="ghost" size="icon" disabled={disabled} onClick={onRemove}>
-            <Trash2Icon className="size-4" />
+            <Trash01Icon className="size-4" />
           </Button>
         </div>
       </div>

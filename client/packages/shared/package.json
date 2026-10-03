@@ -9,6 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc -b",
+    "icons:generate": "node scripts/icons/generate-icons.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -32,13 +33,13 @@
     "@tiptap/starter-kit": "^3.31.2",
     "@tiptap/suggestion": "^3.31.2",
     "@trenova/graphql": "workspace:*",
+    "@untitledui/icons": "0.0.23",
     "chrono-node": "^2.10.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
-    "lucide-react": "^1.40.0",
     "motion": "^13.2.0",
     "react": "^19.2.8",
     "react-day-picker": "^10.0.1",

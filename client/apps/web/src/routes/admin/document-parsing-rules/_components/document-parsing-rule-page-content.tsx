@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyState } from "@/components/empty-state";
-import { FileTextIcon, ListFilterIcon, ScanTextIcon } from "lucide-react";
+import { File06Icon, FilterLinesIcon, ScanTextIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { RuleSetDetail } from "./rule-set-detail";
 import { RuleSetList } from "./rule-set-list";
@@ -27,7 +27,7 @@ export default function DocumentParsingRulePageContent() {
               description={t(
                 "Choose an existing rule set from the sidebar to view and edit its parsing configuration, or create a new one to define extraction rules for a document provider.",
               )}
-              icons={[ListFilterIcon, FileTextIcon, ScanTextIcon]}
+              icons={[FilterLinesIcon, File06Icon, ScanTextIcon]}
             />
           </div>
         )}

@@ -2,7 +2,7 @@ import { CopyIconButton } from "@/components/copy-icon-button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { isAbsoluteUrl } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 
 type Traced = { traceId: string | null; traceUrl?: string | null };
 
@@ -62,7 +62,7 @@ export function TraceLink({ traceId, traceUrl }: TraceLinkProps) {
           className="text-brand ui-focus-ring inline-flex items-center gap-1 rounded-sm font-mono text-xs underline-offset-4 hover:underline"
         >
           {short}
-          <ExternalLinkIcon aria-hidden className="size-3" />
+          <LinkExternal01Icon aria-hidden className="size-3" />
         </a>
       ) : (
         <span title={traceId} className="text-foreground-muted font-mono text-xs">

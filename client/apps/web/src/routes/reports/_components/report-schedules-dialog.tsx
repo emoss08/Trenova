@@ -46,16 +46,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  BellIcon,
+  AlertTriangleIcon,
+  Bell01Icon,
   CalendarClockIcon,
   CheckIcon,
-  MailIcon,
+  Edit02Icon,
+  Mail01Icon,
   PaperclipIcon,
-  PencilIcon,
   PlusIcon,
-  Trash2Icon,
-  TriangleAlertIcon,
-} from "lucide-react";
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useController, useForm, useWatch, type Control } from "react-hook-form";
@@ -730,7 +730,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
               <TooltipTrigger
                 render={
                   <span className="flex cursor-default items-center gap-1 tabular-nums">
-                    <MailIcon className="size-3" />
+                    <Mail01Icon className="size-3" />
                     {emailCount}
                     {schedule.emailAttach && <PaperclipIcon className="size-3" />}
                   </span>
@@ -747,7 +747,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
               <TooltipTrigger
                 render={
                   <span className="flex cursor-default items-center gap-1 tabular-nums">
-                    <BellIcon className="size-3" />
+                    <Bell01Icon className="size-3" />
                     {notifyCount}
                   </span>
                 }
@@ -813,7 +813,7 @@ function ScheduleRow({
           )}
           {schedule.consecutiveFailures > 0 && (
             <Badge variant="warning" className="text-2xs h-5 gap-1">
-              <TriangleAlertIcon className="size-3" />
+              <AlertTriangleIcon className="size-3" />
               {t("{0} failed", schedule.consecutiveFailures)}
             </Badge>
           )}
@@ -839,7 +839,7 @@ function ScheduleRow({
       <div className="flex shrink-0 items-center gap-1">
         <div className="flex gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
           <Button variant="ghost" size="icon" onClick={onEdit} aria-label={t("Edit schedule")}>
-            <PencilIcon className="size-3.5" />
+            <Edit02Icon className="size-3.5" />
           </Button>
           <Button
             variant="ghost"
@@ -848,7 +848,7 @@ function ScheduleRow({
             disabled={deleting}
             aria-label={t("Delete schedule")}
           >
-            <Trash2Icon className="text-destructive size-3.5" />
+            <Trash01Icon className="text-destructive size-3.5" />
           </Button>
         </div>
         <Switch

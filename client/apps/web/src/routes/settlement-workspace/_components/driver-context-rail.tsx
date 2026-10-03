@@ -31,7 +31,13 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeftToLine, Pause, PauseCircle, Play, PlusCircle } from "lucide-react";
+import {
+  ArrowLeftToLineIcon,
+  PauseCircleIcon,
+  PauseIcon,
+  PlayIcon,
+  PlusCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -105,9 +111,7 @@ function RailSection({
     <div className="border-t pt-3 first:border-t-0 first:pt-0">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div>
-          <h4 className="text-muted-foreground text-xs font-semibold">
-            {title}
-          </h4>
+          <h4 className="text-muted-foreground text-xs font-semibold">{title}</h4>
           <p className="text-muted-foreground text-2xs">{hint}</p>
         </div>
         {action}
@@ -214,7 +218,7 @@ function UnsettledPaySection({
                     onClick={() => attachMutation.mutate(event.id)}
                     title={t("Add this pay event to the selected draft settlement")}
                   >
-                    <ArrowLeftToLine className="size-3" />
+                    <ArrowLeftToLineIcon className="size-3" />
                     {t("Add to settlement")}
                   </Button>
                 )}
@@ -226,7 +230,7 @@ function UnsettledPaySection({
                     disabled={releaseMutation.isPending}
                     onClick={() => releaseMutation.mutate(event.id)}
                   >
-                    <Play className="size-3" />
+                    <PlayIcon className="size-3" />
                     {t("Release hold")}
                   </Button>
                 ) : (
@@ -239,7 +243,7 @@ function UnsettledPaySection({
                       "Defer this pay to a later settlement — it will skip generation until released",
                     )}
                   >
-                    <Pause className="size-3" />
+                    <PauseIcon className="size-3" />
                     {t("Hold")}
                   </Button>
                 )}
@@ -306,7 +310,7 @@ function HoldDialog({
             {t("Cancel")}
           </Button>
           <Button disabled={!reason.trim() || mutation.isPending} onClick={() => mutation.mutate()}>
-            <PauseCircle className="size-4" />
+            <PauseCircleIcon className="size-4" />
             {t("Hold pay")}
           </Button>
         </DialogFooter>
@@ -369,15 +373,13 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
           title={t("Create or edit earnings on the full page")}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-2xs")}
         >
-          <PlusCircle className="size-3" />
+          <PlusCircleIcon className="size-3" />
           {t("Manage")}
         </Link>
       }
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-xs">
-          {t("No active earnings for this driver.")}
-        </p>
+        <p className="text-muted-foreground text-xs">{t("No active earnings for this driver.")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((earning) => (
@@ -404,9 +406,9 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
                 }
               >
                 {earning.status === "Paused" ? (
-                  <Play className="size-3" />
+                  <PlayIcon className="size-3" />
                 ) : (
-                  <Pause className="size-3" />
+                  <PauseIcon className="size-3" />
                 )}
               </Button>
             </li>
@@ -472,7 +474,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
           title={t("Create or edit deductions on the full page")}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-2xs")}
         >
-          <PlusCircle className="size-3" />
+          <PlusCircleIcon className="size-3" />
           {t("Manage")}
         </Link>
       }
@@ -507,9 +509,9 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
                 }
               >
                 {deduction.status === "Paused" ? (
-                  <Play className="size-3" />
+                  <PlayIcon className="size-3" />
                 ) : (
-                  <Pause className="size-3" />
+                  <PauseIcon className="size-3" />
                 )}
               </Button>
             </li>
@@ -550,7 +552,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
           title={t("Issue or write off advances on the full page")}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-2xs")}
         >
-          <PlusCircle className="size-3" />
+          <PlusCircleIcon className="size-3" />
           {t("Manage")}
         </Link>
       }

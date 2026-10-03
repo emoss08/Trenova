@@ -26,13 +26,13 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightIcon,
-  LightbulbIcon,
-  RotateCcwIcon,
+  Lightbulb01Icon,
+  RefreshCcw01Icon,
   SearchCheckIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
-  XIcon,
-} from "lucide-react";
+  TrendDown01Icon,
+  TrendUp01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { CATEGORY_LABELS, SEVERITY_TONE } from "./insight-labels";
@@ -147,7 +147,7 @@ function DetailBody({
 
         {insight.recommendation !== "" && (
           <Alert>
-            <LightbulbIcon className="size-4" />
+            <Lightbulb01Icon className="size-4" />
             <AlertDescription>{insight.recommendation}</AlertDescription>
           </Alert>
         )}
@@ -217,9 +217,9 @@ function TrendSection({ trend }: { trend: MetricTrend }) {
             )}
           >
             {trend.direction === "worsening" ? (
-              <TrendingUpIcon className="size-3" />
+              <TrendUp01Icon className="size-3" />
             ) : (
-              <TrendingDownIcon className="size-3" />
+              <TrendDown01Icon className="size-3" />
             )}
             {trend.direction === "worsening"
               ? t("Getting worse")
@@ -363,7 +363,7 @@ function DecisionSection({ insight, onDone }: { insight: Insight; onDone: () => 
           onClick={() => restoreMutation.mutate(undefined)}
           disabled={restoreMutation.isPending}
         >
-          <RotateCcwIcon className="size-3.5" />
+          <RefreshCcw01Icon className="size-3.5" />
           {t("Restore this finding")}
         </Button>
       </section>
@@ -391,7 +391,7 @@ function DecisionSection({ insight, onDone }: { insight: Insight; onDone: () => 
           onClick={() => dismissMutation.mutate(undefined)}
           disabled={dismissMutation.isPending}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
           {t("Dismiss for 30 days")}
         </Button>
       </div>

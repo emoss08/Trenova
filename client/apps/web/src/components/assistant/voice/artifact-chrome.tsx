@@ -8,24 +8,24 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { ArtifactKind, ArtifactStatus } from "@/types/assistant";
 import {
-  CompassIcon,
-  FileTextIcon,
+  Compass03Icon,
+  File06Icon,
   GavelIcon,
   GitCompareArrowsIcon,
+  type IconComponent,
   IdCardIcon,
-  InboxIcon,
-  LayoutDashboardIcon,
+  Inbox01Icon,
+  LayoutAlt04Icon,
   ListChecksIcon,
-  MailIcon,
+  Mail01Icon,
   NewspaperIcon,
   PencilLineIcon,
-  PinIcon,
+  Pin01Icon,
   PinOffIcon,
   ReceiptTextIcon,
   ScrollTextIcon,
   TableIcon,
-  type LucideIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useId, useState, type ReactNode } from "react";
 
 /**
@@ -37,21 +37,21 @@ import { useId, useState, type ReactNode } from "react";
  */
 export const ARTIFACT_KINDS: Record<
   ArtifactKind,
-  { label: string; icon: LucideIcon; source?: string }
+  { label: string; icon: IconComponent; source?: string }
 > = {
   report_preview: { label: "Preview", icon: TableIcon, source: "Report builder" },
-  report_run: { label: "Report", icon: FileTextIcon, source: "Report builder" },
-  email_draft: { label: "Draft", icon: MailIcon },
+  report_run: { label: "Report", icon: File06Icon, source: "Report builder" },
+  email_draft: { label: "Draft", icon: Mail01Icon },
   plan: { label: "Plan", icon: ListChecksIcon },
   entity_card: { label: "Record", icon: IdCardIcon, source: "Records" },
   table_view: { label: "Table", icon: TableIcon, source: "Search" },
   rate_explanation: { label: "Rate", icon: ReceiptTextIcon, source: "Rating" },
-  dashboard_ref: { label: "Dashboard", icon: LayoutDashboardIcon, source: "Dashboards" },
+  dashboard_ref: { label: "Dashboard", icon: LayoutAlt04Icon, source: "Dashboards" },
   briefing: { label: "Briefing", icon: NewspaperIcon },
-  inbound_message: { label: "Message", icon: InboxIcon, source: "Inbox" },
+  inbound_message: { label: "Message", icon: Inbox01Icon, source: "Inbox" },
   run_diff: { label: "Changes", icon: GitCompareArrowsIcon, source: "Report builder" },
   document: { label: "Document", icon: ScrollTextIcon },
-  navigation: { label: "Page", icon: CompassIcon },
+  navigation: { label: "Page", icon: Compass03Icon },
   draft_edit: { label: "Draft change", icon: PencilLineIcon },
   decision_request: { label: "Decision", icon: GavelIcon },
 };
@@ -262,7 +262,7 @@ export function ArtifactChrome({
                 key={pinned ? "pinned" : "loose"}
                 className={cn("flex", pinTouched && "animate-confirm")}
               >
-                {pinned ? <PinOffIcon className="size-3.5" /> : <PinIcon className="size-3.5" />}
+                {pinned ? <PinOffIcon className="size-3.5" /> : <Pin01Icon className="size-3.5" />}
               </span>
             </TooltipTrigger>
             <TooltipContent>{pinned ? t("Unpin") : t("Pin to the top")}</TooltipContent>

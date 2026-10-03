@@ -31,11 +31,11 @@ import { cn } from "@trenova/shared/lib/utils";
 import {
   CheckIcon,
   ChevronRightIcon,
-  ExternalLinkIcon,
-  FileSignatureIcon,
-  FileTextIcon,
-  PenLineIcon,
-} from "lucide-react";
+  Edit03Icon,
+  File06Icon,
+  FileEditIcon,
+  LinkExternal01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDashProfile } from "./dash-layout";
@@ -70,7 +70,7 @@ export function PoliciesCard() {
     <div className="border-border bg-card rounded-2xl border p-4" data-testid="policies-card">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <FileSignatureIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+          <FileEditIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
           <div className="min-w-0">
             <h2 className="text-sm font-semibold">{t("Policies")}</h2>
             <p className="text-muted-foreground text-xs">
@@ -102,9 +102,9 @@ export function PoliciesCard() {
                 )}
               >
                 {policy.hasDocument ? (
-                  <FileTextIcon className="text-muted-foreground size-4 shrink-0" />
+                  <File06Icon className="text-muted-foreground size-4 shrink-0" />
                 ) : (
-                  <PenLineIcon className="text-muted-foreground size-4 shrink-0" />
+                  <Edit03Icon className="text-muted-foreground size-4 shrink-0" />
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{t(policy.title)}</span>
@@ -212,10 +212,10 @@ function PolicyDrawer({
               onClick={() => openDocument.mutate()}
             >
               <span className="flex items-center gap-2">
-                <FileTextIcon className="size-4" />
+                <File06Icon className="size-4" />
                 {openDocument.isPending ? t("Opening…") : t("Open the document")}
               </span>
-              <ExternalLinkIcon className="text-muted-foreground size-4" />
+              <LinkExternal01Icon className="text-muted-foreground size-4" />
             </Button>
           ) : null}
 

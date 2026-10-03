@@ -17,7 +17,7 @@ import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, ExternalLinkIcon, PlugZapIcon } from "lucide-react";
+import { AlertTriangleIcon, LinkExternal01Icon, PlugIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { ModuleCard } from "./module-card";
@@ -148,7 +148,7 @@ function ConnectSamsaraState() {
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
       <span className="bg-muted text-muted-foreground inline-flex size-8 items-center justify-center rounded-full">
-        <PlugZapIcon className="size-4" />
+        <PlugIcon className="size-4" />
       </span>
       <p className="text-xs font-medium">{t("Connect Samsara to watch driver clocks")}</p>
       <p className="text-muted-foreground max-w-55 text-2xs leading-snug">
@@ -162,7 +162,7 @@ function ConnectSamsaraState() {
         nativeButton={false}
         render={<Link to="/admin/integrations?type=Samsara" />}
       >
-        <ExternalLinkIcon className="size-3" />
+        <LinkExternal01Icon className="size-3" />
         {t("Open integrations")}
       </Button>
     </div>

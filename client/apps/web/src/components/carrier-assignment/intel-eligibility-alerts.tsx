@@ -14,22 +14,22 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
+  AlertTriangleIcon,
   ArrowUpRightIcon,
-  InfoIcon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-  type LucideIcon,
-} from "lucide-react";
+  type IconComponent,
+  InfoCircleIcon,
+  XOctagonIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
 export type EligibilityTone = "blocker" | "warning" | "advisory";
 
-const TONE_ICON: Record<EligibilityTone, { icon: LucideIcon; className: string }> = {
-  blocker: { icon: OctagonXIcon, className: "text-danger-foreground" },
-  warning: { icon: TriangleAlertIcon, className: "text-warning-foreground" },
-  advisory: { icon: InfoIcon, className: "text-muted-foreground" },
+const TONE_ICON: Record<EligibilityTone, { icon: IconComponent; className: string }> = {
+  blocker: { icon: XOctagonIcon, className: "text-danger-foreground" },
+  warning: { icon: AlertTriangleIcon, className: "text-warning-foreground" },
+  advisory: { icon: InfoCircleIcon, className: "text-muted-foreground" },
 };
 
 export type EligibilityRow = {

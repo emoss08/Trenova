@@ -8,7 +8,7 @@ import {
 } from "@trenova/shared/hooks/use-notifications";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Notification } from "@trenova/shared/types/notification";
-import { BellIcon, CheckCheckIcon } from "lucide-react";
+import { Bell01Icon, CheckDoubleIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useNavigate } from "react-router";
 import { daysUntil, formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
@@ -59,7 +59,7 @@ export function DashNotificationsPage() {
             disabled={markAllRead.isPending}
             onClick={() => markAllRead.mutate()}
           >
-            <CheckCheckIcon className="size-3.5" />
+            <CheckDoubleIcon className="size-3.5" />
             {t("Mark all read")}
           </Button>
         ) : null}
@@ -138,7 +138,7 @@ export function DashNotificationsPage() {
         </>
       ) : (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-10 text-center">
-          <BellIcon className="size-6 text-muted-foreground" />
+          <Bell01Icon className="size-6 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             {t("You're all caught up. Load assignments, settlements, and pay updates land here.")}
           </p>

@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { MapStyleId, OverlayId } from "@/types/shipment-map";
 import { useMap } from "@vis.gl/react-google-maps";
-import { LocateFixedIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
+import { Expand01Icon, Minimize01Icon, Target02Icon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { MapLegendPopover } from "./map-legend-popover";
 import { MapOptionsPopover } from "./map-options-popover";
@@ -59,9 +59,9 @@ export function MapControls({
           }
         >
           {isFullscreen ? (
-            <Minimize2Icon className="size-3.5" />
+            <Minimize01Icon className="size-3.5" />
           ) : (
-            <Maximize2Icon className="size-3.5" />
+            <Expand01Icon className="size-3.5" />
           )}
         </TooltipTrigger>
         <TooltipContent side="bottom">
@@ -80,7 +80,7 @@ export function MapControls({
             />
           }
         >
-          <LocateFixedIcon className="size-3.5" />
+          <Target02Icon className="size-3.5" />
         </TooltipTrigger>
         <TooltipContent side="bottom">{t("Zoom to fit")}</TooltipContent>
       </Tooltip>

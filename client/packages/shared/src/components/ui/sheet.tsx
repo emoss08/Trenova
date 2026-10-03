@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
@@ -65,7 +65,7 @@ function SheetContent({
             data-slot="sheet-close"
             render={<Button variant="ghost" className="absolute top-3 right-3" size="icon-sm" />}
           >
-            <XIcon />
+            <XCloseIcon />
             <span className="sr-only">{t("Close")}</span>
           </SheetPrimitive.Close>
         )}

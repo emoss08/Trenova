@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { DAY_LABELS } from "@trenova/shared/lib/scheduling";
 import { cn } from "@trenova/shared/lib/utils";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 
 type EmptyProps = {
   title: string;
@@ -40,7 +40,7 @@ export function RotaEmpty({
       action={
         onClearFilters ? (
           <Button variant="outline" size="sm" onClick={onClearFilters}>
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
             {t("Clear filters")}
           </Button>
         ) : null

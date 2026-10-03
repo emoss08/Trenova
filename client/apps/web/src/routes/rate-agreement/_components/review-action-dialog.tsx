@@ -13,7 +13,14 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
-import { ArchiveIcon, CheckIcon, PauseIcon, PlayIcon, SendIcon, XIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  CheckIcon,
+  PauseIcon,
+  PlayIcon,
+  Send01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -41,7 +48,7 @@ const ACTION_CONFIG: Record<
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Describe what changed and why it needs review",
     commentRequired: false,
-    icon: SendIcon,
+    icon: Send01Icon,
     destructive: false,
   },
   approve: {
@@ -66,7 +73,7 @@ const ACTION_CONFIG: Record<
     commentLabel: "Comment (required)",
     commentPlaceholder: "Explain why this agreement is being rejected",
     commentRequired: true,
-    icon: XIcon,
+    icon: XCloseIcon,
     destructive: true,
   },
   suspend: {

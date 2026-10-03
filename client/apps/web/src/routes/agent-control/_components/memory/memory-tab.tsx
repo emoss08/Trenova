@@ -11,7 +11,7 @@ import { aiControlStatsQueryKey } from "../overview/use-ai-control-stats";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArchiveRestoreIcon, ArchiveIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { getMemoryColumns } from "./memory-columns";

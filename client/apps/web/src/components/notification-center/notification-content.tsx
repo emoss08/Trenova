@@ -8,7 +8,7 @@ import { formatCurrency, formatFileSize } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Notification } from "@trenova/shared/types/notification";
 import { formatDistanceToNowStrict } from "date-fns";
-import { DownloadIcon } from "lucide-react";
+import { Download01Icon } from "@trenova/shared/components/icons";
 import { MentionReply } from "./notification-mention-reply";
 import {
   notificationDataBoolean,
@@ -72,7 +72,7 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
             downloadReportRun({ id: runId });
           }}
         >
-          <DownloadIcon className="size-3" />
+          <Download01Icon className="size-3" />
         </Button>
       )}
     </div>

@@ -4,7 +4,7 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import {
   CATEGORY_FILTERS,
   DEFAULT_FILTERS,
@@ -66,7 +66,7 @@ export function InsightFilterBar({
             onClick={() => onChange(DEFAULT_FILTERS)}
             className="text-muted-foreground"
           >
-            <XIcon className="size-3" />
+            <XCloseIcon className="size-3" />
             {t("Clear filters")}
           </Button>
         )}

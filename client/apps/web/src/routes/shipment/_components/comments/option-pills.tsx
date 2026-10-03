@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import type { GenericSelectOption } from "@trenova/shared/types/fields";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 
 export function CommentOptionPill<T extends string>({

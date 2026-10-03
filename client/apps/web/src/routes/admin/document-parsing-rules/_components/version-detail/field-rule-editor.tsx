@@ -10,7 +10,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
-import { ChevronDownIcon, PlusIcon, TrashIcon, TextCursorInputIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  PlusIcon,
+  TextInputIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { TagInput } from "../shared/tag-input";
 import type { RuleVersionFormValues } from "@/types/document-parsing-rule";
@@ -55,7 +60,7 @@ export function FieldRuleEditor() {
     >
       {fields.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
-          <TextCursorInputIcon className="text-muted-foreground/50 size-8" />
+          <TextInputIcon className="text-muted-foreground/50 size-8" />
           <div>
             <p className="text-muted-foreground text-sm font-medium">
               {t("No field rules defined")}
@@ -115,7 +120,9 @@ function FieldItem({
             </span>
             {isRequired && <Badge variant="success">{t("Required")}</Badge>}
             {typeof confidence === "number" && confidence > 0 && (
-              <Badge variant="neutral" appearance="outline">{Math.round(confidence * 100)}%</Badge>
+              <Badge variant="neutral" appearance="outline">
+                {Math.round(confidence * 100)}%
+              </Badge>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -129,7 +136,7 @@ function FieldItem({
                 onRemove();
               }}
             >
-              <TrashIcon className="text-destructive size-3.5" />
+              <Trash01Icon className="text-destructive size-3.5" />
             </Button>
             <ChevronDownIcon className="size-4 transition-transform [[data-state=open]>&]:rotate-180" />
           </div>

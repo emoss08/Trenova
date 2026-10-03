@@ -1,7 +1,7 @@
 "use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
-import { RefreshCwIcon, XIcon } from "lucide-react";
+import { RefreshCw02Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 
 type DataTableRefreshPillProps = {
@@ -31,7 +31,7 @@ export function DataTableRefreshPill({ visible, onRefresh, onDismiss }: DataTabl
               className="h-6 gap-1.5 rounded-full px-2 text-xs"
               onClick={onRefresh}
             >
-              <RefreshCwIcon className="size-3" />
+              <RefreshCw02Icon className="size-3" />
               {t("New data available")}
             </Button>
             <Button
@@ -42,7 +42,7 @@ export function DataTableRefreshPill({ visible, onRefresh, onDismiss }: DataTabl
               onClick={onDismiss}
               aria-label={t("Dismiss refresh notification")}
             >
-              <XIcon className="size-3" />
+              <XCloseIcon className="size-3" />
             </Button>
           </div>
         </m.div>

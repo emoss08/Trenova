@@ -7,7 +7,7 @@ import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { rateMatrixSchema, type RateMatrix } from "@trenova/shared/types/rate";
-import { FileTextIcon, Grid3x3Icon, TableIcon } from "lucide-react";
+import { File06Icon, Grid01Icon, TableIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { DimensionEditor } from "./dimension-editor";
@@ -56,13 +56,13 @@ export function RateMatrixPanel({
       {
         value: "overview",
         label: t("Overview"),
-        icon: FileTextIcon,
+        icon: File06Icon,
         content: <RateMatrixForm />,
       },
       {
         value: "axes",
         label: t("Axes"),
-        icon: Grid3x3Icon,
+        icon: Grid01Icon,
         content: <DimensionEditor />,
       },
       {

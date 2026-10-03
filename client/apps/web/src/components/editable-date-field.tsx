@@ -5,7 +5,7 @@ import {
   toUserWallClock,
 } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Calendar } from "@trenova/shared/components/ui/calendar";

@@ -1,5 +1,5 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { FileIcon } from "lucide-react";
+import { File04Icon } from "@trenova/shared/components/icons";
 import type { PaletteCommand, PalettePage, PaletteRecord } from "../palette-model";
 import type { ActionContext } from "../palette-actions";
 
@@ -13,7 +13,7 @@ export function page(overrides: Partial<PalettePage> = {}): PalettePage {
     title: "Invoices",
     trail: "Billing > Invoices",
     href: "/billing/invoices",
-    icon: FileIcon,
+    icon: File04Icon,
     keywords: ["Invoices", "Billing"],
     module: "Billing",
     ...overrides,
@@ -26,7 +26,7 @@ export function command(overrides: Partial<PaletteCommand> = {}): PaletteCommand
     label: "New shipment",
     description: "Add a new shipment",
     group: "create",
-    icon: FileIcon,
+    icon: File04Icon,
     keywords: ["shipment"],
     intent: { type: "navigate", href: "/shipment-management/shipments?panelType=create" },
     ...overrides,

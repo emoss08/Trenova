@@ -7,7 +7,7 @@ import {
   isDecimalString,
 } from "@trenova/shared/types/decimal";
 import type { FormControlProps } from "@trenova/shared/types/fields";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon } from "@trenova/shared/components/icons";
 import { Controller, type FieldPathValue, type FieldValues, type Path } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { FieldWrapper } from "./field-components";
@@ -183,10 +183,9 @@ function NumberFieldImpl<T extends FieldValues>({
                   "placeholder:text-muted-foreground",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   "read-only:text-muted-foreground read-only:cursor-default",
-"ui-focus-ring",
+                  "ui-focus-ring",
                   props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
-                  fieldState.invalid &&
-fieldInvalidClass,
+                  fieldState.invalid && fieldInvalidClass,
                   sideText ? "pr-16" : "pr-12",
                   className,
                 )}

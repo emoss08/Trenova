@@ -11,29 +11,29 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { cn } from "@trenova/shared/lib/utils";
 import type { ToolEffect } from "@/types/assistant";
 import {
-  BanIcon,
-  BlocksIcon,
-  BookOpenIcon,
+  AlertCircleIcon,
+  BookOpen01Icon,
   CheckIcon,
   ChevronRightIcon,
-  CircleAlertIcon,
-  CodeIcon,
-  CompassIcon,
-  FileTextIcon,
-  ForwardIcon,
-  GaugeIcon,
+  Code01Icon,
+  Compass03Icon,
+  Edit03Icon,
+  File06Icon,
   GitCompareArrowsIcon,
-  GlobeIcon,
-  LockIcon,
-  MessageCircleQuestionIcon,
-  PenLineIcon,
-  PresentationIcon,
-  Repeat2Icon,
+  Globe02Icon,
+  Grid01Icon,
+  type IconComponent,
+  Lock01Icon,
+  MessageQuestionCircleIcon,
+  PresentationChart01Icon,
+  Repeat04Icon,
+  ReverseRightIcon,
   ScrollTextIcon,
-  SearchIcon,
+  SearchLgIcon,
+  SlashCircle01Icon,
+  Speedometer03Icon,
   TableIcon,
-  type LucideIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import {
   delegateRunning,
@@ -68,32 +68,32 @@ import { sourcesOfStep } from "./web-sources";
 
 export type { ToolActivityStatus, ToolStep } from "./activity";
 
-const EFFECT_ICONS: Record<ToolEffect, LucideIcon> = {
-  lookup: SearchIcon,
-  discover: BlocksIcon,
-  navigate: CompassIcon,
-  present: PresentationIcon,
-  change: PenLineIcon,
-  ask: MessageCircleQuestionIcon,
-  delegate: ForwardIcon,
+const EFFECT_ICONS: Record<ToolEffect, IconComponent> = {
+  lookup: SearchLgIcon,
+  discover: Grid01Icon,
+  navigate: Compass03Icon,
+  present: PresentationChart01Icon,
+  change: Edit03Icon,
+  ask: MessageQuestionCircleIcon,
+  delegate: ReverseRightIcon,
 };
 
 /** A few tools say more about themselves than their effect does. */
-const NAMED_ICONS: Readonly<Record<string, LucideIcon>> = {
-  find_in_trenova: BookOpenIcon,
-  run_report: FileTextIcon,
+const NAMED_ICONS: Readonly<Record<string, IconComponent>> = {
+  find_in_trenova: BookOpen01Icon,
+  run_report: File06Icon,
   publish_artifact: ScrollTextIcon,
   compose_table_view: TableIcon,
   compare_report_runs: GitCompareArrowsIcon,
-  [WEB_SEARCH_TOOL]: GlobeIcon,
-  [WEB_READ_TOOL]: GlobeIcon,
+  [WEB_SEARCH_TOOL]: Globe02Icon,
+  [WEB_READ_TOOL]: Globe02Icon,
 };
 
-const REFUSAL_ICONS: Record<ToolRefusal, LucideIcon> = {
-  denied: LockIcon,
-  invalid: BanIcon,
-  over_budget: GaugeIcon,
-  duplicate: Repeat2Icon,
+const REFUSAL_ICONS: Record<ToolRefusal, IconComponent> = {
+  denied: Lock01Icon,
+  invalid: SlashCircle01Icon,
+  over_budget: Speedometer03Icon,
+  duplicate: Repeat04Icon,
 };
 
 const REFUSAL_TEXT: Record<ReturnType<typeof refusalTone>, string> = {
@@ -105,7 +105,7 @@ function refusalText(refusal: ToolRefusal): string {
   return REFUSAL_TEXT[refusalTone(refusal)];
 }
 
-function iconFor(group: ActivityGroup): LucideIcon {
+function iconFor(group: ActivityGroup): IconComponent {
   const first = group.steps[0];
 
   return NAMED_ICONS[first.name] ?? EFFECT_ICONS[group.effect];
@@ -215,7 +215,7 @@ export function ToolActivity({
           />
           <WorkMarks groups={groups} />
           <span className="min-w-0 truncate">{workSummary(steps, t)}</span>
-          {failed && <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />}
+          {failed && <AlertCircleIcon aria-hidden className="text-danger size-3 shrink-0" />}
         </CollapsibleTrigger>
       )}
       <CollapsibleContent className="ease-settle h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0">
@@ -359,7 +359,7 @@ function ActivityMark({
       ) : Refused && line.refusal ? (
         <Refused className={cn("size-3", refusalText(line.refusal), live && "animate-confirm")} />
       ) : line.state === "failed" ? (
-        <CircleAlertIcon className={cn("text-danger size-3", live && "animate-confirm")} />
+        <AlertCircleIcon className={cn("text-danger size-3", live && "animate-confirm")} />
       ) : live ? (
         <CheckIcon key={line.phrase} className="text-foreground-muted animate-confirm size-3" />
       ) : (
@@ -394,7 +394,7 @@ function StepRow({ step }: { step: ToolStep }) {
           ) : Refused && refusal ? (
             <Refused aria-hidden className={cn("size-3 shrink-0", refusalText(refusal))} />
           ) : failed ? (
-            <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />
+            <AlertCircleIcon aria-hidden className="text-danger size-3 shrink-0" />
           ) : (
             <span aria-hidden className="bg-border-strong mx-1.25 size-1 shrink-0 rounded-full" />
           )}
@@ -484,7 +484,7 @@ function StepDetails({ step }: { step: ToolStep }) {
           aria-expanded={raw}
           onClick={() => setRaw((value) => !value)}
         >
-          <CodeIcon className="size-3" />
+          <Code01Icon className="size-3" />
           {raw ? t("Hide details") : t("Details")}
         </Button>
         {raw && (
@@ -576,7 +576,7 @@ function ResultBody({
 
   switch (result.kind) {
     case "error": {
-      const Mark = refusal ? REFUSAL_ICONS[refusal] : CircleAlertIcon;
+      const Mark = refusal ? REFUSAL_ICONS[refusal] : AlertCircleIcon;
       return (
         <p
           className={cn("flex items-start gap-1.5", refusal ? refusalText(refusal) : "text-danger")}

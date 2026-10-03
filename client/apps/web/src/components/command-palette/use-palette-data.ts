@@ -18,7 +18,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { HistoryIcon, PinIcon } from "lucide-react";
+import { ClockRewindIcon, Pin01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useLocation } from "react-router";
 import type { ActionContext } from "./palette-actions";
@@ -191,7 +191,7 @@ export function usePinnedPages(open: boolean, pageIndex: ReadonlyMap<string, Pal
   const pages = useMemo(
     () =>
       (data ?? []).map((favorite) =>
-        pageFromHref(favorite.pageUrl, favorite.pageTitle, pageIndex, PinIcon),
+        pageFromHref(favorite.pageUrl, favorite.pageTitle, pageIndex, Pin01Icon),
       ),
     [data, pageIndex],
   );
@@ -260,7 +260,7 @@ export function usePaletteHome({
   const recentPages = useMemo(
     () =>
       recentPageEntries.map((entry) =>
-        pageFromHref(entry.path, entry.title, catalog.pageIndex, HistoryIcon),
+        pageFromHref(entry.path, entry.title, catalog.pageIndex, ClockRewindIcon),
       ),
     [catalog.pageIndex, recentPageEntries],
   );

@@ -8,7 +8,7 @@ import { pageAssistantThreadKey } from "@/components/assistant/page-assistant";
 import { apiService } from "@/services/api";
 import { shipmentCreateSchema } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { nanoid } from "nanoid";
 import { lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";

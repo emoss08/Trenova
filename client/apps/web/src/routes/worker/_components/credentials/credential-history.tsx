@@ -3,7 +3,7 @@ import type { WorkerCredentialRow } from "@/lib/graphql/worker-credential";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 /**

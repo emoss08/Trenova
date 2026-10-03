@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
+import { CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
@@ -21,7 +21,7 @@ export function FormCopyButton({ rowId }: { rowId: string }) {
               void copy(rowId);
             }}
           >
-            {!isCopied ? <Copy className="size-2" /> : <Check className="size-2" />}
+            {!isCopied ? <Copy01Icon className="size-2" /> : <CheckIcon className="size-2" />}
           </Button>
         }
       />

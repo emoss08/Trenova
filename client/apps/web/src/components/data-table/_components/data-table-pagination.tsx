@@ -11,7 +11,12 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import type { Table } from "@trenova/shared/types/data-table";
-import { ChevronFirstIcon, ChevronLastIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import {
+  ChevronLeftDoubleIcon,
+  ChevronLeftIcon,
+  ChevronRightDoubleIcon,
+  ChevronRightIcon,
+} from "@trenova/shared/components/icons";
 
 type DataTablePaginationProps<TData extends RowData> = {
   table: Table<TData>;
@@ -127,7 +132,7 @@ export function DataTablePagination<TData extends RowData>({
               disabled={!canPreviousPage}
               aria-label={t("Go to first page")}
             >
-              <ChevronFirstIcon className="size-4" />
+              <ChevronLeftDoubleIcon className="size-4" />
             </Button>
           )}
           <Button
@@ -166,7 +171,7 @@ export function DataTablePagination<TData extends RowData>({
               disabled={!canNextPage}
               aria-label={t("Go to last page")}
             >
-              <ChevronLastIcon className="size-4" />
+              <ChevronRightDoubleIcon className="size-4" />
             </Button>
           )}
         </div>

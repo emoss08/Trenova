@@ -5,7 +5,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { formatFileSize } from "@trenova/shared/lib/utils";
 import { cn } from "@trenova/shared/lib/utils";
 import type { UploadState } from "@/hooks/use-upload-with-progress";
-import { RotateCcwIcon, XIcon } from "lucide-react";
+import { RefreshCcw01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -112,7 +112,7 @@ function UploadChip({
           onClick={onRetry}
           aria-label={`Retry uploading ${upload.file.name}`}
         >
-          <RotateCcwIcon className="size-3" />
+          <RefreshCcw01Icon className="size-3" />
         </Button>
       )}
       <Button
@@ -123,7 +123,7 @@ function UploadChip({
         onClick={isActive ? onCancel : onRemove}
         aria-label={`Remove ${upload.file.name}`}
       >
-        <XIcon className="size-3" />
+        <XCloseIcon className="size-3" />
       </Button>
       {isActive && (
         <span className="bg-muted absolute inset-x-0 bottom-0 h-0.5">

@@ -15,7 +15,7 @@ import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { toTitleCase } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { KeyRoundIcon, PlusIcon } from "lucide-react";
+import { Key01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState, PanelHeader, RowSkeleton } from "../security-access/shared";
@@ -70,7 +70,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
   return (
     <div className="bg-background rounded-lg border">
       <PanelHeader
-        icon={<KeyRoundIcon />}
+        icon={<Key01Icon />}
         title={t("SCIM tokens")}
         description={t("Issue bearer tokens for directory synchronization.")}
       />
@@ -149,7 +149,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
           </div>
         ) : (
           <EmptyState
-            icon={<KeyRoundIcon />}
+            icon={<Key01Icon />}
             label={t("No SCIM tokens")}
             description={t("Create a token and copy it into your directory sync application.")}
             compact

@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 
 export type KpiInfoRow = {
   label: string;
@@ -34,10 +34,10 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
               "text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors",
-"ui-focus-ring",
+              "ui-focus-ring",
             )}
           >
-            <InfoIcon className="size-3" />
+            <InfoCircleIcon className="size-3" />
           </button>
         }
       />
@@ -51,9 +51,7 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
         <dl className="grid gap-2">
           {rows.map((row) => (
             <div key={row.label} className="grid gap-0.5">
-              <dt className="text-muted-foreground font-mono text-xs">
-                {t(row.label)}
-              </dt>
+              <dt className="text-muted-foreground font-mono text-xs">{t(row.label)}</dt>
               <dd className="text-foreground/90 text-xs leading-snug">{row.value}</dd>
             </div>
           ))}

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptyTable, type EmptyTableColumn } from "@trenova/shared/components/ui/empty-table";
 import { pluralize, toSentenceFragment } from "@trenova/shared/lib/utils";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 
 type DataTableEmptyStateProps = {
   /** The record the table lists, as the table names itself. */

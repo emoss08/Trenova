@@ -2,7 +2,7 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import * as React from "react";
 
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ChevronRightIcon } from "lucide-react";
+import { CheckIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 
 const statusColors = {
   danger:

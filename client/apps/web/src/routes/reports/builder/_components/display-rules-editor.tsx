@@ -18,7 +18,7 @@ import {
   type ReportDisplayRuleSpec,
   type ReportDisplayTone,
 } from "@/types/report";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 
 type DisplayRulesEditorProps = {
   rules: ReportDisplayRuleSpec[];
@@ -47,9 +47,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
   return (
     <div className="border-border/60 flex flex-col gap-2 border-t pt-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground font-medium">
-          {t("Highlight when")}
-        </span>
+        <span className="text-xs text-muted-foreground font-medium">{t("Highlight when")}</span>
         <div className="flex-1" />
         <Button
           variant="ghost"
@@ -141,7 +139,7 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
               onClick={() => remove(index)}
               aria-label={t("Remove rule")}
             >
-              <XIcon className="size-3.5" />
+              <XCloseIcon className="size-3.5" />
             </Button>
           </div>
         ))

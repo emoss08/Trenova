@@ -10,7 +10,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { FileSignatureIcon, PenLineIcon } from "lucide-react";
+import { Edit03Icon, FileEditIcon } from "@trenova/shared/components/icons";
 
 /**
  * Every policy version this worker has signed. Older versions stay listed:
@@ -37,7 +37,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
     <div className="rounded-lg border p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <FileSignatureIcon className="text-muted-foreground size-4" />
+          <FileEditIcon className="text-muted-foreground size-4" />
           <h3 className="text-sm font-semibold">{t("Policies signed")}</h3>
         </div>
         <span className="text-muted-foreground text-xs tabular-nums">
@@ -66,7 +66,9 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                 <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 pb-3">
                   <span className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <span className="truncate font-medium">{ack.policy?.title ?? t("Policy")}</span>
-                    <Badge variant="neutral" appearance="outline">{t("v{0}", ack.versionLabel)}</Badge>
+                    <Badge variant="neutral" appearance="outline">
+                      {t("v{0}", ack.versionLabel)}
+                    </Badge>
                     {superseded ? (
                       <Badge variant="neutral">
                         {t("Superseded by v{0}", ack.policy?.versionLabel)}
@@ -77,7 +79,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                     {formatShiftDate(ack.acknowledgedAt)}
                     {ack.signatureName ? (
                       <>
-                        <PenLineIcon className="size-3" />
+                        <Edit03Icon className="size-3" />
                         <span>{ack.signatureName}</span>
                       </>
                     ) : (

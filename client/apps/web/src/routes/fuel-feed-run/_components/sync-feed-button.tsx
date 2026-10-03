@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 
 /**
@@ -60,7 +60,7 @@ export function SyncFeedButton() {
       <DropdownMenuTrigger
         render={
           <Button variant="outline" size="sm" isLoading={isPending} loadingText={t("Reading...")}>
-            <RefreshCwIcon className="size-4" />
+            <RefreshCw02Icon className="size-4" />
             {t("Sync now")}
           </Button>
         }

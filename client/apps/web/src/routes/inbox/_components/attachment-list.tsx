@@ -5,7 +5,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatFileSize } from "@trenova/shared/lib/utils";
-import { ExternalLinkIcon, ScanTextIcon } from "lucide-react";
+import { LinkExternal01Icon, ScanTextIcon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 
 function attachmentKindLabel(
@@ -105,7 +105,7 @@ export function AttachmentList({
                   variant="outline"
                   onClick={() => void openDocument(documentId, t("The file could not be opened"))}
                 >
-                  <ExternalLinkIcon className="size-3" />
+                  <LinkExternal01Icon className="size-3" />
                   {t("Open")}
                 </Button>
                 <Button size="xs" variant="outline" onClick={() => onReview(documentId)}>

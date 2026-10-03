@@ -35,18 +35,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { jobDepartmentLabel } from "@trenova/shared/lib/org-structure";
 import { cn } from "@trenova/shared/lib/utils";
 import {
+  ChevronCollapseVerticalIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  ChevronsDownUpIcon,
-  ChevronsUpDownIcon,
+  ChevronSelectorVerticalIcon,
   CornerDownRightIcon,
+  DotsHorizontalIcon,
   GripVerticalIcon,
-  MoreHorizontalIcon,
   PencilLineIcon,
   PlusIcon,
-  SearchIcon,
-  UsersIcon,
-} from "lucide-react";
+  SearchLgIcon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 
 const INDENT_REM = 1.5;
@@ -175,15 +175,15 @@ export function PositionTree({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("Find a title, code or department")}
             aria-label={t("Find a position")}
-            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             inputContainerClassName="w-72 max-w-full"
           />
           <Button size="xs" variant="ghost" onClick={expandAll} aria-label={t("Expand all")}>
-            <ChevronsUpDownIcon className="size-3.5" />
+            <ChevronSelectorVerticalIcon className="size-3.5" />
             {t("Expand")}
           </Button>
           <Button size="xs" variant="ghost" onClick={collapseAll} aria-label={t("Collapse all")}>
-            <ChevronsDownUpIcon className="size-3.5" />
+            <ChevronCollapseVerticalIcon className="size-3.5" />
             {t("Collapse")}
           </Button>
           {tree.unplaced > 0 ? (
@@ -448,12 +448,12 @@ function TreeRow({
                 />
               }
             >
-              <MoreHorizontalIcon className="size-3.5" />
+              <DotsHorizontalIcon className="size-3.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuItem
                 title={t("Who holds it")}
-                startContent={<UsersIcon className="size-3.5" />}
+                startContent={<Users01Icon className="size-3.5" />}
                 onClick={onOpenHolders}
               />
               <DropdownMenuItem

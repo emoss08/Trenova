@@ -18,7 +18,7 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon, TriangleAlertIcon, XIcon } from "lucide-react";
+import { AlertCircleIcon, AlertTriangleIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
 import {
@@ -132,7 +132,7 @@ function AgentHeaders({
     return (
       <div className="p-3">
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t("What these agents can do without a person could not be loaded.")}
           </AlertDescription>
@@ -193,7 +193,7 @@ function AgentHeader({
           aria-label={t("Remove {0} from the comparison", header.agent.name)}
           onClick={() => onRemove(header.agentId)}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
         </Button>
       </div>
       <DescriptionList layout="inline">
@@ -204,7 +204,7 @@ function AgentHeader({
       </DescriptionList>
       {header.reach.warnings.map((warning) => (
         <Alert key={warning.kind} variant="warning" size="sm">
-          <TriangleAlertIcon />
+          <AlertTriangleIcon />
           <AlertDescription>
             {warning.kind === "OpenWithSensitiveTools"
               ? t(

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDownIcon } from "lucide-react";
+import { ArrowDownIcon } from "@trenova/shared/components/icons";
 import { useReducedMotion } from "motion/react";
 import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 

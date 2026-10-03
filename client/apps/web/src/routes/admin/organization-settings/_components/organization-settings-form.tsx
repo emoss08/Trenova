@@ -43,7 +43,13 @@ import {
   resolveOrganizationCapabilityPreset,
   type OrganizationCapabilityPreset,
 } from "@trenova/shared/types/organization-capability";
-import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";
+import {
+  Building07Icon,
+  CreditCard01Icon,
+  Shield01Icon,
+  Upload01Icon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -178,15 +184,15 @@ export default function OrganizationSettingsForm() {
     >
       <TabsList variant="underline">
         <TabsTab value="general">
-          <Building2Icon size={16} />
+          <Building07Icon size={16} />
           {t("General")}
         </TabsTab>
         <TabsTab value="security">
-          <ShieldIcon size={16} />
+          <Shield01Icon size={16} />
           {t("Security")}
         </TabsTab>
         <TabsTab value="billing-usage">
-          <CreditCardIcon size={16} />
+          <CreditCard01Icon size={16} />
           {t("Billing & usage")}
         </TabsTab>
       </TabsList>
@@ -333,7 +339,7 @@ function LogoForm({
                 aria-label={t("Remove logo")}
                 title={t("Remove logo")}
               >
-                <CircleXIcon className="size-4" />
+                <XCircleIcon className="size-4" />
               </button>
             ) : null}
           </div>
@@ -344,7 +350,7 @@ function LogoForm({
             onClick={() => fileInputRef.current?.click()}
             disabled={isRemovingLogo}
           >
-            <UploadIcon className="size-4" />
+            <Upload01Icon className="size-4" />
             {t("Upload logo")}
           </Button>
           <input

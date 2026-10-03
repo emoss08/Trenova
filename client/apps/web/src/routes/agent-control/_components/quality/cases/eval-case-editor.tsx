@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { triggerChoices } from "../../activity/agent-badges";
 import { ArgumentRulesField } from "./argument-rules-field";
@@ -180,7 +180,7 @@ function ToolsSection() {
                 aria-label={t("Remove this tool")}
                 onClick={() => remove(index)}
               >
-                <Trash2Icon />
+                <Trash01Icon />
               </Button>
             </div>
             <ArgumentRulesField name={`tools.${index}.args`} withValues />
@@ -286,7 +286,7 @@ function ProposalRow({ index, onRemove }: { index: number; onRemove: () => void 
           aria-label={t("Remove this proposal")}
           onClick={onRemove}
         >
-          <Trash2Icon />
+          <Trash01Icon />
         </Button>
       </div>
       <TextareaField

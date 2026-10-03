@@ -19,7 +19,13 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, PlusIcon, ShieldAlertIcon, UsersIcon, UserRoundCheckIcon } from "lucide-react";
+import {
+  CheckIcon,
+  PlusIcon,
+  ShieldAlertIcon,
+  UserCheck01Icon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import type { AgentFormValues } from "./agent-form-schema";
@@ -129,12 +135,12 @@ export function AgentAccessSection({
             {
               value: "Everyone",
               label: t("Everyone who can use the assistant"),
-              icon: UsersIcon,
+              icon: Users01Icon,
             },
             {
               value: "Roles",
               label: t("Specific roles"),
-              icon: UserRoundCheckIcon,
+              icon: UserCheck01Icon,
               disabled: isSystem,
             },
           ]}

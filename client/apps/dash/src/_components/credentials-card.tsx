@@ -12,7 +12,7 @@ import {
 import { uploadMyCredentialDocument } from "@trenova/shared/lib/portal";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CameraIcon, IdCardIcon, ShieldCheckIcon } from "lucide-react";
+import { Camera01Icon, IdCardIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
@@ -149,7 +149,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
           {item.numberMasked ? <span className="tabular-nums">{item.numberMasked}</span> : null}
           {item.verified ? (
             <span className="flex items-center gap-1 text-success-foreground">
-              <ShieldCheckIcon className="size-3.5" />
+              <ShieldTickIcon className="size-3.5" />
               {t("Verified")}
             </span>
           ) : null}
@@ -180,7 +180,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
               disabled={upload.isPending}
               onClick={() => fileInputRef.current?.click()}
             >
-              <CameraIcon className="size-3.5" />
+              <Camera01Icon className="size-3.5" />
               {upload.isPending ? t("Uploading {0}…", fileName ?? "") : t("Upload renewal")}
             </Button>
           </>

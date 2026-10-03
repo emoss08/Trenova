@@ -19,7 +19,7 @@ import type { UserRoleAssignment } from "@trenova/shared/types/role";
 import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -176,7 +176,7 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
           onClick={onUnassign}
           disabled={isDisabled}
         >
-          <TrashIcon className="size-4" />
+          <Trash01Icon className="size-4" />
         </Button>
       </div>
     </div>

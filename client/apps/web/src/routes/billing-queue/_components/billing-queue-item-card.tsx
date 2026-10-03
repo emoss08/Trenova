@@ -13,7 +13,12 @@ import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/dat
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
-import { ExternalLinkIcon, PauseIcon, UserPlusIcon, XIcon } from "lucide-react";
+import {
+  LinkExternal01Icon,
+  PauseIcon,
+  UserPlus01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 
 export function BillingQueueItemCard({
   item,
@@ -102,7 +107,7 @@ export function BillingQueueItemCard({
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={onAssignBiller} disabled={isTerminal}>
-          <UserPlusIcon className="size-3.5" />
+          <UserPlus01Icon className="size-3.5" />
           {t("Assign biller")}
         </ContextMenuItem>
         <ContextMenuItem onClick={onHold} disabled={isTerminal || item.status === "OnHold"}>
@@ -115,12 +120,12 @@ export function BillingQueueItemCard({
             window.open(`/shipment-management/shipments?item=${item.shipmentId}`, "_blank")
           }
         >
-          <ExternalLinkIcon className="size-3.5" />
+          <LinkExternal01Icon className="size-3.5" />
           {t("View shipment")}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={onCancel} disabled={isTerminal} className="text-destructive">
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
           {t("Cancel")}
         </ContextMenuItem>
       </ContextMenuContent>

@@ -5,7 +5,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2Icon, PlugZapIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckCircleIcon, PlugIcon } from "@trenova/shared/components/icons";
 import { assessReadiness } from "./ai-readiness";
 
 type AIReadinessBannerProps = {
@@ -36,7 +36,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
   if (!readiness.hasProviders) {
     return (
       <Alert variant="warning" size="sm">
-        <PlugZapIcon className="size-4" />
+        <PlugIcon className="size-4" />
         <AlertTitle>{t("No AI provider is connected")}</AlertTitle>
         <AlertDescription className="flex flex-col gap-3">
           <p>
@@ -46,7 +46,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
           </p>
           <div>
             <Button size="sm" variant="outline" onClick={onOpenProviders}>
-              <PlugZapIcon className="size-3.5" />
+              <PlugIcon className="size-3.5" />
               {t("Connect a provider")}
             </Button>
           </div>
@@ -58,7 +58,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
   if (readiness.uncovered.length === 0) {
     return (
       <Alert size="sm">
-        <CheckCircle2Icon className="size-4 text-success-foreground" />
+        <CheckCircleIcon className="size-4 text-success-foreground" />
         <AlertTitle>{t("Every AI task has a provider")}</AlertTitle>
         <AlertDescription>
           {t("Agents you enable will run. Routing is managed on the Providers tab.")}
@@ -69,7 +69,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
 
   return (
     <Alert variant={readiness.assistantReady ? "default" : "warning"} size="sm">
-      <TriangleAlertIcon className="size-4" />
+      <AlertTriangleIcon className="size-4" />
       <AlertTitle>
         {readiness.assistantReady
           ? t("Some AI work has nowhere to go")

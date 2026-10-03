@@ -9,7 +9,7 @@ import { queries } from "@/lib/queries";
 import { truncateText } from "@trenova/shared/lib/utils";
 import { decimalStringSchema, optionalStringSchema } from "@trenova/shared/types/helpers";
 import { useQuery } from "@tanstack/react-query";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 import { lazy, Suspense } from "react";
 import { z } from "zod";
 
@@ -87,7 +87,7 @@ function Row({ label, value }: { label: string; value: any }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="flex items-center gap-1 truncate font-mono">
         <span className="invisible group-hover:visible">
-          {!isCopied ? <CopyIcon className="size-3" /> : <CheckIcon className="size-3" />}
+          {!isCopied ? <Copy01Icon className="size-3" /> : <CheckIcon className="size-3" />}
         </span>
         {truncateText(value, 40)}
       </span>

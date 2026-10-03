@@ -53,7 +53,12 @@ import {
   type ColumnVisibilityState,
 } from "@tanstack/react-table";
 import { dataTableFeatures } from "@trenova/shared/lib/table-features";
-import { ChartGanttIcon, ChevronLeftIcon, ChevronRightIcon, TableIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  HorizontalBarChart03Icon,
+  TableIcon,
+} from "@trenova/shared/components/icons";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
 import { PanelSkeleton } from "./expanded-row/panel-skeletons";
@@ -608,7 +613,7 @@ function ViewModeToggle({
             : "bg-background text-muted-foreground hover:text-foreground",
         )}
       >
-        <ChartGanttIcon className="size-3" />
+        <HorizontalBarChart03Icon className="size-3" />
         {t("Timeline")}
       </button>
     </div>

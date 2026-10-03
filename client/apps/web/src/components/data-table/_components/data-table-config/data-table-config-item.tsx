@@ -16,16 +16,16 @@ import { apiService } from "@/services/api";
 import type { TableConfig, TableConfiguration, TableViewSource } from "@/types/table-configuration";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Building2Icon,
+  Building07Icon,
   CheckIcon,
-  CopyIcon,
-  GlobeIcon,
-  LockIcon,
-  MoreHorizontalIcon,
-  SaveIcon,
-  StarIcon,
-  TrashIcon,
-} from "lucide-react";
+  Copy01Icon,
+  DotsHorizontalIcon,
+  Globe02Icon,
+  Lock01Icon,
+  Save01Icon,
+  Star01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -160,9 +160,9 @@ export function DataTableConfigItem({
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
       >
         {config.visibility === "Private" ? (
-          <LockIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <Lock01Icon className="text-muted-foreground size-3.5 shrink-0" />
         ) : (
-          <GlobeIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <Globe02Icon className="text-muted-foreground size-3.5 shrink-0" />
         )}
         <span className="flex min-w-0 flex-col">
           <span className="truncate">{config.name}</span>
@@ -174,13 +174,13 @@ export function DataTableConfigItem({
         </span>
         {config.isDefault && isOwn && (
           <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-2xs font-medium">
-            <StarIcon className="size-2.5" />
+            <Star01Icon className="size-2.5" />
             {t("Default")}
           </span>
         )}
         {config.isOrgDefault && (
           <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-2xs font-medium">
-            <Building2Icon className="size-2.5" />
+            <Building07Icon className="size-2.5" />
             {t("Org default")}
           </span>
         )}
@@ -213,7 +213,7 @@ export function DataTableConfigItem({
                 aria-label={`${config.name} view options`}
                 aria-expanded={dropdownOpen}
               >
-                <MoreHorizontalIcon className="text-muted-foreground size-4" />
+                <DotsHorizontalIcon className="text-muted-foreground size-4" />
                 <span className="sr-only">{t("Open menu")}</span>
               </Button>
             }
@@ -236,7 +236,7 @@ export function DataTableConfigItem({
                   description={t(
                     "Overwrite this view with the current filters, sorting, and columns",
                   )}
-                  startContent={<SaveIcon className="size-4" />}
+                  startContent={<Save01Icon className="size-4" />}
                 />
               )}
               <DropdownMenuItem
@@ -244,7 +244,7 @@ export function DataTableConfigItem({
                 disabled={isDuplicating}
                 onClick={withStopPropagation(() => duplicateConfig(undefined))}
                 description={t("Create your own private copy of this view")}
-                startContent={<CopyIcon className="size-4" />}
+                startContent={<Copy01Icon className="size-4" />}
               />
               {isOwn && (
                 <DropdownMenuItem
@@ -255,7 +255,7 @@ export function DataTableConfigItem({
                     setOpen(false);
                   })}
                   description={t("Apply this view automatically when the table loads")}
-                  startContent={<StarIcon className="size-4" />}
+                  startContent={<Star01Icon className="size-4" />}
                 />
               )}
               {canManageOrgDefaults && config.visibility === "Public" && (
@@ -264,7 +264,7 @@ export function DataTableConfigItem({
                   disabled={isSettingOrgDefault}
                   onClick={withStopPropagation(() => setOrgDefaultConfig(!config.isOrgDefault))}
                   description={t("The org default applies for everyone without a personal default")}
-                  startContent={<Building2Icon className="size-4" />}
+                  startContent={<Building07Icon className="size-4" />}
                 />
               )}
               {isOwn && (
@@ -274,7 +274,7 @@ export function DataTableConfigItem({
                   disabled={isDeletingConfig}
                   onClick={withStopPropagation(() => deleteConfig(config.id))}
                   description={t("Delete this view")}
-                  startContent={<TrashIcon className="size-4" />}
+                  startContent={<Trash01Icon className="size-4" />}
                 />
               )}
             </DropdownMenuGroup>

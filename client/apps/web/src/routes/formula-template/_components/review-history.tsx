@@ -5,7 +5,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { FormulaTemplateReview } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { HistoryIcon } from "lucide-react";
+import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { describeReviewDecision, groupReviewRounds, type ReviewRound } from "./review-rounds";
 
@@ -93,7 +93,7 @@ export function ReviewHistory({ templateId }: { templateId: string }) {
   if (rounds.length === 0) {
     return (
       <div className="text-muted-foreground flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs">
-        <HistoryIcon className="size-3.5" />
+        <ClockRewindIcon className="size-3.5" />
         {t("This template has never been submitted for review.")}
       </div>
     );
@@ -102,7 +102,7 @@ export function ReviewHistory({ templateId }: { templateId: string }) {
   return (
     <div className="overflow-hidden rounded-md border">
       <div className="flex items-center gap-1.5 border-b px-3 py-2 text-xs font-semibold">
-        <HistoryIcon className="size-3.5" />
+        <ClockRewindIcon className="size-3.5" />
         {t("Review history")}
       </div>
       {rounds.map((round) => (

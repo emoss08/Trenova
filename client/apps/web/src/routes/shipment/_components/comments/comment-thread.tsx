@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { ChevronDownIcon, MessageSquareReplyIcon } from "lucide-react";
+import { ChevronDownIcon, ReverseLeftIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useShipmentCommentReplies } from "@/hooks/shipment-comments/use-shipment-comments";
 import type { LocalShipmentComment } from "@/lib/shipment-comment-cache";
@@ -71,7 +71,7 @@ export function CommentThread({
           <ChevronDownIcon
             className={`size-3 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`}
           />
-          <MessageSquareReplyIcon className="size-3" />
+          <ReverseLeftIcon className="size-3" />
           {replyCount === 1 ? t("1 reply") : t("{0} replies", replyCount)}
         </Button>
       )}
@@ -87,7 +87,9 @@ export function CommentThread({
             <div className="space-y-0.5 pt-1">
               {isExpanded && isRepliesLoading && <ReplySkeleton />}
               {isExpanded && isRepliesError && (
-                <p className="text-2xs px-2 py-1.5 text-danger-foreground">{t("Failed to load replies")}</p>
+                <p className="text-2xs px-2 py-1.5 text-danger-foreground">
+                  {t("Failed to load replies")}
+                </p>
               )}
               {isExpanded && hasMoreReplies && !isRepliesLoading && (
                 <Button

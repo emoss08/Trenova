@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 /** The field the API keys an off-cycle refusal on. */
@@ -83,7 +83,7 @@ export function OffCycleInvoiceDialog({
 
         <div className="flex flex-col gap-2">
           <Alert variant="warning" size="sm">
-            <TriangleAlertIcon />
+            <AlertTriangleIcon />
             <AlertDescription>
               {t(
                 "This freight will not appear on the customer's next statement. Their cycle does not change — everything else still bills on schedule.",

@@ -15,7 +15,7 @@ import {
   type ReportColumnDisplayLike,
 } from "@trenova/shared/lib/report-format";
 import type { ReportChartSpec } from "@/types/report";
-import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
+import { TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import {
   Area,
@@ -314,9 +314,7 @@ function KpiTile({
 
   return (
     <div className={cn("flex h-full flex-col justify-center gap-1 p-4", className)}>
-      <p className="text-xs text-muted-foreground font-medium">
-        {chart.title || column.label}
-      </p>
+      <p className="text-xs text-muted-foreground font-medium">{chart.title || column.label}</p>
       <p className="text-2xl font-semibold tracking-tight tabular-nums">
         {formatReportValue(value, column.display) || "—"}
       </p>
@@ -328,9 +326,9 @@ function KpiTile({
           )}
         >
           {delta >= 0 ? (
-            <TrendingUpIcon className="size-3.5" />
+            <TrendUp01Icon className="size-3.5" />
           ) : (
-            <TrendingDownIcon className="size-3.5" />
+            <TrendDown01Icon className="size-3.5" />
           )}
           {(delta * 100).toFixed(1)}%
           <span className="text-muted-foreground">

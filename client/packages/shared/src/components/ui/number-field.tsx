@@ -3,7 +3,7 @@
 import { Label } from "@trenova/shared/components/ui/label";
 import { cn } from "@trenova/shared/lib/utils";
 import { NumberField as NumberFieldPrimitive } from "@base-ui/react/number-field";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { MinusIcon, PlusIcon } from "@trenova/shared/components/icons";
 import * as React from "react";
 
 const NumberFieldContext = React.createContext<{

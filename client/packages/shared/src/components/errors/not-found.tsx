@@ -1,7 +1,7 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowLeftIcon, HouseIcon } from "lucide-react";
+import { ArrowLeftIcon, Home02Icon } from "@trenova/shared/components/icons";
 import { useId } from "react";
 import { StatusScreen } from "./status-screen";
 
@@ -104,7 +104,7 @@ export function NotFoundState({
       ) : null}
       <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
         <Button onClick={onGoHome}>
-          <HouseIcon />
+          <Home02Icon />
           {homeLabel ?? t("Go to dashboard")}
         </Button>
         {onGoBack ? (

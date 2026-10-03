@@ -8,7 +8,7 @@ import {
   MAX_BREAKDOWN_DEFINITIONS,
   type BreakdownDefinitionInput,
 } from "@trenova/shared/types/formula-template";
-import { ListTreeIcon, Plus, Trash2 } from "lucide-react";
+import { Dataflow02Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useFieldArray, useFormState, type Control, type UseFormRegister } from "react-hook-form";
 
@@ -72,7 +72,7 @@ export function BreakdownDefinitionEditor({
           disabled={atLimit}
           className="gap-1.5"
         >
-          <Plus className="size-3.5" />
+          <PlusIcon className="size-3.5" />
           {t("Add")}
         </Button>
       </CardHeader>
@@ -80,7 +80,7 @@ export function BreakdownDefinitionEditor({
         {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-              <ListTreeIcon className="text-muted-foreground size-5" />
+              <Dataflow02Icon className="text-muted-foreground size-5" />
             </div>
             <p className="mt-3 text-sm font-medium">{t("No breakdown items")}</p>
             <p className="text-muted-foreground mt-1 text-xs">
@@ -93,7 +93,7 @@ export function BreakdownDefinitionEditor({
               onClick={handleAdd}
               className="mt-4 gap-1.5"
             >
-              <Plus className="size-3.5" />
+              <PlusIcon className="size-3.5" />
               {t("Add item")}
             </Button>
           </div>
@@ -161,7 +161,7 @@ export function BreakdownDefinitionEditor({
                       onClick={() => remove(index)}
                       className="text-muted-foreground hover:bg-danger-subtle hover:text-danger-foreground size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     >
-                      <Trash2 className="size-4" />
+                      <Trash01Icon className="size-4" />
                     </Button>
                   </div>
                 </div>

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { MessageScrollerProvider } from "@trenova/shared/components/ui/message-scroller";
 import { TooltipProvider } from "@trenova/shared/components/ui/tooltip";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { WifiOffIcon } from "lucide-react";
+import { WifiOffIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useCommentMutations } from "@/hooks/shipment-comments/use-comment-mutations";
 import {

@@ -11,7 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
 import type { AccessPolicyConditionRow, AccessPolicyFormValues } from "@trenova/shared/types/iam";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { policyEffectOptions } from "./constants";
 
@@ -198,7 +198,7 @@ function ConditionRowFields({
       />
       <div className="flex items-end pb-0.5">
         <Button type="button" size="icon-sm" variant="ghost" onClick={onRemove}>
-          <XIcon />
+          <XCloseIcon />
         </Button>
       </div>
     </div>

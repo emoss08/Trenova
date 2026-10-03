@@ -6,7 +6,7 @@ import type { DockAction, RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { Trailer } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon, MapPinIcon } from "lucide-react";
+import { CheckCircleIcon, MarkerPin01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { equipmentTableGraphQLConfigs, type TrailerRow } from "@/lib/graphql/equipment-table";
@@ -52,7 +52,7 @@ export default function Table() {
         type: "select",
         label: t("Update status"),
         loadingLabel: t("Updating..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: equipmentStatusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
@@ -66,7 +66,7 @@ export default function Table() {
       {
         id: "locate",
         label: t("Locate trailer"),
-        icon: MapPinIcon,
+        icon: MarkerPin01Icon,
         onClick: (row) => setLocateTrailerId(row.original.id ?? null),
       },
     ],

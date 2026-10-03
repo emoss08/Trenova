@@ -52,7 +52,7 @@ import {
 } from "@trenova/shared/types/tender";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";
@@ -141,7 +141,7 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
 
   return (
     <Alert variant="warning" className="mb-3">
-      <TriangleAlertIcon />
+      <AlertTriangleIcon />
       <AlertTitle>
         {hasSkipped
           ? t("Some carriers were not offered")
@@ -440,7 +440,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
 
         {overridePrompt && (
           <Alert variant="warning">
-            <TriangleAlertIcon />
+            <AlertTriangleIcon />
             <AlertTitle>{t("Insurance warnings")}</AlertTitle>
             <AlertDescription>
               <p>{overridePrompt.message}</p>

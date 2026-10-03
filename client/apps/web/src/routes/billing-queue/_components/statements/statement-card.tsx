@@ -4,7 +4,7 @@ import { billsInLabel, cadenceLabel } from "@/lib/billing-schedule";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { OpenStatement } from "@trenova/shared/types/statement";
-import { BotIcon, PauseCircleIcon } from "lucide-react";
+import { BotIcon, PauseCircleIcon } from "@trenova/shared/components/icons";
 
 /**
  * Bar showing how far into the period the statement is.
@@ -124,9 +124,7 @@ export function StatementCard({
               <span
                 className={cn(
                   "text-xs",
-                  due
-                    ? "font-medium text-warning-foreground"
-                    : "text-muted-foreground/70",
+                  due ? "font-medium text-warning-foreground" : "text-muted-foreground/70",
                 )}
               >
                 {billsInLabel(statement.periodEnd, nowSeconds)}

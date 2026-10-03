@@ -16,7 +16,7 @@ import {
 } from "@/lib/formula-template-export";
 import { apiService } from "@/services/api";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
-import { DownloadIcon, Loader2Icon } from "lucide-react";
+import { Download01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -75,7 +75,7 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <DownloadIcon className="size-4" />
+            <Download01Icon className="size-4" />
             {t("Export template")}
           </DialogTitle>
           <DialogDescription>
@@ -108,12 +108,12 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
           <Button onClick={handleExport} disabled={isExporting}>
             {isExporting ? (
               <>
-                <Loader2Icon className="size-4 animate-spin" />
+                <SpinnerIcon className="size-4 animate-spin" />
                 {t("Exporting...")}
               </>
             ) : (
               <>
-                <DownloadIcon className="size-4" />
+                <Download01Icon className="size-4" />
                 {t("Export")}
               </>
             )}

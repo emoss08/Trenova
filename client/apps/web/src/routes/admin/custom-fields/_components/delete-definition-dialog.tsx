@@ -15,7 +15,7 @@ import type { CustomFieldDefinitionRow } from "@/lib/graphql/custom-field-defini
 import { CustomFieldService } from "@/services/custom-field";
 import type { DefinitionUsageStats } from "@/types/custom-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, Loader2Icon, TrashIcon } from "lucide-react";
+import { AlertTriangleIcon, SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -95,7 +95,7 @@ export function DeleteDefinitionDialog({
           <AlertDialogMedia
             className={hasExistingValues ? "bg-danger-subtle text-destructive" : ""}
           >
-            {hasExistingValues ? <AlertTriangleIcon /> : <TrashIcon />}
+            {hasExistingValues ? <AlertTriangleIcon /> : <Trash01Icon />}
           </AlertDialogMedia>
           <AlertDialogTitle>
             {hasExistingValues ? t("Cannot delete custom field") : t("Delete custom field")}
@@ -133,7 +133,7 @@ export function DeleteDefinitionDialog({
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              {deleteMutation.isPending && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
               {t("Delete")}
             </AlertDialogAction>
           )}

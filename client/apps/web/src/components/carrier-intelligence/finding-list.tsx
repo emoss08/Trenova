@@ -4,17 +4,22 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { InfoIcon, OctagonXIcon, TriangleAlertIcon, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  type IconComponent,
+  InfoCircleIcon,
+  XOctagonIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, type ReactNode } from "react";
 
 export type FindingKind = "blocker" | "advisory" | "notice";
 
 export const ALL_FINDING_KINDS: readonly FindingKind[] = ["blocker", "advisory", "notice"];
 
-const KIND_ICON: Record<FindingKind, { icon: LucideIcon; className: string }> = {
-  blocker: { icon: OctagonXIcon, className: "text-danger-foreground" },
-  advisory: { icon: TriangleAlertIcon, className: "text-warning-foreground" },
-  notice: { icon: InfoIcon, className: "text-muted-foreground" },
+const KIND_ICON: Record<FindingKind, { icon: IconComponent; className: string }> = {
+  blocker: { icon: XOctagonIcon, className: "text-danger-foreground" },
+  advisory: { icon: AlertTriangleIcon, className: "text-warning-foreground" },
+  notice: { icon: InfoCircleIcon, className: "text-muted-foreground" },
 };
 
 export type FindingListProps = {

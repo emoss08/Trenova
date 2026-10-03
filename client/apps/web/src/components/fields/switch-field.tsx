@@ -7,7 +7,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
@@ -95,7 +95,7 @@ export function SwitchField<T extends FieldValues>({
                         aria-label={`About ${label}`}
                         className="ui-focus-ring text-muted-foreground/70 hover:bg-muted hover:text-foreground inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors"
                       >
-                        <InfoIcon className="size-3" />
+                        <InfoCircleIcon className="size-3" />
                       </button>
                     }
                   />

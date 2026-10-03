@@ -8,7 +8,12 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { ChevronLeftIcon, ChevronRightIcon, RefreshCwIcon, SettingsIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  RefreshCw02Icon,
+  Settings01Icon,
+} from "@trenova/shared/components/icons";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { Link } from "react-router";
 
@@ -85,7 +90,7 @@ export function UsagePanel() {
             isLoading={usageQuery.isRefetching}
             onClick={() => void usageQuery.refetch()}
           >
-            <RefreshCwIcon className="size-3.5" />
+            <RefreshCw02Icon className="size-3.5" />
           </Button>
           <Button
             variant="ghost"
@@ -93,7 +98,7 @@ export function UsagePanel() {
             nativeButton={false}
             render={<Link to={CARRIER_INTEL_INTEGRATIONS_PATH} />}
           >
-            <SettingsIcon className="size-3.5" />
+            <Settings01Icon className="size-3.5" />
             {t("Spend limits")}
           </Button>
         </div>
@@ -116,7 +121,7 @@ export function UsagePanel() {
             className="h-8 text-xs"
             onClick={() => void usageQuery.refetch()}
           >
-            <RefreshCwIcon className="size-3.5" />
+            <RefreshCw02Icon className="size-3.5" />
             {t("Retry")}
           </Button>
         </div>

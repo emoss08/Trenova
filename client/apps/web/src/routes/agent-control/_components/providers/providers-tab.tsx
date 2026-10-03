@@ -24,12 +24,12 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
-  CloudIcon,
-  CpuIcon,
-  PlugZapIcon,
+  Cloud01Icon,
+  CpuChip01Icon,
+  PlugIcon,
   PlusIcon,
-  SearchIcon,
-} from "lucide-react";
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AIProviderPanel } from "./ai-provider-panel";
@@ -113,7 +113,7 @@ export default function ProvidersTab() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("Search providers")}
             className="h-8"
-            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             aria-label={t("Search providers")}
           />
           <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export default function ProvidersTab() {
       ) : providers.length === 0 ? (
         <div className="flex justify-center py-6">
           <EmptyState
-            icons={[CloudIcon, PlugZapIcon, CpuIcon]}
+            icons={[Cloud01Icon, PlugIcon, CpuChip01Icon]}
             title={t("No AI providers yet")}
             description={t(
               "Connect a hosted API, a gateway such as OpenRouter, or a model server on your own hardware. AI features stay off until a provider is assigned to a task.",

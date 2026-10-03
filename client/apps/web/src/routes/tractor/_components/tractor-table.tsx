@@ -6,7 +6,7 @@ import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { Tractor } from "@/types/tractor";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon } from "lucide-react";
+import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { equipmentTableGraphQLConfigs, type TractorRow } from "@/lib/graphql/equipment-table";
@@ -50,7 +50,7 @@ export default function Table() {
         type: "select",
         label: t("Update status"),
         loadingLabel: t("Updating..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: equipmentStatusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,

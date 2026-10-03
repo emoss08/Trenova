@@ -15,7 +15,7 @@ import {
   type ReportFilterGroup,
   type ReportIR,
 } from "@/types/report";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { refLabel, refTargetEntity, resolveField, type CatalogIndex } from "./builder-state";
 import { CatalogFieldTree, type FieldSelection } from "./catalog-field-tree";
@@ -184,7 +184,7 @@ function FilterRow({
         onClick={onRemove}
         aria-label={t("Remove filter")}
       >
-        <XIcon className="size-3.5" />
+        <XCloseIcon className="size-3.5" />
       </Button>
     </div>
   );
@@ -270,7 +270,7 @@ function GroupEditor({
             onClick={onRemove}
             aria-label={t("Remove group")}
           >
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
           </Button>
         )}
       </div>

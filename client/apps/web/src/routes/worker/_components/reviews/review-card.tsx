@@ -13,13 +13,13 @@ import {
   type ReviewGoalStatus,
 } from "@trenova/shared/types/performance-review";
 import {
-  CheckCircle2Icon,
-  PencilIcon,
-  RotateCcwIcon,
-  SendIcon,
-  TargetIcon,
-  Trash2Icon,
-} from "lucide-react";
+  CheckCircleIcon,
+  Edit02Icon,
+  RefreshCcw01Icon,
+  Send01Icon,
+  Target05Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 
 export type ReviewPermissions = {
   canUpdate: boolean;
@@ -131,7 +131,7 @@ export function ReviewCard({
         <ul className="flex flex-col gap-1">
           {review.goals.map((goal) => (
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
-              <TargetIcon className="text-muted-foreground size-3.5" />
+              <Target05Icon className="text-muted-foreground size-3.5" />
               <span>{t(goal.title)}</span>
               <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
@@ -162,25 +162,25 @@ export function ReviewCard({
       <div className="flex flex-wrap items-center gap-2">
         {isDraft && permissions.canUpdate ? (
           <Button size="sm" variant="outline" disabled={busy} onClick={() => onEdit(review)}>
-            <PencilIcon className="size-3.5" />
+            <Edit02Icon className="size-3.5" />
             {t("Edit")}
           </Button>
         ) : null}
         {isDraft && permissions.canSubmit ? (
           <Button size="sm" disabled={busy} onClick={() => onSubmit(review)}>
-            <SendIcon className="size-3.5" />
+            <Send01Icon className="size-3.5" />
             {t("Submit")}
           </Button>
         ) : null}
         {isSubmitted && permissions.canClose ? (
           <Button size="sm" variant="outline" disabled={busy} onClick={() => onReopen(review)}>
-            <RotateCcwIcon className="size-3.5" />
+            <RefreshCcw01Icon className="size-3.5" />
             {t("Reopen")}
           </Button>
         ) : null}
         {(isSubmitted || status === "Acknowledged") && permissions.canClose ? (
           <Button size="sm" disabled={busy} onClick={() => onClose(review)}>
-            <CheckCircle2Icon className="size-3.5" />
+            <CheckCircleIcon className="size-3.5" />
             {t("Close review")}
           </Button>
         ) : null}
@@ -193,7 +193,7 @@ export function ReviewCard({
             aria-label={`Delete ${review.title}`}
             onClick={() => onDelete(review)}
           >
-            <Trash2Icon className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         ) : null}
       </div>

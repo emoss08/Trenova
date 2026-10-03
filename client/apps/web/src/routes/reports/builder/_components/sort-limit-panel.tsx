@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import type { ReportIR, ReportSortSpec } from "@/types/report";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { outputColumnChoices, type CatalogIndex } from "./builder-state";
 
 const DIRECTION_CHOICES = [
@@ -94,7 +94,7 @@ export function SortLimitPanel({
               onClick={() => onSortChange(sort.filter((_, i) => i !== sortIndex))}
               aria-label={t("Remove sort")}
             >
-              <XIcon className="size-3.5" />
+              <XCloseIcon className="size-3.5" />
             </Button>
           </div>
         ))}

@@ -50,7 +50,13 @@ import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payme
 import type { SettlementStatus } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, CopyIcon, ExternalLinkIcon, HandCoinsIcon, Undo2Icon } from "lucide-react";
+import {
+  CheckIcon,
+  CoinsHandIcon,
+  Copy01Icon,
+  FlipBackwardIcon,
+  LinkExternal01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -109,14 +115,14 @@ function PaymentDetailView({
             {payment.customer
               ? `${payment.customer.code} — ${payment.customer.name}`
               : payment.customerId}
-            <ExternalLinkIcon className="size-3" />
+            <LinkExternal01Icon className="size-3" />
           </Link>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <CopyIdButton id={payment.id} />
           {canManage && isPosted && payment.unappliedAmountMinor > 0 ? (
             <Button size="sm" variant="outline" onClick={onApplyUnapplied}>
-              <HandCoinsIcon className="size-4" />
+              <CoinsHandIcon className="size-4" />
               {t("Apply unapplied")}
             </Button>
           ) : null}
@@ -126,7 +132,7 @@ function PaymentDetailView({
 
       {isReversed ? (
         <Alert variant="destructive" size="sm">
-          <Undo2Icon />
+          <FlipBackwardIcon />
           <AlertTitle>
             {t(
               "Reversed {0} — cash was backed out and the applied invoices were reopened.",
@@ -385,7 +391,7 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
           className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs hover:underline"
         >
           {t("Open full view")}
-          <ExternalLinkIcon className="size-3" />
+          <LinkExternal01Icon className="size-3" />
         </Link>
       </div>
       {isLoading ? (
@@ -428,7 +434,7 @@ function CopyIdButton({ id }: { id: string }) {
       {copied ? (
         <CheckIcon className="size-3.5 text-success-foreground" />
       ) : (
-        <CopyIcon className="size-3.5" />
+        <Copy01Icon className="size-3.5" />
       )}
     </Button>
   );
@@ -481,7 +487,7 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
   return (
     <>
       <Button size="sm" variant="destructive" onClick={() => setOpen(true)}>
-        <Undo2Icon className="size-4" />
+        <FlipBackwardIcon className="size-4" />
         {t("Reverse")}
       </Button>
       <Dialog

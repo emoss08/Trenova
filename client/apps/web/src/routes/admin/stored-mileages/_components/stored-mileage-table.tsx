@@ -19,7 +19,7 @@ import { StoredMileageService } from "@/services/stored-mileage";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2Icon, TrashIcon } from "lucide-react";
+import { SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./stored-mileage-columns";
@@ -60,7 +60,7 @@ export default function StoredMileageTable() {
     {
       id: "deactivate",
       label: t("Deactivate"),
-      icon: TrashIcon,
+      icon: Trash01Icon,
       variant: "destructive",
       disabled: (row) => row.original.status !== "Active",
       onClick: handleDelete,
@@ -89,7 +89,7 @@ export default function StoredMileageTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <TrashIcon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Deactivate stored mileage")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -109,7 +109,7 @@ export default function StoredMileageTable() {
               }}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              {deleteMutation.isPending && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
               {t("Deactivate")}
             </AlertDialogAction>
           </AlertDialogFooter>

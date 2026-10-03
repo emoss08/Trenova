@@ -7,7 +7,7 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon, PlayIcon } from "lucide-react";
+import { AlertCircleIcon, PlayIcon } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useMemo, useState } from "react";
 import {
@@ -59,7 +59,7 @@ export default function ExtractionView() {
     <div className="flex min-w-0 flex-col gap-4">
       {accuracy.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t("Extraction accuracy could not be loaded. Try again shortly.")}
           </AlertDescription>

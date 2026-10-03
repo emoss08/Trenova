@@ -17,7 +17,7 @@ import { reportDefinitionsInfiniteQuery } from "@/lib/queries/reports";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { HistoryIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { ClockRewindIcon, PlusIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { createLoader, useQueryStates } from "nuqs";
 import { Link, useNavigate } from "react-router";
 import { CannedGallery } from "./_components/canned-gallery";
@@ -161,7 +161,7 @@ export function ReportsPage() {
         actions: (
           <div className="flex items-center gap-2">
             <Button variant="outline" render={<Link to="/reports/runs" />}>
-              <HistoryIcon className="size-4" />
+              <ClockRewindIcon className="size-4" />
               {t("Run history")}
             </Button>
             {canCreate && (
@@ -244,7 +244,7 @@ export function ReportsPage() {
         <Input
           className={cn("h-7 pl-8 text-xs", isDashboards ? "w-44" : "w-64")}
           placeholder={searchPlaceholder(params.tab)}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           value={params.query}
           onChange={(event) => void setParams({ query: event.target.value })}
         />

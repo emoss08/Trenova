@@ -25,7 +25,7 @@ import {
 } from "@trenova/shared/lib/dqf";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DQFFileHeader } from "./dqf-file-header";
@@ -193,9 +193,7 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
 
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-3">
-          <h4 className="text-muted-foreground text-xs font-semibold">
-            {t("Previous employers")}
-          </h4>
+          <h4 className="text-muted-foreground text-xs font-semibold">{t("Previous employers")}</h4>
           <p className="text-muted-foreground truncate text-xs">
             {t("Three-year lookback · 49 CFR 391.23")}
           </p>

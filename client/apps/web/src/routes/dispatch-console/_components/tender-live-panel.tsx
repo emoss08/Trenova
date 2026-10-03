@@ -27,7 +27,7 @@ import {
   type RecordTenderResponsePayload,
 } from "@trenova/shared/types/tender";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { formatOfferCountdown, formatOfferRate } from "./tender-vocabulary";
@@ -362,7 +362,7 @@ export function TenderLivePanel({
 
       {tender.status === "NeedsReview" && (
         <Alert variant="destructive">
-          <TriangleAlertIcon className="size-4" aria-hidden />
+          <AlertTriangleIcon className="size-4" aria-hidden />
           <AlertTitle>{t("Carrier accepted, but auto-assignment failed")}</AlertTitle>
           <AlertDescription>
             {t(

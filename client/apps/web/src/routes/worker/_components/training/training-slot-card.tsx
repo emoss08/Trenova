@@ -17,13 +17,13 @@ import {
   type WorkerTrainingStatus,
 } from "@trenova/shared/types/worker-training";
 import {
-  BanIcon,
-  CheckCheckIcon,
+  CheckDoubleIcon,
   ClipboardCheckIcon,
-  FileCheckIcon,
+  FileCheck02Icon,
   PlusIcon,
-  RefreshCwIcon,
-} from "lucide-react";
+  RefreshCw02Icon,
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 
 export type TrainingSlotPermissions = {
   canAssign: boolean;
@@ -89,14 +89,14 @@ export function TrainingSlotRow({
       actions.push({
         id: "waive",
         label: t("Waive"),
-        icon: CheckCheckIcon,
+        icon: CheckDoubleIcon,
         disabled: busy,
         onSelect: () => onWaive(record),
       });
       actions.push({
         id: "cancel",
         label: `Cancel ${course.name} assignment`,
-        icon: BanIcon,
+        icon: SlashCircle01Icon,
         disabled: busy,
         destructive: true,
         onSelect: () => onCancel(record),
@@ -107,7 +107,7 @@ export function TrainingSlotRow({
       actions.push({
         id: "assign",
         label: needsRenewal ? "Assign renewal" : "Assign",
-        icon: needsRenewal ? RefreshCwIcon : PlusIcon,
+        icon: needsRenewal ? RefreshCw02Icon : PlusIcon,
         disabled: busy,
         onSelect: () => onAssign(course.id),
       });
@@ -175,7 +175,7 @@ function RecordFacts({ record }: { record: WorkerTrainingRecordRow | null | unde
       {facts.map((fact, index) => (
         <span key={fact} className="flex items-center gap-1">
           {index > 0 ? <span aria-hidden>·</span> : null}
-          {fact === "Certificate on file" ? <FileCheckIcon className="size-3" /> : null}
+          {fact === "Certificate on file" ? <FileCheck02Icon className="size-3" /> : null}
           {fact}
         </span>
       ))}

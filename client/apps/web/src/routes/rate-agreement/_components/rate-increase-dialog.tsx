@@ -38,7 +38,7 @@ import { getTodayDate } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
 import type { RateIncreasePlan, RatePartyType } from "@trenova/shared/types/rate";
-import { CircleAlertIcon, TrendingUpIcon } from "lucide-react";
+import { AlertCircleIcon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -237,7 +237,7 @@ export function RateIncreaseDialog({
       <DialogContent size="lg" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <TrendingUpIcon className="size-4" />
+            <TrendUp01Icon className="size-4" />
             {t("General Rate Increase")}
           </DialogTitle>
           <DialogDescription>
@@ -386,7 +386,7 @@ export function RateIncreaseDialog({
 
         {problem && (
           <Alert variant="destructive">
-            <CircleAlertIcon className="size-4" />
+            <AlertCircleIcon className="size-4" />
             <AlertDescription>{problem}</AlertDescription>
           </Alert>
         )}
@@ -403,7 +403,7 @@ export function RateIncreaseDialog({
 
             {plan.negativeCount > 0 && (
               <Alert variant="destructive">
-                <CircleAlertIcon className="size-4" />
+                <AlertCircleIcon className="size-4" />
                 <AlertDescription>
                   {t(
                     "This decrease would push {0} lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.",

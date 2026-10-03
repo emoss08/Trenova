@@ -42,7 +42,7 @@ import { accountingControlSchema } from "@/types/accounting-control";
 import { Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Settings2 } from "lucide-react";
+import { Sliders04Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
 import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
 
@@ -810,7 +810,7 @@ function OANDAReadinessPanel({
           disabled={!canReadIntegrations}
           title={!canReadIntegrations ? "Integration permission required" : "Configure OANDA"}
         >
-          <Settings2 className="size-4" />
+          <Sliders04Icon className="size-4" />
           {t("Configure")}
         </Button>
       </div>

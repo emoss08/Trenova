@@ -44,7 +44,7 @@ import {
   type RateImportBatch,
   type RateImportUploadValues,
 } from "@trenova/shared/types/rate";
-import { CircleAlertIcon, DownloadIcon, FileUpIcon } from "lucide-react";
+import { AlertCircleIcon, Download01Icon, FileUploadIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -235,7 +235,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 isDragging ? "border-primary bg-primary/5" : "hover:bg-muted/50",
               )}
             >
-              <FileUpIcon className="text-muted-foreground mb-2 size-6" />
+              <FileUploadIcon className="text-muted-foreground mb-2 size-6" />
               <p className="text-sm font-medium">
                 {isUploading
                   ? t("Reading the sheet…")
@@ -255,7 +255,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
             {fileProblems.length > 0 && (
               <Alert variant="destructive">
-                <CircleAlertIcon className="size-4" />
+                <AlertCircleIcon className="size-4" />
                 <AlertDescription>
                   <p className="font-medium">{t("This sheet could not be imported")}</p>
                   <ul className="mt-1 list-inside list-disc space-y-0.5">
@@ -284,7 +284,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 onClick={() => downloadTemplate()}
                 className="gap-1.5"
               >
-                <DownloadIcon className="size-3.5" />
+                <Download01Icon className="size-3.5" />
                 {t("Download template")}
               </Button>
             </div>
@@ -308,7 +308,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
             {warnings.length > 0 && (
               <Alert>
-                <CircleAlertIcon className="size-4" />
+                <AlertCircleIcon className="size-4" />
                 <AlertDescription>
                   <ul className="list-inside list-disc space-y-0.5">
                     {warnings.map((warning) => (

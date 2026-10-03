@@ -9,7 +9,7 @@ import { apiService } from "@/services/api";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArchiveIcon, RotateCcwIcon } from "lucide-react";
+import { ArchiveIcon, RefreshCcw01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { getColumns } from "./service-failure-reason-code-columns";
 import { ServiceFailureReasonCodePanel } from "./service-failure-reason-code-panel";
@@ -50,7 +50,7 @@ export default function ServiceFailureReasonCodeTable() {
     {
       id: "activate",
       label: t("Reactivate"),
-      icon: RotateCcwIcon,
+      icon: RefreshCcw01Icon,
       onClick: (row) => void handleActivate(row),
       hidden: (row) => row.original.active,
     },

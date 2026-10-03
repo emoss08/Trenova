@@ -13,7 +13,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { formatCountdown } from "@trenova/shared/lib/detention";
 import { cn, formatCurrency, pluralize } from "@trenova/shared/lib/utils";
-import { MailIcon, RefreshCwIcon } from "lucide-react";
+import { Mail01Icon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { DetentionDeskState } from "./use-detention-desk";
 import { useSendDetentionNotices } from "./use-detention-actions";
@@ -81,7 +81,7 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
           onClick={() => setConfirmOpen(true)}
           disabled={sendNotices.isPending}
         >
-          <MailIcon className="size-3.5" />
+          <Mail01Icon className="size-3.5" />
           {t("Send {0} {1}", noticeQueue.length, pluralize("notice", noticeQueue.length))}
         </Button>
       )}
@@ -94,7 +94,7 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
         onClick={() => void refetch()}
         disabled={isFetching}
       >
-        <RefreshCwIcon
+        <RefreshCw02Icon
           className={cn("size-3.5", isFetching && "animate-spin motion-reduce:animate-none")}
         />
       </Button>

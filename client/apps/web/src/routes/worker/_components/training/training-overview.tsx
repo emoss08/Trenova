@@ -5,7 +5,7 @@ import type { WorkerTrainingSummary } from "@/lib/graphql/worker-training";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { trainingProgress } from "@trenova/shared/lib/training";
-import { ListChecksIcon, PlusIcon } from "lucide-react";
+import { ListChecksIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type TrainingOverviewProps = {

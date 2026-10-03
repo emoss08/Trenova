@@ -9,7 +9,12 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { formatFileSize } from "@trenova/shared/lib/utils";
-import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, ExternalLinkIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Download01Icon,
+  LinkExternal01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { documentContentUrl } from "@/services/document";
 import type { ShipmentCommentAttachment } from "@/types/shipment-comment";
@@ -185,7 +190,7 @@ function AttachmentLightbox({
                   size="xs"
                   onClick={() => window.open(attachmentDownloadUrl(current), "_blank", "noopener")}
                 >
-                  <DownloadIcon className="mr-1 size-3" />
+                  <Download01Icon className="mr-1 size-3" />
                   {t("Download")}
                 </Button>
                 <Button
@@ -194,7 +199,7 @@ function AttachmentLightbox({
                   size="xs"
                   onClick={() => window.open(attachmentViewUrl(current), "_blank", "noopener")}
                 >
-                  <ExternalLinkIcon className="mr-1 size-3" />
+                  <LinkExternal01Icon className="mr-1 size-3" />
                   {t("Open")}
                 </Button>
               </div>

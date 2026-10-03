@@ -22,7 +22,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useQuery } from "@tanstack/react-query";
-import { StarIcon } from "lucide-react";
+import { Star01Icon } from "@trenova/shared/components/icons";
 import { useLocation } from "react-router";
 
 function ModulePanel({
@@ -96,7 +96,7 @@ function PinnedRows() {
           active={isRouteActive(pathname, favorite.pageUrl)}
           sub
         >
-          <StarIcon className="size-3 shrink-0 fill-warning text-warning-foreground" />
+          <Star01Icon className="size-3 shrink-0 fill-warning text-warning-foreground" />
           <WorkspaceRowLabel>{favorite.pageTitle}</WorkspaceRowLabel>
         </WorkspaceNavRow>
       ))}

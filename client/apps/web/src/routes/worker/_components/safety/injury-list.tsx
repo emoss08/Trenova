@@ -20,7 +20,7 @@ import {
   illnessTypeLabel,
 } from "@trenova/shared/lib/injury";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { Edit02Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { InjuryDialog } from "./injury-dialog";
@@ -69,9 +69,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <h4 className="text-muted-foreground text-xs font-semibold">
-          {t("Injuries & illnesses")}
-        </h4>
+        <h4 className="text-muted-foreground text-xs font-semibold">{t("Injuries & illnesses")}</h4>
         {canRecord ? (
           <Button size="sm" variant="outline" onClick={() => setDialog({ injury: null })}>
             {t("Record a case")}
@@ -93,7 +91,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
               actions.push({
                 id: "edit",
                 label: `Edit case ${injury.caseYear}-${injury.caseNumber}`,
-                icon: PencilIcon,
+                icon: Edit02Icon,
                 onSelect: () => setDialog({ injury }),
               });
             }
@@ -101,7 +99,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
               actions.push({
                 id: "delete",
                 label: `Delete case ${injury.caseYear}-${injury.caseNumber}`,
-                icon: Trash2Icon,
+                icon: Trash01Icon,
                 destructive: true,
                 disabled: deleteMutation.isPending,
                 onSelect: () => deleteMutation.mutate(injury.id),

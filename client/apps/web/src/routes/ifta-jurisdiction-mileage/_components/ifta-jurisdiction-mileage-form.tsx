@@ -19,7 +19,7 @@ import {
   IFTA_MILES_SCALE,
   type IftaMileageEntryFormValues,
 } from "@trenova/shared/types/ifta-jurisdiction-mileage";
-import { RouteIcon } from "lucide-react";
+import { RouteIcon } from "@trenova/shared/components/icons";
 import { useFormContext } from "react-hook-form";
 
 type IftaJurisdictionMileageFormProps = {

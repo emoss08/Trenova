@@ -20,7 +20,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { multiSelectVariants } from "@/lib/variants/async-multi-select";
 import { AutoCompleteDatePicker } from "@/components/fields/date-field/date-picker";
-import { ChevronDownIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 
 const BOOL_CHOICES = [
   { value: "true", label: "Yes" },
@@ -82,7 +82,7 @@ function EnumMultiSelect({
                     className={cn("min-w-0", multiSelectVariants({ variant: "default" }))}
                   >
                     <span className="min-w-0 truncate">{byValue.get(entry) ?? entry}</span>
-                    <XIcon
+                    <XCloseIcon
                       className="size-4 shrink-0 cursor-pointer"
                       onClick={(event) => {
                         event.stopPropagation();

@@ -13,7 +13,7 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 
 /**
@@ -73,7 +73,7 @@ export function ConfirmDiscardDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-danger-subtle text-destructive">
-            <Trash2Icon />
+            <Trash01Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>

@@ -16,12 +16,12 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   CheckIcon,
+  FlipBackwardIcon,
   PauseIcon,
   PlayIcon,
-  SendIcon,
-  UndoIcon,
-  UserPlusIcon,
-} from "lucide-react";
+  Send01Icon,
+  UserPlus01Icon,
+} from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { BillingQueueExceptionPopover } from "./billing-queue-exception-popover";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
@@ -86,7 +86,7 @@ export function BillingQueueActionBar({
             {t("Start review")}
           </Button>
           <Button size="sm" variant="outline" onClick={onAssignBiller} disabled={isPending}>
-            <UserPlusIcon className="size-3.5" />
+            <UserPlus01Icon className="size-3.5" />
             {t("Assign biller")}
           </Button>
           <Button
@@ -148,7 +148,7 @@ export function BillingQueueActionBar({
             itemId={item.id}
             targetStatus="SentBackToOps"
             label={t("Send back")}
-            icon={<SendIcon className="size-3.5" />}
+            icon={<Send01Icon className="size-3.5" />}
             variant="outline"
             disabled={isPending}
             successMessage={t("Sent back to ops")}
@@ -189,7 +189,7 @@ export function BillingQueueActionBar({
             onClick={() => updateStatus({ status: "ReadyForReview" })}
             disabled={isPending}
           >
-            <UndoIcon className="size-3.5" />
+            <FlipBackwardIcon className="size-3.5" />
             {t("Resolve")}
           </Button>
         </div>
@@ -204,7 +204,7 @@ export function BillingQueueActionBar({
             onClick={() => updateStatus({ status: "InReview" })}
             disabled={isPending}
           >
-            <UndoIcon className="size-3.5" />
+            <FlipBackwardIcon className="size-3.5" />
             {t("Revert to review")}
           </Button>
         </div>

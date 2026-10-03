@@ -7,18 +7,16 @@ import type { RainViewerFrame, WeatherLayerId, WeatherOption } from "@/types/shi
 import { ControlPosition, MapControl } from "@vis.gl/react-google-maps";
 import {
   ChevronDownIcon,
-  CloudIcon,
-  CloudRainIcon,
-  GaugeIcon,
+  Cloud01Icon,
+  CloudRaining01Icon,
   PauseIcon,
   PlayIcon,
   SkipBackIcon,
   SkipForwardIcon,
-  StepBackIcon,
-  StepForwardIcon,
-  ThermometerIcon,
-  WindIcon,
-} from "lucide-react";
+  Speedometer03Icon,
+  Thermometer01Icon,
+  Wind01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef } from "react";
 import { formatUnixInUserTimezone, formatUnixWeekday } from "@trenova/shared/lib/date";
 
@@ -27,31 +25,31 @@ const WEATHER_OPTIONS: WeatherOption[] = [
     id: "precipitation",
     label: "Radar",
     description: "Track rain, snow and sleet",
-    icon: CloudRainIcon,
+    icon: CloudRaining01Icon,
   },
   {
     id: "wind",
     label: "Wind speed",
     description: "See sustained wind speed (wind gusts not indicated)",
-    icon: WindIcon,
+    icon: Wind01Icon,
   },
   {
     id: "temperature",
     label: "Temperature",
     description: "Hourly temperature forecast",
-    icon: ThermometerIcon,
+    icon: Thermometer01Icon,
   },
   {
     id: "clouds",
     label: "Cloud cover",
     description: "Estimated cloud coverage worldwide",
-    icon: CloudIcon,
+    icon: Cloud01Icon,
   },
   {
     id: "pressure",
     label: "Pressure",
     description: "Atmospheric sea level pressure",
-    icon: GaugeIcon,
+    icon: Speedometer03Icon,
   },
 ];
 
@@ -188,12 +186,7 @@ export function WeatherTimeline({
               <span>{t(activeOption.label)}</span>
               <ChevronDownIcon className="text-muted-foreground size-3" />
             </PopoverTrigger>
-            <PopoverContent
-              side="top"
-              sideOffset={8}
-              align="start"
-              className="w-auto gap-0 p-1"
-            >
+            <PopoverContent side="top" sideOffset={8} align="start" className="w-auto gap-0 p-1">
               {WEATHER_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -227,7 +220,7 @@ export function WeatherTimeline({
               disabled={currentIndex === 0}
               title={t("Previous frame")}
             >
-              <StepBackIcon className="size-3.5" />
+              <SkipBackIcon className="size-3.5" />
             </Button>
             <Button
               variant="ghost"
@@ -244,7 +237,7 @@ export function WeatherTimeline({
               disabled={isLive}
               title={t("Next frame")}
             >
-              <StepForwardIcon className="size-3.5" />
+              <SkipForwardIcon className="size-3.5" />
             </Button>
             <Button
               variant="ghost"

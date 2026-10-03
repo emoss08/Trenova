@@ -6,14 +6,14 @@ import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared
 import { getDestinationLocation, getOriginLocation, getTotalMiles } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import {
-  ArrowLeftRightIcon,
-  CircleCheckIcon,
+  CheckCircleIcon,
   CircleDashedIcon,
   CircleDotIcon,
-  PencilIcon,
+  ClockStopwatchIcon,
+  Edit02Icon,
+  SwitchHorizontal01Icon,
   TableIcon,
-  TimerIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import type { TimelineBar, TimelineStopMarker } from "./use-timeline-data";
 
 function parseDecimal(value: unknown): number {
@@ -93,7 +93,7 @@ export function BarDetailPopover({
                 : "bg-warning-subtle text-warning",
             )}
           >
-            <TimerIcon className="size-3 shrink-0" />
+            <ClockStopwatchIcon className="size-3 shrink-0" />
             {t(
               "Dwelling {0} at {1}{2}",
               formatDurationFromSeconds(bar.dwell.seconds),
@@ -123,7 +123,7 @@ export function BarDetailPopover({
               return (
                 <li key={stop.id} className="flex items-center gap-1.5 text-2xs">
                   {isDone ? (
-                    <CircleCheckIcon className="text-success size-3 shrink-0" />
+                    <CheckCircleIcon className="text-success size-3 shrink-0" />
                   ) : isAtStop ? (
                     <CircleDotIcon className="text-brand size-3 shrink-0" />
                   ) : (
@@ -150,7 +150,7 @@ export function BarDetailPopover({
 
         <div className="border-border flex items-center gap-1 border-t px-2 py-1.5">
           <Button type="button" variant="ghost" size="xs" onClick={() => onEdit(bar)}>
-            <PencilIcon className="size-3" />
+            <Edit02Icon className="size-3" />
             {t("Open")}
           </Button>
           <Button type="button" variant="ghost" size="xs" onClick={() => onViewInTable(bar)}>
@@ -165,7 +165,7 @@ export function BarDetailPopover({
               className="ml-auto"
               onClick={() => onReassign(bar)}
             >
-              <ArrowLeftRightIcon className="size-3" />
+              <SwitchHorizontal01Icon className="size-3" />
               {bar.assignment || bar.carrierAssignment ? t("Reassign") : t("Assign")}
             </Button>
           )}

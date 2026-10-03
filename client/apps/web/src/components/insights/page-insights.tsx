@@ -9,7 +9,7 @@ import {
   isChangeAdverse,
 } from "@/routes/home/_components/widgets/insight-presentation";
 import type { Insight, InsightSeverity, InsightSurface } from "@/types/insight";
-import { CheckCircle2Icon } from "lucide-react";
+import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { PAGE_INSIGHTS_LIMIT, usePageInsights } from "./use-page-insights";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -82,7 +82,7 @@ export function PageInsightsCard({
           </div>
         ) : insights.length === 0 ? (
           <div className="text-muted-foreground flex h-32 flex-col items-center justify-center gap-2 text-sm">
-            <CheckCircle2Icon className="size-5 text-success-foreground" />
+            <CheckCircleIcon className="size-5 text-success-foreground" />
             {t("Nothing needs attention right now")}
           </div>
         ) : (

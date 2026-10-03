@@ -13,7 +13,7 @@ import { ModuleTile } from "@/components/navigation/workspace-primitives";
 import { NotificationSheet } from "@/components/notification-center/notification-sheet";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronDownIcon, GripIcon } from "lucide-react";
+import { ChevronDownIcon, DotsGridIcon } from "@trenova/shared/components/icons";
 
 export const WORKSPACE_HEADER_HEIGHT_CLASS = "h-10";
 
@@ -34,13 +34,13 @@ function ModulesTrigger() {
           aria-label={activeModule ? `Switch module (current: ${label})` : "Open modules"}
           className={cn(
             "flex h-7 max-w-56 items-center gap-1.5 rounded-md pr-1.5 pl-1 text-sm font-medium transition-colors outline-none",
-"ui-focus-ring text-foreground hover:bg-muted data-popup-open:bg-muted",
+            "ui-focus-ring text-foreground hover:bg-muted data-popup-open:bg-muted",
           )}
         >
           {activeModule ? (
             <ModuleTile icon={activeModule.icon} size="sm" className="size-5 rounded-[5px]" />
           ) : (
-            <GripIcon className="text-muted-foreground ml-0.5 size-3.5" strokeWidth={1.75} />
+            <DotsGridIcon className="text-muted-foreground ml-0.5 size-3.5" strokeWidth={1.75} />
           )}
           <span className="truncate">{label}</span>
           <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" strokeWidth={1.75} />
