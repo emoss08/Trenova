@@ -43,7 +43,7 @@ export const DESK_SETTINGS_DEFAULTS: DeskSettings = {
   drop: "page",
   scanDevice: "",
   scanProfile: "",
-  autoOpen: "on",
+  autoOpen: "off",
   artNotify: "on",
   celebrate: "confetti",
   ring: "on",

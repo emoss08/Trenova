@@ -1078,6 +1078,20 @@ export function DeskConversation({
                           )}
                         </DeskRow>
                       )}
+                    {/* The question that opened the conversation goes once the
+                        thread's history has loaded; it shows from the first
+                        frame, as it does when sent from here. */}
+                    {!waitingOpening &&
+                      !turn &&
+                      openingSchedule === null &&
+                      opening.openingQuestion && (
+                        <DeskRow kind="question" first={entries.length === 0}>
+                          <DeskQuestion
+                            text={opening.openingQuestion}
+                            mentions={handoff?.mentions}
+                          />
+                        </DeskRow>
+                      )}
                     {waitingOpening && (
                       <DeskRow kind="question" first={entries.length === 0}>
                         <DeskQuestion
