@@ -10,6 +10,7 @@ import {
   deskArtKindName,
   type DeskArtKind,
 } from "./desk-art-kinds";
+import { artifactPreview } from "./artifact-preview";
 import type { ArtifactLineage } from "./desk-lineage";
 
 /** How many rows the browser draws before it reaches for more. */
@@ -260,6 +261,7 @@ export function DeskArtifactBrowser({
                 {turn.items.map((lineage) => {
                   const itemKind = deskArtKind(lineage.latest);
                   const pinned = lineage.versions.some((version) => version.pinned);
+                  const preview = artifactPreview(lineage.latest, t);
                   return (
                     <Fragment key={lineage.id}>
                       <button
@@ -274,7 +276,11 @@ export function DeskArtifactBrowser({
                           <b>{highlight(lineage.latest.title, needle)}</b>
                           <span>
                             {deskArtKindName(itemKind, t)}
-                            {toolOf(lineage) !== "" && <> · {highlight(toolOf(lineage), needle)}</>}
+                            {preview !== "" ? (
+                              <> · {highlight(preview, needle)}</>
+                            ) : (
+                              toolOf(lineage) !== "" && <> · {highlight(toolOf(lineage), needle)}</>
+                            )}
                           </span>
                         </span>
                         {lineage.versions.length > 1 && (
