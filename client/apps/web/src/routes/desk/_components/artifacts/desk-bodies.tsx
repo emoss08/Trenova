@@ -29,6 +29,7 @@ import {
   runDiffFrom,
 } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
+import { DeskBillingItem } from "./desk-billing-item";
 import { DeskRecordView } from "./desk-record-view";
 
 const PHASE_PILL: Record<string, string> = {
@@ -70,8 +71,20 @@ export function DeskRecordBody({ artifact }: { artifact: AssistantArtifact }) {
   const statusText = status ? formatDisplayValue(status.type, status.value, t) : "";
   const phase = status && typeof status.value === "string" ? statusPhase(status.value) : null;
 
-  if (card.view) {
-    return <DeskRecordView title={title} view={card.view} entity={card.entity} path={card.path} />;
+  const viewed = card.view ? (
+    <DeskRecordView title={title} view={card.view} entity={card.entity} path={card.path} />
+  ) : null;
+  // A billing item is reviewed from its card, so it is read live and acted on there.
+  if (card.entity === "billing_queue_item" && card.recordId !== "") {
+    return (
+      <DeskBillingItem
+        itemId={card.recordId}
+        fallback={viewed ?? <Notice>{t("Loading…")}</Notice>}
+      />
+    );
+  }
+  if (viewed) {
+    return viewed;
   }
 
   return (

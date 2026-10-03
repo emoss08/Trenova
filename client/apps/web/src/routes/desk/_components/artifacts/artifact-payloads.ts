@@ -561,6 +561,8 @@ export type EntityCardArtifact = {
   fields: DisplayField[];
   /** Where the record opens in the app; empty when its kind has no page. */
   path: string;
+  /** The record's id, for a body that reads the record live. */
+  recordId: string;
 };
 
 /** A link the server put on an artifact, kept only when it stays in the app. */
@@ -590,6 +592,7 @@ export function entityCardFrom(artifact: AssistantArtifact): EntityCardArtifact 
     view: recordViewOf(payload.view),
     fields,
     path: appPathOf(payload.path),
+    recordId: stringOf(payload.recordId),
   };
 }
 

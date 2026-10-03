@@ -66,6 +66,7 @@ const ICONS = {
     <path d="M14 4.5h5.5V10M19.5 4.5L11 13M17 14v4.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5" />
   ),
   x: <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
+  pause: <path d="M9 6v12M15 6v12" />,
   up: <path d="M6 15l6-6 6 6" />,
   down: <path d="M6 9l6 6 6-6" />,
   search: (
