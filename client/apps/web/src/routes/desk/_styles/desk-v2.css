@@ -13065,13 +13065,13 @@
   box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
   color: var(--dsk-muted);
 }
-.dk-bq-route b {
+.dk-bq-route > div > b {
   display: block;
   font-size: 13px;
   font-weight: 600;
   color: var(--dsk-fg);
 }
-.dk-bq-route span {
+.dk-bq-route > div > span {
   display: block;
   margin-top: 2px;
   font-size: 12px;
