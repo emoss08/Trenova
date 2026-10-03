@@ -39,3 +39,15 @@ var linkTextSpecials = regexp.MustCompile(`[\[\]]`)
 func escapeLinkText(title string) string {
 	return linkTextSpecials.ReplaceAllString(title, "")
 }
+
+// ArtifactRefIDs is every artifact a reply points to, by id, in the order the
+// reply names them.
+func ArtifactRefIDs(text string) []string {
+	matches := artifactLink.FindAllStringSubmatch(text, -1)
+	ids := make([]string, 0, len(matches))
+	for _, match := range matches {
+		ids = append(ids, match[2])
+	}
+
+	return ids
+}

@@ -190,6 +190,20 @@ export function DeskConversation({
         : undefined,
     [composerContext.attachments, handoff],
   );
+  // The question that started the conversation, shown the moment it was
+  // asked: its files upload first and the question goes once they are in,
+  // and until then the conversation would otherwise be an empty page.
+  const waitingOpening = openingHold && opening.openingQuestion ? opening.openingQuestion : null;
+  const waitingFiles = useMemo(
+    () =>
+      composerContext.attachments.map((item) => ({
+        documentId: item.documentId ?? item.id,
+        fileName: item.name,
+        contentType: item.contentType,
+        fileSize: item.size,
+      })),
+    [composerContext.attachments],
+  );
   const { clear: clearComposerContext } = composerContext;
   const { clear: clearAttachments } = attachments;
   const { onOpeningQuestionSent } = opening;
@@ -878,6 +892,9 @@ export function DeskConversation({
                         <DeskRow kind="question" first={!layout.any}>
                           <DeskQuestion
                             text={turn.userContent}
+                            attachments={turn.attachments}
+                            mentions={turn.mentions}
+                            page={turn.pageContext}
                             muted={turn.status === "refused"}
                             tag={turn.status === "refused" ? t("Not sent to the agent") : undefined}
                           />
@@ -932,6 +949,22 @@ export function DeskConversation({
                           )}
                         </DeskRow>
                       )}
+                    {waitingOpening && (
+                      <DeskRow kind="question" first={entries.length === 0}>
+                        <DeskQuestion
+                          text={waitingOpening}
+                          attachments={waitingFiles}
+                          mentions={handoff?.mentions}
+                        />
+                        <div className="dk-ec-queued dk-ec-queued-row">
+                          <DeskIcon name="up" size={11} stroke={2.2} />
+                          {t(
+                            "{0, plural, one {Uploading # file} other {Uploading # files}}",
+                            Math.max(waitingFiles.length, handoff?.files.length ?? 0),
+                          )}
+                        </div>
+                      </DeskRow>
+                    )}
                     {queued && (
                       <DeskRow kind="question" first={entries.length === 0}>
                         <DeskQuestion text={queued.content} />

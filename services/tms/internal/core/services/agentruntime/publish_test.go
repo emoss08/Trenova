@@ -173,7 +173,7 @@ func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	)
 
 	content := result.Messages[2].Content
-	assert.Contains(t, content, `Shown to the person as a table titled "Shipments"`)
+	assert.Contains(t, content, `can be shown to the person as a table titled "Shipments"`)
 	_, payload, fenced := UnfenceToolResult(content)
 	require.True(t, fenced, "the note sits after the fence and does not break reading it back")
 	assert.Contains(t, payload, `"items"`)

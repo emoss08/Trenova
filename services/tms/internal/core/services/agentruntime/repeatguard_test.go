@@ -128,3 +128,12 @@ func TestCallKey_SeparatesToolsThatShareArguments(t *testing.T) {
 
 	assert.NotEqual(t, first, second)
 }
+
+func TestFanOutNote_RemindsOnlyFromTheThirdSingleFetch(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, fanOutNote("get_billing_queue_item", 2))
+	assert.Empty(t, fanOutNote("list_billing_queue_items", 5))
+	assert.Contains(t, fanOutNote("get_billing_queue_item", 3), "3rd get_billing_queue_item call")
+	assert.Contains(t, fanOutNote("get_billing_queue_item", 12), "12th")
+}

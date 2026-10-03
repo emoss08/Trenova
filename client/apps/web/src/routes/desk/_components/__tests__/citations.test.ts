@@ -90,3 +90,28 @@ describe("citeSteps with similar lookups", () => {
     ]);
   });
 });
+
+describe("citation numbering", () => {
+  it("numbers citations in reading order, skipping steps the reply never cites", () => {
+    const steps = [
+      step("list_customers", { items: [{ name: "Acme" }] }),
+      step("find_tools", { tools: ["x"] }),
+      step("get_worker", { name: "Dana Ortiz" }),
+    ];
+    const citations = citeSteps("Dana Ortiz drives for Acme.", steps);
+    expect(citations.map((citation) => [citation.n, citation.step.name])).toEqual([
+      [1, "get_worker"],
+      [2, "list_customers"],
+    ]);
+  });
+
+  it("draws the steps behind one phrase as a single range", () => {
+    const steps = ["a", "b", "c"].map((key) =>
+      step(`get_billing_queue_item_${key}`, { amountNote: "Amounts withheld" }),
+    );
+    const text = "Amounts withheld for all of them.";
+    const written = withCitations(text, citeSteps(text, steps));
+    expect(written).toContain(`[1–3](${CITATION_HREF}1)`);
+    expect(written.match(new RegExp(CITATION_HREF, "gu"))).toHaveLength(1);
+  });
+});

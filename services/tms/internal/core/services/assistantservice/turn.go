@@ -305,6 +305,9 @@ func (s *Service) FinishTurn(
 		return nil, err
 	}
 	artifacts.attachMessages(sourceMessageIndex(saved))
+	if req.Failure == nil {
+		artifacts.keepLinked(linkedArtifacts(saved))
+	}
 	s.runtime.MarkToolEffects(saved)
 	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
 

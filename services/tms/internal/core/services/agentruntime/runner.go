@@ -391,6 +391,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				continue
 			}
 
+			earlier := t.earlier(call.Name)
 			outcome := fx.Dispatch(t, DispatchCall{
 				Call:                 call,
 				CompletionText:       completion.Text,
@@ -398,8 +399,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				Ordinal:              t.counts.next(call),
 				AfterExternalContent: t.external,
 				Taint:                result.Taint,
-				Earlier:              t.earlier(call.Name),
+				Earlier:              earlier,
 			}).internal()
+			if !outcome.failed {
+				outcome.content += fanOutNote(call.Name, len(earlier)+1)
+			}
 			if outcome.failed {
 				t.repeats.record(call, outcome.content)
 			} else if ReadsExternalContent(call.Name) {

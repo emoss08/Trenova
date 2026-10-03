@@ -7,14 +7,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import {
-  Fragment,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { Fragment, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router";
 import { DeskIcon } from "./desk-icons";
 import { deskThreadState, type DeskThreadState } from "./desk-thread-state";
@@ -258,7 +251,9 @@ export function DeskRail({
                           type="button"
                           className={cn("dk-sb-a", thread.pinned && "dk-pinned")}
                           data-tip={thread.pinned ? t("Unpin") : t("Pin")}
-                          aria-label={thread.pinned ? t("Unpin conversation") : t("Pin conversation")}
+                          aria-label={
+                            thread.pinned ? t("Unpin conversation") : t("Pin conversation")
+                          }
                           aria-pressed={thread.pinned}
                           onClick={() => onTogglePin(thread)}
                         >
@@ -285,7 +280,9 @@ export function DeskRail({
 
       <div className="dk-sb-me">
         <span className="dk-me">{getNameInitials(name, "")}</span>
-        <b>{name}</b>
+        <b className="truncate w-[100px]" title={name}>
+          {name}
+        </b>
         <span style={{ flex: 1 }} />
         <button
           type="button"

@@ -10,7 +10,11 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
-import type { AssistantArtifactEvent, AssistantThread } from "@/types/assistant";
+import {
+  LOOKUP_ARTIFACT_KINDS,
+  type AssistantArtifactEvent,
+  type AssistantThread,
+} from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -275,14 +279,20 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // folded away: the person asked for the thing it holds.
   // Unless the person would rather open it themselves, in which case the
   // top bar only marks that something arrived.
+  // A lookup's table or card is not among them: it is kept only if the
+  // reply points to it, and it opens from the reply where it is named.
   const noteLiveArtifacts = useCallback(
     (artifacts: readonly AssistantArtifactEvent[]) => {
+      const made = artifacts.filter((artifact) => !LOOKUP_ARTIFACT_KINDS.has(artifact.kind));
       setLiveArtifacts((live) => ({
-        ids: artifacts.map((artifact) => artifact.id),
+        ids: made.map((artifact) => artifact.id),
         revision: live.revision + 1,
       }));
+      if (made.length === 0) {
+        return;
+      }
       const { autoOpen, artNotify } = useDeskSettingsStore.getState().settings;
-      if (artifacts.length > 0 && autoOpen === "on") {
+      if (autoOpen === "on") {
         setPane("open");
       }
       setNewArtifact(artNotify === "on");

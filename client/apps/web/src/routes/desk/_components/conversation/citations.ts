@@ -119,8 +119,7 @@ export function citeSteps(text: string, steps: readonly ToolStep[]): Citation[] 
   const blocked = protectedRanges(text);
   const inBlocked = (index: number) => blocked.some(([from, to]) => index >= from && index < to);
   const citable = steps.map(
-    (step) =>
-      !UNCITED.has(step.name) && step.status !== "failed" && step.content !== "",
+    (step) => !UNCITED.has(step.name) && step.status !== "failed" && step.content !== "",
   );
   const anchorsByStep = steps.map((step, index) => (citable[index] ? stepAnchors(step) : []));
   const seen = new Map<string, number>();
@@ -164,7 +163,34 @@ export function citeSteps(text: string, steps: readonly ToolStep[]): Citation[] 
     }
   });
 
-  return citations.sort((a, b) => a.offset - b.offset || a.n - b.n);
+  // Numbered in the order the reader meets them, so a reply reads 1, 2, 3
+  // rather than skipping the steps it never cites.
+  return citations
+    .sort((a, b) => a.offset - b.offset || a.n - b.n)
+    .map((citation, index) => ({ ...citation, n: index + 1 }));
+}
+
+/** Citations that land on the same phrase, drawn as one mark: "3" or "2–10". */
+export type CitationGroup = { citations: Citation[]; label: string };
+
+/** The reply's citations gathered by where they land. */
+export function groupCitations(citations: readonly Citation[]): CitationGroup[] {
+  const groups: CitationGroup[] = [];
+  for (const citation of citations) {
+    const last = groups.at(-1);
+    if (last && last.citations[0].offset === citation.offset) {
+      last.citations.push(citation);
+    } else {
+      groups.push({ citations: [citation], label: "" });
+    }
+  }
+  for (const group of groups) {
+    const first = group.citations[0].n;
+    const end = group.citations.at(-1)?.n ?? first;
+    group.label = first === end ? String(first) : `${first}–${end}`;
+  }
+
+  return groups;
 }
 
 /** The prefix a citation link carries, so the reply's renderer can tell it from a real link. */
@@ -174,10 +200,11 @@ export const CITATION_HREF = "#dk-cite-";
 export function withCitations(text: string, citations: readonly Citation[]): string {
   let out = "";
   let from = 0;
-  for (const citation of citations) {
-    out += text.slice(from, citation.offset);
-    out += `[${citation.n}](${CITATION_HREF}${citation.n})`;
-    from = citation.offset;
+  for (const group of groupCitations(citations)) {
+    const { offset, n } = group.citations[0];
+    out += text.slice(from, offset);
+    out += `[${group.label}](${CITATION_HREF}${n})`;
+    from = offset;
   }
 
   return out + text.slice(from);

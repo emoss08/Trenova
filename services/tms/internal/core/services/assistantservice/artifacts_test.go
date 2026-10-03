@@ -656,22 +656,30 @@ func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T
 		"columns": []any{"number", "status"},
 		"count":   1,
 	}
-	read := func(callID string, status string) serviceports.ToolObservation {
+	// The second read finds the item moved on: the same source read again
+	// over changed data is a new version. Over unchanged data it is the same
+	// view, and the reply points to the one already kept.
+	moved := map[string]any{
+		"items":   []any{map[string]any{"id": "bqi_1", "number": "BQ-1", "status": "InReview"}},
+		"columns": []any{"number", "status"},
+		"count":   1,
+	}
+	read := func(callID string, status string, data map[string]any) serviceports.ToolObservation {
 		return serviceports.ToolObservation{
 			Call: serviceports.ToolCall{
 				ID:        callID,
 				Name:      "list_billing_queue_items",
 				Arguments: map[string]any{"status": status},
 			},
-			Data: rows,
+			Data: data,
 		}
 	}
 
-	_, err := recorder.observe(read("call_1", "Ready"))
+	_, err := recorder.observe(read("call_1", "Ready", rows))
 	require.NoError(t, err)
-	_, err = recorder.observe(read("call_2", "Ready"))
+	_, err = recorder.observe(read("call_2", "Ready", moved))
 	require.NoError(t, err)
-	_, err = recorder.observe(read("call_3", "Posted"))
+	_, err = recorder.observe(read("call_3", "Posted", rows))
 	require.NoError(t, err)
 
 	require.Len(t, repo.upserts, 3)

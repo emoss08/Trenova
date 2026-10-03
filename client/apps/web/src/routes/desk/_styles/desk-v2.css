@@ -2095,3 +2095,9 @@
 .dk-dc2-qmore{margin:10px 8px 0}
 .dk-dc2-btn:disabled{opacity:.5;pointer-events:none}
 .dk-dc2-qd .dk-fail{color:var(--dsk-warn-fg);background:var(--dsk-warn-sub)}
+/* a citation's popover opens below its mark when there is no room above */
+.dk-fnp.dk-below{bottom:auto;top:100%;padding-bottom:0;padding-top:8px}
+.dk-fnp-in.dk-many{max-height:min(360px,60vh);overflow:auto;scrollbar-width:thin}
+.dk-fnp-step{display:flex;flex-direction:column;gap:6px}
+.dk-fnp-sep{display:block;height:1px;margin:2px 0;background:var(--dsk-b-sub)}
+.dk-fnp-more{font-size:11.5px;color:var(--dsk-subtle)}

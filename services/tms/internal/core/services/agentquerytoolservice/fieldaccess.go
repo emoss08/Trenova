@@ -400,10 +400,18 @@ func (g *fieldGate) Withheld() []string {
 	return slices.Clone(g.withheld)
 }
 
+// withheldNote says what a withheld field means for the next call: no other
+// lookup will show it either, so fetching the rows one by one only spends
+// steps on the same gap.
+const withheldNote = "The fields in withheldByAccess are withheld at your access level " +
+	"on every lookup, a single record's included. Do not look them up again row by row; " +
+	"say they are withheld."
+
 type gatedOutcome struct {
 	searchOutcome
 
-	Withheld []string `json:"withheldByAccess,omitempty"`
+	Withheld     []string `json:"withheldByAccess,omitempty"`
+	WithheldNote string   `json:"withheldNote,omitempty"`
 
 	tainted []agent.RecordRef
 }
@@ -412,6 +420,9 @@ func gatedResult(outcome *searchOutcome, gate *fieldGate) *gatedOutcome {
 	result := &gatedOutcome{searchOutcome: *outcome}
 	if gate != nil {
 		result.Withheld = gate.Withheld()
+	}
+	if len(result.Withheld) > 0 {
+		result.WithheldNote = withheldNote
 	}
 
 	return result

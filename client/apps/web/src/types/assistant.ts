@@ -109,6 +109,20 @@ export const artifactKindSchema = z.enum([
   "decision_request",
 ]);
 
+/**
+ * The views of what a lookup returned: a table, a record card, a report
+ * preview. The server keeps one only when the reply points to it, so the
+ * Desk shows them where the reply names them rather than opening the
+ * workspace on them while the reply is still being written.
+ */
+export const LOOKUP_ARTIFACT_KINDS: ReadonlySet<string> = new Set([
+  "table_view",
+  "entity_card",
+  "report_preview",
+  "rate_explanation",
+  "run_diff",
+]);
+
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);
 
 /** Server-side `nullzero` arrays arrive as null when empty; every list here reads as []. */

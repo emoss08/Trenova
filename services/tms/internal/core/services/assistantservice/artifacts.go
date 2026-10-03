@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -257,6 +258,53 @@ func (r *artifactRecorder) attachMessages(index map[string]pulid.ID) {
 	}
 }
 
+// keepLinked drops the views of lookups the reply did not point to. A lookup
+// is how the agent finds things out; its result is worth a place beside the
+// conversation only when the reply uses it to answer. Documents, drafts,
+// plans and decision requests were made on purpose and always stay.
+func (r *artifactRecorder) keepLinked(linked map[string]bool) {
+	if r == nil {
+		return
+	}
+
+	var unused []pulid.ID
+	for _, artifact := range r.recorded {
+		if !assistantartifact.IsLookup(artifact.Kind) || linked[artifact.ID.String()] {
+			continue
+		}
+		unused = append(unused, artifact.ID)
+	}
+	if len(unused) == 0 {
+		return
+	}
+	if err := r.repo.Delete(r.ctx, &repositories.DeleteArtifactsRequest{
+		ThreadID:   r.thread.ID,
+		TenantInfo: r.tenant,
+		IDs:        unused,
+	}); err != nil {
+		r.logger.Warn("could not drop the artifacts the reply did not use", zap.Error(err))
+		return
+	}
+	for _, id := range unused {
+		r.forget(id)
+	}
+}
+
+// linkedArtifacts is every artifact the turn's replies point to.
+func linkedArtifacts(messages []conversation.Message) map[string]bool {
+	linked := map[string]bool{}
+	for idx := range messages {
+		if messages[idx].Role != conversation.RoleAssistant {
+			continue
+		}
+		for _, id := range agentruntime.ArtifactRefIDs(messages[idx].Content) {
+			linked[id] = true
+		}
+	}
+
+	return linked
+}
+
 // artifacts is what the turn produced, for the turn's result.
 func (r *artifactRecorder) artifacts() []services.AssistantArtifact {
 	if r == nil || len(r.recorded) == 0 {
@@ -271,9 +319,13 @@ func (r *artifactRecorder) artifacts() []services.AssistantArtifact {
 	return out
 }
 
-func (r *artifactRecorder) followLineage(artifact *assistantartifact.Artifact) {
+// followLineage makes an artifact the next version of the one the same
+// lookup made before, and returns that earlier one when there is one.
+func (r *artifactRecorder) followLineage(
+	artifact *assistantartifact.Artifact,
+) *assistantartifact.Artifact {
 	if artifact.LineageKey == "" {
-		return
+		return nil
 	}
 	previous, err := r.repo.LatestInLineage(r.ctx, repositories.LatestInLineageRequest{
 		ThreadID:       r.thread.ID,
@@ -283,9 +335,31 @@ func (r *artifactRecorder) followLineage(artifact *assistantartifact.Artifact) {
 	})
 	if err != nil {
 		r.logger.Warn("artifact lineage could not be read", zap.Error(err))
-		return
+		return nil
 	}
 	artifact.FollowLineage(previous)
+
+	return previous
+}
+
+// sameView says a new version would show exactly what the last one shows:
+// the same title over the same data, so there is nothing new to keep.
+func sameView(previous, next *assistantartifact.Artifact) bool {
+	if previous == nil || previous.Kind != next.Kind || previous.Title != next.Title {
+		return false
+	}
+	// ConfigStd sorts map keys; the fast path writes them in whatever order
+	// it meets them, and two identical views would read as different.
+	before, err := sonic.ConfigStd.Marshal(previous.Payload)
+	if err != nil {
+		return false
+	}
+	after, err := sonic.ConfigStd.Marshal(next.Payload)
+	if err != nil {
+		return false
+	}
+
+	return string(before) == string(after)
 }
 
 func (r *artifactRecorder) save(
@@ -306,7 +380,11 @@ func (r *artifactRecorder) save(
 		return nil, multiErr
 	}
 
-	r.followLineage(artifact)
+	// The same lookup run again over data that has not changed shows what the
+	// last version shows; the reply points to that one instead of a copy.
+	if previous := r.followLineage(artifact); sameView(previous, artifact) {
+		return previous, nil
+	}
 
 	saved, err := r.repo.Upsert(r.ctx, artifact)
 	if err != nil {

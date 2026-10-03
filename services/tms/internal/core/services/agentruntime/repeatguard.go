@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/bytedance/sonic"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -85,4 +86,39 @@ func callKey(call serviceports.ToolCall) (string, bool) {
 	sum := sha256.Sum256(append([]byte(call.Name+"\x00"), encoded...))
 
 	return hex.EncodeToString(sum[:]), true
+}
+
+// fanOutAfter is how many single-record fetches of one kind a turn makes
+// before it is reminded that a list usually already has what it is after.
+const fanOutAfter = 3
+
+// fanOutNote is added to a single-record fetch once a turn has made several
+// of the same kind. A model that listed the billing queue and then fetched
+// each of its nine items to read one field spent nine steps, and the person
+// read nine citations, on what the list either had or could not show.
+func fanOutNote(name string, count int) string {
+	if count < fanOutAfter || !strings.HasPrefix(name, "get_") {
+		return ""
+	}
+
+	return fmt.Sprintf("\n\n[This is the %d%s %s call in this turn. If a list or search "+
+		"already returned these records, answer from it; fetch a record on its own only for "+
+		"a field the list does not carry, and a field withheld by access stays withheld.]",
+		count, ordinalSuffix(count), name)
+}
+
+func ordinalSuffix(n int) string {
+	if n%100 >= 11 && n%100 <= 13 {
+		return "th"
+	}
+	switch n % 10 {
+	case 1:
+		return "st"
+	case 2:
+		return "nd"
+	case 3:
+		return "rd"
+	default:
+		return "th"
+	}
 }

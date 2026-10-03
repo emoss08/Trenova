@@ -126,14 +126,19 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 		"three sentences that point to it; do not repeat its text." + artifactRefNote(shown) + "]"
 }
 
-// shownNote tells the model that a result it is reading is already in front
-// of the person. A small model otherwise reprints a twenty-five row list as a
-// markdown table under the table the person is already looking at.
+// shownNote tells the model that a result it is reading can be put in front
+// of the person, and that it is only when the reply points to it: a lookup
+// made to find something out is not worth a place beside the conversation
+// unless the answer rests on it. A small model otherwise reprints a
+// twenty-five row list as a markdown table, or fetches every row of a list
+// again one by one.
 func shownNote(shown *serviceports.ShownArtifact) string {
-	return fmt.Sprintf("\n\n[Shown to the person as %s titled %q, which they can open beside "+
-		"the conversation. Answer with what matters (the count, the few rows or fields that "+
-		"answer the question, anything that needs attention) and refer to it rather than "+
-		"repeating it.%s]", artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
+	return fmt.Sprintf("\n\n[This result can be shown to the person as %s titled %q, which "+
+		"they can open beside the conversation. Point to it only if your answer rests on it; "+
+		"a result you do not point to is not shown. Answer with what matters (the count, the "+
+		"few rows or fields that answer the question, anything that needs attention) rather "+
+		"than repeating it, and work from the fields it already has instead of looking up "+
+		"each row again.%s]", artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
 }
 
 func artifactNoun(kind string) string {

@@ -46,6 +46,10 @@ type ToolExecutionResult struct {
 	// so the person can see which and ask for them to be fixed.
 	Total  int                 `json:"total,omitempty"`
 	Failed []ExecutionItemFail `json:"failed,omitempty"`
+	// State is where the record stands once the write ran, in a few words:
+	// "Posted, 2300.00 USD to FreshHaul Foods, unpaid". Without it the agent
+	// can only say the write ran and send the person to look.
+	State string `json:"state,omitempty"`
 }
 
 // ExecutionItemFail is one record a write over many did not change.
@@ -111,6 +115,7 @@ func (r *ToolExecutionResult) Bounded() *ToolExecutionResult {
 		Name:   stringutils.OneLine(r.Name, maxResultNameChars),
 		Record: r.Record.Bounded(),
 		Total:  r.Total,
+		State:  stringutils.OneLine(r.State, maxResultNameChars),
 	}
 	for idx, failure := range r.Failed {
 		if idx == maxResultFailures {
@@ -144,7 +149,7 @@ func (r *ToolExecutionResult) Bounded() *ToolExecutionResult {
 	}
 
 	if bounded.Action == "" && bounded.Kind == "" && bounded.Name == "" &&
-		len(bounded.IDs) == 0 && bounded.Record == nil {
+		len(bounded.IDs) == 0 && bounded.Record == nil && bounded.State == "" {
 		return nil
 	}
 
@@ -165,14 +170,20 @@ func (r *ToolExecutionResult) Describe() string {
 		action = "made"
 	}
 
+	var made string
 	switch {
 	case r.Kind != "" && r.Name != "":
-		return "It " + action + " the " + r.Kind + ` "` + r.Name + `".`
+		made = "It " + action + " the " + r.Kind + ` "` + r.Name + `".`
 	case r.Kind != "":
-		return "It " + action + " the " + r.Kind + "."
+		made = "It " + action + " the " + r.Kind + "."
 	default:
-		return "It " + action + ` "` + r.Name + `".`
+		made = "It " + action + ` "` + r.Name + `".`
 	}
+	if state := strings.TrimSpace(r.State); state != "" {
+		made += " Now: " + state + "."
+	}
+
+	return made
 }
 
 // IDKeys are the parameter names the write's ids are held under, in order,

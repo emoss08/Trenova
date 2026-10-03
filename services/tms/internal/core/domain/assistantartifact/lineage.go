@@ -37,3 +37,11 @@ func (a *Artifact) FollowLineage(previous *Artifact) {
 	}
 	a.LineageSeq = max(previous.LineageSeq, 1) + 1
 }
+
+// IsLookup says an artifact is a view of what a lookup returned (a table, a
+// record card, a report preview) rather than something made on purpose (a
+// document, a draft, a plan). A lookup's view is kept only when the reply
+// points to it.
+func IsLookup(kind Kind) bool {
+	return versionedKinds[kind]
+}
