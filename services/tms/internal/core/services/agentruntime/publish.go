@@ -136,8 +136,9 @@ func shownNote(shown *serviceports.ShownArtifact) string {
 	return fmt.Sprintf("\n\n[This result can be shown to the person as %s titled %q, which "+
 		"they can open beside the conversation. Point to it only if your answer rests on it; "+
 		"a result you do not point to is not shown. Answer with what matters (the count, the "+
-		"few rows or fields that answer the question, anything that needs attention) rather "+
-		"than repeating it, and work from the fields it already has instead of looking up "+
+		"rows or fields that answer the question, anything that needs attention) rather "+
+		"than repeating all of it; a few rows read best as a short markdown table with the "+
+		"columns the question needs. Work from the fields it already has instead of looking up "+
 		"each row again.%s]", artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
 }
 

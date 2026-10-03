@@ -337,6 +337,10 @@ func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
 	card, ok := events[1].Data.(serviceports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Empty(t, card.Path)
+	// The move is announced and not kept: only the card was saved.
+	require.Len(t, repo.upserts, 1)
+	assert.Equal(t, assistantartifact.KindEntityCard, repo.upserts[0].Kind)
+	require.Len(t, recorder.artifacts(), 1)
 }
 
 // A nil recorder is a turn without a pane: every call is a no-op and the
@@ -535,22 +539,20 @@ permissions, and wrong by the time anybody reads them.
 The rate is a ledger, because a price read aloud is a wall of figures nobody
 can check against an invoice.
 */
-func TestArtifactFromObservation_ADescribedViewOpensTheTable(t *testing.T) {
+func TestArtifactFromObservation_ADescribedViewIsALinkNotAnArtifact(t *testing.T) {
 	t.Parallel()
 
+	// A view opens a page; the reply links to it where it mentions it, and
+	// nothing is added beside the conversation.
 	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
 		"entity":      "shipments",
 		"path":        "/shipments?fieldFilters=%5B%5D",
 		"explanation": "shipments where status equals InTransit",
-		"terms":       []any{"status equals InTransit"},
 		"filterCount": float64(1),
+		"link":        "[shipments where status equals InTransit](/shipments?fieldFilters=%5B%5D)",
 	}))
 
-	require.NotNil(t, artifact)
-	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
-	assert.Equal(t, "Shipments", artifact.Title)
-	assert.Equal(t, "/shipments?fieldFilters=%5B%5D", artifact.Payload["path"])
-	assert.Equal(t, []string{"status equals InTransit"}, artifact.Payload["terms"])
+	assert.Nil(t, artifact)
 }
 
 // A view with no link is not a view, whatever else the result carries.
@@ -683,10 +685,13 @@ func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T
 	require.NoError(t, err)
 
 	require.Len(t, repo.upserts, 3)
-	first, second, other := repo.upserts[0], repo.upserts[1], repo.upserts[2]
+	first, second, third := repo.upserts[0], repo.upserts[1], repo.upserts[2]
 	assert.NotEmpty(t, first.LineageKey)
 	assert.True(t, first.LineageID.IsNil())
 	assert.Equal(t, first.ID, second.LineageID)
 	assert.Equal(t, 2, second.LineageSeq)
-	assert.True(t, other.LineageID.IsNil(), "a different query starts its own lineage")
+	// Read again with another filter, it is still the billing queue: the
+	// next version of the same table, not a second one.
+	assert.Equal(t, first.ID, third.LineageID)
+	assert.Equal(t, 3, third.LineageSeq)
 }

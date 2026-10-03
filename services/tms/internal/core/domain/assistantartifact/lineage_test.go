@@ -12,11 +12,24 @@ func TestLineageKeyFor(t *testing.T) {
 
 	first := LineageKeyFor(KindTableView, "list_billing_queue", map[string]any{"status": "Ready", "limit": 50})
 	again := LineageKeyFor(KindTableView, "list_billing_queue", map[string]any{"limit": 50, "status": "Ready"})
-	other := LineageKeyFor(KindTableView, "list_billing_queue", map[string]any{"status": "Posted", "limit": 50})
+	// Read again with other filters, it is the same table: a new version.
+	refiltered := LineageKeyFor(KindTableView, "list_billing_queue", map[string]any{"status": "Posted", "limit": 50})
 
 	assert.NotEmpty(t, first)
 	assert.Equal(t, first, again)
-	assert.NotEqual(t, first, other)
+	assert.Equal(t, first, refiltered)
+	assert.Equal(t,
+		LineageKeyFor(KindTableView, "compose_table_view", map[string]any{"entity": "shipment", "description": "late"}),
+		LineageKeyFor(KindTableView, "compose_table_view", map[string]any{"entity": "shipment", "description": "in Iowa"}),
+	)
+	assert.NotEqual(t,
+		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_a", "detail": "full"}),
+		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_b"}),
+	)
+	assert.Equal(t,
+		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_a", "detail": "full"}),
+		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_a"}),
+	)
 	assert.NotEqual(t, first, LineageKeyFor(KindTableView, "list_shipments", map[string]any{"status": "Ready", "limit": 50}))
 	assert.Empty(t, LineageKeyFor(KindDocument, "publish_document", nil))
 	assert.Empty(t, LineageKeyFor(KindTableView, "", nil))

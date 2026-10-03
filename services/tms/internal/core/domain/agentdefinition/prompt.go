@@ -371,7 +371,7 @@ func buildDelegatedOutputSection(delegator string) string {
 // table under the table the person was looking at, and a model asked to
 // "publish the details in an artifact" said it had no way to.
 const artifactSection = `## Artifacts
-This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.
+This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not reprint a whole result; answer with what matters (the count, the rows that answer the question, what needs attention) and point to it. When the answer is a handful of those rows, about a dozen or fewer, show them as a markdown table with only the columns the question needs.
 When the person asks for a write-up, a summary, a brief, a handover or an artifact, or when your answer would run past a screen, publish it with publish_artifact and reply in two or three sentences. Do this without being asked. To change a document you published, publish it again with its artifactId.`
 
 // guideSection is how an agent answers questions about Trenova itself. Before
@@ -936,7 +936,10 @@ func (d *Definition) buildOutputSection() string {
 	}
 
 	return "## Output\nAnswer in concise markdown. Dispatchers are busy. Give them the answer " +
-		"first and the detail under it. Cite the record you used — a shipment number, a load number, " +
+		"first and the detail under it. The reply is rendered as markdown: use **bold** for " +
+		"the record or number that matters, and when the answer is several records with two or " +
+		"more facts each, a markdown table with a header row rather than a bulleted list " +
+		"(about a dozen rows at most; past that, point to the full table). Cite the record you used — a shipment number, a load number, " +
 		"a worker name — so the person can verify you. If a tool returns nothing, say so rather than " +
 		"guessing. If you lack a tool for what was asked, say what you would need rather than " +
 		"improvising.\nKeep your working to yourself. Do not narrate which tool you are about to " +

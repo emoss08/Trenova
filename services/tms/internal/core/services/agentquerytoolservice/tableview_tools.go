@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 /*
@@ -112,6 +113,15 @@ type tableViewResult struct {
 	// lost a condition looks like an answer.
 	Unresolved  []unresolvedTermRow `json:"unresolved,omitempty"`
 	FilterCount int                 `json:"filterCount"`
+	// Link is the view as a markdown link, ready to put in the reply: the
+	// page opens with these filters applied. Nothing else shows the view.
+	Link string `json:"link,omitempty"`
+	Note string `json:"note,omitempty"`
+}
+
+// markdownLinkText is a name made safe to sit between a link's brackets.
+func markdownLinkText(name string) string {
+	return strings.NewReplacer("[", "", "]", "").Replace(strings.TrimSpace(name))
 }
 
 type unresolvedTermRow struct {
@@ -158,6 +168,15 @@ func (t *composeTableViewTool) Query(
 		Explanation: composed.Explanation,
 		Terms:       composed.Terms,
 		FilterCount: len(composed.FieldFilters),
+	}
+	if result.Path != "" {
+		label := composed.Explanation
+		if label == "" {
+			label = stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(resource.Entity))
+		}
+		result.Link = "[" + markdownLinkText(stringutils.Ellipsize(label, 80)) + "](" + result.Path + ")"
+		result.Note = "Put link in your reply where you mention the view, with words that say " +
+			"what it shows; it opens the table with these filters. It is not shown anywhere else."
 	}
 	for _, unresolved := range composed.Unresolved {
 		result.Unresolved = append(result.Unresolved, unresolvedTermRow{

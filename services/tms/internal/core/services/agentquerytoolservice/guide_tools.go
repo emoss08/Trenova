@@ -253,7 +253,9 @@ type NavigationResult struct {
 	Name     string `json:"name"`
 	Location string `json:"location"`
 	Page     string `json:"page"`
-	Note     string `json:"note"`
+	// Link is the page as a markdown link, ready to put in the reply.
+	Link string `json:"link"`
+	Note string `json:"note"`
 }
 
 func (t *openPageTool) Query(
@@ -281,7 +283,8 @@ func (t *openPageTool) Query(
 		Name:     destination.Label,
 		Location: destination.Page.Location(),
 		Page:     destination.Page.Path,
-		Note: "The app is moving there now. Say where you took them in one short sentence; " +
-			"do not repeat the link.",
+		Link:     "[" + markdownLinkText(destination.Label) + "](" + destination.Path + ")",
+		Note: "The app is moving there now. Say where you took them in one short sentence, " +
+			"naming the page with the markdown link in link so they can come back to it.",
 	}, nil
 }

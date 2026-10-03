@@ -283,7 +283,11 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // reply points to it, and it opens from the reply where it is named.
   const noteLiveArtifacts = useCallback(
     (artifacts: readonly AssistantArtifactEvent[]) => {
-      const made = artifacts.filter((artifact) => !LOOKUP_ARTIFACT_KINDS.has(artifact.kind));
+      // Nor is a move to another page: the app follows it, and the reply
+      // names the page as a link.
+      const made = artifacts.filter(
+        (artifact) => !LOOKUP_ARTIFACT_KINDS.has(artifact.kind) && artifact.kind !== "navigation",
+      );
       setLiveArtifacts((live) => ({
         ids: made.map((artifact) => artifact.id),
         revision: live.revision + 1,

@@ -14,9 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -149,6 +149,10 @@ func (r *artifactRecorder) observe(
 	if artifact == nil {
 		return nil, nil
 	}
+	if artifact.Kind == assistantartifact.KindNavigation {
+		r.announceNavigation(artifact)
+		return nil, nil
+	}
 	artifact.LineageKey = assistantartifact.LineageKeyFor(
 		artifact.Kind,
 		observation.Call.Name,
@@ -164,6 +168,23 @@ func (r *artifactRecorder) observe(
 	}
 
 	return shownArtifact(saved), nil
+}
+
+// announceNavigation tells the app to move to the page the agent opened. It
+// is a move, not something to keep: the reply names the page as a link, and
+// nothing is added beside the conversation.
+func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifact) {
+	r.emit(services.StreamEvent{
+		Event: services.AssistantEventArtifact,
+		Data: services.AssistantArtifactEvent{
+			ID:               pulid.MustNew("art_"),
+			Kind:             artifact.Kind,
+			Status:           artifact.Status,
+			Title:            artifact.Title,
+			SourceToolCallID: artifact.SourceToolCallID,
+			Path:             navigationPath(artifact),
+		},
+	})
 }
 
 // publish keeps a document the model wrote. A revision replaces the text of a
@@ -687,8 +708,6 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return tableArtifact(observation.Call.ID, name, result)
 	case strings.HasPrefix(name, getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, document)
-	case name == toolComposeView:
-		return composedViewArtifact(observation.Call.ID, result)
 	case name == toolExplainRate:
 		return rateArtifact(observation.Call.ID, result)
 	case name == toolCompareRuns:
@@ -776,32 +795,6 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 // to the live table. It is a table_view like a list result, because to the
 // reader it is the same thing arrived at a different way — except that this
 // one opens rather than being a snapshot.
-func composedViewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
-	path := typeutils.StringOfTrimmed(result["path"])
-	if path == "" {
-		return nil
-	}
-
-	entity := typeutils.StringOfTrimmed(result["entity"])
-	payload := map[string]any{
-		"entity":      entity,
-		"path":        path,
-		"explanation": typeutils.StringOfTrimmed(result["explanation"]),
-		"terms":       stringsOf(result["terms"]),
-		"filterCount": result["filterCount"],
-		"unresolved":  result["unresolved"],
-	}
-
-	return &assistantartifact.Artifact{
-		Kind:   assistantartifact.KindTableView,
-		Status: assistantartifact.StatusReady,
-		Title: artifactTitle(
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)),
-		),
-		Payload:          payload,
-		SourceToolCallID: callID,
-	}
-}
 
 // rateArtifact is the ledger behind a price.
 //

@@ -214,7 +214,12 @@ export function DeskReply({
 export function DeskStreamingReply({ text }: { text: string }) {
   return (
     <div className="dk-prose dk-streaming">
-      <StreamingAiMarkdown content={text} className="dk-md" />
+      <StreamingAiMarkdown
+        content={text}
+        className="dk-md"
+        wordClassName="dk-w"
+        caretClassName="dk-caret"
+      />
     </div>
   );
 }
