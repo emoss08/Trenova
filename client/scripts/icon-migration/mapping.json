@@ -308,7 +308,7 @@
     "lucideNames": ["BrainCircuitIcon"],
     "uses": 1,
     "files": 1,
-    "target": "Brain",
+    "target": "BrainCircuit",
     "kind": "custom"
   },
   {
@@ -1308,16 +1308,16 @@
     "lucideNames": ["GitCompare", "GitCompareIcon"],
     "uses": 3,
     "files": 2,
-    "target": "SwitchHorizontal01",
-    "kind": "approximate"
+    "target": "GitCompare",
+    "kind": "custom"
   },
   {
     "lucide": "git-compare-arrows",
     "lucideNames": ["GitCompareArrowsIcon"],
     "uses": 4,
     "files": 3,
-    "target": "SwitchHorizontal01",
-    "kind": "approximate"
+    "target": "GitCompareArrows",
+    "kind": "custom"
   },
   {
     "lucide": "git-fork",
@@ -2196,8 +2196,8 @@
     "lucideNames": ["ReceiptTextIcon"],
     "uses": 20,
     "files": 20,
-    "target": "Receipt",
-    "kind": "approximate"
+    "target": "ReceiptText",
+    "kind": "custom"
   },
   {
     "lucide": "refresh-ccw",
@@ -2724,7 +2724,7 @@
     "lucideNames": ["TractorIcon"],
     "uses": 1,
     "files": 1,
-    "target": "Tractor",
+    "target": "SemiTruck",
     "kind": "custom"
   },
   {
