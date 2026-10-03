@@ -225,6 +225,7 @@ export function DeskConversation({
     onLiveArtifacts: desk.noteLiveArtifacts,
     onWorkingChange: desk.setWorking,
     onNavigate: carryConversation,
+    followNavigation: false,
     openingQuestion: opening.openingQuestion,
     onOpeningQuestionSent: openingSent,
     openingHold,

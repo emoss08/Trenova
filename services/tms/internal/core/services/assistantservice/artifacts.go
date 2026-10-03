@@ -466,6 +466,7 @@ func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact
 		ID:    artifact.ID,
 		Kind:  string(artifact.Kind),
 		Title: artifact.Title,
+		Rows:  int(numberOf(artifact.Payload, "rowCount")),
 	}
 }
 

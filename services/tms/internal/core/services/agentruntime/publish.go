@@ -133,13 +133,36 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 // twenty-five row list as a markdown table, or fetches every row of a list
 // again one by one.
 func shownNote(shown *serviceports.ShownArtifact) string {
+	if tabular(shown.Kind) && shown.Rows > 0 && shown.Rows <= InlineRows {
+		return fmt.Sprintf("\n\n[This result has %d rows, few enough to answer in your reply: "+
+			"show the rows that answer the question as a markdown table with only the columns "+
+			"it needs, and do not point to the table titled %q; a table you do not point to is "+
+			"not kept. Work from the fields it already has instead of looking up each row "+
+			"again.]", shown.Rows, shown.Title)
+	}
+	if tabular(shown.Kind) {
+		return fmt.Sprintf("\n\n[This result is kept as %s titled %q, which the person can "+
+			"open beside the conversation. It is too long to repeat: do not write its rows "+
+			"out as a markdown table. Answer with the count and the rows that need attention, "+
+			"and point to the table in the sentence that mentions it. Work from the fields it "+
+			"already has instead of looking up each row again.%s]",
+			artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
+	}
+
 	return fmt.Sprintf("\n\n[This result can be shown to the person as %s titled %q, which "+
 		"they can open beside the conversation. Point to it only if your answer rests on it; "+
-		"a result you do not point to is not shown. Answer with what matters (the count, the "+
-		"rows or fields that answer the question, anything that needs attention) rather "+
-		"than repeating all of it; a few rows read best as a short markdown table with the "+
-		"columns the question needs. Work from the fields it already has instead of looking up "+
-		"each row again.%s]", artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
+		"a result you do not point to is not shown. Answer with what matters rather than "+
+		"repeating its fields; the person reads the rest on it.%s]",
+		artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
+}
+
+// InlineRows is the most rows a reply repeats as a markdown table. A table
+// that short is answered in the reply and not kept; a longer one is kept and
+// pointed to, and its rows are not repeated. One or the other, never both.
+const InlineRows = 12
+
+func tabular(kind string) bool {
+	return kind == "table_view" || kind == "report_preview"
 }
 
 func artifactNoun(kind string) string {

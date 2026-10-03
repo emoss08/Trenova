@@ -201,9 +201,10 @@ func newOpenPageTool(guide serviceports.ProductGuide) serviceports.AgentQueryToo
 func (t *openPageTool) Name() string { return "open_page" }
 
 func (t *openPageTool) Description() string {
-	return "Take the person to a page or a record in Trenova, such as the shipments page or " +
-		"one customer: the app moves there as soon as you call it. Use it only when they " +
-		"ask to be taken, opened or shown somewhere. Pass a page's path from " +
+	return "Give the person a link to a page or a record in Trenova, such as the shipments " +
+		"page or one customer, for them to open if they choose; the app does not move on " +
+		"its own. Use it only when they ask to go to or open a page; to show them a record, " +
+		"fetch it with its get tool instead. Pass a page's path from " +
 		"find_in_trenova, or a record's entity and id from the tool that found it; action " +
 		"create opens the page's create form. It refuses a page they may not open."
 }
@@ -284,7 +285,7 @@ func (t *openPageTool) Query(
 		Location: destination.Page.Location(),
 		Page:     destination.Page.Path,
 		Link:     "[" + markdownLinkText(destination.Label) + "](" + destination.Path + ")",
-		Note: "The app is moving there now. Say where you took them in one short sentence, " +
-			"naming the page with the markdown link in link so they can come back to it.",
+		Note: "The app has not moved. Offer the page in one short sentence with the markdown " +
+			"link in link, so the person can open it if they want to; do not say you took them there.",
 	}, nil
 }

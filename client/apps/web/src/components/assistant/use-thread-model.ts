@@ -68,6 +68,12 @@ export type ThreadModelOptions = {
   onLiveArtifacts?: (artifacts: readonly AssistantArtifactEvent[]) => void;
   onWorkingChange?: (working: boolean) => void;
   onNavigate?: () => void;
+  /**
+   * Whether a page the assistant opens is followed as it arrives. The Desk
+   * says no: it offers the page as a link in the reply, and the person
+   * decides whether to go.
+   */
+  followNavigation?: boolean;
   openingQuestion?: string;
   onOpeningQuestionSent?: () => void;
   /** Keeps the opening question back, while the files it carries finish uploading. */
@@ -98,6 +104,7 @@ export function useThreadModel({
   onLiveArtifacts,
   onWorkingChange,
   onNavigate,
+  followNavigation = true,
   openingQuestion,
   onOpeningQuestionSent,
   openingHold = false,
@@ -316,7 +323,10 @@ export function useThreadModel({
   }, [liveArtifacts, onLiveArtifacts]);
 
   // "Take me there": a page the assistant opened is followed as it arrives.
-  useFollowNavigation(turn?.artifacts ?? NO_ARTIFACTS, onNavigate);
+  useFollowNavigation(
+    followNavigation ? (turn?.artifacts ?? NO_ARTIFACTS) : NO_ARTIFACTS,
+    onNavigate,
+  );
 
   // A change the assistant hands its page is applied as it arrives, once.
   useApplyDraftEdits(turn?.artifacts ?? NO_ARTIFACTS, page?.surface, page?.onDraftEdit);

@@ -164,7 +164,7 @@ func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	t.Parallel()
 
 	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
-		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments",
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments", Rows: 25,
 	}}
 	tool := queryTool("search_shipments", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
@@ -173,8 +173,35 @@ func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	)
 
 	content := result.Messages[2].Content
-	assert.Contains(t, content, `can be shown to the person as a table titled "Shipments"`)
+	assert.Contains(t, content, `kept as a table titled "Shipments"`)
+	assert.Contains(t, content, "do not write its rows out as a markdown table")
 	_, payload, fenced := UnfenceToolResult(content)
 	require.True(t, fenced, "the note sits after the fence and does not break reading it back")
 	assert.Contains(t, payload, `"items"`)
+}
+
+/*
+A short list is answered in the reply, not kept beside it.
+
+A billing queue of nine items came back both as a markdown table and as a
+table artifact under it: the same rows twice. A result of a dozen rows or
+fewer is now answered with a table in the reply, and the model is told not
+to point to the artifact, so it is not kept.
+*/
+func TestRun_ShortListsAreAnsweredInTheReply(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 9,
+	}}
+	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
+	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
+		textTurn("Nine items."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, "9 rows, few enough to answer in your reply")
+	assert.Contains(t, content, "do not point to the table")
+	assert.NotContains(t, content, "artifact:", "a short list gets no pointer to write")
 }

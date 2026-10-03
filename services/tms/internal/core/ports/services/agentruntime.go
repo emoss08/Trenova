@@ -245,6 +245,10 @@ type ShownArtifact struct {
 	ID    pulid.ID
 	Kind  string
 	Title string
+	// Rows is how many rows a table holds in all, and zero for anything
+	// that is not a table. It decides whether the reply repeats the rows or
+	// points to the table.
+	Rows int
 }
 
 // PublishedDocument is a write-up the model asked to keep beside the

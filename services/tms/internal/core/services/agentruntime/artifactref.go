@@ -30,8 +30,9 @@ func StripArtifactLinks(text string) string {
 // explain it rather than from a list under the reply.
 func artifactRefNote(shown *services.ShownArtifact) string {
 	return " To point to it, write " + ArtifactRef(shown) +
-		" in the sentence that mentions it, exactly as written; it is shown as a button " +
-		"that opens it. Use it once, and never make up an id."
+		" inside the sentence that mentions it, exactly as written, never on a line of its " +
+		"own or after a table; it is shown as a button that opens it. Use it once, and never " +
+		"make up an id."
 }
 
 var linkTextSpecials = regexp.MustCompile(`[\[\]]`)
