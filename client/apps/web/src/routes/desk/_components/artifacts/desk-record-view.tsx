@@ -99,6 +99,42 @@ function factLabel(key: string, t: TranslateFn): string {
       return t("Waiting");
     case "exception":
       return t("Exception");
+    case "billingCycle":
+      return t("Billing cycle");
+    case "invoiceDelivery":
+      return t("Invoices");
+    case "creditStatus":
+      return t("Credit");
+    case "creditLimit":
+      return t("Credit limit");
+    case "creditBalance":
+      return t("Credit used");
+    case "creditHold":
+      return t("On hold for");
+    case "dotNumber":
+      return t("DOT number");
+    case "mcNumber":
+      return t("MC number");
+    case "fleet":
+      return t("Fleet");
+    case "cdlClass":
+      return t("CDL class");
+    case "endorsement":
+      return t("Endorsements");
+    case "compliance":
+      return t("Compliance");
+    case "physicalDueDate":
+      return t("Physical due");
+    case "mvrDueDate":
+      return t("MVR due");
+    case "twicExpiry":
+      return t("TWIC expires");
+    case "nextTrainingDue":
+      return t("Training due");
+    case "hireDate":
+      return t("Hired");
+    case "leave":
+      return t("On leave");
     default:
       return humanizeToolName(key);
   }
@@ -112,11 +148,18 @@ function factValue(fact: RecordFact, currency: string, t: TranslateFn): ReactNod
     case "miles":
       return t("{0} loaded", Math.round(Number(value)).toLocaleString());
     case "rate":
+    case "creditLimit":
+    case "creditBalance":
       return money(value, currency);
     case "ageDays":
       return t("{0, plural, one {# day} other {# days}}", Number(value));
     case "dueDate":
     case "invoiceDate":
+    case "physicalDueDate":
+    case "mvrDueDate":
+    case "twicExpiry":
+    case "nextTrainingDue":
+    case "hireDate":
       return typeof value === "number"
         ? new Date(value * 1000).toLocaleDateString(undefined, {
             month: "short",
@@ -127,10 +170,29 @@ function factValue(fact: RecordFact, currency: string, t: TranslateFn): ReactNod
     case "settlement":
     case "sent":
     case "billType":
+    case "creditStatus":
+    case "compliance":
+    case "billingCycle":
+    case "invoiceDelivery":
+    case "paymentTerm":
       return typeof value === "string" ? formatDisplayValue("status", value, t) : value;
     default:
       return value;
   }
+}
+
+/** What the readiness line says: a driver can take a load or not, anything else can be approved or not. */
+function readyText(view: RecordView, t: TranslateFn): string {
+  const ready = view.ready;
+  if (!ready) return "";
+  if (view.type === "worker") {
+    return ready.canApprove
+      ? t("Can take a load")
+      : ready.blockedBy || t("Can't be assigned right now");
+  }
+  return ready.canApprove
+    ? t("Ready to approve")
+    : ready.blockedBy || t("Not ready to approve yet");
 }
 
 /** The route as the design draws it: where it started, where it is going, and the truck between. */
@@ -212,9 +274,7 @@ export function DeskRecordView({
       {view.ready && (
         <div className={cn("dk-ax-ready", view.ready.canApprove ? "dk-ok" : "dk-no")}>
           <ArtIcon name={view.ready.canApprove ? "check" : "warn"} size={12} stroke={2.4} />
-          {view.ready.canApprove
-            ? t("Ready to approve")
-            : view.ready.blockedBy || t("Not ready to approve yet")}
+          {readyText(view, t)}
         </div>
       )}
 

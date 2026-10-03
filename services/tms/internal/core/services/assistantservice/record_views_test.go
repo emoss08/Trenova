@@ -57,10 +57,47 @@ func TestShipmentView_IsTheRouteAndWhoIsMovingIt(t *testing.T) {
 func TestRecordView_OnlyForKindsThatHaveOne(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, recordView("customer", map[string]any{"id": "cus_1"}))
+	assert.Nil(t, recordView("tractor", map[string]any{"id": "trc_1"}))
 	invoice := recordView("invoice", map[string]any{
 		"status": "Posted", "billToName": "FreshHaul Foods", "totalAmount": "2300.00", "currency": "USD",
 	})
 	assert.Equal(t, "FreshHaul Foods", invoice["subtitle"])
 	assert.Equal(t, "2300.00", invoice["amount"].(map[string]any)["total"])
+}
+
+func TestCustomerView_IsHowTheyAreBilled(t *testing.T) {
+	t.Parallel()
+
+	view := recordView("customer", map[string]any{
+		"id": "cus_1", "status": "Active", "code": "ACME", "city": "Chicago",
+		"state": map[string]any{"abbreviation": "IL"},
+		"billingProfile": map[string]any{
+			"paymentTerm": "Net30", "creditStatus": "Active", "creditLimit": "50000.00",
+			"creditBalance": "1250.00", "creditHoldReason": "",
+		},
+	})
+	require.NotNil(t, view)
+	assert.Equal(t, "ACME · Chicago, IL", view["subtitle"])
+	keys := make([]string, 0)
+	for _, entry := range view["facts"].([]any) {
+		keys = append(keys, entry.(map[string]any)["key"].(string))
+	}
+	assert.Equal(t, []string{"paymentTerm", "creditStatus", "creditLimit", "creditBalance"}, keys)
+}
+
+func TestWorkerView_IsWhetherTheyCanTakeALoad(t *testing.T) {
+	t.Parallel()
+
+	view := recordView("worker", map[string]any{
+		"id": "wrk_1", "status": "Active", "type": "Employee", "driverType": "OTR",
+		"city": "Denver", "state": "CO", "canBeAssigned": false,
+		"assignmentBlocked": "Medical card expired", "physicalDueDate": float64(1790000000),
+		"mvrDueDate": "none on file",
+	})
+	require.NotNil(t, view)
+	assert.Equal(t, "OTR · Employee · Denver, CO", view["subtitle"])
+	ready := view["ready"].(map[string]any)
+	assert.Equal(t, false, ready["canApprove"])
+	assert.Equal(t, "Medical card expired", ready["blockedBy"])
+	assert.Len(t, view["facts"], 2)
 }

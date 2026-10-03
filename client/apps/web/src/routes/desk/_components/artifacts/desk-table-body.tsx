@@ -18,7 +18,7 @@ import { ArtIcon } from "./desk-art-kinds";
 
 /** A table the workspace draws: columns, rows by key, and where each row opens. */
 type GridRow = { key: string; values: Record<string, unknown>; path: string };
-type Grid = {
+export type Grid = {
   columns: DisplayColumn[];
   rows: GridRow[];
   rowCount: number;
@@ -145,6 +145,136 @@ function rawText(value: unknown): string {
   return typeof value === "string" || typeof value === "number" ? String(value) : "";
 }
 
+/**
+ * The totals a table's footer shows: the source's own when it sent them, or
+ * else the sum of each money column over the rows showing, so a filtered
+ * table totals what is left.
+ */
+export function footTotals(grid: Grid, rows: GridRow[]): Record<string, unknown> | null {
+  if (grid.totals) {
+    return grid.totals;
+  }
+  const money = grid.columns.filter((column) => column.type === "money");
+  if (money.length === 0 || rows.length === 0) {
+    return null;
+  }
+  return Object.fromEntries(
+    money.map((column) => [
+      column.key,
+      rows.reduce((sum, row) => {
+        const figure = Number(row.values[column.key]);
+        return Number.isFinite(figure) ? sum + figure : sum;
+      }, 0),
+    ]),
+  );
+}
+
+/** What a version changed from the one before it, in a few words. */
+export function versionNote(
+  current: AssistantArtifact,
+  previous: AssistantArtifact | null,
+  t: TranslateFn,
+): string {
+  if (!previous) {
+    return t("First read");
+  }
+  const tabular = (artifact: AssistantArtifact) =>
+    (artifact.kind === "table_view" && !("path" in artifact.payload)) ||
+    artifact.kind === "report_preview";
+  if (!tabular(current) || !tabular(previous)) {
+    return t("Read again");
+  }
+  const now = gridOf(current);
+  const before = gridOf(previous);
+  const had = new Set(before.rows.map((row) => row.key));
+  const has = new Set(now.rows.map((row) => row.key));
+  const added = now.rows.filter((row) => !had.has(row.key)).length;
+  const removed = before.rows.filter((row) => !has.has(row.key)).length;
+  const changed = changedCells(now, before).size;
+  const parts = [
+    added > 0 ? t("{0, plural, one {# row added} other {# rows added}}", added) : "",
+    removed > 0 ? t("{0, plural, one {# row gone} other {# rows gone}}", removed) : "",
+    changed > 0 ? t("{0, plural, one {# value changed} other {# values changed}}", changed) : "",
+  ].filter((part) => part !== "");
+  return parts.length > 0 ? parts.join(" · ") : t("Nothing changed");
+}
+
+/** A report short enough to read as bars: its label column, and the figures beside it. */
+type Bars = { label: DisplayColumn; bar: DisplayColumn; extra: DisplayColumn | null };
+
+/**
+ * Whether a report reads best as bars, the way the design draws a summary:
+ * one label per row, a figure to measure them by, and a dozen rows or fewer,
+ * all of them present and none below zero.
+ */
+export function barsOf(grid: Grid): Bars | null {
+  const [label, ...rest] = grid.columns;
+  const figures = rest.filter((column) => isFigureType(column.type));
+  if (!label || isFigureType(label.type) || figures.length === 0) {
+    return null;
+  }
+  if (grid.truncated || grid.rows.length < 2 || grid.rows.length > 12) {
+    return null;
+  }
+  const [bar, extra = null] = figures;
+  const measured = grid.rows.every((row) => {
+    const figure = Number(row.values[bar.key]);
+    return row.values[bar.key] != null && Number.isFinite(figure) && figure >= 0;
+  });
+  return measured ? { label, bar, extra } : null;
+}
+
+/** A short report as bars: each row measured against the largest, and the totals under them. */
+export function DeskReportBars({ artifact, bars }: { artifact: AssistantArtifact; bars: Bars }) {
+  const t = useT();
+  const grid = useMemo(() => gridOf(artifact), [artifact]);
+  const figure = (row: GridRow, column: DisplayColumn) => Number(row.values[column.key]) || 0;
+  const max = Math.max(...grid.rows.map((row) => figure(row, bars.bar)), 0);
+  const sum = (column: DisplayColumn) =>
+    grid.totals?.[column.key] ?? grid.rows.reduce((total, row) => total + figure(row, column), 0);
+  const columns = bars.extra ? [bars.bar, bars.extra] : [bars.bar];
+
+  return (
+    <div className="dk-ax-pad dk-ax-rep">
+      <div className="dk-ax-repm">
+        <span>{columns.map((column) => column.label).join(" · ")}</span>
+        <span>{t("{0, plural, one {# row} other {# rows}}", grid.rowCount)}</span>
+      </div>
+      <div className={cn("dk-ax-bars", !bars.extra && "dk-one")}>
+        {grid.rows.map((row, index) => (
+          <div key={row.key} className="dk-ax-br" style={{ animationDelay: `${index * 60}ms` }}>
+            <span className="dk-ax-bn">
+              {formatDisplayValue(bars.label.type, row.values[bars.label.key], t)}
+            </span>
+            <span className="dk-ax-bt">
+              <i
+                style={{
+                  width: `${max > 0 ? (figure(row, bars.bar) / max) * 100 : 0}%`,
+                  animationDelay: `${120 + index * 60}ms`,
+                }}
+              />
+            </span>
+            {columns.map((column, at) => (
+              <span key={column.key} className={cn("dk-ax-num", at > 0 && "dk-mut")}>
+                {formatDisplayValue(column.type, row.values[column.key], t)}
+              </span>
+            ))}
+          </div>
+        ))}
+        <div className="dk-ax-br dk-tot">
+          <span className="dk-ax-bn">{t("Total")}</span>
+          <span />
+          {columns.map((column) => (
+            <span key={column.key} className="dk-ax-num">
+              {column.type === "percent" ? "" : formatDisplayValue(column.type, sum(column), t)}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type Sort = { key: string; direction: 1 | -1 };
 
 /**
@@ -201,6 +331,8 @@ export function DeskTableBody({
     }
     return shown;
   }, [grid, query, sort, t]);
+
+  const totals = useMemo(() => footTotals(grid, rows), [grid, rows]);
 
   const cycle = (key: string) =>
     setSort((current) =>
@@ -280,16 +412,16 @@ export function DeskTableBody({
               </tr>
             ))}
           </tbody>
-          {grid.totals && (
+          {totals && (
             <tfoot>
               <tr>
                 {grid.columns.map((column, at) => (
                   <td key={column.key} className={isFigureType(column.type) ? "dk-ar" : undefined}>
                     {at === 0 ? (
                       t("{0, plural, one {# row} other {# rows}}", rows.length)
-                    ) : grid.totals?.[column.key] != null && isFigureType(column.type) ? (
+                    ) : totals[column.key] != null && isFigureType(column.type) ? (
                       <span className="dk-ax-num">
-                        {formatDisplayValue(column.type, grid.totals[column.key], t)}
+                        {formatDisplayValue(column.type, totals[column.key], t)}
                       </span>
                     ) : null}
                   </td>

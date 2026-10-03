@@ -12715,3 +12715,13 @@
 .dk-flow > .dk-r:not(:nth-last-child(-n + 6)) > .dk-c:is(:hover, :focus-within) {
   content-visibility: visible;
 }
+/* a short report as bars, as the design draws a summary */
+.dk-ax-repm{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;color:var(--dsk-subtle);margin-bottom:12px}
+.dk-ax-br{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) minmax(60px,auto) minmax(74px,auto);align-items:center;gap:12px;padding:8px 0;font-size:12.5px;animation:dk-mprow 360ms var(--dk-settle) both}
+.dk-ax-bars.dk-one .dk-ax-br{grid-template-columns:minmax(0,150px) minmax(0,1fr) minmax(74px,auto)}
+.dk-ax-br .dk-ax-num{text-align:right}
+.dk-ax-bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsk-fg)}
+.dk-ax-bt{height:18px;border-radius:5px;background:var(--dsk-sunken);overflow:hidden}
+.dk-ax-bt i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,oklch(0.62 0.17 255),oklch(0.62 0.2 285));animation:dk-grow 900ms var(--dk-settle) both}
+.dk-ax-br.dk-tot{border-top:1px solid var(--dsk-b);margin-top:4px;padding-top:12px;font-weight:500;animation:none}
+.dk-ax-tools.dk-end{justify-content:flex-end}

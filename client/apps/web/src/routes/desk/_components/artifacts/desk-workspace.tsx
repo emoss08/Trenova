@@ -35,7 +35,14 @@ import {
   DeskViewBody,
 } from "./desk-bodies";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
-import { DeskTableBody, changedCells, gridOf } from "./desk-table-body";
+import {
+  DeskReportBars,
+  DeskTableBody,
+  barsOf,
+  changedCells,
+  gridOf,
+  versionNote,
+} from "./desk-table-body";
 
 /** How long a just-arrived artifact keeps its "New" mark. */
 const NEW_MS = 6000;
@@ -225,7 +232,7 @@ function VersionPicker({
               >
                 <b>v{at + 1}</b>
                 <span>
-                  <em>{at === 0 ? t("First read") : t("Read again")}</em>
+                  <em>{versionNote(version, lineage.versions[at - 1] ?? null, t)}</em>
                   <i>
                     {shortTime(version.createdAt)}
                     {at === last ? ` · ${t("Latest")}` : ""}
@@ -290,8 +297,17 @@ function ArtifactBody({
       ) : (
         <DeskTableBody artifact={artifact} previous={previous} versions={versions} />
       );
-    case "report_preview":
-      return <DeskTableBody artifact={artifact} previous={previous} versions={versions} />;
+    case "report_preview": {
+      const bars = barsOf(gridOf(artifact));
+      return bars ? (
+        <>
+          {versions && <div className="dk-ax-tools dk-end">{versions}</div>}
+          <DeskReportBars artifact={artifact} bars={bars} />
+        </>
+      ) : (
+        <DeskTableBody artifact={artifact} previous={previous} versions={versions} />
+      );
+    }
     case "report_run":
       return <DeskReportRunBody artifact={artifact} />;
     case "entity_card":

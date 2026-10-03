@@ -12,7 +12,8 @@ A record card's view: the few things a person reads a record of this kind
 for, laid out for it, rather than every field the tool returned. A shipment
 is its route and who is moving it; an invoice is what it bills and whether
 it is paid; a billing queue item is what it would bill and what stands in
-the way.
+the way; a customer is how they are billed and how much credit they have
+left; a driver is whether they can take a load and when their papers are due.
 
 The view is built from the tool's JSON, as the model reads it, so it depends
 on the tool's contract and not its Go types. A field the result does not
@@ -26,6 +27,8 @@ const (
 	viewShipment         = "shipment"
 	viewInvoice          = "invoice"
 	viewBillingQueueItem = "billing_queue_item"
+	viewCustomer         = "customer"
+	viewWorker           = "worker"
 
 	stopPickup   = "Pickup"
 	stopDelivery = "Delivery"
@@ -41,6 +44,10 @@ func recordView(entity string, result map[string]any) map[string]any {
 		return invoiceView(result)
 	case viewBillingQueueItem:
 		return billingQueueView(result)
+	case viewCustomer:
+		return customerView(result)
+	case viewWorker:
+		return workerView(result)
 	default:
 		return nil
 	}
@@ -271,6 +278,89 @@ func billingQueueView(result map[string]any) map[string]any {
 			"canApprove": result["canApprove"],
 			"blockedBy":  textOf(result, "approvalBlockedBy"),
 			"blockers":   blockers,
+		}
+	}
+
+	return view
+}
+
+// place is "City, ST" from a record's city and its state, whichever it has.
+func place(result map[string]any) string {
+	city := textOf(result, "city")
+	state := textOf(objectOf(result["state"]), "abbreviation")
+	if state == "" {
+		state = textOf(result, "state")
+	}
+	switch {
+	case city != "" && state != "":
+		return city + ", " + state
+	case city != "":
+		return city
+	default:
+		return state
+	}
+}
+
+// joined is the parts that hold a value, separated by a middle dot.
+func joined(parts ...string) string {
+	kept := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if strings.TrimSpace(part) != "" {
+			kept = append(kept, part)
+		}
+	}
+
+	return strings.Join(kept, " · ")
+}
+
+// customerView is a customer as billing reads them: who and where they are,
+// how they are billed, and how much of their credit is in use.
+func customerView(result map[string]any) map[string]any {
+	billing := objectOf(result["billingProfile"])
+	view := map[string]any{
+		"type":     viewCustomer,
+		"status":   textOf(result, "status"),
+		"subtitle": joined(textOf(result, "code"), place(result)),
+		"facts": facts(
+			fact{"paymentTerm", textOf(billing, "paymentTerm")},
+			fact{"billingCycle", textOf(billing, "billingCycle")},
+			fact{"invoiceDelivery", textOf(billing, "invoiceDelivery")},
+			fact{"creditStatus", textOf(billing, "creditStatus")},
+			fact{"creditLimit", textOf(billing, "creditLimit")},
+			fact{"creditBalance", textOf(billing, "creditBalance")},
+			fact{"creditHold", textOf(billing, "creditHoldReason")},
+			fact{"dotNumber", textOf(result, "dotNumber")},
+			fact{"mcNumber", textOf(result, "mcNumber")},
+		),
+	}
+
+	return view
+}
+
+// workerView is a driver as dispatch reads them: whether they can take a
+// load, what they are qualified for, and when their papers come due.
+func workerView(result map[string]any) map[string]any {
+	view := map[string]any{
+		"type":     viewWorker,
+		"status":   textOf(result, "status"),
+		"subtitle": joined(textOf(result, "driverType"), textOf(result, "type"), place(result)),
+		"facts": facts(
+			fact{"fleet", textOf(result, "fleetCode")},
+			fact{"cdlClass", textOf(result, "cdlClass")},
+			fact{"endorsement", textOf(result, "endorsement")},
+			fact{"compliance", textOf(result, "complianceStatus")},
+			fact{"physicalDueDate", result["physicalDueDate"]},
+			fact{"mvrDueDate", result["mvrDueDate"]},
+			fact{"twicExpiry", result["twicExpiry"]},
+			fact{"nextTrainingDue", result["nextTrainingDue"]},
+			fact{"hireDate", result["hireDate"]},
+			fact{"leave", textOf(result, "leaveType")},
+		),
+	}
+	if assignable, ok := result["canBeAssigned"].(bool); ok {
+		view["ready"] = map[string]any{
+			"canApprove": assignable,
+			"blockedBy":  textOf(result, "assignmentBlocked"),
 		}
 	}
 
