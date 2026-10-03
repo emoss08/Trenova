@@ -4,7 +4,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import type { RecordFact, RecordView, RouteEnd } from "./artifact-payloads";
+import type { RecordFact, RecordView, RouteEnd, RouteStop } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
 
 const PHASE_PILL: Record<string, string> = {
@@ -198,8 +198,30 @@ function readyText(view: RecordView, t: TranslateFn): string {
     : ready.blockedBy || t("Not ready to approve yet");
 }
 
-/** The route as the design draws it: where it started, where it is going, and the truck between. */
-function Route({ from, to, progress }: { from: RouteEnd; to: RouteEnd; progress: number }) {
+function viaLabel(via: RouteStop[], t: TranslateFn): string {
+  const first = via[0];
+  const name = first.city || first.place;
+  return via.length === 1
+    ? t("via {0}", name)
+    : t("via {0} and {1, plural, one {# more stop} other {# more stops}}", name, via.length - 1);
+}
+
+/**
+ * The route as the design draws it: where it started, where it is going, and
+ * the truck between. A stop on the way sits on the line where the server
+ * spaced it, so a split delivery is not drawn as a straight lane.
+ */
+function Route({
+  from,
+  to,
+  via,
+  progress,
+}: {
+  from: RouteEnd;
+  to: RouteEnd;
+  via: RouteStop[];
+  progress: number;
+}) {
   const t = useT();
   return (
     <div className="dk-ax-route">
@@ -211,9 +233,18 @@ function Route({ from, to, progress }: { from: RouteEnd; to: RouteEnd; progress:
       </div>
       <div className="dk-ax-line" aria-label={t("{0}% of the way", Math.round(progress * 100))}>
         <span className="dk-ax-done" style={{ width: `${progress * 100}%` }} />
+        {via.map((stop, index) => (
+          <span
+            key={`${stop.city}-${stop.place}-${index}`}
+            className={cn("dk-ax-via", stop.done && "dk-done")}
+            style={{ left: `${((index + 1) / (via.length + 1)) * 100}%` }}
+            title={[stop.city, stop.place, routeTime(stop, false, t)].filter(Boolean).join(" · ")}
+          />
+        ))}
         <span className="dk-ax-trk" style={{ left: `${progress * 100}%` }}>
           <ArtIcon name="truck" size={13} />
         </span>
+        {via.length > 0 && <span className="dk-ax-via-l">{viaLabel(via, t)}</span>}
       </div>
       <div className="dk-ax-stop dk-end">
         <i />
@@ -265,7 +296,7 @@ export function DeskRecordView({
         view.to &&
         (view.from.city || view.from.place) &&
         (view.to.city || view.to.place) && (
-          <Route from={view.from} to={view.to} progress={view.progress ?? 0} />
+          <Route from={view.from} to={view.to} via={view.via} progress={view.progress ?? 0} />
         )}
 
       {view.amount && view.amount.total !== "" && (

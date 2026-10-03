@@ -56,7 +56,7 @@ import {
   DeskNoModelCard,
   DeskPoorlyReadCard,
 } from "./conversation/desk-failures";
-import { DeskStepFailures, DeskWriteResultCard } from "./conversation/desk-tool-failures";
+import { DeskWriteResultCard } from "./conversation/desk-tool-failures";
 import { DeskScheduleCard } from "./conversation/desk-schedule-card";
 import {
   isScheduleRequest,
@@ -948,17 +948,11 @@ export function DeskConversation({
                             artifacts={own}
                             latestUserSequence={model.latestUserSequence}
                             chapter={chapterOf(entry.message.id)}
+                            closesTurn={lastOfTurn.has(entry.message.id)}
                             onTogglePin={togglePin}
                             onAnswer={model.answer}
                             onOpenArtifact={openArtifact}
                           />
-                          {lastOfTurn.has(entry.message.id) && (
-                            <div className="dk-ec-after">
-                              <DeskStepFailures
-                                steps={replySteps.get(entry.message.id) ?? NO_STEPS}
-                              />
-                            </div>
-                          )}
                           {(poorlyRead.get(entry.message.id) ?? []).map((fileName) => (
                             <div key={fileName} className="dk-ec-after">
                               <DeskPoorlyReadCard

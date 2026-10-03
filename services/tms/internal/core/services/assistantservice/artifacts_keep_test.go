@@ -72,6 +72,33 @@ func TestArtifactRecorder_KeepsOnlyTheLookupsTheReplyPointsTo(t *testing.T) {
 	assert.False(t, kept[unused.ID])
 }
 
+// An agent the conversation handed a task to cites records in its report to
+// that agent. They are its working: a card stays only if the conversation's
+// own reply points to it too.
+func TestArtifactRecorder_ADelegatesCitationsDoNotKeepItsLookups(t *testing.T) {
+	t.Parallel()
+
+	repo := &deletingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
+	recorder := keepRecorder(t, repo)
+	cited, _ := recorder.observe(observation("get_shipment", map[string]any{"id": "shp_1", "proNumber": "P-1"}))
+	both, _ := recorder.observe(observation("get_customer", map[string]any{"id": "cus_1", "name": "Acme"}))
+	require.NotNil(t, cited)
+	require.NotNil(t, both)
+
+	reply := []conversation.Message{
+		{
+			Role:           conversation.RoleAssistant,
+			DelegateCallID: "call_delegate",
+			Content: "See [shipment P-1](artifact:" + cited.ID.String() + ") and " +
+				"[Acme](artifact:" + both.ID.String() + ").",
+		},
+		{Role: conversation.RoleAssistant, Content: "Acme is on [Customer Acme](artifact:" + both.ID.String() + ")."},
+	}
+	recorder.keepLinked(linkedArtifacts(reply))
+
+	assert.Equal(t, []pulid.ID{cited.ID}, repo.deleted)
+}
+
 // Running the same lookup over data that has not changed points to the last
 // version rather than stacking an identical one on it.
 func TestArtifactRecorder_AnUnchangedLookupReusesItsLastVersion(t *testing.T) {

@@ -62,6 +62,37 @@ describe("record views", () => {
     expect(screen.getByRole("link", { name: /Open shipment/u })).toBeInTheDocument();
   });
 
+  it("draws a stop on the way on the line, not as a straight lane", () => {
+    const split = card({
+      entity: "shipment",
+      fields: [],
+      view: {
+        type: "shipment",
+        status: "InTransit",
+        from: { city: "Dallas, TX", place: "Dallas Warehouse", when: "departed", at: "" },
+        to: { city: "Chicago, IL", place: "Chicago DC", when: "scheduled", at: "" },
+        via: [
+          { city: "Denver, CO", place: "Denver Drop Point", type: "SplitDelivery", done: true },
+          { nonsense: true },
+        ],
+        progress: 0.75,
+        facts: [],
+      },
+    });
+    const parsed = entityCardFrom(split);
+    expect(parsed.view?.via.map((stop) => stop.city)).toEqual(["Denver, CO"]);
+
+    const { container } = render(
+      <MemoryRouter>
+        <DeskRecordBody artifact={split} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("via Denver, CO")).toBeInTheDocument();
+    const dot = container.querySelector(".dk-ax-via");
+    expect(dot).toHaveClass("dk-done");
+    expect(dot).toHaveStyle({ left: "50%" });
+  });
+
   it("says a time today as the time alone", () => {
     const now = new Date(2026, 9, 1, 8, 0);
     expect(localMoment("2026-10-01T12:50", now)).not.toContain("Oct");

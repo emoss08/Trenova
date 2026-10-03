@@ -187,33 +187,40 @@ func shipmentView(result map[string]any) map[string]any {
 	}
 
 	if len(stops) > 0 {
-		first, last := stops[0], stops[len(stops)-1]
-		for _, stop := range stops {
+		first, last := 0, len(stops)-1
+		for idx, stop := range stops {
 			if textOf(stop, "type") == stopPickup {
-				first = stop
+				first = idx
 				break
 			}
 		}
-		for idx := len(stops) - 1; idx >= 0; idx-- {
+		for idx := len(stops) - 1; idx > first; idx-- {
 			if textOf(stops[idx], "type") == stopDelivery {
-				last = stops[idx]
+				last = idx
 				break
 			}
 		}
-		view["from"] = stopView(first, true)
-		view["to"] = stopView(last, false)
+		route := stops[first : last+1]
+		view["from"] = stopView(route[0], true)
+		view["to"] = stopView(route[len(route)-1], false)
 
-		done := 0
-		for _, stop := range stops {
-			if textOf(stop, "actualDeparture") != "" || textOf(stop, "status") == "Completed" {
-				done++
+		// A load that drops part of itself in Denver on the way to Chicago is
+		// not a Dallas–Chicago lane; the stops between are drawn on the line.
+		if len(route) > 2 {
+			via := make([]map[string]any, 0, len(route)-2)
+			for _, stop := range route[1 : len(route)-1] {
+				shown := stopView(stop, false)
+				shown["type"] = textOf(stop, "type")
+				shown["done"] = stopDone(stop)
+				via = append(via, shown)
 			}
+			view["via"] = via
 		}
-		progress := float64(done) / float64(len(stops))
+
+		view["progress"] = routeProgress(route)
 		if textOf(result, "status") == "Completed" {
-			progress = 1
+			view["progress"] = 1.0
 		}
-		view["progress"] = progress
 	}
 
 	var weight int64
@@ -240,6 +247,37 @@ func shipmentView(result map[string]any) map[string]any {
 	)
 
 	return view
+}
+
+func stopDone(stop map[string]any) bool {
+	return textOf(stop, "actualDeparture") != "" || textOf(stop, "status") == "Completed"
+}
+
+// routeProgress is how far along the line the truck is, with the stops evenly
+// spaced on it as the card draws them: at the last stop it finished, or
+// halfway to the next once it has left that one and not yet reached the next.
+func routeProgress(route []map[string]any) float64 {
+	if len(route) < 2 {
+		return 0
+	}
+	at := -1
+	for idx, stop := range route {
+		if stopDone(stop) {
+			at = idx
+		}
+	}
+	if at < 0 {
+		return 0
+	}
+	if at == len(route)-1 {
+		return 1
+	}
+	position := float64(at)
+	if textOf(route[at], "actualDeparture") != "" {
+		position += 0.5
+	}
+
+	return position / float64(len(route)-1)
 }
 
 // stopView is one end of the route: the place, the city and the time that

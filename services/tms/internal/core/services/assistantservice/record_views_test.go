@@ -54,6 +54,43 @@ func TestShipmentView_IsTheRouteAndWhoIsMovingIt(t *testing.T) {
 	}, view["facts"])
 }
 
+/*
+A stop on the way is on the route.
+
+SEED-PAY-003 picks up in Dallas, drops part of the load in Denver and
+delivers the rest in Chicago. The card drew a Dallas–Chicago lane, as if
+Denver had never happened.
+*/
+func TestShipmentView_DrawsTheStopsOnTheWay(t *testing.T) {
+	t.Parallel()
+
+	stop := func(kind, city, status, departed string) map[string]any {
+		return map[string]any{
+			"type": kind, "city": city, "state": "TX", "location": city + " Dock",
+			"status": status, "actualDeparture": departed,
+		}
+	}
+	view := recordView("shipment", map[string]any{
+		"status": "InTransit",
+		"moves": []any{map[string]any{"stops": []any{
+			stop("Pickup", "Dallas", "Completed", "2026-09-21T23:00"),
+			stop("SplitDelivery", "Denver", "Completed", "2026-09-22T05:00"),
+			stop("Delivery", "Chicago", "New", ""),
+		}}},
+	})
+
+	require.NotNil(t, view)
+	assert.Equal(t, "Dallas, TX", view["from"].(map[string]any)["city"])
+	assert.Equal(t, "Chicago, TX", view["to"].(map[string]any)["city"])
+	via := view["via"].([]map[string]any)
+	require.Len(t, via, 1)
+	assert.Equal(t, "Denver, TX", via[0]["city"])
+	assert.Equal(t, "SplitDelivery", via[0]["type"])
+	assert.Equal(t, true, via[0]["done"])
+	// Left Denver, the second of three evenly spaced stops, not yet in Chicago.
+	assert.InDelta(t, 0.75, view["progress"], 0.001)
+}
+
 func TestRecordView_OnlyForKindsThatHaveOne(t *testing.T) {
 	t.Parallel()
 

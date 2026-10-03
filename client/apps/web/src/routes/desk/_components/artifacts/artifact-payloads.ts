@@ -558,6 +558,9 @@ export type RouteEnd = {
   at: string;
 };
 
+/** A stop a shipment makes between its pickup and its delivery. */
+export type RouteStop = RouteEnd & { type: string; done: boolean };
+
 /** A fact on a record card, keyed so the reader names it in their own words. */
 export type RecordFact = { key: string; value: string | number };
 
@@ -572,6 +575,7 @@ export type RecordView = {
   subtitle: string;
   from: RouteEnd | null;
   to: RouteEnd | null;
+  via: RouteStop[];
   progress: number | null;
   amount: { total: string; balance: string; currency: string } | null;
   ready: { canApprove: boolean; blockedBy: string; blockers: number } | null;
@@ -608,6 +612,14 @@ function recordViewOf(value: unknown): RecordView | null {
     subtitle: stringOf(value.subtitle),
     from: routeEndOf(value.from),
     to: routeEndOf(value.to),
+    via: Array.isArray(value.via)
+      ? value.via.flatMap((entry): RouteStop[] => {
+          const end = routeEndOf(entry);
+          return end && isRecord(entry) && (end.city !== "" || end.place !== "")
+            ? [{ ...end, type: stringOf(entry.type), done: entry.done === true }]
+            : [];
+        })
+      : [],
     progress: typeof value.progress === "number" ? Math.min(1, Math.max(0, value.progress)) : null,
     amount: amount
       ? {

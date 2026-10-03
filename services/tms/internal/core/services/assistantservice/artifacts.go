@@ -363,11 +363,14 @@ func (r *artifactRecorder) keepLinked(linked map[string]bool) {
 	}
 }
 
-// linkedArtifacts is every artifact the turn's replies point to.
+// linkedArtifacts is every artifact the turn's replies point to. Only the
+// conversation's own agent answers the person: an agent it handed a task to
+// reports back to that agent, and the records it cited while doing so are its
+// working, not the answer. They stay only if the reply itself uses them.
 func linkedArtifacts(messages []conversation.Message) map[string]bool {
 	linked := map[string]bool{}
 	for idx := range messages {
-		if messages[idx].Role != conversation.RoleAssistant {
+		if messages[idx].Role != conversation.RoleAssistant || messages[idx].DelegateCallID != "" {
 			continue
 		}
 		for _, id := range agentruntime.ArtifactRefIDs(messages[idx].Content) {

@@ -5634,6 +5634,32 @@
   background: var(--dsk-fg);
   animation: dk-grow 1s var(--dk-settle) both;
 }
+/* A stop on the way: the route's end dots, smaller, on the line itself. */
+.dk-ax-via {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 2px var(--dsk-fg);
+}
+.dk-ax-via.dk-done {
+  background: var(--dsk-fg);
+}
+.dk-ax-via-l {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
 .dk-ax-trk {
   position: absolute;
   top: 50%;
@@ -12276,6 +12302,9 @@
 }
 .dk-ec-after {
   margin-top: 14px;
+}
+.dk-ec-after:empty {
+  display: none;
 }
 .dk-ec-fb {
   margin-top: 6px;

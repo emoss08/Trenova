@@ -20,6 +20,7 @@ import { DeskMessageAttachments } from "../composer/desk-uploads";
 import { citeSteps, withCitations } from "./citations";
 import { useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
+import { DeskStepFailures } from "./desk-tool-failures";
 
 /** Where a row sits in the conversation's three columns: time, words, margin. */
 export function DeskRow({
@@ -150,6 +151,7 @@ export const DeskReply = memo(function DeskReply({
   artifacts,
   latestUserSequence,
   chapter,
+  closesTurn = false,
   onTogglePin,
   onAnswer,
   onOpenArtifact,
@@ -162,6 +164,11 @@ export const DeskReply = memo(function DeskReply({
   artifacts: readonly AssistantArtifact[];
   latestUserSequence: number;
   chapter: number;
+  /**
+   * The reply is the last of its turn, so it says which of the turn's steps
+   * did not go through, between its words and the actions under them.
+   */
+  closesTurn?: boolean;
   /** Pins or unpins the reply as a chapter, by its message id. */
   onTogglePin: (messageId: string) => void;
   onAnswer?: (value: string) => void;
@@ -203,6 +210,11 @@ export const DeskReply = memo(function DeskReply({
           />
         </div>
       ))}
+      {closesTurn && (
+        <div className="dk-ec-after">
+          <DeskStepFailures steps={steps} />
+        </div>
+      )}
       {message.content !== "" && (
         <DeskMessageActions
           text={content}
