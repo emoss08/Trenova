@@ -1,0 +1,65 @@
+.udo{position:relative;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border-radius:12px;background:var(--success-sub);box-shadow:0 0 0 1px color-mix(in srgb,var(--success) 40%,transparent);animation:rise 360ms var(--spring) both}
+.udo-ring{flex:none;transform:rotate(-90deg)}
+.udo-ring circle{fill:none;stroke-width:2.2}.udo-ring .bg{stroke:color-mix(in srgb,var(--success) 25%,transparent)}
+.udo-ring .fg{stroke:var(--success-fg);stroke-linecap:round;stroke-dasharray:56.5;transition:stroke-dashoffset 1s linear}
+.udo-ring text{transform:rotate(90deg);transform-origin:11px 11px;font:600 9.5px var(--plex);fill:var(--success-fg)}
+.udo-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.udo-t b{font-size:12.5px;font-weight:600;color:var(--fg)}.udo-t span{font-size:11.5px;color:var(--success-fg)}
+.udo .bt{display:inline-flex;align-items:center;gap:5px}
+.udo .bt.ghost{background:none;box-shadow:none;color:var(--success-fg)}
+.fx{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:0 4px;font-size:11.5px;color:var(--subtle)}
+.fx-l{display:inline-flex;align-items:center;gap:5px;margin-right:2px}
+.fx-c{display:inline-flex;align-items:center;gap:3px;height:22px;padding:0 3px 0 8px;border-radius:999px;font-weight:500;color:var(--fg2);background:var(--sunken);box-shadow:inset 0 0 0 1px var(--b-sub);animation:pop 220ms var(--spring) both}
+.fx-c button{width:16px;height:16px;display:grid;place-items:center;border-radius:50%;color:var(--faint)}
+.fx-c button:hover{background:var(--hover);color:var(--fg)}
+.fx-add{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;border-radius:999px;color:var(--subtle);box-shadow:inset 0 0 0 1px dashed var(--b)}
+.fx-add{border:1px dashed var(--b-strong);box-shadow:none}
+.fx-add:hover{color:var(--fg);border-color:var(--fg)}
+.fx-in{height:22px;width:190px;padding:0 9px;border:0;border-radius:999px;font:inherit;font-size:11.5px;color:var(--fg);background:var(--field);box-shadow:inset 0 0 0 1px var(--b-strong);outline:0}
+.hom{position:relative}
+.hom .ib.on{background:var(--hover);color:var(--fg)}
+.hom-p{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:300px;padding:4px;border-radius:12px;background:var(--raised);box-shadow:var(--lift-hi),0 0 0 1px var(--b-sub);animation:pop 200ms var(--spring) both}
+.hom-h{display:flex;flex-direction:column;gap:1px;padding:8px 8px 6px}
+.hom-h b{font-size:12.5px;font-weight:600}.hom-h span{font-size:11px;color:var(--subtle)}
+.hom-p>button{display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;border-radius:8px;text-align:left}
+.hom-p>button:hover{background:var(--hover)}
+.hom-p>button>span:not(.at){min-width:0;display:flex;flex-direction:column}
+.hom-p>button b{font-size:12.5px;font-weight:500}.hom-p>button em{font-style:normal;font-size:11px;color:var(--subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ho{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--b);animation:nl 320ms var(--settle) both}
+.ho-h{display:flex;align-items:center;gap:10px}
+.ho-h>span:not(.at){display:flex;flex-direction:column;gap:1px}
+.ho-h b{font-size:13px;font-weight:600}.ho-h em{font-style:normal;font-size:11.5px;color:var(--subtle)}
+.ho-c{display:flex;flex-direction:column;gap:6px}
+.ho-c>span{font:500 10.5px var(--plex);letter-spacing:.05em;text-transform:uppercase;color:var(--subtle)}
+.ho-c>div{display:flex;flex-wrap:wrap;gap:5px}
+.ho-chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:999px;font-size:12px;color:var(--fg2);background:var(--sunken)}
+.ho-chip svg{color:var(--success-fg)}
+.ho-go{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:8px;font-size:12.5px;font-weight:500;background:var(--ink);color:var(--ink-fg)}
+.schc{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--b);animation:nl 320ms var(--settle) both}
+.schc-h{display:flex;align-items:baseline;gap:8px}.schc-h b{font-size:12.5px;font-weight:600}.schc-h span{font-size:11.5px;color:var(--subtle)}
+.schc.gone{flex-direction:row;align-items:center;font-size:12px;color:var(--subtle)}
+.why{display:flex;flex-direction:column;gap:5px;margin-top:6px;padding-top:8px;border-top:1px solid var(--b-sub);font-size:11.5px;line-height:1.45;color:var(--fg2);white-space:normal}
+.why>span{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px}
+.why em{font-style:normal;color:var(--subtle)}
+.fnp-why{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11.5px;font-weight:500;color:var(--subtle)}
+.fnp-why:hover,.fnp-why.on{color:var(--fg)}
+.ni-why{margin-left:6px;font-size:11px;font-weight:500;color:var(--subtle);opacity:0;transition:opacity 140ms}
+.ni:hover .ni-why,.ni-why.on{opacity:1}.ni-why:hover{color:var(--fg)}
+.ni-wx{padding:0 0 8px 0}
+/* decision merged into composer */
+.dock .c.has-dec{gap:0}
+.dock .c>.cmp,.dock .c>.cmp .cmp-ring{transition:border-radius 320ms var(--settle),box-shadow 200ms}
+.dock .c.has-dec>.dcx,.dock .c.has-dec>.udo{z-index:2;margin:0 0 -1px;border-radius:16px 16px 0 0;padding:10px 10px 10px 14px;animation:decRise 520ms var(--spring) both}
+.dock .c.has-dec>.dcx:not(.ok){box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 32%,transparent)}
+.dock .c.has-dec>.dcx.ok,.dock .c.has-dec>.udo{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--success) 38%,transparent)}
+.dock .c.has-dec>.dcx::after,.dock .c.has-dec>.udo::after{content:'';position:absolute;left:14px;right:14px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,currentColor 20%,currentColor 80%,transparent);opacity:.18;pointer-events:none}
+.dock .c.has-dec>.dcx .dcx-i{animation:decPing 900ms var(--ease) 260ms both}
+.dock .c.has-dec>.cmp{z-index:1;border-top-left-radius:0;border-top-right-radius:0;box-shadow:0 0 0 1px var(--b),0 14px 30px -16px rgb(0 0 0/.45)}
+.dock .c.has-dec>.cmp .cmp-ring{border-top-left-radius:0;border-top-right-radius:0}
+.dock .c.has-dec>.fx{margin-bottom:8px}
+.dock .c.has-dec>.hint{margin-top:10px}
+@keyframes decRise{from{clip-path:inset(100% 0 0 0 round 16px 16px 0 0);transform:translateY(10px)}to{clip-path:inset(0 0 0 0 round 16px 16px 0 0);transform:none}}
+@keyframes decPing{0%{transform:scale(.6);opacity:0}55%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
+/* artifact switcher: click */
+.ax-stack .ax-card.front{cursor:pointer}
+.hom-p .at,.ho-h .at{flex:none}
