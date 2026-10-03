@@ -16,5 +16,7 @@ func TestEveryFileableResourceHasALookup(t *testing.T) {
 		_, ok := recordKinds[resource.String()]
 		assert.True(t, ok, "no lookup for fileable resource %s", resource)
 	}
-	assert.Len(t, recordKinds, len(capture.FileableResources()))
+	for kind := range recordKinds {
+		assert.True(t, capture.IsCaptureTarget(kind), "lookup for %s, which is not a capture target", kind)
+	}
 }

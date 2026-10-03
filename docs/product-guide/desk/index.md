@@ -58,11 +58,12 @@ Keywords: assistant covers the screen, move chat button, hide AI button, assista
 4. The same choices are under **Position and size** at the top of the open panel: pick a corner, turn **Hide the button when closed** on or off, or select **Reset size**.
 
 ### Organize conversations
-Keywords: pin chat, delete conversation, export transcript, hide workspace, make room
+Keywords: pin chat, delete conversation, export transcript, rename conversation, hide workspace, make room
 1. Open the conversation from [Desk](/desk).
 2. In the bar at the top, use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.
-3. To delete it, hover over it in the rail, select **Delete conversation**, then **Delete** to confirm.
-4. Select **Workspace** in the top bar (or press ⌘\\ / Ctrl+\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation.
+3. To rename it, double-click its name in the rail, type the new name and press Enter.
+4. To delete it, hover over it in the rail, select **Delete conversation**, then **Delete** to confirm.
+5. Select **Workspace** in the top bar (or press ⌘\\ / Ctrl+\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation.
 
 ## Notes
 Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.

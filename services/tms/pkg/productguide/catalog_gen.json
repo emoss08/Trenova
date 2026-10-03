@@ -1,5 +1,5 @@
 {
-  "version": "sha256:1db6a97394384468fb04c072d8ae4ab1b1e8d5559e2959ab54680bb5ba2699da",
+  "version": "sha256:094f1798c8a0c00ca6548752ae8fbb7b1bc36747e501b7b563c3403ba51a2758",
   "modules": [
     {
       "id": "home",
@@ -8207,12 +8207,14 @@
             "pin chat",
             "delete conversation",
             "export transcript",
+            "rename conversation",
             "hide workspace",
             "make room"
           ],
           "steps": [
             "Open the conversation from [Desk](/desk).",
             "In the bar at the top, use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.",
+            "To rename it, double-click its name in the rail, type the new name and press Enter.",
             "To delete it, hover over it in the rail, select **Delete conversation**, then **Delete** to confirm.",
             "Select **Workspace** in the top bar (or press ⌘\\\\ / Ctrl+\\\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation."
           ]
