@@ -205,3 +205,28 @@ func TestRun_ShortListsAreAnsweredInTheReply(t *testing.T) {
 	assert.Contains(t, content, "do not point to the table")
 	assert.NotContains(t, content, "artifact:", "a short list gets no pointer to write")
 }
+
+/*
+A table the person works from is pointed to however short it is.
+
+The billing queue opens with a checkbox on each row and a bar to approve the
+ones selected. Two items answered as a markdown table leave nothing to select.
+*/
+func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 2,
+		Actionable: true,
+	}}
+	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
+	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
+		textTurn("Two items."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, "works from beside the conversation")
+	assert.Contains(t, content, "artifact:", "the reply is given the pointer to write")
+	assert.NotContains(t, content, "few enough to answer in your reply")
+}

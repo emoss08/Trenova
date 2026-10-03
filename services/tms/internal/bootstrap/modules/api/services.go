@@ -60,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/billingqueueapprovalservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice"
@@ -600,6 +601,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	costingservice.New,
 	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
+	billingqueueservice.NewReview,
+	billingqueueapprovalservice.New,
 	dataentrycontrolservice.New,
 	dispatchcontrolservice.New,
 	documentcontrolservice.New,

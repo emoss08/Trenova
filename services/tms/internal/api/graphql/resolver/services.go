@@ -207,6 +207,7 @@ type Params struct {
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
 	ServiceFailureSvc            services.ServiceFailureService
 	BillingQueueService          services.BillingQueueService
+	BillingQueueReviewService    services.BillingQueueReviewService
 	InvoiceService               services.InvoiceService
 	InvoiceAdjustmentService     services.InvoiceAdjustmentService
 	InvoiceDisputeService        services.InvoiceDisputeService
@@ -383,6 +384,7 @@ type Services struct {
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
 	ServiceFailureSvc            services.ServiceFailureService
 	BillingQueueService          services.BillingQueueService
+	BillingQueueReviewService    services.BillingQueueReviewService
 	InvoiceService               services.InvoiceService
 	InvoiceAdjustmentService     services.InvoiceAdjustmentService
 	InvoiceDisputeService        services.InvoiceDisputeService
@@ -565,6 +567,7 @@ func newServices(p *Params) *Services {
 		ServiceFailureReasonCodeSvc:  p.ServiceFailureReasonCodeSvc,
 		ServiceFailureSvc:            p.ServiceFailureSvc,
 		BillingQueueService:          p.BillingQueueService,
+		BillingQueueReviewService:    p.BillingQueueReviewService,
 		InvoiceService:               p.InvoiceService,
 		InvoiceAdjustmentService:     p.InvoiceAdjustmentService,
 		InvoiceDisputeService:        p.InvoiceDisputeService,

@@ -98,11 +98,15 @@ export type TableViewRow = {
   values: Record<string, unknown>;
   /** The record's page, built from the registry; empty when it has none. */
   path: string;
+  /** The record's id, for a table whose rows are acted on in place. */
+  recordId?: string;
 };
 
 export type TableViewArtifact = {
   tool: string;
   entity: string;
+  /** The record kind the rows are, when the registry knows it. */
+  recordEntity: string;
   searchedFor: string[];
   columns: DisplayColumn[];
   rows: TableViewRow[];
@@ -179,6 +183,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
       key: String(index),
       values,
       path: entity !== null && id !== "" ? recordPath(entity, id) : "",
+      recordId: id,
     };
   });
   const rowCount = numberOf(payload.rowCount) || rows.length;
@@ -186,6 +191,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
   return {
     tool: stringOf(payload.tool),
     entity: stringOf(payload.entity),
+    recordEntity: entity ?? "",
     searchedFor: listOf(payload.searchedFor).filter(
       (term): term is string => typeof term === "string" && term !== "",
     ),

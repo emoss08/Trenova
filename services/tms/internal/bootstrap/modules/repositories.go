@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuereviewrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingtransferrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/briefingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/capturerepository"
@@ -530,6 +531,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	costingrepository.New,
 	costingrepository.NewActuals,
 	billingqueuerepository.New,
+	billingqueuereviewrepository.New,
 	distancecalculationrepository.New,
 	distancecontrolrepository.New,
 	distanceoverriderepository.New,

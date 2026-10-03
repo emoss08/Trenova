@@ -1,172 +1,193 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
-import type { ShipmentBillingReadiness } from "@trenova/shared/types/shipment";
-
-/** What one check asks of the person: nothing, a look, or a fix before approval. */
-export type CheckState = "ok" | "warn" | "fail";
-
-export type BillingCheck = {
-  key: string;
-  state: CheckState;
-  title: string;
-  /** The finding, in a line: who is assigned, what is missing, what was flagged. */
-  detail: string;
-  /** Why it was flagged, when there is more to say than the finding. */
-  note?: string;
-  /** "assign" offers to take the item; nothing else is fixed from the card. */
-  action?: "assign";
-};
+import type {
+  BillingCheck,
+  BillingCheckKey,
+  BillingIssue,
+  BillingQueueHoldReason,
+  BillingQueueItem,
+  BillingQueueStatus,
+  BillingQueueSummary,
+} from "@trenova/shared/types/billing-queue";
 
 /**
- * Everything that stands between a billing item and its approval, in the
- * order a biller works through it: who is on it, the paperwork, what the
- * readiness check found, detention waiting on approval, the charges, and the
- * customer. Each check is drawn from what the server already decided; the card
- * never re-derives a rule. A check that passes says what it found, so a clean
- * item reads as checked rather than empty.
+ * Where an item stands for the person looking at it: still to review, approved
+ * and waiting to post, posted, held, or somewhere the desk only reports.
  */
-export function billingChecks(
-  item: BillingQueueItem,
-  readiness: ShipmentBillingReadiness | undefined,
-  t: TranslateFn,
-): BillingCheck[] {
-  const checks: BillingCheck[] = [];
+export type ItemStage = "review" | "approved" | "posted" | "held" | "other";
 
-  const biller = item.assignedBiller?.name ?? "";
-  checks.push(
-    biller !== "" || item.assignedBillerId
-      ? { key: "biller", state: "ok", title: t("Biller"), detail: biller || t("Assigned") }
-      : {
-          key: "biller",
-          state: "fail",
-          title: t("Biller"),
-          detail: t("Nobody is assigned"),
-          action: "assign",
-        },
-  );
-
-  if (readiness) {
-    const missing = readiness.missingRequirements.map((need) => need.documentTypeName);
-    const have = readiness.requirements
-      .filter((need) => need.satisfied)
-      .map((need) => need.documentTypeName);
-    if (missing.length > 0) {
-      checks.push({
-        key: "documents",
-        state: "fail",
-        title: t("Required documents"),
-        detail: t("Missing {0}", missing.join(", ")),
-      });
-    } else if (have.length > 0) {
-      checks.push({
-        key: "documents",
-        state: "ok",
-        title: t("Required documents"),
-        detail: have.join(" · "),
-      });
-    }
-
-    readiness.validationFailures.forEach((failure, index) => {
-      checks.push({
-        key: `validation-${index}`,
-        state: "fail",
-        title: t("Shipment details"),
-        detail: failure.message,
-      });
-    });
-    readiness.warnings.forEach((warning, index) => {
-      checks.push({
-        key: `warning-${index}`,
-        state: "warn",
-        title: t("Worth a look"),
-        detail: warning.message,
-      });
-    });
-    if (readiness.serviceFailureContext.hasUnresolved) {
-      checks.push({
-        key: "service-failures",
-        state: "warn",
-        title: t("Service failures"),
-        detail: t(
-          "{0, plural, one {# service failure is unresolved} other {# service failures are unresolved}}",
-          readiness.serviceFailureContext.unresolvedCount,
-        ),
-      });
-    }
+export function itemStage(status: BillingQueueStatus): ItemStage {
+  switch (status) {
+    case "ReadyForReview":
+    case "InReview":
+      return "review";
+    case "Approved":
+      return "approved";
+    case "Posted":
+      return "posted";
+    case "OnHold":
+      return "held";
+    default:
+      return "other";
   }
-
-  for (const hold of item.detentionHolds) {
-    checks.push({
-      key: `hold-${hold.occurrenceId}`,
-      state: "fail",
-      title: t("Detention waits on approval"),
-      detail: hold.locationName
-        ? t("{0} at {1}", money(hold.billableAmount, hold.currency), hold.locationName)
-        : money(hold.billableAmount, hold.currency),
-      note: t("The item can't be approved until this detention charge is approved or dropped."),
-    });
-  }
-
-  const problem = item.payerShare?.resolutionError ?? "";
-  if (problem !== "") {
-    checks.push({
-      key: "charges",
-      state: "fail",
-      title: t("Charges"),
-      detail: t("The charges can't be divided between payers"),
-      note: problem,
-    });
-  } else if (item.payerShare) {
-    checks.push({
-      key: "charges",
-      state: "ok",
-      title: t("Charges"),
-      detail: t(
-        "{0, plural, one {# charge} other {# charges}} · {1}",
-        item.payerShare.lines.length,
-        money(item.payerShare.totalAmount),
-      ),
-    });
-  }
-
-  const payer = readiness?.payers.find((candidate) => candidate.payerId === item.billToCustomerId);
-  const customer = item.billToCustomer?.name ?? payer?.payerName ?? "";
-  if (payer?.creditHold) {
-    checks.push({
-      key: "bill-to",
-      state: "fail",
-      title: t("Bill-to"),
-      detail: t("{0} is on credit hold", customer),
-    });
-  } else if (customer !== "") {
-    checks.push({
-      key: "bill-to",
-      state: "ok",
-      title: t("Bill-to"),
-      detail: payer?.creditStatus ? `${customer} · ${payer.creditStatus}` : customer,
-    });
-  }
-
-  return checks;
 }
 
-/** Why Approve is not available yet, in a few words; empty when it is. */
-export function approveBlocker(
-  item: BillingQueueItem,
-  checks: readonly BillingCheck[],
-  readiness: ShipmentBillingReadiness | undefined,
+export const HOLD_REASONS: readonly BillingQueueHoldReason[] = [
+  "WaitingOnPaperwork",
+  "CustomerDispute",
+  "RateQuestion",
+];
+
+export function holdReasonLabel(
+  reason: BillingQueueHoldReason | null | undefined,
   t: TranslateFn,
 ): string {
-  if (item.status === "Approved" || item.status === "Posted") return t("Already approved");
-  if (item.status === "Canceled") return t("This item was canceled");
-  const failing = checks.find((check) => check.state === "fail");
-  if (failing?.key === "biller") return t("Assign a biller first");
-  if (failing?.key === "documents") return t("Add the missing documents first");
-  if (failing?.key.startsWith("hold-")) return t("Approve the detention first");
-  if (failing) return t("Resolve what's flagged first");
-  if (readiness && !readiness.canMarkReadyToInvoice) return t("Billing requirements aren't met");
-  if (item.status !== "InReview") return t("Start the review first");
-  return "";
+  switch (reason) {
+    case "WaitingOnPaperwork":
+      return t("Waiting on paperwork");
+    case "CustomerDispute":
+      return t("Customer dispute");
+    case "RateQuestion":
+      return t("Rate question");
+    default:
+      return "";
+  }
+}
+
+/** The status pill's words, the way the queue table and the item both say it. */
+export function stageLabel(
+  status: BillingQueueStatus,
+  hold: BillingQueueHoldReason | null | undefined,
+  t: TranslateFn,
+): string {
+  switch (itemStage(status)) {
+    case "review":
+      return t("Ready for review");
+    case "approved":
+      return t("Approved");
+    case "posted":
+      return t("Posted");
+    case "held": {
+      const reason = holdReasonLabel(hold, t);
+      return reason ? t("On hold · {0}", reason) : t("On hold");
+    }
+    default:
+      switch (status) {
+        case "Exception":
+          return t("Exception");
+        case "SentBackToOps":
+          return t("Sent back to ops");
+        case "Canceled":
+          return t("Canceled");
+        default:
+          return status;
+      }
+  }
+}
+
+export function checkTitle(key: BillingCheckKey, t: TranslateFn): string {
+  switch (key) {
+    case "biller":
+      return t("Biller");
+    case "charges":
+      return t("Charges match the rate con");
+    case "pod":
+      return t("Proof of delivery");
+    case "terms":
+      return t("Bill-to and terms");
+    case "duplicate":
+      return t("Not a duplicate");
+  }
+}
+
+function shortDate(seconds: unknown): string {
+  if (typeof seconds !== "number" || seconds <= 0) return "";
+  return new Date(seconds * 1000).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function paymentTermLabel(term: string, t: TranslateFn): string {
+  if (term === "DueOnReceipt") return t("Due on receipt");
+  const days = /^Net(\d+)$/u.exec(term);
+  return days ? t("Net {0}", Number(days[1])) : term;
+}
+
+/**
+ * A check's finding in the person's language. The server decides each check
+ * and names what it found with a code; the wording is the reader's. A code
+ * the desk does not know yet reads as the server's own line.
+ */
+export function checkDetail(check: BillingCheck, t: TranslateFn): string {
+  const facts = check.facts ?? {};
+  const fact = (key: string) => {
+    const value = facts[key];
+    return typeof value === "string" || typeof value === "number" ? String(value) : "";
+  };
+  switch (check.code) {
+    case "unassigned":
+      return t("Nobody is assigned");
+    case "assigned":
+      return typeof facts.biller === "string" && facts.biller !== "" ? facts.biller : check.detail;
+    case "matches":
+      return t("Every line is on the rate con");
+    case "no_rate_con":
+      return t("Billed as rated");
+    case "signed": {
+      const at = shortDate(facts.at);
+      return at ? t("Signed · {0}", at) : t("Signed");
+    }
+    case "on_file":
+      return t("On file");
+    case "not_required":
+      return t("Not required for this customer");
+    case "terms": {
+      const term = paymentTermLabel(fact("paymentTerm"), t);
+      const contact = fact("contact");
+      return contact ? `${contact} · ${term}` : term;
+    }
+    case "unique":
+      return t("No other invoice for {0}", fact("shipment"));
+    default:
+      return check.detail;
+  }
+}
+
+/**
+ * Why the action bar's main button is not available, in a few words; empty
+ * when it is. Approved items are one step from the customer, so the bar says
+ * what posting does instead.
+ */
+export function barReason(item: BillingQueueItem, t: TranslateFn): string {
+  const stage = itemStage(item.status);
+  if (stage === "held") return t("Release the hold to continue");
+  if (stage === "approved") return t("Posting sends it to the customer and can't be undone");
+  if (stage !== "review") return "";
+  switch (item.review?.blocker ?? "") {
+    case "biller":
+      return t("Assign a biller first");
+    case "issue":
+      return t("Settle the flagged check first");
+    case "":
+      return item.review ? "" : t("Checking…");
+    default:
+      return t("Not ready for review");
+  }
+}
+
+/** The issue a failing check waits on, if it has one. */
+export function issueOf(item: BillingQueueItem, check: BillingCheck): BillingIssue | null {
+  if (!check.issueId) return null;
+  return item.review?.issues.find((issue) => issue.id === check.issueId) ?? null;
+}
+
+export function initials(name: string): string {
+  return name
+    .split(/\s+/u)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 export function money(amount: string | number | null | undefined, currency = "USD"): string {
@@ -179,4 +200,58 @@ export function money(amount: string | number | null | undefined, currency = "US
     currency: currency || "USD",
     minimumFractionDigits: 2,
   }).format(figure);
+}
+
+/** How the selection in a queue table splits for the bulk bar. */
+export type BulkSplit = {
+  /** Selected items every check clears; Approve takes these. */
+  ready: string[];
+  /** Selected items still under review that need a person; Review opens the first. */
+  needs: string[];
+  /** Selected items already approved, posted, held or otherwise out of review. */
+  other: number;
+};
+
+export function bulkSplit(
+  selected: readonly string[],
+  summaries: ReadonlyMap<string, BillingQueueSummary>,
+): BulkSplit {
+  const split: BulkSplit = { ready: [], needs: [], other: 0 };
+  for (const id of selected) {
+    const summary = summaries.get(id);
+    if (!summary || itemStage(summary.status) !== "review") {
+      split.other += 1;
+    } else if (summary.ready) {
+      split.ready.push(id);
+    } else {
+      split.needs.push(id);
+    }
+  }
+  return split;
+}
+
+/** The header checkbox: every row on, some on, or none. */
+export function selectionState(
+  rowIds: readonly string[],
+  selected: readonly string[],
+): "all" | "some" | "none" {
+  if (rowIds.length > 0 && rowIds.every((id) => selected.includes(id))) return "all";
+  return selected.length > 0 ? "some" : "none";
+}
+
+export function toggleOne(selected: readonly string[], id: string): string[] {
+  return selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
+}
+
+export function toggleAll(rowIds: readonly string[], selected: readonly string[]): string[] {
+  return selectionState(rowIds, selected) === "all" ? [] : [...rowIds];
+}
+
+/**
+ * Seconds left on a bulk approval's undo, counted to when the server commits
+ * rather than from when the button was pressed, so a slow request never shows
+ * more time than there is.
+ */
+export function undoSecondsLeft(commitAt: number, nowMs: number): number {
+  return Math.max(0, Math.ceil(commitAt - nowMs / 1000));
 }

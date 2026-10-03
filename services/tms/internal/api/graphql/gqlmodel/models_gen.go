@@ -1041,12 +1041,23 @@ type BillingQueueItem struct {
 	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
 }
 
+// The invoice an item posted as, and where it went.
+type BillingQueuePostResult struct {
+	Item          *BillingQueueItem `json:"item"`
+	InvoiceID     string            `json:"invoiceId"`
+	InvoiceNumber string            `json:"invoiceNumber"`
+	// The address the invoice is emailed to, when posting sends it.
+	SentTo     *string  `json:"sentTo,omitempty"`
+	Recipients []string `json:"recipients"`
+}
+
 type BillingQueueUpdateStatusInput struct {
 	Status              billingqueue.Status               `json:"status"`
 	ExceptionReasonCode *billingqueue.ExceptionReasonCode `json:"exceptionReasonCode,omitempty"`
 	ExceptionNotes      *string                           `json:"exceptionNotes,omitempty"`
 	ReviewNotes         *string                           `json:"reviewNotes,omitempty"`
 	CancelReason        *string                           `json:"cancelReason,omitempty"`
+	HoldReasonCode      *billingqueue.HoldReasonCode      `json:"holdReasonCode,omitempty"`
 }
 
 // One bulk transfer of shipments into the billing queue, run in the background.

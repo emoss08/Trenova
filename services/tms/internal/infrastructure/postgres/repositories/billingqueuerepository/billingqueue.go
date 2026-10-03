@@ -105,8 +105,20 @@ func (r *repository) GetByID(
 		db := r.db.DBForContext(ctx)
 		entity := new(billingqueue.BillingQueueItem)
 
+		// The PO lives on the order; it is read with the item because the
+		// item's header and its invoice both show it.
+		po := db.NewSelect().
+			TableExpr("orders AS ord").
+			Column("ord.po_number").
+			Where("ord.id = bqi.order_id").
+			Where("ord.organization_id = bqi.organization_id").
+			Where("ord.business_unit_id = bqi.business_unit_id").
+			Limit(1)
+
 		if err := db.NewSelect().
 			Model(entity).
+			ColumnExpr("bqi.*").
+			ColumnExpr("(?) AS po_number", po).
 			Where(bqi.ID.Eq(), req.ItemID).
 			Apply(buncolgen.BillingQueueItemApplyTenant(req.TenantInfo)).
 			Relation(buncolgen.BillingQueueItemRelations.Shipment).
@@ -174,6 +186,10 @@ func (r *repository) Update(
 			Set(bqi.CanceledByID.Set(), entity.CanceledByID).
 			Set(bqi.CanceledAt.Set(), entity.CanceledAt).
 			Set(bqi.CancelReason.Set(), entity.CancelReason).
+			Set("hold_reason_code = ?", entity.HoldReasonCode).
+			Set("held_at = ?", entity.HeldAt).
+			Set("held_by_id = ?", entity.HeldByID).
+			Set("status_before_hold = ?", entity.StatusBeforeHold).
 			Set(bqi.Version.Inc(1)).
 			Exec(ctx)
 		if err != nil {

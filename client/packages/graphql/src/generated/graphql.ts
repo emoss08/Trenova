@@ -1372,6 +1372,12 @@ export type BillingQueueExceptionReasonCode =
   | 'ServiceFailure'
   | 'WeightDiscrepancy';
 
+/** Why a biller set an item aside. */
+export type BillingQueueHoldReasonCode =
+  | 'CustomerDispute'
+  | 'RateQuestion'
+  | 'WaitingOnPaperwork';
+
 export type BillingQueueStatus =
   | 'Approved'
   | 'Canceled'
@@ -1386,6 +1392,7 @@ export type BillingQueueUpdateStatusInput = {
   cancelReason?: string | null | undefined;
   exceptionNotes?: string | null | undefined;
   exceptionReasonCode?: BillingQueueExceptionReasonCode | null | undefined;
+  holdReasonCode?: BillingQueueHoldReasonCode | null | undefined;
   reviewNotes?: string | null | undefined;
   status: BillingQueueStatus;
 };

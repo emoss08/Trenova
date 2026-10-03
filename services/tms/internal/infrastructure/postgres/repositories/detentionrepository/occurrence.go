@@ -212,16 +212,20 @@ func (r *occurrenceRepository) GetByShipment(
 		cols := buncolgen.DetentionOccurrenceColumns
 		entities := make([]*detention.DetentionOccurrence, 0, 4)
 
-		err := r.db.DBForContext(ctx).
+		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Apply(withOccurrenceNames).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
-			}).
-			Order(cols.ClockStartAt.OrderAsc()).
-			Scan(ctx)
+			})
+		if req.IncludeEvidence {
+			q = q.Relation("Evidence", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order("dte.sequence ASC")
+			})
+		}
+		err := q.Order(cols.ClockStartAt.OrderAsc()).Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list detention occurrences for shipment", zap.Error(err))
 			return nil, err

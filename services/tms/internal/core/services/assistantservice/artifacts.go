@@ -52,6 +52,9 @@ const (
 	payloadPlanID      = "planId"
 	payloadToolName    = "toolName"
 	payloadRationale   = "rationale"
+
+	// billingQueueRecordEntity is the record a billing queue table's rows are.
+	billingQueueRecordEntity = "billing_queue_item"
 )
 
 // draftSpec names how an outbound message proposal reads as a draft: which
@@ -520,11 +523,21 @@ func (r *artifactRecorder) forget(id pulid.ID) {
 // shownArtifact is how the model is told what the person now sees.
 func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact {
 	return &services.ShownArtifact{
-		ID:    artifact.ID,
-		Kind:  string(artifact.Kind),
-		Title: artifact.Title,
-		Rows:  int(numberOf(artifact.Payload, "rowCount")),
+		ID:         artifact.ID,
+		Kind:       string(artifact.Kind),
+		Title:      artifact.Title,
+		Rows:       int(numberOf(artifact.Payload, "rowCount")),
+		Actionable: actionableTable(artifact),
 	}
+}
+
+// actionableTable is a table whose rows the person acts on where it opens:
+// the billing queue, where items are selected, reviewed and approved. The
+// design draws it with a checkbox column and a bulk bar, which a markdown
+// table in the reply could never offer.
+func actionableTable(artifact *assistantartifact.Artifact) bool {
+	return artifact.Kind == assistantartifact.KindTableView &&
+		typeutils.StringOfTrimmed(artifact.Payload["recordEntity"]) == billingQueueRecordEntity
 }
 
 func (r *artifactRecorder) requestDecision(
@@ -1216,15 +1229,30 @@ func entityCardArtifact(
 	}
 
 	return &assistantartifact.Artifact{
-		Kind:   assistantartifact.KindEntityCard,
-		Status: assistantartifact.StatusReady,
-		Title: artifactTitle(strings.TrimSpace(
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) +
-				" " + assistantartifact.RecordLabel(result),
-		)),
+		Kind:             assistantartifact.KindEntityCard,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(entityCardTitle(entity, result)),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+// entityCardTitle names a record card. A billing queue item is named as a
+// biller knows it, by its number and who it bills, as the design titles it;
+// any other record by its kind and label.
+func entityCardTitle(entity string, result map[string]any) string {
+	if entity == viewBillingQueueItem {
+		number := typeutils.StringOfTrimmed(result["number"])
+		billTo := typeutils.StringOfTrimmed(result["billTo"])
+		if number != "" && billTo != "" {
+			return number + " · " + billTo
+		}
+	}
+
+	return strings.TrimSpace(
+		stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) +
+			" " + assistantartifact.RecordLabel(result),
+	)
 }
 
 // draftArtifact views an outbound message proposal as a draft. Only the

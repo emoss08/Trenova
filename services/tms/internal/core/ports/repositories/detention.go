@@ -129,6 +129,9 @@ type GetDetentionOccurrenceByIDRequest struct {
 type GetOccurrencesByShipmentRequest struct {
 	ShipmentID pulid.ID
 	TenantInfo pagination.TenantInfo
+	// IncludeEvidence loads each occurrence's evidence chain, which is what
+	// billing reads to set the billed wait against the truck's own clock.
+	IncludeEvidence bool
 }
 
 type GetOccurrenceByStopRequest struct {

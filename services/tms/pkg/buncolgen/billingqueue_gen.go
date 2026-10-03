@@ -24,6 +24,475 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// ApprovalRun — table "billingqueue_approval_runs", alias "bqar"
+// ---------------------------------------------------------------------------
+
+// ApprovalRunTable holds the table name, alias, and primary key columns
+// for the "billingqueue_approval_runs" table. The alias "bqar" is used in all generated
+// SQL fragments (e.g. "bqar.id = ?").
+var ApprovalRunTable = TableInfo{
+	Name:       "billingqueue_approval_runs",
+	Alias:      "bqar",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ApprovalRunColumns provides type-safe column references for the "billingqueue_approval_runs" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ApprovalRunColumns.ID.String())
+//	// SELECT bqar.id FROM billingqueue_approval_runs AS bqar
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ApprovalRunColumns.ID.Eq(), id)           // WHERE bqar.id = ?
+//	q.Order(ApprovalRunColumns.CreatedAt.OrderDesc())  // ORDER BY bqar.created_at DESC
+var ApprovalRunColumns = struct {
+	ID                  Column // "id" → qualified: "bqar.id"
+	BusinessUnitID      Column // "business_unit_id" → qualified: "bqar.business_unit_id"
+	OrganizationID      Column // "organization_id" → qualified: "bqar.organization_id"
+	RequestedByID       Column // "requested_by_id" → qualified: "bqar.requested_by_id"
+	IdempotencyKey      Column // "idempotency_key" → qualified: "bqar.idempotency_key"
+	Status              Column // "status" → qualified: "bqar.status"
+	TotalCount          Column // "total_count" → qualified: "bqar.total_count"
+	ApprovedCount       Column // "approved_count" → qualified: "bqar.approved_count"
+	FailedCount         Column // "failed_count" → qualified: "bqar.failed_count"
+	SkippedCount        Column // "skipped_count" → qualified: "bqar.skipped_count"
+	CommitAt            Column // "commit_at" → qualified: "bqar.commit_at"
+	FailureMessage      Column // "failure_message" → qualified: "bqar.failure_message"
+	CancelRequestedAt   Column // "cancel_requested_at" → qualified: "bqar.cancel_requested_at"
+	CancelRequestedByID Column // "cancel_requested_by_id" → qualified: "bqar.cancel_requested_by_id"
+	TemporalWorkflowID  Column // "temporal_workflow_id" → qualified: "bqar.temporal_workflow_id"
+	TemporalRunID       Column // "temporal_run_id" → qualified: "bqar.temporal_run_id"
+	StartedAt           Column // "started_at" → qualified: "bqar.started_at"
+	CompletedAt         Column // "completed_at" → qualified: "bqar.completed_at"
+	Version             Column // "version" → qualified: "bqar.version"
+	CreatedAt           Column // "created_at" → qualified: "bqar.created_at"
+	UpdatedAt           Column // "updated_at" → qualified: "bqar.updated_at"
+}{
+	ID:                  NewColumn("id", "bqar"),
+	BusinessUnitID:      NewColumn("business_unit_id", "bqar"),
+	OrganizationID:      NewColumn("organization_id", "bqar"),
+	RequestedByID:       NewColumn("requested_by_id", "bqar"),
+	IdempotencyKey:      NewColumn("idempotency_key", "bqar"),
+	Status:              NewColumn("status", "bqar"),
+	TotalCount:          NewColumn("total_count", "bqar"),
+	ApprovedCount:       NewColumn("approved_count", "bqar"),
+	FailedCount:         NewColumn("failed_count", "bqar"),
+	SkippedCount:        NewColumn("skipped_count", "bqar"),
+	CommitAt:            NewColumn("commit_at", "bqar"),
+	FailureMessage:      NewColumn("failure_message", "bqar"),
+	CancelRequestedAt:   NewColumn("cancel_requested_at", "bqar"),
+	CancelRequestedByID: NewColumn("cancel_requested_by_id", "bqar"),
+	TemporalWorkflowID:  NewColumn("temporal_workflow_id", "bqar"),
+	TemporalRunID:       NewColumn("temporal_run_id", "bqar"),
+	StartedAt:           NewColumn("started_at", "bqar"),
+	CompletedAt:         NewColumn("completed_at", "bqar"),
+	Version:             NewColumn("version", "bqar"),
+	CreatedAt:           NewColumn("created_at", "bqar"),
+	UpdatedAt:           NewColumn("updated_at", "bqar"),
+}
+
+// ApprovalRunFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ApprovalRun.GetStaticFieldMap().
+var ApprovalRunFieldMap = map[string]string{
+	"id":                  "id",
+	"businessUnitId":      "business_unit_id",
+	"organizationId":      "organization_id",
+	"requestedById":       "requested_by_id",
+	"idempotencyKey":      "idempotency_key",
+	"status":              "status",
+	"totalCount":          "total_count",
+	"approvedCount":       "approved_count",
+	"failedCount":         "failed_count",
+	"skippedCount":        "skipped_count",
+	"commitAt":            "commit_at",
+	"failureMessage":      "failure_message",
+	"cancelRequestedAt":   "cancel_requested_at",
+	"cancelRequestedById": "cancel_requested_by_id",
+	"startedAt":           "started_at",
+	"completedAt":         "completed_at",
+	"version":             "version",
+	"createdAt":           "created_at",
+	"updatedAt":           "updated_at",
+}
+
+// ApprovalRunInsertableColumns lists column names suitable for INSERT statements on the "billingqueue_approval_runs" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ApprovalRunInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"requested_by_id",
+	"idempotency_key",
+	"status",
+	"total_count",
+	"approved_count",
+	"failed_count",
+	"skipped_count",
+	"commit_at",
+	"failure_message",
+	"cancel_requested_at",
+	"cancel_requested_by_id",
+	"temporal_workflow_id",
+	"temporal_run_id",
+	"started_at",
+	"completed_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// ApprovalRunRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ApprovalRunRelations.Items)
+//	// Bun eager-loads the Items association via a separate query
+var ApprovalRunRelations = struct {
+	Items string
+}{
+	Items: "Items",
+}
+
+// ApprovalRunScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE bqar.organization_id = ? AND bqar.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ApprovalRunScopeTenant(sq, ti).
+//		Where(buncolgen.ApprovalRunColumns.ID.Eq(), id)
+func ApprovalRunScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ApprovalRunColumns.OrganizationID, ApprovalRunColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ApprovalRunScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ApprovalRunColumns.ID.In(), bun.List(ids))
+//	})
+func ApprovalRunScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ApprovalRunColumns.OrganizationID, ApprovalRunColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ApprovalRunScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ApprovalRunColumns.ID.Eq(), id)
+//	})
+func ApprovalRunScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ApprovalRunColumns.OrganizationID, ApprovalRunColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ApprovalRunApplyTenant(tenantInfo))
+func ApprovalRunApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ApprovalRunColumns.OrganizationID, ApprovalRunColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "billingqueue_approval_runs" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ApprovalRunFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ApprovalRunFilter = struct {
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RequestedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedById" → DB: "requested_by_id"
+	IdempotencyKey      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "idempotencyKey" → DB: "idempotency_key"
+	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	TotalCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalCount" → DB: "total_count"
+	ApprovedCount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedCount" → DB: "approved_count"
+	FailedCount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedCount" → DB: "failed_count"
+	SkippedCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "skippedCount" → DB: "skipped_count"
+	CommitAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commitAt" → DB: "commit_at"
+	FailureMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureMessage" → DB: "failure_message"
+	CancelRequestedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelRequestedAt" → DB: "cancel_requested_at"
+	CancelRequestedByID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelRequestedById" → DB: "cancel_requested_by_id"
+	StartedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	CompletedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
+	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	RequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedById", op, value)
+	},
+	IdempotencyKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("idempotencyKey", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	TotalCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("totalCount", op, value)
+	},
+	ApprovedCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("approvedCount", op, value)
+	},
+	FailedCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failedCount", op, value)
+	},
+	SkippedCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("skippedCount", op, value)
+	},
+	CommitAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("commitAt", op, value)
+	},
+	FailureMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureMessage", op, value)
+	},
+	CancelRequestedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cancelRequestedAt", op, value)
+	},
+	CancelRequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cancelRequestedById", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("startedAt", op, value)
+	},
+	CompletedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("completedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// ApprovalRunItem — table "billingqueue_approval_run_items", alias "bqari"
+// ---------------------------------------------------------------------------
+
+// ApprovalRunItemTable holds the table name, alias, and primary key columns
+// for the "billingqueue_approval_run_items" table. The alias "bqari" is used in all generated
+// SQL fragments (e.g. "bqari.id = ?").
+var ApprovalRunItemTable = TableInfo{
+	Name:       "billingqueue_approval_run_items",
+	Alias:      "bqari",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ApprovalRunItemColumns provides type-safe column references for the "billingqueue_approval_run_items" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ApprovalRunItemColumns.ID.String())
+//	// SELECT bqari.id FROM billingqueue_approval_run_items AS bqari
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ApprovalRunItemColumns.ID.Eq(), id)           // WHERE bqari.id = ?
+//	q.Order(ApprovalRunItemColumns.CreatedAt.OrderDesc())  // ORDER BY bqari.created_at DESC
+var ApprovalRunItemColumns = struct {
+	ID             Column // "id" → qualified: "bqari.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "bqari.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "bqari.organization_id"
+	RunID          Column // "run_id" → qualified: "bqari.run_id"
+	ItemID         Column // "item_id" → qualified: "bqari.item_id"
+	Sequence       Column // "sequence" → qualified: "bqari.sequence"
+	Status         Column // "status" → qualified: "bqari.status"
+	FailureCode    Column // "failure_code" → qualified: "bqari.failure_code"
+	ErrorMessage   Column // "error_message" → qualified: "bqari.error_message"
+	InvoiceID      Column // "invoice_id" → qualified: "bqari.invoice_id"
+	InvoiceNumber  Column // "invoice_number" → qualified: "bqari.invoice_number"
+	ProcessedAt    Column // "processed_at" → qualified: "bqari.processed_at"
+	CreatedAt      Column // "created_at" → qualified: "bqari.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "bqari.updated_at"
+}{
+	ID:             NewColumn("id", "bqari"),
+	BusinessUnitID: NewColumn("business_unit_id", "bqari"),
+	OrganizationID: NewColumn("organization_id", "bqari"),
+	RunID:          NewColumn("run_id", "bqari"),
+	ItemID:         NewColumn("item_id", "bqari"),
+	Sequence:       NewColumn("sequence", "bqari"),
+	Status:         NewColumn("status", "bqari"),
+	FailureCode:    NewColumn("failure_code", "bqari"),
+	ErrorMessage:   NewColumn("error_message", "bqari"),
+	InvoiceID:      NewColumn("invoice_id", "bqari"),
+	InvoiceNumber:  NewColumn("invoice_number", "bqari"),
+	ProcessedAt:    NewColumn("processed_at", "bqari"),
+	CreatedAt:      NewColumn("created_at", "bqari"),
+	UpdatedAt:      NewColumn("updated_at", "bqari"),
+}
+
+// ApprovalRunItemFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ApprovalRunItem.GetStaticFieldMap().
+var ApprovalRunItemFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"runId":          "run_id",
+	"itemId":         "item_id",
+	"sequence":       "sequence",
+	"status":         "status",
+	"failureCode":    "failure_code",
+	"errorMessage":   "error_message",
+	"invoiceId":      "invoice_id",
+	"invoiceNumber":  "invoice_number",
+	"processedAt":    "processed_at",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// ApprovalRunItemInsertableColumns lists column names suitable for INSERT statements on the "billingqueue_approval_run_items" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ApprovalRunItemInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"run_id",
+	"item_id",
+	"sequence",
+	"status",
+	"failure_code",
+	"error_message",
+	"invoice_id",
+	"invoice_number",
+	"processed_at",
+	"created_at",
+	"updated_at",
+}
+
+// ApprovalRunItemScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE bqari.organization_id = ? AND bqari.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ApprovalRunItemScopeTenant(sq, ti).
+//		Where(buncolgen.ApprovalRunItemColumns.ID.Eq(), id)
+func ApprovalRunItemScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ApprovalRunItemColumns.OrganizationID, ApprovalRunItemColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunItemScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ApprovalRunItemScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ApprovalRunItemColumns.ID.In(), bun.List(ids))
+//	})
+func ApprovalRunItemScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ApprovalRunItemColumns.OrganizationID, ApprovalRunItemColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunItemScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ApprovalRunItemScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ApprovalRunItemColumns.ID.Eq(), id)
+//	})
+func ApprovalRunItemScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ApprovalRunItemColumns.OrganizationID, ApprovalRunItemColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunItemApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ApprovalRunItemApplyTenant(tenantInfo))
+func ApprovalRunItemApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ApprovalRunItemColumns.OrganizationID, ApprovalRunItemColumns.BusinessUnitID, ti)
+}
+
+// ApprovalRunItemFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "billingqueue_approval_run_items" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ApprovalRunItemFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ApprovalRunItemFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RunID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	ItemID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "itemId" → DB: "item_id"
+	Sequence       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
+	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	FailureCode    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCode" → DB: "failure_code"
+	ErrorMessage   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	InvoiceNumber  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumber" → DB: "invoice_number"
+	ProcessedAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "processedAt" → DB: "processed_at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	RunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("runId", op, value)
+	},
+	ItemID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("itemId", op, value)
+	},
+	Sequence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sequence", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	FailureCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureCode", op, value)
+	},
+	ErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorMessage", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	InvoiceNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceNumber", op, value)
+	},
+	ProcessedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("processedAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // BillingQueueItem — table "billing_queue_items", alias "bqi"
 // ---------------------------------------------------------------------------
 
@@ -69,6 +538,10 @@ var BillingQueueItemColumns = struct {
 	CanceledByID              Column // "canceled_by_id" → qualified: "bqi.canceled_by_id"
 	CanceledAt                Column // "canceled_at" → qualified: "bqi.canceled_at"
 	CancelReason              Column // "cancel_reason" → qualified: "bqi.cancel_reason"
+	HoldReasonCode            Column // "hold_reason_code" → qualified: "bqi.hold_reason_code"
+	HeldAt                    Column // "held_at" → qualified: "bqi.held_at"
+	HeldByID                  Column // "held_by_id" → qualified: "bqi.held_by_id"
+	StatusBeforeHold          Column // "status_before_hold" → qualified: "bqi.status_before_hold"
 	IsAdjustmentOrigin        Column // "is_adjustment_origin" → qualified: "bqi.is_adjustment_origin"
 	InvoiceID                 Column // "invoice_id" → qualified: "bqi.invoice_id"
 	SourceInvoiceID           Column // "source_invoice_id" → qualified: "bqi.source_invoice_id"
@@ -82,6 +555,7 @@ var BillingQueueItemColumns = struct {
 	Version                   Column // "version" → qualified: "bqi.version"
 	CreatedAt                 Column // "created_at" → qualified: "bqi.created_at"
 	UpdatedAt                 Column // "updated_at" → qualified: "bqi.updated_at"
+	PONumber                  Column // "po_number" → qualified: "bqi.po_number"
 }{
 	ID:                        NewColumn("id", "bqi"),
 	OrganizationID:            NewColumn("organization_id", "bqi"),
@@ -103,6 +577,10 @@ var BillingQueueItemColumns = struct {
 	CanceledByID:              NewColumn("canceled_by_id", "bqi"),
 	CanceledAt:                NewColumn("canceled_at", "bqi"),
 	CancelReason:              NewColumn("cancel_reason", "bqi"),
+	HoldReasonCode:            NewColumn("hold_reason_code", "bqi"),
+	HeldAt:                    NewColumn("held_at", "bqi"),
+	HeldByID:                  NewColumn("held_by_id", "bqi"),
+	StatusBeforeHold:          NewColumn("status_before_hold", "bqi"),
 	IsAdjustmentOrigin:        NewColumn("is_adjustment_origin", "bqi"),
 	InvoiceID:                 NewColumn("invoice_id", "bqi"),
 	SourceInvoiceID:           NewColumn("source_invoice_id", "bqi"),
@@ -116,6 +594,7 @@ var BillingQueueItemColumns = struct {
 	Version:                   NewColumn("version", "bqi"),
 	CreatedAt:                 NewColumn("created_at", "bqi"),
 	UpdatedAt:                 NewColumn("updated_at", "bqi"),
+	PONumber:                  NewColumn("po_number", "bqi"),
 }
 
 // BillingQueueItemFieldMap maps JSON API field names to database column names.
@@ -143,6 +622,10 @@ var BillingQueueItemFieldMap = map[string]string{
 	"canceledById":              "canceled_by_id",
 	"canceledAt":                "canceled_at",
 	"cancelReason":              "cancel_reason",
+	"holdReasonCode":            "hold_reason_code",
+	"heldAt":                    "held_at",
+	"heldById":                  "held_by_id",
+	"statusBeforeHold":          "status_before_hold",
 	"isAdjustmentOrigin":        "is_adjustment_origin",
 	"invoiceId":                 "invoice_id",
 	"sourceInvoiceId":           "source_invoice_id",
@@ -156,6 +639,7 @@ var BillingQueueItemFieldMap = map[string]string{
 	"version":                   "version",
 	"createdAt":                 "created_at",
 	"updatedAt":                 "updated_at",
+	"poNumber":                  "po_number",
 }
 
 // BillingQueueItemInsertableColumns lists column names suitable for INSERT statements on the "billing_queue_items" table.
@@ -181,6 +665,10 @@ var BillingQueueItemInsertableColumns = []string{
 	"canceled_by_id",
 	"canceled_at",
 	"cancel_reason",
+	"hold_reason_code",
+	"held_at",
+	"held_by_id",
+	"status_before_hold",
 	"is_adjustment_origin",
 	"invoice_id",
 	"source_invoice_id",
@@ -283,6 +771,10 @@ var BillingQueueItemFilter = struct {
 	CanceledByID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledById" → DB: "canceled_by_id"
 	CanceledAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
 	CancelReason              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
+	HoldReasonCode            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "holdReasonCode" → DB: "hold_reason_code"
+	HeldAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heldAt" → DB: "held_at"
+	HeldByID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heldById" → DB: "held_by_id"
+	StatusBeforeHold          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusBeforeHold" → DB: "status_before_hold"
 	IsAdjustmentOrigin        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isAdjustmentOrigin" → DB: "is_adjustment_origin"
 	InvoiceID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
 	SourceInvoiceID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceId" → DB: "source_invoice_id"
@@ -357,6 +849,18 @@ var BillingQueueItemFilter = struct {
 	CancelReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("cancelReason", op, value)
 	},
+	HoldReasonCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("holdReasonCode", op, value)
+	},
+	HeldAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("heldAt", op, value)
+	},
+	HeldByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("heldById", op, value)
+	},
+	StatusBeforeHold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("statusBeforeHold", op, value)
+	},
 	IsAdjustmentOrigin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isAdjustmentOrigin", op, value)
 	},
@@ -395,5 +899,468 @@ var BillingQueueItemFilter = struct {
 	},
 	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// Issue — table "billing_queue_issues", alias "bqis"
+// ---------------------------------------------------------------------------
+
+// IssueTable holds the table name, alias, and primary key columns
+// for the "billing_queue_issues" table. The alias "bqis" is used in all generated
+// SQL fragments (e.g. "bqis.id = ?").
+var IssueTable = TableInfo{
+	Name:       "billing_queue_issues",
+	Alias:      "bqis",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// IssueColumns provides type-safe column references for the "billing_queue_issues" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(IssueColumns.ID.String())
+//	// SELECT bqis.id FROM billing_queue_issues AS bqis
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(IssueColumns.ID.Eq(), id)           // WHERE bqis.id = ?
+//	q.Order(IssueColumns.CreatedAt.OrderDesc())  // ORDER BY bqis.created_at DESC
+var IssueColumns = struct {
+	ID              Column // "id" → qualified: "bqis.id"
+	BusinessUnitID  Column // "business_unit_id" → qualified: "bqis.business_unit_id"
+	OrganizationID  Column // "organization_id" → qualified: "bqis.organization_id"
+	ItemID          Column // "item_id" → qualified: "bqis.item_id"
+	CheckKey        Column // "check_key" → qualified: "bqis.check_key"
+	Code            Column // "code" → qualified: "bqis.code"
+	SubjectKey      Column // "subject_key" → qualified: "bqis.subject_key"
+	Summary         Column // "summary" → qualified: "bqis.summary"
+	Reasoning       Column // "reasoning" → qualified: "bqis.reasoning"
+	Source          Column // "source" → qualified: "bqis.source"
+	AgentRunID      Column // "agent_run_id" → qualified: "bqis.agent_run_id"
+	FlaggedChargeID Column // "flagged_charge_id" → qualified: "bqis.flagged_charge_id"
+	Options         Column // "options" → qualified: "bqis.options"
+	ResolutionKey   Column // "resolution_key" → qualified: "bqis.resolution_key"
+	ResolutionText  Column // "resolution_text" → qualified: "bqis.resolution_text"
+	EffectSnapshot  Column // "effect_snapshot" → qualified: "bqis.effect_snapshot"
+	ResolvedByID    Column // "resolved_by_id" → qualified: "bqis.resolved_by_id"
+	ResolvedAt      Column // "resolved_at" → qualified: "bqis.resolved_at"
+	RequestedAt     Column // "requested_at" → qualified: "bqis.requested_at"
+	RequestedByID   Column // "requested_by_id" → qualified: "bqis.requested_by_id"
+	Version         Column // "version" → qualified: "bqis.version"
+	CreatedAt       Column // "created_at" → qualified: "bqis.created_at"
+	UpdatedAt       Column // "updated_at" → qualified: "bqis.updated_at"
+}{
+	ID:              NewColumn("id", "bqis"),
+	BusinessUnitID:  NewColumn("business_unit_id", "bqis"),
+	OrganizationID:  NewColumn("organization_id", "bqis"),
+	ItemID:          NewColumn("item_id", "bqis"),
+	CheckKey:        NewColumn("check_key", "bqis"),
+	Code:            NewColumn("code", "bqis"),
+	SubjectKey:      NewColumn("subject_key", "bqis"),
+	Summary:         NewColumn("summary", "bqis"),
+	Reasoning:       NewColumn("reasoning", "bqis"),
+	Source:          NewColumn("source", "bqis"),
+	AgentRunID:      NewColumn("agent_run_id", "bqis"),
+	FlaggedChargeID: NewColumn("flagged_charge_id", "bqis"),
+	Options:         NewColumn("options", "bqis"),
+	ResolutionKey:   NewColumn("resolution_key", "bqis"),
+	ResolutionText:  NewColumn("resolution_text", "bqis"),
+	EffectSnapshot:  NewColumn("effect_snapshot", "bqis"),
+	ResolvedByID:    NewColumn("resolved_by_id", "bqis"),
+	ResolvedAt:      NewColumn("resolved_at", "bqis"),
+	RequestedAt:     NewColumn("requested_at", "bqis"),
+	RequestedByID:   NewColumn("requested_by_id", "bqis"),
+	Version:         NewColumn("version", "bqis"),
+	CreatedAt:       NewColumn("created_at", "bqis"),
+	UpdatedAt:       NewColumn("updated_at", "bqis"),
+}
+
+// IssueFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Issue.GetStaticFieldMap().
+var IssueFieldMap = map[string]string{
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"itemId":          "item_id",
+	"checkKey":        "check_key",
+	"code":            "code",
+	"subjectKey":      "subject_key",
+	"summary":         "summary",
+	"reasoning":       "reasoning",
+	"source":          "source",
+	"agentRunId":      "agent_run_id",
+	"flaggedChargeId": "flagged_charge_id",
+	"options":         "options",
+	"resolutionKey":   "resolution_key",
+	"resolutionText":  "resolution_text",
+	"resolvedById":    "resolved_by_id",
+	"resolvedAt":      "resolved_at",
+	"requestedAt":     "requested_at",
+	"requestedById":   "requested_by_id",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
+}
+
+// IssueInsertableColumns lists column names suitable for INSERT statements on the "billing_queue_issues" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var IssueInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"item_id",
+	"check_key",
+	"code",
+	"subject_key",
+	"summary",
+	"reasoning",
+	"source",
+	"agent_run_id",
+	"flagged_charge_id",
+	"options",
+	"resolution_key",
+	"resolution_text",
+	"effect_snapshot",
+	"resolved_by_id",
+	"resolved_at",
+	"requested_at",
+	"requested_by_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// IssueScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE bqis.organization_id = ? AND bqis.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.IssueScopeTenant(sq, ti).
+//		Where(buncolgen.IssueColumns.ID.Eq(), id)
+func IssueScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, IssueColumns.OrganizationID, IssueColumns.BusinessUnitID, ti)
+}
+
+// IssueScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.IssueScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.IssueColumns.ID.In(), bun.List(ids))
+//	})
+func IssueScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, IssueColumns.OrganizationID, IssueColumns.BusinessUnitID, ti)
+}
+
+// IssueScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.IssueScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.IssueColumns.ID.Eq(), id)
+//	})
+func IssueScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, IssueColumns.OrganizationID, IssueColumns.BusinessUnitID, ti)
+}
+
+// IssueApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.IssueApplyTenant(tenantInfo))
+func IssueApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(IssueColumns.OrganizationID, IssueColumns.BusinessUnitID, ti)
+}
+
+// IssueFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "billing_queue_issues" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	IssueFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var IssueFilter = struct {
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ItemID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "itemId" → DB: "item_id"
+	CheckKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checkKey" → DB: "check_key"
+	Code            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	SubjectKey      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectKey" → DB: "subject_key"
+	Summary         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
+	Reasoning       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoning" → DB: "reasoning"
+	Source          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	AgentRunID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
+	FlaggedChargeID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "flaggedChargeId" → DB: "flagged_charge_id"
+	Options         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "options" → DB: "options"
+	ResolutionKey   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionKey" → DB: "resolution_key"
+	ResolutionText  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionText" → DB: "resolution_text"
+	ResolvedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedById" → DB: "resolved_by_id"
+	ResolvedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedAt" → DB: "resolved_at"
+	RequestedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedAt" → DB: "requested_at"
+	RequestedByID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedById" → DB: "requested_by_id"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ItemID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("itemId", op, value)
+	},
+	CheckKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("checkKey", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("code", op, value)
+	},
+	SubjectKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectKey", op, value)
+	},
+	Summary: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("summary", op, value)
+	},
+	Reasoning: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reasoning", op, value)
+	},
+	Source: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("source", op, value)
+	},
+	AgentRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentRunId", op, value)
+	},
+	FlaggedChargeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("flaggedChargeId", op, value)
+	},
+	Options: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("options", op, value)
+	},
+	ResolutionKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolutionKey", op, value)
+	},
+	ResolutionText: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolutionText", op, value)
+	},
+	ResolvedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedById", op, value)
+	},
+	ResolvedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedAt", op, value)
+	},
+	RequestedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedAt", op, value)
+	},
+	RequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedById", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// ItemEvent — table "billing_queue_events", alias "bqe"
+// ---------------------------------------------------------------------------
+
+// ItemEventTable holds the table name, alias, and primary key columns
+// for the "billing_queue_events" table. The alias "bqe" is used in all generated
+// SQL fragments (e.g. "bqe.id = ?").
+var ItemEventTable = TableInfo{
+	Name:       "billing_queue_events",
+	Alias:      "bqe",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ItemEventColumns provides type-safe column references for the "billing_queue_events" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ItemEventColumns.ID.String())
+//	// SELECT bqe.id FROM billing_queue_events AS bqe
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ItemEventColumns.ID.Eq(), id)           // WHERE bqe.id = ?
+//	q.Order(ItemEventColumns.CreatedAt.OrderDesc())  // ORDER BY bqe.created_at DESC
+var ItemEventColumns = struct {
+	ID             Column // "id" → qualified: "bqe.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "bqe.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "bqe.organization_id"
+	ItemID         Column // "item_id" → qualified: "bqe.item_id"
+	Kind           Column // "kind" → qualified: "bqe.kind"
+	Text           Column // "text" → qualified: "bqe.text"
+	ActorType      Column // "actor_type" → qualified: "bqe.actor_type"
+	ActorID        Column // "actor_id" → qualified: "bqe.actor_id"
+	ActorName      Column // "actor_name" → qualified: "bqe.actor_name"
+	Payload        Column // "payload" → qualified: "bqe.payload"
+	At             Column // "at" → qualified: "bqe.at"
+	CreatedAt      Column // "created_at" → qualified: "bqe.created_at"
+}{
+	ID:             NewColumn("id", "bqe"),
+	BusinessUnitID: NewColumn("business_unit_id", "bqe"),
+	OrganizationID: NewColumn("organization_id", "bqe"),
+	ItemID:         NewColumn("item_id", "bqe"),
+	Kind:           NewColumn("kind", "bqe"),
+	Text:           NewColumn("text", "bqe"),
+	ActorType:      NewColumn("actor_type", "bqe"),
+	ActorID:        NewColumn("actor_id", "bqe"),
+	ActorName:      NewColumn("actor_name", "bqe"),
+	Payload:        NewColumn("payload", "bqe"),
+	At:             NewColumn("at", "bqe"),
+	CreatedAt:      NewColumn("created_at", "bqe"),
+}
+
+// ItemEventFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ItemEvent.GetStaticFieldMap().
+var ItemEventFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"itemId":         "item_id",
+	"kind":           "kind",
+	"text":           "text",
+	"actorType":      "actor_type",
+	"actorId":        "actor_id",
+	"actorName":      "actor_name",
+	"payload":        "payload",
+	"at":             "at",
+	"createdAt":      "created_at",
+}
+
+// ItemEventInsertableColumns lists column names suitable for INSERT statements on the "billing_queue_events" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ItemEventInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"item_id",
+	"kind",
+	"text",
+	"actor_type",
+	"actor_id",
+	"actor_name",
+	"payload",
+	"at",
+	"created_at",
+}
+
+// ItemEventScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE bqe.organization_id = ? AND bqe.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ItemEventScopeTenant(sq, ti).
+//		Where(buncolgen.ItemEventColumns.ID.Eq(), id)
+func ItemEventScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ItemEventColumns.OrganizationID, ItemEventColumns.BusinessUnitID, ti)
+}
+
+// ItemEventScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ItemEventScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ItemEventColumns.ID.In(), bun.List(ids))
+//	})
+func ItemEventScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ItemEventColumns.OrganizationID, ItemEventColumns.BusinessUnitID, ti)
+}
+
+// ItemEventScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ItemEventScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ItemEventColumns.ID.Eq(), id)
+//	})
+func ItemEventScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ItemEventColumns.OrganizationID, ItemEventColumns.BusinessUnitID, ti)
+}
+
+// ItemEventApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ItemEventApplyTenant(tenantInfo))
+func ItemEventApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ItemEventColumns.OrganizationID, ItemEventColumns.BusinessUnitID, ti)
+}
+
+// ItemEventFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "billing_queue_events" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ItemEventFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ItemEventFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ItemID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "itemId" → DB: "item_id"
+	Kind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	Text           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "text" → DB: "text"
+	ActorType      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorType" → DB: "actor_type"
+	ActorID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorId" → DB: "actor_id"
+	ActorName      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorName" → DB: "actor_name"
+	Payload        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
+	At             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "at" → DB: "at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ItemID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("itemId", op, value)
+	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("kind", op, value)
+	},
+	Text: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("text", op, value)
+	},
+	ActorType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("actorType", op, value)
+	},
+	ActorID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("actorId", op, value)
+	},
+	ActorName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("actorName", op, value)
+	},
+	Payload: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payload", op, value)
+	},
+	At: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("at", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
 	},
 }

@@ -59,6 +59,7 @@ var DocumentTypeColumns = struct {
 	DocumentClassification Column // "document_classification" → qualified: "dt.document_classification"
 	DocumentCategory       Column // "document_category" → qualified: "dt.document_category"
 	IsSystem               Column // "is_system" → qualified: "dt.is_system"
+	RequiresSignature      Column // "requires_signature" → qualified: "dt.requires_signature"
 	Version                Column // "version" → qualified: "dt.version"
 	CreatedAt              Column // "created_at" → qualified: "dt.created_at"
 	UpdatedAt              Column // "updated_at" → qualified: "dt.updated_at"
@@ -75,6 +76,7 @@ var DocumentTypeColumns = struct {
 	DocumentClassification: NewColumn("document_classification", "dt"),
 	DocumentCategory:       NewColumn("document_category", "dt"),
 	IsSystem:               NewColumn("is_system", "dt"),
+	RequiresSignature:      NewColumn("requires_signature", "dt"),
 	Version:                NewColumn("version", "dt"),
 	CreatedAt:              NewColumn("created_at", "dt"),
 	UpdatedAt:              NewColumn("updated_at", "dt"),
@@ -97,6 +99,7 @@ var DocumentTypeFieldMap = map[string]string{
 	"documentClassification": "document_classification",
 	"documentCategory":       "document_category",
 	"isSystem":               "is_system",
+	"requiresSignature":      "requires_signature",
 	"version":                "version",
 	"createdAt":              "created_at",
 	"updatedAt":              "updated_at",
@@ -115,6 +118,7 @@ var DocumentTypeInsertableColumns = []string{
 	"document_classification",
 	"document_category",
 	"is_system",
+	"requires_signature",
 	"version",
 	"created_at",
 	"updated_at",
@@ -193,6 +197,7 @@ var DocumentTypeFilter = struct {
 	DocumentClassification func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentClassification" → DB: "document_classification"
 	DocumentCategory       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentCategory" → DB: "document_category"
 	IsSystem               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystem" → DB: "is_system"
+	RequiresSignature      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requiresSignature" → DB: "requires_signature"
 	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -226,6 +231,9 @@ var DocumentTypeFilter = struct {
 	},
 	IsSystem: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isSystem", op, value)
+	},
+	RequiresSignature: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requiresSignature", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

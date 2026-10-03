@@ -26,6 +26,16 @@ type ContentStatus string
 type ShipmentDraftStatus string
 type ProcessingProfile string
 
+// SignatureStatus is whether a document carries the signature its type needs.
+// It stays Unknown until extraction reads the signature line or a person says.
+type SignatureStatus string
+
+const (
+	SignatureStatusUnknown  SignatureStatus = "Unknown"
+	SignatureStatusSigned   SignatureStatus = "Signed"
+	SignatureStatusUnsigned SignatureStatus = "Unsigned"
+)
+
 const (
 	StatusDraft           Status = "Draft"
 	StatusActive          Status = "Active"
@@ -230,6 +240,8 @@ type Document struct {
 	HasExtractedText      bool                `json:"hasExtractedText"      bun:"has_extracted_text,type:BOOLEAN,notnull"`
 	ShipmentDraftStatus   ShipmentDraftStatus `json:"shipmentDraftStatus"   bun:"shipment_draft_status,type:document_shipment_draft_status_enum,notnull,nullzero,default:'Unavailable'"`
 	DocumentTypeID        *pulid.ID           `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),nullzero"`
+	SignatureStatus       SignatureStatus     `json:"signatureStatus"       bun:"signature_status,type:VARCHAR(20),notnull,nullzero,default:'Unknown'"`
+	SignedAt              *int64              `json:"signedAt"              bun:"signed_at,type:BIGINT,nullzero"`
 	SearchVector          string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                  string              `json:"-"                     bun:"rank,type:VARCHAR(100),scanonly"`
 	Version               int64               `json:"version"               bun:"version,type:BIGINT"`

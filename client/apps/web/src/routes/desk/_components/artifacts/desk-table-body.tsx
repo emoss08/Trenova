@@ -11,16 +11,28 @@ import {
 import type { AssistantArtifact } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useMemo, useState, type ReactNode } from "react";
+import type { BillingQueueSummary } from "@trenova/shared/types/billing-queue";
+import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Link, useNavigate } from "react-router";
 import { artifactCsvUrl } from "@/services/assistant";
 import { downloadFromUrl } from "@trenova/shared/lib/utils";
 import { reportPreviewFrom, tableViewFrom } from "./artifact-payloads";
+import { selectionState, toggleAll, toggleOne } from "./billing-item-checks";
 import { ArtIcon } from "./desk-art-kinds";
+import { DeskBillingItem } from "./desk-billing-item";
+import {
+  BillingBulkBar,
+  BillingCheckbox,
+  BillingRowPill,
+  useBillingSummaries,
+  useOpenBillingItem,
+} from "./desk-billing-table";
 
 /** A table the workspace draws: columns, rows by key, and where each row opens. */
-type GridRow = { key: string; values: Record<string, unknown>; path: string };
+type GridRow = { key: string; values: Record<string, unknown>; path: string; recordId?: string };
 export type Grid = {
+  /** The record kind of the rows, when they are records; empty otherwise. */
+  entity?: string;
   columns: DisplayColumn[];
   rows: GridRow[];
   rowCount: number;
@@ -68,6 +80,7 @@ export function gridOf(artifact: AssistantArtifact): Grid {
   }
   const view = tableViewFrom(artifact);
   return {
+    entity: view.recordEntity,
     columns: view.columns.filter((column) => !isDetailType(column.type)),
     rows: view.rows.map((row) => ({ ...row, key: row.path || row.key })),
     rowCount: view.rowCount,
@@ -324,17 +337,60 @@ type Sort = { key: string; direction: 1 | -1 };
  * figures on the right, statuses as coloured dots, and each row opening its
  * record. A cell that changed since the version before is marked.
  */
-export function DeskTableBody({
-  artifact,
-  previous,
-  versions,
-}: {
+export function DeskTableBody(props: TableBodyProps) {
+  const billing =
+    props.artifact.kind === "table_view" &&
+    tableViewFrom(props.artifact).recordEntity === "billing_queue_item";
+
+  return billing ? <BillingTableBody {...props} /> : <TableBodyView {...props} kit={null} />;
+}
+
+type TableBodyProps = {
   artifact: AssistantArtifact;
   /** The version before this one, for marking what changed. */
   previous: AssistantArtifact | null;
   /** The versions picker, when the table has more than one. */
   versions?: ReactNode;
-}) {
+};
+
+/** What a billing queue table adds: live row state, picked rows, and an item opened in place. */
+type BillingKit = {
+  summaries: ReadonlyMap<string, BillingQueueSummary>;
+  selected: string[];
+  setSelected: Dispatch<SetStateAction<string[]>>;
+  inline: string | null;
+  setInline: (itemId: string | null) => void;
+  openItem: (itemId: string) => void;
+};
+
+// A table of billing queue items is worked from: rows are picked, opened and
+// approved in bulk, and their status is read live rather than as the agent
+// saw it.
+function BillingTableBody(props: TableBodyProps) {
+  const grid = useMemo(() => gridOf(props.artifact), [props.artifact]);
+  const rowIds = useMemo(
+    () => grid.rows.map((row) => row.recordId ?? "").filter((id) => id !== ""),
+    [grid],
+  );
+  const summaries = useBillingSummaries(rowIds, true);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [inline, setInline] = useState<string | null>(null);
+  const openItem = useOpenBillingItem(props.artifact.threadId, setInline);
+
+  return (
+    <TableBodyView
+      {...props}
+      kit={{ summaries, selected, setSelected, inline, setInline, openItem }}
+    />
+  );
+}
+
+function TableBodyView({
+  artifact,
+  previous,
+  versions,
+  kit,
+}: TableBodyProps & { kit: BillingKit | null }) {
   const t = useT();
   const navigate = useNavigate();
   const grid = useMemo(() => gridOf(artifact), [artifact]);
@@ -377,6 +433,12 @@ export function DeskTableBody({
 
   const totals = useMemo(() => footTotals(grid, rows), [grid, rows]);
 
+  const billing = kit !== null;
+  const shownIds = useMemo(
+    () => (billing ? rows.map((row) => row.recordId ?? "").filter((id) => id !== "") : []),
+    [billing, rows],
+  );
+
   const cycle = (key: string) =>
     setSort((current) =>
       current?.key === key
@@ -385,6 +447,17 @@ export function DeskTableBody({
           : null
         : { key, direction: 1 },
     );
+
+  if (kit?.inline) {
+    return (
+      <DeskBillingItem
+        itemId={kit.inline}
+        fallback={<div className="dk-ax-pad dk-ax-oldnote">{t("Loading…")}</div>}
+        onSelect={kit.setInline}
+        onBack={() => kit.setInline(null)}
+      />
+    );
+  }
 
   return (
     <div className="dk-ax-tbl">
@@ -401,9 +474,18 @@ export function DeskTableBody({
         {versions}
       </div>
       <div className="dk-ax-scroll">
-        <table>
+        <table className={billing ? "dk-sel" : undefined}>
           <thead>
             <tr>
+              {kit && (
+                <th className="dk-cb">
+                  <BillingCheckbox
+                    state={selectionState(shownIds, kit.selected)}
+                    label={t("Select all")}
+                    onClick={() => kit.setSelected(toggleAll(shownIds, kit.selected))}
+                  />
+                </th>
+              )}
               {grid.columns.map((column) => (
                 <th
                   key={column.key}
@@ -429,43 +511,71 @@ export function DeskTableBody({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
-              <tr
-                key={`${row.key}:${artifact.id}`}
-                style={{
-                  animationDelay: `${Math.min(index, 14) * 18}ms`,
-                  cursor: row.path !== "" ? "pointer" : undefined,
-                }}
-                onClick={row.path !== "" ? () => void navigate(row.path) : undefined}
-              >
-                {grid.columns.map((column, at) => (
-                  <td
-                    key={column.key}
-                    className={cn(
-                      isFigureType(column.type) && "dk-ar",
-                      changed.has(`${row.key}:${column.key}`) && "dk-chg",
-                    )}
-                  >
-                    <Cell column={column} value={row.values[column.key]} first={at === 0} />
-                  </td>
-                ))}
-                <td className="dk-go">
-                  {row.path !== "" && (
-                    <Link
-                      to={row.path}
-                      aria-label={t("Open this record")}
-                      onClick={(event) => event.stopPropagation()}
+            {rows.map((row, index) => {
+              const id = kit ? (row.recordId ?? "") : "";
+              const summary = id ? kit?.summaries.get(id) : undefined;
+              const picked = id !== "" && Boolean(kit?.selected.includes(id));
+              return (
+                <tr
+                  key={`${row.key}:${artifact.id}`}
+                  className={cn(picked && "dk-on")}
+                  style={{
+                    animationDelay: `${Math.min(index, 14) * 18}ms`,
+                    cursor: id || row.path !== "" ? "pointer" : undefined,
+                  }}
+                  onClick={
+                    id && kit
+                      ? () => kit.openItem(id)
+                      : row.path !== ""
+                        ? () => void navigate(row.path)
+                        : undefined
+                  }
+                >
+                  {kit && (
+                    <td
+                      className="dk-cb"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (id) kit.setSelected((current) => toggleOne(current, id));
+                      }}
                     >
-                      <ArtIcon name="ext" size={12} />
-                    </Link>
+                      <BillingCheckbox state={picked} label={t("Select")} />
+                    </td>
                   )}
-                </td>
-              </tr>
-            ))}
+                  {grid.columns.map((column, at) => (
+                    <td
+                      key={column.key}
+                      className={cn(
+                        isFigureType(column.type) && "dk-ar",
+                        changed.has(`${row.key}:${column.key}`) && "dk-chg",
+                      )}
+                    >
+                      {summary && column.type === "status" ? (
+                        <BillingRowPill summary={summary} />
+                      ) : (
+                        <Cell column={column} value={row.values[column.key]} first={at === 0} />
+                      )}
+                    </td>
+                  ))}
+                  <td className="dk-go">
+                    {row.path !== "" && (
+                      <Link
+                        to={row.path}
+                        aria-label={t("Open this record")}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <ArtIcon name="ext" size={12} />
+                      </Link>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
           {totals && (
             <tfoot>
               <tr>
+                {billing && <td />}
                 {grid.columns.map((column, at) => (
                   <td key={column.key} className={isFigureType(column.type) ? "dk-ar" : undefined}>
                     {at === 0 ? (
@@ -493,6 +603,14 @@ export function DeskTableBody({
         )}
         {rows.length === 0 && <div className="dk-ax-trunc">{t("No rows match “{0}”", query)}</div>}
       </div>
+      {kit && (
+        <BillingBulkBar
+          selected={kit.selected}
+          summaries={kit.summaries}
+          onClear={() => kit.setSelected([])}
+          onReview={kit.openItem}
+        />
+      )}
     </div>
   );
 }

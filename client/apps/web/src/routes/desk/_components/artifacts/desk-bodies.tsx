@@ -2,6 +2,7 @@ import { decisionRequestOf } from "@/components/assistant/decision-requests";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { decideMyPlan, decideMyProposal, decideMyProposals } from "@/lib/graphql/agent-decisions";
+import { useDraftEditsStore } from "@/stores/desk-draft-edits-store";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { DisplayValue } from "@/components/assistant/display-value";
 import {
@@ -31,6 +32,7 @@ import {
 } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
 import { DeskBillingItem } from "./desk-billing-item";
+import { useDeskBillingStore } from "./desk-billing-store";
 import { DeskRecordView } from "./desk-record-view";
 
 const PHASE_PILL: Record<string, string> = {
@@ -78,8 +80,9 @@ export function DeskRecordBody({ artifact }: { artifact: AssistantArtifact }) {
   // A billing item is reviewed from its card, so it is read live and acted on there.
   if (card.entity === "billing_queue_item" && card.recordId !== "") {
     return (
-      <DeskBillingItem
-        itemId={card.recordId}
+      <DeskBillingCard
+        artifact={artifact}
+        recordId={card.recordId}
         fallback={viewed ?? <Notice>{t("Loading…")}</Notice>}
       />
     );
@@ -125,6 +128,32 @@ export function DeskRecordBody({ artifact }: { artifact: AssistantArtifact }) {
         </Link>
       )}
     </div>
+  );
+}
+
+/**
+ * The billing item artifact: one card showing whichever queue item is picked,
+ * the one it was opened on until a row or a step picks another.
+ */
+function DeskBillingCard({
+  artifact,
+  recordId,
+  fallback,
+}: {
+  artifact: AssistantArtifact;
+  recordId: string;
+  fallback: React.ReactNode;
+}) {
+  const lineageId = artifact.lineageId || artifact.id;
+  const selected = useDeskBillingStore((state) => state.itemByLineage[lineageId]);
+  const select = useDeskBillingStore((state) => state.select);
+
+  return (
+    <DeskBillingItem
+      itemId={selected ?? recordId}
+      fallback={fallback}
+      onSelect={(itemId) => select(lineageId, itemId)}
+    />
   );
 }
 
@@ -403,13 +432,12 @@ export function DeskPlanBody({ artifact }: { artifact: AssistantArtifact }) {
 
 /**
  * A message waiting to go: who it goes to, what it says and why it is worded
- * so. The subject and body can be changed here; "Send for approval" records
- * the decision on the proposal behind the draft, with the changes as its
- * modifications, the same way the approval box does.
+ * so. The subject and body can be changed here. "Send for approval" does not
+ * decide anything: it hands the wording to the decision card on the composer,
+ * which approves the proposal behind the draft with it.
  */
 export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
-  const queryClient = useQueryClient();
   const draft = useMemo(() => emailDraftFrom(artifact), [artifact]);
   const proposalsQuery = useQuery({
     ...queries.assistant.proposals(artifact.threadId),
@@ -419,8 +447,13 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
     (candidate) => candidate.id === artifact.proposalId,
   );
   const { copy, isCopied: copied } = useCopyToClipboard();
-  const [subject, setSubject] = useState(draft.subject);
-  const [body, setBody] = useState(draft.body);
+  const sentEdits = useDraftEditsStore((store) => store.edits[artifact.proposalId]);
+  const [subject, setSubject] = useState(
+    typeof sentEdits?.subject === "string" ? sentEdits.subject : draft.subject,
+  );
+  const [body, setBody] = useState(
+    typeof sentEdits?.body === "string" ? sentEdits.body : draft.body,
+  );
   const subjectKey = typeof artifact.payload.subject === "string" ? "subject" : "";
   const bodyKey = typeof artifact.payload.body === "string" ? "body" : "";
   const state =
@@ -433,21 +466,15 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
           : "unknown";
   const editable = state === "waiting";
 
-  const sendMutation = useApiMutation({
-    mutationFn: () => {
-      const modifications: Record<string, unknown> = {};
-      if (subjectKey && subject !== draft.subject) modifications[subjectKey] = subject;
-      if (bodyKey && body !== draft.body) modifications[bodyKey] = body;
-      const changed = Object.keys(modifications).length > 0;
-      return decideMyProposal(artifact.proposalId, {
-        decision: changed ? "Modified" : "Accepted",
-        reasonCode: changed ? "modified_from_desk" : "",
-        ...(changed ? { modifications } : {}),
-      });
-    },
-    onSuccess: () => invalidateProposalViews(queryClient, artifact.threadId),
-    resourceName: "Draft",
-  });
+  const setEdits = useDraftEditsStore((store) => store.setEdits);
+  const [sentForApproval, setSentForApproval] = useState(sentEdits !== undefined);
+  const sendForApproval = () => {
+    const modifications: Record<string, unknown> = {};
+    if (subjectKey && subject !== draft.subject) modifications[subjectKey] = subject;
+    if (bodyKey && body !== draft.body) modifications[bodyKey] = body;
+    setEdits(artifact.proposalId, modifications);
+    setSentForApproval(true);
+  };
 
   return (
     <div className="dk-ax-mail">
@@ -466,7 +493,10 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
         <input
           value={subject}
           readOnly={!editable || subjectKey === ""}
-          onChange={(event) => setSubject(event.target.value)}
+          onChange={(event) => {
+            setSubject(event.target.value);
+            setSentForApproval(false);
+          }}
           aria-label={t("Subject")}
         />
       </div>
@@ -477,7 +507,10 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
             : body
         }
         readOnly={!editable || bodyKey === ""}
-        onChange={(event) => setBody(event.target.value)}
+        onChange={(event) => {
+          setBody(event.target.value);
+          setSentForApproval(false);
+        }}
         spellCheck={false}
         aria-label={t("Message")}
       />
@@ -502,7 +535,8 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
             <ArtIcon name="check" size={13} stroke={2.4} />
             {t("Sent")}
           </span>
-        ) : sendMutation.isSuccess || (state === "decided" && proposal?.status !== "Rejected") ? (
+        ) : (state === "waiting" && sentForApproval) ||
+          (state === "decided" && proposal?.status !== "Rejected") ? (
           <span className="dk-ax-sent">
             <ArtIcon name="check" size={13} stroke={2.4} />
             {t("Sent for approval")}
@@ -511,8 +545,8 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
           <button
             type="button"
             className="dk-ax-btn dk-ink"
-            disabled={sendMutation.isPending || artifact.proposalId === ""}
-            onClick={() => sendMutation.mutate()}
+            disabled={artifact.proposalId === ""}
+            onClick={sendForApproval}
           >
             {t("Send for approval")}
           </button>

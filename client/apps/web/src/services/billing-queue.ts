@@ -2,14 +2,24 @@ import { z } from "zod";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
+  billingQueueApprovalRunSchema,
+  billingQueueEventPageSchema,
   billingQueueFilterPresetSchema,
   billingQueueItemSchema,
+  billingQueueNeighborsSchema,
+  billingQueuePostResultSchema,
+  billingQueueSummarySchema,
   billingQueueStatsSchema,
   reassignChargeResultSchema,
   type BillingQueueAssignInput,
   type BillingQueueFilterPreset,
+  type BillingQueueApprovalRun,
+  type BillingQueueEventPage,
   type BillingQueueFilterPresetInput,
   type BillingQueueItem,
+  type BillingQueueNeighbors,
+  type BillingQueuePostResult,
+  type BillingQueueSummary,
   type BillingQueueStats,
   type BillingQueueUpdateChargesInput,
   type BillingQueueUpdateStatusInput,
@@ -57,6 +67,92 @@ export class BillingQueueService {
       payload,
     );
     return safeParse(reassignChargeResultSchema, response, "ReassignChargeResult");
+  }
+
+  /** The item's place in the queue: what comes before and after it, and where it sits. */
+  public async getNeighbors(id: string, params?: Record<string, string>) {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : "";
+    const response = await api.get<BillingQueueNeighbors>(
+      `/billing-queue/${id}/neighbors/${query}`,
+    );
+    return safeParse(billingQueueNeighborsSchema, response, "BillingQueueNeighbors");
+  }
+
+  /** The item's activity, newest first, a page at a time. */
+  public async getActivity(id: string, before?: { at: number; id: string }, limit = 30) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (before) {
+      params.set("beforeAt", String(before.at));
+      params.set("beforeId", before.id);
+    }
+    const response = await api.get<BillingQueueEventPage>(
+      `/billing-queue/${id}/activity/?${params.toString()}`,
+    );
+    return safeParse(billingQueueEventPageSchema, response, "BillingQueueEventPage");
+  }
+
+  /** The live state of queue rows, for a table that was read earlier. */
+  public async getSummaries(ids: string[]) {
+    const response = await api.get<{ results: BillingQueueSummary[] }>(
+      `/billing-queue/summaries/?ids=${encodeURIComponent(ids.join(","))}`,
+    );
+    const parsed = await safeParse(
+      z.object({ results: z.array(billingQueueSummarySchema) }),
+      response,
+      "BillingQueueSummaries",
+    );
+    return parsed.results;
+  }
+
+  public async resolveIssue(id: string, issueId: string, optionKey: string) {
+    const response = await api.post<BillingQueueItem>(
+      `/billing-queue/${id}/issues/${issueId}/resolve/`,
+      { optionKey },
+    );
+    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+  }
+
+  public async undoIssue(id: string, issueId: string) {
+    const response = await api.post<BillingQueueItem>(
+      `/billing-queue/${id}/issues/${issueId}/undo/`,
+      {},
+    );
+    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+  }
+
+  public async release(id: string) {
+    const response = await api.post<BillingQueueItem>(`/billing-queue/${id}/release/`, {});
+    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+  }
+
+  /** Posts the approved item's invoice, which sends it to the customer. */
+  public async post(id: string) {
+    const response = await api.post<BillingQueuePostResult>(`/billing-queue/${id}/post/`, {});
+    return safeParse(billingQueuePostResultSchema, response, "BillingQueuePostResult");
+  }
+
+  /** Starts a bulk approval; the server waits out the undo window before it writes. */
+  public async startBulkApprove(itemIds: string[], idempotencyKey: string) {
+    const response = await api.post<BillingQueueApprovalRun>("/billing-queue/bulk-approve/", {
+      itemIds,
+      idempotencyKey,
+    });
+    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueApprovalRun");
+  }
+
+  public async getBulkApprove(runId: string) {
+    const response = await api.get<BillingQueueApprovalRun>(
+      `/billing-queue/bulk-approve/${runId}/`,
+    );
+    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueApprovalRun");
+  }
+
+  public async undoBulkApprove(runId: string) {
+    const response = await api.post<BillingQueueApprovalRun>(
+      `/billing-queue/bulk-approve/${runId}/cancel/`,
+      {},
+    );
+    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueApprovalRun");
   }
 
   public async listFilterPresets() {

@@ -5197,6 +5197,13 @@ enum BillingQueueExceptionReasonCode {
   WeightDiscrepancy
 }
 
+"""Why a biller set an item aside."""
+enum BillingQueueHoldReasonCode {
+  CustomerDispute
+  RateQuestion
+  WaitingOnPaperwork
+}
+
 type BillingQueueItem {
   """
   Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
@@ -5240,6 +5247,16 @@ type BillingQueueItem {
   version: Int!
 }
 
+"""The invoice an item posted as, and where it went."""
+type BillingQueuePostResult {
+  invoiceId: ID!
+  invoiceNumber: String!
+  item: BillingQueueItem!
+  recipients: [String!]!
+  """The address the invoice is emailed to, when posting sends it."""
+  sentTo: String
+}
+
 enum BillingQueueStatus {
   Approved
   Canceled
@@ -5255,6 +5272,7 @@ input BillingQueueUpdateStatusInput {
   cancelReason: String
   exceptionNotes: String
   exceptionReasonCode: BillingQueueExceptionReasonCode
+  holdReasonCode: BillingQueueHoldReasonCode
   reviewNotes: String
   status: BillingQueueStatus!
 }
@@ -16345,6 +16363,8 @@ type Mutation {
   payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
   pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
+  """Posts an approved item's invoice, which sends it to the customer."""
+  postBillingQueueItem(id: ID!): BillingQueuePostResult!
   postCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """
@@ -16420,6 +16440,8 @@ type Mutation {
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Lets records waiting for approval be sent."""
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
+  """Takes an item off hold and back to the status the hold found it in."""
+  releaseBillingQueueItem(id: ID!): BillingQueueItem!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
   """
@@ -16459,6 +16481,8 @@ type Mutation {
   """
   resolveAccountingDrift(input: ResolveAccountingDriftInput!): AccountingDriftFinding!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
+  """Settles one of an item's checks with one of its options."""
+  resolveBillingQueueIssue(id: ID!, issueId: ID!, optionKey: String!): BillingQueueItem!
   resolveCarrierIntelEvent(input: ResolveCarrierIntelEventInput!): CarrierIntelEvent!
   """
   Reads the rows an import is still holding and works them out again against the
@@ -16622,6 +16646,10 @@ type Mutation {
   unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
   uncancelShipment(id: ID!): Shipment!
   uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
+  """
+  Takes back how a check was settled, and puts back any charge it changed.
+  """
+  undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
   """
   Takes back the caller's approval of a proposal (with every proposal
   approved with it in one batch) or of a plan, while it is in its undo window;

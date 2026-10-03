@@ -235,6 +235,14 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 // twenty-five row list as a markdown table, or fetches every row of a list
 // again one by one.
 func shownNote(shown *serviceports.ShownArtifact) string {
+	if tabular(shown.Kind) && shown.Actionable {
+		return fmt.Sprintf("\n\n[This result is kept as a table titled %q that the person works "+
+			"from beside the conversation: they select rows there, review each one and act on "+
+			"them. Point to it in the sentence that mentions it, however few rows it has, and do "+
+			"not write its rows out as a markdown table. Answer with the count and the rows that "+
+			"need attention. Work from the fields it already has instead of looking up each row "+
+			"again.%s]", shown.Title, artifactRefNote(shown))
+	}
 	if tabular(shown.Kind) && shown.Rows > 0 && shown.Rows <= InlineRows {
 		return fmt.Sprintf("\n\n[This result has %d rows, few enough to answer in your reply: "+
 			"show the rows that answer the question as a markdown table with only the columns "+

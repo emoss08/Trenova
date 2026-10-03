@@ -24,13 +24,14 @@ Calls made where the design and the codebase don't line up one-to-one:
 
 | Area | State |
 |---|---|
-| 1. Shell, top bar, hand-off | open |
-| 2. Conversation, markdown, "Why this step?" | open |
-| 3. Dock: facts, attached decision, undo, schedules | open |
-| 4. Workspace / artifact pane, bulk approve | open |
-| 5. Billing queue item | open |
-| 6–7. Memory page, agent capabilities page | open |
-| 11. Watchtower (previous handoff, parked on `wip/watchtower-focus`) | open |
+| 1. Shell, top bar, hand-off | done |
+| 2. Conversation, markdown, "Why this step?" | done |
+| 3. Dock: facts, attached decision, undo, schedules | done |
+| 4. Workspace / artifact pane, bulk approve | done |
+| 5. Billing queue item | done (billing table mode and bulk approve from §4 included) |
+| 6–7. Memory page, agent capabilities page | done |
+| Context meter and compaction | done |
+| 11. Watchtower (previous handoff, parked on `wip/watchtower-focus`) | parked: Desk first, by instruction |
 
 ---
 
@@ -564,3 +565,89 @@ Domain: internal/core/domain/agentdefinition/definition.go:52-134. Admin REST: i
 - [MISSING] Desk-user access — full Definition read/write is admin-only (`ResourceAgentDefinition` on agentDefinition/agentDefinitions resolvers agentdefinition.resolvers.go:154,180 and REST). `myAgents` (ResourceAssistant, :197) returns only name/desc/icon/tools/delegates. Add a `myAgentCapabilities(agentId)` read (tools+effective mode+lock, delegates+topics, limits+usage, hours, enabled, model, owner) gated on Assistant read + agent access; keep mutations (`PUT /agent-definitions/:id/`) on ResourceAgentDefinition OpUpdate and render controls read-only for non-admins (design shows editable controls — confirm intent).
 
 ---
+
+
+---
+
+# Summary
+
+Everything in the handoff's Desk scope is implemented end to end, with the
+backend it needs in Go; the Today page is not built, by instruction. What
+follows is what changed in the database and the API, and what does not
+match the prototype one for one, with the reason.
+
+## Migrations
+
+| Version | What it adds |
+|---|---|
+| 20261231007460 `assistant_thread_pinned_facts` | The facts a conversation keeps in mind, injected into every prompt. |
+| 20261231007470 `agent_proposal_approving` | The `Approving` proposal status the undo window holds a decision in. |
+| 20261231007480 `agent_decision_undo_window` | When an approved decision commits, for the server-enforced undo. |
+| 20261231007490 `conversation_schedules` | Scheduled requests, the `Schedule` message kind and the `Scheduled` turn origin. |
+| 20261231007610 `assistant_artifact_workspace` | Artifact slugs, versions of a document, the extraction kind, and the indexes the paged list reads. |
+| 20261231007700 `assistant_conversation_compaction` | Context usage on the thread, the `Compaction` message kind and turn origin. |
+| 20261231007710 `agent_memory_audience` | Memories for one person or a role, `Paused`, usage counts, and the per-person saving preference. |
+| 20261231007720 `agent_capabilities` | Who set an agent up, its largest change, business hours, hand-off topics and tools switched off. |
+| 20261231007730 `assistant_handoff` | The conversation a hand-off came from and the `Handoff`/`HandoffBrief` message kinds. |
+| 20261231008100 `billing_queue_review` | Checks, issues, activity, holds and bulk approval runs for the billing queue. |
+
+Each migration that redefines a shared check constraint keeps every value the
+earlier ones allowed.
+
+## Endpoints
+
+- Assistant (REST, `/api/v1/assistant`): `POST /threads/:id/handoff/`,
+  `POST /threads/:id/compact/`, schedules (`GET /schedules/`,
+  `GET|POST /threads/:id/schedules/`, `PATCH|DELETE /schedules/:id/`,
+  `POST /schedules/:id/run/`), the paged artifact list
+  (`GET /threads/:id/artifacts/` with `limit`, `cursor`, `q`, `kind`, `pinned`),
+  `GET /threads/:id/artifacts/by-slug/:slug/`, an artifact's lineage, CSV and
+  document export, and document `versions/`, `restore/` and `rewrite/`.
+  Pinned facts and auto-compaction ride on `PATCH /threads/:id/`.
+- Billing queue (REST): `GET /summaries/`, bulk approval
+  (`POST /bulk-approve/`, `GET /bulk-approve/:run/`, `POST /bulk-approve/:run/cancel/`),
+  and per item `neighbors/`, `activity/`, `issues/:issue/resolve/`,
+  `issues/:issue/undo/`, `release/` and `post/`.
+- GraphQL: `undoMyDecision`, `commitMyDecisionNow`; `agentCapabilities`,
+  `updateAgentCapabilities`; the Memory page (`deskMemories`,
+  `deskMemoriesByIds`, `createDeskMemory`, `reviseDeskMemory`,
+  `setDeskMemoryStatus`, `confirmDeskMemory`, `dismissDeskMemory`,
+  `setMemorySavingMode`); billing (`postBillingQueueItem`,
+  `releaseBillingQueueItem`, `resolveBillingQueueIssue`, `undoBillingQueueIssue`).
+- Stream events over the existing assistant stream: `memory_used`,
+  `memory_saved`, `context`, `compaction_started`, `compaction_finished`,
+  `compaction_cancelled`, and `why` on `tool_started`.
+- Temporal: `proposal-commit/{id}` (the undo window), `conversation-schedule/{id}`
+  (a Temporal Schedule per request, reconciled hourly), the compaction
+  activity, and the billing bulk-approval workflow.
+
+## What does not match one for one, and why
+
+- **Today page**: not built, by instruction; Today opens the home composer.
+- **Narrated mode and Replay**: the prototype's narrated mode is unreachable
+  there (it hard-codes ledger) and Replay replays canned data; neither ships.
+- **Tool and record labels**: the agent page names tools by their humanized
+  names ("Get shipment"), and the Memory page's team filter by the person's
+  role ("Organization Administrator"), not the prototype's hand-written
+  phrases; the data, not the layout, differs.
+- **Document blocks**: the prototype's documents are typed demo blocks (a
+  loads table with a late column, an "Open draft" note, a source line under
+  a table). A document here is the model's markdown, so tables, notes and
+  citations render through the markdown set; those three demo-only blocks
+  have no source.
+- **Artifact badges under a reply**: the prototype lists a reply's artifacts
+  as a row of badges under it; per review feedback they open from the
+  sentence that names them instead, inline.
+- **Short billing queues**: a list of twelve rows or fewer is answered as a
+  markdown table in the reply, except the billing queue, which always opens
+  as the selectable table the design draws.
+- **View artifact**: shows the view's filters and its link, without a row
+  count or preview, because composing a view no longer runs it.
+- **Email draft**: "Send for approval" hands the edited wording to the
+  decision card on the composer, which approves with it as a modification;
+  the wording is held in the page, so an edit sent and not approved before a
+  reload goes back to the agent's.
+- **Extraction actions**: "Create shipment" and "Fix fields" ask the agent,
+  which proposes the change for a decision, rather than writing directly.
+- **Fonts**: the prototype's Geist and IBM Plex Mono are the app's font
+  variables; colours are the `--dsk-*` tokens, light and dark.

@@ -4,9 +4,37 @@ package billingqueue
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ApprovalRun].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ApprovalRunFieldMap] instead of parsing struct tags via reflection.
+func (e *ApprovalRun) GetStaticFieldMap() map[string]string {
+	return buncolgen.ApprovalRunFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ApprovalRunItem].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ApprovalRunItemFieldMap] instead of parsing struct tags via reflection.
+func (e *ApprovalRunItem) GetStaticFieldMap() map[string]string {
+	return buncolgen.ApprovalRunItemFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BillingQueueItem].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.BillingQueueItemFieldMap] instead of parsing struct tags via reflection.
 func (e *BillingQueueItem) GetStaticFieldMap() map[string]string {
 	return buncolgen.BillingQueueItemFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Issue].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.IssueFieldMap] instead of parsing struct tags via reflection.
+func (e *Issue) GetStaticFieldMap() map[string]string {
+	return buncolgen.IssueFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ItemEvent].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ItemEventFieldMap] instead of parsing struct tags via reflection.
+func (e *ItemEvent) GetStaticFieldMap() map[string]string {
+	return buncolgen.ItemEventFieldMap
 }

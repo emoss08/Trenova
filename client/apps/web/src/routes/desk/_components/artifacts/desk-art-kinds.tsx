@@ -3,6 +3,12 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
 
 const ICONS = {
+  bill: (
+    <>
+      <path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z" />
+      <path d="M9.5 8.5h5M9.5 12h5M12 14.5v2" />
+    </>
+  ),
   table: (
     <>
       <rect x="3.5" y="5" width="17" height="14" rx="2" />
@@ -156,7 +162,8 @@ export type DeskArtKind =
   | "doc"
   | "view"
   | "decision"
-  | "extract";
+  | "extract"
+  | "bill";
 
 const KIND_LABELS: Record<DeskArtKind, string> = {
   table: "Table",
@@ -170,6 +177,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = {
   view: "View",
   decision: "Decision",
   extract: "Extraction",
+  bill: "Billing item",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -180,7 +188,9 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
     case "report_run":
       return "report";
     case "entity_card":
-      return "record";
+      // A billing queue item is drawn as the item a biller reviews, not as a
+      // record card, and the design gives it its own mark.
+      return artifact.payload.entity === "billing_queue_item" ? "bill" : "record";
     case "rate_explanation":
       return "rate";
     case "email_draft":
@@ -235,6 +245,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Decision");
     case "extract":
       return t("Extraction");
+    case "bill":
+      return t("Billing item");
   }
 }
 

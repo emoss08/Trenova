@@ -103,6 +103,154 @@ export const detentionHoldSchema = z.object({
 });
 export type DetentionHold = z.infer<typeof detentionHoldSchema>;
 
+/** Why a biller set an item aside. */
+export const billingQueueHoldReasonSchema = z.enum([
+  "WaitingOnPaperwork",
+  "CustomerDispute",
+  "RateQuestion",
+]);
+export type BillingQueueHoldReason = z.infer<typeof billingQueueHoldReasonSchema>;
+
+export const billingCheckKeySchema = z.enum(["biller", "charges", "pod", "terms", "duplicate"]);
+export type BillingCheckKey = z.infer<typeof billingCheckKeySchema>;
+
+/** What choosing an issue's option does: bill as is, remove, reprice, ask, or accept. */
+export const billingIssueEffectSchema = z.object({
+  kind: z.enum(["keep", "drop", "set", "request", "accept"]),
+  chargeId: nullableStringSchema,
+  amount: decimalStringSchema.nullish(),
+  basis: z.string().nullish(),
+});
+
+export const billingIssueOptionSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  amount: decimalStringSchema.nullish(),
+  done: z.string().default(""),
+  effect: billingIssueEffectSchema,
+});
+export type BillingIssueOption = z.infer<typeof billingIssueOptionSchema>;
+
+/** Something a person settles before the item can be approved. */
+export const billingIssueSchema = z.object({
+  id: z.string(),
+  itemId: z.string(),
+  checkKey: billingCheckKeySchema,
+  code: z.string(),
+  subjectKey: z.string().default(""),
+  summary: z.string(),
+  reasoning: z.string().nullish(),
+  source: z.string().default("Deterministic"),
+  flaggedChargeId: nullableStringSchema,
+  options: z
+    .array(billingIssueOptionSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  resolutionKey: nullableStringSchema,
+  resolutionText: z.string().nullish(),
+  resolvedById: nullableStringSchema,
+  resolvedAt: z.number().nullish(),
+  requestedAt: z.number().nullish(),
+  undoable: z.boolean().default(false),
+  createdAt: z.number().default(0),
+});
+export type BillingIssue = z.infer<typeof billingIssueSchema>;
+
+/** One of the five checks, as the server decided it. */
+export const billingCheckSchema = z.object({
+  key: billingCheckKeySchema,
+  state: z.enum(["ok", "warn", "fail"]),
+  code: z.string(),
+  detail: z.string().default(""),
+  issueId: nullableStringSchema,
+  facts: z.record(z.string(), z.unknown()).nullish(),
+});
+export type BillingCheck = z.infer<typeof billingCheckSchema>;
+
+export const billingChargeLineSchema = z.object({
+  key: z.string(),
+  additionalChargeId: nullableStringSchema,
+  label: z.string(),
+  basis: z.string().default(""),
+  expected: decimalStringSchema.nullish(),
+  billed: decimalStringSchema,
+  source: z.string().default("none"),
+  flagged: z.boolean().default(false),
+  removed: z.boolean().default(false),
+  adjusted: z.boolean().default(false),
+  issueId: nullableStringSchema,
+});
+export type BillingChargeLine = z.infer<typeof billingChargeLineSchema>;
+
+export const billingChargeReviewSchema = z.object({
+  lines: z
+    .array(billingChargeLineSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  expectedTotal: decimalStringSchema,
+  billedTotal: decimalStringSchema,
+  difference: decimalStringSchema,
+  hasRateCon: z.boolean().default(false),
+});
+export type BillingChargeReview = z.infer<typeof billingChargeReviewSchema>;
+
+export const billingInvoiceRefSchema = z.object({
+  id: z.string(),
+  number: z.string(),
+  draftNumber: z.string().default(""),
+  status: z.string(),
+  invoiceDate: z.number().nullish(),
+  dueDate: z.number().nullish(),
+  postedAt: z.number().nullish(),
+  posted: z.boolean().default(false),
+});
+
+export const billingTermsSchema = z.object({
+  paymentTerm: z.string().default(""),
+  netDays: z.number().default(0),
+  dueDate: z.number().nullish(),
+  recipients: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  creditHold: z.boolean().default(false),
+});
+
+export const billingDocumentTileSchema = z.object({
+  code: z.string().default(""),
+  name: z.string().default(""),
+  documentId: nullableStringSchema,
+  state: z.enum(["ok", "missing", "unsigned"]),
+  required: z.boolean().default(false),
+  signed: z.boolean().default(false),
+  fileName: z.string().default(""),
+});
+export type BillingDocumentTile = z.infer<typeof billingDocumentTileSchema>;
+
+/** The item as a biller reviews it; present when it was read with its shipment. */
+export const billingReviewSchema = z.object({
+  checks: z
+    .array(billingCheckSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  needsCount: z.number().default(0),
+  ready: z.boolean().default(false),
+  blocker: z.string().default(""),
+  issues: z
+    .array(billingIssueSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  charges: billingChargeReviewSchema.nullish(),
+  invoice: billingInvoiceRefSchema.nullish(),
+  terms: billingTermsSchema.nullish(),
+  documents: z
+    .array(billingDocumentTileSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  billerName: z.string().default(""),
+});
+export type BillingReview = z.infer<typeof billingReviewSchema>;
+
 export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -141,10 +289,101 @@ export const billingQueueItemSchema = z.object({
   assignedBiller: userSchema.optional().nullable(),
   canceledBy: userSchema.optional().nullable(),
   payerShare: payerShareSchema.nullish(),
-  detentionHolds: z.array(detentionHoldSchema).default([]),
+  detentionHolds: z
+    .array(detentionHoldSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  holdReasonCode: nullableEnumSchema(billingQueueHoldReasonSchema),
+  heldAt: z.number().nullish(),
+  heldById: nullableStringSchema,
+  statusBeforeHold: nullableEnumSchema(billingQueueStatusSchema),
+  poNumber: z.string().nullish(),
+  review: billingReviewSchema.nullish(),
 });
 
 export type BillingQueueItem = z.infer<typeof billingQueueItemSchema>;
+
+/** One line of an item's activity. */
+export const billingQueueEventSchema = z.object({
+  id: z.string(),
+  kind: z.string(),
+  text: z.string(),
+  actorType: z.enum(["System", "Agent", "User"]),
+  actorId: nullableStringSchema,
+  actorName: z.string().nullish(),
+  at: z.number(),
+});
+export type BillingQueueEvent = z.infer<typeof billingQueueEventSchema>;
+
+export const billingQueueEventPageSchema = z.object({
+  items: z
+    .array(billingQueueEventSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  hasMore: z.boolean().default(false),
+  total: z.number().default(0),
+});
+export type BillingQueueEventPage = z.infer<typeof billingQueueEventPageSchema>;
+
+/** An item's place in the queue, under the list's own order. */
+export const billingQueueNeighborsSchema = z.object({
+  prevId: nullableStringSchema,
+  nextId: nullableStringSchema,
+  position: z.number(),
+  total: z.number(),
+});
+export type BillingQueueNeighbors = z.infer<typeof billingQueueNeighborsSchema>;
+
+/** A queue row's live state. */
+export const billingQueueSummarySchema = z.object({
+  id: z.string(),
+  number: z.string().default(""),
+  status: billingQueueStatusSchema,
+  holdReasonCode: nullableEnumSchema(billingQueueHoldReasonSchema),
+  assignedBillerId: nullableStringSchema,
+  allocatedTotalAmount: decimalStringSchema,
+  needsCount: z.number().default(0),
+  ready: z.boolean().default(false),
+});
+export type BillingQueueSummary = z.infer<typeof billingQueueSummarySchema>;
+
+export const billingQueueApprovalRunItemSchema = z.object({
+  itemId: z.string(),
+  status: z.enum(["Pending", "Approved", "Failed", "Skipped"]),
+  failureCode: z.string().nullish(),
+  errorMessage: z.string().nullish(),
+  invoiceNumber: z.string().nullish(),
+});
+
+/** One press of Approve over several items, run as a job behind an undo window. */
+export const billingQueueApprovalRunSchema = z.object({
+  id: z.string(),
+  status: z.enum(["Scheduled", "Running", "Completed", "Undone", "Failed"]),
+  totalCount: z.number(),
+  approvedCount: z.number().default(0),
+  failedCount: z.number().default(0),
+  skippedCount: z.number().default(0),
+  commitAt: z.number(),
+  cancelRequestedAt: z.number().nullish(),
+  failureMessage: z.string().nullish(),
+  items: z
+    .array(billingQueueApprovalRunItemSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type BillingQueueApprovalRun = z.infer<typeof billingQueueApprovalRunSchema>;
+
+export const billingQueuePostResultSchema = z.object({
+  item: billingQueueItemSchema,
+  invoiceId: z.string(),
+  invoiceNumber: z.string(),
+  sentTo: z.string().nullish(),
+  recipients: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type BillingQueuePostResult = z.infer<typeof billingQueuePostResultSchema>;
 
 /**
  * The queue after a charge moved between payers: the item the change came from
@@ -189,6 +428,7 @@ export const billingQueueUpdateStatusSchema = z.object({
   exceptionNotes: z.string().optional(),
   reviewNotes: z.string().optional(),
   cancelReason: z.string().optional(),
+  holdReasonCode: billingQueueHoldReasonSchema.optional(),
 });
 export type BillingQueueUpdateStatusInput = z.infer<typeof billingQueueUpdateStatusSchema>;
 

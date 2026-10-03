@@ -467,16 +467,19 @@ export function ProposalPreview({
   return (
     <div className="flex min-w-0 flex-col gap-3" data-slot="proposal-preview">
       {attention && <PreviewAttention preview={preview} inPlan={inPlan} wouldFail={wouldFail} />}
-      {preview.coverage === "Unavailable" && (
-        <Alert size="sm" variant="warning">
-          <AlertTriangleIcon />
-          <AlertDescription>
-            {t(
-              "This action can't say exactly what it would change. It would run with the values below.",
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* One notice for one fact: a preview that failed already says the
+          values are shown instead, so the coverage note would repeat it. */}
+      {preview.coverage === "Unavailable" &&
+        !preview.warnings.some((warning) => warning.code === "preview_failed") && (
+          <Alert size="sm" variant="warning">
+            <AlertTriangleIcon />
+            <AlertDescription>
+              {t(
+                "This action can't say exactly what it would change. It would run with the values below.",
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
 
       {preview.changes.length === 0 ? (
         <p className="text-foreground-muted text-xs">{t("Nothing would change.")}</p>

@@ -1467,6 +1467,10 @@ type MutationResolver interface {
 	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*driverpay.WorkerBenefitEnrollment, error)
 	UpdateBillingQueueStatus(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateStatusInput) (*gqlmodel.BillingQueueItem, error)
 	AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error)
+	PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error)
+	ReleaseBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueueItem, error)
+	ResolveBillingQueueIssue(ctx context.Context, id string, issueID string, optionKey string) (*gqlmodel.BillingQueueItem, error)
+	UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error)
 	StartBillingTransferRun(ctx context.Context, input gqlmodel.StartBillingTransferRunInput) (*gqlmodel.BillingTransferRun, error)
 	CancelBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	RetryBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
@@ -8642,6 +8646,24 @@ extend type Mutation {
   exceptionNotes: String
   reviewNotes: String
   cancelReason: String
+  holdReasonCode: BillingQueueHoldReasonCode
+}
+
+"""Why a biller set an item aside."""
+enum BillingQueueHoldReasonCode {
+  WaitingOnPaperwork
+  CustomerDispute
+  RateQuestion
+}
+
+"""The invoice an item posted as, and where it went."""
+type BillingQueuePostResult {
+  item: BillingQueueItem!
+  invoiceId: ID!
+  invoiceNumber: String!
+  """The address the invoice is emailed to, when posting sends it."""
+  sentTo: String
+  recipients: [String!]!
 }
 
 input BillingQueueAssignInput {
@@ -8651,6 +8673,14 @@ input BillingQueueAssignInput {
 extend type Mutation {
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+  """Posts an approved item's invoice, which sends it to the customer."""
+  postBillingQueueItem(id: ID!): BillingQueuePostResult!
+  """Takes an item off hold and back to the status the hold found it in."""
+  releaseBillingQueueItem(id: ID!): BillingQueueItem!
+  """Settles one of an item's checks with one of its options."""
+  resolveBillingQueueIssue(id: ID!, issueId: ID!, optionKey: String!): BillingQueueItem!
+  """Takes back how a check was settled, and puts back any charge it changed."""
+  undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
 }
 `, BuiltIn: false},
 	{Name: "../schema/billing_transfer.graphqls", Input: `"One bulk transfer of shipments into the billing queue, run in the background."

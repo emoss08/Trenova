@@ -480,13 +480,14 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             onDownload={() => activeThread && downloadAssistantTranscript(activeThread.id)}
           />
           <Outlet />
+          {/* Over the main column only, as designed: the sidebar stays in view. */}
+          {searching && (
+            <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />
+          )}
+          {settingsOpen && (
+            <DeskSettingsDialog agents={agents} onClose={() => setSettingsOpen(false)} />
+          )}
         </div>
-        {searching && (
-          <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />
-        )}
-        {settingsOpen && (
-          <DeskSettingsDialog agents={agents} onClose={() => setSettingsOpen(false)} />
-        )}
       </div>
     </DeskContext.Provider>
   );

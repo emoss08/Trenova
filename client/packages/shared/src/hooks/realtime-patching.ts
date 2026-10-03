@@ -107,6 +107,8 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   workers: ["worker-list", "dispatch-board"],
   "audit-logs": ["audit-entry-list"],
   billing_queue: ["billing-queue-list", "billingQueue"],
+  // A bulk approval's progress: the run and the items it is approving.
+  "billing-queue-approval-run": ["billingQueue", "billing-queue-list"],
   "billing-transfer-run": [
     "billing-transfer-run",
     "billing-transfer-active-run",

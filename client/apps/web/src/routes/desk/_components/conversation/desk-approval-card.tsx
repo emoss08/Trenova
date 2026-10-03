@@ -9,6 +9,7 @@ import {
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { decideMyPlan, decideMyProposal } from "@/lib/graphql/agent-decisions";
+import { useDraftEditsStore } from "@/stores/desk-draft-edits-store";
 import {
   invalidateProposalViews,
   markPlanDecided,
@@ -96,13 +97,18 @@ function ProposalCard({
   const approval = useApprovalGate(previewQuery);
   const facts = approvalFacts(previewQuery.data, t);
 
+  // Wording the person changed on the draft and sent for approval goes with
+  // the approval, as a modification of what the agent proposed.
+  const edits = useDraftEditsStore((store) => store.edits[proposal.id]);
+  const clearEdits = useDraftEditsStore((store) => store.clearEdits);
   const mutation = useMutation({
     mutationFn: () =>
-      decideMyProposal(proposal.id, {
-        decision: "Accepted",
-        reasonCode: "",
-        previewDigest: gateDigest(approval.gate),
-      }),
+      decideMyProposal(
+        proposal.id,
+        edits
+          ? { decision: "Modified", reasonCode: "modified_from_desk", modifications: edits }
+          : { decision: "Accepted", reasonCode: "", previewDigest: gateDigest(approval.gate) },
+      ),
     onMutate: () =>
       hold(undo, {
         key: entry.key,
@@ -113,6 +119,7 @@ function ProposalCard({
         planId: null,
       }),
     onSuccess: (decision) => {
+      clearEdits(proposal.id);
       const commitsAt = decision.commitsAt ?? null;
       if (commitsAt !== null) {
         markProposalsStatus(queryClient, [proposal.id], "Approving");

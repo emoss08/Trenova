@@ -89,6 +89,8 @@ var DocumentColumns = struct {
 	HasExtractedText      Column // "has_extracted_text" → qualified: "doc.has_extracted_text"
 	ShipmentDraftStatus   Column // "shipment_draft_status" → qualified: "doc.shipment_draft_status"
 	DocumentTypeID        Column // "document_type_id" → qualified: "doc.document_type_id"
+	SignatureStatus       Column // "signature_status" → qualified: "doc.signature_status"
+	SignedAt              Column // "signed_at" → qualified: "doc.signed_at"
 	SearchVector          Column // "search_vector" → qualified: "doc.search_vector"
 	Rank                  Column // "rank" → qualified: "doc.rank"
 	Version               Column // "version" → qualified: "doc.version"
@@ -135,6 +137,8 @@ var DocumentColumns = struct {
 	HasExtractedText:      NewColumn("has_extracted_text", "doc"),
 	ShipmentDraftStatus:   NewColumn("shipment_draft_status", "doc"),
 	DocumentTypeID:        NewColumn("document_type_id", "doc"),
+	SignatureStatus:       NewColumn("signature_status", "doc"),
+	SignedAt:              NewColumn("signed_at", "doc"),
 	SearchVector:          NewColumn("search_vector", "doc"),
 	Rank:                  NewColumn("rank", "doc"),
 	Version:               NewColumn("version", "doc"),
@@ -187,6 +191,8 @@ var DocumentFieldMap = map[string]string{
 	"hasExtractedText":      "has_extracted_text",
 	"shipmentDraftStatus":   "shipment_draft_status",
 	"documentTypeId":        "document_type_id",
+	"signatureStatus":       "signature_status",
+	"signedAt":              "signed_at",
 	"version":               "version",
 	"createdAt":             "created_at",
 	"updatedAt":             "updated_at",
@@ -235,6 +241,8 @@ var DocumentInsertableColumns = []string{
 	"has_extracted_text",
 	"shipment_draft_status",
 	"document_type_id",
+	"signature_status",
+	"signed_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -345,6 +353,8 @@ var DocumentFilter = struct {
 	HasExtractedText      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasExtractedText" → DB: "has_extracted_text"
 	ShipmentDraftStatus   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentDraftStatus" → DB: "shipment_draft_status"
 	DocumentTypeID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
+	SignatureStatus       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "signatureStatus" → DB: "signature_status"
+	SignedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "signedAt" → DB: "signed_at"
 	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -468,6 +478,12 @@ var DocumentFilter = struct {
 	},
 	DocumentTypeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("documentTypeId", op, value)
+	},
+	SignatureStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("signatureStatus", op, value)
+	},
+	SignedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("signedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

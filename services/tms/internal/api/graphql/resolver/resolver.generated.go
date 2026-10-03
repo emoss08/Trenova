@@ -464,8 +464,9 @@ func FromServices(s *Services) *Resolver {
 		DriverPortalService:     s.DriverPortalService,
 	}
 	billingqueueDeps := &billingqueueresolver.Deps{
-		Core:                s.Core,
-		BillingQueueService: s.BillingQueueService,
+		Core:                      s.Core,
+		BillingQueueService:       s.BillingQueueService,
+		BillingQueueReviewService: s.BillingQueueReviewService,
 	}
 	billingtransferDeps := &billingtransferresolver.Deps{
 		Core:                   s.Core,

@@ -249,6 +249,10 @@ type ShownArtifact struct {
 	// that is not a table. It decides whether the reply repeats the rows or
 	// points to the table.
 	Rows int
+	// Actionable is a table the person works from, not just reads: its rows
+	// can be selected and acted on beside the conversation, so it is pointed
+	// to however short it is.
+	Actionable bool
 }
 
 // PublishedDocument is a write-up the model asked to keep beside the

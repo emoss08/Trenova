@@ -1654,6 +1654,9 @@ models:
   BillingQueueExceptionReasonCode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.ExceptionReasonCode
+  BillingQueueHoldReasonCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.HoldReasonCode
   InvoiceStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.Status

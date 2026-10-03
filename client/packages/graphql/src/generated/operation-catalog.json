@@ -27671,6 +27671,11 @@
           "defaultValue": null
         },
         {
+          "name": "holdReasonCode",
+          "type": "BillingQueueHoldReasonCode",
+          "defaultValue": null
+        },
+        {
           "name": "reviewNotes",
           "type": "String",
           "defaultValue": null
@@ -27681,7 +27686,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input BillingQueueUpdateStatusInput {\n  cancelReason: String\n  exceptionNotes: String\n  exceptionReasonCode: BillingQueueExceptionReasonCode\n  reviewNotes: String\n  status: BillingQueueStatus!\n}"
+      "sdl": "input BillingQueueUpdateStatusInput {\n  cancelReason: String\n  exceptionNotes: String\n  exceptionReasonCode: BillingQueueExceptionReasonCode\n  holdReasonCode: BillingQueueHoldReasonCode\n  reviewNotes: String\n  status: BillingQueueStatus!\n}"
     },
     "BillingTransferRunItemsFilterInput": {
       "kind": "input",
@@ -39522,6 +39527,15 @@
         "WeightDiscrepancy"
       ],
       "sdl": "enum BillingQueueExceptionReasonCode {\n  AccessorialDispute\n  CustomerInformationError\n  DuplicateCharge\n  IncorrectRates\n  MissingDocumentation\n  MissingReferenceNumber\n  Other\n  RateNotOnFile\n  ServiceFailure\n  WeightDiscrepancy\n}"
+    },
+    "BillingQueueHoldReasonCode": {
+      "kind": "enum",
+      "values": [
+        "CustomerDispute",
+        "RateQuestion",
+        "WaitingOnPaperwork"
+      ],
+      "sdl": "\"\"\"Why a biller set an item aside.\"\"\"\nenum BillingQueueHoldReasonCode {\n  CustomerDispute\n  RateQuestion\n  WaitingOnPaperwork\n}"
     },
     "BillingQueueStatus": {
       "kind": "enum",
