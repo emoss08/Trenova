@@ -196,7 +196,7 @@ C["FilterFunnelX"] = paths(
     "m16 15 5 5m0-5-5 5",
 )
 C["ArchiveRestore"] = paths(u("Archive").replace("M10 13h4", "M12 18v-6m-3 3 3-3 3 3"))
-C["ArchiveX"] = paths(u("Archive").replace("M10 13h4", "m10 12 4 4m0-4-4 4"))
+C["ArchiveX"] = paths(u("Archive").replace("M10 13h4", "M10 12l4 4m0-4-4 4"))
 C["ListChecks"] = paths("M13 6h8M13 12h8M13 18h8", "m3 6 1.75 1.75L8.5 4", "m3 16 1.75 1.75L8.5 14")
 C["ListOrdered"] = paths(
     "M10 6h11M10 12h11M10 18h11",
