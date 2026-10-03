@@ -519,6 +519,12 @@ export function useThreadModel({
 
   return {
     t,
+    /** Earlier pages of a long conversation, read as the person scrolls up to them. */
+    older: {
+      has: history.hasOlder,
+      loading: history.isLoadingOlder,
+      load: history.loadOlder,
+    },
     dismissed,
     dismissSuggestion,
     draft,

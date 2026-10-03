@@ -2101,3 +2101,4 @@
 .dk-fnp-step{display:flex;flex-direction:column;gap:6px}
 .dk-fnp-sep{display:block;height:1px;margin:2px 0;background:var(--dsk-b-sub)}
 .dk-fnp-more{font-size:11.5px;color:var(--dsk-subtle)}
+.dk-older{grid-column:2;min-height:24px;padding:4px 0 12px;text-align:center;font-size:12px;color:var(--dsk-subtle)}

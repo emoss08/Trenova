@@ -27,6 +27,7 @@ import { useNavigate } from "react-router";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -262,6 +263,40 @@ export function DeskConversation({
   const replies = entries.filter((entry) => entry.kind === "assistant").length;
   const ownMessages = entries.filter((entry) => entry.kind === "user").length + (turn ? 1 : 0);
   const { scrollRef, away, unread, jumpToLatest } = useStickToBottom({ replies, ownMessages });
+
+  // A long conversation opens on its newest page; the earlier ones are read
+  // as the person scrolls up to them, and the page holds still while they
+  // arrive above what is being read.
+  const olderRef = useRef<HTMLDivElement>(null);
+  const keptHeight = useRef<number | null>(null);
+  const { has: hasOlder, loading: loadingOlder, load: loadOlder } = model.older;
+  useEffect(() => {
+    const marker = olderRef.current;
+    const scroller = scrollRef.current;
+    if (!marker || !scroller || !hasOlder) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && !loadingOlder) {
+          keptHeight.current = scroller.scrollHeight;
+          loadOlder();
+        }
+      },
+      { root: scroller, rootMargin: "400px 0px 0px 0px" },
+    );
+    observer.observe(marker);
+    return () => observer.disconnect();
+  }, [hasOlder, loadOlder, loadingOlder, scrollRef]);
+  const messageCount = model.entries.length;
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current;
+    if (keptHeight.current === null || !scroller || loadingOlder) {
+      return;
+    }
+    scroller.scrollTop += scroller.scrollHeight - keptHeight.current;
+    keptHeight.current = null;
+  }, [loadingOlder, messageCount, scrollRef]);
 
   const drag = useDeskDrop(lockedForFiles(thread, agentsUnavailable) ? null : attachments.add);
   useEffect(() => {
@@ -681,6 +716,11 @@ export function DeskConversation({
               >
                 <div className="dk-scroll" ref={scrollRef} tabIndex={0}>
                   <div className="dk-grid dk-flow">
+                    {hasOlder && (
+                      <div ref={olderRef} className="dk-older" aria-live="polite">
+                        {loadingOlder ? t("Reading earlier messages…") : ""}
+                      </div>
+                    )}
                     {entries.map((entry) => {
                       if (entry.kind === "user") {
                         return (
