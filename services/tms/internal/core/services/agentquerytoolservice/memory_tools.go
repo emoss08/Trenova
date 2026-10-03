@@ -127,6 +127,7 @@ func (t *recallMemoryTool) Query(
 	req := serviceports.RecallAgentMemoriesRequest{
 		TenantInfo:        tenantOf(params),
 		AgentDefinitionID: params.AgentDefinitionID,
+		ReaderUserID:      params.Actor.PersonUserID(),
 		Query:             optionalString(params.Params, "query"),
 		Kind:              agent.MemoryKind(optionalString(params.Params, "kind")),
 		ToolName:          optionalString(params.Params, "toolName"),
@@ -180,9 +181,11 @@ func (t *recallMemoryTool) Query(
 
 	rows := make([]memoryRow, 0, len(memories))
 	tainted := make([]agent.RecordRef, 0, len(memories))
+	ids := make([]pulid.ID, 0, len(memories))
 	for _, recalled := range memories {
 		memory := recalled.Memory
 		tainted = append(tainted, memory.TaintedRecords()...)
+		ids = append(ids, memory.ID)
 		rows = append(rows, memoryRow{
 			ID:         memory.ID.String(),
 			Kind:       string(memory.Kind),
@@ -198,22 +201,36 @@ func (t *recallMemoryTool) Query(
 		})
 	}
 
+	// A memory read back is a memory used, as much as one a prompt carried;
+	// counting only the prompt's left the ones agents look up reading as
+	// never used. A count that fails costs the count, not the answer.
+	if len(ids) > 0 {
+		_ = t.memories.RecordUse(ctx, serviceports.RecordMemoryUseRequest{
+			TenantInfo: req.TenantInfo,
+			IDs:        ids,
+		})
+	}
+
 	return recallOutcome{
 		searchOutcome: searchResult(criteria, rows, len(rows)),
 		tainted:       tainted,
+		recalled:      ids,
 	}, nil
 }
 
 // recallOutcome is a recall's answer, which names the memories in it that
-// were written by a run that had read outside content. Only the runtime reads
-// that; the model reads the rows.
+// were written by a run that had read outside content, and every memory it
+// read back. Only the runtime reads those; the model reads the rows.
 type recallOutcome struct {
 	searchOutcome
 
-	tainted []agent.RecordRef
+	tainted  []agent.RecordRef
+	recalled []pulid.ID
 }
 
 func (o recallOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+
+func (o recallOutcome) RecalledMemoryIDs() []pulid.ID { return o.recalled }
 
 func recordedBy(source agent.MemorySource) string {
 	switch source {

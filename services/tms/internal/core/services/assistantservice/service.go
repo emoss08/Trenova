@@ -67,6 +67,9 @@ type Params struct {
 	Reports *reporting.Service                  `optional:"true"`
 	Queries serviceports.AgentQueryToolRegistry `optional:"true"`
 	PDFs    serviceports.PDFRenderer            `optional:"true"`
+	// Memories describes the memories a reply used or saved, as the thread
+	// is served.
+	Memories serviceports.AgentMemoryService `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -113,6 +116,7 @@ type Service struct {
 	reports       *reporting.Service
 	queries       serviceports.AgentQueryToolRegistry
 	pdfs          serviceports.PDFRenderer
+	memories      serviceports.AgentMemoryService
 }
 
 func New(p Params) *Service {
@@ -148,6 +152,7 @@ func New(p Params) *Service {
 		queries:       p.Queries,
 		pdfs:          p.PDFs,
 		reports:       p.Reports,
+		memories:      p.Memories,
 	}
 
 	return s

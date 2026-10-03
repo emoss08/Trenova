@@ -738,3 +738,24 @@ describe("advanceTurn", () => {
     expect(next.segments).toBe(state.segments);
   });
 });
+
+describe("reduceTurn memory", () => {
+  it("keeps the latest list of memories the turn used, and each one it saved once", () => {
+    const state = run([
+      accepted,
+      parseAssistantStreamEvent("memory_used", JSON.stringify({ ids: ["amem_1"] }))!,
+      parseAssistantStreamEvent("memory_used", JSON.stringify({ ids: ["amem_1", "amem_2"] }))!,
+      parseAssistantStreamEvent(
+        "memory_saved",
+        JSON.stringify({ id: "amem_3", callId: "call_1", pending: true }),
+      )!,
+      parseAssistantStreamEvent(
+        "memory_saved",
+        JSON.stringify({ id: "amem_3", callId: "call_1", pending: true }),
+      )!,
+    ]);
+
+    expect(state.usedMemoryIds).toEqual(["amem_1", "amem_2"]);
+    expect(state.savedMemories).toEqual([{ id: "amem_3", callId: "call_1", pending: true }]);
+  });
+});

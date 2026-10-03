@@ -69,7 +69,9 @@ export function DeskTopBar({
               ? t("Decisions")
               : place === "watchtower"
                 ? t("Watchtower")
-                : t("Today")}
+                : place === "memory"
+                  ? t("Memory")
+                  : t("Today")}
           </b>
         )}
       </div>

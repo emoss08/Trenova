@@ -275,6 +275,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agent.AllMemoryScopes()),
 		},
 		{
+			name:   "chk_agent_memory_preferences_saving_mode",
+			values: stringsOf(agent.AllMemorySavingModes()),
+		},
+		{
 			name:   "chk_agent_proposals_egress_class",
 			values: stringsOf(agent.EgressClasses()),
 		},

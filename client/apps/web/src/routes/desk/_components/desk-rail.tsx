@@ -14,7 +14,7 @@ import { deskThreadState, type DeskThreadState } from "./desk-thread-state";
 import { groupDeskThreadsByRecency, type DeskShelfKey } from "./desk-threads";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
-export type DeskPlace = "today" | "watchtower" | "decisions" | "thread";
+export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "thread";
 
 /** How long a deleted row takes to slide out before it leaves the list. */
 const ROW_LEAVE_MS = 260;
@@ -88,7 +88,9 @@ export function DeskRail({
         ? "n:watch"
         : place === "decisions"
           ? "n:dec"
-          : "n:today";
+          : place === "memory"
+            ? "n:memory"
+            : "n:today";
 
   useLayoutEffect(() => {
     const root = listRef.current;
@@ -200,6 +202,15 @@ export function DeskRail({
             <em className={cn("dk-sb-ct", decisionsWaitHere && "dk-w")}>{decisionsCount}</em>
           </button>
         )}
+        <button
+          type="button"
+          data-k="n:memory"
+          className={cn("dk-sb-i", activeKey === "n:memory" && "dk-on")}
+          onClick={() => void navigate("/desk/memory")}
+        >
+          <DeskIcon name="memory" size={14} />
+          <span>{t("Memory")}</span>
+        </button>
 
         {shelves.map((shelf) => (
           <Fragment key={shelf.key}>

@@ -2063,6 +2063,13 @@ export const routes: RouteObject[] = [
                   return { Component: DeskWatchtowerPage };
                 },
               },
+              {
+                path: "memory",
+                async lazy() {
+                  const { DeskMemoryRoutePage } = await import("@/routes/desk/memory-page");
+                  return { Component: DeskMemoryRoutePage };
+                },
+              },
             ],
           },
         ],

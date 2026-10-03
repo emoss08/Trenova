@@ -2230,6 +2230,9 @@ models:
   AgentMemoryScope:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.MemoryScope
+  AgentMemorySavingMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemorySavingMode
   AIProvider:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Provider

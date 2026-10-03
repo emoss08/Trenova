@@ -293,6 +293,7 @@ func (s *Service) FinishTurn(
 
 	turn := turnResultOf(plan.Input, plan.Decision, req.Run, req.Failure)
 	attachTurnContext(turn.Messages, plan.turnContext())
+	keepTurnMemories(turn.Messages, req.Run)
 	if plan.FollowUp {
 		markDecisionNote(turn.Messages)
 	}
@@ -312,6 +313,7 @@ func (s *Service) FinishTurn(
 	s.runtime.MarkToolEffects(saved)
 	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
 	s.measureAfterTurn(ctx, thread, plan, saved, req.TenantInfo, emit)
+	s.describeMemories(ctx, req.TenantInfo, req.Actor.UserID, saved)
 
 	if req.Failure == nil && !plan.FollowUp {
 		s.titleIfUnnamed(ctx, thread, plan.Input)

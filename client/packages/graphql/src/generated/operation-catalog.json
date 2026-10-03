@@ -1,6 +1,6 @@
 {
-  "operationCount": 962,
-  "fragmentCount": 274,
+  "operationCount": 971,
+  "fragmentCount": 276,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -5650,6 +5650,33 @@
       "sdl": "mutation ConfirmAccountingMappings($input: [ConfirmAccountingMappingInput!]!) {\n  confirmAccountingMappings(input: $input) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
     },
     {
+      "name": "ConfirmDeskMemory",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:b77a68a3726774af6ac20e02f2b3d74f282176aa662680101c26e32336117b9e",
+      "rootFields": [
+        "confirmDeskMemory"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "ConfirmDeskMemoryInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemoryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ConfirmDeskMemory($id: ID!, $input: ConfirmDeskMemoryInput!) {\n  confirmDeskMemory(id: $id, input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+    },
+    {
       "name": "CostingControlPage",
       "kind": "query",
       "domain": "cost-control",
@@ -5835,6 +5862,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation CreateCarrierInvoiceMatch($input: CreateCarrierInvoiceMatchInput!) {\n  createCarrierInvoiceMatch(input: $input) {\n    id\n    status\n    invoiceTotalMinor\n    expectedTotalMinor\n    varianceMinor\n    version\n  }\n}"
+    },
+    {
+      "name": "CreateDeskMemory",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:2a4f43136e5d332b8ac5980aa94e398c556d76aceff7ef0612a9660e323edc4f",
+      "rootFields": [
+        "createDeskMemory"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateDeskMemoryInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemoryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateDeskMemory($input: CreateDeskMemoryInput!) {\n  createDeskMemory(input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
     },
     {
       "name": "CreateDetentionPolicy",
@@ -7808,6 +7857,66 @@
       "sdl": "mutation DenyCaptureDevicePairing($userCode: String!) {\n  denyCaptureDevicePairing(userCode: $userCode)\n}"
     },
     {
+      "name": "DeskMemories",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:561e0df61a7e3a99ab3a70f4a59672c24433290e2218efc55871f129ab70df9e",
+      "rootFields": [
+        "deskMemories"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DeskMemoriesInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemoryFields"
+      ],
+      "usages": [],
+      "sdl": "query DeskMemories($input: DeskMemoriesInput!) {\n  deskMemories(input: $input) {\n    items {\n      ...DeskMemoryFields\n    }\n    next\n    all\n    counts {\n      scope\n      roleId\n      count\n    }\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+    },
+    {
+      "name": "DeskMemoriesByIds",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:eef601834abc646f56ccbea208c44523980450688d1b2d60680b804e231f69ba",
+      "rootFields": [
+        "deskMemoriesByIds"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemoryFields"
+      ],
+      "usages": [],
+      "sdl": "query DeskMemoriesByIds($ids: [ID!]!) {\n  deskMemoriesByIds(ids: $ids) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+    },
+    {
+      "name": "DeskMemorySettings",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:a1c10b7075d0d8f28ba109131de67585ab2fbaff09ab5f914cd7b85045503d38",
+      "rootFields": [
+        "deskMemorySettings"
+      ],
+      "variables": [],
+      "fragments": [
+        "DeskMemorySettingsFields"
+      ],
+      "usages": [],
+      "sdl": "query DeskMemorySettings {\n  deskMemorySettings {\n    ...DeskMemorySettingsFields\n  }\n}\n\nfragment DeskMemorySettingsFields on DeskMemorySettings {\n  savingMode\n  canShareWithOrganization\n  roles {\n    id\n    name\n    writable\n  }\n}"
+    },
+    {
       "name": "DetachOrderShipment",
       "kind": "mutation",
       "domain": "order",
@@ -8235,6 +8344,28 @@
       ],
       "usages": [],
       "sdl": "mutation DismissAgentMemorySuggestion($id: ID!, $version: Int!) {\n  dismissAgentMemorySuggestion(id: $id, version: $version) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "DismissDeskMemory",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:f12fc7eb83ef28f809f8a1d0fe4dd7845574f470d4b6d6ee3b27eb3ad363bb8d",
+      "rootFields": [
+        "dismissDeskMemory"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemoryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DismissDeskMemory($id: ID!) {\n  dismissDeskMemory(id: $id) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
     },
     {
       "name": "DismissMyNotifications",
@@ -16332,6 +16463,33 @@
       "sdl": "mutation ReviewWorkerSafetyEvent($input: SafetyEventStatusInput!) {\n  reviewWorkerSafetyEvent(input: $input) {\n    ...WorkerSafetyEventFields\n  }\n}\n\nfragment WorkerSafetyEventFields on WorkerSafetyEvent {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  kind\n  severity\n  status\n  occurredAt\n  location\n  description\n  preventable\n  points\n  pointsExpireAt\n  activePoints\n  referenceNumber\n  shipmentId\n  inspectionLevel\n  inspectionResult\n  outOfService\n  fineAmount\n  costAmount\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  closedById\n  closedBy {\n    id\n    name\n  }\n  closedAt\n  resolution\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ReviseDeskMemory",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:e10dace813f81c3ed5d0e9ee47b6bdaf9c853d68bbfc7ad633eb028018bdf37f",
+      "rootFields": [
+        "reviseDeskMemory"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "ReviseDeskMemoryInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemoryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ReviseDeskMemory($id: ID!, $input: ReviseDeskMemoryInput!) {\n  reviseDeskMemory(id: $id, input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+    },
+    {
       "name": "RevokeApprovalDelegation",
       "kind": "mutation",
       "domain": "org-structure",
@@ -17093,6 +17251,33 @@
       "sdl": "mutation SetDefaultTableConfiguration($id: ID!) {\n  setDefaultTableConfiguration(id: $id) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
     },
     {
+      "name": "SetDeskMemoryStatus",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:fc8df04b3dec8f28297676effcca3bab2dd524cef578c48c295d03c2a372288e",
+      "rootFields": [
+        "setDeskMemoryStatus"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "AgentMemoryStatus!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemoryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetDeskMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setDeskMemoryStatus(id: $id, status: $status) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+    },
+    {
       "name": "SetInboundMailboxSigningSecret",
       "kind": "mutation",
       "domain": "inbox",
@@ -17118,6 +17303,28 @@
       ],
       "usages": [],
       "sdl": "mutation SetInboundMailboxSigningSecret($id: ID!, $secret: String!) {\n  setInboundMailboxSigningSecret(id: $id, secret: $secret) {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "SetMemorySavingMode",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "hash": "sha256:9b15a52f5d6e8460694f7fae68e3f02cc10e6696d71a0d9791feee6afd27f0a3",
+      "rootFields": [
+        "setMemorySavingMode"
+      ],
+      "variables": [
+        {
+          "name": "mode",
+          "type": "AgentMemorySavingMode!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DeskMemorySettingsFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetMemorySavingMode($mode: AgentMemorySavingMode!) {\n  setMemorySavingMode(mode: $mode) {\n    ...DeskMemorySettingsFields\n  }\n}\n\nfragment DeskMemorySettingsFields on DeskMemorySettings {\n  savingMode\n  canShareWithOrganization\n  roles {\n    id\n    name\n    writable\n  }\n}"
     },
     {
       "name": "SetMyAIFeedback",
@@ -23686,6 +23893,37 @@
       "sdl": "fragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "DeskMemoryFields",
+      "typeCondition": "DeskMemory",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ConfirmDeskMemory",
+        "CreateDeskMemory",
+        "DeskMemories",
+        "DeskMemoriesByIds",
+        "DismissDeskMemory",
+        "ReviseDeskMemory",
+        "SetDeskMemoryStatus"
+      ],
+      "usages": [],
+      "sdl": "fragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+    },
+    {
+      "name": "DeskMemorySettingsFields",
+      "typeCondition": "DeskMemorySettings",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/desk-memory.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "DeskMemorySettings",
+        "SetMemorySavingMode"
+      ],
+      "usages": [],
+      "sdl": "fragment DeskMemorySettingsFields on DeskMemorySettings {\n  savingMode\n  canShareWithOrganization\n  roles {\n    id\n    name\n    writable\n  }\n}"
+    },
+    {
       "name": "DetentionCollectabilityFields",
       "typeCondition": "DetentionCollectability",
       "domain": "detention",
@@ -26713,15 +26951,24 @@
       ],
       "sdl": "input AgentMemoryInput {\n  content: String!\n  expiresAt: Timestamp\n  kind: AgentMemoryKind!\n  subjectId: ID\n  \"\"\"With subjectId, the record the memory is about; both or neither.\"\"\"\n  subjectType: AgentMemorySubjectType\n  toolName: String\n  \"\"\"Required on an update; ignored on a create.\"\"\"\n  version: Int\n}"
     },
+    "AgentMemorySavingMode": {
+      "kind": "enum",
+      "values": [
+        "AskFirst",
+        "Automatic"
+      ],
+      "sdl": "\"\"\"\nHow a person wants memories an agent picks up in their conversations kept.\n\"\"\"\nenum AgentMemorySavingMode {\n  \"\"\"\n  Offered in the conversation; nothing is kept until the person accepts it.\n  \"\"\"\n  AskFirst\n  \"\"\"Saved as the agent picks them up, and said so in the conversation.\"\"\"\n  Automatic\n}"
+    },
     "AgentMemoryStatus": {
       "kind": "enum",
       "values": [
         "Active",
         "Dismissed",
+        "Paused",
         "Retired",
         "Suggested"
       ],
-      "sdl": "enum AgentMemoryStatus {\n  Active\n  \"\"\"\n  A suggestion an administrator refused; the same pattern is not suggested again for 30 days.\n  \"\"\"\n  Dismissed\n  Retired\n  \"\"\"\n  Drawn from feedback and waiting for an administrator; never read by an agent.\n  \"\"\"\n  Suggested\n}"
+      "sdl": "enum AgentMemoryStatus {\n  Active\n  \"\"\"\n  A suggestion an administrator refused; the same pattern is not suggested again for 30 days.\n  \"\"\"\n  Dismissed\n  \"\"\"\n  Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed.\n  \"\"\"\n  Paused\n  Retired\n  \"\"\"\n  Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent.\n  \"\"\"\n  Suggested\n}"
     },
     "AgentPlanDecisionInput": {
       "kind": "input",
@@ -28311,6 +28558,32 @@
       ],
       "sdl": "\"\"\"A proposal to confirm, with the record it proposed when it was shown.\"\"\"\ninput ConfirmAccountingMappingInput {\n  \"\"\"The proposed record's ID in the accounting system, as shown.\"\"\"\n  externalId: String!\n  id: ID!\n}"
     },
+    "ConfirmDeskMemoryInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "content",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "roleId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "scope",
+          "type": "AgentMemoryScope!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ConfirmDeskMemoryInput {\n  \"\"\"The memory as the person edited it.\"\"\"\n  content: String!\n  roleId: ID\n  scope: AgentMemoryScope!\n  version: Int!\n}"
+    },
     "CostCategoryUpdateInput": {
       "kind": "input",
       "fields": [
@@ -28526,6 +28799,27 @@
         }
       ],
       "sdl": "input CreateCarrierInvoiceMatchInput {\n  \"\"\"\n  Optional explicit assignment; otherwise resolved by pro number or shipment reference.\n  \"\"\"\n  carrierAssignmentId: ID\n  \"\"\"\n  Required for document AI sources; EDI sources take the carrier from the linked invoice.\n  \"\"\"\n  carrierId: ID\n  documentAiExtractionId: ID\n  \"\"\"\n  Exactly one source is required: an EDI carrier invoice or a document AI extraction.\n  \"\"\"\n  ediCarrierInvoiceId: ID\n  \"\"\"Document AI sources only: the extracted invoice number.\"\"\"\n  invoiceNumber: String\n  \"\"\"Document AI sources only: the extracted invoice total in minor units.\"\"\"\n  invoiceTotalMinor: Int\n  \"\"\"\n  Document AI sources only: the pro number used to locate the assignment.\n  \"\"\"\n  proNumber: String\n  \"\"\"Document AI sources only: the shipment used to locate the assignment.\"\"\"\n  shipmentId: ID\n}"
+    },
+    "CreateDeskMemoryInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "content",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "roleId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "scope",
+          "type": "AgentMemoryScope!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateDeskMemoryInput {\n  content: String!\n  roleId: ID\n  \"\"\"\n  User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.\n  \"\"\"\n  scope: AgentMemoryScope!\n}"
     },
     "CreateFuelPurchaseImportInput": {
       "kind": "input",
@@ -29185,6 +29479,37 @@
         }
       ],
       "sdl": "input DeleteTimeEntryInput {\n  id: ID!\n  reason: String!\n}"
+    },
+    "DeskMemoriesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "roleId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "scope",
+          "type": "AgentMemoryScope",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DeskMemoriesInput {\n  after: String\n  \"\"\"Page size; 50 when left out, at most 100.\"\"\"\n  first: Int\n  \"\"\"Words the memory says.\"\"\"\n  query: String\n  \"\"\"With scope Role, only this role.\"\"\"\n  roleId: ID\n  \"\"\"Only this scope; every scope when left out.\"\"\"\n  scope: AgentMemoryScope\n}"
     },
     "DetachPayEventInput": {
       "kind": "input",
@@ -34025,6 +34350,32 @@
         }
       ],
       "sdl": "input ReviewInboundMessageInput {\n  note: String\n  \"\"\"\n  Where the message ends up. Only Actioned and Ignored are a person's to choose.\n  \"\"\"\n  status: InboundMessageStatus!\n}"
+    },
+    "ReviseDeskMemoryInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "content",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "roleId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "scope",
+          "type": "AgentMemoryScope",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nChanges what a memory says, who it is kept for, or both; what is left out stays.\n\"\"\"\ninput ReviseDeskMemoryInput {\n  content: String\n  roleId: ID\n  scope: AgentMemoryScope\n  version: Int!\n}"
     },
     "RotaFilterInput": {
       "kind": "input",
@@ -38952,9 +39303,11 @@
       "kind": "enum",
       "values": [
         "Agent",
-        "Organization"
+        "Organization",
+        "Role",
+        "User"
       ],
-      "sdl": "\"\"\"\nWho reads a memory: every agent in the organization, or only the agent it was kept for.\n\"\"\"\nenum AgentMemoryScope {\n  Agent\n  Organization\n}"
+      "sdl": "\"\"\"\nWho reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role.\n\"\"\"\nenum AgentMemoryScope {\n  Agent\n  Organization\n  \"\"\"\n  Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team.\n  \"\"\"\n  Role\n  \"\"\"\n  Kept for one person, read only in their conversations; the Desk calls it Just you.\n  \"\"\"\n  User\n}"
     },
     "PayRateOverrideInput": {
       "kind": "input",

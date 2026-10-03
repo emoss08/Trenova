@@ -21,10 +21,25 @@ import (
 // It is a write like any other: it goes through the proposal tiers, so an
 // organization decides whether an agent may add to its memory on its own or
 // only with a person's approval. What it records is bounded and never a
-// secret, and a person can retire it from AI Control.
+// secret, and a person can retire it from AI Control or the Desk.
+//
+// A memory kept for the person in the conversation alone is theirs, like a
+// private view, and runs without asking them; one for their team or the
+// organization reaches other people's conversations and goes through the
+// tiers. A person who chose to be asked first gets the memory offered instead:
+// kept as a suggestion nothing reads until they accept it in the conversation.
 type rememberTool struct {
 	memories serviceports.AgentMemoryService
 }
+
+var _ serviceports.MemoryRecordingTool = (*rememberTool)(nil)
+
+// Who a memory the agent keeps is visible to, as the model names it.
+const (
+	visibleToMe           = "me"
+	visibleToTeam         = "team"
+	visibleToOrganization = "organization"
+)
 
 func newRememberTool(memories serviceports.AgentMemoryService) serviceports.AgentTool {
 	return &rememberTool{memories: memories}
@@ -37,13 +52,15 @@ func (t *rememberTool) SearchTerms() []string {
 }
 
 func (t *rememberTool) Description() string {
-	return "Record a standing instruction or a fact for every later run of every agent in " +
-		"this organization to know. Use kind Instruction for a rule a person gave you, Fact " +
-		"for something you were told or confirmed that is not in any record. Scope it to one " +
+	return "Record a standing instruction or a fact for later runs to know. Use kind " +
+		"Instruction for a rule a person gave you, Fact for something you were told or " +
+		"confirmed that is not in any record. Say who it is for with visibleTo: me for the " +
+		"person you are talking to alone (the default when someone is in the conversation), " +
+		"team for everyone in their role, organization for everyone. Scope it to one " +
 		"customer, location, driver or carrier with subjectType and subjectId when it is " +
-		"about that record; leave both out for something organization-wide. Do not record " +
-		"what a record already says, a guess, or anything a person asked you to keep " +
-		"private. Use recall_memory first to see whether it is already known."
+		"about that record. Do not record what a record already says, a guess, or anything " +
+		"a person asked you to keep private. Use recall_memory first to see whether it is " +
+		"already known."
 }
 
 func (t *rememberTool) ParamSchema() map[string]any {
@@ -74,6 +91,12 @@ func (t *rememberTool) ParamSchema() map[string]any {
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: "Optional YYYY-MM-DD after which the memory no longer applies, such as a temporary arrangement.",
 			},
+			fieldVisibleTo: agenttoolschema.Enum(
+				"Who the memory reaches: me for the person in the conversation alone, team "+
+					"for everyone in their role, organization for everyone. Defaults to me when "+
+					"a person is in the conversation, organization otherwise.",
+				memoryAudiences,
+			),
 		},
 		toolschema.KeyRequired:             []string{"content"},
 		toolschema.KeyAdditionalProperties: false,
@@ -82,18 +105,20 @@ func (t *rememberTool) ParamSchema() map[string]any {
 
 func (t *rememberTool) Policy() serviceports.ToolPolicy {
 	return serviceports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceAgentMemory,
-		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
-		CarriesTaint:  true,
+		Name:                t.Name(),
+		Kind:                agent.ToolKindAction,
+		Resource:            permission.ResourceAgentMemory,
+		Operation:           permission.OpCreate,
+		Scope:               agent.ToolScopeTenant,
+		DefaultTier:         agent.TierActWithApproval,
+		MaxTier:             agent.TierAutoExecute,
+		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
+		Classify:            classifyRemember,
+		PersonalRunsUnasked: true,
+		Effect:              agent.ToolEffectChange,
+		Reversible:          true,
+		ReadsExternal:       agent.ExternalReadNever,
+		CarriesTaint:        true,
 		TaintHold: &serviceports.TaintHold{
 			Description: "An Instruction or a Correction recorded after the run read text " +
 				"from outside the organization waits for a person's approval; a Fact is " +
@@ -101,8 +126,35 @@ func (t *rememberTool) Policy() serviceports.ToolPolicy {
 			Applies: rememberHeldWhenTainted,
 		},
 		Rationale: "Saves a memory later runs read, so it keeps the taint of the run that " +
-			"wrote it.",
+			"wrote it. One kept for the caller alone is their own record; one for their " +
+			"team or the organization reaches colleagues' conversations.",
 	}
+}
+
+// classifyRemember calls a memory for the person in the conversation alone
+// personal: it reaches nobody else's conversations. Anything wider, or any
+// memory recorded with nobody in the conversation, is internal.
+func classifyRemember(params serviceports.ToolExecuteParams) serviceports.CallPolicy {
+	actor := params.Actor
+	if rememberAudience(params) != visibleToMe || actor == nil ||
+		actor.PrincipalType != serviceports.PrincipalTypeUser || actor.UserID.IsNil() {
+		return serviceports.CallPolicy{Egress: agent.EgressInternal}
+	}
+
+	return serviceports.CallPolicy{Egress: agent.EgressPersonal}
+}
+
+// rememberAudience is who the call keeps the memory for, defaulting to the
+// person when there is one.
+func rememberAudience(params serviceports.ToolExecuteParams) string {
+	if audience := optionalString(params.Params, fieldVisibleTo); audience != "" {
+		return audience
+	}
+	if params.Actor.PersonUserID().IsNotNil() {
+		return visibleToMe
+	}
+
+	return visibleToOrganization
 }
 
 func rememberHeldWhenTainted(params serviceports.ToolExecuteParams) bool {
@@ -119,17 +171,27 @@ func rememberKind(params map[string]any) agent.MemoryKind {
 }
 
 func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
-	request, err := t.request(&params)
-	if err != nil {
-		return err
-	}
-
-	_, err = t.memories.Remember(ctx, request, params.Actor)
+	_, err := t.Record(ctx, params)
 
 	return err
 }
 
+// Record keeps the memory and returns it, so the conversation can show the
+// person what was kept and let them edit or undo it.
+func (t *rememberTool) Record(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) (*agent.Memory, error) {
+	request, err := t.request(ctx, &params)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.memories.Remember(ctx, request, params.Actor)
+}
+
 func (t *rememberTool) request(
+	ctx context.Context,
 	params *serviceports.ToolExecuteParams,
 ) (*serviceports.RememberRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
@@ -156,17 +218,73 @@ func (t *rememberTool) request(
 		return nil, err
 	}
 
-	return &serviceports.RememberRequest{
-		TenantInfo:  tenantFrom(*params),
-		Kind:        kind,
-		Content:     content,
-		SubjectType: subjectType,
-		SubjectID:   subjectID,
-		ExpiresAt:   expiresAt,
-		RunID:       params.RunID,
-		ProposalID:  params.ProposalID,
-		Taint:       params.CarriedTaint(timeutils.NowUnix()),
-	}, nil
+	request := &serviceports.RememberRequest{
+		TenantInfo:   tenantFrom(*params),
+		Kind:         kind,
+		Content:      content,
+		SubjectType:  subjectType,
+		SubjectID:    subjectID,
+		ExpiresAt:    expiresAt,
+		RunID:        params.RunID,
+		ProposalID:   params.ProposalID,
+		Taint:        params.CarriedTaint(timeutils.NowUnix()),
+		PersonUserID: params.Actor.PersonUserID(),
+	}
+	if err = t.audience(ctx, params, request); err != nil {
+		return nil, err
+	}
+
+	return request, nil
+}
+
+// audience narrows the memory to who the call keeps it for, and offers it
+// rather than keeping it when the person asked to be asked first. A memory
+// a person already approved as a proposal was asked about, and is kept.
+func (t *rememberTool) audience(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+	request *serviceports.RememberRequest,
+) error {
+	person := request.PersonUserID
+	switch audience := rememberAudience(*params); audience {
+	case visibleToOrganization:
+		request.Scope = agent.MemoryScopeOrganization
+	case visibleToMe:
+		if person.IsNil() {
+			return fmt.Errorf("visibleTo me needs a person in the conversation; use organization")
+		}
+		request.Scope = agent.MemoryScopeUser
+		request.OwnerUserID = person
+	case visibleToTeam:
+		if person.IsNil() {
+			return fmt.Errorf("visibleTo team needs a person in the conversation; use organization")
+		}
+		reader, err := t.memories.Reader(ctx, request.TenantInfo, person)
+		if err != nil {
+			return err
+		}
+		// The team is the first of the person's own roles by name; a person
+		// with several can move the memory to another on the Desk.
+		if len(reader.RoleIDs) == 0 {
+			return fmt.Errorf("the person holds no role to keep this for; use me or organization")
+		}
+		request.Scope = agent.MemoryScopeRole
+		request.RoleID = reader.RoleIDs[0]
+	default:
+		return fmt.Errorf("visibleTo %q is not one of %s",
+			audience, strings.Join(memoryAudiences.Names(), ", "))
+	}
+
+	if person.IsNil() || params.ApprovedFromProposal() {
+		return nil
+	}
+	mode, err := t.memories.SavingMode(ctx, request.TenantInfo, person)
+	if err != nil {
+		return err
+	}
+	request.Suggest = mode == agent.MemorySavingAskFirst
+
+	return nil
 }
 
 // forgetMemoryTool retires a memory that no longer holds. It is a status
@@ -262,7 +380,13 @@ var (
 		"agent.rememberedMemoryKind",
 		[]agent.MemoryKind{agent.MemoryKindInstruction, agent.MemoryKindFact},
 	)
+	memoryAudiences = agenttoolschema.Source(
+		"agent.memoryAudience",
+		[]string{visibleToMe, visibleToTeam, visibleToOrganization},
+	)
 )
+
+const fieldVisibleTo = "visibleTo"
 
 // memorySubject reads the optional subject pair, refusing half of one: a
 // type without an id names nothing, and an id without a type cannot be

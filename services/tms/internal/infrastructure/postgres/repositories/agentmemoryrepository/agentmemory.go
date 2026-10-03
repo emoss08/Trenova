@@ -213,7 +213,7 @@ func (r *repository) ListActive(
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
-				sq = forAgent(sq, req.AgentDefinitionID)
+				sq = forAgent(sq, req.AgentDefinitionID, req.Reader)
 
 				return sq.WhereGroup(" AND ", func(scope *bun.SelectQuery) *bun.SelectQuery {
 					if req.OrganizationWide {
@@ -297,6 +297,7 @@ func (r *repository) search(
 				sq = forAgent(
 					activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now),
 					req.AgentDefinitionID,
+					req.Reader,
 				)
 				if match != nil {
 					sq = sq.Where(cols.SearchVector.Expr("{} @@ "+match.tsquery), match.args...)
@@ -359,7 +360,7 @@ func (r *repository) FindActive(
 				sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now).
 					Where(cols.Content.Expr("LOWER(TRIM({})) = ?"),
 						strings.ToLower(strings.TrimSpace(req.Content)))
-				sq = sameReaders(sq, req.Scope, req.AgentDefinitionID)
+				sq = sameReaders(sq, &req)
 				if !req.Tainted {
 					sq = sq.Where(cols.Tainted.IsFalse())
 				}
@@ -507,6 +508,7 @@ func (r *repository) ListSuggestionContext(
 						return scope.
 							WhereGroup(" OR ", func(active *bun.SelectQuery) *bun.SelectQuery {
 								return activeOnly(active, req.Now).
+									Where(cols.Scope.In(), bun.List(agentScopes())).
 									WhereGroup(" AND ", func(owner *bun.SelectQuery) *bun.SelectQuery {
 										return owner.Where(cols.AgentDefinitionID.IsNull()).
 											WhereOr(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
@@ -546,9 +548,14 @@ func (r *repository) ResolveSuggestion(
 			NewUpdate().
 			Model((*agent.Memory)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				from := []agent.MemoryStatus{agent.MemoryStatusSuggested}
+				if req.Reconsidered {
+					from = append(from, agent.MemoryStatusDismissed)
+				}
+
 				return buncolgen.MemoryScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.Eq(), agent.MemoryStatusSuggested).
+					Where(cols.Status.In(), bun.List(from)).
 					Where(cols.Version.Eq(), req.Version)
 			}).
 			Set(cols.Status.Set(), req.Status).
@@ -561,10 +568,19 @@ func (r *repository) ResolveSuggestion(
 			if !scope.IsValid() {
 				scope = agent.MemoryScopeAgent
 			}
+			owner, role := pulid.Nil, pulid.Nil
+			switch scope {
+			case agent.MemoryScopeUser:
+				owner = req.OwnerUserID
+			case agent.MemoryScopeRole:
+				role = req.RoleID
+			}
 			query = query.
 				Set(cols.Content.Set(), req.Content).
 				Set(cols.Kind.Set(), req.Kind).
 				Set(cols.Scope.Set(), scope).
+				Set(cols.OwnerUserID.Set(), nullableID(owner)).
+				Set(cols.RoleID.Set(), nullableID(role)).
 				Set(cols.CreatedByUserID.Set(), nullableID(req.ByUserID)).
 				Set(cols.RetiredAt.Set(), nil).
 				Set(cols.RetiredByUserID.Set(), nil)
@@ -597,36 +613,70 @@ func (r *repository) ResolveSuggestion(
 }
 
 // forAgent keeps the memories a prompt for one agent may carry: those kept
-// for the whole organization, and those kept for this agent alone. A prompt
-// for no agent in particular carries only the organization's.
-func forAgent(sq *bun.SelectQuery, agentID pulid.ID) *bun.SelectQuery {
+// for the whole organization, those kept for this agent alone, and those kept
+// for the person the prompt is for, themselves or one of their roles. A
+// prompt for no agent in particular carries none of the agent's, and one for
+// nobody in particular none of anybody's.
+func forAgent(sq *bun.SelectQuery, agentID pulid.ID, reader agent.MemoryReader) *bun.SelectQuery {
 	cols := buncolgen.MemoryColumns
 
 	return sq.WhereGroup(" AND ", func(owner *bun.SelectQuery) *bun.SelectQuery {
 		owner = owner.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
-		if agentID.IsNil() {
-			return owner
+		if agentID.IsNotNil() {
+			owner = owner.WhereGroup(" OR ", func(own *bun.SelectQuery) *bun.SelectQuery {
+				return own.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
+					Where(cols.AgentDefinitionID.Eq(), agentID)
+			})
 		}
 
-		return owner.WhereGroup(" OR ", func(own *bun.SelectQuery) *bun.SelectQuery {
-			return own.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
-				Where(cols.AgentDefinitionID.Eq(), agentID)
-		})
+		return forPerson(owner, reader)
 	})
 }
 
-func sameReaders(
-	sq *bun.SelectQuery,
-	scope agent.MemoryScope,
-	agentID pulid.ID,
-) *bun.SelectQuery {
+// forPerson adds, as alternatives, the memories kept for the reader and for
+// their roles.
+func forPerson(sq *bun.SelectQuery, reader agent.MemoryReader) *bun.SelectQuery {
 	cols := buncolgen.MemoryColumns
-	if scope != agent.MemoryScopeAgent {
-		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
+	if reader.UserID.IsNotNil() {
+		sq = sq.WhereGroup(" OR ", func(own *bun.SelectQuery) *bun.SelectQuery {
+			return own.Where(cols.Scope.Eq(), agent.MemoryScopeUser).
+				Where(cols.OwnerUserID.Eq(), reader.UserID)
+		})
+	}
+	if len(reader.RoleIDs) > 0 {
+		sq = sq.WhereGroup(" OR ", func(role *bun.SelectQuery) *bun.SelectQuery {
+			return role.Where(cols.Scope.Eq(), agent.MemoryScopeRole).
+				Where(cols.RoleID.In(), bun.List(reader.RoleIDs))
+		})
 	}
 
-	return sq.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
-		Where(cols.AgentDefinitionID.Eq(), agentID)
+	return sq
+}
+
+// sameReaders keeps the rows read by exactly the readers the new memory
+// would be: the same agent, the same person or the same role.
+func sameReaders(sq *bun.SelectQuery, req *repositories.FindActiveAgentMemoryRequest) *bun.SelectQuery {
+	cols := buncolgen.MemoryColumns
+	switch req.Scope {
+	case agent.MemoryScopeAgent:
+		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
+			Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+	case agent.MemoryScopeUser:
+		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeUser).
+			Where(cols.OwnerUserID.Eq(), req.OwnerUserID)
+	case agent.MemoryScopeRole:
+		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeRole).
+			Where(cols.RoleID.Eq(), req.RoleID)
+	default:
+		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
+	}
+}
+
+// agentScopes are the scopes about which agents read a memory rather than
+// which people. What one person keeps for themselves or their team is theirs,
+// and is never handed to the job that drafts suggestions for everyone.
+func agentScopes() []agent.MemoryScope {
+	return []agent.MemoryScope{agent.MemoryScopeOrganization, agent.MemoryScopeAgent}
 }
 
 func suggestionStatuses() []agent.MemoryStatus {

@@ -115,9 +115,43 @@ type Message struct {
 	LatencyMs int64            `json:"latencyMs"    bun:"latency_ms,type:BIGINT,nullzero"`
 	CostUSD   *decimal.Decimal `json:"costUsd"      bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
+	// UsedMemoryIDs are the memories the turn this reply ends used, and
+	// SavedMemories what it kept or offered to keep; both only on a turn's
+	// last reply. Memories is each of them as the reader may see it, filled
+	// as the thread is served.
+	UsedMemoryIDs []pulid.ID    `json:"usedMemoryIds,omitempty" bun:"used_memory_ids,type:JSONB,nullzero"`
+	SavedMemories []SavedMemory `json:"savedMemories,omitempty" bun:"saved_memories,type:JSONB,nullzero"`
+	Memories      []MemoryNote  `json:"memories,omitempty"      bun:"-"`
+
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id"`
+}
+
+// SavedMemory is a memory a turn kept through the remember tool, by the call
+// that kept it. Pending is a memory offered rather than kept: the person asked
+// to be asked first, and it waits for them to accept it.
+type SavedMemory struct {
+	ID      pulid.ID `json:"id"`
+	CallID  string   `json:"callId"`
+	Pending bool     `json:"pending"`
+}
+
+// MemoryNote is a memory a reply used or saved, as its reader sees it: what
+// it says, who it is kept for, where it came from, and whether the reader may
+// change it.
+type MemoryNote struct {
+	ID          pulid.ID `json:"id"`
+	Content     string   `json:"content"`
+	Scope       string   `json:"scope"`
+	RoleID      pulid.ID `json:"roleId,omitempty"`
+	RoleName    string   `json:"roleName,omitempty"`
+	Status      string   `json:"status"`
+	Source      string   `json:"source"`
+	SourceTitle string   `json:"sourceTitle,omitempty"`
+	CreatedAt   int64    `json:"createdAt"`
+	Version     int64    `json:"version"`
+	Editable    bool     `json:"editable"`
 }
 
 // MessageAttachment is one file on a user turn: the document it became, and

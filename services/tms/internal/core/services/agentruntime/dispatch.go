@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -37,6 +38,10 @@ type toolOutcome struct {
 	found   []string
 	verdict string
 	reason  string
+	// memories are the memories a recall read back, and saved the one a
+	// remember kept or offered.
+	memories []pulid.ID
+	saved    *serviceports.SavedMemory
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -523,13 +528,18 @@ func (s *Service) runQueryTool(
 			"Tool %q returned data that could not be encoded.", call.Name)
 	}
 
-	return toolOutcome{
+	outcome := toolOutcome{
 		content: FenceToolResult(call.Name, encoded),
 		data:    data,
 		summary: summarizeResult(call.Name, document),
 		taint:   callTaint(tool.Policy(), call, data, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 	}
+	if recall, ok := data.(serviceports.MemoryRecall); ok {
+		outcome.memories = recall.RecalledMemoryIDs()
+	}
+
+	return outcome
 }
 
 func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome {
@@ -541,7 +551,24 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 
 	writeCtx, write := s.startWrite(ctx, &a, false)
 	action.ExecutedAt = timeutils.NowUnix()
-	result, err := serviceports.ExecuteTool(writeCtx, a.tool, a.executeParams())
+	var (
+		result *agent.ToolExecutionResult
+		saved  *serviceports.SavedMemory
+		err    error
+	)
+	if recorder, records := a.tool.(serviceports.MemoryRecordingTool); records {
+		var memory *agent.Memory
+		memory, err = recorder.Record(writeCtx, a.executeParams())
+		if err == nil && memory != nil {
+			saved = &serviceports.SavedMemory{
+				ID:      memory.ID,
+				CallID:  call.ID,
+				Pending: memory.Status == agent.MemoryStatusSuggested,
+			}
+		}
+	} else {
+		result, err = serviceports.ExecuteTool(writeCtx, a.tool, a.executeParams())
+	}
 	if err != nil {
 		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
 		write.End()
@@ -567,6 +594,7 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 		action:  action,
 		taint:   callTaint(a.tool.Policy(), call, nil, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
+		saved:   saved,
 	}
 }
 

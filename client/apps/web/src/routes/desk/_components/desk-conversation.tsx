@@ -1035,7 +1035,10 @@ export function DeskConversation({
                         first={!layout.any}
                         time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
                       >
-                        <DeskStreamingReply text={withArtifactRefs(live, turn.artifacts)} />
+                        <DeskStreamingReply
+                          text={withArtifactRefs(live, turn.artifacts)}
+                          usedMemoryIds={turn.usedMemoryIds}
+                        />
                       </DeskRow>
                     )}
                     {turn?.status === "error" &&

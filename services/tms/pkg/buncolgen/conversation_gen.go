@@ -337,6 +337,8 @@ var MessageColumns = struct {
 	OutputTokens      Column // "output_tokens" → qualified: "amsg.output_tokens"
 	LatencyMs         Column // "latency_ms" → qualified: "amsg.latency_ms"
 	CostUSD           Column // "cost_usd" → qualified: "amsg.cost_usd"
+	UsedMemoryIDs     Column // "used_memory_ids" → qualified: "amsg.used_memory_ids"
+	SavedMemories     Column // "saved_memories" → qualified: "amsg.saved_memories"
 	CreatedAt         Column // "created_at" → qualified: "amsg.created_at"
 }{
 	ID:                NewColumn("id", "amsg"),
@@ -376,6 +378,8 @@ var MessageColumns = struct {
 	OutputTokens:      NewColumn("output_tokens", "amsg"),
 	LatencyMs:         NewColumn("latency_ms", "amsg"),
 	CostUSD:           NewColumn("cost_usd", "amsg"),
+	UsedMemoryIDs:     NewColumn("used_memory_ids", "amsg"),
+	SavedMemories:     NewColumn("saved_memories", "amsg"),
 	CreatedAt:         NewColumn("created_at", "amsg"),
 }
 
@@ -421,6 +425,8 @@ var MessageFieldMap = map[string]string{
 	"outputTokens":   "output_tokens",
 	"latencyMs":      "latency_ms",
 	"costUsd":        "cost_usd",
+	"usedMemoryIds":  "used_memory_ids",
+	"savedMemories":  "saved_memories",
 	"createdAt":      "created_at",
 }
 
@@ -464,6 +470,8 @@ var MessageInsertableColumns = []string{
 	"output_tokens",
 	"latency_ms",
 	"cost_usd",
+	"used_memory_ids",
+	"saved_memories",
 	"created_at",
 }
 
@@ -565,6 +573,8 @@ var MessageFilter = struct {
 	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
 	LatencyMs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
 	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	UsedMemoryIDs     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedMemoryIds" → DB: "used_memory_ids"
+	SavedMemories     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "savedMemories" → DB: "saved_memories"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
@@ -677,6 +687,12 @@ var MessageFilter = struct {
 	},
 	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("costUsd", op, value)
+	},
+	UsedMemoryIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usedMemoryIds", op, value)
+	},
+	SavedMemories: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("savedMemories", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

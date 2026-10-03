@@ -63,3 +63,57 @@ func TestMemoryLimits_AreTheAgreedDefaults(t *testing.T) {
 	assert.Equal(t, 50, agent.MaxMemoryRecallLimit)
 	assert.Less(t, agent.MemoryPromptExcerptChars, agent.MaxMemoryContentChars)
 }
+
+func TestMemoryReader_ReadsTheirOwnAndTheirRolesOnly(t *testing.T) {
+	t.Parallel()
+
+	avery, jordan := pulid.MustNew("usr_"), pulid.MustNew("usr_")
+	billing, dispatch := pulid.MustNew("rol_"), pulid.MustNew("rol_")
+	reader := agent.MemoryReader{UserID: avery, RoleIDs: []pulid.ID{billing}}
+	kept := func(scope agent.MemoryScope, owner, role pulid.ID) *agent.Memory {
+		memory := validMemory("x")
+		memory.SetAudience(scope, owner, role)
+
+		return memory
+	}
+
+	assert.True(t, reader.Reads(kept(agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)))
+	assert.True(t, reader.Reads(kept(agent.MemoryScopeUser, avery, pulid.Nil)))
+	assert.False(t, reader.Reads(kept(agent.MemoryScopeUser, jordan, pulid.Nil)))
+	assert.True(t, reader.Reads(kept(agent.MemoryScopeRole, pulid.Nil, billing)))
+	assert.False(t, reader.Reads(kept(agent.MemoryScopeRole, pulid.Nil, dispatch)))
+	assert.False(t, agent.MemoryReader{}.Reads(kept(agent.MemoryScopeUser, avery, pulid.Nil)),
+		"nobody in particular reads nobody's own memories")
+}
+
+func TestMemoryValidate_APersonalScopeNamesItsReaders(t *testing.T) {
+	t.Parallel()
+
+	for _, scope := range []agent.MemoryScope{agent.MemoryScopeUser, agent.MemoryScopeRole} {
+		memory := validMemory("x")
+		memory.Scope = scope
+		me := errortypes.NewMultiError()
+		memory.Validate(me)
+		assert.True(t, me.HasErrors(), scope)
+	}
+
+	memory := validMemory("x")
+	memory.SetAudience(agent.MemoryScopeUser, pulid.MustNew("usr_"), pulid.MustNew("rol_"))
+	assert.Nil(t, memory.RoleID, "a memory kept for a person names no role")
+	me := errortypes.NewMultiError()
+	memory.Validate(me)
+	assert.False(t, me.HasErrors())
+
+	offered := validMemory("x")
+	offered.Source = agent.MemorySourceAgent
+	offered.Status = agent.MemoryStatusSuggested
+	me = errortypes.NewMultiError()
+	offered.Validate(me)
+	assert.False(t, me.HasErrors(), "an agent may offer a memory for a person to accept")
+
+	written := validMemory("x")
+	written.Status = agent.MemoryStatusSuggested
+	me = errortypes.NewMultiError()
+	written.Validate(me)
+	assert.True(t, me.HasErrors(), "a person's own memory is never a suggestion")
+}

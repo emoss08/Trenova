@@ -2481,6 +2481,9 @@ var MemoryColumns = struct {
 	Content           Column // "content" → qualified: "amem.content"
 	AgentDefinitionID Column // "agent_definition_id" → qualified: "amem.agent_definition_id"
 	Scope             Column // "scope" → qualified: "amem.scope"
+	OwnerUserID       Column // "owner_user_id" → qualified: "amem.owner_user_id"
+	RoleID            Column // "role_id" → qualified: "amem.role_id"
+	SourceThreadID    Column // "source_thread_id" → qualified: "amem.source_thread_id"
 	Tainted           Column // "tainted" → qualified: "amem.tainted"
 	TaintRunID        Column // "taint_run_id" → qualified: "amem.taint_run_id"
 	SourceRunID       Column // "source_run_id" → qualified: "amem.source_run_id"
@@ -2510,6 +2513,9 @@ var MemoryColumns = struct {
 	Content:           NewColumn("content", "amem"),
 	AgentDefinitionID: NewColumn("agent_definition_id", "amem"),
 	Scope:             NewColumn("scope", "amem"),
+	OwnerUserID:       NewColumn("owner_user_id", "amem"),
+	RoleID:            NewColumn("role_id", "amem"),
+	SourceThreadID:    NewColumn("source_thread_id", "amem"),
 	Tainted:           NewColumn("tainted", "amem"),
 	TaintRunID:        NewColumn("taint_run_id", "amem"),
 	SourceRunID:       NewColumn("source_run_id", "amem"),
@@ -2545,6 +2551,9 @@ var MemoryFieldMap = map[string]string{
 	"content":           "content",
 	"agentDefinitionId": "agent_definition_id",
 	"scope":             "scope",
+	"ownerUserId":       "owner_user_id",
+	"roleId":            "role_id",
+	"sourceThreadId":    "source_thread_id",
 	"tainted":           "tainted",
 	"taintRunId":        "taint_run_id",
 	"sourceRunId":       "source_run_id",
@@ -2577,6 +2586,9 @@ var MemoryInsertableColumns = []string{
 	"content",
 	"agent_definition_id",
 	"scope",
+	"owner_user_id",
+	"role_id",
+	"source_thread_id",
 	"tainted",
 	"taint_run_id",
 	"source_run_id",
@@ -2669,6 +2681,9 @@ var MemoryFilter = struct {
 	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
 	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
 	Scope             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scope" → DB: "scope"
+	OwnerUserID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerUserId" → DB: "owner_user_id"
+	RoleID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roleId" → DB: "role_id"
+	SourceThreadID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceThreadId" → DB: "source_thread_id"
 	Tainted           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
 	TaintRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintRunId" → DB: "taint_run_id"
 	SourceRunID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceRunId" → DB: "source_run_id"
@@ -2723,6 +2738,15 @@ var MemoryFilter = struct {
 	Scope: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("scope", op, value)
 	},
+	OwnerUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerUserId", op, value)
+	},
+	RoleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roleId", op, value)
+	},
+	SourceThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceThreadId", op, value)
+	},
 	Tainted: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("tainted", op, value)
 	},
@@ -2755,6 +2779,177 @@ var MemoryFilter = struct {
 	},
 	Evidence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("evidence", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// MemoryPreference — table "agent_memory_preferences", alias "amp"
+// ---------------------------------------------------------------------------
+
+// MemoryPreferenceTable holds the table name, alias, and primary key columns
+// for the "agent_memory_preferences" table. The alias "amp" is used in all generated
+// SQL fragments (e.g. "amp.id = ?").
+var MemoryPreferenceTable = TableInfo{
+	Name:       "agent_memory_preferences",
+	Alias:      "amp",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// MemoryPreferenceColumns provides type-safe column references for the "agent_memory_preferences" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(MemoryPreferenceColumns.ID.String())
+//	// SELECT amp.id FROM agent_memory_preferences AS amp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(MemoryPreferenceColumns.ID.Eq(), id)           // WHERE amp.id = ?
+//	q.Order(MemoryPreferenceColumns.CreatedAt.OrderDesc())  // ORDER BY amp.created_at DESC
+var MemoryPreferenceColumns = struct {
+	ID             Column // "id" → qualified: "amp.id"
+	OrganizationID Column // "organization_id" → qualified: "amp.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "amp.business_unit_id"
+	UserID         Column // "user_id" → qualified: "amp.user_id"
+	SavingMode     Column // "saving_mode" → qualified: "amp.saving_mode"
+	Version        Column // "version" → qualified: "amp.version"
+	CreatedAt      Column // "created_at" → qualified: "amp.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "amp.updated_at"
+}{
+	ID:             NewColumn("id", "amp"),
+	OrganizationID: NewColumn("organization_id", "amp"),
+	BusinessUnitID: NewColumn("business_unit_id", "amp"),
+	UserID:         NewColumn("user_id", "amp"),
+	SavingMode:     NewColumn("saving_mode", "amp"),
+	Version:        NewColumn("version", "amp"),
+	CreatedAt:      NewColumn("created_at", "amp"),
+	UpdatedAt:      NewColumn("updated_at", "amp"),
+}
+
+// MemoryPreferenceFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by MemoryPreference.GetStaticFieldMap().
+var MemoryPreferenceFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"userId":         "user_id",
+	"savingMode":     "saving_mode",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// MemoryPreferenceInsertableColumns lists column names suitable for INSERT statements on the "agent_memory_preferences" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var MemoryPreferenceInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"user_id",
+	"saving_mode",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// MemoryPreferenceRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(MemoryPreferenceRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var MemoryPreferenceRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// MemoryPreferenceScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE amp.organization_id = ? AND amp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.MemoryPreferenceScopeTenant(sq, ti).
+//		Where(buncolgen.MemoryPreferenceColumns.ID.Eq(), id)
+func MemoryPreferenceScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, MemoryPreferenceColumns.OrganizationID, MemoryPreferenceColumns.BusinessUnitID, ti)
+}
+
+// MemoryPreferenceScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.MemoryPreferenceScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.MemoryPreferenceColumns.ID.In(), bun.List(ids))
+//	})
+func MemoryPreferenceScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, MemoryPreferenceColumns.OrganizationID, MemoryPreferenceColumns.BusinessUnitID, ti)
+}
+
+// MemoryPreferenceScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.MemoryPreferenceScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.MemoryPreferenceColumns.ID.Eq(), id)
+//	})
+func MemoryPreferenceScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, MemoryPreferenceColumns.OrganizationID, MemoryPreferenceColumns.BusinessUnitID, ti)
+}
+
+// MemoryPreferenceApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.MemoryPreferenceApplyTenant(tenantInfo))
+func MemoryPreferenceApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(MemoryPreferenceColumns.OrganizationID, MemoryPreferenceColumns.BusinessUnitID, ti)
+}
+
+// MemoryPreferenceFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_memory_preferences" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	MemoryPreferenceFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var MemoryPreferenceFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	SavingMode     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "savingMode" → DB: "saving_mode"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	SavingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("savingMode", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

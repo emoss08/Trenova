@@ -267,6 +267,7 @@ func (s *Service) ListMessages(
 
 	s.runtime.MarkToolEffects(messages)
 	s.nameDelegatedSteps(ctx, req.Thread.TenantInfo, messages)
+	s.describeMemories(ctx, req.Thread.TenantInfo, req.Thread.UserID, messages)
 
 	return &services.ThreadMessagesPage{
 		Results: messages,

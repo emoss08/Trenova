@@ -1618,6 +1618,14 @@ type ConfirmAccountingMappingInput struct {
 	ExternalID string `json:"externalId"`
 }
 
+type ConfirmDeskMemoryInput struct {
+	// The memory as the person edited it.
+	Content string            `json:"content"`
+	Scope   agent.MemoryScope `json:"scope"`
+	RoleID  *string           `json:"roleId,omitempty"`
+	Version int               `json:"version"`
+}
+
 type CostCategory struct {
 	ID                   string                       `json:"id"`
 	Category             CostCategoryType             `json:"category"`
@@ -1722,6 +1730,13 @@ type CreateCarrierInvoiceMatchInput struct {
 	ProNumber *string `json:"proNumber,omitempty"`
 	// Document AI sources only: the shipment used to locate the assignment.
 	ShipmentID *string `json:"shipmentId,omitempty"`
+}
+
+type CreateDeskMemoryInput struct {
+	Content string `json:"content"`
+	// User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.
+	Scope  agent.MemoryScope `json:"scope"`
+	RoleID *string           `json:"roleId,omitempty"`
 }
 
 type CreateDocumentTemplateVersionInput struct {
@@ -1996,6 +2011,77 @@ type DelegateApprovalInput struct {
 type DeleteTimeEntryInput struct {
 	ID     string `json:"id"`
 	Reason string `json:"reason"`
+}
+
+type DeskMemoriesInput struct {
+	// Page size; 50 when left out, at most 100.
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	// Only this scope; every scope when left out.
+	Scope *agent.MemoryScope `json:"scope,omitempty"`
+	// With scope Role, only this role.
+	RoleID *string `json:"roleId,omitempty"`
+	// Words the memory says.
+	Query *string `json:"query,omitempty"`
+}
+
+// A memory as a person keeps it on the Desk: one of their own, their role's, or
+// the organization's. Agent-scoped memories are administered in AI Control and
+// never appear here.
+type DeskMemory struct {
+	ID      string `json:"id"`
+	Content string `json:"content"`
+	// User (Just you), Role (the person's team) or Organization.
+	Scope agent.MemoryScope `json:"scope"`
+	// The role a Role memory is kept for.
+	RoleID   *string `json:"roleId,omitempty"`
+	RoleName string  `json:"roleName"`
+	// Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits.
+	Status agent.MemoryStatus `json:"status"`
+	Source agent.MemorySource `json:"source"`
+	// The conversation the memory was saved from; empty for one a person wrote down.
+	SourceTitle string `json:"sourceTitle"`
+	// How many prompts and recalls have used it.
+	UseCount   int  `json:"useCount"`
+	LastUsedAt *int `json:"lastUsedAt,omitempty"`
+	CreatedAt  int  `json:"createdAt"`
+	Version    int  `json:"version"`
+	// The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
+	Editable bool `json:"editable"`
+}
+
+// How many memories the person keeps in one scope; Role is counted per role.
+type DeskMemoryCount struct {
+	Scope  agent.MemoryScope `json:"scope"`
+	RoleID *string           `json:"roleId,omitempty"`
+	Count  int               `json:"count"`
+}
+
+type DeskMemoryPage struct {
+	// Newest first.
+	Items []*DeskMemory `json:"items"`
+	// The cursor of the next page; null on the last.
+	Next *string `json:"next,omitempty"`
+	// Every memory the search matches, in every scope.
+	All int `json:"all"`
+	// What the search matches in each scope, for the filter chips.
+	Counts []*DeskMemoryCount `json:"counts"`
+}
+
+// A role the person holds, offered as a team to keep a memory for.
+type DeskMemoryRole struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// The person may keep memories for the role: it needs permission to create agent memories.
+	Writable bool `json:"writable"`
+}
+
+type DeskMemorySettings struct {
+	SavingMode agent.MemorySavingMode `json:"savingMode"`
+	// The person's roles by name.
+	Roles []*DeskMemoryRole `json:"roles"`
+	// The person may keep memories for the whole organization.
+	CanShareWithOrganization bool `json:"canShareWithOrganization"`
 }
 
 type DetachPayEventInput struct {
@@ -5940,6 +6026,14 @@ type ReviewRatingInput struct {
 	Key     string  `json:"key"`
 	Score   *int    `json:"score,omitempty"`
 	Comment *string `json:"comment,omitempty"`
+}
+
+// Changes what a memory says, who it is kept for, or both; what is left out stays.
+type ReviseDeskMemoryInput struct {
+	Content *string            `json:"content,omitempty"`
+	Scope   *agent.MemoryScope `json:"scope,omitempty"`
+	RoleID  *string            `json:"roleId,omitempty"`
+	Version int                `json:"version"`
 }
 
 type RoleConnection struct {

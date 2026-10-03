@@ -26322,7 +26322,7 @@
     },
     {
       "name": "remember",
-      "description": "Record a standing instruction or a fact for every later run of every agent in this organization to know. Use kind Instruction for a rule a person gave you, Fact for something you were told or confirmed that is not in any record. Scope it to one customer, location, driver or carrier with subjectType and subjectId when it is about that record; leave both out for something organization-wide. Do not record what a record already says, a guess, or anything a person asked you to keep private. Use recall_memory first to see whether it is already known.",
+      "description": "Record a standing instruction or a fact for later runs to know. Use kind Instruction for a rule a person gave you, Fact for something you were told or confirmed that is not in any record. Say who it is for with visibleTo: me for the person you are talking to alone (the default when someone is in the conversation), team for everyone in their role, organization for everyone. Scope it to one customer, location, driver or carrier with subjectType and subjectId when it is about that record. Do not record what a record already says, a guess, or anything a person asked you to keep private. Use recall_memory first to see whether it is already known.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -26357,6 +26357,16 @@
             ],
             "type": "string",
             "x-enumOf": "agent.memorySubjectType"
+          },
+          "visibleTo": {
+            "description": "Who the memory reaches: me for the person in the conversation alone, team for everyone in their role, organization for everyone. Defaults to me when a person is in the conversation, organization otherwise.",
+            "enum": [
+              "me",
+              "team",
+              "organization"
+            ],
+            "type": "string",
+            "x-enumOf": "agent.memoryAudience"
           }
         },
         "required": [
@@ -26379,10 +26389,11 @@
         "maxTier": "AutoExecute",
         "promotableTo": "AutoExecute",
         "egress": [
+          "personal",
           "internal"
         ],
-        "classifiesEachCall": false,
-        "personalRunsUnasked": false,
+        "classifiesEachCall": true,
+        "personalRunsUnasked": true,
         "heldWhenTainted": true,
         "taintHold": "An Instruction or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text.",
         "effect": "change",
@@ -26390,7 +26401,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": true,
-        "rationale": "Saves a memory later runs read, so it keeps the taint of the run that wrote it."
+        "rationale": "Saves a memory later runs read, so it keeps the taint of the run that wrote it. One kept for the caller alone is their own record; one for their team or the organization reaches colleagues' conversations."
       }
     },
     {

@@ -153,6 +153,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 		"aitraining.graphqls",
 		"aiusage.graphqls",
 		"decisions.graphqls",
+		"desk_memory.graphqls",
 		"extractioneval.graphqls",
 		"extractionrollout.graphqls",
 		"extractionshadow.graphqls",

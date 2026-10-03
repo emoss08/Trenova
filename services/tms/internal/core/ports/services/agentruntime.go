@@ -304,6 +304,11 @@ type RunResult struct {
 	Taint       *agent.RunTaint    `json:",omitempty"`
 	Fingerprint *agent.Fingerprint `json:",omitempty"`
 	Usage       *RunUsage          `json:",omitempty"`
+	// UsedMemoryIDs are the memories the turn used: those its prompt
+	// carried, then those recall_memory read back. SavedMemories are what it
+	// kept or offered to keep. Both are kept on its reply.
+	UsedMemoryIDs []pulid.ID    `json:",omitempty"`
+	SavedMemories []SavedMemory `json:",omitempty"`
 }
 
 type RunUsage struct {

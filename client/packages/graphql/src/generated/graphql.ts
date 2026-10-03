@@ -851,10 +851,21 @@ export type AgentMemoryKind =
   | 'Fact'
   | 'Instruction';
 
-/** Who reads a memory: every agent in the organization, or only the agent it was kept for. */
+/** How a person wants memories an agent picks up in their conversations kept. */
+export type AgentMemorySavingMode =
+  /** Offered in the conversation; nothing is kept until the person accepts it. */
+  | 'AskFirst'
+  /** Saved as the agent picks them up, and said so in the conversation. */
+  | 'Automatic';
+
+/** Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role. */
 export type AgentMemoryScope =
   | 'Agent'
-  | 'Organization';
+  | 'Organization'
+  /** Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team. */
+  | 'Role'
+  /** Kept for one person, read only in their conversations; the Desk calls it Just you. */
+  | 'User';
 
 export type AgentMemorySource =
   | 'Agent'
@@ -867,8 +878,10 @@ export type AgentMemoryStatus =
   | 'Active'
   /** A suggestion an administrator refused; the same pattern is not suggested again for 30 days. */
   | 'Dismissed'
+  /** Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed. */
+  | 'Paused'
   | 'Retired'
-  /** Drawn from feedback and waiting for an administrator; never read by an agent. */
+  /** Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent. */
   | 'Suggested';
 
 export type AgentMemorySubjectType =
@@ -2107,6 +2120,14 @@ export type ConfirmAccountingMappingInput = {
   id: string | number;
 };
 
+export type ConfirmDeskMemoryInput = {
+  /** The memory as the person edited it. */
+  content: string;
+  roleId?: string | number | null | undefined;
+  scope: AgentMemoryScope;
+  version: number;
+};
+
 export type CostBehavior =
   | 'Fixed'
   | 'Variable';
@@ -2203,6 +2224,13 @@ export type CreateCarrierInvoiceMatchInput = {
   proNumber?: string | null | undefined;
   /** Document AI sources only: the shipment used to locate the assignment. */
   shipmentId?: string | number | null | undefined;
+};
+
+export type CreateDeskMemoryInput = {
+  content: string;
+  roleId?: string | number | null | undefined;
+  /** User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds. */
+  scope: AgentMemoryScope;
 };
 
 export type CreateFuelPurchaseImportInput = {
@@ -2544,6 +2572,18 @@ export type DelegateApprovalInput = {
 export type DeleteTimeEntryInput = {
   id: string | number;
   reason: string;
+};
+
+export type DeskMemoriesInput = {
+  after?: string | null | undefined;
+  /** Page size; 50 when left out, at most 100. */
+  first?: number | null | undefined;
+  /** Words the memory says. */
+  query?: string | null | undefined;
+  /** With scope Role, only this role. */
+  roleId?: string | number | null | undefined;
+  /** Only this scope; every scope when left out. */
+  scope?: AgentMemoryScope | null | undefined;
 };
 
 export type DetachPayEventInput = {
@@ -5462,6 +5502,14 @@ export type ReviewRatingInput = {
   score?: number | null | undefined;
 };
 
+/** Changes what a memory says, who it is kept for, or both; what is left out stays. */
+export type ReviseDeskMemoryInput = {
+  content?: string | null | undefined;
+  roleId?: string | number | null | undefined;
+  scope?: AgentMemoryScope | null | undefined;
+  version: number;
+};
+
 /**
  * What one worker is doing on one day. Anything above Scheduled overrides the
  * pattern, and the strongest override wins, so a driver on approved leave never
@@ -8127,6 +8175,74 @@ export type AgentProposalCountQueryVariables = Exact<{
 
 
 export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null } };
+
+export type DeskMemoryFieldsFragment = { id: string, content: string, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
+
+export type DeskMemorySettingsFieldsFragment = { savingMode: AgentMemorySavingMode, canShareWithOrganization: boolean, roles: Array<{ id: string, name: string, writable: boolean }> } & { ' $fragmentName'?: 'DeskMemorySettingsFieldsFragment' };
+
+export type DeskMemoriesQueryVariables = Exact<{
+  input: DeskMemoriesInput;
+}>;
+
+
+export type DeskMemoriesQuery = { deskMemories: { next: string | null, all: number, items: Array<{ ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } }>, counts: Array<{ scope: AgentMemoryScope, roleId: string | null, count: number }> } };
+
+export type DeskMemoriesByIdsQueryVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type DeskMemoriesByIdsQuery = { deskMemoriesByIds: Array<{ ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } }> };
+
+export type DeskMemorySettingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DeskMemorySettingsQuery = { deskMemorySettings: { ' $fragmentRefs'?: { 'DeskMemorySettingsFieldsFragment': DeskMemorySettingsFieldsFragment } } };
+
+export type CreateDeskMemoryMutationVariables = Exact<{
+  input: CreateDeskMemoryInput;
+}>;
+
+
+export type CreateDeskMemoryMutation = { createDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type ReviseDeskMemoryMutationVariables = Exact<{
+  id: string | number;
+  input: ReviseDeskMemoryInput;
+}>;
+
+
+export type ReviseDeskMemoryMutation = { reviseDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type SetDeskMemoryStatusMutationVariables = Exact<{
+  id: string | number;
+  status: AgentMemoryStatus;
+}>;
+
+
+export type SetDeskMemoryStatusMutation = { setDeskMemoryStatus: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type ConfirmDeskMemoryMutationVariables = Exact<{
+  id: string | number;
+  input: ConfirmDeskMemoryInput;
+}>;
+
+
+export type ConfirmDeskMemoryMutation = { confirmDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type DismissDeskMemoryMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DismissDeskMemoryMutation = { dismissDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type SetMemorySavingModeMutationVariables = Exact<{
+  mode: AgentMemorySavingMode;
+}>;
+
+
+export type SetMemorySavingModeMutation = { setMemorySavingMode: { ' $fragmentRefs'?: { 'DeskMemorySettingsFieldsFragment': DeskMemorySettingsFieldsFragment } } };
 
 export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
 
@@ -15952,6 +16068,34 @@ export const AgentChoiceFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AgentChoiceFields"}) as unknown as TypedDocumentString<AgentChoiceFieldsFragment, unknown>;
+export const DeskMemoryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DeskMemoryFields on DeskMemory {
+  id
+  content
+  scope
+  roleId
+  roleName
+  status
+  source
+  sourceTitle
+  useCount
+  lastUsedAt
+  createdAt
+  version
+  editable
+}
+    `, {"fragmentName":"DeskMemoryFields"}) as unknown as TypedDocumentString<DeskMemoryFieldsFragment, unknown>;
+export const DeskMemorySettingsFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DeskMemorySettingsFields on DeskMemorySettings {
+  savingMode
+  canShareWithOrganization
+  roles {
+    id
+    name
+    writable
+  }
+}
+    `, {"fragmentName":"DeskMemorySettingsFields"}) as unknown as TypedDocumentString<DeskMemorySettingsFieldsFragment, unknown>;
 export const AgentEvalCaseTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentEvalCaseTableRowFields on AgentEvalCase {
   id
@@ -24305,6 +24449,15 @@ export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentCho
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
 export const AgentProposalCountDocument = {"__meta__":{"kind":"query","name":"AgentProposalCount","hash":"sha256:2eded728747d5256e64b681abdec7d5ec92e8868262c03bea6249352bc3deb28"}} as unknown as TypedDocumentString<AgentProposalCountQuery, AgentProposalCountQueryVariables>;
+export const DeskMemoriesDocument = {"__meta__":{"kind":"query","name":"DeskMemories","hash":"sha256:561e0df61a7e3a99ab3a70f4a59672c24433290e2218efc55871f129ab70df9e"}} as unknown as TypedDocumentString<DeskMemoriesQuery, DeskMemoriesQueryVariables>;
+export const DeskMemoriesByIdsDocument = {"__meta__":{"kind":"query","name":"DeskMemoriesByIds","hash":"sha256:eef601834abc646f56ccbea208c44523980450688d1b2d60680b804e231f69ba"}} as unknown as TypedDocumentString<DeskMemoriesByIdsQuery, DeskMemoriesByIdsQueryVariables>;
+export const DeskMemorySettingsDocument = {"__meta__":{"kind":"query","name":"DeskMemorySettings","hash":"sha256:a1c10b7075d0d8f28ba109131de67585ab2fbaff09ab5f914cd7b85045503d38"}} as unknown as TypedDocumentString<DeskMemorySettingsQuery, DeskMemorySettingsQueryVariables>;
+export const CreateDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateDeskMemory","hash":"sha256:2a4f43136e5d332b8ac5980aa94e398c556d76aceff7ef0612a9660e323edc4f"}} as unknown as TypedDocumentString<CreateDeskMemoryMutation, CreateDeskMemoryMutationVariables>;
+export const ReviseDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"ReviseDeskMemory","hash":"sha256:e10dace813f81c3ed5d0e9ee47b6bdaf9c853d68bbfc7ad633eb028018bdf37f"}} as unknown as TypedDocumentString<ReviseDeskMemoryMutation, ReviseDeskMemoryMutationVariables>;
+export const SetDeskMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetDeskMemoryStatus","hash":"sha256:fc8df04b3dec8f28297676effcca3bab2dd524cef578c48c295d03c2a372288e"}} as unknown as TypedDocumentString<SetDeskMemoryStatusMutation, SetDeskMemoryStatusMutationVariables>;
+export const ConfirmDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"ConfirmDeskMemory","hash":"sha256:b77a68a3726774af6ac20e02f2b3d74f282176aa662680101c26e32336117b9e"}} as unknown as TypedDocumentString<ConfirmDeskMemoryMutation, ConfirmDeskMemoryMutationVariables>;
+export const DismissDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"DismissDeskMemory","hash":"sha256:f12fc7eb83ef28f809f8a1d0fe4dd7845574f470d4b6d6ee3b27eb3ad363bb8d"}} as unknown as TypedDocumentString<DismissDeskMemoryMutation, DismissDeskMemoryMutationVariables>;
+export const SetMemorySavingModeDocument = {"__meta__":{"kind":"mutation","name":"SetMemorySavingMode","hash":"sha256:9b15a52f5d6e8460694f7fae68e3f02cc10e6696d71a0d9791feee6afd27f0a3"}} as unknown as TypedDocumentString<SetMemorySavingModeMutation, SetMemorySavingModeMutationVariables>;
 export const AgentEvalCaseTableDocument = {"__meta__":{"kind":"query","name":"AgentEvalCaseTable","hash":"sha256:5e3392b2af6f7d552485ad9c8c6e6598132e2b9398f3c7d96465bb66570875e1"}} as unknown as TypedDocumentString<AgentEvalCaseTableQuery, AgentEvalCaseTableQueryVariables>;
 export const AgentEvalCaseDetailDocument = {"__meta__":{"kind":"query","name":"AgentEvalCaseDetail","hash":"sha256:c8f54c60d6575aebc1b527f39b11dbce52859470f602f7a2ee439711ed922799"}} as unknown as TypedDocumentString<AgentEvalCaseDetailQuery, AgentEvalCaseDetailQueryVariables>;
 export const CreateAgentEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentEvalCase","hash":"sha256:75b53ec477e9ad120fe972fdd5d4890e5bb58ba673df78cee3cb879a791a3f1b"}} as unknown as TypedDocumentString<CreateAgentEvalCaseMutation, CreateAgentEvalCaseMutationVariables>;

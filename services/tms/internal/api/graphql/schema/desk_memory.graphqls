@@ -1,0 +1,123 @@
+"How a person wants memories an agent picks up in their conversations kept."
+enum AgentMemorySavingMode {
+  "Saved as the agent picks them up, and said so in the conversation."
+  Automatic
+  "Offered in the conversation; nothing is kept until the person accepts it."
+  AskFirst
+}
+
+"""
+A memory as a person keeps it on the Desk: one of their own, their role's, or
+the organization's. Agent-scoped memories are administered in AI Control and
+never appear here.
+"""
+type DeskMemory {
+  id: ID!
+  content: String!
+  "User (Just you), Role (the person's team) or Organization."
+  scope: AgentMemoryScope!
+  "The role a Role memory is kept for."
+  roleId: ID
+  roleName: String!
+  "Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits."
+  status: AgentMemoryStatus!
+  source: AgentMemorySource!
+  "The conversation the memory was saved from; empty for one a person wrote down."
+  sourceTitle: String!
+  "How many prompts and recalls have used it."
+  useCount: Int!
+  lastUsedAt: Timestamp
+  createdAt: Timestamp!
+  version: Int!
+  "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
+  editable: Boolean!
+}
+
+"How many memories the person keeps in one scope; Role is counted per role."
+type DeskMemoryCount {
+  scope: AgentMemoryScope!
+  roleId: ID
+  count: Int!
+}
+
+type DeskMemoryPage {
+  "Newest first."
+  items: [DeskMemory!]!
+  "The cursor of the next page; null on the last."
+  next: String
+  "Every memory the search matches, in every scope."
+  all: Int!
+  "What the search matches in each scope, for the filter chips."
+  counts: [DeskMemoryCount!]!
+}
+
+"A role the person holds, offered as a team to keep a memory for."
+type DeskMemoryRole {
+  id: ID!
+  name: String!
+  "The person may keep memories for the role: it needs permission to create agent memories."
+  writable: Boolean!
+}
+
+type DeskMemorySettings {
+  savingMode: AgentMemorySavingMode!
+  "The person's roles by name."
+  roles: [DeskMemoryRole!]!
+  "The person may keep memories for the whole organization."
+  canShareWithOrganization: Boolean!
+}
+
+input DeskMemoriesInput {
+  "Page size; 50 when left out, at most 100."
+  first: Int
+  after: String
+  "Only this scope; every scope when left out."
+  scope: AgentMemoryScope
+  "With scope Role, only this role."
+  roleId: ID
+  "Words the memory says."
+  query: String
+}
+
+input CreateDeskMemoryInput {
+  content: String!
+  "User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds."
+  scope: AgentMemoryScope!
+  roleId: ID
+}
+
+"Changes what a memory says, who it is kept for, or both; what is left out stays."
+input ReviseDeskMemoryInput {
+  content: String
+  scope: AgentMemoryScope
+  roleId: ID
+  version: Int!
+}
+
+input ConfirmDeskMemoryInput {
+  "The memory as the person edited it."
+  content: String!
+  scope: AgentMemoryScope!
+  roleId: ID
+  version: Int!
+}
+
+extend type Query {
+  "The memories the person keeps, newest first, with how many each scope holds."
+  deskMemories(input: DeskMemoriesInput!): DeskMemoryPage!
+  "Memories a conversation names, as many of them as the person may see, in the order asked."
+  deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
+  deskMemorySettings: DeskMemorySettings!
+}
+
+extend type Mutation {
+  createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
+  reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
+  "Active resumes or brings back a forgotten memory, Paused sets it aside, Retired forgets it."
+  setDeskMemoryStatus(id: ID!, status: AgentMemoryStatus!): DeskMemory!
+  "Accepts a memory an agent offered in the person's conversation."
+  confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
+  "Turns down a memory an agent offered; nothing is kept."
+  dismissDeskMemory(id: ID!): DeskMemory!
+  setMemorySavingMode(mode: AgentMemorySavingMode!): DeskMemorySettings!
+}

@@ -473,8 +473,10 @@ enum AgentMemorySource {
 
 enum AgentMemoryStatus {
   Active
+  "Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed."
+  Paused
   Retired
-  "Drawn from feedback and waiting for an administrator; never read by an agent."
+  "Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent."
   Suggested
   "A suggestion an administrator refused; the same pattern is not suggested again for 30 days."
   Dismissed
@@ -493,10 +495,14 @@ type AgentMemoryEvidence {
   lastRatedAt: Timestamp!
 }
 
-"Who reads a memory: every agent in the organization, or only the agent it was kept for."
+"Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role."
 enum AgentMemoryScope {
   Organization
   Agent
+  "Kept for one person, read only in their conversations; the Desk calls it Just you."
+  User
+  "Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team."
+  Role
 }
 
 enum AgentMemorySubjectType {
@@ -527,8 +533,10 @@ type AgentMemory {
   toolName: String!
   content: String!
   agentDefinitionId: ID
-  "Organization reaches every agent; Agent reaches only agentDefinitionId."
+  "Organization reaches every agent; Agent reaches only agentDefinitionId; User only ownerUserId's conversations; Role only those of roleId's holders."
   scope: AgentMemoryScope!
+  ownerUserId: ID
+  roleId: ID
   "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
   tainted: Boolean!
   "The run whose outside content the memory carries."

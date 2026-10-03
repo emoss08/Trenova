@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customfielddefinitionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionsresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/distanceoverrideresolver"
@@ -519,6 +520,10 @@ func FromServices(s *Services) *Resolver {
 	decisionsDeps := &decisionsresolver.Deps{
 		Core:                      s.Core,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
+	}
+	deskmemoryDeps := &deskmemoryresolver.Deps{
+		Core:               s.Core,
+		AgentMemoryService: s.AgentMemoryService,
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   s.Core,
@@ -1114,6 +1119,7 @@ func FromServices(s *Services) *Resolver {
 			costingMutation:               &costingMutation{Deps: costingDeps},
 			customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
 			decisionsMutation:             &decisionsMutation{Deps: decisionsDeps},
+			deskmemoryMutation:            &deskmemoryMutation{Deps: deskmemoryDeps},
 			detentionMutation:             &detentionMutation{Deps: detentionDeps},
 			dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 			documenttemplateMutation:      &documenttemplateMutation{Deps: documenttemplateDeps},
@@ -1220,6 +1226,7 @@ func FromServices(s *Services) *Resolver {
 			customerpaymentQuery:          &customerpaymentQuery{Deps: customerpaymentDeps},
 			customfielddefinitionQuery:    &customfielddefinitionQuery{Deps: customfielddefinitionDeps},
 			decisionsQuery:                &decisionsQuery{Deps: decisionsDeps},
+			deskmemoryQuery:               &deskmemoryQuery{Deps: deskmemoryDeps},
 			detentionQuery:                &detentionQuery{Deps: detentionDeps},
 			dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 			distanceoverrideQuery:         &distanceoverrideQuery{Deps: distanceoverrideDeps},
@@ -1976,6 +1983,7 @@ type mutationResolver struct {
 	*costingMutation
 	*customerpaymentMutation
 	*decisionsMutation
+	*deskmemoryMutation
 	*detentionMutation
 	*dispatchconsoleMutation
 	*documenttemplateMutation
@@ -2153,6 +2161,7 @@ type queryResolver struct {
 	*customerpaymentQuery
 	*customfielddefinitionQuery
 	*decisionsQuery
+	*deskmemoryQuery
 	*detentionQuery
 	*dispatchconsoleQuery
 	*distanceoverrideQuery
@@ -2471,6 +2480,7 @@ type (
 	costingMutation               = costingresolver.MutationResolver
 	customerpaymentMutation       = customerpaymentresolver.MutationResolver
 	decisionsMutation             = decisionsresolver.MutationResolver
+	deskmemoryMutation            = deskmemoryresolver.MutationResolver
 	detentionMutation             = detentionresolver.MutationResolver
 	dispatchconsoleMutation       = dispatchconsoleresolver.MutationResolver
 	documenttemplateMutation      = documenttemplateresolver.MutationResolver
@@ -2553,6 +2563,7 @@ type (
 	customerpaymentQuery          = customerpaymentresolver.QueryResolver
 	customfielddefinitionQuery    = customfielddefinitionresolver.QueryResolver
 	decisionsQuery                = decisionsresolver.QueryResolver
+	deskmemoryQuery               = deskmemoryresolver.QueryResolver
 	detentionQuery                = detentionresolver.QueryResolver
 	dispatchconsoleQuery          = dispatchconsoleresolver.QueryResolver
 	distanceoverrideQuery         = distanceoverrideresolver.QueryResolver

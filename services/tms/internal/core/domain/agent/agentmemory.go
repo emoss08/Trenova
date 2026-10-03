@@ -105,24 +105,88 @@ func AllMemorySources() []MemorySource {
 	}
 }
 
+// MemoryScope is who a memory is read for. Organization and Agent are about
+// which agents read it; User and Role are about whose conversations it reaches:
+// one person's own ("Just you" on the Desk), or everyone holding one role (the
+// Desk calls that the person's team, since roles are how people are grouped).
 type MemoryScope string
 
 const (
 	MemoryScopeOrganization = MemoryScope("Organization")
 	MemoryScopeAgent        = MemoryScope("Agent")
+	MemoryScopeUser         = MemoryScope("User")
+	MemoryScopeRole         = MemoryScope("Role")
 )
 
 func (s MemoryScope) IsValid() bool {
 	switch s {
-	case MemoryScopeOrganization, MemoryScopeAgent:
+	case MemoryScopeOrganization, MemoryScopeAgent, MemoryScopeUser, MemoryScopeRole:
 		return true
 	default:
 		return false
 	}
 }
 
+// Personal reports whether the scope narrows a memory to some people rather
+// than to some agents.
+func (s MemoryScope) Personal() bool {
+	return s == MemoryScopeUser || s == MemoryScopeRole
+}
+
 func AllMemoryScopes() []MemoryScope {
-	return []MemoryScope{MemoryScopeOrganization, MemoryScopeAgent}
+	return []MemoryScope{
+		MemoryScopeOrganization,
+		MemoryScopeAgent,
+		MemoryScopeUser,
+		MemoryScopeRole,
+	}
+}
+
+// MemoryReader is the person a memory is read for: their own memories and
+// their roles' reach them, nobody else's. A reader with no user, a run nobody
+// is in, reads only what is kept for the organization or for its agent.
+type MemoryReader struct {
+	UserID  pulid.ID
+	RoleIDs []pulid.ID
+}
+
+// Reads reports whether a memory of this scope reaches the reader. Agent
+// scope is the agent's business, not the person's, and is decided elsewhere.
+func (r MemoryReader) Reads(m *Memory) bool {
+	switch m.Scope {
+	case MemoryScopeUser:
+		return r.UserID.IsNotNil() && m.OwnerUserID != nil && *m.OwnerUserID == r.UserID
+	case MemoryScopeRole:
+		if m.RoleID == nil {
+			return false
+		}
+		for _, id := range r.RoleIDs {
+			if id == *m.RoleID {
+				return true
+			}
+		}
+
+		return false
+	default:
+		return true
+	}
+}
+
+// MemorySavingMode is how a person wants new memories an agent picks up in
+// their conversations to be kept: saved and announced, or offered first.
+type MemorySavingMode string
+
+const (
+	MemorySavingAutomatic = MemorySavingMode("Automatic")
+	MemorySavingAskFirst  = MemorySavingMode("AskFirst")
+)
+
+func (m MemorySavingMode) IsValid() bool {
+	return m == MemorySavingAutomatic || m == MemorySavingAskFirst
+}
+
+func AllMemorySavingModes() []MemorySavingMode {
+	return []MemorySavingMode{MemorySavingAutomatic, MemorySavingAskFirst}
 }
 
 func AllMemoryKinds() []MemoryKind {
@@ -132,7 +196,10 @@ func AllMemoryKinds() []MemoryKind {
 type MemoryStatus string
 
 const (
-	MemoryStatusActive    = MemoryStatus("Active")
+	MemoryStatusActive = MemoryStatus("Active")
+	// MemoryStatusPaused is a memory a person set aside without forgetting
+	// it: kept, listed, and read by no agent until it is resumed.
+	MemoryStatusPaused    = MemoryStatus("Paused")
 	MemoryStatusRetired   = MemoryStatus("Retired")
 	MemoryStatusSuggested = MemoryStatus("Suggested")
 	MemoryStatusDismissed = MemoryStatus("Dismissed")
@@ -140,7 +207,11 @@ const (
 
 func (s MemoryStatus) IsValid() bool {
 	switch s {
-	case MemoryStatusActive, MemoryStatusRetired, MemoryStatusSuggested, MemoryStatusDismissed:
+	case MemoryStatusActive,
+		MemoryStatusPaused,
+		MemoryStatusRetired,
+		MemoryStatusSuggested,
+		MemoryStatusDismissed:
 		return true
 	default:
 		return false
@@ -154,6 +225,7 @@ func (s MemoryStatus) IsSuggestion() bool {
 func AllMemoryStatuses() []MemoryStatus {
 	return []MemoryStatus{
 		MemoryStatusActive,
+		MemoryStatusPaused,
 		MemoryStatusRetired,
 		MemoryStatusSuggested,
 		MemoryStatusDismissed,
@@ -239,14 +311,22 @@ type Memory struct {
 
 	AgentDefinitionID *pulid.ID   `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
 	Scope             MemoryScope `json:"scope"             bun:"scope,type:VARCHAR(20),notnull,default:'Organization'"`
-	Tainted           bool        `json:"tainted"           bun:"tainted,type:BOOLEAN,notnull,default:false"`
-	TaintRunID        *pulid.ID   `json:"taintRunId"        bun:"taint_run_id,type:VARCHAR(100),nullzero"`
-	SourceRunID       *pulid.ID   `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
-	SourceProposalID  *pulid.ID   `json:"sourceProposalId"  bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
-	CreatedByUserID   *pulid.ID   `json:"createdByUserId"   bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
-	RetiredByUserID   *pulid.ID   `json:"retiredByUserId"   bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
-	RetiredAt         *int64      `json:"retiredAt"         bun:"retired_at,type:BIGINT,nullzero"`
-	ExpiresAt         *int64      `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
+	// OwnerUserID is the person a User-scoped memory is kept for, and RoleID
+	// the role a Role-scoped one is kept for. Each is empty for every other
+	// scope.
+	OwnerUserID *pulid.ID `json:"ownerUserId" bun:"owner_user_id,type:VARCHAR(100),nullzero"`
+	RoleID      *pulid.ID `json:"roleId"      bun:"role_id,type:VARCHAR(100),nullzero"`
+	// SourceThreadID is the conversation the run that recorded the memory
+	// was answering, so a list can say which conversation it came from.
+	SourceThreadID   *pulid.ID `json:"sourceThreadId" bun:"source_thread_id,type:VARCHAR(100),nullzero"`
+	Tainted          bool      `json:"tainted"           bun:"tainted,type:BOOLEAN,notnull,default:false"`
+	TaintRunID       *pulid.ID `json:"taintRunId"        bun:"taint_run_id,type:VARCHAR(100),nullzero"`
+	SourceRunID      *pulid.ID `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
+	SourceProposalID *pulid.ID `json:"sourceProposalId"  bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
+	CreatedByUserID  *pulid.ID `json:"createdByUserId"   bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
+	RetiredByUserID  *pulid.ID `json:"retiredByUserId"   bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
+	RetiredAt        *int64    `json:"retiredAt"         bun:"retired_at,type:BIGINT,nullzero"`
+	ExpiresAt        *int64    `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
 
 	UseCount   int    `json:"useCount"   bun:"use_count,type:INTEGER,notnull,default:0"`
 	LastUsedAt *int64 `json:"lastUsedAt" bun:"last_used_at,type:BIGINT,nullzero"`
@@ -328,8 +408,39 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 	if m.AgentScoped() && (m.AgentDefinitionID == nil || m.AgentDefinitionID.IsNil()) {
 		multiErr.Add("scope", errortypes.ErrInvalid, "A memory kept for one agent needs that agent")
 	}
-	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback {
-		multiErr.Add("status", errortypes.ErrInvalid, "Only feedback can suggest a memory")
+	switch m.Scope {
+	case MemoryScopeUser:
+		if m.OwnerUserID == nil || m.OwnerUserID.IsNil() {
+			multiErr.Add("scope", errortypes.ErrInvalid, "A memory kept for one person needs that person")
+		}
+	case MemoryScopeRole:
+		if m.RoleID == nil || m.RoleID.IsNil() {
+			multiErr.Add("roleId", errortypes.ErrRequired, "A memory kept for a role needs the role")
+		}
+	}
+	// A suggestion is drawn from feedback, or offered by an agent to the
+	// person who asked to be asked first; nothing else waits to be accepted.
+	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback &&
+		m.Source != MemorySourceAgent {
+		multiErr.Add("status", errortypes.ErrInvalid, "Only feedback or an agent can suggest a memory")
+	}
+}
+
+// SetAudience narrows the memory to one scope's readers, clearing whatever
+// another scope had named.
+func (m *Memory) SetAudience(scope MemoryScope, ownerID, roleID pulid.ID) {
+	m.Scope = scope
+	m.OwnerUserID = nil
+	m.RoleID = nil
+	switch scope {
+	case MemoryScopeUser:
+		if ownerID.IsNotNil() {
+			m.OwnerUserID = &ownerID
+		}
+	case MemoryScopeRole:
+		if roleID.IsNotNil() {
+			m.RoleID = &roleID
+		}
 	}
 }
 

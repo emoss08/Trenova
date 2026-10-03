@@ -770,6 +770,34 @@ export const providerFallbackSchema = z.object({
   status: z.string().optional().default(""),
 });
 
+/**
+ * A memory a reply used or saved, as the person reading the conversation may
+ * see it. Scope is Organization, User (just them) or Role (their team).
+ */
+export const memoryNoteSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  scope: z.string(),
+  roleId: z.string().nullish(),
+  roleName: z.string().nullish(),
+  /** Active, Paused, Retired once forgotten, Suggested while an offer waits, Dismissed once turned down. */
+  status: z.string(),
+  /** User, Agent, Decision or Feedback: how it was recorded. */
+  source: z.string().optional().default(""),
+  sourceTitle: z.string().nullish(),
+  createdAt: z.number(),
+  version: z.number(),
+  /** The reader may change, pause and forget it. */
+  editable: z.boolean().default(false),
+});
+
+/** A memory the turn kept through remember, or offered to keep when the person asked to be asked. */
+export const savedMemorySchema = z.object({
+  id: z.string(),
+  callId: z.string().optional().default(""),
+  pending: z.boolean().default(false),
+});
+
 export const assistantMessageSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -842,6 +870,12 @@ export const assistantMessageSchema = z.object({
   /** How long the model took, and what the turn cost where the provider is priced. */
   latencyMs: z.number().nullish(),
   costUsd: z.union([z.string(), z.number()]).nullish(),
+  /** On a turn's last reply: the memories the turn used, in the order it used them. */
+  usedMemoryIds: z.array(z.string()).nullish().catch(null),
+  /** On a turn's last reply: what the turn kept, or offered to keep. */
+  savedMemories: z.array(savedMemorySchema).nullish().catch(null),
+  /** Each of those memories as the reader may see them; one moved out of reach is left out. */
+  memories: z.array(memoryNoteSchema).nullish().catch(null),
   createdAt: z.number(),
 });
 
@@ -1476,6 +1510,14 @@ export const assistantCompactionEventSchema = z.object({
 
 export type AssistantCompactionEvent = z.infer<typeof assistantCompactionEventSchema>;
 
+/** Every memory the turn has used so far; each event repeats the whole list. */
+export const assistantMemoryUsedEventSchema = z.object({
+  ids: z
+    .array(z.string())
+    .nullish()
+    .transform((ids) => ids ?? []),
+});
+
 export type AssistantStreamEvent =
   | { event: "accepted"; data: z.infer<typeof assistantAcceptedEventSchema> }
   | { event: "refused"; data: z.infer<typeof assistantRefusedEventSchema> }
@@ -1492,6 +1534,8 @@ export type AssistantStreamEvent =
   | { event: "delegate_finished"; data: z.infer<typeof assistantDelegateFinishedEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
   | { event: "artifact_removed"; data: z.infer<typeof assistantArtifactRemovedEventSchema> }
+  | { event: "memory_used"; data: z.infer<typeof assistantMemoryUsedEventSchema> }
+  | { event: "memory_saved"; data: z.infer<typeof savedMemorySchema> }
   | { event: "thread"; data: AssistantThread }
   /**
    * The saved turn, or null when the ending was rebuilt from the turn's record
@@ -1554,6 +1598,10 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantArtifactEventSchema.parse(data) };
     case "artifact_removed":
       return { event, data: assistantArtifactRemovedEventSchema.parse(data) };
+    case "memory_used":
+      return { event, data: assistantMemoryUsedEventSchema.parse(data) };
+    case "memory_saved":
+      return { event, data: savedMemorySchema.parse(data) };
     case "thread":
       return { event, data: assistantThreadSchema.parse(data) };
     case "done":
@@ -1607,6 +1655,8 @@ export type PageAgent = z.infer<typeof pageAgentSchema>;
 export type PageThread = z.infer<typeof pageThreadSchema>;
 export type AssistantProviderOption = z.infer<typeof assistantProviderOptionSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
+export type MemoryNote = z.infer<typeof memoryNoteSchema>;
+export type SavedMemory = z.infer<typeof savedMemorySchema>;
 export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;
 export type AssistantPageContext = z.infer<typeof pageContextSchema>;
 export type AssistantPageView = z.infer<typeof pageViewSchema>;

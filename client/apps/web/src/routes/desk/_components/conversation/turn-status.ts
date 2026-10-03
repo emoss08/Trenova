@@ -3,6 +3,8 @@ import type { TurnState } from "@/components/assistant/turn-stream";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { DeskComposerStatus } from "../composer/desk-composer";
 
+const MEMORY_TOOLS: ReadonlySet<string> = new Set(["recall_memory", "remember"]);
+
 /**
  * What the composer says while a reply is being made, the one place the Desk
  * shows the agent's work in progress: the question being checked, a model
@@ -43,9 +45,13 @@ export function composerStatus(
     return { text: t("Writing the answer…"), pose: "work" };
   }
 
-  const activity = currentActivity(stepsFromSegments(turn.segments), t);
+  const steps = stepsFromSegments(turn.segments);
+  const activity = currentActivity(steps, t);
   if (activity && activity.state === "running") {
-    return { text: `${activity.phrase}…`, pose: "work" };
+    // Reading or keeping a memory carries the memory mark, as the design draws it.
+    const running = steps.filter((step) => step.status === "running").at(-1);
+    const pose = running && MEMORY_TOOLS.has(running.name) ? "memory" : "work";
+    return { text: `${activity.phrase}…`, pose };
   }
 
   return { text: t("Thinking it through…"), pose: "work" };

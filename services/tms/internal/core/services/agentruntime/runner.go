@@ -121,6 +121,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	tools := t.tools
 
 	t.announceOpened(fx)
+	t.announceMemories(fx)
 
 	retries := 0
 	asked := false
@@ -422,6 +423,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				t.external = true
 			}
 			t.absorbTaint(fx, outcome.taint)
+			t.noteMemories(fx, &outcome)
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
 			if !outcome.failed {

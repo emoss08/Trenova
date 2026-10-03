@@ -9,6 +9,7 @@ import type {
   FailedProvider,
   SendMessageResult,
   RetryKind,
+  SavedMemory,
   StepRationale,
   ToolEffect,
   ToolVerdict,
@@ -313,6 +314,10 @@ export type TurnState = {
   retrying: TurnRetry | null;
   /** What the turn has produced so far, as announced, so the pane can open it early. */
   artifacts: AssistantArtifactEvent[];
+  /** The memories the turn has used so far, in the order it used them. */
+  usedMemoryIds: string[];
+  /** What the turn kept through remember, or offered to keep. */
+  savedMemories: SavedMemory[];
   /** The files and records the person handed over, shown on their provisional turn. */
   attachments: AssistantMessageAttachment[];
   mentions: AssistantEntityRef[];
@@ -353,6 +358,8 @@ export function initialTurnState(
     result: null,
     retrying: null,
     artifacts: [],
+    usedMemoryIds: [],
+    savedMemories: [],
     attachments: context.attachments ?? [],
     mentions: context.mentions ?? [],
     followUp: context.followUp ?? false,
@@ -537,6 +544,21 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
         ...state,
         artifacts: state.artifacts.filter((artifact) => artifact.id !== event.data.id),
       };
+
+    case "memory_used":
+      // Each event names every memory used so far, so the latest stands.
+      return { ...state, usedMemoryIds: event.data.ids };
+
+    case "memory_saved": {
+      const saved = event.data;
+      const known = state.savedMemories.some((memory) => memory.id === saved.id);
+      return {
+        ...state,
+        savedMemories: known
+          ? state.savedMemories.map((memory) => (memory.id === saved.id ? saved : memory))
+          : [...state.savedMemories, saved],
+      };
+    }
 
     case "thread":
       return { ...state, thread: event.data };

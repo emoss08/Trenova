@@ -94,6 +94,9 @@ function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
   if (pathname.startsWith("/desk/watchtower")) {
     return "watchtower";
   }
+  if (pathname.startsWith("/desk/memory")) {
+    return "memory";
+  }
 
   return "today";
 }

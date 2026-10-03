@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceoverrideexec"
@@ -1524,6 +1525,12 @@ type MutationResolver interface {
 	ApplyCreditMemo(ctx context.Context, input gqlmodel.ApplyCreditMemoInput) ([]*customerpayment.CreditMemoApplication, error)
 	UnapplyCreditMemoApplication(ctx context.Context, input gqlmodel.UnapplyCreditMemoApplicationInput) (*customerpayment.CreditMemoApplication, error)
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
+	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
+	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
+	SetDeskMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*gqlmodel.DeskMemory, error)
+	ConfirmDeskMemory(ctx context.Context, id string, input gqlmodel.ConfirmDeskMemoryInput) (*gqlmodel.DeskMemory, error)
+	DismissDeskMemory(ctx context.Context, id string) (*gqlmodel.DeskMemory, error)
+	SetMemorySavingMode(ctx context.Context, mode agent.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
 	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
@@ -2201,6 +2208,9 @@ type QueryResolver interface {
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
 	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
+	DeskMemories(ctx context.Context, input gqlmodel.DeskMemoriesInput) (*gqlmodel.DeskMemoryPage, error)
+	DeskMemoriesByIds(ctx context.Context, ids []string) ([]*gqlmodel.DeskMemory, error)
+	DeskMemorySettings(ctx context.Context) (*gqlmodel.DeskMemorySettings, error)
 	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
 	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
 	DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error)
@@ -2972,6 +2982,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customerpaymentexec.Shard,
 		customfielddefinitionexec.Shard,
 		decisionsexec.Shard,
+		deskmemoryexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,
 		distanceoverrideexec.Shard,
@@ -5377,8 +5388,10 @@ enum AgentMemorySource {
 
 enum AgentMemoryStatus {
   Active
+  "Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed."
+  Paused
   Retired
-  "Drawn from feedback and waiting for an administrator; never read by an agent."
+  "Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent."
   Suggested
   "A suggestion an administrator refused; the same pattern is not suggested again for 30 days."
   Dismissed
@@ -5397,10 +5410,14 @@ type AgentMemoryEvidence {
   lastRatedAt: Timestamp!
 }
 
-"Who reads a memory: every agent in the organization, or only the agent it was kept for."
+"Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role."
 enum AgentMemoryScope {
   Organization
   Agent
+  "Kept for one person, read only in their conversations; the Desk calls it Just you."
+  User
+  "Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team."
+  Role
 }
 
 enum AgentMemorySubjectType {
@@ -5431,8 +5448,10 @@ type AgentMemory {
   toolName: String!
   content: String!
   agentDefinitionId: ID
-  "Organization reaches every agent; Agent reaches only agentDefinitionId."
+  "Organization reaches every agent; Agent reaches only agentDefinitionId; User only ownerUserId's conversations; Role only those of roleId's holders."
   scope: AgentMemoryScope!
+  ownerUserId: ID
+  roleId: ID
   "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
   tainted: Boolean!
   "The run whose outside content the memory carries."
@@ -11962,6 +11981,130 @@ extend type Mutation {
   outcome is reported.
   """
   decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
+}
+`, BuiltIn: false},
+	{Name: "../schema/desk_memory.graphqls", Input: `"How a person wants memories an agent picks up in their conversations kept."
+enum AgentMemorySavingMode {
+  "Saved as the agent picks them up, and said so in the conversation."
+  Automatic
+  "Offered in the conversation; nothing is kept until the person accepts it."
+  AskFirst
+}
+
+"""
+A memory as a person keeps it on the Desk: one of their own, their role's, or
+the organization's. Agent-scoped memories are administered in AI Control and
+never appear here.
+"""
+type DeskMemory {
+  id: ID!
+  content: String!
+  "User (Just you), Role (the person's team) or Organization."
+  scope: AgentMemoryScope!
+  "The role a Role memory is kept for."
+  roleId: ID
+  roleName: String!
+  "Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits."
+  status: AgentMemoryStatus!
+  source: AgentMemorySource!
+  "The conversation the memory was saved from; empty for one a person wrote down."
+  sourceTitle: String!
+  "How many prompts and recalls have used it."
+  useCount: Int!
+  lastUsedAt: Timestamp
+  createdAt: Timestamp!
+  version: Int!
+  "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
+  editable: Boolean!
+}
+
+"How many memories the person keeps in one scope; Role is counted per role."
+type DeskMemoryCount {
+  scope: AgentMemoryScope!
+  roleId: ID
+  count: Int!
+}
+
+type DeskMemoryPage {
+  "Newest first."
+  items: [DeskMemory!]!
+  "The cursor of the next page; null on the last."
+  next: String
+  "Every memory the search matches, in every scope."
+  all: Int!
+  "What the search matches in each scope, for the filter chips."
+  counts: [DeskMemoryCount!]!
+}
+
+"A role the person holds, offered as a team to keep a memory for."
+type DeskMemoryRole {
+  id: ID!
+  name: String!
+  "The person may keep memories for the role: it needs permission to create agent memories."
+  writable: Boolean!
+}
+
+type DeskMemorySettings {
+  savingMode: AgentMemorySavingMode!
+  "The person's roles by name."
+  roles: [DeskMemoryRole!]!
+  "The person may keep memories for the whole organization."
+  canShareWithOrganization: Boolean!
+}
+
+input DeskMemoriesInput {
+  "Page size; 50 when left out, at most 100."
+  first: Int
+  after: String
+  "Only this scope; every scope when left out."
+  scope: AgentMemoryScope
+  "With scope Role, only this role."
+  roleId: ID
+  "Words the memory says."
+  query: String
+}
+
+input CreateDeskMemoryInput {
+  content: String!
+  "User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds."
+  scope: AgentMemoryScope!
+  roleId: ID
+}
+
+"Changes what a memory says, who it is kept for, or both; what is left out stays."
+input ReviseDeskMemoryInput {
+  content: String
+  scope: AgentMemoryScope
+  roleId: ID
+  version: Int!
+}
+
+input ConfirmDeskMemoryInput {
+  "The memory as the person edited it."
+  content: String!
+  scope: AgentMemoryScope!
+  roleId: ID
+  version: Int!
+}
+
+extend type Query {
+  "The memories the person keeps, newest first, with how many each scope holds."
+  deskMemories(input: DeskMemoriesInput!): DeskMemoryPage!
+  "Memories a conversation names, as many of them as the person may see, in the order asked."
+  deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
+  deskMemorySettings: DeskMemorySettings!
+}
+
+extend type Mutation {
+  createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
+  reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
+  "Active resumes or brings back a forgotten memory, Paused sets it aside, Retired forgets it."
+  setDeskMemoryStatus(id: ID!, status: AgentMemoryStatus!): DeskMemory!
+  "Accepts a memory an agent offered in the person's conversation."
+  confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
+  "Turns down a memory an agent offered; nothing is kept."
+  dismissDeskMemory(id: ID!): DeskMemory!
+  setMemorySavingMode(mode: AgentMemorySavingMode!): DeskMemorySettings!
 }
 `, BuiltIn: false},
 	{Name: "../schema/detention.graphqls", Input: `enum DetentionPolicyStatus {

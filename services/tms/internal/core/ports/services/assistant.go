@@ -363,6 +363,13 @@ const (
 	AssistantEventCompactionStarted   = "compaction_started"
 	AssistantEventCompactionFinished  = "compaction_finished"
 	AssistantEventCompactionCancelled = "compaction_cancelled"
+	// AssistantEventMemoryUsed names every memory the turn has used so far:
+	// those its prompt carried, then each one recall_memory read back. Each
+	// event repeats the whole list, so a reader keeps the latest.
+	AssistantEventMemoryUsed = "memory_used"
+	// AssistantEventMemorySaved says the turn kept a memory, or offered one
+	// for the person to accept when they asked to be asked first.
+	AssistantEventMemorySaved = "memory_saved"
 )
 
 // AssistantContextEvent is how full a conversation's context is.
@@ -388,6 +395,15 @@ type AssistantCompactionEvent struct {
 	// own turned compacting on its own off.
 	AutoCompactOff bool `json:"autoCompactOff,omitempty"`
 }
+
+// AssistantMemoryUsedEvent is the memories a turn has used, in the order it
+// used them.
+type AssistantMemoryUsedEvent struct {
+	IDs []pulid.ID `json:"ids"`
+}
+
+// AssistantMemorySavedEvent is a memory the turn saved, or offered to save.
+type AssistantMemorySavedEvent = SavedMemory
 
 type RegroundAction string
 
@@ -455,6 +471,10 @@ func (s DelegateScope) Tag(event StreamEvent) (StreamEvent, bool) {
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: event.Event, Data: data}, true
 	case AssistantRefusedEvent:
+		return StreamEvent{}, false
+	// What another agent remembered on a task is its own; the card under the
+	// reply is for what the conversation's agent kept.
+	case AssistantMemoryUsedEvent, AssistantMemorySavedEvent:
 		return StreamEvent{}, false
 	default:
 		return event, true

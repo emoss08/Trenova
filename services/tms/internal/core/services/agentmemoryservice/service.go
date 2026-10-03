@@ -80,6 +80,10 @@ type Params struct {
 	Ranker  services.MemoryRanker         `optional:"true"`
 	Indexer services.RetrievalIndexer     `optional:"true"`
 	Vectors services.MemoryVectorSearcher `optional:"true"`
+	// Roles says which roles a person holds, so a memory kept for a role
+	// reaches its holders. Without it only the organization's and a person's
+	// own memories are read.
+	Roles repositories.RoleRepository `optional:"true"`
 }
 
 type Service struct {
@@ -92,6 +96,7 @@ type Service struct {
 	ranker   services.MemoryRanker
 	indexer  services.RetrievalIndexer
 	vectors  services.MemoryVectorSearcher
+	roles    roleReader
 }
 
 func New(p Params) services.AgentMemoryService {
@@ -110,6 +115,7 @@ func New(p Params) services.AgentMemoryService {
 		ranker:   ranker,
 		indexer:  p.Indexer,
 		vectors:  p.Vectors,
+		roles:    rolesOrNil(p.Roles),
 	}
 }
 
@@ -170,9 +176,17 @@ func (s *Service) planRemember(
 				zap.String("run", req.RunID.String()),
 				zap.Error(err),
 			)
-		} else if run.AgentDefinitionID.IsNotNil() {
-			definitionID := run.AgentDefinitionID
-			entity.AgentDefinitionID = &definitionID
+		} else {
+			if run.AgentDefinitionID.IsNotNil() {
+				definitionID := run.AgentDefinitionID
+				entity.AgentDefinitionID = &definitionID
+			}
+			// An assistant run answers a conversation, which is where the
+			// memory says it came from.
+			if run.SubjectType == agent.SubjectAssistantThread && run.SubjectID.IsNotNil() {
+				threadID := run.SubjectID
+				entity.SourceThreadID = &threadID
+			}
 		}
 	}
 
@@ -219,6 +233,10 @@ func NewMemory(req *services.RememberRequest, actor *services.RequestActor) *age
 		id := actor.UserID
 		entity.CreatedByUserID = &id
 	}
+	if req.PersonUserID.IsNotNil() {
+		id := req.PersonUserID
+		entity.CreatedByUserID = &id
+	}
 	if req.RunID.IsNotNil() {
 		entity.Source = agent.MemorySourceAgent
 		runID := req.RunID
@@ -234,6 +252,12 @@ func NewMemory(req *services.RememberRequest, actor *services.RequestActor) *age
 			runID := req.RunID
 			entity.TaintRunID = &runID
 		}
+	}
+	if req.Scope.IsValid() {
+		entity.SetAudience(req.Scope, req.OwnerUserID, req.RoleID)
+	}
+	if req.Suggest {
+		entity.Status = agent.MemoryStatusSuggested
 	}
 
 	return entity
@@ -340,10 +364,7 @@ func (s *Service) SetStatus(
 		return nil, err
 	}
 
-	comment := "Agent memory retired"
-	if req.Status == agent.MemoryStatusActive {
-		comment = "Agent memory restored"
-	}
+	comment := statusComment(current.Status, req.Status)
 	s.log(updated, actor, permission.OpUpdate, comment)
 	s.queueForRetrieval(ctx, updated)
 
@@ -513,9 +534,12 @@ func (s *Service) Recall(
 	}
 	limit = min(limit, agent.MaxMemoryRecallLimit)
 
+	reader := s.promptReader(ctx, req.TenantInfo, req.ReaderUserID)
+
 	search := repositories.SearchAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
+		Reader:            reader,
 		Now:               timeutils.NowUnix(),
 		Query:             strings.TrimSpace(req.Query),
 		IDs:               req.IDs,
@@ -682,9 +706,12 @@ func (s *Service) ForContext(
 		)
 	}
 
+	reader := s.promptReader(ctx, req.TenantInfo, req.ReaderUserID)
+
 	memories, err := s.repo.ListActive(ctx, repositories.ListActiveAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
+		Reader:            reader,
 		Now:               now,
 		OrganizationWide:  true,
 		Subjects:          subjectRefs(subjects),
@@ -889,8 +916,17 @@ func sameMemoryRequest(
 	if entity.AgentDefinitionID != nil {
 		agentID = *entity.AgentDefinitionID
 	}
+	owner, role := pulid.Nil, pulid.Nil
+	if entity.OwnerUserID != nil {
+		owner = *entity.OwnerUserID
+	}
+	if entity.RoleID != nil {
+		role = *entity.RoleID
+	}
 
 	return repositories.FindActiveAgentMemoryRequest{
+		OwnerUserID:       owner,
+		RoleID:            role,
 		TenantInfo:        tenant,
 		Now:               timeutils.NowUnix(),
 		Content:           entity.Content,

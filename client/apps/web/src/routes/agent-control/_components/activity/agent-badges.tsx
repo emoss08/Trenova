@@ -87,6 +87,7 @@ const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
 
 const MEMORY_STATUS: Record<AgentMemoryStatus, { label: string; variant: Variant }> = {
   Active: { label: "Active", variant: "success" },
+  Paused: { label: "Paused", variant: "neutral" },
   Retired: { label: "Retired", variant: "neutral" },
   Suggested: { label: "Suggested", variant: "warning" },
   Dismissed: { label: "Dismissed", variant: "neutral" },

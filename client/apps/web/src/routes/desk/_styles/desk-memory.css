@@ -1,0 +1,674 @@
+/* Desk v2 memory: the Memory page (design/pages.jsx MemoryPage, pages.css
+   pg-* and mm-*) and the memory notes in a conversation (design/memory.jsx,
+   memory.css). Values are the design's, mapped onto --dsk-* tokens. */
+.dsk {
+  --dk-mem: oklch(0.62 0.17 300);
+}
+.dark .dsk {
+  --dk-mem: oklch(0.74 0.14 300);
+}
+
+/* ---- page frame (pages.css .pg*) ---- */
+.dk-pg {
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsk-b) transparent;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-pg-in {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 36px 32px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: dk-nl 360ms var(--dk-settle) both;
+}
+.dk-pg-in.dk-narrow {
+  max-width: 720px;
+}
+.dk-pg-h {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.dk-pg-k {
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dsk-subtle);
+}
+.dk-pg-h h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--dsk-fg);
+  line-height: 1.15;
+}
+.dk-pg-h p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--dsk-muted);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+@media (max-width: 640px) {
+  .dk-pg-in {
+    padding: 24px 16px 48px;
+  }
+}
+
+/* ---- saving setting ---- */
+.dk-mm-set {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--dsk-sunken);
+}
+.dk-mm-set > span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dk-mm-set b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-mm-set em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-mm-seg {
+  flex: none;
+  display: flex;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-mm-set .dk-mm-seg {
+  background: var(--dsk-card);
+}
+.dk-mm-seg button {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsk-muted);
+  transition:
+    background 140ms,
+    color 140ms;
+}
+.dk-mm-seg button:hover:not(:disabled) {
+  color: var(--dsk-fg);
+}
+.dk-mm-seg button.dk-on {
+  background: var(--dsk-card);
+  color: var(--dsk-fg);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 0 0 1px var(--dsk-b-sub);
+}
+.dk-mm-set .dk-mm-seg button.dk-on {
+  background: var(--dsk-ink);
+  color: var(--dsk-ink-fg);
+  box-shadow: none;
+}
+.dk-mm-seg button:disabled {
+  cursor: not-allowed;
+}
+
+/* ---- add ---- */
+.dk-mm-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 6px 0 14px;
+  border-radius: 12px;
+  background: var(--dsk-card);
+  box-shadow: 0 0 0 1px var(--dsk-b);
+  color: var(--dsk-subtle);
+}
+.dk-mm-add:focus-within {
+  box-shadow:
+    0 0 0 1px var(--dsk-b-strong),
+    0 0 0 4px var(--dsk-ring);
+}
+.dk-mm-add input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--dsk-fg);
+}
+.dk-mm-add select,
+.dk-mm-scope {
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  cursor: pointer;
+}
+.dk-mm-add .dk-ax-btn:disabled {
+  opacity: 0.35;
+}
+
+/* ---- filters ---- */
+.dk-mm-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.dk-mm-f {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+.dk-mm-f button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--dsk-muted);
+}
+.dk-mm-f button:hover {
+  color: var(--dsk-fg);
+}
+.dk-mm-f button.dk-on {
+  background: var(--dsk-ink);
+  color: var(--dsk-ink-fg);
+}
+.dk-mm-f em {
+  font-style: normal;
+  font: 11px var(--dk-plex);
+  opacity: 0.6;
+}
+
+/* ---- list ---- */
+.dk-mm-l {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px var(--dsk-b);
+  background: var(--dsk-card);
+  overflow: hidden;
+}
+.dk-mm-v {
+  position: relative;
+  width: 100%;
+}
+.dk-mm-v > .dk-mm-r {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+.dk-mm-r {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--dsk-b-sub);
+  transition: opacity 200ms;
+}
+.dk-mm-r.dk-first {
+  border-top: 0;
+}
+.dk-mm-r.dk-fresh {
+  animation: dk-nl 320ms var(--dk-settle) both;
+  background: color-mix(in srgb, var(--dsk-success-sub) 50%, transparent);
+}
+.dk-mm-r p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+.dk-mm-r.dk-paused p {
+  color: var(--dsk-subtle);
+}
+.dk-mm-m {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-mm-scope {
+  height: 22px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.dk-mm-scope:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.dk-mm-acts {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  opacity: 0.4;
+  transition: opacity 140ms;
+}
+.dk-mm-r:hover .dk-mm-acts,
+.dk-mm-acts:focus-within {
+  opacity: 1;
+}
+.dk-mm-acts .dk-ib {
+  width: 26px;
+  height: 26px;
+}
+.dk-mm-r.dk-gone {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+}
+.dk-mm-r.dk-gone button {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-mm-ed textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg);
+  background: var(--dsk-field);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+  outline: 0;
+  resize: vertical;
+  field-sizing: content;
+}
+.dk-mm-ed > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+.dk-mm-empty {
+  padding: 28px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+}
+.dk-mm-more {
+  height: 1px;
+}
+
+/* ---- in a conversation (memory.css) ---- */
+.dk-mem-ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  color: var(--dk-mem);
+  background: color-mix(in oklch, var(--dk-mem) 12%, transparent);
+}
+.dk-mem-scope {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--dsk-muted);
+  background: var(--dsk-sunken);
+}
+
+.dk-mrc {
+  margin: 0 0 10px;
+}
+.dk-mrc-b {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 9px 0 3px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--dsk-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition:
+    background 120ms,
+    color 120ms;
+}
+.dk-mrc-b:hover,
+.dk-mrc.dk-open .dk-mrc-b {
+  background: var(--dsk-hover);
+  color: var(--dsk-fg);
+}
+.dk-mrc-cv {
+  display: grid;
+  place-items: center;
+  color: var(--dsk-faint);
+  transition: transform 200ms var(--dk-settle);
+}
+.dk-mrc.dk-open .dk-mrc-cv {
+  transform: rotate(90deg);
+}
+.dk-mrc-l {
+  display: grid;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  animation: dk-mprow 220ms var(--dk-settle) both;
+}
+.dk-mrc-i {
+  padding: 9px 10px;
+  border-radius: 9px;
+}
+.dk-mrc-i + .dk-mrc-i {
+  box-shadow: 0 -1px 0 var(--dsk-b-sub);
+}
+.dk-mrc-t {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsk-fg2);
+  text-wrap: pretty;
+}
+.dk-mrc-i.dk-gone .dk-mrc-t {
+  color: var(--dsk-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--dsk-b-strong);
+}
+.dk-mrc-m {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-mrc-m button,
+.dk-mem-l {
+  margin-left: auto;
+  padding: 0;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--dsk-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--dsk-b-strong);
+  text-underline-offset: 2px;
+}
+.dk-mrc-m button:hover,
+.dk-mem-l:hover {
+  color: var(--dsk-fg);
+  text-decoration-color: currentColor;
+}
+.dk-mrc-m button:disabled,
+.dk-mem-l:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dk-mem {
+  margin-top: 12px;
+  font-size: 12.5px;
+}
+.dk-mem-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 8px;
+  border-radius: 10px;
+  background: color-mix(in oklch, var(--dk-mem) 6%, var(--dsk-card));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--dk-mem) 22%, var(--dsk-b-sub));
+  animation: dk-memin 420ms var(--dk-spring) both;
+}
+.dk-mem-tx {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.45;
+  color: var(--dsk-fg2);
+  text-wrap: pretty;
+}
+.dk-mem-tx em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dk-mem);
+}
+.dk-mem-acts {
+  display: flex;
+  gap: 12px;
+  flex: none;
+}
+.dk-mem-acts .dk-mem-l {
+  margin: 0;
+}
+.dk-mem-off {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dsk-subtle);
+}
+.dk-mem-off .dk-mem-ic {
+  color: var(--dsk-faint);
+  background: var(--dsk-sunken);
+}
+.dk-mem-off .dk-mem-l {
+  margin-left: 4px;
+}
+.dk-mem-card {
+  padding: 10px 12px 10px;
+  border-radius: 12px;
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  animation: dk-memin 380ms var(--dk-spring) both;
+}
+.dk-mem-card.dk-ask {
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--dk-mem) 30%, var(--dsk-b-sub));
+}
+.dk-mem-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dk-mem-h b {
+  font-weight: 500;
+}
+.dk-mem-card textarea {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 0;
+  resize: none;
+  overflow: hidden;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+  outline: none;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: box-shadow 140ms;
+}
+.dk-mem-card textarea:focus {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--dk-mem) 55%, transparent),
+    0 0 0 3px color-mix(in oklch, var(--dk-mem) 14%, transparent);
+}
+.dk-mem-f {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  flex-wrap: wrap;
+}
+.dk-mem-fl {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-mem-seg {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--dsk-sunken);
+}
+.dk-mem-seg button {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 5px;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--dsk-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.dk-mem-seg button.dk-on {
+  color: var(--dsk-fg);
+  background: var(--dsk-raised);
+  box-shadow:
+    0 0 0 1px var(--dsk-b-sub),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.dk-mem-seg button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.dk-mem-sp {
+  flex: 1;
+}
+/* desk.css .bt.sm */
+.dk-mem-bt {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsk-muted);
+  transition:
+    background 140ms,
+    color 140ms;
+}
+.dk-mem-bt:hover {
+  background: var(--dsk-hover);
+  color: var(--dsk-fg);
+}
+.dk-mem-save {
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 7px;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--dk-mem);
+  cursor: pointer;
+}
+.dk-mem-save:hover {
+  filter: brightness(1.08);
+}
+.dk-mem-save:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+@keyframes dk-memin {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-mem-done,
+  .dk-mem-card,
+  .dk-mrc-l,
+  .dk-mm-r.dk-fresh,
+  .dk-pg-in {
+    animation: none;
+  }
+}
+
+/* the composer's status while a memory is read or kept (memory.css) */
+.dk-mem-sti {
+  display: grid;
+  place-items: center;
+  color: var(--dk-mem);
+  animation: dk-memp 1.4s var(--dk-settle) infinite;
+}
+@keyframes dk-memp {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+.dk-mm-r:first-child {
+  border-top: 0;
+}
+/* the segmented control, small and locked, as the agent page uses it (pages.css) */
+.dk-mm-seg.dk-sm button {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 11.5px;
+}
+.dk-mm-seg.dk-locked {
+  opacity: 0.7;
+}
+.dk-mm-seg button:disabled {
+  cursor: not-allowed;
+}

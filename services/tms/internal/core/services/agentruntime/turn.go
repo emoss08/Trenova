@@ -156,6 +156,10 @@ type ToolOutcome struct {
 	Taint   []agent.TaintMark `json:"taint,omitempty"`
 	Found   []string          `json:"found,omitempty"`
 	Verdict string            `json:"verdict,omitempty"`
+	// Memories are what a recall read back; SavedMemory is what a remember
+	// kept or offered to keep.
+	Memories    []pulid.ID                `json:"memories,omitempty"`
+	SavedMemory *serviceports.SavedMemory `json:"savedMemory,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -173,6 +177,8 @@ func (o toolOutcome) exported() ToolOutcome {
 		Taint:          o.taint,
 		Found:          o.found,
 		Verdict:        o.verdict,
+		Memories:       o.memories,
+		SavedMemory:    o.saved,
 		Data:           o.data,
 	}
 }
@@ -188,6 +194,8 @@ func (o ToolOutcome) internal() toolOutcome {
 		taint:          o.Taint,
 		found:          o.Found,
 		verdict:        o.Verdict,
+		memories:       o.Memories,
+		saved:          o.SavedMemory,
 		data:           o.Data,
 	}
 }
@@ -436,6 +444,12 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	// the system refusing rather than the person lacking the right.
 	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
 	runtimeContext.Memories = s.memoriesForPrompt(ctx, req, &runtimeContext)
+	// A task handed to another agent reads memories for that agent; the card
+	// under the reply says what the conversation's own agent used.
+	var usedMemories []pulid.ID
+	if req.Delegation == nil {
+		usedMemories = memoryIDs(runtimeContext.Memories)
+	}
 	repeats := newRepeatGuard()
 	counts := newOrdinals()
 	// A delegate's turn shares the ledger of the turn that delegated, and is
@@ -483,8 +497,9 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 				Content:   req.Input,
 				CreatedAt: now,
 			}},
-			Taint:       taint,
-			Fingerprint: s.Fingerprint(definition, preferredProvider(req, definition), ""),
+			Taint:         taint,
+			Fingerprint:   s.Fingerprint(definition, preferredProvider(req, definition), ""),
+			UsedMemoryIDs: usedMemories,
 		},
 		delegates: delegates,
 		opened:    opened,

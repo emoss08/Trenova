@@ -31,8 +31,8 @@ const COMPACT_COMMANDS = [COMPACT_COMMAND];
 /** What the composer says it is doing while an agent works. */
 export type DeskComposerStatus = {
   text: string;
-  /** The kind of step: checking the question, retrying a model, or ordinary work. */
-  pose: "check" | "retry" | "work";
+  /** The kind of step: checking the question, retrying a model, reading or keeping a memory, or ordinary work. */
+  pose: "check" | "retry" | "memory" | "work";
   /** A second, quieter fact beside the status, such as "Attempt 2 of 3". */
   extra?: string;
   /** Seconds to count down before the next try, drawn as a ring. */
@@ -285,6 +285,10 @@ export function DeskComposer({
           {status.pose === "check" ? (
             <span className="dk-ec-shield">
               <DeskIcon name="shield" size={13} stroke={2} />
+            </span>
+          ) : status.pose === "memory" ? (
+            <span className="dk-mem-sti">
+              <DeskIcon name="memory" size={13} />
             </span>
           ) : status.countdown ? (
             <DeskCountdown from={status.countdown} key={status.extra ?? status.text} />

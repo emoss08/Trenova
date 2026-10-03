@@ -1,0 +1,88 @@
+fragment DeskMemoryFields on DeskMemory {
+  id
+  content
+  scope
+  roleId
+  roleName
+  status
+  source
+  sourceTitle
+  useCount
+  lastUsedAt
+  createdAt
+  version
+  editable
+}
+
+fragment DeskMemorySettingsFields on DeskMemorySettings {
+  savingMode
+  canShareWithOrganization
+  roles {
+    id
+    name
+    writable
+  }
+}
+
+query DeskMemories($input: DeskMemoriesInput!) {
+  deskMemories(input: $input) {
+    items {
+      ...DeskMemoryFields
+    }
+    next
+    all
+    counts {
+      scope
+      roleId
+      count
+    }
+  }
+}
+
+query DeskMemoriesByIds($ids: [ID!]!) {
+  deskMemoriesByIds(ids: $ids) {
+    ...DeskMemoryFields
+  }
+}
+
+query DeskMemorySettings {
+  deskMemorySettings {
+    ...DeskMemorySettingsFields
+  }
+}
+
+mutation CreateDeskMemory($input: CreateDeskMemoryInput!) {
+  createDeskMemory(input: $input) {
+    ...DeskMemoryFields
+  }
+}
+
+mutation ReviseDeskMemory($id: ID!, $input: ReviseDeskMemoryInput!) {
+  reviseDeskMemory(id: $id, input: $input) {
+    ...DeskMemoryFields
+  }
+}
+
+mutation SetDeskMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {
+  setDeskMemoryStatus(id: $id, status: $status) {
+    ...DeskMemoryFields
+  }
+}
+
+mutation ConfirmDeskMemory($id: ID!, $input: ConfirmDeskMemoryInput!) {
+  confirmDeskMemory(id: $id, input: $input) {
+    ...DeskMemoryFields
+  }
+}
+
+mutation DismissDeskMemory($id: ID!) {
+  dismissDeskMemory(id: $id) {
+    ...DeskMemoryFields
+  }
+}
+
+mutation SetMemorySavingMode($mode: AgentMemorySavingMode!) {
+  setMemorySavingMode(mode: $mode) {
+    ...DeskMemorySettingsFields
+  }
+}

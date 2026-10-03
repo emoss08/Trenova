@@ -185,6 +185,7 @@ func (b *ContextBuilder) readMemories(
 	memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: req.Definition.ID,
+		ReaderUserID:      req.Actor.PersonUserID(),
 		ToolNames:         req.Definition.EffectiveToolNames(),
 		Records:           records,
 		Query:             b.memoryQuery(ctx, &req.Query),

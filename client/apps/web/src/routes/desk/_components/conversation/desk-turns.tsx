@@ -17,6 +17,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { memo, useMemo, type ReactNode } from "react";
 import { DeskMentionText } from "../composer/desk-mentions";
 import { DeskMessageAttachments } from "../composer/desk-uploads";
+import { DeskMemoryRecall, DeskMemorySavedList } from "../memory/desk-memory-notes";
 import { citeSteps, withCitations } from "./citations";
 import { useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
@@ -136,6 +137,8 @@ export function DeskInlineArtifact({
   );
 }
 
+const NO_IDS: readonly string[] = [];
+
 const CUT_NOTE = /\s*_This reply was cut off before it finished\.[^_]*_\s*$/u;
 
 /** A cut-off reply's words, without the note the server adds to say it was cut. */
@@ -191,9 +194,15 @@ export const DeskReply = memo(function DeskReply({
     [artifacts, citations, content],
   );
   const overrides = useCitationOverrides(citations, threadArtifacts, onOpenArtifact);
+  const usedMemories = message.usedMemoryIds ?? NO_IDS;
+  const savedMemories = useMemo(
+    () => (message.savedMemories ?? []).map((saved) => saved.id),
+    [message.savedMemories],
+  );
 
   return (
     <>
+      {usedMemories.length > 0 && <DeskMemoryRecall ids={usedMemories} served={message.memories} />}
       {cited !== "" && (
         <div className={cn("dk-prose", entry.message.truncated && "dk-cut")}>
           <AiMarkdown content={cited} className="dk-md" overrides={overrides} deskSubset />
@@ -218,6 +227,9 @@ export const DeskReply = memo(function DeskReply({
           <DeskStepFailures steps={steps} />
         </div>
       )}
+      {savedMemories.length > 0 && (
+        <DeskMemorySavedList ids={savedMemories} served={message.memories} />
+      )}
       {message.content !== "" && (
         <DeskMessageActions
           text={content}
@@ -232,11 +244,21 @@ export const DeskReply = memo(function DeskReply({
 /**
  * The reply being written, word by word; nothing shows until its first words
  * arrive. Each word fades in as the design's do, with no caret after them.
+ * The memories the turn has used so far sit above it.
  */
-export function DeskStreamingReply({ text }: { text: string }) {
+export function DeskStreamingReply({
+  text,
+  usedMemoryIds = NO_IDS,
+}: {
+  text: string;
+  usedMemoryIds?: readonly string[];
+}) {
   return (
-    <div className="dk-prose dk-streaming">
-      <StreamingAiMarkdown content={text} className="dk-md" wordClassName="dk-w" deskSubset />
-    </div>
+    <>
+      {usedMemoryIds.length > 0 && <DeskMemoryRecall ids={usedMemoryIds} />}
+      <div className="dk-prose dk-streaming">
+        <StreamingAiMarkdown content={text} className="dk-md" wordClassName="dk-w" deskSubset />
+      </div>
+    </>
   );
 }

@@ -3074,10 +3074,12 @@ type AgentMemory {
   kind: AgentMemoryKind!
   lastUsedAt: Timestamp
   organizationId: ID!
+  ownerUserId: ID
   retiredAt: Timestamp
   retiredByUserId: ID
+  roleId: ID
   """
-  Organization reaches every agent; Agent reaches only agentDefinitionId.
+  Organization reaches every agent; Agent reaches only agentDefinitionId; User only ownerUserId's conversations; Role only those of roleId's holders.
   """
   scope: AgentMemoryScope!
   source: AgentMemorySource!
@@ -3149,11 +3151,31 @@ enum AgentMemoryKind {
 }
 
 """
-Who reads a memory: every agent in the organization, or only the agent it was kept for.
+How a person wants memories an agent picks up in their conversations kept.
+"""
+enum AgentMemorySavingMode {
+  """
+  Offered in the conversation; nothing is kept until the person accepts it.
+  """
+  AskFirst
+  """Saved as the agent picks them up, and said so in the conversation."""
+  Automatic
+}
+
+"""
+Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role.
 """
 enum AgentMemoryScope {
   Agent
   Organization
+  """
+  Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team.
+  """
+  Role
+  """
+  Kept for one person, read only in their conversations; the Desk calls it Just you.
+  """
+  User
 }
 
 enum AgentMemorySource {
@@ -3170,9 +3192,13 @@ enum AgentMemoryStatus {
   A suggestion an administrator refused; the same pattern is not suggested again for 30 days.
   """
   Dismissed
+  """
+  Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed.
+  """
+  Paused
   Retired
   """
-  Drawn from feedback and waiting for an administrator; never read by an agent.
+  Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent.
   """
   Suggested
 }
@@ -7758,6 +7784,14 @@ input ConfirmAccountingMappingInput {
   id: ID!
 }
 
+input ConfirmDeskMemoryInput {
+  """The memory as the person edited it."""
+  content: String!
+  roleId: ID
+  scope: AgentMemoryScope!
+  version: Int!
+}
+
 enum CostBehavior {
   Fixed
   Variable
@@ -7906,6 +7940,15 @@ input CreateCarrierInvoiceMatchInput {
   proNumber: String
   """Document AI sources only: the shipment used to locate the assignment."""
   shipmentId: ID
+}
+
+input CreateDeskMemoryInput {
+  content: String!
+  roleId: ID
+  """
+  User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.
+  """
+  scope: AgentMemoryScope!
 }
 
 input CreateDocumentTemplateVersionInput {
@@ -8889,6 +8932,89 @@ input DelegateApprovalInput {
 input DeleteTimeEntryInput {
   id: ID!
   reason: String!
+}
+
+input DeskMemoriesInput {
+  after: String
+  """Page size; 50 when left out, at most 100."""
+  first: Int
+  """Words the memory says."""
+  query: String
+  """With scope Role, only this role."""
+  roleId: ID
+  """Only this scope; every scope when left out."""
+  scope: AgentMemoryScope
+}
+
+"""
+A memory as a person keeps it on the Desk: one of their own, their role's, or
+the organization's. Agent-scoped memories are administered in AI Control and
+never appear here.
+"""
+type DeskMemory {
+  content: String!
+  createdAt: Timestamp!
+  """
+  The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
+  """
+  editable: Boolean!
+  id: ID!
+  lastUsedAt: Timestamp
+  """The role a Role memory is kept for."""
+  roleId: ID
+  roleName: String!
+  """User (Just you), Role (the person's team) or Organization."""
+  scope: AgentMemoryScope!
+  source: AgentMemorySource!
+  """
+  The conversation the memory was saved from; empty for one a person wrote down.
+  """
+  sourceTitle: String!
+  """
+  Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits.
+  """
+  status: AgentMemoryStatus!
+  """How many prompts and recalls have used it."""
+  useCount: Int!
+  version: Int!
+}
+
+"""
+How many memories the person keeps in one scope; Role is counted per role.
+"""
+type DeskMemoryCount {
+  count: Int!
+  roleId: ID
+  scope: AgentMemoryScope!
+}
+
+type DeskMemoryPage {
+  """Every memory the search matches, in every scope."""
+  all: Int!
+  """What the search matches in each scope, for the filter chips."""
+  counts: [DeskMemoryCount!]!
+  """Newest first."""
+  items: [DeskMemory!]!
+  """The cursor of the next page; null on the last."""
+  next: String
+}
+
+"""A role the person holds, offered as a team to keep a memory for."""
+type DeskMemoryRole {
+  id: ID!
+  name: String!
+  """
+  The person may keep memories for the role: it needs permission to create agent memories.
+  """
+  writable: Boolean!
+}
+
+type DeskMemorySettings {
+  """The person may keep memories for the whole organization."""
+  canShareWithOrganization: Boolean!
+  """The person's roles by name."""
+  roles: [DeskMemoryRole!]!
+  savingMode: AgentMemorySavingMode!
 }
 
 input DetachPayEventInput {
@@ -15821,6 +15947,8 @@ type Mutation {
   Confirms Trenova's proposals as they were shown. A proposal that changed since is refused. At most 200 at a time.
   """
   confirmAccountingMappings(input: [ConfirmAccountingMappingInput!]!): [AccountingMapping!]!
+  """Accepts a memory an agent offered in the person's conversation."""
+  confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
   """
   Creates an item, customer or vendor in the accounting system for the mapping and confirms it.
   """
@@ -15836,6 +15964,7 @@ type Mutation {
   """
   createCaptureRequest(input: CreateCaptureRequestInput!): CaptureRequest!
   createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
+  createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
   createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
@@ -15991,6 +16120,8 @@ type Mutation {
   Refuses a suggested memory; its pattern is not suggested again for 30 days.
   """
   dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
+  """Turns down a memory an agent offered; nothing is kept."""
+  dismissDeskMemory(id: ID!): DeskMemory!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
   """Takes an item off the feed without touching the record behind it."""
@@ -16273,6 +16404,7 @@ type Mutation {
   """Records a person's decision about a message and takes it off the feed."""
   reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
   """Revokes anybody's companion."""
   revokeCaptureDevice(id: ID!, reason: String): CaptureDevice!
@@ -16322,9 +16454,14 @@ type Mutation {
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   """
+  Active resumes or brings back a forgotten memory, Paused sets it aside, Retired forgets it.
+  """
+  setDeskMemoryStatus(id: ID!, status: AgentMemoryStatus!): DeskMemory!
+  """
   Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password.
   """
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
+  setMemorySavingMode(mode: AgentMemorySavingMode!): DeskMemorySettings!
   """
   Rates something an AI wrote for the caller, replacing their earlier rating of it.
   """
@@ -18531,6 +18668,15 @@ type Query {
   """
   defaultSafetyPoints(inspectionResult: InspectionResult, kind: SafetyEventKind!, preventable: Boolean, severity: SafetySeverity!): Int!
   defaultTableConfiguration(resource: String!): TableConfiguration
+  """
+  The memories the person keeps, newest first, with how many each scope holds.
+  """
+  deskMemories(input: DeskMemoriesInput!): DeskMemoryPage!
+  """
+  Memories a conversation names, as many of them as the person may see, in the order asked.
+  """
+  deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
+  deskMemorySettings: DeskMemorySettings!
   detentionCustomerStats(input: DetentionStatsInput!): [CustomerDetentionStat!]!
   detentionDesk: [DetentionDeskEntry!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
@@ -20342,6 +20488,16 @@ input ReviewRatingInput {
   comment: String
   key: String!
   score: Int
+}
+
+"""
+Changes what a memory says, who it is kept for, or both; what is left out stays.
+"""
+input ReviseDeskMemoryInput {
+  content: String
+  roleId: ID
+  scope: AgentMemoryScope
+  version: Int!
 }
 
 type Role {

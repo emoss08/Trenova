@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,6 +24,17 @@ type RememberRequest struct {
 	RunID       pulid.ID
 	ProposalID  pulid.ID
 	Taint       *agent.RunTaint
+	// Scope narrows who reads the memory; empty is the organization. A
+	// User memory is kept for OwnerUserID, a Role memory for RoleID.
+	Scope       agent.MemoryScope
+	OwnerUserID pulid.ID
+	RoleID      pulid.ID
+	// Suggest keeps the memory as a suggestion for the person to accept
+	// rather than reading it into prompts at once: they asked to be asked.
+	Suggest bool
+	// PersonUserID is the person whose conversation the memory was picked
+	// up in, recorded as who it came from; only they accept a suggestion.
+	PersonUserID pulid.ID
 }
 
 type RememberPlan struct {
@@ -55,14 +67,17 @@ type SetAgentMemoryStatusRequest struct {
 type RecallAgentMemoriesRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
-	Query             string
-	IDs               []pulid.ID
-	Kind              agent.MemoryKind
-	SubjectType       agent.MemorySubjectType
-	SubjectID         pulid.ID
-	ToolName          string
-	Limit             int
-	Attribution       AIUsageAttribution
+	// ReaderUserID is the person the recall is for; what is kept for them
+	// and for their roles is recalled with the organization's.
+	ReaderUserID pulid.ID
+	Query        string
+	IDs          []pulid.ID
+	Kind         agent.MemoryKind
+	SubjectType  agent.MemorySubjectType
+	SubjectID    pulid.ID
+	ToolName     string
+	Limit        int
+	Attribution  AIUsageAttribution
 }
 
 // RecalledMemory is one memory a recall returned and how it was found: by
@@ -80,9 +95,12 @@ type RecalledMemory struct {
 type MemoryContextRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
-	ToolNames         []string
-	Records           []agent.EntityRef
-	Query             QueryVector
+	// ReaderUserID is the person the prompt is for, nil for a run nobody is
+	// in. Only their own memories and their roles' are read with the rest.
+	ReaderUserID pulid.ID
+	ToolNames    []string
+	Records      []agent.EntityRef
+	Query        QueryVector
 }
 
 // MemoryContext is what a prompt may carry, best first, and the records whose
@@ -136,6 +154,131 @@ type DismissAgentMemorySuggestionRequest struct {
 	Version    int64
 }
 
+// SavedMemory is a memory a turn kept through the remember tool, or offered
+// to keep.
+type SavedMemory = conversation.SavedMemory
+
+// MemoryRecall is a query tool's result that read memories back, naming them
+// so the turn can say which memories it used.
+type MemoryRecall interface {
+	RecalledMemoryIDs() []pulid.ID
+}
+
+// MemoryRecordingTool is a write that keeps a memory and returns it, so the
+// turn can show the person what it kept. The runtime runs it through Record
+// in place of Execute when it runs in the turn; an approved proposal still
+// runs it through Execute.
+type MemoryRecordingTool interface {
+	Record(ctx context.Context, params ToolExecuteParams) (*agent.Memory, error)
+}
+
+// DeskMemory is a memory as the person it is kept for sees it on the Desk.
+type DeskMemory struct {
+	Memory *agent.Memory
+	// SourceTitle is the conversation the memory was saved from; empty for
+	// one a person wrote themselves or one saved outside a conversation.
+	SourceTitle string
+	// RoleName names the role a Role memory is kept for.
+	RoleName string
+	// Editable says the person may change the memory: their own always, a
+	// role's or the organization's only with the permission to.
+	Editable bool
+}
+
+// DeskMemoryRole is one of the person's roles, which the Desk offers as a
+// team to keep a memory for.
+type DeskMemoryRole struct {
+	ID   pulid.ID
+	Name string
+	// Writable says the person may keep memories for the role.
+	Writable bool
+}
+
+// DeskMemoryCount is how many memories the person keeps in one scope.
+type DeskMemoryCount struct {
+	Scope  agent.MemoryScope
+	RoleID pulid.ID
+	Label  string
+	Count  int
+}
+
+// DeskMemoryActor is the person on the Desk and what they may do with
+// memories beyond their own.
+type DeskMemoryActor struct {
+	Actor *RequestActor
+	// MayCreateShared and MayUpdateShared are the agent-memory create and
+	// update permissions, which a role's and the organization's memories
+	// need: they reach other people's conversations.
+	MayCreateShared bool
+	MayUpdateShared bool
+}
+
+type ListDeskMemoriesRequest struct {
+	Actor  *DeskMemoryActor
+	Scope  agent.MemoryScope
+	RoleID pulid.ID
+	Query  string
+	After  string
+	Limit  int
+}
+
+type DeskMemoryPage struct {
+	Items []*DeskMemory
+	// Next is the cursor of the following page; empty on the last.
+	Next string
+	// All counts every memory the search matches, and Counts each scope's.
+	All    int
+	Counts []DeskMemoryCount
+}
+
+type DeskMemorySettings struct {
+	SavingMode               agent.MemorySavingMode
+	Roles                    []DeskMemoryRole
+	CanShareWithOrganization bool
+}
+
+type CreateDeskMemoryRequest struct {
+	Actor   *DeskMemoryActor
+	Content string
+	Scope   agent.MemoryScope
+	RoleID  pulid.ID
+}
+
+// ReviseDeskMemoryRequest changes what a memory says, who reads it, or both.
+// Empty content keeps the words; an empty scope keeps the readers.
+type ReviseDeskMemoryRequest struct {
+	Actor   *DeskMemoryActor
+	ID      pulid.ID
+	Content string
+	Scope   agent.MemoryScope
+	RoleID  pulid.ID
+	Version int64
+}
+
+// SetDeskMemoryStatusRequest pauses, resumes, forgets or brings back a memory:
+// Paused, Active and Retired, the last undone by Active.
+type SetDeskMemoryStatusRequest struct {
+	Actor  *DeskMemoryActor
+	ID     pulid.ID
+	Status agent.MemoryStatus
+}
+
+// ConfirmDeskMemoryRequest accepts a memory an agent offered, as the person
+// edited it and for whom they chose.
+type ConfirmDeskMemoryRequest struct {
+	Actor   *DeskMemoryActor
+	ID      pulid.ID
+	Content string
+	Scope   agent.MemoryScope
+	RoleID  pulid.ID
+	Version int64
+}
+
+type DeskMemoryRef struct {
+	Actor *DeskMemoryActor
+	ID    pulid.ID
+}
+
 type AgentMemoryService interface {
 	Remember(ctx context.Context, req *RememberRequest, actor *RequestActor) (*agent.Memory, error)
 	PreviewRemember(
@@ -182,4 +325,29 @@ type AgentMemoryService interface {
 		req DismissAgentMemorySuggestionRequest,
 		actor *RequestActor,
 	) (*agent.Memory, error)
+	// Reader is who a person reads memories as: themselves and every role
+	// they hold, inherited ones included.
+	Reader(ctx context.Context, tenant pagination.TenantInfo, userID pulid.ID) (agent.MemoryReader, error)
+	// SavingMode is how the person wants what agents pick up kept.
+	SavingMode(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		userID pulid.ID,
+	) (agent.MemorySavingMode, error)
+
+	ListDesk(ctx context.Context, req *ListDeskMemoriesRequest) (*DeskMemoryPage, error)
+	// DeskByIDs reads the memories a conversation names, as many of them as
+	// the person may see.
+	DeskByIDs(ctx context.Context, actor *DeskMemoryActor, ids []pulid.ID) ([]*DeskMemory, error)
+	DeskSettings(ctx context.Context, actor *DeskMemoryActor) (*DeskMemorySettings, error)
+	SetSavingMode(
+		ctx context.Context,
+		actor *DeskMemoryActor,
+		mode agent.MemorySavingMode,
+	) (*DeskMemorySettings, error)
+	CreateDesk(ctx context.Context, req *CreateDeskMemoryRequest) (*DeskMemory, error)
+	ReviseDesk(ctx context.Context, req *ReviseDeskMemoryRequest) (*DeskMemory, error)
+	SetDeskStatus(ctx context.Context, req *SetDeskMemoryStatusRequest) (*DeskMemory, error)
+	ConfirmDesk(ctx context.Context, req *ConfirmDeskMemoryRequest) (*DeskMemory, error)
+	DismissDesk(ctx context.Context, req DeskMemoryRef) (*DeskMemory, error)
 }
