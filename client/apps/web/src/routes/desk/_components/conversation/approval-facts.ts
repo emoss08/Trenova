@@ -25,12 +25,12 @@ export type ApprovalFacts = {
 };
 
 /** The field a write over many records uses to say what happens to each. */
-const OUTCOME_FIELD = "outcome";
-const REFUSED_PREFIX = "Refused:";
+export const OUTCOME_FIELD = "outcome";
+export const REFUSED_PREFIX = "Refused:";
 
 type PreviewField = ProposalPreview["changes"][number]["fields"][number];
 
-function valueText(
+export function valueText(
   value: unknown,
   ref: PreviewField["beforeRef"] | PreviewField["afterRef"] | undefined,
   t: TranslateFn,

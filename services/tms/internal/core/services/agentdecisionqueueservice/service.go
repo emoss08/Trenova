@@ -228,6 +228,57 @@ func (s *Service) Count(
 
 // withheld reports a reader who may use no agent at all, so nothing any
 // agent raised is theirs to see.
+// Recent reads the decisions made since a moment and the proposals they
+// decided. A proposal gone since is left out rather than failing the list.
+func (s *Service) Recent(
+	ctx context.Context,
+	req services.ListRecentDecisionsRequest,
+) ([]services.RecentDecision, error) {
+	if withheld(req.Usable) {
+		return []services.RecentDecision{}, nil
+	}
+
+	entries, err := s.queue.ListRecent(ctx, repositories.ListRecentDecisionsRequest{
+		TenantInfo: req.TenantInfo,
+		Since:      req.Since,
+		Limit:      req.First,
+		Audience:   audienceOf(req.Usable),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(entries) == 0 {
+		return []services.RecentDecision{}, nil
+	}
+
+	ids := make([]pulid.ID, 0, len(entries))
+	for _, entry := range entries {
+		ids = append(ids, entry.ProposalID)
+	}
+	proposals, err := s.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
+		IDs:        ids,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[pulid.ID]*agent.AgentProposal, len(proposals))
+	for _, proposal := range proposals {
+		byID[proposal.ID] = proposal
+	}
+
+	out := make([]services.RecentDecision, 0, len(entries))
+	for _, entry := range entries {
+		proposal, ok := byID[entry.ProposalID]
+		if !ok {
+			continue
+		}
+		out = append(out, services.RecentDecision{RecentDecisionEntry: entry, Proposal: proposal})
+	}
+
+	return out, nil
+}
+
 func withheld(usable *services.UsableAgents) bool {
 	return usable != nil && !usable.Assistant
 }

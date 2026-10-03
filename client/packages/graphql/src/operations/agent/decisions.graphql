@@ -154,3 +154,19 @@ mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) 
     }
   }
 }
+
+query RecentDecisions($since: Timestamp!, $first: Int) {
+  recentDecisions(since: $since, first: $first) {
+    id
+    decision
+    reasonCode
+    note
+    decidedByUserId
+    decidedByName
+    decidedAt
+    proposal {
+      ...PendingProposalFields
+      executionError
+    }
+  }
+}

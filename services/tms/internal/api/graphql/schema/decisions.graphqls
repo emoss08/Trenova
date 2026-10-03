@@ -64,6 +64,20 @@ type AgentProposalDecisionResult {
   executed: Boolean!
 }
 
+"A decision on a proposal, with the proposal and the person who made it."
+type RecentDecision {
+  id: ID!
+  decision: AgentDecisionType!
+  reasonCode: String!
+  "What the decider told the agent; empty when they said nothing."
+  note: String!
+  decidedByUserId: ID!
+  "The decider as the app names them."
+  decidedByName: String!
+  decidedAt: Timestamp!
+  proposal: AgentProposal!
+}
+
 extend type AgentProposal {
   "The run that raised this proposal, for the agent behind it."
   run: AgentRun
@@ -85,6 +99,8 @@ extend type Query {
   "What is waiting on a person, newest first: proposals on their own and plans as one unit."
   pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
   pendingDecisionSummary: PendingDecisionSummary!
+  "What was decided since a moment, newest first: proposals that stood on their own."
+  recentDecisions(since: Timestamp!, first: Int = 25): [RecentDecision!]!
 }
 
 extend type Mutation {

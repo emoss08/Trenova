@@ -2198,6 +2198,7 @@ type QueryResolver interface {
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
+	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
 	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
 	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
 	DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error)
@@ -5146,6 +5147,8 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "Why the approved write failed, written for the person; empty unless status is ExecutionFailed."
+  executionError: String!
   "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
   planId: ID
   "Position in the plan, from one; zero outside a plan."
@@ -11879,6 +11882,20 @@ type AgentProposalDecisionResult {
   executed: Boolean!
 }
 
+"A decision on a proposal, with the proposal and the person who made it."
+type RecentDecision {
+  id: ID!
+  decision: AgentDecisionType!
+  reasonCode: String!
+  "What the decider told the agent; empty when they said nothing."
+  note: String!
+  decidedByUserId: ID!
+  "The decider as the app names them."
+  decidedByName: String!
+  decidedAt: Timestamp!
+  proposal: AgentProposal!
+}
+
 extend type AgentProposal {
   "The run that raised this proposal, for the agent behind it."
   run: AgentRun
@@ -11900,6 +11917,8 @@ extend type Query {
   "What is waiting on a person, newest first: proposals on their own and plans as one unit."
   pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
   pendingDecisionSummary: PendingDecisionSummary!
+  "What was decided since a moment, newest first: proposals that stood on their own."
+  recentDecisions(since: Timestamp!, first: Int = 25): [RecentDecision!]!
 }
 
 extend type Mutation {

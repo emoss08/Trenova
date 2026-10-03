@@ -93,4 +93,30 @@ type AgentDecisionQueueRepository interface {
 	// ListPending, for a connection that asks for its total.
 	CountPending(ctx context.Context, req ListPendingDecisionsRequest) (int, error)
 	Summary(ctx context.Context, req PendingDecisionSummaryRequest) (*PendingDecisionSummary, error)
+	// ListRecent is what was decided lately, newest first: proposals that
+	// stood on their own, each with who decided it.
+	ListRecent(ctx context.Context, req ListRecentDecisionsRequest) ([]RecentDecisionEntry, error)
+}
+
+type ListRecentDecisionsRequest struct {
+	TenantInfo pagination.TenantInfo
+	// Since is the earliest decision kept, in Unix seconds.
+	Since int64
+	Limit int
+	// Audience keeps only what agents the person may use raised; nil keeps
+	// everything.
+	Audience *AgentAudience
+}
+
+// RecentDecisionEntry is one decision on a proposal and the person who made
+// it, by name as the app shows them.
+type RecentDecisionEntry struct {
+	DecisionID      pulid.ID `bun:"decision_id"`
+	ProposalID      pulid.ID `bun:"proposal_id"`
+	Decision        string   `bun:"decision"`
+	ReasonCode      string   `bun:"reason_code"`
+	Note            string   `bun:"note"`
+	DecidedByUserID pulid.ID `bun:"decided_by_user_id"`
+	DecidedByName   string   `bun:"decided_by_name"`
+	DecidedAt       int64    `bun:"decided_at"`
 }

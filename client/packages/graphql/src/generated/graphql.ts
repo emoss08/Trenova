@@ -8056,6 +8056,17 @@ export type DecideAgentProposalsMutationVariables = Exact<{
 
 export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
 
+export type RecentDecisionsQueryVariables = Exact<{
+  since: number;
+  first?: number | null | undefined;
+}>;
+
+
+export type RecentDecisionsQuery = { recentDecisions: Array<{ id: string, decision: AgentDecisionType, reasonCode: string, note: string, decidedByUserId: string, decidedByName: string, decidedAt: number, proposal: (
+      { executionError: string }
+      & { ' $fragmentRefs'?: { 'PendingProposalFieldsFragment': PendingProposalFieldsFragment } }
+    ) }> };
+
 export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
 export type AgentDefinitionCardsQueryVariables = Exact<{
@@ -24266,6 +24277,7 @@ export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"Pend
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
 export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:e68bddfe0b04782f1824389948de415819d6122ced863e86a86564431df715ec"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
 export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:307e160ab24ebe206297811b6ef210e7fda7d5f4412f9d5018d00bdce35f4d91"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
+export const RecentDecisionsDocument = {"__meta__":{"kind":"query","name":"RecentDecisions","hash":"sha256:cf7f4132c5c849741bd5d0fc415994d6dfbe6eb8d9e22905b0e5c5af1dfb3f6f"}} as unknown as TypedDocumentString<RecentDecisionsQuery, RecentDecisionsQueryVariables>;
 export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:ff67572be665e12db87c087023a2b6d8a8fc15ac2af2add16594e6ef22feca59"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
 export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentChoices","hash":"sha256:6bb1514f9329e2c8e1ed77638129117516e2d14d070b7502591fbc60fbe83130"}} as unknown as TypedDocumentString<AgentChoicesQuery, AgentChoicesQueryVariables>;
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;

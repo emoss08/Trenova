@@ -1,5 +1,5 @@
 {
-  "operationCount": 959,
+  "operationCount": 960,
   "fragmentCount": 274,
   "operations": [
     {
@@ -14432,6 +14432,33 @@
       "sdl": "query RecentActivity($first: Int!, $after: String) {\n  auditEntries(input: { first: $first, after: $after }) {\n    edges {\n      node {\n        id\n        resource\n        operation\n        resourceId\n        timestamp\n        comment\n        entityRef\n        user {\n          id\n          name\n          username\n          profilePicUrl\n          thumbnailUrl\n        }\n      }\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}"
     },
     {
+      "name": "RecentDecisions",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/decisions.graphql",
+      "hash": "sha256:cf7f4132c5c849741bd5d0fc415994d6dfbe6eb8d9e22905b0e5c5af1dfb3f6f",
+      "rootFields": [
+        "recentDecisions"
+      ],
+      "variables": [
+        {
+          "name": "since",
+          "type": "Timestamp!",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "PendingProposalFields"
+      ],
+      "usages": [],
+      "sdl": "query RecentDecisions($since: Timestamp!, $first: Int) {\n  recentDecisions(since: $since, first: $first) {\n    id\n    decision\n    reasonCode\n    note\n    decidedByUserId\n    decidedByName\n    decidedAt\n    proposal {\n      ...PendingProposalFields\n      executionError\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+    },
+    {
       "name": "RecomputeIftaReturn",
       "kind": "mutation",
       "domain": "ifta-return",
@@ -24930,7 +24957,8 @@
       "fragments": [],
       "usedByOperations": [
         "PendingDecisions",
-        "PlanSteps"
+        "PlanSteps",
+        "RecentDecisions"
       ],
       "usages": [],
       "sdl": "fragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"

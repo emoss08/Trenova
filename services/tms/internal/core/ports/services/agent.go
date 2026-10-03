@@ -439,6 +439,23 @@ type ListPendingDecisionsRequest struct {
 	Usable *UsableAgents
 }
 
+type ListRecentDecisionsRequest struct {
+	TenantInfo pagination.TenantInfo
+	// Since is the earliest decision kept, in Unix seconds.
+	Since int64
+	First int
+	// Usable keeps only what agents the reader may use raised. Nil keeps
+	// everything.
+	Usable *UsableAgents
+}
+
+// RecentDecision is one decision on a proposal, with the proposal as it
+// stands now and the decider's name.
+type RecentDecision struct {
+	repositories.RecentDecisionEntry
+	Proposal *agent.AgentProposal
+}
+
 type PendingDecisionsPage struct {
 	Items       []PendingDecision
 	HasNextPage bool
@@ -485,6 +502,9 @@ type AgentDecisionQueueService interface {
 		req *DecideAgentProposalsRequest,
 		actor *RequestActor,
 	) ([]AgentProposalDecisionResult, error)
+	// Recent is what was decided since a moment, newest first, each with
+	// the proposal it decided and who decided it.
+	Recent(ctx context.Context, req ListRecentDecisionsRequest) ([]RecentDecision, error)
 	DecideManyOwn(
 		ctx context.Context,
 		req *DecideAgentProposalsRequest,

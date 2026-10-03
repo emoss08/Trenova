@@ -1773,6 +1773,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentProposalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalStatus),
 			},
 			{
+				Name:     "executionError",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentProposal)
+					return obj.ExecutionError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "planId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {

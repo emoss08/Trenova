@@ -221,3 +221,50 @@ func (r *QueryResolver) PendingDecisionSummary(ctx context.Context) (*gqlmodel.P
 
 	return out, nil
 }
+
+func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	usable, err := r.PermissionEngine.AgentsUsable(
+		ctx,
+		actorutil.FromAuthContext(authCtx),
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req := services.ListRecentDecisionsRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Since:      int64(since),
+		Usable:     usable,
+	}
+	if first != nil {
+		req.First = *first
+	}
+
+	recent, err := r.AgentDecisionQueueService.Recent(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*gqlmodel.RecentDecision, 0, len(recent))
+	for i := range recent {
+		item := recent[i]
+		out = append(out, &gqlmodel.RecentDecision{
+			ID:              item.DecisionID.String(),
+			Decision:        agent.DecisionType(item.Decision),
+			ReasonCode:      item.ReasonCode,
+			Note:            item.Note,
+			DecidedByUserID: item.DecidedByUserID.String(),
+			DecidedByName:   item.DecidedByName,
+			DecidedAt:       int(item.DecidedAt),
+			Proposal:        item.Proposal,
+		})
+	}
+
+	return out, nil
+}

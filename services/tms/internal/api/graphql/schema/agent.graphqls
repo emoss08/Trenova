@@ -245,6 +245,8 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "Why the approved write failed, written for the person; empty unless status is ExecutionFailed."
+  executionError: String!
   "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
   planId: ID
   "Position in the plan, from one; zero outside a plan."

@@ -3488,6 +3488,10 @@ type AgentProposal {
   egressClass: AgentEgressClass
   evidence: [AgentEvidenceRef!]!
   """
+  Why the approved write failed, written for the person; empty unless status is ExecutionFailed.
+  """
+  executionError: String!
+  """
   What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption.
   """
   heldBy: [String!]!
@@ -18854,6 +18858,10 @@ type Query {
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
+  """
+  What was decided since a moment, newest first: proposals that stood on their own.
+  """
+  recentDecisions(first: Int = 25, since: Timestamp!): [RecentDecision!]!
   recurringDeduction(id: ID!): RecurringDeduction
   recurringDeductions(input: DataTableConnectionInput!): RecurringDeductionConnection!
   recurringEarning(id: ID!): RecurringEarning
@@ -19275,6 +19283,22 @@ type RateZoneConnection {
 type RateZoneEdge {
   cursor: String!
   node: RateZone!
+}
+
+"""
+A decision on a proposal, with the proposal and the person who made it.
+"""
+type RecentDecision {
+  decidedAt: Timestamp!
+  """The decider as the app names them."""
+  decidedByName: String!
+  decidedByUserId: ID!
+  decision: AgentDecisionType!
+  id: ID!
+  """What the decider told the agent; empty when they said nothing."""
+  note: String!
+  proposal: AgentProposal!
+  reasonCode: String!
 }
 
 enum RecognitionKind {

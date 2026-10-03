@@ -5,6 +5,7 @@ import {
   PendingPlanFieldsFragmentDoc,
   PendingProposalFieldsFragmentDoc,
   PlanStepsDocument,
+  RecentDecisionsDocument,
   type DecideAgentProposalsInput,
   type PendingPlanFieldsFragment,
   type PendingProposalFieldsFragment,
@@ -75,7 +76,9 @@ export function usePendingDecisions(filter: PendingDecisionFilter, enabled = tru
             ];
           }
           if (node.__typename === "AgentPlan") {
-            return [{ ...getFragmentData(PendingPlanFieldsFragmentDoc, node), __typename: "AgentPlan" }];
+            return [
+              { ...getFragmentData(PendingPlanFieldsFragmentDoc, node), __typename: "AgentPlan" },
+            ];
           }
           return [];
         }),
@@ -97,6 +100,53 @@ export function usePendingDecisionSummary(enabled = true) {
     refetchInterval: REFETCH_INTERVAL,
     enabled,
     select: (data) => data.pendingDecisionSummary,
+  });
+}
+
+/** One decision made lately, with the proposal it decided. */
+export type RecentDecisionNode = {
+  id: string;
+  decision: string;
+  reasonCode: string;
+  note: string;
+  decidedByUserId: string;
+  decidedByName: string;
+  decidedAt: number;
+  proposal: PendingProposalNode & { executionError: string };
+};
+
+/** The start of today where the person is, in Unix seconds. */
+export function startOfToday(now = new Date()): number {
+  const midnight = new Date(now);
+  midnight.setHours(0, 0, 0, 0);
+  return Math.floor(midnight.getTime() / 1000);
+}
+
+/**
+ * What was decided since a moment, newest first. Kept under the queue's key,
+ * so every decision that refreshes the queue refreshes this with it.
+ */
+export function useRecentDecisions(since: number, enabled = true) {
+  return useQuery({
+    queryKey: [PENDING_DECISIONS_KEY, "recent", since],
+    queryFn: ({ signal }) =>
+      requestGraphQL({
+        document: RecentDecisionsDocument,
+        operationName: "RecentDecisions",
+        variables: { since, first: 50 },
+        signal,
+      }),
+    refetchInterval: REFETCH_INTERVAL,
+    enabled,
+    select: (data): RecentDecisionNode[] =>
+      data.recentDecisions.map((row) => ({
+        ...row,
+        proposal: {
+          ...getFragmentData(PendingProposalFieldsFragmentDoc, row.proposal),
+          executionError: row.proposal.executionError,
+          __typename: "AgentProposal",
+        },
+      })),
   });
 }
 

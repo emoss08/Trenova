@@ -5124,6 +5124,20 @@ type RateZoneEdge struct {
 	Cursor string    `json:"cursor"`
 }
 
+// A decision on a proposal, with the proposal and the person who made it.
+type RecentDecision struct {
+	ID         string             `json:"id"`
+	Decision   agent.DecisionType `json:"decision"`
+	ReasonCode string             `json:"reasonCode"`
+	// What the decider told the agent; empty when they said nothing.
+	Note            string `json:"note"`
+	DecidedByUserID string `json:"decidedByUserId"`
+	// The decider as the app names them.
+	DecidedByName string               `json:"decidedByName"`
+	DecidedAt     int                  `json:"decidedAt"`
+	Proposal      *agent.AgentProposal `json:"proposal"`
+}
+
 type RecordClearinghouseQueryInput struct {
 	WorkerID          string                        `json:"workerId"`
 	QueryType         worker.ClearinghouseQueryType `json:"queryType"`

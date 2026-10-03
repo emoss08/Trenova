@@ -2088,3 +2088,10 @@
   .dk-wsb{padding:0 8px}
   .dk-wsb-l{display:none}
 }
+/* decisions: a write the card can't draw as one field, the plan's steps, paging the queue */
+.dk-dc2-full{margin-top:22px}
+.dk-dc2-kv{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)}
+.dk-dc2-kv b{color:var(--dsk-fg)}
+.dk-dc2-qmore{margin:10px 8px 0}
+.dk-dc2-btn:disabled{opacity:.5;pointer-events:none}
+.dk-dc2-qd .dk-fail{color:var(--dsk-warn-fg);background:var(--dsk-warn-sub)}
