@@ -20,19 +20,19 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { Notification, NotificationState } from "@trenova/shared/types/notification";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  AlertCircleIcon,
   ArchiveIcon,
-  CheckCheckIcon,
-  CircleAlertIcon,
-  InboxIcon,
+  CheckDoubleIcon,
+  Inbox01Icon,
   MailCheckIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { NotificationItem, type NotificationItemActions } from "./notification-item";
 import { NotificationFeedSkeleton } from "./notification-skeletons";
 
 function FeedEmptyState({ state, unreadOnly }: { state: NotificationState; unreadOnly: boolean }) {
-  const Icon = state === "archived" ? ArchiveIcon : unreadOnly ? MailCheckIcon : InboxIcon;
+  const Icon = state === "archived" ? ArchiveIcon : unreadOnly ? MailCheckIcon : Inbox01Icon;
   const title =
     state === "archived"
       ? "Nothing archived"
@@ -171,7 +171,7 @@ export default function NotificationPanel({
             className="text-2xs text-muted-foreground"
             onClick={() => markAllRead.mutate()}
           >
-            <CheckCheckIcon className="size-3" />
+            <CheckDoubleIcon className="size-3" />
             {t("Mark all read")}
           </Button>
         )}
@@ -223,7 +223,7 @@ export default function NotificationPanel({
 
         {isError && !isLoading && (
           <div className="flex flex-col items-center justify-center gap-3 py-16">
-            <CircleAlertIcon className="text-destructive/60 size-5" />
+            <AlertCircleIcon className="text-destructive/60 size-5" />
             <p className="text-2xs text-muted-foreground">
               {t("Notifications couldn't be loaded.")}
             </p>

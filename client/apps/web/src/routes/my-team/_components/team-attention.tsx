@@ -1,7 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { attentionReasons, isWatched, type ClassifiedMember } from "@/lib/my-team";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { AlertTriangleIcon, ChevronRightIcon, CircleCheckIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { MemberIdentity, memberHref } from "./member-identity";
@@ -45,7 +49,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
           {flagged.length > 0 ? (
             <AlertTriangleIcon className="text-destructive size-3.5" aria-hidden />
           ) : (
-            <CircleCheckIcon className="text-muted-foreground size-3.5" aria-hidden />
+            <CheckCircleIcon className="text-muted-foreground size-3.5" aria-hidden />
           )}
           <h3 id="team-attention-heading" className="text-sm font-semibold">
             {t("Needs your attention")}

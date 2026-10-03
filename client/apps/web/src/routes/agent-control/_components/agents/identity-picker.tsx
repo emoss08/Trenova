@@ -14,7 +14,7 @@ import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 /**

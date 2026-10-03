@@ -4,23 +4,23 @@ import { fetchMyPortalProfile } from "@trenova/shared/lib/graphql/driver-portal"
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BellIcon,
-  Clock4Icon,
-  HouseIcon,
+  Bell01Icon,
+  ClockIcon,
+  Home02Icon,
   ReceiptTextIcon,
-  TruckIcon,
-  WalletIcon,
-} from "lucide-react";
+  Truck01Icon,
+  Wallet02Icon,
+} from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { NavLink, Outlet, useLocation, Link } from "react-router";
 import { useDashRealtime } from "./use-dash-realtime";
 
 const tabs = [
-  { to: "/dash", label: "Home", icon: HouseIcon, end: true },
-  { to: "/dash/loads", label: "Loads", icon: TruckIcon, end: false },
-  { to: "/dash/hos", label: "HOS", icon: Clock4Icon, end: false },
+  { to: "/dash", label: "Home", icon: Home02Icon, end: true },
+  { to: "/dash/loads", label: "Loads", icon: Truck01Icon, end: false },
+  { to: "/dash/hos", label: "HOS", icon: ClockIcon, end: false },
   { to: "/dash/pay", label: "Pay", icon: ReceiptTextIcon, end: false },
-  { to: "/dash/money", label: "Money", icon: WalletIcon, end: false },
+  { to: "/dash/money", label: "Money", icon: Wallet02Icon, end: false },
 ] as const;
 
 export function useDashProfile() {
@@ -46,7 +46,7 @@ function NotificationBell() {
         )
       }
     >
-      <BellIcon className="size-4" />
+      <Bell01Icon className="size-4" />
       {count > 0 ? (
         <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground">
           {count > 99 ? "99+" : count}

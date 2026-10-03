@@ -6,7 +6,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediTransferStatusChoices } from "@/lib/choices";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { LinkIcon } from "lucide-react";
+import { Link01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 export function getTransferColumns(
@@ -95,7 +95,7 @@ export function getTransferColumns(
             className="text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline"
             to={`/shipment-management/shipments?item=${row.original.targetShipmentId}`}
           >
-            <LinkIcon className="size-3.5" />
+            <Link01Icon className="size-3.5" />
             {t("Open shipment")}
           </Link>
         ) : (

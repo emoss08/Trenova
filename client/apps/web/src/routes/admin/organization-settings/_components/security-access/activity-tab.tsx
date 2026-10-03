@@ -28,11 +28,11 @@ import type {
 import { useQuery } from "@tanstack/react-query";
 import {
   ActivityIcon,
-  ExternalLinkIcon,
-  KeyRoundIcon,
-  LockKeyholeIcon,
+  Key01Icon,
+  LinkExternal01Icon,
+  Lock01Icon,
   ShieldAlertIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import type { ReactNode } from "react";
 import { memo, useCallback, useMemo, useState } from "react";
@@ -57,13 +57,13 @@ const activityViewButtonLabels: Record<ActivityViewValue, string> = {
 function getActivityViewIcon(view: ActivityViewValue) {
   switch (view) {
     case "auth":
-      return KeyRoundIcon;
+      return Key01Icon;
     case "risk":
       return ShieldAlertIcon;
     case "identities":
-      return ExternalLinkIcon;
+      return LinkExternal01Icon;
     case "mfa":
-      return LockKeyholeIcon;
+      return Lock01Icon;
   }
 }
 

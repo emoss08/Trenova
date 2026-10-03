@@ -11,7 +11,7 @@ import {
   CHECKLIST_OWNER_LABELS,
   type ChecklistKind,
 } from "@trenova/shared/types/worker-checklist";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { ChecklistItemRow, type ChecklistItemPermissions } from "./checklist-item-row";
 import { groupByOwner } from "./checklist-meta";
@@ -92,7 +92,7 @@ export function ChecklistCard({
               aria-label={`Cancel ${checklist.name}`}
               onClick={() => onCancel(checklist)}
             >
-              <XIcon className="size-3.5" />
+              <XCloseIcon className="size-3.5" />
               {t("Cancel")}
             </Button>
           ) : null}

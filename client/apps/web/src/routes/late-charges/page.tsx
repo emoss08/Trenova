@@ -29,7 +29,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { getEndOfDay } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { AlertTriangleIcon, PlayIcon } from "lucide-react";
+import { AlertTriangleIcon, PlayIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";

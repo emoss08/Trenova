@@ -19,11 +19,11 @@ import {
 } from "@trenova/shared/types/shipment";
 import {
   AlertTriangleIcon,
-  ContainerIcon,
-  FileTextIcon,
-  HistoryIcon,
-  MessageSquareIcon,
-} from "lucide-react";
+  ClockRewindIcon,
+  File06Icon,
+  MessageSquare01Icon,
+  ShippingContainerIcon,
+} from "@trenova/shared/components/icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { useForm } from "react-hook-form";
@@ -171,7 +171,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     {
       value: "documents",
       label: t("Documents"),
-      icon: FileTextIcon,
+      icon: File06Icon,
       hideFooter: true,
       content: DocumentsTab,
       contentProps: {
@@ -182,7 +182,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     {
       value: "comments",
       label: commentCount > 0 ? `Comments (${commentCount})` : "Comments",
-      icon: MessageSquareIcon,
+      icon: MessageSquare01Icon,
       manageScroll: true,
       hideFooter: true,
       content: ShipmentCommentsTab,
@@ -193,7 +193,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     {
       value: "history",
       label: t("History"),
-      icon: HistoryIcon,
+      icon: ClockRewindIcon,
       hideFooter: true,
       content: AuditTab,
       contentProps: {
@@ -235,7 +235,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
                   />
                 }
               >
-                <ContainerIcon className="size-4" />
+                <ShippingContainerIcon className="size-4" />
               </TooltipTrigger>
               <TooltipContent side="bottom">{t("Load planner")}</TooltipContent>
             </Tooltip>

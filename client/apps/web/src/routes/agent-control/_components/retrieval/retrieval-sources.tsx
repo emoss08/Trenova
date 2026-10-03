@@ -12,7 +12,7 @@ import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import {
   SOURCE_LABEL,
   SOURCE_STATE,
@@ -181,7 +181,7 @@ function SourceRow({
                   : undefined
             }
           >
-            <RefreshCwIcon className="size-3.5" />
+            <RefreshCw02Icon className="size-3.5" />
             {t("Re-index")}
           </Button>
         ) : null}

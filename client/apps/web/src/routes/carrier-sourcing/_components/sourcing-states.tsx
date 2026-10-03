@@ -3,7 +3,7 @@ import { carrierIntelProviderLabel } from "@/lib/carrier-intelligence";
 import { CARRIER_INTEL_INTEGRATIONS_PATH } from "@/lib/carrier-links";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ArrowRightIcon, PlugZapIcon } from "lucide-react";
+import { ArrowRightIcon, PlugIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 export function SourcingListSketch() {
@@ -126,7 +126,7 @@ export function SourcingNotConfigured() {
           nativeButton={false}
           render={<Link to={CARRIER_INTEL_INTEGRATIONS_PATH} />}
         >
-          <PlugZapIcon className="size-3.5" aria-hidden />
+          <PlugIcon className="size-3.5" aria-hidden />
           {t("Open integrations")}
         </Button>
       }

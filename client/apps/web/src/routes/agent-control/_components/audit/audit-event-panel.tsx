@@ -17,7 +17,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import type { ReactNode } from "react";
 import { HeldByChips } from "../safety/safety-badges";
@@ -58,14 +58,14 @@ export function AuditEventPanel({ open, onOpenChange, row }: DataTablePanelProps
     >
       {detail.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t("This event could not be loaded. Try again shortly.")}
           </AlertDescription>
         </Alert>
       ) : detail.isSuccess && event === null ? (
         <Alert size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t("This event is not on your organization's trail, or retention has removed it.")}
           </AlertDescription>
@@ -341,7 +341,7 @@ export function AuditEventDetailSections({ event }: { event: AIAuditEventDetail 
             ) : null}
             {event.argumentsTruncated ? (
               <Alert size="sm">
-                <CircleAlertIcon />
+                <AlertCircleIcon />
                 <AlertDescription>
                   {t("The arguments were longer than the trail keeps, so some values were cut.")}
                 </AlertDescription>

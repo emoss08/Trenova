@@ -15,7 +15,7 @@ import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { findActiveNavPath, isRouteActive } from "@/lib/route-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { useNavigationStore } from "@/stores/navigation-store";
-import { ChevronRightIcon, ChevronsUpDownIcon } from "lucide-react";
+import { ChevronRightIcon, ChevronSelectorVerticalIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router";
 
@@ -56,7 +56,7 @@ function NavGroupSection({ group, activePath }: { group: NavGroup; activePath: s
             )}
           >
             <span className="truncate">{t(group.label)}</span>
-            <ChevronsUpDownIcon
+            <ChevronSelectorVerticalIcon
               className={cn("size-3 shrink-0 transition-transform", open && "rotate-180")}
             />
           </button>

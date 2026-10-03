@@ -15,7 +15,7 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PanelBottomDashedIcon } from "lucide-react";
+import { LayoutBottomIcon } from "@trenova/shared/components/icons";
 import { dockLabel } from "./dock-label";
 
 const DOCK_ORDER: readonly AssistantDock[] = [
@@ -56,7 +56,7 @@ export function AssistantPlacementMenu() {
             />
           }
         >
-          <PanelBottomDashedIcon className="size-4" />
+          <LayoutBottomIcon className="size-4" />
         </TooltipTrigger>
         <TooltipContent>{t("Position and size")}</TooltipContent>
       </Tooltip>

@@ -13,7 +13,7 @@ import { formulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import type { ForkLineage, FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircleIcon, GitBranchIcon, Loader2Icon } from "lucide-react";
+import { AlertCircleIcon, GitBranch01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 
 type ForkLineageDialogProps = {
   open: boolean;
@@ -70,7 +70,7 @@ function LineageNode({
             }
           }}
         >
-          <GitBranchIcon className="text-muted-foreground size-4" />
+          <GitBranch01Icon className="text-muted-foreground size-4" />
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">{node.templateName}</span>
             {node.sourceVersion && (
@@ -140,7 +140,7 @@ export function ForkLineageDialog({
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GitBranchIcon className="size-4" />
+            <GitBranch01Icon className="size-4" />
             {t("Fork lineage")}
           </DialogTitle>
           <DialogDescription>
@@ -153,7 +153,7 @@ export function ForkLineageDialog({
         <div className="max-h-[400px] overflow-y-auto py-4">
           {isLoading && (
             <div className="flex items-center justify-center py-8">
-              <Loader2Icon className="text-muted-foreground size-6 animate-spin" />
+              <SpinnerIcon className="text-muted-foreground size-6 animate-spin" />
             </div>
           )}
 

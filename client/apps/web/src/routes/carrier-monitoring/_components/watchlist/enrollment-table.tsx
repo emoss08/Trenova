@@ -18,7 +18,7 @@ import type {
   RowAction,
 } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { ExternalLinkIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -150,7 +150,7 @@ export function EnrollmentTable({ canUpdate }: EnrollmentTableProps) {
       {
         id: "open-carrier",
         label: t("Open carrier"),
-        icon: ExternalLinkIcon,
+        icon: LinkExternal01Icon,
         hidden: (row) => !row.original.carrierId,
         onClick: (row) => {
           if (row.original.carrierId) {

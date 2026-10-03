@@ -7,13 +7,13 @@ import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { PluginKey } from "@tiptap/pm/state";
 import {
-  BoldIcon,
-  ItalicIcon,
-  LinkIcon,
+  Bold01Icon,
+  Italic01Icon,
+  Link01Icon,
   ListIcon,
   ListOrderedIcon,
-  UnderlineIcon,
-} from "lucide-react";
+  Underline01Icon,
+} from "@trenova/shared/components/icons";
 import {
   forwardRef,
   useCallback,
@@ -198,7 +198,7 @@ function LinkControl({ editor, disabled }: { editor: Editor; disabled?: boolean 
   return (
     <div ref={containerRef} className="relative flex items-center">
       <ToolbarButton
-        icon={<LinkIcon className="size-3.5" />}
+        icon={<Link01Icon className="size-3.5" />}
         label={isActive ? "Remove link" : "Add link"}
         isActive={isActive || isOpen}
         onClick={toggle}
@@ -503,21 +503,21 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
           {editor && (
             <>
               <ToolbarButton
-                icon={<BoldIcon className="size-3.5" />}
+                icon={<Bold01Icon className="size-3.5" />}
                 label={translate("Bold")}
                 isActive={editor.isActive("bold")}
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 disabled={disabled}
               />
               <ToolbarButton
-                icon={<ItalicIcon className="size-3.5" />}
+                icon={<Italic01Icon className="size-3.5" />}
                 label={translate("Italic")}
                 isActive={editor.isActive("italic")}
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 disabled={disabled}
               />
               <ToolbarButton
-                icon={<UnderlineIcon className="size-3.5" />}
+                icon={<Underline01Icon className="size-3.5" />}
                 label={translate("Underline")}
                 isActive={editor.isActive("underline")}
                 onClick={() => editor.chain().focus().toggleUnderline().run()}

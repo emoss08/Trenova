@@ -2,7 +2,7 @@ import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { KeyboardIcon, MicOffIcon, XIcon } from "lucide-react";
+import { Keyboard01Icon, MicrophoneOff01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import type { ComposerHintKind } from "./composer-hint";
@@ -92,7 +92,7 @@ export function ComposerHints({
         <AnimatePresence initial={false}>
           {kind === "issue" && issue !== null ? (
             <HintLine key={kind} kind={kind}>
-              <MicOffIcon
+              <MicrophoneOff01Icon
                 aria-hidden
                 className={cn(
                   "size-3 shrink-0",
@@ -113,7 +113,7 @@ export function ComposerHints({
                 aria-label={t("Dismiss")}
                 className="ui-focus-ring hover:text-foreground hover:bg-surface-hover inline-flex size-4 shrink-0 items-center justify-center rounded-full transition-colors"
               >
-                <XIcon className="size-3" />
+                <XCloseIcon className="size-3" />
               </button>
             </HintLine>
           ) : kind === "starting" ? (
@@ -202,7 +202,7 @@ function ShortcutsPopover({
         aria-label={t("Keyboard shortcuts")}
         className="ui-focus-ring hover:text-foreground hover:bg-surface-hover data-popup-open:text-foreground data-popup-open:bg-surface-hover inline-flex size-5.5 shrink-0 items-center justify-center rounded-full transition-colors"
       >
-        <KeyboardIcon className="size-3.5" />
+        <Keyboard01Icon className="size-3.5" />
       </PopoverTrigger>
       <PopoverContent side="top" align="end" className="w-64 gap-2 p-3">
         <p className="text-xs font-semibold">{t("Keyboard shortcuts")}</p>

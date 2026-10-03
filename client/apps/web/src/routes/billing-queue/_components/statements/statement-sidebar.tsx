@@ -5,7 +5,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import type { OpenStatement } from "@trenova/shared/types/statement";
-import { ArrowDownWideNarrowIcon, SearchIcon } from "lucide-react";
+import { SearchLgIcon, SortDescendingIcon } from "@trenova/shared/components/icons";
 import { useDeferredValue, useMemo, useState } from "react";
 import { StatementCard } from "./statement-card";
 
@@ -93,14 +93,14 @@ export function StatementSidebar({
       <div className="flex flex-col gap-1.5 border-b p-2">
         <Input
           placeholder={t("Search customer...")}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="h-7 flex-1 text-xs"
           inputContainerClassName="w-full"
         />
         <div className="flex items-center gap-1">
-          <ArrowDownWideNarrowIcon className="text-muted-foreground size-3" />
+          <SortDescendingIcon className="text-muted-foreground size-3" />
           {SORTS.map((option) => (
             <button
               key={option.key}

@@ -202,7 +202,7 @@ func (t *openPageTool) Name() string { return "open_page" }
 
 func (t *openPageTool) Description() string {
 	return "Give the person a link to a page or a record in Trenova, such as the shipments " +
-		"page or one customer, for them to open if they choose; the app does not move on " +
+		"page or one customer, to open if they choose; the app does not move on " +
 		"its own. Use it only when they ask to go to or open a page; to show them a record, " +
 		"fetch it with its get tool instead. Pass a page's path from " +
 		"find_in_trenova, or a record's entity and id from the tool that found it; action " +

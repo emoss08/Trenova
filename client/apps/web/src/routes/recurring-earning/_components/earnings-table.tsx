@@ -10,7 +10,7 @@ import type { RecurringEarningStatus } from "@trenova/shared/types/driver-pay";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon } from "lucide-react";
+import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { earningStatusInput, getColumns } from "./earning-columns";
@@ -46,7 +46,7 @@ export default function EarningsTable() {
         type: "select",
         label: t("Update status"),
         loadingLabel: t("Updating..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: [
           {
             value: "Active",

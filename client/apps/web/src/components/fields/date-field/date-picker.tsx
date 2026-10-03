@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateOnly, generateDateOnlyString } from "@trenova/shared/lib/date";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "@trenova/shared/components/icons";
 import type { DatePickerProps } from "./date-field";
 import { DatePickerPopover } from "./date-picker-popover";
 import { DateSuggestionInput, type Suggestion } from "./date-suggestion-input";

@@ -8,7 +8,7 @@ import type { EDITemplateScriptLibrary } from "@trenova/shared/types/edi";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
-import { PlusIcon, SaveIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Save01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -144,7 +144,7 @@ export function ScriptLibraryEditor() {
                 replaceScripts(libraries.filter((library) => library.id !== selected.id))
               }
             >
-              <Trash2Icon className="size-4" />
+              <Trash01Icon className="size-4" />
               {t("Remove")}
             </Button>
             <Button
@@ -162,7 +162,7 @@ export function ScriptLibraryEditor() {
                 })
               }
             >
-              <SaveIcon className="size-4" />
+              <Save01Icon className="size-4" />
               {t("Save scripts")}
             </Button>
           </div>

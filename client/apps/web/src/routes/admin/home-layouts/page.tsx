@@ -20,13 +20,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
-  LayoutGridIcon,
-  Loader2Icon,
-  LockIcon,
+  Grid01Icon,
+  Lock01Icon,
   PlusIcon,
-  Trash2Icon,
-  TrashIcon,
-} from "lucide-react";
+  SpinnerIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -101,7 +100,7 @@ export function HomeLayoutsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia className="bg-danger-subtle text-destructive">
-              <TrashIcon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete home screen")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -124,7 +123,7 @@ export function HomeLayoutsPage() {
               disabled={deletePreset.isPending}
               onClick={() => confirming && void remove(confirming)}
             >
-              {deletePreset.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              {deletePreset.isPending && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
               {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -164,7 +163,7 @@ function PresetRow({
           {preset.isOrgDefault && <Badge variant="neutral">{t("Org default")}</Badge>}
           {preset.locked && (
             <Badge variant="warning" className="gap-1">
-              <LockIcon className="size-2.5" />
+              <Lock01Icon className="size-2.5" />
               {t("Locked")}
             </Badge>
           )}
@@ -203,7 +202,7 @@ function PresetRow({
             aria-label={`Delete ${preset.name}`}
             onClick={onDelete}
           >
-            <Trash2Icon className="size-4" />
+            <Trash01Icon className="size-4" />
           </Button>
         )}
       </div>
@@ -216,7 +215,7 @@ function EmptyState({ canCreate }: { canCreate: boolean }) {
 
   return (
     <div className="border-border flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-      <LayoutGridIcon className="text-muted-foreground/40 size-5" />
+      <Grid01Icon className="text-muted-foreground/40 size-5" />
       <p className="text-sm font-medium">{t("No home screens yet")}</p>
       <p className="text-muted-foreground max-w-sm text-xs">
         {t("Until you author one, everyone lands on the home screen Trenova ships for their role.")}

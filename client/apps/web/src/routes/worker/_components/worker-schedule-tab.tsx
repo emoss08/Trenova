@@ -31,7 +31,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { AvailabilityPreferenceValue } from "@trenova/shared/types/scheduling";
-import { CalendarClockIcon, PlusIcon, RepeatIcon } from "lucide-react";
+import { CalendarClockIcon, PlusIcon, Repeat01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AssignShiftDialog } from "./scheduling/assign-shift-dialog";
@@ -252,7 +252,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
       {canReadSwaps ? (
         <section className="rounded-lg border p-4">
           <div className="flex items-center gap-2">
-            <RepeatIcon className="text-muted-foreground size-4" />
+            <Repeat01Icon className="text-muted-foreground size-4" />
             <h3 className="text-sm font-semibold">{t("Swaps")}</h3>
           </div>
           {swaps.length === 0 ? (

@@ -24,7 +24,12 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { cn } from "@trenova/shared/lib/utils";
 import { Command as CommandPrimitive } from "cmdk";
-import { ScanSearchIcon, SearchIcon, TruckIcon, XIcon } from "lucide-react";
+import {
+  ScanSearchIcon,
+  SearchLgIcon,
+  Truck01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useRef, useState, type KeyboardEvent } from "react";
 
 export const AUTOCOMPLETE_MIN_CHARS = 2;
@@ -144,7 +149,7 @@ export function SourcingSearchBar({
       className="relative h-auto overflow-visible bg-transparent"
     >
       <div className="relative">
-        <SearchIcon
+        <SearchLgIcon
           className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
           aria-hidden
         />
@@ -165,7 +170,7 @@ export function SourcingSearchBar({
           aria-label={t("Search carriers by name, USDOT, MC, EIN or VIN")}
           className={cn(
             "border-input bg-muted placeholder:text-muted-foreground h-10 w-full rounded-md border pr-20 pl-9 text-sm outline-none",
-"ui-focus-ring transition-[border-color,box-shadow] duration-200",
+            "ui-focus-ring transition-[border-color,box-shadow] duration-200",
           )}
         />
         <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
@@ -182,7 +187,7 @@ export function SourcingSearchBar({
               aria-label={t("Clear search")}
               className="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-sm"
             >
-              <XIcon className="size-3.5" aria-hidden />
+              <XCloseIcon className="size-3.5" aria-hidden />
             </button>
           ) : focused ? null : (
             <Kbd aria-hidden>/</Kbd>
@@ -199,7 +204,7 @@ export function SourcingSearchBar({
               {intent.kind === "dot" || intent.kind === "mc" ? (
                 <ScanSearchIcon className="size-3.5" aria-hidden />
               ) : (
-                <SearchIcon className="size-3.5" aria-hidden />
+                <SearchLgIcon className="size-3.5" aria-hidden />
               )}
               <span className="truncate">{submitLabel(intent)}</span>
               <CommandShortcut>↵</CommandShortcut>
@@ -218,7 +223,7 @@ export function SourcingSearchBar({
                       onPickSuggestion(suggestion);
                     }}
                   >
-                    <TruckIcon className="size-3.5" aria-hidden />
+                    <Truck01Icon className="size-3.5" aria-hidden />
                     <span className="flex min-w-0 flex-1 items-baseline gap-2">
                       <span className="truncate">
                         {suggestion.legalName || t("USDOT {0}", suggestion.dotNumber)}

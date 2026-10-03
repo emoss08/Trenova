@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { SplitIcon } from "lucide-react";
+import { SplitIcon } from "@trenova/shared/components/icons";
 
 /**
  * The least an allocation row has to carry to be named. Shipment charges hold

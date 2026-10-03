@@ -11,14 +11,14 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CheckIcon,
   ChevronDownIcon,
-  DownloadIcon,
-  HistoryIcon,
-  LayoutPanelLeftIcon,
-  Maximize2Icon,
-  Minimize2Icon,
+  ClockRewindIcon,
+  Download01Icon,
+  Expand01Icon,
+  LayoutAlt02Icon,
+  Minimize01Icon,
   PlusIcon,
-  XIcon,
-} from "lucide-react";
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useMemo, useState } from "react";
 import { AssistantPlacementMenu } from "./assistant-placement-menu";
@@ -176,7 +176,7 @@ export function AssistantHeader({
                   />
                 }
               >
-                <HistoryIcon className="size-4" />
+                <ClockRewindIcon className="size-4" />
               </TooltipTrigger>
               <TooltipContent>{t("Conversations")}</TooltipContent>
             </Tooltip>
@@ -216,7 +216,7 @@ export function AssistantHeader({
                 />
               }
             >
-              <LayoutPanelLeftIcon className="size-4" />
+              <LayoutAlt02Icon className="size-4" />
             </TooltipTrigger>
             <TooltipContent>{t("Open in Desk")}</TooltipContent>
           </Tooltip>
@@ -235,7 +235,7 @@ export function AssistantHeader({
                 />
               }
             >
-              <DownloadIcon className="size-4" />
+              <Download01Icon className="size-4" />
             </TooltipTrigger>
             <TooltipContent>{t("Download transcript")}</TooltipContent>
           </Tooltip>
@@ -281,7 +281,7 @@ export function AssistantHeader({
               />
             }
           >
-            {expanded ? <Minimize2Icon className="size-4" /> : <Maximize2Icon className="size-4" />}
+            {expanded ? <Minimize01Icon className="size-4" /> : <Expand01Icon className="size-4" />}
           </TooltipTrigger>
           <TooltipContent>{expanded ? t("Collapse") : t("Expand")}</TooltipContent>
         </Tooltip>
@@ -298,7 +298,7 @@ export function AssistantHeader({
               />
             }
           >
-            <XIcon className="size-4" />
+            <XCloseIcon className="size-4" />
           </TooltipTrigger>
           <TooltipContent className="flex items-center gap-2">
             {t("Close")} <Kbd>Esc</Kbd>

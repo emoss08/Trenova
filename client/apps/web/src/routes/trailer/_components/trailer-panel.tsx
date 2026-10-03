@@ -5,7 +5,7 @@ import type { TrailerRow } from "@/lib/graphql/equipment-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { trailerSchema } from "@/types/trailer";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileTextIcon } from "lucide-react";
+import { File06Icon } from "@trenova/shared/components/icons";
 import { lazy, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { TrailerForm } from "./trailer-form";
@@ -50,7 +50,7 @@ export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       {
         value: "documents",
         label: t("Documents"),
-        icon: FileTextIcon,
+        icon: File06Icon,
         content: DocumentsTab,
         contentProps: {
           resourceType: "trailer",

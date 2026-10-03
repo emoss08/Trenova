@@ -32,13 +32,13 @@ import { useQuery } from "@tanstack/react-query";
 import {
   CheckIcon,
   ChevronDownIcon,
+  Edit02Icon,
   EyeIcon,
-  PencilIcon,
-  SearchIcon,
-  ShieldIcon,
-  XIcon,
+  SearchLgIcon,
+  Shield01Icon,
+  XCloseIcon,
   ZapIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -67,7 +67,7 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
     id: "editor",
     name: "Editor",
     description: "Read and update access",
-    icon: <PencilIcon className="size-4" />,
+    icon: <Edit02Icon className="size-4" />,
     getPermissions: (resources) =>
       resources
         .filter((r) => r.operations.some((op) => op.operation === "update"))
@@ -83,7 +83,7 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
     id: "manager",
     name: "Manager",
     description: "Full CRUD access",
-    icon: <ShieldIcon className="size-4" />,
+    icon: <Shield01Icon className="size-4" />,
     getPermissions: (resources) =>
       resources.map((r) => ({
         resource: r.resource,
@@ -343,7 +343,7 @@ export function RolePermissionBuilder({
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+            <SearchLgIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
             <Input
               placeholder={t("Search resources...")}
               value={searchQuery}
@@ -356,7 +356,7 @@ export function RolePermissionBuilder({
                 onClick={() => setSearchQuery("")}
                 className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
               >
-                <XIcon className="size-4" />
+                <XCloseIcon className="size-4" />
               </button>
             )}
           </div>

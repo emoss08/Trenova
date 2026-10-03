@@ -11,7 +11,7 @@ import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { MoveStatus, Shipment, ShipmentMove, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { PALETTE_ENTITIES } from "../../palette-entities";
 import type { PaletteAction, PaletteIntent, PaletteRecord } from "../../palette-model";
 import { shipmentPreviewQuery } from "../preview/preview-queries";

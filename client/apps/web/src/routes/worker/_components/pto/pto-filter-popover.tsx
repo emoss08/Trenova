@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { getCommonDatePresets } from "@trenova/shared/lib/date";
 import { ptoFilterSchema, type PTOFilter, type PTOType } from "@trenova/shared/types/worker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FilterIcon } from "lucide-react";
+import { FilterFunnel01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ptoTypeOptions } from "./use-pto-filters";
@@ -72,7 +72,7 @@ export function PTOFilterPopover({
       <PopoverTrigger
         render={
           <Button variant="outline" className="h-full">
-            <FilterIcon className="size-4" />
+            <FilterFunnel01Icon className="size-4" />
             <span className="text-xs">{t("Filter")}</span>
           </Button>
         }

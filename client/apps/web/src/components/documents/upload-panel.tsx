@@ -5,16 +5,16 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { UploadState } from "@/types/upload";
 import {
   AlertCircleIcon,
-  CheckCircleIcon,
+  CheckCircleBrokenIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  Loader2Icon,
   PlusIcon,
-  RotateCcwIcon,
-  ServerCrashIcon,
+  RefreshCcw01Icon,
+  ServerAlertIcon,
+  SpinnerIcon,
   WifiOffIcon,
-  XIcon,
-} from "lucide-react";
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { DocumentFileTypeIcon } from "./document-file-type-icon";
@@ -91,7 +91,7 @@ function getErrorIcon(errorType?: string) {
     case "network":
       return <WifiOffIcon className="size-4 text-warning-foreground" />;
     case "server":
-      return <ServerCrashIcon className="size-4 text-danger-foreground" />;
+      return <ServerAlertIcon className="size-4 text-danger-foreground" />;
     default:
       return <AlertCircleIcon className="size-4 text-danger-foreground" />;
   }
@@ -192,25 +192,27 @@ function UploadItem({
 
       <div className="flex shrink-0 items-center gap-1">
         {status === "uploading" && (
-          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+          <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
         {status === "processing" && (
-          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+          <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
         {status === "uploaded" && (
-          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+          <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
         {status === "verifying" && (
-          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+          <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
         {status === "paused" && <AlertCircleIcon className="size-4 text-warning-foreground" />}
         {status === "retrying" && (
-          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+          <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
         {status === "completing" && (
-          <Loader2Icon className="size-4 animate-spin text-info-foreground" />
+          <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
-        {status === "success" && <CheckCircleIcon className="size-4 text-success-foreground" />}
+        {status === "success" && (
+          <CheckCircleBrokenIcon className="size-4 text-success-foreground" />
+        )}
         {(status === "error" || status === "paused" || status === "quarantined") && (
           <>
             {status === "error" ? getErrorIcon(errorType) : null}
@@ -222,7 +224,7 @@ function UploadItem({
                 className="text-muted-foreground hover:bg-muted hover:text-foreground"
                 title={t("Retry upload")}
               >
-                <RotateCcwIcon className="size-3.5" />
+                <RefreshCcw01Icon className="size-3.5" />
               </Button>
             )}
             {onRemove && (
@@ -233,7 +235,7 @@ function UploadItem({
                 className="text-muted-foreground hover:bg-muted hover:text-foreground"
                 title={t("Remove")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             )}
           </>
@@ -252,7 +254,7 @@ function UploadItem({
               onClick={() => onCancel(id)}
               className="text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <XIcon className="size-3.5" />
+              <XCloseIcon className="size-3.5" />
             </Button>
           )}
       </div>
@@ -560,7 +562,7 @@ export function UploadPanel({
                 onClick={onClose}
                 className="text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <XIcon className="size-4" />
+                <XCloseIcon className="size-4" />
               </Button>
             </div>
           </div>

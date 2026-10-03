@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { FileTextIcon, LockIcon } from "lucide-react";
+import { File06Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { type ReactNode, lazy, Suspense } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -66,7 +66,7 @@ export function ShipmentForm() {
             <div className="bg-background/60 absolute inset-0 z-10 rounded-lg">
               <div className="sticky top-1/3 flex flex-col items-center gap-3 py-12">
                 <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-                  <LockIcon className="text-muted-foreground size-5" />
+                  <Lock01Icon className="text-muted-foreground size-5" />
                 </div>
                 <div className="max-w-sm text-center">
                   <p className="text-sm font-medium">
@@ -99,7 +99,7 @@ function InvoicedBanner() {
 
   return (
     <Alert variant="info" size="sm">
-      <FileTextIcon />
+      <File06Icon />
       <AlertTitle>{t("Invoiced")}</AlertTitle>
       <AlertDescription>
         {t(
@@ -120,7 +120,7 @@ function SectionLock({ locked, children }: { locked: boolean; children: ReactNod
       {children}
       <div className="bg-background/60 absolute inset-0 z-10 flex cursor-not-allowed items-center justify-center rounded-lg">
         <div className="bg-muted flex items-center gap-2 rounded-md px-3 py-1.5">
-          <LockIcon className="text-muted-foreground size-3.5" />
+          <Lock01Icon className="text-muted-foreground size-3.5" />
           <span className="text-muted-foreground text-xs font-medium">
             {t("Locked — shipment has been invoiced")}
           </span>

@@ -17,7 +17,7 @@ import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { RETRIEVAL_SOURCE_PARAM, retrievalSourceParser } from "../../ai-control-tabs";
@@ -109,7 +109,7 @@ export default function FailedEntriesTable() {
             {t("Showing failures in {0} only", t(SOURCE_LABEL[sourceType].label))}
           </p>
           <Button variant="ghost" size="xs" onClick={() => navigate({ tab: "retrieval" })}>
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
             {t("Show every source")}
           </Button>
         </div>

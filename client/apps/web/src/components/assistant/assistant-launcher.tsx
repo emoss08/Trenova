@@ -8,7 +8,7 @@ import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { EyeOffIcon } from "lucide-react";
+import { EyeOffIcon } from "@trenova/shared/components/icons";
 import { m, useMotionValue, useReducedMotion, type PanInfo } from "motion/react";
 import { useRef, useState } from "react";
 import { AssistantDockTargets } from "./assistant-dock-targets";

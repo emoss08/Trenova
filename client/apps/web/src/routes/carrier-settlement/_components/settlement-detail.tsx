@@ -48,17 +48,17 @@ import type { CarrierSettlementStatus } from "@trenova/shared/types/carrier-sett
 import type { RateConfirmation } from "@trenova/shared/types/rate-confirmation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpRight,
-  CheckCheck,
-  CircleDollarSign,
-  Download,
-  FileText,
-  Plus,
-  RefreshCcw,
-  Send,
-  X,
-  Undo2,
-} from "lucide-react";
+  ArrowUpRightIcon,
+  CheckDoubleIcon,
+  CurrencyDollarCircleIcon,
+  Download01Icon,
+  File06Icon,
+  FlipBackwardIcon,
+  PlusIcon,
+  RefreshCcw02Icon,
+  Send01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -144,7 +144,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
           to={`/carrier-settlements/workspace?settlement=${settlement.id}`}
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
-          <ArrowUpRight className="size-3.5" />
+          <ArrowUpRightIcon className="size-3.5" />
           {t("Open in workspace")}
         </Link>
       )}
@@ -272,7 +272,7 @@ function SettlementActions({
       {status === "Draft" && (
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("submit")}>
-            <Send className="size-3.5" />
+            <Send01Icon className="size-3.5" />
             {t("Submit for approval")}
           </Button>
           <Button
@@ -281,7 +281,7 @@ function SettlementActions({
             disabled={busy}
             onClick={() => runAction.mutate("recalculate")}
           >
-            <RefreshCcw className="size-3.5" />
+            <RefreshCcw02Icon className="size-3.5" />
             {t("Recalculate")}
           </Button>
         </>
@@ -289,7 +289,7 @@ function SettlementActions({
       {status === "PendingApproval" && (
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("approve")}>
-            <CheckCheck className="size-3.5" />
+            <CheckDoubleIcon className="size-3.5" />
             {t("Approve")}
           </Button>
           <Button
@@ -298,20 +298,20 @@ function SettlementActions({
             disabled={busy}
             onClick={() => setReasonAction("reject")}
           >
-            <Undo2 className="size-3.5" />
+            <FlipBackwardIcon className="size-3.5" />
             {t("Reject")}
           </Button>
         </>
       )}
       {status === "Approved" && (
         <Button size="sm" disabled={busy} onClick={() => runAction.mutate("post")}>
-          <CheckCheck className="size-3.5" />
+          <CheckDoubleIcon className="size-3.5" />
           {t("Post to GL")}
         </Button>
       )}
       {status === "Posted" && (
         <Button size="sm" disabled={busy} onClick={() => setPayDialogOpen(true)}>
-          <CircleDollarSign className="size-3.5" />
+          <CurrencyDollarCircleIcon className="size-3.5" />
           {t("Mark paid")}
         </Button>
       )}
@@ -322,7 +322,7 @@ function SettlementActions({
           disabled={busy}
           onClick={() => setAdjustDialogOpen(true)}
         >
-          <Plus className="size-3.5" />
+          <PlusIcon className="size-3.5" />
           {t("Add adjustment")}
         </Button>
       )}
@@ -335,7 +335,7 @@ function SettlementActions({
           disabled={busy}
           onClick={() => setReasonAction("void")}
         >
-          <X className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
           {t("Void")}
         </Button>
       )}
@@ -398,7 +398,7 @@ function BatchCsvExportButton({ batchId }: { batchId: string }) {
       onClick={() => exportMutation.mutate()}
       title={t("Download the remittance CSV for this settlement's batch")}
     >
-      <Download className="size-3.5" />
+      <Download01Icon className="size-3.5" />
       {t("Batch CSV")}
     </Button>
   );
@@ -738,7 +738,7 @@ function SettlementLines({
                               onClick={() => removeMutation.mutate(line.id)}
                               aria-label={t("Remove adjustment")}
                             >
-                              <X className="size-3" />
+                              <XCloseIcon className="size-3" />
                             </Button>
                           )}
                         </td>
@@ -867,7 +867,7 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
                   rel="noreferrer"
                   className="ml-auto inline-flex items-center gap-1 font-medium hover:underline"
                 >
-                  <FileText className="size-3" aria-hidden />
+                  <File06Icon className="size-3" aria-hidden />
                   {t("View PDF")}
                 </a>
               )}

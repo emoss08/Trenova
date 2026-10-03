@@ -5,7 +5,7 @@ import { getAvailableResources, type ResourceDefinition } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
-import { EyeIcon, PencilIcon, ShieldIcon } from "lucide-react";
+import { Edit02Icon, EyeIcon, Shield01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -34,7 +34,7 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
     id: "editor",
     name: "Editor",
     description: "Read and update access",
-    icon: <PencilIcon className="size-3.5" />,
+    icon: <Edit02Icon className="size-3.5" />,
     getPermissions: (resources) =>
       resources
         .filter((r) => r.operations.some((op) => op.operation === "update"))
@@ -50,7 +50,7 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
     id: "manager",
     name: "Manager",
     description: "Full CRUD access to all resources",
-    icon: <ShieldIcon className="size-3.5" />,
+    icon: <Shield01Icon className="size-3.5" />,
     getPermissions: (resources) =>
       resources.map((r) => ({
         resource: r.resource,

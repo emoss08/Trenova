@@ -13,7 +13,7 @@ import { formatClockDurationMs } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { useQuery } from "@tanstack/react-query";
-import { CheckIcon, ChevronDownIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 const FEASIBILITY_STALE_MS = 30_000;
@@ -75,7 +75,8 @@ function FeasibilityRow({
           )}
           {driver.tractorCode && (
             <Badge
-              variant="neutral" appearance="outline"
+              variant="neutral"
+              appearance="outline"
               className="border-border h-4 shrink-0 rounded-md px-1 font-mono text-3xs"
             >
               {driver.tractorCode}
@@ -114,7 +115,7 @@ function FeasibilityRow({
         onClick={() => onSelect(driver.workerId)}
         className={cn(
           "flex w-full flex-col gap-0.5 rounded-md px-2 py-1.5 text-left transition-colors",
-"ui-focus-ring hover:bg-muted/60",
+          "ui-focus-ring hover:bg-muted/60",
           selected && "bg-muted/40",
         )}
       >
@@ -241,7 +242,7 @@ export function AssignmentHosFeasibility({
     <div className="flex flex-col gap-2 pb-4">
       {selectedDriver?.verdict === "infeasible" && (
         <p className="text-destructive flex items-start gap-1.5 text-xs">
-          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
+          <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
           <span>
             {t(
               "Selected driver has insufficient hours {0}",

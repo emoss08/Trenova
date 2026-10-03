@@ -6,7 +6,7 @@ import type { Insight, InsightSeverity } from "@/types/insight";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { ModuleCard } from "./module-card";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -127,7 +127,7 @@ export function InsightsWatch({ enabled = true }: { enabled?: boolean }) {
           nativeButton={false}
           render={<Link to="/insights" />}
         >
-          <ExternalLinkIcon className="size-2.5" />
+          <LinkExternal01Icon className="size-2.5" />
         </Button>
       }
     >

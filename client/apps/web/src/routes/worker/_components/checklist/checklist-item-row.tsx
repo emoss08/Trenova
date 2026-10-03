@@ -10,7 +10,12 @@ import {
   type ChecklistItemKind,
   type ChecklistItemStatus,
 } from "@trenova/shared/types/worker-checklist";
-import { CheckIcon, CircleSlashIcon, RotateCcwIcon, SkipForwardIcon } from "lucide-react";
+import {
+  CheckIcon,
+  RefreshCcw01Icon,
+  SkipForwardIcon,
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { CHECKLIST_ITEM_KIND_ICONS, isAutoSatisfied } from "./checklist-meta";
 
 export type ChecklistItemPermissions = { canUpdate: boolean };
@@ -104,7 +109,7 @@ export function ChecklistItemRow({
       actions.push({
         id: "not-applicable",
         label: `Mark ${item.label} not applicable`,
-        icon: CircleSlashIcon,
+        icon: SlashCircle01Icon,
         disabled: busy,
         onSelect: () => onNotApplicable(item),
       });
@@ -112,7 +117,7 @@ export function ChecklistItemRow({
       actions.push({
         id: "reopen",
         label: `Reopen ${item.label}`,
-        icon: RotateCcwIcon,
+        icon: RefreshCcw01Icon,
         disabled: busy,
         onSelect: () => onReopen(item),
       });
@@ -141,7 +146,7 @@ export function ChecklistItemRow({
         ) : status === "Skipped" ? (
           <SkipForwardIcon className="size-3.5" />
         ) : status === "NotApplicable" ? (
-          <CircleSlashIcon className="size-3.5" />
+          <SlashCircle01Icon className="size-3.5" />
         ) : (
           <Icon className="size-3.5" />
         )}
@@ -161,7 +166,11 @@ export function ChecklistItemRow({
             <span className="text-xs text-muted-foreground">{t("Optional")}</span>
           ) : null}
           {auto ? (
-            <Badge variant="neutral" appearance="outline" title={t("Completes itself from evidence")}>
+            <Badge
+              variant="neutral"
+              appearance="outline"
+              title={t("Completes itself from evidence")}
+            >
               {t("Auto")}
             </Badge>
           ) : null}

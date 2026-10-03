@@ -1,7 +1,7 @@
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { ExternalLinkIcon, InfoIcon, LockIcon } from "lucide-react";
+import { InfoCircleIcon, LinkExternal01Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import type {
   AccountingAppSettings,
   AccountingConnection,
@@ -52,7 +52,7 @@ export function AccountingConnectStep({
       </div>
       <ul className="text-foreground-muted space-y-1.5 text-sm">
         <li className="flex gap-2">
-          <LockIcon aria-hidden className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
+          <Lock01Icon aria-hidden className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
           <span>
             {t(
               "Right away, Trenova reads the company's name, home currency, multicurrency setting and closing date, and checks the connection every fifteen minutes.",
@@ -60,7 +60,7 @@ export function AccountingConnectStep({
           </span>
         </li>
         <li className="flex gap-2">
-          <InfoIcon aria-hidden className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
+          <InfoCircleIcon aria-hidden className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
           <span>
             {t(
               "Nothing is sent to {0} until you map your accounts and turn syncing on.",
@@ -116,7 +116,7 @@ export function AccountingConnectStep({
           loadingText={t("Opening {0}...", vendor.name)}
         >
           {t("Connect to {0}", vendor.name)}
-          <ExternalLinkIcon aria-hidden className="size-3.5" />
+          <LinkExternal01Icon aria-hidden className="size-3.5" />
         </Button>
       </div>
     </>

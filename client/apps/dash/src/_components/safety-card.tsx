@@ -20,7 +20,7 @@ import {
   type SafetyRating,
 } from "@trenova/shared/types/worker-safety";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AwardIcon, CheckIcon, ShieldCheckIcon } from "lucide-react";
+import { Award01Icon, CheckIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -59,7 +59,7 @@ export function SafetyCard() {
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <ShieldCheckIcon className="size-4 text-muted-foreground" />
+          <ShieldTickIcon className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold">{t("Safety")}</h2>
         </div>
         <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
@@ -105,7 +105,7 @@ export function SafetyCard() {
         <ul className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
           {recognitions.data.slice(0, 3).map((recognition) => (
             <li key={recognition.id} className="flex items-start gap-2">
-              <AwardIcon className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
+              <Award01Icon className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
               <div className="min-w-0">
                 <p className="text-sm font-medium">{t(recognition.title)}</p>
                 {recognition.message ? (

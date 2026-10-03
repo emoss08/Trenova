@@ -22,7 +22,7 @@ import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { downloadJsonFile } from "@trenova/shared/lib/utils";
-import { CopyIcon, DownloadIcon, LockKeyholeIcon } from "lucide-react";
+import { Copy01Icon, Download01Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 export type RawPayloadDialogProps = {
@@ -73,7 +73,7 @@ export function RawPayloadDialog({
           </DialogDescription>
         </DialogHeader>
         <p className="text-muted-foreground flex items-start gap-2 text-xs">
-          <LockKeyholeIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <Lock01Icon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {t(
             "Confidential. Licensed provider data that may contain personal contact details and must not be shared outside your organization. Viewing it is recorded.",
           )}
@@ -105,7 +105,7 @@ export function RawPayloadDialog({
                 variant="outline"
                 onClick={() => void copy(pretty, { withToast: true })}
               >
-                <CopyIcon />
+                <Copy01Icon />
                 {t("Copy")}
               </Button>
               <Button
@@ -118,7 +118,7 @@ export function RawPayloadDialog({
                   )
                 }
               >
-                <DownloadIcon />
+                <Download01Icon />
                 {t("Download")}
               </Button>
             </>

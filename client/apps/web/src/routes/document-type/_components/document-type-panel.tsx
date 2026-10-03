@@ -18,7 +18,7 @@ import { documentTypeSchema, type DocumentType } from "@trenova/shared/types/doc
 import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -200,7 +200,7 @@ function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEd
         <div className="flex flex-col gap-6">
           {isSystem && (
             <Alert variant="info">
-              <CircleAlertIcon />
+              <AlertCircleIcon />
               <AlertTitle>{t("System document type")}</AlertTitle>
               <AlertDescription>
                 {t("This is a system document type and cannot be modified.")}

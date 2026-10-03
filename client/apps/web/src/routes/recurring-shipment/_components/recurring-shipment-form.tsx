@@ -16,7 +16,7 @@ import {
 import { describeCron } from "@/lib/cron";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { CalendarClockIcon } from "lucide-react";
+import { CalendarClockIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { BlackoutDatesField } from "./blackout-dates-field";

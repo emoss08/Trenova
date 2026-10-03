@@ -27,21 +27,21 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
+  Beaker02Icon,
   CheckIcon,
   ClockIcon,
-  DownloadIcon,
-  FileUpIcon,
-  FlaskConicalIcon,
-  GitBranchIcon,
-  GitForkIcon,
-  HistoryIcon,
-  MessageSquareWarningIcon,
-  MoreVerticalIcon,
-  NetworkIcon,
-  SendIcon,
-  UsersIcon,
-  XIcon,
-} from "lucide-react";
+  ClockRewindIcon,
+  Dataflow04Icon,
+  DotsVerticalIcon,
+  Download01Icon,
+  FileUploadIcon,
+  GitBranch01Icon,
+  GitBranch02Icon,
+  MessageAlertSquareIcon,
+  Send01Icon,
+  Users01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useNavigate } from "react-router";
 import type { ApprovalAction } from "../approval-action-dialog";
 
@@ -88,7 +88,7 @@ function UsageChip({
       <HoverCardTrigger
         render={
           <Badge variant={data.inUse ? "info" : "neutral"} className="gap-1 text-xs">
-            <UsersIcon className="size-3" />
+            <Users01Icon className="size-3" />
             {data.inUse ? t("In use ({0})", total) : t("Not in use")}
           </Badge>
         }
@@ -134,7 +134,7 @@ function ScenarioBadge({ summary }: { summary: ScenarioSummary }) {
             variant={allPassing ? "success" : "danger"}
             className={cn("gap-1 text-xs", (summary.isStale || summary.isPending) && "opacity-60")}
           >
-            <FlaskConicalIcon className="size-3" />
+            <Beaker02Icon className="size-3" />
             {summary.passed}/{summary.total}
           </Badge>
         }
@@ -233,7 +233,7 @@ export function StudioHeader({
                 onClick={onLineage}
                 className="flex items-center gap-1 rounded-md border border-warning-border bg-warning-subtle px-1.5 py-0.5 text-xs text-warning-subtle-foreground"
               >
-                <GitBranchIcon className="size-3" />
+                <GitBranch01Icon className="size-3" />
                 {t("Forked from v{0}", template.sourceVersionNumber)}
               </button>
             )}
@@ -260,7 +260,7 @@ export function StudioHeader({
                       disabled={isDirty}
                       onClick={() => onApprovalAction("submit")}
                     >
-                      <SendIcon className="size-3" />
+                      <Send01Icon className="size-3" />
                       {template?.status === "Inactive"
                         ? t("Reactivate via review")
                         : t("Submit for review")}
@@ -298,7 +298,7 @@ export function StudioHeader({
                   className="gap-1.5 text-warning-foreground"
                   onClick={() => onApprovalAction("requestChanges")}
                 >
-                  <MessageSquareWarningIcon className="size-3" />
+                  <MessageAlertSquareIcon className="size-3" />
                   {t("Request changes")}
                 </Button>
                 <Button
@@ -308,7 +308,7 @@ export function StudioHeader({
                   className="text-destructive gap-1.5"
                   onClick={() => onApprovalAction("reject")}
                 >
-                  <XIcon className="size-3" />
+                  <XCloseIcon className="size-3" />
                   {t("Reject")}
                 </Button>
               </>
@@ -321,7 +321,7 @@ export function StudioHeader({
             <DropdownMenuTrigger
               render={
                 <Button type="button" variant="ghost" size="icon-sm" aria-label={t("More actions")}>
-                  <MoreVerticalIcon className="size-4" />
+                  <DotsVerticalIcon className="size-4" />
                 </Button>
               }
             />
@@ -335,7 +335,7 @@ export function StudioHeader({
                 <DropdownMenuItem
                   title={t("Backtest")}
                   description={t("Re-rate recent shipments")}
-                  startContent={<HistoryIcon className="size-4" />}
+                  startContent={<ClockRewindIcon className="size-4" />}
                   onClick={onBacktest}
                 />
               </DropdownMenuGroup>
@@ -343,12 +343,12 @@ export function StudioHeader({
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   title={t("Fork template")}
-                  startContent={<GitForkIcon className="size-4" />}
+                  startContent={<GitBranch02Icon className="size-4" />}
                   onClick={onFork}
                 />
                 <DropdownMenuItem
                   title={t("View lineage")}
-                  startContent={<NetworkIcon className="size-4" />}
+                  startContent={<Dataflow04Icon className="size-4" />}
                   onClick={onLineage}
                 />
               </DropdownMenuGroup>
@@ -356,12 +356,12 @@ export function StudioHeader({
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   title={t("Export JSON")}
-                  startContent={<DownloadIcon className="size-4" />}
+                  startContent={<Download01Icon className="size-4" />}
                   onClick={onExport}
                 />
                 <DropdownMenuItem
                   title={t("Import templates")}
-                  startContent={<FileUpIcon className="size-4" />}
+                  startContent={<FileUploadIcon className="size-4" />}
                   onClick={onImport}
                 />
               </DropdownMenuGroup>

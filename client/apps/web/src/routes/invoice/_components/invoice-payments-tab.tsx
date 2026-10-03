@@ -29,7 +29,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { HandCoinsIcon, ReceiptTextIcon } from "lucide-react";
+import { CoinsHandIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -140,7 +140,7 @@ export function InvoicePaymentsTab({
                 to={`/accounting/ar/payments?panelType=create&customerId=${invoice.customerId}&invoiceIds=${invoice.id}`}
                 className={cn(buttonVariants({ size: "sm" }))}
               >
-                <HandCoinsIcon className="size-3.5" />
+                <CoinsHandIcon className="size-3.5" />
                 {t("Record payment")}
               </Link>
             ) : null}

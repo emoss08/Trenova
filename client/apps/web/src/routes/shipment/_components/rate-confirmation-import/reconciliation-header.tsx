@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
-import { ZapIcon } from "lucide-react";
+import { ZapIcon } from "@trenova/shared/components/icons";
 import type { ReconciliationCounts } from "./types";
 
 type ReconciliationHeaderProps = {

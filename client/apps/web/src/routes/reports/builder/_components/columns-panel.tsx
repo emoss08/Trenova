@@ -46,7 +46,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { FilterIcon, GripVerticalIcon, PaletteIcon, SigmaIcon, XIcon } from "lucide-react";
+import {
+  FilterFunnel01Icon,
+  GripVerticalIcon,
+  PaletteIcon,
+  SigmaIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useState } from "react";
 import { BandEditor } from "./band-editor";
@@ -313,7 +319,7 @@ function SortableColumnRow({
             aria-expanded={filterOpen}
             title={t("Only count matching records")}
           >
-            <FilterIcon className={cn("size-3.5", column.filter && "text-primary")} />
+            <FilterFunnel01Icon className={cn("size-3.5", column.filter && "text-primary")} />
           </Button>
         )}
         <Button
@@ -336,7 +342,7 @@ function SortableColumnRow({
           onClick={onRemove}
           aria-label={t("Remove column")}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
         </Button>
       </div>
       {isComputed ? (

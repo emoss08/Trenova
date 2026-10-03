@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { GlobeIcon } from "lucide-react";
+import { Globe02Icon } from "@trenova/shared/components/icons";
 import { lazy } from "react";
 
 const Table = lazy(() => import("./_components/ifta-tax-rate-table"));
@@ -20,7 +20,7 @@ export function IftaTaxRatesPage() {
       }}
     >
       <Alert variant="info">
-        <GlobeIcon className="size-4" />
+        <Globe02Icon className="size-4" />
         <AlertTitle>{t("Rates are global")}</AlertTitle>
         <AlertDescription>
           {t(

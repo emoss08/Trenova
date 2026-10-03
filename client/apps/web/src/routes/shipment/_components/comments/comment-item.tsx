@@ -38,24 +38,23 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation } from "@trenova/shared/types/permission";
 import { formatDistanceToNow, fromUnixTime } from "date-fns";
 import {
-  CheckCircle2Icon,
+  CheckCircleIcon,
   CheckIcon,
-  CircleSlashIcon,
-  EllipsisVerticalIcon,
+  DotsVerticalIcon,
+  Edit02Icon,
   EyeIcon,
-  FlagIcon,
-  LoaderIcon,
-  PencilIcon,
-  PinIcon,
+  Flag01Icon,
+  FlipBackwardIcon,
+  Loading02Icon,
+  Pin01Icon,
   PinOffIcon,
-  ReplyIcon,
-  RotateCcwIcon,
-  TagIcon,
-  Trash2Icon,
-  TrashIcon,
-  UndoIcon,
-  XIcon,
-} from "lucide-react";
+  RefreshCcw01Icon,
+  ReverseLeftIcon,
+  SlashCircle01Icon,
+  Tag01Icon,
+  Trash01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   fetchAllEntityRefCandidates,
@@ -184,7 +183,7 @@ export function CommentItem({
           </span>
           {comment.pending ? (
             <span className="text-2xs text-muted-foreground flex items-center gap-1">
-              <LoaderIcon className="size-3 animate-spin" />
+              <Loading02Icon className="size-3 animate-spin" />
               {t("Sending…")}
             </span>
           ) : (
@@ -196,7 +195,7 @@ export function CommentItem({
           {isPinned && (
             <Tooltip>
               <TooltipTrigger
-                render={<PinIcon className="size-3 shrink-0 text-warning-foreground" />}
+                render={<Pin01Icon className="size-3 shrink-0 text-warning-foreground" />}
               />
               <TooltipContent side="top">
                 {t(
@@ -251,7 +250,7 @@ export function CommentItem({
               className="text-2xs h-5 gap-1 px-1.5"
               onClick={actions.onRetry}
             >
-              <RotateCcwIcon className="size-2.5" />
+              <RefreshCcw01Icon className="size-2.5" />
               {t("Retry")}
             </Button>
             <Button
@@ -261,7 +260,7 @@ export function CommentItem({
               className="text-2xs text-muted-foreground h-5 gap-1 px-1.5"
               onClick={actions.onDiscard}
             >
-              <Trash2Icon className="size-2.5" />
+              <Trash01Icon className="size-2.5" />
               {t("Discard")}
             </Button>
           </div>
@@ -269,7 +268,7 @@ export function CommentItem({
 
         {isResolved && !isEditing && (
           <div className="text-2xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
-            <CheckCircle2Icon className="size-3 text-success-foreground" />
+            <CheckCircleIcon className="size-3 text-success-foreground" />
             {t(
               "Resolved {0} {1}",
               comment.resolvedBy?.name ? ` ${t("by {0}", comment.resolvedBy.name)}` : "",
@@ -318,7 +317,7 @@ function CommentTombstone({ comment }: { comment: LocalShipmentComment }) {
   return (
     <div data-comment-id={comment.id} className="flex items-center gap-3 rounded-lg px-2 py-2.5">
       <div className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
-        <CircleSlashIcon className="text-muted-foreground size-4" />
+        <SlashCircle01Icon className="text-muted-foreground size-4" />
       </div>
       <p className="text-muted-foreground text-sm italic">{t("This comment was deleted")}</p>
     </div>
@@ -365,14 +364,14 @@ function CommentActions({
         <DropdownMenuTrigger
           render={
             <Button variant="ghost" size="xs" className="size-6">
-              <EllipsisVerticalIcon className="size-3.5" />
+              <DotsVerticalIcon className="size-3.5" />
             </Button>
           }
         />
         <DropdownMenuContent align="end">
           {onReply && (
             <DropdownMenuItem
-              startContent={<ReplyIcon className="mr-2 size-3.5" />}
+              startContent={<ReverseLeftIcon className="mr-2 size-3.5" />}
               title={t("Reply")}
               onClick={onReply}
             />
@@ -383,7 +382,7 @@ function CommentActions({
                 isPinned ? (
                   <PinOffIcon className="mr-2 size-3.5" />
                 ) : (
-                  <PinIcon className="mr-2 size-3.5" />
+                  <Pin01Icon className="mr-2 size-3.5" />
                 )
               }
               title={isPinned ? "Unpin" : "Pin"}
@@ -394,9 +393,9 @@ function CommentActions({
             <DropdownMenuItem
               startContent={
                 isResolved ? (
-                  <UndoIcon className="mr-2 size-3.5" />
+                  <FlipBackwardIcon className="mr-2 size-3.5" />
                 ) : (
-                  <CheckCircle2Icon className="mr-2 size-3.5" />
+                  <CheckCircleIcon className="mr-2 size-3.5" />
                 )
               }
               title={isResolved ? "Reopen" : "Resolve"}
@@ -405,7 +404,7 @@ function CommentActions({
           )}
           {canEdit && (
             <DropdownMenuItem
-              startContent={<PencilIcon className="mr-2 size-3.5" />}
+              startContent={<Edit02Icon className="mr-2 size-3.5" />}
               title={t("Edit")}
               onClick={onEdit}
             />
@@ -417,7 +416,7 @@ function CommentActions({
                   color="danger"
                   disabled={isDeleting}
                   title={t("Delete")}
-                  startContent={<TrashIcon className="mr-2 size-3.5" />}
+                  startContent={<Trash01Icon className="mr-2 size-3.5" />}
                 />
               }
             />
@@ -495,7 +494,7 @@ function CommentEditForm({
         <>
           <CommentOptionPill
             label={t("Type")}
-            icon={<TagIcon className="size-3" />}
+            icon={<Tag01Icon className="size-3" />}
             value={commentType}
             options={commentTypeChoices}
             onChange={setCommentType}
@@ -509,7 +508,7 @@ function CommentEditForm({
           />
           <CommentOptionPill
             label={t("Priority")}
-            icon={<FlagIcon className="size-3" />}
+            icon={<Flag01Icon className="size-3" />}
             value={priority}
             options={commentPriorityChoices}
             onChange={setPriority}
@@ -525,7 +524,7 @@ function CommentEditForm({
           disabled={isSubmitting}
           aria-label={t("Cancel edit")}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
         </Button>
         <Button
           size="xs"
@@ -535,7 +534,7 @@ function CommentEditForm({
           aria-label={t("Save comment")}
         >
           {isSubmitting ? (
-            <LoaderIcon className="size-3.5 animate-spin" />
+            <Loading02Icon className="size-3.5 animate-spin" />
           ) : (
             <CheckIcon className="size-3.5" />
           )}

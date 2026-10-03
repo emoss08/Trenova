@@ -7,7 +7,7 @@ import { listRoles } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Role } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 type UserRolesSectionProps = {
@@ -58,7 +58,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="relative">
-        <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+        <SearchLgIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           placeholder={t("Search roles...")}
           value={searchQuery}

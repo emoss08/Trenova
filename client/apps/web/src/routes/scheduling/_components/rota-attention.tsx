@@ -10,7 +10,12 @@ import {
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatShiftDate, rotaStateTone } from "@trenova/shared/lib/scheduling";
-import { AlertTriangleIcon, ChevronRightIcon, CircleCheckIcon, RepeatIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+  Repeat01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { workerRecordHref } from "@/lib/route-utils";
@@ -51,7 +56,7 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
           {total > 0 ? (
             <AlertTriangleIcon className="text-destructive size-3.5" aria-hidden />
           ) : (
-            <CircleCheckIcon className="text-muted-foreground size-3.5" aria-hidden />
+            <CheckCircleIcon className="text-muted-foreground size-3.5" aria-hidden />
           )}
           <h3 id="rota-attention-heading" className="text-sm font-semibold">
             {t("Needs a look")}
@@ -64,7 +69,7 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
         </div>
         {swapSummary.awaitingOffice > 0 && onOpenSwaps ? (
           <Button size="xs" variant="outline" onClick={onOpenSwaps}>
-            <RepeatIcon className="size-3" />
+            <Repeat01Icon className="size-3" />
             {t("{0, plural, one {# swap} other {# swaps}} to decide", swapSummary.awaitingOffice)}
           </Button>
         ) : null}

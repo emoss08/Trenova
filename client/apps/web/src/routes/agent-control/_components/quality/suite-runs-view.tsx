@@ -18,7 +18,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps, RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { ArrowLeftIcon, CircleAlertIcon, ListChecksIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  ArrowLeftIcon,
+  ListChecksIcon,
+} from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo } from "react";
 import {
@@ -152,7 +157,7 @@ function SuiteRunDetails({ run }: { run: AgentSuiteRunRow }) {
     <div className="flex flex-col gap-3">
       {run.regression ? (
         <Alert variant="warning" size="sm">
-          <TriangleAlertIcon />
+          <AlertTriangleIcon />
           <AlertDescription>
             {run.comments || t("The agent's score fell after it changed.")}
           </AlertDescription>
@@ -217,7 +222,7 @@ function SuiteRunCases({ suiteRunId, agentId }: { suiteRunId: string; agentId: s
         </Button>
         {run.isError ? (
           <span className="text-muted-foreground flex items-center gap-1 text-sm">
-            <CircleAlertIcon className="size-3.5" />
+            <AlertCircleIcon className="size-3.5" />
             {t("This run could not be loaded.")}
           </span>
         ) : run.data ? (

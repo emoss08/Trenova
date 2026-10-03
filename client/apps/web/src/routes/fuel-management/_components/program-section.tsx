@@ -20,7 +20,7 @@ import { fuelSurchargeMethodChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { FuelProgramsEmpty } from "./fuel-management-empty";
@@ -70,7 +70,7 @@ export default function ProgramSection() {
           )}
         </p>
         <Button type="button" size="sm" onClick={openCreate} className="gap-1.5">
-          <Plus className="size-3.5" />
+          <PlusIcon className="size-3.5" />
           {t("New program")}
         </Button>
       </div>
@@ -162,7 +162,7 @@ function ProgramCard({
             }}
             className="text-muted-foreground hover:bg-danger-subtle hover:text-destructive size-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
           >
-            <Trash2 className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         </div>
       </div>
@@ -193,7 +193,7 @@ function ProgramCard({
             appearance="outline"
             className="text-2xs border-warning-border text-warning-foreground gap-1"
           >
-            <AlertTriangle className="size-3" />
+            <AlertTriangleIcon className="size-3" />
             {t("Prior week price")}
           </Badge>
         )}

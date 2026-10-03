@@ -6,7 +6,7 @@ import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { format } from "date-fns";
-import { CalendarIcon, XIcon } from "lucide-react";
+import { CalendarIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../field-components";
@@ -30,8 +30,7 @@ const styles = {
   base: `${fieldTriggerClass} w-full h-7 text-sm justify-start text-left font-normal`,
   invalid: fieldInvalidClass,
   open: "text-sm",
-  focusVisible:
-"ui-focus-ring",
+  focusVisible: "ui-focus-ring",
   hover: "",
   disabled: "text-muted-foreground hover:text-muted-foreground",
 };
@@ -92,7 +91,7 @@ function DateFieldControl({
             <CalendarIcon className="mr-0.5" />
             {dateValue ? format(dateValue, "PPP") : <span>{placeholder || t("Pick a date")}</span>}
             {clearable && dateValue && !isLocked && (
-              <XIcon
+              <XCloseIcon
                 className="ml-auto h-4 w-4 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();

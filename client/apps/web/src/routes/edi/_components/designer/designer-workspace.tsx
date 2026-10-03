@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
-import { ArchiveIcon, Layers3Icon } from "lucide-react";
+import { ArchiveIcon, LayersThree01Icon } from "@trenova/shared/components/icons";
 import { lazy, Suspense } from "react";
 import { DesignerWorkspaceSkeleton } from "./components/designer-workspace-skeleton";
 import { useEDIDesignerUrlState } from "./hooks/use-edi-designer-url-state";
@@ -25,7 +25,7 @@ export function DesignerWorkspace() {
     >
       <TabsList variant="underline" className="border-border w-full justify-start border-b px-1">
         <TabsTrigger value="templates" className="max-w-34">
-          <Layers3Icon data-icon="inline-start" />
+          <LayersThree01Icon data-icon="inline-start" />
           {t("Templates")}
         </TabsTrigger>
         <TabsTrigger value="documents" className="max-w-52">

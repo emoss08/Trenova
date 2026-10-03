@@ -27,7 +27,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { locationSchema, type Location } from "@trenova/shared/types/location";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -397,7 +397,7 @@ function DialogShell({
                     size="icon-sm"
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    <XIcon className="size-4" />
+                    <XCloseIcon className="size-4" />
                   </Button>
                 }
               />

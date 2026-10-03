@@ -17,7 +17,7 @@ import {
   resourceLabel,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
-import { ChevronRightIcon, Loader2 } from "lucide-react";
+import { ChevronRightIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useEffect, useRef, useState } from "react";
 import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 
@@ -162,7 +162,7 @@ function ActivityFeedList({
         ))}
         {isFetchingNextPage && (
           <div className="flex items-center justify-center py-1.5">
-            <Loader2 className="text-muted-foreground size-3.5 animate-spin" />
+            <SpinnerIcon className="text-muted-foreground size-3.5 animate-spin" />
           </div>
         )}
         <div ref={observerTarget} aria-hidden className="h-px w-full" />

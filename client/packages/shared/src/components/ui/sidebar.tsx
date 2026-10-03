@@ -20,7 +20,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useIsMobile } from "@trenova/shared/hooks/use-mobile";
 import { cn } from "@trenova/shared/lib/utils";
-import { PanelLeftIcon } from "lucide-react";
+import { LayoutLeftIcon } from "@trenova/shared/components/icons";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -265,7 +265,7 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <LayoutLeftIcon />
       <span className="sr-only">{t("Toggle sidebar")}</span>
     </Button>
   );

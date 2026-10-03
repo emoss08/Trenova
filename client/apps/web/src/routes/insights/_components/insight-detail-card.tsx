@@ -17,10 +17,10 @@ import {
 import {
   ArrowRightIcon,
   ClockAlertIcon,
-  LightbulbIcon,
-  RotateCcwIcon,
-  XIcon,
-} from "lucide-react";
+  Lightbulb01Icon,
+  RefreshCcw01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { CATEGORY_LABELS, SEVERITY_TONE } from "./insight-labels";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -70,7 +70,9 @@ export function InsightDetailCard({
         <button type="button" onClick={onOpen} className="min-w-0 flex-1 cursor-pointer text-left">
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
             <Badge variant={SEVERITY_TONE[insight.severity]}>{insight.severity}</Badge>
-            <Badge variant="neutral" appearance="outline">{t(CATEGORY_LABELS[insight.category])}</Badge>
+            <Badge variant="neutral" appearance="outline">
+              {t(CATEGORY_LABELS[insight.category])}
+            </Badge>
             {insight.status !== "Active" && (
               <Badge variant="neutral">{statusLabel(insight, t)}</Badge>
             )}
@@ -94,7 +96,7 @@ export function InsightDetailCard({
             onClick={() => dismissMutation.mutate(undefined)}
             disabled={dismissMutation.isPending}
           >
-            <XIcon className="size-3" />
+            <XCloseIcon className="size-3" />
             {t("Dismiss")}
           </Button>
         ) : insight.status === "Dismissed" ? (
@@ -104,7 +106,7 @@ export function InsightDetailCard({
             onClick={() => restoreMutation.mutate(undefined)}
             disabled={restoreMutation.isPending}
           >
-            <RotateCcwIcon className="size-3" />
+            <RefreshCcw01Icon className="size-3" />
             {t("Restore")}
           </Button>
         ) : null}
@@ -127,7 +129,7 @@ export function InsightDetailCard({
 
       {insight.recommendation !== "" && (
         <Alert className="mt-3">
-          <LightbulbIcon className="size-4" />
+          <Lightbulb01Icon className="size-4" />
           <AlertDescription>{insight.recommendation}</AlertDescription>
         </Alert>
       )}

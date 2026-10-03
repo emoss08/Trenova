@@ -3,7 +3,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { FileMinusIcon, FilePlusIcon } from "lucide-react";
+import { FileMinus02Icon, FilePlus02Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 /**
@@ -24,7 +24,7 @@ export function MemoEntryButton({
 
   if (!allowed) return null;
 
-  const Icon = billType === "CreditMemo" ? FileMinusIcon : FilePlusIcon;
+  const Icon = billType === "CreditMemo" ? FileMinus02Icon : FilePlus02Icon;
 
   return (
     <>

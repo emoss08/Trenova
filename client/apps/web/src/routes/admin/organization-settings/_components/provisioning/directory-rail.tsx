@@ -11,7 +11,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { PlusIcon, UsersRoundIcon } from "lucide-react";
+import { PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef } from "react";
 import { EmptyState, ErrorState } from "../security-access/shared";
@@ -127,7 +127,7 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
         </ScrollArea>
       ) : (
         <EmptyState
-          icon={<UsersRoundIcon />}
+          icon={<Users01Icon />}
           label={t("No directories")}
           description={t("Create a SCIM directory before issuing tokens or mapping groups.")}
           compact

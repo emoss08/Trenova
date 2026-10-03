@@ -11,7 +11,13 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIMappingProfileItem, EDITransferStatus } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightIcon, CheckIcon, PackageIcon, RouteIcon, XIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  PackageIcon,
+  RouteIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { mappingKey } from "../edi-display-utils";
@@ -107,7 +113,7 @@ export function EDITransferReviewPanel({
           {transfer && canUpdate && direction === "inbound" && isActionable && (
             <>
               <Button variant="outline" onClick={() => setRejectDialogOpen(true)}>
-                <XIcon data-icon="inline-start" />
+                <XCloseIcon data-icon="inline-start" />
                 {t("Reject")}
               </Button>
               <Button

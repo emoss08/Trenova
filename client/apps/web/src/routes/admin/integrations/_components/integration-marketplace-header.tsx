@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { integrationHeaderSearchParamsParser } from "../integration-marketplace-state";
 
@@ -27,7 +27,7 @@ export function IntegrationMarketplaceHeader() {
           onChange={(event) => setSearchParams({ query: event.target.value })}
           placeholder={t("Search integrations")}
           className="bg-background h-9"
-          leftElement={<SearchIcon className="text-muted-foreground size-4" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-4" />}
         />
       </div>
     </div>

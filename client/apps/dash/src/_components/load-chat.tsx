@@ -25,7 +25,7 @@ import {
 } from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageSquareTextIcon, SendIcon } from "lucide-react";
+import { MessageTextSquare01Icon, Send01Icon } from "@trenova/shared/components/icons";
 import { useDashFeatures } from "./use-dash-features";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -136,7 +136,7 @@ function ChatComposer({ shipmentId }: { shipmentId: string }) {
         disabled={draft.trim().length === 0 || send.isPending}
         onClick={handleSend}
       >
-        <SendIcon className="size-4" />
+        <Send01Icon className="size-4" />
       </Button>
     </div>
   );
@@ -162,7 +162,7 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <MessageSquareTextIcon className="size-4 text-muted-foreground" />
+        <MessageTextSquare01Icon className="size-4 text-muted-foreground" />
         <h2 className="text-sm font-semibold">{t("Dispatch chat")}</h2>
         <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="size-1.5 rounded-full bg-success" />

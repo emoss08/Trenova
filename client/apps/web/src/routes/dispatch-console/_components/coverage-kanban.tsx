@@ -5,7 +5,13 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
-import { Building2Icon, FlameIcon, SendIcon, SnowflakeIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  Building07Icon,
+  FlameIcon,
+  Send01Icon,
+  Snowflake01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { CoverageKanbanSkeleton } from "./console-skeletons";
 import {
@@ -40,7 +46,7 @@ function TenderChip({ move }: { move: DispatchBoardMove }) {
 
   return (
     <Badge variant={TENDER_CHIP_VARIANT[meta.tone]} className="h-4 rounded-md px-1 text-3xs">
-      <SendIcon className="mr-0.5 size-2.5" aria-hidden />
+      <Send01Icon className="mr-0.5 size-2.5" aria-hidden />
       {t(meta.label)}
       {countdown ? ` · ${countdown}` : ""}
     </Badge>
@@ -86,7 +92,11 @@ function MoveCard({
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="truncate font-mono text-xs font-semibold">{move.proNumber}</span>
           {move.moveCount > 1 && (
-            <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded-md px-1 text-3xs">
+            <Badge
+              variant="neutral"
+              appearance="outline"
+              className="h-4 shrink-0 rounded-md px-1 text-3xs"
+            >
               {t("Leg {0}/{1}", move.sequence + 1, move.moveCount)}
             </Badge>
           )}
@@ -139,13 +149,13 @@ function MoveCard({
         )}
         {move.temperatureMin != null && (
           <Badge variant="info" className="h-4 rounded-md px-1 text-3xs">
-            <SnowflakeIcon className="mr-0.5 size-2.5" aria-hidden />
+            <Snowflake01Icon className="mr-0.5 size-2.5" aria-hidden />
             {t("{0}–{1}°F", move.temperatureMin, move.temperatureMax)}
           </Badge>
         )}
         {move.hasActiveHold && (
           <Badge variant="danger" className="h-4 rounded-md px-1 text-3xs">
-            <TriangleAlertIcon className="mr-0.5 size-2.5" aria-hidden />
+            <AlertTriangleIcon className="mr-0.5 size-2.5" aria-hidden />
             {t("On hold")}
           </Badge>
         )}
@@ -157,7 +167,7 @@ function MoveCard({
         {move.isCovered &&
           (move.coverageType === "carrier" ? (
             <Badge variant="success" className="h-4 shrink-0 rounded-md px-1 text-3xs">
-              <Building2Icon className="mr-0.5 size-2.5" aria-hidden />
+              <Building07Icon className="mr-0.5 size-2.5" aria-hidden />
               {move.assignedCarrierName}
               {move.carrierTotalCost != null
                 ? ` · ${formatCompactCurrency(move.carrierTotalCost)}`
@@ -197,9 +207,7 @@ function UrgencyColumn({
       >
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
         <span className="text-xs font-semibold">{t(meta.label)}</span>
-        <span className="text-muted-foreground ml-auto text-2xs tabular-nums">
-          {moves.length}
-        </span>
+        <span className="text-muted-foreground ml-auto text-2xs tabular-nums">{moves.length}</span>
       </header>
       <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
         <div className="flex flex-col gap-1.5 p-1.5">
@@ -212,9 +220,7 @@ function UrgencyColumn({
             />
           ))}
           {moves.length === 0 && (
-            <p className="text-muted-foreground py-6 text-center text-xs">
-              {t("Nothing here.")}
-            </p>
+            <p className="text-muted-foreground py-6 text-center text-xs">{t("Nothing here.")}</p>
           )}
         </div>
       </ScrollArea>

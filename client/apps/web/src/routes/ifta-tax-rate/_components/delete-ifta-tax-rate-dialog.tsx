@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { periodLabel } from "./ifta-tax-rate-columns";
 
@@ -54,7 +54,7 @@ export function DeleteIftaTaxRateDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-danger-subtle text-destructive">
-            <Trash2Icon />
+            <Trash01Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Delete this rate?")}</AlertDialogTitle>
           <AlertDialogDescription>

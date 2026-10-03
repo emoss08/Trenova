@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import {
   useCallback,
   useEffect,
@@ -289,7 +289,7 @@ export function DateSuggestionInput({
             className="text-muted-foreground absolute top-1/2 right-8 size-5 -translate-y-1/2 [&>svg]:size-3"
           >
             <span className="sr-only">{t("Clear date")}</span>
-            <XIcon className="size-4" />
+            <XCloseIcon className="size-4" />
           </Button>
         )}
         {picker}

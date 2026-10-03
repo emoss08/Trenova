@@ -12,7 +12,12 @@ import {
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import { ChevronDownIcon, PlusIcon, TrashIcon, MapPinIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  MarkerPin01Icon,
+  PlusIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { TagInput } from "../shared/tag-input";
 import type { RuleVersionFormValues } from "@/types/document-parsing-rule";
@@ -92,7 +97,7 @@ export function StopRuleEditor() {
     >
       {fields.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
-          <MapPinIcon className="text-muted-foreground/50 size-8" />
+          <MarkerPin01Icon className="text-muted-foreground/50 size-8" />
           <div>
             <p className="text-muted-foreground text-sm font-medium">
               {t("No stop rules defined")}
@@ -158,7 +163,7 @@ function StopItem({
                 onRemove();
               }}
             >
-              <TrashIcon className="text-destructive size-3.5" />
+              <Trash01Icon className="text-destructive size-3.5" />
             </Button>
             <ChevronDownIcon className="size-4 transition-transform [[data-state=open]>&]:rotate-180" />
           </div>
@@ -301,7 +306,7 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
               className="size-6"
               onClick={() => remove(extIdx)}
             >
-              <TrashIcon className="text-destructive size-3" />
+              <Trash01Icon className="text-destructive size-3" />
             </Button>
           </div>
           <FormGroup cols={2}>

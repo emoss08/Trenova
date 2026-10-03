@@ -11,12 +11,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ArrowRightToLineIcon,
   EyeIcon,
-  FilePlusIcon,
-  RotateCcwIcon,
-  RotateCwIcon,
-  ScissorsIcon,
-  UndoDotIcon,
-} from "lucide-react";
+  FilePlus02Icon,
+  FlipBackwardIcon,
+  RefreshCcw01Icon,
+  RefreshCw01Icon,
+  Scissors01Icon,
+} from "@trenova/shared/components/icons";
 import { LOOSE, type LayoutGroup } from "./page-layout";
 import type { PageMenu as PageMenuHandle, PageMenuPayload } from "./page-thumbnail";
 
@@ -88,26 +88,26 @@ function PageMenuContent({
         <>
           <DropdownMenuItem
             title={t("Rotate right")}
-            startContent={<RotateCwIcon className="size-3.5" />}
+            startContent={<RefreshCw01Icon className="size-3.5" />}
             onClick={() => actions.rotate(pageId, 1)}
           />
           <DropdownMenuItem
             title={t("Rotate left")}
-            startContent={<RotateCcwIcon className="size-3.5" />}
+            startContent={<RefreshCcw01Icon className="size-3.5" />}
             onClick={() => actions.rotate(pageId, -1)}
           />
           <DropdownMenuSeparator />
           {!loose && !last && (
             <DropdownMenuItem
               title={t("Start a new document after this page")}
-              startContent={<ScissorsIcon className="size-3.5" />}
+              startContent={<Scissors01Icon className="size-3.5" />}
               onClick={() => actions.splitAfter(groupKey, pageId)}
             />
           )}
           {loose && (
             <DropdownMenuItem
               title={t("Make it a document of its own")}
-              startContent={<FilePlusIcon className="size-3.5" />}
+              startContent={<FilePlus02Icon className="size-3.5" />}
               onClick={() => actions.newDocument(pageId)}
             />
           )}
@@ -132,7 +132,7 @@ function PageMenuContent({
             <DropdownMenuItem
               title={t("Set aside")}
               description={t("Keeps the page out of every document")}
-              startContent={<UndoDotIcon className="size-3.5" />}
+              startContent={<FlipBackwardIcon className="size-3.5" />}
               onClick={() => actions.leaveOut(pageId)}
             />
           )}

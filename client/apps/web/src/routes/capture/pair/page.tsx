@@ -16,7 +16,7 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CheckCircle2Icon, XCircleIcon } from "lucide-react";
+import { CheckCircleIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { PairingCodeForm } from "./_components/pairing-code-form";
@@ -129,7 +129,7 @@ export function CapturePairPage() {
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
         {outcome?.decision === "approved" ? (
           <Alert variant="success">
-            <CheckCircle2Icon />
+            <CheckCircleIcon />
             <AlertTitle>{t("{0} is paired", outcome.name)}</AlertTitle>
             <AlertDescription>
               {t("Trenova Capture signs in on its own in a few seconds. You can close this tab.")}{" "}

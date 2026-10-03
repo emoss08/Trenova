@@ -17,7 +17,11 @@ import { formatRange, getTodayDate, inclusiveDays } from "@trenova/shared/lib/da
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarPlusIcon, CalendarRangeIcon, EllipsisIcon } from "lucide-react";
+import {
+  CalendarPlus01Icon,
+  CalendarRangeIcon,
+  DotsHorizontalIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { canApplyPTOAction } from "./pto/pto-actions";
 import { ptoDecision } from "./pto/pto-columns";
@@ -97,7 +101,7 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
         </div>
         {canCreate ? (
           <Button size="sm" onClick={() => setRequestOpen(true)}>
-            <CalendarPlusIcon className="size-3.5" />
+            <CalendarPlus01Icon className="size-3.5" />
             {t("Request PTO")}
           </Button>
         ) : null}
@@ -171,7 +175,7 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
                                 className="size-6"
                                 aria-label={t("PTO actions")}
                               >
-                                <EllipsisIcon />
+                                <DotsHorizontalIcon />
                               </Button>
                             }
                           />

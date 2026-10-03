@@ -4,7 +4,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { queries } from "@/lib/queries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeftIcon, ChevronRightIcon, LightbulbIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Lightbulb01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { InsightDetailCard } from "./_components/insight-detail-card";
@@ -128,7 +132,7 @@ function EmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => v
   return (
     <div className="border-border flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-center">
       <span className="border-border bg-muted/50 flex size-10 items-center justify-center rounded-full border">
-        <LightbulbIcon className="text-muted-foreground size-5" />
+        <Lightbulb01Icon className="text-muted-foreground size-5" />
       </span>
       <p className="text-muted-foreground max-w-md text-sm">
         {filtered

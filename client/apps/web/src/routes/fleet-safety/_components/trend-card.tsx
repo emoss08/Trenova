@@ -9,7 +9,7 @@ import {
 } from "@trenova/shared/components/ui/chart";
 import { safetyEventKindLabel, trendDirection } from "@trenova/shared/lib/csa";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
-import { MinusIcon, TrendingDownIcon, TrendingUpIcon } from "lucide-react";
+import { MinusIcon, TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
@@ -52,9 +52,9 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
         </div>
         <span className="text-muted-foreground flex items-center gap-1 text-xs" aria-live="polite">
           {direction === "up" ? (
-            <TrendingUpIcon className="size-3.5" aria-hidden />
+            <TrendUp01Icon className="size-3.5" aria-hidden />
           ) : direction === "down" ? (
-            <TrendingDownIcon className="size-3.5" aria-hidden />
+            <TrendDown01Icon className="size-3.5" aria-hidden />
           ) : (
             <MinusIcon className="size-3.5" aria-hidden />
           )}

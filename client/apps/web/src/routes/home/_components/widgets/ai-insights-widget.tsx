@@ -9,7 +9,12 @@ import { apiService } from "@/services/api";
 import type { Insight, InsightMetric, InsightSeverity } from "@/types/insight";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRightIcon, ClockAlertIcon, LightbulbIcon, XIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  ClockAlertIcon,
+  Lightbulb01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
@@ -56,7 +61,7 @@ export function AIInsightsWidget({ widget }: WidgetProps) {
   return (
     <WidgetShell
       title={widget.title || t("Operational insights")}
-      icon={LightbulbIcon}
+      icon={Lightbulb01Icon}
       badge={criticalCount > 0 ? <WidgetCount value={criticalCount} tone="danger" /> : null}
       href="/insights"
       hrefLabel={t("All insights")}
@@ -64,7 +69,7 @@ export function AIInsightsWidget({ widget }: WidgetProps) {
       {insightsQuery.isLoading ? (
         <WidgetSkeleton rows={3} />
       ) : insights.length === 0 ? (
-        <WidgetEmpty icon={LightbulbIcon}>
+        <WidgetEmpty icon={Lightbulb01Icon}>
           {t(
             "Nothing needs your attention. Findings appear here when service, billing, or compliance moves in the wrong direction.",
           )}
@@ -122,7 +127,7 @@ function InsightCard({ insight, now }: { insight: Insight; now: number }) {
           disabled={dismissMutation.isPending}
           aria-label={t("Dismiss this insight")}
         >
-          <XIcon className="size-3" />
+          <XCloseIcon className="size-3" />
         </Button>
       </div>
 

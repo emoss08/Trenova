@@ -28,7 +28,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CheckIcon, ShieldCheckIcon } from "lucide-react";
+import { CheckIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -183,7 +183,7 @@ export function ExtensionSettingsDialog({
         </ul>
 
         <Alert size="sm" variant="info">
-          <ShieldCheckIcon aria-hidden />
+          <ShieldTickIcon aria-hidden />
           <AlertDescription>{extension.dataNotice}</AlertDescription>
         </Alert>
 

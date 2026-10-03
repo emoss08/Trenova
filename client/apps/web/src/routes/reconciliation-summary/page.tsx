@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { ReconciliationSummaryEmpty } from "./_components/reconciliation-summary-empty";
 import { ReconciliationSummarySkeleton } from "./_components/reconciliation-summary-skeleton";

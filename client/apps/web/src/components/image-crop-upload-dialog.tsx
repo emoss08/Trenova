@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { createCroppedWebPFile, loadImageFromFile } from "@/lib/images/crop-image";
-import { Loader2 } from "lucide-react";
+import { SpinnerIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -178,7 +178,7 @@ export function ImageCropUploadDialog({
             {t("Cancel")}
           </Button>
           <Button type="button" onClick={() => void handleConfirm()} disabled={!canSubmit}>
-            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+            {isSubmitting ? <SpinnerIcon className="size-4 animate-spin" /> : null}
             {confirmLabel}
           </Button>
         </DialogFooter>

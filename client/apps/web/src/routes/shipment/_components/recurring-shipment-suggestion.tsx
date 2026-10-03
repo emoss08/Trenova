@@ -15,7 +15,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarSyncIcon, XIcon } from "lucide-react";
+import { CalendarSyncIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -104,9 +104,7 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
   return (
     <Alert variant="info">
       <CalendarSyncIcon />
-      <AlertTitle>
-        {t("A recurring shipment already covers this lane")}
-      </AlertTitle>
+      <AlertTitle>{t("A recurring shipment already covers this lane")}</AlertTitle>
       <AlertDescription>
         <p>
           {t(
@@ -142,7 +140,7 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
           onClick={onDismiss}
           className="ui-focus-ring rounded-md text-current/70 hover:text-current"
         >
-          <XIcon className="size-4" />
+          <XCloseIcon className="size-4" />
         </button>
       </AlertAction>
     </Alert>
@@ -192,7 +190,7 @@ function PatternHint({
         onClick={onDismiss}
         className="text-muted-foreground hover:text-foreground"
       >
-        <XIcon className="size-4" />
+        <XCloseIcon className="size-4" />
       </button>
     </div>
   );

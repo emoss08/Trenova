@@ -1,6 +1,6 @@
 import type { OrganizationCapabilityType } from "@trenova/shared/types/organization-capability";
 import type { OperationType } from "@trenova/shared/types/permission";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 
 export type ModuleId =
   | "home"
@@ -33,7 +33,7 @@ export interface NavItem {
   id: string;
   label: string;
   path: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   disabled?: boolean;
   includeBetaTag?: boolean;
   external?: boolean;
@@ -53,7 +53,7 @@ export type NavGroupKind = "configuration";
 export interface NavGroup {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   items: NavItem[];
   defaultOpen?: boolean;
   /**

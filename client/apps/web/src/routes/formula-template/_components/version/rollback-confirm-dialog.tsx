@@ -28,7 +28,7 @@ import type {
   TemplateUsageResponse,
 } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, ChevronDownIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type RollbackConfirmDialogProps = {

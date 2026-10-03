@@ -5,7 +5,7 @@ import { InputField } from "@/components/fields/input-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 export type ReceiptLineValues = {
@@ -172,7 +172,7 @@ export function ImportBatchForm() {
                       onClick={() => remove(index)}
                       disabled={fields.length <= 1}
                     >
-                      <Trash2Icon className="text-muted-foreground size-3.5" />
+                      <Trash01Icon className="text-muted-foreground size-3.5" />
                     </Button>
                   </td>
                 </tr>

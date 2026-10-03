@@ -2,7 +2,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, PencilIcon, UndoIcon, ChevronDownIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  Edit02Icon,
+  FlipBackwardIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useRef, useState } from "react";
 import { type ReconciliationField, type FieldStatus, getEffectiveValue } from "./types";
 
@@ -87,7 +92,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
           className="ml-auto opacity-0 transition-opacity group-hover:opacity-100"
           onClick={handleStartEdit}
         >
-          <PencilIcon className="size-2.5" />
+          <Edit02Icon className="size-2.5" />
         </Button>
       </div>
     );
@@ -130,12 +135,12 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
               )}
               {!isEditing && (
                 <Button variant="ghost" size="icon-xs" onClick={handleStartEdit}>
-                  <PencilIcon className="size-2.5" />
+                  <Edit02Icon className="size-2.5" />
                 </Button>
               )}
               {field.status === "edited" && (
                 <Button variant="ghost" size="icon-xs" onClick={() => onReset(field.key)}>
-                  <UndoIcon className="size-2.5" />
+                  <FlipBackwardIcon className="size-2.5" />
                 </Button>
               )}
             </div>

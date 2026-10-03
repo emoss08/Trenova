@@ -19,7 +19,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SequenceConfigDocument } from "@/types/sequence-config";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { separatorOptions, yearDigitsOptions } from "./sequence-config-constants";

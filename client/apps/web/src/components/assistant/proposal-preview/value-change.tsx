@@ -6,7 +6,7 @@ import type {
 import { DescriptionEmpty } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, LockIcon } from "lucide-react";
+import { ArrowRightIcon, Lock01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { formatDisplayValue, isFigureType, type DisplayType } from "../readable-values";
 import { displayTypeOf, previewRecordPath } from "./preview-format";
@@ -19,7 +19,7 @@ export function HiddenValue({ className }: { className?: string }) {
     <span
       className={cn("text-foreground-subtle inline-flex items-center gap-1 text-xs", className)}
     >
-      <LockIcon aria-hidden className="size-3 shrink-0" />
+      <Lock01Icon aria-hidden className="size-3 shrink-0" />
       {t("Hidden by your data access")}
     </span>
   );

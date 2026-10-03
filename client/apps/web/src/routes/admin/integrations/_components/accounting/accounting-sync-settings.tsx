@@ -15,7 +15,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { SlidersHorizontalIcon } from "lucide-react";
+import { Sliders01Icon } from "@trenova/shared/components/icons";
 import { useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";
 import {
@@ -72,7 +72,7 @@ export function AccountingSyncSettings({
   };
 
   return (
-    <SectionPanel title={t("Sync settings")} icon={<SlidersHorizontalIcon />}>
+    <SectionPanel title={t("Sync settings")} icon={<Sliders01Icon />}>
       <Form onSubmit={handleSubmit((values) => save.mutate(values))} className="space-y-3 p-3">
         <FormGroup cols={1}>
           <FormControl>

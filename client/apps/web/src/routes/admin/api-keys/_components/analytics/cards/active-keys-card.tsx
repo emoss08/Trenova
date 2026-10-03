@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KPICard } from "@/components/kpi/kpi-simple-card";
-import { ShieldCheck } from "lucide-react";
+import { ShieldTickIcon } from "@trenova/shared/components/icons";
 import type { ApiKeyAnalyticsData } from "../analytics-data";
 
 type Props = {
@@ -16,7 +16,7 @@ export function ActiveKeysCard({ data }: Props) {
     <KPICard
       label={t("Active keys")}
       value={count.toLocaleString()}
-      icon={ShieldCheck}
+      icon={ShieldTickIcon}
       detail={`${percentOfTotal}% of total`}
     />
   );

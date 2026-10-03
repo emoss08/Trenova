@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KeyRoundIcon, ShieldAlertIcon, WaypointsIcon } from "lucide-react";
+import { Dataflow01Icon, Key01Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { ProviderFormValues } from "./build-save-payload";
@@ -332,7 +332,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
             </FormControl>
           </FormGroup>
           <Alert variant="info" size="sm">
-            <WaypointsIcon />
+            <Dataflow01Icon />
             <AlertDescription>
               {t(
                 "Documents are sent with social security, card and bank account numbers masked. Only one embedding model is searched at a time; providers with the same model and size back each other up.",
@@ -535,7 +535,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
         </FormGroup>
         {mode === "edit" && (
           <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <KeyRoundIcon className="size-3.5" />
+            <Key01Icon className="size-3.5" />
             {t("Save, then use Test on the card to check the endpoint honours JSON schemas.")}
           </p>
         )}

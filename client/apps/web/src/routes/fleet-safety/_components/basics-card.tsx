@@ -6,7 +6,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { csaBasicHint, csaBasicLabel } from "@trenova/shared/lib/csa";
 import { cn } from "@trenova/shared/lib/utils";
-import { InfoIcon, ShieldAlertIcon } from "lucide-react";
+import { InfoCircleIcon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type BasicsCardProps = {
@@ -38,7 +38,7 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
           <TooltipTrigger
             render={
               <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                <InfoIcon className="size-3" aria-hidden />
+                <InfoCircleIcon className="size-3" aria-hidden />
                 {t("How the score is made")}
               </span>
             }

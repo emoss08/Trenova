@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 
 /**
  * A billing workspace list as it will look with records in it: a card per
@@ -41,7 +41,7 @@ export function BillingListEmpty({
       action={
         onClearFilters ? (
           <Button variant="outline" size="sm" onClick={onClearFilters}>
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
             {t("Clear filters")}
           </Button>
         ) : null

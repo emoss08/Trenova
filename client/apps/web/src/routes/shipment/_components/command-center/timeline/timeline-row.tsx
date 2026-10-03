@@ -2,7 +2,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
-import { Building2Icon, ChevronDownIcon, ChevronRightIcon, InboxIcon } from "lucide-react";
+import {
+  Building07Icon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Inbox01Icon,
+} from "@trenova/shared/components/icons";
 import {
   COLLAPSED_BAR_HEIGHT_PX,
   RAIL_WIDTH_PX,
@@ -128,11 +133,11 @@ export function TimelineRowItem({
         {!collapsed &&
           (isUnassigned ? (
             <span className="bg-warning-subtle text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
-              <InboxIcon className="size-3.5" />
+              <Inbox01Icon className="size-3.5" />
             </span>
           ) : row.isCarrier ? (
             <span className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
-              <Building2Icon className="size-3.5" />
+              <Building07Icon className="size-3.5" />
             </span>
           ) : (
             <Avatar className={cn("shrink-0", density === "compact" ? "size-5" : "size-6")}>

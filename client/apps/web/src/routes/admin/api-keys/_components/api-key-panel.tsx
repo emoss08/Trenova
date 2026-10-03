@@ -36,12 +36,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   CheckIcon,
-  CopyIcon,
-  KeyRoundIcon,
-  RefreshCwIcon,
+  Copy01Icon,
+  Key01Icon,
+  RefreshCw02Icon,
   ShieldAlertIcon,
   ShieldXIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -303,7 +303,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                     onClick={() => rotateMutation.mutate(undefined)}
                     disabled={rotateMutation.isPending}
                   >
-                    <RefreshCwIcon className="size-4" />
+                    <RefreshCw02Icon className="size-4" />
                   </Button>
                 }
               />
@@ -453,7 +453,7 @@ function TokenSuccessDialog({
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <KeyRoundIcon className="size-4" />
+            <Key01Icon className="size-4" />
             {t("Copy this API key now")}
           </DialogTitle>
           <DialogDescription>
@@ -474,7 +474,7 @@ function TokenSuccessDialog({
             {t("Close")}
           </Button>
           <Button type="button" onClick={() => copy(token, { withToast: true })}>
-            {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
+            {isCopied ? <CheckIcon className="size-4" /> : <Copy01Icon className="size-4" />}
             {isCopied ? t("Copied") : t("Copy API key")}
           </Button>
         </DialogFooter>

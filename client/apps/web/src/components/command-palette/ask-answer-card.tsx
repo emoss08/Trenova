@@ -7,7 +7,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
 import { AssistantProse } from "@/components/assistant/message-items";
 import type { TurnState } from "@/components/assistant/turn-stream";
-import { LayoutPanelLeftIcon, SquareIcon } from "lucide-react";
+import { LayoutAlt02Icon, SquareIcon } from "@trenova/shared/components/icons";
 
 /**
  * The answer to a quick question, inside the palette. It streams the way a
@@ -109,7 +109,7 @@ export function AskAnswerCard({
           {canOpen && (
             <div className="flex items-center gap-2 pt-1">
               <Button size="xs" variant="outline" onClick={onOpenInDesk}>
-                <LayoutPanelLeftIcon className="size-3.5" />
+                <LayoutAlt02Icon className="size-3.5" />
                 {t("Open in Desk")}
               </Button>
               <span className="text-muted-foreground text-xs">

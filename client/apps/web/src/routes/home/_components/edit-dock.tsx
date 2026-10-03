@@ -6,7 +6,7 @@ import {
 } from "@/components/action-dock";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
-import { LayoutGridIcon, PlusIcon } from "lucide-react";
+import { Grid01Icon, PlusIcon } from "@trenova/shared/components/icons";
 
 export type HomeEditDockProps = {
   /** True once the draft differs from what the server holds. */
@@ -51,7 +51,7 @@ export function HomeEditDock({
           <ActionDockIndicator
             icon={
               <span className="bg-background/15 flex size-6 items-center justify-center rounded-full">
-                <LayoutGridIcon className="text-background size-3.5" />
+                <Grid01Icon className="text-background size-3.5" />
               </span>
             }
             title={t("Editing home screen")}

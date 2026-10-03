@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { respondToMyAssignment, type PortalLoad } from "@trenova/shared/lib/graphql/driver-portal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
@@ -84,7 +84,7 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
             disabled={respond.isPending}
             onClick={() => setDeclineOpen(true)}
           >
-            <XIcon className="size-4" />
+            <XCloseIcon className="size-4" />
             {t("Decline")}
           </Button>
         ) : null}

@@ -8,7 +8,7 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ClipboardIcon } from "lucide-react";
+import { CheckIcon, ClipboardIcon } from "@trenova/shared/components/icons";
 
 /**
  * A secret shown the one time it can be: a token that is stored only as a

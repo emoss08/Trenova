@@ -9,11 +9,11 @@ import type {
 } from "@trenova/shared/types/shipment";
 import {
   AlertCircleIcon,
-  CheckCircle2Icon,
-  Clock3Icon,
-  ExternalLinkIcon,
-  UploadIcon,
-} from "lucide-react";
+  CheckCircleIcon,
+  ClockIcon,
+  LinkExternal01Icon,
+  Upload01Icon,
+} from "@trenova/shared/components/icons";
 import { UnmetRequirementNote } from "./unmet-requirement-note";
 import { ShipmentBillingPayerRows } from "@/routes/shipment/_components/shipment-billing-payer-rows";
 import { ShipmentBillingQueueBadge } from "@/routes/shipment/_components/shipment-billing-queue-status";
@@ -78,11 +78,11 @@ function RequirementRow({
       <div className="flex min-w-0 items-center gap-2.5">
         {done ? (
           <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success-subtle">
-            <CheckCircle2Icon className="size-3 text-success-foreground" />
+            <CheckCircleIcon className="size-3 text-success-foreground" />
           </div>
         ) : (
           <div className="bg-muted flex size-5 shrink-0 items-center justify-center rounded-full">
-            <UploadIcon className="text-muted-foreground size-3" />
+            <Upload01Icon className="text-muted-foreground size-3" />
           </div>
         )}
         <div className="min-w-0">
@@ -198,7 +198,7 @@ export function ShipmentBillingReadinessPanel({
                     "View {0, plural, one {# service failure} other {# service failures}}",
                     readiness.serviceFailureContext.unresolvedCount,
                   )}
-                  <ExternalLinkIcon className="size-3" />
+                  <LinkExternal01Icon className="size-3" />
                 </a>
               )}
             </AlertDescription>
@@ -219,7 +219,7 @@ export function ShipmentBillingReadinessPanel({
           </div>
         ) : (
           <div className="text-muted-foreground flex items-center justify-center gap-2 py-6">
-            <Clock3Icon className="size-4" />
+            <ClockIcon className="size-4" />
             <p className="text-sm">{t("No billing documents required.")}</p>
           </div>
         )}
@@ -234,7 +234,7 @@ export function ShipmentBillingReadinessPanel({
               isLoading={isMarkingReady}
               loadingText={t("Marking...")}
             >
-              <CheckCircle2Icon className="size-4" />
+              <CheckCircleIcon className="size-4" />
               {t("Mark ready to invoice")}
             </Button>
           </div>

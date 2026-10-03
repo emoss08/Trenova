@@ -11,7 +11,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { apiUrl } from "@trenova/shared/lib/api-url";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BadgeTone } from "@trenova/shared/types/badge";
-import { MoreHorizontalIcon } from "lucide-react";
+import { DotsHorizontalIcon } from "@trenova/shared/components/icons";
 import { memo, useState } from "react";
 
 /** A US letter page, for a page that did not say how big it is. */
@@ -160,7 +160,7 @@ export const PageThumbnail = memo(function PageThumbnail({
                 variant="outline"
                 aria-label={t("Page {0} actions", number)}
               >
-                <MoreHorizontalIcon className="size-3.5" />
+                <DotsHorizontalIcon className="size-3.5" />
               </Button>
             }
           />

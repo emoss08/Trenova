@@ -14,7 +14,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { LockIcon } from "lucide-react";
+import { Lock01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, type ReactNode } from "react";
 import { MessageThread, type PageBinding, type PageRequest } from "./message-thread";
 import { OutsideContentBadge } from "./outside-content-badge";
@@ -249,7 +249,7 @@ function PageAssistantNotice({ children, className }: { children: ReactNode; cla
   return (
     <div className={cn("p-3", className)}>
       <Alert size="sm">
-        <LockIcon />
+        <Lock01Icon />
         {children}
       </Alert>
     </div>

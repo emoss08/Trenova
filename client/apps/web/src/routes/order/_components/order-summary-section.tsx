@@ -18,7 +18,7 @@ import { cancelOrder, closeOrder, fetchOrderDetail } from "@/lib/graphql/order";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Order } from "@trenova/shared/types/order";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { BanIcon, CheckCircle2Icon } from "lucide-react";
+import { CheckCircleIcon, SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -108,13 +108,13 @@ export function OrderSummarySection() {
               loadingText={t("Closing...")}
               onClick={() => close()}
             >
-              <CheckCircle2Icon className="size-3" />
+              <CheckCircleIcon className="size-3" />
               {t("Close order")}
             </Button>
           )}
           {canCancel && (
             <Button type="button" variant="outline" size="xxs" onClick={() => setCancelOpen(true)}>
-              <BanIcon className="text-destructive size-3" />
+              <SlashCircle01Icon className="text-destructive size-3" />
               {t("Cancel order")}
             </Button>
           )}

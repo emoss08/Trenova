@@ -34,7 +34,7 @@ import type {
   TableFormatRule,
 } from "@/types/table-configuration";
 import type { SelectOption } from "@trenova/shared/types/fields";
-import { PaintbrushIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { Brush01Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type FormatColumn = {
@@ -239,7 +239,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
         </DialogHeader>
         {rules.length === 0 ? (
           <div className="border-border flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center">
-            <PaintbrushIcon className="text-muted-foreground size-4" />
+            <Brush01Icon className="text-muted-foreground size-4" />
             <h3 className="text-sm font-medium">{t("No formatting rules")}</h3>
             <p className="text-muted-foreground max-w-72 text-xs">
               {t("Tint rows that need attention — for example, unassigned or late records.")}
@@ -328,7 +328,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                       aria-label={t("Remove rule")}
                       onClick={() => removeRule(rule.id)}
                     >
-                      <TrashIcon className="size-3.5" />
+                      <Trash01Icon className="size-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -354,9 +354,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
           ) : (
             <span />
           )}
-          <Button onClick={() => onOpenChange(false)}>
-            {t("Done")}
-          </Button>
+          <Button onClick={() => onOpenChange(false)}>{t("Done")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

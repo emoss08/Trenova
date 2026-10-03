@@ -7,13 +7,13 @@ import { isEligibleTenderStatus } from "@/lib/shipment-utils";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import {
-  ArrowRightLeftIcon,
-  BanIcon,
-  CopyIcon,
-  PencilIcon,
-  SendIcon,
-  UndoIcon,
-} from "lucide-react";
+  Copy01Icon,
+  Edit02Icon,
+  FlipBackwardIcon,
+  Send01Icon,
+  SlashCircle01Icon,
+  SwitchHorizontal01Icon,
+} from "@trenova/shared/components/icons";
 
 export type ShipmentRowActionHandlers = {
   onEdit: (row: Row<Shipment>) => void;
@@ -43,26 +43,26 @@ export function buildShipmentRowActions(
     {
       id: "edit",
       label: translate("Edit"),
-      icon: PencilIcon,
+      icon: Edit02Icon,
       onClick: handlers.onEdit,
     },
     {
       id: "duplicate",
       label: translate("Duplicate"),
-      icon: CopyIcon,
+      icon: Copy01Icon,
       onClick: handlers.onDuplicate,
     },
     {
       id: "transfer-ownership",
       label: translate("Transfer ownership"),
-      icon: ArrowRightLeftIcon,
+      icon: SwitchHorizontal01Icon,
       onClick: handlers.onTransferOwnership,
       hidden: (row) => row.original.status === "Canceled",
     },
     {
       id: "send-edi-load-tender",
       label: translate("Send EDI load tender"),
-      icon: SendIcon,
+      icon: Send01Icon,
       onClick: handlers.onSendEDI,
       hidden: (row) => {
         const shipment = row.original;
@@ -83,7 +83,7 @@ export function buildShipmentRowActions(
     {
       id: "cancel",
       label: translate("Cancel"),
-      icon: BanIcon,
+      icon: SlashCircle01Icon,
       variant: "destructive",
       onClick: handlers.onCancel,
       hidden: (row) => row.original.status === "Canceled",
@@ -91,7 +91,7 @@ export function buildShipmentRowActions(
     {
       id: "uncancel",
       label: translate("Uncancel"),
-      icon: UndoIcon,
+      icon: FlipBackwardIcon,
       onClick: handlers.onUncancel,
       hidden: (row) => row.original.status !== "Canceled",
     },

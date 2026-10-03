@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchScoreFactor } from "@/lib/graphql/dispatch-console";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { scoreTone } from "./dispatch-vocabulary";
 
@@ -32,9 +32,7 @@ export function ScoreBreakdown({
     <div className={cn("flex flex-col gap-2.5", className)}>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-baseline justify-between">
-          <span className="text-muted-foreground text-xs font-medium">
-            {t("Match score")}
-          </span>
+          <span className="text-muted-foreground text-xs font-medium">{t("Match score")}</span>
           <span className="flex items-baseline gap-1">
             <span
               className={cn("text-lg leading-none font-semibold tabular-nums", scoreTone(score))}
@@ -57,11 +55,7 @@ export function ScoreBreakdown({
         <>
           <ul className="flex flex-col gap-2">
             {signal.map((factor) => (
-              <FactorRow
-                key={factor.key}
-                factor={factor}
-                maxContribution={maxContribution}
-              />
+              <FactorRow key={factor.key} factor={factor} maxContribution={maxContribution} />
             ))}
           </ul>
 
@@ -88,9 +82,7 @@ export function ScoreBreakdown({
                     <li key={factor.key} className="flex flex-col gap-px">
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="text-muted-foreground text-xs">{t(factor.label)}</span>
-                        <span className="text-muted-foreground/60 text-2xs tabular-nums">
-                          +0.0
-                        </span>
+                        <span className="text-muted-foreground/60 text-2xs tabular-nums">+0.0</span>
                       </div>
                       <span className="text-muted-foreground/70 text-2xs leading-snug">
                         {factor.detail}

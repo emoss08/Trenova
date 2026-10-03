@@ -6,12 +6,12 @@ import { canAccessQuickAction } from "@/hooks/use-filtered-navigation";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 export interface SidebarQuickAction {
   definition: QuickActionCommand;
-  icon: LucideIcon;
+  icon: IconComponent;
   href: string;
   /** "Create Shipment" reads as "New Shipment" next to a plus sign. */
   shortLabel: string;

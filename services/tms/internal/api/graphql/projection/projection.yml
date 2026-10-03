@@ -104,6 +104,9 @@ aliases:
     equipmentStatus: status
   Trailer:
     equipmentStatus: status
+  RecentDecision:
+    decidedAt: createdAt
+    proposal: proposalId
 
 virtuals:
   AICorrection:
@@ -319,6 +322,8 @@ virtuals:
     - starterDrifted
   Order:
     - legs
+  RecentDecision:
+    - decidedByName
   ReportSchedule:
     - formats
     - emailRecipients

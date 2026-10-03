@@ -24,7 +24,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { Building2Icon, PlugZapIcon, RefreshCwIcon } from "lucide-react";
+import { Building07Icon, PlugIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
@@ -47,7 +47,7 @@ function IntegrationsButton() {
       nativeButton={false}
       render={<Link to={CARRIER_INTEL_INTEGRATIONS_PATH} />}
     >
-      <PlugZapIcon className="size-3.5" />
+      <PlugIcon className="size-3.5" />
       {t("Open integrations")}
     </Button>
   );
@@ -157,7 +157,7 @@ export function MyDotIntelligence() {
             nativeButton={false}
             render={<Link to={ORGANIZATION_SETTINGS_HREF} />}
           >
-            <Building2Icon className="size-3.5" />
+            <Building07Icon className="size-3.5" />
             {t("Open organization settings")}
           </Button>
         }
@@ -199,7 +199,7 @@ export function MyDotIntelligence() {
               isLoading={refresh.isPending}
               onClick={() => refresh.mutate(undefined)}
             >
-              <RefreshCwIcon className="size-3.5" />
+              <RefreshCw02Icon className="size-3.5" />
               {t("Pull profile")}
             </Button>
           ) : undefined
@@ -214,7 +214,7 @@ export function MyDotIntelligence() {
     <div className="flex flex-col gap-4">
       {!provider?.configured ? (
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
-          <PlugZapIcon className="size-3.5" aria-hidden />
+          <PlugIcon className="size-3.5" aria-hidden />
           {t(
             "No provider is connected, so this is the last snapshot on file and cannot be refreshed.",
           )}

@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { HelpCircleIcon, SearchIcon } from "lucide-react";
+import { HelpCircleIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useEffect, useRef } from "react";
 
 type DataTableSearchProps = {
@@ -76,7 +76,7 @@ export default function DataTableSearch({ value, onChange, placeholder }: DataTa
       onChange={(e) => handleChange(e.target.value)}
       placeholder={placeholder ?? "Search..."}
       className="h-7 w-48 text-sm"
-      leftElement={<SearchIcon className="text-muted-foreground size-3.5 shrink-0" />}
+      leftElement={<SearchLgIcon className="text-muted-foreground size-3.5 shrink-0" />}
       rightElement={<SearchSyntaxHelper />}
     />
   );

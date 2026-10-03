@@ -41,7 +41,7 @@ import {
   type ResolveDisputeFormValues,
 } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ShieldAlertIcon } from "lucide-react";
+import { ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";

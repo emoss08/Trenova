@@ -10,7 +10,7 @@ import type { AgentResolutionState } from "@trenova/graphql/generated/graphql";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2Icon, EyeIcon, XCircleIcon } from "lucide-react";
+import { CheckCircleIcon, EyeIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getExceptionColumns } from "./agent-exception-columns";
@@ -76,7 +76,7 @@ export default function AgentExceptionTable() {
     {
       id: "resolve",
       label: t("Resolve"),
-      icon: CheckCircle2Icon,
+      icon: CheckCircleIcon,
       onClick: (row) => transition(row, "Resolved"),
       hidden: (row) =>
         !canResolve ||

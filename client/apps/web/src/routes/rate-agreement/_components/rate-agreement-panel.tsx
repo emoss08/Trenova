@@ -14,18 +14,18 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { rateAgreementSchema, type RateAgreement } from "@trenova/shared/types/rate";
 import {
   ArchiveIcon,
+  Beaker02Icon,
   CheckIcon,
   ClockIcon,
-  FileTextIcon,
-  FlaskConicalIcon,
+  File06Icon,
   FuelIcon,
-  MapIcon,
+  Map01Icon,
   PauseIcon,
   PlayIcon,
   ReceiptTextIcon,
-  SendIcon,
-  XIcon,
-} from "lucide-react";
+  Send01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { AccessorialScheduleEditor } from "./accessorial-schedule-editor";
@@ -100,7 +100,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
           className="mr-1 gap-1.5"
           onClick={() => onReviewAction("submit")}
         >
-          <SendIcon className="size-3" />
+          <Send01Icon className="size-3" />
           {t("Submit for review")}
         </Button>
       )}
@@ -126,7 +126,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
               className="text-destructive gap-1.5"
               onClick={() => onReviewAction("reject")}
             >
-              <XIcon className="size-3" />
+              <XCloseIcon className="size-3" />
               {t("Reject")}
             </Button>
           )}
@@ -211,13 +211,13 @@ export function RateAgreementPanel({
       {
         value: "overview",
         label: t("Overview"),
-        icon: FileTextIcon,
+        icon: File06Icon,
         content: <RateAgreementForm />,
       },
       {
         value: "lanes",
         label: t("Lanes"),
-        icon: MapIcon,
+        icon: Map01Icon,
         content: <LaneEditor />,
       },
       {
@@ -235,7 +235,7 @@ export function RateAgreementPanel({
       {
         value: "simulation",
         label: t("Simulation"),
-        icon: FlaskConicalIcon,
+        icon: Beaker02Icon,
         content: <SimulationPanel rateAgreementId={row?.id} />,
       },
       {

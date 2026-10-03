@@ -7,7 +7,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { RateQuote, RateTraceCandidate, RateTraceGuardrail } from "@trenova/shared/types/rate";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 
 type WhyThisRateProps = {
   shipmentId?: string;
@@ -38,7 +38,7 @@ export function WhyThisRate({ shipmentId }: WhyThisRateProps) {
       <PopoverTrigger
         render={
           <Button type="button" variant="ghost" size="xxxs">
-            <InfoIcon className="size-3" />
+            <InfoCircleIcon className="size-3" />
             <span className="text-2xs">{t("Why this rate")}</span>
           </Button>
         }
@@ -113,9 +113,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
 
       {(trace?.guardrails?.length ?? 0) > 0 && (
         <div className="border-b p-3">
-          <p className="text-xs text-muted-foreground mb-2 font-medium">
-            {t("Guardrails")}
-          </p>
+          <p className="text-xs text-muted-foreground mb-2 font-medium">{t("Guardrails")}</p>
           {trace?.guardrails?.map((guardrail, index) => (
             <GuardrailRow
               key={`${guardrail.kind}-${index}`}

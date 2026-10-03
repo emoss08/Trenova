@@ -2,7 +2,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { MicIcon, MicOffIcon, SquareIcon } from "lucide-react";
+import {
+  Microphone01Icon,
+  MicrophoneOff01Icon,
+  SquareIcon,
+} from "@trenova/shared/components/icons";
 import { useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 import type { DictationAvailability, DictationIssue, DictationPhase } from "./use-dictation";
@@ -212,7 +216,7 @@ export function DictationControl({
             />
           }
         >
-          <MicOffIcon className="size-4" />
+          <MicrophoneOff01Icon className="size-4" />
         </TooltipTrigger>
         <TooltipContent>{dictationUnavailableText(availability, t)}</TooltipContent>
       </Tooltip>
@@ -258,9 +262,9 @@ export function DictationControl({
             )}
           </>
         ) : issue !== null && issue !== "no-speech" ? (
-          <MicOffIcon className="size-4" />
+          <MicrophoneOff01Icon className="size-4" />
         ) : (
-          <MicIcon className="size-4" />
+          <Microphone01Icon className="size-4" />
         )}
       </TooltipTrigger>
       <TooltipContent>

@@ -7,7 +7,7 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 export type OverflowTab = {

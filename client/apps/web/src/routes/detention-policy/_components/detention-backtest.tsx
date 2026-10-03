@@ -17,7 +17,11 @@ import type {
   DetentionPolicy,
 } from "@trenova/shared/types/detention";
 import { useMutation } from "@tanstack/react-query";
-import { HistoryIcon, RotateCwIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ClockRewindIcon,
+  RefreshCw01Icon,
+} from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -320,9 +324,9 @@ export function DetentionBacktest() {
           />
           <Button type="button" size="sm" className="h-7" disabled={!ready} onClick={run}>
             {mutation.isPending ? (
-              <RotateCwIcon className="mr-1.5 size-3.5 animate-spin" />
+              <RefreshCw01Icon className="mr-1.5 size-3.5 animate-spin" />
             ) : (
-              <HistoryIcon className="mr-1.5 size-3.5" />
+              <ClockRewindIcon className="mr-1.5 size-3.5" />
             )}
             {mutation.isPending ? t("Running…") : mutation.data ? t("Re-run") : t("Run backtest")}
           </Button>
@@ -369,7 +373,7 @@ export function DetentionBacktest() {
           onClick={run}
           className="flex items-center gap-2 rounded-lg border border-warning-border bg-warning-subtle px-3 py-2 text-left transition-colors hover:bg-warning-subtle"
         >
-          <TriangleAlertIcon className="size-3.5 shrink-0 text-warning-foreground" />
+          <AlertTriangleIcon className="size-3.5 shrink-0 text-warning-foreground" />
           <span className="text-xs">
             {t("The terms changed since this run — re-run to see what they are worth.")}
           </span>
@@ -385,7 +389,7 @@ export function DetentionBacktest() {
 
       {mutation.isError && (
         <div className="border-border flex items-start gap-2.5 rounded-lg border px-3 py-2.5">
-          <TriangleAlertIcon className="mt-px size-4 shrink-0 text-warning-foreground" />
+          <AlertTriangleIcon className="mt-px size-4 shrink-0 text-warning-foreground" />
           <div className="min-w-0">
             <p className="text-xs font-medium">{t("The backtest could not run")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
@@ -401,7 +405,7 @@ export function DetentionBacktest() {
 
       {!mutation.data && !mutation.isPending && !mutation.isError && ready && (
         <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border border-dashed py-10 text-center">
-          <HistoryIcon className="text-muted-foreground/60 size-5" />
+          <ClockRewindIcon className="text-muted-foreground/60 size-5" />
           <p className="text-muted-foreground max-w-[18rem] text-xs">
             {t(
               "Run the backtest to see what these terms would have billed over the last {0} days.",

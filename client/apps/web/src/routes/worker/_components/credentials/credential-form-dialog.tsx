@@ -35,7 +35,7 @@ import {
   credentialFormSchema,
   type CredentialFormValues,
 } from "@trenova/shared/types/worker-credential";
-import { CheckCircle2Icon, PaperclipIcon, XIcon } from "lucide-react";
+import { CheckCircleIcon, PaperclipIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -366,7 +366,7 @@ export function CredentialFormDialog({
                   {attached ? (
                     <div className="border-border bg-muted/40 flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
-                        <CheckCircle2Icon className="size-4 shrink-0 text-success-foreground" />
+                        <CheckCircleIcon className="size-4 shrink-0 text-success-foreground" />
                         <span className="truncate">{attached.name}</span>
                         {attached.size > 0 ? (
                           <span className="text-muted-foreground shrink-0 text-xs">
@@ -382,7 +382,7 @@ export function CredentialFormDialog({
                         aria-label={t("Remove document")}
                         onClick={() => setAttached(null)}
                       >
-                        <XIcon className="size-3.5" />
+                        <XCloseIcon className="size-3.5" />
                       </Button>
                     </div>
                   ) : activeUpload ? (

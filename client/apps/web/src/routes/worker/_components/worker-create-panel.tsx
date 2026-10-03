@@ -10,7 +10,12 @@ import { apiService } from "@/services/api";
 import type { Worker } from "@trenova/shared/types/worker";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { BriefcaseIcon, ShieldCheckIcon, UserIcon, XIcon } from "lucide-react";
+import {
+  Briefcase01Icon,
+  ShieldTickIcon,
+  User01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
@@ -165,7 +170,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
                 />
               }
             >
-              <XIcon className="size-4" />
+              <XCloseIcon className="size-4" />
               <span className="sr-only">{t("Close panel")}</span>
             </Dialog.Close>
           </div>
@@ -184,21 +189,21 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
                 <div className="border-border border-b px-4">
                   <TabsList variant="underline">
                     <TabsTab value="general" className={cn(hasGeneralErrors && "text-destructive")}>
-                      <UserIcon className="size-4" />
+                      <User01Icon className="size-4" />
                       {t("General information")}
                     </TabsTab>
                     <TabsTab
                       value="employment"
                       className={cn(hasEmploymentErrors && "text-destructive")}
                     >
-                      <BriefcaseIcon className="size-4" />
+                      <Briefcase01Icon className="size-4" />
                       {t("Employment information")}
                     </TabsTab>
                     <TabsTab
                       value="compliance"
                       className={cn(hasComplianceErrors && "text-destructive")}
                     >
-                      <ShieldCheckIcon className="size-4" />
+                      <ShieldTickIcon className="size-4" />
                       {t("Compliance status")}
                     </TabsTab>
                   </TabsList>

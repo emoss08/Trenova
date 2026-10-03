@@ -31,7 +31,13 @@ import { startOfRotaWeek } from "@trenova/shared/lib/scheduling";
 import { elapsedMinutes, formatHours, timesheetStatusTone } from "@trenova/shared/lib/timesheet";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ClockIcon, PenLineIcon, PlayIcon, SquareIcon, Trash2Icon } from "lucide-react";
+import {
+  ClockIcon,
+  Edit03Icon,
+  PlayIcon,
+  SquareIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -354,7 +360,7 @@ export function TimeClockPanel({
                       variant="ghost"
                       onClick={() => setEntryDialog({ entry: null })}
                     >
-                      <PenLineIcon className="size-3.5" />
+                      <Edit03Icon className="size-3.5" />
                       {t("Record hours")}
                     </Button>
                   ) : null}
@@ -536,7 +542,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
                     aria-label={t("Correct this entry")}
                     onClick={() => onEdit(row)}
                   >
-                    <PenLineIcon className="size-3.5" />
+                    <Edit03Icon className="size-3.5" />
                   </Button>
                   <Button
                     size="icon-xs"
@@ -545,7 +551,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
                     aria-label={t("Remove this entry")}
                     onClick={() => onRemove(row)}
                   >
-                    <Trash2Icon className="size-3.5" />
+                    <Trash01Icon className="size-3.5" />
                   </Button>
                 </span>
               ) : null}

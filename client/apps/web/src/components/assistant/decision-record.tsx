@@ -13,7 +13,12 @@ import { queries } from "@/lib/queries";
 import { useAssistantStore, type DecisionFocus } from "@/stores/assistant-store";
 import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownIcon, ChevronRightIcon, HourglassIcon, type LucideIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ChevronRightIcon,
+  Hourglass01Icon,
+  type IconComponent,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState, type ReactNode } from "react";
 import { focusKeys } from "./approval-queue";
 import { OutcomeIcon, ProposedBy } from "./decision-chrome";
@@ -83,7 +88,7 @@ function DecisionRecordFrame({
   const t = useT();
   const [open, setOpen] = useState(defaultOpen);
   const waiting = state === "awaiting";
-  const Mark: LucideIcon | null = waiting ? HourglassIcon : null;
+  const Mark: IconComponent | null = waiting ? Hourglass01Icon : null;
 
   return (
     <Collapsible

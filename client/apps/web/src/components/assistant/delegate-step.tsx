@@ -11,12 +11,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DelegateDocument } from "@/types/assistant";
 import {
+  AlertCircleIcon,
+  Beaker02Icon,
   CheckIcon,
   ChevronRightIcon,
-  CircleAlertIcon,
-  FlaskConicalIcon,
-  HourglassIcon,
-} from "lucide-react";
+  Hourglass01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { currentActivity, type ToolStep } from "./activity";
@@ -289,13 +289,11 @@ function MoreRow({ text }: { text: string }) {
 function WriteMark({ state }: { state: WriteLine["state"] }) {
   switch (state) {
     case "failed":
-      return <CircleAlertIcon aria-hidden className="text-danger mt-0.5 size-3 shrink-0" />;
+      return <AlertCircleIcon aria-hidden className="text-danger mt-0.5 size-3 shrink-0" />;
     case "simulated":
-      return (
-        <FlaskConicalIcon aria-hidden className="text-foreground-muted mt-0.5 size-3 shrink-0" />
-      );
+      return <Beaker02Icon aria-hidden className="text-foreground-muted mt-0.5 size-3 shrink-0" />;
     case "awaiting":
-      return <HourglassIcon aria-hidden className="text-warning mt-0.5 size-3 shrink-0" />;
+      return <Hourglass01Icon aria-hidden className="text-warning mt-0.5 size-3 shrink-0" />;
     default:
       return <CheckIcon aria-hidden className="text-foreground-muted mt-0.5 size-3 shrink-0" />;
   }

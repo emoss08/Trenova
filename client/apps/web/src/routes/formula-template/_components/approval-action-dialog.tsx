@@ -15,7 +15,12 @@ import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, MessageSquareWarningIcon, SendIcon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  MessageAlertSquareIcon,
+  Send01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApprovalImpactPanel } from "./approval-impact-panel";
@@ -53,7 +58,7 @@ const ACTION_CONFIG: Record<
     successMessage: "Template submitted for review",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Describe what changed and why it needs review",
-    icon: SendIcon,
+    icon: Send01Icon,
     destructive: false,
   },
   approve: {
@@ -76,7 +81,7 @@ const ACTION_CONFIG: Record<
     successMessage: "Template rejected and archived",
     commentLabel: "Comment (required)",
     commentPlaceholder: "Explain why this template is being rejected",
-    icon: XIcon,
+    icon: XCloseIcon,
     destructive: true,
   },
   requestChanges: {
@@ -88,7 +93,7 @@ const ACTION_CONFIG: Record<
     successMessage: "Changes requested; the author has been notified",
     commentLabel: "What needs to change (required)",
     commentPlaceholder: "e.g. Guard totalWeight with coalesce; the hazmat surcharge should be $200",
-    icon: MessageSquareWarningIcon,
+    icon: MessageAlertSquareIcon,
     destructive: false,
   },
 };

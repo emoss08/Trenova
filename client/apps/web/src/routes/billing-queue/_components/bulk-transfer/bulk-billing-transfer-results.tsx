@@ -10,7 +10,11 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { AlertTriangleIcon, ExternalLinkIcon, InfoIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  InfoCircleIcon,
+  LinkExternal01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { billingTransferRunItemsQuery } from "../../billing-queue-queries";
 import { BILLING_TRANSFER_FAILURE_REASONS } from "./bulk-billing-transfer-report";
@@ -223,7 +227,7 @@ function Notice({
   title?: string;
   children: React.ReactNode;
 }) {
-  const Icon = tone === "danger" ? AlertTriangleIcon : InfoIcon;
+  const Icon = tone === "danger" ? AlertTriangleIcon : InfoCircleIcon;
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
@@ -279,7 +283,7 @@ function ShipmentLink({ shipmentId, proNumber }: { shipmentId: string; proNumber
         aria-label={t("Open shipment {0}", display)}
         className="text-muted-foreground hover:text-foreground shrink-0"
       >
-        <ExternalLinkIcon className="size-3" />
+        <LinkExternal01Icon className="size-3" />
       </a>
     </div>
   );

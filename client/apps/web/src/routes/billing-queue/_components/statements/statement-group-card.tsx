@@ -4,7 +4,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { StatementGroup, StatementShipment } from "@trenova/shared/types/statement";
-import { ChevronDownIcon, ChevronRightIcon, PauseCircleIcon, ReceiptTextIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  PauseCircleIcon,
+  ReceiptTextIcon,
+} from "@trenova/shared/components/icons";
 
 /**
  * One invoice this statement will produce, with the shipments that will be on it.

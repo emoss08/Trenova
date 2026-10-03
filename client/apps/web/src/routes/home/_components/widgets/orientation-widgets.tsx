@@ -12,7 +12,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { StarIcon } from "lucide-react";
+import { Star01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
@@ -87,7 +87,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
               to={favorite.pageUrl}
               className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-1.5 py-1 text-xs transition-colors"
             >
-              <StarIcon className="size-3 shrink-0 fill-warning text-warning-foreground" />
+              <Star01Icon className="size-3 shrink-0 fill-warning text-warning-foreground" />
               <span className="truncate">{favorite.pageTitle}</span>
             </Link>
           ))}

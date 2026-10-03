@@ -23,7 +23,7 @@ import {
 } from "@trenova/shared/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KeyRoundIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { Key01Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useQueryState, useQueryStates } from "nuqs";
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { type Resolver, useForm, useFormContext } from "react-hook-form";
@@ -198,7 +198,7 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
         </div>
       ) : (
         <EmptyState
-          icon={<KeyRoundIcon />}
+          icon={<Key01Icon />}
           label={providers.length === 0 ? "No identity providers configured" : "No providers found"}
           description={
             providers.length === 0
@@ -378,7 +378,7 @@ const ProviderRow = memo(function ProviderRow({
           onClick={() => onDeleteProvider(provider.id)}
           disabled={isDeleting}
         >
-          <Trash2Icon />
+          <Trash01Icon />
           {t("Delete")}
         </Button>
       </div>

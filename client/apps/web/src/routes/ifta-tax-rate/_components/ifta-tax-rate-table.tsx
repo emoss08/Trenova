@@ -19,7 +19,7 @@ import type {
 } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { FileSpreadsheetIcon, Trash2Icon } from "lucide-react";
+import { FileSpreadsheetIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { DeleteIftaTaxRateDialog } from "./delete-ifta-tax-rate-dialog";
 import { getColumns } from "./ifta-tax-rate-columns";
@@ -105,7 +105,7 @@ export default function IftaTaxRateTable() {
       {
         id: "delete",
         label: t("Delete"),
-        icon: Trash2Icon,
+        icon: Trash01Icon,
         variant: "destructive",
         onClick: (row) => setDeleting(row.original),
       },

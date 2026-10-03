@@ -7,12 +7,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   ArchiveIcon,
-  CheckCheckIcon,
-  InboxIcon,
-  LayersIcon,
-  MailIcon,
-  type LucideIcon,
-} from "lucide-react";
+  CheckDoubleIcon,
+  type IconComponent,
+  Inbox01Icon,
+  LayersThree01Icon,
+  Mail01Icon,
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import {
   CLASSIFICATION_ICON,
@@ -22,11 +22,11 @@ import {
 import { isSameFolder, type InboxFolder } from "./folders";
 import type { LaneKey } from "./lanes";
 
-const LANE_ICON: Record<LaneKey, LucideIcon> = {
-  waiting: InboxIcon,
-  handled: CheckCheckIcon,
+const LANE_ICON: Record<LaneKey, IconComponent> = {
+  waiting: Inbox01Icon,
+  handled: CheckDoubleIcon,
   ignored: ArchiveIcon,
-  all: LayersIcon,
+  all: LayersThree01Icon,
 };
 
 export function laneLabel(t: (value: string) => string, lane: LaneKey): string {
@@ -146,7 +146,7 @@ export function FolderRail({
                 return (
                   <RailItem
                     key={mailbox.id}
-                    icon={MailIcon}
+                    icon={Mail01Icon}
                     label={mailbox.name === "" ? mailbox.address : mailbox.name}
                     hint={mailbox.name === "" ? undefined : mailbox.address}
                     muted={mailbox.status !== "Active"}

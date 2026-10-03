@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { UploadIcon } from "lucide-react";
+import { Upload01Icon } from "@trenova/shared/components/icons";
 
 /**
  * The file list as it will look with documents on it: the file mark, the name,
@@ -39,7 +39,7 @@ export function BillingQueueDocumentsEmpty({
       action={
         onUpload ? (
           <Button variant="outline" size="sm" onClick={onUpload}>
-            <UploadIcon className="size-3.5" />
+            <Upload01Icon className="size-3.5" />
             {t("Upload a document")}
           </Button>
         ) : null

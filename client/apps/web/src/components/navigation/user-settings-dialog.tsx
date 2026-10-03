@@ -24,7 +24,13 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { ChangeMyPassword, UpdateMySettings, User } from "@trenova/shared/types/user";
-import { Camera, Globe, KeyRound, Mail, Trash2 } from "lucide-react";
+import {
+  Camera01Icon,
+  Globe02Icon,
+  Key01Icon,
+  Mail01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import type { ChangeEvent, ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -242,7 +248,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
             <p className="truncate text-sm font-semibold">{user?.name}</p>
             <p className="text-muted-foreground truncate text-xs">@{user?.username}</p>
             <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
-              <Mail className="size-3 shrink-0" />
+              <Mail01Icon className="size-3 shrink-0" />
               <span className="truncate">{user?.emailAddress}</span>
             </div>
           </div>
@@ -253,7 +259,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
               size="sm"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Camera className="size-4" />
+              <Camera01Icon className="size-4" />
               {user?.profilePicUrl ? t("Change") : t("Upload")}
             </Button>
             {user?.profilePicUrl ? (
@@ -265,7 +271,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                 disabled={isRemovingProfilePicture}
                 aria-label={t("Remove profile picture")}
               >
-                <Trash2 className="size-4" />
+                <Trash01Icon className="size-4" />
               </Button>
             ) : null}
           </div>
@@ -283,7 +289,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
         <div className="space-y-5">
           <div className="space-y-3">
             <SectionHeader
-              icon={Globe}
+              icon={Globe02Icon}
               title={t("Preferences")}
               description={t("Configure your regional and display settings.")}
             />
@@ -327,7 +333,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
 
           <div className="space-y-3">
             <SectionHeader
-              icon={KeyRound}
+              icon={Key01Icon}
               title={t("Change password")}
               description={t("Leave blank to keep your current password.")}
             />

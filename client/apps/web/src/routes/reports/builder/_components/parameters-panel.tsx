@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { REPORT_PARAMETER_TYPE_CHOICES, type ReportParameterDef } from "@/types/report";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { REPORT_REF_ENTITY_CHOICES } from "../../_components/report-ref-autocomplete";
 
 type ParametersPanelProps = {
@@ -85,7 +85,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                 onClick={() => onChange(parameters.filter((_, i) => i !== paramIndex))}
                 aria-label={t("Remove parameter")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-2">

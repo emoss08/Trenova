@@ -21,7 +21,7 @@ import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { DocumentType } from "@trenova/shared/types/document-type";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2Icon, TrashIcon } from "lucide-react";
+import { SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./document-packet-rule-columns";
@@ -81,7 +81,7 @@ export default function DocumentPacketRuleTable() {
       {
         id: "delete",
         label: t("Delete"),
-        icon: TrashIcon,
+        icon: Trash01Icon,
         variant: "destructive",
         onClick: handleDelete,
       },
@@ -104,7 +104,7 @@ export default function DocumentPacketRuleTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <TrashIcon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete document packet rule")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -122,7 +122,7 @@ export default function DocumentPacketRuleTable() {
               }}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              {deleteMutation.isPending && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
               {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

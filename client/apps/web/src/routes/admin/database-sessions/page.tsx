@@ -35,10 +35,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   ChevronDownIcon,
-  CodeIcon,
-  RefreshCwIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+  Code01Icon,
+  RefreshCw02Icon,
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -218,7 +218,7 @@ function SessionCard({ row }: { row: DatabaseSessionChain }) {
 
         <div className="border-t px-3 py-2">
           <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md py-1 text-xs transition-colors">
-            <CodeIcon className="size-3" />
+            <Code01Icon className="size-3" />
             <span>{t("Queries")}</span>
             <ChevronDownIcon className="size-3 transition-transform [[data-panel-open]_&]:rotate-180" />
           </CollapsibleTrigger>
@@ -266,7 +266,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <div className="bg-muted flex size-14 items-center justify-center rounded-full">
-        <ShieldCheckIcon className="text-muted-foreground size-7" />
+        <ShieldTickIcon className="text-muted-foreground size-7" />
       </div>
       <h3 className="mt-4 text-sm font-medium">{t("No blocked sessions")}</h3>
       <p className="text-muted-foreground mt-1 text-xs">
@@ -306,7 +306,7 @@ function StatusBar({
               <Button size="icon-xs" variant="outline" onClick={onRefresh} disabled={isFetching} />
             }
           >
-            <RefreshCwIcon className={`size-3 ${isFetching ? "animate-spin" : ""}`} />
+            <RefreshCw02Icon className={`size-3 ${isFetching ? "animate-spin" : ""}`} />
           </TooltipTrigger>
           <TooltipContent>{t("Refresh")}</TooltipContent>
         </Tooltip>

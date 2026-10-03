@@ -38,13 +38,13 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { formatSettlementDate } from "@trenova/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Building2Icon,
-  CheckCheckIcon,
-  FileTextIcon,
-  LinkIcon,
-  ScaleIcon,
-  XIcon,
-} from "lucide-react";
+  Building07Icon,
+  CheckDoubleIcon,
+  File06Icon,
+  Link01Icon,
+  Scales01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -509,7 +509,7 @@ function InvoiceList({
                 invoice.carrierId ? "text-success-foreground" : "text-warning-foreground",
               )}
             >
-              <Building2Icon className="size-3" aria-hidden />
+              <Building07Icon className="size-3" aria-hidden />
               {invoice.carrierId ? t("Carrier linked") : t("No carrier link")}
             </span>
             <span className="font-semibold tabular-nums">
@@ -748,7 +748,7 @@ function InvoiceDetail({
                   {t("Suggest carrier")}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>
-                  <LinkIcon className="size-3.5" />
+                  <Link01Icon className="size-3.5" />
                   {t("Link carrier")}
                 </Button>
               </>
@@ -763,7 +763,7 @@ function InvoiceDetail({
               }
               onClick={() => createMatchMutation.mutate()}
             >
-              <FileTextIcon className="size-3.5" />
+              <File06Icon className="size-3.5" />
               {t("Create match")}
             </Button>
           </div>
@@ -978,7 +978,7 @@ function MatchDetail({
                 "Reconciles the invoice against the buy rate without changing the accrued cost",
               )}
             >
-              <CheckCheckIcon className="size-3.5" />
+              <CheckDoubleIcon className="size-3.5" />
               {t("Accept")}
             </Button>
           )}
@@ -991,7 +991,7 @@ function MatchDetail({
                 "Accrues an adjustment cost event for the variance so the carrier is paid the billed amount",
               )}
             >
-              <ScaleIcon className="size-3.5" />
+              <Scales01Icon className="size-3.5" />
               {t("Accept with variance (")}
               <AmountDisplay value={match.varianceMinor} variant="auto" currency={currency} />)
             </Button>
@@ -1003,7 +1003,7 @@ function MatchDetail({
             disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
             onClick={() => setRejectOpen(true)}
           >
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
             {t("Reject")}
           </Button>
         </div>

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { operatorsForFieldType, type ReportDashboardFilter } from "@/types/report";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import {
   preferReferenceField,
@@ -74,7 +74,7 @@ function SelectedFilter({
           onClick={onRemove}
           aria-label={t("Remove filter")}
         >
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
         </Button>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -284,7 +284,6 @@ export function DashboardFiltersEditor({
           "What each report filters on and breaks down by. Turning one on narrows every tile built on the same data.",
         )}
       >
-
         {groups.map((group) => (
           <div key={group.report} className="flex flex-col gap-0.5">
             <p

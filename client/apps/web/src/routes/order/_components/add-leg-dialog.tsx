@@ -14,7 +14,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { attachOrderShipments } from "@/lib/graphql/order";
 import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { useMutation } from "@tanstack/react-query";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useOrderInvalidation } from "./use-order-invalidation";
@@ -120,7 +120,7 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
                     }
                     aria-label={`Remove ${leg.label}`}
                   >
-                    <XIcon className="size-3" />
+                    <XCloseIcon className="size-3" />
                   </Button>
                 </li>
               ))}

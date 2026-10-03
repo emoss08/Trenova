@@ -11,7 +11,12 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { cn } from "@trenova/shared/lib/utils";
 import type { VariableDefinitionInput } from "@trenova/shared/types/formula-template";
-import { ChevronDown, ChevronUp, Database, RotateCcw } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  Database01Icon,
+  RefreshCcw01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import type { VariableDoc } from "./known-identifiers";
 import { CATEGORY_LABELS, categoryLabel, sampleInputKind } from "./schema-labels";
@@ -161,16 +166,16 @@ export function TestDataEditor({
         className="flex w-full items-center justify-between px-3 py-2 text-left"
       >
         <div className="flex items-center gap-2">
-          <Database className="text-muted-foreground size-3.5" />
+          <Database01Icon className="text-muted-foreground size-3.5" />
           <span className="text-xs font-medium">{t("Sample data")}</span>
           <span className="text-muted-foreground text-xs">
             {t("({0} values)", Object.keys(values).length)}
           </span>
         </div>
         {isExpanded ? (
-          <ChevronUp className="text-muted-foreground size-3.5" />
+          <ChevronUpIcon className="text-muted-foreground size-3.5" />
         ) : (
-          <ChevronDown className="text-muted-foreground size-3.5" />
+          <ChevronDownIcon className="text-muted-foreground size-3.5" />
         )}
       </button>
 
@@ -187,7 +192,7 @@ export function TestDataEditor({
               onClick={handleReset}
               className="text-muted-foreground h-6 gap-1 px-2 text-xs"
             >
-              <RotateCcw className="size-3" />
+              <RefreshCcw01Icon className="size-3" />
               {t("Reset")}
             </Button>
           </div>

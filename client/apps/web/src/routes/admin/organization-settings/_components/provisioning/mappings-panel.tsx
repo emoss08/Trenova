@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Button } from "@trenova/shared/components/ui/button";
-import { PlusIcon, UsersRoundIcon } from "lucide-react";
+import { PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { lazy, memo, useCallback, useState } from "react";
 import { EmptyState, PanelHeader } from "../security-access/shared";
 import { SCIMGroupMappingCreatePanel } from "./mapping-panel";
@@ -61,7 +61,7 @@ const MappingsPanel = memo(function MappingsPanel({
   return (
     <div className="bg-background rounded-lg border">
       <PanelHeader
-        icon={<UsersRoundIcon />}
+        icon={<Users01Icon />}
         title={t("Group role mappings")}
         description={t("Resolve external directory groups into application roles.")}
         action={
@@ -78,7 +78,7 @@ const MappingsPanel = memo(function MappingsPanel({
           </DataTableLazyComponent>
         ) : (
           <EmptyState
-            icon={<UsersRoundIcon />}
+            icon={<Users01Icon />}
             label={t("Select a directory")}
             description={t("Choose a SCIM directory before loading group mappings.")}
             compact

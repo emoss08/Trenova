@@ -3,7 +3,7 @@ import { Meter, ShareBreakdown, type ShareSegment } from "@/components/detention
 import { detentionWaiverReasonChoices, findChoice } from "@/lib/choices";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { WaiverLeakageStat } from "@trenova/shared/types/detention";
-import { HandCoinsIcon } from "lucide-react";
+import { CoinsHandIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Panel, PanelEmpty, PanelError, PanelRowsSkeleton } from "./intelligence-panel";
 
@@ -47,9 +47,7 @@ function LeakageRow({
   const description = reasonDescription(row.reason);
 
   return (
-    <div
-      className="hover:bg-muted/40 px-3 py-2.5 transition-colors"
-    >
+    <div className="hover:bg-muted/40 px-3 py-2.5 transition-colors">
       <div className="flex items-center gap-3">
         <span
           className={cn(
@@ -129,7 +127,7 @@ export function WaiverLeakage({
 
   return (
     <Panel
-      icon={HandCoinsIcon}
+      icon={CoinsHandIcon}
       title={t("Waiver leakage")}
       description={t(
         "Revenue forgiven at someone's discretion, grouped by the coded reason given.",
@@ -155,7 +153,7 @@ export function WaiverLeakage({
         <PanelRowsSkeleton rows={4} />
       ) : sorted.length === 0 ? (
         <PanelEmpty
-          icon={HandCoinsIcon}
+          icon={CoinsHandIcon}
           message={t("Nothing was waived in this window. Every accrued detention charge stood.")}
         />
       ) : (

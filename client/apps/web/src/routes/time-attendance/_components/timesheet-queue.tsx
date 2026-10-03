@@ -44,7 +44,12 @@ import {
 } from "@trenova/shared/lib/timesheet";
 import { cn, initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CheckIcon, SendIcon, UndoIcon, UsersIcon } from "lucide-react";
+import {
+  CheckIcon,
+  FlipBackwardIcon,
+  Send01Icon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -196,7 +201,7 @@ export function TimesheetQueue({ now }: { now: number }) {
             onClick={() => setTeamOnly((value) => !value)}
             aria-pressed={teamOnly}
           >
-            <UsersIcon className="size-3.5" />
+            <Users01Icon className="size-3.5" />
             {t("My team")}
           </Button>
         </div>
@@ -376,7 +381,7 @@ function QueueRow({
               disabled={busy}
               onClick={() => onDecide("Rejected")}
             >
-              <UndoIcon className="size-3.5" />
+              <FlipBackwardIcon className="size-3.5" />
               {t("Send back")}
             </Button>
           ) : null}
@@ -393,7 +398,7 @@ function QueueRow({
               disabled={busy}
               onClick={() => onDecide("Submitted")}
             >
-              <SendIcon className="size-3.5" />
+              <Send01Icon className="size-3.5" />
               {t("Hand over")}
             </Button>
           ) : null}

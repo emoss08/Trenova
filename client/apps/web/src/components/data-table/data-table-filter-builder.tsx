@@ -36,7 +36,13 @@ import type {
   ColumnDef,
 } from "@trenova/shared/types/data-table";
 import type { SelectOption } from "@trenova/shared/types/fields";
-import { CalendarIcon, FilterIcon, FolderPlusIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  FilterFunnel01Icon,
+  FolderPlusIcon,
+  PlusIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 
 type FilterableColumn = {
@@ -261,7 +267,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
       <PopoverTrigger
         render={
           <Button variant="outline" size="sm">
-            <FilterIcon className="size-3.5" />
+            <FilterFunnel01Icon className="size-3.5" />
             {t("Filter")}
             {totalFilters > 0 && (
               <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
@@ -440,7 +446,7 @@ function FilterGroupRow({
           className="text-muted-foreground hover:text-destructive size-7"
           onClick={() => onRemoveGroup(group.id)}
         >
-          <TrashIcon className="size-4" />
+          <Trash01Icon className="size-4" />
         </Button>
       </div>
     </div>
@@ -548,7 +554,7 @@ function FilterRow({
         className="text-muted-foreground hover:text-destructive size-7"
         onClick={() => onRemove(filter.id)}
       >
-        <TrashIcon className="size-4" />
+        <Trash01Icon className="size-4" />
       </Button>
     </div>
   );

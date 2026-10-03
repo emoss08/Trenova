@@ -32,18 +32,18 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import {
   AlertTriangleIcon,
-  Braces,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  FlaskConical,
-  ListTree,
-  PinIcon,
+  Beaker02Icon,
+  BracketsIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Dataflow02Icon,
+  Pin01Icon,
   PlayIcon,
-  ShieldIcon,
-  Truck,
-  XCircle,
-} from "lucide-react";
+  Shield01Icon,
+  Truck01Icon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch, type Path } from "react-hook-form";
 import type { LivePreviewState } from "./use-live-preview";
@@ -54,7 +54,7 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
   if (!guardrail.applied) {
     return (
       <div className="mt-2 flex items-center gap-1.5 text-xs text-success-foreground">
-        <ShieldIcon className="size-3" />
+        <Shield01Icon className="size-3" />
         {t("Within guardrails")}
       </div>
     );
@@ -65,7 +65,7 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
 
   return (
     <Alert variant="warning" size="sm" className="mt-2">
-      <ShieldIcon />
+      <Shield01Icon />
       <AlertDescription>
         {t(
           "The formula produced {0} and was clamped to the {1} charge{2}.",
@@ -189,7 +189,7 @@ function BreakdownResultTable({
   return (
     <div className="mt-4 space-y-2">
       <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-        <ListTree className="size-3" />
+        <Dataflow02Icon className="size-3" />
         {t("Breakdown")}
       </div>
       <div className="bg-background/50 overflow-hidden rounded-md border">
@@ -247,7 +247,7 @@ function BreakdownResultTable({
       </div>
       {reconciliation?.clampMismatch && (
         <Alert variant="warning" size="sm">
-          <ShieldIcon />
+          <Shield01Icon />
           <AlertDescription>
             {t(
               "A guardrail moved the total to {0}, but the lines still add up to the raw {1}. An invoice built from these lines would not match the charge.",
@@ -281,8 +281,12 @@ function ResolvedVariablesView({
           onClick={() => setIsOpen((prev) => !prev)}
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium"
         >
-          {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-          <Braces className="size-3" />
+          {isOpen ? (
+            <ChevronDownIcon className="size-3" />
+          ) : (
+            <ChevronRightIcon className="size-3" />
+          )}
+          <BracketsIcon className="size-3" />
           {t("Resolved variables ({0})", count)}
         </button>
         {onUseValues && (
@@ -367,7 +371,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
-          <FlaskConical className="text-muted-foreground size-4" />
+          <Beaker02Icon className="text-muted-foreground size-4" />
           <span className="text-sm font-semibold">{t("Live preview")}</span>
           {isPending ? (
             <span className="text-muted-foreground text-2xs flex items-center gap-1">
@@ -384,7 +388,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <Truck className="text-muted-foreground size-3.5" />
+            <Truck01Icon className="text-muted-foreground size-3.5" />
             <Label htmlFor="preview-real-shipment" className="text-xs">
               {t("Real shipment")}
             </Label>
@@ -461,7 +465,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
 
           {!hasResult && !requestError && (
             <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
-              <FlaskConical className="size-8 opacity-40" />
+              <Beaker02Icon className="size-8 opacity-40" />
               <span>{t("Start typing an expression and the result appears here.")}</span>
             </div>
           )}
@@ -484,9 +488,9 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 )}
               >
                 {isValid ? (
-                  <CheckCircle2 className="size-4 text-success-subtle-foreground" />
+                  <CheckCircleIcon className="size-4 text-success-subtle-foreground" />
                 ) : (
-                  <XCircle className="size-4 text-danger-subtle-foreground" />
+                  <XCircleIcon className="size-4 text-danger-subtle-foreground" />
                 )}
                 <span
                   className={cn(
@@ -509,7 +513,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                             onPinScenario({ variables: sampleForPin(), result: numericResult })
                           }
                         >
-                          <PinIcon className="size-3" />
+                          <Pin01Icon className="size-3" />
                           {t("Pin as scenario")}
                         </Button>
                       }

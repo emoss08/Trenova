@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowUpRightIcon, XIcon } from "lucide-react";
+import { ArrowUpRightIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { Suggestion } from "./suggestions";
 
@@ -88,7 +88,7 @@ export function AgentStarters({
                   "opacity-0 group-hover/starter:opacity-100 focus-visible:opacity-100",
                 )}
               >
-                <XIcon aria-hidden className="size-2.5" />
+                <XCloseIcon aria-hidden className="size-2.5" />
               </button>
             )}
           </m.li>

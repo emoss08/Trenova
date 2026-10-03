@@ -2,14 +2,14 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 import { cn } from "@trenova/shared/lib/utils";
 import { Button } from "@trenova/shared/components/ui/button";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 
 interface EmptyStateProps {
   title: string;
   description: string;
-  icons?: LucideIcon[];
+  icons?: IconComponent[];
   action?: {
-    icon?: LucideIcon;
+    icon?: IconComponent;
     label: string;
     onClick: () => void;
   };

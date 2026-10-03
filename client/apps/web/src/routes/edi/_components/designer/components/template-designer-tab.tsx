@@ -22,12 +22,12 @@ import {
 import {
   AlertTriangleIcon,
   ArchiveIcon,
-  CheckCircle2Icon,
+  CheckCircleIcon,
   ClipboardCheckIcon,
-  CopyPlusIcon,
+  Copy06Icon,
   ListChecksIcon,
-  SaveIcon,
-} from "lucide-react";
+  Save01Icon,
+} from "@trenova/shared/components/icons";
 import { lazy, Suspense, useEffect } from "react";
 import { toast } from "sonner";
 import { ElementDesigner } from "../element/element-designer";
@@ -147,7 +147,9 @@ function TemplateDesignerHeader() {
           {selectedVersion ? <VersionStatusBadge version={selectedVersion} /> : null}
           {hasUnsavedChanges && <Badge variant="warning">{t("Unsaved")}</Badge>}
           {!isEditable && selectedVersion ? (
-            <Badge variant="neutral" appearance="outline">{t("Read-only")}</Badge>
+            <Badge variant="neutral" appearance="outline">
+              {t("Read-only")}
+            </Badge>
           ) : null}
         </div>
         <div className="text-muted-foreground text-xs">
@@ -178,7 +180,7 @@ function TemplateDesignerHeader() {
           isLoading={createDraftMutation.isPending}
           disabled={!selectedTemplateId || !selectedVersion || selectedVersion.status === "Draft"}
         >
-          <CopyPlusIcon className="size-4" />
+          <Copy06Icon className="size-4" />
           {t("New draft")}
         </Button>
         <Button
@@ -219,7 +221,7 @@ function TemplateDesignerHeader() {
           isLoading={activateMutation.isPending}
           disabled={selectedVersion?.status !== "Certified"}
         >
-          <CheckCircle2Icon className="size-4" />
+          <CheckCircleIcon className="size-4" />
           {t("Activate")}
         </Button>
       </div>
@@ -325,7 +327,7 @@ function TemplateDesignerTabBar() {
           isLoading={saveMetadataMutation.isPending}
           disabled={!isEditable || !metadataDirty}
         >
-          <SaveIcon className="size-4" />
+          <Save01Icon className="size-4" />
           {t("Save metadata")}
         </Button>
         <Button
@@ -344,7 +346,7 @@ function TemplateDesignerTabBar() {
           isLoading={saveSegmentsMutation.isPending}
           disabled={!isEditable || !segmentsDirty}
         >
-          <SaveIcon className="size-4" />
+          <Save01Icon className="size-4" />
           {t("Save draft")}
         </Button>
       </div>

@@ -23,7 +23,12 @@ import {
   stopTypeChoices,
 } from "@/lib/choices";
 import type { Shipment, StopScheduleType, StopStatus } from "@trenova/shared/types/shipment";
-import { CalendarIcon, MapPinIcon, PlusIcon, XIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  MarkerPin01Icon,
+  PlusIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 type MoveDialogState = { open: false } | { open: true; moveIndex: number; isNew: boolean };
@@ -169,7 +174,7 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
 
         {fields.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-8 text-center">
-            <MapPinIcon className="text-muted-foreground/40 mb-2 size-4" />
+            <MarkerPin01Icon className="text-muted-foreground/40 mb-2 size-4" />
             <p className="text-muted-foreground text-xs">{t("No stops configured")}</p>
             <p className="text-muted-foreground/60 mb-3 text-xs">
               {t("Add at least one pickup and delivery stop.")}
@@ -239,7 +244,7 @@ function StopCard({
     <div className="rounded-md border">
       <div className="flex items-center justify-between border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
-          <MapPinIcon className="text-muted-foreground size-3" />
+          <MarkerPin01Icon className="text-muted-foreground size-3" />
           <span className="text-xs font-medium">
             {t("Stop {0}", stopIndex + 1)}
             <span className="text-muted-foreground"> / {totalStops}</span>
@@ -249,7 +254,7 @@ function StopCard({
           </Badge>
         </div>
         <Button type="button" variant="ghost" size="icon" className="size-6" onClick={onRemove}>
-          <XIcon className="text-muted-foreground size-3" />
+          <XCloseIcon className="text-muted-foreground size-3" />
         </Button>
       </div>
 

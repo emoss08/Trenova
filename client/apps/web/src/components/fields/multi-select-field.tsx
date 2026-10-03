@@ -22,7 +22,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { multiSelectVariants } from "@/lib/variants/async-multi-select";
 import { type GenericLimitOffsetResponse } from "@trenova/shared/types/server";
-import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import {
   useCallback,
   useEffect,
@@ -567,12 +567,11 @@ export function MultiSelectAutocomplete<T>({
               aria-readonly={readOnly || undefined}
               className={cn(
                 fieldTriggerClass,
-        "h-auto min-h-7 w-full cursor-auto gap-2 px-2 py-1 font-normal",
+                "h-auto min-h-7 w-full cursor-auto gap-2 px-2 py-1 font-normal",
                 "cursor-pointer justify-between [&_svg]:size-3 [&_svg]:shrink-0",
                 "cursor-default whitespace-nowrap",
                 isLocked && "cursor-not-allowed opacity-50",
-                isInvalid &&
-fieldInvalidClass,
+                isInvalid && fieldInvalidClass,
                 triggerClassName,
               )}
               disabled={isLocked}
@@ -597,7 +596,7 @@ fieldInvalidClass,
                               removeOption(getOptionValue(option).toString());
                             }}
                           >
-                            <XIcon />
+                            <XCloseIcon />
                           </span>
                         )}
                       </span>
@@ -625,7 +624,7 @@ fieldInvalidClass,
                             handleClearAll();
                           }}
                         >
-                          <XIcon />
+                          <XCloseIcon />
                         </span>
                         <Separator
                           orientation="vertical"

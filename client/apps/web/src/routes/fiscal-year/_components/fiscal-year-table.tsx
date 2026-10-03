@@ -5,7 +5,7 @@ import { getFiscalYearActions, type FiscalYearAction } from "@/lib/fiscal-year-a
 import { fiscalYearTableGraphQLConfig, type FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource, type OperationType } from "@trenova/shared/types/permission";
-import { PlayIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
+import { PlayIcon, RefreshCcw01Icon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { FiscalYearActionDialog } from "./fiscal-year-alert-dialog-content";
 import { getColumns } from "./fiscal-year-columns";
@@ -57,7 +57,7 @@ export default function FiscalYearTable() {
       {
         id: "reopen",
         label: t("Reopen year"),
-        icon: RotateCcwIcon,
+        icon: RefreshCcw01Icon,
         variant: "destructive",
         onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "reopen"),
         hidden: (row: Row<FiscalYearRow>) => isHidden(row, "reopen"),

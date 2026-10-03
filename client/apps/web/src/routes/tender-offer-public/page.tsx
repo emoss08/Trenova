@@ -14,7 +14,12 @@ import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { PublicTenderOffer } from "@trenova/shared/types/tender";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2Icon, CircleSlashIcon, ClockIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router";
 
@@ -179,7 +184,7 @@ export function TenderOfferPublicPage() {
   if (submitted) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="size-8 text-success-foreground" aria-hidden />}
+        icon={<CheckCircleIcon className="size-8 text-success-foreground" aria-hidden />}
         title={t("Response recorded")}
         body={t("Thank you — the dispatcher has been notified of your response.")}
       />
@@ -195,7 +200,7 @@ export function TenderOfferPublicPage() {
   } else if (submitError === "unavailable") {
     content = (
       <StatusCard
-        icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
+        icon={<AlertTriangleIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Temporarily unavailable")}
         body={t(
           "Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.",
@@ -222,7 +227,7 @@ export function TenderOfferPublicPage() {
   } else if (submitError === "invalid") {
     content = (
       <StatusCard
-        icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
+        icon={<SlashCircle01Icon className="text-muted-foreground size-8" aria-hidden />}
         title={t("This offer link is no longer valid")}
         body={t(
           "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.",
@@ -250,7 +255,7 @@ export function TenderOfferPublicPage() {
         />
       ) : kind === "unavailable" ? (
         <StatusCard
-          icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
+          icon={<AlertTriangleIcon className="text-muted-foreground size-8" aria-hidden />}
           title={t("Temporarily unavailable")}
           body={t(
             "The offer could not be loaded because of a temporary problem. Please try again in a moment.",
@@ -271,7 +276,7 @@ export function TenderOfferPublicPage() {
         />
       ) : (
         <StatusCard
-          icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
+          icon={<SlashCircle01Icon className="text-muted-foreground size-8" aria-hidden />}
           title={t("This offer link is no longer valid")}
           body={t(
             "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.",
@@ -281,7 +286,7 @@ export function TenderOfferPublicPage() {
   } else if (previewQuery.data?.responded) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
+        icon={<CheckCircleIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Already answered")}
         body={t(
           "A response has already been recorded for this offer. Contact the broker if anything changed.",
@@ -301,7 +306,7 @@ export function TenderOfferPublicPage() {
   } else {
     content = (
       <StatusCard
-        icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
+        icon={<SlashCircle01Icon className="text-muted-foreground size-8" aria-hidden />}
         title={t("This offer link is no longer valid")}
         body={t(
           "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.",

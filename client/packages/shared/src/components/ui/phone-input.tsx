@@ -12,7 +12,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon } from "@trenova/shared/components/icons";
 import * as React from "react";
 import * as RPNInput from "react-phone-number-input";
 

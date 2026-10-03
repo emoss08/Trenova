@@ -20,7 +20,7 @@ import {
 import { cn, pluralize, toTitleCase } from "@trenova/shared/lib/utils";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon } from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
 

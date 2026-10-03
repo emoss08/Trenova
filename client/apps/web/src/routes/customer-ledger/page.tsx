@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { DownloadIcon, FileTextIcon, HandCoinsIcon } from "lucide-react";
+import { CoinsHandIcon, Download01Icon, File06Icon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
@@ -106,7 +106,7 @@ export function CustomerLedgerPage() {
         actions: customerId ? (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleExport} disabled={!entries?.length}>
-              <DownloadIcon className="size-4" />
+              <Download01Icon className="size-4" />
               {t("Export")}
             </Button>
             <Button
@@ -114,7 +114,7 @@ export function CustomerLedgerPage() {
               size="sm"
               onClick={() => void navigate(`/accounting/ar/customer-statement/${customerId}`)}
             >
-              <FileTextIcon className="size-4" />
+              <File06Icon className="size-4" />
               {t("Statement")}
             </Button>
             <MemoEntryButton customerId={customerId} billType="CreditMemo" />
@@ -126,7 +126,7 @@ export function CustomerLedgerPage() {
                   void navigate(`/accounting/ar/payments?panelType=create&customerId=${customerId}`)
                 }
               >
-                <HandCoinsIcon className="size-4" />
+                <CoinsHandIcon className="size-4" />
                 {t("Record payment")}
               </Button>
             ) : null}

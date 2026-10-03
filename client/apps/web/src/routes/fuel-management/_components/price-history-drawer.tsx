@@ -18,7 +18,7 @@ import {
 } from "@/lib/graphql/fuel-surcharge";
 import { queries } from "@/lib/queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -128,7 +128,7 @@ export function PriceHistoryDrawer({
               disabled={isAdding || !newPrice || !newDate}
               className="gap-1"
             >
-              <Plus className="size-3.5" />
+              <PlusIcon className="size-3.5" />
               {t("Add")}
             </Button>
           </div>
@@ -161,10 +161,7 @@ export function PriceHistoryDrawer({
                     <td className="px-3 py-1.5">{price.priceDate}</td>
                     <td className="px-3 py-1.5">${Number(price.price).toFixed(3)}</td>
                     <td className="px-3 py-1.5">
-                      <Badge
-                        variant={price.isManual ? "neutral" : "neutral"}
-                        className="text-2xs"
-                      >
+                      <Badge variant={price.isManual ? "neutral" : "neutral"} className="text-2xs">
                         {price.isManual ? t("Manual") : t("EIA")}
                       </Badge>
                     </td>
@@ -177,7 +174,7 @@ export function PriceHistoryDrawer({
                           onClick={() => removePrice(price.id)}
                           className="text-muted-foreground hover:text-destructive size-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                         >
-                          <Trash2 className="size-3" />
+                          <Trash01Icon className="size-3" />
                         </Button>
                       )}
                     </td>

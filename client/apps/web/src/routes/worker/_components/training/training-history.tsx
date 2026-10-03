@@ -9,7 +9,7 @@ import {
   type WorkerTrainingHealth,
   type WorkerTrainingStatus,
 } from "@trenova/shared/types/worker-training";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 /**

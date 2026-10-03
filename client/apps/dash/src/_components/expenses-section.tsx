@@ -22,7 +22,7 @@ import {
 import { uploadMyExpenseReceipt } from "@trenova/shared/lib/portal";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CameraIcon, PlusIcon, ReceiptIcon, XIcon } from "lucide-react";
+import { Camera01Icon, PlusIcon, ReceiptIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ExpenseStatusBadge } from "./portal-badges";
@@ -268,7 +268,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
                 className="text-muted-foreground hover:text-foreground"
                 onClick={() => setReceipt(null)}
               >
-                <XIcon className="size-4" />
+                <XCloseIcon className="size-4" />
               </button>
             </div>
           ) : (
@@ -277,7 +277,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
               className="h-10"
               onClick={() => fileInputRef.current?.click()}
             >
-              <CameraIcon className="size-4" />
+              <Camera01Icon className="size-4" />
               {features.requireExpenseReceipt
                 ? t("Add receipt photo (required)")
                 : t("Add receipt photo")}

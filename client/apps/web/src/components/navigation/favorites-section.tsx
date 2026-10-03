@@ -4,7 +4,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { queries } from "@/lib/queries";
 import { isRouteActive } from "@/lib/route-utils";
 import { useQuery } from "@tanstack/react-query";
-import { Star } from "lucide-react";
+import { Star01Icon } from "@trenova/shared/components/icons";
 import { useLocation } from "react-router";
 
 export function FavoritesSection() {
@@ -28,7 +28,7 @@ export function FavoritesSection() {
               to={favorite.pageUrl}
               active={isRouteActive(pathname, favorite.pageUrl)}
             >
-              <Star className="size-3 shrink-0 fill-warning text-warning-foreground" />
+              <Star01Icon className="size-3 shrink-0 fill-warning text-warning-foreground" />
               <span className="truncate">{favorite.pageTitle}</span>
             </SidebarNavLink>
           ))}

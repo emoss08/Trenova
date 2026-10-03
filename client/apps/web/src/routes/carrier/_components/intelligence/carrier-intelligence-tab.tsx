@@ -22,7 +22,7 @@ import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlugZapIcon, ScanSearchIcon } from "lucide-react";
+import { PlugIcon, ScanSearchIcon } from "@trenova/shared/components/icons";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useState, type ReactNode } from "react";
 import { Link } from "react-router";
@@ -163,7 +163,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
             nativeButton={false}
             render={<Link to="/admin/integrations?category=CarrierCompliance" />}
           >
-            <PlugZapIcon className="size-3.5" />
+            <PlugIcon className="size-3.5" />
             {t("Open integrations")}
           </Button>
         }
@@ -224,7 +224,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
     <div className="flex flex-col gap-4">
       {!provider.configured ? (
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
-          <PlugZapIcon className="size-3.5" aria-hidden />
+          <PlugIcon className="size-3.5" aria-hidden />
           {t(
             "No provider is connected, so this is the last snapshot on file and cannot be refreshed.",
           )}

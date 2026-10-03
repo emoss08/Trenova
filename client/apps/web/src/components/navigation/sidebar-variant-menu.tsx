@@ -12,7 +12,7 @@ import {
   useNavigationStore,
   type SidebarVariant,
 } from "@/stores/navigation-store";
-import { PanelsTopLeftIcon } from "lucide-react";
+import { LayoutAlt01Icon } from "@trenova/shared/components/icons";
 
 interface SidebarVariantOption {
   value: SidebarVariant;
@@ -45,7 +45,7 @@ export function SidebarLayoutSubmenu() {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        <PanelsTopLeftIcon className="mr-2 size-4" />
+        <LayoutAlt01Icon className="mr-2 size-4" />
         <span>{t("Sidebar layout")}</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>

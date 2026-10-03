@@ -18,7 +18,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { DownloadIcon, RotateCcwIcon, SendIcon } from "lucide-react";
+import { Download01Icon, RefreshCcw01Icon, Send01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { billingTransferCandidatesQuery } from "../../billing-queue-queries";
 import { BulkBillingTransferCandidates } from "./bulk-billing-transfer-candidates";
@@ -241,7 +241,7 @@ export function BulkBillingTransferDialog({
                   {t("Back")}
                 </Button>
                 <Button onClick={transferAll} disabled={isStarting}>
-                  <SendIcon className="size-3.5" />
+                  <Send01Icon className="size-3.5" />
                   {t("Start transfer")}
                 </Button>
               </div>
@@ -266,7 +266,7 @@ export function BulkBillingTransferDialog({
                   </Button>
                 ) : null}
                 <Button onClick={transferSelected} disabled={selectedIds.size === 0 || isStarting}>
-                  <SendIcon className="size-3.5" />
+                  <Send01Icon className="size-3.5" />
                   {t("Transfer {0} selected", selectedIds.size)}
                 </Button>
               </div>
@@ -278,13 +278,13 @@ export function BulkBillingTransferDialog({
                 onClick={() => void downloadReport()}
                 disabled={downloading}
               >
-                <DownloadIcon className="size-3.5" />
+                <Download01Icon className="size-3.5" />
                 {downloading ? t("Preparing...") : t("Download report")}
               </Button>
               <div className="flex items-center gap-2">
                 {canRetryRun(run) ? (
                   <Button variant="outline" onClick={() => void retry()} disabled={isStarting}>
-                    <RotateCcwIcon className="size-3.5" />
+                    <RefreshCcw01Icon className="size-3.5" />
                     {t("Retry {0}", run.retryableCount + run.skippedCount)}
                   </Button>
                 ) : null}

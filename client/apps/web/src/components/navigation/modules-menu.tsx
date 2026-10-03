@@ -19,7 +19,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { ClockIcon, HomeIcon, SettingsIcon, SlidersHorizontalIcon, StarIcon } from "lucide-react";
+import {
+  ClockIcon,
+  Home02Icon,
+  Settings01Icon,
+  Sliders01Icon,
+  Star01Icon,
+} from "@trenova/shared/components/icons";
 import { useState, type ReactElement } from "react";
 import { Link, useLocation } from "react-router";
 
@@ -162,7 +168,7 @@ function ShortcutsColumn({
         to="/"
         current={pathname === "/"}
         onNavigate={onNavigate}
-        icon={<HomeIcon className="size-3.5 shrink-0" strokeWidth={1.75} />}
+        icon={<Home02Icon className="size-3.5 shrink-0" strokeWidth={1.75} />}
       >
         {t("Home")}
       </SideRow>
@@ -177,7 +183,9 @@ function ShortcutsColumn({
                 key={favorite.id}
                 to={favorite.pageUrl}
                 onNavigate={onNavigate}
-                icon={<StarIcon className="size-3 shrink-0 fill-warning text-warning-foreground" />}
+                icon={
+                  <Star01Icon className="size-3 shrink-0 fill-warning text-warning-foreground" />
+                }
               >
                 {favorite.pageTitle}
               </SideRow>
@@ -273,7 +281,7 @@ export function ModulesMenu({
                 "ui-focus-ring hover:text-nav-active-foreground",
               )}
             >
-              <SettingsIcon className="size-3" strokeWidth={1.75} />
+              <Settings01Icon className="size-3" strokeWidth={1.75} />
               {t("Organization settings")}
             </Link>
           )}
@@ -283,7 +291,7 @@ export function ModulesMenu({
                 type="button"
                 className="ui-focus-ring text-foreground hover:text-nav-active-foreground flex items-center gap-1.5 rounded-sm transition-colors outline-none"
               >
-                <SlidersHorizontalIcon className="size-3" strokeWidth={1.75} />
+                <Sliders01Icon className="size-3" strokeWidth={1.75} />
                 {t("Customize navigation")}
               </button>
             }

@@ -6,7 +6,7 @@ import { MoneyField } from "@/components/fields/money-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ManualJournalLine } from "@/types/manual-journal";
-import { CheckCircle2Icon, PlusIcon, Trash2Icon } from "lucide-react";
+import { CheckCircleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
@@ -131,7 +131,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                     disabled={fields.length <= 2}
                     className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 disabled:opacity-0"
                   >
-                    <Trash2Icon className="text-muted-foreground size-3.5 hover:text-danger-foreground" />
+                    <Trash01Icon className="text-muted-foreground size-3.5 hover:text-danger-foreground" />
                   </Button>
                 </td>
               </tr>
@@ -163,7 +163,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
         {hasAmounts &&
           (isBalanced ? (
             <p className="flex items-center gap-1.5 text-xs font-medium text-success-foreground">
-              <CheckCircle2Icon className="size-3.5" />
+              <CheckCircleIcon className="size-3.5" />
               {t("Balanced")}
             </p>
           ) : (

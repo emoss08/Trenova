@@ -12,7 +12,7 @@ import {
   type DisciplinaryLevel,
   type SafetyRating,
 } from "@trenova/shared/types/worker-safety";
-import { AwardIcon, PlusIcon } from "lucide-react";
+import { Award01Icon, PlusIcon } from "@trenova/shared/components/icons";
 
 type SafetyScorecardCardProps = {
   scorecard: SafetyScorecard;
@@ -62,7 +62,7 @@ export function SafetyScorecardCard({
         <div className="flex items-center gap-2">
           {canRecognise ? (
             <Button size="sm" variant="outline" onClick={onRecognise}>
-              <AwardIcon className="size-3.5" />
+              <Award01Icon className="size-3.5" />
               {t("Add recognition")}
             </Button>
           ) : null}

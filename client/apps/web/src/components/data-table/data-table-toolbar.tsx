@@ -27,7 +27,7 @@ import type {
   TableFormatRule,
   TableViewSource,
 } from "@/types/table-configuration";
-import { ChevronDownIcon, DownloadIcon, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, Download01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { lazy, Suspense, useState } from "react";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -198,7 +198,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
                     aria-label={t("Export to CSV")}
                     onClick={() => setExportDialogOpen(true)}
                   >
-                    <DownloadIcon className="size-4" />
+                    <Download01Icon className="size-4" />
                   </Button>
                 }
               />

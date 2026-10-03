@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
@@ -129,7 +129,7 @@ function KeyValueEditorInner({
             />
             {!disabled && (
               <Button type="button" variant="ghost" size="icon" onClick={() => removeEntry(key)}>
-                <XIcon className="size-4" />
+                <XCloseIcon className="size-4" />
               </Button>
             )}
           </div>

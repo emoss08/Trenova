@@ -19,7 +19,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { Link, useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 

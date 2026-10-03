@@ -11,7 +11,7 @@ import type {
   CellData,
   RowData,
 } from "@tanstack/react-table";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 import { z } from "zod";
 import type { CellEditCommitFn } from "../lib/cell-editing-feature";
 import type { DataTableFeatures } from "../lib/table-features";
@@ -94,7 +94,7 @@ type BaseDockAction = {
   id: string;
   label: string;
   loadingLabel?: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   variant?: "default" | "destructive";
   clearSelectionOnSuccess?: boolean;
 };
@@ -121,7 +121,7 @@ export type DockAction<TData> = SimpleDockAction<TData> | SelectDockAction<TData
 export type RowAction<TData extends RowData> = {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   variant?: "default" | "destructive";
   group?: string | { id: string; label: string };
   onClick: (row: Row<TData>) => void | Promise<unknown>;
@@ -134,7 +134,7 @@ export type AddRecordAction = {
   id: string;
   label: string;
   description?: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   onClick: () => void;
 };
 

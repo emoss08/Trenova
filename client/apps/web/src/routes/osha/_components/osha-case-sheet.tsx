@@ -25,7 +25,7 @@ import {
   MAX_COUNTED_DAYS,
 } from "@trenova/shared/lib/injury";
 import { initials } from "@trenova/shared/lib/utils";
-import { LockIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { Edit02Icon, Lock01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { FormMark } from "./osha-form-marks";
@@ -128,7 +128,7 @@ function CaseDetail({
 
         {entry.privacyCase ? (
           <p className="bg-muted/60 text-muted-foreground flex items-start gap-2 rounded-md px-3 py-2 text-xs">
-            <LockIcon className="mt-0.5 size-3.5 shrink-0" />
+            <Lock01Icon className="mt-0.5 size-3.5 shrink-0" />
             <span>
               {t(
                 "Privacy case. The posted log reads “{0}”; the name stays on the confidential list.",
@@ -232,13 +232,13 @@ function CaseDetail({
               className="text-destructive hover:text-destructive mr-auto"
               onClick={() => onDelete(entry)}
             >
-              <Trash2Icon className="size-3.5" />
+              <Trash01Icon className="size-3.5" />
               {t("Delete case")}
             </Button>
           ) : null}
           {canUpdate ? (
             <Button variant="outline" size="sm" onClick={() => onEdit(entry)}>
-              <PencilIcon className="size-3.5" />
+              <Edit02Icon className="size-3.5" />
               {t("Edit case")}
             </Button>
           ) : null}

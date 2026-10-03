@@ -22,7 +22,7 @@ import {
   type UnsettledPayEvent,
 } from "@/lib/graphql/driver-settlement";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Zap } from "lucide-react";
+import { ZapIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -266,7 +266,7 @@ export function InstantPayDialog({
             onClick={() => payMutation.mutate()}
             title={t("Generates, approves, posts, and marks the settlement paid in one pass")}
           >
-            <Zap className="size-3.5" />
+            <ZapIcon className="size-3.5" />
             {payMutation.isPending ? t("Paying...") : t("Pay now")}
           </Button>
         </DialogFooter>

@@ -7,7 +7,7 @@ import {
   ResizablePanelGroup,
 } from "@trenova/shared/components/ui/resizable";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { LoaderCircleIcon } from "lucide-react";
+import { SpinnerIcon } from "@trenova/shared/components/icons";
 import { lazy, useState } from "react";
 import type { Control, Path } from "react-hook-form";
 import { FieldReconciliationList } from "./field-reconciliation-list";
@@ -159,7 +159,7 @@ export default function ReconciliationWorkspace({
                 onClick={onCreateShipment}
                 disabled={isCreating || !canCreateShipment}
               >
-                {isCreating && <LoaderCircleIcon className="size-3.5 animate-spin" />}
+                {isCreating && <SpinnerIcon className="size-3.5 animate-spin" />}
                 {t("Create shipment")}
               </Button>
             </div>

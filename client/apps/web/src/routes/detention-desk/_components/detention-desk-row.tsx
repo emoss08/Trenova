@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/lib/detention";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DeskEntry } from "@trenova/shared/types/detention";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "@trenova/shared/components/icons";
 import { memo } from "react";
 import { DeskClockTrack } from "./desk-clock-track";
 import { DeskMoney } from "./desk-money";
@@ -74,7 +74,7 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
       }}
       className={cn(
         "group flex cursor-pointer items-center gap-3 px-3 py-2.5 text-left transition-colors",
-"ui-focus-ring focus-visible:-outline-offset-2",
+        "ui-focus-ring focus-visible:-outline-offset-2",
         isSelected ? "bg-muted" : "hover:bg-muted/50",
         isLost && "opacity-60",
       )}

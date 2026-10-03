@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { Building2Icon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, Building07Icon } from "@trenova/shared/components/icons";
 
 function formatDriverName(first: string | undefined | null, last: string | undefined | null) {
   const firstInitial = first?.[0] ? `${first[0].toUpperCase()}.` : "";
@@ -32,7 +32,7 @@ export function DriverCell({ shipment }: { shipment: Shipment }) {
     return (
       <div className="flex flex-col gap-0.5">
         <span className="inline-flex min-w-0 items-center gap-1 text-xs font-medium">
-          <Building2Icon className="text-muted-foreground size-3 shrink-0" aria-hidden />
+          <Building07Icon className="text-muted-foreground size-3 shrink-0" aria-hidden />
           <span className="truncate">{carrierName}</span>
         </span>
         {carrierLine && (
@@ -50,7 +50,7 @@ export function DriverCell({ shipment }: { shipment: Shipment }) {
   if (!driver) {
     return (
       <div className={cn("text-warning inline-flex items-center gap-1 text-xs font-medium")}>
-        <TriangleAlertIcon className="size-3" />
+        <AlertTriangleIcon className="size-3" />
         <span>{t("Needs coverage")}</span>
       </div>
     );

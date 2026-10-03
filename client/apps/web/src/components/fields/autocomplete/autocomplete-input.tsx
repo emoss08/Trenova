@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronDownIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import React from "react";
 import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
@@ -150,7 +150,7 @@ export function AutocompleteInputActions({
           className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
         >
           <span className="sr-only">{t("Clear")}</span>
-          <XIcon className="size-4" />
+          <XCloseIcon className="size-4" />
         </span>
       )}
       <ChevronDownIcon

@@ -10,7 +10,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
 import { TABLE_CATALOGUE_KEY } from "@/services/table-query";
 import type { ComposedTableQuery } from "@/types/table-query";
-import { CornerDownLeftIcon, TriangleAlertIcon, XIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CornerDownLeftIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useRef, useState } from "react";
 
 /**
@@ -130,7 +134,7 @@ export function DataTableAsk({
             onClick={clear}
             className="text-muted-foreground hover:text-foreground absolute top-1/2 right-0.5 size-6 -translate-y-1/2"
           >
-            <XIcon className="size-3" />
+            <XCloseIcon className="size-3" />
           </Button>
         )}
       </div>
@@ -170,7 +174,7 @@ function AskOutcome({ result, onDismiss }: { result: ComposedTableQuery; onDismi
           />
         }
       >
-        {missed && <TriangleAlertIcon className="size-3" />}
+        {missed && <AlertTriangleIcon className="size-3" />}
         {applied
           ? t("{0, plural, one {# filter} other {# filters}}", result.fieldFilters.length)
           : t("Nothing applied")}

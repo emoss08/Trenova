@@ -4,7 +4,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { UsersRoundIcon } from "lucide-react";
+import { Users01Icon } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -131,7 +131,7 @@ export function ProvisioningTab({
           </>
         ) : (
           <EmptyState
-            icon={<UsersRoundIcon />}
+            icon={<Users01Icon />}
             label={t("Select a directory")}
             description={t(
               "Choose or create a SCIM directory before managing tokens and group mappings.",

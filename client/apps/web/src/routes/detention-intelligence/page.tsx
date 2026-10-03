@@ -5,7 +5,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { cn } from "@trenova/shared/lib/utils";
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
-import { RotateCwIcon } from "lucide-react";
+import { RefreshCw01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { DetentionIntelligence } from "./_components/detention-intelligence";
 import {
@@ -29,7 +29,7 @@ function RefreshAction() {
       aria-label={t("Recalculate detention intelligence")}
       onClick={() => void queryClient.invalidateQueries({ queryKey: queries.detention._def })}
     >
-      <RotateCwIcon className={cn("mr-1.5 size-3.5", isFetching && "animate-spin")} />
+      <RefreshCw01Icon className={cn("mr-1.5 size-3.5", isFetching && "animate-spin")} />
       {isFetching ? t("Recalculating…") : t("Refresh")}
     </Button>
   );

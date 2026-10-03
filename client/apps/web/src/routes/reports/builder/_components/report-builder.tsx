@@ -16,7 +16,12 @@ import {
   type ReportIR,
   type ReportParameterDef,
 } from "@/types/report";
-import { ArrowLeftIcon, PlayIcon, SaveIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ArrowLeftIcon,
+  PlayIcon,
+  Save01Icon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -232,14 +237,14 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           onClick={() => setSaveOpen(true)}
           disabled={ir.columns.length === 0}
         >
-          <SaveIcon className="size-3.5" />
+          <Save01Icon className="size-3.5" />
           {t("Save")}
         </Button>
       </header>
 
       {definition && definition.diagnostics.length > 0 && (
         <div className="border-border flex items-start gap-2 border-b bg-warning-subtle px-4 py-2 text-xs">
-          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
+          <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">{t("This report needs attention")}</p>
             {definition.diagnostics.map((diagnostic, i) => (

@@ -29,24 +29,24 @@ import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { Resource } from "@trenova/shared/types/permission";
 import {
   CalendarIcon,
-  LockIcon,
-  MoreHorizontalIcon,
+  DotsHorizontalIcon,
+  type IconComponent,
+  Lock01Icon,
+  LockUnlocked01Icon,
   PlayIcon,
-  RotateCcwIcon,
-  ShieldCheckIcon,
-  UnlockIcon,
+  RefreshCcw01Icon,
+  ShieldTickIcon,
   XCircleIcon,
-  type LucideIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { FiscalPeriodActionDialog } from "./fiscal-period-dialog-content";
 
-const actionIcons: Record<FiscalPeriodAction, LucideIcon> = {
+const actionIcons: Record<FiscalPeriodAction, IconComponent> = {
   activate: PlayIcon,
-  lock: LockIcon,
-  unlock: UnlockIcon,
+  lock: Lock01Icon,
+  unlock: LockUnlocked01Icon,
   close: XCircleIcon,
-  reopen: RotateCcwIcon,
+  reopen: RefreshCcw01Icon,
 };
 
 function actionLabel(action: FiscalPeriodAction, t: TranslateFn) {
@@ -195,7 +195,7 @@ export function FiscalPeriodTable({
                             size="icon-sm"
                             aria-label={t("Actions for {0}", period.name)}
                           >
-                            <MoreHorizontalIcon className="size-4" />
+                            <DotsHorizontalIcon className="size-4" />
                           </Button>
                         }
                       />
@@ -203,7 +203,7 @@ export function FiscalPeriodTable({
                         {period.status === "PermanentlyClosed" ? (
                           <DropdownMenuItem
                             disabled
-                            startContent={<ShieldCheckIcon className="size-4" />}
+                            startContent={<ShieldTickIcon className="size-4" />}
                             title={t("Permanently closed")}
                             description={t("This period's figures are final and cannot change.")}
                             descriptionClassProps="whitespace-normal"

@@ -10,13 +10,13 @@ import type { BillingUsageSummary } from "@/types/platform-billing";
 import { useQuery } from "@tanstack/react-query";
 import {
   ActivityIcon,
-  CheckCircle2Icon,
-  CircleAlertIcon,
-  GaugeIcon,
-  KeyRoundIcon,
-  RefreshCcwIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+  AlertCircleIcon,
+  CheckCircleIcon,
+  Key01Icon,
+  RefreshCcw02Icon,
+  ShieldTickIcon,
+  Speedometer03Icon,
+} from "@trenova/shared/components/icons";
 import type { ComponentType } from "react";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
@@ -40,7 +40,7 @@ export function BillingUsageTab() {
   if (summaryQuery.isError) {
     return (
       <Alert variant="destructive">
-        <CircleAlertIcon className="size-4" />
+        <AlertCircleIcon className="size-4" />
         <AlertTitle>{t("Unable to load billing status")}</AlertTitle>
         <AlertDescription>
           {t("The subscription and usage summary could not be loaded.")}
@@ -57,7 +57,7 @@ export function BillingUsageTab() {
     <div className="space-y-4">
       {!summary.active ? (
         <Alert variant="warning">
-          <CircleAlertIcon className="size-4" />
+          <AlertCircleIcon className="size-4" />
           <AlertTitle>{t("Access is not active")}</AlertTitle>
           <AlertDescription>{formatReason(summary.reason)}</AlertDescription>
         </Alert>
@@ -65,21 +65,21 @@ export function BillingUsageTab() {
 
       <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          icon={ShieldCheckIcon}
+          icon={ShieldTickIcon}
           label={t("Access state")}
           value={summary.active ? "Active" : "Blocked"}
           detail={formatReason(summary.reason)}
           tone={summary.active ? "success" : "danger"}
         />
         <SummaryCard
-          icon={KeyRoundIcon}
+          icon={Key01Icon}
           label={t("Plan")}
           value={summary.plan?.name ?? "Not assigned"}
           detail={summary.plan?.key ?? "No plan key"}
           tone="info"
         />
         <SummaryCard
-          icon={CheckCircle2Icon}
+          icon={CheckCircleIcon}
           label={t("Features")}
           value={numberFormatter.format(allowedFeatures)}
           detail={
@@ -90,7 +90,7 @@ export function BillingUsageTab() {
           tone="info"
         />
         <SummaryCard
-          icon={GaugeIcon}
+          icon={Speedometer03Icon}
           label={t("Tracked usage")}
           value={numberFormatter.format(trackedMeters)}
           detail={formatPeriod(
@@ -111,7 +111,7 @@ export function BillingUsageTab() {
               onClick={() => void summaryQuery.refetch()}
               disabled={summaryQuery.isFetching}
             >
-              <RefreshCcwIcon className="size-3.5" />
+              <RefreshCcw02Icon className="size-3.5" />
               {t("Refresh")}
             </Button>
           </CardHeader>
@@ -155,7 +155,7 @@ export function BillingUsageTab() {
               </div>
             ) : (
               <EmptyState
-                icon={ShieldCheckIcon}
+                icon={ShieldTickIcon}
                 title={t("No feature data")}
                 description={t("No entitlement records were returned for this tenant.")}
               />

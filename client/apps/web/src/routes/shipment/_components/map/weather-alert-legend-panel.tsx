@@ -6,7 +6,7 @@ import {
   type WeatherAlertFeature,
 } from "@/types/weather-alert";
 import { ControlPosition, MapControl } from "@vis.gl/react-google-maps";
-import { ChevronDownIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 export function WeatherAlertLegendPanel({
@@ -40,7 +40,7 @@ export function WeatherAlertLegendPanel({
           className="flex w-full items-center justify-between gap-2 px-3 py-2"
         >
           <div className="flex items-center gap-1.5">
-            <TriangleAlertIcon className="text-muted-foreground size-3.5" />
+            <AlertTriangleIcon className="text-muted-foreground size-3.5" />
             <span className="text-foreground text-xs font-semibold">{t("Public alerts")}</span>
             <span className="text-2xs text-muted-foreground tabular-nums">({totalCount})</span>
           </div>

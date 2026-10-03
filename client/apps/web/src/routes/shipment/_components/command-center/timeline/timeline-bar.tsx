@@ -8,7 +8,11 @@ import {
 } from "@/lib/shipment-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { ChevronLeftIcon, ChevronRightIcon, TimerIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClockStopwatchIcon,
+} from "@trenova/shared/components/icons";
 import { DENSITY_CONFIGS, type TimelineDensity } from "./constants";
 import { getBarGeometry, type TimeRange } from "./time-scale";
 import type { TimelineZoom } from "../url-state";
@@ -149,7 +153,7 @@ export function TimelineBarItem({
                 : "bg-warning text-foreground-on-solid",
             )}
           >
-            <TimerIcon className="size-2.5" />
+            <ClockStopwatchIcon className="size-2.5" />
             {geometry.width >= 96 && formatDurationFromSeconds(bar.dwell.seconds)}
           </span>
         )}
@@ -204,7 +208,7 @@ export function TimelineBarItem({
                 bar.dwell.severity === "critical" ? "text-destructive" : "text-warning",
               )}
             >
-              <TimerIcon className="size-3" />
+              <ClockStopwatchIcon className="size-3" />
               {t(
                 "Dwelling {0} at {1}",
                 formatDurationFromSeconds(bar.dwell.seconds),

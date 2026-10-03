@@ -21,11 +21,11 @@ import {
   ArchiveIcon,
   ArrowLeftIcon,
   CheckIcon,
-  Link2Icon,
-  MessageSquareIcon,
+  Link02Icon,
+  MessageSquare01Icon,
   PaperclipIcon,
-  XIcon,
-} from "lucide-react";
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AttachmentList } from "./attachment-list";
@@ -212,14 +212,14 @@ export function ReadingPane({
         <ToolbarAction
           label={t("Link by hand")}
           shortcut="l"
-          icon={Link2Icon}
+          icon={Link02Icon}
           disabled={busy}
           onClick={() => onLinkOpenChange(true)}
         />
         <ToolbarAction
           label={t("Ask the desk")}
           shortcut="a"
-          icon={MessageSquareIcon}
+          icon={MessageSquare01Icon}
           disabled={busy || !actions.canAsk}
           onClick={() => actions.ask(message)}
         />
@@ -230,7 +230,7 @@ export function ReadingPane({
           aria-label={t("Close")}
           onClick={onClose}
         >
-          <XIcon className="size-4" />
+          <XCloseIcon className="size-4" />
         </Button>
       </div>
 

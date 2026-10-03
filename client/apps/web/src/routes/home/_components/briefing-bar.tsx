@@ -8,7 +8,12 @@ import { partOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { TimeFormat } from "@trenova/shared/types/user";
-import { ArrowRightIcon, CheckIcon, LayoutGridIcon, LockIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  Grid01Icon,
+  Lock01Icon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
@@ -218,7 +223,7 @@ export function BriefingBar({
               <TooltipTrigger
                 render={
                   <Button variant="outline" size="sm" disabled>
-                    <LockIcon className="size-3.5" />
+                    <Lock01Icon className="size-3.5" />
                     {t("Customize")}
                   </Button>
                 }
@@ -234,7 +239,7 @@ export function BriefingBar({
               onClick={onCustomize}
               disabled={!canCustomize || saving}
             >
-              <LayoutGridIcon className="size-3.5" />
+              <Grid01Icon className="size-3.5" />
               {editing ? t("Done") : t("Customize")}
             </Button>
           )}

@@ -24,7 +24,7 @@ import {
   type MarginTone,
 } from "@trenova/shared/lib/shop";
 import type { ShopOption, ShopResult, ShopStrategy } from "@trenova/shared/types/rate";
-import { CircleAlertIcon, LoaderCircleIcon, SearchIcon } from "lucide-react";
+import { AlertCircleIcon, SearchLgIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -104,9 +104,9 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
           onClick={() => run(strategy)}
         >
           {isPending ? (
-            <LoaderCircleIcon className="mr-1 size-3.5 animate-spin" />
+            <SpinnerIcon className="mr-1 size-3.5 animate-spin" />
           ) : (
-            <SearchIcon className="mr-1 size-3.5" />
+            <SearchLgIcon className="mr-1 size-3.5" />
           )}
           {t("Shop carriers")}
         </Button>
@@ -116,14 +116,14 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
 
       {result?.warnings.map((warning) => (
         <Alert key={warning}>
-          <CircleAlertIcon className="size-4" />
+          <AlertCircleIcon className="size-4" />
           <AlertDescription>{warning}</AlertDescription>
         </Alert>
       ))}
 
       {result && assignable.length === 0 && result.options.length > 0 && (
         <Alert variant="destructive">
-          <CircleAlertIcon className="size-4" />
+          <AlertCircleIcon className="size-4" />
           <AlertDescription>
             {t(
               "No carrier on this lane has a contract that prices it. Write one, or enter the rate by hand.",

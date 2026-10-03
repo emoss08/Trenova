@@ -13,7 +13,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, CheckIcon, CopyIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -253,7 +253,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                       {copied ? (
                         <CheckIcon className="size-3.5" />
                       ) : (
-                        <CopyIcon className="size-3.5" />
+                        <Copy01Icon className="size-3.5" />
                       )}
                       <span className="sr-only">{t("Copy webhook URL")}</span>
                     </Button>

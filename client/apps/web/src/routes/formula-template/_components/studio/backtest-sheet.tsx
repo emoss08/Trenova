@@ -12,7 +12,7 @@ import type {
   FormulaTemplate,
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
-import { HistoryIcon } from "lucide-react";
+import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { lazy, Suspense } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -46,7 +46,7 @@ export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSh
       >
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
-            <HistoryIcon className="size-4" />
+            <ClockRewindIcon className="size-4" />
             {t("Backtest")}
           </SheetTitle>
           <SheetDescription>

@@ -6,7 +6,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { Building2Icon, TruckIcon } from "lucide-react";
+import { Building07Icon, Truck01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { CLASSIFICATION_ICON, CLASSIFICATION_VARIANT, classificationLabel } from "./classification";
 import type { NextStep } from "./next-step";
@@ -229,7 +229,7 @@ export function DeskReading({
                     to={shipmentPath(shipment.id)}
                     className="ui-focus-ring hover:bg-surface-hover border-border flex items-start gap-2 rounded-md border px-2.5 py-2 transition-colors"
                   >
-                    <TruckIcon
+                    <Truck01Icon
                       className="text-foreground-subtle mt-0.5 size-4 shrink-0"
                       aria-hidden
                     />
@@ -258,7 +258,7 @@ export function DeskReading({
                     to={customerPath(customer.id)}
                     className="ui-focus-ring text-brand flex w-fit items-center gap-1.5 text-sm underline-offset-4 hover:underline"
                   >
-                    <Building2Icon className="text-foreground-subtle size-3.5" aria-hidden />
+                    <Building07Icon className="text-foreground-subtle size-3.5" aria-hidden />
                     {customer.name}
                   </Link>
                 )}

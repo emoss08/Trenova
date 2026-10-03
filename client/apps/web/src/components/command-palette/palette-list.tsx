@@ -2,7 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { CommandGroup } from "@trenova/shared/components/ui/command";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { RotateCwIcon } from "lucide-react";
+import { RefreshCw01Icon } from "@trenova/shared/components/icons";
 import type { PaletteItem, PaletteSection } from "./palette-model";
 import { PaletteRow } from "./palette-row";
 
@@ -80,7 +80,7 @@ export function PaletteList({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={onRetry}
               >
-                <RotateCwIcon className="size-3" />
+                <RefreshCw01Icon className="size-3" />
                 {t("Try again")}
               </Button>
             </div>

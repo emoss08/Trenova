@@ -5,7 +5,11 @@ import { vacantPositions } from "@/lib/org-chart";
 import { Button } from "@trenova/shared/components/ui/button";
 import { headcountShare, jobDepartmentLabel } from "@trenova/shared/lib/org-structure";
 import { cn } from "@trenova/shared/lib/utils";
-import { BriefcaseIcon, Building2Icon, LayersIcon } from "lucide-react";
+import {
+  Briefcase01Icon,
+  Building07Icon,
+  LayersThree01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 const SHOWN_LIMIT = 6;
@@ -107,7 +111,7 @@ export function OrgAside({
     <aside className="flex min-w-0 flex-col gap-4">
       <SectionPanel
         title={t("By terminal")}
-        icon={<Building2Icon />}
+        icon={<Building07Icon />}
         hint={`${total} active`}
         help={t(
           "Active workers by the terminal they are assigned to, biggest first. Front-office users are not on this roster.",
@@ -117,7 +121,7 @@ export function OrgAside({
       </SectionPanel>
       <SectionPanel
         title={t("By department")}
-        icon={<LayersIcon />}
+        icon={<LayersThree01Icon />}
         help={t(
           "Active workers by the department of the position they hold. Somebody with no position is not counted here.",
         )}
@@ -130,7 +134,7 @@ export function OrgAside({
       </SectionPanel>
       <SectionPanel
         title={t("Titles nobody holds yet")}
-        icon={<BriefcaseIcon />}
+        icon={<Briefcase01Icon />}
         help={t(
           "Positions still open that nobody on either roster holds. Assign a worker or a user from the position's holders view.",
         )}

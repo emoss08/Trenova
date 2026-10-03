@@ -6,12 +6,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
-import { MoreHorizontalIcon, type LucideIcon } from "lucide-react";
+import { DotsHorizontalIcon, type IconComponent } from "@trenova/shared/components/icons";
 
 export type RowAction = {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   onSelect: () => void;
   disabled?: boolean;
   destructive?: boolean;
@@ -48,7 +48,7 @@ export function RowActionsMenu({ label, actions, disabled, className }: RowActio
           />
         }
       >
-        <MoreHorizontalIcon className="size-4" />
+        <DotsHorizontalIcon className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         {actions.map((action) => {

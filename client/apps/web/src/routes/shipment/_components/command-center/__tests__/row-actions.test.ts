@@ -4,7 +4,7 @@ import type {
 } from "@/hooks/use-shipment-billing-actions";
 import type { Row } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { SendIcon } from "lucide-react";
+import { Send01Icon } from "@trenova/shared/components/icons";
 import { describe, expect, it, vi } from "vitest";
 import { buildShipmentRowActions, type ShipmentRowActionHandlers } from "../row-actions";
 
@@ -12,7 +12,7 @@ function billingAction(id: string, isAvailable: (shipment: Shipment) => boolean)
   return {
     id,
     label: id,
-    icon: SendIcon,
+    icon: Send01Icon,
     isAvailable,
     run: vi.fn(async (_shipmentId: string) => undefined),
   } satisfies ShipmentBillingAction;

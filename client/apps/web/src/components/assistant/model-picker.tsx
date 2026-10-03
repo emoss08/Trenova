@@ -10,7 +10,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AssistantProviderOption } from "@/types/assistant";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { kindMark } from "@/routes/agent-control/_components/providers/kind-marks";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";

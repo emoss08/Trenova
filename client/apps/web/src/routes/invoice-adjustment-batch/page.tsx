@@ -18,7 +18,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { Link } from "react-router";
@@ -297,7 +297,7 @@ function LinkButton({ to, children }: { to: string; children: ReactNode }) {
       to={to}
       className="hover:bg-muted inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs"
     >
-      <ExternalLinkIcon className="size-3.5" />
+      <LinkExternal01Icon className="size-3.5" />
       {children}
     </Link>
   );

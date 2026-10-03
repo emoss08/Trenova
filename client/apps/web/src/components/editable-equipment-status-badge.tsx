@@ -3,7 +3,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { EquipmentStatus } from "@trenova/shared/types/helpers";
-import { CheckCheckIcon, CheckIcon, ChevronDownIcon, ClockIcon, XIcon } from "lucide-react";
+import {
+  CheckDoubleIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -33,9 +39,9 @@ const EQUIPMENT_STATUS_LABELS: Record<EquipmentStatus, string> = {
 };
 
 const EQUIPMENT_STATUS_ICONS: Record<EquipmentStatus, React.ReactNode> = {
-  Available: <CheckCheckIcon className="size-3" />,
+  Available: <CheckDoubleIcon className="size-3" />,
   AtMaintenance: <ClockIcon className="size-3" />,
-  OutOfService: <XIcon className="size-3" />,
+  OutOfService: <XCloseIcon className="size-3" />,
   Sold: <CheckIcon className="size-3" />,
 };
 

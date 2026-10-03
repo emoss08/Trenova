@@ -17,16 +17,16 @@ import type {
 } from "@/types/invoice-adjustment";
 import {
   AlertTriangleIcon,
-  BanIcon,
   CalendarIcon,
-  CheckCircle2Icon,
-  CircleDollarSignIcon,
-  InfoIcon,
+  CheckCircleIcon,
+  CurrencyDollarCircleIcon,
+  InfoCircleIcon,
   ReceiptIcon,
-  RefreshCwIcon,
-  RotateCcwIcon,
+  RefreshCcw01Icon,
+  RefreshCw02Icon,
   ShieldAlertIcon,
-} from "lucide-react";
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import type { Control, FieldErrors, UseFormClearErrors, UseFormSetValue } from "react-hook-form";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 
@@ -55,19 +55,19 @@ const adjustmentTypes: {
     value: "CreditOnly",
     label: "Credit only",
     description: "Issue a credit memo without rebilling",
-    icon: <CircleDollarSignIcon className="size-4" />,
+    icon: <CurrencyDollarCircleIcon className="size-4" />,
   },
   {
     value: "CreditAndRebill",
     label: "Credit & rebill",
     description: "Credit the original and issue a corrected invoice",
-    icon: <RefreshCwIcon className="size-4" />,
+    icon: <RefreshCw02Icon className="size-4" />,
   },
   {
     value: "FullReversal",
     label: "Full reversal",
     description: "Reverse all charges on this invoice",
-    icon: <RotateCcwIcon className="size-4" />,
+    icon: <RefreshCcw01Icon className="size-4" />,
   },
 ];
 
@@ -347,7 +347,7 @@ function InvoiceAdjustmentLineEditorRow({
         </div>
         {hasError ? (
           <div className="mt-1.5 ml-7 flex items-start gap-1.5">
-            <BanIcon className="text-destructive mt-0.5 size-3 shrink-0" />
+            <SlashCircle01Icon className="text-destructive mt-0.5 size-3 shrink-0" />
             <p className="text-2xs text-destructive">
               {previewLine?.eligibilityMessage ||
                 t("Exceeds eligibility by {0}", formatCurrency(overageAmount))}
@@ -477,7 +477,7 @@ export function InvoiceAdjustmentPreviewPanel({
       {preview.warnings.length > 0 ? (
         <div className="border-border bg-muted/30 rounded-lg border px-4 py-3">
           <div className="flex items-center gap-2">
-            <InfoIcon className="text-muted-foreground size-3.5" />
+            <InfoCircleIcon className="text-muted-foreground size-3.5" />
             <p className="text-muted-foreground text-xs font-medium">{t("Warnings")}</p>
           </div>
           <div className="mt-2 space-y-1">
@@ -510,7 +510,7 @@ export function InvoiceAdjustmentPreviewPanel({
         </Alert>
       ) : (
         <Alert variant="success" size="sm">
-          <CheckCircle2Icon />
+          <CheckCircleIcon />
           <AlertTitle>{t("Preview passed validation")}</AlertTitle>
         </Alert>
       )}

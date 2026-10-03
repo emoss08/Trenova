@@ -5,15 +5,15 @@ import * as React from "react";
 
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
 import {
-  AlertTriangle,
-  Check,
-  ChevronDown,
-  Clock,
-  Loader2,
-  ShieldQuestion,
-  Wrench,
-  X,
-} from "lucide-react";
+  AlertTriangleIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  ShieldQuestionIcon,
+  SpinnerIcon,
+  Tool01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 
 import { cn } from "@trenova/shared/lib/utils";
 
@@ -110,34 +110,39 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
       { icon: React.ReactNode; label: string; className: string }
     > = {
       pending: {
-        icon: <Clock className="size-3.5" />,
+        icon: <ClockIcon className="size-3.5" />,
         label: t("Pending"),
         className: "bg-muted text-muted-foreground",
       },
       running: {
-        icon: <Loader2 className="size-3.5 animate-spin" />,
+        icon: <SpinnerIcon className="size-3.5 animate-spin" />,
         label: t("Running"),
-        className: "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
+        className:
+          "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
       },
       completed: {
-        icon: <Check className="size-3.5" />,
+        icon: <CheckIcon className="size-3.5" />,
         label: t("Completed"),
-        className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
+        className:
+          "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       },
       error: {
-        icon: <X className="size-3.5" />,
+        icon: <XCloseIcon className="size-3.5" />,
         label: t("Error"),
-        className: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
+        className:
+          "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
       },
       "awaiting-approval": {
-        icon: <ShieldQuestion className="size-3.5" />,
+        icon: <ShieldQuestionIcon className="size-3.5" />,
         label: t("Awaiting approval"),
-        className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
+        className:
+          "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       },
       denied: {
-        icon: <AlertTriangle className="size-3.5" />,
+        icon: <AlertTriangleIcon className="size-3.5" />,
         label: t("Denied"),
-        className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
+        className:
+          "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       },
     };
     return configs[state];
@@ -147,12 +152,12 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
     <CollapsiblePrimitive.Trigger
       data-slot="ai-tool-call-header"
       className={cn(
-"ui-focus-ring hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
+        "ui-focus-ring hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
         className,
       )}
     >
       <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md">
-        <Wrench className="text-muted-foreground size-4" />
+        <Tool01Icon className="text-muted-foreground size-4" />
       </div>
       <div className="flex flex-1 items-center gap-2 text-left">
         <span className="font-mono text-sm">{name}</span>
@@ -167,7 +172,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
         </span>
       </div>
       {children}
-      <ChevronDown
+      <ChevronDownIcon
         className={cn(
           "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
           isOpen && "rotate-180",
@@ -208,9 +213,7 @@ function AiToolCallInput({ input, className }: AiToolCallInputProps) {
 
   return (
     <div data-slot="ai-tool-call-input" className={cn("space-y-1.5", className)}>
-      <span className="text-muted-foreground text-xs font-medium">
-        {t("Input")}
-      </span>
+      <span className="text-muted-foreground text-xs font-medium">{t("Input")}</span>
       <pre className="bg-muted/50 text-foreground overflow-x-auto rounded-md p-3 font-mono text-xs">
         {formattedJson}
       </pre>
@@ -228,9 +231,7 @@ function AiToolCallOutput({ children, className }: AiToolCallOutputProps) {
 
   return (
     <div data-slot="ai-tool-call-output" className={cn("space-y-1.5", className)}>
-      <span className="text-muted-foreground text-xs font-medium">
-        {t("Output")}
-      </span>
+      <span className="text-muted-foreground text-xs font-medium">{t("Output")}</span>
       <div className="bg-muted/50 overflow-x-auto rounded-md p-3 text-sm">{children}</div>
     </div>
   );

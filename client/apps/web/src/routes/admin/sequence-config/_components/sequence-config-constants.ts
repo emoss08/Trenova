@@ -1,17 +1,17 @@
 import type { LocationCodeStrategy, SequenceConfig, SequenceType } from "@/types/sequence-config";
 import {
-  BookOpenIcon,
+  BookOpen01Icon,
   ClipboardEditIcon,
-  FileTextIcon,
-  LayersIcon,
-  MapPinIcon,
+  File06Icon,
+  type IconComponent,
+  LayersThree01Icon,
+  MarkerPin01Icon,
   PackageIcon,
   ReceiptIcon,
-  TruckIcon,
-  WalletIcon,
-  WrenchIcon,
-  type LucideIcon,
-} from "lucide-react";
+  Tool01Icon,
+  Truck01Icon,
+  Wallet02Icon,
+} from "@trenova/shared/components/icons";
 
 export const sequenceTitles: Record<SequenceType, string> = {
   pro_number: "Pro Number",
@@ -39,17 +39,17 @@ export const sequenceDescriptions: Record<SequenceType, string> = {
   driver_settlement: "Controls driver settlement numbering for pay period settlements.",
 };
 
-export const sequenceIcons: Record<SequenceType, LucideIcon> = {
-  pro_number: TruckIcon,
-  consolidation: LayersIcon,
+export const sequenceIcons: Record<SequenceType, IconComponent> = {
+  pro_number: Truck01Icon,
+  consolidation: LayersThree01Icon,
   order: PackageIcon,
-  work_order: WrenchIcon,
+  work_order: Tool01Icon,
   invoice: ReceiptIcon,
-  journal_batch: BookOpenIcon,
-  journal_entry: FileTextIcon,
+  journal_batch: BookOpen01Icon,
+  journal_entry: File06Icon,
   manual_journal_request: ClipboardEditIcon,
-  location_code: MapPinIcon,
-  driver_settlement: WalletIcon,
+  location_code: MarkerPin01Icon,
+  driver_settlement: Wallet02Icon,
 };
 
 export type SidebarGroup = {

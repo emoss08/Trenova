@@ -4,7 +4,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { BacktestResult } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
-import { MinusIcon, TrendingDownIcon, TrendingUpIcon } from "lucide-react";
+import { MinusIcon, TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
 
 const TOP_MOVERS_SHOWN = 5;
 
@@ -23,10 +23,7 @@ function MoverRow({ result }: { result: BacktestResult }) {
           {formatCurrency(result.currentAmount)} → {formatCurrency(result.candidateAmount)}
         </span>
         <span
-          className={cn(
-            "font-medium",
-            increased ? "text-success-foreground" : "text-destructive",
-          )}
+          className={cn("font-medium", increased ? "text-success-foreground" : "text-destructive")}
         >
           {formatSignedCurrency(result.delta)}
         </span>
@@ -76,7 +73,7 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
 
   const noChange = summary.changedCount === 0 && summary.errorCount === 0;
   const totalIncreased = summary.totalDelta > 0;
-  const TrendIcon = noChange ? MinusIcon : totalIncreased ? TrendingUpIcon : TrendingDownIcon;
+  const TrendIcon = noChange ? MinusIcon : totalIncreased ? TrendUp01Icon : TrendDown01Icon;
 
   // Results arrive biggest-movers-first from the server; only re-rated rows
   // that actually moved are worth listing.

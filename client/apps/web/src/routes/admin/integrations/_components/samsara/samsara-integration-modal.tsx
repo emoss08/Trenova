@@ -15,7 +15,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@trenova/shared/components/ui/sidebar";
-import { SettingsIcon, UsersIcon, type LucideIcon } from "lucide-react";
+import { type IconComponent, Settings01Icon, Users01Icon } from "@trenova/shared/components/icons";
 import React, { Activity, useEffect, useState } from "react";
 import { SamsaraConfigurationContent } from "./configuration-content";
 import { SamsaraWorkerSyncCard } from "./sync/samsara-worker-sync-card";
@@ -24,19 +24,19 @@ type SamsaraView = "configuration" | "worker-sync";
 
 type NavItem = {
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   value: SamsaraView;
 };
 
 const navItems: NavItem[] = [
   {
     label: "Configuration",
-    icon: SettingsIcon,
+    icon: Settings01Icon,
     value: "configuration",
   },
   {
     label: "Worker sync",
-    icon: UsersIcon,
+    icon: Users01Icon,
     value: "worker-sync",
   },
 ];

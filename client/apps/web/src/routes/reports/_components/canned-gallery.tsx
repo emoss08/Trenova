@@ -7,7 +7,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { CannedReport } from "@/lib/graphql/reports";
 import { Resource } from "@trenova/shared/types/permission";
 import { parseReportIR, type ReportParameterDef } from "@/types/report";
-import { PencilRulerIcon, PlayIcon, TableIcon } from "lucide-react";
+import { PlayIcon, RulerIcon, TableIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -79,7 +79,7 @@ function CannedReportCard({
               onClick={onCustomize}
               disabled={customizing}
             >
-              <PencilRulerIcon className="size-3" />
+              <RulerIcon className="size-3" />
               {customizing ? t("Copying...") : t("Customize")}
             </Button>
           )}

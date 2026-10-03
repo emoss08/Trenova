@@ -5,7 +5,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatTimestamp } from "@/lib/notification-helpers";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Notification } from "@trenova/shared/types/notification";
-import { ArchiveIcon, ArchiveRestoreIcon, CheckIcon, MailIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  CheckIcon,
+  Mail01Icon,
+} from "@trenova/shared/components/icons";
 import type { KeyboardEvent } from "react";
 import { NotificationContent } from "./notification-content";
 import { getNotificationLink, resolveNotificationDescriptor } from "./notification-registry";
@@ -166,7 +171,7 @@ export function NotificationItem({
                 label={t("Mark as unread")}
                 onClick={() => actions.markUnread([notification.id])}
               >
-                <MailIcon className="size-3" />
+                <Mail01Icon className="size-3" />
               </ItemAction>
             )}
             <ItemAction label={t("Archive")} onClick={() => actions.archive([notification.id])}>

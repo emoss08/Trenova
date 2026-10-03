@@ -12,7 +12,7 @@ import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { BookCheckIcon } from "lucide-react";
+import { BookCheckIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 type AccountingSyncStateLineProps = {

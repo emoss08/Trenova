@@ -12,20 +12,23 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Columns3Icon,
-  GanttChartIcon,
-  Undo2Icon,
-} from "lucide-react";
+  Columns03Icon,
+  FlipBackwardIcon,
+  HorizontalBarChart03Icon,
+} from "@trenova/shared/components/icons";
 import { preloadCenterView } from "./console-center-pane";
 import { TIMELINE_ZOOM_OPTIONS } from "./timeline-metrics";
 import { useDispatchView, useDispatchWindow, type CenterMode } from "./url-state";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
-const CENTER_MODE_OPTIONS: readonly { id: CenterMode; label: string; Icon: typeof Columns3Icon }[] =
-  [
-    { id: "board", label: "Board", Icon: Columns3Icon },
-    { id: "timeline", label: "Timeline", Icon: GanttChartIcon },
-  ];
+const CENTER_MODE_OPTIONS: readonly {
+  id: CenterMode;
+  label: string;
+  Icon: typeof Columns03Icon;
+}[] = [
+  { id: "board", label: "Board", Icon: Columns03Icon },
+  { id: "timeline", label: "Timeline", Icon: HorizontalBarChart03Icon },
+];
 
 /**
  * The window the board is asked about, the shape it is drawn in, and the two actions that
@@ -181,7 +184,7 @@ export function ConsoleToolbar({
           disabled={!canUndo || isAssigning}
           onClick={onUndo}
         >
-          <Undo2Icon className="size-3" aria-hidden />
+          <FlipBackwardIcon className="size-3" aria-hidden />
           {t("Undo")}
           <Kbd className="h-4 min-w-4 text-3xs">u</Kbd>
         </Button>

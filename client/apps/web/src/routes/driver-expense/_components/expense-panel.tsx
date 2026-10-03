@@ -14,7 +14,7 @@ import {
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DriverExpenseStatusBadge } from "./expense-columns";
@@ -117,7 +117,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           variant="outline"
           onClick={() => void handleViewReceipt(expense.receiptDocumentId!)}
         >
-          <ExternalLinkIcon className="size-4" />
+          <LinkExternal01Icon className="size-4" />
           {t("View receipt")}
         </Button>
       ) : (

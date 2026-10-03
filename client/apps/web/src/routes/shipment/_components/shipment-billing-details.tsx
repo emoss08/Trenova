@@ -38,9 +38,9 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   ReceiptTextIcon,
+  Shield01Icon,
   ShieldAlertIcon,
-  ShieldIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
@@ -510,7 +510,7 @@ function RatingBreakdownCard() {
             breakdown.length > 0 && "mt-3",
           )}
         >
-          <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-info-foreground" />
+          <Shield01Icon className="mt-0.5 size-3.5 shrink-0 text-info-foreground" />
           <p className="text-2xs text-muted-foreground">
             {t(
               "{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .",

@@ -4,14 +4,19 @@ import type { FiscalYear } from "@/types/fiscal-year";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Resource, type OperationType } from "@trenova/shared/types/permission";
-import { PlayIcon, RotateCcwIcon, XCircleIcon, type LucideIcon } from "lucide-react";
+import {
+  type IconComponent,
+  PlayIcon,
+  RefreshCcw01Icon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { FiscalYearActionDialog } from "./fiscal-year-alert-dialog-content";
 
-const actionIcons: Record<FiscalYearAction, LucideIcon> = {
+const actionIcons: Record<FiscalYearAction, IconComponent> = {
   activate: PlayIcon,
   close: XCircleIcon,
-  reopen: RotateCcwIcon,
+  reopen: RefreshCcw01Icon,
 };
 
 function actionLabel(action: FiscalYearAction, t: TranslateFn) {

@@ -44,7 +44,7 @@ import {
   type IftaPeriodFormValues,
 } from "@trenova/shared/types/ifta-tax-rate";
 import type { IftaQuarter } from "@trenova/shared/types/fuel-ifta-enums";
-import { CircleAlertIcon, DownloadIcon } from "lucide-react";
+import { AlertCircleIcon, Download01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -189,14 +189,14 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
 
         {readError ? (
           <Alert variant="destructive">
-            <CircleAlertIcon className="size-4" />
+            <AlertCircleIcon className="size-4" />
             <AlertDescription>{readError}</AlertDescription>
           </Alert>
         ) : null}
 
         {result && result.fileErrors.length > 0 ? (
           <Alert variant="destructive">
-            <CircleAlertIcon className="size-4" />
+            <AlertCircleIcon className="size-4" />
             <AlertTitle>{t("{0} could not be read", fileName ?? t("This file"))}</AlertTitle>
             <AlertDescription>
               <ul className="mt-1 list-inside list-disc space-y-0.5">
@@ -300,7 +300,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 )
               }
             >
-              <DownloadIcon className="size-3.5" />
+              <Download01Icon className="size-3.5" />
               {t("Download template")}
             </Button>
           </div>

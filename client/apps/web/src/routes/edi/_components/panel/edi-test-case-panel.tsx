@@ -18,7 +18,7 @@ import type { EDIDocumentPreview, EDITestCaseRow } from "@trenova/shared/types/e
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlayIcon } from "lucide-react";
+import { PlayIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";

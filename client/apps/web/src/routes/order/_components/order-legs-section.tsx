@@ -21,7 +21,13 @@ import { detachOrderShipment, fetchOrderDetail } from "@/lib/graphql/order";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Order } from "@trenova/shared/types/order";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { FileTextIcon, PackageIcon, PlusIcon, Trash2Icon, TruckIcon } from "lucide-react";
+import {
+  File06Icon,
+  PackageIcon,
+  PlusIcon,
+  Trash01Icon,
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Link } from "react-router";
@@ -260,7 +266,7 @@ export function OrderLegsSection() {
                           }
                           aria-label={t("Detach leg")}
                         >
-                          <Trash2Icon className="text-destructive size-3.5" />
+                          <Trash01Icon className="text-destructive size-3.5" />
                         </Button>
                       )}
                     </span>
@@ -281,7 +287,7 @@ export function OrderLegsSection() {
             className="border-bg-sidebar-border max-h-[200px] rounded-lg border p-4"
             title={t("No legs")}
             description={t("This order has no shipments attached yet")}
-            icons={[PackageIcon, TruckIcon]}
+            icons={[PackageIcon, Truck01Icon]}
             action={
               membershipLocked
                 ? undefined
@@ -305,7 +311,7 @@ export function OrderLegsSection() {
               loadingText={t("Creating invoice...")}
               onClick={submitInvoice}
             >
-              <FileTextIcon className="mr-1.5 size-3.5" />
+              <File06Icon className="mr-1.5 size-3.5" />
               {selectedIds.length > 0
                 ? t("Create invoice from {0} {1}", selectedIds.length, legLabel)
                 : t("Create invoice")}

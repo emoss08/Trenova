@@ -15,7 +15,7 @@ import { apiService } from "@/services/api";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentPreview } from "@/types/invoice-adjustment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { WalletCardsIcon } from "lucide-react";
+import { Wallet01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -208,7 +208,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
       }}
     >
       <Button size="sm" className="cursor-pointer" variant="outline" onClick={() => setOpen(true)}>
-        <WalletCardsIcon className="size-3.5" />
+        <Wallet01Icon className="size-3.5" />
         {t("Adjust invoice")}
       </Button>
       <DialogContent size="xl" className="gap-0 p-0">

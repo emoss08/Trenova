@@ -8,7 +8,7 @@ import { apiService } from "@/services/api";
 import type { Fixture } from "@/types/document-parsing-rule";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FlaskConicalIcon, PlusIcon } from "lucide-react";
+import { Beaker02Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { FixtureDetail } from "../fixture-detail/fixture-detail";
@@ -121,7 +121,7 @@ function FixtureList({
       {(!fixtures || fixtures.length === 0) && (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-12 text-center">
           <div className="bg-muted flex size-10 items-center justify-center rounded-full">
-            <FlaskConicalIcon className="text-muted-foreground size-5" />
+            <Beaker02Icon className="text-muted-foreground size-5" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">{t("No fixtures yet")}</p>

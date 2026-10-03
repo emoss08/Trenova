@@ -24,7 +24,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import type { PreviewScope } from "@/lib/graphql/agent-preview";
 import type { ProposalField } from "@/types/assistant";
-import { CircleAlertIcon, LockIcon } from "lucide-react";
+import { AlertCircleIcon, Lock01Icon } from "@trenova/shared/components/icons";
 import { humanizeKey } from "./readable-values";
 import { useId, useMemo, useState } from "react";
 import {
@@ -279,7 +279,7 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
                 )}
                 {readOnly ? (
                   <p className="text-foreground-subtle flex items-center gap-1 text-xs">
-                    <LockIcon aria-hidden className="size-3 shrink-0" />
+                    <Lock01Icon aria-hidden className="size-3 shrink-0" />
                     {t("Stays as proposed: a change can't point this at a different record.")}
                   </p>
                 ) : (
@@ -324,7 +324,7 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
               </p>
             ) : refused ? (
               <Alert size="sm" variant="destructive">
-                <CircleAlertIcon />
+                <AlertCircleIcon />
                 <AlertDescription>
                   {t(
                     "These values would not go through: {0}",

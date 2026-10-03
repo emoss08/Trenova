@@ -42,7 +42,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ScanLineIcon } from "lucide-react";
+import { ScanIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -319,7 +319,7 @@ export function VerifyEquipmentDialog({
                   </FormGroup>
                   <div className="flex justify-end">
                     <Button type="submit" size="sm" isLoading={isPending}>
-                      <ScanLineIcon />
+                      <ScanIcon />
                       {t("Verify")}
                     </Button>
                   </div>

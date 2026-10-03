@@ -14,15 +14,15 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { pluralize } from "@trenova/shared/lib/utils";
 import {
-  DownloadIcon,
-  FilePlus2Icon,
-  LockIcon,
-  LockOpenIcon,
+  Download01Icon,
+  FilePlus02Icon,
+  Lock01Icon,
+  LockUnlocked01Icon,
   PlayIcon,
-  RefreshCwIcon,
-  SendIcon,
-  Trash2Icon,
-} from "lucide-react";
+  RefreshCw02Icon,
+  Send01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AmendReturnDialog } from "./amend-return-dialog";
@@ -82,7 +82,7 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
           disabled={recompute.isPending}
           title={t("Rebuild every line from the miles, fuel and rates on file now.")}
         >
-          <RefreshCwIcon className="size-3.5" />
+          <RefreshCw02Icon className="size-3.5" />
           {recompute.isPending ? t("Recomputing...") : t("Recompute")}
         </Button>
       ) : null}
@@ -99,42 +99,42 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
               : "Recompute and lock the worksheet."
           }
         >
-          <LockIcon className="size-3.5" />
+          <Lock01Icon className="size-3.5" />
           {t("Finalize…")}
         </Button>
       ) : null}
 
       {transitions.has("reopen") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("reopen")}>
-          <LockOpenIcon className="size-3.5" />
+          <LockUnlocked01Icon className="size-3.5" />
           {t("Reopen…")}
         </Button>
       ) : null}
 
       {transitions.has("markFiled") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("markFiled")}>
-          <SendIcon className="size-3.5" />
+          <Send01Icon className="size-3.5" />
           {t("Mark filed…")}
         </Button>
       ) : null}
 
       {transitions.has("amend") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("amend")}>
-          <FilePlus2Icon className="size-3.5" />
+          <FilePlus02Icon className="size-3.5" />
           {t("Amend…")}
         </Button>
       ) : null}
 
       {transitions.has("export") ? (
         <Button variant="outline" size="sm" onClick={onExport} disabled={!ret}>
-          <DownloadIcon className="size-3.5" />
+          <Download01Icon className="size-3.5" />
           {t("Export CSV")}
         </Button>
       ) : null}
 
       {transitions.has("delete") ? (
         <Button variant="outline" size="sm" onClick={() => setDialog("delete")}>
-          <Trash2Icon className="size-3.5" />
+          <Trash01Icon className="size-3.5" />
           {t("Delete draft…")}
         </Button>
       ) : null}

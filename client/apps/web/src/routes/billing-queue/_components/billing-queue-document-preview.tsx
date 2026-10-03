@@ -3,7 +3,7 @@ import { PdfViewer } from "@/components/elements/pdf-viewer";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
-import { FileSearchIcon, FileTextIcon } from "lucide-react";
+import { File06Icon, FileSearch02Icon } from "@trenova/shared/components/icons";
 
 export default function BillingQueueDocumentPreview({
   documentId,
@@ -24,7 +24,7 @@ export default function BillingQueueDocumentPreview({
   if (!documentId) {
     return (
       <div className="bg-muted/20 text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-4">
-        <FileSearchIcon className="size-10" />
+        <FileSearch02Icon className="size-10" />
         <p className="text-center text-sm">{t("Select a document to preview it here")}</p>
       </div>
     );
@@ -44,7 +44,7 @@ export default function BillingQueueDocumentPreview({
     return (
       <div className="bg-muted/20 flex h-full items-center justify-center">
         <div className="text-muted-foreground flex flex-col items-center gap-2">
-          <FileTextIcon className="size-6 opacity-40" />
+          <File06Icon className="size-6 opacity-40" />
           <span className="text-xs">{t("Preview unavailable")}</span>
         </div>
       </div>

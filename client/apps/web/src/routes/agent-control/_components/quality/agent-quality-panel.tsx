@@ -19,7 +19,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon, PlayIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertCircleIcon, AlertTriangleIcon, PlayIcon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { SuiteRunStatusBadge } from "./quality-columns";
@@ -60,7 +60,7 @@ function AgentQualityBody({ agentId }: { agentId: string }) {
     <div className="flex flex-col gap-4">
       {detail.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>{t("This agent's quality could not be loaded.")}</AlertDescription>
         </Alert>
       ) : detail.data ? (
@@ -177,7 +177,7 @@ function AgentQualitySummary({ detail }: { detail: AgentQualityDetail }) {
             </DescriptionList>
             {last.regression ? (
               <Alert variant="warning" size="sm">
-                <TriangleAlertIcon />
+                <AlertTriangleIcon />
                 <AlertDescription>
                   {last.comments || t("The agent's score fell after it changed.")}
                 </AlertDescription>

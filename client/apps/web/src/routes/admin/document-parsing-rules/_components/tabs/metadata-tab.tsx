@@ -13,7 +13,7 @@ import { apiService } from "@/services/api";
 import { ruleSetSchema, type RuleSet } from "@/types/document-parsing-rule";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { PackageIcon } from "lucide-react";
+import { PackageIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 

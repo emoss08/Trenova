@@ -25,7 +25,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { CoinsIcon } from "lucide-react";
+import { Coins01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -145,7 +145,7 @@ export function VetCarrierDialog({
           </div>
           {cost ? (
             <div className="text-muted-foreground flex items-start gap-2 border-t pt-3 text-xs">
-              <CoinsIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              <Coins01Icon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               <span>
                 {cost.basis === "Free"
                   ? t("{0} does not charge per lookup.", providerName)

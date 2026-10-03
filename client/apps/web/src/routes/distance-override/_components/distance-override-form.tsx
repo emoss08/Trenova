@@ -7,7 +7,7 @@ import { NumberField } from "@/components/fields/number-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { DistanceOverride } from "@/types/distance-override";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 export function DistanceOverrideForm() {
@@ -93,7 +93,7 @@ export function DistanceOverrideForm() {
                     placeholder={t("Select stop location")}
                   />
                   <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                    <TrashIcon className="text-destructive size-4" />
+                    <Trash01Icon className="text-destructive size-4" />
                   </Button>
                 </div>
               ))}

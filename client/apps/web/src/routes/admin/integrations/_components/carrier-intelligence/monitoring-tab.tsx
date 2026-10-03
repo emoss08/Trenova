@@ -28,7 +28,7 @@ import {
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -285,7 +285,7 @@ function MonitoringFeedStatus({ open, canManage }: { open: boolean; canManage: b
             disabled={statusQuery.isFetching}
             aria-label={t("Refresh feed status")}
           >
-            <RefreshCwIcon className="size-3.5" />
+            <RefreshCw02Icon className="size-3.5" />
           </Button>
           {hasPausedFeed && canManage ? (
             <Button

@@ -5,7 +5,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import type { CatalogFragment, CatalogOperation, CatalogSelection } from "@/types/graphql-catalog";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { SearchIcon, SearchXIcon } from "lucide-react";
+import { SearchLgIcon, SearchXIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type CatalogFilter, searchCatalog } from "./catalog";
 import { useCatalog } from "./use-catalog";
@@ -287,7 +287,7 @@ export function ListPanel({
           onKeyDown={handleSearchKeyDown}
           placeholder={t("Search operations…")}
           className="h-8 pl-8 text-sm"
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           autoFocus
         />
         <div className="bg-muted/60 flex items-center gap-0.5 rounded-lg p-0.5">

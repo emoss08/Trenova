@@ -19,7 +19,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate, isSwapOpen, SWAP_STATUS_TONES } from "@trenova/shared/lib/scheduling";
 import { initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowRightIcon, CheckIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SwapsEmpty } from "./scheduling-empty";
@@ -176,7 +176,7 @@ function SwapRow({
               disabled={busy}
               onClick={() => onDecide("Rejected")}
             >
-              <XIcon className="size-3.5" />
+              <XCloseIcon className="size-3.5" />
               {t("Reject")}
             </Button>
           ) : null}

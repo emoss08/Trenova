@@ -21,7 +21,7 @@ import {
   EMPLOYMENT_EVENT_LABELS,
   type EmploymentEventKind,
 } from "@trenova/shared/types/worker-employment";
-import { HistoryIcon, PlusIcon } from "lucide-react";
+import { ClockRewindIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import {
   EmploymentEventSheet,
@@ -139,7 +139,7 @@ export default function WorkerTimelineTab({
 
       {visible.length === 0 ? (
         <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-sm">
-          <HistoryIcon className="size-5" />
+          <ClockRewindIcon className="size-5" />
           {events.length === 0
             ? t("No employment events yet")
             : t("Nothing matches the selected kinds")}

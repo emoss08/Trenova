@@ -4,7 +4,7 @@ import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { useAutoResizeTextarea } from "@trenova/shared/hooks/use-auto-resize-textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowUpIcon } from "lucide-react";
+import { ArrowUpIcon } from "@trenova/shared/components/icons";
 import { useImperativeHandle, useMemo, useState, type FormEvent, type Ref } from "react";
 import { AgentPicker } from "./agent-picker";
 import { AgentStarters } from "./agent-starters";

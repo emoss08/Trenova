@@ -28,7 +28,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { AlertTriangleIcon, Trash2Icon } from "lucide-react";
+import { AlertTriangleIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useId, useState } from "react";
 import { CaseStatusBadge } from "./extraction-badges";
 import { CASE_STATUS_ACTION, documentKindLabel, nextCaseStatuses } from "./extraction-model";
@@ -166,7 +166,7 @@ export function CasePanel({ open, onOpenChange, row }: DataTablePanelProps<Extra
                 variant="outline"
                 onClick={() => setConfirmingDelete(true)}
               >
-                <Trash2Icon />
+                <Trash01Icon />
                 {t("Delete")}
               </Button>
             </div>

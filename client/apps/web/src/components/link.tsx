@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { cn } from "@trenova/shared/lib/utils";
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import React, { useState } from "react";
 import { Link, type LinkProps } from "react-router";
 
@@ -79,7 +79,7 @@ export function ExternalLink({
         {...props}
       >
         {children}
-        <ExternalLinkIcon className="size-2" />
+        <LinkExternal01Icon className="size-2" />
       </div>
       <ExternalLinkDialog open={open} onClose={() => setOpen(false)} link={href} />
     </>

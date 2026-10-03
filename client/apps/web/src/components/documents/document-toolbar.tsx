@@ -12,13 +12,13 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  ArrowDownAZIcon,
-  ArrowUpAZIcon,
-  LayoutGridIcon,
+  Grid01Icon,
   ListIcon,
-  SearchIcon,
-  UploadIcon,
-} from "lucide-react";
+  SearchLgIcon,
+  SortAscendingIcon,
+  SortDescendingIcon,
+  Upload01Icon,
+} from "@trenova/shared/components/icons";
 
 export type FileTypeFilter = "all" | "pdf" | "images" | "documents" | "spreadsheets";
 export type SortField = "name" | "date" | "size";
@@ -86,7 +86,7 @@ export function DocumentToolbar({
           placeholder={t("Search...")}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          leftElement={<SearchIcon className="text-muted-foreground size-4" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-4" />}
           className="max-w-[200px]"
         />
       </div>
@@ -132,9 +132,9 @@ export function DocumentToolbar({
           aria-label={`Sort ${sortDirection === "asc" ? "descending" : "ascending"}`}
         >
           {sortDirection === "asc" ? (
-            <ArrowUpAZIcon className="size-4" />
+            <SortDescendingIcon className="size-4" />
           ) : (
-            <ArrowDownAZIcon className="size-4" />
+            <SortAscendingIcon className="size-4" />
           )}
         </Button>
       </ButtonGroup>
@@ -147,7 +147,7 @@ export function DocumentToolbar({
           aria-label={t("Grid view")}
           aria-pressed={viewMode === "grid"}
         >
-          <LayoutGridIcon className="size-4" />
+          <Grid01Icon className="size-4" />
         </Button>
         <Button
           variant={viewMode === "list" ? "secondary" : "outline"}
@@ -163,7 +163,7 @@ export function DocumentToolbar({
       {addActions}
       {onUploadClick && (
         <Button variant="secondary" size="sm" onClick={onUploadClick} disabled={disabled}>
-          <UploadIcon className="size-4" />
+          <Upload01Icon className="size-4" />
           {t("Upload")}
         </Button>
       )}

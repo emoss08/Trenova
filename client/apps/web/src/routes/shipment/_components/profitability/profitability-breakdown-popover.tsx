@@ -10,7 +10,7 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 
 const sourceBadges: Record<string, { label: string; className: string }> = {
@@ -92,7 +92,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
 
       {data.missingDistance && (
         <Alert variant="warning" size="sm">
-          <AlertTriangle />
+          <AlertTriangleIcon />
           <AlertDescription>
             {t(
               "Some moves are missing distance — the estimate only covers moves with a calculated distance.",

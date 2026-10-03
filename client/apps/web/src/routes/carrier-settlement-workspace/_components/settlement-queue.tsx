@@ -27,7 +27,12 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import type { CarrierSettlementStatus } from "@trenova/shared/types/carrier-settlement";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCheck, CircleDollarSign, Search, Send } from "lucide-react";
+import {
+  CheckDoubleIcon,
+  CurrencyDollarCircleIcon,
+  SearchLgIcon,
+  Send01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -139,7 +144,7 @@ export function SettlementQueue({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={t("Search carrier or number")}
-            leftElement={<Search className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             className="h-8 pl-7 text-xs"
             aria-label={t("Search settlements by carrier name or settlement number")}
           />
@@ -333,10 +338,10 @@ function BulkActionBar({
 
   return (
     <div className="bg-muted/40 flex flex-wrap items-center gap-1.5 border-t p-2">
-      {actionButton("Submit", "Submit", <Send className="size-3" />)}
-      {actionButton("Approve", "Approve", <CheckCheck className="size-3" />)}
-      {actionButton("Post", "Post", <CheckCheck className="size-3" />)}
-      {actionButton("MarkPaid", "Mark Paid", <CircleDollarSign className="size-3" />, () =>
+      {actionButton("Submit", "Submit", <Send01Icon className="size-3" />)}
+      {actionButton("Approve", "Approve", <CheckDoubleIcon className="size-3" />)}
+      {actionButton("Post", "Post", <CheckDoubleIcon className="size-3" />)}
+      {actionButton("MarkPaid", "Mark Paid", <CurrencyDollarCircleIcon className="size-3" />, () =>
         setPayDialogOpen(true),
       )}
       <Button

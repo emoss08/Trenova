@@ -34,14 +34,14 @@ import { ORG_HOLIDAY_KIND_LABELS } from "@trenova/shared/types/org-holiday";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  CalendarDaysIcon,
+  CalendarDateIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  PencilIcon,
+  Edit02Icon,
   PlusIcon,
-  RepeatIcon,
-  Trash2Icon,
-} from "lucide-react";
+  Repeat01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { HolidayDialog } from "./holiday-dialog";
@@ -218,7 +218,7 @@ export function HolidayCalendar() {
       {!isLoading && !isError ? (
         occurrences.length === 0 ? (
           <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-8 text-center text-sm">
-            <CalendarDaysIcon className="size-6" />
+            <CalendarDateIcon className="size-6" />
             <p>{t("Nothing on the calendar for {0}.", year)}</p>
             {canCreate ? (
               <Button type="button" variant="outline" size="sm" onClick={() => openCreate()}>
@@ -415,7 +415,7 @@ function EntryRow({
       <div className="flex shrink-0 items-center gap-1">
         {entry.recursAnnually ? (
           <Badge variant="neutral" appearance="outline" className="gap-1 px-1.5 py-0 text-2xs">
-            <RepeatIcon className="size-3" />
+            <Repeat01Icon className="size-3" />
             {t("Every year")}
           </Badge>
         ) : null}
@@ -440,7 +440,7 @@ function EntryRow({
             aria-label={`Edit ${entry.name}`}
             onClick={onEdit}
           >
-            <PencilIcon className="size-3.5" />
+            <Edit02Icon className="size-3.5" />
           </Button>
         ) : null}
         {canDelete ? (
@@ -452,7 +452,7 @@ function EntryRow({
             aria-label={`Remove ${entry.name}`}
             onClick={onRemove}
           >
-            <Trash2Icon className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         ) : null}
       </div>

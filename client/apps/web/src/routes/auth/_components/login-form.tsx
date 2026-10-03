@@ -13,7 +13,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { BuildingIcon, TruckIcon } from "lucide-react";
+import { Building03Icon, Truck01Icon } from "@trenova/shared/components/icons";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router";
@@ -24,8 +24,8 @@ import { StepCrumbs, StepHeading } from "./auth-primitives";
 export type AuthAudience = "office" | "driver";
 
 const AUDIENCE_OPTIONS = [
-  { value: "office", label: "Office", icon: BuildingIcon },
-  { value: "driver", label: "Driver", icon: TruckIcon },
+  { value: "office", label: "Office", icon: Building03Icon },
+  { value: "driver", label: "Driver", icon: Truck01Icon },
 ] as const;
 
 export function LoginForm({

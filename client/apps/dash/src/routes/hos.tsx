@@ -16,7 +16,13 @@ import {
 } from "@trenova/shared/lib/graphql/driver-portal";
 import { metersToMiles, toTitleCase } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { CircleCheckIcon, Clock4Icon, GaugeIcon, TriangleAlertIcon, TruckIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  Speedometer03Icon,
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useState } from "react";
 import { dutyStatusInfo, gaugeTone, timeAgo, toDateKey } from "../lib/hos";
@@ -46,9 +52,7 @@ function ClockGauge({ label, remainingMs, limitMs, defaultTone }: ClockGaugeProp
           <span className="text-xl font-semibold tabular-nums">
             {formatClockDurationMs(remainingMs)}
           </span>
-          <span className="mt-1 text-xs font-medium text-muted-foreground">
-            left
-          </span>
+          <span className="mt-1 text-xs font-medium text-muted-foreground">left</span>
         </div>
       </RingGauge>
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -99,7 +103,7 @@ function ClockHero({ state }: { state: MyHosState }) {
         <Badge variant={duty.variant}>{t(duty.label)}</Badge>
         {state.currentVehicleId ? (
           <span className="inline-flex max-w-40 items-center gap-1 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
-            <TruckIcon className="size-3.5 shrink-0" />
+            <Truck01Icon className="size-3.5 shrink-0" />
             <span className="truncate font-mono">{state.currentVehicleId}</span>
           </span>
         ) : null}
@@ -131,9 +135,7 @@ function DailyLogRow({ log }: { log: MyHosDailyLog }) {
           )}
         </p>
         {!log.isCertified ? (
-          <p className="mt-0.5 text-xs text-warning-foreground">
-            {t("Not yet certified")}
-          </p>
+          <p className="mt-0.5 text-xs text-warning-foreground">{t("Not yet certified")}</p>
         ) : null}
       </div>
       {log.isCertified ? (
@@ -211,7 +213,7 @@ function ViolationRow({ violation }: { violation: MyHosViolation }) {
           </p>
         ) : null}
       </div>
-      <TriangleAlertIcon className="size-4 shrink-0 text-warning-foreground" />
+      <AlertTriangleIcon className="size-4 shrink-0 text-warning-foreground" />
     </li>
   );
 }
@@ -256,7 +258,7 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
         </ul>
       ) : (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-8 text-center">
-          <CircleCheckIcon className="size-6 text-success-foreground" />
+          <CheckCircleIcon className="size-6 text-success-foreground" />
           <p className="text-sm text-muted-foreground">{t("No violations — nice work.")}</p>
         </div>
       )}
@@ -293,7 +295,7 @@ export function DashHosPage() {
         </div>
       ) : state.isError ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-8 text-center">
-          <GaugeIcon className="size-7 text-muted-foreground" />
+          <Speedometer03Icon className="size-7 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             {t("We couldn't load your hours of service.")}
           </p>
@@ -303,7 +305,7 @@ export function DashHosPage() {
         </div>
       ) : !state.data ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-8 text-center">
-          <Clock4Icon className="size-7 text-muted-foreground" />
+          <ClockIcon className="size-7 text-muted-foreground" />
           <p className="text-sm font-medium">{t("Hours of service isn't available")}</p>
           <p className="max-w-xs text-sm text-muted-foreground">
             {t(
@@ -317,7 +319,7 @@ export function DashHosPage() {
 
           {state.data.shiftDrivingViolationMs > 0 || state.data.cycleViolationMs > 0 ? (
             <Alert variant="destructive">
-              <TriangleAlertIcon />
+              <AlertTriangleIcon />
               <AlertTitle>{t("You have an active HOS violation")}</AlertTitle>
               <AlertDescription>{t("Contact dispatch before you keep driving.")}</AlertDescription>
             </Alert>

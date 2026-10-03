@@ -2,7 +2,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import type { Document } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DownloadIcon, FileIcon, Trash2Icon, UploadCloudIcon } from "lucide-react";
+import {
+  Download01Icon,
+  File04Icon,
+  Trash01Icon,
+  UploadCloud02Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -39,7 +44,7 @@ function DocumentRow({
   return (
     <div className="flex items-center justify-between rounded-md border p-3">
       <div className="flex items-center gap-3">
-        <FileIcon className="text-muted-foreground size-5" />
+        <File04Icon className="text-muted-foreground size-5" />
         <div>
           <p className="text-sm font-medium">{document.originalName}</p>
           <p className="text-muted-foreground text-xs">
@@ -54,7 +59,7 @@ function DocumentRow({
           onClick={() => onDownload(document)}
           aria-label={t("Download document")}
         >
-          <DownloadIcon className="size-4" />
+          <Download01Icon className="size-4" />
         </Button>
         <Button
           variant="ghost"
@@ -63,7 +68,7 @@ function DocumentRow({
           disabled={isDeleting}
           aria-label={t("Delete document")}
         >
-          <Trash2Icon className="text-destructive size-4" />
+          <Trash01Icon className="text-destructive size-4" />
         </Button>
       </div>
     </div>
@@ -215,7 +220,7 @@ export function DocumentUploadSection({
             isDragging ? "border-primary bg-primary/5" : ""
           } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
         >
-          <UploadCloudIcon className="text-muted-foreground mb-2 size-10" />
+          <UploadCloud02Icon className="text-muted-foreground mb-2 size-10" />
           <p className="text-muted-foreground text-sm">
             {uploadMutation.isPending ? t("Uploading...") : t("Drop files here or click to upload")}
           </p>

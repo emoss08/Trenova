@@ -25,13 +25,13 @@ import { EditorView, keymap } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import {
   AlertTriangleIcon,
-  BracesIcon,
+  BracketsIcon,
   ChevronRightIcon,
-  HistoryIcon,
+  ClockRewindIcon,
   PlayIcon,
-  RotateCcwIcon,
-  Trash2Icon,
-} from "lucide-react";
+  RefreshCcw01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { referencedTypeNames, scaffoldVariables } from "./catalog";
@@ -103,7 +103,7 @@ function HistoryPopover({
       <PopoverTrigger
         render={<Button size="sm" variant="outline" className="text-muted-foreground gap-1.5" />}
       >
-        <HistoryIcon className="size-3.5" />
+        <ClockRewindIcon className="size-3.5" />
         {t("History")}
         {entries.length > 0 && (
           <span className="text-2xs text-muted-foreground/70 tabular-nums">{entries.length}</span>
@@ -111,16 +111,14 @@ function HistoryPopover({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-88 p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-xs text-muted-foreground/70 font-medium">
-            {t("Run history")}
-          </span>
+          <span className="text-xs text-muted-foreground/70 font-medium">{t("Run history")}</span>
           {entries.length > 0 && (
             <button
               type="button"
               onClick={onClear}
               className="text-2xs text-muted-foreground hover:text-destructive flex items-center gap-1 font-medium transition-colors"
             >
-              <Trash2Icon className="size-3" />
+              <Trash01Icon className="size-3" />
               {t("Clear")}
             </button>
           )}
@@ -214,7 +212,7 @@ function InputTypesReference({ typeNames }: { typeNames: string[] }) {
         }
       >
         <ChevronRightIcon className={cn("size-3 transition-transform", open && "rotate-90")} />
-        <BracesIcon className="size-3" />
+        <BracketsIcon className="size-3" />
         {t("Input types ({0})", typeNames.length)}
       </CollapsibleTrigger>
       <CollapsibleContent>
@@ -427,9 +425,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground/70 font-medium">
-            {t("Variables")}
-          </span>
+          <span className="text-xs text-muted-foreground/70 font-medium">{t("Variables")}</span>
           {isDirty && (
             <button
               type="button"
@@ -439,14 +435,14 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
               }}
               className="text-2xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium transition-colors"
             >
-              <RotateCcwIcon className="size-3" />
+              <RefreshCcw01Icon className="size-3" />
               {t("Reset")}
             </button>
           )}
         </div>
         <div
           className={cn(
-"ui-container-focus-ring overflow-hidden rounded-md border transition-colors",
+            "ui-container-focus-ring overflow-hidden rounded-md border transition-colors",
             parseError && "border-destructive",
           )}
         >
@@ -470,9 +466,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
 
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground/70 font-medium">
-            {t("Response")}
-          </span>
+          <span className="text-xs text-muted-foreground/70 font-medium">{t("Response")}</span>
           {runState.status === "success" && (
             <div className="flex items-center gap-1.5">
               <div className="bg-muted/60 flex items-center gap-0.5 rounded-md p-0.5">

@@ -27,7 +27,13 @@ import type {
 } from "@trenova/shared/types/billing-queue";
 import type { User } from "@trenova/shared/types/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FilterIcon, SaveIcon, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
+import {
+  FilterFunnel01Icon,
+  Save01Icon,
+  SearchLgIcon,
+  Trash01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useState } from "react";
 import type { FieldValues } from "react-hook-form";
@@ -233,7 +239,7 @@ export function BillingQueueSidebar({
           <div className="flex items-center gap-1">
             <Input
               placeholder={t("Search PRO, BOL...")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               value={search}
               onChange={(e) => void setSearchParams({ query: e.target.value })}
               className="h-7 flex-1 text-xs"
@@ -242,7 +248,7 @@ export function BillingQueueSidebar({
             <PopoverTrigger
               render={
                 <Button size="xs" variant="outline" className="relative h-7 shrink-0 gap-1 px-2">
-                  <FilterIcon className="size-3" />
+                  <FilterFunnel01Icon className="size-3" />
                   <span className="text-xs">{t("Filters")}</span>
                   {activeFilterCount > 0 && (
                     <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full text-2xs font-medium">
@@ -259,7 +265,7 @@ export function BillingQueueSidebar({
                 <span className="text-xs font-medium">{t("Filters")}</span>
                 {hasActiveFilters && (
                   <Button size="xs" variant="ghost" onClick={clearFilters} className="h-5 px-1">
-                    <XIcon className="mr-0.5 size-3" />
+                    <XCloseIcon className="mr-0.5 size-3" />
                     <span className="text-xs">{t("Clear all")}</span>
                   </Button>
                 )}
@@ -381,7 +387,7 @@ export function BillingQueueSidebar({
                     onClick={() => setSavePresetOpen(true)}
                     title={t("Save current filters as preset")}
                   >
-                    <SaveIcon className="size-3" />
+                    <Save01Icon className="size-3" />
                   </Button>
                 )}
                 {selectedPresetId && (
@@ -391,7 +397,7 @@ export function BillingQueueSidebar({
                     onClick={() => deletePreset(selectedPresetId)}
                     title={t("Delete selected preset")}
                   >
-                    <Trash2Icon className="size-3" />
+                    <Trash01Icon className="size-3" />
                   </Button>
                 )}
               </div>

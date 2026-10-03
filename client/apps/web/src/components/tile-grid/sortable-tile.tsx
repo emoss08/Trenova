@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@trenova/shared/lib/utils";
-import { GripVerticalIcon } from "lucide-react";
+import { GripVerticalIcon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 
 export type TileDragHandleProps = {

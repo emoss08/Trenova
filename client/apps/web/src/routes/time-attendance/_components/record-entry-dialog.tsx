@@ -29,7 +29,7 @@ import {
   recordTimeEntryFormSchema,
   type RecordTimeEntryFormValues,
 } from "@trenova/shared/types/timesheet";
-import { ArrowRightIcon, CoffeeIcon } from "lucide-react";
+import { ArrowRightIcon, CoffeeIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";

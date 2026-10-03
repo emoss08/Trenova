@@ -30,7 +30,12 @@ import {
   decideProfileChangeFormSchema,
   type DecideProfileChangeFormValues,
 } from "@trenova/shared/types/self-service";
-import { ArrowRightIcon, CheckIcon, ClipboardPenIcon, XIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  ClipboardEditIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -71,7 +76,7 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
     <div className="rounded-lg border p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <ClipboardPenIcon className="text-muted-foreground size-4" />
+          <ClipboardEditIcon className="text-muted-foreground size-4" />
           <h3 className="text-sm font-semibold">{t("Profile changes")}</h3>
         </div>
         {pendingCount > 0 ? (
@@ -105,7 +110,7 @@ export function ProfileChangeRequests({ workerId }: { workerId: string }) {
                         variant="outline"
                         onClick={() => setDeciding({ request, approve: false })}
                       >
-                        <XIcon className="size-3" />
+                        <XCloseIcon className="size-3" />
                         {t("Turn down")}
                       </Button>
                     ) : null}

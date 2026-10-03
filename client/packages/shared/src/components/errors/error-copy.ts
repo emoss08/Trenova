@@ -5,37 +5,37 @@ import type {
   ErrorTone,
 } from "@trenova/shared/lib/error-presentation";
 import {
-  CircleAlertIcon,
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  ClockStopwatchIcon,
   CloudOffIcon,
-  FileQuestionIcon,
-  HourglassIcon,
-  KeyRoundIcon,
-  LockIcon,
-  type LucideIcon,
-  RefreshCwIcon,
-  ServerCrashIcon,
-  TimerIcon,
-  TriangleAlertIcon,
+  FileQuestion02Icon,
+  Hourglass01Icon,
+  type IconComponent,
+  Key01Icon,
+  Lock01Icon,
+  RefreshCw02Icon,
+  ServerAlertIcon,
   WifiOffIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 
 export type ErrorCopy = {
   title: string;
   description: string;
 };
 
-export const ERROR_ICONS: Record<ErrorKind, LucideIcon> = {
+export const ERROR_ICONS: Record<ErrorKind, IconComponent> = {
   offline: WifiOffIcon,
   network: CloudOffIcon,
-  "stale-build": RefreshCwIcon,
-  "session-expired": KeyRoundIcon,
-  forbidden: LockIcon,
-  "not-found": FileQuestionIcon,
-  "rate-limited": TimerIcon,
-  timeout: HourglassIcon,
-  server: ServerCrashIcon,
-  request: CircleAlertIcon,
-  unexpected: TriangleAlertIcon,
+  "stale-build": RefreshCw02Icon,
+  "session-expired": Key01Icon,
+  forbidden: Lock01Icon,
+  "not-found": FileQuestion02Icon,
+  "rate-limited": ClockStopwatchIcon,
+  timeout: Hourglass01Icon,
+  server: ServerAlertIcon,
+  request: AlertCircleIcon,
+  unexpected: AlertTriangleIcon,
 };
 
 export const ERROR_TONE_WELL: Record<ErrorTone, string> = {

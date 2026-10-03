@@ -2,7 +2,7 @@ import type { AIRetrievalAvailability } from "@/lib/graphql/ai-retrieval";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CircleAlertIcon, InfoIcon } from "lucide-react";
+import { AlertCircleIcon, InfoCircleIcon } from "@trenova/shared/components/icons";
 import { ENABLE_VECTOR_COMMAND, availabilityNotice } from "./retrieval-model";
 
 type RetrievalNoticeProps = {
@@ -30,7 +30,7 @@ export function RetrievalNotice({
 
   return (
     <Alert size="sm" variant={notice.variant} data-testid="retrieval-notice">
-      {notice.variant === "info" ? <InfoIcon /> : <CircleAlertIcon />}
+      {notice.variant === "info" ? <InfoCircleIcon /> : <AlertCircleIcon />}
       <AlertTitle>{t(notice.title)}</AlertTitle>
       <AlertDescription className="flex flex-col items-start gap-1.5">
         <span>{t(notice.message)}</span>

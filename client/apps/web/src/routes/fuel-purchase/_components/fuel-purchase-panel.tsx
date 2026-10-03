@@ -15,7 +15,7 @@ import {
   type FuelPurchaseFormValues,
 } from "@trenova/shared/types/fuel-purchase";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileTextIcon } from "lucide-react";
+import { File06Icon } from "@trenova/shared/components/icons";
 import { lazy, useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { FuelPurchaseForm } from "./fuel-purchase-form";
@@ -184,7 +184,7 @@ function FuelPurchaseEditPanel({
       {
         value: "documents",
         label: t("Documents"),
-        icon: FileTextIcon,
+        icon: File06Icon,
         content: DocumentsTab,
         contentProps: {
           resourceType: "fuel_purchase",

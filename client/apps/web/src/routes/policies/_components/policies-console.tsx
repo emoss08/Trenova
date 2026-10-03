@@ -15,7 +15,7 @@ import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import { policyAudienceLabel } from "@trenova/shared/lib/self-service";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { FileTextIcon, PenLineIcon, PlusIcon, UsersIcon } from "lucide-react";
+import { Edit03Icon, File06Icon, PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { PolicyComplianceDialog } from "./policy-compliance-dialog";
 import { PoliciesEmpty } from "./policies-empty";
@@ -154,9 +154,9 @@ function PolicyCard({
       <div className="flex items-start gap-3">
         <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
           {policy.documentId ? (
-            <FileTextIcon className="size-4" />
+            <File06Icon className="size-4" />
           ) : (
-            <PenLineIcon className="size-4" />
+            <Edit03Icon className="size-4" />
           )}
         </span>
         <div className="min-w-0 flex-1">
@@ -181,7 +181,7 @@ function PolicyCard({
 
       <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
         <Button size="xs" variant="outline" onClick={onCompliance}>
-          <UsersIcon className="size-3.5" />
+          <Users01Icon className="size-3.5" />
           {t("Who has signed")}
         </Button>
         {onEdit ? (

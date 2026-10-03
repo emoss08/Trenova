@@ -9,7 +9,7 @@ import type { ExtractionEvalCaseStatus } from "@trenova/graphql/generated/graphq
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArchiveIcon, ArchiveRestoreIcon, CircleCheckIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { getCaseColumns } from "./case-columns";
 import { CasePanel } from "./case-panel";
@@ -36,7 +36,7 @@ export function CasesTable() {
     {
       id: "activate",
       label: t("Activate"),
-      icon: CircleCheckIcon,
+      icon: CheckCircleIcon,
       onClick: (row) => move(row, "Active"),
       hidden: (row) => !movable(row, "Active") || row.original.status === "Retired",
     },

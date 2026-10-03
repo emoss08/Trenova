@@ -30,7 +30,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CheckIcon, ChevronDownIcon, ClipboardListIcon, PlayIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ClipboardListIcon,
+  PlayIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ChecklistCard } from "./checklist/checklist-card";

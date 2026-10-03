@@ -24,7 +24,7 @@ import {
 } from "@trenova/shared/lib/scheduling";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AvailabilityPreferenceValue } from "@trenova/shared/types/scheduling";
-import { CalendarClockIcon, RepeatIcon } from "lucide-react";
+import { CalendarClockIcon, Repeat01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -221,7 +221,7 @@ export function ScheduleCard() {
       {openSwaps.length > 0 ? (
         <div className="border-border mt-4 border-t pt-3">
           <div className="flex items-center gap-2">
-            <RepeatIcon className="text-muted-foreground size-4" />
+            <Repeat01Icon className="text-muted-foreground size-4" />
             <p className="text-sm font-semibold">{t("Swaps")}</p>
           </div>
           <ul className="mt-2 flex flex-col gap-2">

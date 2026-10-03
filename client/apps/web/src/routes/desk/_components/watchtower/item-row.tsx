@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { SEVERITY_TONE } from "./severity";
 import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
@@ -111,7 +111,7 @@ export function WatchtowerItemRow({
           onClick={() => onDismiss(item)}
           disabled={busy}
         >
-          <XIcon className="size-4" />
+          <XCloseIcon className="size-4" />
         </Button>
       </div>
     </li>

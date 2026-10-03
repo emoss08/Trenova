@@ -2,13 +2,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DocumentPreviewStatus } from "@trenova/shared/types/document";
 import {
-  FileIcon,
+  File04Icon,
+  File06Icon,
   FileSpreadsheetIcon,
-  FileTextIcon,
-  ImageIcon,
-  LoaderCircleIcon,
-  VideoIcon,
-} from "lucide-react";
+  Image01Icon,
+  SpinnerIcon,
+  VideoRecorderIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 interface DocumentThumbnailProps {
@@ -78,7 +78,7 @@ export function DocumentThumbnail({
         )}
         title={t("Generating thumbnail...")}
       >
-        <LoaderCircleIcon className={cn("text-muted-foreground animate-spin", iconSizes[size])} />
+        <SpinnerIcon className={cn("text-muted-foreground animate-spin", iconSizes[size])} />
       </div>
     );
   }
@@ -93,13 +93,13 @@ export function DocumentThumbnail({
       title={previewStatus === "Failed" ? "Preview unavailable" : undefined}
     >
       {iconType.startsWith("image/") && (
-        <ImageIcon className={cn("text-muted-foreground", iconSizes[size])} />
+        <Image01Icon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {iconType.startsWith("video/") && (
-        <VideoIcon className={cn("text-muted-foreground", iconSizes[size])} />
+        <VideoRecorderIcon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {(iconType === "application/pdf" || iconType.includes("pdf")) && (
-        <FileTextIcon className={cn("text-muted-foreground", iconSizes[size])} />
+        <File06Icon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {(iconType.includes("spreadsheet") ||
         iconType.includes("excel") ||
@@ -109,7 +109,7 @@ export function DocumentThumbnail({
       {(iconType.includes("document") ||
         iconType.includes("word") ||
         iconType === "text/plain") && (
-        <FileTextIcon className={cn("text-muted-foreground", iconSizes[size])} />
+        <File06Icon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {!iconType.startsWith("image/") &&
         !iconType.startsWith("video/") &&
@@ -123,7 +123,7 @@ export function DocumentThumbnail({
           iconType.includes("document") ||
           iconType.includes("word") ||
           iconType === "text/plain"
-        ) && <FileIcon className={cn("text-muted-foreground", iconSizes[size])} />}
+        ) && <File04Icon className={cn("text-muted-foreground", iconSizes[size])} />}
     </div>
   );
 }

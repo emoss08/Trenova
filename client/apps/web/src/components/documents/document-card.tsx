@@ -6,14 +6,14 @@ import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { Document } from "@trenova/shared/types/document";
 import {
-  BanIcon,
   BrainCircuitIcon,
-  CircleCheckIcon,
-  DownloadIcon,
+  CheckCircleIcon,
+  ClockRewindIcon,
+  Download01Icon,
   EyeIcon,
-  HistoryIcon,
-  Trash2Icon,
-} from "lucide-react";
+  SlashCircle01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { canApproveDocument, canRejectDocument } from "@/lib/document-review";
 import { DocumentReviewBadge } from "./document-review-badge";
@@ -142,7 +142,7 @@ export function DocumentCard({
                 variant="neutral"
                 className="hover:bg-secondary/80 h-5 cursor-pointer px-1.5 py-0 text-2xs"
               >
-                <HistoryIcon className="mr-0.5 size-3" />
+                <ClockRewindIcon className="mr-0.5 size-3" />
                 {t("v{0}", document.versionNumber)}
               </Badge>
             </button>
@@ -183,7 +183,7 @@ export function DocumentCard({
             onClick={() => onDownload(document)}
             aria-label={t("Download document")}
           >
-            <DownloadIcon className="size-4" />
+            <Download01Icon className="size-4" />
           </Button>
         )}
         {onInspect && (
@@ -203,7 +203,7 @@ export function DocumentCard({
             onClick={() => onVersions(document)}
             aria-label={t("View document versions")}
           >
-            <HistoryIcon className="size-4" />
+            <ClockRewindIcon className="size-4" />
           </Button>
         )}
         {onApprove && canApproveDocument(document) && (
@@ -214,7 +214,7 @@ export function DocumentCard({
             disabled={isReviewing}
             aria-label={t("Approve document")}
           >
-            <CircleCheckIcon className="size-4" />
+            <CheckCircleIcon className="size-4" />
           </Button>
         )}
         {onReject && canRejectDocument(document) && (
@@ -225,7 +225,7 @@ export function DocumentCard({
             disabled={isReviewing}
             aria-label={t("Reject document")}
           >
-            <BanIcon className="size-4" />
+            <SlashCircle01Icon className="size-4" />
           </Button>
         )}
         {onDelete && (
@@ -236,7 +236,7 @@ export function DocumentCard({
             disabled={isDeleting}
             aria-label={t("Delete document")}
           >
-            <Trash2Icon className="text-destructive size-4" />
+            <Trash01Icon className="text-destructive size-4" />
           </Button>
         )}
       </div>

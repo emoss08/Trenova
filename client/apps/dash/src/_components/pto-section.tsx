@@ -27,7 +27,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import type { PortalPtoType } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDaysIcon, PlusIcon } from "lucide-react";
+import { CalendarDateIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PtoStatusBadge, ptoTypeLabels } from "./portal-badges";
@@ -61,7 +61,7 @@ export function PtoSection() {
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <CalendarDaysIcon className="size-4 text-muted-foreground" />
+          <CalendarDateIcon className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold">{t("Time off")}</h2>
         </div>
         <Button variant="outline" size="sm" className="h-8" onClick={() => setRequestOpen(true)}>

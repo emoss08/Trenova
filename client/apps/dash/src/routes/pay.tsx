@@ -6,7 +6,7 @@ import { formatRange } from "@trenova/shared/lib/date";
 import { fetchMySettlements } from "@trenova/shared/lib/graphql/driver-portal";
 import type { DriverSettlementStatus } from "@trenova/shared/types/driver-pay";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRightIcon, ReceiptTextIcon } from "lucide-react";
+import { ChevronRightIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { Link } from "react-router";
 import { YtdCard } from "../_components/ytd-card";

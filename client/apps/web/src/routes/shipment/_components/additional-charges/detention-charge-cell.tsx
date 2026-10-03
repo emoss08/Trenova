@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/lib/detention";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
-import { TimerIcon } from "lucide-react";
+import { ClockStopwatchIcon } from "@trenova/shared/components/icons";
 
 type DetentionRisk = {
   rank: number;
@@ -94,7 +94,7 @@ export function DetentionChargeLabel({
 
   return (
     <>
-      <TimerIcon className="text-primary size-3 shrink-0" />
+      <ClockStopwatchIcon className="text-primary size-3 shrink-0" />
       {code}
       <span className="bg-primary/10 text-2xs text-primary rounded-md px-1 py-0.5">
         {t("Detention")}
@@ -174,7 +174,7 @@ function ClaimFileButton({ onClick, disabled }: { onClick?: () => void; disabled
       onClick={onClick}
       disabled={disabled}
     >
-      <TimerIcon className="text-primary size-3.5" />
+      <ClockStopwatchIcon className="text-primary size-3.5" />
     </Button>
   );
 }

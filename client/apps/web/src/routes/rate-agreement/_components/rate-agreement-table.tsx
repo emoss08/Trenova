@@ -6,7 +6,7 @@ import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AddRecordAction, DockAction, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CopyIcon, FileUpIcon, TrendingUpIcon } from "lucide-react";
+import { Copy01Icon, FileUploadIcon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ImportRateSheetDialog } from "./import-rate-sheet-dialog";
@@ -40,14 +40,14 @@ export default function RateAgreementTable() {
         id: "import-rate-sheet",
         label: t("Import rate sheet"),
         description: t("Upload a CSV or XLSX rate sheet into an agreement."),
-        icon: FileUpIcon,
+        icon: FileUploadIcon,
         onClick: () => setImportOpen(true),
       },
       {
         id: "rate-increase",
         label: t("Apply Rate Increase"),
         description: t("Move every rate for a customer, a carrier, or across the board."),
-        icon: TrendingUpIcon,
+        icon: TrendUp01Icon,
         onClick: () => {
           setIncreaseSelection([]);
           setIncreaseOpen(true);
@@ -62,7 +62,7 @@ export default function RateAgreementTable() {
       {
         id: "rate-increase-selected",
         label: t("Rate Increase"),
-        icon: TrendingUpIcon,
+        icon: TrendUp01Icon,
         clearSelectionOnSuccess: true,
         onClick: (selectedRows) => {
           setIncreaseSelection(selectedRows);
@@ -78,7 +78,7 @@ export default function RateAgreementTable() {
       {
         id: "duplicate-agreement",
         label: t("Duplicate agreement"),
-        icon: CopyIcon,
+        icon: Copy01Icon,
         hidden: () => !canDuplicate,
         onClick: (row) => {
           const id = row.original.id;

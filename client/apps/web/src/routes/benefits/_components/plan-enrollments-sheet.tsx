@@ -21,7 +21,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { coverageTierLabel, formatMinor } from "@trenova/shared/lib/benefits";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { initials } from "@trenova/shared/lib/utils";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { planEnrollmentsQuery } from "./queries";
@@ -93,7 +93,7 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("Find a name or terminal")}
               aria-label={t("Find on this plan")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               inputContainerClassName="w-60 max-w-full"
             />
             {enrollments.data ? (

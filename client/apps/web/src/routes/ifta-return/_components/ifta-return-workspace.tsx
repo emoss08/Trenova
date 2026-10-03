@@ -3,7 +3,7 @@ import type { IftaPeriodKey } from "@/lib/ifta-return";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { IftaReturnEmpty } from "./ifta-return-empty";
 import { IftaReturnSkeleton } from "./ifta-return-skeleton";
 import { useGenerateIftaReturn } from "./mutations";
@@ -44,7 +44,7 @@ export function IftaReturnWorkspace({ period, onPeriodChange }: IftaReturnWorksp
         <IftaReturnSkeleton />
       ) : returnQuery.isError ? (
         <Alert variant="destructive">
-          <TriangleAlertIcon className="size-4" />
+          <AlertTriangleIcon className="size-4" />
           <AlertTitle>{t("The return could not be read")}</AlertTitle>
           <AlertDescription className="flex flex-col items-start gap-2">
             <span>

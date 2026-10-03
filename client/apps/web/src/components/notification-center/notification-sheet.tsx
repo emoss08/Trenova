@@ -2,7 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@trenova/shared/components/ui/sheet";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { cn } from "@trenova/shared/lib/utils";
-import { BellIcon } from "lucide-react";
+import { Bell01Icon } from "@trenova/shared/components/icons";
 import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { lazy, Suspense, useCallback, useState } from "react";
 import { NotificationPanelSkeleton } from "./notification-skeletons";
@@ -15,7 +15,7 @@ const NotificationPanel = lazy(() => import("./notification-panel"));
 function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean }) {
   return (
     <span className="relative">
-      <BellIcon className={cn("size-3 transition-colors", open && "text-foreground")} />
+      <Bell01Icon className={cn("size-3 transition-colors", open && "text-foreground")} />
       {unreadCount > 0 && (
         <span className="bg-brand text-brand-foreground text-3xs absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 leading-none font-semibold tabular-nums">
           {unreadCount > 9 ? "9+" : unreadCount}

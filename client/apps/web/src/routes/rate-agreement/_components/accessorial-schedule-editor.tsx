@@ -8,7 +8,7 @@ import { accessorialChargeMethodChoices, rateUnitChoices } from "@/lib/choices";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import type { RateAgreement, RateAgreementAccessorial } from "@trenova/shared/types/rate";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const NEW_ACCESSORIAL = {

@@ -11,7 +11,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { phaseTone, type BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
-import { UnplugIcon } from "lucide-react";
+import { PlugOffIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { RevokeDeviceDialog } from "./revoke-device-dialog";
 
@@ -166,7 +166,7 @@ export function DeviceList({
                 isLoading={revokingId === device.id}
                 loadingText={t("Revoking")}
               >
-                <UnplugIcon className="size-3.5" aria-hidden />
+                <PlugOffIcon className="size-3.5" aria-hidden />
                 {t("Revoke")}
               </Button>
             )}

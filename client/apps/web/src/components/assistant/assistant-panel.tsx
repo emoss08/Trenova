@@ -20,7 +20,7 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -186,7 +186,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <Trash2Icon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete this conversation?")}</AlertDialogTitle>
             <AlertDialogDescription>

@@ -21,7 +21,7 @@ import {
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { pluralize } from "@trenova/shared/lib/utils";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
-import { LockIcon } from "lucide-react";
+import { Lock01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { handleIftaReturnError, invalidateIftaReturn } from "./queries";
 
@@ -60,7 +60,7 @@ export function FinalizeReturnDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-info-subtle text-info">
-            <LockIcon />
+            <Lock01Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Finalize the {0} return?", quarterLabel(period))}</AlertDialogTitle>
           <AlertDialogDescription>

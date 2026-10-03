@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import type { SequenceConfig, SequenceConfigDocument, SequenceType } from "@/types/sequence-config";
-import { RotateCcwIcon } from "lucide-react";
+import { RefreshCcw01Icon } from "@trenova/shared/components/icons";
 import { useFormContext } from "react-hook-form";
 import { LocationCodeStrategySection } from "./location-code-sections";
 import {
@@ -54,7 +54,7 @@ export function SequenceConfigPanel({ index, sequenceType }: PanelProps) {
       description={sequenceDescriptions[sequenceType]}
       action={
         <Button type="button" variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
-          <RotateCcwIcon className="size-3.5" />
+          <RefreshCcw01Icon className="size-3.5" />
           {t("Reset to default")}
         </Button>
       }

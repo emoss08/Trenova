@@ -23,7 +23,7 @@ import {
   type DelegationState,
 } from "@trenova/shared/lib/org-structure";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowRightIcon, HandshakeIcon, PlusIcon } from "lucide-react";
+import { ArrowRightIcon, HandshakeIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DelegationDialog } from "./delegation-dialog";

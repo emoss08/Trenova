@@ -14,7 +14,11 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { invoiceVoidBlocker, type Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { BanIcon, MoreHorizontalIcon, RadioTowerIcon } from "lucide-react";
+import {
+  DotsHorizontalIcon,
+  Signal01Icon,
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { InvoiceVoidDialog } from "./invoice-void-dialog";
@@ -90,7 +94,7 @@ export function InvoiceActionsMenu({
               variant="outline"
               aria-label={t("Invoice actions")}
             >
-              <MoreHorizontalIcon className="size-4" />
+              <DotsHorizontalIcon className="size-4" />
             </Button>
           }
         />
@@ -101,7 +105,7 @@ export function InvoiceActionsMenu({
                 title={ediSent ? t("Resend EDI") : t("Send EDI")}
                 description={ediBlocker ? t(ediBlocker) : undefined}
                 descriptionClassProps="whitespace-normal"
-                startContent={<RadioTowerIcon className="size-3.5" />}
+                startContent={<Signal01Icon className="size-3.5" />}
                 disabled={Boolean(ediBlocker) || sendEdi.isPending}
                 onClick={() => sendEdi.mutate()}
               />
@@ -114,7 +118,7 @@ export function InvoiceActionsMenu({
                 title={t("Void invoice")}
                 description={voidBlocker ? t(voidBlocker) : undefined}
                 descriptionClassProps="whitespace-normal"
-                startContent={<BanIcon className="size-3.5" />}
+                startContent={<SlashCircle01Icon className="size-3.5" />}
                 color="danger"
                 disabled={Boolean(voidBlocker)}
                 onClick={() => setVoidOpen(true)}

@@ -1,15 +1,15 @@
 import type { InboundClassification, InboundMessageStatus } from "@/lib/graphql/inbox";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import {
-  CircleHelpIcon,
   ClockAlertIcon,
-  FileCheckIcon,
-  FileSignatureIcon,
+  FileCheck02Icon,
+  FileEditIcon,
+  HelpCircleIcon,
+  type IconComponent,
   PackagePlusIcon,
-  ReceiptTextIcon,
   RadarIcon,
-  type LucideIcon,
-} from "lucide-react";
+  ReceiptTextIcon,
+} from "@trenova/shared/components/icons";
 
 /** Every kind a message can be read as, in the order the server lists them. */
 export const INBOUND_CLASSIFICATIONS = [
@@ -23,14 +23,14 @@ export const INBOUND_CLASSIFICATIONS = [
 ] as const satisfies readonly InboundClassification[];
 
 /** A glyph per kind, so the rail and a row can be told apart at a glance. */
-export const CLASSIFICATION_ICON: Record<InboundClassification, LucideIcon> = {
+export const CLASSIFICATION_ICON: Record<InboundClassification, IconComponent> = {
   Tender: PackagePlusIcon,
-  RateConfirmation: FileSignatureIcon,
-  ProofOfDelivery: FileCheckIcon,
+  RateConfirmation: FileEditIcon,
+  ProofOfDelivery: FileCheck02Icon,
   Invoice: ReceiptTextIcon,
   StatusRequest: RadarIcon,
   DetentionDispute: ClockAlertIcon,
-  Other: CircleHelpIcon,
+  Other: HelpCircleIcon,
 };
 
 /**

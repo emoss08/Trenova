@@ -1,6 +1,6 @@
 import { FieldWrapper } from "@/components/fields/field-components";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import {
   Controller,
@@ -93,9 +93,8 @@ export function EmailChipsField<T extends FieldValues>({
               className={cn(
                 "ui-field flex min-h-7 flex-wrap items-center gap-1 px-1.5 py-1",
                 "cursor-text",
-"ui-container-focus-ring",
-                (invalidDraft || fieldState.invalid) &&
-fieldInvalidClass,
+                "ui-container-focus-ring",
+                (invalidDraft || fieldState.invalid) && fieldInvalidClass,
               )}
             >
               {emails.map((email) => (
@@ -107,13 +106,13 @@ fieldInvalidClass,
                   <button
                     type="button"
                     aria-label={`Remove ${email}`}
- className="ui-focus-ring text-muted-foreground hover:text-foreground rounded-xs transition-colors"
+                    className="ui-focus-ring text-muted-foreground hover:text-foreground rounded-xs transition-colors"
                     onClick={(event) => {
                       event.stopPropagation();
                       remove(email);
                     }}
                   >
-                    <XIcon className="size-3" />
+                    <XCloseIcon className="size-3" />
                   </button>
                 </span>
               ))}

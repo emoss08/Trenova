@@ -14,7 +14,7 @@ import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import type { DataTableEmptyStateRenderProps, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { DeleteIftaMileageEntryDialog } from "./delete-ifta-mileage-entry-dialog";
 import { getColumns } from "./ifta-jurisdiction-mileage-columns";
@@ -74,7 +74,7 @@ export default function IftaJurisdictionMileageTable() {
       {
         id: "delete",
         label: t("Delete"),
-        icon: Trash2Icon,
+        icon: Trash01Icon,
         variant: "destructive",
         onClick: (row) => setDeleting(row.original),
       },

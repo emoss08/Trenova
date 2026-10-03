@@ -28,17 +28,17 @@ import {
   AlertTriangleIcon,
   CheckIcon,
   ClockIcon,
-  CopyIcon,
-  FileSearchIcon,
-  GitBranchIcon,
-  ImageIcon,
-  LayersIcon,
-  RefreshCwIcon,
-  SearchIcon,
-  UploadIcon,
-  WorkflowIcon,
+  Copy01Icon,
+  Dataflow03Icon,
+  FileSearch02Icon,
+  GitBranch01Icon,
+  Image01Icon,
+  LayersThree01Icon,
+  RefreshCw02Icon,
+  SearchLgIcon,
+  Upload01Icon,
   XCircleIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
@@ -137,7 +137,7 @@ function CopyableId({ value, truncate = true }: { value: string; truncate?: bool
         {isCopied ? (
           <CheckIcon className="size-3 shrink-0 text-success-foreground" />
         ) : (
-          <CopyIcon className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
+          <Copy01Icon className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
         )}
       </TooltipTrigger>
       <TooltipContent className="font-mono text-xs">{value}</TooltipContent>
@@ -193,7 +193,7 @@ function DocumentSearch({
         onChange={(e) => setInput(e.target.value)}
         placeholder={t("Paste a document ID to inspect...")}
         className="truncate pr-18 font-mono placeholder:font-sans"
-        leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+        leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
         rightElement={
           <Button
             type="submit"
@@ -392,7 +392,7 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={RefreshCwIcon} title={t("Recovery actions")} />
+      <SectionHeader icon={RefreshCw02Icon} title={t("Recovery actions")} />
       <div className="grid gap-2.5 sm:grid-cols-3">
         <ActionButton
           label={t("Reextract content")}
@@ -400,7 +400,7 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
           description={t(
             "Re-run content extraction for this document. This will re-process the document and update extracted text and structured data.",
           )}
-          icon={FileSearchIcon}
+          icon={FileSearch02Icon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.reextract(id)}
           onSuccess={onSuccess}
@@ -411,7 +411,7 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
           description={t(
             "Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail.",
           )}
-          icon={ImageIcon}
+          icon={Image01Icon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.regeneratePreview(id)}
           onSuccess={onSuccess}
@@ -422,7 +422,7 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
           description={t(
             "Re-sync this document's search index entry. This will update the search projection with the latest document data.",
           )}
-          icon={RefreshCwIcon}
+          icon={RefreshCw02Icon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.resyncSearch(id)}
           onSuccess={onSuccess}
@@ -443,7 +443,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
         <span
           className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasContent ? "bg-success-subtle text-success-foreground" : "bg-muted text-muted-foreground"}`}
         >
-          <FileSearchIcon className="size-4" />
+          <FileSearch02Icon className="size-4" />
         </span>
         <div>
           <div className="text-sm font-medium">{t("Extracted content")}</div>
@@ -458,7 +458,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
         <span
           className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasDraft ? "bg-success-subtle text-success-foreground" : "bg-muted text-muted-foreground"}`}
         >
-          <LayersIcon className="size-4" />
+          <LayersThree01Icon className="size-4" />
         </span>
         <div>
           <div className="text-sm font-medium">{t("Shipment draft")}</div>
@@ -478,7 +478,7 @@ function VersionsSection({ versions }: { versions: Document[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={GitBranchIcon} title={t("Version history")} count={versions.length} />
+      <SectionHeader icon={GitBranch01Icon} title={t("Version history")} count={versions.length} />
       <div className="grid gap-2">
         {versions.map((v) => (
           <div
@@ -513,7 +513,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={UploadIcon} title={t("Upload sessions")} count={sessions.length} />
+      <SectionHeader icon={Upload01Icon} title={t("Upload sessions")} count={sessions.length} />
       <div className="grid gap-2">
         {sessions.map((s) => {
           const hasFailure = !!(s.failureCode || s.failureMessage);
@@ -577,7 +577,7 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={WorkflowIcon} title={t("Workflow references")} count={refs.length} />
+      <SectionHeader icon={Dataflow03Icon} title={t("Workflow references")} count={refs.length} />
       <div className="grid gap-2 sm:grid-cols-2">
         {refs.map((ref) => (
           <div
@@ -585,7 +585,7 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
             className="flex items-center gap-3 rounded-lg border p-3"
           >
             <span className="bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-md">
-              <WorkflowIcon className="text-muted-foreground size-3.5" />
+              <Dataflow03Icon className="text-muted-foreground size-3.5" />
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-muted-foreground text-xs font-medium">
@@ -723,7 +723,7 @@ export function DocumentOperationsPage() {
       {!documentId && (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="bg-muted flex size-14 items-center justify-center rounded-full">
-            <FileSearchIcon className="text-muted-foreground size-7" />
+            <FileSearch02Icon className="text-muted-foreground size-7" />
           </div>
           <h3 className="mt-4 text-sm font-medium">{t("No document selected")}</h3>
           <p className="text-muted-foreground mt-1 max-w-[260px] text-center text-xs">
@@ -752,7 +752,7 @@ export function DocumentOperationsPage() {
               className="mt-4"
               onClick={() => diagnosticsQuery.refetch()}
             >
-              <RefreshCwIcon className="size-3" />
+              <RefreshCw02Icon className="size-3" />
               {t("Retry")}
             </Button>
           </CardContent>

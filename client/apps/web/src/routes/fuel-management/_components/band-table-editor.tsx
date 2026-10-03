@@ -7,7 +7,14 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDownUp, CircleAlert, Plus, Table2, TriangleAlert, Trash2 } from "lucide-react";
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  PlusIcon,
+  SwitchVertical01Icon,
+  TableIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { memo, useCallback, useDeferredValue, useMemo, useRef, useState } from "react";
 import {
@@ -289,7 +296,7 @@ const BandRow = memo(function BandRow({
             title={t("Insert a band below this one")}
             className="text-muted-foreground hover:text-foreground size-7 p-0"
           >
-            <Plus className="size-3.5" />
+            <PlusIcon className="size-3.5" />
           </Button>
           <Button
             type="button"
@@ -300,7 +307,7 @@ const BandRow = memo(function BandRow({
             title={t("Delete this band")}
             className="text-muted-foreground hover:bg-danger-subtle hover:text-destructive size-7 p-0"
           >
-            <Trash2 className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         </div>
       </td>
@@ -334,7 +341,7 @@ function SortButton({
       disabled={disabled}
       className="gap-1.5"
     >
-      <ArrowDownUp className="size-3.5" />
+      <SwitchVertical01Icon className="size-3.5" />
       {t("Sort by price")}
     </Button>
   );
@@ -348,7 +355,7 @@ function RowsErrorBanner({ control }: { control: Control<FuelSurchargeProgramFor
 
   return (
     <p className="flex items-center gap-1.5 border-b bg-danger-subtle px-4 py-2 text-xs text-danger-foreground">
-      <CircleAlert className="size-3.5 shrink-0" />
+      <AlertCircleIcon className="size-3.5 shrink-0" />
       {message}
     </p>
   );
@@ -390,9 +397,9 @@ function IssuesStrip({
           >
             <span className="flex items-center gap-1.5">
               {issue.severity === "error" ? (
-                <CircleAlert className="size-3.5 shrink-0" />
+                <AlertCircleIcon className="size-3.5 shrink-0" />
               ) : (
-                <TriangleAlert className="size-3.5 shrink-0" />
+                <AlertTriangleIcon className="size-3.5 shrink-0" />
               )}
               {issue.message}
             </span>
@@ -651,7 +658,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
               disabled={disabled}
               className="gap-1.5"
             >
-              <Plus className="size-3.5" />
+              <PlusIcon className="size-3.5" />
               {t("Add band")}
             </Button>
           </div>
@@ -662,7 +669,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
         {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
             <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-              <Table2 className="text-muted-foreground size-5" />
+              <TableIcon className="text-muted-foreground size-5" />
             </div>
             <p className="mt-3 text-sm font-medium">{t("Build your price band table")}</p>
             <p className="text-muted-foreground mt-1 max-w-sm text-xs">
@@ -689,7 +696,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
                 disabled={disabled}
                 className="gap-1.5"
               >
-                <Plus className="size-3.5" />
+                <PlusIcon className="size-3.5" />
                 {t("Start from scratch")}
               </Button>
             </div>

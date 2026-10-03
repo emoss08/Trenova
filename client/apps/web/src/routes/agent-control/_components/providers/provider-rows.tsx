@@ -7,13 +7,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  KeyRoundIcon,
-  PencilIcon,
-  PlugZapIcon,
-  ServerIcon,
-  ShieldCheckIcon,
-  Trash2Icon,
-} from "lucide-react";
+  Edit02Icon,
+  Key01Icon,
+  PlugIcon,
+  Server01Icon,
+  ShieldTickIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { providerBrandDomain } from "./provider-brand";
 import { ProviderTestSummary } from "./provider-test-summary";
@@ -132,7 +132,7 @@ export function ProviderRow({
               <TooltipTrigger
                 render={
                   <Badge variant="info" className="gap-1">
-                    <ShieldCheckIcon className="size-3" />
+                    <ShieldTickIcon className="size-3" />
                     {t("Trusted")}
                   </Badge>
                 }
@@ -150,7 +150,7 @@ export function ProviderRow({
               <TooltipTrigger
                 render={
                   <span className="inline-flex items-center gap-1">
-                    <ServerIcon className="size-3" />
+                    <Server01Icon className="size-3" />
                     {t("Private network")}
                   </span>
                 }
@@ -160,7 +160,7 @@ export function ProviderRow({
           )}
           {provider.hasApiKey && (
             <span className="inline-flex items-center gap-1">
-              <KeyRoundIcon className="size-3" />
+              <Key01Icon className="size-3" />
               {t("Key stored")}
             </span>
           )}
@@ -192,7 +192,7 @@ export function ProviderRow({
             onClick={() => actions.onTest(provider)}
             isLoading={actions.isTesting(provider)}
           >
-            <PlugZapIcon className="size-3" />
+            <PlugIcon className="size-3" />
             {t("Test")}
           </Button>
         )}
@@ -203,7 +203,7 @@ export function ProviderRow({
             aria-label={t("Edit provider")}
             onClick={() => actions.onEdit(provider)}
           >
-            <PencilIcon className="size-3.5" />
+            <Edit02Icon className="size-3.5" />
           </Button>
         )}
         {actions.canDelete && (
@@ -214,7 +214,7 @@ export function ProviderRow({
             className="text-muted-foreground hover:text-destructive"
             onClick={() => actions.onDelete(provider)}
           >
-            <Trash2Icon className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         )}
       </div>

@@ -21,7 +21,7 @@ import {
   type LaneScopeLabelResolver,
 } from "@trenova/shared/lib/rate";
 import type { RateAgreement, RateAgreementRule } from "@trenova/shared/types/rate";
-import { PlusIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import type { Control } from "react-hook-form";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
@@ -101,7 +101,7 @@ export function LaneEditor() {
 
       {issues.length > 0 && (
         <Alert variant="destructive">
-          <TriangleAlertIcon className="size-4" />
+          <AlertTriangleIcon className="size-4" />
           <AlertTitle>
             {issues.length === 1
               ? t("One lane can never apply")

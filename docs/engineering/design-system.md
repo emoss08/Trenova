@@ -473,18 +473,45 @@ hyphen.
 - An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
   `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
 
+## Icons
+
+Every icon is imported from `@trenova/shared/components/icons`. It exports each
+[Untitled UI](https://www.untitledui.com/resources/icons) icon under its own name
+with an `Icon` suffix (`Truck01Icon`, `SearchLgIcon`, `AlertTriangleIcon`), and
+Trenova's custom set beside them: the icons a TMS needs that Untitled's free set
+does not draw (`FuelIcon`, `ShippingContainerIcon`, `SemiTruckIcon`,
+`ShieldAlertIcon`, …). A slot that takes an icon is typed `IconComponent`; its
+props are `IconProps`. Lint refuses `lucide-react` and `@untitledui/icons`, so
+an icon cannot arrive from anywhere else.
+
+All of them sit on a 24px grid with a 2px round-capped stroke in
+`currentColor`. Size an icon with a class (`size-4`) and colour it with a text
+token; `strokeWidth` and `size` still work for the rare icon that needs them.
+
+When Untitled has no icon for something, draw one rather than borrowing it from
+another library, whose stroke and corners will not match. The custom set is drawn
+in `packages/shared/scripts/icons/draw_custom_icons.py`, which builds its corners
+with the same curve Untitled uses and composes badges (`ShieldAlert`,
+`FileClock`) from Untitled's own outlines. Add the drawing there, run
+`python3 packages/shared/scripts/icons/draw_custom_icons.py`, then
+`pnpm --filter @trenova/shared icons:generate`, which rewrites
+`components/icon-set/custom.gen.tsx` and `untitled.gen.ts`. The generator refuses a
+custom name that shadows an Untitled icon. Run it after upgrading
+`@untitledui/icons` too.
+
 ## The assist mark
 
 Anything the system suggests, drafts or fills in on its own is marked with
 `AssistMark` (`@trenova/shared/components/ui/assist-mark`): the diamond of an
 advisory road sign with a point at its centre. On the road that shape means "take
 this into account", which is the standing a machine's suggestion has with a
-dispatcher. It is a real `LucideIcon`, so it takes `size`, `strokeWidth` and
+dispatcher. It is a real `IconComponent`, so it takes `size`, `strokeWidth` and
 `className` and fits any `icon:` slot.
 
-Do not import `Sparkles`, `WandSparkles` or `Wand2` from lucide. Sparkles says
-magic, which is the wrong promise for a rate or a settlement, and it is the glyph
-every generated interface spends. The assistant's launcher uses `AssistantMark`,
+Untitled's `Stars` and `MagicWand` icons are left out of the icon module on
+purpose, and no custom icon draws a sparkle. Sparkles says magic, which is the
+wrong promise for a rate or a settlement, and it is the glyph every generated
+interface spends. The assistant's launcher uses `AssistantMark`,
 the same diamond with a centre point that breathes on hover.
 
 ## Badge

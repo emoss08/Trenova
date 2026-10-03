@@ -16,19 +16,19 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
   ArchiveIcon,
-  CircleAlertIcon,
-  InfoIcon,
-  LockIcon,
-  PencilIcon,
+  Edit02Icon,
+  type IconComponent,
+  InfoCircleIcon,
+  Lock01Icon,
   PlayIcon,
   PlusIcon,
-  RefreshCwIcon,
-  SendIcon,
-  Trash2Icon,
-  TriangleAlertIcon,
-  type LucideIcon,
-} from "lucide-react";
+  RefreshCw02Icon,
+  Send01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { humanizeToolName } from "../proposal-state";
@@ -53,12 +53,12 @@ export type PreviewDensity = "compact" | "full";
 const COMPACT_RECORDS = 2;
 const COMPACT_FIELDS = 4;
 
-const OPERATION_ICONS: Record<AgentPreviewOperation, LucideIcon> = {
+const OPERATION_ICONS: Record<AgentPreviewOperation, IconComponent> = {
   Create: PlusIcon,
-  Update: PencilIcon,
-  Delete: Trash2Icon,
+  Update: Edit02Icon,
+  Delete: Trash01Icon,
   Archive: ArchiveIcon,
-  Send: SendIcon,
+  Send: Send01Icon,
   Run: PlayIcon,
 };
 
@@ -68,10 +68,10 @@ const WARNING_VARIANT: Record<PreviewWarningTone, "destructive" | "warning" | "i
   info: "info",
 };
 
-const WARNING_ICON: Record<PreviewWarningTone, LucideIcon> = {
-  danger: CircleAlertIcon,
-  warning: TriangleAlertIcon,
-  info: InfoIcon,
+const WARNING_ICON: Record<PreviewWarningTone, IconComponent> = {
+  danger: AlertCircleIcon,
+  warning: AlertTriangleIcon,
+  info: InfoCircleIcon,
 };
 
 /**
@@ -133,7 +133,7 @@ function WouldFailAlert({
 
   return (
     <Alert size="sm" variant="destructive">
-      <CircleAlertIcon />
+      <AlertCircleIcon />
       <AlertTitle>{t("This would not go through as it stands")}</AlertTitle>
       <AlertDescription>
         <ul className="flex w-full flex-col gap-1">
@@ -148,7 +148,7 @@ function WouldFailAlert({
               </span>
               {changeable(reason) && (
                 <Button size="xxs" variant="outline" onClick={() => actions?.onChange?.(reason)}>
-                  <PencilIcon className="size-3" />
+                  <Edit02Icon className="size-3" />
                   {t("Change {0}", reason.label !== "" ? reason.label : paramLabel(reason.param))}
                 </Button>
               )}
@@ -184,7 +184,7 @@ export function StaleNotice({ missing }: { missing: boolean }) {
 
   return (
     <Alert size="sm" variant="warning">
-      <TriangleAlertIcon />
+      <AlertTriangleIcon />
       <AlertTitle>{t("Changed since it was proposed")}</AlertTitle>
       <AlertDescription>
         {missing
@@ -203,7 +203,7 @@ export function ChangedNotice() {
 
   return (
     <Alert size="sm" variant="warning">
-      <RefreshCwIcon />
+      <RefreshCw02Icon />
       <AlertDescription>{t("This change looks different now — review it again.")}</AlertDescription>
     </Alert>
   );
@@ -224,7 +224,7 @@ export function PreviewFailedNotice({
 
   return (
     <Alert size="sm" variant="warning">
-      <TriangleAlertIcon />
+      <AlertTriangleIcon />
       <AlertDescription>
         {t(
           "What this would change could not be loaded. Approving now is recorded as approved without a preview.",
@@ -345,7 +345,7 @@ function RecordHeader({ change, tool }: { change: PreviewRecordChange; tool: str
         <span className="min-w-0 break-words">{humanizeToolName(tool)}</span>
       ) : change.withheld ? (
         <span className="text-foreground-subtle inline-flex items-center gap-1">
-          <LockIcon aria-hidden className="size-3 shrink-0" />
+          <Lock01Icon aria-hidden className="size-3 shrink-0" />
           {t("A record hidden by your data access")}
         </span>
       ) : (
@@ -469,7 +469,7 @@ export function ProposalPreview({
       {attention && <PreviewAttention preview={preview} inPlan={inPlan} wouldFail={wouldFail} />}
       {preview.coverage === "Unavailable" && (
         <Alert size="sm" variant="warning">
-          <TriangleAlertIcon />
+          <AlertTriangleIcon />
           <AlertDescription>
             {t(
               "This action can't say exactly what it would change. It would run with the values below.",
@@ -501,7 +501,7 @@ export function ProposalPreview({
         <div className="text-foreground-subtle flex flex-col gap-1 text-xs">
           {preview.withheldCount > 0 && (
             <span className="inline-flex items-center gap-1">
-              <LockIcon aria-hidden className="size-3 shrink-0" />
+              <Lock01Icon aria-hidden className="size-3 shrink-0" />
               {t(
                 "{0, plural, one {# part hidden by your data access} other {# parts hidden by your data access}}",
                 preview.withheldCount,

@@ -25,7 +25,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { TRAINING_CATEGORY_LABELS } from "@trenova/shared/types/worker-training";
 import type { WorkerRow } from "@/lib/graphql/worker-table";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -193,7 +193,7 @@ export function BulkAssignTrainingDialog({
               {workers.length > 50 ? (
                 <FormControl cols="full">
                   <Alert className="py-2">
-                    <InfoIcon className="size-4" />
+                    <InfoCircleIcon className="size-4" />
                     <AlertDescription>
                       {t(
                         "This opens up to {0} assignments and notifies every driver affected.",

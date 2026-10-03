@@ -7,7 +7,12 @@ import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { Worker } from "@trenova/shared/types/worker";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon, GraduationCapIcon, TruckIcon, UserIcon } from "lucide-react";
+import {
+  CheckCircleIcon,
+  GraduationHat01Icon,
+  Truck01Icon,
+  User01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BulkAssignTrainingDialog } from "./bulk-assign-training-dialog";
@@ -99,7 +104,7 @@ export default function WorkerTable() {
         type: "select",
         label: t("Update status"),
         loadingLabel: t("Updating..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
@@ -109,7 +114,7 @@ export default function WorkerTable() {
         type: "select",
         label: t("Update type"),
         loadingLabel: t("Updating..."),
-        icon: UserIcon,
+        icon: User01Icon,
         options: workerTypeChoices,
         onSelect: handleBulkTypeUpdate,
         clearSelectionOnSuccess: true,
@@ -119,7 +124,7 @@ export default function WorkerTable() {
         type: "select",
         label: t("Update driver type"),
         loadingLabel: t("Updating..."),
-        icon: TruckIcon,
+        icon: Truck01Icon,
         options: driverTypeChoices,
         onSelect: handleBulkDriverTypeUpdate,
         clearSelectionOnSuccess: true,
@@ -127,7 +132,7 @@ export default function WorkerTable() {
       {
         id: "assign-training",
         label: t("Assign training"),
-        icon: GraduationCapIcon,
+        icon: GraduationHat01Icon,
         onClick: (rows) => setTrainingTargets(rows),
       },
     ],

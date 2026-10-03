@@ -11,7 +11,7 @@ import {
   type ReportFilterGroup,
   type ReportIR,
 } from "@/types/report";
-import { FilterIcon } from "lucide-react";
+import { FilterFunnel01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import {
   preferReferenceField,
@@ -109,7 +109,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
             aria-label={t("Filter this tile")}
             title={t("Filter this tile")}
           >
-            <FilterIcon className={cn("size-3.5", active > 0 && "text-primary")} />
+            <FilterFunnel01Icon className={cn("size-3.5", active > 0 && "text-primary")} />
           </Button>
         }
       />

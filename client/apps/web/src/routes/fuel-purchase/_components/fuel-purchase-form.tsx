@@ -20,7 +20,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { FuelPurchaseFormValues } from "@trenova/shared/types/fuel-purchase";
-import { FileSpreadsheetIcon } from "lucide-react";
+import { FileSpreadsheetIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 

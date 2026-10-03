@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
 import { Operation } from "@trenova/shared/types/permission";
-import { ChevronDownIcon, PinIcon, PinOffIcon } from "lucide-react";
+import { ChevronDownIcon, Pin01Icon, PinOffIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useState } from "react";
 import type { LocalShipmentComment } from "@/lib/shipment-comment-cache";
@@ -44,7 +44,7 @@ export function PinnedStrip({
         onClick={() => setIsExpanded((expanded) => !expanded)}
         aria-expanded={isExpanded}
       >
-        <PinIcon className="size-3.5 shrink-0 text-warning-foreground" />
+        <Pin01Icon className="size-3.5 shrink-0 text-warning-foreground" />
         <span className="shrink-0 text-xs font-medium">
           {pinnedComments.length === 1 ? t("1 pinned") : t("{0} pinned", pinnedComments.length)}
         </span>

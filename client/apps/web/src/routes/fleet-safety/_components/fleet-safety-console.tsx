@@ -7,7 +7,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { BasicsCard } from "./basics-card";
 import { RankList, TerminalsPanel } from "./fleet-safety-panels";
@@ -81,7 +81,7 @@ export default function FleetSafetyConsole() {
                 style={{ backgroundColor: selectedTerminal.color || "var(--muted-foreground)" }}
               />
               {selectedTerminal.code}
-              <XIcon className="size-3" />
+              <XCloseIcon className="size-3" />
             </Button>
           ) : (
             <span className="text-muted-foreground text-xs">

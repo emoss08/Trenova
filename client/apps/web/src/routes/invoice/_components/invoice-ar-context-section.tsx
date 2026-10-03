@@ -9,7 +9,7 @@ import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLinkIcon, SplitIcon } from "lucide-react";
+import { LinkExternal01Icon, SplitIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 /**
@@ -43,9 +43,7 @@ function ArContextCard({ invoice }: { invoice: Invoice }) {
 
   return (
     <div className="bg-card rounded-lg border p-3" data-testid="invoice-ar-context">
-      <p className="text-xs text-muted-foreground font-medium">
-        {t("On behalf of")}
-      </p>
+      <p className="text-xs text-muted-foreground font-medium">{t("On behalf of")}</p>
       {isLoading && !shipper ? (
         <Skeleton className="mt-1.5 h-4 w-40" />
       ) : shipper ? (
@@ -85,7 +83,7 @@ function ArContextCard({ invoice }: { invoice: Invoice }) {
                     className="inline-flex items-center gap-1 font-medium hover:underline"
                   >
                     {row.number}
-                    <ExternalLinkIcon className="size-2.5" />
+                    <LinkExternal01Icon className="size-2.5" />
                   </Link>
                   <span className="text-muted-foreground truncate">{row.billToName}</span>
                 </span>

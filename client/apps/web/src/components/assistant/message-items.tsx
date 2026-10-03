@@ -24,17 +24,17 @@ import { ArtifactKindIcon, ARTIFACT_KINDS } from "./voice/artifact-chrome";
 import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
 import { TURN_FEEDBACK_REVEAL } from "@/components/ai-feedback/feedback-targets";
 import {
-  CheckCheckIcon,
+  AtSignIcon,
+  CheckDoubleIcon,
   CheckIcon,
   ChevronRightIcon,
-  CopyIcon,
-  AtSignIcon,
-  FileIcon,
-  MapPinIcon,
-  RotateCcwIcon,
+  Copy01Icon,
+  File04Icon,
+  MarkerPin01Icon,
+  RefreshCcw01Icon,
   ShieldAlertIcon,
-  XIcon,
-} from "lucide-react";
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import {
   useCallback,
   useEffect,
@@ -95,7 +95,7 @@ export function PageContextChip({ context }: { context: AssistantPageContext | n
       <TooltipTrigger
         render={
           <span className="text-muted-foreground inline-flex max-w-full min-w-0 items-center gap-1 text-xs">
-            <MapPinIcon className="size-3 shrink-0" />
+            <MarkerPin01Icon className="size-3 shrink-0" />
             <span className="truncate">{context.title || record || context.path}</span>
           </span>
         }
@@ -136,7 +136,7 @@ export function TurnContextChips({
           key={file.documentId}
           className="border-border bg-surface inline-flex h-6 max-w-[16rem] items-center gap-1.5 rounded-full border px-2 text-xs"
         >
-          <FileIcon className="text-muted-foreground size-3 shrink-0" />
+          <File04Icon className="text-muted-foreground size-3 shrink-0" />
           <span className="min-w-0 truncate">{file.fileName}</span>
         </li>
       ))}
@@ -220,11 +220,11 @@ export function UserTurn({
         )}
         <TurnActions>
           <IconAction label={t("Copy")} done={t("Copied")} onClick={() => copyText(content)}>
-            <CopyIcon className="size-3" />
+            <Copy01Icon className="size-3" />
           </IconAction>
           {onResend && (
             <IconAction label={t("Ask again")} onClick={onResend}>
-              <RotateCcwIcon className="size-3" />
+              <RefreshCcw01Icon className="size-3" />
             </IconAction>
           )}
         </TurnActions>
@@ -549,7 +549,7 @@ export function AssistantEntry({
             done={t("Copied")}
             onClick={() => copyText(message.content)}
           >
-            <CopyIcon className="size-3" />
+            <Copy01Icon className="size-3" />
           </IconAction>
         ) : null
       }
@@ -721,7 +721,7 @@ export function DeclinedTurn({ content, sentAt }: { content: string; sentAt: num
 export function DecisionNote({ content, at }: { content: string; at?: number }) {
   const t = useT();
   const line = decisionHeadline(content);
-  const Icon = /^Rejected\b/u.test(line) ? XIcon : CheckCheckIcon;
+  const Icon = /^Rejected\b/u.test(line) ? XCloseIcon : CheckDoubleIcon;
 
   return (
     <div

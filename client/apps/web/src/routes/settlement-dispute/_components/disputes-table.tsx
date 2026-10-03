@@ -9,7 +9,7 @@ import { runBulkAction } from "@/lib/bulk-run";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { EyeIcon } from "lucide-react";
+import { EyeIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./dispute-columns";

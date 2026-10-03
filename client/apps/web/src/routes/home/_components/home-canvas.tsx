@@ -7,14 +7,14 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import type { HomeWidget, HomeWidgetCatalog, HomeWidgetOption } from "@/lib/graphql/home-layout";
 import {
-  ChevronsLeftRightIcon,
-  ChevronsUpDownIcon,
-  LayoutGridIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
+  ChevronSelectorHorizontalIcon,
+  ChevronSelectorVerticalIcon,
+  DotsHorizontalIcon,
+  Edit02Icon,
+  Grid01Icon,
   PlusIcon,
-  Trash2Icon,
-} from "lucide-react";
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence } from "motion/react";
 import { useMemo, useState } from "react";
 import { AddWidgetDialog } from "./add-widget-dialog";
@@ -129,7 +129,7 @@ export function HomeCanvas({
   if (widgets.length === 0 && !editing) {
     return (
       <div className="border-border flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-        <LayoutGridIcon className="text-muted-foreground/40 size-5" />
+        <Grid01Icon className="text-muted-foreground/40 size-5" />
         <p className="text-sm font-medium">{t("Your home screen is empty")}</p>
         <p className="text-muted-foreground max-w-xs text-xs">
           {t("Choose Customize to add the queues and numbers you want to land on.")}
@@ -170,9 +170,7 @@ export function HomeCanvas({
             className={editing ? "ring-border ring-1" : undefined}
           >
             {(drag) => (
-              <div
-                className="flex min-h-0 flex-1 flex-col"
-              >
+              <div className="flex min-h-0 flex-1 flex-col">
                 {editing && (
                   <div className="border-border/60 bg-muted/40 flex h-8 shrink-0 items-center gap-1.5 border-b px-2">
                     <TileDragHandle {...drag} />
@@ -289,14 +287,14 @@ function WidgetControls({
             className="size-5 shrink-0"
             aria-label={t("Widget options")}
           >
-            <MoreHorizontalIcon className="size-3" />
+            <DotsHorizontalIcon className="size-3" />
           </Button>
         }
       />
       <PopoverContent className="w-60 p-2" align="end">
         <div className="flex flex-col gap-2">
           <SizeStepper
-            icon={ChevronsLeftRightIcon}
+            icon={ChevronSelectorHorizontalIcon}
             label={t("Width")}
             value={widget.w}
             min={option?.minW ?? 1}
@@ -304,7 +302,7 @@ function WidgetControls({
             onChange={(w) => onResize({ w })}
           />
           <SizeStepper
-            icon={ChevronsUpDownIcon}
+            icon={ChevronSelectorVerticalIcon}
             label={t("Height")}
             value={widget.h}
             min={option?.minH ?? 1}
@@ -314,7 +312,7 @@ function WidgetControls({
           <div className="border-border flex flex-col gap-1 border-t pt-2">
             {configurable && (
               <Button variant="ghost" size="sm" className="h-7 justify-start" onClick={onEdit}>
-                <PencilIcon className="size-3.5" />
+                <Edit02Icon className="size-3.5" />
                 {t("Configure")}
               </Button>
             )}
@@ -324,7 +322,7 @@ function WidgetControls({
               className="text-destructive h-7 justify-start"
               onClick={onRemove}
             >
-              <Trash2Icon className="size-3.5" />
+              <Trash01Icon className="size-3.5" />
               {t("Remove")}
             </Button>
           </div>

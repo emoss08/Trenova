@@ -20,7 +20,7 @@ import {
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { UpdateMySettings, User } from "@trenova/shared/types/user";
-import { Languages } from "lucide-react";
+import { Translate01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -146,7 +146,7 @@ export function LanguageSubmenu() {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        <Languages className="mr-2 size-4" />
+        <Translate01Icon className="mr-2 size-4" />
         <span>{t("Language")}</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>

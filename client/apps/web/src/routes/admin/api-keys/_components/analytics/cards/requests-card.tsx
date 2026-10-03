@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { ChartContainer, type ChartConfig } from "@trenova/shared/components/ui/chart";
-import { Activity } from "lucide-react";
+import { ActivityIcon } from "@trenova/shared/components/icons";
 import { Area, AreaChart } from "recharts";
 import type { ApiKeyAnalyticsData } from "../analytics-data";
 
@@ -21,11 +21,9 @@ export function RequestsCard({ data }: Props) {
 
   return (
     <KpiCard span={2}>
-      <KpiHeader icon={<Activity className="size-[11px]" />} label={t("Requests (30d)")} />
+      <KpiHeader icon={<ActivityIcon className="size-[11px]" />} label={t("Requests (30d)")} />
       <div className="relative px-4">
-        <p className={KPI_VALUE_LG_CLASS}>
-          {total.toLocaleString()}
-        </p>
+        <p className={KPI_VALUE_LG_CLASS}>{total.toLocaleString()}</p>
       </div>
       {sparkline.length > 1 ? (
         <ChartContainer config={chartConfig} className="mt-auto aspect-auto! h-4 w-full">

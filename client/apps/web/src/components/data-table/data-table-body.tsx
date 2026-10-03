@@ -12,7 +12,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { DataTableBodyProps, RowAction, Row, Table } from "@trenova/shared/types/data-table";
 import type { ColumnPinningState, RowData, RowSelectionState } from "@tanstack/react-table";
 import { flexRender } from "@tanstack/react-table";
-import { PencilIcon } from "lucide-react";
+import { Edit02Icon } from "@trenova/shared/components/icons";
 import { memo, useCallback, useRef } from "react";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { DataTableCellEditor } from "./data-table-cell-editor";
@@ -87,7 +87,7 @@ function DataTableRowInner<TData extends RowData>({
       data-state={selected && "selected"}
       onClick={isClickable ? handleRowClick : undefined}
       className={cn(
-"ui-inset-focus-ring group/row outline-brand -outline-offset-2 transition-colors data-[state=selected]:outline",
+        "ui-inset-focus-ring group/row outline-brand -outline-offset-2 transition-colors data-[state=selected]:outline",
         isClickable && "cursor-pointer",
         formatClass,
         table.options.meta?.getRowClassName?.(row),
@@ -139,7 +139,7 @@ function DataTableRowInner<TData extends RowData>({
                     }}
                     className="absolute top-1/2 right-1 -translate-y-1/2 rounded-sm border border-border bg-background p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover/cell:opacity-100"
                   >
-                    <PencilIcon className="size-3" />
+                    <Edit02Icon className="size-3" />
                   </button>
                 )}
               </>

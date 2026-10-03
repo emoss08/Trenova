@@ -17,10 +17,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
-  CircleCheckIcon,
+  CheckCircleIcon,
   PauseCircleIcon,
   PlayIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { CASE_STATUS_MOVED } from "./eval-case-badges";
@@ -70,7 +70,7 @@ export function EvalCasesTable() {
     {
       id: "activate",
       label: t("Activate"),
-      icon: CircleCheckIcon,
+      icon: CheckCircleIcon,
       onClick: (row) => move.mutate({ id: row.original.id, status: "Active" }),
       hidden: (row) => !movable(row, "Active") || row.original.status === "Retired",
     },

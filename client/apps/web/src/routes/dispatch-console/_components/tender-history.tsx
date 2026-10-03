@@ -12,7 +12,7 @@ import {
   TENDER_RESPONSE_SOURCE_LABEL,
 } from "@trenova/shared/types/tender";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { formatOfferRate } from "./tender-vocabulary";
 
@@ -42,7 +42,11 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
         ) : (
           <ChevronRightIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
         )}
-        <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded-md px-1 text-3xs">
+        <Badge
+          variant="neutral"
+          appearance="outline"
+          className="h-4 shrink-0 rounded-md px-1 text-3xs"
+        >
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         <TenderStatusBadge status={tender.status} className="shrink-0 text-3xs" />
@@ -73,7 +77,8 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-1.5">
                   <Badge
-                    variant="neutral" appearance="outline"
+                    variant="neutral"
+                    appearance="outline"
                     className="h-4 shrink-0 rounded-md px-1 text-3xs tabular-nums"
                   >
                     #{offer.rank}
@@ -142,9 +147,7 @@ export function TenderHistory({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <span className="text-muted-foreground text-xs">
-        {t("Tenders")}
-      </span>
+      <span className="text-muted-foreground text-xs">{t("Tenders")}</span>
       {isLoading ? (
         <Skeleton className="h-12 rounded-md" />
       ) : (

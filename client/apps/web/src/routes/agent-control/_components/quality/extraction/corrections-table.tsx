@@ -8,7 +8,7 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleCheckIcon, ListPlusIcon } from "lucide-react";
+import { CheckCircleIcon, ListPlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { getCorrectionColumns } from "./correction-columns";
 import { CorrectionPanel } from "./correction-panel";
@@ -29,7 +29,7 @@ export function CorrectionsTable() {
     {
       id: "promote-active",
       label: t("Add as active case"),
-      icon: CircleCheckIcon,
+      icon: CheckCircleIcon,
       onClick: (row) => promote.mutate({ correctionId: row.original.id, activate: true }),
       hidden: () => !canCreate,
     },

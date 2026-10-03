@@ -31,17 +31,16 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import {
   ClipboardListIcon,
-  LockIcon,
-  PencilIcon,
-  SearchIcon,
-  Trash2Icon,
-  UserRoundIcon,
-} from "lucide-react";
+  Edit02Icon,
+  Lock01Icon,
+  SearchLgIcon,
+  Trash01Icon,
+  User01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { OshaEmptyLog } from "./osha-empty-log";
 import { FormMark } from "./osha-form-marks";
-
 
 type OshaCaseTableProps = {
   year: number;
@@ -122,7 +121,7 @@ export function OshaCaseTable({
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder={t("Name, injury or place")}
               aria-label={t("Search the log")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               inputContainerClassName="w-52"
             />
           </div>
@@ -193,7 +192,7 @@ export function OshaCaseTable({
                   {
                     id: "worker",
                     label: t("Open worker"),
-                    icon: UserRoundIcon,
+                    icon: User01Icon,
                     onSelect: () => void navigate(workerRecordHref(entry.workerId, "safety")),
                   },
                 ];
@@ -201,7 +200,7 @@ export function OshaCaseTable({
                   actions.push({
                     id: "edit",
                     label: t("Edit case"),
-                    icon: PencilIcon,
+                    icon: Edit02Icon,
                     onSelect: () => onEdit(entry),
                   });
                 }
@@ -209,7 +208,7 @@ export function OshaCaseTable({
                   actions.push({
                     id: "delete",
                     label: t("Delete case"),
-                    icon: Trash2Icon,
+                    icon: Trash01Icon,
                     destructive: true,
                     onSelect: () => onDelete(entry),
                   });
@@ -233,7 +232,7 @@ export function OshaCaseTable({
                           event.stopPropagation();
                           onOpen(entry);
                         }}
- className="ui-focus-ring rounded-sm font-medium tabular-nums outline-none"
+                        className="ui-focus-ring rounded-sm font-medium tabular-nums outline-none"
                       >
                         {label}
                       </button>
@@ -253,7 +252,7 @@ export function OshaCaseTable({
                                 />
                               }
                             >
-                              <LockIcon className="size-3" />
+                              <Lock01Icon className="size-3" />
                             </TooltipTrigger>
                             <TooltipContent>
                               {t("Privacy case: the name is withheld from the posted log.")}

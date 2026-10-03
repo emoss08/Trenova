@@ -12,7 +12,7 @@ import {
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type DirectoryDetailHeaderProps = {
@@ -65,7 +65,7 @@ export function DirectoryDetailHeader({
             disabled={!directory || isDeleting}
             onClick={() => setConfirmOpen(true)}
           >
-            <Trash2Icon />
+            <Trash01Icon />
             {t("Delete directory")}
           </Button>
         </div>

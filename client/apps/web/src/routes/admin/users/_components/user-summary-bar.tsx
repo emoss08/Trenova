@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Loader2Icon, ShieldIcon, UserIcon } from "lucide-react";
+import { Shield01Icon, SpinnerIcon, User01Icon } from "@trenova/shared/components/icons";
 
 type UserSummaryBarProps = {
   roleCount: number;
@@ -26,7 +26,7 @@ export function UserSummaryBar({
     <div className="flex items-center justify-between px-6 py-3">
       <div className="flex items-center gap-5 text-sm">
         <div className="flex items-center gap-2">
-          <UserIcon className="text-muted-foreground size-4" />
+          <User01Icon className="text-muted-foreground size-4" />
           <span className="text-muted-foreground">{t("Status:")}</span>
           <Badge
             variant={status === "Active" ? "neutral" : "neutral"}
@@ -39,7 +39,7 @@ export function UserSummaryBar({
         <div className="bg-border h-4 w-px" />
 
         <div className="flex items-center gap-2">
-          <ShieldIcon className="text-muted-foreground size-4" />
+          <Shield01Icon className="text-muted-foreground size-4" />
           <span className="font-medium tabular-nums">{roleCount}</span>
           <span className="text-muted-foreground">
             {t("{0, plural, one {role} other {roles}} assigned", roleCount)}
@@ -52,7 +52,7 @@ export function UserSummaryBar({
           {t("Cancel")}
         </Button>
         <Button type="button" size="sm" onClick={onSubmit} disabled={isSubmitting}>
-          {isSubmitting && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+          {isSubmitting && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
           {submitLabel}
         </Button>
       </div>

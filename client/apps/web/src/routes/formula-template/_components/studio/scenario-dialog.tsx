@@ -19,7 +19,7 @@ import {
   type FormulaTestCaseInput,
   type VariableDefinitionInput,
 } from "@trenova/shared/types/formula-template";
-import { FlaskConicalIcon } from "lucide-react";
+import { Beaker02Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -143,7 +143,7 @@ export function ScenarioDialog({
       <DialogContent size="md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FlaskConicalIcon className="size-4" />
+            <Beaker02Icon className="size-4" />
             {editing ? t("Edit scenario") : t("New scenario")}
           </DialogTitle>
           <DialogDescription>

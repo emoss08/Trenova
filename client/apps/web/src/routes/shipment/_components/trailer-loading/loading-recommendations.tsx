@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { LoadingRecommendation } from "@/types/loading-optimization";
-import { LightbulbIcon, ShieldAlertIcon, TrendingUpIcon } from "lucide-react";
+import { Lightbulb01Icon, ShieldAlertIcon, TrendUp01Icon } from "@trenova/shared/components/icons";
 
 const priorityConfig = {
   critical: {
@@ -11,13 +11,13 @@ const priorityConfig = {
     label: "Critical",
   },
   suggested: {
-    icon: LightbulbIcon,
+    icon: Lightbulb01Icon,
     badge: "bg-warning-subtle text-warning",
     iconColor: "text-warning",
     label: "Suggested",
   },
   optimization: {
-    icon: TrendingUpIcon,
+    icon: TrendUp01Icon,
     badge: "bg-primary/15 text-primary",
     iconColor: "text-primary",
     label: "Tip",

@@ -7,7 +7,7 @@ import type { DockAction } from "@trenova/shared/types/data-table";
 import type { HazardousMaterial } from "@/types/hazardous-material";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheckIcon } from "lucide-react";
+import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./hazardous-material-columns";
@@ -50,7 +50,7 @@ export default function HazardousMaterialTable() {
         type: "select",
         label: t("Update status"),
         loadingLabel: t("Updating..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,

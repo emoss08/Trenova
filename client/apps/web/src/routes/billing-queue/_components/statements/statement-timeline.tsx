@@ -2,7 +2,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { billsInLabel, periodRange, splitLabel } from "@/lib/billing-schedule";
 import { cn } from "@trenova/shared/lib/utils";
 import type { OpenStatement } from "@trenova/shared/types/statement";
-import { BotIcon, CheckIcon, ReceiptTextIcon, UserCheckIcon } from "lucide-react";
+import {
+  BotIcon,
+  CheckIcon,
+  ReceiptTextIcon,
+  UserCheck01Icon,
+} from "@trenova/shared/components/icons";
 
 type StepState = "done" | "active" | "pending";
 
@@ -47,7 +52,7 @@ export function StatementTimeline({
       label: due ? "Billing" : "Bills",
       detail: billsInLabel(statement.periodEnd, nowSeconds),
       state: due ? "active" : "pending",
-      Icon: statement.autoBill ? BotIcon : UserCheckIcon,
+      Icon: statement.autoBill ? BotIcon : UserCheck01Icon,
     },
     {
       key: "invoice",

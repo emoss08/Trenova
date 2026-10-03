@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { lazy, useCallback, useRef, useState } from "react";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { ReindexDialog } from "./reindex-dialog";
@@ -57,7 +57,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
   if (status.isError) {
     return (
       <Alert variant="destructive" size="sm">
-        <CircleAlertIcon />
+        <AlertCircleIcon />
         <AlertDescription>
           {t("Where search by meaning stands could not be loaded. Try again shortly.")}
         </AlertDescription>

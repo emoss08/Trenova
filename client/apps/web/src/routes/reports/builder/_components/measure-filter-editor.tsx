@@ -15,7 +15,7 @@ import {
   type ReportFilterGroup,
   type ReportIR,
 } from "@/types/report";
-import { FilterIcon, PlusIcon, XIcon } from "lucide-react";
+import { FilterFunnel01Icon, PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import {
   pathCrossesToMany,
@@ -156,10 +156,8 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
   return (
     <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border border-dashed p-2">
       <div className="flex items-center gap-2">
-        <FilterIcon className="text-muted-foreground size-3" />
-        <span className="text-xs text-muted-foreground font-medium">
-          {t("Only count")}
-        </span>
+        <FilterFunnel01Icon className="text-muted-foreground size-3" />
+        <span className="text-xs text-muted-foreground font-medium">{t("Only count")}</span>
         {filterCount(column.filter) > 1 && (
           <Select
             value={group.op}
@@ -244,7 +242,7 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
                 onClick={() => setFilters(filters.filter((_, i) => i !== filterIndex))}
                 aria-label={t("Remove condition")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             </div>
           );

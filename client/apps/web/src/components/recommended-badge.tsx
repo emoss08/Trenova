@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
-import { CircleCheckIcon } from "lucide-react";
+import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import type React from "react";
 
 type RecommendedBadgeVariant = "default" | "premium" | "success" | "warning";
@@ -40,8 +40,11 @@ export function RecommendedBadge({
   tooltip,
 }: RecommendedBadgeProps) {
   const badge = (
-    <Badge variant={variantTone[variant]} className={cn("select-none", sizeClasses[size], className)}>
-      <CircleCheckIcon aria-hidden />
+    <Badge
+      variant={variantTone[variant]}
+      className={cn("select-none", sizeClasses[size], className)}
+    >
+      <CheckCircleIcon aria-hidden />
       {text}
     </Badge>
   );

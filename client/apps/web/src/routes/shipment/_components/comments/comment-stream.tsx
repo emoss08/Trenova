@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/message-scroller";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { fromUnixTime, isSameDay } from "date-fns";
-import { MessageSquareIcon, RotateCcwIcon } from "lucide-react";
+import { MessageSquare01Icon, RefreshCcw01Icon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useNewCommentsPill } from "@/hooks/shipment-comments/use-new-comments-pill";
@@ -126,10 +126,10 @@ export function CommentStream({
   if (isError) {
     return (
       <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 py-12">
-        <MessageSquareIcon className="size-8 opacity-40" />
+        <MessageSquare01Icon className="size-8 opacity-40" />
         <p className="text-sm font-medium">{t("Comments could not be loaded")}</p>
         <Button type="button" variant="outline" size="xs" onClick={onRetry}>
-          <RotateCcwIcon className="mr-1 size-3" />
+          <RefreshCcw01Icon className="mr-1 size-3" />
           {t("Try again")}
         </Button>
       </div>

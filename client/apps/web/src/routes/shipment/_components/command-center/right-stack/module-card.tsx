@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { cn } from "@trenova/shared/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVerticalIcon, MinusIcon } from "lucide-react";
+import { GripVerticalIcon, MinusIcon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 import { useRightStackStore, type RightStackModuleId } from "./right-stack-store";
 

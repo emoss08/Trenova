@@ -7,7 +7,7 @@ import {
 import type { DriverSettlementRow } from "@/lib/graphql/driver-settlement";
 import type { DriverSettlementStatus, PayeeClassification } from "@trenova/shared/types/driver-pay";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { TriangleAlert } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
@@ -28,7 +28,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         <div className="flex items-center gap-1.5">
           <DriverSettlementStatusBadge status={row.original.status as DriverSettlementStatus} />
           {row.original.hasExceptions && (
-            <TriangleAlert
+            <AlertTriangleIcon
               className="size-3.5 text-warning-foreground"
               aria-label={t("Has exceptions")}
             />

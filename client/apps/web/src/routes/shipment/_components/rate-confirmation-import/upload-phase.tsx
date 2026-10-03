@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { m } from "motion/react";
-import { AlertCircleIcon, LoaderCircleIcon } from "lucide-react";
+import { AlertCircleIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
@@ -82,7 +82,7 @@ export function UploadPhase({
                 )}
               </div>
               {currentUpload.status === "uploading" && (
-                <LoaderCircleIcon className="text-muted-foreground size-3.5 shrink-0 animate-spin" />
+                <SpinnerIcon className="text-muted-foreground size-3.5 shrink-0 animate-spin" />
               )}
             </div>
 

@@ -12,7 +12,7 @@ import {
   useSidebarCustomizationOptions,
   useSidebarPreferences,
 } from "@/hooks/use-sidebar-preferences";
-import { SlidersHorizontalIcon } from "lucide-react";
+import { Sliders01Icon } from "@trenova/shared/components/icons";
 import { cn } from "@trenova/shared/lib/utils";
 import { lazy, Suspense, useState, type ReactElement } from "react";
 
@@ -69,7 +69,7 @@ export function CustomizeSidebarDialog({
           )
         }
       >
-        {trigger ? null : <SlidersHorizontalIcon className="size-3.5" strokeWidth={1.75} />}
+        {trigger ? null : <Sliders01Icon className="size-3.5" strokeWidth={1.75} />}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

@@ -5,7 +5,7 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { deltaToneClass, formatSignedCurrency } from "@trenova/shared/lib/detention";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CustomerDetentionStat } from "@trenova/shared/types/detention";
-import { UsersIcon } from "lucide-react";
+import { Users01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import {
   Panel,
@@ -38,9 +38,7 @@ function CustomerRow({ row, scale }: { row: CustomerDetentionStat; scale: number
   const losing = row.netMargin < 0;
 
   return (
-    <div
-      className="hover:bg-muted/40 flex items-center gap-3 px-3 py-2.5 transition-colors"
-    >
+    <div className="hover:bg-muted/40 flex items-center gap-3 px-3 py-2.5 transition-colors">
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-1.5">
           <p className="truncate text-sm leading-tight font-medium">
@@ -68,11 +66,7 @@ function CustomerRow({ row, scale }: { row: CustomerDetentionStat; scale: number
         </p>
       </div>
 
-      <DivergingBar
-        value={row.netMargin}
-        scale={scale}
-        className="hidden sm:block"
-      />
+      <DivergingBar value={row.netMargin} scale={scale} className="hidden sm:block" />
 
       <span
         className={cn(
@@ -114,7 +108,7 @@ export function CustomerMargin({
 
   return (
     <Panel
-      icon={UsersIcon}
+      icon={Users01Icon}
       title={t("Customer margin")}
       description={t(
         "Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants.",
@@ -155,7 +149,7 @@ export function CustomerMargin({
         <PanelRowsSkeleton rows={5} />
       ) : sorted.length === 0 ? (
         <PanelEmpty
-          icon={UsersIcon}
+          icon={Users01Icon}
           message={t("No customer accrued settled detention in this window.")}
         />
       ) : (

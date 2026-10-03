@@ -7,7 +7,7 @@ import { apiService } from "@/services/api";
 import type { CommunicationProfileFormValues } from "@/routes/edi/_components/edi-schemas";
 import type { EDICertificateSummary } from "@trenova/shared/types/edi";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { UploadIcon } from "lucide-react";
+import { Upload01Icon } from "@trenova/shared/components/icons";
 import { useRef } from "react";
 import { useController, useWatch, type Control, type FieldPath } from "react-hook-form";
 import { toast } from "sonner";
@@ -77,7 +77,7 @@ export function EDICertificateField({
           className="shrink-0"
           onClick={() => fileInputRef.current?.click()}
         >
-          <UploadIcon className="size-3.5" />
+          <Upload01Icon className="size-3.5" />
           {t("Upload")}
         </Button>
         <input

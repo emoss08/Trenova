@@ -25,17 +25,17 @@ import {
 import { SizeStepper } from "@/components/tile-grid/size-stepper";
 import {
   ArrowLeftIcon,
-  ChevronsLeftRightIcon,
-  ChevronsUpDownIcon,
-  DownloadIcon,
-  LayoutDashboardIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
+  ChevronSelectorHorizontalIcon,
+  ChevronSelectorVerticalIcon,
+  DotsHorizontalIcon,
+  Download01Icon,
+  Edit02Icon,
+  LayoutAlt04Icon,
   PlusIcon,
-  SettingsIcon,
-  Trash2Icon,
-  XIcon,
-} from "lucide-react";
+  Settings01Icon,
+  Trash01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -101,14 +101,14 @@ function TileControls({
             className="size-6 shrink-0"
             aria-label={t("Tile options")}
           >
-            <MoreHorizontalIcon className="size-3.5" />
+            <DotsHorizontalIcon className="size-3.5" />
           </Button>
         }
       />
       <PopoverContent className="w-60 p-2" align="end">
         <div className="flex flex-col gap-2">
           <SizeStepper
-            icon={ChevronsLeftRightIcon}
+            icon={ChevronSelectorHorizontalIcon}
             label={t("Width")}
             value={tile.w}
             min={1}
@@ -116,7 +116,7 @@ function TileControls({
             onChange={(w) => onResize({ w })}
           />
           <SizeStepper
-            icon={ChevronsUpDownIcon}
+            icon={ChevronSelectorVerticalIcon}
             label={t("Height")}
             value={tile.h}
             min={1}
@@ -125,7 +125,7 @@ function TileControls({
           />
           <div className="border-border flex flex-col gap-1 border-t pt-2">
             <Button variant="ghost" size="sm" className="h-7 justify-start" onClick={onEdit}>
-              <PencilIcon className="size-3.5" />
+              <Edit02Icon className="size-3.5" />
               {t("Edit tile")}
             </Button>
             <Button
@@ -134,7 +134,7 @@ function TileControls({
               className="text-destructive h-7 justify-start"
               onClick={onRemove}
             >
-              <Trash2Icon className="size-3.5" />
+              <Trash01Icon className="size-3.5" />
               {t("Remove tile")}
             </Button>
           </div>
@@ -459,7 +459,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               className="h-7"
               onClick={() => setSettingsOpen(true)}
             >
-              <SettingsIcon className="size-3.5" />
+              <Settings01Icon className="size-3.5" />
               {t("Filters")}
             </Button>
             <Button
@@ -469,7 +469,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               onClick={handleDelete}
               disabled={deleteDashboard.isPending}
             >
-              <Trash2Icon className="size-3.5" />
+              <Trash01Icon className="size-3.5" />
               {t("Delete")}
             </Button>
             <Button variant="ghost" size="sm" className="h-7" onClick={() => setEditing(false)}>
@@ -493,12 +493,12 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               disabled={exporting}
               onClick={handleExport}
             >
-              <DownloadIcon className="size-3.5" />
+              <Download01Icon className="size-3.5" />
               {exporting ? t("Exporting...") : t("Export")}
             </Button>
             {canEdit && (
               <Button variant="outline" size="sm" className="h-7" onClick={startEditing}>
-                <PencilIcon className="size-3.5" />
+                <Edit02Icon className="size-3.5" />
                 {t("Edit")}
               </Button>
             )}
@@ -553,7 +553,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
                 aria-label={t("Remove filter")}
                 onClick={() => setCrossFilters((prev) => removeCrossFilter(prev, id))}
               >
-                <XIcon className="size-3" />
+                <XCloseIcon className="size-3" />
               </button>
             </Badge>
           ))}
@@ -578,7 +578,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
         {layout.tiles.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3">
             <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
-              <LayoutDashboardIcon className="text-muted-foreground size-5" strokeWidth={1.75} />
+              <LayoutAlt04Icon className="text-muted-foreground size-5" strokeWidth={1.75} />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium">{t("Nothing here yet")}</p>

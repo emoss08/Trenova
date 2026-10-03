@@ -1,6 +1,6 @@
 import type { PlanPreview as PlanPreviewData, ProposalPreview } from "@/lib/graphql/agent-preview";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LinkIcon } from "lucide-react";
+import { Link01Icon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 import { dependencySteps } from "./preview-format";
 import {
@@ -26,7 +26,7 @@ export function StepDependencyNote({ preview }: { preview: ProposalPreview }) {
     <span className="text-foreground-muted flex flex-col gap-0.5 text-xs">
       {steps.map((step) => (
         <span key={step} className="inline-flex items-center gap-1">
-          <LinkIcon aria-hidden className="size-3 shrink-0" />
+          <Link01Icon aria-hidden className="size-3 shrink-0" />
           {t("Uses the record step {0} changes", step)}
         </span>
       ))}

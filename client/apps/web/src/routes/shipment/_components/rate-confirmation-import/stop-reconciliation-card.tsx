@@ -3,7 +3,7 @@ import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
-import { MapPinIcon, TruckIcon } from "lucide-react";
+import { MarkerPin01Icon, Truck01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import type { Control, Path } from "react-hook-form";
 import {
@@ -162,9 +162,9 @@ export function StopReconciliationCard({
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isPickup ? (
-            <TruckIcon className="text-muted-foreground size-3.5" />
+            <Truck01Icon className="text-muted-foreground size-3.5" />
           ) : (
-            <MapPinIcon className="text-muted-foreground size-3.5" />
+            <MarkerPin01Icon className="text-muted-foreground size-3.5" />
           )}
           <span className="text-xs font-medium">
             {isPickup ? t("Pickup") : t("Delivery")} {stop.sequence + 1}

@@ -42,16 +42,16 @@ import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import type { DriverSettlementStatus, PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpRight,
-  CheckCheck,
-  CircleDollarSign,
-  Plus,
-  RefreshCcw,
-  Send,
-  TriangleAlert,
-  Undo2,
-  X,
-} from "lucide-react";
+  AlertTriangleIcon,
+  ArrowUpRightIcon,
+  CheckDoubleIcon,
+  CurrencyDollarCircleIcon,
+  FlipBackwardIcon,
+  PlusIcon,
+  RefreshCcw02Icon,
+  Send01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -157,7 +157,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
           to={`/payroll/workspace?settlement=${settlement.id}`}
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
-          <ArrowUpRight className="size-3.5" />
+          <ArrowUpRightIcon className="size-3.5" />
           {t("Open in workspace")}
         </Link>
       )}
@@ -260,7 +260,7 @@ function ExceptionsBanner({ settlement }: { settlement: SettlementDetailData }) 
 
   return (
     <Alert variant="warning">
-      <TriangleAlert />
+      <AlertTriangleIcon />
       <AlertTitle>{t("Review required before approval")}</AlertTitle>
       <AlertDescription>
         <ul className="flex flex-col gap-1">
@@ -338,7 +338,7 @@ function SettlementActions({
       {status === "Draft" && (
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("submit")}>
-            <Send className="size-3.5" />
+            <Send01Icon className="size-3.5" />
             {t("Submit for approval")}
           </Button>
           <Button
@@ -347,7 +347,7 @@ function SettlementActions({
             disabled={busy}
             onClick={() => runAction.mutate("recalculate")}
           >
-            <RefreshCcw className="size-3.5" />
+            <RefreshCcw02Icon className="size-3.5" />
             {t("Recalculate")}
           </Button>
         </>
@@ -355,7 +355,7 @@ function SettlementActions({
       {status === "PendingApproval" && (
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("approve")}>
-            <CheckCheck className="size-3.5" />
+            <CheckDoubleIcon className="size-3.5" />
             {t("Approve")}
           </Button>
           <Button
@@ -364,20 +364,20 @@ function SettlementActions({
             disabled={busy}
             onClick={() => setReasonAction("reject")}
           >
-            <Undo2 className="size-3.5" />
+            <FlipBackwardIcon className="size-3.5" />
             {t("Reject")}
           </Button>
         </>
       )}
       {status === "Approved" && (
         <Button size="sm" disabled={busy} onClick={() => runAction.mutate("post")}>
-          <CheckCheck className="size-3.5" />
+          <CheckDoubleIcon className="size-3.5" />
           {t("Post to GL")}
         </Button>
       )}
       {status === "Posted" && (
         <Button size="sm" disabled={busy} onClick={() => setPayDialogOpen(true)}>
-          <CircleDollarSign className="size-3.5" />
+          <CurrencyDollarCircleIcon className="size-3.5" />
           {t("Mark paid")}
         </Button>
       )}
@@ -388,7 +388,7 @@ function SettlementActions({
           disabled={busy}
           onClick={() => setAdjustDialogOpen(true)}
         >
-          <Plus className="size-3.5" />
+          <PlusIcon className="size-3.5" />
           {t("Add adjustment")}
         </Button>
       )}
@@ -400,7 +400,7 @@ function SettlementActions({
           disabled={busy}
           onClick={() => setReasonAction("void")}
         >
-          <X className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
           {t("Void")}
         </Button>
       )}
@@ -781,7 +781,7 @@ function SettlementLines({
                               onClick={() => removeMutation.mutate(line.id as string)}
                               aria-label={t("Remove adjustment")}
                             >
-                              <X className="size-3" />
+                              <XCloseIcon className="size-3" />
                             </Button>
                           )}
                           {canDetach && line.category === "Earning" && line.payEventId && (
@@ -796,7 +796,7 @@ function SettlementLines({
                                 "Remove this pay event — it returns to the unsettled pool for a later settlement",
                               )}
                             >
-                              <X className="size-3" />
+                              <XCloseIcon className="size-3" />
                             </Button>
                           )}
                         </td>

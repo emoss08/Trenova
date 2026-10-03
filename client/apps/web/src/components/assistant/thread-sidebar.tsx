@@ -8,7 +8,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { MessageSquareIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
+import {
+  MessageSquare01Icon,
+  PlusIcon,
+  SearchLgIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { LiveReplyLabel } from "./live-reply-label";
@@ -71,7 +76,7 @@ export function ThreadSidebar({
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("Search conversations")}
           className="h-7 text-xs"
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           aria-label={t("Search conversations")}
         />
         <Tooltip>
@@ -190,7 +195,7 @@ export function ThreadList({
   if (groups.length === 0) {
     return (
       <div className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-center text-xs">
-        <MessageSquareIcon className="size-5" />
+        <MessageSquare01Icon className="size-5" />
         {emptyText}
       </div>
     );
@@ -278,7 +283,7 @@ function ThreadRow({
         className="text-muted-foreground hover:text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
         onClick={onDelete}
       >
-        <Trash2Icon className="size-3.5" />
+        <Trash01Icon className="size-3.5" />
       </Button>
     </div>
   );

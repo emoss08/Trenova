@@ -13,7 +13,13 @@ import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { AccessPolicy } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PencilIcon, PlusIcon, ShieldCheckIcon, ShieldXIcon, Trash2Icon } from "lucide-react";
+import {
+  Edit02Icon,
+  PlusIcon,
+  ShieldTickIcon,
+  ShieldXIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { memo, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { effectFilterOptions } from "./policies/constants";
@@ -170,7 +176,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
         </div>
       ) : (
         <EmptyState
-          icon={<ShieldCheckIcon />}
+          icon={<ShieldTickIcon />}
           label={policies.length === 0 ? "No access policies configured" : "No policies found"}
           description={
             policies.length === 0
@@ -211,7 +217,7 @@ const PolicyRow = memo(function PolicyRow({
 
   const conditionCount = Object.keys(policy.conditions).length;
   const isAllow = policy.effect === "allow";
-  const EffectIcon = isAllow ? ShieldCheckIcon : ShieldXIcon;
+  const EffectIcon = isAllow ? ShieldTickIcon : ShieldXIcon;
   const effectLabel = isAllow ? "Allow" : "Deny";
   const resourceLabel = resourceName || policy.resource;
 
@@ -248,9 +254,7 @@ const PolicyRow = memo(function PolicyRow({
             <span
               className={cn(
                 "font-medium",
-                isAllow
-                  ? "text-success-foreground"
-                  : "text-danger-foreground",
+                isAllow ? "text-success-foreground" : "text-danger-foreground",
                 !policy.enabled && "text-muted-foreground",
               )}
             >
@@ -279,7 +283,7 @@ const PolicyRow = memo(function PolicyRow({
       </div>
       <div className="flex items-center justify-end gap-1">
         <Button size="sm" variant="ghost" onClick={() => onEditPolicy(policy)}>
-          <PencilIcon />
+          <Edit02Icon />
           {t("Edit")}
         </Button>
         <Button
@@ -289,7 +293,7 @@ const PolicyRow = memo(function PolicyRow({
           aria-label={`Delete ${policy.name}`}
           onClick={() => onDeletePolicy(policy.id)}
         >
-          <Trash2Icon />
+          <Trash01Icon />
         </Button>
       </div>
     </div>

@@ -21,7 +21,7 @@ import {
 } from "@trenova/shared/lib/benefits";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { EnrollDialog } from "./enroll-dialog";

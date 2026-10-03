@@ -6,19 +6,19 @@ import {
 } from "@trenova/shared/types/worker-checklist";
 import {
   ClipboardCheckIcon,
-  FileTextIcon,
+  File06Icon,
+  type IconComponent,
   IdCardIcon,
   PackageIcon,
-  SmartphoneIcon,
-  type LucideIcon,
-} from "lucide-react";
+  Phone01Icon,
+} from "@trenova/shared/components/icons";
 
-export const CHECKLIST_ITEM_KIND_ICONS: Record<ChecklistItemKind, LucideIcon> = {
-  Document: FileTextIcon,
+export const CHECKLIST_ITEM_KIND_ICONS: Record<ChecklistItemKind, IconComponent> = {
+  Document: File06Icon,
   Credential: IdCardIcon,
   Task: ClipboardCheckIcon,
   Equipment: PackageIcon,
-  PortalAccess: SmartphoneIcon,
+  PortalAccess: Phone01Icon,
 };
 
 export function isAutoSatisfied(kind: string): boolean {

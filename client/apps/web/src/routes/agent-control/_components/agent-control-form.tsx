@@ -15,7 +15,12 @@ import {
 import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { AwardIcon, DatabaseIcon, GaugeIcon, PauseCircleIcon } from "lucide-react";
+import {
+  Award01Icon,
+  Database01Icon,
+  PauseCircleIcon,
+  Speedometer03Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { personAllowanceOptions, promotionThresholdOptions } from "./agent-control-options";
@@ -165,7 +170,7 @@ export default function AgentControlForm() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-              <AwardIcon className="size-4" />
+              <Award01Icon className="size-4" />
             </span>
             <div className="max-w-prose">
               <p className="text-sm font-semibold">{t("Earned autonomy")}</p>
@@ -202,7 +207,7 @@ export default function AgentControlForm() {
       <Card size="sm" className="gap-3 px-4 py-3">
         <div className="flex items-start gap-3">
           <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <GaugeIcon className="size-4" />
+            <Speedometer03Icon className="size-4" />
           </span>
           <div className="max-w-prose">
             <p className="text-sm font-semibold">{t("Monthly allowance per person")}</p>
@@ -233,7 +238,7 @@ export default function AgentControlForm() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-              <DatabaseIcon className="size-4" />
+              <Database01Icon className="size-4" />
             </span>
             <div className="max-w-prose">
               <p className="text-sm font-semibold">{t("Share corrections for model training")}</p>

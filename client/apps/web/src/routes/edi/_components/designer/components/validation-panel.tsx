@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { ListChecksIcon } from "lucide-react";
+import { ListChecksIcon } from "@trenova/shared/components/icons";
 import {
   useSelectDiagnostic,
   useTemplateDesignerValidationAction,

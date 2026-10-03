@@ -19,7 +19,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { CheckIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { widgetVisualFor, WidgetSketch } from "./widget-gallery-visuals";
@@ -252,7 +252,7 @@ function WidgetGallery({
               focusFirstCard();
             }
           }}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           inputContainerClassName="flex-1"
           className="h-8"
           rightElement={
@@ -267,7 +267,7 @@ function WidgetGallery({
                   searchRef.current?.focus();
                 }}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             ) : undefined
           }
@@ -344,7 +344,7 @@ function GalleryHeader({ used, max, onClose }: { used: number; max: number; onCl
       </div>
       <SlotMeter used={used} max={max} />
       <Button variant="ghost" size="icon-sm" aria-label={t("Close")} onClick={onClose}>
-        <XIcon />
+        <XCloseIcon />
       </Button>
     </DialogHeader>
   );
@@ -594,7 +594,7 @@ function GalleryEmpty({ search, onClear }: { search: string; onClear: () => void
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-      <SearchIcon className="text-muted-foreground/40 size-5" />
+      <SearchLgIcon className="text-muted-foreground/40 size-5" />
       <p className="text-sm font-medium">{t("Nothing matches")}</p>
       <p className="text-muted-foreground max-w-xs text-xs">
         {search.trim() === ""

@@ -7,7 +7,7 @@ import { getProfile, isMoveRemovalAllowed } from "@trenova/shared/lib/capability
 import { queries } from "@/lib/queries";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { MoveEditDialog } from "../shipment-move-edit-dialog";

@@ -5,7 +5,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 import type { WorkerSyncLogLevel } from "@/types/samsara";
-import { CopyIcon, TerminalIcon, Trash2Icon } from "lucide-react";
+import { Copy01Icon, TerminalIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
 
@@ -74,7 +74,7 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
             onClick={handleCopyLogs}
             disabled={logLines.length === 0}
           >
-            <CopyIcon className="size-3.5" />
+            <Copy01Icon className="size-3.5" />
             {t("Copy")}
           </Button>
           <Button
@@ -83,7 +83,7 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
             onClick={() => setLogLines([])}
             disabled={logLines.length === 0}
           >
-            <Trash2Icon className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
             {t("Clear")}
           </Button>
         </div>

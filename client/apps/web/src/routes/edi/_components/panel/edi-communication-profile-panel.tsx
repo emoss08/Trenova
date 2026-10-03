@@ -9,7 +9,12 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIConnectionTestResult } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { KeyRoundIcon, RadioTowerIcon, ServerIcon, ShieldCheckIcon } from "lucide-react";
+import {
+  Key01Icon,
+  Server01Icon,
+  ShieldTickIcon,
+  Signal01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -81,18 +86,18 @@ export function CommunicationProfilePanel({
 
   const formTabs = useMemo<FormTabConfig[]>(
     () => [
-      { value: "overview", label: t("Overview"), icon: ServerIcon, content: <OverviewTab /> },
+      { value: "overview", label: t("Overview"), icon: Server01Icon, content: <OverviewTab /> },
       {
         value: "transport",
         label: t("Transport"),
-        icon: RadioTowerIcon,
+        icon: Signal01Icon,
         content: <TransportTab />,
       },
-      { value: "envelope", label: t("Envelope"), icon: ShieldCheckIcon, content: <EnvelopeTab /> },
+      { value: "envelope", label: t("Envelope"), icon: ShieldTickIcon, content: <EnvelopeTab /> },
       {
         value: "secrets",
         label: t("Secrets"),
-        icon: KeyRoundIcon,
+        icon: Key01Icon,
         content: <SecretsTab profile={profile} />,
       },
     ],

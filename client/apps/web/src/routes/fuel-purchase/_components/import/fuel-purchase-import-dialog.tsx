@@ -63,7 +63,12 @@ import {
   fuelPurchaseImportSetupSchema,
   type FuelPurchaseImportSetupValues,
 } from "@trenova/shared/types/fuel-purchase";
-import { CircleAlertIcon, CircleCheckIcon, DownloadIcon, Trash2Icon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  Download01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -430,7 +435,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
 
               {problem ? (
                 <Alert variant="destructive">
-                  <CircleAlertIcon className="size-4" />
+                  <AlertCircleIcon className="size-4" />
                   <AlertTitle>{t("The statement could not be staged")}</AlertTitle>
                   <AlertDescription>{problem}</AlertDescription>
                 </Alert>
@@ -448,7 +453,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                   onClick={() => downloadTemplate()}
                   className="gap-1.5"
                 >
-                  <DownloadIcon className="size-3.5" />
+                  <Download01Icon className="size-3.5" />
                   {t("Download template")}
                 </Button>
               </div>
@@ -472,7 +477,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
 
               {failed ? (
                 <Alert variant="destructive">
-                  <CircleAlertIcon className="size-4" />
+                  <AlertCircleIcon className="size-4" />
                   <AlertTitle>{t("The statement could not be read")}</AlertTitle>
                   <AlertDescription>
                     {t(
@@ -487,7 +492,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
 
               {warnings.length > 0 ? (
                 <Alert>
-                  <CircleAlertIcon className="size-4" />
+                  <AlertCircleIcon className="size-4" />
                   <AlertDescription>
                     <ul className="list-inside list-disc space-y-0.5">
                       {warnings.map((warning) => (
@@ -510,9 +515,9 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
           {step === "done" && batch ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
               {batch.status === "Committed" ? (
-                <CircleCheckIcon className="text-success size-8" />
+                <CheckCircleIcon className="text-success size-8" />
               ) : (
-                <Trash2Icon className="text-muted-foreground size-8" />
+                <Trash01Icon className="text-muted-foreground size-8" />
               )}
               <p className="text-sm font-medium">{importHeadline(batch)}</p>
               {batch.status === "Committed" ? (
@@ -576,7 +581,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia className="bg-danger-subtle text-destructive">
-              <Trash2Icon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{batch ? discardImportNotice(batch).title : ""}</AlertDialogTitle>
             <AlertDialogDescription>

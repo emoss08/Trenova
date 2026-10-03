@@ -5,7 +5,7 @@ import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import type { LocationDetails } from "@/types/google-maps";
 import { useQuery } from "@tanstack/react-query";
-import { CheckIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   useFormContext,
@@ -241,7 +241,7 @@ export function AddressField<TForm extends FieldValues>({
                     id="address-search-button"
                     className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground flex cursor-pointer items-center gap-1 rounded-md p-1"
                   >
-                    <SearchIcon className="text-muted-foreground size-3" />
+                    <SearchLgIcon className="text-muted-foreground size-3" />
                     <span className="sr-only">{t("Search addresses")}</span>
                   </span>
                 </Button>
@@ -316,7 +316,7 @@ export function AddressField<TForm extends FieldValues>({
                 <span className="absolute top-1/2 right-2 mt-0.5 inline-flex -translate-y-1/2">
                   <Button size="icon-xs" variant="ghost" disabled>
                     <span className="flex items-center gap-1 rounded-md p-1">
-                      <SearchIcon className="text-muted-foreground/40 size-3" />
+                      <SearchLgIcon className="text-muted-foreground/40 size-3" />
                     </span>
                   </Button>
                 </span>

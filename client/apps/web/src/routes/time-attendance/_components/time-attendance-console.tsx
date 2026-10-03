@@ -5,7 +5,11 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { startOfRotaWeek } from "@trenova/shared/lib/scheduling";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { BanknoteIcon, ClipboardCheckIcon, TimerIcon } from "lucide-react";
+import {
+  BankNote01Icon,
+  ClipboardCheckIcon,
+  ClockStopwatchIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { PayrollPanel } from "./payroll-panel";
 import {
@@ -60,7 +64,7 @@ export default function TimeAttendanceConsole() {
       <Tabs defaultValue="clock">
         <TabsList variant="underline">
           <TabsTrigger value="clock">
-            <TimerIcon className="size-3.5" />
+            <ClockStopwatchIcon className="size-3.5" />
             {t("Clock")}
             {onClockCount > 0 ? (
               <Badge variant="neutral" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
@@ -79,7 +83,7 @@ export default function TimeAttendanceConsole() {
           </TabsTrigger>
           {canExport ? (
             <TabsTrigger value="payroll">
-              <BanknoteIcon className="size-3.5" />
+              <BankNote01Icon className="size-3.5" />
               {t("Payroll")}
             </TabsTrigger>
           ) : null}

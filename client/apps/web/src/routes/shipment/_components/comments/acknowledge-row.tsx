@@ -3,7 +3,7 @@ import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { CheckCheckIcon, LoaderIcon } from "lucide-react";
+import { CheckDoubleIcon, Loading02Icon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import type { LocalShipmentComment } from "@/lib/shipment-comment-cache";
 
@@ -38,9 +38,9 @@ export function AcknowledgeRow({
           onClick={onAcknowledge}
         >
           {isAcknowledging ? (
-            <LoaderIcon className="size-3 animate-spin" />
+            <Loading02Icon className="size-3 animate-spin" />
           ) : (
-            <CheckCheckIcon className="size-3" />
+            <CheckDoubleIcon className="size-3" />
           )}
           {t("Acknowledge")}
         </Button>

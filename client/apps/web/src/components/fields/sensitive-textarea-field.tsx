@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Button } from "@trenova/shared/components/ui/button";

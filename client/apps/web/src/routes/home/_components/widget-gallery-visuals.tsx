@@ -1,37 +1,37 @@
 import { cn } from "@trenova/shared/lib/utils";
 import {
   ActivityIcon,
-  BellIcon,
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  Announcement02Icon,
+  Bell01Icon,
   BookmarkIcon,
   CalendarClockIcon,
-  ChartAreaIcon,
-  ChartPieIcon,
-  CheckCheckIcon,
-  CircleAlertIcon,
+  CheckDoubleIcon,
+  ClockRewindIcon,
+  ClockStopwatchIcon,
+  Dataflow04Icon,
   FileClockIcon,
-  GaugeIcon,
-  HistoryIcon,
-  LayoutDashboardIcon,
-  LayoutGridIcon,
-  LayoutPanelTopIcon,
-  MegaphoneIcon,
-  MapPinnedIcon,
-  NetworkIcon,
+  Grid01Icon,
+  type IconComponent,
+  LayoutAlt04Icon,
+  LayoutTopIcon,
+  LineChartUp01Icon,
+  MarkerPin04Icon,
   PackageSearchIcon,
+  PieChart01Icon,
   ReceiptTextIcon,
   RouteIcon,
   ShieldAlertIcon,
-  StarIcon,
+  Speedometer03Icon,
+  Star01Icon,
   TableIcon,
-  TargetIcon,
-  TimerIcon,
-  TriangleAlertIcon,
-  TruckIcon,
-  UsersIcon,
-  WalletIcon,
+  Target05Icon,
+  Truck01Icon,
+  Users01Icon,
+  Wallet02Icon,
   ZapIcon,
-  type LucideIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 
 /**
  * The shape a widget draws on the canvas, reduced to the handful of silhouettes
@@ -56,11 +56,11 @@ export type WidgetShape =
   | "link";
 
 export type WidgetVisual = {
-  icon: LucideIcon;
+  icon: IconComponent;
   shape: WidgetShape;
 };
 
-const FALLBACK: WidgetVisual = { icon: LayoutGridIcon, shape: "list" };
+const FALLBACK: WidgetVisual = { icon: Grid01Icon, shape: "list" };
 
 /**
  * Keyed by the widget keys the Go catalog defines. A key that reaches a client
@@ -69,43 +69,43 @@ const FALLBACK: WidgetVisual = { icon: LayoutGridIcon, shape: "list" };
  */
 const WIDGET_VISUALS: Record<string, WidgetVisual> = {
   // Work
-  attention: { icon: TriangleAlertIcon, shape: "grid" },
+  attention: { icon: AlertTriangleIcon, shape: "grid" },
   unassigned: { icon: PackageSearchIcon, shape: "list" },
   exceptions: { icon: ShieldAlertIcon, shape: "list" },
-  "detention-watch": { icon: TimerIcon, shape: "list" },
+  "detention-watch": { icon: ClockStopwatchIcon, shape: "list" },
   "tomorrows-pickups": { icon: CalendarClockIcon, shape: "list" },
-  "my-approvals": { icon: CheckCheckIcon, shape: "list" },
+  "my-approvals": { icon: CheckDoubleIcon, shape: "list" },
   "billing-queue": { icon: ReceiptTextIcon, shape: "list" },
-  "service-failures": { icon: CircleAlertIcon, shape: "list" },
-  "edi-attention": { icon: NetworkIcon, shape: "list" },
+  "service-failures": { icon: AlertCircleIcon, shape: "list" },
+  "edi-attention": { icon: Dataflow04Icon, shape: "list" },
   "expiring-credentials": { icon: FileClockIcon, shape: "list" },
-  "worker-attention": { icon: UsersIcon, shape: "grid" },
+  "worker-attention": { icon: Users01Icon, shape: "grid" },
 
   // Pulse
-  kpi: { icon: GaugeIcon, shape: "metric" },
-  "kpi-row": { icon: LayoutPanelTopIcon, shape: "metricStrip" },
-  "ar-snapshot": { icon: WalletIcon, shape: "stats" },
-  "revenue-trend": { icon: ChartAreaIcon, shape: "chart" },
-  "fleet-status": { icon: TruckIcon, shape: "stats" },
-  "on-time-goal": { icon: TargetIcon, shape: "gauge" },
+  kpi: { icon: Speedometer03Icon, shape: "metric" },
+  "kpi-row": { icon: LayoutTopIcon, shape: "metricStrip" },
+  "ar-snapshot": { icon: Wallet02Icon, shape: "stats" },
+  "revenue-trend": { icon: LineChartUp01Icon, shape: "chart" },
+  "fleet-status": { icon: Truck01Icon, shape: "stats" },
+  "on-time-goal": { icon: Target05Icon, shape: "gauge" },
 
   // Insight
   report: { icon: TableIcon, shape: "table" },
-  "dashboard-link": { icon: LayoutDashboardIcon, shape: "link" },
+  "dashboard-link": { icon: LayoutAlt04Icon, shape: "link" },
   "lane-heatmap": { icon: RouteIcon, shape: "heatmap" },
-  "customer-mix": { icon: ChartPieIcon, shape: "donut" },
+  "customer-mix": { icon: PieChart01Icon, shape: "donut" },
 
   // Orientation
   "quick-actions": { icon: ZapIcon, shape: "grid" },
-  favorites: { icon: StarIcon, shape: "list" },
-  "jump-back-in": { icon: HistoryIcon, shape: "list" },
+  favorites: { icon: Star01Icon, shape: "list" },
+  "jump-back-in": { icon: ClockRewindIcon, shape: "list" },
   "saved-views": { icon: BookmarkIcon, shape: "list" },
   activity: { icon: ActivityIcon, shape: "list" },
-  notifications: { icon: BellIcon, shape: "list" },
+  notifications: { icon: Bell01Icon, shape: "list" },
 
   // Comms
-  announcement: { icon: MegaphoneIcon, shape: "text" },
-  map: { icon: MapPinnedIcon, shape: "map" },
+  announcement: { icon: Announcement02Icon, shape: "text" },
+  map: { icon: MarkerPin04Icon, shape: "map" },
 };
 
 export function widgetVisualFor(key: string): WidgetVisual {
@@ -122,7 +122,9 @@ function Line({ className }: { className?: string }) {
 
 function Cell({ className }: { className?: string }) {
   return (
-    <span className={cn("border-foreground/10 flex flex-col gap-1 rounded-md border p-1", className)}>
+    <span
+      className={cn("border-foreground/10 flex flex-col gap-1 rounded-md border p-1", className)}
+    >
       <span className={cn("block h-1 w-2/3 rounded-full", GHOST)} />
       <span className={cn("block h-1.5 w-1/2 rounded-full", GHOST_STRONG)} />
     </span>

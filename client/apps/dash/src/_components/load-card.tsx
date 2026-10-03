@@ -10,7 +10,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import type { PortalStopAction } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { Link } from "react-router";
 import { toast } from "sonner";

@@ -13,7 +13,7 @@ import {
   credentialCategorySchema,
   type CredentialTypeFormValues,
 } from "@trenova/shared/types/worker-credential";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const CATEGORY_OPTIONS = credentialCategorySchema.options.map((value) => ({
@@ -122,7 +122,7 @@ export function CredentialTypeForm({
         )}
       >
         <Alert variant="default">
-          <InfoIcon className="size-4" />
+          <InfoCircleIcon className="size-4" />
           <AlertTitle>{t("One active credential per worker")}</AlertTitle>
           <AlertDescription>
             {t(

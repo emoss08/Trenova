@@ -27,7 +27,14 @@ import { apiService } from "@/services/api";
 import type { ApiKeyPermissionInput } from "@/types/api-key";
 import type { DataScope } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
-import { CheckIcon, ChevronDownIcon, EyeIcon, SearchIcon, XIcon, ZapIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  EyeIcon,
+  SearchLgIcon,
+  XCloseIcon,
+  ZapIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { ApiKeyPanelFormValues } from "./api-key-panel";
@@ -220,7 +227,7 @@ export function APIKeyPermissionsEditor() {
       description={t("Apply a global preset, then narrow access by resource where needed.")}
       action={
         <div className="relative w-48 sm:w-64">
-          <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+          <SearchLgIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
           <Input
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -233,7 +240,7 @@ export function APIKeyPermissionsEditor() {
               onClick={() => setSearchQuery("")}
               className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
             >
-              <XIcon className="size-4" />
+              <XCloseIcon className="size-4" />
             </button>
           )}
         </div>
@@ -248,11 +255,7 @@ export function APIKeyPermissionsEditor() {
             size="sm"
             onClick={() => applyBulkPreset(allResources, mode)}
           >
-            {mode === "read"
-              ? t("All read")
-              : mode === "write"
-                ? t("All write")
-                : t("Full access")}
+            {mode === "read" ? t("All read") : mode === "write" ? t("All write") : t("Full access")}
           </Button>
         ))}
         <Button
@@ -273,7 +276,9 @@ export function APIKeyPermissionsEditor() {
             {selectionSummary.selectedOperations}{" "}
             {pluralize("operation", selectionSummary.selectedOperations)}
           </Badge>
-          <Badge variant="neutral" appearance="outline">{selectionSummary.modeLabel}</Badge>
+          <Badge variant="neutral" appearance="outline">
+            {selectionSummary.modeLabel}
+          </Badge>
         </div>
       </div>
 
