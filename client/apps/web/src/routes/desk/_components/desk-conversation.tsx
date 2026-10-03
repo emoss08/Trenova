@@ -738,7 +738,6 @@ export function DeskConversation({
                               text={entry.message.content}
                               mentions={entry.message.mentions}
                               attachments={entry.message.attachments}
-                              page={entry.message.pageContext}
                             />
                           </DeskRow>
                         );
@@ -939,7 +938,6 @@ export function DeskConversation({
                             text={turn.userContent}
                             attachments={turn.attachments}
                             mentions={turn.mentions}
-                            page={turn.pageContext}
                             muted={turn.status === "refused"}
                             tag={turn.status === "refused" ? t("Not sent to the agent") : undefined}
                           />

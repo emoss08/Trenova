@@ -13343,3 +13343,184 @@
     opacity: 0;
   }
 }
+/* the person's message: a bubble on the right, as the spec draws it */
+.dk-qb {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.dk-qb > .dk-q {
+  width: fit-content;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--dsk-sunken);
+  text-wrap: pretty;
+}
+.dk-qb > .dk-q:not(.dk-mid):not(.dk-long) {
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.008em;
+}
+.dk-qb > .dk-q.dk-mid {
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.dk-qb > .dk-q.dk-long {
+  padding: 12px 16px;
+  border-radius: 14px;
+}
+.dk-qb > .dk-q.dk-ec-q.dk-muted {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+
+/* a reply's markdown at the design's values (prototype desk.css .md rules) */
+.dk-prose .dk-md > * {
+  margin: 0;
+}
+.dk-prose .dk-md > * + * {
+  margin-top: 12px;
+}
+.dk-prose .dk-md .md-h {
+  color: var(--dsk-fg);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+  margin: 0;
+}
+.dk-prose .dk-md > * + .md-h {
+  margin-top: 22px;
+}
+.dk-prose .dk-md .md-h + * {
+  margin-top: 8px;
+}
+.dk-prose .dk-md .md-h1 {
+  font-size: 1.3em;
+}
+.dk-prose .dk-md .md-h2 {
+  font-size: 1.13em;
+}
+.dk-prose .dk-md .md-h3 {
+  font-size: 1em;
+}
+.dk-prose .dk-md .md-h4 {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dsk-subtle);
+  font-weight: 500;
+}
+.dk-prose .dk-md .md-h5 {
+  font-size: 0.93em;
+  font-weight: 500;
+}
+.dk-prose .dk-md .md-h6 {
+  font-size: 0.86em;
+  font-weight: 500;
+  color: var(--dsk-subtle);
+}
+.dk-prose .dk-md li + li {
+  margin-top: 4px;
+}
+.dk-prose .dk-md ul > li::marker {
+  color: var(--dsk-faint);
+}
+.dk-prose .dk-md ol > li::marker {
+  color: var(--dsk-subtle);
+  font: 500 0.9em var(--font-mono);
+}
+.dk-prose .dk-md hr {
+  height: 1px;
+  margin: 20px 0;
+  border: 0;
+  background: var(--dsk-b-sub);
+}
+.dk-prose .dk-md div:has(> table) {
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+  background: var(--dsk-card);
+}
+.dk-prose .dk-md table {
+  font-size: 0.86em;
+  line-height: 1.45;
+}
+.dk-prose .dk-md th {
+  padding: 8px 12px;
+  background: var(--dsk-sunken);
+  border-bottom: 1px solid var(--dsk-b);
+}
+.dk-prose .dk-md td {
+  padding: 8px 12px;
+  color: var(--dsk-fg2);
+  vertical-align: top;
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-prose .dk-md tbody tr:last-child td {
+  border-bottom: 0;
+}
+.dk-prose .dk-md tbody tr {
+  animation: dk-pop 260ms var(--dk-settle) both;
+}
+.dk-prose .dk-md tbody tr:hover td {
+  background: var(--dsk-hover);
+}
+.dk-prose .dk-md td.md-num {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: 0.95em;
+  white-space: nowrap;
+}
+.dk-prose .dk-md td:first-child {
+  font-weight: inherit;
+}
+.dk-prose .dk-md .md-code {
+  margin: 0;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-prose .dk-md .md-code-h {
+  height: 32px;
+  padding: 0 6px 0 12px;
+  font: 11px var(--font-mono);
+}
+.dk-prose .dk-md .md-code-copy {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  font: inherit;
+  color: var(--dsk-subtle);
+  transition:
+    background 140ms,
+    color 140ms;
+}
+.dk-prose .dk-md .md-code-copy.md-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-prose .dk-md .md-code pre {
+  padding: 12px 14px;
+  font: 12.5px/1.65 var(--font-mono);
+}
+.dk-prose .dk-md .katex-display {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-prose .dk-md .katex-display > .katex {
+  font-size: 1.12em;
+}
+.dk-prose .dk-md .md-math-raw {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  font: 12.5px/1.6 var(--font-mono);
+  color: var(--dsk-subtle);
+  white-space: pre-wrap;
+}
