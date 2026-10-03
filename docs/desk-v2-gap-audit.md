@@ -201,7 +201,7 @@ Paths are relative to `client/apps/web/src/` unless they start with `services/` 
 
 ## Hand-off and schedule cards
 - [MISSING] `HandoffCard`: agent tile, "Handed off to {agent}", "{time} · this conversation stays open here", "Carried over" chips, and "Open their conversation" (design/threadx.jsx:52-63). `useDeskHandoffStore` in desk-conversation.tsx:168 is a composer-seed hand-off, not this card.
-- [MISSING] `SchedCard`: "Scheduled", "Results will post into this conversation", the schedule row, and a "Schedule deleted" state (design/threadx.jsx:65-70). There are no matches in the client.
+- [MATCHES] `SchedCard`: `DeskScheduleCard` (conversation/desk-schedule-card.tsx), drawn from the thread's `Schedule` message with the schedule read from `GET /assistant/threads/:id/schedules/`.
 
 ## Backend gaps
 
@@ -276,7 +276,7 @@ Paths: P = design_handoff_desk_v2/design, W = client/apps/web/src, D = W/routes/
 ## 4. Composer
 - [MATCHES] Attachments max 5 (D/composer/desk-attachments.ts:6, 158-162). Full-state title "Up to 5 files per message" (desk-composer.tsx:335).
 - [MATCHES] `@` mentions with picker and mirror (desk-composer.tsx:20; desk-mentions.tsx:167, 458).
-- [PARTIAL] Slash commands with typed slots — status / quote / report / explain with identical slots and templates (W/components/assistant/composer-commands.ts:26-50; D/composer/desk-slash.tsx). **`/schedule` is missing**, both from the command list and from `COMMAND_ICONS` (desk-slash.tsx:13-18).
+- [PARTIAL] Slash commands with typed slots — status / quote / report / explain with identical slots and templates (W/components/assistant/composer-commands.ts:26-50; D/composer/desk-slash.tsx). `/schedule` is now listed too, with a "when" slot that takes the whole cadence (`splitScheduleSlots`).
 - [MATCHES] Page-context chip with Explain (desk-conversation.tsx:1176-1181; desk-page-chip.tsx:64-75).
 - [MATCHES] Agent picker (desk-composer.tsx:16) and model picker with Auto first and default (desk-model-picker.tsx:92-147).
 - [MISSING] Context meter + compaction. No ContextMeter, CtxDrain, "Context is nearly full · compacting" / "Compacting the conversation…" status, Cancel, or "You can reply once compacting finishes" placeholder. The only related UI is the hard-stop "This conversation is too long for {model}" card (desk-conversation.tsx:1100-1118). `DeskUsageMeter` is a spend budget, not context (desk-locks.tsx:250).
@@ -284,8 +284,8 @@ Paths: P = design_handoff_desk_v2/design, W = client/apps/web/src, D = W/routes/
 - [MATCHES] Hint line: "Press ⌘↵ to approve" when the card shows, otherwise the "Desk can make mistakes…" disclaimer (desk-conversation.tsx:1196-1207).
 
 ## 5. Scheduled requests (§9; P/app.jsx:307, P/pages.jsx:2-31, SchedCard threadx.jsx:58-63)
-- [MISSING] Detecting `^(/schedule\s+)?(every|each)\s` on send, and the cadence parse (weekday/day/morning/weekday names/week + "at h[:mm] am|pm", default 8:00 AM, label "Every weekday · 7:30 AM").
-- [MISSING] SchedCard: "Scheduled · Results will post into this conversation" plus a SchedRow (clock icon, prompt, "{when} · next {next}" or "paused", pause/resume, delete). Also missing: the deleted state "Schedule deleted", run now, and any schedule list. Nothing in W/routes/desk or W/components/assistant matches schedule creation.
+- [MATCHES] Detection on send (`isScheduleRequest`, composer-commands.ts) routes the message to `POST /assistant/threads/:id/schedules/`; the server parses it (`conversationschedule.ParseRequest`). A message that opens with "every" but no cadence the parser reads ("every time…") stays an ordinary question. The schedule is not answered at once: the prototype only inserts the card, and the first answer comes on the first slot (or `POST /assistant/schedules/:id/run/`).
+- [MATCHES] SchedCard with SchedRow, pause/resume, delete and "Schedule deleted". Run now and the per-person list exist in the API; the prototype shows Run now only on the unshipped Today page, so the card has no button for it.
 
 ## BACKEND GAPS (services/tms)
 
@@ -314,7 +314,7 @@ Paths: P = design_handoff_desk_v2/design, W = client/apps/web/src, D = W/routes/
 - **Audit:** move the `OpApprove` audit to commit and log undo separately.
 - **Realtime:** add events for approving, committed and undone through the existing `announce` (service.go:600).
 
-**(c) Schedules — infra exists to reuse; no conversation schedules.**
+**(c) Schedules — done** (`conversationschedule`, `conversationscheduleservice`, `conversationschedulejobs`; migration 20261231007460). Run now starts the turn directly rather than through the schedule's Trigger, so the click gets the turn or the reason there is none.
 - **Runner pattern:** `agentjobs.DefinitionSchedules` keeps one Temporal Schedule per agent, with `ScheduleSpec{CronExpressions, TimeZoneName}`, `Paused`, overlap SKIP, a 5m catch-up window, and memo ownership. It also has `Sync`/`Remove`/`Reconcile` (T/core/temporaljobs/agentjobs/definitionschedules.go:94-246). Copy it as `conversation-schedule/{id}`: pause/resume maps to `Paused`, and "run now" maps to Temporal schedule Trigger.
 - **Alternative:** user-owned DB rows dispatched by a minute sweep, as in `report.ReportSchedule` (cron_expression, timezone, enabled, run_as_id, next_run_at, consecutive_failures; T/core/domain/report/schedule.go:207-232) with `reportjobs` dispatch (dispatch.go:65-76 via `cronutils.NextRun`, /home/claude/trenova/shared/cronutils/cronutils.go:15, 25).
 - **New table:** `conversation_schedules` (thread_id, user_id, prompt, cadence label, cron, timezone, enabled, last_run_at, next_run_at, last_turn_id).

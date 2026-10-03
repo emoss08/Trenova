@@ -26,6 +26,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router";
 import {
+  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -56,6 +57,12 @@ import {
   DeskPoorlyReadCard,
 } from "./conversation/desk-failures";
 import { DeskStepFailures, DeskWriteResultCard } from "./conversation/desk-tool-failures";
+import { DeskScheduleCard } from "./conversation/desk-schedule-card";
+import {
+  isScheduleRequest,
+  useCreateSchedule,
+  useScheduleActions,
+} from "./conversation/desk-schedules";
 import {
   DeskInlineArtifact,
   DeskQuestion,
@@ -215,6 +222,38 @@ export function DeskConversation({
     }
   }, [clearAttachments, clearComposerContext, handoff, onOpeningQuestionSent, setHandoff]);
 
+  // A conversation started from the front page with "every weekday at 7:30,
+  // …" is a schedule, not a question: it is kept here rather than handed to
+  // the turn.
+  const scheduling = useCreateSchedule(thread.id);
+  const openingSchedule =
+    opening.openingQuestion && isScheduleRequest(opening.openingQuestion)
+      ? opening.openingQuestion
+      : null;
+  const scheduledOpening = useRef(false);
+  const { create: createSchedule } = scheduling;
+  useEffect(() => {
+    if (openingSchedule === null || openingHold || scheduledOpening.current) {
+      return;
+    }
+    scheduledOpening.current = true;
+    createSchedule(openingSchedule);
+    openingSent();
+  }, [createSchedule, openingHold, openingSchedule, openingSent]);
+  const schedulesQuery = useQuery(queries.assistant.schedules(thread.id));
+  const scheduleById = useMemo(
+    () => new Map((schedulesQuery.data?.items ?? []).map((item) => [item.id, item])),
+    [schedulesQuery.data],
+  );
+  const scheduleActions = useScheduleActions(thread.id);
+  const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    // "Today" and "Tomorrow" on a schedule's next run move at midnight; a
+    // minute is close enough for a label.
+    const timer = window.setInterval(() => setClock(Math.floor(Date.now() / 1000)), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const model = useThreadModel({
     thread,
     agent,
@@ -224,7 +263,7 @@ export function DeskConversation({
     onWorkingChange: desk.setWorking,
     onNavigate: carryConversation,
     followNavigation: false,
-    openingQuestion: opening.openingQuestion,
+    openingQuestion: openingSchedule === null ? opening.openingQuestion : undefined,
     onOpeningQuestionSent: openingSent,
     openingHold,
     openingPayload,
@@ -669,7 +708,7 @@ export function DeskConversation({
           headed.add(entry.message.id);
         }
         replyHeaded = true;
-      } else if (entry.kind === "user") {
+      } else if (entry.kind === "user" || entry.kind === "schedule") {
         replyHeaded = false;
       }
       if (!seenFirst) {
@@ -739,6 +778,30 @@ export function DeskConversation({
                               attachments={entry.message.attachments}
                             />
                           </DeskRow>
+                        );
+                      }
+                      if (entry.kind === "schedule") {
+                        const scheduleId = entry.message.scheduleId ?? "";
+                        return (
+                          <Fragment key={entry.message.id}>
+                            <DeskRow kind="question" first={isFirst(entry.message.id)}>
+                              <DeskQuestion text={entry.message.content} />
+                            </DeskRow>
+                            <DeskRow kind="event">
+                              <DeskScheduleCard
+                                schedule={
+                                  schedulesQuery.data
+                                    ? (scheduleById.get(scheduleId) ?? null)
+                                    : undefined
+                                }
+                                now={clock}
+                                timezone={timezone}
+                                disabled={scheduleActions.busy}
+                                onToggle={scheduleActions.toggle}
+                                onDelete={scheduleActions.remove}
+                              />
+                            </DeskRow>
+                          </Fragment>
                         );
                       }
                       if (entry.kind === "declined") {
@@ -1007,6 +1070,11 @@ export function DeskConversation({
                         </div>
                       </DeskRow>
                     )}
+                    {scheduling.pending !== null && (
+                      <DeskRow kind="question" first={entries.length === 0}>
+                        <DeskQuestion text={scheduling.pending} />
+                      </DeskRow>
+                    )}
                     {queued && (
                       <DeskRow kind="question" first={entries.length === 0}>
                         <DeskQuestion text={queued.content} />
@@ -1142,6 +1210,14 @@ export function DeskConversation({
                         value={model.draft}
                         onChange={model.onDraftChange}
                         onSend={(content, payload) => {
+                          if (isScheduleRequest(content)) {
+                            // Kept as a schedule, not asked: its card says when
+                            // it runs. Refused, the words go back in the box.
+                            createSchedule(content, model.onDraftChange);
+                            composerContext.clear();
+                            attachments.clear();
+                            return;
+                          }
                           if (!online) {
                             setQueued({ content, payload });
                           } else {

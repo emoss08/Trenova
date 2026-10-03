@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -52,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/completionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/conversationschedulejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/dispatchjobs"
@@ -184,6 +186,8 @@ func Options() fx.Option {
 		assistantservice.Module,
 		assistantturnservice.Module,
 		assistantfollowupservice.Module,
+		conversationscheduleservice.Module,
+		conversationschedulejobs.Module,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,
@@ -288,6 +292,7 @@ func WorkerOptions() fx.Option {
 		api.ServiceModule,
 		temporaljobs.WorkerModule,
 		agentjobs.WorkerModule,
+		conversationschedulejobs.WorkerModule,
 		agentqualityjobs.WorkerModule,
 	)
 }

@@ -35,11 +35,16 @@ const (
 	// call; the model is never sent them again, because the agent that
 	// delegated only ever saw its own call and the answer it got back.
 	MessageKindDelegated = MessageKind("Delegated")
+	// MessageKindSchedule is a request the person asked to have repeated. It
+	// is kept in the person's words with the schedule it made, and drawn as
+	// that schedule's card. The model is never sent it: nothing answered it,
+	// and each run asks the request afresh in a turn of its own.
+	MessageKindSchedule = MessageKind("Schedule")
 )
 
 func (k MessageKind) IsValid() bool {
 	switch k {
-	case MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated:
+	case MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated, MessageKindSchedule:
 		return true
 	default:
 		return false
@@ -49,13 +54,18 @@ func (k MessageKind) IsValid() bool {
 // AllMessageKinds is every kind a message may be, in the order they were
 // added.
 func AllMessageKinds() []MessageKind {
-	return []MessageKind{MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated}
+	return []MessageKind{
+		MessageKindMessage,
+		MessageKindDecisionNote,
+		MessageKindDelegated,
+		MessageKindSchedule,
+	}
 }
 
 // ModelHiddenKinds are the kinds a conversation keeps and never replays to
 // the model.
 func ModelHiddenKinds() []MessageKind {
-	return []MessageKind{MessageKindDelegated}
+	return []MessageKind{MessageKindDelegated, MessageKindSchedule}
 }
 
 // ThreadStatus is a conversation's lifecycle.

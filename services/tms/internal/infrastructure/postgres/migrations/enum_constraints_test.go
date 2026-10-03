@@ -243,6 +243,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(conversation.AllMessageKinds()),
 		},
 		{
+			name:   "ck_assistant_turns_origin",
+			values: stringsOf(conversation.AllAssistantTurnOrigins()),
+		},
+		{
 			name:   "ck_agent_eval_cases_source",
 			values: stringsOf(agentquality.AllCaseSources()),
 		},

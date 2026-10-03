@@ -75,6 +75,14 @@ const PATHS = {
   shield: <path d="M12 3l7 3v5.5c0 4.2-2.9 7.7-7 8.5-4.1-.8-7-4.3-7-8.5V6z" />,
   undo: <path d="M9 14l-5-5 5-5M4 9h10a6 6 0 0 1 0 12h-3" />,
   trash: <path d="M4.5 7h15M10 7V5h4v2M6.5 7l1 12h9l1-12M10 11v5M14 11v5" />,
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
+  pause: <path d="M9 6v12M15 6v12" />,
+  play: <path d="M8 5.5v13l10-6.5z" />,
   enter: <path d="M19 5v7a3 3 0 0 1-3 3H6M10 11l-4 4 4 4" />,
   chat: (
     <path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h0A2.5 2.5 0 0 1 5 13.5z" />

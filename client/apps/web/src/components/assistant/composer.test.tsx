@@ -45,8 +45,8 @@ describe("Composer slash commands", () => {
     renderComposer({ draft: "/" });
 
     expect(screen.getByRole("listbox", { name: /starter questions/i })).toBeInTheDocument();
-    // The four commands, then the agent's two questions.
-    expect(screen.getAllByRole("option")).toHaveLength(6);
+    // The five commands, then the agent's two questions.
+    expect(screen.getAllByRole("option")).toHaveLength(7);
   });
 
   it("narrows the list by what follows the slash", () => {
@@ -85,12 +85,13 @@ describe("Composer slash commands with slots", () => {
     const { onDraftChange, onSend } = renderComposer({ draft: "/" });
 
     const options = screen.getAllByRole("option");
-    expect(options[0]).toHaveTextContent("/status");
+    expect(options[0]).toHaveTextContent("/schedule");
+    expect(options[1]).toHaveTextContent("/status");
 
     fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
 
     expect(onSend).not.toHaveBeenCalled();
-    expect(onDraftChange).toHaveBeenCalledWith("/status ");
+    expect(onDraftChange).toHaveBeenCalledWith("/schedule ");
   });
 
   it("shows the empty slot as a hint and sends the filled question on Enter", () => {

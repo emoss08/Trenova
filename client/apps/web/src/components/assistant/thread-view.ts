@@ -21,6 +21,7 @@ export type ThreadEntry =
   | { kind: "decision"; message: AssistantMessage }
   | { kind: "declined"; message: AssistantMessage }
   | { kind: "refusal"; message: AssistantMessage }
+  | { kind: "schedule"; message: AssistantMessage }
   | { kind: "assistant"; message: AssistantMessage; tools: ToolExchange[] };
 
 /**
@@ -82,6 +83,9 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
         break;
       case "refusal":
         entries.push({ kind: "refusal", message });
+        break;
+      case "schedule":
+        entries.push({ kind: "schedule", message });
         break;
       case "assistant": {
         const tools: ToolExchange[] = [...orphans];

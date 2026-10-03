@@ -13786,3 +13786,88 @@
     transform: scale(1);
   }
 }
+/* Schedule card (threadx.css .schc, pages.css .sch-*): a request the person
+   scheduled, in the conversation it was asked in. */
+.dk-schc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--dsk-card);
+  box-shadow: 0 0 0 1px var(--dsk-b);
+  animation: dk-nl 320ms var(--dk-settle) both;
+}
+.dk-schc-h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.dk-schc-h b {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-schc-h span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-schc.dk-gone {
+  flex-direction: row;
+  align-items: center;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-sch-r {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px 8px 10px;
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+}
+.dk-sch-r.dk-fresh {
+  animation: dk-pop 320ms var(--dk-spring) both;
+  box-shadow: 0 0 0 1px var(--dsk-b-strong);
+}
+.dk-sch-r.dk-off .dk-sch-t {
+  opacity: 0.5;
+}
+.dk-sch-i {
+  flex: none;
+  color: var(--dsk-muted);
+  display: grid;
+  place-items: center;
+}
+.dk-sch-t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dk-sch-t b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-sch-t em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-sch-r .dk-ib {
+  width: 26px;
+  height: 26px;
+  color: var(--dsk-subtle);
+}
+.dk-sch-r .dk-ib:hover {
+  color: var(--dsk-fg);
+}
+.dk-sch-r .dk-ib:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}

@@ -11,6 +11,7 @@ import { Fragment, useState, type KeyboardEvent, type RefObject } from "react";
 import { DeskIcon, type DeskIconName } from "../desk-icons";
 
 const COMMAND_ICONS: Record<string, DeskIconName> = {
+  schedule: "receipt",
   status: "truck",
   quote: "route",
   report: "compass",

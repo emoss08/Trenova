@@ -26,6 +26,9 @@ import {
   assistantProviderListSchema,
   assistantThreadListSchema,
   assistantThreadSchema,
+  conversationScheduleListSchema,
+  conversationScheduleSchema,
+  createdScheduleSchema,
   parseAssistantStreamEvent,
   saveAgentDefinitionRequestSchema,
   sendMessageResultSchema,
@@ -36,6 +39,7 @@ import {
   type ThreadOrigin,
   type AssistantStreamEvent,
   type AssistantThread,
+  type ConversationSchedule,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
 
@@ -72,8 +76,11 @@ export type ActiveTurn = {
   threadId: string;
   status: string;
   workflowId?: string;
-  /** What started the turn: the person, or the application reporting a decision. */
-  origin?: "Person" | "DecisionFollowUp";
+  /**
+   * What started the turn: the person, the application reporting a decision,
+   * or a request the person scheduled coming round.
+   */
+  origin?: "Person" | "DecisionFollowUp" | "Scheduled";
   /** The question the turn answers, when a person asked one. */
   input?: string;
 };
@@ -171,6 +178,55 @@ export class AssistantService {
       pinned,
     });
     return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
+  }
+
+  /**
+   * The requests scheduled in one conversation, newest first. A conversation
+   * keeps at most 25, so the first page is all of them.
+   */
+  public async listThreadSchedules(
+    threadId: AssistantThread["id"],
+    options?: { signal?: AbortSignal; limit?: number; offset?: number },
+  ) {
+    const response = await api.get(
+      `/assistant/threads/${threadId}/schedules/?limit=${options?.limit ?? 25}&offset=${options?.offset ?? 0}`,
+      { signal: options?.signal },
+    );
+    return safeParse(conversationScheduleListSchema, response, "Conversation Schedule");
+  }
+
+  /** Every request the person scheduled, across their conversations, newest first. */
+  public async listSchedules(options?: { signal?: AbortSignal; limit?: number; offset?: number }) {
+    const response = await api.get(
+      `/assistant/schedules/?limit=${options?.limit ?? 25}&offset=${options?.offset ?? 0}`,
+      { signal: options?.signal },
+    );
+    return safeParse(conversationScheduleListSchema, response, "Conversation Schedule");
+  }
+
+  /**
+   * Schedules a message: "every weekday at 7:30am, …" or "/schedule …". The
+   * server reads the cadence and answers with the schedule and its card.
+   */
+  public async createSchedule(threadId: AssistantThread["id"], content: string) {
+    const response = await api.post(`/assistant/threads/${threadId}/schedules/`, { content });
+    return safeParse(createdScheduleSchema, response, "Conversation Schedule");
+  }
+
+  /** Pauses or resumes a schedule. */
+  public async setScheduleEnabled(id: ConversationSchedule["id"], enabled: boolean) {
+    const response = await api.patch(`/assistant/schedules/${id}/`, { enabled });
+    return safeParse(conversationScheduleSchema, response, "Conversation Schedule");
+  }
+
+  public async deleteSchedule(id: ConversationSchedule["id"]) {
+    await api.delete(`/assistant/schedules/${id}/`);
+  }
+
+  /** Asks a schedule's request now; answers with the turn to watch. */
+  public async runSchedule(id: ConversationSchedule["id"]) {
+    const response = await api.post(`/assistant/schedules/${id}/run/`, {});
+    return safeParse(startedTurnSchema, response, "Assistant Turn");
   }
 
   public async getThread(id: AssistantThread["id"]) {

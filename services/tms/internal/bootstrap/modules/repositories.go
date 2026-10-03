@@ -63,6 +63,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/costingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerpaymentrepository"
@@ -376,6 +377,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	conversationrepository.New,
 	conversationrepository.NewThreadOwners,
 	conversationrepository.NewPageThreads,
+	conversationschedulerepository.New,
 	aiproviderrepository.New,
 	assignmentrepository.New,
 	bankreceiptrepository.New,

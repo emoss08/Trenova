@@ -268,7 +268,9 @@ export function MessageThread({
             delay={delay ?? 0}
             risen={risen.current}
           >
-            {entry.kind === "user" ? (
+            {/* A scheduled request reads as what the person wrote; its card
+                and controls are the Desk's. */}
+            {entry.kind === "user" || entry.kind === "schedule" ? (
               <UserTurn
                 content={entry.message.content}
                 sentAt={entry.message.createdAt}
@@ -276,7 +278,9 @@ export function MessageThread({
                 attachments={entry.message.attachments}
                 mentions={entry.message.mentions}
                 onResend={
-                  !readOnly && entry.message.sequence === latestUserSequence
+                  !readOnly &&
+                  entry.kind === "user" &&
+                  entry.message.sequence === latestUserSequence
                     ? () => void send(entry.message.content, undefined, providerId)
                     : undefined
                 }

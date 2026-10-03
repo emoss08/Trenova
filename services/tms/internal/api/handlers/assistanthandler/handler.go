@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,6 +29,7 @@ type Params struct {
 	Service              serviceports.AssistantService
 	Turns                *assistantturnservice.Service
 	Workflows            serviceports.WorkflowStarter
+	Schedules            *conversationscheduleservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -37,13 +39,14 @@ type Handler struct {
 	service   serviceports.AssistantService
 	turns     *assistantturnservice.Service
 	workflows serviceports.WorkflowStarter
+	schedules scheduleService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
 }
 
 func New(p Params) *Handler {
-	return &Handler{
+	h := &Handler{
 		service:   p.Service,
 		turns:     p.Turns,
 		workflows: p.Workflows,
@@ -51,6 +54,13 @@ func New(p Params) *Handler {
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
 	}
+	// A nil service put in the interface would no longer compare equal to
+	// nil, and the schedule routes would call through it.
+	if p.Schedules != nil {
+		h.schedules = p.Schedules
+	}
+
+	return h
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -183,6 +193,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.pinArtifact,
 	)
+	h.registerScheduleRoutes(api, resource)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {

@@ -12,6 +12,8 @@ import type { AssistantMessage } from "@/types/assistant";
  *   something the assistant said
  * - `declined-prompt` — the user turn that was refused, shown muted so the
  *   conversation still reads in order without implying it was answered
+ * - `schedule` — a request the person scheduled, shown in their words with
+ *   the schedule's card under it; nothing answered it there and then
  * - `user` / `assistant` — ordinary turns
  */
 export type MessagePresentation =
@@ -20,6 +22,7 @@ export type MessagePresentation =
   | "decision"
   | "refusal"
   | "declined-prompt"
+  | "schedule"
   | "user"
   | "assistant";
 
@@ -52,6 +55,10 @@ export function classifyMessage(message: AssistantMessage): MessagePresentation 
 
   if (message.role === "Tool") {
     return "tool";
+  }
+
+  if (message.kind === "Schedule") {
+    return "schedule";
   }
 
   if (message.kind === "DecisionNote") {

@@ -58,7 +58,7 @@ export const contextProviderSchema = z.enum([
 
 export const messageRoleSchema = z.enum(["User", "Assistant", "Tool"]);
 
-export const messageKindSchema = z.enum(["Message", "DecisionNote", "Delegated"]);
+export const messageKindSchema = z.enum(["Message", "DecisionNote", "Delegated", "Schedule"]);
 
 export const threadStatusSchema = z.enum(["Active", "Archived"]);
 
@@ -730,9 +730,12 @@ export const assistantMessageSchema = z.object({
    * Message for what a person or the model wrote; DecisionNote for the input
    * of the turn that follows a decision, which the thread shows as a note;
    * Delegated for a step another agent took on a task this conversation's
-   * agent handed it, which the thread shows under the call that handed it.
+   * agent handed it, which the thread shows under the call that handed it;
+   * Schedule for a request the person scheduled, drawn as its schedule card.
    */
   kind: messageKindSchema.catch("Message").default("Message"),
+  /** On a Schedule message: the schedule it made, which may since be deleted. */
+  scheduleId: z.string().nullish(),
   /** On a Delegated message: the agent that took the step. */
   agentId: z.string().nullish(),
   /** On a Delegated message: the delegate_task call it answers. */
@@ -958,8 +961,42 @@ export const assistantThreadListSchema = z.object({
   total: z.number().default(0),
 });
 
-/** What started a turn: the person, or the application reporting a decision. */
-export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp"]);
+/**
+ * What started a turn: the person, the application reporting a decision, or
+ * a request the person scheduled coming round.
+ */
+export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp", "Scheduled"]);
+
+/**
+ * A request the person asked to have repeated in a conversation. `cadence` is
+ * when, as the card shows it ("Every weekday · 7:30 AM"); the run times are
+ * Unix seconds.
+ */
+export const conversationScheduleSchema = z.object({
+  id: z.string(),
+  threadId: z.string(),
+  userId: z.string(),
+  prompt: z.string(),
+  cadence: z.string(),
+  cronExpression: z.string().optional().default(""),
+  timezone: z.string().optional().default("UTC"),
+  enabled: z.boolean(),
+  lastRunAt: z.number().nullish(),
+  nextRunAt: z.number().nullish(),
+  lastTurnId: z.string().nullish(),
+  createdAt: z.number(),
+});
+
+export const conversationScheduleListSchema = z.object({
+  items: nullableList(conversationScheduleSchema),
+  total: z.number().default(0),
+});
+
+/** A schedule just made, and the message that draws its card. */
+export const createdScheduleSchema = z.object({
+  schedule: conversationScheduleSchema,
+  message: assistantMessageSchema,
+});
 
 /**
  * A reply the person's assistant is still writing, in any of their
@@ -1442,6 +1479,9 @@ export type AssistantThread = z.infer<typeof assistantThreadSchema>;
 export type CannotContinueReason = z.infer<typeof cannotContinueReasonSchema>;
 export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
 export type TurnOrigin = z.infer<typeof turnOriginSchema>;
+export type ConversationSchedule = z.infer<typeof conversationScheduleSchema>;
+export type ConversationScheduleList = z.infer<typeof conversationScheduleListSchema>;
+export type CreatedSchedule = z.infer<typeof createdScheduleSchema>;
 export type AssistantLiveTurn = z.infer<typeof assistantLiveTurnSchema>;
 export type AssistantLiveTurnList = z.infer<typeof assistantLiveTurnListSchema>;
 export type AssistantArtifact = z.infer<typeof assistantArtifactSchema>;

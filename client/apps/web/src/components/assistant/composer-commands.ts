@@ -19,9 +19,71 @@ export type SlashCommand = {
   description: string;
   slots: readonly CommandSlot[];
   template: string;
+  /**
+   * Splits what follows the command into its slots, for a command whose
+   * slots are not one word each. Without it, words fill the slots in order.
+   */
+  splitSlots?: (rest: string) => string[];
 };
 
+const SCHEDULE_UNITS =
+  "weekday|day|morning|monday|tuesday|wednesday|thursday|friday|saturday|sunday|week";
+
+/**
+ * A message that asks for a schedule rather than an answer: "/schedule …", or
+ * one that opens with a cadence the server reads, such as "every weekday at
+ * 7:30am, …". The server reads the same pattern
+ * (conversationschedule.ParseRequest); a message that only starts with
+ * "every", like "every time I open the queue…", is an ordinary question.
+ */
+const SCHEDULE_REQUEST = new RegExp(
+  `^(?:/schedule\\s+)?(?:every|each)\\s+(?:${SCHEDULE_UNITS})\\w*(?:\\s+at\\s+[\\d:]+(?:\\s*(?:am|pm)\\b)?)?[,:]?\\s*(.*)$`,
+  "is",
+);
+
+/** The cadence at the start of a schedule's text: its "when" slot. */
+const SCHEDULE_WHEN = new RegExp(
+  `^((?:every|each)\\s+(?:${SCHEDULE_UNITS})\\w*(?:\\s+at\\s+[\\d:]+(?:\\s*(?:am|pm)\\b)?)?)[,:]?\\s*(.*)$`,
+  "is",
+);
+
+/** Whether a message, as sent, schedules a request rather than asking one. */
+export function isScheduleRequest(text: string): boolean {
+  const trimmed = text.trim();
+
+  return /^\/schedule(?:\s|$)/i.test(trimmed) || SCHEDULE_REQUEST.test(trimmed);
+}
+
+/**
+ * The /schedule command's slots: the cadence, however many words it takes,
+ * then the request. Until a cadence is read the whole text is the "when".
+ */
+export function splitScheduleSlots(rest: string): string[] {
+  const match = SCHEDULE_WHEN.exec(rest.trim());
+  if (!match) {
+    return [rest.trim(), ""];
+  }
+
+  const request = match[2]?.trim() ?? "";
+  // "every Monday at" and "every Monday at 8 a" are a time still being typed.
+  if (/^at(?:\s+[\d:]*\s*[ap]?m?)?$/i.test(request)) {
+    return [rest.trim(), ""];
+  }
+
+  return [match[1]?.trim() ?? "", request];
+}
+
 export const SLASH_COMMANDS: readonly SlashCommand[] = [
+  {
+    name: "schedule",
+    description: "Run a request on a schedule and post the results here",
+    slots: [
+      { name: "when", hint: "every Monday at 8am" },
+      { name: "request", hint: "what to ask" },
+    ],
+    template: "{when}, {request}",
+    splitSlots: splitScheduleSlots,
+  },
   {
     name: "status",
     description: "Where a shipment is and what is holding it up",
@@ -109,6 +171,14 @@ export function parseSlashCommand(draft: string): ParsedSlashCommand | null {
   }
 
   const rest = firstSpace === -1 ? "" : body.slice(firstSpace + 1).trim();
+  if (command.splitSlots) {
+    const split = command.splitSlots(rest);
+    return {
+      command,
+      args: split,
+      complete: split.length === command.slots.length && split.every((arg) => arg !== ""),
+    };
+  }
   const args: string[] = [];
   let remaining = rest;
   for (let index = 0; index < command.slots.length; index += 1) {

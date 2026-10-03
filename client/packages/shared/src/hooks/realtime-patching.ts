@@ -61,6 +61,9 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     ["assistant", "activeTurns"],
     ["assistant", "threads"],
   ],
+  // A schedule made, paused, resumed, deleted or run: its card's state and
+  // next run move.
+  conversation_schedules: [["assistant", "schedules"]],
   // The feed and its counts live under one key root from the query factory
   // (createQueryKeys("watchtower")), so invalidating the root catches both the
   // list and every filtered variant of it.

@@ -42,6 +42,13 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.threadBudget(threadId, { signal }),
   }),
+  // The requests scheduled in a conversation, for its schedule cards. Kept
+  // fresh by the "conversation_schedules" realtime event, not polled.
+  schedules: (threadId: string) => ({
+    queryKey: ["assistant-schedules", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listThreadSchedules(threadId, { signal }),
+  }),
   activeTurns: () => ({
     queryKey: ["assistant-active-turns"],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>

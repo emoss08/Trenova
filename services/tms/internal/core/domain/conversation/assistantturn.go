@@ -53,14 +53,27 @@ const (
 	// AssistantTurnOriginDecisionFollowUp is the turn in which the agent says
 	// what came of a proposal somebody decided, wherever they decided it.
 	AssistantTurnOriginDecisionFollowUp = AssistantTurnOrigin("DecisionFollowUp")
+	// AssistantTurnOriginScheduled is a run of a request the person scheduled
+	// in the conversation, asked on their behalf when its time came.
+	AssistantTurnOriginScheduled = AssistantTurnOrigin("Scheduled")
 )
 
 func (o AssistantTurnOrigin) IsValid() bool {
 	switch o {
-	case AssistantTurnOriginPerson, AssistantTurnOriginDecisionFollowUp:
+	case AssistantTurnOriginPerson, AssistantTurnOriginDecisionFollowUp,
+		AssistantTurnOriginScheduled:
 		return true
 	default:
 		return false
+	}
+}
+
+// AllAssistantTurnOrigins is every origin a turn may have.
+func AllAssistantTurnOrigins() []AssistantTurnOrigin {
+	return []AssistantTurnOrigin{
+		AssistantTurnOriginPerson,
+		AssistantTurnOriginDecisionFollowUp,
+		AssistantTurnOriginScheduled,
 	}
 }
 

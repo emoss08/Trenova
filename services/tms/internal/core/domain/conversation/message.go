@@ -54,6 +54,10 @@ type Message struct {
 	// and on a call refused before anybody was asked.
 	DelegateReport *DelegateReport `json:"delegateReport,omitempty" bun:"delegate_report,type:JSONB,nullzero"`
 
+	// ScheduleID is the conversation schedule a Schedule message made. The
+	// schedule may since have been deleted; the card then says so.
+	ScheduleID pulid.ID `json:"scheduleId,omitempty" bun:"schedule_id,type:VARCHAR(100),nullzero"`
+
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 
 	// ToolCalls is what an assistant turn asked for, stored as the normalized
