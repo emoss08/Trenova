@@ -27,6 +27,7 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { rehypeNumericColumns } from "./rehype-numeric-columns";
+import { remarkDeskSubset } from "./remark-desk-subset";
 import { rehypeStreamWords } from "./rehype-stream-words";
 
 type PluggableList = NonNullable<MarkdownOptions["rehypePlugins"]>;
@@ -62,22 +63,40 @@ function textOf(children: ReactNode): string {
 
 /** The language a fence was labelled with, as written: "sql", "json". */
 function fenceLabel(className: string | undefined): string {
-  return /language-([\w+#.-]+)/iu.exec(className ?? "")?.[1] ?? "";
+  return /language-([\w+#.-]+)/iu.exec(className ?? "")?.[1] ?? "text";
 }
+
+/** The fence a still-open math block is shown in, as its raw text, until it closes. */
+export const RAW_MATH_FENCE = "dk-math-raw";
 
 function CopyCode({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
       type="button"
-      className="md-code-copy"
+      className={cn("md-code-copy", copied && "md-ok")}
       onClick={() => {
         void navigator.clipboard?.writeText(code).then(() => {
           setCopied(true);
-          window.setTimeout(() => setCopied(false), 1500);
+          window.setTimeout(() => setCopied(false), 1400);
         });
       }}
     >
+      {copied && (
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M5 12.5l4.5 4.5L19 7" />
+        </svg>
+      )}
       {copied ? "Copied" : "Copy"}
     </button>
   );
@@ -92,6 +111,9 @@ function CodeBlock({ className, children }: ComponentProps<"code">) {
   const code = textOf(children).replace(/\n$/u, "");
   const lang = resolveLang(className);
   const label = fenceLabel(className);
+  if (label === RAW_MATH_FENCE) {
+    return <pre className="md-math-raw">{code}</pre>;
+  }
 
   return (
     <div className="md-code bg-sunken rounded-surface my-2.5 overflow-hidden">
@@ -190,16 +212,24 @@ function MarkdownImage({ src, alt }: ComponentProps<"img">) {
 const components: Components = {
   p: ({ children }) => <p className="my-2 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
-    <h3 className="mt-4 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
+    <h3 className="md-h md-h1 mt-4 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
   ),
   h2: ({ children }) => (
-    <h3 className="mt-3.5 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
+    <h3 className="md-h md-h2 mt-3.5 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
   ),
-  h3: ({ children }) => <h4 className="mt-3 mb-1 text-sm font-semibold first:mt-0">{children}</h4>,
-  h4: ({ children }) => <h5 className="mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h5>,
-  h5: ({ children }) => <h6 className="mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h6>,
+  h3: ({ children }) => (
+    <h4 className="md-h md-h3 mt-3 mb-1 text-sm font-semibold first:mt-0">{children}</h4>
+  ),
+  h4: ({ children }) => (
+    <h5 className="md-h md-h4 mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h5>
+  ),
+  h5: ({ children }) => (
+    <h6 className="md-h md-h5 mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h6>
+  ),
   h6: ({ children }) => (
-    <h6 className="text-muted-foreground mt-2 mb-1 text-xs font-medium first:mt-0">{children}</h6>
+    <h6 className="md-h md-h6 text-muted-foreground mt-2 mb-1 text-xs font-medium first:mt-0">
+      {children}
+    </h6>
   ),
   ul: ({ children }) => (
     <ul className="marker:text-foreground-subtle my-2 list-disc space-y-1 pl-5">{children}</ul>
@@ -296,11 +326,14 @@ export const AiMarkdown = memo(function AiMarkdown({
   content,
   className,
   overrides,
+  deskSubset = false,
 }: {
   content: string;
   className?: string;
   /** Elements a surface draws its own way, such as a link it reads as something else. */
   overrides?: Components;
+  /** Keeps to the Desk's markdown set; see DESK_REMARK_PLUGINS. */
+  deskSubset?: boolean;
 }) {
   const merged = useMemo(
     () => (overrides ? { ...components, ...overrides } : components),
@@ -311,7 +344,7 @@ export const AiMarkdown = memo(function AiMarkdown({
   return (
     <div className={cn("text-sm wrap-break-word", className)}>
       <ReactMarkdown
-        remarkPlugins={REMARK_PLUGINS}
+        remarkPlugins={deskSubset ? DESK_REMARK_PLUGINS : REMARK_PLUGINS}
         rehypePlugins={REHYPE_PLUGINS}
         components={merged}
         urlTransform={urlTransform}
@@ -323,6 +356,16 @@ export const AiMarkdown = memo(function AiMarkdown({
 });
 
 const REMARK_PLUGINS = [remarkGfm, remarkMath, remarkBreaks];
+
+/**
+ * The Desk's reply set: the same, less what its design leaves out (bare
+ * addresses as links, footnotes, images, indented code). Other surfaces keep
+ * the broader set they were built for.
+ */
+const DESK_REMARK_PLUGINS = [...REMARK_PLUGINS, remarkDeskSubset];
+
+/** A reference definition line, "[id]: url", wherever it sits in a reply. */
+const DEFINITION = /^ {0,3}\[[^\]\n]+\]:[ \t]*\S.*$/gmu;
 
 /** What every reply's markup goes through: math typeset, figures aligned. */
 const REHYPE_PLUGINS: PluggableList = [
@@ -344,14 +387,16 @@ const MarkdownBlock = memo(function MarkdownBlock({
   content,
   merged,
   rehypePlugins,
+  deskSubset,
 }: {
   content: string;
   merged: Components;
   rehypePlugins?: PluggableList;
+  deskSubset: boolean;
 }) {
   return (
     <ReactMarkdown
-      remarkPlugins={REMARK_PLUGINS}
+      remarkPlugins={deskSubset ? DESK_REMARK_PLUGINS : REMARK_PLUGINS}
       rehypePlugins={rehypePlugins ?? REHYPE_PLUGINS}
       components={merged}
       urlTransform={urlTransform}
@@ -374,19 +419,23 @@ export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
   overrides,
   wordClassName,
   caretClassName,
+  deskSubset = false,
 }: {
   content: string;
   className?: string;
   overrides?: Components;
+  deskSubset?: boolean;
   /** Wraps each word in a span of this class, so a surface can bring words in as they land. */
   wordClassName?: string;
   /** Ends the reply in a caret of this class, after its last word. */
   caretClassName?: string;
 }) {
-  const blocks = useMemo(
-    () => splitMarkdownBlocks(prepareMarkdown(content, { streaming: true })),
-    [content],
-  );
+  const prepared = useMemo(() => prepareMarkdown(content, { streaming: true }), [content]);
+  const blocks = useMemo(() => splitMarkdownBlocks(prepared), [prepared]);
+  // Each block is parsed on its own, so a reference link in one block would
+  // not find its definition in another. Every block carries the reply's
+  // definitions; they draw nothing themselves.
+  const definitions = useMemo(() => (prepared.match(DEFINITION) ?? []).join("\n"), [prepared]);
   const merged = useMemo(
     () => (overrides ? { ...components, ...overrides } : components),
     [overrides],
@@ -416,9 +465,10 @@ export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
         <Fragment key={index}>
           {index > 0 && "\n"}
           <MarkdownBlock
-            content={block}
+            content={definitions === "" ? block : `${block}\n\n${definitions}`}
             merged={merged}
             rehypePlugins={index === blocks.length - 1 ? lastPlugins : wordPlugins}
+            deskSubset={deskSubset}
           />
         </Fragment>
       ))}

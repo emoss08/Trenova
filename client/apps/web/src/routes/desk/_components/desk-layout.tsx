@@ -252,6 +252,13 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     resourceName: "Conversation",
   });
 
+  const renameMutation = useApiMutation({
+    mutationFn: ({ thread, title }: { thread: AssistantThread; title: string }) =>
+      apiService.assistantService.updateThread(thread.id, { title }),
+    onSuccess: refreshThreads,
+    resourceName: "Conversation",
+  });
+
   const pinMutation = useApiMutation({
     mutationFn: (thread: AssistantThread) =>
       apiService.assistantService.updateThread(thread.id, { pinned: !thread.pinned }),
@@ -422,6 +429,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           }}
           onTogglePin={(thread) => pinMutation.mutate(thread)}
           onDelete={(thread) => deleteMutation.mutate(thread.id)}
+          onRename={(thread, title) => renameMutation.mutate({ thread, title })}
         />
         {railOpen && (
           <button

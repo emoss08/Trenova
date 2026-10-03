@@ -20,7 +20,7 @@ describe("prepareMarkdown", () => {
 
   it("keeps an unclosed display block raw while the reply is arriving", () => {
     expect(prepareMarkdown("Rate:\n\n$$\nr = d / t", { streaming: true })).toBe(
-      "Rate:\n\n\\$\\$\nr = d / t",
+      "Rate:\n\n\n\n```dk-math-raw\n$$\nr = d / t\n```\n",
     );
     expect(prepareMarkdown("$$r = d / t$$", { streaming: true })).toBe("$$r = d / t$$");
   });

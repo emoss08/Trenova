@@ -78,21 +78,27 @@ function pairDelimiters(text: string, open: string, close: string, as: string): 
 /** A dollar sign before a digit, not escaped and not part of `$$`: money. */
 const MONEY = /(?<![\\$])\$(?=\d)/gu;
 
-function prepareProse(text: string, streaming: boolean): string {
+function prepareProse(text: string, streaming: boolean, last: boolean): string {
   let next = pairDelimiters(text, "\\[", "\\]", "$$");
   next = pairDelimiters(next, "\\(", "\\)", "$");
   next = next.replace(MONEY, "\\$");
-  if (streaming) {
+  if (streaming && last) {
     const blocks = [...next.matchAll(/(?<!\\)\$\$/gu)];
     if (blocks.length % 2 === 1) {
-      const last = blocks.at(-1);
-      if (last) {
-        next = `${next.slice(0, last.index)}\\$\\$${next.slice(last.index + 2)}`;
+      const open = blocks.at(-1);
+      if (open) {
+        // Still arriving: the open block is shown as the raw text it is so
+        // far, in its own box, and set as math once it closes.
+        const raw = next.slice(open.index).replace(/`/gu, "\u02cb");
+        next = `${next.slice(0, open.index)}\n\n\`\`\`${RAW_MATH_FENCE}\n${raw}\n\`\`\`\n`;
       }
     }
   }
   return next;
 }
+
+/** The code fence the renderer draws an unfinished math block in; see ai-markdown. */
+const RAW_MATH_FENCE = "dk-math-raw";
 
 export function prepareMarkdown(text: string, { streaming = false } = {}): string {
   if (!/[$\\]/u.test(text)) {
@@ -100,6 +106,8 @@ export function prepareMarkdown(text: string, { streaming = false } = {}): strin
   }
 
   return segments(text)
-    .map((part) => (part.code ? part.text : prepareProse(part.text, streaming)))
+    .map((part, index, parts) =>
+      part.code ? part.text : prepareProse(part.text, streaming, index === parts.length - 1),
+    )
     .join("");
 }

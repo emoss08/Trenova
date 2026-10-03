@@ -26,6 +26,7 @@ func toToolCallRecords(calls []serviceports.ToolCall) []conversation.ToolCallRec
 			Arguments:    call.Arguments,
 			ProviderData: call.ProviderData,
 			ProviderID:   call.ProviderID,
+			Why:          call.Why,
 		})
 	}
 
@@ -45,6 +46,7 @@ func fromToolCallRecords(records []conversation.ToolCallRecord) []serviceports.T
 			Arguments:    record.Arguments,
 			ProviderData: record.ProviderData,
 			ProviderID:   record.ProviderID,
+			Why:          record.Why,
 		})
 	}
 

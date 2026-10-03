@@ -332,7 +332,8 @@
   /* Desk v2: the conversation room, Watchtower and Decisions. Most of the
      palette is the app's own; the room keeps a softer ink for prose, a step
      between muted and subtle text, and the dark-blue chip artifacts wear in a
-     reply. The vendor marks are the providers' brand colours, and the logo
+     reply. Success and warning are the Desk design's own (its neutral palette),
+     a little brighter than the app's. The vendor marks are the providers' brand colours, and the logo
      ramp is the Trenova mark's, used only by the composer while an agent works. */
   --dsk-canvas: var(--canvas);
   --dsk-card: var(--card);
@@ -352,12 +353,12 @@
   --dsk-ink: var(--ink);
   --dsk-ink-fg: var(--ink-foreground);
   --dsk-ring: color-mix(in oklch, var(--ring) 24%, transparent);
-  --dsk-success: var(--success);
-  --dsk-success-sub: var(--success-subtle);
-  --dsk-success-fg: var(--success-foreground);
-  --dsk-warn: var(--warning);
-  --dsk-warn-sub: var(--warning-subtle);
-  --dsk-warn-fg: var(--warning-foreground);
+  --dsk-success: oklch(0.646 0.175 147.2);
+  --dsk-success-sub: oklch(0.971 0.021 154.1);
+  --dsk-success-fg: oklch(0.516 0.144 147.8);
+  --dsk-warn: oklch(0.784 0.159 73);
+  --dsk-warn-sub: oklch(0.966 0.049 93.4);
+  --dsk-warn-fg: oklch(0.528 0.131 54.6);
   --dsk-blue: oklch(0.573 0.235 260.1);
   --dsk-blue-sub: oklch(0.961 0.019 255.5);
   --dsk-blue-fg: oklch(0.539 0.233 261);
@@ -758,12 +759,12 @@
   --dsk-ink: var(--ink);
   --dsk-ink-fg: var(--ink-foreground);
   --dsk-ring: color-mix(in oklch, var(--ring) 35%, transparent);
-  --dsk-success: var(--success);
-  --dsk-success-sub: var(--success-subtle);
-  --dsk-success-fg: var(--success-foreground);
-  --dsk-warn: var(--warning);
-  --dsk-warn-sub: var(--warning-subtle);
-  --dsk-warn-fg: var(--warning-foreground);
+  --dsk-success: oklch(0.732 0.213 147.8);
+  --dsk-success-sub: oklch(0.228 0.044 150.1);
+  --dsk-success-fg: oklch(0.731 0.142 148);
+  --dsk-warn: oklch(0.817 0.164 75.8);
+  --dsk-warn-sub: oklch(0.226 0.048 74.2);
+  --dsk-warn-fg: oklch(0.769 0.162 73.1);
   --dsk-blue: oklch(0.714 0.156 248.9);
   --dsk-blue-sub: oklch(0.242 0.058 260.8);
   --dsk-blue-fg: oklch(0.717 0.152 251);

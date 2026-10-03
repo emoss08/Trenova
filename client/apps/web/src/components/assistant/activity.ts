@@ -1,6 +1,12 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
-import type { AssistantMessage, DelegateReport, ToolEffect, ToolVerdict } from "@/types/assistant";
+import type {
+  AssistantMessage,
+  DelegateReport,
+  StepRationale,
+  ToolEffect,
+  ToolVerdict,
+} from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
 import { REQUEST_DECISION_TOOL } from "./decision-requests";
@@ -27,6 +33,8 @@ export type ToolStep = {
   summary: string;
   /** How long the call took, in seconds, when that is known. */
   durationSeconds: number | null;
+  /** Why the agent took the step, in its own words, when it said. */
+  why?: StepRationale | null;
   /** How the runtime judged the call; absent from an older server or a result saved before it was kept. */
   verdict?: ToolVerdict;
   /**
@@ -150,6 +158,7 @@ export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: numb
       summary: result?.summary ?? "",
       durationSeconds: timed ? Math.max(0, result.createdAt - askedAt) : null,
       verdict: result?.toolVerdict,
+      why: call.why,
       ...(name === DELEGATE_TOOL
         ? {
             delegate: {
@@ -180,6 +189,7 @@ export function segmentStep(segment: Extract<TurnSegment, { kind: "tool" }>): To
     summary: segment.summary ?? "",
     durationSeconds: timed ? (segment.finishedAt! - segment.startedAt!) / 1000 : null,
     verdict: segment.verdict,
+    why: segment.why,
     ...(segment.delegate || segment.name === DELEGATE_TOOL
       ? {
           delegate: {

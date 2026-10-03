@@ -54,6 +54,7 @@ function renderRail(props: Partial<DeskRailProps> = {}) {
     onSettings: vi.fn(),
     onTogglePin: vi.fn(),
     onDelete: vi.fn(),
+    onRename: vi.fn(),
   };
   const view = render(
     <MemoryRouter initialEntries={["/desk"]}>
@@ -134,9 +135,8 @@ describe("DeskRail", () => {
     expect(dot("Waiting one")).toHaveClass("dk-s-wait");
     expect(dot("Failed one")).toHaveClass("dk-s-error");
     expect(dot("Unread one")).toHaveClass("dk-s-new");
-    expect(screen.getByText("Waiting one").closest(".dk-sb-c")).toHaveAttribute(
-      "title",
-      "Billing desk · Needs your approval",
+    expect(screen.getByText("Waiting one").closest(".dk-sb-c")?.getAttribute("title")).toMatch(
+      /^Billing desk · Needs your approval · /,
     );
   });
 
@@ -209,5 +209,34 @@ describe("DeskRail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Desk settings" }));
     expect(handlers.onSearch).toHaveBeenCalled();
     expect(handlers.onSettings).toHaveBeenCalled();
+  });
+});
+
+describe("DeskRail rename", () => {
+  it("renames a conversation in place: double-click, type, Enter", () => {
+    const { handlers } = renderRail({ threads: [thread({ id: "a", title: "Old name" })] });
+    fireEvent.doubleClick(screen.getByText("Old name"));
+    const field = screen.getByRole("textbox", { name: "Conversation name" });
+    fireEvent.change(field, { target: { value: "  New name  " } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    expect(handlers.onRename).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "a" }),
+      "New name",
+    );
+  });
+
+  it("leaves the name alone on Escape", () => {
+    const { handlers } = renderRail({ threads: [thread({ id: "a", title: "Same" })] });
+    fireEvent.doubleClick(screen.getByText("Same"));
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Conversation name" }), {
+      key: "Escape",
+    });
+    expect(handlers.onRename).not.toHaveBeenCalled();
+    expect(screen.getByText("Same")).toBeInTheDocument();
+  });
+
+  it("says where chats will show up when there are none", () => {
+    renderRail();
+    expect(screen.getByText(/Your chats will show up here/)).toBeInTheDocument();
   });
 });

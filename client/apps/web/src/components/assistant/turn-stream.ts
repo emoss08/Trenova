@@ -9,6 +9,7 @@ import type {
   FailedProvider,
   SendMessageResult,
   RetryKind,
+  StepRationale,
   ToolEffect,
   ToolVerdict,
 } from "@/types/assistant";
@@ -48,6 +49,8 @@ export type ToolSegment = {
   finishedAt?: number;
   /** Set on a delegate_task call: the other agent's work on the task, nested under it. */
   delegate?: DelegateProgress;
+  /** Why the agent took the step, when it said. */
+  why?: StepRationale | null;
 };
 
 export type TurnRetry = {
@@ -173,6 +176,7 @@ function startTool(segments: TurnSegment[], data: ToolStartedData): TurnSegment[
             name: data.name,
             arguments: data.arguments ?? segment.arguments,
             effect: data.effect ?? segment.effect,
+            why: data.why ?? segment.why,
           }
         : segment,
     );
@@ -187,6 +191,7 @@ function startTool(segments: TurnSegment[], data: ToolStartedData): TurnSegment[
       status: "running",
       content: "",
       effect: data.effect,
+      why: data.why,
     },
   ];
 }

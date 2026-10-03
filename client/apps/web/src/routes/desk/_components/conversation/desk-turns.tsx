@@ -11,13 +11,11 @@ import type {
   AssistantArtifact,
   AssistantEntityRef,
   AssistantMessageAttachment,
-  AssistantPageContext,
 } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo, useMemo, type ReactNode } from "react";
 import { DeskMentionText } from "../composer/desk-mentions";
-import { DeskPageSent } from "../composer/desk-page-chip";
 import { DeskMessageAttachments } from "../composer/desk-uploads";
 import { citeSteps, withCitations } from "./citations";
 import { useCitationOverrides } from "./desk-citations";
@@ -67,7 +65,6 @@ export function DeskQuestion({
   tag,
   mentions,
   attachments,
-  page,
 }: {
   text: string;
   muted?: boolean;
@@ -76,13 +73,13 @@ export function DeskQuestion({
   mentions?: readonly AssistantEntityRef[] | null;
   /** The files the question carried. */
   attachments?: readonly AssistantMessageAttachment[] | null;
-  /** The page it was asked from. */
-  page?: AssistantPageContext | null;
 }) {
   const size = questionSize(text);
 
+  // The page it was asked from still travels with the message; the design
+  // no longer says so under the question.
   return (
-    <>
+    <div className="dk-qb">
       <div
         className={cn(
           "dk-q",
@@ -101,8 +98,7 @@ export function DeskQuestion({
       {attachments && attachments.length > 0 && (
         <DeskMessageAttachments attachments={attachments} />
       )}
-      <DeskPageSent context={page} />
-    </>
+    </div>
   );
 }
 
@@ -190,7 +186,7 @@ export const DeskReply = memo(function DeskReply({
     <>
       {cited !== "" && (
         <div className={cn("dk-prose", entry.message.truncated && "dk-cut")}>
-          <AiMarkdown content={cited} className="dk-md" overrides={overrides} />
+          <AiMarkdown content={cited} className="dk-md" overrides={overrides} deskSubset />
         </div>
       )}
       {reportRuns.map((run) => (
@@ -227,6 +223,7 @@ export function DeskStreamingReply({ text }: { text: string }) {
         className="dk-md"
         wordClassName="dk-w"
         caretClassName="dk-caret"
+        deskSubset
       />
     </div>
   );

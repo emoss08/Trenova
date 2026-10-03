@@ -36,6 +36,8 @@ export type DeskRailProps = {
   onSettings: () => void;
   onTogglePin: (thread: AssistantThread) => void;
   onDelete: (thread: AssistantThread) => void;
+  /** Renames a conversation from its row: double-click, type, Enter. */
+  onRename: (thread: AssistantThread, title: string) => void;
 };
 
 /**
@@ -60,6 +62,7 @@ export function DeskRail({
   onSettings,
   onTogglePin,
   onDelete,
+  onRename,
 }: DeskRailProps) {
   const t = useT();
   const navigate = useNavigate();
@@ -69,6 +72,7 @@ export function DeskRail({
   const [now] = useState(nowInSeconds);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState<{ y: number; h: number } | null>(null);
 
@@ -115,6 +119,13 @@ export function DeskRail({
   };
 
   const open = (thread: AssistantThread) => void navigate(conversationPath(thread.id));
+  const rename = (thread: AssistantThread, value: string) => {
+    setEditing(null);
+    const title = value.trim();
+    if (title !== "" && title !== thread.title) {
+      onRename(thread, title);
+    }
+  };
   const openOnKey = (event: KeyboardEvent, thread: AssistantThread) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -174,7 +185,7 @@ export function DeskRail({
           >
             <DeskIcon name="radar" size={14} />
             <span>{t("Watchtower")}</span>
-            {watchtowerCount > 0 && <em className="dk-sb-ct">{watchtowerCount}</em>}
+            <em className="dk-sb-ct">{watchtowerCount}</em>
           </button>
         )}
         {canDecide && (
@@ -186,9 +197,7 @@ export function DeskRail({
           >
             <DeskIcon name="inbox" size={14} />
             <span>{t("Decisions")}</span>
-            {decisionsCount > 0 && (
-              <em className={cn("dk-sb-ct", decisionsWaitHere && "dk-w")}>{decisionsCount}</em>
-            )}
+            <em className={cn("dk-sb-ct", decisionsWaitHere && "dk-w")}>{decisionsCount}</em>
           </button>
         )}
 
@@ -214,12 +223,21 @@ export function DeskRail({
                     active && "dk-on",
                     leaving === thread.id && "dk-out",
                     confirming === thread.id && "dk-cf",
+                    editing === thread.id && "dk-ed",
                   )}
-                  title={[agent?.name ?? t("Agent unavailable"), stateLabel(t, state)]
+                  title={[
+                    agent?.name ?? t("Agent unavailable"),
+                    stateLabel(t, state),
+                    railTime(thread, now, timezone),
+                  ]
                     .filter(Boolean)
                     .join(" · ")}
-                  onClick={() => open(thread)}
-                  onKeyDown={(event) => openOnKey(event, thread)}
+                  onClick={() => editing !== thread.id && open(thread)}
+                  onDoubleClick={() => {
+                    setConfirming(null);
+                    setEditing(thread.id);
+                  }}
+                  onKeyDown={(event) => editing !== thread.id && openOnKey(event, thread)}
                   onMouseLeave={() => confirming === thread.id && setConfirming(null)}
                 >
                   <span className={cn("dk-sb-dot", state && `dk-s-${state}`)}>
@@ -231,7 +249,25 @@ export function DeskRail({
                       <i />
                     )}
                   </span>
-                  <span className="dk-sb-t">{title}</span>
+                  {editing === thread.id ? (
+                    <input
+                      className="dk-sb-in"
+                      // oxlint-disable-next-line jsx-a11y/no-autofocus -- the row turned into this field on purpose
+                      autoFocus
+                      defaultValue={thread.title}
+                      aria-label={t("Conversation name")}
+                      onFocus={(event) => event.target.select()}
+                      onClick={(event) => event.stopPropagation()}
+                      onBlur={(event) => rename(thread, event.target.value)}
+                      onKeyDown={(event) => {
+                        event.stopPropagation();
+                        if (event.key === "Enter") rename(thread, event.currentTarget.value);
+                        if (event.key === "Escape") setEditing(null);
+                      }}
+                    />
+                  ) : (
+                    <span className="dk-sb-t">{title}</span>
+                  )}
                   <span
                     className="dk-sb-acts"
                     onClick={(event) => event.stopPropagation()}
@@ -276,6 +312,15 @@ export function DeskRail({
             })}
           </Fragment>
         ))}
+        {shelves.length === 0 && (
+          <>
+            <div className="dk-sb-gh">{t("Conversations")}</div>
+            <div className="dk-sb-empty">
+              {t("Your chats will show up here. Press")} <span className="dk-kbd">⌘N</span>{" "}
+              {t("to start one.")}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="dk-sb-me">
@@ -295,16 +340,36 @@ export function DeskRail({
         </button>
         <button
           type="button"
-          className="dk-ib"
+          className="dk-ib dk-sb-back"
           title={t("Back to Trenova")}
           aria-label={t("Back to Trenova")}
           onClick={() => void navigate("/")}
         >
-          <DeskIcon name="chevL" size={14} />
+          <span className="dk-sb-bk-c">
+            <DeskIcon name="chevL" size={14} />
+          </span>
+          <img className="dk-sb-bk-l" src={logo} alt="" />
         </button>
       </div>
     </aside>
   );
+}
+
+/** When a conversation was last touched, as its row's tooltip ends: the time today, the day otherwise. */
+function railTime(thread: AssistantThread, now: number, timezone: string): string {
+  const at = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
+  if (!at) return "";
+  const moment = new Date(at * 1000);
+  const sameDay =
+    new Date(now * 1000).toLocaleDateString(undefined, { timeZone: timezone }) ===
+    moment.toLocaleDateString(undefined, { timeZone: timezone });
+  return sameDay
+    ? moment.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone: timezone,
+      })
+    : moment.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: timezone });
 }
 
 function shelfHeading(t: TranslateFn, key: DeskShelfKey): string {
