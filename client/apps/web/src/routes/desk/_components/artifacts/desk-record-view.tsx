@@ -17,6 +17,9 @@ const PHASE_PILL: Record<string, string> = {
   closed: "dk-ink",
 };
 
+/** Kinds whose title is a name rather than a number, set in the reading face. */
+const NAMED = new Set(["customer", "worker"]);
+
 function money(amount: string | number, currency = "USD"): string {
   const figure = Number(amount);
   if (amount === "" || !Number.isFinite(figure)) return String(amount);
@@ -247,7 +250,7 @@ export function DeskRecordView({
     <div className="dk-ax-pad dk-ax-rec">
       <div className="dk-ax-rec-h">
         <div>
-          <div className="dk-ax-big">{title}</div>
+          <div className={cn("dk-ax-big", NAMED.has(view.type) && "dk-named")}>{title}</div>
           <div className="dk-ax-sub">{view.subtitle || humanizeToolName(entity)}</div>
         </div>
         {statusText !== "" && (

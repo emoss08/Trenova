@@ -12499,25 +12499,26 @@
   color: var(--dsk-fg);
   letter-spacing: -0.01em;
 }
+/* a reply's heading renders a level down: # and ## are an h3, ### an h4, #### and below smaller */
 .dk-prose .dk-md h3 {
-  margin: 18px 0 6px;
-  font-size: 16px;
+  margin: 22px 0 8px;
+  font-size: 18px;
+  line-height: 1.35;
   font-weight: 600;
 }
 .dk-prose .dk-md h4 {
-  margin: 16px 0 4px;
-  font-size: 14.5px;
+  margin: 20px 0 6px;
+  font-size: 16px;
+  line-height: 1.4;
   font-weight: 600;
 }
 .dk-prose .dk-md h5,
 .dk-prose .dk-md h6 {
-  margin: 14px 0 4px;
-  font-size: 13.5px;
+  margin: 16px 0 4px;
+  font-size: 14px;
   font-weight: 600;
 }
-.dk-prose .dk-md h3:first-child,
-.dk-prose .dk-md h4:first-child,
-.dk-prose .dk-md h5:first-child {
+.dk-prose .dk-md :is(h3, h4, h5, h6):first-child {
   margin-top: 0;
 }
 .dk-prose .dk-md ol,
@@ -12607,14 +12608,23 @@
   border-radius: 4px;
   box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
 }
+.dk-prose .dk-md .md-check {
+  position: relative;
+}
 .dk-prose .dk-md .md-check.md-checked {
-  background: var(--dsk-fg)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E")
-    center/11px no-repeat;
+  background: var(--dsk-ink);
   box-shadow: none;
 }
-.dark .dk-prose .dk-md .md-check.md-checked {
-  background-color: var(--dsk-fg);
+.dk-prose .dk-md .md-check.md-checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4.5px;
+  height: 8.5px;
+  border: solid var(--dsk-ink-fg);
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg);
 }
 .dk-prose .dk-md li.md-task:has(> .md-checked) {
   color: var(--dsk-subtle);
@@ -12683,6 +12693,7 @@
 /* tables: figures on the right, in mono; a wide one scrolls */
 .dk-prose .dk-md .md-table {
   max-width: 100%;
+  scrollbar-gutter: auto;
 }
 .dk-prose .dk-md td.md-num,
 .dk-prose .dk-md th.md-num {
@@ -12716,12 +12727,59 @@
   content-visibility: visible;
 }
 /* a short report as bars, as the design draws a summary */
-.dk-ax-repm{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;color:var(--dsk-subtle);margin-bottom:12px}
-.dk-ax-br{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) minmax(60px,auto) minmax(74px,auto);align-items:center;gap:12px;padding:8px 0;font-size:12.5px;animation:dk-mprow 360ms var(--dk-settle) both}
-.dk-ax-bars.dk-one .dk-ax-br{grid-template-columns:minmax(0,150px) minmax(0,1fr) minmax(74px,auto)}
-.dk-ax-br .dk-ax-num{text-align:right}
-.dk-ax-bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsk-fg)}
-.dk-ax-bt{height:18px;border-radius:5px;background:var(--dsk-sunken);overflow:hidden}
-.dk-ax-bt i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,oklch(0.62 0.17 255),oklch(0.62 0.2 285));animation:dk-grow 900ms var(--dk-settle) both}
-.dk-ax-br.dk-tot{border-top:1px solid var(--dsk-b);margin-top:4px;padding-top:12px;font-weight:500;animation:none}
-.dk-ax-tools.dk-end{justify-content:flex-end}
+.dk-ax-repm {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  margin-bottom: 12px;
+}
+.dk-ax-br {
+  display: grid;
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr) minmax(60px, auto) minmax(74px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 12.5px;
+  animation: dk-mprow 360ms var(--dk-settle) both;
+}
+.dk-ax-bars.dk-one .dk-ax-br {
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr) minmax(74px, auto);
+}
+.dk-ax-br .dk-ax-num {
+  text-align: right;
+}
+.dk-ax-bn {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--dsk-fg);
+}
+.dk-ax-bt {
+  height: 18px;
+  border-radius: 5px;
+  background: var(--dsk-sunken);
+  overflow: hidden;
+}
+.dk-ax-bt i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, oklch(0.62 0.17 255), oklch(0.62 0.2 285));
+  animation: dk-grow 900ms var(--dk-settle) both;
+}
+.dk-ax-br.dk-tot {
+  border-top: 1px solid var(--dsk-b);
+  margin-top: 4px;
+  padding-top: 12px;
+  font-weight: 500;
+  animation: none;
+}
+.dk-ax-tools.dk-end {
+  justify-content: flex-end;
+}
+.dk-ax-big.dk-named {
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
