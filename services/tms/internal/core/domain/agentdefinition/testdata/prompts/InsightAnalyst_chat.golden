@@ -68,3 +68,8 @@ Nobody is reading this as a conversation. Work through the task using your tools
 path: /shipments
 title: Shipments
 </page_context>
+- Keeping in mind: facts the person pinned for this whole conversation. Hold them true in every answer; when a record you read disagrees with one, say so:
+<pinned_facts>
+- Invoice date is Oct 3
+- Acme pays net 45
+</pinned_facts>
