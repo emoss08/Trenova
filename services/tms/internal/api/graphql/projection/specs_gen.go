@@ -390,6 +390,8 @@ var RateQuoteSpec TypeSpec
 
 var RateZoneSpec TypeSpec
 
+var RecentDecisionSpec TypeSpec
+
 var RecurringDeductionSpec TypeSpec
 
 var RecurringEarningSpec TypeSpec
@@ -2492,6 +2494,10 @@ func init() {
 				FieldMapKey: "aiTrainingConsentChangedById",
 			},
 			{
+				Name:        "personMonthlyMessages",
+				FieldMapKey: "personMonthlyMessages",
+			},
+			{
 				Name:    "billingAgentEnabled",
 				Special: "billingAgentEnabled",
 			},
@@ -3411,6 +3417,10 @@ func init() {
 			{
 				Name:        "status",
 				FieldMapKey: "status",
+			},
+			{
+				Name:        "executionError",
+				FieldMapKey: "executionError",
 			},
 			{
 				Name:        "planId",
@@ -18775,6 +18785,49 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	RecentDecisionSpec = TypeSpec{
+		TypeName: "RecentDecision",
+		FieldMap: buncolgen.AgentDecisionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "decision",
+				FieldMapKey: "decision",
+			},
+			{
+				Name:        "reasonCode",
+				FieldMapKey: "reasonCode",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "decidedByUserId",
+				FieldMapKey: "decidedByUserId",
+			},
+			{
+				Name:    "decidedByName",
+				Special: "decidedByName",
+			},
+			{
+				Name:        "decidedAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "proposal",
+				FieldMapKey: "proposalId",
 			},
 		},
 	}
