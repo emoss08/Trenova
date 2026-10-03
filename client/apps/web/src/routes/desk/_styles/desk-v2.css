@@ -12704,3 +12704,14 @@
 .dk-streaming .dk-md tbody tr {
   animation: dk-land 360ms var(--dk-settle) both;
 }
+/* A long conversation only lays out and paints what is near the screen: every
+   row but the last few is skipped while offscreen, holding the size it last
+   had. A row being pointed at or focused is always drawn in full, so a
+   footnote's card or a menu can reach past its edge. */
+.dk-flow > .dk-r:not(:nth-last-child(-n + 6)) > .dk-c {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 220px;
+}
+.dk-flow > .dk-r:not(:nth-last-child(-n + 6)) > .dk-c:is(:hover, :focus-within) {
+  content-visibility: visible;
+}

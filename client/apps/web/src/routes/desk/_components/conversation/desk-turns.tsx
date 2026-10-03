@@ -15,7 +15,7 @@ import type {
 } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useMemo, type ReactNode } from "react";
+import { memo, useMemo, type ReactNode } from "react";
 import { DeskMentionText } from "../composer/desk-mentions";
 import { DeskPageSent } from "../composer/desk-page-chip";
 import { DeskMessageAttachments } from "../composer/desk-uploads";
@@ -143,8 +143,11 @@ export function withoutCutNote(content: string): string {
   return content.replace(CUT_NOTE, "");
 }
 
-/** A saved reply: its words, what it produced, and the actions under it. */
-export function DeskReply({
+/**
+ * A saved reply: its words, what it produced, and the actions under it.
+ * Memoized, so a reply arriving below does not set every earlier one again.
+ */
+export const DeskReply = memo(function DeskReply({
   entry,
   steps,
   threadArtifacts,
@@ -163,7 +166,8 @@ export function DeskReply({
   artifacts: readonly AssistantArtifact[];
   latestUserSequence: number;
   chapter: number;
-  onTogglePin: () => void;
+  /** Pins or unpins the reply as a chapter, by its message id. */
+  onTogglePin: (messageId: string) => void;
   onAnswer?: (value: string) => void;
   onOpenArtifact: (id: string) => void;
 }) {
@@ -204,11 +208,15 @@ export function DeskReply({
         </div>
       ))}
       {message.content !== "" && (
-        <DeskMessageActions text={content} chapter={chapter} onTogglePin={onTogglePin} />
+        <DeskMessageActions
+          text={content}
+          chapter={chapter}
+          onTogglePin={() => onTogglePin(message.id)}
+        />
       )}
     </>
   );
-}
+});
 
 /** The reply being written, word by word; nothing shows until its first words arrive. */
 export function DeskStreamingReply({ text }: { text: string }) {

@@ -255,6 +255,10 @@ export function DeskConversation({
   const { setArtifactCount, openArtifact: openInDesk, setWorkspaceOpen, workspaceOpen } = desk;
   useEffect(() => setArtifactCount(artifacts.length), [artifacts.length, setArtifactCount]);
 
+  const togglePin = useCallback(
+    (messageId: string) => toggleChapter(thread.id, messageId),
+    [thread.id, toggleChapter],
+  );
   const openArtifact = useCallback(
     (artifactId: string) => openInDesk(thread.id, artifactId),
     [openInDesk, thread.id],
@@ -867,7 +871,7 @@ export function DeskConversation({
                             artifacts={own}
                             latestUserSequence={model.latestUserSequence}
                             chapter={chapterOf(entry.message.id)}
-                            onTogglePin={() => toggleChapter(thread.id, entry.message.id)}
+                            onTogglePin={togglePin}
                             onAnswer={model.answer}
                             onOpenArtifact={openArtifact}
                           />
