@@ -29,6 +29,7 @@ import {
   runDiffFrom,
 } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
+import { DeskRecordView } from "./desk-record-view";
 
 const PHASE_PILL: Record<string, string> = {
   failed: "dk-warn",
@@ -69,6 +70,10 @@ export function DeskRecordBody({ artifact }: { artifact: AssistantArtifact }) {
   const statusText = status ? formatDisplayValue(status.type, status.value, t) : "";
   const phase = status && typeof status.value === "string" ? statusPhase(status.value) : null;
 
+  if (card.view) {
+    return <DeskRecordView title={title} view={card.view} entity={card.entity} path={card.path} />;
+  }
+
   return (
     <div className="dk-ax-pad dk-ax-rec">
       <div className="dk-ax-rec-h">
@@ -95,7 +100,8 @@ export function DeskRecordBody({ artifact }: { artifact: AssistantArtifact }) {
       </dl>
       {details.map((field) => (
         <div key={field.key} className="dk-ax-note">
-          <b>{field.label}</b> <DisplayValue type={field.type} value={field.value} label={field.label} />
+          <b>{field.label}</b>{" "}
+          <DisplayValue type={field.type} value={field.value} label={field.label} />
         </div>
       ))}
       {card.path !== "" && (
@@ -152,7 +158,11 @@ export function DeskRateBody({ artifact }: { artifact: AssistantArtifact }) {
                 <span>{component.basis}</span>
               </span>
               <span className="dk-ax-bar">
-                <i style={{ width: `${total > 0 ? Math.max(0, Math.min(1, running / total)) * 100 : 0}%` }} />
+                <i
+                  style={{
+                    width: `${total > 0 ? Math.max(0, Math.min(1, running / total)) * 100 : 0}%`,
+                  }}
+                />
               </span>
               <span className="dk-ax-num">{money(component.amount, rate.currency)}</span>
             </div>
@@ -178,7 +188,11 @@ export function DeskRateBody({ artifact }: { artifact: AssistantArtifact }) {
       ))}
       {rate.rejected.length > 0 && (
         <>
-          <button type="button" className="dk-ax-more" onClick={() => setRejectedOpen((value) => !value)}>
+          <button
+            type="button"
+            className="dk-ax-more"
+            onClick={() => setRejectedOpen((value) => !value)}
+          >
             <ArtIcon name={rejectedOpen ? "up" : "down"} size={11} stroke={2.2} />
             {t(
               "{0, plural, one {# agreement didn't apply} other {# agreements didn't apply}}",
@@ -213,7 +227,13 @@ export function DeskDocBody({ artifact }: { artifact: AssistantArtifact }) {
     <article className="dk-ax-pad dk-ax-doc">
       <h2>{artifact.title}</h2>
       <p className="dk-ax-dm">
-        {t("Written {0}", new Date(artifact.updatedAt * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}
+        {t(
+          "Written {0}",
+          new Date(artifact.updatedAt * 1000).toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          }),
+        )}
       </p>
       <AiMarkdown content={document.body} />
     </article>
@@ -231,9 +251,13 @@ export function DeskDiffBody({ artifact }: { artifact: AssistantArtifact }) {
   return (
     <div className="dk-ax-pad dk-ax-diff">
       <div className="dk-ax-dh">
-        <span>{diff.before.reportName || t("Before")} {when(diff.before.generatedAt)}</span>
+        <span>
+          {diff.before.reportName || t("Before")} {when(diff.before.generatedAt)}
+        </span>
         <i>→</i>
-        <span>{diff.after.reportName || t("After")} {when(diff.after.generatedAt)}</span>
+        <span>
+          {diff.after.reportName || t("After")} {when(diff.after.generatedAt)}
+        </span>
       </div>
       <div className="dk-ax-dc">
         <span className="dk-add">{t("+{0} added", diff.counts.added)}</span>
@@ -309,8 +333,13 @@ export function DeskPlanBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
   const plan = useMemo(() => planFrom(artifact), [artifact]);
   const proposalsQuery = useQuery(queries.assistant.proposals(artifact.threadId));
-  const byId = new Map((proposalsQuery.data?.results ?? []).map((proposal) => [proposal.id, proposal]));
-  const steps = plan.steps.map((step) => ({ ...step, state: stepState(byId.get(step.proposalId)) }));
+  const byId = new Map(
+    (proposalsQuery.data?.results ?? []).map((proposal) => [proposal.id, proposal]),
+  );
+  const steps = plan.steps.map((step) => ({
+    ...step,
+    state: stepState(byId.get(step.proposalId)),
+  }));
   const done = steps.filter((step) => step.state === "done").length;
   const total = Math.max(steps.length, plan.stepCount, 1);
 
@@ -362,7 +391,9 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
     ...queries.assistant.proposals(artifact.threadId),
     enabled: artifact.proposalId !== "",
   });
-  const proposal = proposalsQuery.data?.results.find((candidate) => candidate.id === artifact.proposalId);
+  const proposal = proposalsQuery.data?.results.find(
+    (candidate) => candidate.id === artifact.proposalId,
+  );
   const { copy, isCopied: copied } = useCopyToClipboard();
   const state =
     artifact.status === "Sent" || proposal?.status === "Executed"
@@ -390,7 +421,10 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
         <input value={draft.subject} readOnly aria-label={t("Subject")} />
       </div>
       <textarea
-        value={draft.body || t("The message is written from the organization's template when it is sent.")}
+        value={
+          draft.body ||
+          t("The message is written from the organization's template when it is sent.")
+        }
         readOnly
         spellCheck={false}
         aria-label={t("Message")}
@@ -481,7 +515,10 @@ export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
   return <Notice>{t("This view no longer names a page.")}</Notice>;
 }
 
-function splitTerms(text: string, terms: readonly string[]): Array<{ text: string; term: boolean }> {
+function splitTerms(
+  text: string,
+  terms: readonly string[],
+): Array<{ text: string; term: boolean }> {
   if (terms.length === 0) {
     return [{ text, term: false }];
   }

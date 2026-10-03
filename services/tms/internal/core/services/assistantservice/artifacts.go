@@ -1107,6 +1107,9 @@ func entityCardArtifact(
 	if path, ok := productguide.RecordPath(entity, typeutils.StringOfTrimmed(result["id"])); ok {
 		payload["path"] = path
 	}
+	if view := recordView(entity, result); view != nil {
+		payload[payloadView] = view
+	}
 	if payloadSize(payload) > assistantartifact.MaxPayloadBytes {
 		return nil
 	}

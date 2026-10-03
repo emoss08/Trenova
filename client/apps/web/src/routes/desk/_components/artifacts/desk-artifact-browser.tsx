@@ -19,7 +19,11 @@ function dayLabel(at: number, today: string, yesterday: string): string {
   const day = new Date(at * 1000).toDateString();
   if (day === today) return "Today";
   if (day === yesterday) return "Yesterday";
-  return new Date(at * 1000).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+  return new Date(at * 1000).toLocaleDateString([], {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function shortTime(at: number): string {
@@ -100,9 +104,12 @@ export function DeskArtifactBrowser({
     }
     return tally;
   }, [base]);
-  const shown = kind === "all" ? base : base.filter((lineage) => deskArtKind(lineage.latest) === kind);
+  const shown =
+    kind === "all" ? base : base.filter((lineage) => deskArtKind(lineage.latest) === kind);
   const page = shown.slice(0, limit);
-  const pinnedCount = lineages.filter((lineage) => lineage.versions.some((version) => version.pinned)).length;
+  const pinnedCount = lineages.filter((lineage) =>
+    lineage.versions.some((version) => version.pinned),
+  ).length;
 
   const resetPaging = () => {
     setLimit(PAGE);
@@ -129,7 +136,10 @@ export function DeskArtifactBrowser({
   const now = new Date();
   const today = now.toDateString();
   const yesterday = new Date(now.getTime() - 86_400_000).toDateString();
-  const groups: Array<{ day: string; turns: Array<{ key: string; at: number; items: ArtifactLineage[] }> }> = [];
+  const groups: Array<{
+    day: string;
+    turns: Array<{ key: string; at: number; items: ArtifactLineage[] }>;
+  }> = [];
   for (const lineage of page) {
     const day = dayLabel(lineage.latest.createdAt, today, yesterday);
     let group = groups.at(-1);
@@ -149,13 +159,25 @@ export function DeskArtifactBrowser({
   return (
     <div className="dk-axb">
       <div className="dk-axb-top">
-        <button type="button" className="dk-ax-ib" onClick={onBack} title={t("Back")} aria-label={t("Back")}>
+        <button
+          type="button"
+          className="dk-ax-ib"
+          onClick={onBack}
+          title={t("Back")}
+          aria-label={t("Back")}
+        >
           <ArtIcon name="up" size={13} stroke={2.2} />
         </button>
         <b>{t("All artifacts")}</b>
         <span className="dk-axb-n">{lineages.length}</span>
         <span className="flex-1" />
-        <button type="button" className="dk-ax-ib" onClick={onClose} title={t("Close")} aria-label={t("Hide artifacts")}>
+        <button
+          type="button"
+          className="dk-ax-ib"
+          onClick={onClose}
+          title={t("Close")}
+          aria-label={t("Hide artifacts")}
+        >
           <ArtIcon name="x" size={13} stroke={2.2} />
         </button>
       </div>

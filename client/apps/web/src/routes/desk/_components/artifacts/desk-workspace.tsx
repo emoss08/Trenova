@@ -20,12 +20,7 @@ import type { LiveArtifacts } from "../desk-layout";
 import { useOutsideDismiss } from "../use-outside-dismiss";
 import { tableViewCsv } from "./artifact-export";
 import { tableViewFrom } from "./artifact-payloads";
-import {
-  ArtIcon,
-  DeskArtKindIcon,
-  deskArtKind,
-  deskArtKindName,
-} from "./desk-art-kinds";
+import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
 import {
@@ -116,7 +111,11 @@ function ArtStack({
           <button
             key={lineage.id}
             type="button"
-            className={cn("dk-ax-card", index === 0 && "dk-front", lineage.id === newest && "dk-nw")}
+            className={cn(
+              "dk-ax-card",
+              index === 0 && "dk-front",
+              lineage.id === newest && "dk-nw",
+            )}
             onClick={() => {
               onPick(lineage.id);
               close();
@@ -258,8 +257,7 @@ function Provenance({
     artifact.kind === "table_view" && !("path" in artifact.payload)
       ? tableViewFrom(artifact).calls
       : 0;
-  const changes =
-    grid && previous ? changedCells(grid, gridOf(previous)).size : 0;
+  const changes = grid && previous ? changedCells(grid, gridOf(previous)).size : 0;
 
   if (tool === "" && !grid && calls === 0) {
     return null;
@@ -440,19 +438,19 @@ export function DeskWorkspace({
   if (artifactsQuery.isError) {
     return (
       <div className="dk-apx dk-apx-solo">
-      <div className="dk-axe">
-        <div className="dk-axe-in">
-          <b className="dk-axe-t">{t("This conversation's artifacts could not be loaded.")}</b>
-          <button
-            type="button"
-            className="dk-ec-btn"
-            style={{ marginTop: 14 }}
-            onClick={() => void artifactsQuery.refetch()}
-          >
-            {t("Try again")}
-          </button>
+        <div className="dk-axe">
+          <div className="dk-axe-in">
+            <b className="dk-axe-t">{t("This conversation's artifacts could not be loaded.")}</b>
+            <button
+              type="button"
+              className="dk-ec-btn"
+              style={{ marginTop: 14 }}
+              onClick={() => void artifactsQuery.refetch()}
+            >
+              {t("Try again")}
+            </button>
+          </div>
         </div>
-      </div>
       </div>
     );
   }
@@ -530,13 +528,31 @@ export function DeskWorkspace({
               onAll={() => setBrowsing(true)}
             />
             <div className="dk-ax-nav">
-              <button type="button" className="dk-ax-ib" title={t("Previous")} aria-label={t("Previous")} onClick={() => go(-1)}>
+              <button
+                type="button"
+                className="dk-ax-ib"
+                title={t("Previous")}
+                aria-label={t("Previous")}
+                onClick={() => go(-1)}
+              >
                 <ArtIcon name="up" size={13} stroke={2.2} />
               </button>
-              <button type="button" className="dk-ax-ib" title={t("Next")} aria-label={t("Next")} onClick={() => go(1)}>
+              <button
+                type="button"
+                className="dk-ax-ib"
+                title={t("Next")}
+                aria-label={t("Next")}
+                onClick={() => go(1)}
+              >
                 <ArtIcon name="down" size={13} stroke={2.2} />
               </button>
-              <button type="button" className="dk-ax-ib" title={t("Close")} aria-label={t("Hide artifacts")} onClick={onClose}>
+              <button
+                type="button"
+                className="dk-ax-ib"
+                title={t("Close")}
+                aria-label={t("Hide artifacts")}
+                onClick={onClose}
+              >
                 <ArtIcon name="x" size={13} stroke={2.2} />
               </button>
             </div>
@@ -544,7 +560,12 @@ export function DeskWorkspace({
           <div className="dk-ax-body" key={artifact.id}>
             {index !== last && (
               <div className="dk-ax-oldnote">
-                {t("Version {0} of {1}, read {2}", index + 1, last + 1, shortTime(artifact.createdAt))}
+                {t(
+                  "Version {0} of {1}, read {2}",
+                  index + 1,
+                  last + 1,
+                  shortTime(artifact.createdAt),
+                )}
               </div>
             )}
             <Provenance artifact={artifact} previous={previous} />
@@ -568,11 +589,22 @@ export function DeskWorkspace({
               <ArtIcon name="pin" size={14} />
             </button>
             {tabular && artifact.kind === "table_view" && (
-              <button type="button" className="dk-ax-ib" title={t("Export CSV")} onClick={exportCsv}>
+              <button
+                type="button"
+                className="dk-ax-ib"
+                title={t("Export CSV")}
+                onClick={exportCsv}
+              >
                 <ArtIcon name="dl" size={14} />
               </button>
             )}
-            <a className="dk-ax-ib" href={link} target="_blank" rel="noreferrer" title={t("Open on its own page")}>
+            <a
+              className="dk-ax-ib"
+              href={link}
+              target="_blank"
+              rel="noreferrer"
+              title={t("Open on its own page")}
+            >
               <ArtIcon name="ext" size={14} />
             </a>
           </div>

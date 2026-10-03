@@ -474,8 +474,89 @@ export function documentFrom(artifact: AssistantArtifact): DocumentArtifact {
   return { body: stringOf(artifact.payload.body) };
 }
 
+/** One end of a shipment's route, and the time that matters there. */
+export type RouteEnd = {
+  city: string;
+  place: string;
+  /** Whether the time is when it happened or when it is due. */
+  when: "departed" | "arrived" | "scheduled" | "";
+  /** A local date and time, "2026-10-02T09:12". */
+  at: string;
+};
+
+/** A fact on a record card, keyed so the reader names it in their own words. */
+export type RecordFact = { key: string; value: string | number };
+
+/**
+ * A record laid out for its kind: a shipment's route and who is moving it, an
+ * invoice's amount and whether it is paid, a billing item's amount and what
+ * stands in its way. Null for a kind that has no view of its own.
+ */
+export type RecordView = {
+  type: string;
+  status: string;
+  subtitle: string;
+  from: RouteEnd | null;
+  to: RouteEnd | null;
+  progress: number | null;
+  amount: { total: string; balance: string; currency: string } | null;
+  ready: { canApprove: boolean; blockedBy: string; blockers: number } | null;
+  facts: RecordFact[];
+};
+
+function routeEndOf(value: unknown): RouteEnd | null {
+  if (!isRecord(value)) return null;
+  const when = stringOf(value.when);
+  return {
+    city: stringOf(value.city),
+    place: stringOf(value.place),
+    when: when === "departed" || when === "arrived" || when === "scheduled" ? when : "",
+    at: stringOf(value.at),
+  };
+}
+
+function recordViewOf(value: unknown): RecordView | null {
+  if (!isRecord(value) || stringOf(value.type) === "") return null;
+  const amount = isRecord(value.amount) ? value.amount : null;
+  const ready = isRecord(value.ready) ? value.ready : null;
+  const facts = Array.isArray(value.facts)
+    ? value.facts.flatMap((entry): RecordFact[] =>
+        isRecord(entry) &&
+        typeof entry.key === "string" &&
+        (typeof entry.value === "string" || typeof entry.value === "number")
+          ? [{ key: entry.key, value: entry.value }]
+          : [],
+      )
+    : [];
+  return {
+    type: stringOf(value.type),
+    status: stringOf(value.status),
+    subtitle: stringOf(value.subtitle),
+    from: routeEndOf(value.from),
+    to: routeEndOf(value.to),
+    progress: typeof value.progress === "number" ? Math.min(1, Math.max(0, value.progress)) : null,
+    amount: amount
+      ? {
+          total: stringOf(amount.total),
+          balance: stringOf(amount.balance),
+          currency: stringOf(amount.currency),
+        }
+      : null,
+    ready: ready
+      ? {
+          canApprove: ready.canApprove === true,
+          blockedBy: stringOf(ready.blockedBy),
+          blockers: typeof ready.blockers === "number" ? ready.blockers : 0,
+        }
+      : null,
+    facts,
+  };
+}
+
 export type EntityCardArtifact = {
   entity: string;
+  /** The record laid out for its kind, when its kind has a layout. */
+  view: RecordView | null;
   /** The record's readable fields, its name first; never its id. */
   fields: DisplayField[];
   /** Where the record opens in the app; empty when its kind has no page. */
@@ -506,6 +587,7 @@ export function entityCardFrom(artifact: AssistantArtifact): EntityCardArtifact 
 
   return {
     entity: stringOf(payload.entity),
+    view: recordViewOf(payload.view),
     fields,
     path: appPathOf(payload.path),
   };

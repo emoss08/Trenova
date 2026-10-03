@@ -87,7 +87,10 @@ export function changedCells(current: Grid, previous: Grid | null): Set<string> 
       continue;
     }
     for (const column of current.columns) {
-      if (JSON.stringify(old.values[column.key] ?? null) !== JSON.stringify(row.values[column.key] ?? null)) {
+      if (
+        JSON.stringify(old.values[column.key] ?? null) !==
+        JSON.stringify(row.values[column.key] ?? null)
+      ) {
         changed.add(`${row.key}:${column.key}`);
       }
     }
@@ -188,7 +191,11 @@ export function DeskTableBody({
           const y = sortKey(column.type, b.values[column.key]);
           if (x === null) return 1;
           if (y === null) return -1;
-          return (typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y))) * sort.direction;
+          return (
+            (typeof x === "number" && typeof y === "number"
+              ? x - y
+              : String(x).localeCompare(String(y))) * sort.direction
+          );
         });
       }
     }
@@ -197,7 +204,11 @@ export function DeskTableBody({
 
   const cycle = (key: string) =>
     setSort((current) =>
-      current?.key === key ? (current.direction === 1 ? { key, direction: -1 } : null) : { key, direction: 1 },
+      current?.key === key
+        ? current.direction === 1
+          ? { key, direction: -1 }
+          : null
+        : { key, direction: 1 },
     );
 
   return (
@@ -244,7 +255,10 @@ export function DeskTableBody({
           </thead>
           <tbody>
             {rows.map((row, index) => (
-              <tr key={`${row.key}:${artifact.id}`} style={{ animationDelay: `${Math.min(index, 14) * 18}ms` }}>
+              <tr
+                key={`${row.key}:${artifact.id}`}
+                style={{ animationDelay: `${Math.min(index, 14) * 18}ms` }}
+              >
                 {grid.columns.map((column, at) => (
                   <td
                     key={column.key}
@@ -294,9 +308,7 @@ export function DeskTableBody({
             )}
           </div>
         )}
-        {rows.length === 0 && (
-          <div className="dk-ax-trunc">{t("No rows match “{0}”", query)}</div>
-        )}
+        {rows.length === 0 && <div className="dk-ax-trunc">{t("No rows match “{0}”", query)}</div>}
       </div>
     </div>
   );
