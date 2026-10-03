@@ -166,10 +166,19 @@ type ChatProviderFailure struct {
 	ProviderID pulid.ID `json:"providerId"`
 	Name       string   `json:"name"`
 	Model      string   `json:"model"`
+	// Vendor is the company behind the model, for its mark.
+	Vendor string `json:"vendor"`
 	// Status is a short word for what went wrong: Overloaded, Timed out,
-	// Unavailable or Failed.
+	// Unavailable, Failed, or Not set up for a model the organization has
+	// but has not given the task.
 	Status string `json:"status"`
+	// Detail says what happened in a line a person can read: "Anthropic
+	// returned 529 twice", "No response after 30s".
 	Detail string `json:"detail"`
+	// HTTPStatus is the provider's status code, when it answered at all, and
+	// Attempts how many times it was asked.
+	HTTPStatus int `json:"httpStatus,omitempty"`
+	Attempts   int `json:"attempts,omitempty"`
 }
 
 // ChatProvidersFailedError is returned when every provider in the order was

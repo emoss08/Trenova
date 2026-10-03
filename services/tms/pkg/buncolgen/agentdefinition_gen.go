@@ -62,6 +62,8 @@ var DefinitionColumns = struct {
 	AutonomyCeiling        Column // "autonomy_ceiling" → qualified: "agdef.autonomy_ceiling"
 	DataAccessCeiling      Column // "data_access_ceiling" → qualified: "agdef.data_access_ceiling"
 	Enabled                Column // "enabled" → qualified: "agdef.enabled"
+	DisabledAt             Column // "disabled_at" → qualified: "agdef.disabled_at"
+	DisabledByID           Column // "disabled_by_id" → qualified: "agdef.disabled_by_id"
 	ShadowMode             Column // "shadow_mode" → qualified: "agdef.shadow_mode"
 	DecisionTimeoutSeconds Column // "decision_timeout_seconds" → qualified: "agdef.decision_timeout_seconds"
 	TriggerMode            Column // "trigger_mode" → qualified: "agdef.trigger_mode"
@@ -105,6 +107,8 @@ var DefinitionColumns = struct {
 	AutonomyCeiling:        NewColumn("autonomy_ceiling", "agdef"),
 	DataAccessCeiling:      NewColumn("data_access_ceiling", "agdef"),
 	Enabled:                NewColumn("enabled", "agdef"),
+	DisabledAt:             NewColumn("disabled_at", "agdef"),
+	DisabledByID:           NewColumn("disabled_by_id", "agdef"),
 	ShadowMode:             NewColumn("shadow_mode", "agdef"),
 	DecisionTimeoutSeconds: NewColumn("decision_timeout_seconds", "agdef"),
 	TriggerMode:            NewColumn("trigger_mode", "agdef"),
@@ -154,6 +158,8 @@ var DefinitionFieldMap = map[string]string{
 	"autonomyCeiling":        "autonomy_ceiling",
 	"dataAccessCeiling":      "data_access_ceiling",
 	"enabled":                "enabled",
+	"disabledAt":             "disabled_at",
+	"disabledById":           "disabled_by_id",
 	"shadowMode":             "shadow_mode",
 	"decisionTimeoutSeconds": "decision_timeout_seconds",
 	"triggerMode":            "trigger_mode",
@@ -201,6 +207,8 @@ var DefinitionInsertableColumns = []string{
 	"autonomy_ceiling",
 	"data_access_ceiling",
 	"enabled",
+	"disabled_at",
+	"disabled_by_id",
 	"shadow_mode",
 	"decision_timeout_seconds",
 	"trigger_mode",
@@ -308,6 +316,8 @@ var DefinitionFilter = struct {
 	AutonomyCeiling        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyCeiling" → DB: "autonomy_ceiling"
 	DataAccessCeiling      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dataAccessCeiling" → DB: "data_access_ceiling"
 	Enabled                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	DisabledAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disabledAt" → DB: "disabled_at"
+	DisabledByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disabledById" → DB: "disabled_by_id"
 	ShadowMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
 	DecisionTimeoutSeconds func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decisionTimeoutSeconds" → DB: "decision_timeout_seconds"
 	TriggerMode            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "triggerMode" → DB: "trigger_mode"
@@ -376,6 +386,12 @@ var DefinitionFilter = struct {
 	},
 	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enabled", op, value)
+	},
+	DisabledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("disabledAt", op, value)
+	},
+	DisabledByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("disabledById", op, value)
 	},
 	ShadowMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("shadowMode", op, value)

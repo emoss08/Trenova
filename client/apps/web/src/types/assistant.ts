@@ -512,6 +512,12 @@ export const threadBudgetSchema = z.object({
   resetsAt: z.number().optional().default(0),
   runsToday: z.number().optional().default(0),
   dailyRunLimit: z.number().optional().default(0),
+  budgetUsed: z.boolean().optional().default(false),
+  dailyUsed: z.boolean().optional().default(false),
+  dayResetsAt: z.number().optional().default(0),
+  /** Who turned the agent off, and when; empty while it is on. */
+  disabledBy: z.string().optional().default(""),
+  disabledAt: z.number().optional().default(0),
   person: z
     .object({ used: z.number(), limit: z.number(), resetsAt: z.number() })
     .nullable()
@@ -533,7 +539,8 @@ export const deskSearchResultSchema = z.object({
   agentId: z.string().optional().default(""),
   title: z.string().optional().default(""),
   threadTitle: z.string().optional().default(""),
-  artifactKind: z.string().optional().default(""),
+  /** On an artifact result: what kind it is; absent when the server names one this client does not know. */
+  artifactKind: artifactKindSchema.optional().catch(undefined),
   status: z.string().optional().default(""),
   at: z.number().optional().default(0),
 });
@@ -557,6 +564,7 @@ export const messageAttachmentSchema = z.object({
   fileName: z.string(),
   contentType: z.string().optional(),
   fileSize: z.number().optional(),
+  poorlyRead: z.boolean().optional(),
 });
 
 /**
@@ -600,6 +608,18 @@ export const toolExecutionResultSchema = z.object({
   name: z.string().optional().default(""),
   ids: z.preprocess((value) => value ?? {}, z.record(z.string(), z.string())),
   record: recordRefSchema.nullish().catch(null),
+  /** On a write over many records: how many it was asked to change. */
+  total: z.number().optional(),
+  /** On a write over many records: each one that did not go through, and why. */
+  failed: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string().optional().default(""),
+        reason: z.string().optional().default(""),
+      }),
+    )
+    .nullish(),
 });
 
 /** One write the other agent made or proposed on the task. */
@@ -645,6 +665,37 @@ export const assistantDelegateFinishedEventSchema = z.object({
   moreMade: z.number().int().nonnegative().optional().default(0),
   moreAwaiting: z.number().int().nonnegative().optional().default(0),
   morePublished: z.number().int().nonnegative().optional().default(0),
+});
+
+/** One model a failed reply was asked of, and what happened. */
+export const failedProviderSchema = z.object({
+  name: z.string().optional().default(""),
+  model: z.string().optional().default(""),
+  vendor: z.string().optional().default(""),
+  /** Overloaded, Timed out, Unavailable, Failed, or Not set up. */
+  status: z.string().optional().default(""),
+  detail: z.string().optional().default(""),
+});
+
+export type FailedProvider = z.infer<typeof failedProviderSchema>;
+
+/** Why a saved reply did not finish. */
+export const replyFailureSchema = z.object({
+  kind: z.enum(["no_model", "interrupted", "stopped", "before_start"]).catch("before_start"),
+  providers: z
+    .array(failedProviderSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export type ReplyFailure = z.infer<typeof replyFailureSchema>;
+
+/** The model a reply was asked of first, when another one answered. */
+export const providerFallbackSchema = z.object({
+  providerId: z.string().optional().default(""),
+  name: z.string().optional().default(""),
+  model: z.string().optional().default(""),
+  status: z.string().optional().default(""),
 });
 
 export const assistantMessageSchema = z.object({
@@ -700,6 +751,14 @@ export const assistantMessageSchema = z.object({
   attachments: z.array(messageAttachmentSchema).nullish(),
   mentions: z.array(entityRefSchema).nullish(),
   model: z.string().optional().default(""),
+  /** The model that wrote the reply. */
+  providerId: z.string().nullish(),
+  /** The reply broke off partway; what arrived is kept. */
+  truncated: z.boolean().optional(),
+  /** Another model answered because this one did not. */
+  fallbackFrom: providerFallbackSchema.nullish().catch(null),
+  /** Set on a reply that is only a closing note: why it did not finish. */
+  failure: replyFailureSchema.nullish().catch(null),
   inputTokens: z.number().default(0),
   outputTokens: z.number().default(0),
   reasoning: reasoningTraceSchema.nullish(),
@@ -1028,6 +1087,8 @@ export const assistantProposalSchema = z.object({
   executedAt: z.number().nullish(),
   /** Why an approved proposal failed to run, shown instead of a success state. */
   executionError: z.string().optional().default(""),
+  /** What the run made; for a write over many records, the ones that did not go through. */
+  executionResult: toolExecutionResultSchema.nullish().catch(null),
   /** When a pending proposal stops being decidable; 0 for one made before expiry existed. */
   expiresAt: z.number().nullish().default(0),
   /**
@@ -1206,6 +1267,10 @@ export const turnLimitSchema = z.object({
 
 export const assistantErrorEventSchema = z.object({
   message: z.string(),
+  /** no_model_answered when every model failed, no_provider when none is set up. */
+  code: z.string().optional(),
+  /** The models asked, when every one of them failed. */
+  providers: z.array(failedProviderSchema).nullish(),
   /** Set when a usage cap turned the question away. */
   limit: turnLimitSchema.nullish().catch(null),
 });
@@ -1228,6 +1293,8 @@ export const assistantRetryingEventSchema = z.object({
   kind: retryKindSchema.optional().default("restart"),
   /** How long the router is waiting before a busy retry, in seconds. */
   waitSeconds: z.number().int().nonnegative().optional().default(0),
+  /** How many times the model is asked in all, for "attempt 2 of 3". */
+  maxAttempts: z.number().int().nonnegative().optional(),
 });
 
 /** The other agent's reply died partway and is starting over; the reply being shown is untouched. */

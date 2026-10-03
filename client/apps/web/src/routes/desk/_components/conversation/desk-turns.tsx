@@ -136,6 +136,13 @@ export function DeskInlineArtifact({
   );
 }
 
+const CUT_NOTE = /\s*_This reply was cut off before it finished\.[^_]*_\s*$/u;
+
+/** A cut-off reply's words, without the note the server adds to say it was cut. */
+export function withoutCutNote(content: string): string {
+  return content.replace(CUT_NOTE, "");
+}
+
 /** A saved reply: its words, what it produced, and the actions under it. */
 export function DeskReply({
   entry,
@@ -163,19 +170,22 @@ export function DeskReply({
   const { message, tools } = entry;
   const asks = askRequestsFrom(tools);
   const reportRuns = reportRunsFrom(tools);
-  const citations = useMemo(() => citeSteps(message.content, steps), [message.content, steps]);
+  // A reply that broke off carries the server's note saying so; the card
+  // under it says it instead.
+  const content = message.truncated ? withoutCutNote(message.content) : message.content;
+  const citations = useMemo(() => citeSteps(content, steps), [content, steps]);
   // Every artifact the reply made is opened from its words: one it named
   // where it named it, any other at the end of its last sentence.
   const cited = useMemo(
-    () => withArtifactRefs(withCitations(message.content, citations), artifacts),
-    [artifacts, citations, message.content],
+    () => withArtifactRefs(withCitations(content, citations), artifacts),
+    [artifacts, citations, content],
   );
   const overrides = useCitationOverrides(citations, threadArtifacts, onOpenArtifact);
 
   return (
     <>
       {cited !== "" && (
-        <div className="dk-prose">
+        <div className={cn("dk-prose", entry.message.truncated && "dk-cut")}>
           <AiMarkdown content={cited} className="dk-md" overrides={overrides} />
         </div>
       )}
@@ -194,7 +204,7 @@ export function DeskReply({
         </div>
       ))}
       {message.content !== "" && (
-        <DeskMessageActions text={message.content} chapter={chapter} onTogglePin={onTogglePin} />
+        <DeskMessageActions text={content} chapter={chapter} onTogglePin={onTogglePin} />
       )}
     </>
   );

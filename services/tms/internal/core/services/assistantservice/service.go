@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -52,6 +53,11 @@ type Params struct {
 	// AgentControls holds the per-person allowance; without it nobody is
 	// limited.
 	AgentControls repositories.AgentControlRepository `optional:"true"`
+	// Users names who turned an agent off.
+	Users repositories.UserRepository `optional:"true"`
+	// Notifier tells the people who run AI Control that someone asked for
+	// more room: access to an agent, more allowance, more budget.
+	Notifications *notificationservice.Service `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -92,6 +98,8 @@ type Service struct {
 	systemAgents  serviceports.SystemAgentProvisioner
 	pageThreads   repositories.PageThreadRepository
 	agentControls repositories.AgentControlRepository
+	users         repositories.UserRepository
+	notifier      raiseNotifier
 }
 
 func New(p Params) *Service {
@@ -121,5 +129,17 @@ func New(p Params) *Service {
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,
 		agentControls: p.AgentControls,
+		users:         p.Users,
+		notifier:      raiseNotifierOf(p.Notifications),
 	}
+}
+
+// raiseNotifierOf keeps a missing notification service nil as an interface,
+// so the service can tell that requests cannot be sent.
+func raiseNotifierOf(notifications *notificationservice.Service) raiseNotifier {
+	if notifications == nil {
+		return nil
+	}
+
+	return notifications
 }

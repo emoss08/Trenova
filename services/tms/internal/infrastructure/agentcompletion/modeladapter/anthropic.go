@@ -401,6 +401,9 @@ func (a anthropicAdapter) Stream(
 		order      []int
 	)
 
+	// messageStopped is the closing event; with the stop reason it is how a
+	// finished reply is told from a dropped connection.
+	messageStopped := false
 	err = readSSE(stream, func(_, data string) error {
 		var event anthropicStreamEvent
 		if err := sonic.Unmarshal([]byte(data), &event); err != nil {
@@ -441,6 +444,8 @@ func (a anthropicAdapter) Stream(
 			case "signature_delta":
 				block.block.Signature += event.Delta.Signature
 			}
+		case "message_stop":
+			messageStopped = true
 		case "message_delta":
 			if event.Delta != nil {
 				stopReason = stringutils.FirstNonEmpty(event.Delta.StopReason, stopReason)
@@ -455,6 +460,9 @@ func (a anthropicAdapter) Stream(
 
 		return nil
 	})
+	if err == nil && stopReason == "" && !messageStopped {
+		err = errStreamCut
+	}
 	if err != nil {
 		return nil, interrupted(err, model)
 	}

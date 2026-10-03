@@ -41,7 +41,23 @@ type ToolExecutionResult struct {
 	// reader links to it without guessing from Kind and IDs. Kind, Name and
 	// IDs stay for the model.
 	Record *RecordRef `json:"record,omitempty"`
+	// Total and Failed are set by a write over many records: how many it
+	// was asked to change, and each one that did not go through and why,
+	// so the person can see which and ask for them to be fixed.
+	Total  int                 `json:"total,omitempty"`
+	Failed []ExecutionItemFail `json:"failed,omitempty"`
 }
+
+// ExecutionItemFail is one record a write over many did not change.
+type ExecutionItemFail struct {
+	ID     string `json:"id"`
+	Label  string `json:"label,omitempty"`
+	Reason string `json:"reason"`
+}
+
+// maxResultFailures keeps the list of failed records to what a person can
+// page through under one card.
+const maxResultFailures = 500
 
 // RecordRef points at one record the way the app opens it: EntityType is a
 // key of the record-link registry (client/apps/web/src/config/record-links.ts,
@@ -94,6 +110,17 @@ func (r *ToolExecutionResult) Bounded() *ToolExecutionResult {
 		Kind:   stringutils.OneLine(r.Kind, maxResultWordChars),
 		Name:   stringutils.OneLine(r.Name, maxResultNameChars),
 		Record: r.Record.Bounded(),
+		Total:  r.Total,
+	}
+	for idx, failure := range r.Failed {
+		if idx == maxResultFailures {
+			break
+		}
+		bounded.Failed = append(bounded.Failed, ExecutionItemFail{
+			ID:     stringutils.OneLine(failure.ID, maxResultIDChars),
+			Label:  stringutils.OneLine(failure.Label, maxResultNameChars),
+			Reason: stringutils.OneLine(failure.Reason, maxResultNameChars),
+		})
 	}
 
 	keys := make([]string, 0, len(r.IDs))

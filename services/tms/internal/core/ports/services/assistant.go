@@ -125,6 +125,9 @@ type AssistantProposal struct {
 	// accepted proposal with neither set was approved but has not run yet.
 	ExecutedAt     *int64 `json:"executedAt"`
 	ExecutionError string `json:"executionError"`
+	// ExecutionResult is what the run made, and for a write over many
+	// records each one that did not go through.
+	ExecutionResult *agent.ToolExecutionResult `json:"executionResult,omitempty"`
 	// ExpiresAt is when a pending proposal stops being decidable. Zero means
 	// it was made before expiry existed.
 	ExpiresAt int64 `json:"expiresAt"`
@@ -617,6 +620,7 @@ type AssistantService interface {
 		req DeskSearchRequest,
 	) ([]DeskSearchResult, error)
 	ThreadBudget(ctx context.Context, req repositories.GetThreadRequest) (*ThreadBudget, error)
+	RequestMore(ctx context.Context, req RequestMoreRequest) (*RequestMoreResult, error)
 	ListThreadProposals(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
@@ -703,8 +707,36 @@ type ThreadBudget struct {
 	ResetsAt      int64   `json:"resetsAt"`
 	RunsToday     int     `json:"runsToday"`
 	DailyRunLimit int     `json:"dailyRunLimit"`
+	// BudgetUsed and DailyUsed say a cap is spent, so the composer locks
+	// before a question is sent rather than after it is refused.
+	BudgetUsed bool `json:"budgetUsed"`
+	DailyUsed  bool `json:"dailyUsed"`
+	// DayResetsAt is when the daily run cap clears.
+	DayResetsAt int64 `json:"dayResetsAt"`
+	// DisabledBy and DisabledAt say who turned the agent off and when.
+	DisabledBy string `json:"disabledBy,omitempty"`
+	DisabledAt int64  `json:"disabledAt,omitempty"`
 	// Person is the asker's own monthly allowance, nil when unlimited.
 	Person *PersonAllowance `json:"person"`
+}
+
+// The things a person can ask AI Control for from a conversation.
+const (
+	RequestMoreAccess    = "access"
+	RequestMoreAllowance = "allowance"
+	RequestMoreBudget    = "budget"
+	RequestMoreDailyRuns = "daily_runs"
+)
+
+// RequestMoreRequest asks for what a person ran out of in a conversation.
+type RequestMoreRequest struct {
+	Thread repositories.GetThreadRequest
+	Kind   string
+}
+
+// RequestMoreResult says how many people were asked.
+type RequestMoreResult struct {
+	Sent int `json:"sent"`
 }
 
 // PersonAllowance is how many questions one person has asked this month

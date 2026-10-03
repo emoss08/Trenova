@@ -453,6 +453,8 @@ func (r *repository) Update(
 			Set(cols.AutonomyCeiling.Set(), entity.AutonomyCeiling).
 			Set(cols.DataAccessCeiling.Set(), entity.DataAccessCeiling).
 			Set(cols.Enabled.Set(), entity.Enabled).
+			Set(cols.DisabledAt.Set(), entity.DisabledAt).
+			Set(cols.DisabledByID.Set(), entity.DisabledByID).
 			Set(cols.ShadowMode.Set(), entity.ShadowMode).
 			Set(cols.DecisionTimeoutSeconds.Set(), entity.DecisionTimeoutSeconds).
 			Set(cols.TriggerMode.Set(), entity.TriggerMode).

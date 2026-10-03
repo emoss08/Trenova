@@ -6,6 +6,7 @@ import type {
   AssistantStreamEvent,
   AssistantThread,
   DelegateReport,
+  FailedProvider,
   SendMessageResult,
   RetryKind,
   ToolEffect,
@@ -54,6 +55,8 @@ export type TurnRetry = {
   provider: string;
   kind: RetryKind;
   waitSeconds: number;
+  /** How many times the model is asked in all; 0 when the server did not say. */
+  maxAttempts: number;
 };
 
 /**
@@ -294,6 +297,12 @@ export type TurnState = {
   error: string | null;
   /** Set when the question was refused because a usage cap was reached. */
   limit: TurnLimit | null;
+  /** The models asked, when every one of them failed. */
+  failedProviders: FailedProvider[];
+  /** The person stopped the reply themselves. */
+  stopped: boolean;
+  /** Seconds to wait before sending again, when the server said too many too fast. */
+  rateLimited: number | null;
   result: SendMessageResult | null;
   /** Set while the reply is starting over after a model died partway. */
   retrying: TurnRetry | null;
@@ -333,6 +342,9 @@ export function initialTurnState(
     segments: [],
     error: null,
     limit: null,
+    failedProviders: [],
+    stopped: false,
+    rateLimited: null,
     result: null,
     retrying: null,
     artifacts: [],
@@ -469,6 +481,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           provider: data.provider,
           kind: data.kind,
           waitSeconds: data.waitSeconds,
+          maxAttempts: data.maxAttempts ?? 0,
         },
         segments: data.kind === "busy" ? delegate.segments : withdrawAttempt(delegate.segments),
       }));
@@ -500,6 +513,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           provider: event.data.provider,
           kind: event.data.kind,
           waitSeconds: event.data.waitSeconds,
+          maxAttempts: event.data.maxAttempts ?? 0,
         },
         segments: event.data.kind === "busy" ? state.segments : withdrawAttempt(state.segments),
       };
@@ -536,6 +550,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
         status: "error",
         error: event.data.message,
         limit: event.data.limit ?? null,
+        failedProviders: event.data.providers ?? [],
       };
 
     default:

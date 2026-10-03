@@ -89,6 +89,9 @@ type RuntimeAttachment struct {
 	// or to read: "Extracted", "Pending", "Failed".
 	Status  string
 	Excerpt string
+	// PoorlyRead says reading finished but most of the file could not be
+	// made out, so the model says what it could read rather than guessing.
+	PoorlyRead bool
 }
 
 // RuntimeMention is a record the person pointed at by name while asking.
@@ -831,6 +834,10 @@ func describeAttachments(attachments []RuntimeAttachment) string {
 		if attachment.Status != "" {
 			builder.WriteString("\n  reading: ")
 			builder.WriteString(attachment.Status)
+		}
+		if attachment.PoorlyRead {
+			builder.WriteString("\n  legibility: poor. Most of this file could not be read. " +
+				"Say what you could make out and ask for a clearer copy; do not guess the rest.")
 		}
 		if excerpt := strings.TrimSpace(attachment.Excerpt); excerpt != "" {
 			builder.WriteString("\n  excerpt: ")

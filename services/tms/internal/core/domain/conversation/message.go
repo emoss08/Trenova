@@ -96,9 +96,12 @@ type Message struct {
 	// FallbackFrom names the provider asked first when another one answered.
 	Truncated    bool              `json:"truncated,omitempty"    bun:"truncated,type:BOOLEAN,notnull,default:false"`
 	FallbackFrom *ProviderFallback `json:"fallbackFrom,omitempty" bun:"fallback_from,type:JSONB,nullzero"`
-	ProviderID   pulid.ID          `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
-	InputTokens  int               `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
-	OutputTokens int               `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
+	// Failure says why the reply did not finish, for a reply that is only a
+	// closing note: the models that were asked, or that it was stopped.
+	Failure      *ReplyFailure `json:"failure,omitempty" bun:"failure,type:JSONB,nullzero"`
+	ProviderID   pulid.ID      `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
+	InputTokens  int           `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
+	OutputTokens int           `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
 	LatencyMs int64            `json:"latencyMs"    bun:"latency_ms,type:BIGINT,nullzero"`
@@ -116,6 +119,10 @@ type MessageAttachment struct {
 	FileName    string   `json:"fileName"`
 	ContentType string   `json:"contentType,omitempty"`
 	FileSize    int64    `json:"fileSize,omitempty"`
+	// PoorlyRead marks a file whose reading finished but could make out
+	// little of it, such as a blurred photo, so the Desk can ask for a
+	// clearer copy.
+	PoorlyRead bool `json:"poorlyRead,omitempty"`
 }
 
 // ReasoningTrace is a model's thinking, kept in two parts.
@@ -249,6 +256,34 @@ func (m *Message) Validate(multiErr *errortypes.MultiError) {
 
 // ProviderFallback is the provider a reply was asked of first, and why it did
 // not give it.
+// ReplyFailure is why a reply did not finish.
+type ReplyFailure struct {
+	// Kind is no_model when every model asked failed, interrupted when the
+	// reply broke off partway, stopped when the person stopped it, and
+	// before_start for any other failure before a word arrived.
+	Kind string `json:"kind"`
+	// Providers are the models asked, and any the organization has that were
+	// not given the task, each with what happened.
+	Providers []FailedProvider `json:"providers,omitempty"`
+}
+
+// FailedProvider is one model a failed reply was asked of.
+type FailedProvider struct {
+	Name   string `json:"name"`
+	Model  string `json:"model"`
+	Vendor string `json:"vendor"`
+	Status string `json:"status"`
+	Detail string `json:"detail"`
+}
+
+// The kinds of ReplyFailure.
+const (
+	ReplyFailureNoModel     = "no_model"
+	ReplyFailureInterrupted = "interrupted"
+	ReplyFailureStopped     = "stopped"
+	ReplyFailureBeforeStart = "before_start"
+)
+
 type ProviderFallback struct {
 	ProviderID pulid.ID `json:"providerId"`
 	Name       string   `json:"name"`

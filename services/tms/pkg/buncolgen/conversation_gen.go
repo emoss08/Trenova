@@ -329,6 +329,7 @@ var MessageColumns = struct {
 	Model             Column // "model" → qualified: "amsg.model"
 	Truncated         Column // "truncated" → qualified: "amsg.truncated"
 	FallbackFrom      Column // "fallback_from" → qualified: "amsg.fallback_from"
+	Failure           Column // "failure" → qualified: "amsg.failure"
 	ProviderID        Column // "provider_id" → qualified: "amsg.provider_id"
 	InputTokens       Column // "input_tokens" → qualified: "amsg.input_tokens"
 	OutputTokens      Column // "output_tokens" → qualified: "amsg.output_tokens"
@@ -365,6 +366,7 @@ var MessageColumns = struct {
 	Model:             NewColumn("model", "amsg"),
 	Truncated:         NewColumn("truncated", "amsg"),
 	FallbackFrom:      NewColumn("fallback_from", "amsg"),
+	Failure:           NewColumn("failure", "amsg"),
 	ProviderID:        NewColumn("provider_id", "amsg"),
 	InputTokens:       NewColumn("input_tokens", "amsg"),
 	OutputTokens:      NewColumn("output_tokens", "amsg"),
@@ -407,6 +409,7 @@ var MessageFieldMap = map[string]string{
 	"model":          "model",
 	"truncated":      "truncated",
 	"fallbackFrom":   "fallback_from",
+	"failure":        "failure",
 	"providerId":     "provider_id",
 	"inputTokens":    "input_tokens",
 	"outputTokens":   "output_tokens",
@@ -447,6 +450,7 @@ var MessageInsertableColumns = []string{
 	"model",
 	"truncated",
 	"fallback_from",
+	"failure",
 	"provider_id",
 	"input_tokens",
 	"output_tokens",
@@ -545,6 +549,7 @@ var MessageFilter = struct {
 	Model             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
 	Truncated         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "truncated" → DB: "truncated"
 	FallbackFrom      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fallbackFrom" → DB: "fallback_from"
+	Failure           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failure" → DB: "failure"
 	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
 	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
 	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
@@ -638,6 +643,9 @@ var MessageFilter = struct {
 	},
 	FallbackFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fallbackFrom", op, value)
+	},
+	Failure: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failure", op, value)
 	},
 	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("providerId", op, value)

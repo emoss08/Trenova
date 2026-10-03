@@ -2066,3 +2066,9 @@
 .dk-abadge.dk-inline{height:22px;padding:0 8px 0 6px;gap:5px;margin:0 1px;font-size:12.5px;vertical-align:-1px;animation:none;max-width:100%}
 .dk-abadge.dk-inline>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dk-abadge.dk-inline:hover{transform:none}
+/* a reply that broke off: its last lines fade, and the card that says so sits a step below it */
+.dk-prose.dk-cut{-webkit-mask-image:linear-gradient(#000 55%,rgba(0,0,0,.35));mask-image:linear-gradient(#000 55%,rgba(0,0,0,.35))}
+.dk-ec-after{margin-top:14px}
+.dk-ec-fb{margin-top:6px}
+.dk-ec-dockcard{margin:0 0 10px}
+.dk-ec-queued-row{margin-top:8px}

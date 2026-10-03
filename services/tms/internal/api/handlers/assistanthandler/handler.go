@@ -14,6 +14,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -72,6 +73,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/threads/:threadID/budget/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.threadBudget,
+	)
+	api.POST(
+		"/threads/:threadID/requests/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.requestMore,
 	)
 	// Renaming, pinning and deleting a conversation need no more than being
 	// allowed to use the assistant.
@@ -325,6 +331,34 @@ func (h *Handler) threadBudget(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, budget)
+}
+
+func (h *Handler) requestMore(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	var body struct {
+		Kind string `json:"kind"`
+	}
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"kind", errortypes.ErrInvalid, "Say what is being asked for",
+		))
+		return
+	}
+
+	result, err := h.service.RequestMore(c.Request.Context(), serviceports.RequestMoreRequest{
+		Thread: req,
+		Kind:   body.Kind,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) markThreadRead(c *gin.Context) {

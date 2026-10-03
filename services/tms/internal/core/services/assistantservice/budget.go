@@ -2,6 +2,8 @@ package assistantservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -46,15 +48,22 @@ func (s *Service) ThreadBudget(
 	}
 
 	out.AgentName = definition.Name
+	if definition.DisabledAt != nil {
+		out.DisabledAt = *definition.DisabledAt
+		out.DisabledBy = s.personName(ctx, definition.DisabledByID, req.TenantInfo)
+	}
 	out.SpentUSD = status.SpentUSD
 	out.MonthStart = status.MonthStart
 	out.ResetsAt = time.Unix(status.MonthStart, 0).UTC().AddDate(0, 1, 0).Unix()
 	out.RunsToday = status.RunsToday
 	out.DailyRunLimit = status.DailyRunLimit
+	out.DailyUsed = status.DailyRunLimit > 0 && status.RunsToday >= status.DailyRunLimit
+	out.DayResetsAt = time.Unix(status.DayStart, 0).UTC().AddDate(0, 0, 1).Unix()
 	if status.MonthlyBudget != nil {
 		out.LimitUSD = *status.MonthlyBudget
 		out.Share = budgetShare(status.SpentUSD, *status.MonthlyBudget)
 		out.Near = out.Share >= budgetNearShare
+		out.BudgetUsed = out.Share >= 1
 	}
 
 	return out, nil
@@ -74,4 +83,25 @@ func budgetShare(spent, limit string) float64 {
 
 	share, _ := spentUSD.Div(limitUSD).Float64()
 	return share
+}
+
+// personName is a person's name for a sentence such as "Jordan Pike turned
+// off this agent", empty when there is nobody to name or no way to look.
+func (s *Service) personName(
+	ctx context.Context,
+	id *pulid.ID,
+	tenant pagination.TenantInfo,
+) string {
+	if id == nil || id.IsNil() || s.users == nil {
+		return ""
+	}
+	user, err := s.users.GetByID(ctx, repositories.GetUserByIDRequest{
+		TenantInfo:   tenant,
+		LookupUserID: *id,
+	})
+	if err != nil || user == nil {
+		return ""
+	}
+
+	return user.Name
 }

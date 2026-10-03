@@ -158,14 +158,17 @@ func (s *Service) readAttachment(
 		return attachmentSlot{problem: "Attachment does not belong to this conversation"}
 	}
 
+	runtime := s.describeAttachment(ctx, doc.ID, doc.OriginalName, doc.FileType, tenant)
+
 	return attachmentSlot{
 		stored: &conversation.MessageAttachment{
 			DocumentID:  doc.ID,
 			FileName:    doc.OriginalName,
 			ContentType: doc.FileType,
 			FileSize:    doc.FileSize,
+			PoorlyRead:  runtime.PoorlyRead,
 		},
-		runtime: s.describeAttachment(ctx, doc.ID, doc.OriginalName, doc.FileType, tenant),
+		runtime: runtime,
 	}
 }
 
@@ -203,6 +206,7 @@ func (s *Service) describeAttachment(
 	attachment.Status = string(content.Status)
 	attachment.PageCount = content.PageCount
 	attachment.Kind = content.DetectedDocumentKind
+	attachment.PoorlyRead = content.PoorlyRead()
 	if text := strings.TrimSpace(content.ContentText); text != "" {
 		attachment.Excerpt = text
 	}

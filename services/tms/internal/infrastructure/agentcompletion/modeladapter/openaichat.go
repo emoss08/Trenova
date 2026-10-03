@@ -283,6 +283,8 @@ func (a openAIChatAdapter) Stream(
 		usage     chatUsage
 		refused   bool
 		truncated bool
+		// finished is set by a finish reason or the closing [DONE] marker.
+		finished bool
 		// Buffers are keyed by index, which is the protocol's own key for a
 		// call's fragments — but a fragment carrying a different id at an
 		// index already in use is a new call, not a continuation. Some
@@ -295,6 +297,7 @@ func (a openAIChatAdapter) Stream(
 
 	err = readSSE(stream, func(_, data string) error {
 		if data == "[DONE]" {
+			finished = true
 			return nil
 		}
 
@@ -310,6 +313,9 @@ func (a openAIChatAdapter) Stream(
 
 		for idx := range chunk.Choices {
 			choice := &chunk.Choices[idx]
+			if choice.FinishReason != "" {
+				finished = true
+			}
 			switch choice.FinishReason {
 			case "content_filter":
 				refused = true
@@ -345,6 +351,9 @@ func (a openAIChatAdapter) Stream(
 
 		return nil
 	})
+	if err == nil && !finished {
+		err = errStreamCut
+	}
 	if err != nil {
 		return nil, interrupted(err, model)
 	}

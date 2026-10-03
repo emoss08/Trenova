@@ -16,16 +16,19 @@ import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskStore } from "@/stores/desk-store";
-import type { AssistantArtifact, AssistantThread } from "@/types/assistant";
+import type { AssistantArtifact, AssistantProposal, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useReducedMotion } from "motion/react";
+import { useNavigate } from "react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { DeskWorkspace } from "./artifacts/desk-workspace";
 import { useDeskAttachments } from "./composer/desk-attachments";
+import { usePoorlyReadFiles } from "./conversation/desk-poorly-read";
+import { useOnline } from "./desk-online";
 import { useDeskScans } from "./composer/desk-capture";
 import { DeskComposer } from "./composer/desk-composer";
 import { DeskModelPicker } from "./composer/desk-model-picker";
@@ -39,8 +42,16 @@ import {
 import { useDeskSetting } from "@/stores/desk-settings-store";
 import { DeskConfetti } from "./conversation/desk-confetti";
 import {
+  DeskCutOffCard,
+  DeskFallbackLine,
+  DeskNoModelCard,
+  DeskPoorlyReadCard,
+} from "./conversation/desk-failures";
+import { DeskStepFailures, DeskWriteResultCard } from "./conversation/desk-tool-failures";
+import {
   DeskInlineArtifact,
   DeskQuestion,
+  withoutCutNote,
   DeskReply,
   DeskRow,
   DeskStreamingReply,
@@ -49,7 +60,7 @@ import { composerStatus, streamingText } from "./conversation/turn-status";
 import { useStickToBottom } from "./conversation/use-stick-to-bottom";
 import { DeskErrorButton, DeskErrorCard } from "./desk-error-card";
 import { DeskIcon } from "./desk-icons";
-import { DeskLimitCard, DeskLimitNote } from "./desk-limits";
+import { deskComposerLock, DeskUsageMeter, useRequestMore } from "./desk-locks";
 import { useDesk } from "./desk-layout";
 import { DeskTermsNote } from "./desk-terms-note";
 
@@ -67,6 +78,12 @@ const NO_ARTIFACTS: AssistantArtifact[] = [];
 const APPROVED_HOLD_MS = 1100;
 /** How long a confetti burst lasts. */
 const CONFETTI_MS = 5400;
+
+/** The reason a saved closing note gives, without its italics and its stock opening. */
+function closingReason(content: string): string {
+  const plain = content.replace(/^_|_$/g, "").trim();
+  return plain.replace(/^This reply failed before it started\. Ask again to continue\.\s*/u, "");
+}
 
 function turnTime(at: number, timezone: string, t: TranslateFn): string {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: timezone });
@@ -287,32 +304,208 @@ export function DeskConversation({
     }
   };
 
-  const status = composerStatus(turn, t);
+  // For a reply that did not finish: what had arrived of it, and the question
+  // it answered, so its card can count the words and ask again.
+  const { arrivedBefore, questionBefore } = useMemo(() => {
+    const arrived = new Map<string, string>();
+    const asked = new Map<string, string>();
+    let text = "";
+    let question = "";
+    for (const entry of entries) {
+      if (entry.kind === "user") {
+        text = "";
+        question = entry.message.content;
+        continue;
+      }
+      if (entry.kind !== "assistant") {
+        continue;
+      }
+      asked.set(entry.message.id, question);
+      if (entry.message.failure) {
+        arrived.set(entry.message.id, text.trim());
+        continue;
+      }
+      text += ` ${entry.message.content}`;
+    }
+    return { arrivedBefore: arrived, questionBefore: asked };
+  }, [entries]);
+  const ask = useCallback(
+    (text: string) => void model.send(text, undefined, model.providerId),
+    [model],
+  );
+  const retryFor = (id: string) => {
+    const question = questionBefore.get(id) ?? "";
+    return question !== "" ? () => ask(question) : undefined;
+  };
+  const navigate = useNavigate();
+  const requestMore = useRequestMore(thread.id);
+  const checkProviders = useCallback(
+    () => void navigate("/admin/agent-control?tab=providers"),
+    [navigate],
+  );
+  const vendorOf = useCallback(
+    (providerId: string | null | undefined) =>
+      providerId ? model.providers.find((option) => option.id === providerId)?.vendor : undefined,
+    [model.providers],
+  );
+  // When no model answered, the question goes back in the composer, so the
+  // card's "Your message is saved" holds and asking again is one press.
+  const restoredFor = useRef<number | null>(null);
+  useEffect(() => {
+    if (
+      turn?.status === "error" &&
+      turn.failedProviders.length > 0 &&
+      restoredFor.current !== turn.startedAt
+    ) {
+      restoredFor.current = turn.startedAt;
+      if (model.draft.trim() === "") {
+        onDraftChange(turn.userContent);
+      }
+    }
+  }, [turn, model.draft, onDraftChange]);
+  // Sent too fast: the question goes back in the composer and the send button
+  // counts down; when it reaches the end the turn is cleared so it can go.
+  const limitedFor = turn?.status === "error" ? turn.rateLimited : null;
+  const dismissTurn = model.dismiss;
+  useEffect(() => {
+    if (limitedFor === null || !turn) {
+      return;
+    }
+    if (model.draft.trim() === "") {
+      onDraftChange(turn.userContent);
+    }
+    const timer = window.setTimeout(() => void dismissTurn(), limitedFor * 1000);
+    return () => window.clearTimeout(timer);
+    // The draft is read once, when the wait starts.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [limitedFor, turn?.startedAt, dismissTurn, onDraftChange]);
+  // Changes that ran but did not all go through, under the reply that drafted
+  // them; and each turn's last reply, which carries the steps that failed.
+  const writeResults = useMemo(() => {
+    const out = new Map<string, AssistantProposal[]>();
+    for (const proposal of model.proposalsQuery.data?.results ?? []) {
+      const failedItems = proposal.executionResult?.failed?.length ?? 0;
+      if (proposal.status !== "ExecutionFailed" && failedItems === 0) continue;
+      const source = proposal.sourceMessageId;
+      if (!source) continue;
+      out.set(source, [...(out.get(source) ?? []), proposal]);
+    }
+    return out;
+  }, [model.proposalsQuery.data]);
+  const lastOfTurn = useMemo(() => {
+    const out = new Set<string>();
+    let last = "";
+    for (const entry of entries) {
+      if (entry.kind === "user") {
+        if (last !== "") out.add(last);
+        last = "";
+      } else if (entry.kind === "assistant" && !entry.message.failure) {
+        last = entry.message.id;
+      }
+    }
+    if (last !== "" && turn === null) out.add(last);
+    return out;
+  }, [entries, turn]);
+  // Files on a question that reading made out little of, keyed by the last
+  // reply of that turn, under which the card asking for a clearer copy sits.
+  const askedFiles = useMemo(
+    () =>
+      entries.flatMap((entry) => (entry.kind === "user" ? (entry.message.attachments ?? []) : [])),
+    [entries],
+  );
+  const unreadable = usePoorlyReadFiles(askedFiles);
+  const poorlyRead = useMemo(() => {
+    const out = new Map<string, string[]>();
+    let files: string[] = [];
+    for (const entry of entries) {
+      if (entry.kind === "user") {
+        files = (entry.message.attachments ?? [])
+          .filter((file) => unreadable.has(file.documentId))
+          .map((file) => file.fileName);
+      } else if (entry.kind === "assistant" && lastOfTurn.has(entry.message.id)) {
+        if (files.length > 0) out.set(entry.message.id, files);
+        files = [];
+      }
+    }
+    return out;
+  }, [entries, lastOfTurn, unreadable]);
+  const [filePickerSignal, setFilePickerSignal] = useState(0);
+  // A question asked while offline waits here, shown as sent, and goes the
+  // moment the connection is back.
+  const online = useOnline();
+  const [queued, setQueued] = useState<{
+    content: string;
+    payload: Parameters<typeof model.send>[3];
+  } | null>(null);
+  const { send, providerId } = model;
+  useEffect(() => {
+    if (online && queued) {
+      setQueued(null);
+      void send(queued.content, undefined, providerId, queued.payload);
+    }
+  }, [online, queued, send, providerId]);
+  const [pickerSignal, setPickerSignal] = useState(0);
+  const [agentPickerSignal, setAgentPickerSignal] = useState(0);
+  // A question the guard turned away: its card offers to ask another agent
+  // or to rephrase, both starting from the question as it was asked.
+  const refusedQuestion = useMemo(() => {
+    const out = new Map<string, string>();
+    let declined = "";
+    for (const entry of entries) {
+      if (entry.kind === "declined") {
+        declined = entry.message.content;
+      } else if (entry.kind === "refusal") {
+        if (declined !== "") {
+          out.set(entry.message.id, declined);
+        }
+        declined = "";
+      }
+    }
+    return out;
+  }, [entries]);
+  const currentModelName =
+    model.providers.find((option) => option.id === model.providerId)?.model ||
+    model.providers[0]?.model ||
+    t("this model");
+  const lastIsRefusal = entries.at(-1)?.kind === "refusal" && turn === null;
+  // Switching model mid-retry asks again: the retrying turn is stopped, the
+  // question goes back in the composer, and the picker opens on it.
+  const switchModel = useCallback(() => {
+    const question = turn?.userContent ?? "";
+    model.stop();
+    void model.dismiss();
+    if (question !== "") {
+      model.onDraftChange(question);
+    }
+    setPickerSignal((value) => value + 1);
+  }, [model, turn?.userContent]);
+  const status = composerStatus(turn, t, switchModel);
   const live = streamingText(turn);
   const chapterOf = (id: string) => (chapters ? chapters.indexOf(id) + 1 : 0);
   const showCard = model.showDock && model.current !== null && approved === null;
   const pending = model.queue.length > 0;
   const jumping = away || unread > 0;
 
-  const lock =
+  const composerLock = deskComposerLock({
+    thread,
+    // A turned-off agent is no longer among the ones the person can pick, so
+    // its name comes from the conversation's own record.
+    agentName: agent?.name || budgetQuery.data?.agentName || t("This agent"),
+    budget: budgetQuery.data,
+    noModel: model.providersReady && model.providers.length === 0,
+    timezone,
+    t,
+    requestMore: (kind) => void requestMore(kind),
+    startElsewhere: () => void navigate("/desk"),
+    openAgentControl: () => void navigate("/admin/agent-control?tab=providers"),
+  });
+  const fallbackLock =
     model.block === "read-only" ? (
       <>
         <DeskIcon name="lock" size={13} stroke={2} />
         <span>
           <b>{t("This conversation can no longer continue.")}</b> {t("You can still read it.")}
         </span>
-      </>
-    ) : model.block === "full" ? (
-      <>
-        <DeskIcon name="info" size={13} stroke={2} />
-        <span>
-          <b>{t("This conversation is full.")}</b> {t("Start a new one to continue.")}
-        </span>
-        {onStartNew && (
-          <button type="button" className="dk-ec-link" onClick={onStartNew}>
-            {t("Continue in a new conversation")}
-          </button>
-        )}
       </>
     ) : model.block === "agents-unavailable" ? (
       <>
@@ -329,6 +522,8 @@ export function DeskConversation({
         </span>
       </>
     ) : null;
+  const lock = composerLock?.lock ?? fallbackLock;
+  const rateLimited = turn?.status === "error" ? turn.rateLimited : null;
 
   const replySteps = useMemo(() => {
     const byEntry = new Map<string, ToolStep[]>();
@@ -495,12 +690,83 @@ export function DeskConversation({
                                 agent?.name ?? t("the agent"),
                               )}
                               sub={entry.message.content}
+                              actions={
+                                refusedQuestion.has(entry.message.id) ? (
+                                  <>
+                                    <DeskErrorButton
+                                      ink
+                                      onClick={() => {
+                                        model.onDraftChange(
+                                          refusedQuestion.get(entry.message.id) ?? "",
+                                        );
+                                        setAgentPickerSignal((value) => value + 1);
+                                      }}
+                                    >
+                                      {t("Ask another agent")}
+                                    </DeskErrorButton>
+                                    <DeskErrorButton
+                                      onClick={() =>
+                                        model.onDraftChange(
+                                          refusedQuestion.get(entry.message.id) ?? "",
+                                        )
+                                      }
+                                    >
+                                      {t("Rephrase")}
+                                    </DeskErrorButton>
+                                  </>
+                                ) : undefined
+                              }
                             />
                           </DeskRow>
                         );
                       }
                       if (entry.kind === "decision") {
                         return null;
+                      }
+                      const failure = entry.message.failure;
+                      if (failure) {
+                        const arrived = arrivedBefore.get(entry.message.id) ?? "";
+                        const question = questionBefore.get(entry.message.id) ?? "";
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="event"
+                            first={isFirst(entry.message.id)}
+                          >
+                            {failure.kind === "no_model" ? (
+                              <DeskNoModelCard
+                                providers={failure.providers}
+                                onRetry={question !== "" ? () => ask(question) : undefined}
+                                onCheckStatus={checkProviders}
+                              />
+                            ) : failure.kind === "stopped" || failure.kind === "interrupted" ? (
+                              <DeskCutOffCard
+                                arrived={arrived}
+                                vendor={vendorOf(entry.message.providerId)}
+                                stoppedByYou={failure.kind === "stopped"}
+                                onRetry={question !== "" ? () => ask(question) : undefined}
+                                onContinue={() => ask(t("Continue from where you stopped."))}
+                              />
+                            ) : (
+                              <DeskErrorCard
+                                tone="err"
+                                compact
+                                title={t("The reply didn't come through")}
+                                sub={
+                                  closingReason(entry.message.content) || t("Nothing was changed.")
+                                }
+                                actions={
+                                  question !== "" ? (
+                                    <DeskErrorButton ink onClick={() => ask(question)}>
+                                      <DeskIcon name="replay" size={12} />
+                                      {t("Try again")}
+                                    </DeskErrorButton>
+                                  ) : undefined
+                                }
+                              />
+                            )}
+                          </DeskRow>
+                        );
                       }
                       const own = rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS;
                       if (!replyShows(entry, own.length)) {
@@ -527,18 +793,72 @@ export function DeskConversation({
                             onAnswer={model.answer}
                             onOpenArtifact={openArtifact}
                           />
+                          {lastOfTurn.has(entry.message.id) && (
+                            <div className="dk-ec-after">
+                              <DeskStepFailures
+                                steps={replySteps.get(entry.message.id) ?? NO_STEPS}
+                              />
+                            </div>
+                          )}
+                          {(poorlyRead.get(entry.message.id) ?? []).map((fileName) => (
+                            <div key={fileName} className="dk-ec-after">
+                              <DeskPoorlyReadCard
+                                fileName={fileName}
+                                onUploadClearer={
+                                  composerLock ? undefined : () => setFilePickerSignal((n) => n + 1)
+                                }
+                                onUseWhatWasRead={
+                                  composerLock
+                                    ? undefined
+                                    : () =>
+                                        ask(
+                                          t(
+                                            "Go ahead with what you could read from {0}.",
+                                            fileName,
+                                          ),
+                                        )
+                                }
+                              />
+                            </div>
+                          ))}
+                          {(writeResults.get(entry.message.id) ?? []).map((proposal) => (
+                            <div key={proposal.id} className="dk-ec-after">
+                              <DeskWriteResultCard proposal={proposal} onAsk={ask} />
+                            </div>
+                          ))}
+                          {entry.message.fallbackFrom && (
+                            <DeskFallbackLine
+                              fromVendor={vendorOf(entry.message.fallbackFrom.providerId) ?? ""}
+                              fromModel={
+                                entry.message.fallbackFrom.model || entry.message.fallbackFrom.name
+                              }
+                              answeredVendor={vendorOf(entry.message.providerId) ?? ""}
+                              answeredModel={entry.message.model}
+                            />
+                          )}
+                          {entry.message.truncated && (
+                            <DeskCutOffCard
+                              arrived={withoutCutNote(entry.message.content)}
+                              vendor={vendorOf(entry.message.providerId)}
+                              onRetry={retryFor(entry.message.id)}
+                              onContinue={() => ask(t("Continue from where you stopped."))}
+                            />
+                          )}
                         </DeskRow>
                       );
                     })}
-                    {turn && !turn.followUp && turn.userContent !== "" && (
-                      <DeskRow kind="question" first={!layout.any}>
-                        <DeskQuestion
-                          text={turn.userContent}
-                          muted={turn.status === "refused"}
-                          tag={turn.status === "refused" ? t("Not sent to the agent") : undefined}
-                        />
-                      </DeskRow>
-                    )}
+                    {turn &&
+                      !turn.followUp &&
+                      turn.userContent !== "" &&
+                      turn.rateLimited === null && (
+                        <DeskRow kind="question" first={!layout.any}>
+                          <DeskQuestion
+                            text={turn.userContent}
+                            muted={turn.status === "refused"}
+                            tag={turn.status === "refused" ? t("Not sent to the agent") : undefined}
+                          />
+                        </DeskRow>
+                      )}
                     {turn && live !== "" && (
                       <DeskRow
                         kind="reply"
@@ -548,44 +868,63 @@ export function DeskConversation({
                         <DeskStreamingReply text={withArtifactRefs(live, turn.artifacts)} />
                       </DeskRow>
                     )}
-                    {turn?.status === "error" && turn.limit !== null && (
-                      <DeskRow kind="event" first={!layout.any}>
-                        <DeskLimitCard
-                          limit={turn.limit}
-                          timezone={timezone}
-                          onDismiss={() => void model.dismiss()}
-                        />
-                      </DeskRow>
-                    )}
-                    {turn?.status === "error" && turn.limit === null && (
-                      <DeskRow kind="event" first={!layout.any}>
-                        <DeskErrorCard
-                          tone="err"
-                          compact
-                          title={
-                            live !== ""
-                              ? t("Reply stopped partway")
-                              : t("The reply didn't come through")
-                          }
-                          sub={turn.error ?? t("Nothing was changed.")}
-                          actions={
-                            <>
-                              {model.retry && (
-                                <DeskErrorButton ink onClick={() => void model.retry?.()}>
-                                  <DeskIcon name="replay" size={12} />
-                                  {t("Try again")}
-                                </DeskErrorButton>
-                              )}
-                              <DeskErrorButton onClick={() => void model.dismiss()}>
-                                {t("Dismiss")}
-                              </DeskErrorButton>
-                            </>
-                          }
-                        />
+                    {turn?.status === "error" &&
+                      turn.limit === null &&
+                      turn.rateLimited === null && (
+                        <DeskRow kind="event" first={!layout.any}>
+                          {turn.failedProviders.length > 0 ? (
+                            <DeskNoModelCard
+                              providers={turn.failedProviders}
+                              onRetry={model.retry ? () => void model.retry?.() : undefined}
+                              onCheckStatus={checkProviders}
+                            />
+                          ) : turn.stopped || live !== "" ? (
+                            <DeskCutOffCard
+                              arrived={live}
+                              stoppedByYou={turn.stopped}
+                              onRetry={model.retry ? () => void model.retry?.() : undefined}
+                              onContinue={() => ask(t("Continue from where you stopped."))}
+                            />
+                          ) : (
+                            <DeskErrorCard
+                              tone="err"
+                              compact
+                              title={t("The reply didn't come through")}
+                              sub={turn.error ?? t("Nothing was changed.")}
+                              actions={
+                                <>
+                                  {model.retry && (
+                                    <DeskErrorButton ink onClick={() => void model.retry?.()}>
+                                      <DeskIcon name="replay" size={12} />
+                                      {t("Try again")}
+                                    </DeskErrorButton>
+                                  )}
+                                  <DeskErrorButton onClick={() => void model.dismiss()}>
+                                    {t("Dismiss")}
+                                  </DeskErrorButton>
+                                </>
+                              }
+                            />
+                          )}
+                        </DeskRow>
+                      )}
+                    {queued && (
+                      <DeskRow kind="question" first={entries.length === 0}>
+                        <DeskQuestion text={queued.content} />
+                        <div className="dk-ec-queued dk-ec-queued-row">
+                          <DeskIcon name="undo" size={11} stroke={2.2} />
+                          {t("Waiting to send")}
+                        </div>
                       </DeskRow>
                     )}
                   </div>
                 </div>
+                {!online && (
+                  <div className="dk-ec-off dk-ec-offtop" role="status">
+                    <span className="dk-ec-offd" />
+                    {t("You're offline · messages will send when you reconnect")}
+                  </div>
+                )}
                 <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
                 {burst !== null && <DeskConfetti key={burst} seed={burst % 1000} />}
                 <div
@@ -641,6 +980,7 @@ export function DeskConversation({
                           onDefer={model.deferAll}
                           onDecided={model.decided}
                           onApproved={onApproved}
+                          onAsk={ask}
                         />
                       )}
                       {pending && model.current === null && approved === null && (
@@ -655,14 +995,46 @@ export function DeskConversation({
                           )}
                         </button>
                       )}
-                      {budgetQuery.data && (
-                        <DeskLimitNote budget={budgetQuery.data} timezone={timezone} />
+                      {model.block === "full" && !composerLock && (
+                        <div className="dk-ec-dockcard">
+                          <DeskErrorCard
+                            tone="info"
+                            icon="info"
+                            compact
+                            title={t("This conversation is too long for {0}", currentModelName)}
+                            sub={t(
+                              "Start a new conversation with {0} to keep going. This one stays here to read.",
+                              agent?.name ?? t("the agent"),
+                            )}
+                            actions={
+                              <>
+                                {onStartNew && (
+                                  <DeskErrorButton ink onClick={onStartNew}>
+                                    {t("Continue in a new conversation")}
+                                  </DeskErrorButton>
+                                )}
+                                {model.providers.length > 1 && (
+                                  <DeskErrorButton
+                                    onClick={() => setPickerSignal((value) => value + 1)}
+                                  >
+                                    {t("Switch model")}
+                                  </DeskErrorButton>
+                                )}
+                              </>
+                            }
+                          />
+                        </div>
                       )}
+                      {budgetQuery.data && !lock && <DeskUsageMeter budget={budgetQuery.data} />}
                       <DeskComposer
                         value={model.draft}
                         onChange={model.onDraftChange}
                         onSend={(content, payload) => {
-                          void model.send(content, undefined, model.providerId, payload);
+                          if (!online) {
+                            setQueued({ content, payload });
+                          } else {
+                            void model.send(content, undefined, model.providerId, payload);
+                          }
                           composerContext.clear();
                           attachments.clear();
                         }}
@@ -677,8 +1049,23 @@ export function DeskConversation({
                         recentAgentIds={askable.recency.ids}
                         agentLastUsedAt={askable.recency.lastUsedAt}
                         busy={isActive}
-                        status={status}
+                        status={
+                          rateLimited !== null
+                            ? {
+                                text: t("You're sending messages quickly · send again in a moment"),
+                                pose: "retry",
+                                countdown: rateLimited,
+                              }
+                            : status
+                        }
+                        wait={rateLimited ?? 0}
+                        agentPickerSignal={agentPickerSignal}
+                        filePickerSignal={filePickerSignal}
+                        placeholder={
+                          lastIsRefusal ? t("Rephrase, or ask another agent…") : undefined
+                        }
                         lock={lock}
+                        note={composerLock?.note}
                         attachments={attachments}
                         scans={scans}
                         mentions={composerContext.mentions}
@@ -700,6 +1087,7 @@ export function DeskConversation({
                             onChange={model.setProviderId}
                             hasReplies={replies > 0}
                             disabled={isActive}
+                            openSignal={pickerSignal}
                           />
                         }
                       />

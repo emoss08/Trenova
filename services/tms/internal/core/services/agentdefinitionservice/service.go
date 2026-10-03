@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/fx"
@@ -150,6 +151,7 @@ func (s *Service) Update(
 	updated := *existing
 	updated.Version = req.Version
 	apply(&updated, req)
+	updated.NoteEnabledChange(previous.Enabled, actorUser(actor), timeutils.NowUnix())
 
 	if err = s.validate(ctx, &updated, &previous); err != nil {
 		return nil, err
@@ -519,4 +521,13 @@ func (s *Service) logAudit(
 	}, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log agent definition audit", zap.Error(err))
 	}
+}
+
+// actorUser is the person behind a request, nil for a key or the system.
+func actorUser(actor *services.RequestActor) pulid.ID {
+	if actor == nil {
+		return pulid.Nil
+	}
+
+	return actor.UserID
 }

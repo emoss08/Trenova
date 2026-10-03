@@ -354,6 +354,7 @@ func interruptedTurn(
 		Content:    notice,
 		Model:      run.Model,
 		ProviderID: run.ProviderID,
+		Failure:    replyFailure(err, len(run.Messages) > 1),
 	})
 
 	return &TurnResult{
@@ -364,6 +365,33 @@ func interruptedTurn(
 		Model:    run.Model,
 		Provider: run.ProviderID,
 	}
+}
+
+// replyFailure is the closing note's reason as data, so the Desk can draw the
+// card for it: the models asked and what each said, or that it was stopped.
+func replyFailure(err error, ranAnything bool) *conversation.ReplyFailure {
+	if errors.Is(err, context.Canceled) {
+		return &conversation.ReplyFailure{Kind: conversation.ReplyFailureStopped}
+	}
+	var exhausted *serviceports.ChatProvidersFailedError
+	if errors.As(err, &exhausted) && len(exhausted.Failures) > 0 {
+		failure := &conversation.ReplyFailure{Kind: conversation.ReplyFailureNoModel}
+		for _, provider := range exhausted.Failures {
+			failure.Providers = append(failure.Providers, conversation.FailedProvider{
+				Name:   provider.Name,
+				Model:  provider.Model,
+				Vendor: provider.Vendor,
+				Status: provider.Status,
+				Detail: provider.Detail,
+			})
+		}
+		return failure
+	}
+	if ranAnything {
+		return &conversation.ReplyFailure{Kind: conversation.ReplyFailureInterrupted}
+	}
+
+	return &conversation.ReplyFailure{Kind: conversation.ReplyFailureBeforeStart}
 }
 
 func scopedMessage(

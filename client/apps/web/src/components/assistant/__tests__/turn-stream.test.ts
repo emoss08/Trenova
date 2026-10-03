@@ -305,6 +305,7 @@ describe("reduceTurn restarts and refusals", () => {
     expect(state.retrying).toEqual({
       attempt: 1,
       provider: "Backup",
+      maxAttempts: 0,
       kind: "restart",
       waitSeconds: 0,
     });
@@ -404,6 +405,7 @@ describe("reduceTurn restarts and refusals", () => {
     expect(state.retrying).toEqual({
       attempt: 2,
       provider: "Gemini",
+      maxAttempts: 0,
       kind: "busy",
       waitSeconds: 4,
     });

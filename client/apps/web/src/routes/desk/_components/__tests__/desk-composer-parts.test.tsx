@@ -1,6 +1,6 @@
 import type { ComposerAttachment } from "@/components/assistant/composer";
 import type { AssistantProviderOption } from "@/types/assistant";
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useDeskAttachments, type AttachmentSource } from "../composer/desk-attachments";
 import { DeskModelPicker } from "../composer/desk-model-picker";
@@ -17,15 +17,22 @@ function source(attachments: ComposerAttachment[] = []): AttachmentSource {
 const file = (name: string, size = 1000) => new File([new Uint8Array(size)], name);
 
 describe("useDeskAttachments", () => {
-  it("uploads what the Desk can read and refuses the rest on the spot", () => {
+  it("uploads what the Desk can read and refuses the rest on the spot", async () => {
     const upload = source();
     const { result } = renderHook(() => useDeskAttachments(upload));
 
     act(() => result.current.add([file("rate-con.pdf"), file("packet.zip")]));
 
-    expect(upload.attachFiles).toHaveBeenCalledWith([expect.objectContaining({ name: "rate-con.pdf" })]);
+    await waitFor(() => expect(upload.attachFiles).toHaveBeenCalled());
+    expect(upload.attachFiles).toHaveBeenCalledWith([
+      expect.objectContaining({ name: "rate-con.pdf" }),
+    ]);
     expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0]).toMatchObject({ name: "packet.zip", status: "error", refused: true });
+    expect(result.current.items[0]).toMatchObject({
+      name: "packet.zip",
+      status: "error",
+      refused: true,
+    });
     expect(result.current.failed).toBe(1);
   });
 
@@ -37,15 +44,40 @@ describe("useDeskAttachments", () => {
     expect(result.current.items[0].error).toMatch(/Too large/);
   });
 
-  it("takes five files at most and says how many did not fit", () => {
+  it("takes five files at most and says how many did not fit", async () => {
     const upload = source();
     const { result } = renderHook(() => useDeskAttachments(upload));
 
-    act(() => result.current.add(Array.from({ length: 7 }, (_, index) => file(`page-${index}.pdf`))));
+    act(() =>
+      result.current.add(Array.from({ length: 7 }, (_, index) => file(`page-${index}.pdf`))),
+    );
 
+    await waitFor(() => expect(upload.attachFiles).toHaveBeenCalled());
     expect(upload.attachFiles).toHaveBeenCalledWith(expect.arrayContaining([expect.any(File)]));
     expect((upload.attachFiles as ReturnType<typeof vi.fn>).mock.calls[0][0]).toHaveLength(5);
     expect(result.current.note).toBe("Up to 5 files per message · 2 not added");
+  });
+
+  it("refuses a PDF locked with a password before it uploads", async () => {
+    const upload = source();
+    const { result } = renderHook(() => useDeskAttachments(upload));
+    const locked = new File(
+      ["%PDF-1.7\ntrailer << /Root 1 0 R /Encrypt 4 0 R >>\n%%EOF"],
+      "locked.pdf",
+      {
+        type: "application/pdf",
+      },
+    );
+
+    act(() => result.current.add([locked]));
+
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    expect(result.current.items[0]).toMatchObject({
+      name: "locked.pdf",
+      error: "Password-protected · Desk can't open it",
+      refused: true,
+    });
+    expect(upload.attachFiles).not.toHaveBeenCalled();
   });
 
   it("removes a refused file locally and an uploaded one through its source", () => {
@@ -65,8 +97,23 @@ describe("useDeskAttachments", () => {
 });
 
 const providers: AssistantProviderOption[] = [
-  { id: "p1", name: "Anthropic · primary", kind: "AnthropicMessages", model: "Claude Sonnet", trusted: true, vendor: "anthropic" },
-  { id: "p2", name: "Groq", kind: "OpenAIChat", model: "Llama 3.3 70B", trusted: false, vendor: "groq", unavailable: true },
+  {
+    id: "p1",
+    name: "Anthropic · primary",
+    kind: "AnthropicMessages",
+    model: "Claude Sonnet",
+    trusted: true,
+    vendor: "anthropic",
+  },
+  {
+    id: "p2",
+    name: "Groq",
+    kind: "OpenAIChat",
+    model: "Llama 3.3 70B",
+    trusted: false,
+    vendor: "groq",
+    unavailable: true,
+  },
 ];
 
 describe("DeskModelPicker", () => {
@@ -98,6 +145,8 @@ describe("DeskModelPicker", () => {
     render(<DeskModelPicker options={providers} value="p1" onChange={vi.fn()} hasReplies />);
     fireEvent.click(screen.getByRole("button", { name: "Choose which model answers" }));
 
-    expect(screen.getByText("Switching re-reads this conversation before the next reply.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Switching re-reads this conversation before the next reply."),
+    ).toBeInTheDocument();
   });
 });

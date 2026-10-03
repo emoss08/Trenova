@@ -397,9 +397,9 @@ func (a *Activities) finish(
 	status := assistantturnservice.StatusFor(result.Refused, cause)
 	switch status {
 	case conversation.AssistantTurnStatusStopped:
-		return failedEnding(status, stoppedMessage), cause, nil
+		return keptInThread(failedEnding(status, stoppedMessage)), cause, nil
 	case conversation.AssistantTurnStatusFailed:
-		return failedEndingFor(status, failedMessage, in.Failure), cause, nil
+		return keptInThread(failedEndingFor(status, failedMessage, in.Failure)), cause, nil
 	default:
 		return &TurnEnding{
 			Result: AssistantTurnResult{
@@ -462,6 +462,17 @@ func failedEndingFor(
 		return ending
 	}
 	ending.Event.Data = data
+
+	return ending
+}
+
+// keptInThread marks a failed ending whose turn was saved, closing note and
+// all, so the reader can hand over to the conversation, which now shows the
+// failure as it will be read back later, instead of keeping its own copy.
+func keptInThread(ending *TurnEnding) *TurnEnding {
+	if data, ok := ending.Event.Data.(map[string]any); ok {
+		data["saved"] = true
+	}
 
 	return ending
 }

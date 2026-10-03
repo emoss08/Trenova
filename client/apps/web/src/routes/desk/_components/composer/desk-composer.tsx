@@ -21,6 +21,7 @@ import { DeskMentionMirror, DeskMentionPicker, useDeskMentions } from "./desk-me
 import { DeskSlashMenu, DeskSlashMirror, useDeskSlash } from "./desk-slash";
 import { DeskAttachMenu, DeskAttachRow, DeskDropGhosts, type DragState } from "./desk-uploads";
 import { useTypewriter } from "./use-typewriter";
+import { DeskCountdown } from "../desk-countdown";
 
 /** What the composer says it is doing while an agent works. */
 export type DeskComposerStatus = {
@@ -29,6 +30,10 @@ export type DeskComposerStatus = {
   pose: "check" | "retry" | "work";
   /** A second, quieter fact beside the status, such as "Attempt 2 of 3". */
   extra?: string;
+  /** Seconds to count down before the next try, drawn as a ring. */
+  countdown?: number;
+  /** A way out of the wait, such as switching model. */
+  action?: { label: string; onClick: () => void };
 };
 
 const NO_MENTIONS: AssistantEntityRef[] = [];
@@ -53,6 +58,14 @@ export type DeskComposerProps = {
   placeholder?: string;
   /** Replaces the text box with a read-only line saying why nothing can be sent. */
   lock?: ReactNode;
+  /** A quiet line under the composer, such as how much of an allowance is used. */
+  note?: ReactNode;
+  /** Seconds before the next message may be sent; the send button counts them down. */
+  wait?: number;
+  /** Opens the agent list each time it changes. */
+  agentPickerSignal?: number;
+  /** Opens the file picker each time it changes. */
+  filePickerSignal?: number;
   /** Controls after the agent: the page Desk can see, for one. */
   extras?: ReactNode;
   /** The model picker, on the right before dictation and send. */
@@ -98,6 +111,10 @@ export function DeskComposer({
   presets = [],
   placeholder,
   lock,
+  note,
+  wait = 0,
+  agentPickerSignal = 0,
+  filePickerSignal = 0,
   extras,
   model,
   attachments,
@@ -114,8 +131,7 @@ export function DeskComposer({
   const markTermsSeen = useDeskStore((state) => state.markTermsSeen);
   const settings = useDeskSettingsStore((state) => state.settings);
   const empty = value === "";
-  const typing =
-    home && settings.presets === "on" && presets.length > 0 && empty && !disabled;
+  const typing = home && settings.presets === "on" && presets.length > 0 && empty && !disabled;
   const typed = useTypewriter(presets, typing);
   const dictation = useComposerDictation({ draft: value, onDraftChange: onChange });
 
@@ -135,7 +151,7 @@ export function DeskComposer({
     if (text === "" && ready.length > 0) {
       text = ready.length > 1 ? t("What's in these?") : t("What's in this?");
     }
-    if (text === "" || busy || disabled || lock || uploading || blocked) {
+    if (text === "" || busy || disabled || lock || uploading || blocked || wait > 0) {
       return;
     }
     dictation.release();
@@ -164,6 +180,12 @@ export function DeskComposer({
     onMentionsChange: onMentionsChange ?? (() => undefined),
     enabled: onMentionsChange !== undefined && settings.mentions === "on",
   });
+
+  useEffect(() => {
+    if (filePickerSignal > 0) {
+      fileInputRef.current?.click();
+    }
+  }, [filePickerSignal]);
 
   useEffect(() => {
     if (!attachments || lock) {
@@ -217,6 +239,8 @@ export function DeskComposer({
         busy && "dk-busy",
         home && "dk-hm",
         lock && "dk-ec dk-off",
+        busy && status?.pose === "check" && "dk-ec dk-r-check",
+        busy && status?.pose === "retry" && "dk-ec dk-r-retry",
         dropping && "dk-drop-on",
         dropping && drag?.hot && "dk-drop-hot",
       )}
@@ -227,21 +251,24 @@ export function DeskComposer({
         </span>
       )}
       <span className="dk-cmp-ring" aria-hidden />
-      {busy && status && (
+      {(busy || wait > 0) && status && (
         <div className="dk-cmp-st dk-ec-st" key={status.text} role="status">
           {status.pose === "check" ? (
             <span className="dk-ec-shield">
               <DeskIcon name="shield" size={13} stroke={2} />
             </span>
+          ) : status.countdown ? (
+            <DeskCountdown from={status.countdown} key={status.extra ?? status.text} />
           ) : (
             <span className="dk-cmp-st-d" />
           )}
           <span className={status.pose === "retry" ? undefined : "dk-shim"}>{status.text}</span>
-          {status.extra && (
-            <>
-              <span className="dk-ec-sp" />
-              <span className="dk-ec-att">{status.extra}</span>
-            </>
+          {(status.extra || status.action) && <span className="dk-ec-sp" />}
+          {status.extra && <span className="dk-ec-att">{status.extra}</span>}
+          {status.action && (
+            <button type="button" className="dk-ec-link" onClick={status.action.onClick}>
+              {status.action.label}
+            </button>
           )}
         </div>
       )}
@@ -349,12 +376,15 @@ export function DeskComposer({
             recentIds={recentAgentIds}
             lastUsedAt={agentLastUsedAt}
             disabled={busy}
+            openSignal={agentPickerSignal}
           />
         )}
         {extras}
         <span className="flex-1" />
         {model}
-        {!lock && settings.mic === "on" && <DeskDictate dictation={dictation} disabled={busy || disabled} />}
+        {!lock && settings.mic === "on" && (
+          <DeskDictate dictation={dictation} disabled={busy || disabled} />
+        )}
         {busy ? (
           <button
             type="button"
@@ -369,12 +399,20 @@ export function DeskComposer({
           <button
             type="button"
             className="dk-send"
-            disabled={!canSend}
-            title={uploading ? t("Waiting for the files to finish uploading") : t("Send")}
+            disabled={!canSend || wait > 0}
+            title={
+              wait > 0
+                ? t("You can send again in a moment")
+                : uploading
+                  ? t("Waiting for the files to finish uploading")
+                  : t("Send")
+            }
             aria-label={t("Send")}
             onClick={() => send(value)}
           >
-            {uploading ? (
+            {wait > 0 ? (
+              <DeskCountdown from={wait} size={18} tone="ink" />
+            ) : uploading ? (
               <span className="dk-send-wait" />
             ) : (
               <DeskIcon name="up" size={15} stroke={2.2} />
@@ -382,6 +420,7 @@ export function DeskComposer({
           </button>
         )}
       </div>
+      {note && <div className="dk-ec-cnote">{note}</div>}
     </div>
   );
 }

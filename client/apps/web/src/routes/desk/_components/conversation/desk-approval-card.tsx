@@ -19,7 +19,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useEffect, type MutableRefObject } from "react";
 import { toast } from "sonner";
 import { DeskIcon } from "../desk-icons";
-import { approvalFacts, recordCount, type ApprovalFacts } from "./approval-facts";
+import { approvalFacts, recordCount, refusalReasons, type ApprovalFacts } from "./approval-facts";
 
 /** What the card said about a change, kept for the moment after it is approved. */
 export type ApprovedNote = { key: string; title: string; detail: string };
@@ -36,6 +36,8 @@ type CardProps = {
   onApproved: (note: ApprovedNote) => void;
   /** Kept pointing at this card's approve while it can approve, for ⌘↵. */
   approveRef: MutableRefObject<(() => void) | null>;
+  /** Asks the agent something in the conversation, such as to redraft a stale change. */
+  onAsk?: (text: string) => void;
 };
 
 /**
@@ -73,6 +75,7 @@ function ProposalCard({
   onDecided,
   onApproved,
   approveRef,
+  onAsk,
 }: CardProps & { entry: Extract<ApprovalEntry, { kind: "proposal" }> }) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -115,10 +118,16 @@ function ProposalCard({
       facts={facts}
       reversible={view.reversible}
       changed={approval.changed}
+      stale={approval.gate.state === "stale"}
       approvable={approvable}
       onApprove={approve}
       onReview={() => onReview(entry)}
       onDefer={onDefer}
+      onRedraft={
+        onAsk
+          ? () => onAsk(t("Draft that change again with the records as they are now."))
+          : undefined
+      }
     />
   );
 }
@@ -139,7 +148,14 @@ function PlanCard({
   const approval = useApprovalGate(previewQuery);
   const afterDecision = useAfterDecision(threadId, entry, onDecided);
   const title = plan.title || t("Run the plan");
-  const facts: ApprovalFacts = { count: plan.stepCount, resource: "", field: null };
+  const facts: ApprovalFacts = {
+    count: plan.stepCount,
+    resource: "",
+    field: null,
+    refused: [],
+    wouldFail: null,
+    changedSince: 0,
+  };
   const reversible = steps.every((step) => presentProposal(step).reversible);
 
   const mutation = useMutation({
@@ -265,10 +281,12 @@ function CardRow({
   countLabel,
   reversible,
   changed,
+  stale = false,
   approvable,
   onApprove,
   onReview,
   onDefer,
+  onRedraft,
 }: {
   title: string;
   facts: ApprovalFacts;
@@ -276,14 +294,101 @@ function CardRow({
   reversible: boolean;
   /** The change looks different from what was shown; read it again before approving. */
   changed: boolean;
+  /** Records changed since the agent drafted it; the server will not take an approval. */
+  stale?: boolean;
   approvable: boolean;
   onApprove: () => void;
   onReview: () => void;
   onDefer: () => void;
+  onRedraft?: () => void;
 }) {
   const t = useT();
   const scope =
     countLabel ?? (facts.count > 0 ? recordCount(facts.resource, facts.count, t) : null);
+
+  // Out of date: what it was drafted against has changed, so it is drafted
+  // again rather than approved.
+  if (stale) {
+    const going = Math.max(0, facts.count - facts.changedSince);
+    return (
+      <div className="dk-dcx dk-ec-stale" role="group" aria-label={t("Out of date")}>
+        <span className="dk-dcx-i">
+          <DeskIcon name="undo" size={15} stroke={2} />
+        </span>
+        <span className="dk-dcx-t">
+          <b>
+            {title} {scope && <span className="dk-dcx-s">{t("on {0}", scope)}</span>}
+          </b>
+          <span className="dk-dcx-d">
+            {facts.changedSince > 0
+              ? t(
+                  "{0, plural, one {# of these items changed after it was drafted} other {# of these items changed after it was drafted}}",
+                  facts.changedSince,
+                )
+              : t("What it was drafted against has changed since")}
+          </span>
+        </span>
+        <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+          {t("Not now")}
+        </button>
+        {onRedraft ? (
+          <button type="button" className="dk-apv-b" onClick={onRedraft}>
+            {facts.changedSince > 0 && going > 0
+              ? t("Redraft with {0}", recordCount(facts.resource, going, t))
+              : t("Redraft")}
+          </button>
+        ) : (
+          <button type="button" className="dk-apv-b" onClick={onReview}>
+            {t("Review")}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Would be refused: all of it, or the records named in the preview. The
+  // rest go through on approval; the refused ones are listed afterwards.
+  const refusedCount = facts.refused.length;
+  if (facts.wouldFail !== null || refusedCount > 0) {
+    const all = facts.wouldFail !== null || refusedCount >= facts.count;
+    const reasons = refusalReasons(facts.refused)
+      .slice(0, 3)
+      .map(([reason, n]) => `${n} ${reason.charAt(0).toLowerCase()}${reason.slice(1)}`);
+    return (
+      <div className="dk-dcx dk-ec-would" role="group" aria-label={t("Would be refused")}>
+        <span className="dk-dcx-i">
+          <DeskIcon name="alert" size={15} stroke={2} />
+        </span>
+        <span className="dk-dcx-t">
+          <b>
+            {title} <span className="dk-dcx-s">{t("would be refused as it stands")}</span>
+          </b>
+          <span className="dk-dcx-d">
+            {refusedCount > 0
+              ? [t("{0} of {1}", refusedCount, facts.count), ...reasons].join(" · ")
+              : (facts.wouldFail ?? "")}
+          </span>
+        </span>
+        <button type="button" className="dk-bt dk-sm" onClick={onReview}>
+          {refusedCount > 0 ? t("Review {0}", refusedCount) : t("Review")}
+        </button>
+        {all ? (
+          <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+            {t("Not now")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="dk-apv-b dk-ec-fix"
+            disabled={!approvable}
+            onClick={onApprove}
+          >
+            {t("Approve {0}, skip {1}", facts.count - refusedCount, refusedCount)}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="dk-dcx" role="group" aria-label={t("Waiting on your approval")}>
@@ -302,9 +407,7 @@ function CardRow({
               {facts.field.label} <s>{facts.field.before}</s> → <em>{facts.field.after}</em>
             </>
           ) : null}
-          <span className="dk-dcx-m">
-            · {reversible ? t("reversible") : t("can't be undone")}
-          </span>
+          <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
         </span>
       </span>
       <button type="button" className="dk-bt dk-sm" onClick={onReview}>

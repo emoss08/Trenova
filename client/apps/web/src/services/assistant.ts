@@ -181,6 +181,15 @@ export class AssistantService {
     return safeParse(threadBudgetSchema, response, "Assistant Thread Budget");
   }
 
+  /** Asks the people who run AI Control for what the person ran out of. */
+  public async requestMore(
+    id: AssistantThread["id"],
+    kind: "access" | "allowance" | "budget" | "daily_runs",
+  ) {
+    const response = await api.post(`/assistant/threads/${id}/requests/`, { kind });
+    return response as { sent: number };
+  }
+
   public async deleteThread(id: AssistantThread["id"]) {
     await api.delete(`/assistant/threads/${id}/`);
   }

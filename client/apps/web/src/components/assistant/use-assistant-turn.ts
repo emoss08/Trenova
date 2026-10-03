@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import {
@@ -92,7 +93,12 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   );
 
   const fail = useCallback(
-    (cause: TurnFailureCause, detail?: string, limit: TurnLimit | null = null) => {
+    (
+      cause: TurnFailureCause,
+      detail?: string,
+      limit: TurnLimit | null = null,
+      rateLimited: number | null = null,
+    ) => {
       setTurn((state) => {
         if (!state || !isTurnActive(state)) {
           return state;
@@ -103,6 +109,8 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           status: "error",
           error: detail && detail !== "" ? `${message} ${detail}` : message,
           limit,
+          stopped: cause === "stopped",
+          rateLimited,
         };
       });
     },
@@ -193,6 +201,24 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     [queryClient, refreshThread, seedProposals, threadId],
   );
 
+  // A reply that failed after the question reached the agent is saved with a
+  // note saying why, and the conversation draws that note as the same card.
+  // Once the refetched conversation holds it, the live copy is dropped, or
+  // the question and its card would show twice.
+  const handOverIfSaved = useCallback(
+    async (startedAt: number) => {
+      await refreshThread();
+      const history = queryClient.getQueryData<ThreadHistory>(
+        queries.assistant.messages(threadId).queryKey,
+      );
+      const newest = history?.pages[0]?.results.at(-1);
+      if (newest?.failure && newest.createdAt >= Math.floor(startedAt / 1000) - 5) {
+        setTurn((state) => (state?.status === "error" ? null : state));
+      }
+    },
+    [queryClient, refreshThread, threadId],
+  );
+
   const settle = useCallback(
     async (result: SendMessageResult | null) => {
       if (result?.proposalsUnrecorded) {
@@ -266,6 +292,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           "failed",
           turnFailureDetail(error, t("The connection to the assistant was lost.")),
           turnLimitOf(error),
+          error instanceof ApiRequestError && error.status === 429 ? (error.retryAfter ?? 5) : null,
         );
         void refreshThread();
         return;
@@ -300,13 +327,13 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           if (state?.status === "refused") {
             void settle(null);
           } else if (state?.status === "error") {
-            void refreshThread();
+            void handOverIfSaved(state.startedAt);
           }
           return state;
         });
       }
     },
-    [fail, refreshThread, settle, t],
+    [fail, handOverIfSaved, refreshThread, settle, t],
   );
 
   /**

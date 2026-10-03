@@ -49,7 +49,10 @@ export type AttachmentSource = {
  * held as picked and handed to the conversation the message starts, which
  * uploads them before the question goes.
  */
-export function useHeldAttachments(): AttachmentSource & { files: () => File[]; clear: () => void } {
+export function useHeldAttachments(): AttachmentSource & {
+  files: () => File[];
+  clear: () => void;
+} {
   const [held, setHeld] = useState<Array<{ id: string; file: File }>>([]);
   const counter = useRef(0);
 
@@ -97,6 +100,28 @@ function refusal(file: File, t: ReturnType<typeof useT>): string | null {
     return t("Too large · max {0} MB", MAX_ATTACHMENT_MB);
   }
   return null;
+}
+
+/** How much of each end of a PDF is read to look for its encryption entry. */
+const PDF_PROBE_BYTES = 64 * 1024;
+
+/**
+ * Whether a PDF is locked with a password. A locked PDF names its
+ * encryption dictionary in the trailer, at the end of the file or, for a
+ * PDF laid out for the web, near its start; both ends are read, never the
+ * whole file.
+ */
+export async function isPasswordProtectedPdf(file: Blob): Promise<boolean> {
+  try {
+    const head = file.slice(0, PDF_PROBE_BYTES);
+    const tail = file.slice(Math.max(0, file.size - PDF_PROBE_BYTES));
+    const decoder = new TextDecoder("latin1");
+    const text =
+      decoder.decode(await head.arrayBuffer()) + decoder.decode(await tail.arrayBuffer());
+    return /\/Encrypt\s*(\d+\s+\d+\s+R|<<)/u.test(text);
+  } catch {
+    return false;
+  }
 }
 
 export type DeskAttachments = ReturnType<typeof useDeskAttachments>;
@@ -159,9 +184,39 @@ export function useDeskAttachments(source: AttachmentSource, extra?: ExtraAttach
       if (turnedAway.length > 0) {
         setRefused((current) => [...current, ...turnedAway]);
       }
-      if (accepted.length > 0) {
-        source.attachFiles(accepted);
+      if (accepted.length === 0) {
+        return;
       }
+      // A PDF locked with a password would upload and then be unreadable,
+      // so it is turned away here, before anything is sent.
+      void Promise.all(
+        accepted.map((file) =>
+          extensionOf(file.name) === "pdf" ? isPasswordProtectedPdf(file) : Promise.resolve(false),
+        ),
+      ).then((locked) => {
+        const open = accepted.filter((_, index) => !locked[index]);
+        const shut = accepted.filter((_, index) => locked[index]);
+        if (shut.length > 0) {
+          setRefused((current) => [
+            ...current,
+            ...shut.map((file) => {
+              counter.current += 1;
+              return {
+                id: `refused-${counter.current}`,
+                name: file.name,
+                size: file.size,
+                status: "error" as const,
+                progress: 0,
+                error: t("Password-protected · Desk can't open it"),
+                refused: true,
+              };
+            }),
+          ]);
+        }
+        if (open.length > 0) {
+          source.attachFiles(open);
+        }
+      });
     },
     [items.length, source, t],
   );

@@ -20,15 +20,32 @@ let csrfToken: string | null = null;
 let csrfHeaderName = CSRF_HEADER_NAME;
 let csrfTokenRequest: Promise<string | null> | null = null;
 
+/** The wait a response asked for, in whole seconds; null when it asked for none. */
+function retryAfterOf(response: Response): number | null {
+  const raw = response.headers.get("Retry-After");
+  if (raw === null || raw.trim() === "") {
+    return null;
+  }
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) {
+    return Math.max(0, Math.ceil(seconds));
+  }
+  const at = Date.parse(raw);
+  return Number.isNaN(at) ? null : Math.max(0, Math.ceil((at - Date.now()) / 1000));
+}
+
 export class ApiRequestError extends Error {
   status: number;
   data: ApiErrorResponse;
+  /** Seconds the server asked the caller to wait before trying again, from Retry-After. */
+  retryAfter: number | null;
 
-  constructor(status: number, data: ApiErrorResponse) {
+  constructor(status: number, data: ApiErrorResponse, retryAfter: number | null = null) {
     super(data.detail || data.title);
     this.name = "ApiRequestError";
     this.status = status;
     this.data = data;
+    this.retryAfter = retryAfter;
   }
 
   normalize(): NormalizedApiError {
@@ -238,7 +255,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     }));
     const parsed = apiErrorResponseSchema.safeParse(errorData);
     const validatedData = parsed.success ? parsed.data : errorData;
-    throw new ApiRequestError(response.status, validatedData);
+    throw new ApiRequestError(response.status, validatedData, retryAfterOf(response));
   }
 
   if (response.status === 204) {
@@ -273,7 +290,7 @@ async function uploadRequest<T>(
     }));
     const parsed = apiErrorResponseSchema.safeParse(errorData);
     const validatedData = parsed.success ? parsed.data : errorData;
-    throw new ApiRequestError(response.status, validatedData);
+    throw new ApiRequestError(response.status, validatedData, retryAfterOf(response));
   }
 
   if (response.status === 204) {

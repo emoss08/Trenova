@@ -227,7 +227,7 @@ export function DeskSearchPalette({
           .join(" · ");
       case "art":
         return [
-          deskArtKindName(deskArtKind({ kind: result.artifactKind, payload: {} }), t),
+          deskArtKindName(deskArtKind({ kind: result.artifactKind ?? "document", payload: {} }), t),
           result.threadTitle || t("Untitled conversation"),
           when,
         ].join(" · ");
@@ -333,7 +333,7 @@ export function DeskSearchPalette({
                           <i />
                         </span>
                       ) : result.kind === "art" ? (
-                        <DeskArtKindIcon kind={deskArtKind({ kind: result.artifactKind, payload: {} })} size={13} />
+                        <DeskArtKindIcon kind={deskArtKind({ kind: result.artifactKind ?? "document", payload: {} })} size={13} />
                       ) : (
                         <DeskIcon name={GROUP_ICONS[result.kind]} size={13} />
                       )}

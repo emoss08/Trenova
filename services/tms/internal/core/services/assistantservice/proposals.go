@@ -715,6 +715,7 @@ func toAssistantProposal(
 		Confidence:      proposal.Confidence.InexactFloat64(),
 		ExecutedAt:      proposal.ExecutedAt,
 		ExecutionError:  proposal.ExecutionError,
+		ExecutionResult: proposal.ExecutionResult,
 		ExpiresAt:       proposal.ExpiresAt,
 		Hold:            hold,
 		PlanStep:        proposal.PlanStep,

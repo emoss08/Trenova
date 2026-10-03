@@ -14,15 +14,7 @@ import type { PageDraft, PageDraftEdit, PageDraftSurface } from "@/types/page-dr
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  
-  
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   approvalQueue,
   currentEntry,
@@ -47,7 +39,6 @@ import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { replyWebSources } from "./web-sources";
-
 
 /** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
 const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
@@ -468,7 +459,6 @@ export function useThreadModel({
   // typed, and sent as ids the server checks against the thread.
   const composerContext = useComposerContext(thread.id);
 
-
   // The server starts the turn in which the agent reports a decision, once
   // the change has run, wherever the decision was made. This view only has to
   // pick it up: when the thread opens, when a card in it is decided, and when
@@ -537,6 +527,8 @@ export function useThreadModel({
     history,
     messages,
     providers,
+    /** The models were read; an empty list then means none is set up. */
+    providersReady: providersQuery.isSuccess,
     providerId,
     setProviderId,
     proposalsQuery,

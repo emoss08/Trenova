@@ -69,9 +69,13 @@ type Definition struct {
 
 	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" bun:"data_access_ceiling,type:VARCHAR(20),notnull,default:'Internal'"`
 
-	Enabled                bool `json:"enabled"                bun:"enabled,type:BOOLEAN,notnull"`
-	ShadowMode             bool `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull"`
-	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull"`
+	Enabled bool `json:"enabled"                bun:"enabled,type:BOOLEAN,notnull"`
+	// DisabledAt and DisabledByID say when the agent was last turned off and
+	// by whom; both are cleared when it is turned back on.
+	DisabledAt             *int64    `json:"disabledAt,omitempty"   bun:"disabled_at,type:BIGINT,nullzero"`
+	DisabledByID           *pulid.ID `json:"disabledById,omitempty" bun:"disabled_by_id,type:VARCHAR(100),nullzero"`
+	ShadowMode             bool      `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull"`
+	DecisionTimeoutSeconds int       `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull"`
 
 	TriggerMode       TriggerMode       `json:"triggerMode"       bun:"trigger_mode,type:VARCHAR(20),notnull"`
 	CronExpression    string            `json:"cronExpression"    bun:"cron_expression,type:VARCHAR(100),nullzero"`
@@ -668,5 +672,22 @@ func (d *Definition) validateContextProviders(multiErr *errortypes.MultiError) {
 				fmt.Sprintf("%q is not a context this system can provide", provider),
 			)
 		}
+	}
+}
+
+// NoteEnabledChange records who turned the agent off and when, or clears it
+// once the agent is on again.
+func (d *Definition) NoteEnabledChange(wasEnabled bool, by pulid.ID, at int64) {
+	switch {
+	case wasEnabled && !d.Enabled:
+		d.DisabledAt = &at
+		if by.IsNil() {
+			d.DisabledByID = nil
+		} else {
+			d.DisabledByID = &by
+		}
+	case d.Enabled:
+		d.DisabledAt = nil
+		d.DisabledByID = nil
 	}
 }

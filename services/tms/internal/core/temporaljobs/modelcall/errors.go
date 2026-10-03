@@ -245,6 +245,17 @@ func FailureOf(err error) *Failure {
 // understand: a stop is context.Canceled, a provider's answer is a
 // ProviderFailure, and so on.
 func (f *Failure) Err() error {
+	err := f.err()
+	// Every model the reply was asked of failed: the error says which, so the
+	// saved reply can list them the way the reader saw them.
+	if f != nil && len(f.Providers) > 0 && err != nil {
+		return &serviceports.ChatProvidersFailedError{Failures: f.Providers, Err: err}
+	}
+
+	return err
+}
+
+func (f *Failure) err() error {
 	switch {
 	case f == nil:
 		return nil

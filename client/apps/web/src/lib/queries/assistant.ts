@@ -12,6 +12,7 @@ import {
   type AgentAccessPreviewRequest,
 } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
+import type { DeskSearchKind } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const assistant = createQueryKeys("assistant", {

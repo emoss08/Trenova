@@ -250,3 +250,22 @@ func TestFinalAttemptOutsideAnActivity(t *testing.T) {
 
 	assert.True(t, FinalAttempt(t.Context(), 3))
 }
+
+func TestFailureErrKeepsTheModelsAsked(t *testing.T) {
+	t.Parallel()
+
+	failure := &Failure{
+		Message:   "every provider failed",
+		Status:    529,
+		Retryable: true,
+		Providers: []serviceports.ChatProviderFailure{{Name: "Anthropic", Status: "Overloaded"}},
+	}
+
+	var exhausted *serviceports.ChatProvidersFailedError
+	require.ErrorAs(t, failure.Err(), &exhausted)
+	assert.Equal(t, "Anthropic", exhausted.Failures[0].Name)
+
+	var provider serviceports.ProviderFailure
+	require.ErrorAs(t, failure.Err(), &provider, "the status is still readable underneath")
+	assert.Equal(t, 529, provider.ProviderStatus())
+}

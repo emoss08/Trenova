@@ -4,14 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCompactAge } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { DeskAgentTile } from "../desk-agent-tile";
 import { DeskIcon } from "../desk-icons";
 import { useOutsideDismiss } from "../use-outside-dismiss";
@@ -30,15 +23,23 @@ export function DeskAgentPicker({
   recentIds,
   lastUsedAt,
   disabled = false,
+  openSignal = 0,
 }: {
   agent: AgentChoice;
   onSelect: (agent: AgentChoice) => void;
   recentIds: readonly string[];
   lastUsedAt?: ReadonlyMap<string, number>;
   disabled?: boolean;
+  /** Opens the list each time it changes, for "Ask another agent" elsewhere. */
+  openSignal?: number;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (openSignal > 0) {
+      setOpen(true);
+    }
+  }, [openSignal]);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const rootRef = useRef<HTMLSpanElement>(null);
@@ -57,7 +58,9 @@ export function DeskAgentPicker({
     const byId = new Map(all.map((candidate) => [candidate.id, candidate]));
     const recentList = recentIds
       .map((id) => byId.get(id))
-      .filter((candidate): candidate is AgentChoice => candidate !== undefined && matches(candidate));
+      .filter(
+        (candidate): candidate is AgentChoice => candidate !== undefined && matches(candidate),
+      );
     const recentSet = new Set(recentList.map((candidate) => candidate.id));
     return {
       recent: recentList,

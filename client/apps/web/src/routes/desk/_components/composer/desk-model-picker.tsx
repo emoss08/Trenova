@@ -13,12 +13,7 @@ import {
 } from "react";
 import { DeskIcon } from "../desk-icons";
 import { useOutsideDismiss } from "../use-outside-dismiss";
-import {
-  DeskBrandMark,
-  GeminiGradient,
-  REEL_VENDORS,
-  VENDOR_NAMES,
-} from "./desk-brand-mark";
+import { DeskBrandMark, GeminiGradient, REEL_VENDORS, VENDOR_NAMES } from "./desk-brand-mark";
 
 /** The marks the Auto chip's reel turns through, starting and ending on Auto. */
 const CHIP_REEL = ["auto", "anthropic", "openai", "gemini", "groq", "auto"] as const;
@@ -89,9 +84,7 @@ function endpointTag(
   return t("Balanced");
 }
 
-type Row =
-  | { auto: true }
-  | { auto: false; option: AssistantProviderOption; order: number };
+type Row = { auto: true } | { auto: false; option: AssistantProviderOption; order: number };
 
 /**
  * Which model answers, as a chip in the composer.
@@ -109,6 +102,7 @@ export function DeskModelPicker({
   onChange,
   hasReplies,
   disabled = false,
+  openSignal = 0,
 }: {
   options: readonly AssistantProviderOption[];
   /** Empty means Auto. */
@@ -117,9 +111,16 @@ export function DeskModelPicker({
   /** Switching mid-conversation re-reads it, which the footer says. */
   hasReplies: boolean;
   disabled?: boolean;
+  /** Opens the picker each time it changes, for "Switch model" elsewhere. */
+  openSignal?: number;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (openSignal > 0) {
+      setOpen(true);
+    }
+  }, [openSignal]);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const [spin, setSpin] = useState(0);
@@ -332,7 +333,9 @@ export function DeskModelPicker({
                     )}
                     style={{ animationDelay: `${Math.min(index, 8) * 22}ms` }}
                     title={
-                      option.unavailable ? t("This endpoint failed its last health check") : undefined
+                      option.unavailable
+                        ? t("This endpoint failed its last health check")
+                        : undefined
                     }
                     onMouseMove={() => highlighted !== index && setHighlighted(index)}
                     onClick={() => pick(row)}

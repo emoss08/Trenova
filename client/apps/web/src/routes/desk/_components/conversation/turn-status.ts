@@ -9,7 +9,11 @@ import type { DeskComposerStatus } from "../composer/desk-composer";
  * being asked again, the step under way, or the answer being written.
  * Nothing once the turn has finished, failed or been refused.
  */
-export function composerStatus(turn: TurnState | null, t: TranslateFn): DeskComposerStatus | null {
+export function composerStatus(
+  turn: TurnState | null,
+  t: TranslateFn,
+  onSwitchModel?: () => void,
+): DeskComposerStatus | null {
   if (!turn || turn.status === "done" || turn.status === "error" || turn.status === "refused") {
     return null;
   }
@@ -18,13 +22,20 @@ export function composerStatus(turn: TurnState | null, t: TranslateFn): DeskComp
   }
   if (turn.retrying) {
     const who = turn.retrying.provider !== "" ? turn.retrying.provider : t("The model");
-    return turn.retrying.kind === "busy"
-      ? {
-          text: t("{0} is busy · retrying", who),
-          pose: "retry",
-          extra: t("Attempt {0}", turn.retrying.attempt + 1),
-        }
-      : { text: t("Starting the reply again…"), pose: "retry" };
+    if (turn.retrying.kind !== "busy") {
+      return { text: t("Starting the reply again…"), pose: "retry" };
+    }
+    const attempt = turn.retrying.attempt + 1;
+    return {
+      text: t("{0} is overloaded · retrying", who),
+      pose: "retry",
+      extra:
+        turn.retrying.maxAttempts > 0
+          ? t("Attempt {0} of {1}", attempt, turn.retrying.maxAttempts)
+          : t("Attempt {0}", attempt),
+      countdown: turn.retrying.waitSeconds > 0 ? turn.retrying.waitSeconds : undefined,
+      action: onSwitchModel ? { label: t("Switch model"), onClick: onSwitchModel } : undefined,
+    };
   }
 
   const last = turn.segments.at(-1);
