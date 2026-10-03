@@ -164,3 +164,13 @@ echo "Monitor progress at: $(gh repo view --json url -q .url)/actions"
 echo ""
 echo "Once complete, users can update with:"
 echo "  trenova update apply ${VERSION#v}"
+
+DEPLOY_REPO="${TRENOVA_DEPLOY_REPO:-$(git rev-parse --show-toplevel)/../trenova-cloud-deploy}"
+if [ -x "$DEPLOY_REPO/scripts/ship.sh" ]; then
+    echo ""
+    read -p "Deploy $VERSION to Trenova Cloud once the images are built? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        "$DEPLOY_REPO/scripts/ship.sh" "$VERSION" --yes
+    fi
+fi
