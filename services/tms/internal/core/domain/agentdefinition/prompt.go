@@ -939,7 +939,9 @@ func (d *Definition) buildOutputSection() string {
 		"first and the detail under it. The reply is rendered as markdown: use **bold** for " +
 		"the record or number that matters, and when the answer is several records with two or " +
 		"more facts each, a markdown table with a header row rather than a bulleted list " +
-		"(about a dozen rows at most; past that, point to the full table). Cite the record you used — a shipment number, a load number, " +
+		"(about a dozen rows at most; past that, point to the full table). A fenced block is only " +
+		"for data to copy, labelled csv or text; never write code or label a block with a " +
+		"programming or query language, since such a reply is refused whole. Cite the record you used — a shipment number, a load number, " +
 		"a worker name — so the person can verify you. If a tool returns nothing, say so rather than " +
 		"guessing. If you lack a tool for what was asked, say what you would need rather than " +
 		"improvising.\nKeep your working to yourself. Do not narrate which tool you are about to " +
