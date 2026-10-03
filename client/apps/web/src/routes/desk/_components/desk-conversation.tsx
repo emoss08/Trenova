@@ -24,7 +24,15 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { DeskWorkspace } from "./artifacts/desk-workspace";
 import { useDeskAttachments } from "./composer/desk-attachments";
 import { usePoorlyReadFiles } from "./conversation/desk-poorly-read";
@@ -430,6 +438,15 @@ export function DeskConversation({
     return out;
   }, [entries, lastOfTurn, unreadable]);
   const [filePickerSignal, setFilePickerSignal] = useState(0);
+  // The jump button floats just above the dock, whose height changes with
+  // what sits over the composer: the terms note, an approval, a lock.
+  const [dockHeight, setDockHeight] = useState<number | null>(null);
+  const dockRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new ResizeObserver(() => setDockHeight(node.offsetHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   // A question asked while offline waits here, shown as sent, and goes the
   // moment the connection is back.
   const online = useOnline();
@@ -640,7 +657,14 @@ export function DeskConversation({
         <ArtifactLinkContext value={renderArtifactLink}>
           <DecisionFollowUpProvider value={model.followUpDecision}>
             <div className={cn("dk-stage", workspaceOpen && "dk-open")} onKeyDown={onKeyDown}>
-              <div className={cn("dk-room", isActive && "dk-lit")}>
+              <div
+                className={cn("dk-room", isActive && "dk-lit")}
+                style={
+                  dockHeight === null
+                    ? undefined
+                    : ({ "--dk-dock-h": `${dockHeight}px` } as CSSProperties)
+                }
+              >
                 <div className="dk-scroll" ref={scrollRef} tabIndex={0}>
                   <div className="dk-grid dk-flow">
                     {entries.map((entry) => {
@@ -964,7 +988,7 @@ export function DeskConversation({
                     </svg>
                   </button>
                 </div>
-                <div className="dk-dock">
+                <div className="dk-dock" ref={dockRef}>
                   <div className="dk-grid">
                     <div className="dk-g" />
                     <div className="dk-c">

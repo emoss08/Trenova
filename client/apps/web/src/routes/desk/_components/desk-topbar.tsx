@@ -22,6 +22,7 @@ export function DeskTopBar({
   onToggleWorkspace,
   onTogglePin,
   onDownload,
+  onOpenRail,
 }: {
   place: DeskPlace;
   thread: AssistantThread | null;
@@ -35,18 +36,31 @@ export function DeskTopBar({
   onToggleWorkspace: () => void;
   onTogglePin: () => void;
   onDownload: () => void;
+  /** Opens the rail over the page, where it is folded away on a phone. */
+  onOpenRail?: () => void;
 }) {
   const t = useT();
   const inThread = place === "thread" && thread !== null;
 
   return (
     <header className="dk-top">
+      {onOpenRail && (
+        <button
+          type="button"
+          className="dk-ib dk-top-menu"
+          title={t("Menu")}
+          aria-label={t("Menu")}
+          onClick={onOpenRail}
+        >
+          <DeskIcon name="menu" size={16} />
+        </button>
+      )}
       <div className="dk-ttl">
         {inThread ? (
           <>
             <DeskAgentTile agent={agent} size="xs" className="dk-ttl-at" />
             <span className="dk-ttl-a">{agent?.name ?? t("Agent unavailable")}</span>
-            <span className="dk-sl">/</span>
+            <span className="dk-ttl-sl">/</span>
             <b>{thread.title || t("Untitled conversation")}</b>
           </>
         ) : (
@@ -85,10 +99,11 @@ export function DeskTopBar({
             type="button"
             className={cn("dk-wsb", workspaceOpen && "dk-on")}
             aria-pressed={workspaceOpen}
+            aria-label={t("Workspace")}
             onClick={onToggleWorkspace}
           >
             <DeskIcon name="panel" size={15} />
-            {t("Workspace")}
+            <span className="dk-wsb-l">{t("Workspace")}</span>
             <span className="dk-n">{artifactCount}</span>
             {!workspaceOpen && (newArtifact || pending) && (
               <span className={cn("dk-dot", pending && "dk-dot-wait")} />

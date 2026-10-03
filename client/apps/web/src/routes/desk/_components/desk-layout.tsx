@@ -127,6 +127,22 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const [artifactCount, setArtifactCount] = useState(0);
   const [newArtifact, setNewArtifact] = useState(false);
   const [searching, setSearching] = useState(false);
+  // On a phone the rail slides over the page instead of sitting beside it,
+  // and folds away again once a place in it is chosen.
+  const [railOpen, setRailOpen] = useState(false);
+  const [railPath, setRailPath] = useState(pathname);
+  useEffect(() => {
+    if (!railOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRailOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [railOpen]);
+  if (railPath !== pathname) {
+    setRailPath(pathname);
+    setRailOpen(false);
+  }
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settings = useDeskSettingsStore((state) => state.settings);
 
@@ -177,7 +193,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   if (!entered && threadsQuery.isSuccess) {
     setEntered(true);
     const latest = threads.reduce<AssistantThread | null>(
-      (best, thread) => (best === null || thread.lastMessageAt > best.lastMessageAt ? thread : best),
+      (best, thread) =>
+        best === null || thread.lastMessageAt > best.lastMessageAt ? thread : best,
       null,
     );
     if (settings.start === "last" && latest !== null) {
@@ -367,7 +384,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   return (
     <DeskContext.Provider value={value}>
       <div
-        className={cn("dsk", deskSettingsClasses(settings))}
+        className={cn("dsk", deskSettingsClasses(settings), railOpen && "dk-rail-open")}
         data-searching={searching || undefined}
         data-settings={settingsOpen || undefined}
       >
@@ -381,13 +398,28 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           watchtowerCount={watchtowerCounts?.unresolved ?? 0}
           decisionsCount={attention?.agentDecisions ?? 0}
           decisionsWaitHere={pendingHere}
-          onSearch={() => setSearching(true)}
-          onSettings={() => setSettingsOpen(true)}
+          onSearch={() => {
+            setRailOpen(false);
+            setSearching(true);
+          }}
+          onSettings={() => {
+            setRailOpen(false);
+            setSettingsOpen(true);
+          }}
           onTogglePin={(thread) => pinMutation.mutate(thread)}
           onDelete={(thread) => deleteMutation.mutate(thread.id)}
         />
+        {railOpen && (
+          <button
+            type="button"
+            className="dk-rail-scrim"
+            aria-label={t("Close the menu")}
+            onClick={() => setRailOpen(false)}
+          />
+        )}
         <div className="dk-mainc">
           <DeskTopBar
+            onOpenRail={() => setRailOpen(true)}
             place={place}
             thread={activeThread}
             agent={activeAgent}

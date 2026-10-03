@@ -53,20 +53,26 @@ export function DecisionsToolbar({
   return (
     <div className="border-border flex min-h-11 flex-wrap items-center gap-2 border-b px-3 py-1.5">
       {agentItems.length > 1 && (
-        <SegmentedControl
-          items={agentItems}
-          value={filter.agentDefinitionId || ALL}
-          onValueChange={(value) =>
-            onFilterChange({ ...filter, agentDefinitionId: value === ALL ? "" : value })
-          }
-        />
+        <div className="max-w-full overflow-x-auto">
+          <SegmentedControl
+            items={agentItems}
+            value={filter.agentDefinitionId || ALL}
+            onValueChange={(value) =>
+              onFilterChange({ ...filter, agentDefinitionId: value === ALL ? "" : value })
+            }
+          />
+        </div>
       )}
       {toolItems.length > 1 && (
-        <SegmentedControl
-          items={toolItems}
-          value={filter.toolName || ALL}
-          onValueChange={(value) => onFilterChange({ ...filter, toolName: value === ALL ? "" : value })}
-        />
+        <div className="max-w-full overflow-x-auto">
+          <SegmentedControl
+            items={toolItems}
+            value={filter.toolName || ALL}
+            onValueChange={(value) =>
+              onFilterChange({ ...filter, toolName: value === ALL ? "" : value })
+            }
+          />
+        </div>
       )}
       {filtered && (
         <Button
@@ -80,9 +86,7 @@ export function DecisionsToolbar({
         </Button>
       )}
       <span className="text-muted-foreground ml-auto text-xs tabular-nums">
-        {totalCount === null
-          ? ""
-          : t("{0, plural, one {# waiting} other {# waiting}}", totalCount)}
+        {totalCount === null ? "" : t("{0, plural, one {# waiting} other {# waiting}}", totalCount)}
       </span>
     </div>
   );

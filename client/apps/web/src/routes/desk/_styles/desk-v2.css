@@ -19,7 +19,7 @@
 /* top */
 .dk-top{position:relative;z-index:3;display:flex;align-items:center;gap:10px;padding:0 14px 0 16px}
 .dk-logo{width:24px;height:24px;border-radius:7px;background:var(--dsk-ink);color:var(--dsk-ink-fg);display:grid;place-items:center}
-.dk-top .dk-sl{color:var(--dsk-faint);font-size:16px;font-weight:300;margin:0 2px}
+.dk-top .dk-ttl-sl{color:var(--dsk-faint);font-size:16px;font-weight:300;margin:0 2px}
 .dk-ttl{display:flex;align-items:center;gap:8px;height:32px;min-width:0;flex:1 1 auto;font-size:13px}
 .dk-ttl b{min-width:0;flex:0 1 auto}
 .dk-ttl-a{color:var(--dsk-subtle);white-space:nowrap}
@@ -2072,3 +2072,19 @@
 .dk-ec-fb{margin-top:6px}
 .dk-ec-dockcard{margin:0 0 10px}
 .dk-ec-queued-row{margin-top:8px}
+/* phone: the rail slides over the page from a menu button in the top strip */
+.dk-top-menu,.dk-rail-scrim{display:none}
+@media (max-width:720px){
+  .dsk{grid-template-columns:minmax(0,1fr)}
+  .dsk .dk-sb{position:fixed;top:0;bottom:0;left:0;z-index:40;width:min(300px,86vw);transform:translateX(-102%);transition:transform 320ms var(--dk-settle);box-shadow:none}
+  .dsk.dk-rail-open .dk-sb{transform:none;box-shadow:var(--dsk-lift-hi),0 0 0 1px var(--dsk-b-sub)}
+  .dk-rail-scrim{display:block;position:fixed;inset:0;z-index:39;border:0;padding:0;background:color-mix(in srgb,#000 38%,transparent);animation:dk-fadein 200ms ease both}
+  .dk-top-menu{display:grid;margin-right:4px}
+}
+@keyframes dk-fadein{from{opacity:0}}
+@media (max-width:720px){
+  .dk-top{padding-inline:10px 8px}
+  .dk-ttl-a,.dk-ttl-sl{display:none}
+  .dk-wsb{padding:0 8px}
+  .dk-wsb-l{display:none}
+}

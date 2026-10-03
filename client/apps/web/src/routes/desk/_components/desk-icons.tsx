@@ -31,6 +31,7 @@ const PATHS = {
       <path d="M4 10h16M10 10v9" />
     </>
   ),
+  menu: <path d="M4 7h16M4 12h16M4 17h10" />,
   panel: (
     <>
       <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
