@@ -40,6 +40,9 @@ type TurnRequest struct {
 	// Taint is the outside content the conversation has already read, which
 	// every later turn in it opens with.
 	Taint *agent.RunTaint
+	// Facts are what the person pinned for the agents to keep in mind for
+	// the whole conversation.
+	Facts []string
 }
 
 type TurnResult struct {
@@ -158,6 +161,7 @@ func (s *Service) buildContext(
 		Subject:     req.Subject,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
+		Facts:       req.Facts,
 	}
 	if s.contexts == nil {
 		return bare
@@ -171,6 +175,7 @@ func (s *Service) buildContext(
 		Page:        req.Page,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
+		Facts:       req.Facts,
 		Query: (&serviceports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(req.Definition),

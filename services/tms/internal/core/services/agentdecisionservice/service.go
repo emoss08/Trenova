@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -127,6 +128,20 @@ func (s *Service) DecideOwn(
 		return nil, err
 	}
 
+	// An approval from the person's own conversation waits out the undo
+	// window; nothing it approved runs until the window closes.
+	if s.Defers(req.Decision) {
+		results, err := s.ApproveDeferred(ctx, []*services.DecideAgentProposalRequest{req}, actor)
+		if err != nil {
+			return nil, err
+		}
+		if results[0].Err != nil {
+			return nil, results[0].Err
+		}
+
+		return results[0].Decision, nil
+	}
+
 	return s.Decide(ctx, req, actor)
 }
 
@@ -189,15 +204,46 @@ func (s *Service) DecideWithOutcome(
 	req *services.DecideAgentProposalRequest,
 	actor *services.RequestActor,
 ) (*services.DecisionOutcome, error) {
+	ctx, rec, span, err := s.record(ctx, req, actor, nil)
+	if span != nil {
+		defer span.End()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return s.carryOut(ctx, rec, actor), nil
+}
+
+// recorded is a decision written down and its proposal moved out of
+// Pending, before anything it decided has run.
+type recorded struct {
+	proposal *agent.AgentProposal
+	decision *agent.AgentDecision
+	// req is the request as settled: an approval with nothing changed is
+	// an approval as proposed.
+	req *services.DecideAgentProposalRequest
+}
+
+// record checks a decision, writes it down and moves its proposal out of
+// Pending. With a window the proposal moves to Approving instead of to the
+// decision's status, and the decision says when it commits and which
+// workflow commits it; nothing it approved runs until then.
+func (s *Service) record(
+	ctx context.Context,
+	req *services.DecideAgentProposalRequest,
+	actor *services.RequestActor,
+	window *undoWindow,
+) (context.Context, *recorded, trace.Span, error) {
 	if !actor.IsUser() {
-		return nil, errortypes.NewValidationError(
+		return ctx, nil, nil, errortypes.NewValidationError(
 			"actor",
 			errortypes.ErrForbidden,
 			"Only a human user can decide on agent proposals",
 		)
 	}
 	if req.TenantInfo.OrgID != actor.OrganizationID || req.TenantInfo.BuID != actor.BusinessUnitID {
-		return nil, errortypes.NewValidationError(
+		return ctx, nil, nil, errortypes.NewValidationError(
 			"actor",
 			errortypes.ErrForbidden,
 			"A proposal can only be decided within the decider's own organization",
@@ -209,24 +255,24 @@ func (s *Service) DecideWithOutcome(
 		TenantInfo: &req.TenantInfo,
 	})
 	if err != nil {
-		return nil, err
+		return ctx, nil, nil, err
 	}
 
 	if err = decidable(proposal); err != nil {
-		return nil, err
+		return ctx, nil, nil, err
 	}
 
 	verdict, err := s.shadow.ForRun(ctx, req.TenantInfo, proposal.RunID)
 	if err != nil {
-		return nil, err
+		return ctx, nil, nil, err
 	}
 	if verdict.Shadow() {
-		return nil, shadowRefusal(verdict)
+		return ctx, nil, nil, shadowRefusal(verdict)
 	}
 
 	req, err = s.settleModifications(ctx, proposal, req, actor)
 	if err != nil {
-		return nil, err
+		return ctx, nil, nil, err
 	}
 
 	ctx, span := aitrace.StartDecide(ctx, &aitrace.DecideSpec{
@@ -243,7 +289,6 @@ func (s *Service) DecideWithOutcome(
 		ProposalTraceID:   proposal.TraceID,
 		ProposalSpanID:    proposal.SpanID,
 	})
-	defer span.End()
 
 	// What the decider approves is what they were shown, as the world is now:
 	// a change whose record moved on, or whose preview no longer matches the
@@ -252,7 +297,7 @@ func (s *Service) DecideWithOutcome(
 	if err != nil {
 		aitrace.MarkFailed(span, previewRefusal(err))
 
-		return nil, err
+		return ctx, nil, span, err
 	}
 	aitrace.RecordDecidedPreview(span, shown.digest, shown.reviewed)
 
@@ -271,18 +316,25 @@ func (s *Service) DecideWithOutcome(
 		PreviewTargetVersion: shown.targetVersion,
 	}
 	decision.TraceID, _ = aitrace.IDs(ctx)
+	status := proposalStatusFor(req.Decision)
+	if window != nil {
+		commitsAt := window.commitsAt
+		decision.CommitsAt = &commitsAt
+		decision.CommitWorkflowID = window.workflowID
+		status = agent.ProposalStatusApproving
+	}
 
 	me := errortypes.NewMultiError()
 	decision.Validate(me)
 	if me.HasErrors() {
-		return nil, me
+		return ctx, nil, span, me
 	}
 
 	created, err := s.decisionRepo.Create(ctx, decision)
 	if err != nil {
 		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
 
-		return nil, err
+		return ctx, nil, span, err
 	}
 
 	// Conditional on the proposal still being pending. The check above reads a
@@ -291,14 +343,27 @@ func (s *Service) DecideWithOutcome(
 	// instead, with a conflict rather than a second write.
 	if _, err = s.proposalRepo.UpdateStatus(ctx, repositories.UpdateAgentProposalStatusRequest{
 		ID:         proposal.ID,
-		Status:     proposalStatusFor(req.Decision),
+		Status:     status,
 		FromStatus: agent.ProposalStatusPending,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
 		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
 
-		return nil, err
+		return ctx, nil, span, err
 	}
+
+	return ctx, &recorded{proposal: proposal, decision: created, req: req}, span, nil
+}
+
+// carryOut does what a recorded decision decided: it tells the run, runs the
+// approved write, teaches the ledger and the memory, audits, announces and
+// has the conversation report the outcome.
+func (s *Service) carryOut(
+	ctx context.Context,
+	rec *recorded,
+	actor *services.RequestActor,
+) *services.DecisionOutcome {
+	proposal, created, req := rec.proposal, rec.decision, rec.req
 
 	s.clearFromWatchtower(ctx, proposal, req.TenantInfo)
 
@@ -306,7 +371,7 @@ func (s *Service) DecideWithOutcome(
 	// signalling on its own would reach a workflow the first step already
 	// released.
 	if !req.WithinPlan {
-		if err = s.signalWorkflow(ctx, proposal.RunID, req, created); err != nil {
+		if err := s.signalWorkflow(ctx, proposal.RunID, req, created); err != nil {
 			s.l.Error("failed to signal agent workflow", zap.Error(err))
 		}
 	}
@@ -324,7 +389,7 @@ func (s *Service) DecideWithOutcome(
 	s.recordCorrection(ctx, proposal, created)
 
 	auditActor := actor.AuditActor()
-	if err = s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     proposal.GetID().String(),
 		Operation:      permission.OpApprove,
@@ -340,7 +405,11 @@ func (s *Service) DecideWithOutcome(
 		s.l.Error("failed to log agent decision audit", zap.Error(err))
 	}
 
-	s.announce(ctx, proposal, req.TenantInfo, auditActor)
+	action := services.ActivityUpdated
+	if created.CommitsAt != nil {
+		action = services.ActivityCommitted
+	}
+	s.announce(ctx, proposal, req.TenantInfo, auditActor, action)
 
 	// Last, once the change has run or failed: the report is of the outcome,
 	// not of the click. A plan's steps are reported once, by the plan.
@@ -356,7 +425,7 @@ func (s *Service) DecideWithOutcome(
 		Decision:              created,
 		ExecutionError:        execErr,
 		ExecutedTargetVersion: executed,
-	}, nil
+	}
 }
 
 // settleModifications turns what the form sent back into what the decision
@@ -602,6 +671,7 @@ func (s *Service) announce(
 	proposal *agent.AgentProposal,
 	tenant pagination.TenantInfo,
 	actor services.AuditActor,
+	action string,
 ) {
 	if s.activity == nil {
 		return
@@ -617,7 +687,7 @@ func (s *Service) announce(
 		current = proposal
 	}
 
-	s.activity.ProposalChanged(ctx, current, actor, services.ActivityUpdated)
+	s.activity.ProposalChanged(ctx, current, actor, action)
 }
 
 // clearFromWatchtower takes a decided proposal off the feed. It is called

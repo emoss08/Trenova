@@ -35,6 +35,9 @@ type UpdateThreadRequest struct {
 	TenantInfo pagination.TenantInfo
 	Title      *string
 	Pinned     *bool
+	// PinnedFacts, when set, replaces what the agents keep in mind for the
+	// whole conversation. An empty list unpins them all.
+	PinnedFacts *[]string
 	// Keep promotes an Ask thread to the Desk so it is listed.
 	Keep bool
 }

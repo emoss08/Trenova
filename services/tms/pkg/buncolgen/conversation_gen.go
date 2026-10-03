@@ -707,6 +707,7 @@ var ThreadColumns = struct {
 	Pinned              Column // "pinned" → qualified: "athr.pinned"
 	SubjectType         Column // "subject_type" → qualified: "athr.subject_type"
 	SubjectID           Column // "subject_id" → qualified: "athr.subject_id"
+	PinnedFacts         Column // "pinned_facts" → qualified: "athr.pinned_facts"
 	Taint               Column // "taint" → qualified: "athr.taint"
 	TaintedAt           Column // "tainted_at" → qualified: "athr.tainted_at"
 	Version             Column // "version" → qualified: "athr.version"
@@ -727,6 +728,7 @@ var ThreadColumns = struct {
 	Pinned:              NewColumn("pinned", "athr"),
 	SubjectType:         NewColumn("subject_type", "athr"),
 	SubjectID:           NewColumn("subject_id", "athr"),
+	PinnedFacts:         NewColumn("pinned_facts", "athr"),
 	Taint:               NewColumn("taint", "athr"),
 	TaintedAt:           NewColumn("tainted_at", "athr"),
 	Version:             NewColumn("version", "athr"),
@@ -753,6 +755,7 @@ var ThreadFieldMap = map[string]string{
 	"pinned":              "pinned",
 	"subjectType":         "subject_type",
 	"subjectId":           "subject_id",
+	"pinnedFacts":         "pinned_facts",
 	"taint":               "taint",
 	"taintedAt":           "tainted_at",
 	"version":             "version",
@@ -777,6 +780,7 @@ var ThreadInsertableColumns = []string{
 	"pinned",
 	"subject_type",
 	"subject_id",
+	"pinned_facts",
 	"taint",
 	"tainted_at",
 	"version",
@@ -863,6 +867,7 @@ var ThreadFilter = struct {
 	Pinned              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinned" → DB: "pinned"
 	SubjectType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
 	SubjectID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	PinnedFacts         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinnedFacts" → DB: "pinned_facts"
 	Taint               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
 	TaintedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintedAt" → DB: "tainted_at"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -910,6 +915,9 @@ var ThreadFilter = struct {
 	},
 	SubjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("subjectId", op, value)
+	},
+	PinnedFacts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pinnedFacts", op, value)
 	},
 	Taint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("taint", op, value)

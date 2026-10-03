@@ -893,6 +893,8 @@ export type AgentPlanDecisionInput = {
 
 export type AgentPlanStatus =
   | 'Approved'
+  /** Approved from the decider's own conversation and waiting out its undo window; no step has run yet. */
+  | 'Approving'
   | 'Completed'
   | 'Expired'
   | 'Failed'
@@ -957,6 +959,8 @@ export type AgentProposalPreviewDigestInput = {
 
 export type AgentProposalStatus =
   | 'Accepted'
+  /** Approved from the decider's own conversation and waiting out its undo window; nothing has run yet. */
+  | 'Approving'
   | 'Executed'
   | 'ExecutionFailed'
   | 'Expired'
@@ -7863,7 +7867,7 @@ export type DecideMyPlanMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyPlanMutation = { decideMyPlan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, version: number, updatedAt: number } };
+export type DecideMyPlanMutation = { decideMyPlan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, commitsAt: number | null, version: number, updatedAt: number } };
 
 export type DecideMyProposalMutationVariables = Exact<{
   id: string | number;
@@ -7871,7 +7875,7 @@ export type DecideMyProposalMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, version: number, createdAt: number } };
+export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, version: number, createdAt: number } };
 
 export type AgentAccessRoleFieldsFragment = { id: string, name: string, description: string, isSystem: boolean } & { ' $fragmentName'?: 'AgentAccessRoleFieldsFragment' };
 
@@ -7929,7 +7933,23 @@ export type DecideMyProposalsMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyProposalsMutation = { decideMyProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
+export type DecideMyProposalsMutation = { decideMyProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, createdAt: number } | null }> };
+
+export type UndoMyDecisionMutationVariables = Exact<{
+  proposalId?: string | number | null | undefined;
+  planId?: string | number | null | undefined;
+}>;
+
+
+export type UndoMyDecisionMutation = { undoMyDecision: boolean };
+
+export type CommitMyDecisionNowMutationVariables = Exact<{
+  proposalId?: string | number | null | undefined;
+  planId?: string | number | null | undefined;
+}>;
+
+
+export type CommitMyDecisionNowMutation = { commitMyDecisionNow: boolean };
 
 export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
 
@@ -24253,15 +24273,17 @@ export const ArPaymentStatsDocument = {"__meta__":{"kind":"query","name":"ArPaym
 export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArCustomerProfile","hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}} as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
 export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
 export const MyAgentsDocument = {"__meta__":{"kind":"query","name":"MyAgents","hash":"sha256:fbba5deefba9da56ab81d72cd1815eed78a2855232af5826e2ec73f3f787cbc5"}} as unknown as TypedDocumentString<MyAgentsQuery, MyAgentsQueryVariables>;
-export const DecideMyPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideMyPlan","hash":"sha256:9a89b2fadb3bbade1f0c771624ca6cc51a6f9331c122e4c14d462c629db2e868"}} as unknown as TypedDocumentString<DecideMyPlanMutation, DecideMyPlanMutationVariables>;
-export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:cf3c4ea53d12c1f61f37b2fdefda3a45507f197dcfc721e514db2a83c876a993"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
+export const DecideMyPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideMyPlan","hash":"sha256:88cd6064cb6e3e865a06ce2e86fb4c49f63454065cd0aac26005aaa53b92b42b"}} as unknown as TypedDocumentString<DecideMyPlanMutation, DecideMyPlanMutationVariables>;
+export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:e1a0719c2bd974fb380071b01d02fc55d6fab115f6a1efbc45781ba0bd0126f2"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
 export const AgentAccessDocument = {"__meta__":{"kind":"query","name":"AgentAccess","hash":"sha256:a96fd576cc93fef1d6389a872a52d1d681ed4ce882cba36bb6ef2199d6fda41f"}} as unknown as TypedDocumentString<AgentAccessQuery, AgentAccessQueryVariables>;
 export const SetAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetAgentAccess","hash":"sha256:e6df898351f5a8c4e7ba13ec77ffd0d5b05464e9abe0fff637b90a0d2e6e61ce"}} as unknown as TypedDocumentString<SetAgentAccessMutation, SetAgentAccessMutationVariables>;
 export const RoleAgentAccessDocument = {"__meta__":{"kind":"query","name":"RoleAgentAccess","hash":"sha256:4320bfe8fce105b07adf7782d513aaff38f3b1aa012079c2d259df9de7eaebcc"}} as unknown as TypedDocumentString<RoleAgentAccessQuery, RoleAgentAccessQueryVariables>;
 export const SetRoleAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetRoleAgentAccess","hash":"sha256:dd0999e8751bca239fb25ebad5054c71404e98c83deea9439010bd3b5d3b410b"}} as unknown as TypedDocumentString<SetRoleAgentAccessMutation, SetRoleAgentAccessMutationVariables>;
 export const AgentAccessPreviewDocument = {"__meta__":{"kind":"query","name":"AgentAccessPreview","hash":"sha256:fff0b7d3ee09999aa9a00d4313e756288a2f222e014f1234beb35d3c0619da65"}} as unknown as TypedDocumentString<AgentAccessPreviewQuery, AgentAccessPreviewQueryVariables>;
 export const SuggestedAgentAudienceDocument = {"__meta__":{"kind":"query","name":"SuggestedAgentAudience","hash":"sha256:79bdbda787008c4d10159a18a778009b985209e55670b365e0bc0675e361a021"}} as unknown as TypedDocumentString<SuggestedAgentAudienceQuery, SuggestedAgentAudienceQueryVariables>;
-export const DecideMyProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposals","hash":"sha256:52169b125c46e08fad645a937cf1562258b648d926be2beed8e0689b9a608205"}} as unknown as TypedDocumentString<DecideMyProposalsMutation, DecideMyProposalsMutationVariables>;
+export const DecideMyProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposals","hash":"sha256:43aaeb7e935e724d9714b2248cc2cb5ba10715eb0336f6dbee971c95bd25677d"}} as unknown as TypedDocumentString<DecideMyProposalsMutation, DecideMyProposalsMutationVariables>;
+export const UndoMyDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoMyDecision","hash":"sha256:530fd6518732d5522e0973029600faef0101edb322bbbe1be80defa0b9f77592"}} as unknown as TypedDocumentString<UndoMyDecisionMutation, UndoMyDecisionMutationVariables>;
+export const CommitMyDecisionNowDocument = {"__meta__":{"kind":"mutation","name":"CommitMyDecisionNow","hash":"sha256:b9db4e8528fdfc8d69c46c8b5be4b04ceaea396b4815f12e841aa6d0f8f3eeca"}} as unknown as TypedDocumentString<CommitMyDecisionNowMutation, CommitMyDecisionNowMutationVariables>;
 export const AiAuditEventTableDocument = {"__meta__":{"kind":"query","name":"AIAuditEventTable","hash":"sha256:4df8553a5f6877364cf0f4bf0bf7fd0745b577dd89671d7f6ce85bda0bd5684e"}} as unknown as TypedDocumentString<AiAuditEventTableQuery, AiAuditEventTableQueryVariables>;
 export const AiAuditEventDetailDocument = {"__meta__":{"kind":"query","name":"AIAuditEventDetail","hash":"sha256:ed73402380199934972ba4aa4c9baba8179b23d14cb6e7463f76a9c34c8c89da"}} as unknown as TypedDocumentString<AiAuditEventDetailQuery, AiAuditEventDetailQueryVariables>;
 export const AiAuditChainStatusDocument = {"__meta__":{"kind":"query","name":"AIAuditChainStatus","hash":"sha256:189c7a9b735b0b8ec6b15f9d4a9ce6bc3cd25c26cd30f99b7dda9538c48b6820"}} as unknown as TypedDocumentString<AiAuditChainStatusQuery, AiAuditChainStatusQueryVariables>;

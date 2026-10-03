@@ -381,6 +381,7 @@ func FromServices(s *Services) *Resolver {
 		AgentExceptionService:     s.AgentExceptionService,
 		AgentDecisionService:      s.AgentDecisionService,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
+		ApprovalCommitter:         s.ApprovalCommitter,
 		AgentTools:                s.AgentTools,
 		AgentControlService:       s.AgentControlService,
 	}

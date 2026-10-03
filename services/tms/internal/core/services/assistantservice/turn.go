@@ -189,6 +189,7 @@ func (s *Service) prepareTurn(
 		Attachments:         runtimeAttachments,
 		Mentions:            mentions,
 		Taint:               thread.Taint,
+		Facts:               thread.PinnedFacts,
 	}
 
 	decision, runReq := s.admit(ctx, turnReq)

@@ -2552,6 +2552,14 @@ enum AgentDataAccessCeiling {
 
 type AgentDecision {
   businessUnitId: ID!
+  """
+  When an approval made from the decider's own conversation goes through,
+  unless it is undone first. Absent for a decision that took effect when it
+  was made.
+  """
+  commitsAt: Timestamp
+  """When the approval went through at the close of its undo window."""
+  committedAt: Timestamp
   createdAt: Timestamp!
   decidedByUserId: ID!
   decision: AgentDecisionType!
@@ -2586,6 +2594,8 @@ type AgentDecision {
   The decision's trace in the tracing backend, when one is configured and the decision has a trace.
   """
   traceUrl: String
+  """When the approval was undone in its undo window."""
+  undoneAt: Timestamp
   updatedAt: Timestamp!
   version: Int!
 }
@@ -3196,6 +3206,10 @@ enum AgentOutputMode {
 """Several proposals from one run, decided once and run in order."""
 type AgentPlan {
   businessUnitId: ID!
+  """
+  When an approval in its undo window starts to run, unless it is undone first.
+  """
+  commitsAt: Timestamp
   completedSteps: Int!
   createdAt: Timestamp!
   decidedAt: Timestamp
@@ -3215,6 +3229,8 @@ type AgentPlan {
   stepCount: Int!
   summary: String!
   title: String!
+  """When the approval was undone in its undo window; absent if it was not."""
+  undoneAt: Timestamp
   updatedAt: Timestamp!
   version: Int!
 }
@@ -3263,6 +3279,10 @@ type AgentPlanPreview {
 
 enum AgentPlanStatus {
   Approved
+  """
+  Approved from the decider's own conversation and waiting out its undo window; no step has run yet.
+  """
+  Approving
   Completed
   Expired
   Failed
@@ -3682,6 +3702,10 @@ input AgentProposalPreviewDigestInput {
 
 enum AgentProposalStatus {
   Accepted
+  """
+  Approved from the decider's own conversation and waiting out its undo window; nothing has run yet.
+  """
+  Approving
   Executed
   ExecutionFailed
   Expired
@@ -15777,6 +15801,12 @@ type Mutation {
   """
   commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
   """
+  Ends the undo window on the caller's approval of a proposal or a plan, so
+  it goes through now. One that already went through is left as it is; one
+  that was undone is a conflict.
+  """
+  commitMyDecisionNow(planId: ID, proposalId: ID): Boolean!
+  """
   Finishes connecting with what the provider returned. Only the person who started it can finish it.
   """
   completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection! @deprecated(reason: "Use finishAccountingAuthorization, which can offer a choice of companies")
@@ -16354,6 +16384,13 @@ type Mutation {
   unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
   uncancelShipment(id: ID!): Shipment!
   uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
+  """
+  Takes back the caller's approval of a proposal (with every proposal
+  approved with it in one batch) or of a plan, while it is in its undo window;
+  it waits on them again. Name one of the two. Once the approval has gone
+  through it is a conflict.
+  """
+  undoMyDecision(planId: ID, proposalId: ID): Boolean!
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!

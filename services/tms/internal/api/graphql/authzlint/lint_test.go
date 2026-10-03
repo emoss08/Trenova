@@ -205,6 +205,10 @@ func TestAgentAccessResolversAreAuthorized(t *testing.T) {
 		// runs the plan's writes, so it must hold assistant:update before the
 		// service checks the thread is the caller's and the agent is theirs.
 		"MutationResolver.DecideMyPlan",
+		// Undoing or hurrying an approval reaches the same writes deciding
+		// does, so it is held to the same check.
+		"MutationResolver.UndoMyDecision",
+		"MutationResolver.CommitMyDecisionNow",
 		"QueryResolver.AgentAccessPreview",
 		"QueryResolver.PendingDecisions",
 		"QueryResolver.PendingDecisionSummary",

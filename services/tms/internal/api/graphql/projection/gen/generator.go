@@ -54,6 +54,7 @@ var nonProjectionObjects = map[string]string{
 	"HomeMetricOption":                   "GraphQL home widget catalog DTO",
 	"DispatchFinding":                    "GraphQL dispatch console DTO",
 	"PendingDecisionAgentCount":          "GraphQL decision queue summary DTO",
+	"RecentDecision":                     "GraphQL recent-decisions DTO built by its resolver",
 	"DocumentTemplateKind":               "GraphQL registry catalog DTO, not a table",
 	"DocumentTemplateVariable":           "GraphQL registry catalog DTO, not a table",
 	"DocumentTemplateDiagnostic":         "GraphQL template engine finding DTO",

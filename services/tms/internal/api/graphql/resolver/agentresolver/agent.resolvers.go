@@ -272,6 +272,42 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *MutationResolver) UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return false, err
+	}
+
+	req, err := settleApprovalRequest(proposalID, planID, base.TenantInfo(authCtx))
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.ApprovalCommitter.UndoOwnApproval(ctx, req, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return false, err
+	}
+
+	req, err := settleApprovalRequest(proposalID, planID, base.TenantInfo(authCtx))
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.ApprovalCommitter.CommitOwnApprovalNow(ctx, req, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpCreate)
 	if err != nil {

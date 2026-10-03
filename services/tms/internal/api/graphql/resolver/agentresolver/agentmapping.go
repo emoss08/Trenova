@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -251,4 +252,32 @@ func agentExceptionConnectionToModel(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+// settleApprovalRequest reads which approval an undo or a commit-now names:
+// a proposal or a plan, exactly one.
+func settleApprovalRequest(
+	proposalID, planID *string,
+	tenant pagination.TenantInfo,
+) (*services.SettleApprovalRequest, error) {
+	req := &services.SettleApprovalRequest{TenantInfo: tenant}
+	hasProposal := proposalID != nil && *proposalID != ""
+	hasPlan := planID != nil && *planID != ""
+	if hasProposal == hasPlan {
+		return nil, errortypes.NewValidationError(
+			"proposalId", errortypes.ErrInvalid, "Name a proposal or a plan, not both or neither",
+		)
+	}
+
+	var err error
+	if hasProposal {
+		req.ProposalID, err = pulid.MustParse(*proposalID)
+	} else {
+		req.PlanID, err = pulid.MustParse(*planID)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }

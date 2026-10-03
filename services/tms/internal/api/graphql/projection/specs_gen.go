@@ -2577,6 +2577,18 @@ func init() {
 				Special: "traceUrl",
 			},
 			{
+				Name:        "commitsAt",
+				FieldMapKey: "commitsAt",
+			},
+			{
+				Name:        "committedAt",
+				FieldMapKey: "committedAt",
+			},
+			{
+				Name:        "undoneAt",
+				FieldMapKey: "undoneAt",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -3346,6 +3358,14 @@ func init() {
 			{
 				Name:        "expiresAt",
 				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "commitsAt",
+				FieldMapKey: "commitsAt",
+			},
+			{
+				Name:        "undoneAt",
+				FieldMapKey: "undoneAt",
 			},
 			{
 				Name:        "version",

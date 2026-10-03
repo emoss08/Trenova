@@ -379,6 +379,8 @@ func (h *Handler) markThreadRead(c *gin.Context) {
 type updateThreadRequest struct {
 	Title  *string `json:"title"`
 	Pinned *bool   `json:"pinned"`
+	// PinnedFacts replaces the facts the agents keep in mind, when sent.
+	PinnedFacts *[]string `json:"pinnedFacts"`
 	// Keep lists a quick question as a conversation.
 	Keep bool `json:"keep"`
 }
@@ -398,11 +400,12 @@ func (h *Handler) updateThread(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
 	thread, err := h.service.UpdateThread(c.Request.Context(), &serviceports.UpdateThreadRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
-		Title:      body.Title,
-		Pinned:     body.Pinned,
-		Keep:       body.Keep,
+		ThreadID:    req.ID,
+		TenantInfo:  req.TenantInfo,
+		Title:       body.Title,
+		Pinned:      body.Pinned,
+		PinnedFacts: body.PinnedFacts,
+		Keep:        body.Keep,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)

@@ -53,6 +53,8 @@ const (
 	attachmentsCloseTag    = "</attachments>"
 	mentionsOpenTag        = "<mentioned_records>"
 	mentionsCloseTag       = "</mentioned_records>"
+	factsOpenTag           = "<pinned_facts>"
+	factsCloseTag          = "</pinned_facts>"
 
 	// maxAttachmentExcerptRunes bounds what one attached file contributes to
 	// the prompt. The whole text is reachable through get_document_summary;
@@ -120,7 +122,11 @@ type RuntimeContext struct {
 	// message: files, and records named from the composer.
 	Attachments []RuntimeAttachment
 	Mentions    []RuntimeMention
-	Tools       []ToolSummary
+	// Facts are what the person pinned for the agents to keep in mind for
+	// the whole conversation. They are rendered into the system prompt, not
+	// the history, so no trimming of the history can drop one.
+	Facts []string
+	Tools []ToolSummary
 	// Memories is what the organization has recorded for its agents that this
 	// turn may read, best first: the organization-wide ones, any about this
 	// agent's tools, and any about the records the turn is about.
@@ -442,6 +448,9 @@ func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 		if rc.Page.Draft != nil {
 			fenced = append(fenced, describePageDraft(rc.Page.Draft))
 		}
+	}
+	if len(rc.Facts) > 0 {
+		fenced = append(fenced, describeFacts(rc.Facts))
 	}
 	if len(rc.Mentions) > 0 {
 		fenced = append(fenced, describeMentions(rc.Mentions))
@@ -768,6 +777,28 @@ func describeFilter(filter domaintypes.FieldFilter) string {
 	}
 
 	return line
+}
+
+// describeFacts lists what the person pinned for the whole conversation.
+// They are the person's own words, so they are held as true; a record that
+// says otherwise is worth saying so rather than quietly preferring either.
+func describeFacts(facts []string) string {
+	var builder strings.Builder
+	builder.WriteString("- Keeping in mind: facts the person pinned for this whole conversation. " +
+		"Hold them true in every answer; when a record you read disagrees with one, say so:\n")
+	builder.WriteString(factsOpenTag)
+	for _, fact := range facts {
+		fact = strings.TrimSpace(fact)
+		if fact == "" {
+			continue
+		}
+		builder.WriteString("\n- ")
+		builder.WriteString(stringutils.NeutralizeCloseTag(fact, factsCloseTag))
+	}
+	builder.WriteString("\n")
+	builder.WriteString(factsCloseTag)
+
+	return builder.String()
 }
 
 // describeMentions lists the records the person named. Each is an id to look

@@ -1,5 +1,9 @@
 import { decideMyProposals } from "@/lib/graphql/agent-decisions";
-import { invalidateProposalViews, markProposalDecided } from "@/lib/proposal-cache";
+import {
+  invalidateProposalViews,
+  markProposalDecided,
+  markProposalsStatus,
+} from "@/lib/proposal-cache";
 import type { AssistantProposal } from "@/types/assistant";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -11,8 +15,18 @@ import { presentProposal } from "./proposal-presenters";
 /** Why a batch was turned down in a conversation, as the server records it. */
 const BATCH_REJECT_REASON = "rejected_in_conversation";
 
-/** How a batch went: how many of its changes the server took, and why the rest did not go. */
-export type BatchOutcome = { approved: number; total: number; errors: string[] };
+/**
+ * How a batch went: how many of its changes the server took, and why the rest
+ * did not go. An approval from the person's own conversation waits out an
+ * undo window; `commitsAt` is when it closes (Unix seconds), or null when the
+ * changes went through at once.
+ */
+export type BatchOutcome = {
+  approved: number;
+  total: number;
+  errors: string[];
+  commitsAt: number | null;
+};
 
 /**
  * What every kind of decision does once the server has recorded it: the
@@ -64,13 +78,19 @@ export async function decideBatch(
     note: approving ? undefined : note,
   });
   const failed = results.filter((result) => (result.error ?? "") !== "");
+  let commitsAt: number | null = null;
   for (const result of results) {
-    if ((result.error ?? "") === "" || result.decision) {
+    const waits = result.decision?.commitsAt ?? null;
+    if (waits !== null) {
+      commitsAt = Math.max(commitsAt ?? 0, waits);
+      markProposalsStatus(queryClient, [result.proposalId], "Approving");
+    } else if ((result.error ?? "") === "" || result.decision) {
       markProposalDecided(queryClient, result.proposalId, approving ? "Accepted" : "Rejected");
     }
   }
 
   return {
+    commitsAt,
     approved: results.length - failed.length,
     total: results.length,
     errors: failed.map((result) => {

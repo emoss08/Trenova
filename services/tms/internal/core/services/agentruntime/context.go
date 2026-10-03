@@ -72,6 +72,7 @@ func (b *ContextBuilder) Build(
 		Page:             req.Page,
 		Attachments:      req.Attachments,
 		Mentions:         req.Mentions,
+		Facts:            req.Facts,
 		DelegatorRecords: req.DelegatorRecords,
 		Tools:            b.runtime.ToolSummaries(definition),
 	}

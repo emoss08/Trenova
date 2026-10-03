@@ -17,7 +17,8 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact, AssistantProposal, AssistantThread } from "@/types/assistant";
-import { useQuery } from "@tanstack/react-query";
+import { invalidateProposalViews } from "@/lib/proposal-cache";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -43,11 +44,9 @@ import { DeskComposer } from "./composer/desk-composer";
 import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
 import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
-import {
-  DeskApprovalCard,
-  DeskApprovedCard,
-  type ApprovedNote,
-} from "./conversation/desk-approval-card";
+import { DeskApprovalCard, DeskApprovedCard } from "./conversation/desk-approval-card";
+import { DeskUndoBar, useUndoWindow } from "./conversation/desk-undo-bar";
+import { DeskFactsBar } from "./composer/desk-facts";
 import { useDeskSetting } from "@/stores/desk-settings-store";
 import { DeskConfetti } from "./conversation/desk-confetti";
 import {
@@ -83,8 +82,6 @@ export type DeskConversationProps = {
 const NO_STEPS: ToolStep[] = [];
 const NO_ARTIFACTS: AssistantArtifact[] = [];
 
-/** How long the green "Approved" row holds before the composer has the room again. */
-const APPROVED_HOLD_MS = 1100;
 /** How long a confetti burst lasts. */
 const CONFETTI_MS = 5400;
 
@@ -138,6 +135,7 @@ export function DeskConversation({
   const t = useT();
   const desk = useDesk();
   const reduceMotion = useReducedMotion();
+  const queryClient = useQueryClient();
   const celebrate = useDeskSetting("celebrate");
   const motion = useDeskSetting("motion");
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
@@ -317,16 +315,8 @@ export function DeskConversation({
     }
   }, [onDraftChange]);
 
-  const [approved, setApproved] = useState<ApprovedNote | null>(null);
   const [burst, setBurst] = useState<number | null>(null);
   const approveRef = useRef<(() => void) | null>(null);
-  useEffect(() => {
-    if (!approved) {
-      return;
-    }
-    const timer = window.setTimeout(() => setApproved(null), APPROVED_HOLD_MS);
-    return () => window.clearTimeout(timer);
-  }, [approved]);
   useEffect(() => {
     if (burst === null) {
       return;
@@ -335,12 +325,18 @@ export function DeskConversation({
     return () => window.clearTimeout(timer);
   }, [burst]);
 
-  const onApproved = (note: ApprovedNote) => {
-    setApproved(note);
+  // An approval waits out its undo window on the server. When it goes
+  // through, the conversation reads the outcome and picks up the turn in
+  // which the agent reports it.
+  const { followUpDecision } = model;
+  const undo = useUndoWindow(thread.id, () => {
+    void invalidateProposalViews(queryClient, thread.id);
+    followUpDecision();
     if (!reduceMotion && celebrate === "confetti" && motion === "full") {
       setBurst(Date.now());
     }
-  };
+  });
+  const holding = undo.state.phase !== "idle";
 
   const reviewEntry = (entry: ApprovalEntry) => {
     const artifact = artifacts.find(
@@ -553,7 +549,10 @@ export function DeskConversation({
   const status = composerStatus(turn, t, switchModel);
   const live = streamingText(turn);
   const chapterOf = (id: string) => (chapters ? chapters.indexOf(id) + 1 : 0);
-  const showCard = model.showDock && model.current !== null && approved === null;
+  const showCard = model.showDock && model.current !== null && !holding;
+  // The change waiting on the person, or the approval in its undo window, is
+  // attached to the top of the composer.
+  const attached = showCard || holding;
   const pending = model.queue.length > 0;
   const jumping = away || unread > 0;
 
@@ -1067,23 +1066,10 @@ export function DeskConversation({
                 <div className="dk-dock" ref={dockRef}>
                   <div className="dk-grid">
                     <div className="dk-g" />
-                    <div className="dk-c">
-                      {!pending && approved === null && <DeskTermsNote />}
-                      {approved && <DeskApprovedCard note={approved} />}
-                      {showCard && model.current && (
-                        <DeskApprovalCard
-                          key={model.current.entry.key}
-                          threadId={thread.id}
-                          entry={model.current.entry}
-                          approveRef={approveRef}
-                          onReview={reviewEntry}
-                          onDefer={model.deferAll}
-                          onDecided={model.decided}
-                          onApproved={onApproved}
-                          onAsk={ask}
-                        />
-                      )}
-                      {pending && model.current === null && approved === null && (
+                    <div className={cn("dk-c", attached && "dk-has-dec")}>
+                      {thread.canContinue && <DeskFactsBar thread={thread} />}
+                      {!pending && !holding && <DeskTermsNote />}
+                      {pending && model.current === null && !holding && (
                         <button
                           type="button"
                           className="dk-bt dk-sm dk-dock-pill"
@@ -1126,6 +1112,32 @@ export function DeskConversation({
                         </div>
                       )}
                       {budgetQuery.data && !lock && <DeskUsageMeter budget={budgetQuery.data} />}
+                      {undo.state.phase === "waiting" && (
+                        <DeskUndoBar
+                          key={undo.state.window.key}
+                          held={undo.state.window}
+                          left={undo.left}
+                          busy={undo.busy}
+                          onUndo={undo.undo}
+                          onNow={undo.commitNow}
+                        />
+                      )}
+                      {undo.state.phase === "committed" && (
+                        <DeskApprovedCard held={undo.state.window} />
+                      )}
+                      {showCard && model.current && (
+                        <DeskApprovalCard
+                          key={model.current.entry.key}
+                          threadId={thread.id}
+                          entry={model.current.entry}
+                          approveRef={approveRef}
+                          onReview={reviewEntry}
+                          onDefer={model.deferAll}
+                          onDecided={model.decided}
+                          undo={undo}
+                          onAsk={ask}
+                        />
+                      )}
                       <DeskComposer
                         value={model.draft}
                         onChange={model.onDraftChange}
@@ -1162,7 +1174,11 @@ export function DeskConversation({
                         agentPickerSignal={agentPickerSignal}
                         filePickerSignal={filePickerSignal}
                         placeholder={
-                          lastIsRefusal ? t("Rephrase, or ask another agent…") : undefined
+                          showCard
+                            ? t("Reply, or ask about this change…")
+                            : lastIsRefusal
+                              ? t("Rephrase, or ask another agent…")
+                              : undefined
                         }
                         lock={lock}
                         note={composerLock?.note}

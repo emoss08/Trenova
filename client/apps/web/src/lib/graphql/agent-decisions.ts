@@ -1,10 +1,12 @@
 import {
+  CommitMyDecisionNowDocument,
   DecideAgentPlanDocument,
   DecideAgentProposalDocument,
   DecideMyPlanDocument,
   DecideMyProposalDocument,
   DecideMyProposalsDocument,
   ResolveAgentExceptionDocument,
+  UndoMyDecisionDocument,
   type AgentExceptionResolveInput,
   type AgentPlanDecisionInput,
   type AgentProposalDecisionInput,
@@ -95,4 +97,39 @@ export async function resolveAgentException(id: string, input: AgentExceptionRes
   });
 
   return data.resolveAgentException;
+}
+
+/** Which approval an undo or a "do it now" is about: a proposal (with its batch) or a plan. */
+export type ApprovalTarget = { proposalId: string } | { planId: string };
+
+function targetVariables(target: ApprovalTarget) {
+  return "planId" in target
+    ? { proposalId: null, planId: target.planId }
+    : { proposalId: target.proposalId, planId: null };
+}
+
+/**
+ * Takes back the person's approval while it is in its undo window; the change
+ * waits on them again. Once it has gone through the server answers with a
+ * conflict.
+ */
+export async function undoMyDecision(target: ApprovalTarget) {
+  const data = await requestGraphQL({
+    document: UndoMyDecisionDocument,
+    operationName: "UndoMyDecision",
+    variables: targetVariables(target),
+  });
+
+  return data.undoMyDecision;
+}
+
+/** Ends the undo window on the person's approval, so it goes through now. */
+export async function commitMyDecisionNow(target: ApprovalTarget) {
+  const data = await requestGraphQL({
+    document: CommitMyDecisionNowDocument,
+    operationName: "CommitMyDecisionNow",
+    variables: targetVariables(target),
+  });
+
+  return data.commitMyDecisionNow;
 }

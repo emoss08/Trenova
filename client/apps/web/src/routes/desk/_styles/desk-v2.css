@@ -13558,4 +13558,231 @@
 .dk-why em {
   font-style: normal;
   color: var(--dsk-subtle);
+/* dock: pinned facts ("Keeping in mind") */
+.dk-fx {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 4px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-fx-l {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 2px;
+}
+.dk-fx-c {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 3px 0 8px;
+  border-radius: 999px;
+  font-weight: 500;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  animation: dk-pop 220ms var(--dk-spring) both;
+}
+.dk-fx-c button {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--dsk-faint);
+}
+.dk-fx-c button:hover {
+  background: var(--dsk-hover);
+  color: var(--dsk-fg);
+}
+.dk-fx-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  color: var(--dsk-subtle);
+  border: 1px dashed var(--dsk-b-strong);
+  transition:
+    color 140ms,
+    border-color 140ms;
+}
+.dk-fx-add:hover {
+  color: var(--dsk-fg);
+  border-color: var(--dsk-fg);
+}
+.dk-fx-in {
+  height: 22px;
+  width: 190px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--dsk-fg);
+  background: var(--dsk-field);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+  outline: 0;
+}
+/* dock: the undo window after an approval */
+.dk-udo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 10px;
+  border-radius: 12px;
+  background: var(--dsk-success-sub);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dsk-success) 40%, transparent);
+  animation: dk-rise 360ms var(--dk-spring) both;
+}
+.dk-udo-ring {
+  flex: none;
+  transform: rotate(-90deg);
+}
+.dk-udo-ring circle {
+  fill: none;
+  stroke-width: 2.2;
+}
+.dk-udo-ring .dk-bg {
+  stroke: color-mix(in srgb, var(--dsk-success) 25%, transparent);
+}
+.dk-udo-ring .dk-fg {
+  stroke: var(--dsk-success-fg);
+  stroke-linecap: round;
+  stroke-dasharray: 56.5;
+  transition: stroke-dashoffset 1s linear;
+}
+.dk-udo-ring text {
+  transform: rotate(90deg);
+  transform-origin: 11px 11px;
+  font: 600 9.5px var(--dk-plex);
+  fill: var(--dsk-success-fg);
+}
+.dk-udo-t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dk-udo-t b {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-udo-t span {
+  font-size: 11.5px;
+  color: var(--dsk-success-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-udo .dk-bt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dk-udo .dk-bt.dk-ghost {
+  background: none;
+  box-shadow: none;
+  color: var(--dsk-success-fg);
+}
+/* dock: the decision attached to the composer */
+.dk-dock .dk-c.dk-has-dec {
+  gap: 0;
+}
+.dk-dock .dk-c > .dk-cmp,
+.dk-dock .dk-c > .dk-cmp .dk-cmp-ring {
+  transition:
+    border-radius 320ms var(--dk-settle),
+    box-shadow 200ms;
+}
+.dk-dock .dk-c.dk-has-dec > .dk-dcx,
+.dk-dock .dk-c.dk-has-dec > .dk-udo {
+  z-index: 2;
+  margin: 0 0 -1px;
+  border-radius: 16px 16px 0 0;
+  padding: 10px 10px 10px 14px;
+  animation: dk-dec-rise 520ms var(--dk-spring) both;
+}
+.dk-dock .dk-c.dk-has-dec > .dk-dcx:not(.dk-ok):not(.dk-ec-would):not(.dk-ec-stale) {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsk-warn) 32%, transparent);
+}
+.dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ec-would {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dk-t) 32%, transparent);
+}
+.dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ec-stale {
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ok,
+.dk-dock .dk-c.dk-has-dec > .dk-udo {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsk-success) 38%, transparent);
+}
+.dk-dock .dk-c.dk-has-dec > .dk-dcx::after,
+.dk-dock .dk-c.dk-has-dec > .dk-udo::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor 20%, currentColor 80%, transparent);
+  opacity: 0.18;
+  pointer-events: none;
+}
+.dk-dock .dk-c.dk-has-dec > .dk-dcx .dk-dcx-i {
+  animation: dk-dec-ping 900ms var(--dk-ease) 260ms both;
+}
+.dk-dock .dk-c.dk-has-dec > .dk-cmp {
+  z-index: 1;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow:
+    0 0 0 1px var(--dsk-b),
+    0 14px 30px -16px rgb(0 0 0 / 0.45);
+}
+.dk-dock .dk-c.dk-has-dec > .dk-cmp .dk-cmp-ring {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.dk-dock .dk-c.dk-has-dec > .dk-fx,
+.dk-dock .dk-c.dk-has-dec > .dk-dock-pill,
+.dk-dock .dk-c.dk-has-dec > .dk-ec-dockcard,
+.dk-dock .dk-c.dk-has-dec > .dk-ec-meter {
+  margin-bottom: 8px;
+}
+.dk-dock .dk-c.dk-has-dec > .dk-hint {
+  margin-top: 10px;
+}
+@keyframes dk-dec-rise {
+  from {
+    clip-path: inset(100% 0 0 0 round 16px 16px 0 0);
+    transform: translateY(10px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 16px 16px 0 0);
+    transform: none;
+  }
+}
+@keyframes dk-dec-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
 }

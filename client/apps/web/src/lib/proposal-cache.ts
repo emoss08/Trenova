@@ -139,3 +139,46 @@ export function markPlanDecided(queryClient: QueryClient, planId: string, decisi
           },
   );
 }
+
+/**
+ * Writes a status into every cached list that holds these proposals: an
+ * approval moving into its undo window, or back out of it on undo, so the
+ * approval box follows the click rather than the refetch.
+ */
+export function markProposalsStatus(
+  queryClient: QueryClient,
+  proposalIds: readonly string[],
+  status: AssistantProposal["status"],
+) {
+  const ids = new Set(proposalIds);
+  queryClient.setQueriesData<{ results: AssistantProposal[] }>(
+    { queryKey: scopeOf(queries.assistant.proposals) },
+    (data) =>
+      data === undefined
+        ? data
+        : {
+            ...data,
+            results: data.results.map((proposal) =>
+              ids.has(proposal.id) ? { ...proposal, status } : proposal,
+            ),
+          },
+  );
+}
+
+/** Writes a plan's status into every cached list of plans. */
+export function markPlanStatus(
+  queryClient: QueryClient,
+  planId: string,
+  status: AssistantPlan["status"],
+) {
+  queryClient.setQueriesData<{ results: AssistantPlan[] }>(
+    { queryKey: scopeOf(queries.assistant.plans) },
+    (data) =>
+      data === undefined
+        ? data
+        : {
+            ...data,
+            results: data.results.map((plan) => (plan.id === planId ? { ...plan, status } : plan)),
+          },
+  );
+}

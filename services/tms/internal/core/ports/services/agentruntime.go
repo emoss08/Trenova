@@ -400,6 +400,9 @@ type RuntimeContextRequest struct {
 	// message that started this turn.
 	Attachments []agentdefinition.RuntimeAttachment
 	Mentions    []agentdefinition.RuntimeMention
+	// Facts are what the person pinned for the agents to keep in mind for
+	// the whole conversation.
+	Facts []string
 	// DelegatedBy names the agent that handed this turn its task, when it is
 	// working for another agent. Such a turn is offered no delegates.
 	DelegatedBy string

@@ -346,6 +346,12 @@ func (r *repository) ExpirePending(
 			Where(cols.Status.Eq(), agent.ProposalStatusPending).
 			Where(cols.ExpiresAt.IsNotNull()).
 			Where(cols.ExpiresAt.Lte(), req.Before).
+			// A step of a plan in its undo window was approved with the plan,
+			// inside its window, and runs when the plan commits.
+			Where("NOT EXISTS (SELECT 1 FROM agent_plans AS apl WHERE apl.id = "+
+				cols.PlanID.Qualified()+" AND apl.organization_id = "+
+				cols.OrganizationID.Qualified()+" AND apl.business_unit_id = "+
+				cols.BusinessUnitID.Qualified()+" AND apl.status = ?)", agent.PlanStatusApproving).
 			Set(cols.Status.Set(), agent.ProposalStatusExpired).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Exec(ctx)

@@ -1,6 +1,7 @@
 package conversation
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -95,4 +96,44 @@ func TestThreadOrigin_PageBoundConversationsAreNeitherListedNorKept(t *testing.T
 	for _, origin := range AllThreadOrigins() {
 		assert.True(t, origin.IsValid(), string(origin))
 	}
+}
+
+// Pinned facts are kept as the person meant them: tidied, without blanks or
+// repeats, in the order they were pinned.
+func TestNormalizePinnedFacts_TidiesWithoutReordering(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t,
+		[]string{"Invoice date is Oct 3", "Acme pays net 45"},
+		NormalizePinnedFacts([]string{
+			"  Invoice   date is Oct 3 ", "", "Acme pays net 45", "Invoice date is Oct 3",
+		}),
+	)
+	assert.Empty(t, NormalizePinnedFacts(nil))
+}
+
+// The facts ride in every turn's system prompt, so the list and each fact
+// are capped.
+func TestThreadValidate_CapsPinnedFacts(t *testing.T) {
+	t.Parallel()
+
+	tooMany := validThread()
+	for i := range MaxPinnedFacts + 1 {
+		tooMany.PinnedFacts = append(tooMany.PinnedFacts, strings.Repeat("x", i+1))
+	}
+	multiErr := errortypes.NewMultiError()
+	tooMany.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors())
+
+	tooLong := validThread()
+	tooLong.PinnedFacts = []string{strings.Repeat("x", MaxPinnedFactLength+1)}
+	multiErr = errortypes.NewMultiError()
+	tooLong.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors())
+
+	fine := validThread()
+	fine.PinnedFacts = []string{"Invoice date is Oct 3"}
+	multiErr = errortypes.NewMultiError()
+	fine.Validate(multiErr)
+	require.False(t, multiErr.HasErrors())
 }

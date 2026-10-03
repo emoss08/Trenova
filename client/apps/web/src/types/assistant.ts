@@ -816,6 +816,11 @@ export const assistantThreadSchema = z.object({
   preferredProviderId: optionalIdSchema,
   origin: threadOriginSchema.default("Panel"),
   pinned: z.boolean().default(false),
+  /**
+   * What the person pinned for the agents to keep in mind for the whole
+   * conversation, in the order they pinned them.
+   */
+  pinnedFacts: z.array(z.string()).nullish(),
   /** The record the conversation was opened from, when it was. */
   subjectType: z.string().optional().default(""),
   subjectId: optionalIdSchema,
@@ -991,6 +996,8 @@ export const assistantMessagePageSchema = z.object({
 
 export const proposalStatusSchema = z.enum([
   "Pending",
+  /** Approved, and waiting out the few seconds in which it can be undone. */
+  "Approving",
   "Accepted",
   "Rejected",
   "Modified",
@@ -1022,6 +1029,8 @@ export const planDecisionSchema = z.enum(["Accepted", "Rejected"]);
 
 export const planStatusSchema = z.enum([
   "Pending",
+  /** Approved, and waiting out the few seconds in which it can be undone. */
+  "Approving",
   "Approved",
   "Completed",
   "Failed",

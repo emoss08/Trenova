@@ -1434,6 +1434,8 @@ type MutationResolver interface {
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
 	DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
+	UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
+	CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
 	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
 	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
@@ -4950,6 +4952,8 @@ enum AgentRunStatus {
 
 enum AgentProposalStatus {
   Pending
+  "Approved from the decider's own conversation and waiting out its undo window; nothing has run yet."
+  Approving
   Accepted
   Modified
   Rejected
@@ -4964,6 +4968,8 @@ enum AgentProposalStatus {
 
 enum AgentPlanStatus {
   Pending
+  "Approved from the decider's own conversation and waiting out its undo window; no step has run yet."
+  Approving
   Approved
   Completed
   Failed
@@ -5236,6 +5242,10 @@ type AgentPlan {
   decidedByUserId: ID
   decidedAt: Timestamp
   expiresAt: Timestamp
+  "When an approval in its undo window starts to run, unless it is undone first."
+  commitsAt: Timestamp
+  "When the approval was undone in its undo window; absent if it was not."
+  undoneAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -5277,6 +5287,16 @@ type AgentDecision {
   traceId: String!
   "The decision's trace in the tracing backend, when one is configured and the decision has a trace."
   traceUrl: String
+  """
+  When an approval made from the decider's own conversation goes through,
+  unless it is undone first. Absent for a decision that took effect when it
+  was made.
+  """
+  commitsAt: Timestamp
+  "When the approval went through at the close of its undo window."
+  committedAt: Timestamp
+  "When the approval was undone in its undo window."
+  undoneAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -5643,6 +5663,19 @@ extend type Mutation {
   each reports its outcome; otherwise the first that fails stops the rest.
   """
   decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  """
+  Takes back the caller's approval of a proposal (with every proposal
+  approved with it in one batch) or of a plan, while it is in its undo window;
+  it waits on them again. Name one of the two. Once the approval has gone
+  through it is a conflict.
+  """
+  undoMyDecision(proposalId: ID, planId: ID): Boolean!
+  """
+  Ends the undo window on the caller's approval of a proposal or a plan, so
+  it goes through now. One that already went through is left as it is; one
+  that was undone is a conflict.
+  """
+  commitMyDecisionNow(proposalId: ID, planId: ID): Boolean!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!

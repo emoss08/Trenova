@@ -17,6 +17,7 @@ type Deps struct {
 	AgentExceptionService     services.AgentExceptionService
 	AgentDecisionService      services.AgentDecisionService
 	AgentDecisionQueueService services.AgentDecisionQueueService
+	ApprovalCommitter         services.ApprovalCommitter
 	AgentTools                services.AgentToolRegistry
 	AgentControlService       services.AgentControlService
 }

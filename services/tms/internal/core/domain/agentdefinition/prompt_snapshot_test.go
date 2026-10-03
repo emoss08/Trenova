@@ -103,6 +103,7 @@ func promptContexts() []promptContext {
 					Title: "Shipments",
 				}
 				rc.Guide = true
+				rc.Facts = []string{"Invoice date is Oct 3", "Acme pays net 45"}
 
 				return &serviceports.RunRequest{
 					Definition: definition,

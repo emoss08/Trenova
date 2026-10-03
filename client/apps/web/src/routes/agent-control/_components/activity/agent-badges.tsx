@@ -32,6 +32,7 @@ const RUN_STATUS: Record<AgentRunStatus, { label: string; variant: Variant }> = 
 
 const PROPOSAL_STATUS: Record<AgentProposalStatus, { label: string; variant: Variant }> = {
   Pending: { label: "Awaiting decision", variant: "warning" },
+  Approving: { label: "Approved, can be undone", variant: "info" },
   Accepted: { label: "Accepted", variant: "success" },
   Modified: { label: "Accepted with changes", variant: "info" },
   Rejected: { label: "Rejected", variant: "danger" },
@@ -45,6 +46,7 @@ const PROPOSAL_STATUS: Record<AgentProposalStatus, { label: string; variant: Var
 
 const PLAN_STATUS: Record<AgentPlanStatus, { label: string; variant: Variant }> = {
   Pending: { label: "Awaiting decision", variant: "warning" },
+  Approving: { label: "Approved, can be undone", variant: "info" },
   Approved: { label: "Running", variant: "info" },
   Completed: { label: "Done", variant: "success" },
   Failed: { label: "Stopped", variant: "danger" },

@@ -1,4 +1,4 @@
-import { decideBatch, useAfterDecision } from "@/components/assistant/approval-actions";
+import { decideBatch } from "@/components/assistant/approval-actions";
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import { canApprove, gateDigest } from "@/components/assistant/proposal-preview/preview-gate";
 import {
@@ -12,7 +12,9 @@ import { decideMyPlan, decideMyProposal } from "@/lib/graphql/agent-decisions";
 import {
   invalidateProposalViews,
   markPlanDecided,
+  markPlanStatus,
   markProposalDecided,
+  markProposalsStatus,
 } from "@/lib/proposal-cache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -20,9 +22,11 @@ import { useEffect, type MutableRefObject } from "react";
 import { toast } from "sonner";
 import { DeskIcon } from "../desk-icons";
 import { approvalFacts, recordCount, refusalReasons, type ApprovalFacts } from "./approval-facts";
+import type { UndoController } from "./desk-undo-bar";
+import type { UndoWindow } from "./undo-window";
 
-/** What the card said about a change, kept for the moment after it is approved. */
-export type ApprovedNote = { key: string; title: string; detail: string };
+/** What the card hands the undo window when it is approved. */
+type Held = Omit<UndoWindow, "commitsAt" | "startedAt">;
 
 type CardProps = {
   threadId: string;
@@ -32,13 +36,20 @@ type CardProps = {
   /** Puts the change off; it waits in the workspace and in Decisions. */
   onDefer: () => void;
   onDecided: (entry: ApprovalEntry) => void;
-  /** Told the moment the server takes the approval, with what to say while it runs. */
-  onApproved: (note: ApprovedNote) => void;
+  /**
+   * The undo window an approval opens: started on the click, scheduled when
+   * the server says when it commits, cleared if the server refuses it.
+   */
+  undo: Pick<UndoController, "start" | "scheduled" | "clear">;
   /** Kept pointing at this card's approve while it can approve, for ⌘↵. */
   approveRef: MutableRefObject<(() => void) | null>;
   /** Asks the agent something in the conversation, such as to redraft a stale change. */
   onAsk?: (text: string) => void;
 };
+
+function hold(undo: CardProps["undo"], held: Held) {
+  undo.start({ ...held, commitsAt: null, startedAt: Date.now() });
+}
 
 /**
  * The change waiting on the person, as one compact row above the composer:
@@ -73,7 +84,7 @@ function ProposalCard({
   onReview,
   onDefer,
   onDecided,
-  onApproved,
+  undo,
   approveRef,
   onAsk,
 }: CardProps & { entry: Extract<ApprovalEntry, { kind: "proposal" }> }) {
@@ -83,7 +94,6 @@ function ProposalCard({
   const view = presentProposal(proposal);
   const previewQuery = useProposalPreview({ scope: "mine", id: proposal.id });
   const approval = useApprovalGate(previewQuery);
-  const afterDecision = useAfterDecision(threadId, entry, onDecided);
   const facts = approvalFacts(previewQuery.data, t);
 
   const mutation = useMutation({
@@ -93,12 +103,27 @@ function ProposalCard({
         reasonCode: "",
         previewDigest: gateDigest(approval.gate),
       }),
-    onMutate: () => onApproved(approvedNote(entry.key, view.title, facts, t)),
-    onSuccess: async () => {
-      markProposalDecided(queryClient, proposal.id, "Accepted");
-      await afterDecision(proposal.id);
+    onMutate: () =>
+      hold(undo, {
+        key: entry.key,
+        title: view.title,
+        what: approvedWhat(view.title, facts, t),
+        target: { proposalId: proposal.id },
+        proposalIds: [proposal.id],
+        planId: null,
+      }),
+    onSuccess: (decision) => {
+      const commitsAt = decision.commitsAt ?? null;
+      if (commitsAt !== null) {
+        markProposalsStatus(queryClient, [proposal.id], "Approving");
+      } else {
+        markProposalDecided(queryClient, proposal.id, "Accepted");
+      }
+      undo.scheduled(entry.key, commitsAt);
+      onDecided(entry);
     },
     onError: (error) => {
+      undo.clear(entry.key);
       if (!approval.handleDecisionError(error)) {
         handleMutationError({ error, resourceName: "Proposal" });
       }
@@ -138,7 +163,7 @@ function PlanCard({
   onReview,
   onDefer,
   onDecided,
-  onApproved,
+  undo,
   approveRef,
 }: CardProps & { entry: Extract<ApprovalEntry, { kind: "plan" }> }) {
   const t = useT();
@@ -146,7 +171,6 @@ function PlanCard({
   const { plan, steps } = entry;
   const previewQuery = usePlanPreview({ scope: "mine", id: plan.id });
   const approval = useApprovalGate(previewQuery);
-  const afterDecision = useAfterDecision(threadId, entry, onDecided);
   const title = plan.title || t("Run the plan");
   const facts: ApprovalFacts = {
     count: plan.stepCount,
@@ -166,16 +190,26 @@ function PlanCard({
         previewDigest: gateDigest(approval.gate),
       }),
     onMutate: () =>
-      onApproved({
+      hold(undo, {
         key: entry.key,
         title,
-        detail: t("{0, plural, one {Running # step…} other {Running # steps…}}", plan.stepCount),
+        what: t("{0, plural, one {Running # step} other {Running # steps}}", plan.stepCount),
+        target: { planId: plan.id },
+        proposalIds: steps.map((step) => step.id),
+        planId: plan.id,
       }),
-    onSuccess: async () => {
-      markPlanDecided(queryClient, plan.id, "Accepted");
-      await afterDecision(steps[0]?.id ?? plan.id);
+    onSuccess: (decided) => {
+      const commitsAt = decided.commitsAt ?? null;
+      if (commitsAt !== null) {
+        markPlanStatus(queryClient, plan.id, "Approving");
+      } else {
+        markPlanDecided(queryClient, plan.id, "Accepted");
+      }
+      undo.scheduled(entry.key, commitsAt);
+      onDecided(entry);
     },
     onError: (error) => {
+      undo.clear(entry.key);
       if (!approval.handleDecisionError(error)) {
         handleMutationError({ error, resourceName: "Plan" });
       }
@@ -210,7 +244,7 @@ function BatchCard({
   onReview,
   onDefer,
   onDecided,
-  onApproved,
+  undo,
   approveRef,
 }: CardProps & { entry: Extract<ApprovalEntry, { kind: "batch" }> }) {
   const t = useT();
@@ -219,7 +253,6 @@ function BatchCard({
   const first = proposals[0];
   const view = presentProposal(first);
   const previewQuery = useProposalPreview({ scope: "mine", id: first.id });
-  const afterDecision = useAfterDecision(threadId, entry, onDecided);
   const sample = approvalFacts(previewQuery.data, t);
   const facts: ApprovalFacts = { ...sample, count: proposals.length };
   const reversible = proposals.every((proposal) => presentProposal(proposal).reversible);
@@ -227,16 +260,31 @@ function BatchCard({
   const mutation = useMutation({
     mutationFn: () =>
       decideBatch(queryClient, proposals, { approving: true, shownDigests: new Map() }),
-    onMutate: () => onApproved(approvedNote(entry.key, view.title, facts, t)),
-    onSuccess: async (outcome) => {
+    onMutate: () =>
+      hold(undo, {
+        key: entry.key,
+        title: view.title,
+        what: approvedWhat(view.title, facts, t),
+        target: { proposalId: first.id },
+        proposalIds: proposals.map((proposal) => proposal.id),
+        planId: null,
+      }),
+    onSuccess: (outcome) => {
       if (outcome.errors.length > 0) {
         toast.warning(t("{0} of {1} went through", outcome.approved, outcome.total), {
           description: outcome.errors.join(" · "),
         });
       }
-      await afterDecision(first.id);
+      if (outcome.approved === 0) {
+        undo.clear(entry.key);
+        void invalidateProposalViews(queryClient, threadId);
+        return;
+      }
+      undo.scheduled(entry.key, outcome.commitsAt);
+      onDecided(entry);
     },
     onError: (error) => {
+      undo.clear(entry.key);
       handleMutationError({ error, resourceName: "Proposals" });
       void invalidateProposalViews(queryClient, threadId);
     },
@@ -259,20 +307,11 @@ function BatchCard({
   );
 }
 
-function approvedNote(
-  key: string,
-  title: string,
-  facts: ApprovalFacts,
-  t: TranslateFn,
-): ApprovedNote {
-  return {
-    key,
-    title,
-    detail:
-      facts.count > 0
-        ? t("{0} on {1}…", title, recordCount(facts.resource, facts.count, t))
-        : t("{0}…", title),
-  };
+/** What an approval will do when its undo window closes, e.g. "Assign biller on 11 items". */
+function approvedWhat(title: string, facts: ApprovalFacts, t: TranslateFn): string {
+  return facts.count > 0
+    ? t("{0} on {1}", title, recordCount(facts.resource, facts.count, t))
+    : title;
 }
 
 function CardRow({
@@ -424,12 +463,12 @@ function CardRow({
   );
 }
 
-/** The card once approved: a green row that says what is now running, then leaves. */
-export function DeskApprovedCard({ note }: { note: ApprovedNote }) {
+/** The approval once it has gone through: a green row that says what is now running, then leaves. */
+export function DeskApprovedCard({ held }: { held: UndoWindow }) {
   const t = useT();
 
   return (
-    <div className="dk-dcx dk-ok" key={note.key} role="status">
+    <div className="dk-dcx dk-ok" key={held.key} role="status">
       <span className="dk-okr">
         <svg
           width="11"
@@ -447,7 +486,7 @@ export function DeskApprovedCard({ note }: { note: ApprovedNote }) {
       </span>
       <span className="dk-dcx-t">
         <b>{t("Approved")}</b>
-        <span>{note.detail}</span>
+        <span>{t("{0}…", held.what)}</span>
       </span>
       <span className="dk-shine" />
     </div>

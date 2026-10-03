@@ -64,6 +64,11 @@ var AgentDecisionColumns = struct {
 	PreviewDigest        Column // "preview_digest" → qualified: "ad.preview_digest"
 	PreviewReviewed      Column // "preview_reviewed" → qualified: "ad.preview_reviewed"
 	PreviewTargetVersion Column // "preview_target_version" → qualified: "ad.preview_target_version"
+	CommitsAt            Column // "commits_at" → qualified: "ad.commits_at"
+	CommittedAt          Column // "committed_at" → qualified: "ad.committed_at"
+	UndoneAt             Column // "undone_at" → qualified: "ad.undone_at"
+	UndoneByUserID       Column // "undone_by_user_id" → qualified: "ad.undone_by_user_id"
+	CommitWorkflowID     Column // "commit_workflow_id" → qualified: "ad.commit_workflow_id"
 	Version              Column // "version" → qualified: "ad.version"
 	CreatedAt            Column // "created_at" → qualified: "ad.created_at"
 	UpdatedAt            Column // "updated_at" → qualified: "ad.updated_at"
@@ -83,6 +88,11 @@ var AgentDecisionColumns = struct {
 	PreviewDigest:        NewColumn("preview_digest", "ad"),
 	PreviewReviewed:      NewColumn("preview_reviewed", "ad"),
 	PreviewTargetVersion: NewColumn("preview_target_version", "ad"),
+	CommitsAt:            NewColumn("commits_at", "ad"),
+	CommittedAt:          NewColumn("committed_at", "ad"),
+	UndoneAt:             NewColumn("undone_at", "ad"),
+	UndoneByUserID:       NewColumn("undone_by_user_id", "ad"),
+	CommitWorkflowID:     NewColumn("commit_workflow_id", "ad"),
 	Version:              NewColumn("version", "ad"),
 	CreatedAt:            NewColumn("created_at", "ad"),
 	UpdatedAt:            NewColumn("updated_at", "ad"),
@@ -108,6 +118,11 @@ var AgentDecisionFieldMap = map[string]string{
 	"previewDigest":        "preview_digest",
 	"previewReviewed":      "preview_reviewed",
 	"previewTargetVersion": "preview_target_version",
+	"commitsAt":            "commits_at",
+	"committedAt":          "committed_at",
+	"undoneAt":             "undone_at",
+	"undoneByUserId":       "undone_by_user_id",
+	"commitWorkflowId":     "commit_workflow_id",
 	"version":              "version",
 	"createdAt":            "created_at",
 	"updatedAt":            "updated_at",
@@ -131,6 +146,11 @@ var AgentDecisionInsertableColumns = []string{
 	"preview_digest",
 	"preview_reviewed",
 	"preview_target_version",
+	"commits_at",
+	"committed_at",
+	"undone_at",
+	"undone_by_user_id",
+	"commit_workflow_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -216,6 +236,11 @@ var AgentDecisionFilter = struct {
 	PreviewDigest        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewDigest" → DB: "preview_digest"
 	PreviewReviewed      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewReviewed" → DB: "preview_reviewed"
 	PreviewTargetVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewTargetVersion" → DB: "preview_target_version"
+	CommitsAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commitsAt" → DB: "commits_at"
+	CommittedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "committedAt" → DB: "committed_at"
+	UndoneAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneAt" → DB: "undone_at"
+	UndoneByUserID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneByUserId" → DB: "undone_by_user_id"
+	CommitWorkflowID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commitWorkflowId" → DB: "commit_workflow_id"
 	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -264,6 +289,21 @@ var AgentDecisionFilter = struct {
 	},
 	PreviewTargetVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("previewTargetVersion", op, value)
+	},
+	CommitsAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("commitsAt", op, value)
+	},
+	CommittedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("committedAt", op, value)
+	},
+	UndoneAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("undoneAt", op, value)
+	},
+	UndoneByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("undoneByUserId", op, value)
+	},
+	CommitWorkflowID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("commitWorkflowId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -553,6 +593,9 @@ var AgentPlanColumns = struct {
 	DecidedByUserID Column // "decided_by_user_id" → qualified: "apl.decided_by_user_id"
 	DecidedAt       Column // "decided_at" → qualified: "apl.decided_at"
 	ExpiresAt       Column // "expires_at" → qualified: "apl.expires_at"
+	CommitsAt       Column // "commits_at" → qualified: "apl.commits_at"
+	UndoneAt        Column // "undone_at" → qualified: "apl.undone_at"
+	UndoneByUserID  Column // "undone_by_user_id" → qualified: "apl.undone_by_user_id"
 	Version         Column // "version" → qualified: "apl.version"
 	CreatedAt       Column // "created_at" → qualified: "apl.created_at"
 	UpdatedAt       Column // "updated_at" → qualified: "apl.updated_at"
@@ -571,6 +614,9 @@ var AgentPlanColumns = struct {
 	DecidedByUserID: NewColumn("decided_by_user_id", "apl"),
 	DecidedAt:       NewColumn("decided_at", "apl"),
 	ExpiresAt:       NewColumn("expires_at", "apl"),
+	CommitsAt:       NewColumn("commits_at", "apl"),
+	UndoneAt:        NewColumn("undone_at", "apl"),
+	UndoneByUserID:  NewColumn("undone_by_user_id", "apl"),
 	Version:         NewColumn("version", "apl"),
 	CreatedAt:       NewColumn("created_at", "apl"),
 	UpdatedAt:       NewColumn("updated_at", "apl"),
@@ -595,6 +641,9 @@ var AgentPlanFieldMap = map[string]string{
 	"decidedByUserId": "decided_by_user_id",
 	"decidedAt":       "decided_at",
 	"expiresAt":       "expires_at",
+	"commitsAt":       "commits_at",
+	"undoneAt":        "undone_at",
+	"undoneByUserId":  "undone_by_user_id",
 	"version":         "version",
 	"createdAt":       "created_at",
 	"updatedAt":       "updated_at",
@@ -617,6 +666,9 @@ var AgentPlanInsertableColumns = []string{
 	"decided_by_user_id",
 	"decided_at",
 	"expires_at",
+	"commits_at",
+	"undone_at",
+	"undone_by_user_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -701,6 +753,9 @@ var AgentPlanFilter = struct {
 	DecidedByUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedByUserId" → DB: "decided_by_user_id"
 	DecidedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedAt" → DB: "decided_at"
 	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	CommitsAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commitsAt" → DB: "commits_at"
+	UndoneAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneAt" → DB: "undone_at"
+	UndoneByUserID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneByUserId" → DB: "undone_by_user_id"
 	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -746,6 +801,15 @@ var AgentPlanFilter = struct {
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expiresAt", op, value)
+	},
+	CommitsAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("commitsAt", op, value)
+	},
+	UndoneAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("undoneAt", op, value)
+	},
+	UndoneByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("undoneByUserId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

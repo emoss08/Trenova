@@ -1,5 +1,5 @@
 {
-  "operationCount": 960,
+  "operationCount": 962,
   "fragmentCount": 274,
   "operations": [
     {
@@ -5487,6 +5487,31 @@
       "sdl": "mutation CommitFuelPurchaseImport($id: ID!, $version: Int!) {\n  commitFuelPurchaseImport(id: $id, version: $version) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
+      "name": "CommitMyDecisionNow",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:b9db4e8528fdfc8d69c46c8b5be4b04ceaea396b4815f12e841aa6d0f8f3eeca",
+      "rootFields": [
+        "commitMyDecisionNow"
+      ],
+      "variables": [
+        {
+          "name": "proposalId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "planId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation CommitMyDecisionNow($proposalId: ID, $planId: ID) {\n  commitMyDecisionNow(proposalId: $proposalId, planId: $planId)\n}"
+    },
+    {
       "name": "CommodityTable",
       "kind": "query",
       "domain": "commodity",
@@ -7030,7 +7055,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/access.graphql",
-      "hash": "sha256:9a89b2fadb3bbade1f0c771624ca6cc51a6f9331c122e4c14d462c629db2e868",
+      "hash": "sha256:88cd6064cb6e3e865a06ce2e86fb4c49f63454065cd0aac26005aaa53b92b42b",
       "rootFields": [
         "decideMyPlan"
       ],
@@ -7048,14 +7073,14 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideMyPlan($id: ID!, $input: AgentPlanDecisionInput!) {\n  decideMyPlan(id: $id, input: $input) {\n    id\n    status\n    stepCount\n    completedSteps\n    failedStep\n    failureError\n    decidedByUserId\n    decidedAt\n    version\n    updatedAt\n  }\n}"
+      "sdl": "mutation DecideMyPlan($id: ID!, $input: AgentPlanDecisionInput!) {\n  decideMyPlan(id: $id, input: $input) {\n    id\n    status\n    stepCount\n    completedSteps\n    failedStep\n    failureError\n    decidedByUserId\n    decidedAt\n    commitsAt\n    version\n    updatedAt\n  }\n}"
     },
     {
       "name": "DecideMyProposal",
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/access.graphql",
-      "hash": "sha256:cf3c4ea53d12c1f61f37b2fdefda3a45507f197dcfc721e514db2a83c876a993",
+      "hash": "sha256:e1a0719c2bd974fb380071b01d02fc55d6fab115f6a1efbc45781ba0bd0126f2",
       "rootFields": [
         "decideMyProposal"
       ],
@@ -7073,14 +7098,14 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    previewDigest\n    previewReviewed\n    version\n    createdAt\n  }\n}"
+      "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    previewDigest\n    previewReviewed\n    commitsAt\n    version\n    createdAt\n  }\n}"
     },
     {
       "name": "DecideMyProposals",
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/access.graphql",
-      "hash": "sha256:52169b125c46e08fad645a937cf1562258b648d926be2beed8e0689b9a608205",
+      "hash": "sha256:43aaeb7e935e724d9714b2248cc2cb5ba10715eb0336f6dbee971c95bd25677d",
       "rootFields": [
         "decideMyProposals"
       ],
@@ -7098,7 +7123,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideMyProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideMyProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      previewDigest\n      previewReviewed\n      createdAt\n    }\n  }\n}"
+      "sdl": "mutation DecideMyProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideMyProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      previewDigest\n      previewReviewed\n      commitsAt\n      createdAt\n    }\n  }\n}"
     },
     {
       "name": "DecideProfileChange",
@@ -18892,6 +18917,31 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation UncertifyOshaSummary($year: Int!) {\n  uncertifyOshaSummary(year: $year) {\n    id\n    year\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "UndoMyDecision",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:530fd6518732d5522e0973029600faef0101edb322bbbe1be80defa0b9f77592",
+      "rootFields": [
+        "undoMyDecision"
+      ],
+      "variables": [
+        {
+          "name": "proposalId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "planId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation UndoMyDecision($proposalId: ID, $planId: ID) {\n  undoMyDecision(proposalId: $proposalId, planId: $planId)\n}"
     },
     {
       "name": "UnpinShipmentComment",

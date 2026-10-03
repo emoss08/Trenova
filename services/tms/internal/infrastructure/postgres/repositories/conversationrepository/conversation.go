@@ -204,6 +204,7 @@ func (r *repository) UpdateThread(
 			Set(cols.PreferredProviderID.Set(), thread.PreferredProviderID).
 			Set(cols.Origin.Set(), thread.Origin).
 			Set(cols.Pinned.Set(), thread.Pinned).
+			Set(cols.PinnedFacts.Set(), thread.PinnedFacts).
 			Set(cols.SubjectType.Set(), thread.SubjectType).
 			Set(cols.SubjectID.Set(), thread.SubjectID).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).

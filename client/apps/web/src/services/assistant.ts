@@ -117,6 +117,8 @@ export type AskOptions = {
 export type UpdateThreadOptions = {
   title?: string;
   pinned?: boolean;
+  /** Replaces what the agents keep in mind for the whole conversation. */
+  pinnedFacts?: readonly string[];
   /** Lists a quick question as a conversation. */
   keep?: boolean;
 };
@@ -142,6 +144,7 @@ export class AssistantService {
     const response = await api.patch(`/assistant/threads/${id}/`, {
       title: options.title ?? null,
       pinned: options.pinned ?? null,
+      pinnedFacts: options.pinnedFacts ?? null,
       keep: options.keep ?? false,
     });
     return safeParse(assistantThreadSchema, response, "Assistant Thread");

@@ -230,6 +230,7 @@ type Params struct {
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
+	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
 	WatchtowerService            services.WatchtowerService
@@ -404,6 +405,7 @@ type Services struct {
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
+	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
 	WatchtowerService            services.WatchtowerService
@@ -584,6 +586,7 @@ func newServices(p *Params) *Services {
 		AgentExceptionService:        p.AgentExceptionService,
 		AgentDecisionService:         p.AgentDecisionService,
 		AgentDecisionQueueService:    p.AgentDecisionQueueService,
+		ApprovalCommitter:            p.ApprovalCommitter,
 		AgentAccessService:           p.AgentAccessService,
 		AgentSafetyService:           p.AgentSafetyService,
 		WatchtowerService:            p.WatchtowerService,

@@ -2,6 +2,8 @@ package conversation
 
 import (
 	"context"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -69,6 +71,12 @@ type Thread struct {
 	// told whether the agent was turned off, removed, or taken from them.
 	// Empty while the conversation can continue. Never stored.
 	CannotContinueReason ContinueRefusal `json:"cannotContinueReason,omitempty" bun:"-"`
+
+	// PinnedFacts are what the person asked the agents to keep in mind for
+	// the whole conversation, in the order they pinned them. Every turn
+	// carries them in its system prompt rather than in the history, so
+	// trimming the history for length never drops one.
+	PinnedFacts []string `json:"pinnedFacts" bun:"pinned_facts,type:JSONB,nullzero"`
 
 	Taint     *agent.RunTaint `json:"taint,omitempty"     bun:"taint,type:JSONB,nullzero"`
 	TaintedAt *int64          `json:"taintedAt,omitempty" bun:"tainted_at,type:BIGINT,nullzero"`
@@ -155,6 +163,47 @@ func (t *Thread) Validate(multiErr *errortypes.MultiError) {
 	if t.SubjectType != "" && t.SubjectID.IsNil() {
 		multiErr.Add("subjectId", errortypes.ErrRequired, "A subject type needs an id")
 	}
+	if len(t.PinnedFacts) > MaxPinnedFacts {
+		multiErr.Add("pinnedFacts", errortypes.ErrInvalid,
+			"A conversation keeps at most {0} pinned facts; unpin one first", MaxPinnedFacts)
+	}
+	for _, fact := range t.PinnedFacts {
+		if utf8.RuneCountInString(fact) > MaxPinnedFactLength {
+			multiErr.Add("pinnedFacts", errortypes.ErrInvalid,
+				"A pinned fact can be at most {0} characters", MaxPinnedFactLength)
+
+			break
+		}
+	}
+}
+
+// MaxPinnedFacts and MaxPinnedFactLength bound what a conversation pins. The
+// facts ride in every turn's system prompt, so a list without a cap would be
+// a prompt without one.
+const (
+	MaxPinnedFacts      = 12
+	MaxPinnedFactLength = 200
+)
+
+// NormalizePinnedFacts is the list as it is kept: each fact trimmed to single
+// spaces, blanks dropped, and a fact pinned twice kept once, where it was
+// first pinned.
+func NormalizePinnedFacts(facts []string) []string {
+	kept := make([]string, 0, len(facts))
+	seen := make(map[string]struct{}, len(facts))
+	for _, fact := range facts {
+		fact = strings.Join(strings.Fields(fact), " ")
+		if fact == "" {
+			continue
+		}
+		if _, dup := seen[fact]; dup {
+			continue
+		}
+		seen[fact] = struct{}{}
+		kept = append(kept, fact)
+	}
+
+	return kept
 }
 
 func (t *Thread) Tainted() bool {

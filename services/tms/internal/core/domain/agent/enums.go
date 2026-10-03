@@ -206,7 +206,12 @@ func (s RunStatus) IsValid() bool {
 type ProposalStatus string
 
 const (
-	ProposalStatusPending    = ProposalStatus("Pending")
+	ProposalStatusPending = ProposalStatus("Pending")
+	// ProposalStatusApproving is an approval that has not gone through yet:
+	// approved from the person's own conversation, it commits a few seconds
+	// later unless they undo it first. It is neither waiting on anyone nor
+	// decided, so no queue lists it and no sweep expires it.
+	ProposalStatusApproving  = ProposalStatus("Approving")
 	ProposalStatusAccepted   = ProposalStatus("Accepted")
 	ProposalStatusModified   = ProposalStatus("Modified")
 	ProposalStatusRejected   = ProposalStatus("Rejected")
@@ -229,6 +234,7 @@ const (
 func (s ProposalStatus) IsValid() bool {
 	switch s {
 	case ProposalStatusPending,
+		ProposalStatusApproving,
 		ProposalStatusAccepted,
 		ProposalStatusModified,
 		ProposalStatusRejected,
@@ -247,7 +253,10 @@ func (s ProposalStatus) IsValid() bool {
 type PlanStatus string
 
 const (
-	PlanStatusPending   = PlanStatus("Pending")
+	PlanStatusPending = PlanStatus("Pending")
+	// PlanStatusApproving is a plan approved from the person's own
+	// conversation that commits a few seconds later unless they undo it.
+	PlanStatusApproving = PlanStatus("Approving")
 	PlanStatusApproved  = PlanStatus("Approved")
 	PlanStatusCompleted = PlanStatus("Completed")
 	PlanStatusFailed    = PlanStatus("Failed")
@@ -258,6 +267,7 @@ const (
 func (s PlanStatus) IsValid() bool {
 	switch s {
 	case PlanStatusPending,
+		PlanStatusApproving,
 		PlanStatusApproved,
 		PlanStatusCompleted,
 		PlanStatusFailed,
@@ -271,6 +281,15 @@ func (s PlanStatus) IsValid() bool {
 
 // Decidable reports whether a plan is still waiting on a person.
 func (s PlanStatus) Decidable() bool { return s == PlanStatusPending }
+
+// Expirable reports whether the sweep may close a proposal's decision
+// window. Only one still waiting on a person can expire: an approval in its
+// undo window was decided inside its window and commits whatever the clock
+// says now.
+func (s ProposalStatus) Expirable() bool { return s == ProposalStatusPending }
+
+// Expirable is ProposalStatus.Expirable for a plan.
+func (s PlanStatus) Expirable() bool { return s == PlanStatusPending }
 
 type AutonomyTier string
 

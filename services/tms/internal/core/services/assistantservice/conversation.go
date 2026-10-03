@@ -337,6 +337,9 @@ func (s *Service) UpdateThread(
 	if req.Pinned != nil {
 		thread.Pinned = *req.Pinned
 	}
+	if req.PinnedFacts != nil {
+		thread.PinnedFacts = conversation.NormalizePinnedFacts(*req.PinnedFacts)
+	}
 	if req.Keep && thread.Origin.Keepable() {
 		thread.Origin = conversation.ThreadOriginDesk
 	}

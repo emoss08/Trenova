@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/completionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/dispatchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/distancemileagejobs"
@@ -202,6 +203,7 @@ func Options() fx.Option {
 		retrainingalert.Module,
 		fx.Provide(aidocumentservice.NewContract),
 		aifeedbackjobs.Module,
+		decisioncommitjobs.Module,
 		retrievaljobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
