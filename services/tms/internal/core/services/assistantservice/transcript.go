@@ -371,6 +371,13 @@ func writeTranscriptMessage(
 
 		return
 	}
+	if m.Compacted() {
+		fmt.Fprintf(b, "## Conversation compacted · %s\n\n", transcriptTime(m.CreatedAt))
+		fmt.Fprintf(b, "_%d earlier messages summarized_\n\n", m.Compaction.Summarized)
+		writeText(b, m.Content)
+
+		return
+	}
 
 	switch m.Role {
 	case conversation.RoleUser:

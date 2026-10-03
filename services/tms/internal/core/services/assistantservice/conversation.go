@@ -343,6 +343,9 @@ func (s *Service) UpdateThread(
 	if req.Keep && thread.Origin.Keepable() {
 		thread.Origin = conversation.ThreadOriginDesk
 	}
+	if req.AutoCompact != nil {
+		thread.AutoCompactOff = !*req.AutoCompact
+	}
 
 	multiErr := errortypes.NewMultiError()
 	thread.Validate(multiErr)

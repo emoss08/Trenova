@@ -60,6 +60,10 @@ type Message struct {
 
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 
+	// Compaction says what a compaction summary stands in for. Nil on every
+	// other message.
+	Compaction *Compaction `json:"compaction,omitempty" bun:"compaction,type:JSONB,nullzero"`
+
 	// ToolCalls is what an assistant turn asked for, stored as the normalized
 	// shape rather than any one provider's wire format.
 	ToolCalls []ToolCallRecord `json:"toolCalls"  bun:"tool_calls,type:jsonb,nullzero"`

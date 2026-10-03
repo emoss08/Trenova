@@ -19,6 +19,7 @@ const PATHS = {
   inbox: <path d="M4 13l2.5-7h11L20 13v6H4z M4 13h4.5l1 2h5l1-2H20" />,
   pin: <path d="M9 4h6l-1 5 3 3v1H7v-1l3-3zM12 13v7" />,
   chevR: <path d="M9 6l6 6-6 6" />,
+  compact: <path d="M12 3v6M9 6l3 3 3-3M12 21v-6M9 18l3-3 3 3M5 12h14" />,
   chevL: <path d="M15 6l-6 6 6 6" />,
   x: <path d="M6 6l12 12M18 6L6 18" />,
   link: (

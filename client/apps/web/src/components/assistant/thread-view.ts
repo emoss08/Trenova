@@ -22,6 +22,8 @@ export type ThreadEntry =
   | { kind: "declined"; message: AssistantMessage }
   | { kind: "refusal"; message: AssistantMessage }
   | { kind: "schedule"; message: AssistantMessage }
+  /** Where the conversation was compacted: everything before it is summarized for the agent. */
+  | { kind: "compaction"; message: AssistantMessage }
   | { kind: "assistant"; message: AssistantMessage; tools: ToolExchange[] };
 
 /**
@@ -86,6 +88,9 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
         break;
       case "schedule":
         entries.push({ kind: "schedule", message });
+        break;
+      case "compaction":
+        entries.push({ kind: "compaction", message });
         break;
       case "assistant": {
         const tools: ToolExchange[] = [...orphans];

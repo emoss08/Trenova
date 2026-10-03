@@ -11,6 +11,7 @@ import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useComposerContext } from "@/components/assistant/use-composer-context";
 import { useOpeningQuestion } from "@/components/assistant/use-opening-question";
 import { useThreadModel } from "@/components/assistant/use-thread-model";
+import { meterView } from "@/components/assistant/compaction";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
@@ -43,6 +44,8 @@ import { useOnline } from "./desk-online";
 import { useDeskScans } from "./composer/desk-capture";
 import { DeskComposer } from "./composer/desk-composer";
 import { DeskModelPicker } from "./composer/desk-model-picker";
+import { DeskContextMeter } from "./composer/desk-context-meter";
+import { DeskCompactMark } from "./conversation/desk-compact-mark";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
 import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
 import { DeskApprovalCard, DeskApprovedCard } from "./conversation/desk-approval-card";
@@ -269,7 +272,7 @@ export function DeskConversation({
     openingPayload,
     pageContextSource: deskPage.context,
   });
-  const { entries, placements, turn, isActive } = model;
+  const { entries, placements, turn, isActive, compaction } = model;
 
   // Each reply spends from the caps, so the warning above the composer is
   // read again once one ends rather than waiting out its staleness.
@@ -780,6 +783,18 @@ export function DeskConversation({
                       </div>
                     )}
                     {entries.map((entry) => {
+                      if (entry.kind === "compaction") {
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="event"
+                            className="dk-cmpd"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskCompactMark message={entry.message} />
+                          </DeskRow>
+                        );
+                      }
                       if (entry.kind === "user") {
                         return (
                           <DeskRow
@@ -1291,6 +1306,26 @@ export function DeskConversation({
                             openSignal={pickerSignal}
                           />
                         }
+                        meter={
+                          <DeskContextMeter
+                            usage={compaction.usage}
+                            auto={compaction.auto}
+                            onAutoChange={(on) => void compaction.setAuto(on)}
+                            onCompact={() => void compaction.compact()}
+                            compacting={compaction.compacting !== null}
+                            budget={budgetQuery.data}
+                          />
+                        }
+                        compacting={
+                          compaction.compacting && {
+                            auto: compaction.compacting.auto,
+                            before: compaction.compacting.before,
+                            after: compaction.compacting.after,
+                            window: meterView(compaction.usage).window,
+                          }
+                        }
+                        onCancelCompact={compaction.cancel}
+                        onCompact={() => void compaction.compact()}
                       />
                       <div className="dk-hint">
                         {showCard ? (

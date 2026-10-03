@@ -159,6 +159,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpCreate),
 		h.startTurn,
 	)
+	// Compacting summarizes the older part of a conversation into a message
+	// of its own, which is writing to it like asking a question.
+	api.POST(
+		"/threads/:threadID/compact/",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.compactThread,
+	)
 	// Stopping a reply is arranging one's own conversation, like naming or
 	// deleting it, and every turn here is read under the caller's own user id.
 	api.POST(
@@ -390,6 +397,8 @@ type updateThreadRequest struct {
 	PinnedFacts *[]string `json:"pinnedFacts"`
 	// Keep lists a quick question as a conversation.
 	Keep bool `json:"keep"`
+	// AutoCompact turns the conversation's compacting itself on or off.
+	AutoCompact *bool `json:"autoCompact"`
 }
 
 func (h *Handler) updateThread(c *gin.Context) {
@@ -413,6 +422,7 @@ func (h *Handler) updateThread(c *gin.Context) {
 		Pinned:      body.Pinned,
 		PinnedFacts: body.PinnedFacts,
 		Keep:        body.Keep,
+		AutoCompact: body.AutoCompact,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)

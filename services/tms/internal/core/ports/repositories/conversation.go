@@ -54,6 +54,20 @@ type ListMessagesRequest struct {
 	// Kinds, when set, reads only messages of these kinds: the decision notes
 	// a conversation already carries, without the turns around them.
 	Kinds []conversation.MessageKind
+	// SinceCompaction reads only what the model still reads once the
+	// conversation has been compacted: the latest summary, and every message
+	// after the stretch it stands in for. Limit then counts from there. A
+	// conversation never compacted is read as it would be without it.
+	SinceCompaction bool
+}
+
+// UpdateThreadContextRequest keeps how full a conversation's context is, and
+// whether it still compacts itself. A nil field is left as it is.
+type UpdateThreadContextRequest struct {
+	ThreadID       pulid.ID
+	TenantInfo     pagination.TenantInfo
+	Usage          *conversation.ContextUsage
+	AutoCompactOff *bool
 }
 
 // CountMessagesRequest counts a thread's messages, which is how long the
@@ -192,4 +206,8 @@ type ConversationRepository interface {
 	// MarkThreadTainted writes the thread's taint and, the first time, when it
 	// became tainted. It leaves the thread's version alone.
 	MarkThreadTainted(ctx context.Context, req MarkThreadTaintedRequest) error
+	// UpdateThreadContext writes how full the conversation's context is and
+	// whether it compacts itself. It leaves the thread's version alone: it
+	// is the system's bookkeeping, not an edit a person could conflict with.
+	UpdateThreadContext(ctx context.Context, req UpdateThreadContextRequest) error
 }

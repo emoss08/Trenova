@@ -205,6 +205,7 @@ func (r *repository) UpdateThread(
 			Set(cols.Origin.Set(), thread.Origin).
 			Set(cols.Pinned.Set(), thread.Pinned).
 			Set(cols.PinnedFacts.Set(), thread.PinnedFacts).
+			Set(cols.AutoCompactOff.Set(), thread.AutoCompactOff).
 			Set(cols.SubjectType.Set(), thread.SubjectType).
 			Set(cols.SubjectID.Set(), thread.SubjectID).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
@@ -244,6 +245,39 @@ func (r *repository) MarkThreadTainted(
 			Exec(ctx)
 		if err != nil {
 			return fmt.Errorf("mark thread tainted: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+	})
+}
+
+func (r *repository) UpdateThreadContext(
+	ctx context.Context,
+	req repositories.UpdateThreadContextRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if req.Usage == nil && req.AutoCompactOff == nil {
+			return nil
+		}
+
+		cols := buncolgen.ThreadColumns
+		query := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*conversation.Thread)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ThreadID)
+			})
+		if req.Usage != nil {
+			query = query.Set(cols.ContextUsage.Set(), req.Usage)
+		}
+		if req.AutoCompactOff != nil {
+			query = query.Set(cols.AutoCompactOff.Set(), *req.AutoCompactOff)
+		}
+
+		res, err := query.Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("update thread context: %w", err)
 		}
 
 		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
@@ -319,6 +353,30 @@ func (r *repository) ListMessages(
 
 		if len(req.Kinds) > 0 {
 			query = query.Where(cols.Kind.In(), bun.List(req.Kinds))
+		}
+
+		if req.SinceCompaction {
+			// The latest summary stands in for every message up to the
+			// sequence it names; the summary itself is numbered after that,
+			// so it is read with what follows. The subquery names the thread
+			// outright, so it is planned once rather than once a row.
+			query = query.Where(
+				`? > COALESCE((
+					SELECT ("c"."compaction"->>'through')::int
+					FROM "assistant_messages" AS "c"
+					WHERE "c"."organization_id" = ?
+						AND "c"."business_unit_id" = ?
+						AND "c"."thread_id" = ?
+						AND "c"."kind" = ?
+					ORDER BY "c"."sequence" DESC
+					LIMIT 1
+				), -1)`,
+				bun.Ident("amsg.sequence"),
+				req.TenantInfo.OrgID,
+				req.TenantInfo.BuID,
+				req.ThreadID,
+				conversation.MessageKindCompaction,
+			)
 		}
 
 		if req.Limit > 0 {

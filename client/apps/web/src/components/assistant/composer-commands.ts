@@ -116,6 +116,18 @@ export const SLASH_COMMANDS: readonly SlashCommand[] = [
 ];
 
 /**
+ * /compact summarizes the conversation's older turns. It asks the agent
+ * nothing, so it is offered only where a composer can compact, which handles
+ * the command itself rather than sending it.
+ */
+export const COMPACT_COMMAND: SlashCommand = {
+  name: "compact",
+  description: "Summarize older turns to free up context",
+  slots: [],
+  template: "/compact",
+};
+
+/**
  * A draft that opens with a slash is a request for the starter questions,
  * filtered by whatever follows. Null for any other draft, including a slash
  * somewhere later in a sentence and a draft that has grown to a second line.
@@ -158,14 +170,17 @@ export type ParsedSlashCommand = {
  * a place name with a space in it is not split. Null when the first word is
  * not a command.
  */
-export function parseSlashCommand(draft: string): ParsedSlashCommand | null {
+export function parseSlashCommand(
+  draft: string,
+  extra: readonly SlashCommand[] = [],
+): ParsedSlashCommand | null {
   if (!draft.startsWith("/") || draft.includes("\n")) {
     return null;
   }
   const body = draft.slice(1);
   const firstSpace = body.search(/\s/);
   const name = (firstSpace === -1 ? body : body.slice(0, firstSpace)).toLowerCase();
-  const command = SLASH_COMMANDS.find((candidate) => candidate.name === name);
+  const command = [...SLASH_COMMANDS, ...extra].find((candidate) => candidate.name === name);
   if (!command) {
     return null;
   }
@@ -222,16 +237,20 @@ export type CommandEntry =
  * questions, both narrowed by the query. Once a command's first slot has
  * begun, only that command is listed, with its slots as the hint.
  */
-export function commandEntries(query: string, suggestions: readonly Suggestion[]): CommandEntry[] {
+export function commandEntries(
+  query: string,
+  suggestions: readonly Suggestion[],
+  extra: readonly SlashCommand[] = [],
+): CommandEntry[] {
   const needle = query.trim().toLowerCase();
-  const typed = parseSlashCommand("/" + query);
+  const typed = parseSlashCommand("/" + query, extra);
   if (typed && /\s/.test(query)) {
     return [commandEntry(typed.command)];
   }
 
-  const commands = SLASH_COMMANDS.filter(
-    (command) => needle === "" || command.name.startsWith(needle),
-  ).map(commandEntry);
+  const commands = [...SLASH_COMMANDS, ...extra]
+    .filter((command) => needle === "" || command.name.startsWith(needle))
+    .map(commandEntry);
   const questions = matchSuggestions(needle, suggestions).map<CommandEntry>((suggestion) => ({
     kind: "question",
     label: suggestion.label,

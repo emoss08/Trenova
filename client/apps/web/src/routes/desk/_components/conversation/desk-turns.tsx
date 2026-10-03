@@ -27,17 +27,20 @@ export function DeskRow({
   kind,
   first = false,
   time,
+  className,
   children,
 }: {
   kind: "question" | "reply" | "continued" | "event";
   first?: boolean;
   time?: ReactNode;
+  className?: string;
   children: ReactNode;
 }) {
   return (
     <div
       className={cn(
         "dk-r",
+        className,
         (kind === "reply" || kind === "continued") && "dk-a",
         kind === "continued" && "dk-cont",
         kind === "event" && "dk-ev",
@@ -80,7 +83,7 @@ export function DeskQuestion({
   // The page it was asked from still travels with the message; the design
   // no longer says so under the question.
   return (
-    <div className="dk-qb">
+    <>
       <div
         className={cn(
           "dk-q",
@@ -99,7 +102,7 @@ export function DeskQuestion({
       {attachments && attachments.length > 0 && (
         <DeskMessageAttachments attachments={attachments} />
       )}
-    </div>
+    </>
   );
 }
 
@@ -226,17 +229,14 @@ export const DeskReply = memo(function DeskReply({
   );
 });
 
-/** The reply being written, word by word; nothing shows until its first words arrive. */
+/**
+ * The reply being written, word by word; nothing shows until its first words
+ * arrive. Each word fades in as the design's do, with no caret after them.
+ */
 export function DeskStreamingReply({ text }: { text: string }) {
   return (
     <div className="dk-prose dk-streaming">
-      <StreamingAiMarkdown
-        content={text}
-        className="dk-md"
-        wordClassName="dk-w"
-        caretClassName="dk-caret"
-        deskSubset
-      />
+      <StreamingAiMarkdown content={text} className="dk-md" wordClassName="dk-w" deskSubset />
     </div>
   );
 }

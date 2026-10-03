@@ -40,11 +40,17 @@ const (
 	// that schedule's card. The model is never sent it: nothing answered it,
 	// and each run asks the request afresh in a turn of its own.
 	MessageKindSchedule = MessageKind("Schedule")
+	// MessageKindCompaction is the summary a compaction wrote of the
+	// conversation before it. The model reads it in place of every message
+	// it stands in for, and the thread shows it as the line where the
+	// conversation was compacted.
+	MessageKindCompaction = MessageKind("Compaction")
 )
 
 func (k MessageKind) IsValid() bool {
 	switch k {
-	case MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated, MessageKindSchedule:
+	case MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated,
+		MessageKindSchedule, MessageKindCompaction:
 		return true
 	default:
 		return false
@@ -59,6 +65,7 @@ func AllMessageKinds() []MessageKind {
 		MessageKindDecisionNote,
 		MessageKindDelegated,
 		MessageKindSchedule,
+		MessageKindCompaction,
 	}
 }
 

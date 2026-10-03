@@ -311,6 +311,7 @@ func (s *Service) FinishTurn(
 	}
 	s.runtime.MarkToolEffects(saved)
 	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
+	s.measureAfterTurn(ctx, thread, plan, saved, req.TenantInfo, emit)
 
 	if req.Failure == nil && !plan.FollowUp {
 		s.titleIfUnnamed(ctx, thread, plan.Input)

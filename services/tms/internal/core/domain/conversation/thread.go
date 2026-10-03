@@ -78,6 +78,15 @@ type Thread struct {
 	// trimming the history for length never drops one.
 	PinnedFacts []string `json:"pinnedFacts" bun:"pinned_facts,type:JSONB,nullzero"`
 
+	// ContextUsage is how full the model's context window was after the
+	// conversation's last turn or compaction; nil before its first.
+	// AutoCompactOff says the conversation no longer compacts itself on
+	// crossing AutoCompactShare: the person turned it off, or cancelled a
+	// compaction that started on its own. Stored as the exception so every
+	// conversation, however it was made, starts with it on.
+	ContextUsage   *ContextUsage `json:"contextUsage,omitempty" bun:"context_usage,type:JSONB,nullzero"`
+	AutoCompactOff bool          `json:"autoCompactOff"         bun:"auto_compact_off,type:BOOLEAN,notnull,default:false"`
+
 	Taint     *agent.RunTaint `json:"taint,omitempty"     bun:"taint,type:JSONB,nullzero"`
 	TaintedAt *int64          `json:"taintedAt,omitempty" bun:"tainted_at,type:BIGINT,nullzero"`
 
@@ -233,4 +242,10 @@ func (t *Thread) AbsorbTaint(taint *agent.RunTaint, now int64) bool {
 // HasSubject reports whether the conversation is about one record.
 func (t *Thread) HasSubject() bool {
 	return t.SubjectType != "" && t.SubjectID.IsNotNil()
+}
+
+// CompactsItself reports a conversation that is compacted on its own once its
+// context crosses AutoCompactShare.
+func (t *Thread) CompactsItself() bool {
+	return !t.AutoCompactOff
 }

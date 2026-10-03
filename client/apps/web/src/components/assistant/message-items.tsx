@@ -743,6 +743,28 @@ export function DecisionNote({ content, at }: { content: string; at?: number }) 
   );
 }
 
+/**
+ * Where the conversation was compacted: what came before it reaches the
+ * agent only as a summary.
+ */
+export function CompactionNote({ summarized, auto }: { summarized: number; auto: boolean }) {
+  const t = useT();
+
+  return (
+    <div className="text-foreground-subtle flex items-center gap-3 py-1 text-xs" role="note">
+      <span className="bg-border-subtle h-px flex-1" />
+      <span className="shrink-0 font-medium">
+        {auto ? t("Auto-compacted") : t("Compacted")} ·{" "}
+        {t(
+          "{0, plural, one {# earlier message summarized} other {# earlier messages summarized}}",
+          summarized,
+        )}
+      </span>
+      <span className="bg-border-subtle h-px flex-1" />
+    </div>
+  );
+}
+
 /** A date between turns, so a thread that spans days reads with them in it. */
 export function DayDivider({ at, daysAgo }: { at: number; daysAgo: number }) {
   const t = useT();

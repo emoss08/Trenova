@@ -461,6 +461,12 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 	for _, message := range history {
 		switch message.Role {
 		case conversation.RoleUser:
+			// A compaction summary is the application's account of the
+			// conversation, not anything the person said.
+			if message.Compacted() {
+				turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})
+				continue
+			}
 			turns = append(turns, agentguard.Turn{Role: "user", Content: message.Content})
 		case conversation.RoleAssistant:
 			turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})

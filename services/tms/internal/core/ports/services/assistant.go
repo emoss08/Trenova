@@ -41,6 +41,8 @@ type UpdateThreadRequest struct {
 	PinnedFacts *[]string
 	// Keep promotes an Ask thread to the Desk so it is listed.
 	Keep bool
+	// AutoCompact turns the conversation's compacting itself on or off.
+	AutoCompact *bool
 }
 
 // SendMessageRequest is one turn from a person.
@@ -350,7 +352,42 @@ const (
 	// the organization, once for each new place it came from.
 	AssistantEventRunTainted      = "run_tainted"
 	AssistantEventReplyRegrounded = "reply_regrounded"
+	// AssistantEventContext says how full the conversation's context is now,
+	// sent as a turn is saved so the composer's meter moves with the reply.
+	AssistantEventContext = "context"
+	// AssistantEventCompactionStarted, AssistantEventCompactionFinished and
+	// AssistantEventCompactionCancelled follow a compaction: from the turn
+	// that set one off on its own, which names the compaction's turn so the
+	// reader can follow it, and on the compaction's own stream. Finished and
+	// cancelled each end that stream.
+	AssistantEventCompactionStarted   = "compaction_started"
+	AssistantEventCompactionFinished  = "compaction_finished"
+	AssistantEventCompactionCancelled = "compaction_cancelled"
 )
+
+// AssistantContextEvent is how full a conversation's context is.
+type AssistantContextEvent struct {
+	ThreadID       pulid.ID                   `json:"threadId"`
+	Usage          *conversation.ContextUsage `json:"usage"`
+	AutoCompactOff bool                       `json:"autoCompactOff"`
+}
+
+// AssistantCompactionEvent is where a compaction stands. Before and After are
+// the context use either side, in tokens: After is the estimate until the
+// compaction finishes.
+type AssistantCompactionEvent struct {
+	TurnID   pulid.ID `json:"turnId"`
+	ThreadID pulid.ID `json:"threadId"`
+	Auto     bool     `json:"auto"`
+	Before   int      `json:"before"`
+	After    int      `json:"after"`
+	// Message is the summary, once it is saved; Usage the context after it.
+	Message *conversation.Message      `json:"message,omitempty"`
+	Usage   *conversation.ContextUsage `json:"usage,omitempty"`
+	// AutoCompactOff is set when cancelling a compaction that started on its
+	// own turned compacting on its own off.
+	AutoCompactOff bool `json:"autoCompactOff,omitempty"`
+}
 
 type RegroundAction string
 

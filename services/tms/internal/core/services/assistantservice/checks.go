@@ -92,17 +92,9 @@ func (s *Service) checkTurn(
 	})
 	// Another agent's steps on a task this one handed it are the thread's to
 	// show, not the model's to read again: it only ever saw its own call and
-	// the answer that came back.
+	// the answer that came back. A compacted stretch is read as its summary.
 	wg.Go(func() {
-		checks.history, checks.historyErr = s.conversations.ListMessages(
-			ctx,
-			repositories.ListMessagesRequest{
-				ThreadID:     thread.ID,
-				TenantInfo:   req.TenantInfo,
-				Limit:        historyLimit,
-				ExcludeKinds: conversation.ModelHiddenKinds(),
-			},
-		)
+		checks.history, checks.historyErr = s.modelHistory(ctx, thread.ID, req.TenantInfo)
 	})
 	wg.Go(func() {
 		checks.proposals = s.proposalOutcomes(ctx, thread, req.TenantInfo)

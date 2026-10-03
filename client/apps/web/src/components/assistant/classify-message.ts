@@ -14,9 +14,12 @@ import type { AssistantMessage } from "@/types/assistant";
  *   conversation still reads in order without implying it was answered
  * - `schedule` — a request the person scheduled, shown in their words with
  *   the schedule's card under it; nothing answered it there and then
+ * - `compaction` — the summary a compaction wrote, shown as the line where the
+ *   conversation was compacted and never as something the person said
  * - `user` / `assistant` — ordinary turns
  */
 export type MessagePresentation =
+  | "compaction"
   | "delegated"
   | "tool"
   | "decision"
@@ -51,6 +54,12 @@ export function classifyMessage(message: AssistantMessage): MessagePresentation 
   // would read as the person asking or the conversation's agent replying.
   if (message.kind === "Delegated") {
     return "delegated";
+  }
+
+  // A compaction summary is saved in the User role because the model reads
+  // it in the person's place; the person never wrote it.
+  if (message.kind === "Compaction") {
+    return "compaction";
   }
 
   if (message.role === "Tool") {

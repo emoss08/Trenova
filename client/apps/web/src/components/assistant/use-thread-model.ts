@@ -8,6 +8,7 @@ import type {
   AssistantPageContext,
   AssistantPlan,
   AssistantProposal,
+  AssistantStreamEvent,
   AssistantThread,
 } from "@/types/assistant";
 import type { PageDraft, PageDraftEdit, PageDraftSurface } from "@/types/page-draft";
@@ -35,6 +36,7 @@ import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
 import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
 import { useAssistantTurn } from "./use-assistant-turn";
+import { useCompaction } from "./use-compaction";
 import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
@@ -298,10 +300,23 @@ export function useThreadModel({
     }
     return contextIncluded ? getPageContext() : null;
   }, [contextIncluded, getPageContext, pageContextSource, readDraft]);
+  // A reply's stream also says how full the conversation's context is and
+  // when a compaction starts; those go to the compaction, which is made
+  // after the turn because it waits for the turn to be quiet.
+  const conversationEvents = useRef<((event: AssistantStreamEvent) => void) | null>(null);
+  const onConversationEvent = useCallback(
+    (event: AssistantStreamEvent) => conversationEvents.current?.(event),
+    [],
+  );
   const { turn, isActive, send, rejoin, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
+    onConversationEvent,
   );
+  const compaction = useCompaction(thread, isActive);
+  useEffect(() => {
+    conversationEvents.current = compaction.onConversationEvent;
+  }, [compaction.onConversationEvent]);
 
   // The Desk lights its whole header while an agent works, so the state has
   // to leave the thread. Reported on the way down and cleared on unmount,
@@ -586,6 +601,8 @@ export function useThreadModel({
     followUpDecision,
     liveSteps,
     canTell,
+    /** The conversation's context meter and any compaction under way. */
+    compaction,
   };
 }
 

@@ -3,6 +3,7 @@ import {
   fillCommand,
   parseSlashCommand,
   type CommandEntry,
+  type SlashCommand,
 } from "@/components/assistant/composer-commands";
 import type { Suggestion } from "@/components/assistant/suggestions";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -16,7 +17,10 @@ const COMMAND_ICONS: Record<string, DeskIconName> = {
   quote: "route",
   report: "compass",
   explain: "search",
+  compact: "compact",
 };
+
+const NO_COMMANDS: readonly SlashCommand[] = [];
 
 /** A slash typed while the box was otherwise empty: what it offers and what has been filled. */
 export type DeskSlash = ReturnType<typeof useDeskSlash>;
@@ -44,6 +48,7 @@ export function useDeskSlash({
   onSendText,
   suggestions,
   enabled,
+  commands = NO_COMMANDS,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -51,15 +56,17 @@ export function useDeskSlash({
   onSendText: (text: string) => void;
   suggestions: readonly Suggestion[];
   enabled: boolean;
+  /** Commands this composer handles itself, offered after the shared ones. */
+  commands?: readonly SlashCommand[];
 }) {
   const [highlighted, setHighlighted] = useState(0);
   const [dismissed, setDismissed] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState("");
   const active = enabled && value.startsWith("/") && !value.includes("\n") && dismissed !== value;
   const query = active ? value.slice(1) : "";
-  const parsed = active ? parseSlashCommand(value) : null;
+  const parsed = active ? parseSlashCommand(value, commands) : null;
   const started = parsed !== null && /\s/.test(query);
-  const entries = active ? commandEntries(query, suggestions) : [];
+  const entries = active ? commandEntries(query, suggestions, commands) : [];
 
   const head = query.split(" ")[0];
   if (head !== lastQuery) {
@@ -145,7 +152,17 @@ export function useDeskSlash({
     return false;
   };
 
-  return { active, query, parsed, started, entries, highlighted, setHighlighted, choose, onKeyDown };
+  return {
+    active,
+    query,
+    parsed,
+    started,
+    entries,
+    highlighted,
+    setHighlighted,
+    choose,
+    onKeyDown,
+  };
 }
 
 function CommandGlyph({ name }: { name: string }) {

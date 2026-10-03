@@ -58,7 +58,54 @@ export const contextProviderSchema = z.enum([
 
 export const messageRoleSchema = z.enum(["User", "Assistant", "Tool"]);
 
-export const messageKindSchema = z.enum(["Message", "DecisionNote", "Delegated", "Schedule"]);
+export const messageKindSchema = z.enum([
+  "Message",
+  "DecisionNote",
+  "Delegated",
+  "Schedule",
+  "Compaction",
+]);
+
+/**
+ * How full a conversation's context window is, in estimated tokens by part,
+ * measured when its last turn or compaction ended.
+ */
+export const contextUsageSchema = z.object({
+  /** The agent's instructions, pinned facts, memories and tool definitions. */
+  instructions: z.number().default(0),
+  /** What was said, and the summary of any compacted stretch. */
+  messages: z.number().default(0),
+  toolResults: z.number().default(0),
+  /** The text of attached files, read through the document tools. */
+  files: z.number().default(0),
+  /** How much a compaction would summarize: everything before the latest two turns. */
+  compactable: z.number().default(0),
+  /** The model's context window. */
+  window: z.number().default(0),
+  model: z.string().optional().default(""),
+  measuredAt: z.number().default(0),
+});
+
+export type ContextUsage = z.infer<typeof contextUsageSchema>;
+
+/** On a compaction summary: what it stands in for. */
+export const compactionRecordSchema = z.object({
+  /** The conversation compacted itself on nearing a full context. */
+  auto: z.boolean().default(false),
+  /** How many earlier messages the summary replaces. */
+  summarized: z.number().default(0),
+  through: z.number().default(0),
+  /** Context use, in tokens, before and after. */
+  before: z.number().default(0),
+  after: z.number().default(0),
+  /** What stayed in full: "recent" for the latest turns, "approvals" for decisions still waiting. */
+  kept: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export type CompactionRecord = z.infer<typeof compactionRecordSchema>;
 
 export const threadStatusSchema = z.enum(["Active", "Archived"]);
 
@@ -757,6 +804,8 @@ export const assistantMessageSchema = z.object({
    */
   delegateReport: assistantDelegateFinishedEventSchema.nullish().catch(null),
   content: z.string().optional().default(""),
+  /** On a Compaction message: what the summary stands in for. */
+  compaction: compactionRecordSchema.nullish().catch(null),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
   toolCallId: z.string().optional().default(""),
   toolName: z.string().optional().default(""),
@@ -846,6 +895,10 @@ export const assistantThreadSchema = z.object({
    * agent proposes waits for a person.
    */
   taintedAt: z.number().nullish(),
+  /** How full the context was after the last turn or compaction; absent before the first. */
+  contextUsage: contextUsageSchema.nullish().catch(null),
+  /** The conversation no longer compacts itself on nearing a full context. */
+  autoCompactOff: z.boolean().optional(),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -985,10 +1038,11 @@ export const assistantThreadListSchema = z.object({
 });
 
 /**
- * What started a turn: the person, the application reporting a decision, or
- * a request the person scheduled coming round.
+ * What started a turn: the person, the application reporting a decision, a
+ * request the person scheduled coming round, or the conversation being
+ * compacted.
  */
-export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp", "Scheduled"]);
+export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp", "Scheduled", "Compaction"]);
 
 /**
  * A request the person asked to have repeated in a conversation. `cadence` is
@@ -1396,6 +1450,32 @@ export const assistantDelegateRetryingEventSchema = assistantRetryingEventSchema
   delegateCallId: z.string(),
 });
 
+/** How full the conversation's context is, sent as a turn is saved. */
+export const assistantContextEventSchema = z.object({
+  threadId: z.string(),
+  usage: contextUsageSchema,
+  autoCompactOff: z.boolean().optional().default(false),
+});
+
+/**
+ * Where a compaction stands. From a turn that set one off, it names the
+ * compaction's own turn to follow; on that turn's stream it opens, and
+ * finished or cancelled ends it.
+ */
+export const assistantCompactionEventSchema = z.object({
+  turnId: z.string(),
+  threadId: z.string(),
+  auto: z.boolean().optional().default(false),
+  before: z.number().optional().default(0),
+  after: z.number().optional().default(0),
+  /** The summary, once saved. */
+  message: assistantMessageSchema.nullish(),
+  usage: contextUsageSchema.nullish(),
+  autoCompactOff: z.boolean().optional().default(false),
+});
+
+export type AssistantCompactionEvent = z.infer<typeof assistantCompactionEventSchema>;
+
 export type AssistantStreamEvent =
   | { event: "accepted"; data: z.infer<typeof assistantAcceptedEventSchema> }
   | { event: "refused"; data: z.infer<typeof assistantRefusedEventSchema> }
@@ -1419,7 +1499,11 @@ export type AssistantStreamEvent =
    * conversation rather than trusting what it has on screen.
    */
   | { event: "done"; data: SendMessageResult | null }
-  | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
+  | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> }
+  | { event: "context"; data: z.infer<typeof assistantContextEventSchema> }
+  | { event: "compaction_started"; data: AssistantCompactionEvent }
+  | { event: "compaction_finished"; data: AssistantCompactionEvent }
+  | { event: "compaction_cancelled"; data: AssistantCompactionEvent };
 
 /**
  * An ending the server rebuilt from a turn's record (`replay: true`) rather
@@ -1479,6 +1563,12 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       };
     case "error":
       return { event, data: assistantErrorEventSchema.parse(data) };
+    case "context":
+      return { event, data: assistantContextEventSchema.parse(data) };
+    case "compaction_started":
+    case "compaction_finished":
+    case "compaction_cancelled":
+      return { event, data: assistantCompactionEventSchema.parse(data) };
     default:
       return null;
   }
@@ -1499,6 +1589,7 @@ export type ToolSimulation = z.infer<typeof toolSimulationSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
+export type AssistantThreadList = z.infer<typeof assistantThreadListSchema>;
 export type CannotContinueReason = z.infer<typeof cannotContinueReasonSchema>;
 export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
 export type TurnOrigin = z.infer<typeof turnOriginSchema>;

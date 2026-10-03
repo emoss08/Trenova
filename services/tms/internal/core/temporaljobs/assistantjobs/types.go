@@ -133,6 +133,15 @@ type FinishTurnInput struct {
 type TurnEnding struct {
 	Result AssistantTurnResult     `json:"result"`
 	Event  temporaltype.StreamItem `json:"event"`
+	// Compact is set when the turn left the conversation full enough to
+	// compact itself, with the context use either side of doing so.
+	Compact *CompactionCue `json:"compact,omitempty"`
+}
+
+// CompactionCue is a conversation a turn left full enough to compact itself.
+type CompactionCue struct {
+	Before int `json:"before"`
+	After  int `json:"after"`
 }
 
 // NotifyUnseenTurnInput is a turn that ended with nobody reading it, for

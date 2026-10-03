@@ -312,6 +312,7 @@ var MessageColumns = struct {
 	DelegateReport    Column // "delegate_report" → qualified: "amsg.delegate_report"
 	ScheduleID        Column // "schedule_id" → qualified: "amsg.schedule_id"
 	Content           Column // "content" → qualified: "amsg.content"
+	Compaction        Column // "compaction" → qualified: "amsg.compaction"
 	ToolCalls         Column // "tool_calls" → qualified: "amsg.tool_calls"
 	ToolCallID        Column // "tool_call_id" → qualified: "amsg.tool_call_id"
 	ToolName          Column // "tool_name" → qualified: "amsg.tool_name"
@@ -350,6 +351,7 @@ var MessageColumns = struct {
 	DelegateReport:    NewColumn("delegate_report", "amsg"),
 	ScheduleID:        NewColumn("schedule_id", "amsg"),
 	Content:           NewColumn("content", "amsg"),
+	Compaction:        NewColumn("compaction", "amsg"),
 	ToolCalls:         NewColumn("tool_calls", "amsg"),
 	ToolCallID:        NewColumn("tool_call_id", "amsg"),
 	ToolName:          NewColumn("tool_name", "amsg"),
@@ -394,6 +396,7 @@ var MessageFieldMap = map[string]string{
 	"delegateReport": "delegate_report",
 	"scheduleId":     "schedule_id",
 	"content":        "content",
+	"compaction":     "compaction",
 	"toolCalls":      "tool_calls",
 	"toolCallId":     "tool_call_id",
 	"toolName":       "tool_name",
@@ -436,6 +439,7 @@ var MessageInsertableColumns = []string{
 	"delegate_report",
 	"schedule_id",
 	"content",
+	"compaction",
 	"tool_calls",
 	"tool_call_id",
 	"tool_name",
@@ -536,6 +540,7 @@ var MessageFilter = struct {
 	DelegateReport    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateReport" → DB: "delegate_report"
 	ScheduleID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scheduleId" → DB: "schedule_id"
 	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
+	Compaction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "compaction" → DB: "compaction"
 	ToolCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
 	ToolCallID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallId" → DB: "tool_call_id"
 	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
@@ -597,6 +602,9 @@ var MessageFilter = struct {
 	},
 	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("content", op, value)
+	},
+	Compaction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("compaction", op, value)
 	},
 	ToolCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("toolCalls", op, value)
@@ -716,6 +724,8 @@ var ThreadColumns = struct {
 	SubjectType         Column // "subject_type" → qualified: "athr.subject_type"
 	SubjectID           Column // "subject_id" → qualified: "athr.subject_id"
 	PinnedFacts         Column // "pinned_facts" → qualified: "athr.pinned_facts"
+	ContextUsage        Column // "context_usage" → qualified: "athr.context_usage"
+	AutoCompactOff      Column // "auto_compact_off" → qualified: "athr.auto_compact_off"
 	Taint               Column // "taint" → qualified: "athr.taint"
 	TaintedAt           Column // "tainted_at" → qualified: "athr.tainted_at"
 	Version             Column // "version" → qualified: "athr.version"
@@ -737,6 +747,8 @@ var ThreadColumns = struct {
 	SubjectType:         NewColumn("subject_type", "athr"),
 	SubjectID:           NewColumn("subject_id", "athr"),
 	PinnedFacts:         NewColumn("pinned_facts", "athr"),
+	ContextUsage:        NewColumn("context_usage", "athr"),
+	AutoCompactOff:      NewColumn("auto_compact_off", "athr"),
 	Taint:               NewColumn("taint", "athr"),
 	TaintedAt:           NewColumn("tainted_at", "athr"),
 	Version:             NewColumn("version", "athr"),
@@ -764,6 +776,8 @@ var ThreadFieldMap = map[string]string{
 	"subjectType":         "subject_type",
 	"subjectId":           "subject_id",
 	"pinnedFacts":         "pinned_facts",
+	"contextUsage":        "context_usage",
+	"autoCompactOff":      "auto_compact_off",
 	"taint":               "taint",
 	"taintedAt":           "tainted_at",
 	"version":             "version",
@@ -789,6 +803,8 @@ var ThreadInsertableColumns = []string{
 	"subject_type",
 	"subject_id",
 	"pinned_facts",
+	"context_usage",
+	"auto_compact_off",
 	"taint",
 	"tainted_at",
 	"version",
@@ -876,6 +892,8 @@ var ThreadFilter = struct {
 	SubjectType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
 	SubjectID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
 	PinnedFacts         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinnedFacts" → DB: "pinned_facts"
+	ContextUsage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextUsage" → DB: "context_usage"
+	AutoCompactOff      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCompactOff" → DB: "auto_compact_off"
 	Taint               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
 	TaintedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintedAt" → DB: "tainted_at"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -926,6 +944,12 @@ var ThreadFilter = struct {
 	},
 	PinnedFacts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("pinnedFacts", op, value)
+	},
+	ContextUsage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("contextUsage", op, value)
+	},
+	AutoCompactOff: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoCompactOff", op, value)
 	},
 	Taint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("taint", op, value)

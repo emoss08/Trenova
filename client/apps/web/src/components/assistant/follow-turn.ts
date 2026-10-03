@@ -120,7 +120,12 @@ export async function followTurn(
     if (id) {
       cursor = id;
     }
-    if (event.event === "done" || event.event === "error") {
+    if (
+      event.event === "done" ||
+      event.event === "error" ||
+      event.event === "compaction_finished" ||
+      event.event === "compaction_cancelled"
+    ) {
       terminal = true;
     }
   };

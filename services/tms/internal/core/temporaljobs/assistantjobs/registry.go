@@ -50,6 +50,10 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 			Name:        AssistantTurnWorkflowName,
 			Fn:          p.Workflows.AssistantTurnWorkflow,
 			Description: "Answer one question in a conversation, publishing the reply as it is written",
+		}, {
+			Name:        CompactionWorkflowName,
+			Fn:          p.Workflows.ConversationCompactionWorkflow,
+			Description: "Summarize the older part of a conversation so it fits its model's window",
 		}},
 		Logger: p.Logger,
 	})

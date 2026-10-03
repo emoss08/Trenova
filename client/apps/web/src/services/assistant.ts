@@ -103,9 +103,10 @@ export type ActiveTurn = {
   workflowId?: string;
   /**
    * What started the turn: the person, the application reporting a decision,
-   * or a request the person scheduled coming round.
+   * a request the person scheduled coming round, or the conversation being
+   * compacted.
    */
-  origin?: "Person" | "DecisionFollowUp" | "Scheduled";
+  origin?: "Person" | "DecisionFollowUp" | "Scheduled" | "Compaction";
   /** The question the turn answers, when a person asked one. */
   input?: string;
 };
@@ -153,6 +154,8 @@ export type UpdateThreadOptions = {
   pinnedFacts?: readonly string[];
   /** Lists a quick question as a conversation. */
   keep?: boolean;
+  /** Whether the conversation compacts itself on nearing a full context. */
+  autoCompact?: boolean;
 };
 
 export class AssistantService {
@@ -178,8 +181,19 @@ export class AssistantService {
       pinned: options.pinned ?? null,
       pinnedFacts: options.pinnedFacts ?? null,
       keep: options.keep ?? false,
+      autoCompact: options.autoCompact ?? null,
     });
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
+  }
+
+  /**
+   * Starts summarizing the older part of a conversation to free its context.
+   * It runs as the conversation's turn, followed on its stream and stopped
+   * like a reply.
+   */
+  public async compactThread(threadId: AssistantThread["id"]): Promise<StartedTurn> {
+    const response = await api.post(`/assistant/threads/${threadId}/compact/`, {});
+    return safeParse(startedTurnSchema, response, "Assistant Turn");
   }
 
   /**

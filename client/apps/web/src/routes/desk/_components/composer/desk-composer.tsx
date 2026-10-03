@@ -3,6 +3,7 @@ import {
   readyAttachments,
   type ComposerPayload,
 } from "@/components/assistant/composer";
+import { COMPACT_COMMAND } from "@/components/assistant/composer-commands";
 import type { Suggestion } from "@/components/assistant/suggestions";
 import { useComposerDictation } from "@/components/assistant/use-composer-dictation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
@@ -22,6 +23,10 @@ import { DeskSlashMenu, DeskSlashMirror, useDeskSlash } from "./desk-slash";
 import { DeskAttachMenu, DeskAttachRow, DeskDropGhosts, type DragState } from "./desk-uploads";
 import { useTypewriter } from "./use-typewriter";
 import { DeskCountdown } from "../desk-countdown";
+import { DeskContextDrain } from "./desk-context-meter";
+
+/** /compact, offered where the conversation can be compacted. */
+const COMPACT_COMMANDS = [COMPACT_COMMAND];
 
 /** What the composer says it is doing while an agent works. */
 export type DeskComposerStatus = {
@@ -81,6 +86,16 @@ export type DeskComposerProps = {
   suggestions?: readonly Suggestion[];
   /** Files dragged over the Desk. */
   drag?: DragState;
+  /** The context meter, between the model picker and dictation. */
+  meter?: ReactNode;
+  /**
+   * A compaction under way: the line at the top says so with Cancel, and the
+   * box takes nothing until it finishes.
+   */
+  compacting?: { auto: boolean; before: number; after: number; window: number } | null;
+  onCancelCompact?: () => void;
+  /** Compacts the conversation: what /compact does. Without it there is no /compact. */
+  onCompact?: () => void;
 };
 
 /**
@@ -123,6 +138,10 @@ export function DeskComposer({
   onMentionsChange,
   suggestions = NO_SUGGESTIONS,
   drag,
+  meter,
+  compacting = null,
+  onCancelCompact,
+  onCompact,
 }: DeskComposerProps) {
   const t = useT();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -144,14 +163,22 @@ export function DeskComposer({
     !blocked &&
     !busy &&
     !disabled &&
+    !compacting &&
     !lock;
 
   const send = (content: string) => {
+    if (onCompact && content.trim() === COMPACT_COMMAND.template) {
+      if (!busy && !compacting && !lock) {
+        onChange("");
+        onCompact();
+      }
+      return;
+    }
     let text = content.trim();
     if (text === "" && ready.length > 0) {
       text = ready.length > 1 ? t("What's in these?") : t("What's in this?");
     }
-    if (text === "" || busy || disabled || lock || uploading || blocked || wait > 0) {
+    if (text === "" || busy || disabled || compacting || lock || uploading || blocked || wait > 0) {
       return;
     }
     dictation.release();
@@ -171,6 +198,7 @@ export function DeskComposer({
     onSendText: send,
     suggestions,
     enabled: !typing && settings.slash === "on",
+    commands: onCompact ? COMPACT_COMMANDS : undefined,
   });
   const mention = useDeskMentions({
     value,
@@ -243,6 +271,7 @@ export function DeskComposer({
         busy && status?.pose === "retry" && "dk-ec dk-r-retry",
         dropping && "dk-drop-on",
         dropping && drag?.hot && "dk-drop-hot",
+        compacting && "dk-cmpg",
       )}
     >
       {dropping && (
@@ -272,6 +301,26 @@ export function DeskComposer({
           )}
         </div>
       )}
+      {compacting && (
+        <div className="dk-cmp-st dk-cx-st" role="status">
+          <DeskContextDrain
+            from={compacting.before}
+            to={compacting.after}
+            window={compacting.window}
+          />
+          <span className="dk-shim dk-cx-stt">
+            {compacting.auto
+              ? t("Context is nearly full · compacting…")
+              : t("Compacting the conversation…")}
+          </span>
+          <span className="dk-ec-sp" />
+          {onCancelCompact && (
+            <button type="button" className="dk-ec-link" onClick={onCancelCompact}>
+              {t("Cancel")}
+            </button>
+          )}
+        </div>
+      )}
       {attachments && !lock && <DeskAttachRow attachments={attachments} />}
       {dropping && drag && (
         <DeskDropGhosts count={drag.count} taken={attachments?.items.length ?? 0} />
@@ -291,13 +340,15 @@ export function DeskComposer({
             ref={textareaRef}
             rows={2}
             value={value}
-            disabled={disabled}
+            disabled={disabled || Boolean(compacting)}
             className={slash.parsed && slash.started ? "dk-sl-on" : undefined}
             placeholder={
               typing
                 ? ""
-                : (placeholder ??
-                  (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
+                : compacting
+                  ? t("You can reply once compacting finishes")
+                  : (placeholder ??
+                    (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
             }
             aria-label={agent ? t("Message {0}", agent.name) : t("Message the Desk")}
             onChange={(event) => {
@@ -335,7 +386,7 @@ export function DeskComposer({
               title={full ? t("Up to {0} files per message", MAX_ATTACHMENTS) : t("Attach files")}
               aria-label={t("Attach files")}
               data-attach-toggle
-              disabled={Boolean(lock) || full}
+              disabled={Boolean(lock) || Boolean(compacting) || full}
               onClick={() => setMenu((current) => (current ? null : "menu"))}
             >
               <DeskIcon name="plus" size={16} />
@@ -382,8 +433,9 @@ export function DeskComposer({
         {extras}
         <span className="flex-1" />
         {model}
+        {meter}
         {!lock && settings.mic === "on" && (
-          <DeskDictate dictation={dictation} disabled={busy || disabled} />
+          <DeskDictate dictation={dictation} disabled={busy || disabled || Boolean(compacting)} />
         )}
         {busy ? (
           <button

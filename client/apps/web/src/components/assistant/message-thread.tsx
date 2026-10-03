@@ -34,6 +34,7 @@ import {
   AgentAvatar,
   AssistantEntry,
   DayDivider,
+  CompactionNote,
   DecisionNote,
   DeclinedTurn,
   PageContextChip,
@@ -291,6 +292,11 @@ export function MessageThread({
               <DeclinedTurn content={entry.message.content} sentAt={entry.message.createdAt} />
             ) : entry.kind === "refusal" ? (
               <RefusalNotice message={entry.message.content} />
+            ) : entry.kind === "compaction" ? (
+              <CompactionNote
+                summarized={entry.message.compaction?.summarized ?? 0}
+                auto={entry.message.compaction?.auto ?? false}
+              />
             ) : (
               <AssistantEntry
                 entry={entry}

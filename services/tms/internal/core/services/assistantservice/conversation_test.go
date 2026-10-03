@@ -31,6 +31,17 @@ type stubConversations struct {
 	count int
 	// tainted is every time the thread's taint was written.
 	tainted []repositories.MarkThreadTaintedRequest
+	// contexts is every time the thread's context use was written.
+	contexts []repositories.UpdateThreadContextRequest
+}
+
+func (s *stubConversations) UpdateThreadContext(
+	_ context.Context,
+	req repositories.UpdateThreadContextRequest,
+) error {
+	s.contexts = append(s.contexts, req)
+
+	return nil
 }
 
 func (s *stubConversations) MarkThreadTainted(

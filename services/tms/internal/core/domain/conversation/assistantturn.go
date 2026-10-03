@@ -56,24 +56,31 @@ const (
 	// AssistantTurnOriginScheduled is a run of a request the person scheduled
 	// in the conversation, asked on their behalf when its time came.
 	AssistantTurnOriginScheduled = AssistantTurnOrigin("Scheduled")
+	// AssistantTurnOriginCompaction is the conversation being summarized to
+	// free its context. It holds the conversation's one live slot like any
+	// reply, so nothing is asked while the history is being rewritten, and
+	// it is stopped the way a reply is.
+	AssistantTurnOriginCompaction = AssistantTurnOrigin("Compaction")
 )
 
-func (o AssistantTurnOrigin) IsValid() bool {
-	switch o {
-	case AssistantTurnOriginPerson, AssistantTurnOriginDecisionFollowUp,
-		AssistantTurnOriginScheduled:
-		return true
-	default:
-		return false
-	}
-}
-
-// AllAssistantTurnOrigins is every origin a turn may have.
+// AllAssistantTurnOrigins is every origin a turn may have, in the order they
+// were added.
 func AllAssistantTurnOrigins() []AssistantTurnOrigin {
 	return []AssistantTurnOrigin{
 		AssistantTurnOriginPerson,
 		AssistantTurnOriginDecisionFollowUp,
 		AssistantTurnOriginScheduled,
+		AssistantTurnOriginCompaction,
+	}
+}
+
+func (o AssistantTurnOrigin) IsValid() bool {
+	switch o {
+	case AssistantTurnOriginPerson, AssistantTurnOriginDecisionFollowUp,
+		AssistantTurnOriginScheduled, AssistantTurnOriginCompaction:
+		return true
+	default:
+		return false
 	}
 }
 

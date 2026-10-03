@@ -98,6 +98,10 @@ const changeCloseUnsavedTurn = "assistant-turn-close-unsaved"
 // began before it replay preparing as a regular activity.
 const changePrepareLocally = "assistant-turn-prepare-local"
 
+// changeAutoCompact compacts a conversation a turn left nearly full.
+// Executions that began before it replay without the step.
+const changeAutoCompact = "assistant-turn-auto-compact"
+
 // changeNotifyUnseenTurn tells the person who asked when their reply ended
 // with nobody reading it. Executions that began before it replay without the
 // step.
@@ -169,6 +173,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 		w.closeRecord(keep, payload, err)
 	}
 
+	w.compactIfFull(keep, stream, payload, &ending)
 	stream.Publish(keep, ending.Event)
 	stream.Close(keep)
 	w.notifyUnseen(keep, stream, finish, &ending)
@@ -336,4 +341,55 @@ func (w *Workflows) closeRecord(
 			"error", err.Error(),
 		)
 	}
+}
+
+// compactIfFull starts the conversation compacting itself when the turn left
+// it nearly full, and tells the reader which turn is doing it, so the composer
+// can show the compaction and follow it to its end.
+//
+// It starts once the turn's record is closed, since the compaction takes the
+// conversation's one live slot. If something else took the slot first, a
+// decision's follow-up most often, nothing starts: that turn's own ending
+// cues the compaction again.
+func (w *Workflows) compactIfFull(
+	ctx workflow.Context,
+	stream *agentflow.Stream,
+	payload *AssistantTurnPayload,
+	ending *TurnEnding,
+) {
+	if ending.Compact == nil {
+		return
+	}
+	if workflow.GetVersion(ctx, changeAutoCompact, workflow.DefaultVersion, 1) != 1 {
+		return
+	}
+
+	var a *Activities
+	var started StartedCompaction
+	err := workflow.ExecuteActivity(
+		workflow.WithActivityOptions(ctx, startCompactionOptions),
+		a.StartAutoCompactionActivity, payload,
+	).Get(ctx, &started)
+	if err != nil {
+		workflow.GetLogger(ctx).Warn("could not start compacting a full conversation",
+			"turnId", payload.TurnID.String(),
+			"error", err.Error(),
+		)
+		return
+	}
+	if started.TurnID.IsNil() {
+		return
+	}
+
+	stream.Publish(ctx, temporaltype.StreamItem{
+		Event: serviceports.AssistantEventCompactionStarted,
+		Data: serviceports.AssistantCompactionEvent{
+			TurnID:   started.TurnID,
+			ThreadID: payload.ThreadID,
+			Auto:     true,
+			Before:   ending.Compact.Before,
+			After:    ending.Compact.After,
+		},
+		At: workflow.Now(ctx).Unix(),
+	})
 }

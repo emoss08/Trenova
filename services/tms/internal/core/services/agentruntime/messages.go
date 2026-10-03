@@ -85,6 +85,9 @@ func replayHistory(
 	history []conversation.Message,
 	outcomes []serviceports.ProposalOutcome,
 ) (messages []serviceports.Message, shortened []string) {
+	// A compacted conversation is read from its latest summary, which stands
+	// in for everything before the turns it kept whole.
+	history = conversation.ReplayOrder(history)
 	messages = make([]serviceports.Message, 0, len(history)+1)
 	ledger := newProposalLedger(outcomes)
 
@@ -149,15 +152,27 @@ func replayHistory(
 			if msg.Refused {
 				continue
 			}
+			content := msg.Content
+			if msg.Compacted() {
+				content = compactionPreamble + content
+			}
 			messages = append(messages, serviceports.Message{
 				Role:    serviceports.RoleUser,
-				Content: msg.Content,
+				Content: content,
 			})
 		}
 	}
 
 	return messages, shortened
 }
+
+// compactionPreamble opens the summary of a compacted conversation as the
+// model reads it. The model is told what it is reading, and that whatever the
+// summary left out is gone from its view rather than settled, so it looks a
+// record up again instead of answering from a memory it does not have.
+const compactionPreamble = "[Summary of the conversation so far. The earlier messages were " +
+	"compacted to free room and are no longer in view; this summary stands in for them. " +
+	"Anything it does not mention, look up again rather than assume.]\n\n"
 
 // replayToolResult is a tool result as the model is sent it: the decision's
 // current wording for a proposal, and otherwise the stored result, shortened
@@ -223,9 +238,11 @@ func recentTurnStart(history []conversation.Message, turns int) int {
 	seen := 0
 	for idx := len(history) - 1; idx >= 0; idx-- {
 		// A decision note is the person's answer arriving as a message, not
-		// a turn of questions, so it does not push results out of the window.
+		// a turn of questions, so it does not push results out of the window;
+		// nor does a compaction summary, which nobody asked.
 		if history[idx].Role != conversation.RoleUser || history[idx].Refused ||
-			history[idx].Kind == conversation.MessageKindDecisionNote {
+			history[idx].Kind == conversation.MessageKindDecisionNote ||
+			history[idx].Kind == conversation.MessageKindCompaction {
 			continue
 		}
 		seen++

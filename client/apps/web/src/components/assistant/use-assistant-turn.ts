@@ -46,9 +46,21 @@ type PendingSend = { stopped: boolean };
  * The transient turn is cleared only after the refetch lands, so the reply
  * never blinks out and back in between "streamed" and "saved".
  */
-export function useAssistantTurn(threadId: string, getContext?: () => AssistantPageContext | null) {
+export function useAssistantTurn(
+  threadId: string,
+  getContext?: () => AssistantPageContext | null,
+  onConversationEvent?: (event: AssistantStreamEvent) => void,
+) {
   const t = useT();
   const queryClient = useQueryClient();
+  // What a turn says about the conversation rather than the reply — how
+  // full its context is, a compaction it set off — goes to whoever keeps
+  // that. The latest callback is read when an event arrives, so a turn
+  // followed across renders never calls a stale one.
+  const conversationEventRef = useRef(onConversationEvent);
+  useEffect(() => {
+    conversationEventRef.current = onConversationEvent;
+  }, [onConversationEvent]);
 
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -271,6 +283,10 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       setTurn(initial);
 
       const onEvent = (event: AssistantStreamEvent) => {
+        if (event.event === "context" || event.event === "compaction_started") {
+          conversationEventRef.current?.(event);
+          return;
+        }
         setTurn((state) => (state ? advanceTurn(state, event) : state));
         if (event.event === "done") {
           terminal = true;
@@ -377,12 +393,28 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       return;
     }
     const active = await activeTurn();
+    // A compaction is not a reply: it is handed to whoever shows it, which
+    // follows it on its own stream.
+    if (active?.origin === "Compaction") {
+      conversationEventRef.current?.({
+        event: "compaction_started",
+        data: {
+          turnId: active.id,
+          threadId,
+          auto: false,
+          before: 0,
+          after: 0,
+          autoCompactOff: false,
+        },
+      });
+      return;
+    }
     // A question sent while the lookup was out owns the view now.
     if (active === null || following() || startingRef.current !== null) {
       return;
     }
     await followActive(active);
-  }, [activeTurn, followActive, following]);
+  }, [activeTurn, followActive, following, threadId]);
 
   const send = useCallback(
     async (
@@ -426,7 +458,12 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
             useRealtimeStore.getState().connectionState === "connected",
           );
           const running = quiet ? null : await activeTurn();
-          if (running !== null && !following() && !pending.stopped) {
+          if (
+            running !== null &&
+            running.origin !== "Compaction" &&
+            !following() &&
+            !pending.stopped
+          ) {
             await followActive(running);
           }
         }
@@ -472,6 +509,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
                 const active = await activeTurn();
                 return active !== null &&
                   active.origin !== "DecisionFollowUp" &&
+                  active.origin !== "Compaction" &&
                   active.input === content
                   ? active.id
                   : null;

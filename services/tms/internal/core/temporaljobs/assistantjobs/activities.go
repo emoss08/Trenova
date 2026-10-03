@@ -76,6 +76,9 @@ type ActivitiesParams struct {
 	Trajectory    serviceports.AgentRunEventRecorder   `optional:"true"`
 	FollowUps     serviceports.DecisionFollowUpResumer `optional:"true"`
 	Metrics       *metrics.Registry                    `optional:"true"`
+	// Workflows starts the compaction a turn that filled its conversation
+	// sets off.
+	Workflows serviceports.WorkflowStarter `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -91,6 +94,7 @@ type Activities struct {
 	notifications replyNotifications
 	followUps     serviceports.DecisionFollowUpResumer
 	metrics       *metrics.Assistant
+	workflows     serviceports.WorkflowStarter
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -103,6 +107,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		trajectory: p.Trajectory,
 		followUps:  p.FollowUps,
 		metrics:    metrics.AssistantFrom(p.Metrics),
+		workflows:  p.Workflows,
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
@@ -407,9 +412,28 @@ func (a *Activities) finish(
 				Refused: result.Refused,
 				Result:  result,
 			},
-			Event: temporaltype.StreamItem{Event: serviceports.AssistantEventDone, Data: result},
+			Event:   temporaltype.StreamItem{Event: serviceports.AssistantEventDone, Data: result},
+			Compact: compactionCue(status, result),
 		}, nil, nil
 	}
+}
+
+// compactionCue is the cue to compact a conversation a turn answered, when it
+// compacts itself and the turn left it past conversation.AutoCompactShare.
+// Only an answered turn sets one off: a refusal added nothing worth room.
+func compactionCue(
+	status conversation.AssistantTurnStatus,
+	result *serviceports.SendMessageResult,
+) *CompactionCue {
+	if status != conversation.AssistantTurnStatusCompleted || result.Thread == nil {
+		return nil
+	}
+	usage := result.Thread.ContextUsage
+	if !result.Thread.CompactsItself() || !usage.NeedsCompaction() {
+		return nil
+	}
+
+	return &CompactionCue{Before: usage.Total(), After: usage.Total() - usage.Frees()}
 }
 
 func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput) {
