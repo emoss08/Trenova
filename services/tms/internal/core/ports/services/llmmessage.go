@@ -67,6 +67,9 @@ type ToolCall struct {
 	// to the provider that produced it, named by ProviderID.
 	ProviderData map[string]any `json:"providerData,omitempty"`
 	ProviderID   pulid.ID       `json:"providerId,omitempty"`
+	// Why is the step's rationale, lifted out of the arguments by the
+	// runtime; see agentruntime/rationale.go.
+	Why *conversation.StepRationale `json:"why,omitempty"`
 }
 
 // UserMessage is the common single-turn case.

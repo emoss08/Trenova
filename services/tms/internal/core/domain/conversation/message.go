@@ -176,6 +176,17 @@ type ToolCallRecord struct {
 	// signature; another provider would refuse the field itself.
 	ProviderData map[string]any `json:"providerData,omitempty"`
 	ProviderID   pulid.ID       `json:"providerId,omitempty"`
+	// Why is the model's own account of the step, shown under "Why this
+	// step?": what it looked at, why it chose this, and what it passed over.
+	Why *StepRationale `json:"why,omitempty"`
+}
+
+// StepRationale is why the model took one step. It comes from the model with
+// the call, in a short phrase each, and is shown as the model wrote it.
+type StepRationale struct {
+	Saw       string `json:"saw,omitempty"`
+	Because   string `json:"because,omitempty"`
+	InsteadOf string `json:"insteadOf,omitempty"`
 }
 
 func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {

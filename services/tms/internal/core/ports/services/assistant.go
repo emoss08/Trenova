@@ -504,6 +504,8 @@ type AssistantToolStartedEvent struct {
 	Name      string           `json:"name"`
 	Arguments map[string]any   `json:"arguments"`
 	Effect    agent.ToolEffect `json:"effect,omitempty"`
+	// Why is the model's reason for the step, when it gave one.
+	Why *conversation.StepRationale `json:"why,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`

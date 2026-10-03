@@ -436,11 +436,20 @@ export const saveAgentDefinitionRequestSchema = z.object({
   version: z.number().default(0),
 });
 
+/** Why the agent took a step, in its own words: what it saw, why, and what it passed over. */
+export const stepRationaleSchema = z.object({
+  saw: z.string().optional().default(""),
+  because: z.string().optional().default(""),
+  insteadOf: z.string().optional().default(""),
+});
+export type StepRationale = z.infer<typeof stepRationaleSchema>;
+
 export const toolCallRecordSchema = z.object({
   id: z.string(),
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()).nullish(),
   effect: optionalToolEffect,
+  why: stepRationaleSchema.nullish(),
 });
 
 /** One filter as a table carries it, in the shape the list tools take. */
@@ -1239,6 +1248,7 @@ export const assistantToolStartedEventSchema = z.object({
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()).nullish(),
   effect: optionalToolEffect,
+  why: stepRationaleSchema.nullish(),
   ...delegateScopeShape,
 });
 
