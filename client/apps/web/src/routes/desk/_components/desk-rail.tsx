@@ -14,7 +14,7 @@ import { deskThreadState, type DeskThreadState } from "./desk-thread-state";
 import { groupDeskThreadsByRecency, type DeskShelfKey } from "./desk-threads";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
-export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "thread";
+export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "thread" | "agent";
 
 /** How long a deleted row takes to slide out before it leaves the list. */
 const ROW_LEAVE_MS = 260;
@@ -90,6 +90,8 @@ export function DeskRail({
           ? "n:dec"
           : place === "memory"
             ? "n:memory"
+          : place === "agent"
+            ? "n:agent"
             : "n:today";
 
   useLayoutEffect(() => {

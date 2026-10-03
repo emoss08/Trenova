@@ -166,6 +166,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		call.Arguments = resolved
 	}
 	p.call = call
+	if outcome, refused := oversizedChange(req, call.Name, tool.ParamSchema(), call.Arguments); refused {
+		return outcome
+	}
 	tierParams := runToolParams(req, call.ID, call.Arguments)
 	decision := s.decideCall(ctx, agenttoolpolicy.DecideInput{
 		Policy:     policy,
@@ -175,6 +178,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Taint:      decisionTaint(p.taint, p.afterExternal),
 	})
 	tier, heldForExternal := afterExternalContent(decision.Tier, p.afterExternal)
+	tier, heldForHours := s.heldForBusinessHours(ctx, req, tier)
 	if tier != agent.TierAutoExecute {
 		if pinner, pins := tool.(serviceports.ToolProposalSelectionResolver); pins {
 			pinned, pErr := pinner.ResolveProposalSelection(
@@ -205,8 +209,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
 	}
+	if heldForHours {
+		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByBusinessHours)
+	}
 	source := decision.Source
-	if heldForExternal {
+	if heldForExternal || heldForHours {
 		source = agent.TierSourcePolicyDefault
 	}
 	stampAction(ctx, action, source, p.stepKey)
@@ -278,6 +285,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		if heldForExternal {
 			content += externalContentNote
+		}
+		if heldForHours {
+			content += businessHoursNote
 		}
 		if req.Definition.SimulationMode {
 			content += " This agent is in simulation: an approval will preview the change, not make it."

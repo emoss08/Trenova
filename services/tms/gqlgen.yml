@@ -2319,6 +2319,21 @@ models:
         resolver: true
       delegates:
         resolver: true
+  AgentCapabilityMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityMode
+  AgentCapabilityTool:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityTool
+  AgentCapabilityHandoff:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityHandoff
+  AgentCapabilityLimits:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityLimits
+  AgentCapabilities:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilities
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AccessMode

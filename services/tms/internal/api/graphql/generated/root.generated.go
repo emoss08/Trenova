@@ -1447,6 +1447,7 @@ type MutationResolver interface {
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
+	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
@@ -2088,6 +2089,7 @@ type QueryResolver interface {
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
+	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
 	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
@@ -6036,6 +6038,131 @@ extend type Mutation {
   setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
   "Replaces the agents a role is granted."
   setRoleAgentAccess(roleId: ID!, agentIds: [ID!]!): Role!
+}
+
+"""
+How an agent may use one tool, as its capabilities page says it: Allowed runs
+on its own, AskFirst waits for a person, Off is a tool the agent does not hold.
+"""
+enum AgentCapabilityMode {
+  Allowed
+  AskFirst
+  Off
+}
+
+"One tool on an agent's capabilities page."
+type AgentCapabilityTool {
+  "The tool's name, as the agent calls it."
+  key: String!
+  label: String!
+  "Whether the tool changes things rather than reading them."
+  write: Boolean!
+  mode: AgentCapabilityMode!
+  "The modes the tool may be given on this agent. A read is never AskFirst."
+  allowedModes: [AgentCapabilityMode!]!
+  "Why a mode is missing from allowedModes, such as \"Always asks · this can't be undone\"."
+  lockReason: String
+}
+
+"An agent this one hands work to, and which work."
+type AgentCapabilityHandoff {
+  agentId: ID!
+  name: String!
+  description: String!
+  icon: String!
+  accent: String!
+  template: String!
+  "What goes to it; its description when no topic was set."
+  topic: String!
+}
+
+"An agent's caps and where it stands against them."
+type AgentCapabilityLimits {
+  requestsToday: Int!
+  "0 for no daily cap."
+  dailyRequestLimit: Int!
+  dayResetsAt: Timestamp!
+  monthlySpentUsd: Decimal!
+  "Absent when there is no monthly budget."
+  monthlyBudgetUsd: Decimal
+  monthStart: Timestamp!
+  monthResetsAt: Timestamp!
+  "The most records one change may touch; a bigger batch is split and approved separately."
+  maxChangeItems: Int!
+  businessHoursOnly: Boolean!
+  "Minutes after midnight."
+  businessHoursStart: Int!
+  "Minutes after midnight, exclusive."
+  businessHoursEnd: Int!
+  "The zone the window is read in: the agent's own or the organization's."
+  businessHoursTimezone: String!
+}
+
+"""
+What an agent can do, for anyone who may use it: what it looks up and changes
+and how far each change may go on its own, who it hands work to, and its
+limits. canEdit says whether the reader may change it.
+"""
+type AgentCapabilities {
+  agentId: ID!
+  name: String!
+  description: String!
+  template: String!
+  icon: String!
+  accent: String!
+  systemKey: String!
+  "The model it answers with, by the name an administrator gave it."
+  model: String!
+  "Who set the agent up; empty when unknown."
+  setUpBy: String!
+  enabled: Boolean!
+  canEdit: Boolean!
+  version: Int!
+  readTools: [AgentCapabilityTool!]!
+  writeTools: [AgentCapabilityTool!]!
+  handoffs: [AgentCapabilityHandoff!]!
+  limits: AgentCapabilityLimits!
+}
+
+input AgentCapabilityToolInput {
+  key: String!
+  mode: AgentCapabilityMode!
+}
+
+input AgentDelegateTopicInput {
+  agentId: ID!
+  "Empty clears the topic."
+  topic: String!
+}
+
+"Changes to an agent's capabilities. Absent fields are left as they are."
+input UpdateAgentCapabilitiesInput {
+  "The version the page was read at."
+  version: Int!
+  enabled: Boolean
+  tools: [AgentCapabilityToolInput!]
+  dailyRequestLimit: Int
+  monthlyBudgetUsd: Decimal
+  clearMonthlyBudget: Boolean
+  maxChangeItems: Int
+  businessHoursOnly: Boolean
+  businessHoursStart: Int
+  businessHoursEnd: Int
+  businessHoursTimezone: String
+  delegateTopics: [AgentDelegateTopicInput!]
+}
+
+extend type Query {
+  "What an agent can do. Anyone who may use the agent may read it."
+  agentCapabilities(agentId: ID!): AgentCapabilities!
+}
+
+extend type Mutation {
+  "Changes what an agent can do. Needs permission to update agents."
+  updateAgentCapabilities(
+    agentId: ID!
+    input: UpdateAgentCapabilitiesInput!
+  ): AgentCapabilities!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."

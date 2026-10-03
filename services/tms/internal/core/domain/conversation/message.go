@@ -57,6 +57,10 @@ type Message struct {
 	// ScheduleID is the conversation schedule a Schedule message made. The
 	// schedule may since have been deleted; the card then says so.
 	ScheduleID pulid.ID `json:"scheduleId,omitempty" bun:"schedule_id,type:VARCHAR(100),nullzero"`
+	// Handoff is what a hand-off carried, on the card it left in the
+	// conversation handed off and on the brief that opens the new one. Nil
+	// on every other message.
+	Handoff *Handoff `json:"handoff,omitempty" bun:"handoff,type:JSONB,nullzero"`
 
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 

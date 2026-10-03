@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
 	"github.com/emoss08/trenova/internal/core/services/agentactivityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentbudgetservice"
+	"github.com/emoss08/trenova/internal/core/services/agentcapabilityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
@@ -49,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/approvalwindow"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/assistanthandoffservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/autheventservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
@@ -326,6 +328,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	accessorialchargeservice.New,
 	agentcontrolservice.New,
 	agentdefinitionservice.New,
+	agentcapabilityservice.New,
+	assistanthandoffservice.New,
 	func(s services.AgentDefinitionService) services.SystemAgentProvisioner { return s },
 	agentaccessservice.New,
 	agentsafetyservice.New,

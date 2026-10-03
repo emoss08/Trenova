@@ -698,6 +698,20 @@ export type AgentAutonomyTier =
   | 'AutoExecute'
   | 'Propose';
 
+/**
+ * How an agent may use one tool, as its capabilities page says it: Allowed runs
+ * on its own, AskFirst waits for a person, Off is a tool the agent does not hold.
+ */
+export type AgentCapabilityMode =
+  | 'Allowed'
+  | 'AskFirst'
+  | 'Off';
+
+export type AgentCapabilityToolInput = {
+  key: string;
+  mode: AgentCapabilityMode;
+};
+
 export type AgentContextProvider =
   | 'Clock'
   | 'Memory'
@@ -733,6 +747,12 @@ export type AgentDecisionType =
   | 'Accepted'
   | 'Modified'
   | 'Rejected';
+
+export type AgentDelegateTopicInput = {
+  agentId: string | number;
+  /** Empty clears the topic. */
+  topic: string;
+};
 
 /** Where a tool's work can be seen or felt. */
 export type AgentEgressClass =
@@ -6537,6 +6557,23 @@ export type UpdateAccountingSyncSettingsInput = {
   integrationType: AccountingSystem;
 };
 
+/** Changes to an agent's capabilities. Absent fields are left as they are. */
+export type UpdateAgentCapabilitiesInput = {
+  businessHoursEnd?: number | null | undefined;
+  businessHoursOnly?: boolean | null | undefined;
+  businessHoursStart?: number | null | undefined;
+  businessHoursTimezone?: string | null | undefined;
+  clearMonthlyBudget?: boolean | null | undefined;
+  dailyRequestLimit?: number | null | undefined;
+  delegateTopics?: Array<AgentDelegateTopicInput> | null | undefined;
+  enabled?: boolean | null | undefined;
+  maxChangeItems?: number | null | undefined;
+  monthlyBudgetUsd?: string | null | undefined;
+  tools?: Array<AgentCapabilityToolInput> | null | undefined;
+  /** The version the page was read at. */
+  version: number;
+};
+
 export type UpdateAgentEvalCaseInput = {
   expected?: unknown;
   /** Absent leaves the expiry alone; null clears it. */
@@ -8063,6 +8100,25 @@ export type VerifyAiAuditChainMutationVariables = Exact<{ [key: string]: never; 
 
 
 export type VerifyAiAuditChainMutation = { verifyAIAuditChain: { ' $fragmentRefs'?: { 'AiAuditChainStatusFieldsFragment': AiAuditChainStatusFieldsFragment } } };
+
+export type AgentCapabilityToolFieldsFragment = { key: string, label: string, write: boolean, mode: AgentCapabilityMode, allowedModes: Array<AgentCapabilityMode>, lockReason: string | null } & { ' $fragmentName'?: 'AgentCapabilityToolFieldsFragment' };
+
+export type AgentCapabilitiesFieldsFragment = { agentId: string, name: string, description: string, template: string, icon: string, accent: string, systemKey: string, model: string, setUpBy: string, enabled: boolean, canEdit: boolean, version: number, readTools: Array<{ ' $fragmentRefs'?: { 'AgentCapabilityToolFieldsFragment': AgentCapabilityToolFieldsFragment } }>, writeTools: Array<{ ' $fragmentRefs'?: { 'AgentCapabilityToolFieldsFragment': AgentCapabilityToolFieldsFragment } }>, handoffs: Array<{ agentId: string, name: string, description: string, icon: string, accent: string, template: string, topic: string }>, limits: { requestsToday: number, dailyRequestLimit: number, dayResetsAt: number, monthlySpentUsd: string, monthlyBudgetUsd: string | null, monthStart: number, monthResetsAt: number, maxChangeItems: number, businessHoursOnly: boolean, businessHoursStart: number, businessHoursEnd: number, businessHoursTimezone: string } } & { ' $fragmentName'?: 'AgentCapabilitiesFieldsFragment' };
+
+export type AgentCapabilitiesQueryVariables = Exact<{
+  agentId: string | number;
+}>;
+
+
+export type AgentCapabilitiesQuery = { agentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
+
+export type UpdateAgentCapabilitiesMutationVariables = Exact<{
+  agentId: string | number;
+  input: UpdateAgentCapabilitiesInput;
+}>;
+
+
+export type UpdateAgentCapabilitiesMutation = { updateAgentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
 
 export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
@@ -15877,6 +15933,68 @@ export const AiAuditExportFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AIAuditExportFields"}) as unknown as TypedDocumentString<AiAuditExportFieldsFragment, unknown>;
+export const AgentCapabilityToolFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentCapabilityToolFields on AgentCapabilityTool {
+  key
+  label
+  write
+  mode
+  allowedModes
+  lockReason
+}
+    `, {"fragmentName":"AgentCapabilityToolFields"}) as unknown as TypedDocumentString<AgentCapabilityToolFieldsFragment, unknown>;
+export const AgentCapabilitiesFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentCapabilitiesFields on AgentCapabilities {
+  agentId
+  name
+  description
+  template
+  icon
+  accent
+  systemKey
+  model
+  setUpBy
+  enabled
+  canEdit
+  version
+  readTools {
+    ...AgentCapabilityToolFields
+  }
+  writeTools {
+    ...AgentCapabilityToolFields
+  }
+  handoffs {
+    agentId
+    name
+    description
+    icon
+    accent
+    template
+    topic
+  }
+  limits {
+    requestsToday
+    dailyRequestLimit
+    dayResetsAt
+    monthlySpentUsd
+    monthlyBudgetUsd
+    monthStart
+    monthResetsAt
+    maxChangeItems
+    businessHoursOnly
+    businessHoursStart
+    businessHoursEnd
+    businessHoursTimezone
+  }
+}
+    fragment AgentCapabilityToolFields on AgentCapabilityTool {
+  key
+  label
+  write
+  mode
+  allowedModes
+  lockReason
+}`, {"fragmentName":"AgentCapabilitiesFields"}) as unknown as TypedDocumentString<AgentCapabilitiesFieldsFragment, unknown>;
 export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentControlFields on AgentControl {
   id
@@ -24436,6 +24554,8 @@ export const AiAuditExportDetailDocument = {"__meta__":{"kind":"query","name":"A
 export const RequestAiAuditExportDocument = {"__meta__":{"kind":"mutation","name":"RequestAIAuditExport","hash":"sha256:58b7441c924c34ef725b97617378507ee9fbc255c4807fa0a1c6728b3a686e3f"}} as unknown as TypedDocumentString<RequestAiAuditExportMutation, RequestAiAuditExportMutationVariables>;
 export const AiAuditExportDownloadDocument = {"__meta__":{"kind":"mutation","name":"AIAuditExportDownload","hash":"sha256:c2de785dfd66b796b3fe28d2540c3661146c4fb1ec351a765baa567758c6a80f"}} as unknown as TypedDocumentString<AiAuditExportDownloadMutation, AiAuditExportDownloadMutationVariables>;
 export const VerifyAiAuditChainDocument = {"__meta__":{"kind":"mutation","name":"VerifyAIAuditChain","hash":"sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5"}} as unknown as TypedDocumentString<VerifyAiAuditChainMutation, VerifyAiAuditChainMutationVariables>;
+export const AgentCapabilitiesDocument = {"__meta__":{"kind":"query","name":"AgentCapabilities","hash":"sha256:6f97bbb889d00e875d1c8ff495ac4845fb7f2f62b01781d09a9f93c96ac916cb"}} as unknown as TypedDocumentString<AgentCapabilitiesQuery, AgentCapabilitiesQueryVariables>;
+export const UpdateAgentCapabilitiesDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentCapabilities","hash":"sha256:3b7b2ebfc4e46941d7688ca51b50113dfb42b495c38fc637bc7e026dcd698a2b"}} as unknown as TypedDocumentString<UpdateAgentCapabilitiesMutation, UpdateAgentCapabilitiesMutationVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:bfd36ffb28b2d85c9f6720c07c230b726efa4fcf7d07537dad18faf7841447cc"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
 export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:3cb3858ecc09300046d55c8b9edb5b8b174e0076adc94f2c5f3309831b529d5a"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
 export const AiTrainingExportHistoryDocument = {"__meta__":{"kind":"query","name":"AITrainingExportHistory","hash":"sha256:01cd3c46644654237a5921cf3f7b335abb7d86a142049dcd571463c3667f6f0a"}} as unknown as TypedDocumentString<AiTrainingExportHistoryQuery, AiTrainingExportHistoryQueryVariables>;

@@ -31,6 +31,7 @@ import {
   conversationScheduleListSchema,
   conversationScheduleSchema,
   createdScheduleSchema,
+  handoffResultSchema,
   parseAssistantStreamEvent,
   saveAgentDefinitionRequestSchema,
   sendMessageResultSchema,
@@ -354,6 +355,23 @@ export class AssistantService {
   ) {
     const response = await api.post(`/assistant/threads/${id}/requests/`, { kind });
     return response as { sent: number };
+  }
+
+  /**
+   * Takes the conversation to another agent: a new conversation with it,
+   * opened with a summary, the pinned facts and the pinned artifacts, and a
+   * card here saying so.
+   */
+  public async handoffThread(
+    id: AssistantThread["id"],
+    agentDefinitionId: string,
+    facts: readonly string[] = [],
+  ) {
+    const response = await api.post(`/assistant/threads/${id}/handoff/`, {
+      agentDefinitionId,
+      facts,
+    });
+    return safeParse(handoffResultSchema, response, "Assistant Handoff");
   }
 
   public async deleteThread(id: AssistantThread["id"]) {

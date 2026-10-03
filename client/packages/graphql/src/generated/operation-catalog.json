@@ -1,6 +1,6 @@
 {
-  "operationCount": 971,
-  "fragmentCount": 276,
+  "operationCount": 973,
+  "fragmentCount": 278,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -966,6 +966,29 @@
       ],
       "usages": [],
       "sdl": "query AgentAccessPreview($input: AgentAccessPreviewInput!) {\n  agentAccessPreview(input: $input) {\n    accessMode\n    sensitiveTools\n    roles {\n      role {\n        ...AgentAccessRoleFields\n      }\n      coverage\n      missingResources\n      granted\n    }\n  }\n}\n\nfragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
+    },
+    {
+      "name": "AgentCapabilities",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/capabilities.graphql",
+      "hash": "sha256:6f97bbb889d00e875d1c8ff495ac4845fb7f2f62b01781d09a9f93c96ac916cb",
+      "rootFields": [
+        "agentCapabilities"
+      ],
+      "variables": [
+        {
+          "name": "agentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentCapabilitiesFields",
+        "AgentCapabilityToolFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentCapabilities($agentId: ID!) {\n  agentCapabilities(agentId: $agentId) {\n    ...AgentCapabilitiesFields\n  }\n}\n\nfragment AgentCapabilitiesFields on AgentCapabilities {\n  agentId\n  name\n  description\n  template\n  icon\n  accent\n  systemKey\n  model\n  setUpBy\n  enabled\n  canEdit\n  version\n  readTools {\n    ...AgentCapabilityToolFields\n  }\n  writeTools {\n    ...AgentCapabilityToolFields\n  }\n  handoffs {\n    agentId\n    name\n    description\n    icon\n    accent\n    template\n    topic\n  }\n  limits {\n    requestsToday\n    dailyRequestLimit\n    dayResetsAt\n    monthlySpentUsd\n    monthlyBudgetUsd\n    monthStart\n    monthResetsAt\n    maxChangeItems\n    businessHoursOnly\n    businessHoursStart\n    businessHoursEnd\n    businessHoursTimezone\n  }\n}\n\nfragment AgentCapabilityToolFields on AgentCapabilityTool {\n  key\n  label\n  write\n  mode\n  allowedModes\n  lockReason\n}"
     },
     {
       "name": "AgentChoices",
@@ -19305,6 +19328,34 @@
       "sdl": "mutation UpdateAccountingSyncSettings($input: UpdateAccountingSyncSettingsInput!) {\n  updateAccountingSyncSettings(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
+      "name": "UpdateAgentCapabilities",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/capabilities.graphql",
+      "hash": "sha256:3b7b2ebfc4e46941d7688ca51b50113dfb42b495c38fc637bc7e026dcd698a2b",
+      "rootFields": [
+        "updateAgentCapabilities"
+      ],
+      "variables": [
+        {
+          "name": "agentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "UpdateAgentCapabilitiesInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentCapabilitiesFields",
+        "AgentCapabilityToolFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateAgentCapabilities($agentId: ID!, $input: UpdateAgentCapabilitiesInput!) {\n  updateAgentCapabilities(agentId: $agentId, input: $input) {\n    ...AgentCapabilitiesFields\n  }\n}\n\nfragment AgentCapabilitiesFields on AgentCapabilities {\n  agentId\n  name\n  description\n  template\n  icon\n  accent\n  systemKey\n  model\n  setUpBy\n  enabled\n  canEdit\n  version\n  readTools {\n    ...AgentCapabilityToolFields\n  }\n  writeTools {\n    ...AgentCapabilityToolFields\n  }\n  handoffs {\n    agentId\n    name\n    description\n    icon\n    accent\n    template\n    topic\n  }\n  limits {\n    requestsToday\n    dailyRequestLimit\n    dayResetsAt\n    monthlySpentUsd\n    monthlyBudgetUsd\n    monthStart\n    monthResetsAt\n    maxChangeItems\n    businessHoursOnly\n    businessHoursStart\n    businessHoursEnd\n    businessHoursTimezone\n  }\n}\n\nfragment AgentCapabilityToolFields on AgentCapabilityTool {\n  key\n  label\n  write\n  mode\n  allowedModes\n  lockReason\n}"
+    },
+    {
       "name": "UpdateAgentControl",
       "kind": "mutation",
       "domain": "agent",
@@ -22650,6 +22701,34 @@
       ],
       "usages": [],
       "sdl": "fragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
+    },
+    {
+      "name": "AgentCapabilitiesFields",
+      "typeCondition": "AgentCapabilities",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/capabilities.graphql",
+      "fragments": [
+        "AgentCapabilityToolFields"
+      ],
+      "usedByOperations": [
+        "AgentCapabilities",
+        "UpdateAgentCapabilities"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentCapabilitiesFields on AgentCapabilities {\n  agentId\n  name\n  description\n  template\n  icon\n  accent\n  systemKey\n  model\n  setUpBy\n  enabled\n  canEdit\n  version\n  readTools {\n    ...AgentCapabilityToolFields\n  }\n  writeTools {\n    ...AgentCapabilityToolFields\n  }\n  handoffs {\n    agentId\n    name\n    description\n    icon\n    accent\n    template\n    topic\n  }\n  limits {\n    requestsToday\n    dailyRequestLimit\n    dayResetsAt\n    monthlySpentUsd\n    monthlyBudgetUsd\n    monthStart\n    monthResetsAt\n    maxChangeItems\n    businessHoursOnly\n    businessHoursStart\n    businessHoursEnd\n    businessHoursTimezone\n  }\n}\n\nfragment AgentCapabilityToolFields on AgentCapabilityTool {\n  key\n  label\n  write\n  mode\n  allowedModes\n  lockReason\n}"
+    },
+    {
+      "name": "AgentCapabilityToolFields",
+      "typeCondition": "AgentCapabilityTool",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/capabilities.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentCapabilities",
+        "UpdateAgentCapabilities"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentCapabilityToolFields on AgentCapabilityTool {\n  key\n  label\n  write\n  mode\n  allowedModes\n  lockReason\n}"
     },
     {
       "name": "AgentChoiceFields",
@@ -36320,6 +36399,72 @@
       ],
       "sdl": "input UpdateAccountingSyncSettingsInput {\n  \"\"\"\n  Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.\n  \"\"\"\n  autoSync: Boolean!\n  \"\"\"\n  Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.\n  \"\"\"\n  driverSettlements: Boolean!\n  \"\"\"\n  What happens to payments recorded in the accounting system. Left out, it stays as it is.\n  \"\"\"\n  inboundPayments: AccountingInboundPaymentPolicy\n  integrationType: AccountingSystem!\n}"
     },
+    "UpdateAgentCapabilitiesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "businessHoursEnd",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "businessHoursOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "businessHoursStart",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "businessHoursTimezone",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "clearMonthlyBudget",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "dailyRequestLimit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "delegateTopics",
+          "type": "[AgentDelegateTopicInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "maxChangeItems",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "monthlyBudgetUsd",
+          "type": "Decimal",
+          "defaultValue": null
+        },
+        {
+          "name": "tools",
+          "type": "[AgentCapabilityToolInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nChanges to an agent's capabilities. Absent fields are left as they are.\n\"\"\"\ninput UpdateAgentCapabilitiesInput {\n  businessHoursEnd: Int\n  businessHoursOnly: Boolean\n  businessHoursStart: Int\n  businessHoursTimezone: String\n  clearMonthlyBudget: Boolean\n  dailyRequestLimit: Int\n  delegateTopics: [AgentDelegateTopicInput!]\n  enabled: Boolean\n  maxChangeItems: Int\n  monthlyBudgetUsd: Decimal\n  tools: [AgentCapabilityToolInput!]\n  \"\"\"The version the page was read at.\"\"\"\n  version: Int!\n}"
+    },
     "UpdateAgentEvalCaseInput": {
       "kind": "input",
       "fields": [
@@ -41899,6 +42044,38 @@
       ],
       "sdl": "\"\"\"\nWhat happens to a payment recorded in the accounting system against documents Trenova sent.\n\"\"\"\nenum AccountingInboundPaymentPolicy {\n  \"\"\"\n  Payments that match Trenova are applied on their own; the rest wait for a person.\n  \"\"\"\n  Apply\n  \"\"\"Payments recorded there are not brought into Trenova.\"\"\"\n  Off\n  \"\"\"Each payment waits for a person to apply it in Trenova.\"\"\"\n  Propose\n}"
     },
+    "AgentDelegateTopicInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "agentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "topic",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentDelegateTopicInput {\n  agentId: ID!\n  \"\"\"Empty clears the topic.\"\"\"\n  topic: String!\n}"
+    },
+    "AgentCapabilityToolInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "key",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "mode",
+          "type": "AgentCapabilityMode!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentCapabilityToolInput {\n  key: String!\n  mode: AgentCapabilityMode!\n}"
+    },
     "PayPeriodFrequency": {
       "kind": "enum",
       "values": [
@@ -42838,6 +43015,15 @@
         }
       ],
       "sdl": "input ShipmentStopInput {\n  actualArrival: Timestamp\n  actualDeparture: Timestamp\n  addressLine: String\n  countDetentionOverride: Boolean\n  countLateOverride: Boolean\n  id: ID\n  locationId: ID!\n  pieces: Int\n  scheduleType: StopScheduleType = Open\n  scheduledWindowEnd: Timestamp\n  scheduledWindowStart: Timestamp = 0\n  sequence: Int = 0\n  shipmentMoveId: ID\n  status: StopStatus = New\n  type: StopType = Pickup\n  version: Int\n  weight: Int\n}"
+    },
+    "AgentCapabilityMode": {
+      "kind": "enum",
+      "values": [
+        "Allowed",
+        "AskFirst",
+        "Off"
+      ],
+      "sdl": "\"\"\"\nHow an agent may use one tool, as its capabilities page says it: Allowed runs\non its own, AskFirst waits for a person, Off is a tool the agent does not hold.\n\"\"\"\nenum AgentCapabilityMode {\n  Allowed\n  AskFirst\n  Off\n}"
     },
     "ReviewGoalStatus": {
       "kind": "enum",

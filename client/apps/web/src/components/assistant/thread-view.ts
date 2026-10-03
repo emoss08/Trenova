@@ -19,6 +19,7 @@ export type ToolExchange = {
 export type ThreadEntry =
   | { kind: "user"; message: AssistantMessage }
   | { kind: "decision"; message: AssistantMessage }
+  | { kind: "handoff"; message: AssistantMessage }
   | { kind: "declined"; message: AssistantMessage }
   | { kind: "refusal"; message: AssistantMessage }
   | { kind: "schedule"; message: AssistantMessage }
@@ -76,6 +77,9 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
       }
       case "decision":
         entries.push({ kind: "decision", message });
+        break;
+      case "handoff":
+        entries.push({ kind: "handoff", message });
         break;
       case "user":
         entries.push({ kind: "user", message });

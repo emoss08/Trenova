@@ -2479,6 +2479,101 @@ enum AgentAutonomyTier {
   Propose
 }
 
+"""
+What an agent can do, for anyone who may use it: what it looks up and changes
+and how far each change may go on its own, who it hands work to, and its
+limits. canEdit says whether the reader may change it.
+"""
+type AgentCapabilities {
+  accent: String!
+  agentId: ID!
+  canEdit: Boolean!
+  description: String!
+  enabled: Boolean!
+  handoffs: [AgentCapabilityHandoff!]!
+  icon: String!
+  limits: AgentCapabilityLimits!
+  """The model it answers with, by the name an administrator gave it."""
+  model: String!
+  name: String!
+  readTools: [AgentCapabilityTool!]!
+  """Who set the agent up; empty when unknown."""
+  setUpBy: String!
+  systemKey: String!
+  template: String!
+  version: Int!
+  writeTools: [AgentCapabilityTool!]!
+}
+
+"""An agent this one hands work to, and which work."""
+type AgentCapabilityHandoff {
+  accent: String!
+  agentId: ID!
+  description: String!
+  icon: String!
+  name: String!
+  template: String!
+  """What goes to it; its description when no topic was set."""
+  topic: String!
+}
+
+"""An agent's caps and where it stands against them."""
+type AgentCapabilityLimits {
+  """Minutes after midnight, exclusive."""
+  businessHoursEnd: Int!
+  businessHoursOnly: Boolean!
+  """Minutes after midnight."""
+  businessHoursStart: Int!
+  """The zone the window is read in: the agent's own or the organization's."""
+  businessHoursTimezone: String!
+  """0 for no daily cap."""
+  dailyRequestLimit: Int!
+  dayResetsAt: Timestamp!
+  """
+  The most records one change may touch; a bigger batch is split and approved separately.
+  """
+  maxChangeItems: Int!
+  monthResetsAt: Timestamp!
+  monthStart: Timestamp!
+  """Absent when there is no monthly budget."""
+  monthlyBudgetUsd: Decimal
+  monthlySpentUsd: Decimal!
+  requestsToday: Int!
+}
+
+"""
+How an agent may use one tool, as its capabilities page says it: Allowed runs
+on its own, AskFirst waits for a person, Off is a tool the agent does not hold.
+"""
+enum AgentCapabilityMode {
+  Allowed
+  AskFirst
+  Off
+}
+
+"""One tool on an agent's capabilities page."""
+type AgentCapabilityTool {
+  """
+  The modes the tool may be given on this agent. A read is never AskFirst.
+  """
+  allowedModes: [AgentCapabilityMode!]!
+  """The tool's name, as the agent calls it."""
+  key: String!
+  label: String!
+  """
+  Why a mode is missing from allowedModes, such as "Always asks · this can't be undone".
+  """
+  lockReason: String
+  mode: AgentCapabilityMode!
+  """Whether the tool changes things rather than reading them."""
+  write: Boolean!
+}
+
+input AgentCapabilityToolInput {
+  key: String!
+  mode: AgentCapabilityMode!
+}
+
 enum AgentContextProvider {
   Clock
   Memory
@@ -2719,6 +2814,12 @@ type AgentDefinitionConnection {
 type AgentDefinitionEdge {
   cursor: String!
   node: AgentDefinition!
+}
+
+input AgentDelegateTopicInput {
+  agentId: ID!
+  """Empty clears the topic."""
+  topic: String!
 }
 
 """Where a tool's work can be seen or felt."""
@@ -16533,6 +16634,8 @@ type Mutation {
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
   """Change how documents are sent once setup is complete."""
   updateAccountingSyncSettings(input: UpdateAccountingSyncSettingsInput!): AccountingConnection!
+  """Changes what an agent can do. Needs permission to update agents."""
+  updateAgentCapabilities(agentId: ID!, input: UpdateAgentCapabilitiesInput!): AgentCapabilities!
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
@@ -18419,6 +18522,8 @@ type Query {
   and changes nothing.
   """
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+  """What an agent can do. Anyone who may use the agent may read it."""
+  agentCapabilities(agentId: ID!): AgentCapabilities!
   agentControl: AgentControl!
   agentDefinition(id: ID!): AgentDefinition
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
@@ -24202,6 +24307,25 @@ input UpdateAccountingSyncSettingsInput {
   """
   inboundPayments: AccountingInboundPaymentPolicy
   integrationType: AccountingSystem!
+}
+
+"""
+Changes to an agent's capabilities. Absent fields are left as they are.
+"""
+input UpdateAgentCapabilitiesInput {
+  businessHoursEnd: Int
+  businessHoursOnly: Boolean
+  businessHoursStart: Int
+  businessHoursTimezone: String
+  clearMonthlyBudget: Boolean
+  dailyRequestLimit: Int
+  delegateTopics: [AgentDelegateTopicInput!]
+  enabled: Boolean
+  maxChangeItems: Int
+  monthlyBudgetUsd: Decimal
+  tools: [AgentCapabilityToolInput!]
+  """The version the page was read at."""
+  version: Int!
 }
 
 input UpdateAgentEvalCaseInput {

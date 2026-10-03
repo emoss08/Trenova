@@ -1,3 +1,4 @@
+import { fetchAgentCapabilities } from "@/lib/graphql/agent-capabilities";
 import {
   fetchAgentChoicesByIds,
   fetchAgentDefinitions,
@@ -104,6 +105,11 @@ export const assistant = createQueryKeys("assistant", {
   myAgents: () => ({
     queryKey: ["my-agents"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchMyAgents({ signal }),
+  }),
+  // What an agent can do, for its capabilities page.
+  agentCapabilities: (agentId: string) => ({
+    queryKey: ["agent-capabilities", agentId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentCapabilities(agentId, { signal }),
   }),
   // Paged: read by useAgentChoices as an infinite query, one cursor at a time.
   agentChoices: (query: AgentChoiceQuery, source: AgentChoiceSource, pageSize: number) => ({

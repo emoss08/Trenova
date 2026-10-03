@@ -213,6 +213,7 @@ type Params struct {
 	LateChargeService            services.LateChargeService
 	AgentRunService              services.AgentRunService
 	AgentDefinitionService       services.AgentDefinitionService
+	AgentCapabilityService       services.AgentCapabilityService
 	AIProviderService            services.AIProviderService
 	AIUsageService               services.AIUsageService
 	AIRetrievalStatusService     services.AIRetrievalStatusService
@@ -388,6 +389,7 @@ type Services struct {
 	LateChargeService            services.LateChargeService
 	AgentRunService              services.AgentRunService
 	AgentDefinitionService       services.AgentDefinitionService
+	AgentCapabilityService       services.AgentCapabilityService
 	AiProviderService            services.AIProviderService
 	AiUsageService               services.AIUsageService
 	AiRetrievalStatusService     services.AIRetrievalStatusService
@@ -569,6 +571,7 @@ func newServices(p *Params) *Services {
 		LateChargeService:            p.LateChargeService,
 		AgentRunService:              p.AgentRunService,
 		AgentDefinitionService:       p.AgentDefinitionService,
+		AgentCapabilityService:       p.AgentCapabilityService,
 		AiProviderService:            p.AIProviderService,
 		AiUsageService:               p.AIUsageService,
 		AiRetrievalStatusService:     p.AIRetrievalStatusService,

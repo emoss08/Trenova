@@ -57,6 +57,20 @@ type SaveAgentDefinitionRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+// PatchAgentDefinitionRequest changes some of an agent's settings and leaves
+// the rest as stored. Edit makes the change on a copy of the stored agent,
+// which is then validated and saved like any other update. Version, when
+// set, is the version the change was made against; a save over a newer one
+// is refused rather than undoing it.
+type PatchAgentDefinitionRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	Version    int64
+	// Comment is what the audit entry says was done.
+	Comment string
+	Edit    func(definition *agentdefinition.Definition) error
+}
+
 type AgentTemplateDescriptor struct {
 	Template             agentdefinition.Template          `json:"template"`
 	Label                string                            `json:"label"`
@@ -142,6 +156,11 @@ type AgentDefinitionService interface {
 	Update(
 		ctx context.Context,
 		req *SaveAgentDefinitionRequest,
+		actor *RequestActor,
+	) (*agentdefinition.Definition, error)
+	Patch(
+		ctx context.Context,
+		req *PatchAgentDefinitionRequest,
 		actor *RequestActor,
 	) (*agentdefinition.Definition, error)
 	Delete(

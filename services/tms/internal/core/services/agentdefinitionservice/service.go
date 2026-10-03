@@ -107,6 +107,9 @@ func (s *Service) Create(
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
 	apply(definition, req)
+	if by := actorUser(actor); by.IsNotNil() {
+		definition.CreatedByID = &by
+	}
 
 	if err := s.validate(ctx, definition, nil); err != nil {
 		return nil, err
@@ -435,6 +438,10 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	if req.DelegateIDs != nil {
 		definition.DelegateIDs = slices.Clone(*req.DelegateIDs)
 	}
+	// A form that picks a switched-off tool again, or drops a delegate, has
+	// the last word over what the capabilities page remembered about them.
+	definition.ForgetReheldTools()
+	definition.PruneDelegateTopics()
 	definition.ApplyDefaults()
 
 	if definition.TriggerMode != agentdefinition.TriggerScheduled {

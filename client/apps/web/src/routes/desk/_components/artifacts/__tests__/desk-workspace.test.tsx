@@ -155,7 +155,7 @@ describe("DeskWorkspace", () => {
     const { onClose } = renderWorkspace();
 
     expect(await screen.findByText("No artifacts yet")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Hide artifacts" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalled();
   });
 

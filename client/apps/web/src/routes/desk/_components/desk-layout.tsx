@@ -97,8 +97,17 @@ function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
   if (pathname.startsWith("/desk/memory")) {
     return "memory";
   }
+  if (agentPageId(pathname) !== null) {
+    return "agent";
+  }
 
   return "today";
+}
+
+/** The agent whose capabilities page is open, from `/desk/agents/:agentId`. */
+function agentPageId(pathname: string): string | null {
+  const match = /^\/desk\/agents\/([^/]+)/u.exec(pathname);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 /**
@@ -181,6 +190,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     ? (agentsById.get(activeThread.agentDefinitionId) ?? null)
     : null;
   const place = placeFor(pathname, activeThreadId);
+  const pageAgentId = agentPageId(pathname);
+  const pageAgent = pageAgentId !== null ? (agentsById.get(pageAgentId) ?? null) : null;
 
   // Leaving a conversation leaves its turn behind with it. Adjusted during
   // render rather than in an effect, so the first frame of a new conversation
@@ -451,7 +462,15 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             onOpenRail={() => setRailOpen(true)}
             place={place}
             thread={activeThread}
-            agent={activeAgent}
+            agent={place === "agent" ? pageAgent : activeAgent}
+            agents={agents}
+            onOpenAgent={() => {
+              if (activeThread && activeAgent) {
+                void navigate(
+                  `/desk/agents/${encodeURIComponent(activeAgent.id)}?from=${encodeURIComponent(activeThread.id)}`,
+                );
+              }
+            }}
             workspaceOpen={workspaceOpen}
             artifactCount={artifactCount}
             newArtifact={newArtifact}

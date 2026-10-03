@@ -26,6 +26,14 @@ type StartThreadRequest struct {
 	// when it was opened from one.
 	SubjectType agent.SubjectType
 	SubjectID   pulid.ID
+	// HandedFromThreadID is the conversation a hand-off started this one
+	// from, and Taint the outside content that conversation had read, which
+	// the summary carried over may repeat.
+	HandedFromThreadID pulid.ID
+	Taint              *agent.RunTaint
+	TaintedAt          *int64
+	// PinnedFacts are the facts the conversation opens keeping in mind.
+	PinnedFacts []string
 }
 
 // UpdateThreadRequest changes what a person may change about their own

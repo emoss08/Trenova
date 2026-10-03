@@ -1,45 +1,51 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { DeskIcon } from "../desk-icons";
+import { cn } from "@trenova/shared/lib/utils";
+import { ArtIcon, DeskArtKindIcon, type DeskArtKind } from "./desk-art-kinds";
+
+const STACK: readonly DeskArtKind[] = ["report", "record", "table"];
 
 /**
- * The workspace before a conversation has made anything: a small stack of
- * blank cards, what will land here and what can be done with it, and the
- * shortcut that brings the panel back.
+ * The workspace before a conversation has made anything: three blank cards
+ * fanned out, each marked with a kind of artifact, what will land here and
+ * what can be done with it, and the shortcut that brings the panel back.
  */
 export function DeskArtifactsEmpty({ onClose }: { onClose: () => void }) {
   const t = useT();
 
   return (
     <div className="dk-axe" data-slot="artifacts-empty">
-      <button
-        type="button"
-        className="dk-axe-x"
-        title={t("Hide artifacts")}
-        aria-label={t("Hide artifacts")}
-        onClick={onClose}
-      >
-        <DeskIcon name="x" size={12} stroke={2} />
-      </button>
-      <div className="dk-axe-in">
-        <div className="dk-axe-art" aria-hidden>
-          <span className="dk-axe-c dk-l" />
-          <span className="dk-axe-c dk-r" />
-          <span className="dk-axe-c dk-f">
-            <span className="dk-axe-ic">
-              <DeskIcon name="layout" size={13} stroke={1.8} />
+      <div className="dk-axe-top">
+        <button
+          type="button"
+          className="dk-ax-ib"
+          title={t("Close")}
+          aria-label={t("Close")}
+          onClick={onClose}
+        >
+          <ArtIcon name="x" size={13} stroke={2.2} />
+        </button>
+      </div>
+      <div className="dk-axe-c">
+        <div className="dk-axe-stack" aria-hidden>
+          {STACK.map((kind) => (
+            <span key={kind}>
+              <span className={cn("dk-ax-ki", `dk-k-${kind}`)}>
+                <DeskArtKindIcon kind={kind} size={14} />
+              </span>
+              <i />
+              <i />
             </span>
-            <i />
-            <i />
-          </span>
+          ))}
         </div>
-        <b className="dk-axe-t">{t("No artifacts yet")}</b>
-        <p className="dk-axe-p">
+        <b>{t("No artifacts yet")}</b>
+        <p>
           {t(
             "When the agent pulls a table, opens a record or drafts an email, it lands here so you can check it, pin it or export it.",
           )}
         </p>
         <span className="dk-axe-k">
-          <span className="dk-kbd">⌘J</span> {t("opens this panel")}
+          <span className="dk-kbd">⌘J</span>
+          {t("opens this panel")}
         </span>
       </div>
     </div>

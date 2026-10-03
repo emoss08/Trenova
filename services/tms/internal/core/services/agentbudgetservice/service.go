@@ -220,6 +220,21 @@ func (s *Service) Status(
 	return status, nil
 }
 
+func (s *Service) WithinBusinessHours(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+) bool {
+	if !definition.BusinessHoursOnly {
+		return true
+	}
+
+	return definition.WithinBusinessHours(time.Unix(s.now(), 0), s.Timezone(ctx, definition))
+}
+
+func (s *Service) Timezone(ctx context.Context, definition *agentdefinition.Definition) string {
+	return s.zones.Timezone(ctx, tenantOf(definition))
+}
+
 type budgetWindows struct {
 	monthStart int64
 	nextMonth  int64

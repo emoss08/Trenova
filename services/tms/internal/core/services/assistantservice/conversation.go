@@ -74,15 +74,19 @@ func (s *Service) StartThread(
 	}
 
 	thread := &conversation.Thread{
-		OrganizationID:    req.TenantInfo.OrgID,
-		BusinessUnitID:    req.TenantInfo.BuID,
-		UserID:            actor.UserID,
-		AgentDefinitionID: definition.ID,
-		Title:             strings.TrimSpace(req.Title),
-		Status:            conversation.ThreadStatusActive,
-		Origin:            origin,
-		SubjectType:       req.SubjectType,
-		SubjectID:         req.SubjectID,
+		OrganizationID:     req.TenantInfo.OrgID,
+		BusinessUnitID:     req.TenantInfo.BuID,
+		UserID:             actor.UserID,
+		AgentDefinitionID:  definition.ID,
+		Title:              strings.TrimSpace(req.Title),
+		Status:             conversation.ThreadStatusActive,
+		Origin:             origin,
+		SubjectType:        req.SubjectType,
+		SubjectID:          req.SubjectID,
+		HandedFromThreadID: req.HandedFromThreadID,
+		Taint:              req.Taint,
+		TaintedAt:          req.TaintedAt,
+		PinnedFacts:        conversation.NormalizePinnedFacts(req.PinnedFacts),
 	}
 
 	multiErr := errortypes.NewMultiError()

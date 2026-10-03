@@ -5,6 +5,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { DeskAgentTile } from "./desk-agent-tile";
 import { DeskIcon } from "./desk-icons";
 import type { DeskPlace } from "./desk-rail";
+import { DeskHandoffMenu } from "./handoff/desk-handoff-menu";
 
 /**
  * The strip across the top of the Desk. In a conversation it names the agent
@@ -15,6 +16,8 @@ export function DeskTopBar({
   place,
   thread,
   agent,
+  agents,
+  onOpenAgent,
   workspaceOpen,
   artifactCount,
   newArtifact,
@@ -26,7 +29,12 @@ export function DeskTopBar({
 }: {
   place: DeskPlace;
   thread: AssistantThread | null;
+  /** The conversation's agent, or on an agent's page that agent. */
   agent: AgentChoice | null;
+  /** Every agent the person may use, for handing the conversation to one. */
+  agents: readonly AgentChoice[];
+  /** Opens the page saying what the conversation's agent can do. */
+  onOpenAgent: () => void;
   workspaceOpen: boolean;
   artifactCount: number;
   /** Something landed in the workspace while it was folded away. */
@@ -59,9 +67,27 @@ export function DeskTopBar({
         {inThread ? (
           <>
             <DeskAgentTile agent={agent} size="xs" className="dk-ttl-at" />
-            <span className="dk-ttl-a">{agent?.name ?? t("Agent unavailable")}</span>
+            {agent ? (
+              <button
+                type="button"
+                className="dk-ttl-a dk-ttl-ag"
+                title={t("What this agent can do")}
+                onClick={onOpenAgent}
+              >
+                {agent.name}
+              </button>
+            ) : (
+              <span className="dk-ttl-a">{t("Agent unavailable")}</span>
+            )}
             <span className="dk-ttl-sl">/</span>
             <b>{thread.title || t("Untitled conversation")}</b>
+          </>
+        ) : place === "agent" ? (
+          <>
+            <DeskAgentTile agent={agent} size="xs" className="dk-ttl-at" />
+            <b>{agent?.name ?? t("Agent")}</b>
+            <span className="dk-ttl-sl">/</span>
+            <span className="dk-ttl-a">{t("What it can do")}</span>
           </>
         ) : (
           <b>
@@ -97,6 +123,18 @@ export function DeskTopBar({
           >
             <DeskIcon name="pin" size={14} />
           </button>
+          <DeskHandoffMenu threadId={thread.id} agent={agent} agents={agents} />
+          {agent && (
+            <button
+              type="button"
+              className="dk-ib"
+              title={t("What this agent can do")}
+              aria-label={t("What this agent can do")}
+              onClick={onOpenAgent}
+            >
+              <DeskIcon name="shield" size={14} />
+            </button>
+          )}
           <button
             type="button"
             className={cn("dk-wsb", workspaceOpen && "dk-on")}

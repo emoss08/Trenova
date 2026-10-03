@@ -166,6 +166,12 @@ const PATHS = {
     </>
   ),
   edit: <path d="M5 19h4L19 9l-4-4L5 15zM13.5 6.5l4 4" />,
+  handoff: (
+    <>
+      <path d="M4 12h12M12 7l5 5-5 5" />
+      <path d="M20 5v14" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type DeskIconName = keyof typeof PATHS;

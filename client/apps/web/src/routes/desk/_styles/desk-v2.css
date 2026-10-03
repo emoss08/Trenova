@@ -12065,137 +12065,83 @@
 
 /* workspace empty state */
 .dk-axe {
-  position: relative;
-  flex: 1;
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: var(--dsk-card);
-}
-.dk-axe-x {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 7px;
-  color: var(--dsk-subtle);
-  transition:
-    background 120ms,
-    color 120ms;
-}
-.dk-axe-x:hover {
-  background: var(--dsk-hover);
-  color: var(--dsk-fg);
-}
-.dk-axe-in {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  max-width: 300px;
-  animation: dk-axein 520ms var(--dk-settle) both;
+  height: 100%;
 }
-.dk-axe-art {
-  position: relative;
-  width: 184px;
-  height: 110px;
-  margin-bottom: 26px;
+.dk-axe-top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 10px 0;
 }
 .dk-axe-c {
-  position: absolute;
-  border-radius: 12px;
-  background: var(--dsk-raised);
-  box-shadow: 0 0 0 1px var(--dsk-b-sub);
-}
-.dk-axe-c.dk-l,
-.dk-axe-c.dk-r {
-  display: block;
-  top: 12px;
-  width: 120px;
-  height: 86px;
-  background: color-mix(in srgb, var(--dsk-raised) 70%, var(--dsk-card));
-}
-.dk-axe-c.dk-l {
-  left: 4px;
-  transform: rotate(-6deg);
-  animation: dk-axel 640ms var(--dk-spring) 80ms both;
-}
-.dk-axe-c.dk-r {
-  right: 4px;
-  transform: rotate(6deg);
-  animation: dk-axer 640ms var(--dk-spring) 80ms both;
-}
-.dk-axe-c.dk-l::before,
-.dk-axe-c.dk-r::before {
-  content: "";
-  position: absolute;
-  top: 44px;
-  left: 16px;
-  width: 40%;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--dsk-b-sub);
-}
-.dk-axe-c.dk-r::before {
-  left: auto;
-  right: 16px;
-}
-.dk-axe-c.dk-f {
-  left: 26px;
-  top: 0;
-  width: 132px;
-  height: 92px;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
-  padding: 14px 12px 0;
-  background: var(--dsk-raised);
-  box-shadow:
-    0 0 0 1px var(--dsk-b),
-    var(--dsk-lift);
+  justify-content: center;
+  gap: 6px;
+  padding: 0 36px 72px;
+  text-align: center;
 }
-.dk-axe-c.dk-f i {
-  display: block;
-  align-self: stretch;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--dsk-b-sub);
-}
-.dk-axe-c.dk-f i:last-child {
-  width: 58%;
-  align-self: flex-start;
-}
-.dk-axe-ic {
-  color: var(--dsk-blue-fg);
-  margin-bottom: 6px;
-  display: grid;
-  place-items: center;
-}
-.dk-axe-t {
+.dk-axe-c > b {
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--dsk-fg);
 }
-.dk-axe-p {
-  margin-top: 10px;
+.dk-axe-c > p {
+  margin: 0;
+  max-width: 300px;
   font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--dsk-muted);
+  line-height: 1.55;
+  color: var(--dsk-subtle);
+  text-wrap: pretty;
 }
 .dk-axe-k {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 16px;
-  font-size: 11.5px;
+  margin-top: 10px;
+  font-size: 11px;
   color: var(--dsk-subtle);
+}
+.dk-axe-stack {
+  position: relative;
+  width: 132px;
+  height: 92px;
+  margin-bottom: 22px;
+}
+.dk-axe-stack > span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px;
+  border: 1px dashed var(--dsk-b-strong);
+  border-radius: 12px;
+  background: var(--dsk-raised);
+}
+.dk-axe-stack > span:nth-child(1) {
+  transform: translate(-22px, 6px) rotate(-9deg);
+  opacity: 0.55;
+}
+.dk-axe-stack > span:nth-child(2) {
+  transform: translate(22px, 3px) rotate(7deg);
+  opacity: 0.75;
+}
+.dk-axe-stack > span:nth-child(3) {
+  border-style: solid;
+  border-color: var(--dsk-b-sub);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.25);
+}
+.dk-axe-stack i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+}
+.dk-axe-stack i:last-child {
+  width: 60%;
 }
 @keyframes dk-axein {
   from {
@@ -12215,16 +12161,6 @@
   to {
     opacity: 1;
     transform: rotate(-6deg);
-  }
-}
-@keyframes dk-axer {
-  from {
-    opacity: 0;
-    transform: rotate(0) translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(6deg);
   }
 }
 .dk-panel {
@@ -14640,7 +14576,7 @@ h3.dk-dx-b {
   border-top: 1px solid var(--dsk-b-sub);
 }
 .dk-dx-table {
-  margin: 4px 0 12px;
+  margin: 4px 0 6px;
   font: 12.5px var(--font-sans);
 }
 .dk-dx-table table {

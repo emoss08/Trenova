@@ -45,12 +45,20 @@ const (
 	// it stands in for, and the thread shows it as the line where the
 	// conversation was compacted.
 	MessageKindCompaction = MessageKind("Compaction")
+	// MessageKindHandoff marks, in the conversation a person handed off, that
+	// they took it to another agent and what went with it. The conversation
+	// shows it as a card; the model is never sent it.
+	MessageKindHandoff = MessageKind("Handoff")
+	// MessageKindHandoffBrief opens the conversation a hand-off started: the
+	// summary, pinned facts and pinned artifacts carried over. It is sent to
+	// the model like a person's message, and shown as a note.
+	MessageKindHandoffBrief = MessageKind("HandoffBrief")
 )
 
 func (k MessageKind) IsValid() bool {
 	switch k {
 	case MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated,
-		MessageKindSchedule, MessageKindCompaction:
+		MessageKindSchedule, MessageKindCompaction, MessageKindHandoff, MessageKindHandoffBrief:
 		return true
 	default:
 		return false
@@ -66,13 +74,15 @@ func AllMessageKinds() []MessageKind {
 		MessageKindDelegated,
 		MessageKindSchedule,
 		MessageKindCompaction,
+		MessageKindHandoff,
+		MessageKindHandoffBrief,
 	}
 }
 
 // ModelHiddenKinds are the kinds a conversation keeps and never replays to
 // the model.
 func ModelHiddenKinds() []MessageKind {
-	return []MessageKind{MessageKindDelegated, MessageKindSchedule}
+	return []MessageKind{MessageKindDelegated, MessageKindSchedule, MessageKindHandoff}
 }
 
 // ThreadStatus is a conversation's lifecycle.

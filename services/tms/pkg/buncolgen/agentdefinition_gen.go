@@ -87,6 +87,14 @@ var DefinitionColumns = struct {
 	PreferredProviderID    Column // "preferred_provider_id" → qualified: "agdef.preferred_provider_id"
 	SystemKey              Column // "system_key" → qualified: "agdef.system_key"
 	DelegateIDs            Column // "delegate_ids" → qualified: "agdef.delegate_ids"
+	DelegateTopics         Column // "delegate_topics" → qualified: "agdef.delegate_topics"
+	DisabledToolNames      Column // "disabled_tool_names" → qualified: "agdef.disabled_tool_names"
+	MaxChangeItems         Column // "max_change_items" → qualified: "agdef.max_change_items"
+	BusinessHoursOnly      Column // "business_hours_only" → qualified: "agdef.business_hours_only"
+	BusinessHoursStart     Column // "business_hours_start" → qualified: "agdef.business_hours_start"
+	BusinessHoursEnd       Column // "business_hours_end" → qualified: "agdef.business_hours_end"
+	BusinessHoursTimezone  Column // "business_hours_timezone" → qualified: "agdef.business_hours_timezone"
+	CreatedByID            Column // "created_by_id" → qualified: "agdef.created_by_id"
 	AccessMode             Column // "access_mode" → qualified: "agdef.access_mode"
 	LastRunAt              Column // "last_run_at" → qualified: "agdef.last_run_at"
 	NextRunAt              Column // "next_run_at" → qualified: "agdef.next_run_at"
@@ -132,6 +140,14 @@ var DefinitionColumns = struct {
 	PreferredProviderID:    NewColumn("preferred_provider_id", "agdef"),
 	SystemKey:              NewColumn("system_key", "agdef"),
 	DelegateIDs:            NewColumn("delegate_ids", "agdef"),
+	DelegateTopics:         NewColumn("delegate_topics", "agdef"),
+	DisabledToolNames:      NewColumn("disabled_tool_names", "agdef"),
+	MaxChangeItems:         NewColumn("max_change_items", "agdef"),
+	BusinessHoursOnly:      NewColumn("business_hours_only", "agdef"),
+	BusinessHoursStart:     NewColumn("business_hours_start", "agdef"),
+	BusinessHoursEnd:       NewColumn("business_hours_end", "agdef"),
+	BusinessHoursTimezone:  NewColumn("business_hours_timezone", "agdef"),
+	CreatedByID:            NewColumn("created_by_id", "agdef"),
 	AccessMode:             NewColumn("access_mode", "agdef"),
 	LastRunAt:              NewColumn("last_run_at", "agdef"),
 	NextRunAt:              NewColumn("next_run_at", "agdef"),
@@ -183,6 +199,14 @@ var DefinitionFieldMap = map[string]string{
 	"preferredProviderId":    "preferred_provider_id",
 	"systemKey":              "system_key",
 	"delegateIds":            "delegate_ids",
+	"delegateTopics":         "delegate_topics",
+	"disabledToolNames":      "disabled_tool_names",
+	"maxChangeItems":         "max_change_items",
+	"businessHoursOnly":      "business_hours_only",
+	"businessHoursStart":     "business_hours_start",
+	"businessHoursEnd":       "business_hours_end",
+	"businessHoursTimezone":  "business_hours_timezone",
+	"createdById":            "created_by_id",
 	"accessMode":             "access_mode",
 	"lastRunAt":              "last_run_at",
 	"nextRunAt":              "next_run_at",
@@ -232,6 +256,14 @@ var DefinitionInsertableColumns = []string{
 	"preferred_provider_id",
 	"system_key",
 	"delegate_ids",
+	"delegate_topics",
+	"disabled_tool_names",
+	"max_change_items",
+	"business_hours_only",
+	"business_hours_start",
+	"business_hours_end",
+	"business_hours_timezone",
+	"created_by_id",
 	"access_mode",
 	"last_run_at",
 	"next_run_at",
@@ -341,6 +373,14 @@ var DefinitionFilter = struct {
 	PreferredProviderID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
 	SystemKey              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "systemKey" → DB: "system_key"
 	DelegateIDs            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateIds" → DB: "delegate_ids"
+	DelegateTopics         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateTopics" → DB: "delegate_topics"
+	DisabledToolNames      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disabledToolNames" → DB: "disabled_tool_names"
+	MaxChangeItems         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxChangeItems" → DB: "max_change_items"
+	BusinessHoursOnly      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessHoursOnly" → DB: "business_hours_only"
+	BusinessHoursStart     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessHoursStart" → DB: "business_hours_start"
+	BusinessHoursEnd       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessHoursEnd" → DB: "business_hours_end"
+	BusinessHoursTimezone  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessHoursTimezone" → DB: "business_hours_timezone"
+	CreatedByID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
 	AccessMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessMode" → DB: "access_mode"
 	LastRunAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunAt" → DB: "last_run_at"
 	NextRunAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "nextRunAt" → DB: "next_run_at"
@@ -461,6 +501,30 @@ var DefinitionFilter = struct {
 	},
 	DelegateIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("delegateIds", op, value)
+	},
+	DelegateTopics: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("delegateTopics", op, value)
+	},
+	DisabledToolNames: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("disabledToolNames", op, value)
+	},
+	MaxChangeItems: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxChangeItems", op, value)
+	},
+	BusinessHoursOnly: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessHoursOnly", op, value)
+	},
+	BusinessHoursStart: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessHoursStart", op, value)
+	},
+	BusinessHoursEnd: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessHoursEnd", op, value)
+	},
+	BusinessHoursTimezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessHoursTimezone", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdById", op, value)
 	},
 	AccessMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("accessMode", op, value)

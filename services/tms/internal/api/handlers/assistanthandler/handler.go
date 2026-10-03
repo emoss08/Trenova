@@ -30,6 +30,7 @@ type Params struct {
 	Turns                *assistantturnservice.Service
 	Workflows            serviceports.WorkflowStarter
 	Schedules            *conversationscheduleservice.Service
+	Handoffs             serviceports.AssistantHandoffService `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -40,6 +41,7 @@ type Handler struct {
 	turns     *assistantturnservice.Service
 	workflows serviceports.WorkflowStarter
 	schedules scheduleService
+	handoffs  serviceports.AssistantHandoffService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -50,6 +52,7 @@ func New(p Params) *Handler {
 		service:   p.Service,
 		turns:     p.Turns,
 		workflows: p.Workflows,
+		handoffs:  p.Handoffs,
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
@@ -108,6 +111,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/threads/:threadID/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.deleteThread,
+	)
+	// Handing a conversation to another agent starts a conversation, so it
+	// needs what starting one needs.
+	api.POST(
+		"/threads/:threadID/handoff/",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.handoff,
 	)
 	api.POST(
 		"/threads/:threadID/read/",

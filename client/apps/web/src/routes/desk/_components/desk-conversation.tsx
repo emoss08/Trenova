@@ -51,6 +51,7 @@ import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
 import { DeskApprovalCard, DeskApprovedCard } from "./conversation/desk-approval-card";
 import { DeskUndoBar, useUndoWindow } from "./conversation/desk-undo-bar";
 import { DeskFactsBar } from "./composer/desk-facts";
+import { DeskHandoffCard } from "./handoff/desk-handoff-card";
 import { useDeskSetting } from "@/stores/desk-settings-store";
 import { DeskConfetti } from "./conversation/desk-confetti";
 import {
@@ -896,6 +897,23 @@ export function DeskConversation({
                       }
                       if (entry.kind === "decision") {
                         return null;
+                      }
+                      if (entry.kind === "handoff") {
+                        const carried = entry.message.handoff;
+                        return carried ? (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="event"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskHandoffCard
+                              handoff={carried}
+                              incoming={entry.message.kind === "HandoffBrief"}
+                              time={turnTime(entry.message.createdAt, timezone, t)}
+                              agentsById={desk.agentsById}
+                            />
+                          </DeskRow>
+                        ) : null;
                       }
                       const failure = entry.message.failure;
                       if (failure) {

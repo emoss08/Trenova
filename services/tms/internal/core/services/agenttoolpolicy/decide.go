@@ -19,6 +19,9 @@ const (
 	HeldByTainted           = agent.HeldByTaintKey
 	HeldByToolTier          = "tool_tier"
 	HeldByPersonalExemption = "personal_exemption"
+	// HeldByBusinessHours marks a write held for a person because the agent
+	// may only change things on its own in business hours, and it was not.
+	HeldByBusinessHours = "business_hours"
 )
 
 type DecideInput struct {

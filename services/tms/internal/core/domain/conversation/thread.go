@@ -86,6 +86,9 @@ type Thread struct {
 	// conversation, however it was made, starts with it on.
 	ContextUsage   *ContextUsage `json:"contextUsage,omitempty" bun:"context_usage,type:JSONB,nullzero"`
 	AutoCompactOff bool          `json:"autoCompactOff"         bun:"auto_compact_off,type:BOOLEAN,notnull,default:false"`
+	// HandedFromThreadID is the conversation this one was handed off from,
+	// empty for one a person started.
+	HandedFromThreadID pulid.ID `json:"handedFromThreadId,omitempty" bun:"handed_from_thread_id,type:VARCHAR(100),nullzero"`
 
 	Taint     *agent.RunTaint `json:"taint,omitempty"     bun:"taint,type:JSONB,nullzero"`
 	TaintedAt *int64          `json:"taintedAt,omitempty" bun:"tainted_at,type:BIGINT,nullzero"`

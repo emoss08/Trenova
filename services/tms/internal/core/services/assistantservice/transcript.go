@@ -378,6 +378,15 @@ func writeTranscriptMessage(
 
 		return
 	}
+	// The brief that opens a handed-off conversation is the application's
+	// words to the agent, not the person's, so it reads as a note.
+	if m.Kind == conversation.MessageKindHandoffBrief && m.Handoff != nil {
+		fmt.Fprintf(b, "_Handed over from %s · %s_\n\n", m.Handoff.FromAgentName,
+			transcriptTime(m.CreatedAt))
+		writeText(b, m.Handoff.Summary)
+
+		return
+	}
 
 	switch m.Role {
 	case conversation.RoleUser:

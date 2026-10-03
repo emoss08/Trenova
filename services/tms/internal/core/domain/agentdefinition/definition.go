@@ -117,6 +117,35 @@ type Definition struct {
 	// hold. Each delegate works with its own tools, tiers, ceiling and budget,
 	// as the same person, and never delegates further.
 	DelegateIDs []pulid.ID `json:"delegateIds" bun:"delegate_ids,type:TEXT[],array,nullzero"`
+	// DelegateTopics names, per delegate id, the questions that go to that
+	// agent ("Pay rates, people records"), so a person reading what an agent
+	// does sees why it hands work on. A delegate without one is described by
+	// its own description.
+	DelegateTopics map[string]string `json:"delegateTopics" bun:"delegate_topics,type:JSONB,nullzero"`
+
+	// DisabledToolNames are tools switched off from the agent's capabilities
+	// page. Switching a tool off removes it from ToolNames, which is the
+	// grant; it is listed here only so the page can still offer it back.
+	DisabledToolNames []string `json:"disabledToolNames" bun:"disabled_tool_names,type:TEXT[],array,nullzero"`
+
+	// MaxChangeItems is the most records one change by the agent may touch.
+	// A bigger batch is refused with an instruction to split it, so each part
+	// is proposed and approved on its own.
+	MaxChangeItems int `json:"maxChangeItems" bun:"max_change_items,type:INTEGER,notnull,default:500"`
+
+	// BusinessHoursOnly keeps the agent from making changes on its own
+	// outside the window BusinessHoursStart to BusinessHoursEnd (minutes
+	// after midnight) in BusinessHoursTimezone, or the organization's zone
+	// when that is empty. Outside the window a change is held as a proposal
+	// for a person instead of running.
+	BusinessHoursOnly     bool   `json:"businessHoursOnly"     bun:"business_hours_only,type:BOOLEAN,notnull,default:false"`
+	BusinessHoursStart    int    `json:"businessHoursStart"    bun:"business_hours_start,type:INTEGER,notnull,default:420"`
+	BusinessHoursEnd      int    `json:"businessHoursEnd"      bun:"business_hours_end,type:INTEGER,notnull,default:1080"`
+	BusinessHoursTimezone string `json:"businessHoursTimezone" bun:"business_hours_timezone,type:VARCHAR(100),nullzero"`
+
+	// CreatedByID is the person who set the agent up; nil for the agents the
+	// platform provisions and for those made before it was kept.
+	CreatedByID *pulid.ID `json:"createdById,omitempty" bun:"created_by_id,type:VARCHAR(100),nullzero"`
 
 	// AccessMode is who may use the agent among the people who may use the
 	// assistant: everyone, or only the roles granted it. Only the agent
@@ -209,6 +238,7 @@ func (d *Definition) ApplyDefaults() {
 	if d.AccessMode == "" {
 		d.AccessMode = AccessEveryone
 	}
+	d.applyCapabilityDefaults()
 }
 
 func (d *Definition) EffectiveTier(tool string, toolTier agent.AutonomyTier) agent.AutonomyTier {
@@ -401,6 +431,7 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 	d.validateMemoryBudget(multiErr)
 	d.validateDelegates(multiErr)
 	d.validateAccess(multiErr)
+	d.validateCapabilities(multiErr)
 }
 
 // Delegates reports whether the agent may hand work to another agent at all:

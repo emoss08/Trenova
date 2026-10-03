@@ -2056,6 +2056,13 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "agents/:agentId",
+                async lazy() {
+                  const { DeskAgentCapabilitiesPage } = await import("@/routes/desk/agent-page");
+                  return { Component: DeskAgentCapabilitiesPage };
+                },
+              },
+              {
                 path: "watchtower",
                 loader: createPermissionLoader(Resource.Watchtower, Operation.Read),
                 async lazy() {

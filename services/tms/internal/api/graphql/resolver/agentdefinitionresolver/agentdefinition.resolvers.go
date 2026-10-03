@@ -294,3 +294,37 @@ func (r *QueryResolver) AgentAccessPreview(ctx context.Context, input gqlmodel.A
 
 	return accessPreviewToModel(suggestion), nil
 }
+
+func (r *MutationResolver) UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := capabilitiesUpdate(agentID, &input)
+	if err != nil {
+		return nil, err
+	}
+	req.TenantInfo = base.TenantInfo(authCtx)
+
+	return r.AgentCapabilityService.Update(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error) {
+	// Anyone who may use the assistant may ask; the service then refuses an
+	// agent the reader may not use.
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentCapabilityService.Get(ctx, &services.GetAgentCapabilitiesRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		AgentID:    id,
+	}, actorutil.FromAuthContext(authCtx))
+}

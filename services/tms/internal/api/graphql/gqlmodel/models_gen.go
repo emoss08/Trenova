@@ -372,6 +372,11 @@ type AgentAudienceSuggestion struct {
 	SensitiveTools []string `json:"sensitiveTools"`
 }
 
+type AgentCapabilityToolInput struct {
+	Key  string                       `json:"key"`
+	Mode services.AgentCapabilityMode `json:"mode"`
+}
+
 type AgentControlInput struct {
 	ShadowMode bool `json:"shadowMode"`
 	// Absent leaves the organization's earned autonomy switch as it is.
@@ -395,6 +400,12 @@ type AgentDefinitionConnection struct {
 type AgentDefinitionEdge struct {
 	Node   *agentdefinition.Definition `json:"node"`
 	Cursor string                      `json:"cursor"`
+}
+
+type AgentDelegateTopicInput struct {
+	AgentID string `json:"agentId"`
+	// Empty clears the topic.
+	Topic string `json:"topic"`
 }
 
 // A case as it was created, or the case that already asked the same thing.
@@ -8518,6 +8529,23 @@ type UpdateAccountingSyncSettingsInput struct {
 	DriverSettlements bool `json:"driverSettlements"`
 	// What happens to payments recorded in the accounting system. Left out, it stays as it is.
 	InboundPayments *accountingsync.InboundPaymentPolicy `json:"inboundPayments,omitempty"`
+}
+
+// Changes to an agent's capabilities. Absent fields are left as they are.
+type UpdateAgentCapabilitiesInput struct {
+	// The version the page was read at.
+	Version               int                         `json:"version"`
+	Enabled               *bool                       `json:"enabled,omitempty"`
+	Tools                 []*AgentCapabilityToolInput `json:"tools,omitempty"`
+	DailyRequestLimit     *int                        `json:"dailyRequestLimit,omitempty"`
+	MonthlyBudgetUsd      *string                     `json:"monthlyBudgetUsd,omitempty"`
+	ClearMonthlyBudget    *bool                       `json:"clearMonthlyBudget,omitempty"`
+	MaxChangeItems        *int                        `json:"maxChangeItems,omitempty"`
+	BusinessHoursOnly     *bool                       `json:"businessHoursOnly,omitempty"`
+	BusinessHoursStart    *int                        `json:"businessHoursStart,omitempty"`
+	BusinessHoursEnd      *int                        `json:"businessHoursEnd,omitempty"`
+	BusinessHoursTimezone *string                     `json:"businessHoursTimezone,omitempty"`
+	DelegateTopics        []*AgentDelegateTopicInput  `json:"delegateTopics,omitempty"`
 }
 
 type UpdateAgentEvalCaseInput struct {

@@ -64,6 +64,8 @@ export const messageKindSchema = z.enum([
   "Delegated",
   "Schedule",
   "Compaction",
+  "Handoff",
+  "HandoffBrief",
 ]);
 
 /**
@@ -798,6 +800,40 @@ export const savedMemorySchema = z.object({
   pending: z.boolean().default(false),
 });
 
+/** A pinned artifact a hand-off carried: the copy in the new conversation and its source. */
+export const handoffArtifactSchema = z.object({
+  id: z.string(),
+  sourceId: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+  kind: z.string().optional().default(""),
+});
+
+/**
+ * A conversation a person took to another agent, and what went with it. Set
+ * on the Handoff card left where it was handed off and on the HandoffBrief
+ * that opens the new conversation.
+ */
+export const handoffSchema = z.object({
+  fromThreadId: z.string(),
+  toThreadId: z.string(),
+  fromAgentId: z.string().optional().default(""),
+  fromAgentName: z.string().optional().default(""),
+  toAgentId: z.string().optional().default(""),
+  toAgentName: z.string().optional().default(""),
+  summary: z.string().optional().default(""),
+  facts: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  artifacts: z
+    .array(handoffArtifactSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  at: z.number().optional().default(0),
+});
+
+export type AssistantHandoff = z.infer<typeof handoffSchema>;
+
 export const assistantMessageSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -831,6 +867,8 @@ export const assistantMessageSchema = z.object({
    * before it was kept, whose account is read back out of `content`.
    */
   delegateReport: assistantDelegateFinishedEventSchema.nullish().catch(null),
+  /** On a Handoff or HandoffBrief message: what the hand-off carried. */
+  handoff: handoffSchema.nullish().catch(null),
   content: z.string().optional().default(""),
   /** On a Compaction message: what the summary stands in for. */
   compaction: compactionRecordSchema.nullish().catch(null),
@@ -933,6 +971,9 @@ export const assistantThreadSchema = z.object({
   contextUsage: contextUsageSchema.nullish().catch(null),
   /** The conversation no longer compacts itself on nearing a full context. */
   autoCompactOff: z.boolean().optional(),
+
+  /** The conversation this one was handed off from. */
+  handedFromThreadId: z.string().nullish(),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -1682,3 +1723,10 @@ export type ProposalHold = z.infer<typeof proposalHoldSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;
 export type PlanStatus = z.infer<typeof planStatusSchema>;
 export type PlanDecision = z.infer<typeof planDecisionSchema>;
+
+export const handoffResultSchema = z.object({
+  thread: assistantThreadSchema,
+  message: assistantMessageSchema.nullish(),
+});
+
+export type HandoffResult = z.infer<typeof handoffResultSchema>;

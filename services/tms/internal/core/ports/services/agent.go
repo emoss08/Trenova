@@ -406,6 +406,12 @@ type AgentBudgetService interface {
 	// CheckTool says whether the agent may execute the tool once more today.
 	CheckTool(ctx context.Context, req CheckToolBudgetRequest) (BudgetRefusal, error)
 	Status(ctx context.Context, definition *agentdefinition.Definition) (*AgentBudgetStatus, error)
+	// WithinBusinessHours says whether the agent may make a change on its
+	// own now, reading its business-hours window in its own zone or the
+	// organization's. Always true while the rule is off.
+	WithinBusinessHours(ctx context.Context, definition *agentdefinition.Definition) bool
+	// Timezone is the organization's zone, empty when it cannot be read.
+	Timezone(ctx context.Context, definition *agentdefinition.Definition) string
 }
 
 // AgentActivityPublisher tells connected clients that an agent record

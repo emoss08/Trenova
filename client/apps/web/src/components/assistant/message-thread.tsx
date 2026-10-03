@@ -4,6 +4,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type {
   AssistantArtifact,
   AssistantArtifactEvent,
+  AssistantMessage,
   AssistantPageContext,
   AssistantThread,
 } from "@/types/assistant";
@@ -297,6 +298,8 @@ export function MessageThread({
                 summarized={entry.message.compaction?.summarized ?? 0}
                 auto={entry.message.compaction?.auto ?? false}
               />
+            ) : entry.kind === "handoff" ? (
+              <HandoffLine message={entry.message} />
             ) : (
               <AssistantEntry
                 entry={entry}
@@ -719,4 +722,20 @@ function ThreadLengthNotice({
       )}
     </div>
   );
+}
+
+/**
+ * A hand-off as the panel shows it: one quiet line. The Desk draws the full
+ * card; here it only has to say the conversation went somewhere, or came
+ * from somewhere.
+ */
+function HandoffLine({ message }: { message: AssistantMessage }) {
+  const t = useT();
+  const handoff = message.handoff;
+  const text =
+    message.kind === "HandoffBrief"
+      ? t("Handed over from {0}", handoff?.fromAgentName || t("another agent"))
+      : t("Handed off to {0}", handoff?.toAgentName || t("another agent"));
+
+  return <p className="px-1 text-xs text-muted-foreground">{text}</p>;
 }
