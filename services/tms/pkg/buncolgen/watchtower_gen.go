@@ -196,6 +196,8 @@ var ItemColumns = struct {
 	EventKind      Column // "event_kind" → qualified: "wti.event_kind"
 	Path           Column // "path" → qualified: "wti.path"
 	OccurredAt     Column // "occurred_at" → qualified: "wti.occurred_at"
+	DueAt          Column // "due_at" → qualified: "wti.due_at"
+	DueLabel       Column // "due_label" → qualified: "wti.due_label"
 	ResolvedAt     Column // "resolved_at" → qualified: "wti.resolved_at"
 	Version        Column // "version" → qualified: "wti.version"
 	CreatedAt      Column // "created_at" → qualified: "wti.created_at"
@@ -215,6 +217,8 @@ var ItemColumns = struct {
 	EventKind:      NewColumn("event_kind", "wti"),
 	Path:           NewColumn("path", "wti"),
 	OccurredAt:     NewColumn("occurred_at", "wti"),
+	DueAt:          NewColumn("due_at", "wti"),
+	DueLabel:       NewColumn("due_label", "wti"),
 	ResolvedAt:     NewColumn("resolved_at", "wti"),
 	Version:        NewColumn("version", "wti"),
 	CreatedAt:      NewColumn("created_at", "wti"),
@@ -240,6 +244,8 @@ var ItemFieldMap = map[string]string{
 	"eventKind":      "event_kind",
 	"path":           "path",
 	"occurredAt":     "occurred_at",
+	"dueAt":          "due_at",
+	"dueLabel":       "due_label",
 	"resolvedAt":     "resolved_at",
 	"version":        "version",
 	"createdAt":      "created_at",
@@ -262,6 +268,8 @@ var ItemInsertableColumns = []string{
 	"event_kind",
 	"path",
 	"occurred_at",
+	"due_at",
+	"due_label",
 	"resolved_at",
 	"version",
 	"created_at",
@@ -331,6 +339,8 @@ var ItemFilter = struct {
 	EventKind      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventKind" → DB: "event_kind"
 	Path           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "path" → DB: "path"
 	OccurredAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "occurredAt" → DB: "occurred_at"
+	DueAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueAt" → DB: "due_at"
+	DueLabel       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueLabel" → DB: "due_label"
 	ResolvedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedAt" → DB: "resolved_at"
 	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -374,6 +384,12 @@ var ItemFilter = struct {
 	},
 	OccurredAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("occurredAt", op, value)
+	},
+	DueAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dueAt", op, value)
+	},
+	DueLabel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dueLabel", op, value)
 	},
 	ResolvedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("resolvedAt", op, value)

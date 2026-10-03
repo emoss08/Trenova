@@ -1806,6 +1806,7 @@ type MutationResolver interface {
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
+	SnoozeWatchtowerItem(ctx context.Context, id string, until int) (*watchtower.Item, error)
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
 	CreateWorkerPTO(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	UpdateWorkerPTO(ctx context.Context, input gqlmodel.UpdateWorkerPTOInput) (*worker.WorkerPTO, error)
@@ -26734,6 +26735,14 @@ type WatchtowerItem {
   "An application path that opens the source record; blank when the source has no page of its own."
   path: String!
   occurredAt: Timestamp!
+  "When the item stops being something a person can still head off; absent when its source has no deadline."
+  dueAt: Timestamp
+  "What happens at dueAt, in a few words: Move starts, Medical card expires."
+  dueLabel: String!
+  "The newest agent run on the item's record, when it began once the item was open or is still going."
+  activeRun: AgentRun
+  "An agent that takes this kind of event, when one does."
+  suggestedAgent: AgentDefinition
   "When the source closed; absent while the item is still open."
   resolvedAt: Timestamp
   "Whether this reader had already been shown the item, from their own cursor."
@@ -26818,6 +26827,8 @@ extend type Mutation {
   dismissWatchtowerItem(id: ID!): WatchtowerItem!
   "Hands an item to an agent, or to whoever subscribes to its event."
   handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
+  "Puts an item aside for this reader until a moment, at most 30 days out. Nobody else's feed changes."
+  snoozeWatchtowerItem(id: ID!, until: Timestamp!): WatchtowerItem!
 }
 `, BuiltIn: false},
 	{Name: "../schema/worker.graphqls", Input: `enum WorkerType {

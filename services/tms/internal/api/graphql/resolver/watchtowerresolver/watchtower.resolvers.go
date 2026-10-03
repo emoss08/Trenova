@@ -191,3 +191,25 @@ func (r *WatchtowerItemResolver) EventKind(ctx context.Context, obj *watchtower.
 func (r *WatchtowerItemResolver) KindLabel(ctx context.Context, obj *watchtower.Item) (string, error) {
 	return obj.SourceKind.Label(), nil
 }
+
+func (r *MutationResolver) SnoozeWatchtowerItem(ctx context.Context, id string, until int) (*watchtower.Item, error) {
+	// A snooze changes only what this reader sees, so reading the tower is
+	// enough to do it.
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerService.Snooze(
+		ctx,
+		base.TenantInfo(authCtx),
+		itemID,
+		int64(until),
+		actorutil.FromAuthContext(authCtx),
+	)
+}

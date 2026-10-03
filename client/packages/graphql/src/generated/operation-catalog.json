@@ -1,5 +1,5 @@
 {
-  "operationCount": 960,
+  "operationCount": 961,
   "fragmentCount": 274,
   "operations": [
     {
@@ -8256,7 +8256,7 @@
       "kind": "mutation",
       "domain": "watchtower",
       "sourceFile": "src/operations/watchtower/watchtower.graphql",
-      "hash": "sha256:a4d52c1f24091bec9e7b5e7bd5c3de38363d559b903c74333c452e2f4331fbf6",
+      "hash": "sha256:0805c9d9c97b61f3f739d8c7d31419343bbcf5bc57b392432575629a379b554d",
       "rootFields": [
         "dismissWatchtowerItem"
       ],
@@ -8271,7 +8271,7 @@
         "WatchtowerItemFields"
       ],
       "usages": [],
-      "sdl": "mutation DismissWatchtowerItem($id: ID!) {\n  dismissWatchtowerItem(id: $id) {\n    ...WatchtowerItemFields\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
+      "sdl": "mutation DismissWatchtowerItem($id: ID!) {\n  dismissWatchtowerItem(id: $id) {\n    ...WatchtowerItemFields\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n  dueAt\n  dueLabel\n  activeRun {\n    id\n    status\n    summary\n    createdAt\n    completedAt\n    definition {\n      id\n      name\n      icon\n      accent\n      template\n    }\n  }\n  suggestedAgent {\n    id\n    name\n    description\n    icon\n    accent\n    template\n  }\n}"
     },
     {
       "name": "DispatchAssignmentPreview",
@@ -10735,7 +10735,7 @@
       "kind": "mutation",
       "domain": "watchtower",
       "sourceFile": "src/operations/watchtower/watchtower.graphql",
-      "hash": "sha256:49824f70ee0a28ce5164f83c692d2a33d019e4baa4f4b5d179dfda66fb2d7069",
+      "hash": "sha256:ae7b6e1db0c94c1c460dd67b906551891ec38de8ad28101e5fa4ab24145b6969",
       "rootFields": [
         "handOffWatchtowerItem"
       ],
@@ -10755,7 +10755,7 @@
         "WatchtowerItemFields"
       ],
       "usages": [],
-      "sdl": "mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {\n  handOffWatchtowerItem(id: $id, input: $input) {\n    item {\n      ...WatchtowerItemFields\n    }\n    run {\n      id\n      status\n    }\n    subscribers {\n      id\n      name\n      icon\n      accent\n      template\n    }\n    candidates {\n      id\n      name\n      icon\n      accent\n      template\n    }\n    templates\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
+      "sdl": "mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {\n  handOffWatchtowerItem(id: $id, input: $input) {\n    item {\n      ...WatchtowerItemFields\n    }\n    run {\n      id\n      status\n    }\n    subscribers {\n      id\n      name\n      icon\n      accent\n      template\n    }\n    candidates {\n      id\n      name\n      icon\n      accent\n      template\n    }\n    templates\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n  dueAt\n  dueLabel\n  activeRun {\n    id\n    status\n    summary\n    createdAt\n    completedAt\n    definition {\n      id\n      name\n      icon\n      accent\n      template\n    }\n  }\n  suggestedAgent {\n    id\n    name\n    description\n    icon\n    accent\n    template\n  }\n}"
     },
     {
       "name": "HazardousMaterialTable",
@@ -17961,6 +17961,33 @@
       "sdl": "mutation SkipWorkerChecklistItem($input: WorkerChecklistItemActionInput!) {\n  skipWorkerChecklistItem(input: $input) {\n    ...WorkerChecklistFields\n  }\n}\n\nfragment WorkerChecklistFields on WorkerChecklist {\n  id\n  workerId\n  templateId\n  name\n  kind\n  status\n  startedAt\n  dueAt\n  completedAt\n  cancelledAt\n  cancelReason\n  sourceEventId\n  startedById\n  version\n  createdAt\n  updatedAt\n  startedBy {\n    id\n    name\n  }\n  progress {\n    total\n    settled\n    requiredTotal\n    requiredDone\n    overdue\n    percent\n    complete\n  }\n  items {\n    id\n    checklistId\n    label\n    description\n    kind\n    required\n    owner\n    dueAt\n    overdue\n    credentialTypeId\n    documentTypeId\n    status\n    completedById\n    completedAt\n    autoCompleted\n    note\n    evidenceDocumentId\n    evidenceCredentialId\n    sortOrder\n    version\n    completedBy {\n      id\n      name\n    }\n    evidenceDocument {\n      id\n      originalName\n      fileType\n    }\n    evidenceCredential {\n      id\n      number\n      expiresAt\n    }\n    credentialType {\n      id\n      code\n      name\n    }\n  }\n}"
     },
     {
+      "name": "SnoozeWatchtowerItem",
+      "kind": "mutation",
+      "domain": "watchtower",
+      "sourceFile": "src/operations/watchtower/watchtower.graphql",
+      "hash": "sha256:5c5d7ed5758e221cf14c3fa2adf82e9bb538c3b8a576165ca7688e7dc5dc683d",
+      "rootFields": [
+        "snoozeWatchtowerItem"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "until",
+          "type": "Timestamp!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "WatchtowerItemFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SnoozeWatchtowerItem($id: ID!, $until: Timestamp!) {\n  snoozeWatchtowerItem(id: $id, until: $until) {\n    ...WatchtowerItemFields\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n  dueAt\n  dueLabel\n  activeRun {\n    id\n    status\n    summary\n    createdAt\n    completedAt\n    definition {\n      id\n      name\n      icon\n      accent\n      template\n    }\n  }\n  suggestedAgent {\n    id\n    name\n    description\n    icon\n    accent\n    template\n  }\n}"
+    },
+    {
       "name": "StageFuelPurchaseImport",
       "kind": "mutation",
       "domain": "fuel-purchase-import",
@@ -21027,7 +21054,7 @@
       "kind": "query",
       "domain": "watchtower",
       "sourceFile": "src/operations/watchtower/watchtower.graphql",
-      "hash": "sha256:ceca8b044fbd37d9f5a5e86dbe6d66b6b6c8696ba19d2ac18418fde175b16e37",
+      "hash": "sha256:884266d839d4671bc3515405b1eee5c9091d3126dfc1389b11ce73bccd4b0a46",
       "rootFields": [
         "watchtowerItems"
       ],
@@ -21042,7 +21069,7 @@
         "WatchtowerItemFields"
       ],
       "usages": [],
-      "sdl": "query WatchtowerFeed($input: WatchtowerItemsInput!) {\n  watchtowerItems(input: $input) {\n    edges {\n      cursor\n      node {\n        ...WatchtowerItemFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    seenAt\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
+      "sdl": "query WatchtowerFeed($input: WatchtowerItemsInput!) {\n  watchtowerItems(input: $input) {\n    edges {\n      cursor\n      node {\n        ...WatchtowerItemFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    seenAt\n  }\n}\n\nfragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n  dueAt\n  dueLabel\n  activeRun {\n    id\n    status\n    summary\n    createdAt\n    completedAt\n    definition {\n      id\n      name\n      icon\n      accent\n      template\n    }\n  }\n  suggestedAgent {\n    id\n    name\n    description\n    icon\n    accent\n    template\n  }\n}"
     },
     {
       "name": "WithdrawInvoiceDispute",
@@ -25956,10 +25983,11 @@
       "usedByOperations": [
         "DismissWatchtowerItem",
         "HandOffWatchtowerItem",
+        "SnoozeWatchtowerItem",
         "WatchtowerFeed"
       ],
       "usages": [],
-      "sdl": "fragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n}"
+      "sdl": "fragment WatchtowerItemFields on WatchtowerItem {\n  id\n  sourceKind\n  sourceId\n  severity\n  title\n  summary\n  subjectType\n  subjectId\n  eventKind\n  path\n  occurredAt\n  resolvedAt\n  seen\n  kindLabel\n  dueAt\n  dueLabel\n  activeRun {\n    id\n    status\n    summary\n    createdAt\n    completedAt\n    definition {\n      id\n      name\n      icon\n      accent\n      template\n    }\n  }\n  suggestedAgent {\n    id\n    name\n    description\n    icon\n    accent\n    template\n  }\n}"
     },
     {
       "name": "WorkerChecklistFields",

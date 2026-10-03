@@ -3,6 +3,7 @@ import {
   DismissWatchtowerItemDocument,
   HandOffWatchtowerItemDocument,
   MarkWatchtowerSeenDocument,
+  SnoozeWatchtowerItemDocument,
   WatchtowerCountsDocument,
   WatchtowerCountsFieldsFragmentDoc,
   WatchtowerFeedDocument,
@@ -148,4 +149,15 @@ export async function handOffWatchtowerItem(
     })),
     templates: result.templates,
   };
+}
+
+/** Puts an item aside for this reader until a moment; nobody else's feed changes. */
+export async function snoozeWatchtowerItem(id: string, until: number): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: SnoozeWatchtowerItemDocument,
+    operationName: "SnoozeWatchtowerItem",
+    variables: { id, until },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.snoozeWatchtowerItem);
 }

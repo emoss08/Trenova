@@ -1,5 +1,5 @@
-import { WatchtowerFeed } from "./_components/watchtower/watchtower-feed";
+import { WatchtowerFocus } from "./_components/watchtower/watchtower-focus";
 
 export function DeskWatchtowerPage() {
-  return <WatchtowerFeed />;
+  return <WatchtowerFocus />;
 }

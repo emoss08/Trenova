@@ -80,6 +80,8 @@ func itemFromInput(input services.WatchtowerItemInput) *watchtower.Item {
 		EventKind:      input.EventKind,
 		Path:           input.Path,
 		OccurredAt:     occurredAt,
+		DueAt:          input.DueAt,
+		DueLabel:       input.DueLabel,
 	}
 	item.Normalize()
 

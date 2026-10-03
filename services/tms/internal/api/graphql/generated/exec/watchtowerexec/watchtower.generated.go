@@ -67,6 +67,19 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNWatchtowerHandOffResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWatchtowerHandOffResult),
 			},
+			{
+				Name:       "snoozeWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_snoozeWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SnoozeWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["until"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐItem),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
@@ -349,6 +362,45 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 			{
+				Name:     "dueAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.DueAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "dueLabel",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.DueLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "activeRun",
+				HasChild:  true,
+				ChildType: "AgentRun",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.ActiveRun, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentRun),
+			},
+			{
+				Name:      "suggestedAgent",
+				HasChild:  true,
+				ChildType: "AgentDefinition",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.SuggestedAgent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition),
+			},
+			{
 				Name:     "resolvedAt",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -515,6 +567,7 @@ type resolverMutation interface {
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
+	SnoozeWatchtowerItem(ctx context.Context, id string, until int) (*watchtower.Item, error)
 }
 
 type resolverQuery interface {
@@ -584,6 +637,27 @@ func field_Mutation_handOffWatchtowerItem_args(ctx context.Context, ec *gqlexec.
 		return nil, err
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_snoozeWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "until",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNTimestamp2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["until"] = arg1
 	return args, nil
 }
 
@@ -708,6 +782,11 @@ func unmarshalNHandOffWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -949,6 +1028,13 @@ func marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentDefinition", v)
 }
 
 func marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentRun) graphql.Marshaler {

@@ -25,6 +25,9 @@ type WatchtowerItemInput struct {
 	EventKind   agent.EventKind
 	Path        string
 	OccurredAt  int64
+	// DueAt and DueLabel are the deadline, when the source has one.
+	DueAt    *int64
+	DueLabel string
 }
 
 // WatchtowerProjector is what a source calls as its records open and close.
@@ -131,6 +134,15 @@ type WatchtowerService interface {
 		req HandOffWatchtowerItemRequest,
 		actor *RequestActor,
 	) (*HandOffWatchtowerItemResult, error)
+	// Snooze puts an item aside for the person until a moment: it leaves
+	// their feed and their counts, and comes back by itself.
+	Snooze(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		id pulid.ID,
+		until int64,
+		actor *RequestActor,
+	) (*watchtower.Item, error)
 	// Backfill fills the feed from every source's snapshot; Reconcile
 	// resolves what the sources no longer report as open and adds what they
 	// do. Both run per tenant.

@@ -59,6 +59,35 @@ const (
 	maxStopVisitTitleLength = 200
 )
 
+// positive is a deadline the record actually holds; a zero means it holds
+// none.
+func positive(at int64) *int64 {
+	if at <= 0 {
+		return nil
+	}
+
+	return &at
+}
+
+func detentionDueLabel(entity *detention.DetentionOccurrence) string {
+	if entity.BillableMinutes > 0 {
+		return "Detention is accruing"
+	}
+
+	return "Free time ends"
+}
+
+func paperDueLabel(paper ExpiringPaper) string {
+	if paper.Name == "" {
+		return "Credential expires"
+	}
+	if paper.DaysLeft < 0 {
+		return paper.Name + " expired"
+	}
+
+	return paper.Name + " expires"
+}
+
 func panelPath(base string, id string) string {
 	return base + "?panelType=edit&panelEntityId=" + id
 }
@@ -128,6 +157,8 @@ func DescribeProposal(entity *agent.AgentProposal, agentName string) services.Wa
 		Summary:    entity.Rationale,
 		Path:       pathDecisions + "?run=" + entity.RunID.String(),
 		OccurredAt: entity.CreatedAt,
+		DueAt:      positive(entity.ExpiresAt),
+		DueLabel:   "Proposal expires",
 	}
 }
 
@@ -154,6 +185,8 @@ func DescribePlan(entity *agent.AgentPlan, agentName string) services.Watchtower
 		Summary:    entity.Summary,
 		Path:       pathDecisions + "?run=" + entity.RunID.String(),
 		OccurredAt: entity.CreatedAt,
+		DueAt:      positive(entity.ExpiresAt),
+		DueLabel:   "Plan expires",
 	}
 }
 
@@ -452,6 +485,10 @@ func DescribeDetentionOccurrence(
 		EventKind:   agent.EventDetentionOccurrenceOpened,
 		Path:        pathDetentionDesk + "?occurrence=" + entity.ID.String(),
 		OccurredAt:  entity.ClockStartAt,
+		// Free time running out is the deadline; once it has, the clock is
+		// the thing running, and the tower says for how long.
+		DueAt:    positive(entity.FreeTimeExpiresAt),
+		DueLabel: detentionDueLabel(entity),
 	}
 }
 
@@ -460,6 +497,8 @@ func DescribeDetentionOccurrence(
 type ExpiringPaper struct {
 	Name     string
 	DaysLeft int64
+	// ExpiresAt is the moment it lapses, when the credential records one.
+	ExpiresAt int64
 }
 
 // ExpiringCredentials is a driver's papers coming due, gathered per driver
@@ -478,10 +517,12 @@ type ExpiringCredentials struct {
 func DescribeExpiringCredentials(entity ExpiringCredentials) services.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	soonest := int64(0)
+	var first ExpiringPaper
 	parts := make([]string, 0, len(entity.Papers))
 	for i, paper := range entity.Papers {
 		if i == 0 || paper.DaysLeft < soonest {
 			soonest = paper.DaysLeft
+			first = paper
 		}
 		parts = append(parts, paper.Name+" "+expiryPhrase(paper.DaysLeft))
 	}
@@ -509,6 +550,8 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) services.Watchtower
 		EventKind:   agent.EventWorkerCredentialExpiring,
 		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
 		OccurredAt:  entity.OccurredAt,
+		DueAt:       positive(first.ExpiresAt),
+		DueLabel:    paperDueLabel(first),
 	}
 }
 
@@ -579,6 +622,8 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) services.WatchtowerItemInput
 		EventKind:   agent.EventShipmentMoveCoverageAtRisk,
 		Path:        pathDispatchConsole,
 		OccurredAt:  entity.StartsAt,
+		DueAt:       positive(entity.StartsAt),
+		DueLabel:    "Move starts",
 	}
 }
 

@@ -152,6 +152,7 @@ func (s *Service) List(
 		UnresolvedOnly: req.UnresolvedOnly,
 		Since:          req.Since,
 		Limit:          first + 1,
+		Snoozed:        s.snoozedFor(actor),
 	}
 	if req.After != "" {
 		decoded, dErr := pagination.DecodeCursor(req.After)
@@ -177,6 +178,7 @@ func (s *Service) List(
 	for _, item := range items {
 		item.Seen = item.OccurredAt <= cursor.SeenAt
 	}
+	s.attachWork(ctx, req.TenantInfo, items)
 	page.Items = items
 	if last := len(items); last > 0 {
 		encoded, eErr := pagination.EncodeCursor(pagination.Cursor{
@@ -221,6 +223,7 @@ func (s *Service) Counts(
 		TenantInfo: tenant,
 		Kinds:      kinds,
 		SeenAt:     cursor.SeenAt,
+		Snoozed:    s.snoozedFor(actor),
 	})
 	if err != nil {
 		return nil, err
@@ -261,6 +264,142 @@ func (s *Service) MarkSeen(
 	}
 
 	return s.Counts(ctx, tenant, actor)
+}
+
+// attachWork says, for a page of items, which agent is working on each
+// record and which agent could take each kind of event. It is the tower's
+// garnish, not its content: a read that fails leaves the items bare.
+func (s *Service) attachWork(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	items []*watchtower.Item,
+) {
+	subjects := make([]pulid.ID, 0, len(items))
+	seenSubject := map[pulid.ID]bool{}
+	kinds := map[agent.EventKind]bool{}
+	for _, item := range items {
+		if item.SubjectID.IsNotNil() && !seenSubject[item.SubjectID] {
+			seenSubject[item.SubjectID] = true
+			subjects = append(subjects, item.SubjectID)
+		}
+		if item.EventKind != "" {
+			kinds[item.EventKind] = true
+		}
+	}
+
+	if len(subjects) > 0 {
+		runs, err := s.repo.LatestRunsBySubject(ctx, repositories.LatestRunsBySubjectRequest{
+			TenantInfo: tenant,
+			SubjectIDs: subjects,
+		})
+		if err != nil {
+			s.l.Warn("could not read who is working on the tower", zap.Error(err))
+		}
+		bySubject := make(map[pulid.ID]*agent.AgentRun, len(runs))
+		for _, run := range runs {
+			bySubject[run.SubjectID] = run
+		}
+		for _, item := range items {
+			run := bySubject[item.SubjectID]
+			if run != nil && (run.CreatedAt >= item.OccurredAt || runOpen(run.Status)) {
+				item.ActiveRun = run
+			}
+		}
+	}
+
+	suggested := make(map[agent.EventKind]*agentdefinition.Definition, len(kinds))
+	for kind := range kinds {
+		definitions, err := s.definitions.ListEnabledByTrigger(
+			ctx,
+			repositories.ListAgentDefinitionsByTriggerRequest{
+				TenantInfo: tenant,
+				Mode:       agentdefinition.TriggerEvent,
+				EventKind:  kind,
+			},
+		)
+		if err != nil {
+			s.l.Warn("could not read which agents take an event", zap.Error(err))
+			continue
+		}
+		if len(definitions) > 0 {
+			suggested[kind] = definitions[0]
+		}
+	}
+	for _, item := range items {
+		item.SuggestedAgent = suggested[item.EventKind]
+	}
+}
+
+// runOpen is a run still on its way to an answer.
+func runOpen(status agent.RunStatus) bool {
+	switch status {
+	case agent.RunStatusPending,
+		agent.RunStatusGatheringContext,
+		agent.RunStatusDiagnosing,
+		agent.RunStatusAwaitingDecision:
+		return true
+	default:
+		return false
+	}
+}
+
+// maxSnooze is the furthest an item may be put aside: past it, whatever
+// the item was about has either been dealt with or needs a person again.
+const maxSnooze = 30 * 24 * 60 * 60
+
+// snoozedFor reads a person's snoozes as of now; a caller who is not a
+// person has none.
+func (s *Service) snoozedFor(actor *services.RequestActor) *repositories.WatchtowerSnoozeFilter {
+	if actor == nil || !actor.IsUser() {
+		return nil
+	}
+
+	return &repositories.WatchtowerSnoozeFilter{UserID: actor.UserID, Now: s.now()}
+}
+
+func (s *Service) Snooze(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
+	until int64,
+	actor *services.RequestActor,
+) (*watchtower.Item, error) {
+	if !actor.IsUser() {
+		return nil, errortypes.NewBusinessError("Only a person can snooze an item")
+	}
+	now := s.now()
+	if until <= now {
+		return nil, errortypes.NewValidationError(
+			"until",
+			errortypes.ErrInvalid,
+			"Snooze until a moment that hasn't passed",
+		)
+	}
+	if until > now+maxSnooze {
+		return nil, errortypes.NewValidationError(
+			"until",
+			errortypes.ErrInvalid,
+			"An item can be snoozed for 30 days at most",
+		)
+	}
+
+	item, err := s.repo.GetByID(ctx, repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant})
+	if err != nil {
+		return nil, err
+	}
+	if err = s.access.assertMaySee(ctx, actor, item); err != nil {
+		return nil, err
+	}
+	if err = s.repo.Snooze(ctx, repositories.SnoozeWatchtowerItemRequest{
+		TenantInfo: tenant,
+		UserID:     actor.UserID,
+		ItemID:     item.ID,
+		Until:      until,
+	}); err != nil {
+		return nil, err
+	}
+
+	return item, nil
 }
 
 func (s *Service) Dismiss(

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,6 +53,11 @@ type Item struct {
 	Path string `json:"path" bun:"path,type:VARCHAR(500),nullzero"`
 
 	OccurredAt int64  `json:"occurredAt" bun:"occurred_at,type:BIGINT,notnull"`
+	// DueAt is when the item stops being something a person can still head
+	// off, and DueLabel what happens then ("Move starts"). Nil when the
+	// source has no deadline to give.
+	DueAt    *int64 `json:"dueAt"    bun:"due_at,type:BIGINT,nullzero"`
+	DueLabel string `json:"dueLabel" bun:"due_label,type:VARCHAR(120),nullzero"`
 	ResolvedAt *int64 `json:"resolvedAt" bun:"resolved_at,type:BIGINT,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
@@ -61,6 +67,12 @@ type Item struct {
 	// Seen says whether this reader had already been shown the item, from
 	// their cursor. Filled by the service, never stored.
 	Seen bool `json:"seen" bun:"-"`
+	// ActiveRun is the newest agent run on the item's record, when it began
+	// once the item was open or is still going: who is working on it.
+	// SuggestedAgent is an agent that takes this kind of event, when one
+	// does. Both are filled by the service, never stored.
+	ActiveRun      *agent.AgentRun             `json:"-" bun:"-"`
+	SuggestedAgent *agentdefinition.Definition `json:"-" bun:"-"`
 	// Inserted is set by an upsert that reports whether the row was created
 	// rather than replaced; it is never selected on its own.
 	Inserted bool `json:"-"    bun:"inserted,scanonly"`
@@ -92,11 +104,18 @@ func (i *Item) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 // Normalize trims what a person reads and bounds it to what the columns
 // hold, so a source whose summary runs long is cut rather than refused.
+// maxDueLabelLength bounds what a deadline is called, as the column does.
+const maxDueLabelLength = 120
+
 func (i *Item) Normalize() {
 	i.Title = stringutils.Ellipsize(i.Title, maxTitleLength)
 	i.Summary = stringutils.Ellipsize(i.Summary, maxSummaryLength)
 	i.SourceID = strings.TrimSpace(i.SourceID)
 	i.Path = strings.TrimSpace(i.Path)
+	i.DueLabel = stringutils.Ellipsize(strings.TrimSpace(i.DueLabel), maxDueLabelLength)
+	if i.DueAt != nil && *i.DueAt <= 0 {
+		i.DueAt = nil
+	}
 }
 
 func (i *Item) Validate(multiErr *errortypes.MultiError) {

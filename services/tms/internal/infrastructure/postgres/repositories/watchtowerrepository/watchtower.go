@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -80,6 +81,8 @@ func buildUpsert(db bun.IDB, item *watchtower.Item) *bun.InsertQuery {
 		Set(cols.EventKind.SetExcluded()).
 		Set(cols.Path.SetExcluded()).
 		Set(cols.OccurredAt.SetExcluded()).
+		Set(cols.DueAt.SetExcluded()).
+		Set(cols.DueLabel.SetExcluded()).
 		Set(cols.ResolvedAt.Set(), nil).
 		Set(cols.Version.IncConflict(1)).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
@@ -248,6 +251,7 @@ func (r *repository) List(
 				if req.Since > 0 {
 					sq = sq.Where(cols.OccurredAt.Gt(), req.Since)
 				}
+				sq = withoutSnoozed(sq, req.Snoozed)
 				if req.BeforeOccurredAt > 0 && req.BeforeID.IsNotNil() {
 					sq = sq.Where(
 						"("+cols.OccurredAt.Qualified()+", "+cols.ID.Qualified()+") < (?, ?)",
@@ -270,6 +274,75 @@ func (r *repository) List(
 	})
 }
 
+// snoozeTable is where a person's snoozes are kept; it has no model of its
+// own, being nothing but a person, an item and a moment.
+const snoozeTable = "watchtower_snoozes"
+
+// withoutSnoozed leaves out what the person put aside past now.
+func withoutSnoozed(
+	sq *bun.SelectQuery,
+	filter *repositories.WatchtowerSnoozeFilter,
+) *bun.SelectQuery {
+	if filter == nil || filter.UserID.IsNil() {
+		return sq
+	}
+	cols := buncolgen.ItemColumns
+
+	return sq.Where("NOT EXISTS (SELECT 1 FROM "+snoozeTable+" AS wts"+
+		" WHERE wts.organization_id = "+cols.OrganizationID.Qualified()+
+		" AND wts.business_unit_id = "+cols.BusinessUnitID.Qualified()+
+		" AND wts.item_id = "+cols.ID.Qualified()+
+		" AND wts.user_id = ? AND wts.until > ?)", filter.UserID, filter.Now)
+}
+
+func (r *repository) LatestRunsBySubject(
+	ctx context.Context,
+	req repositories.LatestRunsBySubjectRequest,
+) ([]*agent.AgentRun, error) {
+	if len(req.SubjectIDs) == 0 {
+		return []*agent.AgentRun{}, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
+		cols := buncolgen.AgentRunColumns
+		runs := make([]*agent.AgentRun, 0, len(req.SubjectIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&runs).
+			ExcludeColumn(cols.Transcript.String()).
+			DistinctOn(cols.SubjectID.Qualified()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+					Where(cols.SubjectID.In(), bun.In(req.SubjectIDs))
+			}).
+			Order(cols.SubjectID.OrderAsc(), cols.CreatedAt.OrderDesc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list latest runs by subject", zap.Error(err))
+
+			return nil, fmt.Errorf("list latest runs by subject: %w", err)
+		}
+
+		return runs, nil
+	})
+}
+
+func (r *repository) Snooze(ctx context.Context, req repositories.SnoozeWatchtowerItemRequest) error {
+	_, err := r.db.DBForContext(ctx).NewRaw(
+		"INSERT INTO "+snoozeTable+
+			" (organization_id, business_unit_id, user_id, item_id, until) VALUES (?, ?, ?, ?, ?)"+
+			" ON CONFLICT (organization_id, business_unit_id, user_id, item_id)"+
+			" DO UPDATE SET until = EXCLUDED.until",
+		req.TenantInfo.OrgID, req.TenantInfo.BuID, req.UserID, req.ItemID, req.Until,
+	).Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to snooze watchtower item", zap.Error(err))
+
+		return fmt.Errorf("snooze watchtower item: %w", err)
+	}
+
+	return nil
+}
+
 func (r *repository) Counts(
 	ctx context.Context,
 	req repositories.CountWatchtowerItemsRequest,
@@ -287,7 +360,7 @@ func (r *repository) Counts(
 						sq = sq.Where(cols.SourceKind.In(), bun.In(req.Kinds))
 					}
 
-					return sq
+					return withoutSnoozed(sq, req.Snoozed)
 				})
 		}
 

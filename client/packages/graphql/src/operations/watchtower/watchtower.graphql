@@ -13,6 +13,30 @@ fragment WatchtowerItemFields on WatchtowerItem {
   resolvedAt
   seen
   kindLabel
+  dueAt
+  dueLabel
+  activeRun {
+    id
+    status
+    summary
+    createdAt
+    completedAt
+    definition {
+      id
+      name
+      icon
+      accent
+      template
+    }
+  }
+  suggestedAgent {
+    id
+    name
+    description
+    icon
+    accent
+    template
+  }
 }
 
 fragment WatchtowerCountsFields on WatchtowerCounts {
@@ -86,5 +110,11 @@ mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {
       template
     }
     templates
+  }
+}
+
+mutation SnoozeWatchtowerItem($id: ID!, $until: Timestamp!) {
+  snoozeWatchtowerItem(id: $id, until: $until) {
+    ...WatchtowerItemFields
   }
 }

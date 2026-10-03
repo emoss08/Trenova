@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,6 +46,29 @@ type ListWatchtowerItemsRequest struct {
 	BeforeOccurredAt int64
 	BeforeID         pulid.ID
 	Limit            int
+	// Snoozed hides what one person put aside; nil hides nothing.
+	Snoozed *WatchtowerSnoozeFilter
+}
+
+type LatestRunsBySubjectRequest struct {
+	TenantInfo pagination.TenantInfo
+	SubjectIDs []pulid.ID
+}
+
+// WatchtowerSnoozeFilter is a person and the moment their snoozes are read
+// at: an item snoozed past Now is hidden from them.
+type WatchtowerSnoozeFilter struct {
+	UserID pulid.ID
+	Now    int64
+}
+
+// SnoozeWatchtowerItemRequest puts an item aside for one person until a
+// moment; snoozing it again moves the moment.
+type SnoozeWatchtowerItemRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	ItemID     pulid.ID
+	Until      int64
 }
 
 // CountWatchtowerItemsRequest asks how much is open, and how much of it is
@@ -53,6 +77,7 @@ type CountWatchtowerItemsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Kinds      []watchtower.SourceKind
 	SeenAt     int64
+	Snoozed    *WatchtowerSnoozeFilter
 }
 
 type WatchtowerKindCount struct {
@@ -98,6 +123,10 @@ type WatchtowerRepository interface {
 	ResolveMissing(ctx context.Context, req ResolveMissingWatchtowerItemsRequest) (int, error)
 	GetByID(ctx context.Context, req GetWatchtowerItemRequest) (*watchtower.Item, error)
 	List(ctx context.Context, req ListWatchtowerItemsRequest) ([]*watchtower.Item, error)
+	Snooze(ctx context.Context, req SnoozeWatchtowerItemRequest) error
+	// LatestRunsBySubject is the newest agent run on each record, for the
+	// tower to say who is working on what it shows.
+	LatestRunsBySubject(ctx context.Context, req LatestRunsBySubjectRequest) ([]*agent.AgentRun, error)
 	Counts(ctx context.Context, req CountWatchtowerItemsRequest) (*WatchtowerCounts, error)
 	GetCursor(ctx context.Context, req GetWatchtowerCursorRequest) (*watchtower.Cursor, error)
 	SetCursor(ctx context.Context, cursor *watchtower.Cursor) (*watchtower.Cursor, error)

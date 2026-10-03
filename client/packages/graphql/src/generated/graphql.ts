@@ -13981,7 +13981,7 @@ export type UserTableQueryVariables = Exact<{
 
 export type UserTableQuery = { users: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
+export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string, dueAt: number | null, dueLabel: string, activeRun: { id: string, status: AgentRunStatus, summary: string, createdAt: number, completedAt: number | null, definition: { id: string, name: string, icon: string, accent: string, template: AgentTemplate | null } | null } | null, suggestedAgent: { id: string, name: string, description: string, icon: string, accent: string, template: AgentTemplate | null } | null } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
 
 export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, unseen: number, unseenCritical: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
 
@@ -14018,6 +14018,14 @@ export type HandOffWatchtowerItemMutationVariables = Exact<{
 
 
 export type HandOffWatchtowerItemMutation = { handOffWatchtowerItem: { templates: Array<string>, item: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }, run: { id: string, status: AgentRunStatus } | null, subscribers: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }>, candidates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } };
+
+export type SnoozeWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  until: number;
+}>;
+
+
+export type SnoozeWatchtowerItemMutation = { snoozeWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
 export type WorkerChecklistTemplateItemFieldsFragment = { id: string, templateId: string, label: string, description: string | null, kind: WorkerChecklistItemKind, required: boolean, dueOffsetDays: number, owner: WorkerChecklistOwner, credentialTypeId: string | null, documentTypeId: string | null, documentTypeName: string | null, sortOrder: number, credentialType: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'WorkerChecklistTemplateItemFieldsFragment' };
 
@@ -23286,6 +23294,30 @@ export const WatchtowerItemFieldsFragmentDoc = new TypedDocumentString(`
   resolvedAt
   seen
   kindLabel
+  dueAt
+  dueLabel
+  activeRun {
+    id
+    status
+    summary
+    createdAt
+    completedAt
+    definition {
+      id
+      name
+      icon
+      accent
+      template
+    }
+  }
+  suggestedAgent {
+    id
+    name
+    description
+    icon
+    accent
+    template
+  }
 }
     `, {"fragmentName":"WatchtowerItemFields"}) as unknown as TypedDocumentString<WatchtowerItemFieldsFragment, unknown>;
 export const WatchtowerCountsFieldsFragmentDoc = new TypedDocumentString(`
@@ -25022,11 +25054,12 @@ export const TransitionTimesheetDocument = {"__meta__":{"kind":"mutation","name"
 export const GeneratePayrollExportDocument = {"__meta__":{"kind":"mutation","name":"GeneratePayrollExport","hash":"sha256:d2e6498db231b0929eaae44b9fec9404182112f932187530c9b5d214f16cb761"}} as unknown as TypedDocumentString<GeneratePayrollExportMutation, GeneratePayrollExportMutationVariables>;
 export const VoidPayrollExportDocument = {"__meta__":{"kind":"mutation","name":"VoidPayrollExport","hash":"sha256:91d91e0679fb937df8c50be37f8d75aa727a2a797c7a9a886e9afe3e903b89c2"}} as unknown as TypedDocumentString<VoidPayrollExportMutation, VoidPayrollExportMutationVariables>;
 export const UserTableDocument = {"__meta__":{"kind":"query","name":"UserTable","hash":"sha256:40300ce9b4742ab9f0008bfa9e6af539b18334e725df797823f41d75af2f3b48"}} as unknown as TypedDocumentString<UserTableQuery, UserTableQueryVariables>;
-export const WatchtowerFeedDocument = {"__meta__":{"kind":"query","name":"WatchtowerFeed","hash":"sha256:ceca8b044fbd37d9f5a5e86dbe6d66b6b6c8696ba19d2ac18418fde175b16e37"}} as unknown as TypedDocumentString<WatchtowerFeedQuery, WatchtowerFeedQueryVariables>;
+export const WatchtowerFeedDocument = {"__meta__":{"kind":"query","name":"WatchtowerFeed","hash":"sha256:884266d839d4671bc3515405b1eee5c9091d3126dfc1389b11ce73bccd4b0a46"}} as unknown as TypedDocumentString<WatchtowerFeedQuery, WatchtowerFeedQueryVariables>;
 export const WatchtowerCountsDocument = {"__meta__":{"kind":"query","name":"WatchtowerCounts","hash":"sha256:9abddd9875a5ae7d5580f430cbfc811d4c5b7f7058e05d91b7555b02b5018b1e"}} as unknown as TypedDocumentString<WatchtowerCountsQuery, WatchtowerCountsQueryVariables>;
 export const MarkWatchtowerSeenDocument = {"__meta__":{"kind":"mutation","name":"MarkWatchtowerSeen","hash":"sha256:93e4737258bcf6abb3f847b3db83650975d88d250ddf6ddf82587f23ed165c3e"}} as unknown as TypedDocumentString<MarkWatchtowerSeenMutation, MarkWatchtowerSeenMutationVariables>;
-export const DismissWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"DismissWatchtowerItem","hash":"sha256:a4d52c1f24091bec9e7b5e7bd5c3de38363d559b903c74333c452e2f4331fbf6"}} as unknown as TypedDocumentString<DismissWatchtowerItemMutation, DismissWatchtowerItemMutationVariables>;
-export const HandOffWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"HandOffWatchtowerItem","hash":"sha256:49824f70ee0a28ce5164f83c692d2a33d019e4baa4f4b5d179dfda66fb2d7069"}} as unknown as TypedDocumentString<HandOffWatchtowerItemMutation, HandOffWatchtowerItemMutationVariables>;
+export const DismissWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"DismissWatchtowerItem","hash":"sha256:0805c9d9c97b61f3f739d8c7d31419343bbcf5bc57b392432575629a379b554d"}} as unknown as TypedDocumentString<DismissWatchtowerItemMutation, DismissWatchtowerItemMutationVariables>;
+export const HandOffWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"HandOffWatchtowerItem","hash":"sha256:ae7b6e1db0c94c1c460dd67b906551891ec38de8ad28101e5fa4ab24145b6969"}} as unknown as TypedDocumentString<HandOffWatchtowerItemMutation, HandOffWatchtowerItemMutationVariables>;
+export const SnoozeWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"SnoozeWatchtowerItem","hash":"sha256:5c5d7ed5758e221cf14c3fa2adf82e9bb538c3b8a576165ca7688e7dc5dc683d"}} as unknown as TypedDocumentString<SnoozeWatchtowerItemMutation, SnoozeWatchtowerItemMutationVariables>;
 export const WorkerChecklistTemplateTableDocument = {"__meta__":{"kind":"query","name":"WorkerChecklistTemplateTable","hash":"sha256:f2eda82e9be4f74f7c9dc81c979e31c50ed9bc54a77cbc16e0faeecbc20376e2"}} as unknown as TypedDocumentString<WorkerChecklistTemplateTableQuery, WorkerChecklistTemplateTableQueryVariables>;
 export const ActiveWorkerChecklistTemplatesDocument = {"__meta__":{"kind":"query","name":"ActiveWorkerChecklistTemplates","hash":"sha256:7ea423ffb6c8654acdf33a23df25d34a19e6af10a5300c0a6f3bf0f0f25a30ab"}} as unknown as TypedDocumentString<ActiveWorkerChecklistTemplatesQuery, ActiveWorkerChecklistTemplatesQueryVariables>;
 export const WorkerChecklistsDocument = {"__meta__":{"kind":"query","name":"WorkerChecklists","hash":"sha256:04a8feaf12d8632f22968dc84a503969e99a8a2475d5dd7db3f25cf26416fcea"}} as unknown as TypedDocumentString<WorkerChecklistsQuery, WorkerChecklistsQueryVariables>;

@@ -195,10 +195,14 @@ func (s *sweepState) recordDueDriver(
 		}
 		s.dueDrivers[cred.WorkerID] = driver
 	}
-	driver.papers = append(driver.papers, watchtowersources.ExpiringPaper{
+	paper := watchtowersources.ExpiringPaper{
 		Name:     cred.CredentialType.Name,
 		DaysLeft: daysLeft,
-	})
+	}
+	if cred.ExpiresAt != nil {
+		paper.ExpiresAt = *cred.ExpiresAt
+	}
+	driver.papers = append(driver.papers, paper)
 }
 
 // raiseDueDrivers puts each driver whose papers reached a mark on the feed
