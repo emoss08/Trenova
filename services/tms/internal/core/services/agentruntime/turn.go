@@ -329,7 +329,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		evidence:     state.Evidence,
 		tools:        restoreToolSet(state.Tools),
 		held:         held,
-		repeats:      &repeatGuard{failures: failures},
+		repeats:      &repeatGuard{failures: failures, reads: make(map[string]bool, 4)},
 		counts:       &ordinals{seen: seen},
 		questions:    questions,
 		decisions:    make(map[pulid.ID]struct{}, 1),

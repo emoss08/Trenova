@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -236,4 +237,60 @@ func TestExplainRate_RefusesSomethingThatIsNotAShipmentID(t *testing.T) {
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"shipmentId": "the reno load"}))
 
 	require.Error(t, err)
+}
+
+type stubShipmentRating struct{ record *shipment.Shipment }
+
+func (s *stubShipmentRating) GetByID(
+	_ context.Context,
+	_ *repositories.GetShipmentByIDRequest,
+) (*shipment.Shipment, error) {
+	return s.record, nil
+}
+
+/*
+A shipment no agreement priced is explained from the rating it carries.
+
+SEED-PAY-007 was a spot load priced by the Flat Rate template: $3,050 from
+the expression baseRate. With no quote trace the tool said there was no
+rating on record, and the person had to ask three times before a delegate
+read it off the shipment.
+*/
+func TestExplainRate_ExplainsAShipmentPricedFromItsFormulaTemplate(t *testing.T) {
+	t.Parallel()
+
+	record := &shipment.Shipment{
+		BaseRate:            decimal.NewNullDecimal(usd("3050")),
+		FreightChargeAmount: decimal.NewNullDecimal(usd("3050")),
+		TotalChargeAmount:   decimal.NewNullDecimal(usd("3050")),
+		RatingDetail: &shipment.RatingDetail{
+			FormulaTemplateName: "Flat Rate",
+			Expression:          "baseRate",
+			Source:              "FormulaFallback",
+			Explanation:         "No agreement covered this lane; priced from a formula template",
+			Result:              3050,
+			Breakdown:           []shipment.RatingBreakdownItem{{Name: "Linehaul", Label: "Linehaul", Amount: 3050}},
+		},
+	}
+	tool := &explainRateTool{quotes: &stubQuoteReader{}, shipments: &stubShipmentRating{record: record}}
+	explanation := explain(t, tool, map[string]any{"shipmentId": pulid.MustNew("shp_").String()})
+
+	require.NotNil(t, explanation.PricedBy)
+	assert.Equal(t, "Flat Rate", explanation.PricedBy.Method)
+	assert.Equal(t, "baseRate", explanation.PricedBy.Expression)
+	require.Len(t, explanation.Components, 1)
+	assert.Equal(t, "Linehaul", explanation.Components[0].Label)
+	assert.True(t, explanation.Components[0].Amount.Equal(usd("3050")))
+	assert.True(t, explanation.Totals.Total.Equal(usd("3050")))
+	assert.Contains(t, explanation.Note, "No rate agreement priced this shipment")
+}
+
+func TestExplainRate_StillSaysNothingWhenTheShipmentCarriesNoRating(t *testing.T) {
+	t.Parallel()
+
+	tool := &explainRateTool{quotes: &stubQuoteReader{}, shipments: &stubShipmentRating{record: &shipment.Shipment{}}}
+	explanation := explain(t, tool, map[string]any{"shipmentId": pulid.MustNew("shp_").String()})
+
+	assert.Nil(t, explanation.PricedBy)
+	assert.Contains(t, explanation.Note, "no rating on record")
 }

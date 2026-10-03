@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
@@ -39,12 +40,25 @@ type quoteReader interface {
 	) (*ratequote.RateQuote, error)
 }
 
-type explainRateTool struct {
-	quotes quoteReader
+// shipmentRatingReader reads the rating a shipment carries itself, for the
+// shipments no agreement priced.
+type shipmentRatingReader interface {
+	GetByID(
+		ctx context.Context,
+		req *repositories.GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
 }
 
-func newExplainRateTool(quotes repositories.RateQuoteRepository) serviceports.AgentQueryTool {
-	return &explainRateTool{quotes: quotes}
+type explainRateTool struct {
+	quotes    quoteReader
+	shipments shipmentRatingReader
+}
+
+func newExplainRateTool(
+	quotes repositories.RateQuoteRepository,
+	shipments repositories.ShipmentRepository,
+) serviceports.AgentQueryTool {
+	return &explainRateTool{quotes: quotes, shipments: shipments}
 }
 
 func (t *explainRateTool) Name() string { return "explain_rate" }
@@ -103,9 +117,29 @@ type rateExplanation struct {
 	Warnings      []string           `json:"warnings,omitempty"`
 	Error         string             `json:"error,omitempty"`
 	EngineVersion string             `json:"engineVersion,omitempty"`
+	// PricedBy is how a shipment no agreement priced got its price: the
+	// formula template it was rated with, or the amount someone entered.
+	PricedBy *pricedByRow `json:"pricedBy,omitempty"`
 	// Note is set when there is nothing to explain, so the model says that
 	// rather than reporting a zero as a price.
 	Note string `json:"note,omitempty"`
+}
+
+// pricedByRow is the rating a shipment stores on itself: no agreement and no
+// quote trace, but the method, the expression and what it came to.
+type pricedByRow struct {
+	// Method is the formula template that priced it, "Flat Rate" say.
+	Method      string           `json:"method,omitempty"`
+	Source      string           `json:"source,omitempty"`
+	Explanation string           `json:"explanation,omitempty"`
+	Expression  string           `json:"expression,omitempty"`
+	Variables   map[string]any   `json:"variables,omitempty"`
+	BaseRate    *decimal.Decimal `json:"baseRate,omitempty"`
+	RatedAt     int64            `json:"ratedAt,omitempty"`
+	// Override is an amount a person entered over the rating, and why.
+	Override       *decimal.Decimal `json:"override,omitempty"`
+	OverrideReason string           `json:"overrideReason,omitempty"`
+	Locked         bool             `json:"locked,omitempty"`
 }
 
 type rateWinnerRow struct {
@@ -189,6 +223,23 @@ func (t *explainRateTool) Query(
 	}
 
 	explanation := rateExplanation{ShipmentID: shipmentID.String(), Side: string(side)}
+	if (quote == nil || quote.Trace == nil) && side == rateagreement.PartyTypeCustomer &&
+		t.shipments != nil {
+		record, err := t.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+			ID: shipmentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  params.OrganizationID,
+				BuID:   params.BusinessUnitID,
+				UserID: params.Actor.UserID,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		if stored, ok := explainStored(explanation, record); ok {
+			return stored, nil
+		}
+	}
 	if quote == nil || quote.Trace == nil {
 		explanation.Note = "This shipment has no rating on record for that side, so there " +
 			"is no price to explain. It may be rated manually, or not yet rated."
@@ -282,4 +333,82 @@ func totalsRow(totals ratetypes.Totals) rateTotalsRow {
 	}
 
 	return row
+}
+
+// explainStored explains a shipment from the rating it carries, when no
+// agreement priced it. A spot load priced from its formula template has no
+// quote trace, and "no rating on record" was the wrong answer for it: the
+// record says which template priced it, with what expression, and what it
+// came to. Nothing is reported when the shipment carries no rating and no
+// amount either.
+func explainStored(into rateExplanation, record *shipment.Shipment) (rateExplanation, bool) {
+	if record == nil {
+		return into, false
+	}
+	detail := record.RatingDetail
+	override := record.RateOverrideAmount
+	if detail == nil && !override.Valid {
+		return into, false
+	}
+
+	priced := &pricedByRow{
+		OverrideReason: record.RateOverrideReason,
+		Locked:         record.RateLocked,
+	}
+	if record.BaseRate.Valid && !record.BaseRate.Decimal.IsZero() {
+		base := record.BaseRate.Decimal
+		priced.BaseRate = &base
+	}
+	if override.Valid {
+		amount := override.Decimal
+		priced.Override = &amount
+	}
+
+	var running decimal.Decimal
+	if detail != nil {
+		priced.Method = detail.FormulaTemplateName
+		priced.Source = detail.Source
+		priced.Explanation = detail.Explanation
+		priced.Expression = detail.Expression
+		priced.Variables = detail.ResolvedVariables
+		priced.RatedAt = detail.RatedAt
+
+		into.Components = make([]rateComponentRow, 0, len(detail.Breakdown))
+		for _, item := range detail.Breakdown {
+			amount := decimal.NewFromFloat(item.Amount)
+			running = running.Add(amount)
+			label := item.Label
+			if label == "" {
+				label = item.Name
+			}
+			row := rateComponentRow{
+				Label:        label,
+				Amount:       amount,
+				RunningTotal: running,
+				Source:       "Formula",
+				SourceName:   detail.FormulaTemplateName,
+			}
+			if len(detail.Breakdown) == 1 {
+				row.Basis = detail.Expression
+			}
+			into.Components = append(into.Components, row)
+		}
+	}
+
+	freight := running
+	if record.FreightChargeAmount.Valid && !record.FreightChargeAmount.Decimal.IsZero() {
+		freight = record.FreightChargeAmount.Decimal
+	}
+	into.Totals.Linehaul = freight
+	into.Totals.Total = freight
+	if record.TotalChargeAmount.Valid && !record.TotalChargeAmount.Decimal.IsZero() {
+		into.Totals.Total = record.TotalChargeAmount.Decimal
+		into.Totals.Accessorial = into.Totals.Total.Sub(freight)
+	}
+	into.PricedBy = priced
+	into.Note = "No rate agreement priced this shipment, so there is no agreement to explain. " +
+		"pricedBy is how it was priced instead: the formula template named in method, the " +
+		"expression it evaluated, and any amount a person entered over it."
+
+	return into, true
 }

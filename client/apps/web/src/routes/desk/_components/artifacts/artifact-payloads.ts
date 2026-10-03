@@ -344,6 +344,14 @@ export type RateExplanationArtifact = {
   guardrails: RateGuardrail[];
   totals: { linehaul: string; fuel: string; accessorial: string; total: string };
   warnings: string[];
+  /** How a shipment no agreement priced got its price: its formula template, or an entered amount. */
+  pricedBy: {
+    method: string;
+    explanation: string;
+    expression: string;
+    override: string;
+    overrideReason: string;
+  } | null;
 };
 
 /**
@@ -357,6 +365,7 @@ export type RateExplanationArtifact = {
 export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanationArtifact {
   const payload = artifact.payload;
   const winner = isRecord(payload.winner) ? payload.winner : null;
+  const pricedBy = isRecord(payload.pricedBy) ? payload.pricedBy : null;
 
   return {
     shipmentId: stringOf(payload.shipmentId),
@@ -399,6 +408,16 @@ export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanatio
     warnings: listOf(payload.warnings).filter(
       (warning): warning is string => typeof warning === "string" && warning !== "",
     ),
+    pricedBy:
+      pricedBy === null
+        ? null
+        : {
+            method: stringOf(pricedBy.method),
+            explanation: stringOf(pricedBy.explanation),
+            expression: stringOf(pricedBy.expression),
+            override: amountOf(pricedBy.override),
+            overrideReason: stringOf(pricedBy.overrideReason),
+          },
   };
 }
 

@@ -105,6 +105,41 @@ func textOf(object map[string]any, key string) string {
 	return typeutils.StringOfTrimmed(object[key])
 }
 
+// nameOf is a field that may be written out or nested: the summary of a
+// shipment says "primaryWorker": "Emily Chen", the full record nests the
+// worker. A nested record reads as its whole name, its name, its first and
+// last name, or its code, whichever it has.
+func nameOf(object map[string]any, key string) string {
+	if text := textOf(object, key); text != "" {
+		return text
+	}
+	nested := objectOf(object[key])
+	if nested == nil {
+		return ""
+	}
+	for _, field := range []string{"wholeName", "name"} {
+		if text := textOf(nested, field); text != "" {
+			return text
+		}
+	}
+	if full := strings.TrimSpace(textOf(nested, "firstName") + " " + textOf(nested, "lastName")); full != "" {
+		return full
+	}
+
+	return textOf(nested, "code")
+}
+
+// firstText is the first of the keys that holds a value.
+func firstText(object map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if text := textOf(object, key); text != "" {
+			return text
+		}
+	}
+
+	return ""
+}
+
 func numberOf(object map[string]any, key string) float64 {
 	switch value := object[key].(type) {
 	case float64:
@@ -136,6 +171,9 @@ func shipmentView(result map[string]any) map[string]any {
 		}
 		if carrier == nil {
 			carrier = objectOf(move["carrier"])
+		}
+		if carrier == nil {
+			carrier = objectOf(move["carrierAssignment"])
 		}
 		if loaded, _ := move["loaded"].(bool); loaded {
 			miles += numberOf(move, "distance")
@@ -184,17 +222,21 @@ func shipmentView(result map[string]any) map[string]any {
 	}
 	rating := objectOf(result["rating"])
 
+	rate := textOf(rating, "totalChargeAmount")
+	if rate == "" {
+		rate = textOf(result, "totalChargeAmount")
+	}
 	view["facts"] = facts(
-		fact{"driver", textOf(assignment, "primaryWorker")},
-		fact{"tractor", textOf(assignment, "tractor")},
-		fact{"trailer", textOf(assignment, "trailer")},
-		fact{"carrier", textOf(carrier, "carrier")},
+		fact{"driver", nameOf(assignment, "primaryWorker")},
+		fact{"tractor", nameOf(assignment, "tractor")},
+		fact{"trailer", nameOf(assignment, "trailer")},
+		fact{"carrier", nameOf(carrier, "carrier")},
 		fact{"weight", weight},
 		fact{"miles", miles},
-		fact{"rate", textOf(rating, "totalChargeAmount")},
+		fact{"rate", rate},
 		fact{"bol", textOf(result, "bol")},
-		fact{"serviceType", textOf(result, "serviceType")},
-		fact{"shipmentType", textOf(result, "shipmentType")},
+		fact{"serviceType", nameOf(result, "serviceType")},
+		fact{"shipmentType", nameOf(result, "shipmentType")},
 	)
 
 	return view
@@ -203,8 +245,17 @@ func shipmentView(result map[string]any) map[string]any {
 // stopView is one end of the route: the place, the city and the time that
 // matters there, which is when it happened if it has, and the window if not.
 func stopView(stop map[string]any, origin bool) map[string]any {
-	city := textOf(stop, "city")
-	if state := textOf(stop, "state"); state != "" {
+	// The summary writes a stop's place out; the full record nests its location.
+	location := objectOf(stop["location"])
+	city := firstText(stop, "city")
+	if city == "" {
+		city = textOf(location, "city")
+	}
+	state := textOf(stop, "state")
+	if state == "" {
+		state = textOf(objectOf(location["state"]), "abbreviation")
+	}
+	if state != "" {
 		if city != "" {
 			city += ", " + state
 		} else {
@@ -212,7 +263,11 @@ func stopView(stop map[string]any, origin bool) map[string]any {
 		}
 	}
 
-	view := map[string]any{"city": city, "place": textOf(stop, "location")}
+	place := textOf(stop, "location")
+	if place == "" {
+		place = textOf(location, "name")
+	}
+	view := map[string]any{"city": city, "place": place}
 	switch {
 	case origin && textOf(stop, "actualDeparture") != "":
 		view["when"], view["at"] = "departed", textOf(stop, "actualDeparture")

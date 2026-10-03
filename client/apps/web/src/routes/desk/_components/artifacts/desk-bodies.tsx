@@ -155,6 +155,34 @@ export function DeskRateBody({ artifact }: { artifact: AssistantArtifact }) {
           </div>
         </div>
       )}
+      {!rate.winner && rate.pricedBy && (
+        <div className="dk-ax-win">
+          <span className="dk-ax-wck">
+            <ArtIcon name="check" size={12} stroke={2.6} />
+          </span>
+          <div>
+            <b>{rate.pricedBy.method || t("Entered by hand")}</b>
+            <span>
+              {t("Formula template")}
+              {rate.pricedBy.expression && (
+                <>
+                  {" · "}
+                  <code>{rate.pricedBy.expression}</code>
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+      )}
+      {!rate.winner && rate.pricedBy?.explanation && (
+        <p className="dk-ax-note">{rate.pricedBy.explanation}</p>
+      )}
+      {rate.pricedBy?.override && (
+        <p className="dk-ax-note">
+          {t("Overridden to {0}", money(rate.pricedBy.override, rate.currency))}
+          {rate.pricedBy.overrideReason ? ` · ${rate.pricedBy.overrideReason}` : ""}
+        </p>
+      )}
       {rate.tieBreak !== "" && <p className="dk-ax-note">{rate.tieBreak}</p>}
       <div className="dk-ax-ledger">
         {rate.components.map((component, index) => {

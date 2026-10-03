@@ -24,12 +24,64 @@ import (
 // arguments is the retry that was wanted, and only a byte-identical repeat is
 // refused. What comes back names the original failure, because a model that
 // repeats itself is one that did not absorb the error the first time.
+//
+// A read that succeeded is guarded the same way until something writes. One
+// turn fetched the same billing queue item five times running, each time
+// getting the record it already had; nothing in between could have changed
+// it. The identical read is answered from the earlier one until a call that is
+// not a read runs, after which the record may have moved and reading it again
+// is the right thing to do.
 type repeatGuard struct {
 	failures map[string]string
+	reads    map[string]bool
 }
 
 func newRepeatGuard() *repeatGuard {
-	return &repeatGuard{failures: make(map[string]string, 4)}
+	return &repeatGuard{failures: make(map[string]string, 4), reads: make(map[string]bool, 4)}
+}
+
+// isRead is a tool that only looks something up, by the names read tools take.
+func isRead(name string) bool {
+	for _, prefix := range []string{"get_", "list_", "search_"} {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// readBefore reports whether this exact read already succeeded since the last
+// call that could have changed anything.
+func (g *repeatGuard) readBefore(call serviceports.ToolCall) bool {
+	if !isRead(call.Name) {
+		return false
+	}
+	key, ok := callKey(call)
+
+	return ok && g.reads[key]
+}
+
+// ran notes a call that succeeded: a read is remembered, and anything else
+// forgets every read, since it may have changed what they returned.
+func (g *repeatGuard) ran(call serviceports.ToolCall) {
+	if !isRead(call.Name) {
+		clear(g.reads)
+		return
+	}
+	if key, ok := callKey(call); ok {
+		g.reads[key] = true
+	}
+}
+
+// repeatedRead is what the model gets instead of the same record again.
+func repeatedRead(name string) string {
+	return fmt.Sprintf(
+		"This exact call to %q already ran earlier in this turn, and nothing has changed "+
+			"since, so it was not run again: its result is above. Work from that result. "+
+			"Call it again only with different arguments.",
+		name,
+	)
 }
 
 // seen reports the earlier failure for this exact call, if there was one.

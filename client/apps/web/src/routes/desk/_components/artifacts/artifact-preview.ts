@@ -42,7 +42,10 @@ export function artifactPreview(artifact: AssistantArtifact, t: TranslateFn): st
     }
     case "rate_explanation": {
       const rate = rateExplanationFrom(artifact);
-      return [money(rate.totals.total, rate.currency), rate.winner?.agreementName ?? ""]
+      return [
+        money(rate.totals.total, rate.currency),
+        rate.winner?.agreementName ?? rate.pricedBy?.method ?? "",
+      ]
         .filter((part) => part !== "")
         .join(" · ");
     }

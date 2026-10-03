@@ -804,8 +804,10 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 // total, the limits that bit, what it was priced under — it is the thing a
 // person puts next to the invoice line they are disputing.
 func rateArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
-	// Nothing to explain is a sentence, not a ledger of zeroes.
-	if typeutils.StringOfTrimmed(result["note"]) != "" {
+	// Nothing to explain is a sentence, not a ledger of zeroes. A shipment
+	// priced from its formula template has a note too, and a ledger.
+	pricedBy := objectOf(result["pricedBy"])
+	if typeutils.StringOfTrimmed(result["note"]) != "" && pricedBy == nil {
 		return nil
 	}
 	components, _ := result["components"].([]any)
@@ -824,6 +826,9 @@ func rateArtifact(callID string, result map[string]any) *assistantartifact.Artif
 		"guardrails": result["guardrails"],
 		"totals":     result["totals"],
 		"warnings":   stringsOf(result["warnings"]),
+	}
+	if pricedBy != nil {
+		payload["pricedBy"] = pricedBy
 	}
 	fitRows(payload, "components")
 

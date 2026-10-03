@@ -261,9 +261,12 @@ export function DeskRecordView({
         )}
       </div>
 
-      {view.from && view.to && (
-        <Route from={view.from} to={view.to} progress={view.progress ?? 0} />
-      )}
+      {view.from &&
+        view.to &&
+        (view.from.city || view.from.place) &&
+        (view.to.city || view.to.place) && (
+          <Route from={view.from} to={view.to} progress={view.progress ?? 0} />
+        )}
 
       {view.amount && view.amount.total !== "" && (
         <div className="dk-ax-amt">

@@ -324,7 +324,7 @@ func TestRun_StopsAtTheToolCallBudget(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, result.Exhausted)
-	assert.Equal(t, 2, tool.Calls, "the budget bounds how many tools run")
+	assert.Equal(t, 1, tool.Calls, "the repeated read is answered from the first, not run")
 	assert.Equal(t, 2, result.ToolCallsUsed)
 	assert.Contains(t, result.Reply, "could not finish")
 }

@@ -101,3 +101,61 @@ func TestWorkerView_IsWhetherTheyCanTakeALoad(t *testing.T) {
 	assert.Equal(t, "Medical card expired", ready["blockedBy"])
 	assert.Len(t, view["facts"], 2)
 }
+
+/*
+The full record reads as well as the summary.
+
+A delegate fetched SEED-PAY-007 with detail full, which nests each stop's
+location, the driver and the equipment instead of writing them out, and the
+card came out with an empty route and no driver, tractor or rate.
+*/
+func TestShipmentView_ReadsTheFullRecord(t *testing.T) {
+	t.Parallel()
+
+	stop := func(kind, city, state, name, arrived string) map[string]any {
+		return map[string]any{
+			"type": kind, "status": "Completed", "actualArrival": arrived,
+			"actualDeparture": arrived,
+			"location": map[string]any{
+				"city": city, "name": name, "state": map[string]any{"abbreviation": state},
+			},
+		}
+	}
+	view := recordView("shipment", map[string]any{
+		"status":            "ReadyToInvoice",
+		"bol":               "BOL-2026-0107",
+		"totalChargeAmount": "3050",
+		"customer":          map[string]any{"name": "Range Logistics"},
+		"serviceType":       map[string]any{"code": "STD"},
+		"moves": []any{map[string]any{
+			"loaded": true, "distance": float64(1016),
+			"assignment": map[string]any{
+				"primaryWorker": map[string]any{"firstName": "Emily", "lastName": "Chen", "wholeName": ""},
+				"tractor":       map[string]any{"code": "TRC-003"},
+				"trailer":       map[string]any{"code": "TRL-003"},
+			},
+			"stops": []any{
+				stop("Pickup", "Denver", "CO", "Denver Drop Point", "2026-09-23 22:00 EDT (10 days ago)"),
+				stop("Delivery", "Los Angeles", "CA", "Los Angeles Terminal", "2026-09-24 10:00 EDT (9 days ago)"),
+			},
+		}},
+	})
+	require.NotNil(t, view)
+	from := view["from"].(map[string]any)
+	to := view["to"].(map[string]any)
+	assert.Equal(t, "Denver, CO", from["city"])
+	assert.Equal(t, "Denver Drop Point", from["place"])
+	assert.Equal(t, "Los Angeles, CA", to["city"])
+	assert.Equal(t, "arrived", to["when"])
+
+	got := map[string]any{}
+	for _, entry := range view["facts"].([]any) {
+		fact := entry.(map[string]any)
+		got[fact["key"].(string)] = fact["value"]
+	}
+	assert.Equal(t, "Emily Chen", got["driver"])
+	assert.Equal(t, "TRC-003", got["tractor"])
+	assert.Equal(t, "TRL-003", got["trailer"])
+	assert.Equal(t, "3050", got["rate"])
+	assert.Equal(t, "STD", got["serviceType"])
+}

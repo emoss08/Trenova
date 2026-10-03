@@ -391,6 +391,13 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				continue
 			}
 
+			if t.repeats.readBefore(call) {
+				outcome := toolOutcome{content: repeatedRead(call.Name)}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
 			earlier := t.earlier(call.Name)
 			outcome := fx.Dispatch(t, DispatchCall{
 				Call:                 call,
@@ -406,7 +413,10 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			}
 			if outcome.failed {
 				t.repeats.record(call, outcome.content)
-			} else if ReadsExternalContent(call.Name) {
+			} else {
+				t.repeats.ran(call)
+			}
+			if !outcome.failed && ReadsExternalContent(call.Name) {
 				t.external = true
 			}
 			t.absorbTaint(fx, outcome.taint)
