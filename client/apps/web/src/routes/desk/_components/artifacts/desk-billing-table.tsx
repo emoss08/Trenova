@@ -124,7 +124,8 @@ type Undo = { runId: string; commitAt: number; count: number };
 /**
  * The floating bar over a queue table with rows picked: what the picked rows
  * come to, Review for the first that needs a person, and Approve for the
- * ready ones. Approving starts one job on the server that waits out a short
+ * ready ones. Picked items whose only want is a biller are approved too,
+ * once the person agrees to become their biller. Approving starts one job on the server that waits out a short
  * undo window before it writes; the bar counts the window down, and Undo
  * stops the job before it touches anything.
  */
@@ -142,6 +143,9 @@ export function BillingBulkBar({
   const t = useT();
   const queryClient = useQueryClient();
   const [undo, setUndo] = useState<Undo | null>(null);
+  // Approving items nobody is biller of makes the person their biller, so
+  // the bar asks before it does.
+  const [asking, setAsking] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const split = bulkSplit(selected, summaries);
 
@@ -168,10 +172,11 @@ export function BillingBulkBar({
   }, [undo, refresh]);
 
   const start = useApiMutation({
-    mutationFn: (itemIds: string[]) =>
-      apiService.billingQueueService.startBulkApprove(itemIds, crypto.randomUUID()),
+    mutationFn: ({ itemIds, assignMe }: { itemIds: string[]; assignMe: boolean }) =>
+      apiService.billingQueueService.startBulkApprove(itemIds, crypto.randomUUID(), assignMe),
     resourceName: "BillingQueueItem",
     onSuccess: (run) => {
+      setAsking(false);
       setNow(Date.now());
       setUndo({ runId: run.id, commitAt: run.commitAt, count: run.totalCount });
       onClear();
@@ -212,6 +217,14 @@ export function BillingBulkBar({
   if (!counting && selected.length === 0) {
     return null;
   }
+  const approvable = split.ready.length + split.unassigned.length;
+  const approve = () => {
+    if (split.unassigned.length > 0) {
+      setAsking(true);
+      return;
+    }
+    start.mutate({ itemIds: split.ready, assignMe: false });
+  };
 
   return (
     <div className="dk-ax-bulk" key={counting ? "undo" : "select"}>
@@ -234,6 +247,41 @@ export function BillingBulkBar({
             {t("Undo")} <em className="dk-ax-bk-n">{left}</em>
           </button>
         </>
+      ) : asking && split.unassigned.length > 0 ? (
+        <>
+          <span className="dk-ax-bk-t">
+            <b>
+              {t(
+                "{0, plural, one {# item has no biller} other {# items have no biller}}",
+                split.unassigned.length,
+              )}
+            </b>
+            <span>{t("Approving makes you their biller.")}</span>
+          </span>
+          <button type="button" className="dk-ax-btn dk-ghost" onClick={() => setAsking(false)}>
+            {t("Back")}
+          </button>
+          {split.ready.length > 0 && (
+            <button
+              type="button"
+              className="dk-ax-btn"
+              disabled={start.isPending}
+              onClick={() => start.mutate({ itemIds: split.ready, assignMe: false })}
+            >
+              {t("Only the {0} with a biller", split.ready.length)}
+            </button>
+          )}
+          <button
+            type="button"
+            className="dk-ax-btn dk-ink"
+            disabled={start.isPending}
+            onClick={() =>
+              start.mutate({ itemIds: [...split.ready, ...split.unassigned], assignMe: true })
+            }
+          >
+            {t("Assign me and approve {0}", approvable)}
+          </button>
+        </>
       ) : (
         <>
           <span className="dk-ax-bk-t">
@@ -241,6 +289,9 @@ export function BillingBulkBar({
             <span>
               {[
                 t("{0} ready", split.ready.length),
+                split.unassigned.length > 0
+                  ? t("{0} without a biller", split.unassigned.length)
+                  : "",
                 split.needs.length > 0 ? t("{0} need you", split.needs.length) : "",
                 split.other > 0 ? t("{0} already done or held", split.other) : "",
               ]
@@ -259,10 +310,10 @@ export function BillingBulkBar({
           <button
             type="button"
             className="dk-ax-btn dk-ink"
-            disabled={split.ready.length === 0 || start.isPending}
-            onClick={() => start.mutate(split.ready)}
+            disabled={approvable === 0 || start.isPending}
+            onClick={approve}
           >
-            {split.ready.length > 0 ? t("Approve {0}", split.ready.length) : t("Approve")}
+            {approvable > 0 ? t("Approve {0}", approvable) : t("Approve")}
           </button>
         </>
       )}

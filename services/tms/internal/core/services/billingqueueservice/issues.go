@@ -530,12 +530,24 @@ func (s *service) Post(
 // It never approves on the strength of what a table showed a few seconds ago.
 func (s *service) ApproveIfReady(
 	ctx context.Context,
-	req *services.BillingQueueItemRequest,
+	req *services.ApproveIfReadyRequest,
 	actor *services.RequestActor,
 ) (*services.ApproveIfReadyResult, error) {
 	item, err := s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
 	if err != nil {
 		return nil, err
+	}
+	if req.AssignApprover && onlyWantsBiller(item) && actor != nil && actor.UserID.IsNotNil() {
+		if _, err = s.AssignBiller(ctx, &services.AssignBillerRequest{
+			ItemID:     req.ItemID,
+			BillerID:   actor.UserID,
+			TenantInfo: req.TenantInfo,
+		}, actor); err != nil {
+			return nil, err
+		}
+		if item, err = s.reviewedItem(ctx, req.ItemID, req.TenantInfo); err != nil {
+			return nil, err
+		}
 	}
 	result := &services.ApproveIfReadyResult{Item: item}
 
@@ -577,6 +589,15 @@ func (s *service) ApproveIfReady(
 	}
 
 	return result, nil
+}
+
+// onlyWantsBiller is an item whose one open check is that nobody is its
+// biller, so naming one is all approving it waits on. An item with anything
+// else open is left as it is rather than assigned and not approved.
+func onlyWantsBiller(item *billingqueue.BillingQueueItem) bool {
+	return item.Review != nil &&
+		item.Review.Blocker == billingqueue.BlockerBiller &&
+		item.Review.NeedsCount == 1
 }
 
 func blockerReason(item *billingqueue.BillingQueueItem) string {

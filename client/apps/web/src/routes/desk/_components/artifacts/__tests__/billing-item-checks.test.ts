@@ -163,6 +163,16 @@ describe("bulk selection", () => {
     expect(split.other).toBe(3);
   });
 
+  it("sets apart rows whose only want is a biller, which approving can assign", () => {
+    const unassigned = new Map([
+      ["e", summary("e", { ready: false, needsCount: 1, assignedBillerId: null })],
+      ["f", summary("f", { ready: false, needsCount: 2, assignedBillerId: null })],
+    ]);
+    const split = bulkSplit(["e", "f"], unassigned);
+    expect(split.unassigned).toEqual(["e"]);
+    expect(split.needs).toEqual(["f"]);
+  });
+
   it("reads the header box as all, some or none", () => {
     expect(selectionState(["a", "b"], ["a", "b"])).toBe("all");
     expect(selectionState(["a", "b"], ["a"])).toBe("some");

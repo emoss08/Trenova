@@ -600,7 +600,7 @@ func TestApproveIfReadyLeavesAnItemThatStillNeedsAPerson(t *testing.T) {
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 
-	result, err := w.svc.ApproveIfReady(t.Context(), &services.BillingQueueItemRequest{
+	result, err := w.svc.ApproveIfReady(t.Context(), &services.ApproveIfReadyRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 
@@ -616,10 +616,77 @@ func TestApproveIfReadySkipsAnItemSomebodyHeld(t *testing.T) {
 
 	w := newReviewWorld(t, billingqueue.StatusOnHold)
 
-	result, err := w.svc.ApproveIfReady(t.Context(), &services.BillingQueueItemRequest{
+	result, err := w.svc.ApproveIfReady(t.Context(), &services.ApproveIfReadyRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 
 	require.NoError(t, err)
 	assert.Equal(t, billingqueue.ApprovalFailureOnHold, result.FailureCode)
+}
+
+// unassigned leaves the world's item with nobody as its biller.
+func (w *reviewWorld) unassigned() {
+	w.item.AssignedBillerID = nil
+	w.item.AssignedBiller = nil
+}
+
+func TestApproveIfReadyMakesTheApproverTheBillerWhenThatIsAllItWaitsOn(t *testing.T) {
+	t.Parallel()
+
+	w := newReviewWorld(t, billingqueue.StatusInReview)
+	w.unassigned()
+	w.shp.AdditionalCharges = nil
+	syncTotals(w.shp)
+	w.item.AllocatedTotalAmount = w.shp.TotalChargeAmount.Decimal
+	invoices := mocks.NewMockInvoiceRepository(t)
+	invoices.EXPECT().ListByShipmentIDs(mock.Anything, mock.Anything).
+		Return(map[pulid.ID][]*invoice.Invoice{}, nil).Maybe()
+	invoices.EXPECT().GetByBillingQueueItemID(mock.Anything, mock.Anything).
+		Return(&invoice.Invoice{ID: pulid.MustNew("inv_"), Number: "INV-24101"}, nil)
+	w.svc.invoiceRepo = invoices
+
+	result, err := w.svc.ApproveIfReady(t.Context(), &services.ApproveIfReadyRequest{
+		ItemID: w.item.ID, TenantInfo: w.tenant, AssignApprover: true,
+	}, w.actor)
+
+	require.NoError(t, err)
+	assert.True(t, result.Approved)
+	assert.Equal(t, billingqueue.StatusApproved, w.item.Status)
+	require.NotNil(t, w.item.AssignedBillerID)
+	assert.Equal(t, w.tenant.UserID, *w.item.AssignedBillerID)
+	assert.Contains(t, w.review.eventTexts(), "Assigned Avery Lane as biller")
+}
+
+func TestApproveIfReadyDoesNotAssignAnItemThatAlsoNeedsSomethingElse(t *testing.T) {
+	t.Parallel()
+
+	w := newReviewWorld(t, billingqueue.StatusInReview)
+	w.unassigned()
+
+	result, err := w.svc.ApproveIfReady(t.Context(), &services.ApproveIfReadyRequest{
+		ItemID: w.item.ID, TenantInfo: w.tenant, AssignApprover: true,
+	}, w.actor)
+
+	require.NoError(t, err)
+	assert.False(t, result.Approved)
+	assert.Nil(t, w.item.AssignedBillerID)
+}
+
+func TestApproveIfReadyLeavesAnUnassignedItemWhenNotAskedToAssign(t *testing.T) {
+	t.Parallel()
+
+	w := newReviewWorld(t, billingqueue.StatusInReview)
+	w.unassigned()
+	w.shp.AdditionalCharges = nil
+	syncTotals(w.shp)
+	w.item.AllocatedTotalAmount = w.shp.TotalChargeAmount.Decimal
+
+	result, err := w.svc.ApproveIfReady(t.Context(), &services.ApproveIfReadyRequest{
+		ItemID: w.item.ID, TenantInfo: w.tenant,
+	}, w.actor)
+
+	require.NoError(t, err)
+	assert.False(t, result.Approved)
+	assert.Equal(t, "Nobody is assigned as biller", result.Reason)
+	assert.Nil(t, w.item.AssignedBillerID)
 }

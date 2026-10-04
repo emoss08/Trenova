@@ -104,14 +104,18 @@ func (s *Service) Start(
 		return nil, err
 	}
 
-	if err = s.startWorkflow(ctx, run); err != nil {
+	if err = s.startWorkflow(ctx, run, req.AssignApprover); err != nil {
 		return nil, err
 	}
 
 	return run, nil
 }
 
-func (s *Service) startWorkflow(ctx context.Context, run *billingqueue.ApprovalRun) error {
+func (s *Service) startWorkflow(
+	ctx context.Context,
+	run *billingqueue.ApprovalRun,
+	assignApprover bool,
+) error {
 	wf, err := s.workflows.StartWorkflow(ctx,
 		client.StartWorkflowOptions{
 			ID:                    workflowIDPrefix + run.ID.String(),
@@ -126,7 +130,8 @@ func (s *Service) startWorkflow(ctx context.Context, run *billingqueue.ApprovalR
 				UserID:         run.RequestedByID,
 				Timestamp:      timeutils.NowUnix(),
 			},
-			RunID: run.ID,
+			RunID:          run.ID,
+			AssignApprover: assignApprover,
 		},
 	)
 	if err == nil {

@@ -275,6 +275,9 @@ func (h *Handler) post(c *gin.Context) {
 type bulkApproveRequest struct {
 	ItemIDs        []pulid.ID `json:"itemIds"        binding:"required"`
 	IdempotencyKey string     `json:"idempotencyKey" binding:"required"`
+	// AssignApprover makes the person approving the biller of the picked
+	// items that have none.
+	AssignApprover bool `json:"assignApprover"`
 }
 
 // @Summary Approve several items as one job, after an undo window
@@ -298,10 +301,13 @@ func (h *Handler) startBulkApprove(c *gin.Context) {
 		return
 	}
 
+	// The run is the person's: it is approved in their name, and an item with
+	// no biller can only be given to them.
 	run, err := h.approval.Start(c.Request.Context(), &services.StartBillingQueueApprovalRequest{
-		TenantInfo:     pagination.FromAuth(authCtx),
+		TenantInfo:     pagination.FromAuthAsUser(authCtx),
 		ItemIDs:        body.ItemIDs,
 		IdempotencyKey: body.IdempotencyKey,
+		AssignApprover: body.AssignApprover,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -319,8 +325,9 @@ func (h *Handler) runRequest(c *gin.Context) (*services.BillingQueueApprovalRunR
 		return nil, false
 	}
 
+	// Undo is the approver's alone, so the request says who is asking.
 	return &services.BillingQueueApprovalRunRequest{
-		TenantInfo: pagination.FromAuth(authCtx),
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		RunID:      runID,
 	}, true
 }

@@ -110,9 +110,10 @@ func BulkApprovalWorkflow(
 	itemCtx := workflow.WithActivityOptions(ctx, itemActivityOptions)
 	for _, itemID := range itemIDs {
 		itemPayload := &ApproveItemPayload{
-			BasePayload: payload.BasePayload,
-			RunID:       payload.RunID,
-			ItemID:      itemID,
+			BasePayload:    payload.BasePayload,
+			RunID:          payload.RunID,
+			ItemID:         itemID,
+			AssignApprover: payload.AssignApprover,
 		}
 		var result *ApproveItemResult
 		err := workflow.ExecuteActivity(itemCtx, a.ApproveQueueItemActivity, itemPayload).

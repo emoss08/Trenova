@@ -26,6 +26,9 @@ type ApprovalRunPayload struct {
 	temporaltype.BasePayload
 
 	RunID pulid.ID `json:"runId"`
+	// AssignApprover: the person agreed to become the biller of the items
+	// that have none.
+	AssignApprover bool `json:"assignApprover,omitempty"`
 }
 
 func (p *ApprovalRunPayload) tenant() pagination.TenantInfo {
@@ -39,8 +42,9 @@ func (p *ApprovalRunPayload) tenant() pagination.TenantInfo {
 type ApproveItemPayload struct {
 	temporaltype.BasePayload
 
-	RunID  pulid.ID `json:"runId"`
-	ItemID pulid.ID `json:"itemId"`
+	RunID          pulid.ID `json:"runId"`
+	ItemID         pulid.ID `json:"itemId"`
+	AssignApprover bool     `json:"assignApprover,omitempty"`
 }
 
 func (p *ApproveItemPayload) tenant() pagination.TenantInfo {

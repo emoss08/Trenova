@@ -132,10 +132,12 @@ export class BillingQueueService {
   }
 
   /** Starts a bulk approval; the server waits out the undo window before it writes. */
-  public async startBulkApprove(itemIds: string[], idempotencyKey: string) {
+  public async startBulkApprove(itemIds: string[], idempotencyKey: string, assignMe = false) {
     const response = await api.post<BillingQueueApprovalRun>("/billing-queue/bulk-approve/", {
       itemIds,
       idempotencyKey,
+      // Makes the person approving the biller of the items that have none.
+      assignApprover: assignMe,
     });
     return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueApprovalRun");
   }

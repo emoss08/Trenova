@@ -99,15 +99,28 @@ type BillingQueueReviewService interface {
 	// only if every one passes. It is what a bulk approval does per item.
 	ApproveIfReady(
 		ctx context.Context,
-		req *BillingQueueItemRequest,
+		req *ApproveIfReadyRequest,
 		actor *RequestActor,
 	) (*ApproveIfReadyResult, error)
+}
+
+// ApproveIfReadyRequest is one item of a bulk approval.
+type ApproveIfReadyRequest struct {
+	ItemID     pulid.ID
+	TenantInfo pagination.TenantInfo
+	// AssignApprover makes the person approving the item's biller when nobody
+	// is and that is all that stands in the way. Approving is a biller's act,
+	// so it never names anyone else.
+	AssignApprover bool
 }
 
 type StartBillingQueueApprovalRequest struct {
 	TenantInfo     pagination.TenantInfo
 	ItemIDs        []pulid.ID
 	IdempotencyKey string
+	// AssignApprover: the person agreed to become the biller of the picked
+	// items that have none.
+	AssignApprover bool
 }
 
 type BillingQueueApprovalRunRequest struct {

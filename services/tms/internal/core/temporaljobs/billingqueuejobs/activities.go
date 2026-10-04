@@ -97,9 +97,10 @@ func (a *Activities) ApproveQueueItemActivity(
 		BusinessUnitID: payload.BusinessUnitID,
 	}
 
-	outcome, err := a.review.ApproveIfReady(ctx, &services.BillingQueueItemRequest{
-		ItemID:     payload.ItemID,
-		TenantInfo: tenant,
+	outcome, err := a.review.ApproveIfReady(ctx, &services.ApproveIfReadyRequest{
+		ItemID:         payload.ItemID,
+		TenantInfo:     tenant,
+		AssignApprover: payload.AssignApprover,
 	}, actor)
 	record := &billingqueue.ApprovalRunItem{RunID: payload.RunID, ItemID: payload.ItemID}
 	switch {

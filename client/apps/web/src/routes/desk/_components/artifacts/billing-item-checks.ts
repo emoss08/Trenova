@@ -206,6 +206,11 @@ export function money(amount: string | number | null | undefined, currency = "US
 export type BulkSplit = {
   /** Selected items every check clears; Approve takes these. */
   ready: string[];
+  /**
+   * Selected items whose only open check is that nobody is their biller.
+   * Approving them makes the person approving their biller, so it asks first.
+   */
+  unassigned: string[];
   /** Selected items still under review that need a person; Review opens the first. */
   needs: string[];
   /** Selected items already approved, posted, held or otherwise out of review. */
@@ -216,13 +221,15 @@ export function bulkSplit(
   selected: readonly string[],
   summaries: ReadonlyMap<string, BillingQueueSummary>,
 ): BulkSplit {
-  const split: BulkSplit = { ready: [], needs: [], other: 0 };
+  const split: BulkSplit = { ready: [], unassigned: [], needs: [], other: 0 };
   for (const id of selected) {
     const summary = summaries.get(id);
     if (!summary || itemStage(summary.status) !== "review") {
       split.other += 1;
     } else if (summary.ready) {
       split.ready.push(id);
+    } else if (!summary.assignedBillerId && summary.needsCount === 1) {
+      split.unassigned.push(id);
     } else {
       split.needs.push(id);
     }
