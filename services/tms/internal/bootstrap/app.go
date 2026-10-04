@@ -28,8 +28,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/retrievalquery"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
@@ -122,6 +124,8 @@ func Options() fx.Option {
 		infrastructure.DatabaseModule,
 		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
+		planservice.Module,
+		quotaservice.Module,
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
 		fx.Provide(integrationservice.New),

@@ -434,10 +434,11 @@ const (
 )
 
 type EncryptionConfig struct {
-	Mode       string       `mapstructure:"mode"       validate:"omitempty,oneof=envelope disabled"`
-	KeyManager string       `mapstructure:"keyManager" validate:"omitempty,oneof=local gcp-autokey disabled"`
-	Key        string       `mapstructure:"key"        validate:"omitempty,min=32"`
-	GCPKMS     GCPKMSConfig `mapstructure:"gcpKms"`
+	Mode                             string       `mapstructure:"mode"                              validate:"omitempty,oneof=envelope disabled"`
+	KeyManager                       string       `mapstructure:"keyManager"                        validate:"omitempty,oneof=local gcp-autokey disabled"`
+	Key                              string       `mapstructure:"key"                               validate:"omitempty,min=32"`
+	AllowLocalKeyManagerInProduction bool         `mapstructure:"allowLocalKeyManagerInProduction"`
+	GCPKMS                           GCPKMSConfig `mapstructure:"gcpKms"`
 }
 
 type GCPKMSConfig struct {
@@ -1688,6 +1689,11 @@ type PlatformConfig struct {
 	InstanceID            string                     `mapstructure:"instanceId"`
 	ControlPlane          PlatformControlPlaneConfig `mapstructure:"controlPlane"`
 	ReferenceDataStewards []string                   `mapstructure:"referenceDataStewards"`
+	Cloud                 PlatformCloudConfig        `mapstructure:"cloud"`
+}
+
+func (c *PlatformConfig) IsCloud() bool {
+	return c.GetMode() == PlatformModeCloud
 }
 
 func (c *PlatformConfig) IsCloudBacked() bool {
@@ -1708,6 +1714,204 @@ func (c *PlatformConfig) GetMode() PlatformMode {
 
 func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 	return c.GetMode() == PlatformModeDevelopment
+}
+
+const (
+	DefaultCloudSignupMaxActiveTenants     = 500
+	DefaultCloudSignupMaxSignupsPerDay     = 100
+	DefaultCloudSignupPerIPPerHour         = 3
+	DefaultCloudSignupVerificationTokenTTL = 24 * time.Hour
+	DefaultCloudSignupTermsURL             = "https://trenova.app/terms"
+	DefaultCloudSignupPrivacyURL           = "https://trenova.app/privacy"
+	DefaultCloudTurnstileVerifyURL         = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+	DefaultCloudTurnstileTimeout           = 5 * time.Second
+	CloudSystemEmailProviderResend         = "resend"
+	DefaultCloudSystemEmailFromAddress     = "noreply@trenova.app"
+	DefaultCloudSystemEmailFromName        = "Trenova"
+	DefaultCloudSystemEmailTimeout         = 10 * time.Second
+	DefaultCloudTrialLifetime              = 720 * time.Hour
+	DefaultCloudTrialReadOnlyGrace         = 336 * time.Hour
+)
+
+type PlatformCloudConfig struct {
+	Signup      CloudSignupConfig      `mapstructure:"signup"`
+	Turnstile   CloudTurnstileConfig   `mapstructure:"turnstile"`
+	SystemEmail CloudSystemEmailConfig `mapstructure:"systemEmail"`
+	Trial       CloudTrialConfig       `mapstructure:"trial"`
+	FreePlan    CloudFreePlanConfig    `mapstructure:"freePlan"`
+}
+
+type CloudSignupConfig struct {
+	Enabled              bool          `mapstructure:"enabled"`
+	MaxActiveTenants     int           `mapstructure:"maxActiveTenants"     validate:"min=0"`
+	MaxSignupsPerDay     int           `mapstructure:"maxSignupsPerDay"     validate:"min=0"`
+	PerIPPerHour         int           `mapstructure:"perIpPerHour"         validate:"min=0"`
+	VerificationTokenTTL time.Duration `mapstructure:"verificationTokenTtl" validate:"omitempty,min=5m,max=168h"`
+	BlockDisposableEmail bool          `mapstructure:"blockDisposableEmail"`
+	AllowedEmailDomains  []string      `mapstructure:"allowedEmailDomains"  validate:"omitempty,dive,required,fqdn"`
+	TermsURL             string        `mapstructure:"termsUrl"             validate:"omitempty,url"`
+	PrivacyURL           string        `mapstructure:"privacyUrl"           validate:"omitempty,url"`
+}
+
+func (c *CloudSignupConfig) GetMaxActiveTenants() int {
+	return max(c.MaxActiveTenants, 0)
+}
+
+func (c *CloudSignupConfig) GetMaxSignupsPerDay() int {
+	return max(c.MaxSignupsPerDay, 0)
+}
+
+func (c *CloudSignupConfig) GetPerIPPerHour() int {
+	if c.PerIPPerHour <= 0 {
+		return DefaultCloudSignupPerIPPerHour
+	}
+
+	return c.PerIPPerHour
+}
+
+func (c *CloudSignupConfig) GetVerificationTokenTTL() time.Duration {
+	if c.VerificationTokenTTL <= 0 {
+		return DefaultCloudSignupVerificationTokenTTL
+	}
+
+	return c.VerificationTokenTTL
+}
+
+func (c *CloudSignupConfig) GetAllowedEmailDomains() []string {
+	domains := make([]string, 0, len(c.AllowedEmailDomains))
+	for _, domain := range c.AllowedEmailDomains {
+		normalized := strings.ToLower(strings.TrimSpace(domain))
+		if normalized != "" {
+			domains = append(domains, normalized)
+		}
+	}
+
+	return domains
+}
+
+func (c *CloudSignupConfig) GetTermsURL() string {
+	if trimmed := strings.TrimSpace(c.TermsURL); trimmed != "" {
+		return trimmed
+	}
+
+	return DefaultCloudSignupTermsURL
+}
+
+func (c *CloudSignupConfig) GetPrivacyURL() string {
+	if trimmed := strings.TrimSpace(c.PrivacyURL); trimmed != "" {
+		return trimmed
+	}
+
+	return DefaultCloudSignupPrivacyURL
+}
+
+type CloudTurnstileConfig struct {
+	Enabled   bool          `mapstructure:"enabled"`
+	SiteKey   string        `mapstructure:"siteKey"`
+	SecretKey string        `mapstructure:"secretKey"`
+	VerifyURL string        `mapstructure:"verifyUrl" validate:"omitempty,url"`
+	Timeout   time.Duration `mapstructure:"timeout"   validate:"omitempty,min=1s,max=30s"`
+}
+
+func (c *CloudTurnstileConfig) GetVerifyURL() string {
+	if trimmed := strings.TrimSpace(c.VerifyURL); trimmed != "" {
+		return trimmed
+	}
+
+	return DefaultCloudTurnstileVerifyURL
+}
+
+func (c *CloudTurnstileConfig) GetTimeout() time.Duration {
+	if c.Timeout <= 0 {
+		return DefaultCloudTurnstileTimeout
+	}
+
+	return c.Timeout
+}
+
+type CloudSystemEmailConfig struct {
+	Provider    string        `mapstructure:"provider"    validate:"omitempty,oneof=resend"`
+	APIKey      string        `mapstructure:"apiKey"`
+	FromAddress string        `mapstructure:"fromAddress" validate:"omitempty,email"`
+	FromName    string        `mapstructure:"fromName"    validate:"omitempty,max=100"`
+	ReplyTo     string        `mapstructure:"replyTo"     validate:"omitempty,email"`
+	Timeout     time.Duration `mapstructure:"timeout"     validate:"omitempty,min=1s,max=60s"`
+}
+
+func (c *CloudSystemEmailConfig) GetProvider() string {
+	if trimmed := strings.ToLower(strings.TrimSpace(c.Provider)); trimmed != "" {
+		return trimmed
+	}
+
+	return CloudSystemEmailProviderResend
+}
+
+func (c *CloudSystemEmailConfig) GetFromAddress() string {
+	if trimmed := strings.TrimSpace(c.FromAddress); trimmed != "" {
+		return trimmed
+	}
+
+	return DefaultCloudSystemEmailFromAddress
+}
+
+func (c *CloudSystemEmailConfig) GetFromName() string {
+	if trimmed := strings.TrimSpace(c.FromName); trimmed != "" {
+		return trimmed
+	}
+
+	return DefaultCloudSystemEmailFromName
+}
+
+func (c *CloudSystemEmailConfig) GetReplyTo() string {
+	return strings.TrimSpace(c.ReplyTo)
+}
+
+func (c *CloudSystemEmailConfig) GetTimeout() time.Duration {
+	if c.Timeout <= 0 {
+		return DefaultCloudSystemEmailTimeout
+	}
+
+	return c.Timeout
+}
+
+func (c *CloudSystemEmailConfig) HasAPIKey() bool {
+	return strings.TrimSpace(c.APIKey) != ""
+}
+
+type CloudTrialConfig struct {
+	Lifetime      time.Duration `mapstructure:"lifetime"      validate:"omitempty,min=1h"`
+	ReadOnlyGrace time.Duration `mapstructure:"readOnlyGrace" validate:"omitempty,min=0"`
+}
+
+func (c *CloudTrialConfig) GetLifetime() time.Duration {
+	if c.Lifetime <= 0 {
+		return DefaultCloudTrialLifetime
+	}
+
+	return c.Lifetime
+}
+
+func (c *CloudTrialConfig) GetReadOnlyGrace() time.Duration {
+	if c.ReadOnlyGrace <= 0 {
+		return DefaultCloudTrialReadOnlyGrace
+	}
+
+	return c.ReadOnlyGrace
+}
+
+type CloudFreePlanConfig struct {
+	Limits map[string]map[string]int64 `mapstructure:"limits"`
+}
+
+func (c *CloudFreePlanConfig) GetLimitOverrides() map[string]int64 {
+	overrides := make(map[string]int64, len(c.Limits)*2)
+	for group, entries := range c.Limits {
+		for name, value := range entries {
+			overrides[strings.ToLower(strings.TrimSpace(group))+"."+strings.ToLower(strings.TrimSpace(name))] = value
+		}
+	}
+
+	return overrides
 }
 
 const defaultControlPlaneMaxProvisioningBodyBytes int64 = 1 << 20

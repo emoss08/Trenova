@@ -17,7 +17,9 @@ type PlatformProviderSelectorParams struct {
 	Config           *config.Config
 	LocalEntitlement *entitlementservice.LocalEntitlementProvider
 	LocalBilling     *platformbillingservice.LocalBillingProvider
+	LocalPlanBilling *platformbillingservice.LocalPlanBillingProvider
 	NoopUsage        *usageservice.NoopUsageProvider
+	LocalPlanUsage   *usageservice.LocalPlanUsageProvider
 	CloudEntitlement *controlplane.CloudEntitlementProvider
 	CloudBilling     *controlplane.CloudBillingProvider
 	CloudUsage       *controlplane.CloudUsageProvider
@@ -34,17 +36,23 @@ func SelectEntitlementProvider(
 }
 
 func SelectBillingProvider(p PlatformProviderSelectorParams) (services.BillingProvider, error) {
-	if p.Config.Platform.ControlPlane.Enabled {
+	switch {
+	case p.Config.Platform.ControlPlane.Enabled:
 		return p.CloudBilling, nil
+	case p.Config.Platform.IsCloud():
+		return p.LocalPlanBilling, nil
+	default:
+		return p.LocalBilling, nil
 	}
-
-	return p.LocalBilling, nil
 }
 
 func SelectUsageProvider(p PlatformProviderSelectorParams) (services.UsageProvider, error) {
-	if p.Config.Platform.ControlPlane.Enabled {
+	switch {
+	case p.Config.Platform.ControlPlane.Enabled:
 		return p.CloudUsage, nil
+	case p.Config.Platform.IsCloud():
+		return p.LocalPlanUsage, nil
+	default:
+		return p.NoopUsage, nil
 	}
-
-	return p.NoopUsage, nil
 }

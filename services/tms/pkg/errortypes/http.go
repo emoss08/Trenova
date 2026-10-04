@@ -20,6 +20,10 @@ func HTTPStatus(err error) int {
 		return http.StatusForbidden
 	case IsRateLimitError(err):
 		return http.StatusTooManyRequests
+	case IsQuotaExceededError(err):
+		return http.StatusPaymentRequired
+	case IsPlanRestrictionError(err):
+		return http.StatusForbidden
 	case IsBusinessError(err):
 		return http.StatusUnprocessableEntity
 	case IsNotImplementedError(err):
@@ -59,6 +63,10 @@ func HTTPStatusWithCode(code ErrorCode) int {
 		return http.StatusInternalServerError
 	case ErrNotImplemented:
 		return http.StatusNotImplemented
+	case ErrQuotaExceeded:
+		return http.StatusPaymentRequired
+	case ErrPlanRestricted:
+		return http.StatusForbidden
 	default:
 		return http.StatusInternalServerError
 	}

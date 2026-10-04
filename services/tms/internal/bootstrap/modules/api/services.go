@@ -291,7 +291,9 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	platformcatalog.NewRegistry,
 	entitlementservice.NewLocalEntitlementProvider,
 	platformbillingservice.NewLocalBillingProvider,
+	platformbillingservice.NewLocalPlanBillingProvider,
 	usageservice.NewNoopUsageProvider,
+	usageservice.NewLocalPlanUsageProvider,
 	fx.Annotate(
 		controlplane.NewHTTPControlPlaneClient,
 		fx.As(new(controlplane.Client)),

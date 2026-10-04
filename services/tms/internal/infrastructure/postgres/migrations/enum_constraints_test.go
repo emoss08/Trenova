@@ -19,9 +19,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/core/domain/cloudsignup"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/core/domain/subscription"
 	"github.com/stretchr/testify/require"
 )
 
@@ -437,6 +440,22 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_capture_items_suggestion_source",
 			values: stringsOf(capture.AllSuggestionSources()),
+		},
+		{
+			name:   "ck_organization_subscriptions_status",
+			values: stringsOf(subscription.AllStatuses()),
+		},
+		{
+			name:   "ck_organization_onboarding_status",
+			values: stringsOf(onboarding.AllStatuses()),
+		},
+		{
+			name:   "ck_organization_onboarding_operation_type",
+			values: stringsOf(onboarding.AllOperationTypes()),
+		},
+		{
+			name:   "ck_cloud_signups_status",
+			values: stringsOf(cloudsignup.AllStatuses()),
 		},
 	}
 

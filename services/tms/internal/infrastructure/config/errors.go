@@ -38,7 +38,28 @@ var (
 		"production and staging require security.encryption.mode=envelope",
 	)
 	ErrProductionKMSRequired = errors.New(
-		"production and staging require security.encryption.keyManager=gcp-autokey",
+		"production and staging require security.encryption.keyManager=gcp-autokey, or keyManager=local with security.encryption.allowLocalKeyManagerInProduction",
+	)
+	ErrProductionLocalEncryptionKeyRequired = errors.New(
+		"security.encryption.allowLocalKeyManagerInProduction requires security.encryption.key of at least 32 characters",
+	)
+	ErrCloudRequiresPostgres = errors.New(
+		"platform.mode=cloud requires the postgres database driver",
+	)
+	ErrCloudTurnstileSiteKeyRequired = errors.New(
+		"platform.cloud.turnstile.siteKey is required when cloud signup and turnstile are enabled",
+	)
+	ErrCloudTurnstileSecretKeyRequired = errors.New(
+		"platform.cloud.turnstile.secretKey is required when cloud signup and turnstile are enabled",
+	)
+	ErrCloudFreePlanLimitNegative = errors.New(
+		"platform.cloud.freePlan.limits values must not be negative",
+	)
+	ErrProductionCloudTurnstileRequired = errors.New(
+		"production and staging require platform.cloud.turnstile.enabled when cloud signup is enabled",
+	)
+	ErrProductionCloudSystemEmailRequired = errors.New(
+		"production and staging require platform.cloud.systemEmail.apiKey when cloud signup is enabled",
 	)
 	ErrProductionGCPKMSConfigRequired = errors.New(
 		"production and staging require a GCP KMS crypto key resource",

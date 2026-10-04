@@ -396,6 +396,29 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("platform.controlPlane.heartbeatInterval", "5m")
 	l.viper.SetDefault("platform.controlPlane.tenantSyncInterval", "1h")
 	l.viper.SetDefault("platform.controlPlane.failOpenOnError", false)
+	l.viper.SetDefault("platform.cloud.signup.enabled", false)
+	l.viper.SetDefault("platform.cloud.signup.maxActiveTenants", DefaultCloudSignupMaxActiveTenants)
+	l.viper.SetDefault("platform.cloud.signup.maxSignupsPerDay", DefaultCloudSignupMaxSignupsPerDay)
+	l.viper.SetDefault("platform.cloud.signup.perIpPerHour", DefaultCloudSignupPerIPPerHour)
+	l.viper.SetDefault("platform.cloud.signup.verificationTokenTtl", DefaultCloudSignupVerificationTokenTTL.String())
+	l.viper.SetDefault("platform.cloud.signup.blockDisposableEmail", true)
+	l.viper.SetDefault("platform.cloud.signup.allowedEmailDomains", []string{})
+	l.viper.SetDefault("platform.cloud.signup.termsUrl", DefaultCloudSignupTermsURL)
+	l.viper.SetDefault("platform.cloud.signup.privacyUrl", DefaultCloudSignupPrivacyURL)
+	l.viper.SetDefault("platform.cloud.turnstile.enabled", true)
+	l.viper.SetDefault("platform.cloud.turnstile.siteKey", "")
+	l.viper.SetDefault("platform.cloud.turnstile.secretKey", "")
+	l.viper.SetDefault("platform.cloud.turnstile.verifyUrl", DefaultCloudTurnstileVerifyURL)
+	l.viper.SetDefault("platform.cloud.turnstile.timeout", DefaultCloudTurnstileTimeout.String())
+	l.viper.SetDefault("platform.cloud.systemEmail.provider", CloudSystemEmailProviderResend)
+	l.viper.SetDefault("platform.cloud.systemEmail.apiKey", "")
+	l.viper.SetDefault("platform.cloud.systemEmail.fromAddress", DefaultCloudSystemEmailFromAddress)
+	l.viper.SetDefault("platform.cloud.systemEmail.fromName", DefaultCloudSystemEmailFromName)
+	l.viper.SetDefault("platform.cloud.systemEmail.replyTo", "")
+	l.viper.SetDefault("platform.cloud.systemEmail.timeout", DefaultCloudSystemEmailTimeout.String())
+	l.viper.SetDefault("platform.cloud.trial.lifetime", DefaultCloudTrialLifetime.String())
+	l.viper.SetDefault("platform.cloud.trial.readOnlyGrace", DefaultCloudTrialReadOnlyGrace.String())
+	l.viper.SetDefault("security.encryption.allowLocalKeyManagerInProduction", false)
 
 	// Storage defaults
 	l.viper.SetDefault("storage.provider", StorageProviderMinio)
@@ -569,11 +592,10 @@ func validateLoggingConfig(config *Config) error {
 }
 
 func validatePlatformConfig(config *Config) error {
-	if config.Platform.GetMode() == PlatformModeCloud && !config.Platform.ControlPlane.Enabled {
-		return fmt.Errorf(
-			"platform.controlplane.enabled is required for %s platform mode",
-			config.Platform.GetMode(),
-		)
+	if config.Platform.IsCloud() {
+		if err := validateCloudConfig(config); err != nil {
+			return err
+		}
 	}
 
 	if config.Platform.ControlPlane.Enabled {
@@ -591,6 +613,85 @@ func validatePlatformConfig(config *Config) error {
 			return errors.New(
 				"platform.instanceid is required when control plane is enabled",
 			)
+		}
+	}
+
+	return nil
+}
+
+func validateCloudConfig(config *Config) error {
+	if !config.Database.GetDialect().IsPostgres() {
+		return ErrCloudRequiresPostgres
+	}
+
+	cloud := &config.Platform.Cloud
+	if cloud.Signup.Enabled && cloud.Turnstile.Enabled {
+		if strings.TrimSpace(cloud.Turnstile.SiteKey) == "" {
+			return ErrCloudTurnstileSiteKeyRequired
+		}
+		if strings.TrimSpace(cloud.Turnstile.SecretKey) == "" {
+			return ErrCloudTurnstileSecretKeyRequired
+		}
+	}
+
+	for key, value := range cloud.FreePlan.GetLimitOverrides() {
+		if value < 0 {
+			return fmt.Errorf("%w: %s is %d", ErrCloudFreePlanLimitNegative, key, value)
+		}
+	}
+
+	return nil
+}
+
+func validateCloudProductionSecurity(config *Config) error {
+	if !config.Platform.IsCloud() {
+		return nil
+	}
+
+	cloud := &config.Platform.Cloud
+	if cloud.Signup.Enabled && !cloud.Turnstile.Enabled {
+		return ErrProductionCloudTurnstileRequired
+	}
+	if cloud.Signup.Enabled && !cloud.SystemEmail.HasAPIKey() {
+		return ErrProductionCloudSystemEmailRequired
+	}
+
+	return nil
+}
+
+func validateProductionKeyManager(config *Config) error {
+	keyManager := strings.ToLower(strings.TrimSpace(config.Security.Encryption.KeyManager))
+	if keyManager == EncryptionKeyManagerLocal &&
+		config.Security.Encryption.AllowLocalKeyManagerInProduction {
+		return validateProductionLocalKey(config.Security.Encryption.Key)
+	}
+	if keyManager != EncryptionKeyManagerGCPAutokey {
+		return ErrProductionKMSRequired
+	}
+
+	gcpKey := strings.TrimSpace(config.Security.Encryption.GCPKMS.CryptoKey)
+	if gcpKey == "" {
+		gcpKey = strings.TrimSpace(config.Security.Encryption.GCPKMS.KeyResource)
+	}
+	if gcpKey == "" {
+		return ErrProductionGCPKMSConfigRequired
+	}
+
+	return nil
+}
+
+const minProductionLocalEncryptionKeyLength = 32
+
+func validateProductionLocalKey(key string) error {
+	trimmed := strings.TrimSpace(key)
+	if len(trimmed) < minProductionLocalEncryptionKeyLength {
+		return ErrProductionLocalEncryptionKeyRequired
+	}
+
+	lowered := strings.ToLower(trimmed)
+	for _, placeholder := range InsecureDefaultValues {
+		if strings.Contains(lowered, placeholder) {
+			return ErrEncryptionKeyIsInsecure
 		}
 	}
 
@@ -620,16 +721,11 @@ func validateProductionSecurity(config *Config) error {
 	if encryptionMode != EncryptionModeEnvelope {
 		return ErrProductionEncryptionModeRequired
 	}
-	keyManager := strings.ToLower(strings.TrimSpace(config.Security.Encryption.KeyManager))
-	if keyManager != EncryptionKeyManagerGCPAutokey {
-		return ErrProductionKMSRequired
+	if err := validateProductionKeyManager(config); err != nil {
+		return err
 	}
-	gcpKey := strings.TrimSpace(config.Security.Encryption.GCPKMS.CryptoKey)
-	if gcpKey == "" {
-		gcpKey = strings.TrimSpace(config.Security.Encryption.GCPKMS.KeyResource)
-	}
-	if gcpKey == "" {
-		return ErrProductionGCPKMSConfigRequired
+	if err := validateCloudProductionSecurity(config); err != nil {
+		return err
 	}
 	if config.Storage.GetProvider() == StorageProviderR2 &&
 		(!config.Storage.UseSSL || !strings.HasPrefix(config.Storage.Endpoint, "https://")) {

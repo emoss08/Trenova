@@ -36,6 +36,45 @@ platform:
     # Set to true once the control plane issues the new keys; until then the packs that
     # own those features are reachable by any tenant holding tms.core.
     disableLegacyGrants: false
+  # Trenova Cloud free tier. Read only when mode is cloud; see
+  # docs/engineering/cloud-free-tier.md. Every organization created by signup gets the
+  # free_demo plan; organizations without a subscription row (seeded operator tenants)
+  # are unlimited.
+  cloud:
+    signup:
+      enabled: false
+      maxActiveTenants: 500 # trialing + read_only organizations; 0 = no cap
+      maxSignupsPerDay: 100 # verified signups per UTC day; 0 = no cap
+      perIpPerHour: 3 # signup + resend requests per client IP
+      verificationTokenTtl: 24h
+      blockDisposableEmail: true
+      allowedEmailDomains: [] # non-empty = only these domains may sign up
+      termsUrl: https://trenova.app/terms
+      privacyUrl: https://trenova.app/privacy
+    turnstile:
+      enabled: true
+      # Cloudflare's always-pass test keys. Replace them with your own widget's keys
+      # before exposing signup to the internet.
+      siteKey: 1x00000000000000000000AA
+      secretKey: 1x0000000000000000000000000000000AA
+      verifyUrl: https://challenges.cloudflare.com/turnstile/v0/siteverify
+      timeout: 5s
+    systemEmail:
+      provider: resend
+      apiKey: "" # Empty outside production logs platform email instead of sending it
+      fromAddress: noreply@trenova.app
+      fromName: Trenova
+      replyTo: ""
+      timeout: 10s
+    trial:
+      lifetime: 720h # 30 days of full use
+      readOnlyGrace: 336h # then 14 days read-only, then purge
+    freePlan:
+      # Every key is optional; omitted meters keep the defaults in platformplan.
+      limits: {}
+      # limits:
+      #   shipments.total: 12
+      #   documents.storage_bytes: 104857600
 
 # HTTP Server configuration
 server:
@@ -292,6 +331,10 @@ security:
     mode: envelope # envelope, disabled (tests only)
     keyManager: local # local for dev/test; production/staging must use gcp-autokey
     key: super-secret-key # Encryption key (min 32 chars)
+    # Lets a single-host production deploy run keyManager: local. The key must then be at
+    # least 32 characters and contain no placeholder text. Leave false wherever a cloud KMS
+    # is available.
+    allowLocalKeyManagerInProduction: false
     gcpKms:
       cryptoKey: "" # Full Cloud KMS crypto key name for production/staging
       credentialsMode: adc # adc, workload-identity, or credentials-file

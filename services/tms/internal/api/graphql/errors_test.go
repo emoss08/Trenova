@@ -151,3 +151,45 @@ func TestErrorPresenter_RowLevelSecurityViolationIsForbidden(t *testing.T) {
 	)
 	assert.Len(t, tracker.Violations(), 1)
 }
+
+func TestErrorPresenter_QuotaExceededCarriesItsParams(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(presenterTestConfig())
+
+	presented := present(context.Background(), fmt.Errorf("create shipment: %w",
+		errortypes.NewQuotaExceededError("shipments.total", 12, 12, "free_demo")))
+	require.NotNil(t, presented)
+	assert.Equal(t, string(errortypes.ErrQuotaExceeded), presented.Extensions["code"])
+	assert.Equal(t,
+		"https://api.test/problems/"+string(helpers.ProblemTypeQuotaExceeded),
+		presented.Extensions["type"],
+	)
+	assert.Equal(t, map[string]string{
+		"meter": "shipments.total",
+		"limit": "12",
+		"used":  "12",
+		"plan":  "free_demo",
+	}, presented.Extensions["params"])
+	assert.Equal(t, "This organization has reached the limit of its plan", presented.Message)
+}
+
+func TestErrorPresenter_PlanRestrictionCarriesItsParams(t *testing.T) {
+	t.Parallel()
+
+	present := newErrorPresenter(presenterTestConfig())
+
+	presented := present(context.Background(),
+		errortypes.NewPlanRestrictionError("api_keys", "", "free_demo"))
+	require.NotNil(t, presented)
+	assert.Equal(t, string(errortypes.ErrPlanRestricted), presented.Extensions["code"])
+	assert.Equal(t,
+		"https://api.test/problems/"+string(helpers.ProblemTypePlanRestricted),
+		presented.Extensions["type"],
+	)
+	assert.Equal(t, map[string]string{
+		"capability": "api_keys",
+		"reason":     errortypes.PlanRestrictionReasonPlan,
+		"plan":       "free_demo",
+	}, presented.Extensions["params"])
+}
