@@ -235,6 +235,13 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 // twenty-five row list as a markdown table, or fetches every row of a list
 // again one by one.
 func shownNote(shown *serviceports.ShownArtifact) string {
+	if tabular(shown.Kind) && shown.Opens {
+		return fmt.Sprintf("\n\n[This view is kept beside the conversation as %q, with how many "+
+			"rows it holds and the first few; the person opens it as the live table. Point to it "+
+			"in the sentence that describes it, and do not write its rows out or paste a link. Say "+
+			"what it was narrowed to, and anything the description asked for that it could not "+
+			"express.%s]", shown.Title, artifactRefNote(shown))
+	}
 	if tabular(shown.Kind) && shown.Actionable {
 		return fmt.Sprintf("\n\n[This result is kept as a table titled %q that the person works "+
 			"from beside the conversation: they select rows there, review each one and act on "+

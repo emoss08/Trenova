@@ -190,6 +190,40 @@ func TestBuildSystemPrompt_GroupsMemoriesByWhatTheyAreAbout(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(prompt, "### About Acme Foods (customer)"))
 }
 
+/*
+A person's own memory is theirs, not the organization's.
+
+"Acme pays net 45", saved as "Just you", was put to the model under "For the
+whole organization", so a preference read as a rule for everyone.
+*/
+func TestBuildSystemPrompt_HeadsMemoriesByWhoTheyAreFor(t *testing.T) {
+	t.Parallel()
+
+	mine := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindInstruction, Scope: agent.MemoryScopeUser,
+		Content: "Acme Manufacturing pays net 45, not net 30.",
+	}
+	team := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact, Scope: agent.MemoryScopeRole,
+		Content: "Billing closes the week on Friday at noon.",
+	}
+	everyone := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact, Scope: agent.MemoryScopeOrganization,
+		Content: "The yard closes at 18:00.",
+	}
+	d := definitionWithInstructions("Help.")
+
+	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		Memories: []*agent.Memory{mine, team, everyone},
+	})
+
+	assert.Contains(t, prompt, "### For the person you are talking to\n"+
+		"- [Instruction] Acme Manufacturing pays net 45, not net 30.\n")
+	assert.Contains(t, prompt, "### For everyone in their role\n"+
+		"- [Fact] Billing closes the week on Friday at noon.\n")
+	assert.Contains(t, prompt, "### For the whole organization\n- [Fact] The yard closes at 18:00.\n")
+}
+
 func TestBuildSystemPrompt_KeepsOutsideMemoryFencedApartWithinTheBudget(t *testing.T) {
 	t.Parallel()
 

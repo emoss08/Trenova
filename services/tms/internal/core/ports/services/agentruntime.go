@@ -253,6 +253,9 @@ type ShownArtifact struct {
 	// can be selected and acted on beside the conversation, so it is pointed
 	// to however short it is.
 	Actionable bool
+	// Opens is a composed view: it opens the live table rather than being
+	// worked from where it is drawn.
+	Opens bool
 }
 
 // PublishedDocument is a write-up the model asked to keep beside the

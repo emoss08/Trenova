@@ -21,7 +21,12 @@ const (
 	memoryTierRest
 )
 
-const organizationMemoryHeading = "For the whole organization"
+const (
+	organizationMemoryHeading = "For the whole organization"
+	personalMemoryHeading     = "For the person you are talking to"
+	roleMemoryHeading         = "For everyone in their role"
+	agentMemoryHeading        = "For this agent"
+)
 
 func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 	records := make([]agent.EntityRef, 0, 2+len(rc.Mentions)+len(rc.DelegatorRecords))
@@ -201,16 +206,28 @@ func memoryGroupKey(memory *agent.Memory) string {
 	case strings.TrimSpace(memory.ToolName) != "":
 		return "tool:" + strings.TrimSpace(memory.ToolName)
 	default:
-		return ""
+		return "scope:" + string(memory.Scope)
 	}
 }
 
+// memoryHeading says what a group of memories is about, or, for one about
+// nothing in particular, who it is for: a person's own preference must not
+// read as a rule for the whole organization.
 func memoryHeading(memory *agent.Memory) string {
 	if about := memory.About(); about != "" {
 		return "About " + about
 	}
 
-	return organizationMemoryHeading
+	switch memory.Scope {
+	case agent.MemoryScopeUser:
+		return personalMemoryHeading
+	case agent.MemoryScopeRole:
+		return roleMemoryHeading
+	case agent.MemoryScopeAgent:
+		return agentMemoryHeading
+	default:
+		return organizationMemoryHeading
+	}
 }
 
 func memoryLine(memory *agent.Memory) string {

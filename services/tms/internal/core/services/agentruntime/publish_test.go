@@ -230,3 +230,24 @@ func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
 	assert.Contains(t, content, "artifact:", "the reply is given the pointer to write")
 	assert.NotContains(t, content, "few enough to answer in your reply")
 }
+
+// A composed view is pointed to as a view: what it was narrowed to, not rows
+// to work from where it is drawn.
+func TestRun_AViewIsPointedToAsAView(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Late loads", Rows: 3,
+		Actionable: true, Opens: true,
+	}}
+	tool := queryTool("compose_table_view", map[string]any{"path": "/shipments"}, nil)
+	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+		toolTurn("compose_table_view", map[string]any{"entity": "shipments", "description": "late"}),
+		textTurn("Three loads are late."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, "the person opens it as the live table")
+	assert.Contains(t, content, "artifact:")
+	assert.NotContains(t, content, "select rows there")
+}

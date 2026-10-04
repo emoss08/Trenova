@@ -528,7 +528,15 @@ func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact
 		Title:      artifact.Title,
 		Rows:       int(numberOf(artifact.Payload, "rowCount")),
 		Actionable: actionableTable(artifact),
+		Opens:      opensView(artifact),
 	}
+}
+
+// opensView is a composed view: a table that opens the live page.
+func opensView(artifact *assistantartifact.Artifact) bool {
+	_, opens := artifact.Payload["path"]
+
+	return artifact.Kind == assistantartifact.KindTableView && opens
 }
 
 // actionableTable is a table whose rows the person acts on where it opens:
