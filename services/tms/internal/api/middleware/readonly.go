@@ -17,38 +17,43 @@ import (
 const graphQLPath = "/graphql"
 
 var readOnlyWriteAllowedPaths = map[string]struct{}{
-	graphQLPath:                                     {},
-	"/api/v1/auth/logout":                           {},
-	"/api/v1/users/me/change-password":              {},
-	"/api/v1/users/me/switch-organization":          {},
-	"/api/v1/users/me/settings":                     {},
-	"/api/v1/assistant/turns/:turnID/stop":          {},
-	"/api/v1/shipments/:shipmentID/comments/typing": {},
-}
-
-var readOnlyWriteAllowedActions = map[string]struct{}{
-	"backtest":                 {},
-	"bulk-preview":             {},
-	"calculate-distance":       {},
-	"calculate-totals":         {},
-	"check-for-duplicate-bols": {},
-	"check-hazmat-segregation": {},
-	"check-worker-compliance":  {},
-	"compose":                  {},
-	"edi-214-payload":          {},
-	"explain":                  {},
-	"export":                   {},
-	"inspect":                  {},
-	"inspect-certificate":      {},
-	"loading-optimization":     {},
-	"match":                    {},
-	"presence":                 {},
-	"preview":                  {},
-	"preview-prompt":           {},
-	"previous-rates":           {},
-	"shop":                     {},
-	"simulate":                 {},
-	"validate":                 {},
+	graphQLPath:                                                        {},
+	"/api/v1/auth/logout":                                              {},
+	"/api/v1/users/me/change-password":                                 {},
+	"/api/v1/users/me/switch-organization":                             {},
+	"/api/v1/users/me/settings":                                        {},
+	"/api/v1/users/:userID/permissions/simulate":                       {},
+	"/api/v1/assistant/turns/:turnID/stop":                             {},
+	"/api/v1/shipments/:shipmentID/comments/typing":                    {},
+	"/api/v1/shipments/:shipmentID/comments/presence":                  {},
+	"/api/v1/shipments/calculate-totals":                               {},
+	"/api/v1/shipments/calculate-distance":                             {},
+	"/api/v1/shipments/check-for-duplicate-bols":                       {},
+	"/api/v1/shipments/check-hazmat-segregation":                       {},
+	"/api/v1/shipments/loading-optimization":                           {},
+	"/api/v1/shipments/previous-rates":                                 {},
+	"/api/v1/assignments/check-worker-compliance":                      {},
+	"/api/v1/recurring-shipments/match":                                {},
+	"/api/v1/rate-quotes/shipment/:shipmentID/explain":                 {},
+	"/api/v1/rate-agreements/rate-increase/preview":                    {},
+	"/api/v1/formula-templates/:templateID/backtest":                   {},
+	"/api/v1/detention/backtest":                                       {},
+	"/api/v1/detention-policies/preview":                               {},
+	"/api/v1/billing/invoices/:invoiceID/preview":                      {},
+	"/api/v1/billing/invoice-adjustments/preview":                      {},
+	"/api/v1/billing/invoice-adjustments/bulk-preview":                 {},
+	"/api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview": {},
+	"/api/v1/service-failures/:serviceFailureID/edi-214-payload":       {},
+	"/api/v1/reports/dashboards/:dashboardID/export":                   {},
+	"/api/v1/tables/:resource/compose":                                 {},
+	"/api/v1/agent-definitions/preview-prompt":                         {},
+	"/api/v1/document-parsing-rules/versions/:versionID/simulate":      {},
+	"/api/v1/edi/documents/preview":                                    {},
+	"/api/v1/edi/test-cases/:testCaseID/preview":                       {},
+	"/api/v1/edi/communication-profiles/inspect-certificate":           {},
+	"/api/v1/edi/templates/:templateID/versions/:versionID/validate":   {},
+	"/api/v1/edi/catalog/partner-settings/validate":                    {},
+	"/api/v1/edi/x12/inspect":                                          {},
 }
 
 var expiredAllowedPaths = map[string]struct{}{
@@ -134,14 +139,7 @@ func IsUnsafeMethod(method string) bool {
 }
 
 func ReadOnlyWriteAllowed(route string) bool {
-	normalized := strings.TrimSuffix(route, "/")
-	if _, ok := readOnlyWriteAllowedPaths[normalized]; ok {
-		return true
-	}
-
-	action := normalized[strings.LastIndexByte(normalized, '/')+1:]
-	_, ok := readOnlyWriteAllowedActions[action]
-
+	_, ok := readOnlyWriteAllowedPaths[strings.TrimSuffix(route, "/")]
 	return ok
 }
 

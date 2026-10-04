@@ -21,6 +21,7 @@ type platformHarness struct {
 	platform  *mocks.MockPlatformEmailService
 	tenantMsg *mocks.MockEmailService
 	user      *tenant.User
+	rendered  []*services.RenderMessageRequest
 }
 
 func newPlatformHarness(t *testing.T) *platformHarness {
@@ -28,16 +29,6 @@ func newPlatformHarness(t *testing.T) *platformHarness {
 
 	user := activeUser()
 	svc := newService(t, &stubUserRepo{user: user}, &stubTokenRepo{}, &stubSessionRepo{})
-
-	templates := mocks.NewMockDocumentTemplateResolver(t)
-	templates.EXPECT().RenderMessage(mock.Anything, mock.Anything).Return(&services.RenderedMessage{
-		Subject: "Reset your password",
-		HTML:    "<p>reset</p>",
-		Text:    "reset",
-	}, nil)
-	orgs := mocks.NewMockOrganizationRepository(t)
-	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.Organization{Name: "Acme"}, nil).Maybe()
-
 	h := &platformHarness{
 		svc:       svc,
 		plans:     mocks.NewMockPlanService(t),
@@ -45,6 +36,19 @@ func newPlatformHarness(t *testing.T) *platformHarness {
 		tenantMsg: mocks.NewMockEmailService(t),
 		user:      user,
 	}
+
+	templates := mocks.NewMockDocumentTemplateResolver(t)
+	templates.EXPECT().RenderMessage(mock.Anything, mock.MatchedBy(func(req *services.RenderMessageRequest) bool {
+		h.rendered = append(h.rendered, req)
+		return true
+	})).Return(&services.RenderedMessage{
+		Subject: "Reset your password",
+		HTML:    "<p>reset</p>",
+		Text:    "reset",
+	}, nil)
+	orgs := mocks.NewMockOrganizationRepository(t)
+	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.Organization{Name: "Acme"}, nil).Maybe()
+
 	svc.templates = templates
 	svc.orgs = orgs
 	svc.emailService = h.tenantMsg
@@ -75,6 +79,8 @@ func TestResetEmailForAManagedOrganizationUsesThePlatformSender(t *testing.T) {
 	})).Return(nil)
 
 	require.NoError(t, h.svc.RequestReset(t.Context(), h.user.EmailAddress))
+	require.Len(t, h.rendered, 1)
+	assert.True(t, h.rendered[0].BuiltInOnly, "a platform-sent email must never carry tenant-authored content")
 }
 
 func TestResetEmailForAnUnmanagedOrganizationUsesTheTenantSender(t *testing.T) {
@@ -95,6 +101,8 @@ func TestResetEmailForAnUnmanagedOrganizationUsesTheTenantSender(t *testing.T) {
 
 	require.NoError(t, h.svc.RequestReset(t.Context(), h.user.EmailAddress))
 	assert.Empty(t, h.platform.Calls)
+	require.Len(t, h.rendered, 1)
+	assert.False(t, h.rendered[0].BuiltInOnly)
 }
 
 func TestResetEmailOutsideCloudUsesTheTenantSender(t *testing.T) {

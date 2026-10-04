@@ -50,7 +50,14 @@ organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
 `session.logout`, `password_reset.request`, `password_reset.confirm`, `login_throttled`,
 and for cloud signup `signup_requested`, `signup_rejected`, `signup_verified`,
-`signup_provisioned` (see [cloud-free-tier.md](cloud-free-tier.md)).
+`signup_provisioned`. Signup rows carry no user until provisioning; a rejection names
+its reason in `error_code` (`honeypot`, `turnstile_rejected`, `turnstile_unavailable`,
+`invalid_input`, `existing_account`, `send_limit_reached`, `invalid_token`,
+`expired_token`, `signups_paused`, `email_in_use`, `provisioning_failed`).
+`login_throttled` rows name the scope in `error_code` (`login_throttled_account`,
+`login_throttled_ip`). The throttle fails open: when Redis cannot be reached the attempt
+is allowed and a warning is logged, so a cache outage never locks every user out; the
+password check, the per-account bcrypt cost and the signup Turnstile check still apply.
 
 - **Outcome.** `success`; `denied` when policy refused a known account (SSO
   enforced, account locked, no access to the organization, reset rate limit);

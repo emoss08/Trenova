@@ -1813,6 +1813,21 @@ type CloudTurnstileConfig struct {
 	Timeout   time.Duration `mapstructure:"timeout"   validate:"omitempty,min=1s,max=30s"`
 }
 
+var turnstileTestSecrets = map[string]struct{}{
+	"1x0000000000000000000000000000000AA": {},
+	"2x0000000000000000000000000000000AA": {},
+	"3x0000000000000000000000000000000AA": {},
+}
+
+func IsTurnstileTestSecret(secret string) bool {
+	_, ok := turnstileTestSecrets[strings.TrimSpace(secret)]
+	return ok
+}
+
+func (c *CloudTurnstileConfig) UsesTestSecret() bool {
+	return IsTurnstileTestSecret(c.SecretKey)
+}
+
 func (c *CloudTurnstileConfig) GetVerifyURL() string {
 	if trimmed := strings.TrimSpace(c.VerifyURL); trimmed != "" {
 		return trimmed

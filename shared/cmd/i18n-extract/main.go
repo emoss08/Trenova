@@ -84,6 +84,7 @@ var noMessage = map[string]struct{}{
 	"NewCanceledError":                {},
 	"NewQuotaExceededError":           {},
 	"NewPlanRestrictionError":         {},
+	"NewPlanRefusalError":             {},
 }
 
 func isErrortypesConstructor(name string) bool {

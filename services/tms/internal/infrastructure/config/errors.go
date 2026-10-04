@@ -58,6 +58,9 @@ var (
 	ErrProductionCloudTurnstileRequired = errors.New(
 		"production and staging require platform.cloud.turnstile.enabled when cloud signup is enabled",
 	)
+	ErrProductionCloudTurnstileTestSecret = errors.New(
+		"production and staging refuse a Cloudflare Turnstile test secret in platform.cloud.turnstile.secretKey",
+	)
 	ErrProductionCloudSystemEmailRequired = errors.New(
 		"production and staging require platform.cloud.systemEmail.apiKey when cloud signup is enabled",
 	)

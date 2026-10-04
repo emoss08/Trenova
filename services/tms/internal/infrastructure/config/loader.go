@@ -652,6 +652,9 @@ func validateCloudProductionSecurity(config *Config) error {
 	if cloud.Signup.Enabled && !cloud.Turnstile.Enabled {
 		return ErrProductionCloudTurnstileRequired
 	}
+	if cloud.Signup.Enabled && cloud.Turnstile.UsesTestSecret() {
+		return ErrProductionCloudTurnstileTestSecret
+	}
 	if cloud.Signup.Enabled && !cloud.SystemEmail.HasAPIKey() {
 		return ErrProductionCloudSystemEmailRequired
 	}

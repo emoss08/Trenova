@@ -19,7 +19,6 @@ type TurnstileVerification struct {
 	Token          string
 	RemoteIP       string
 	ExpectedAction string
-	IdempotencyKey string
 }
 
 type TurnstileVerifier interface {

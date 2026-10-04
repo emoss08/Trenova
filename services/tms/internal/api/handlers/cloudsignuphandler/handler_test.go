@@ -127,6 +127,31 @@ func (h *harness) allow(t *testing.T) {
 	})
 }
 
+func (h *harness) allowVerify(t *testing.T) {
+	t.Helper()
+	h.store.decisions = []repositories.RateLimitDecision{{Allowed: true}}
+	t.Cleanup(func() {
+		require.Len(t, h.store.requests, 1)
+		req := h.store.requests[0]
+		assert.Equal(t, 30, req.Policy.Rate)
+		assert.Equal(t, 30, req.Policy.Burst)
+		assert.Equal(t, verifyLimitPrefix+"192.0.2.1", req.Key)
+	})
+}
+
+func TestVerifyPerIPLimit(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, config.PlatformModeCloud)
+	h.svc.EXPECT().Enabled().Return(true)
+	h.store.decisions = []repositories.RateLimitDecision{{Allowed: false, RetryAfter: time.Minute}}
+
+	w := h.do(http.MethodPost, "/cloud/signups/verify", map[string]string{"token": "tok"})
+	require.Equal(t, http.StatusTooManyRequests, w.Code)
+	require.Len(t, h.store.requests, 1)
+	assert.Equal(t, verifyLimitPrefix+"192.0.2.1", h.store.requests[0].Key)
+}
+
 func TestPublicConfigInCloudMode(t *testing.T) {
 	t.Parallel()
 
@@ -258,6 +283,7 @@ func TestVerifySignsInLikeLogin(t *testing.T) {
 
 	h := newHarness(t, config.PlatformModeCloud)
 	h.svc.EXPECT().Enabled().Return(true)
+	h.allowVerify(t)
 	sessionID := pulid.MustNew("ses_")
 	h.svc.EXPECT().Verify(mock.Anything, &services.CloudSignupVerifyRequest{Token: "tok"}).Return(
 		&services.LoginResponse{
@@ -292,6 +318,7 @@ func TestVerifySignupsPaused(t *testing.T) {
 
 	h := newHarness(t, config.PlatformModeCloud)
 	h.svc.EXPECT().Enabled().Return(true)
+	h.allowVerify(t)
 	h.svc.EXPECT().Verify(mock.Anything, mock.Anything).Return(nil, errortypes.NewPlanRestrictionError(
 		"", errortypes.PlanRestrictionReasonSignupsPaused, "free_demo",
 	))

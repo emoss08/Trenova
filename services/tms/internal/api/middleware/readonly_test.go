@@ -195,7 +195,7 @@ func TestReadOnlyGuardLetsATrialOrganizationWrite(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, recorder.Code)
 }
 
-func TestReadOnlyWriteAllowedMatchesPathsAndReadActions(t *testing.T) {
+func TestReadOnlyWriteAllowedMatchesExactRoutesOnly(t *testing.T) {
 	t.Parallel()
 
 	assert.True(t, ReadOnlyWriteAllowed("/api/v1/users/me/settings/"))
@@ -204,6 +204,37 @@ func TestReadOnlyWriteAllowedMatchesPathsAndReadActions(t *testing.T) {
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/shipments/"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/users/me/profile-picture/"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/shipments/:id/duplicate/"))
+	assert.False(t, ReadOnlyWriteAllowed("/api/v1/bank-receipts/:receiptID/match/"))
+	assert.False(t, ReadOnlyWriteAllowed("/api/v1/billing/invoice-runs/preview/"))
+	assert.False(t, ReadOnlyWriteAllowed("/api/v1/rate-quotes/shipment/:shipmentID/shop/"))
+	assert.False(t, ReadOnlyWriteAllowed("/api/v1/anything/validate/"))
+}
+
+func TestReadOnlyGuardRefusesWritesThatOnlyLookLikeReads(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	plans := plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly))
+
+	for _, tc := range []guardCase{
+		{
+			method: http.MethodPost,
+			route:  "/api/v1/bank-receipts/:receiptID/match/",
+			path:   "/api/v1/bank-receipts/br_1/match/",
+		},
+		{method: http.MethodPost, route: "/api/v1/billing/invoice-runs/preview/"},
+		{
+			method: http.MethodPost,
+			route:  "/api/v1/rate-quotes/shipment/:shipmentID/shop/",
+			path:   "/api/v1/rate-quotes/shipment/shp_1/shop/",
+		},
+	} {
+		tc.plans = plans
+		tc.tenant = tenant
+		recorder, reached := serveThroughGuard(t, tc)
+		assert.False(t, reached, tc.route)
+		assert.Equal(t, http.StatusForbidden, recorder.Code, tc.route)
+	}
 }
 
 func TestIsUnsafeMethod(t *testing.T) {

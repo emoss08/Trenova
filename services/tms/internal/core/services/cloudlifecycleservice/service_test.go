@@ -347,6 +347,11 @@ func TestPurgeStorageDeletesTheOrganizationPrefix(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
+	sub := newSubscription(subscription.StatusExpired, 1, 2)
+	sub.OrganizationID = ref.OrganizationID
+	sub.BusinessUnitID = ref.BusinessUnitID
+	h.subs.EXPECT().GetByOrganization(mock.Anything, mock.Anything).Return(sub, nil)
+
 	deleted, err := h.svc.PurgeStorage(t.Context(), ref)
 
 	require.NoError(t, err)
@@ -354,11 +359,41 @@ func TestPurgeStorageDeletesTheOrganizationPrefix(t *testing.T) {
 	assert.Equal(t, []string{ref.OrganizationID.String() + "/"}, h.storage.prefixes)
 }
 
+func TestPurgeStorageRefusesAnOrganizationThatHasNotExpired(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	sub := newSubscription(subscription.StatusReadOnly, 1, 2)
+	h.subs.EXPECT().GetByOrganization(mock.Anything, mock.Anything).Return(sub, nil)
+
+	_, err := h.svc.PurgeStorage(t.Context(), cloudlifecycleservice.TenantRef{
+		OrganizationID: sub.OrganizationID,
+		BusinessUnitID: sub.BusinessUnitID,
+	})
+
+	require.ErrorIs(t, err, repositories.ErrTenantNotPurgeable)
+	assert.Empty(t, h.storage.prefixes)
+}
+
+func TestPurgeStorageRefusesAnEmptyTenant(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+
+	_, err := h.svc.PurgeStorage(t.Context(), cloudlifecycleservice.TenantRef{})
+
+	require.ErrorIs(t, err, repositories.ErrTenantNotPurgeable)
+	assert.Empty(t, h.storage.prefixes)
+}
+
 func TestPurgeStorageReportsAnUnsupportedBackend(t *testing.T) {
 	t.Parallel()
 
+	subs := mocks.NewMockSubscriptionRepository(t)
+	sub := newSubscription(subscription.StatusExpired, 1, 2)
+	subs.EXPECT().GetByOrganization(mock.Anything, mock.Anything).Return(sub, nil)
 	svc := cloudlifecycleservice.New(cloudlifecycleservice.Params{
-		Subscriptions: mocks.NewMockSubscriptionRepository(t),
+		Subscriptions: subs,
 		Purge:         &fakePurge{},
 		Plans:         mocks.NewMockPlanService(t),
 		Storage:       mocks.NewMockClient(t),
@@ -366,8 +401,8 @@ func TestPurgeStorageReportsAnUnsupportedBackend(t *testing.T) {
 	})
 
 	_, err := svc.PurgeStorage(t.Context(), cloudlifecycleservice.TenantRef{
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: sub.OrganizationID,
+		BusinessUnitID: sub.BusinessUnitID,
 	})
 	require.ErrorIs(t, err, cloudlifecycleservice.ErrStorageUnsupported)
 }

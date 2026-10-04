@@ -20,7 +20,7 @@ function jsonResponse(body: unknown, status: number): Response {
   });
 }
 
-// Fixtures follow docs/engineering/cloud-free-tier.md: REST problem params are a
+// Fixtures mirror the server's plan-limit errors: REST problem params are a
 // map[string]string (helpers.ProblemDetail.Params), so limit and used arrive as strings;
 // GraphQL extensions carry code, type and params, where numbers may arrive as numbers.
 const quotaProblem = {

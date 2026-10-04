@@ -19,6 +19,8 @@ const (
 	tablesPattern       = `SELECT c.relname AS table_name`
 	foreignKeysPattern  = `SELECT con.conname AS constraint_name`
 	orgCountPattern     = `SELECT count\(\*\) FROM "organizations"`
+	orgExistsPattern    = `SELECT EXISTS \(SELECT .* FROM "organizations"`
+	expiredSubPattern   = `FROM "organization_subscriptions" AS "osub" WHERE .*status = 'expired'.* FOR UPDATE`
 	tableColumns        = "table_name,has_org,has_bu"
 	foreignKeyColumns   = "constraint_name,child_table,parent_table,on_delete,child_columns,parent_columns"
 	shipmentsBatch      = `DELETE FROM "shipments" WHERE \(tableoid, ctid\) IN`
@@ -44,7 +46,14 @@ func columns(spec string) []string {
 	return out
 }
 
+func expectPurgeable(sqlMock sqlmock.Sqlmock) {
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	sqlMock.ExpectQuery(expiredSubPattern).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(pulid.MustNew("osub_").String()))
+}
+
 func expectCatalog(sqlMock sqlmock.Sqlmock, fks *sqlmock.Rows) {
+	expectPurgeable(sqlMock)
 	sqlMock.ExpectQuery(tablesPattern).WillReturnRows(
 		sqlmock.NewRows(columns(tableColumns)).
 			AddRow("customers", true, true).
@@ -192,6 +201,8 @@ func TestDeleteTenantKeepsTheOrganizationWhileRetainedRowsBlockIt(t *testing.T) 
 	t.Parallel()
 
 	repo, sqlMock := newPurgeRepository(t)
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	expectPurgeable(sqlMock)
 	sqlMock.ExpectExec(`DELETE FROM "cloud_signups"`).WillReturnResult(sqlmock.NewResult(0, 1))
 	sqlMock.ExpectExec(`DELETE FROM "organizations"`).WillReturnError(&pgconn.PgError{
 		Code:    pgerrcode.InsufficientPrivilege,
@@ -211,6 +222,8 @@ func TestDeleteTenantDeletesAnExclusiveBusinessUnit(t *testing.T) {
 	t.Parallel()
 
 	repo, sqlMock := newPurgeRepository(t)
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	expectPurgeable(sqlMock)
 	sqlMock.ExpectExec(`DELETE FROM "cloud_signups"`).WillReturnResult(sqlmock.NewResult(0, 0))
 	sqlMock.ExpectExec(`DELETE FROM "organizations"`).WillReturnResult(sqlmock.NewResult(0, 1))
 	sqlMock.ExpectQuery(orgCountPattern).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
@@ -228,9 +241,10 @@ func TestPurgeUserDeactivatesAUserItCannotDelete(t *testing.T) {
 	t.Parallel()
 
 	repo, sqlMock := newPurgeRepository(t)
+	expectPurgeable(sqlMock)
 	sqlMock.ExpectQuery(`FROM "user_organization_memberships"`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}))
-	sqlMock.ExpectExec(`DELETE FROM "users"`).WillReturnError(&pgconn.PgError{
+	sqlMock.ExpectExec(`DELETE FROM "users" AS "usr" WHERE \(usr.id = '.*'\) AND \(\(usr.current_organization_id = '.*' OR usr.business_unit_id = '.*'\)\)`).WillReturnError(&pgconn.PgError{
 		Code: pgerrcode.ForeignKeyViolation,
 	})
 	sqlMock.ExpectExec(`UPDATE "users"`).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -250,6 +264,7 @@ func TestPurgeUserMovesAUserWhoBelongsElsewhere(t *testing.T) {
 	t.Parallel()
 
 	repo, sqlMock := newPurgeRepository(t)
+	expectPurgeable(sqlMock)
 	sqlMock.ExpectQuery(`FROM "user_organization_memberships"`).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "organization_id", "business_unit_id"}).
 			AddRow(pulid.MustNew("uom_").String(), pulid.MustNew("org_").String(), pulid.MustNew("bu_").String()))
@@ -262,5 +277,74 @@ func TestPurgeUserMovesAUserWhoBelongsElsewhere(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, result.Reassigned)
+	require.NoError(t, sqlMock.ExpectationsWereMet())
+}
+
+func TestPurgeRowsRefusesAnOrganizationWhoseSubscriptionHasNotExpired(t *testing.T) {
+	t.Parallel()
+
+	repo, sqlMock := newPurgeRepository(t)
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	sqlMock.ExpectQuery(expiredSubPattern).WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	_, err := repo.PurgeRows(t.Context(), &repositories.PurgeTenantRowsRequest{TenantInfo: purgeTenant()})
+
+	require.ErrorIs(t, err, repositories.ErrTenantNotPurgeable)
+	require.NoError(t, sqlMock.ExpectationsWereMet())
+}
+
+func TestPurgeRowsRefusesAnOrganizationOutsideTheNamedBusinessUnit(t *testing.T) {
+	t.Parallel()
+
+	repo, sqlMock := newPurgeRepository(t)
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	_, err := repo.PurgeRows(t.Context(), &repositories.PurgeTenantRowsRequest{TenantInfo: purgeTenant()})
+
+	require.ErrorIs(t, err, repositories.ErrTenantNotPurgeable)
+	require.NoError(t, sqlMock.ExpectationsWereMet())
+}
+
+func TestPurgeUserRefusesAnOrganizationWhoseSubscriptionHasNotExpired(t *testing.T) {
+	t.Parallel()
+
+	repo, sqlMock := newPurgeRepository(t)
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	sqlMock.ExpectQuery(expiredSubPattern).WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	_, err := repo.PurgeUser(t.Context(), &repositories.PurgeTenantUserRequest{
+		TenantInfo: purgeTenant(),
+		UserID:     pulid.MustNew("usr_"),
+	})
+
+	require.ErrorIs(t, err, repositories.ErrTenantNotPurgeable)
+	require.NoError(t, sqlMock.ExpectationsWereMet())
+}
+
+func TestDeleteTenantRefusesAnOrganizationWhoseSubscriptionHasNotExpired(t *testing.T) {
+	t.Parallel()
+
+	repo, sqlMock := newPurgeRepository(t)
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	sqlMock.ExpectQuery(expiredSubPattern).WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	_, err := repo.DeleteTenant(t.Context(), purgeTenant())
+
+	require.ErrorIs(t, err, repositories.ErrTenantNotPurgeable)
+	require.NoError(t, sqlMock.ExpectationsWereMet())
+}
+
+func TestDeleteTenantIsANoOpOnceTheOrganizationIsGone(t *testing.T) {
+	t.Parallel()
+
+	repo, sqlMock := newPurgeRepository(t)
+	sqlMock.ExpectQuery(orgExistsPattern).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	result, err := repo.DeleteTenant(t.Context(), purgeTenant())
+
+	require.NoError(t, err)
+	assert.True(t, result.OrganizationDeleted)
+	assert.False(t, result.BusinessUnitDeleted)
 	require.NoError(t, sqlMock.ExpectationsWereMet())
 }

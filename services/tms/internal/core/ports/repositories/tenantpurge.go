@@ -2,9 +2,14 @@ package repositories
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+)
+
+var ErrTenantNotPurgeable = errors.New(
+	"the organization has no expired subscription, so nothing of it may be purged",
 )
 
 type TenantMember struct {

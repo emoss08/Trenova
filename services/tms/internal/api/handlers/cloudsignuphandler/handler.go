@@ -20,8 +20,10 @@ import (
 )
 
 const (
-	signupLimitPeriod = time.Hour
-	signupLimitPrefix = "cloud_signup:ip:"
+	signupLimitPeriod     = time.Hour
+	signupLimitPrefix     = "cloud_signup:ip:"
+	verifyLimitPrefix     = "cloud_signup_verify:ip:"
+	verifyLimitMultiplier = 10
 )
 
 type Params struct {
@@ -79,9 +81,9 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 
 	cloud := rg.Group("/cloud/signups")
 	cloud.Use(h.requireSignupEnabled())
-	cloud.POST("", h.limitSignups(), h.signup)
-	cloud.POST("/resend", h.limitSignups(), h.resend)
-	cloud.POST("/verify", h.verify)
+	cloud.POST("", h.limitSignups(signupLimitPrefix, 1), h.signup)
+	cloud.POST("/resend", h.limitSignups(signupLimitPrefix, 1), h.resend)
+	cloud.POST("/verify", h.limitSignups(verifyLimitPrefix, verifyLimitMultiplier), h.verify)
 }
 
 func (h *Handler) publicConfig(c *gin.Context) {
@@ -202,16 +204,16 @@ func (h *Handler) requireSignupEnabled() gin.HandlerFunc {
 	}
 }
 
-func (h *Handler) limitSignups() gin.HandlerFunc {
+func (h *Handler) limitSignups(prefix string, multiplier int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if h.store == nil {
 			c.Next()
 			return
 		}
 
-		perHour := h.cfg.Platform.Cloud.Signup.GetPerIPPerHour()
+		perHour := h.cfg.Platform.Cloud.Signup.GetPerIPPerHour() * multiplier
 		decisions, err := h.store.Check(c.Request.Context(), []repositories.RateLimitRequest{{
-			Key: signupLimitPrefix + c.ClientIP(),
+			Key: prefix + c.ClientIP(),
 			Policy: repositories.RateLimitPolicy{
 				Rate:   perHour,
 				Period: signupLimitPeriod,

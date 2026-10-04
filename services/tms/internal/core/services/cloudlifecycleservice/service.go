@@ -367,6 +367,15 @@ func (s *Service) PurgeRows(
 }
 
 func (s *Service) PurgeStorage(ctx context.Context, ref TenantRef) (int64, error) {
+	if ref.OrganizationID.IsNil() || ref.BusinessUnitID.IsNil() {
+		return 0, repositories.ErrTenantNotPurgeable
+	}
+	if err := s.RequireExpired(ctx, ref); err != nil {
+		if errors.Is(err, ErrNotExpired) {
+			return 0, repositories.ErrTenantNotPurgeable
+		}
+		return 0, err
+	}
 	if s.storage == nil {
 		return 0, ErrStorageUnsupported
 	}

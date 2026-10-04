@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
 )
 
@@ -21,6 +22,7 @@ type scriptedPurge struct {
 	passes  []*repositories.PurgeTenantRowsResult
 	calls   int
 	members []*repositories.TenantMember
+	err     error
 }
 
 func (s *scriptedPurge) ListMembers(
@@ -41,6 +43,9 @@ func (s *scriptedPurge) PurgeRows(
 	context.Context,
 	*repositories.PurgeTenantRowsRequest,
 ) (*repositories.PurgeTenantRowsResult, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
 	pass := s.passes[min(s.calls, len(s.passes)-1)]
 	s.calls++
 	return pass, nil
@@ -155,10 +160,29 @@ func TestCheckActivityListsTheMembersOfAnExpiredOrganization(t *testing.T) {
 func TestStorageActivitySkipsAnUnsupportedBackend(t *testing.T) {
 	t.Parallel()
 
-	a := newActivities(t, &scriptedPurge{}, mocks.NewMockSubscriptionRepository(t))
+	subs := mocks.NewMockSubscriptionRepository(t)
+	subs.EXPECT().GetByOrganization(mock.Anything, mock.Anything).Return(&subscription.Subscription{
+		Status: subscription.StatusExpired,
+	}, nil)
+	a := newActivities(t, &scriptedPurge{}, subs)
 
 	result, err := a.PurgeCloudTenantStorageActivity(t.Context(), purgePayload())
 
 	require.NoError(t, err)
 	assert.True(t, result.Skipped)
+}
+
+func TestPurgeRowsActivityStopsRetryingAnOrganizationThatIsNotPurgeable(t *testing.T) {
+	t.Parallel()
+
+	purge := &scriptedPurge{err: repositories.ErrTenantNotPurgeable}
+	a := newActivities(t, purge, mocks.NewMockSubscriptionRepository(t))
+
+	_, err := a.PurgeCloudTenantRowsActivity(t.Context(), purgePayload())
+
+	require.ErrorIs(t, err, repositories.ErrTenantNotPurgeable)
+	var appErr *temporal.ApplicationError
+	require.ErrorAs(t, err, &appErr)
+	assert.True(t, appErr.NonRetryable())
+	assert.Equal(t, errTypeNotPurgeable, appErr.Type())
 }

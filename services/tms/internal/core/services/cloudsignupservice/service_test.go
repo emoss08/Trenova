@@ -186,7 +186,6 @@ func (d *deps) passTurnstile(action string) {
 		Token:          "ts-token",
 		RemoteIP:       "198.51.100.4",
 		ExpectedAction: action,
-		IdempotencyKey: "req-42",
 	}).Return(nil)
 }
 
@@ -588,7 +587,6 @@ func TestVerifyRejectsUnknownTokens(t *testing.T) {
 	_, err := d.svc.Verify(t.Context(), &services.CloudSignupVerifyRequest{Token: "  "})
 	require.ErrorIs(t, err, errInvalidVerificationToken)
 
-	d.bootstrap.EXPECT().LockProvisioning(mock.Anything).Return(nil)
 	d.signups.EXPECT().GetPendingByTokenHash(mock.Anything, tokenutils.Hash("tok")).
 		Return(nil, errortypes.NewNotFoundError("Signup not found"))
 
@@ -605,7 +603,6 @@ func TestVerifyExpiredTokenRejectsTheSignup(t *testing.T) {
 
 	d := setup(t)
 	signup := pendingSignup(time.Now().Unix() - 10)
-	d.bootstrap.EXPECT().LockProvisioning(mock.Anything).Return(nil)
 	d.signups.EXPECT().GetPendingByTokenHash(mock.Anything, mock.Anything).Return(signup, nil)
 	d.signups.EXPECT().Reject(mock.Anything, &repositories.RejectCloudSignupRequest{
 		ID:     signup.ID,

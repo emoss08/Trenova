@@ -21,12 +21,6 @@ const (
 	maxResponseBytes = 64 << 10
 )
 
-var testSecrets = map[string]struct{}{
-	"1x0000000000000000000000000000000AA": {},
-	"2x0000000000000000000000000000000AA": {},
-	"3x0000000000000000000000000000000AA": {},
-}
-
 type Params struct {
 	fx.In
 
@@ -92,7 +86,7 @@ func NewVerifier(opts *Options) *Verifier {
 		secret:           secret,
 		verifyURL:        strings.TrimSpace(opts.VerifyURL),
 		expectedHostname: strings.ToLower(strings.TrimSpace(opts.ExpectedHostname)),
-		testKeys:         isTestSecret(secret),
+		testKeys:         config.IsTurnstileTestSecret(secret),
 		client:           client,
 		l:                logger.Named("turnstile"),
 	}
@@ -139,9 +133,6 @@ func (v *Verifier) siteVerify(
 	form.Set("response", token)
 	if ip := strings.TrimSpace(req.RemoteIP); ip != "" {
 		form.Set("remoteip", ip)
-	}
-	if key := strings.TrimSpace(req.IdempotencyKey); key != "" {
-		form.Set("idempotency_key", key)
 	}
 
 	httpReq, err := http.NewRequestWithContext(
@@ -223,11 +214,6 @@ func (v *Verifier) checkAction(action, expected string) error {
 func allowedAction(action string) bool {
 	return action == services.TurnstileActionSignup ||
 		action == services.TurnstileActionSignupResend
-}
-
-func isTestSecret(secret string) bool {
-	_, ok := testSecrets[secret]
-	return ok
 }
 
 func hostnameOf(rawURL string) string {

@@ -45,6 +45,11 @@ func (s *Service) Signup(
 		return nil, err
 	}
 
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(input.password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
 	existing, err := s.findUser(ctx, input.email.Lower)
 	if err != nil {
 		return nil, err
@@ -53,11 +58,6 @@ func (s *Service) Signup(
 		s.rejected(ctx, reasonExistingAccount)
 		s.sendExistingAccount(ctx, input.email.Lower, existing.Name)
 		return accepted(), nil
-	}
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(input.password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
 	}
 
 	token, tokenHash, err := tokenutils.New()
@@ -245,7 +245,6 @@ func (s *Service) verifyTurnstile(ctx context.Context, token, action string) err
 		Token:          token,
 		RemoteIP:       meta.ClientIP,
 		ExpectedAction: action,
-		IdempotencyKey: meta.RequestID,
 	})
 	if err == nil {
 		return nil

@@ -100,10 +100,6 @@ func (s *Service) provision(ctx context.Context, tokenHash string) (*provisioned
 		txCtx context.Context,
 		_ bun.Tx,
 	) error {
-		if err := s.bootstrap.LockProvisioning(txCtx); err != nil {
-			return err
-		}
-
 		signup, err := s.signups.GetPendingByTokenHash(txCtx, tokenHash)
 		if err != nil {
 			if errortypes.IsNotFoundError(err) {
@@ -115,6 +111,10 @@ func (s *Service) provision(ctx context.Context, tokenHash string) (*provisioned
 		now := timeutils.NowUnix()
 		if signup.IsExpired(now) {
 			return &signupFailure{signup: signup, cause: errSignupExpired}
+		}
+
+		if err = s.bootstrap.LockProvisioning(txCtx); err != nil {
+			return err
 		}
 
 		if err = s.checkCapacity(txCtx, now); err != nil {

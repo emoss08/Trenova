@@ -186,6 +186,11 @@ func TestLoad_CloudProductionRequiresTurnstileAndSystemEmail(t *testing.T) {
 	cfg.Platform.Cloud.SystemEmail.APIKey = "re_live_key"
 	require.NoError(t, validateCloudProductionSecurity(cfg))
 
+	cfg.Platform.Cloud.Turnstile.SecretKey = "1x0000000000000000000000000000000AA"
+	require.ErrorIs(t, validateCloudProductionSecurity(cfg), ErrProductionCloudTurnstileTestSecret)
+	cfg.Platform.Cloud.Turnstile.SecretKey = "0x4AAAAAAA-live-secret"
+	require.NoError(t, validateCloudProductionSecurity(cfg))
+
 	cfg.Platform.Mode = PlatformModeSelfHosted
 	cfg.Platform.Cloud.SystemEmail.APIKey = ""
 	require.NoError(t, validateCloudProductionSecurity(cfg))

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/cloudlifecycleservice"
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -17,6 +18,7 @@ const (
 	purgeMaxBatches     = 40
 	maxPurgeRowsPasses  = 2_000
 	sweepHeartbeatLabel = "sweeping cloud subscriptions"
+	errTypeNotPurgeable = "CloudTenantNotPurgeable"
 )
 
 type ActivitiesParams struct {
@@ -91,7 +93,7 @@ func (a *Activities) PurgeCloudTenantRowsActivity(
 
 		pass, err := a.lifecycle.PurgeRows(ctx, payload.ref(), purgeBatchSize, purgeMaxBatches)
 		if err != nil {
-			return nil, fmt.Errorf("purge tenant rows: %w", err)
+			return nil, purgeError("purge tenant rows", err)
 		}
 		result.Passes++
 		result.Deleted += pass.Deleted
@@ -130,7 +132,7 @@ func (a *Activities) PurgeCloudTenantStorageActivity(
 			)
 			return &PurgeStorageResult{Skipped: true}, nil
 		}
-		return nil, fmt.Errorf("purge stored objects: %w", err)
+		return nil, purgeError("purge stored objects", err)
 	}
 
 	return &PurgeStorageResult{Deleted: deleted}, nil
@@ -144,7 +146,7 @@ func (a *Activities) PurgeCloudTenantUsersActivity(
 
 	result, err := a.lifecycle.PurgeUsers(ctx, input.ref(), input.UserIDs)
 	if err != nil {
-		return nil, err
+		return nil, purgeError("purge users", err)
 	}
 
 	return result, nil
@@ -156,7 +158,7 @@ func (a *Activities) FinalizeCloudTenantPurgeActivity(
 ) (*repositories.DeleteTenantResult, error) {
 	result, err := a.lifecycle.Finalize(ctx, payload.ref())
 	if err != nil {
-		return nil, fmt.Errorf("delete tenant: %w", err)
+		return nil, purgeError("delete tenant", err)
 	}
 
 	if !result.OrganizationDeleted {
@@ -167,6 +169,15 @@ func (a *Activities) FinalizeCloudTenantPurgeActivity(
 	}
 
 	return result, nil
+}
+
+func purgeError(step string, err error) error {
+	wrapped := fmt.Errorf("%s: %w", step, err)
+	if errors.Is(err, repositories.ErrTenantNotPurgeable) {
+		return temporal.NewNonRetryableApplicationError(wrapped.Error(), errTypeNotPurgeable, wrapped)
+	}
+
+	return wrapped
 }
 
 func recordHeartbeat(ctx context.Context, details any) {

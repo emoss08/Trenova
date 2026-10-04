@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/cloudsignup"
+	"github.com/emoss08/trenova/internal/core/domain/subscription"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -225,6 +226,10 @@ func (r *repository) PurgeRows(
 	ctx = dbscope.WithSystem(ctx, purgeRowsScopeReason)
 
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PurgeTenantRowsResult, error) {
+		if err := r.requirePurgeable(ctx, req.TenantInfo); err != nil {
+			return nil, err
+		}
+
 		return r.purgeRows(ctx, req)
 	})
 }
@@ -585,6 +590,10 @@ func (r *repository) PurgeUser(
 	ctx = dbscope.WithSystem(ctx, purgeUserScopeReason)
 
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PurgeTenantUserResult, error) {
+		if err := r.requirePurgeable(ctx, req.TenantInfo); err != nil {
+			return nil, err
+		}
+
 		return r.purgeUser(ctx, req)
 	})
 }
@@ -624,16 +633,22 @@ func (r *repository) purgeUser(
 		return nil, fmt.Errorf("read the user's other memberships: %w", err)
 	}
 
+	var deleted int64
 	err = dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
-		_, deleteErr := r.db.DBForContext(ctx).
+		res, deleteErr := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*tenant.User)(nil)).
 			Where(users.ID.Eq(), req.UserID).
+			Where(ownedByTenantClause(), req.TenantInfo.OrgID, req.TenantInfo.BuID).
 			Exec(ctx)
+		if deleteErr != nil {
+			return deleteErr
+		}
+		deleted, deleteErr = res.RowsAffected()
 		return deleteErr
 	})
 	if err == nil {
-		result.Deleted = true
+		result.Deleted = deleted > 0
 		return result, nil
 	}
 
@@ -643,15 +658,21 @@ func (r *repository) purgeUser(
 		return nil, fmt.Errorf("delete user: %w", err)
 	}
 
-	if _, err = db.NewUpdate().
+	deactivated, err := db.NewUpdate().
 		Model((*tenant.User)(nil)).
 		Set(users.Status.Set(), domaintypes.StatusInactive).
 		Set(users.UpdatedAt.Set(), timeutils.NowUnix()).
 		Where(users.ID.Eq(), req.UserID).
-		Exec(ctx); err != nil {
+		Where(ownedByTenantClause(), req.TenantInfo.OrgID, req.TenantInfo.BuID).
+		Exec(ctx)
+	if err != nil {
 		return nil, fmt.Errorf("deactivate user: %w", err)
 	}
-	result.Deactivated = true
+	affected, err := deactivated.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("deactivate user: %w", err)
+	}
+	result.Deactivated = affected > 0
 
 	return result, nil
 }
@@ -675,6 +696,18 @@ func (r *repository) deleteTenant(
 	tenantInfo pagination.TenantInfo,
 ) (*repositories.DeleteTenantResult, error) {
 	result := new(repositories.DeleteTenantResult)
+
+	exists, err := r.organizationExists(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		result.OrganizationDeleted = true
+		return result, nil
+	}
+	if err = r.requirePurgeable(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
 
 	signups, err := r.db.DBForContext(ctx).
 		NewDelete().
@@ -731,6 +764,60 @@ func (r *repository) deleteTenant(
 	result.BusinessUnitDeleted = true
 
 	return result, nil
+}
+
+func (r *repository) requirePurgeable(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	exists, err := r.organizationExists(ctx, tenantInfo)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return repositories.ErrTenantNotPurgeable
+	}
+
+	cols := buncolgen.SubscriptionColumns
+	sub := new(subscription.Subscription)
+	err = r.db.DBForContext(ctx).
+		NewSelect().
+		Model(sub).
+		Column(cols.ID.Bare()).
+		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+		Where(cols.Status.Eq(), subscription.StatusExpired).
+		For("UPDATE").
+		Limit(1).
+		Scan(ctx)
+	if err == nil {
+		return nil
+	}
+	if dberror.IsNotFoundError(err) {
+		return repositories.ErrTenantNotPurgeable
+	}
+
+	return fmt.Errorf("read the organization's subscription: %w", err)
+}
+
+func (r *repository) organizationExists(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	cols := buncolgen.OrganizationColumns
+	exists, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*tenant.Organization)(nil)).
+		Where(cols.ID.Eq(), tenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+		Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("read organization: %w", err)
+	}
+
+	return exists, nil
+}
+
+func ownedByTenantClause() string {
+	users := buncolgen.UserColumns
+	return "(" + users.CurrentOrganizationID.Eq() + " OR " + users.BusinessUnitID.Eq() + ")"
 }
 
 func retainedByRule(err error) bool {

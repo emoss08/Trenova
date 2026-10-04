@@ -70,7 +70,6 @@ func TestVerifyAcceptsAMatchingToken(t *testing.T) {
 		Token:          "token-1",
 		RemoteIP:       "203.0.113.9",
 		ExpectedAction: services.TurnstileActionSignup,
-		IdempotencyKey: "idem-1",
 	})
 	require.NoError(t, err)
 
@@ -79,7 +78,7 @@ func TestVerifyAcceptsAMatchingToken(t *testing.T) {
 	assert.Equal(t, "real-secret", form.Get("secret"))
 	assert.Equal(t, "token-1", form.Get("response"))
 	assert.Equal(t, "203.0.113.9", form.Get("remoteip"))
-	assert.Equal(t, "idem-1", form.Get("idempotency_key"))
+	assert.False(t, form.Has("idempotency_key"))
 }
 
 func TestVerifyRejections(t *testing.T) {

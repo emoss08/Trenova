@@ -141,7 +141,10 @@ err := errortypes.NewRateLimitError("api", "Too many requests. Please try again 
 
 ### Plan Errors
 
-Trenova Cloud plan limits (see `docs/engineering/cloud-free-tier.md`):
+Trenova Cloud plan limits. A quota error carries the meter, the plan's limit and the usage at
+the time of the refusal; a plan restriction carries the capability (empty when the whole
+organization is read-only or expired), a reason (`plan_restricted`,
+`subscription_read_only`, `subscription_expired`, `signups_paused`) and the plan key:
 
 ```go
 err := errortypes.NewQuotaExceededError("shipments.total", 12, 12, "free_demo") // 402, QUOTA_EXCEEDED

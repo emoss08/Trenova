@@ -406,6 +406,7 @@ func (s *Service) sendResetEmail(
 		return
 	}
 
+	platformSender := s.usesPlatformSender(ctx, tenantInfo)
 	ttl := s.cfg.Security.PasswordReset.GetTokenTTL()
 	rendered, renderErr := s.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
@@ -423,6 +424,7 @@ func (s *Service) sendResetEmail(
 		ReferenceID:       user.ID,
 		Locale:            i18n.Locale(user.Locale),
 		FallbackToBuiltIn: true,
+		BuiltInOnly:       platformSender,
 	})
 	if renderErr != nil {
 		log.Error("failed to render the password reset email", zap.Error(renderErr))
@@ -431,7 +433,7 @@ func (s *Service) sendResetEmail(
 
 	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
 
-	if s.usesPlatformSender(ctx, tenantInfo) {
+	if platformSender {
 		if err = s.platform.SendRendered(ctx, &serviceports.PlatformEmailMessage{
 			Kind:           "password_reset",
 			To:             user.EmailAddress,

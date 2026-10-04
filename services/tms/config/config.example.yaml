@@ -36,9 +36,8 @@ platform:
     # Set to true once the control plane issues the new keys; until then the packs that
     # own those features are reachable by any tenant holding tms.core.
     disableLegacyGrants: false
-  # Trenova Cloud free tier. Read only when mode is cloud; see
-  # docs/engineering/cloud-free-tier.md. Every organization created by signup gets the
-  # free_demo plan; organizations without a subscription row (seeded operator tenants)
+  # Trenova Cloud free tier. Read only when mode is cloud. Every organization created by
+  # signup gets the free_demo plan; organizations without a subscription row (seeded operator tenants)
   # are unlimited.
   cloud:
     signup:
