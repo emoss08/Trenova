@@ -64,7 +64,7 @@ type Schedule struct {
 	Timezone       string `json:"timezone"       bun:"timezone,type:VARCHAR(100),notnull,default:'UTC'"`
 
 	// Enabled is false while the schedule is paused.
-	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
 
 	// LastRunAt is when the latest run started, and LastTurnID the turn it
 	// started. NextRunAt is the next slot, worked out whenever the schedule
