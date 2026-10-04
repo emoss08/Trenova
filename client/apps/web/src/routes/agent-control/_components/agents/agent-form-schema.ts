@@ -46,7 +46,10 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
       .array(z.string())
       .max(MAX_ACCESS_ROLES, `An agent can be granted to at most ${MAX_ACCESS_ROLES} roles at once`)
       .default([]),
+    /** The agent looks back over its work and keeps what it learned; saved as its opposite, learningOff. */
+    learnsFromWork: z.boolean().default(true),
   })
+  .omit({ learningOff: true })
   .superRefine((values, ctx) => {
     const seen = new Set<string>();
     for (const [index, id] of values.delegateIds.entries()) {
@@ -133,6 +136,7 @@ export const agentFormDefaults: AgentFormValues = {
   toolDailyLimits: {},
   simulationMode: false,
   memoryTokenBudget: null,
+  learnsFromWork: true,
   contextProviders: [],
   outputMode: "Conversational",
   preferredProviderId: "",
@@ -170,6 +174,7 @@ export function toSaveRequest(
     accessRoles: _granted,
     accessMode: _mode,
     accessRoleIds: _roleIds,
+    learnsFromWork,
     ...form
   } = values;
   const selected = new Set(form.toolNames);
@@ -189,6 +194,7 @@ export function toSaveRequest(
 
   return {
     ...form,
+    learningOff: !learnsFromWork,
     name: form.name.trim(),
     toolTiers,
     toolDailyLimits,
@@ -276,6 +282,7 @@ export function toAgentPanelRow(agent: AgentDefinitionRow): AgentPanelRow {
     toolDailyLimits: limitsOf(agent.toolDailyLimits),
     simulationMode: agent.simulationMode,
     memoryTokenBudget: agent.memoryTokenBudget ?? null,
+    learnsFromWork: !agent.learningOff,
     contextProviders: [...agent.contextProviders],
     outputMode: agent.outputMode,
     preferredProviderId: agent.preferredProviderId,

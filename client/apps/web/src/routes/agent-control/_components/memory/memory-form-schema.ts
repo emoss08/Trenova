@@ -17,6 +17,7 @@ export const memoryKindValues = [
   "Instruction",
   "Fact",
   "Correction",
+  "Procedure",
 ] as const satisfies readonly AgentMemoryKind[];
 export const memorySubjectTypeValues = [
   "Customer",

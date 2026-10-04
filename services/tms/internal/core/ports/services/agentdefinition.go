@@ -41,6 +41,7 @@ type SaveAgentDefinitionRequest struct {
 	ToolDailyLimits        map[string]int
 	SimulationMode         bool
 	MemoryTokenBudget      *int
+	LearningOff            *bool
 	Icon                   string
 	Accent                 string
 	ContextProviders       []agentdefinition.ContextProvider

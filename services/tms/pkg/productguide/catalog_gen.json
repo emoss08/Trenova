@@ -1,5 +1,5 @@
 {
-  "version": "sha256:094f1798c8a0c00ca6548752ae8fbb7b1bc36747e501b7b563c3403ba51a2758",
+  "version": "sha256:517807985ec6e4f68f4d4bd118b8e00da3c86b4645944c571897b6c7214a7ba3",
   "modules": [
     {
       "id": "home",
@@ -2821,13 +2821,32 @@
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Memory** in the rail.",
             "Select **New memory**.",
-            "Choose the **Kind** (**Instruction**, **Fact** or **Correction**), write the **Memory**, and optionally set **Until**.",
+            "Choose the **Kind** (**Instruction**, **Fact**, **Correction** or **Procedure**), write the **Memory**, and optionally set **Until**.",
             "To make it about one record, pick a **Kind of record** and the record; leave it empty for something every agent should know. Then select **Save**.",
             "To stop agents reading an entry, right-click it and choose **Retire**; **Restore** brings it back."
           ]
+        },
+        {
+          "title": "Let agents learn from their work",
+          "keywords": [
+            "self-improving agents",
+            "learning",
+            "reflection",
+            "look back",
+            "lessons",
+            "procedures",
+            "what the agent learned"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, turn **Learn from their work** on or off for every agent. It is on unless someone turned it off.",
+            "To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on or off, then select **Save**.",
+            "Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it kept, offered or turned down, with the reason.",
+            "A lesson shared beyond one person waits under **Suggested memories**, with the memory it would retire. Select **Review and approve** to edit and keep it, or **Dismiss**.",
+            "Open any memory in the list to see **Where it came from**: why it was kept, what made the agent look back, what was said, the conversation or run it was drawn from, and the memory it replaces or that has replaced it."
+          ]
         }
       ],
-      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst-rated answers** and satisfaction need read access to agent feedback, **Run suite now** needs create access to the evaluation suite, and changing **Settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail…** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst-rated answers** and satisfaction need read access to agent feedback, **Run suite now** needs create access to the evaluation suite, and changing **Settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail…** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",
@@ -8159,13 +8178,22 @@
           ]
         },
         {
-          "title": "Start a new conversation",
+          "title": "Keep or undo what an agent learned",
           "keywords": [
+            "agent learned",
+            "learned from this conversation",
+            "self-improving",
+            "memory",
+            "procedure",
+            "lesson",
             "new chat",
             "blank conversation",
             "start over"
           ],
           "steps": [
+            "Once a conversation has been quiet for a while, the agent looks back over it when something went wrong, took several tries or was corrected. What it kept appears under the reply it learned from, marked as learned; a procedure is the steps that worked.",
+            "If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Save memory**, or **Don't save**.",
+            "To take back a lesson it kept, select **Undo** on the card, or pause or forget it on the Memory page like any other memory.",
             "Select **New conversation** in the rail of [Desk](/desk), or press ⌘N (Ctrl+N).",
             "Pick the agent in the box and ask your question."
           ]
@@ -8242,7 +8270,7 @@
         "Decisions"
       ],
       "description": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan.",
-      "summary": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal leads with **What changes**: every record the change would touch, what happens to it, and each value before and after, worked out by the same code that would make the change and read from your records as they are now. A message the change would send is shown as it would go out, with the recipients it would really reach, and amounts it would move are shown line by line with the totals before and after. Below that are **Why** the agent wants it, how sure it is, the **Evidence** behind it, and under **Details** the arguments **Exactly as proposed**. A plan shows **What changes, in the order it runs**, step by step. Changes that cannot be undone are marked **Permanent**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.",
+      "summary": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal leads with **What changes**: every record the change would touch, what happens to it, and each value before and after, worked out by the same code that would make the change and read from your records as they are now. A message the change would send is shown as it would go out, with the recipients it would really reach, and amounts it would move are shown line by line with the totals before and after. Below that are **Why** the agent wants it, how sure it is, the evidence behind it, and under **Details** the arguments Exactly as proposed. A plan shows What changes, in the order it runs, step by step. Changes that cannot be undone are marked **Permanent**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.",
       "requires": [
         {
           "resource": "assistant",
@@ -8289,7 +8317,7 @@
           ],
           "steps": [
             "Open [Decisions](/desk/decisions) and select a proposal.",
-            "Read **What changes**, **Why** and **Evidence**. **Approve** stays off until what the change would do has loaded.",
+            "Read **What changes**, **Why** and evidence. **Approve** stays off until what the change would do has loaded.",
             "Select **Approve** (a) or **Reject** (r). The dialog shows what changes again; enter a **Reason** (required when rejecting, optional when approving) and confirm with **Approve and run** or **Reject**.",
             "If what the change would do moved while you were reading it, nothing is recorded: the dialog shows the change as it is now and says it looks different. Read it again and confirm."
           ]
@@ -8337,7 +8365,7 @@
           "keywords": [],
           "steps": [
             "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **Open the conversation** or **Open the run** to see the context the agent was working in."
+            "Select **Open the conversation** or Open the run to see the context the agent was working in."
           ]
         },
         {
@@ -8357,6 +8385,86 @@
       "related": [
         "/desk",
         "/desk/watchtower",
+        "/admin/agent-control"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
+    },
+    {
+      "path": "/desk/memory",
+      "name": "Memory",
+      "module": "desk",
+      "breadcrumb": [
+        "Desk",
+        "Memory"
+      ],
+      "description": "**What Desk remembers** is everything the agents keep about how you work: what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work.",
+      "summary": "**What Desk remembers** is everything the agents keep about how you work: what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work. Each memory says who it is for (**Just you**, a team you belong to, or the **Organization**), where it came from and how often it has been used. You can add a memory, edit or pause it, forget it, and choose whether agents save new memories on their own or ask you first.",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "agent memory",
+        "what the AI remembers",
+        "saved preferences",
+        "teach the assistant",
+        "learned lessons",
+        "forget something"
+      ],
+      "tasks": [
+        {
+          "title": "Teach Desk something",
+          "keywords": [
+            "add memory",
+            "remember this",
+            "standing instruction",
+            "preference"
+          ],
+          "steps": [
+            "Open [What Desk remembers](/desk/memory) and select **Add a memory**.",
+            "Write it as you would tell a colleague, choose **Who it is for**, and select **Save**.",
+            "Every agent you talk to reads it from your next question. A memory for a team or the organization needs permission to create agent memories."
+          ]
+        },
+        {
+          "title": "Change, pause or forget a memory",
+          "keywords": [
+            "edit memory",
+            "stop using a memory",
+            "delete memory",
+            "wrong memory"
+          ],
+          "steps": [
+            "Open [What Desk remembers](/desk/memory), or use **Search memories** to find one.",
+            "Select **Edit** to change the words or **Who it is for**, then **Save**.",
+            "Select **Pause** to set it aside without losing it, and **Resume** to bring it back.",
+            "Select **Forget** to stop agents using it; **Undo** takes that back while the message shows."
+          ]
+        },
+        {
+          "title": "Choose whether agents ask before saving",
+          "keywords": [
+            "ask first",
+            "automatic saving",
+            "memory preference",
+            "learned from conversation"
+          ],
+          "steps": [
+            "Open [What Desk remembers](/desk/memory) and find **Saving new memories**.",
+            "Choose **Automatically** to let agents save what they pick up and tell you in the conversation, or **Ask me first** to have each one offered for you to keep or turn down.",
+            "The choice also covers what an agent learns by looking back over a conversation once it goes quiet: kept and shown under the reply it learned from, or offered there for you to keep.",
+            "A memory an agent learned shows why it was kept, and the memory it replaced, under its words. A memory a newer one replaced says so in the conversation instead of offering **Undo**, so the two never apply at once."
+          ]
+        }
+      ],
+      "notes": "",
+      "related": [
+        "/desk",
         "/admin/agent-control"
       ],
       "covers": [],

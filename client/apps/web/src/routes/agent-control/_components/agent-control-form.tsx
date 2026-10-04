@@ -10,49 +10,25 @@ import {
   AGENT_CONTROL_QUERY_KEY,
   agentControlQueryOptions,
   updateAgentControl,
-  type AgentControl,
 } from "@/lib/graphql/agent-control";
-import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Award01Icon,
   Database01Icon,
+  GraduationHat01Icon,
   PauseCircleIcon,
   Speedometer03Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { personAllowanceOptions, promotionThresholdOptions } from "./agent-control-options";
+import {
+  controlInput,
+  personAllowanceOptions,
+  promotionThresholdOptions,
+  type ControlPatch,
+} from "./agent-control-options";
 import { TrainingExportHistory } from "./training-export-history";
-
-type ControlPatch = Partial<
-  Pick<
-    AgentControlInput,
-    | "shadowMode"
-    | "earnedAutonomy"
-    | "promotionThreshold"
-    | "aiTrainingConsent"
-    | "personMonthlyMessages"
-  >
->;
-
-/**
- * The input the mutation sends: the current switches with one of them changed.
- * Training consent is sent only when it is the switch being changed, so saving
- * any other switch never re-records who consented.
- */
-function controlInput(current: AgentControl, patch: ControlPatch): AgentControlInput {
-  return {
-    shadowMode: patch.shadowMode ?? current.shadowMode,
-    earnedAutonomy: patch.earnedAutonomy ?? current.earnedAutonomy,
-    promotionThreshold: patch.promotionThreshold ?? current.promotionThreshold,
-    personMonthlyMessages: patch.personMonthlyMessages ?? current.personMonthlyMessages,
-    ...(patch.aiTrainingConsent === undefined
-      ? {}
-      : { aiTrainingConsent: patch.aiTrainingConsent }),
-  };
-}
 
 export default function AgentControlForm() {
   const t = useT();
@@ -77,6 +53,12 @@ export default function AgentControlForm() {
         );
       } else if (patch.personMonthlyMessages !== undefined) {
         toast.success(t("Monthly allowance saved"));
+      } else if (patch.learningOff !== undefined) {
+        toast.success(
+          patch.learningOff
+            ? t("Agents stopped learning from their work")
+            : t("Agents learn from their work"),
+        );
       } else {
         toast.success(t("Promotion threshold saved"));
       }
@@ -95,6 +77,10 @@ export default function AgentControlForm() {
   );
   const onTrainingConsent = useCallback(
     (checked: boolean) => mutation.mutate({ aiTrainingConsent: checked }),
+    [mutation],
+  );
+  const onLearning = useCallback(
+    (checked: boolean) => mutation.mutate({ learningOff: !checked }),
     [mutation],
   );
   const onThreshold = useCallback(
@@ -201,6 +187,30 @@ export default function AgentControlForm() {
               items={thresholdItems}
             />
           </div>
+        </div>
+      </Card>
+
+      <Card size="sm" className="gap-3 px-4 py-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <GraduationHat01Icon className="size-4" />
+            </span>
+            <div className="max-w-prose">
+              <p className="text-sm font-semibold">{t("Learn from their work")}</p>
+              <p className="text-muted-foreground text-xs">
+                {t(
+                  "Once a conversation goes quiet or a background run settles, the agent looks back over it. When something went wrong, took several tries or a person corrected it, it keeps the lesson as memory: a preference, a fact, or the steps that worked. Each person's saving preference still applies, lessons shared beyond one person wait for someone allowed to approve them, and anything drawn from outside content is only ever offered. Each agent also has its own switch.",
+                )}
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={!data.learningOff}
+            disabled={!canUpdate || mutation.isPending}
+            onCheckedChange={onLearning}
+            aria-label={t("Learn from their work")}
+          />
         </div>
       </Card>
 

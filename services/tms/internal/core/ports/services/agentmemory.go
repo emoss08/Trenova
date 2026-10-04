@@ -34,12 +34,20 @@ type RememberRequest struct {
 	Suggest bool
 	// PersonUserID is the person whose conversation the memory was picked
 	// up in, recorded as who it came from; only they accept a suggestion.
-	PersonUserID pulid.ID
+	PersonUserID      pulid.ID
+	Replaces          pulid.ID
+	Source            agent.MemorySource
+	AgentDefinitionID pulid.ID
+	ThreadID          pulid.ID
+	ReflectionID      pulid.ID
+	Evidence          *agent.MemoryEvidence
 }
 
 type RememberPlan struct {
 	Memory   *agent.Memory
 	Existing *agent.Memory
+	Replaced *agent.Memory
+	Held     bool
 }
 
 // UpdateAgentMemoryRequest rewrites what a memory says or is about. Its
@@ -182,7 +190,15 @@ type DeskMemory struct {
 	RoleName string
 	// Editable says the person may change the memory: their own always, a
 	// role's or the organization's only with the permission to.
-	Editable bool
+	Editable   bool
+	Replaces   *DeskMemoryLink
+	ReplacedBy *DeskMemoryLink
+}
+
+type DeskMemoryLink struct {
+	ID      pulid.ID
+	Content string
+	Status  agent.MemoryStatus
 }
 
 // DeskMemoryRole is one of the person's roles, which the Desk offers as a

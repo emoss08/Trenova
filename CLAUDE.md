@@ -328,6 +328,9 @@ Extensions (web search and anything like it) add agent-only tools that an organi
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in
 [docs/engineering/agent-extensions.md](docs/engineering/agent-extensions.md).
+How an agent looks back over a quiet conversation or a settled run and keeps what the work
+taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
+"Learning from the work" in agent-runtime.md.
 An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).

@@ -1,6 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import { memorySource, savedLine, scopeLabel, usageLine } from "../memory-format";
+import { memorySource, memoryWhy, savedLine, scopeLabel, usageLine } from "../memory-format";
 
 const t = ((text: string, ...args: unknown[]) =>
   text.replace(/\{(\d)\}/g, (_match, index: string) => String(args[Number(index)]))) as TranslateFn;
@@ -54,5 +54,47 @@ describe("memory lines", () => {
     expect(scopeLabel({ scope: "Role", roleName: "Billing" }, t)).toBe("Billing");
     expect(scopeLabel({ scope: "User" }, t)).toBe("Just you");
     expect(scopeLabel({ scope: "Organization" }, t)).toBe("Organization");
+  });
+});
+
+describe("learned memories", () => {
+  it("names a lesson an agent kept and who it is kept for", () => {
+    expect(memorySource({ source: "Reflection", sourceTitle: "", scope: "Agent" }, t)).toBe(
+      "An agent looking back over its work",
+    );
+    expect(scopeLabel({ scope: "Agent" }, t)).toBe("Everyone using this agent");
+  });
+});
+
+/*
+The server sends reason, quotes, replaces and replacedBy on DeskMemory
+(services/tms/internal/api/graphql/schema/desk_memory.graphqls). A memory a
+person wrote has an empty reason, no quotes and no links, and shows nothing.
+*/
+describe("memoryWhy", () => {
+  it("shows nothing for a memory a person wrote down", () => {
+    expect(memoryWhy({ reason: "", quotes: [], replaces: null, replacedBy: null }, t)).toEqual([]);
+    expect(memoryWhy({}, t)).toEqual([]);
+    expect(memoryWhy({ reason: "   ", quotes: ["  "] }, t)).toEqual([]);
+  });
+
+  it("gives the reason, a little of what was said, and what it replaced", () => {
+    expect(
+      memoryWhy(
+        {
+          reason: " Billing asked to be copied as well. ",
+          quotes: ["Billing needs these too", "And the rep", "A third quote"],
+          replaces: { content: "Copy dispatch on rate confirmations." },
+          replacedBy: { content: "Copy dispatch, billing and the rep." },
+        },
+        t,
+      ),
+    ).toEqual([
+      { key: "reason", label: "Why", text: "Billing asked to be copied as well." },
+      { key: "quote", label: "Said", text: "“Billing needs these too”" },
+      { key: "quote", label: "Said", text: "“And the rep”" },
+      { key: "replaces", label: "Replaces", text: "“Copy dispatch on rate confirmations.”" },
+      { key: "replacedBy", label: "Replaced by", text: "“Copy dispatch, billing and the rep.”" },
+    ]);
   });
 });

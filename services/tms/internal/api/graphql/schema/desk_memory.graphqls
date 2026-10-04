@@ -8,13 +8,16 @@ enum AgentMemorySavingMode {
 
 """
 A memory as a person keeps it on the Desk: one of their own, their role's, or
-the organization's. Agent-scoped memories are administered in AI Control and
-never appear here.
+the organization's. Agent-scoped memories are administered in AI Control; the
+only ones a person sees here are those an agent learned in their own
+conversations.
 """
 type DeskMemory {
   id: ID!
   content: String!
-  "User (Just you), Role (the person's team) or Organization."
+  "Instruction, Fact, Correction or Procedure."
+  kind: AgentMemoryKind!
+  "User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent."
   scope: AgentMemoryScope!
   "The role a Role memory is kept for."
   roleId: ID
@@ -31,6 +34,21 @@ type DeskMemory {
   version: Int!
   "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
   editable: Boolean!
+  "Why it was kept, in the words of the agent that kept it; empty for one a person wrote down."
+  reason: String!
+  "What was said in the work that the memory rests on."
+  quotes: [String!]!
+  "The memory this one replaced, when the person can see it."
+  replaces: DeskMemoryLink
+  "The newest memory that replaced this one, when the person can see it."
+  replacedBy: DeskMemoryLink
+}
+
+"Another memory a Desk memory points to, read as it is now."
+type DeskMemoryLink {
+  id: ID!
+  content: String!
+  status: AgentMemoryStatus!
 }
 
 "How many memories the person keeps in one scope; Role is counted per role."

@@ -39,7 +39,13 @@ Keywords: approve in chat, review agent change, preview before approving, what w
 4. To keep talking first, select **Decide later** (the clock beside the buttons, or Alt+L). The box folds into a pill above the message box saying how many decisions wait; select it to bring the approval box back.
 5. If the box says **Changed since it was proposed**, it can only be rejected; ask the agent again for a fresh proposal.
 
-### Start a new conversation
+### Keep or undo what an agent learned
+Keywords: agent learned, learned from this conversation, self-improving, memory, procedure, lesson
+1. Once a conversation has been quiet for a while, the agent looks back over it when something went wrong, took several tries or was corrected. What it kept appears under the reply it learned from, marked as learned; a procedure is the steps that worked.
+2. If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Save memory**, or **Don't save**.
+3. To take back a lesson it kept, select **Undo** on the card, or pause or forget it on the Memory page like any other memory.
+
+
 Keywords: new chat, blank conversation, start over
 1. Select **New conversation** in the rail of [Desk](/desk), or press ⌘N (Ctrl+N).
 2. Pick the agent in the box and ask your question.

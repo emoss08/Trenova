@@ -1,6 +1,7 @@
 fragment DeskMemoryFields on DeskMemory {
   id
   content
+  kind
   scope
   roleId
   roleName
@@ -12,6 +13,18 @@ fragment DeskMemoryFields on DeskMemory {
   createdAt
   version
   editable
+  reason
+  quotes
+  replaces {
+    id
+    content
+    status
+  }
+  replacedBy {
+    id
+    content
+    status
+  }
 }
 
 fragment DeskMemorySettingsFields on DeskMemorySettings {

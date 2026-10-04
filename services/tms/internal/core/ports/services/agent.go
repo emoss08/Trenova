@@ -315,6 +315,7 @@ type UpdateAgentControlRequest struct {
 	AITrainingConsent      *bool
 	// PersonMonthlyMessages is absent to leave the allowance as it is.
 	PersonMonthlyMessages *int
+	LearningOff           *bool
 	TenantInfo            pagination.TenantInfo
 }
 

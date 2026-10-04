@@ -47,7 +47,9 @@ export function MemoryForm() {
                 value: choice.value,
                 label: t(choice.label),
               }))}
-              description={t("An instruction is followed; a fact is weighed.")}
+              description={t(
+                "An instruction or a procedure is followed; a fact is weighed; a correction fixes how a tool is used.",
+              )}
             />
           </FormControl>
           <FormControl>

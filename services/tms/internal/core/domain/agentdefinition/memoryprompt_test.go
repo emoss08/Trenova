@@ -352,3 +352,29 @@ func TestRuntimeContext_MemoryRecordsNameEveryRecordOnce(t *testing.T) {
 		Page: &agentdefinition.PageContext{Path: "/shipments"},
 	}).MemoryRecords(), "a list page is about no record")
 }
+
+func TestOrderMemoriesForPrompt_AnOrganizationProcedureIsFollowedLikeAnInstruction(t *testing.T) {
+	t.Parallel()
+
+	fact := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindFact,
+		Content: "Acme ships from two docks.",
+	}
+	procedure := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindProcedure,
+		Content: "1. Read the move. 2. Assign it by move id.",
+	}
+	instruction := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindInstruction,
+		Content: "Quote in dollars.",
+	}
+
+	fitted := definitionWithInstructions("Help.").FitMemories(&agentdefinition.RuntimeContext{
+		Memories: []*agent.Memory{fact, procedure, instruction},
+	})
+
+	assert.Equal(t, []*agent.Memory{instruction, procedure, fact}, fitted)
+}

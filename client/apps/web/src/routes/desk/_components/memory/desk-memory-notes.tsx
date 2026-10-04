@@ -18,6 +18,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DeskIcon } from "../desk-icons";
+import { DeskMemoryWhy } from "./desk-memory-why";
 import { memoryDay, memorySource, scopeLabel } from "./memory-format";
 import "../../_styles/desk-memory.css";
 
@@ -26,6 +27,7 @@ export type MemoryCard = Pick<
   MemoryNote,
   | "id"
   | "content"
+  | "kind"
   | "scope"
   | "roleId"
   | "roleName"
@@ -35,12 +37,16 @@ export type MemoryCard = Pick<
   | "createdAt"
   | "version"
   | "editable"
+  | "reason"
+  | "replaces"
+  | "replacedBy"
 >;
 
 function cardOf(memory: DeskMemory): MemoryCard {
   return {
     id: memory.id,
     content: memory.content,
+    kind: memory.kind,
     scope: memory.scope,
     roleId: memory.roleId ?? null,
     roleName: memory.roleName,
@@ -50,6 +56,9 @@ function cardOf(memory: DeskMemory): MemoryCard {
     createdAt: memory.createdAt,
     version: memory.version,
     editable: memory.editable,
+    reason: memory.reason,
+    replaces: memory.replaces ?? null,
+    replacedBy: memory.replacedBy ?? null,
   };
 }
 
@@ -183,16 +192,20 @@ export function DeskMemoryRecall({
 }
 
 /** Where a saved memory card stands: kept, offered, being edited, or taken back. */
-export type MemorySaveState = "saved" | "ask" | "edit" | "removed" | "declined";
+export type MemorySaveState = "saved" | "ask" | "edit" | "removed" | "declined" | "replaced";
 
-export function initialSaveState(status: string): MemorySaveState {
+/**
+ * A retired memory that a newer one replaced reads as replaced, not removed:
+ * bringing it back would set it beside the memory that took its place.
+ */
+export function initialSaveState(status: string, replaced = false): MemorySaveState {
   switch (status) {
     case "Suggested":
       return "ask";
     case "Dismissed":
       return "declined";
     case "Retired":
-      return "removed";
+      return replaced ? "replaced" : "removed";
     default:
       return "saved";
   }
@@ -201,6 +214,9 @@ export function initialSaveState(status: string): MemorySaveState {
 function audienceOf(card: Pick<MemoryCard, "scope" | "roleId">): DeskMemoryAudience {
   if (card.scope === "Role") {
     return { scope: "Role", roleId: card.roleId ?? null };
+  }
+  if (card.scope === "Agent") {
+    return { scope: "Agent", roleId: null };
   }
   return { scope: card.scope === "Organization" ? "Organization" : "User", roleId: null };
 }
@@ -214,13 +230,17 @@ function audienceOf(card: Pick<MemoryCard, "scope" | "roleId">): DeskMemoryAudie
 export function DeskMemorySaved({ card }: { card: MemoryCard }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const [state, setState] = useState<MemorySaveState>(() => initialSaveState(card.status));
+  const [state, setState] = useState<MemorySaveState>(() =>
+    initialSaveState(card.status, Boolean(card.replacedBy)),
+  );
   const [text, setText] = useState(card.content);
   const [draft, setDraft] = useState(card.content);
   const [audience, setAudience] = useState<DeskMemoryAudience>(() => audienceOf(card));
   const [scopeName, setScopeName] = useState(() => scopeLabel(card, t));
   const [version, setVersion] = useState(card.version);
   const area = useRef<HTMLTextAreaElement>(null);
+  const learned = card.source === "Reflection";
+  const procedure = card.kind === "Procedure";
 
   const settings = useQuery({
     queryKey: [DESK_MEMORIES_KEY, "settings"],
@@ -278,6 +298,20 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
     setState("saved");
   };
 
+  if (state === "replaced") {
+    return (
+      <div className="dk-mem dk-mem-off">
+        <span className="dk-mem-ic">
+          <DeskIcon name="memory" size={12} stroke={2} />
+        </span>
+        <span className="dk-mem-tx">
+          <span>{t("Replaced by a newer memory")}</span>
+          {card.replacedBy ? <span>“{card.replacedBy.content}”</span> : null}
+        </span>
+      </div>
+    );
+  }
+
   if (state === "removed" || state === "declined") {
     return (
       <div className="dk-mem dk-mem-off">
@@ -321,8 +355,17 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
           <span className="dk-mem-ic">
             <DeskIcon name="memory" size={12} stroke={2} />
           </span>
-          <b>{asking ? t("Remember this for next time?") : t("Edit memory")}</b>
+          <b>
+            {asking
+              ? learned
+                ? procedure
+                  ? t("Learned the steps that worked. Keep them for next time?")
+                  : t("Learned something from this conversation. Keep it?")
+                : t("Remember this for next time?")
+              : t("Edit memory")}
+          </b>
         </div>
+        {asking ? <DeskMemoryWhy memory={card} /> : null}
         <textarea
           ref={area}
           rows={1}
@@ -388,8 +431,15 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
         <DeskIcon name="memory" size={12} stroke={2} />
       </span>
       <span className="dk-mem-tx">
-        <em>{t("Saved to memory")}</em>
+        <em>
+          {learned
+            ? procedure
+              ? t("Learned the steps that worked")
+              : t("Learned from this conversation")
+            : t("Saved to memory")}
+        </em>
         {text}
+        <DeskMemoryWhy memory={card} />
       </span>
       <span className="dk-mem-scope">{scopeName}</span>
       {card.editable && (

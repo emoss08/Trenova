@@ -69,8 +69,8 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 			},
 			"kind": agenttoolschema.Enum(
 				"Optional: Instruction for standing rules to follow, Fact "+
-					"for things agents were told, or Correction for fixes people made to "+
-					"earlier proposals.",
+					"for things agents were told, Correction for fixes people made to "+
+					"earlier proposals, or Procedure for the steps that worked for a task.",
 				memoryKinds,
 			),
 			"subjectType": agenttoolschema.Enum(
@@ -134,7 +134,8 @@ func (t *recallMemoryTool) Query(
 		Limit:             limit,
 	}
 	if req.Kind != "" && !req.Kind.IsValid() {
-		return nil, fmt.Errorf("kind %q is not Instruction, Fact or Correction", req.Kind)
+		return nil, fmt.Errorf("kind %q is not one of %s",
+			req.Kind, strings.Join(memoryKinds.Names(), ", "))
 	}
 	rawMemoryID := optionalString(params.Params, "id")
 	if rawMemoryID != "" {
@@ -247,6 +248,8 @@ func recordedBy(source agent.MemorySource) string {
 		return "a decision on a proposal"
 	case agent.MemorySourceFeedback:
 		return "people's ratings of an agent's work"
+	case agent.MemorySourceReflection:
+		return "an agent looking back over its own work"
 	default:
 		return string(source)
 	}

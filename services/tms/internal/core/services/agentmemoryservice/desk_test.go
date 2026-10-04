@@ -86,6 +86,36 @@ func (r *deskRepo) GetDesk(
 	return rows, nil
 }
 
+func (r *deskRepo) ListByIDs(
+	_ context.Context,
+	req repositories.ListAgentMemoriesByIDsRequest,
+) ([]*agent.Memory, error) {
+	out := make([]*agent.Memory, 0, len(req.IDs))
+	for _, id := range req.IDs {
+		if memory, ok := r.memories[id]; ok {
+			copied := *memory
+			out = append(out, &copied)
+		}
+	}
+
+	return out, nil
+}
+
+func (r *deskRepo) ListReplacements(
+	_ context.Context,
+	req repositories.ListAgentMemoryReplacementsRequest,
+) ([]*agent.Memory, error) {
+	out := make([]*agent.Memory, 0)
+	for _, memory := range r.memories {
+		if memory.SupersedesID != nil && slices.Contains(req.ReplacedIDs, *memory.SupersedesID) {
+			copied := *memory
+			out = append(out, &copied)
+		}
+	}
+
+	return out, nil
+}
+
 func (r *deskRepo) visible(filter *repositories.DeskMemoryFilter) []*agent.Memory {
 	out := make([]*agent.Memory, 0, len(r.memories))
 	for _, memory := range r.memories {
@@ -558,6 +588,70 @@ func TestDeskMemories_AnOfferIsAcceptedOnlyByWhoItWasOfferedTo(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
+}
+
+func TestDeskMemories_NameWhatTheyReplacedAndWhatReplacedThem(t *testing.T) {
+	t.Parallel()
+
+	w := newDeskWorld()
+	old := w.keep(
+		"Copy dispatch on rate confirmations.",
+		agent.MemoryScopeOrganization,
+		pulid.Nil,
+		pulid.Nil,
+	)
+	old.Status = agent.MemoryStatusRetired
+	offered := w.repo.put(&agent.Memory{
+		Kind:         agent.MemoryKindProcedure,
+		Source:       agent.MemorySourceReflection,
+		Status:       agent.MemoryStatusSuggested,
+		Scope:        agent.MemoryScopeOrganization,
+		Content:      "Copy dispatch and the carrier rep.",
+		SupersedesID: &old.ID,
+	})
+	current := w.repo.put(&agent.Memory{
+		Kind:         agent.MemoryKindProcedure,
+		Source:       agent.MemorySourceReflection,
+		Scope:        agent.MemoryScopeOrganization,
+		Content:      "Copy dispatch and billing on rate confirmations.",
+		SupersedesID: &old.ID,
+		Evidence: &agent.MemoryEvidence{
+			Reason:  "The person asked for billing to be copied as well.",
+			Quotes:  []string{"Billing needs these too"},
+			Signals: []string{string(agent.ReflectionSignalPersonCorrected)},
+		},
+	})
+	jordans := w.keep("Jordan's own way.", agent.MemoryScopeUser, pulid.MustNew("usr_"), pulid.Nil)
+	mine := w.keep("Copy me as well.", agent.MemoryScopeUser, w.avery, pulid.Nil)
+	mine.SupersedesID = &jordans.ID
+
+	page, err := w.svc.ListDesk(t.Context(), &services.ListDeskMemoriesRequest{
+		Actor: w.actor(false),
+		Limit: 10,
+	})
+	require.NoError(t, err)
+	byID := map[pulid.ID]*services.DeskMemory{}
+	for _, item := range page.Items {
+		byID[item.Memory.ID] = item
+	}
+
+	require.Contains(t, byID, current.ID)
+	require.NotNil(t, byID[current.ID].Replaces)
+	assert.Equal(t, old.ID, byID[current.ID].Replaces.ID)
+	assert.Equal(t, old.Content, byID[current.ID].Replaces.Content)
+	assert.Equal(t, agent.MemoryStatusRetired, byID[current.ID].Replaces.Status)
+	assert.Nil(t, byID[current.ID].ReplacedBy)
+
+	require.Contains(t, byID, mine.ID)
+	assert.Nil(t, byID[mine.ID].Replaces, "someone else's memory is not named")
+	assert.NotContains(t, byID, offered.ID)
+
+	shown, err := w.svc.DeskByIDs(t.Context(), w.actor(false), []pulid.ID{old.ID})
+	require.NoError(t, err)
+	require.Len(t, shown, 1)
+	require.NotNil(t, shown[0].ReplacedBy, "the retired memory names what took its place")
+	assert.Equal(t, current.ID, shown[0].ReplacedBy.ID,
+		"an offer still waiting is not what replaced it")
 }
 
 func TestSavingMode_AutomaticUntilThePersonChooses(t *testing.T) {

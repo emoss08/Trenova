@@ -148,6 +148,7 @@ type Resolver struct {
 	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
 	agentEvalCase                      *agentqualityresolver.AgentEvalCaseResolver
 	agentEvaluation                    *agentresolver.AgentEvaluationResolver
+	agentMemory                        *agentresolver.AgentMemoryResolver
 	agentPlan                          *decisionsresolver.AgentPlanResolver
 	agentPreviewFieldChange            *agentpreviewresolver.AgentPreviewFieldChangeResolver
 	agentPreviewMessage                *agentpreviewresolver.AgentPreviewMessageResolver
@@ -160,6 +161,7 @@ type Resolver struct {
 	agentProposalField                 *agentresolver.AgentProposalFieldResolver
 	agentQualityAgent                  *agentqualityresolver.AgentQualityAgentResolver
 	agentQualityControl                *agentqualityresolver.AgentQualityControlResolver
+	agentReflection                    *agentresolver.AgentReflectionResolver
 	agentRun                           *agentRunResolver
 	agentRunEvent                      *agentruneventresolver.AgentRunEventResolver
 	agentSafety                        *agentsafetyresolver.AgentSafetyResolver
@@ -378,6 +380,7 @@ func FromServices(s *Services) *Resolver {
 		AgentProposalService:      s.AgentProposalService,
 		AgentPlanService:          s.AgentPlanService,
 		AgentMemoryService:        s.AgentMemoryService,
+		AgentReflectionService:    s.AgentReflectionService,
 		AgentEvaluationService:    s.AgentEvaluationService,
 		AgentExceptionService:     s.AgentExceptionService,
 		AgentDecisionService:      s.AgentDecisionService,
@@ -972,6 +975,7 @@ func FromServices(s *Services) *Resolver {
 		agentDefinition:          &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
 		agentEvalCase:            &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
 		agentEvaluation:          &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
+		agentMemory:              &agentresolver.AgentMemoryResolver{Deps: agentDeps},
 		agentPlan:                &decisionsresolver.AgentPlanResolver{Deps: decisionsDeps},
 		agentPreviewFieldChange:  &agentpreviewresolver.AgentPreviewFieldChangeResolver{Deps: agentpreviewDeps},
 		agentPreviewMessage:      &agentpreviewresolver.AgentPreviewMessageResolver{Deps: agentpreviewDeps},
@@ -987,6 +991,7 @@ func FromServices(s *Services) *Resolver {
 		agentProposalField:  &agentresolver.AgentProposalFieldResolver{Deps: agentDeps},
 		agentQualityAgent:   &agentqualityresolver.AgentQualityAgentResolver{Deps: agentqualityDeps},
 		agentQualityControl: &agentqualityresolver.AgentQualityControlResolver{Deps: agentqualityDeps},
+		agentReflection:     &agentresolver.AgentReflectionResolver{Deps: agentDeps},
 		agentRun: &agentRunResolver{
 			agentAgentRun:     &agentAgentRun{Deps: agentDeps},
 			decisionsAgentRun: &decisionsAgentRun{Deps: decisionsDeps},
@@ -1463,6 +1468,10 @@ func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
 	return r.agentEvaluation
 }
 
+func (r *Resolver) AgentMemory() generated.AgentMemoryResolver {
+	return r.agentMemory
+}
+
 func (r *Resolver) AgentPlan() generated.AgentPlanResolver {
 	return r.agentPlan
 }
@@ -1514,6 +1523,10 @@ func (r *Resolver) AgentQualityAgent() generated.AgentQualityAgentResolver {
 
 func (r *Resolver) AgentQualityControl() generated.AgentQualityControlResolver {
 	return r.agentQualityControl
+}
+
+func (r *Resolver) AgentReflection() generated.AgentReflectionResolver {
+	return r.agentReflection
 }
 
 func (r *Resolver) AgentRun() generated.AgentRunResolver {

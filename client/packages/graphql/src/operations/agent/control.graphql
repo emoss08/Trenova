@@ -6,6 +6,7 @@ fragment AgentControlFields on AgentControl {
   earnedAutonomy
   promotionThreshold
   personMonthlyMessages
+  learningOff
   aiTrainingConsent
   aiTrainingConsentChangedAt
   version

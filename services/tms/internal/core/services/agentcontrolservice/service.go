@@ -85,6 +85,9 @@ func (s *Service) Update(
 	if req.PersonMonthlyMessages != nil {
 		control.PersonMonthlyMessages = *req.PersonMonthlyMessages
 	}
+	if req.LearningOff != nil {
+		control.LearningOff = *req.LearningOff
+	}
 
 	me := errortypes.NewMultiError()
 	consentChanged := s.applyTrainingConsent(control, req.AITrainingConsent, actor, me)

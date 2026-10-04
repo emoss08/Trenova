@@ -1919,6 +1919,30 @@ models:
   AgentMemoryUsage:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentMemoryUsage
+  AgentReflection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.Reflection
+  AgentReflectionSignal:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSignal
+  AgentReflectionChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionChange
+  AgentReflectionSubject:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSubject
+  AgentReflectionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionStatus
+  AgentReflectionSkip:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSkip
+  AgentReflectionSignalKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSignalKind
+  AgentReflectionAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionAction
   AICorrection:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aicorrection.Correction

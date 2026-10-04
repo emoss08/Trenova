@@ -53,8 +53,51 @@ func (r *repository) Create(ctx context.Context, entity *agent.Memory) (*agent.M
 			return nil, fmt.Errorf("create agent memory: %w", err)
 		}
 
+		if entity.Status == agent.MemoryStatusActive && entity.Replaces() {
+			if err := r.retireSuperseded(ctx, retireSupersededParams{
+				tenant: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
+				id:       *entity.SupersedesID,
+				byUserID: pulid.ConvertFromPtr(entity.CreatedByUserID),
+				at:       entity.CreatedAt,
+			}); err != nil {
+				return nil, err
+			}
+		}
+
 		return entity, nil
 	})
+}
+
+type retireSupersededParams struct {
+	tenant   pagination.TenantInfo
+	id       pulid.ID
+	byUserID pulid.ID
+	at       int64
+}
+
+func (r *repository) retireSuperseded(ctx context.Context, p retireSupersededParams) error {
+	cols := buncolgen.MemoryColumns
+	if _, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*agent.Memory)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.MemoryScopeTenantUpdate(uq, p.tenant).
+				Where(cols.ID.Eq(), p.id).
+				Where(cols.Status.In(), bun.List(replaceableStatuses()))
+		}).
+		Set(cols.Status.Set(), agent.MemoryStatusRetired).
+		Set(cols.RetiredAt.Set(), p.at).
+		Set(cols.RetiredByUserID.Set(), nullableID(p.byUserID)).
+		Set(cols.UpdatedAt.Set(), p.at).
+		Set(cols.Version.Inc(1)).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("retire the agent memory a new one replaces: %w", err)
+	}
+
+	return nil
 }
 
 // Update rewrites what the memory says and is about, under its version. The
@@ -122,6 +165,63 @@ func (r *repository) GetByID(
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) ListByIDs(
+	ctx context.Context,
+	req repositories.ListAgentMemoriesByIDsRequest,
+) ([]*agent.Memory, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
+		if len(req.IDs) == 0 {
+			return []*agent.Memory{}, nil
+		}
+
+		cols := buncolgen.MemoryColumns
+		entities := make([]*agent.Memory, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.List(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list agent memories by ids: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListReplacements(
+	ctx context.Context,
+	req repositories.ListAgentMemoryReplacementsRequest,
+) ([]*agent.Memory, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
+		if len(req.ReplacedIDs) == 0 {
+			return []*agent.Memory{}, nil
+		}
+
+		cols := buncolgen.MemoryColumns
+		entities := make([]*agent.Memory, 0, len(req.ReplacedIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
+					Where(cols.SupersedesID.In(), bun.List(req.ReplacedIDs)).
+					Where(cols.Status.In(), bun.List(agent.ReplacingMemoryStatuses()))
+			}).
+			OrderExpr(cols.CreatedAt.OrderDesc()).
+			OrderExpr(cols.ID.OrderDesc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list agent memory replacements: %w", err)
+		}
+
+		return entities, nil
 	})
 }
 
@@ -359,7 +459,11 @@ func (r *repository) FindActive(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now).
+				sq = keptOnly(
+					buncolgen.MemoryScopeTenant(sq, req.TenantInfo),
+					req.Now,
+					req.IncludeSuggested,
+				).
 					Where(cols.Content.Expr(memoryWords("{}")+" = "+memoryWords("?")), req.Content)
 				sq = sameReaders(sq, &req)
 				if !req.Tainted {
@@ -380,6 +484,7 @@ func (r *repository) FindActive(
 				return sq
 			}).
 			OrderExpr(cols.Tainted.OrderAsc()).
+			OrderExpr(activeFirst()).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
 			Limit(1).
 			Scan(ctx)
@@ -606,10 +711,25 @@ func (r *repository) ResolveSuggestion(
 			return nil, dberror.CreateVersionMismatchError("AgentMemory", req.ID.String())
 		}
 
-		return r.GetByID(
+		resolved, err := r.GetByID(
 			ctx,
 			repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
 		)
+		if err != nil {
+			return nil, err
+		}
+		if resolved.Status == agent.MemoryStatusActive && resolved.Replaces() {
+			if err = r.retireSuperseded(ctx, retireSupersededParams{
+				tenant:   req.TenantInfo,
+				id:       *resolved.SupersedesID,
+				byUserID: req.ByUserID,
+				at:       req.At,
+			}); err != nil {
+				return nil, err
+			}
+		}
+
+		return resolved, nil
 	})
 }
 
@@ -685,12 +805,32 @@ func suggestionStatuses() []agent.MemoryStatus {
 }
 
 func activeOnly(sq *bun.SelectQuery, now int64) *bun.SelectQuery {
-	cols := buncolgen.MemoryColumns
+	return keptOnly(sq, now, false)
+}
 
-	return sq.Where(cols.Status.Eq(), agent.MemoryStatusActive).
-		WhereGroup(" AND ", func(expiry *bun.SelectQuery) *bun.SelectQuery {
-			return expiry.Where(cols.ExpiresAt.IsNull()).WhereOr(cols.ExpiresAt.Gt(), now)
-		})
+func keptOnly(sq *bun.SelectQuery, now int64, includeSuggested bool) *bun.SelectQuery {
+	cols := buncolgen.MemoryColumns
+	if includeSuggested {
+		sq = sq.Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
+			agent.MemoryStatusActive,
+			agent.MemoryStatusSuggested,
+		}))
+	} else {
+		sq = sq.Where(cols.Status.Eq(), agent.MemoryStatusActive)
+	}
+
+	return sq.WhereGroup(" AND ", func(expiry *bun.SelectQuery) *bun.SelectQuery {
+		return expiry.Where(cols.ExpiresAt.IsNull()).WhereOr(cols.ExpiresAt.Gt(), now)
+	})
+}
+
+func replaceableStatuses() []agent.MemoryStatus {
+	return []agent.MemoryStatus{agent.MemoryStatusActive, agent.MemoryStatusPaused}
+}
+
+func activeFirst() string {
+	return "CASE " + buncolgen.MemoryColumns.Status.Qualified() +
+		" WHEN 'Active' THEN 0 ELSE 1 END ASC"
 }
 
 // memoryWords is what a memory says with the case, spacing and punctuation
@@ -699,11 +839,11 @@ func memoryWords(operand string) string {
 	return "BTRIM(REGEXP_REPLACE(LOWER(" + operand + "), '[^[:alnum:]]+', ' ', 'g'))"
 }
 
-// kindOrder puts instructions before corrections before facts, the order a
-// prompt reads them in.
+// kindOrder puts instructions before corrections before procedures before
+// facts, the order a prompt reads them in.
 func kindOrder() string {
 	return "CASE " + buncolgen.MemoryColumns.Kind.Qualified() +
-		" WHEN 'Instruction' THEN 0 WHEN 'Correction' THEN 1 ELSE 2 END ASC"
+		" WHEN 'Instruction' THEN 0 WHEN 'Correction' THEN 1 WHEN 'Procedure' THEN 2 ELSE 3 END ASC"
 }
 
 func candidateOrder() string {

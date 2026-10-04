@@ -11,6 +11,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useForm, type Resolver } from "react-hook-form";
 import { MemoryForm } from "./memory-form";
+import { MemoryProvenance } from "./memory-provenance";
 import {
   memoryFormDefaults,
   memoryFormSchema,
@@ -48,7 +49,12 @@ export function MemoryPanel({
         title={t("Memory")}
         fieldKey="content"
         mutationFn={(values, current) => updateAgentMemory(current.id, toMemoryInput(values))}
-        formComponent={<MemoryForm />}
+        formComponent={
+          <>
+            <MemoryForm />
+            <MemoryProvenance memory={row} />
+          </>
+        }
       />
     );
   }
