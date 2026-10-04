@@ -12,6 +12,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
+const billingTransferCandidateAlias = "candidate"
+
 func billingTransferCandidatePredicate(q *bun.SelectQuery) *bun.SelectQuery {
 	sp := buncolgen.ShipmentColumns
 
@@ -64,11 +66,16 @@ func (r *repository) ListBillingTransferCandidateIDs(
 			return result, nil
 		}
 
-		if err = dba.NewSelect().
+		matched := dba.NewSelect().
 			Model((*shipment.Shipment)(nil)).
-			Column(sp.ID.Bare()).
-			Apply(scope).
-			Order(sp.CreatedAt.OrderAsc(), sp.ID.OrderAsc()).
+			Apply(scope)
+		candidate := sp.ID.WithAlias(billingTransferCandidateAlias)
+		candidateCreatedAt := sp.CreatedAt.WithAlias(billingTransferCandidateAlias)
+
+		if err = dba.NewSelect().
+			TableExpr("(?) AS ?", matched, bun.Ident(billingTransferCandidateAlias)).
+			ColumnExpr(candidate.Qualified()).
+			Order(candidateCreatedAt.OrderAsc(), candidate.OrderAsc()).
 			Limit(req.Limit).
 			Scan(ctx, &result.IDs); err != nil {
 			return nil, err
