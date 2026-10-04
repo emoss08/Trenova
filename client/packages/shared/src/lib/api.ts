@@ -390,6 +390,20 @@ async function uploadWithProgress<T>(
   });
 }
 
+/**
+ * Where an upload part is sent. The server hands back API-relative paths
+ * ("/api/v1/documents/uploads/..."); when the API lives on another origin than
+ * the client, as on Trenova Cloud, they must resolve against the API, not the page.
+ * Absolute URLs (presigned storage targets) pass through unchanged.
+ */
+function resolveUploadURL(url: string): string {
+  if (url.startsWith("/") && API_BASE_URL.startsWith("http")) {
+    return new URL(url, API_BASE_URL).toString();
+  }
+
+  return url;
+}
+
 async function putFileWithProgress(
   url: string,
   file: Blob,
@@ -449,7 +463,7 @@ async function putFileWithProgress(
       );
     });
 
-    xhr.open("PUT", url);
+    xhr.open("PUT", resolveUploadURL(url));
     xhr.withCredentials = Boolean(endpoint);
     uploadHeaders.forEach((value, key) => {
       xhr.setRequestHeader(key, value);
