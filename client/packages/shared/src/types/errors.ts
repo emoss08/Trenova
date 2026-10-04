@@ -29,6 +29,7 @@ export const apiErrorResponseSchema = z.object({
   type: z.string(),
   title: z.string(),
   status: z.number(),
+  code: z.string().optional(),
   detail: z.string().optional(),
   instance: z.string().optional(),
   traceId: z.string().optional(),

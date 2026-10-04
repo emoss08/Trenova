@@ -527,6 +527,15 @@
       "apps/web/types"
     ]
   },
+  "1 day left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "1 hour": {
     "sites": 2,
     "scope": [
@@ -2542,6 +2551,15 @@
       "service/carrierassignmentservice"
     ]
   },
+  "A conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A conversation answers in prose; a report in sections.": {
     "sites": 1,
     "scope": [
@@ -2758,6 +2776,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "A decision on a change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "A decision request is a view over a proposal": {
@@ -3343,6 +3370,15 @@
     ],
     "areas": [
       "domain/ratequote"
+    ]
+  },
+  "A few details and your workspace is ready. Everything here can be changed later in Organization settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "A field is listed twice": {
@@ -7854,6 +7890,15 @@
       "routes/agent-control"
     ]
   },
+  "AI spend": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "AM": {
     "sites": 1,
     "scope": [
@@ -10730,6 +10775,15 @@
       "routes/reports"
     ]
   },
+  "Add a memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Add a move to define the route for this shipment": {
     "sites": 1,
     "scope": [
@@ -12354,6 +12408,24 @@
       "packages/shared/components"
     ]
   },
+  "Added by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Added by you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Added each settlement.": {
     "sites": 1,
     "scope": [
@@ -13472,6 +13544,15 @@
       "api/writecoverage"
     ]
   },
+  "Agent automation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent cannot be empty": {
     "sites": 2,
     "scope": [
@@ -13833,6 +13914,15 @@
       "routes/agent-control"
     ]
   },
+  "Agent web search": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent work reaches the trail within a minute of happening. Widen the range, pick another agent or person, or include evaluations.": {
     "sites": 1,
     "scope": [
@@ -13896,6 +13986,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Agents ask before saving anything": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Agents can look up current regulations, rules and public information — hours of service, ELD requirements, hazmat placarding, IFTA filing — and cite the page and its date instead of answering from memory. Government sites are ranked first and marked as official.": {
@@ -13979,6 +14078,15 @@
       "routes/agent-control"
     ]
   },
+  "Agents save useful facts and tell you in the conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Agents searching and reading public web pages on a person's behalf, through an enabled extension": {
     "sites": 1,
     "scope": [
@@ -13995,6 +14103,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Agents use these to answer the way your team works. Edit anything that's wrong, pause what you're unsure about, or forget it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Agents you choose": {
@@ -15437,6 +15554,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Already have one?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Already imported": {
@@ -18432,6 +18558,15 @@
       "routes/settlement-dispute"
     ]
   },
+  "Appears on invoices, rate confirmations and other documents, and sets the clock the organization's reports use.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Append a Luhn-computed check digit for validation.": {
     "sites": 1,
     "scope": [
@@ -21069,6 +21204,15 @@
       "routes/desk"
     ]
   },
+  "Ask me first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Ask something else": {
     "sites": 1,
     "scope": [
@@ -21458,6 +21602,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Asset carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Asset operations": {
@@ -22158,6 +22311,15 @@
       "routes/agent-control"
     ]
   },
+  "Assistant messages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Assume notices were sent on time": {
     "sites": 1,
     "scope": [
@@ -22237,6 +22399,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule-override"
+    ]
+  },
+  "At least 12 characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "At least 2 commodity IDs are required": {
@@ -24296,6 +24467,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Automatically": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Automatically add applicable accessorial charges (fuel surcharge, detention, liftgate, etc.) to shipments based on service rules.": {
@@ -28379,6 +28559,15 @@
       "routes/admin"
     ]
   },
+  "Bot protection is not configured, so signup is unavailable right now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Both": {
     "sites": 1,
     "scope": [
@@ -31886,6 +32075,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Carrier intelligence lookups": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Carrier intelligence prune": {
@@ -39500,6 +39698,26 @@
       "domain/accountingsync"
     ]
   },
+  "Company name": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding",
+      "routes/signup"
+    ]
+  },
+  "Company profile": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/onboarding"
+    ]
+  },
   "Compare": {
     "sites": 1,
     "scope": [
@@ -39718,6 +39936,24 @@
     ],
     "areas": [
       "service/shipmentmoveservice"
+    ]
+  },
+  "Complete the security check before creating your account.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
+  "Complete the security check first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Complete these fields to create the shipment": {
@@ -40917,6 +41153,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Confirm and finish": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Confirm and save": {
@@ -45835,6 +46080,15 @@
       "routes/admin"
     ]
   },
+  "Create account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Create account & sign in": {
     "sites": 1,
     "scope": [
@@ -46484,6 +46738,15 @@
       "domain/permission"
     ]
   },
+  "Create your account": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Create your own private copy of this view": {
     "sites": 1,
     "scope": [
@@ -46701,6 +46964,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Creating your account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Creating...": {
@@ -48590,6 +48862,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Customer records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Customer reference": {
@@ -50913,6 +51194,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Decides which halves of Trenova are turned on. You can change it later in Organization settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Decides which items are rated and how they are weighted.": {
@@ -53393,6 +53683,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Deleted on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Deleted or voided": {
@@ -58282,6 +58581,15 @@
       "apps/web/lib"
     ]
   },
+  "Document storage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Document templates": {
     "sites": 1,
     "scope": [
@@ -58456,6 +58764,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Document uploads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Document version restored": {
@@ -58649,6 +58966,15 @@
       "routes/admin"
     ]
   },
+  "Documents stored in the organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Documents that differ": {
     "sites": 1,
     "scope": [
@@ -58801,6 +59127,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Don't save": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Done": {
@@ -60244,6 +60579,15 @@
       "routes/fleet-safety",
       "routes/org-structure",
       "routes/pay-profile"
+    ]
+  },
+  "Drivers and other worker records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Drivers available": {
@@ -62299,6 +62643,15 @@
       "routes/worker-checklist-template"
     ]
   },
+  "Each of these returns a plan notice when tried. They come with paid plans.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Each payment waits on the payments from the books page until someone applies or ignores it.": {
     "sites": 1,
     "scope": [
@@ -62848,6 +63201,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Edit memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Edit move {0}": {
@@ -65623,6 +65985,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Enter company name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Enter current password": {
@@ -75509,6 +75880,15 @@
       "domain/aifeedback"
     ]
   },
+  "Finish creating your Trenova account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Finish on the Terms tab first:": {
     "sites": 1,
     "scope": [
@@ -76734,6 +77114,15 @@
       "routes/detention-policy"
     ]
   },
+  "Forget": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Forgiven": {
     "sites": 2,
     "scope": [
@@ -76759,6 +77148,24 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Forgotten. Agents won't use this again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Forgotten. Desk won't use this again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Fork": {
@@ -77429,6 +77836,24 @@
       "routes/pay-profile"
     ]
   },
+  "Free demo: 1 day left. After that the workspace becomes read-only.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Free demo: {0} days left. After that the workspace becomes read-only.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Free minutes granted cannot be negative": {
     "sites": 1,
     "scope": [
@@ -77545,6 +77970,15 @@
       "routes/shipment",
       "service/agenttoolservice",
       "template/invoice.pdf"
+    ]
+  },
+  "Freight brokerage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Freight charge": {
@@ -80199,6 +80633,15 @@
     ]
   },
   "Got back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Got it": {
     "sites": 1,
     "scope": [
       "ts"
@@ -83039,6 +83482,15 @@
       "routes/desk"
     ]
   },
+  "How does your company move freight?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "How drivers are told": {
     "sites": 1,
     "scope": [
@@ -84060,6 +84512,15 @@
       "apps/web/lib"
     ]
   },
+  "I agree to the": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "I have copied it": {
     "sites": 1,
     "scope": [
@@ -84655,6 +85116,24 @@
     ],
     "areas": [
       "template/driverportal.invitation.email"
+    ]
+  },
+  "If {0} can be used for a new account, a verification link is on its way. Open it on this device to finish setting up your workspace.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
+  "If {0} has a pending signup, a new link is on its way.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Ignore": {
@@ -90885,6 +91364,15 @@
       "routes/intake"
     ]
   },
+  "Jordan Rivera": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Journal approved": {
     "sites": 1,
     "scope": [
@@ -91481,6 +91969,15 @@
     "areas": [
       "apps/web/hooks",
       "routes/accounting-inbound"
+    ]
+  },
+  "Just you": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "KPI": {
@@ -92846,6 +93343,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Largest upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Largest value": {
@@ -95075,6 +95581,15 @@
       "service/reporting"
     ]
   },
+  "Limit must be a number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "Limit must be at least 0": {
     "sites": 1,
     "scope": [
@@ -96283,6 +96798,15 @@
       "template/notification.dash.load_unassigned"
     ]
   },
+  "Load sample data": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Load tender": {
     "sites": 2,
     "scope": [
@@ -97017,6 +97541,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Loading security check…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Loading service failure...": {
@@ -102132,6 +102665,15 @@
       "domain/permission"
     ]
   },
+  "Messages sent to the assistant this month.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Messages the desk reads as this kind will collect here.": {
     "sites": 1,
     "scope": [
@@ -103512,6 +104054,15 @@
     ],
     "areas": [
       "domain/trailer"
+    ]
+  },
+  "Model usage cost this month.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Moderate": {
@@ -106076,6 +106627,15 @@
     ],
     "areas": [
       "domain/carrierintel"
+    ]
+  },
+  "Name, timezone and address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Name, type, and description": {
@@ -111048,6 +111608,15 @@
       "routes/formula-template"
     ]
   },
+  "No memories match.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No message": {
     "sites": 1,
     "scope": [
@@ -111587,6 +112156,15 @@
     ],
     "areas": [
       "routes/rate-zone"
+    ]
+  },
+  "No plan limits on this installation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No plans yet": {
@@ -114234,6 +114812,15 @@
       "apps/web/components"
     ]
   },
+  "Not included in the free demo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Not indexed; found by its words only": {
     "sites": 1,
     "scope": [
@@ -114531,6 +115118,15 @@
       "routes/agent-control"
     ]
   },
+  "Not saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not scored": {
     "sites": 2,
     "scope": [
@@ -114701,6 +115297,15 @@
       "routes/accounting-sync"
     ]
   },
+  "Not used yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not verified": {
     "sites": 1,
     "scope": [
@@ -114772,6 +115377,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Not your email address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "NotSent": {
@@ -122158,6 +122772,16 @@
       "domain/audit"
     ]
   },
+  "Operation type": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/onboarding"
+    ]
+  },
   "Operational": {
     "sites": 1,
     "scope": [
@@ -124293,6 +124917,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Outbound email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Outbound enabled": {
@@ -127225,6 +127858,15 @@
       "service/passwordresetservice"
     ]
   },
+  "Password must not be your email address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Password reset link sent": {
     "sites": 1,
     "scope": [
@@ -129118,6 +129760,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "People with access to the organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "People with any of these roles, or a role that inherits one, can use it.": {
@@ -131277,6 +131928,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Pickup, delivery and other location records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Pickup/delivery": {
     "sites": 1,
     "scope": [
@@ -131698,6 +132358,17 @@
       "routes/worker"
     ]
   },
+  "Plan & usage": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/config",
+      "routes/admin"
+    ]
+  },
   "Plan an organization's nightly agent quality sweep and run each changed agent's suite": {
     "sites": 1,
     "scope": [
@@ -131741,6 +132412,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Plan summary": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Plan type is required": {
@@ -131869,6 +132549,15 @@
     "areas": [
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Plans and usage limits apply only on Trenova Cloud. Every organization here is unlimited.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Plans cannot be actioned while all agents are paused. Turn off \"Pause all agents\" on the AI Control overview, then decide again": {
@@ -139839,6 +140528,15 @@
       "routes/organization"
     ]
   },
+  "Ratings of an agent's work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rationale": {
     "sites": 1,
     "scope": [
@@ -144102,6 +144800,24 @@
       "domain/recurringshipment"
     ]
   },
+  "Recurring shipment schedules.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Recurring shipment series": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Recurring shipment series management and scheduled generation": {
     "sites": 1,
     "scope": [
@@ -144644,6 +145360,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Refresh the page to try again. Your account and organization are safe.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Refresh to try again.": {
@@ -145618,6 +146343,15 @@
       "domain/invoiceadjustment"
     ]
   },
+  "Remember this for next time?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Remembered it? Go back.": {
     "sites": 1,
     "scope": [
@@ -146453,6 +147187,15 @@
     "areas": [
       "apps/web/components",
       "routes/formula-template"
+    ]
+  },
+  "Removed from memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Removed provider": {
@@ -149082,6 +149825,15 @@
       "routes/admin"
     ]
   },
+  "Resend in {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Resend integration updated": {
     "sites": 1,
     "scope": [
@@ -149089,6 +149841,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Resend verification email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Resend webhook setup": {
@@ -149231,6 +149992,15 @@
     ],
     "areas": [
       "template/account.password_reset.email"
+    ]
+  },
+  "Resets {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Resize the assistant. Use the arrow keys, or double-click to reset.": {
@@ -152362,6 +153132,15 @@
       "apps/web/components"
     ]
   },
+  "Rivera Freight LLC": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Road restrictions and supplemental reporting options sent with mileage requests.": {
     "sites": 1,
     "scope": [
@@ -155381,6 +156160,24 @@
       "apps/web/components"
     ]
   },
+  "Sample data set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
+  "Sample records count toward the free demo's limits, the same as records you create. Deleting one frees its slot.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Sample rows.": {
     "sites": 1,
     "scope": [
@@ -155893,6 +156690,15 @@
       "routes/admin"
     ]
   },
+  "Save memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Save metadata": {
     "sites": 1,
     "scope": [
@@ -156292,6 +157098,15 @@
       "apps/web/components"
     ]
   },
+  "Saved to memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Saved version": {
     "sites": 1,
     "scope": [
@@ -156326,6 +157141,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Saved {0} from “{1}”": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Saved. Leave blank to keep it.": {
@@ -156371,6 +157195,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Saving new memories": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Saving starts the rollout again and begins a new comparison; what happened before the guard stopped it is no longer counted.": {
@@ -158505,6 +159338,15 @@
     ],
     "areas": [
       "routes/accounting-mapping"
+    ]
+  },
+  "Search memories": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Search metrics": {
@@ -161935,6 +162777,15 @@
       "domain/permission"
     ]
   },
+  "Send a new link": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Send a rate agreement back for revision": {
     "sites": 1,
     "scope": [
@@ -162847,6 +163698,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Sent again. Use the newest link; earlier ones stop working.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Sent as bills since {0}. Company driver pay is never sent.": {
@@ -164246,6 +165106,15 @@
       "routes/shipment"
     ]
   },
+  "Set up your Trenova organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Set up your account": {
     "sites": 1,
     "scope": [
@@ -164307,6 +165176,24 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Setting up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
+  "Setting up your workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Setting up...": {
@@ -164843,6 +165730,15 @@
       "routes/home.tsx"
     ]
   },
+  "Setup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Setup step is required": {
     "sites": 1,
     "scope": [
@@ -164850,6 +165746,15 @@
     ],
     "areas": [
       "domain/accountingsync"
+    ]
+  },
+  "Setup steps": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Severity": {
@@ -167025,6 +167930,15 @@
       "apps/web/lib"
     ]
   },
+  "Shipments in the organization, however they were created.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Shipments moving on or after this date price against this contract": {
     "sites": 1,
     "scope": [
@@ -168157,6 +169071,15 @@
       "packages/shared/components"
     ]
   },
+  "Sign in instead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Sign in to Trenova": {
     "sites": 1,
     "scope": [
@@ -168182,6 +169105,15 @@
     ],
     "areas": [
       "routes/admin",
+      "routes/auth"
+    ]
+  },
+  "Sign in with the account your organization set up for you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/auth"
     ]
   },
@@ -168484,6 +169416,15 @@
     ]
   },
   "Single shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Single sign-on": {
     "sites": 1,
     "scope": [
       "ts"
@@ -171043,6 +171984,15 @@
       "go/other"
     ]
   },
+  "Start a free Trenova Cloud demo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Start a fresh conversation with the assistant": {
     "sites": 1,
     "scope": [
@@ -171216,6 +172166,24 @@
       "packages/shared/types"
     ]
   },
+  "Start empty": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
+  "Start empty or with examples": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Start from": {
     "sites": 1,
     "scope": [
@@ -171259,6 +172227,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Start over": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Start review": {
@@ -171434,6 +172411,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Start with a few customers, locations, equipment and shipments so every screen has something to show. You can delete them at any time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Start with a template": {
@@ -172527,6 +173513,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Step {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Step {0}: {1}": {
@@ -176024,6 +177019,15 @@
       "routes/ifta-return"
     ]
   },
+  "Teach Desk something, e.g. “Granite pays by ACH only”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Teal": {
     "sites": 1,
     "scope": [
@@ -177549,6 +178553,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Text messages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Text node must contain text": {
@@ -181636,6 +182649,15 @@
       "routes/edi"
     ]
   },
+  "The email could not be sent. Try again.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "The embedding provider is failing": {
     "sites": 1,
     "scope": [
@@ -182569,6 +183591,24 @@
       "routes/fuel-card"
     ]
   },
+  "The free demo is for trying Trenova, so it holds a small amount of data. Delete records you no longer need to free room. {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The free demo's trial period is over, so this workspace is read-only: everything can be opened and exported, but nothing can be created or changed. Paid plans are coming soon.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The freight billed, one row per commodity.": {
     "sites": 1,
     "scope": [
@@ -183278,6 +184318,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "The link works once and expires after a day. Nothing arrived? Check spam, then send it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "The linked assignment is unavailable. Expected total:": {
@@ -184671,6 +185720,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The plan and usage summary could not be loaded. Try refreshing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The plan behind this is no longer in the conversation.": {
@@ -186422,6 +187480,15 @@
       "domain/shipment"
     ]
   },
+  "The security check could not load. Check your connection or content blocker.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The selected carrier cost events are no longer pending; they were attached or voided by a concurrent request": {
     "sites": 1,
     "scope": [
@@ -186871,6 +187938,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The size one uploaded file may be.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The source document was attached to the new shipment successfully.": {
@@ -187685,6 +188761,15 @@
       "routes/billing-queue"
     ]
   },
+  "The trial period is over, so this workspace is read-only: you can open and export everything, but nothing can be created or changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The truck stop or station, as it appears on the receipt.": {
     "sites": 1,
     "scope": [
@@ -187944,6 +189029,15 @@
     ],
     "areas": [
       "service/aiauditservice"
+    ]
+  },
+  "The verification link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or ask for a new one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "The version signed is required": {
@@ -188272,6 +189366,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "The workspace is deleted when the read-only period ends. Paid plans are coming soon; until then, export anything you want to keep.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).": {
@@ -190757,6 +191860,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "This is Trenova Cloud's free demo: the whole product with small limits, for trying it on your own freight. Paid plans with higher limits are coming soon.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This is a popout window!": {
     "sites": 1,
     "scope": [
@@ -190992,6 +192104,15 @@
       "routes/escrow-account"
     ]
   },
+  "This limit resets at the start of next month. {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This link expires in {0, plural, one {# day} other {# days}}, on {1}.": {
     "sites": 2,
     "scope": [
@@ -191008,6 +192129,15 @@
     ],
     "areas": [
       "template/driverportal.invitation.email"
+    ]
+  },
+  "This link has expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "This link is incomplete": {
@@ -191235,6 +192365,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This network has made too many requests. Try again in {0} minutes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
+  "This network has made too many requests. Wait a while and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "This offer expires at {0}.": {
@@ -191588,6 +192736,15 @@
     ],
     "areas": [
       "service/agentplanservice"
+    ]
+  },
+  "This plan has no usage limits.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This pool has already been drawn for that period": {
@@ -195448,6 +196605,15 @@
       "packages/shared/types"
     ]
   },
+  "Total size of every stored document.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Total time on site": {
     "sites": 2,
     "scope": [
@@ -195804,6 +196970,15 @@
       "apps/web/components"
     ]
   },
+  "Tractor records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Tractor registrations": {
     "sites": 1,
     "scope": [
@@ -196076,6 +197251,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Trailer records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Trailer registrations": {
@@ -197345,6 +198529,15 @@
       "routes/accounting-drift"
     ]
   },
+  "Trial": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trial balance": {
     "sites": 3,
     "scope": [
@@ -197363,6 +198556,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Trial ends": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Tried first. Automatic follows the routing on the Providers tab.": {
@@ -197534,6 +198736,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Trucks, brokerage or both": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "True / false": {
@@ -198718,6 +199929,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "Unable to load your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Unable to read X12 separators from ISA; default X12 separators were used.": {
@@ -201101,6 +202321,15 @@
       "routes/shipment"
     ]
   },
+  "Upload a smaller file, or split it into parts. {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Upload and manage your organization logo used across the application.": {
     "sites": 1,
     "scope": [
@@ -202240,6 +203469,15 @@
       "routes/worker"
     ]
   },
+  "Used {0}× · last {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "User": {
     "sites": 6,
     "scope": [
@@ -202368,6 +203606,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "User seats": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "User settings": {
@@ -203290,6 +204537,15 @@
       "apps/web/components"
     ]
   },
+  "Verification links work once and expire after a day. If you already used this one, sign in instead; otherwise ask for a new link.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Verification overridden": {
     "sites": 1,
     "scope": [
@@ -203386,6 +204642,15 @@
       "domain/permission"
     ]
   },
+  "Verify email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Verify equipment": {
     "sites": 3,
     "scope": [
@@ -203432,6 +204697,15 @@
       "go/other"
     ]
   },
+  "Verifying": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Verifying credentials": {
     "sites": 1,
     "scope": [
@@ -203439,6 +204713,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Verifying your email and preparing your organization. This takes a few seconds.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Verifying...": {
@@ -204626,6 +205909,15 @@
       "domain/permission"
     ]
   },
+  "View plan & usage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "View plans and enrollments": {
     "sites": 1,
     "scope": [
@@ -205386,6 +206678,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Visible to": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Visible to customer": {
@@ -206590,6 +207891,15 @@
       "packages/shared/components"
     ]
   },
+  "We could not reach Trenova to verify your email. Check your connection and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "We couldn't find that": {
     "sites": 1,
     "scope": [
@@ -206671,6 +207981,15 @@
       "routes/profile.tsx"
     ]
   },
+  "We couldn't load your setup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "We couldn't load your violations.": {
     "sites": 1,
     "scope": [
@@ -206678,6 +207997,15 @@
     ],
     "areas": [
       "routes/hos.tsx"
+    ]
+  },
+  "We couldn't verify your email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "We do not run oversize at night in this state": {
@@ -206852,6 +208180,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Website": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Website URL must be a valid URL": {
@@ -207300,6 +208637,24 @@
       "routes/worker"
     ]
   },
+  "Welcome": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
+  "Welcome to Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Welcome{0} 👋": {
     "sites": 1,
     "scope": [
@@ -207352,6 +208707,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What Desk remembers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What Trenova read this document as": {
@@ -210594,6 +211958,15 @@
       "routes/fuel-card"
     ]
   },
+  "Who it is for": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Who pays, per settlement period": {
     "sites": 1,
     "scope": [
@@ -211612,6 +212985,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "Work email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Work in progress": {
@@ -212864,6 +214246,15 @@
       "apps/web/components"
     ]
   },
+  "Wrong address? Start over.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Wrong bill-to": {
     "sites": 1,
     "scope": [
@@ -213330,6 +214721,15 @@
       "apps/dash/_components"
     ]
   },
+  "You arrange freight with outside carriers. Carrier sourcing, tenders, rate confirmations and carrier settlements lead the product.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "You can close this window — the transfer keeps going.": {
     "sites": 1,
     "scope": [
@@ -213703,6 +215103,15 @@
       "api/handlers"
     ]
   },
+  "You haul freight with your own trucks and drivers. Dispatch, fleet, hours of service and driver pay lead the product.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "You have an active HOS violation": {
     "sites": 1,
     "scope": [
@@ -213822,6 +215231,15 @@
       "apps/web/components"
     ]
   },
+  "You run your own fleet and broker loads to partner carriers. Every part of the product is turned on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "You sign in on {0}'s own page and choose the company to connect. Trenova never sees your password; it keeps an encrypted authorization that you can revoke at any time.": {
     "sites": 1,
     "scope": [
@@ -213922,6 +215340,24 @@
       "packages/shared/components"
     ]
   },
+  "You're on the free demo. Paid plans are coming soon.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "You're on the wait list": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "You've already arrived at this stop": {
     "sites": 1,
     "scope": [
@@ -213983,6 +215419,24 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "Your Standard Carrier Alpha Code, if you have one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
+  "Your USDOT number, if you have one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Your access is limited to your own team, which cannot be checked right now": {
@@ -214265,6 +215719,15 @@
       "apps/web/hooks"
     ]
   },
+  "Your email is verified, but the free demo is full right now. We open new workspaces as space frees up and will email you when yours is ready — there's nothing else you need to do.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "Your emails and documents will use it too.": {
     "sites": 1,
     "scope": [
@@ -214328,6 +215791,51 @@
       "routes/fuel-management"
     ]
   },
+  "Your free demo ends today. After that the workspace becomes read-only.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your free demo has ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your free demo has ended. The workspace is read-only and will be deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your free demo has ended. The workspace is read-only until {0}, then it is deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your free demo has expired and this workspace is scheduled for deletion.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Your friendly system administrator is just a call away for a swift rescue!": {
     "sites": 1,
     "scope": [
@@ -214380,6 +215888,15 @@
     ],
     "areas": [
       "template/notification.dash.review_submitted"
+    ]
+  },
+  "Your name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
     ]
   },
   "Your name (required)": {
@@ -214445,6 +215962,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Your organization has reached its {0} limit ({1}).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Your organization is not entitled to this feature": {
     "sites": 1,
     "scope": [
@@ -214488,6 +216014,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Your organization's plan, where its trial stands and how much of each limit it has used.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Your own answer": {
@@ -214724,6 +216259,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Your team": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Your team could not be loaded. {0}": {
@@ -218659,6 +220203,15 @@
       "go/other"
     ]
   },
+  "not met": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/signup"
+    ]
+  },
   "not yet": {
     "sites": 1,
     "scope": [
@@ -222491,6 +224044,15 @@
       "routes/intake"
     ]
   },
+  "{0, plural, one {Used # memory} other {Used # memories}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {Waiting for a print to Trenova, # minute left} other {Waiting for a print to Trenova, # minutes left}}": {
     "sites": 1,
     "scope": [
@@ -222930,6 +224492,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} allows files up to {1}. This one is larger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} already covered": {
@@ -223548,6 +225119,15 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
+    ]
+  },
+  "{0} days left": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} days past due": {
@@ -224640,6 +226220,15 @@
       "service/carrierintelservice"
     ]
   },
+  "{0} is for trying Trenova and leaves this out. Paid plans that include it are coming soon.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} is inactive and cannot receive mileage": {
     "sites": 1,
     "scope": [
@@ -225344,6 +226933,24 @@
       "routes/shipment"
     ]
   },
+  "{0} limit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} limit reached": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} load(s) on this settlement are still waiting on a resolved carrier invoice match; resolve the matches or recalculate the settlement before approving": {
     "sites": 1,
     "scope": [
@@ -225783,6 +227390,15 @@
     ],
     "areas": [
       "service/accountingsyncservice"
+    ]
+  },
+  "{0} not available": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} not covered": {
@@ -227291,6 +228907,15 @@
       "routes/edi"
     ]
   },
+  "{0} used": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} value is not valid for a {1} lane": {
     "sites": 1,
     "scope": [
@@ -228298,6 +229923,15 @@
     ],
     "areas": [
       "template/agent.proposal_reminder.email"
+    ]
+  },
+  "{0}: {1} of {2} used ({3}).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0}: {1} of {2}h remaining": {

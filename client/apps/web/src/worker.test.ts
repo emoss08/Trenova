@@ -49,6 +49,7 @@ describe("Cloudflare SPA worker", () => {
     expect(response.headers.get("Content-Security-Policy")).toContain("http://127.0.0.1:8080");
     expect(response.headers.get("Content-Security-Policy")).toContain("http://localhost:9000");
     expect(response.headers.get("Content-Security-Policy")).toContain("http://127.0.0.1:9000");
+    expectTurnstileAllowed(response.headers.get("Content-Security-Policy") ?? "");
   });
 
   it("returns 404 for sensitive paths before static asset lookup", async () => {
@@ -362,7 +363,27 @@ function expectSecurityHeaders(headers: Headers): void {
   expect(headers.get("Content-Security-Policy")).not.toContain("http://127.0.0.1:9000");
   expect(headers.get("Content-Security-Policy")).toContain("https://tilecache.rainviewer.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://tile.openweathermap.org");
+  expectTurnstileAllowed(headers.get("Content-Security-Policy") ?? "");
   // Live updates are server-sent events from the API origin; nothing in
   // production opens a WebSocket to a third party.
   expect(headers.get("Content-Security-Policy")).not.toContain("wss://");
+}
+
+function cspDirective(policy: string, name: string): string[] {
+  const directive = policy
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name} `));
+  return directive ? directive.split(/\s+/).slice(1) : [];
+}
+
+// The signup page renders Cloudflare Turnstile explicitly: its loader is a script from
+// challenges.cloudflare.com and the challenge itself runs in an iframe from the same
+// origin. Missing either source leaves the widget blank and the form unsubmittable.
+function expectTurnstileAllowed(policy: string): void {
+  expect(cspDirective(policy, "script-src")).toContain("https://challenges.cloudflare.com");
+  expect(cspDirective(policy, "frame-src")).toEqual([
+    "'self'",
+    "https://challenges.cloudflare.com",
+  ]);
 }

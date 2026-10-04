@@ -1,5 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { installPlanLimitHandler } from "@/lib/plan-limit-handler";
 import { queryClient } from "@/lib/query-client";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
@@ -25,6 +26,10 @@ setSessionExpiryHandler(() => {
     window.location.assign("/login");
   }
 });
+
+// QUOTA_EXCEEDED and PLAN_RESTRICTED from any request open the plan-limit dialog; the
+// transports report them here because they cannot reach the dialog themselves.
+installPlanLimitHandler();
 
 setPartialErrorReporter((errors, { operationName }) => {
   for (const error of errors) {

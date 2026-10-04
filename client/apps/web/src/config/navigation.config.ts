@@ -1521,6 +1521,14 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/plan-usage",
+    title: "Plan & usage",
+    group: "Organization",
+    resource: Resource.Organization,
+    requiredOperation: Operation.Read,
+    platformMode: "cloud",
+  },
+  {
     href: "/admin/accounting-control",
     title: "Accounting controls",
     group: "Organization",

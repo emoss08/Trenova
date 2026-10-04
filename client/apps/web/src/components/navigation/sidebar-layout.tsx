@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { AssistantWidget } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
+import { CloudTrialBanner } from "../plan-limit/cloud-trial-banner";
 import { Header } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
@@ -104,6 +105,7 @@ function WorkspaceShell({ children }: SidebarLayoutProps) {
         <WorkspaceSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <WorkspaceContextBar />
+          <CloudTrialBanner />
           <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
@@ -117,6 +119,7 @@ function ClassicShell({ children }: SidebarLayoutProps) {
       <ClassicSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
+        <CloudTrialBanner />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
