@@ -312,15 +312,18 @@ reason `quota_exceeded` and carries `plan`, and `usageservice.LimitError` turns 
 
 ## Signup
 
-Public routes, registered only when `platform.mode: cloud` and
-`platform.cloud.signup.enabled`, all behind the global CSRF browser guard and an extra
-per-IP limiter (`perIpPerHour`):
+Public routes (`internal/api/handlers/cloudsignuphandler`), behind the global CSRF browser
+guard. The signup routes are always mounted so the route table and the write-coverage
+ledger see them, but they answer `404` unless `platform.mode: cloud` and
+`platform.cloud.signup.enabled` (`CloudSignupService.Enabled`). `signups` and
+`signups/resend` also pass an extra per-IP limiter (`perIpPerHour` on the Redis GCRA
+`RateLimitStore`, key `cloud_signup:ip:<ip>`, `429` with `Retry-After`):
 
 | Route | Body | Result |
 |---|---|---|
 | `POST /api/v1/cloud/signups` | `{name, emailAddress, password, companyName, acceptTerms, turnstileToken, website}` | `202 {status: "pending"}` — always the same response whether the email is new, pending or already a user |
 | `POST /api/v1/cloud/signups/resend` | `{emailAddress, turnstileToken}` | `202` |
-| `POST /api/v1/cloud/signups/verify` | `{token}` | `200` login response + session cookie, exactly like `POST /auth/login` |
+| `POST /api/v1/cloud/signups/verify` | `{token}` | `200` login response + session cookie + `csrfToken`, exactly like `POST /auth/login`; an unknown, expired or used token is a validation error on `token` |
 | `GET /api/v1/system/public-config` | — | `{platformMode, signupEnabled, turnstileSiteKey, termsUrl, privacyUrl, freePlan: {limits}}` — always registered |
 
 Bot and abuse defences, in order:
@@ -332,19 +335,35 @@ Bot and abuse defences, in order:
 4. **Email checks** — syntax, MX-shaped domain, disposable-domain blocklist
    (`shared/emailutils`), optional allowlist, and normalization (lower case; Gmail dots
    and `+tags` stripped) for uniqueness.
-5. **Password policy** — 12+ characters, not the email, not in the breached-password
-   top list.
+5. **Password policy** — 12+ characters, at most 72 bytes (bcrypt's limit), not the
+   address and not containing its local part, not in the common-password list or a run of
+   one character or a sequence (`shared/passwordutils`).
 6. **Nothing is created until the email is verified.** `cloud_signups` holds the request
-   with an argon2id password hash and a SHA-256 token hash (64 lowercase hex characters,
-   enforced by a CHECK); the token is mailed through the platform sender and expires after
-   `verificationTokenTtl`. One pending row per normalized address (partial unique index);
-   a repeat signup replaces its token with `Refresh` rather than adding a row.
+   with a **bcrypt** password hash — the same hash `users.password` uses, so the hash is
+   copied onto the owner and the chosen password signs in — and a SHA-256 token hash (64
+   lowercase hex characters, enforced by a CHECK) of a 32-byte `crypto/rand` token
+   (`shared/tokenutils`). The token is mailed through the platform sender and expires
+   after `verificationTokenTtl`. One pending row per normalized address (partial unique
+   index); a repeat signup replaces its token with `Refresh` rather than adding a row, and
+   `resend` reissues it with `Touch`. Each send counts as an attempt; after 5 the request
+   still answers `202` but nothing more is mailed. An address that already belongs to a
+   user gets an "you already have an account" email instead, and nothing is stored.
+
+Validation failures use the standard validation problem (the same status every REST
+validation error uses), with `errors[].field` one of `name`, `emailAddress`,
+`companyName`, `password`, `acceptTerms`, `turnstileToken`. A failed or replayed
+Turnstile token and an unreachable Cloudflare both answer on `turnstileToken`; Turnstile
+fails closed.
 7. **Caps** — `maxSignupsPerDay` and `maxActiveTenants` are checked at verify time; when
    either is hit, verification returns `PLAN_RESTRICTED` reason `signups_paused` and the
    page tells the person they are on the wait list.
 
-Each step writes an `auth_events` row (`signup_requested`, `signup_rejected`,
-`signup_verified`, `signup_provisioned`) with IP, user agent and the reason.
+Each step writes an `auth_events` row (`provider` = `signup_requested`,
+`signup_rejected`, `signup_verified`, `signup_provisioned`) with IP, user agent and the
+reason in `error_code` (`honeypot`, `turnstile_rejected`, `turnstile_unavailable`,
+`invalid_input`, `existing_account`, `send_limit_reached`, `unknown_signup`,
+`invalid_token`, `expired_token`, `signups_paused`, `email_in_use`,
+`provisioning_failed`). The provisioned rows carry the new organization and owner.
 
 `cloud_signups` (domain `internal/core/domain/cloudsignup`) holds no tenant data until it
 is provisioned, but it is **not** a global table: it carries password hashes, so it is
@@ -361,18 +380,82 @@ access goes through `repositories.CloudSignupRepository`, whose methods each dec
 ### Provisioning
 
 `cloudsignupservice.Verify` runs, under one system-scoped transaction
-(`dbscope.WithSystem(ctx, "cloud signup provisioning")`, listed in `systemscopelint`):
+(`dbscope.WithSystem(ctx, "cloud signup provisioning")` in `Service.provision`, listed in
+`rlslint`'s allowlist):
 
-1. Lock and re-check the signup row (single use).
-2. `tenantbootstrap.Bootstrap` — the same code the base seeds run for every seeded
-   organization: business unit, organization, every control, sequences, the
-   Organization Administrator role with every permission, chart of accounts and
-   accounting defaults, document types, service-failure reason codes, document
-   template starters, system user, system agent definitions.
-3. The owner user (status Active, `MustChangePassword` false), membership, role assignment.
-4. `organization_subscriptions` row: `free_demo`, `trialing`, timestamps from `trial`.
-5. `organization_onboarding` row: `pending`.
-6. After commit: a session is created exactly as login does, and a welcome email is sent.
+1. `TenantBootstrapRepository.LockProvisioning` takes a transaction advisory lock so the
+   caps below hold under concurrent verifications.
+2. Lock and re-check the signup row (`GetPendingByTokenHash`, `FOR UPDATE`; single use).
+   An expired row is rejected (`Reject`, reason `expired_token`) after the transaction.
+3. Caps: `maxSignupsPerDay` against `CountProvisionedSince(start of the UTC day)` and
+   `maxActiveTenants` against `CountByStatus(trialing, read_only)`. Either refuses with
+   `PLAN_RESTRICTED` `signups_paused` and leaves the row pending.
+4. An address that became a user meanwhile (or a unique violation on
+   `idx_users_email_address`) rejects the row (`email_in_use`).
+5. `TenantBootstrapRepository.Bootstrap` → `tenantbootstrap.Bootstrap` — the same code the
+   base seeds run (`internal/infrastructure/postgres/tenantbootstrap`): business unit (a
+   random unique `CL…` code), organization, every control
+   (`CreateControls`), sequences (`CreateSequences`), the owner user (status Active,
+   `MustChangePassword` false, the signup's bcrypt hash, a unique username of at most 20
+   characters from the address's local part) and default membership, the Organization
+   Administrator role with every permission (`CreateAdminRole`) assigned to the owner
+   (`AssignRole`), chart of accounts and accounting defaults (`CreateChartOfAccounts`),
+   document types, service-failure reason codes, document template starters and the
+   system agent definitions. The instance-wide `system` user (seed 05) belongs to the
+   default organization and is shared by every tenant, so no tenant gets its own.
+6. `organization_subscriptions`: `free_demo`, `trialing`, `trial_ends_at = now +
+   trial.lifetime`, `read_only_until = trial_ends_at + trial.readOnlyGrace`.
+7. `organization_onboarding`: `pending`.
+8. `MarkProvisioned`; `PlanService.Invalidate(org)` is registered with
+   `ports.AfterCommit`.
+9. After commit: `signup_verified` / `signup_provisioned` auth events, the welcome email,
+   and `AuthService.CreateSessionForUser` — the same session, login response and
+   `password` auth event as `POST /auth/login`. The handler sets the cookie and CSRF token.
+
+The organization is created with placeholder profile values the onboarding wizard
+replaces (`onboarding.Placeholder*`): name = company name, SCAC `TBDX`, DOT `0`, city
+`Pending`, ZIP `00000`, state `NY`, timezone `America/New_York`, both brokerage and asset
+operations enabled. The login slug is the company name as an ASCII slug, made unique with
+`-2`…`-10` and then a random suffix (`tenantbootstrap.AvailableLoginSlug`); `bucket_name`
+is the slug (storage keys are prefixed by organization, so no bucket is created).
+
+`GET /api/v1/auth/csrf` answers `200 {csrfToken: "", headerName}` without a session (or
+with a stale cookie), so the signup pages can bootstrap it before anyone is signed in.
+
+### Platform email
+
+`services.PlatformEmailService` (`internal/core/services/platformemailservice`, provided
+in the base fx options so the worker can use it) sends platform, non-tenant email through
+Resend with `platform.cloud.systemEmail`, reusing `emailservice.ResendSender`. Typed
+messages: `SendSignupVerification` (link `{app.webBaseUrl}/signup/verify?token=…`),
+`SendSignupExistingAccount`, `SendWelcome`, `SendTrialEnded` (the read-only notice),
+`SendAccountPurged`, and `SendRendered` for content rendered elsewhere. Templates are
+embedded `templates/<kind>.{subject,html,txt}` with a shared layout; they are platform
+content, so they are not tenant-authorable document template kinds. With no
+`systemEmail.apiKey` outside production the message (link included) is logged instead; in
+production it is `ErrPlatformEmailNotConfigured`.
+
+`passwordresetservice` renders the reset email through the tenant's template as before,
+but sends it through `SendRendered` when the organization's plan is managed (a cloud
+subscription), because a free organization has no email profile and outbound tenant
+email is restricted.
+
+### Turnstile
+
+`services.TurnstileVerifier` (`internal/infrastructure/turnstile`) posts `secret`,
+`response`, `remoteip` and `idempotency_key` (the request ID) to `turnstile.verifyUrl`
+within `turnstile.timeout`, and accepts only `success` with `hostname` equal to
+`app.webBaseUrl`'s host (when set) and `action` equal to the expected `signup` /
+`signup_resend`. Cloudflare's documented test secrets skip the hostname check and accept an
+empty action. A disabled verifier accepts everything.
+
+### Public config
+
+`GET /api/v1/system/public-config` (always mounted, public, cached 60 s):
+`platformMode`, `signupEnabled`, `turnstileSiteKey` (only when signup and Turnstile are
+on), `termsUrl` / `privacyUrl` and `freePlan.limits` (meter key → max of the free plan,
+overrides applied) in cloud mode; outside cloud mode only the mode, `signupEnabled: false`
+and empty limits.
 
 ## Onboarding
 
@@ -389,20 +472,46 @@ holds `status` (`pending` | `completed`), `operation_type` (`asset` | `brokerage
 | `GET /api/v1/onboarding/` | state + whether the wizard applies (`required` is false outside cloud mode) |
 | `POST /api/v1/onboarding/complete/` | `{organization: {name, timezone, addressLine1, city, stateId, postalCode, scacCode?, dotNumber?}, operationType: "asset"\|"brokerage"\|"both", loadSampleData}` |
 
-Completing sets the organization profile, the brokerage/asset capability flags from
-`operationType`, and when `loadSampleData` is true creates a small sample set through
-the normal services (so it counts against the limits): 2 customers, 4 locations,
-1 worker, 1 tractor, 1 trailer, 2 shipments.
+`internal/core/services/onboardingservice` and `internal/api/handlers/onboardinghandler`.
+`GET` is open to any signed-in user of the organization and returns `required: false,
+status: "completed"` outside cloud mode or when the organization has no onboarding row;
+while `pending` it returns the organization's name and timezone with the placeholder
+fields blank, and once completed the full profile (placeholder SCAC/DOT stay blank).
+`POST complete/` needs `organization:update`, runs in one transaction and answers the new
+state. It validates the body (field errors under `organization.<field>`, plus
+`operationType`), updates the organization through `OrganizationService.Update` (its
+validation errors are re-keyed to `organization.<field>`; a blank SCAC or DOT keeps the
+placeholder), sets `brokerage_enabled` / `asset_operations_enabled` from
+`operationType`, and when `loadSampleData` is true creates the sample set through the
+normal services, so it counts against the limits and any `QUOTA_EXCEEDED` rolls the whole
+completion back: the reference data a shipment needs (a "Customer Facility" location
+category, `TRACTOR` and `DRYVAN` equipment types, a manufacturer, service type `STD`,
+shipment type `FTL`, and the standard formula template library via
+`InstallStandards`, using "Flat Rate"), then 2 customers, 4 geocoded locations in Texas,
+1 worker at the organization's address, 1 tractor driven by that worker, 1 trailer and
+2 shipments with a pickup and a delivery each. A second completion is a `409`.
 
 The web app redirects any signed-in user whose organization's onboarding is
 `pending` to `/onboarding` while `platformMode` is `cloud`.
 
 ## Login hardening (all modes)
 
-- Failed logins are counted per account and per IP in Redis; after 5 failures for an
-  account in 15 minutes it is throttled with exponential backoff (429 with
-  `Retry-After`), and after 20 failures from one IP in an hour that IP is throttled.
-  A successful login clears the account counter. Each throttle writes an `auth_events` row.
+- Failed logins are counted per account and per IP in Redis
+  (`repositories.LoginThrottleStore`, `internal/infrastructure/redis/repositories/loginthrottle.go`;
+  account keys hold a SHA-256 of the address, never the address). After 5 failures for an
+  account within a sliding 15 minutes it is locked for 30 s, doubling per further failure
+  up to 15 minutes; after 20 failures from one IP in an hour that IP is refused until the
+  hour ends. A throttled attempt is a `429` with `Retry-After`
+  (`errortypes.RateLimitError.WithRetryAfter`, written by the error handler) and is checked
+  before the password, so it reveals nothing. A successful login clears the account
+  counter. Tripping and refusing both write `auth_events` rows (`provider`
+  `login_throttled`, `error_code` `login_throttled_account` / `login_throttled_ip`). A
+  Redis failure is logged and the attempt allowed.
+- In cloud mode, login is refused for an organization whose subscription no longer allows
+  it (`ResolvedPlan.AllowsLogin`, i.e. `expired`). Without an organization slug, a user
+  whose current organization is expired is moved to another membership that still allows
+  login; with none left, the refusal says the trial has ended
+  (`error_code` `subscription_expired`). `read_only` organizations still sign in.
 - `security.encryption.allowLocalKeyManagerInProduction` lets a single-host production
   deploy run `app.env: production` with `keyManager: local`; the key must then be at least
   32 characters with no placeholder text. Without it production still requires a cloud
@@ -416,11 +525,19 @@ The web app redirects any signed-in user whose organization's onboarding is
 | `repositories.SubscriptionRepository` — `GetByOrganization`, `Create`, `UpdateStatus` (optimistic), `ListDue`, `CountByStatus` | `subscriptionrepository` | tenant; `ListDue` and `CountByStatus` system |
 | `repositories.OnboardingRepository` | `onboardingrepository` | tenant |
 | `repositories.CloudSignupRepository` | `cloudsignuprepository` | system |
+| `repositories.TenantBootstrapRepository` — `LockProvisioning`, `Bootstrap` | `tenantbootstraprepository` (wraps `tenantbootstrap`) | system |
+| `repositories.LoginThrottleStore` | Redis `loginThrottleStore` | |
+| `services.CloudSignupService` | `cloudsignupservice` | |
+| `services.OnboardingService` | `onboardingservice` | tenant |
+| `services.PlatformEmailService` | `platformemailservice` | |
+| `services.TurnstileVerifier` | `turnstile.Verifier` | |
 | `repositories.QuotaCounterRepository` | `quotacounterrepository` | the caller's transaction |
 | `services.PlanService` | `planservice.CloudService` / `UnlimitedPlanService` | |
 | `services.QuotaGuard` | `quotaservice.CloudGuard` / `UnlimitedQuotaGuard` | |
 
 Mocks for each live in `internal/testutil/mocks` (`MockPlanService`, `MockQuotaGuard`,
 `MockSubscriptionRepository`, `MockOnboardingRepository`, `MockCloudSignupRepository`,
-`MockQuotaCounterRepository`). The tables arrive in migration
+`MockQuotaCounterRepository`, `MockTenantBootstrapRepository`, `MockLoginThrottleStore`,
+`MockCloudSignupService`, `MockOnboardingService`, `MockPlatformEmailService`,
+`MockTurnstileVerifier`). The tables arrive in migration
 `20261231008150_cloud_free_tier`.

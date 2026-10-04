@@ -20,7 +20,15 @@ type ResendSender struct {
 }
 
 func NewResendSender() *ResendSender {
-	return &ResendSender{client: &http.Client{Timeout: 20 * time.Second}}
+	return NewResendSenderWithClient(&http.Client{Timeout: 20 * time.Second})
+}
+
+func NewResendSenderWithClient(client *http.Client) *ResendSender {
+	if client == nil {
+		client = &http.Client{Timeout: 20 * time.Second}
+	}
+
+	return &ResendSender{client: client}
 }
 
 func (s *ResendSender) Provider() email.Provider {

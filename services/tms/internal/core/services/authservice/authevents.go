@@ -12,21 +12,24 @@ import (
 )
 
 const (
-	authErrorUnknownAccount     = "unknown_account"
-	authErrorRejectedLogin      = "invalid_credentials"
-	authErrorAccountUnavailable = "account_unavailable"
-	authErrorOrganizationAccess = "organization_access_denied"
-	authErrorSSORequired        = "sso_required"
-	authErrorSSOState           = "sso_state_invalid"
-	authErrorSSOConfig          = "sso_configuration_unavailable"
-	authErrorSSOExchange        = "sso_code_exchange_failed"
-	authErrorSSOAssertion       = "sso_id_token_invalid"
-	authErrorSSONonce           = "sso_nonce_mismatch"
-	authErrorSSOTenant          = "sso_tenant_mismatch"
-	authErrorSSOIdentity        = "sso_identity_unresolved"
-	authErrorAuthentication     = "authentication_failed"
-	authErrorAuthorization      = "access_denied"
-	authErrorInternal           = "internal_error"
+	authErrorUnknownAccount      = "unknown_account"
+	authErrorRejectedLogin       = "invalid_credentials"
+	authErrorAccountUnavailable  = "account_unavailable"
+	authErrorOrganizationAccess  = "organization_access_denied"
+	authErrorSSORequired         = "sso_required"
+	authErrorSSOState            = "sso_state_invalid"
+	authErrorSSOConfig           = "sso_configuration_unavailable"
+	authErrorSSOExchange         = "sso_code_exchange_failed"
+	authErrorSSOAssertion        = "sso_id_token_invalid"
+	authErrorSSONonce            = "sso_nonce_mismatch"
+	authErrorSSOTenant           = "sso_tenant_mismatch"
+	authErrorSSOIdentity         = "sso_identity_unresolved"
+	authErrorAuthentication      = "authentication_failed"
+	authErrorAuthorization       = "access_denied"
+	authErrorInternal            = "internal_error"
+	authErrorSubscriptionExpired = "subscription_expired"
+	authErrorThrottledAccount    = "login_throttled_account"
+	authErrorThrottledIP         = "login_throttled_ip"
 )
 
 type authAttempt struct {
@@ -38,6 +41,7 @@ type authAttempt struct {
 	fal            int
 	mfaState       string
 	errorCode      string
+	riskSignals    []string
 }
 
 func newAuthAttempt(provider string) *authAttempt {
@@ -82,6 +86,7 @@ func (s *Service) recordAuthAttempt(ctx context.Context, attempt *authAttempt, e
 		FederationFAL:    attempt.fal,
 		MFAState:         attempt.mfaState,
 		RiskOutcome:      iam.RiskOutcomeAllow,
+		RiskSignals:      attempt.riskSignals,
 	}
 	if err != nil {
 		rec.ErrorCode = attempt.errorCode
@@ -100,7 +105,9 @@ func authOutcome(err error) iam.AuthEventOutcome {
 	switch {
 	case err == nil:
 		return iam.AuthEventOutcomeSuccess
-	case errors.Is(err, errSSORequired), errortypes.IsAuthorizationError(err):
+	case errors.Is(err, errSSORequired),
+		errortypes.IsAuthorizationError(err),
+		errortypes.IsRateLimitError(err):
 		return iam.AuthEventOutcomeDenied
 	default:
 		return iam.AuthEventOutcomeFailed

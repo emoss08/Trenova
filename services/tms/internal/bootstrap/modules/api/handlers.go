@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/cloudsignuphandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
@@ -82,6 +83,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/networkpulsehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
@@ -135,6 +137,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	iamhandler.New,
 	userhandler.New,
 	authhandler.New,
+	cloudsignuphandler.New,
+	onboardinghandler.New,
 	driverportalhandler.New,
 	pushhandler.New,
 	formulatemplatehandler.New,

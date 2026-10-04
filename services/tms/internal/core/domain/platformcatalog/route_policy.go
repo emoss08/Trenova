@@ -12,6 +12,16 @@ var accountShellRoutes = mergeRouteRefs(
 	usStateShellRoutes,
 	graphQLTransportShellRoutes,
 	pushSubscriptionShellRoutes,
+	onboardingShellRoutes,
+)
+
+var onboardingShellRoutes = mergeRouteRefs(
+	routeRefsFor("GET",
+		"/api/v1/onboarding/",
+	),
+	routeRefsFor("POST",
+		"/api/v1/onboarding/complete/",
+	),
 )
 
 var pushSubscriptionShellRoutes = mergeRouteRefs(

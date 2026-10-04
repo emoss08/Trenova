@@ -14,6 +14,9 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | SSO callback, success or failure | `auth_events` | `authservice.HandleSSOCallback` | — |
 | Sign-out | `auth_events` | `authservice.Logout` | — |
 | Password reset requested or redeemed | `auth_events` | `passwordresetservice` | — |
+| Sign-in throttled (account or IP failure limit) | `auth_events` | `authservice.Login` | — |
+| Cloud signup requested, rejected, verified, provisioned | `auth_events` | `cloudsignupservice` | — |
+| Cloud signup owner granted Organization Administrator | `audit_entries` | `cloudsignupservice` | yes |
 | API key created, updated, rotated, revoked | `audit_entries` | `apikeyservice` | yes |
 | Role created or updated, assigned or unassigned, inheritance, separation of duty constraints, resource permissions | `audit_entries` | `roleservice` | yes |
 | Identity providers, SCIM directories, tokens and group mappings, access policies | `audit_entries` | `iamservice` | yes |
@@ -45,7 +48,9 @@ balancer, list it there, or every row records the balancer's address.
 attempt. The caller fills an `AuthEventRecord` (provider, outcome, user,
 organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
-`session.logout`, `password_reset.request`, `password_reset.confirm`.
+`session.logout`, `password_reset.request`, `password_reset.confirm`, `login_throttled`,
+and for cloud signup `signup_requested`, `signup_rejected`, `signup_verified`,
+`signup_provisioned` (see [cloud-free-tier.md](cloud-free-tier.md)).
 
 - **Outcome.** `success`; `denied` when policy refused a known account (SSO
   enforced, account locked, no access to the organization, reset rate limit);

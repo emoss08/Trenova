@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/core/services/platformemailservice"
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
@@ -129,6 +130,7 @@ func Options() fx.Option {
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
 		fx.Provide(integrationservice.New),
+		fx.Provide(platformemailservice.New),
 		fx.Provide(fx.Annotate(
 			func(svc *integrationservice.Service) services.FuelCardFeedResolver { return svc },
 		)),

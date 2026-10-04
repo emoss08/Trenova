@@ -2,6 +2,7 @@ package rlslint
 
 var allowed = map[string]string{
 	"internal/core/services/captureservice/pairing.go:Service.ExchangePairing":                                                                                         "exchange an approved pairing, which belongs to no organization until now, for its device",
+	"internal/core/services/cloudsignupservice/verify.go:Service.provision":                                                                                            "provision a verified cloud signup's business unit, organization, owner, subscription and onboarding in one transaction before the tenant exists",
 	"internal/core/services/ediservice/approval.go:Service.ApproveTransfer":                                                                                            "approve an internal load tender, writing both organizations' shipments in one transaction",
 	"internal/core/services/ediservice/transfer_changes.go:Service.reviewTransferChange":                                                                               "apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
 	"internal/core/services/organizationservice/validator.go:businessUnitWideScope":                                                                                    "check organization names, SCAC and DOT numbers and login slugs across the business unit",
@@ -142,6 +143,8 @@ var allowed = map[string]string{
 	"internal/infrastructure/postgres/repositories/tenantsyncrepository/tenant_sync.go:repository.ListOrganizationsByID":                                               "load organizations across tenants for control plane sync",
 	"internal/infrastructure/postgres/repositories/tenderrepository/tender.go:repository.GetTokenByHash":                                                               "resolve a public tender offer link before its tenant is known",
 	"internal/infrastructure/postgres/repositories/tenderrepository/tender.go:repository.ListAcceptedMissingRateConfirmation":                                          "list accepted tenders missing a rate confirmation across every organization",
+	"internal/infrastructure/postgres/repositories/tenantbootstraprepository/repository.go:repository.Bootstrap":                                                       "create a new tenant's business unit, organization, owner and defaults before the tenant exists",
+	"internal/infrastructure/postgres/repositories/tenantbootstraprepository/repository.go:repository.LockProvisioning":                                                "serialize tenant provisioning so instance-wide signup caps hold under concurrency",
 	"internal/infrastructure/postgres/repositories/tenderrepository/tender.go:repository.ListForSweep":                                                                 "list stalled tenders across every organization for the tender sweep",
 	"internal/infrastructure/postgres/repositories/tenderrepository/tender.go:repository.PurgeDeadOfferTokens":                                                         "purge dead tender offer tokens across every organization",
 	"internal/infrastructure/postgres/repositories/userrepository/user.go:repository.FindByEmail":                                                                      "resolve a sign-in email before any tenant is known",

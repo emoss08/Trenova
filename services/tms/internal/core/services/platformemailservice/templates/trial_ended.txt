@@ -1,0 +1,9 @@
+Hi {{.FirstName}},
+
+The free trial for the {{.CompanyName}} workspace has ended, so it is now read-only. You can still sign in, look up records and export your data.
+
+Open your workspace: {{.AppURL}}
+
+On {{.ReadOnlyUntil}} the workspace and everything in it will be permanently deleted.
+
+Reply to this email if you want to keep using {{.ProductName}}.

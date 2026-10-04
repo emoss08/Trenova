@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/sessioncookie"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -17,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -192,13 +192,28 @@ func (h *Handler) validateSession(c *gin.Context) {
 }
 
 func (h *Handler) csrfToken(c *gin.Context) {
-	sess, ok := h.sessionFromCookie(c)
-	if !ok {
+	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	if err != nil || token == "" {
+		h.anonymousCSRFToken(c)
+		return
+	}
+
+	sess, err := h.service.AuthenticateSession(c.Request.Context(), token)
+	if err != nil {
+		h.anonymousCSRFToken(c)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"csrfToken":  csrf.Token(sess.ID.String(), h.cfg.Security.Session.Secret),
+		"headerName": h.cfg.Security.CSRF.HeaderName,
+	})
+}
+
+func (h *Handler) anonymousCSRFToken(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, gin.H{
+		"csrfToken":  "",
 		"headerName": h.cfg.Security.CSRF.HeaderName,
 	})
 }
@@ -402,31 +417,9 @@ func (h *Handler) resolveSSOErrorOrigin(loginState *repositories.SSOLoginState) 
 }
 
 func (h *Handler) clearSessionCookie(c *gin.Context) {
-	sessionCfg := h.cfg.Security.Session
-	c.SetSameSite(sessionCfg.GetSameSite())
-	c.SetCookie(
-		sessionCfg.Name,
-		"",
-		-1,
-		sessionCfg.Path,
-		sessionCfg.Domain,
-		sessionCfg.Secure,
-		sessionCfg.HTTPOnly,
-	)
+	sessioncookie.Clear(c, &h.cfg.Security.Session)
 }
 
 func (h *Handler) setSessionCookie(c *gin.Context, sessionID string, expiresAt int64) {
-	maxAge := max(0, int(expiresAt-timeutils.NowUnix()))
-
-	sessionCfg := h.cfg.Security.Session
-	c.SetSameSite(sessionCfg.GetSameSite())
-	c.SetCookie(
-		sessionCfg.Name,
-		sessionID,
-		maxAge,
-		sessionCfg.Path,
-		sessionCfg.Domain,
-		sessionCfg.Secure,
-		sessionCfg.HTTPOnly,
-	)
+	sessioncookie.Set(c, &h.cfg.Security.Session, sessionID, expiresAt)
 }

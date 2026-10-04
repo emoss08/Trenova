@@ -71,6 +71,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/cloudsignupservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -157,6 +158,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/networkpulseservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/onboardingservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
@@ -237,6 +239,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/controlplane"
+	"github.com/emoss08/trenova/internal/infrastructure/turnstile"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
 
@@ -424,6 +427,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	bankreceiptworkitemservice.New,
 	networkpulseservice.New,
 	passwordresetservice.New,
+	turnstile.New,
+	cloudsignupservice.New,
+	onboardingservice.New,
+	onboardingservice.NewSampleData,
 	versionservice.New,
 	capturereleaseservice.New,
 	servicetypeservice.New,

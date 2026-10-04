@@ -221,6 +221,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcasubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/telematicsrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantprovisioningrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenderrepository"
@@ -255,6 +256,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	cloudsignuprepository.New,
 	quotacounterrepository.New,
 	iamrepository.New,
+	tenantbootstraprepository.New,
 	iamrepository.NewAuthEventRepository,
 	ssoconfigrepository.New,
 	ssoidentitylinkrepository.New,

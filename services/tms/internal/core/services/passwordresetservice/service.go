@@ -49,6 +49,8 @@ type Params struct {
 	Templates        serviceports.DocumentTemplateResolver
 	AuditService     serviceports.AuditService
 	AuthEvents       serviceports.AuthEventRecorder
+	Plans            serviceports.PlanService          `optional:"true"`
+	PlatformEmail    serviceports.PlatformEmailService `optional:"true"`
 	Config           *config.Config
 	Logger           *zap.Logger
 }
@@ -62,6 +64,8 @@ type Service struct {
 	templates    serviceports.DocumentTemplateResolver
 	audit        serviceports.AuditService
 	authEvents   serviceports.AuthEventRecorder
+	plans        serviceports.PlanService
+	platform     serviceports.PlatformEmailService
 	cfg          *config.Config
 	l            *zap.Logger
 }
@@ -76,6 +80,8 @@ func New(p Params) *Service {
 		templates:    p.Templates,
 		audit:        p.AuditService,
 		authEvents:   p.AuthEvents,
+		plans:        p.Plans,
+		platform:     p.PlatformEmail,
 		cfg:          p.Config,
 		l:            p.Logger.Named("service.password-reset"),
 	}
@@ -423,6 +429,23 @@ func (s *Service) sendResetEmail(
 		return
 	}
 
+	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
+
+	if s.usesPlatformSender(ctx, tenantInfo) {
+		if err = s.platform.SendRendered(ctx, &serviceports.PlatformEmailMessage{
+			Kind:           "password_reset",
+			To:             user.EmailAddress,
+			Subject:        rendered.Subject,
+			HTML:           rendered.HTML,
+			Text:           rendered.Text,
+			IdempotencyKey: idempotencyKey,
+		}); err != nil {
+			log.Error("failed to send the password reset email through the platform sender",
+				zap.Error(err))
+		}
+		return
+	}
+
 	if _, err = s.emailService.Send(ctx, &serviceports.SendEmailRequest{
 		TenantInfo: tenantInfo,
 		Purpose:    email.PurposeGeneral,
@@ -432,10 +455,26 @@ func (s *Service) sendResetEmail(
 		Text:       rendered.Text,
 		// Keyed on the token hash so a retry of the same send is deduplicated while two
 		// genuinely separate requests each go out.
-		IdempotencyKey: "password-reset-" + tokenutils.Hash(rawToken),
+		IdempotencyKey: idempotencyKey,
 	}); err != nil {
 		log.Error("failed to send the password reset email", zap.Error(err))
 	}
+}
+
+func (s *Service) usesPlatformSender(ctx context.Context, tenantInfo pagination.TenantInfo) bool {
+	if s.plans == nil || s.platform == nil || !s.plans.IsCloud() {
+		return false
+	}
+
+	resolved, err := s.plans.Resolve(ctx, tenantInfo.OrgID, tenantInfo.BuID)
+	if err != nil {
+		s.l.Warn("could not resolve the plan for a password reset; using the tenant sender",
+			zap.String("organizationId", tenantInfo.OrgID.String()),
+			zap.Error(err))
+		return false
+	}
+
+	return resolved.IsManaged()
 }
 
 var errNoResetBaseURL = errors.New(

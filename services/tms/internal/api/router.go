@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/cloudsignuphandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
@@ -85,6 +86,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/networkpulsehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
@@ -164,6 +166,8 @@ type RouterParams struct {
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
 	DriverPortalHandler             *driverportalhandler.Handler
+	CloudSignupHandler              *cloudsignuphandler.Handler
+	OnboardingHandler               *onboardinghandler.Handler
 	PushHandler                     *pushhandler.Handler
 	BankReceiptHandler              *bankreceipthandler.Handler
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
@@ -304,6 +308,8 @@ type Router struct {
 	authHandler                     *authhandler.Handler
 	driverPortalHandler             *driverportalhandler.Handler
 	pushHandler                     *pushhandler.Handler
+	cloudSignupHandler              *cloudsignuphandler.Handler
+	onboardingHandler               *onboardinghandler.Handler
 	bankReceiptHandler              *bankreceipthandler.Handler
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -446,6 +452,8 @@ func NewRouter(p RouterParams) *Router {
 		driverPortalHandler:             p.DriverPortalHandler,
 		pushHandler:                     p.PushHandler,
 		bankReceiptHandler:              p.BankReceiptHandler,
+		cloudSignupHandler:              p.CloudSignupHandler,
+		onboardingHandler:               p.OnboardingHandler,
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
@@ -634,6 +642,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.driverPortalHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)
 	r.networkPulseHandler.RegisterPublicRoutes(rg)
+	r.cloudSignupHandler.RegisterPublicRoutes(rg)
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.telematicsHandler.RegisterPublicRoutes(rg)
@@ -657,6 +666,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
+	r.onboardingHandler.RegisterRoutes(protected)
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)
 	r.bankReceiptHandler.RegisterRoutes(protected)
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)

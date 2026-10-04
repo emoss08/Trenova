@@ -1,0 +1,7 @@
+Hi{{if .FirstName}} {{.FirstName}}{{end}},
+
+The {{.CompanyName}} trial workspace reached the end of its read-only period, so it and all of its data have been permanently deleted.
+
+You are welcome to start again at any time: {{.SignupURL}}
+
+Thank you for trying {{.ProductName}}.
