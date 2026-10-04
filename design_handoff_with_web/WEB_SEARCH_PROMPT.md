@@ -1,0 +1,8 @@
+Implement web search sources in Desk, exactly per trenova/design_handoff_desk_v2/WEB_SEARCH_HANDOFF.md. Everything else in desk v2 is done; touch only what this needs.
+
+1. Read WEB_SEARCH_HANDOFF.md fully, then the prototype files it names (trenova/desk-v2/websrc.jsx, websrc.css, and the thread.jsx / app.jsx / icons.jsx integration points).
+2. Backend (Go): when the agent runs web search, stream (a) step start with the query, (b) one event per result as it arrives, (c) step end with the count, (d) text deltas carrying citation markers, (e) the final ordered, URL-deduped sources list on the turn. Map provider output per section 2 (Anthropic web_search_tool_result + web_search_result_location citations). Persist sources and citation positions with the message so reloaded conversations render identically.
+3. Frontend: port WebCite, WebLive, WebSources and Fav into the app's component structure and styling system, keeping every size, colour token, radius, font, animation and timing from section 1, 4 and 7. Add the globe icon. Wire the tokenizer/Prose citation segment and the two renderItem changes from section 3. Links open in a new tab (drop the prototype's preventDefault). Live chips append on real result events, not a fake stagger.
+4. Do not ship the prototype-only pieces listed at the end of section 3.
+5. Verify against the section 5 checklist in light and dark, with and without reduced motion, plus a turn with sources but no citations and a turn with no web search. Add tests for the source dedupe, citation-index mapping and the pill label rule.
+6. Append a short "Web search" entry to docs/desk-v2-gap-audit.md describing what shipped, then push to master.
