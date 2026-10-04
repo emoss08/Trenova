@@ -1,8 +1,9 @@
 // Streaming-safe markdown: ATX + setext headings, lists (nested, task), tables, code fences, quotes, hr,
 // inline bold/italic/code/strike, inline + reference links, hard line breaks, escapes, TeX math via KaTeX.
 const MD_NUM = /^[-+]?[$€£]?\(?[\d,]+(\.\d+)?\)?%?$|^—$|^-$/;
-const isSep = l => /^\|?\s*:?-{1,}:?\s*(\|\s*:?-*:?\s*)*\|?\s*$/.test(l) && l.includes("-");
 const cells = l => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+const SEP_CELL = /^:?-*:?$/;
+const isSep = l => { const c = cells(l); return c[0].includes("-") && c.every(x => SEP_CELL.test(x)); };
 const REF_DEF = /^\s{0,3}\[([^\]^][^\]]*)\]:\s*<?(\S+?)>?(?:\s+["'(](.+)["')])?\s*$/;
 const BLOCK_START = /^(#{1,6}\s|\s*```|\s*>|\s*\||\s*([-*+]|\d+[.)])\s|\s*\$\$|\s*\\\[)/;
 
