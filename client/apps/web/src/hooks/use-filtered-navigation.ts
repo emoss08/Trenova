@@ -1,4 +1,6 @@
 import { navigationConfig } from "@/config/navigation.config";
+import { usePlanRestrictions } from "@/hooks/use-cloud-plan";
+import { isPlanRestricted } from "@/lib/plan-capability";
 import {
   isNavGroup,
   type NavGroup,
@@ -18,6 +20,8 @@ import { useMemo } from "react";
 export interface NavAccessContext {
   hasPermission: (resource: string, operation: OperationType) => boolean;
   capabilities: OrganizationCapabilities;
+  /** What the organization's Trenova Cloud plan withholds; absent means nothing. */
+  planRestrictions?: readonly string[];
 }
 
 /**
@@ -30,6 +34,10 @@ export function canAccessNavEntry(
   context: NavAccessContext,
 ): boolean {
   if (entry.capability && !hasOrganizationCapability(context.capabilities, entry.capability)) {
+    return false;
+  }
+
+  if (isPlanRestricted(context.planRestrictions, entry.planCapability)) {
     return false;
   }
 
@@ -49,6 +57,10 @@ export function canAccessQuickAction(
   context: NavAccessContext,
 ): boolean {
   if (action.capability && !hasOrganizationCapability(context.capabilities, action.capability)) {
+    return false;
+  }
+
+  if (isPlanRestricted(context.planRestrictions, action.planCapability)) {
     return false;
   }
 
@@ -99,13 +111,18 @@ function useNavAccessContext(): NavAccessContext {
   const manifest = usePermissionStore((state) => state.manifest);
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const capabilities = useOrgCapabilities();
+  const planRestrictions = usePlanRestrictions();
 
   return useMemo(
     // Before the manifest lands nothing is known about permissions, so they are
     // treated as granted rather than flashing a stripped-down menu. Capabilities
     // ride the session payload and are known immediately, so they still apply.
-    () => ({ hasPermission: manifest ? hasPermission : PERMIT_ALL, capabilities }),
-    [manifest, hasPermission, capabilities],
+    () => ({
+      hasPermission: manifest ? hasPermission : PERMIT_ALL,
+      capabilities,
+      planRestrictions,
+    }),
+    [manifest, hasPermission, capabilities, planRestrictions],
   );
 }
 

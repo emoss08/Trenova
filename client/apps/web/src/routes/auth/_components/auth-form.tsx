@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import logoRainbow from "@/assets/logo.webp";
 import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import { queryClient } from "@/lib/query-client";
 import { apiService } from "@/services/api";
 import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
 import { authService } from "@trenova/shared/services/auth";
@@ -191,6 +192,9 @@ export function AuthForm({
   }, []);
 
   const handleHandoff = useCallback(() => {
+    // Drop anything cached by an earlier session in this tab, including one that
+    // expired without signing out, before the app loads for the new one.
+    queryClient.clear();
     void navigate("/", { replace: true });
   }, [navigate]);
 

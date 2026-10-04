@@ -64,6 +64,7 @@ export const billingSummarySchema = z.object({
   subscription: billingSubscriptionSummarySchema.nullish(),
   features: z.array(billingFeatureSummarySchema).default([]),
   usage: z.array(billingUsageSummarySchema).default([]),
+  restrictions: z.array(z.string()).default([]),
   checkedAt: z.number().int().default(0),
 });
 

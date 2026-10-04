@@ -1,5 +1,7 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
 import { adminLinks } from "@/config/navigation.config";
+import { usePlanRestrictions } from "@/hooks/use-cloud-plan";
+import { isPlanRestricted } from "@/lib/plan-capability";
 import { normalizePath } from "@/lib/route-utils";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
@@ -13,6 +15,7 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const canAccessRoute = usePermissionStore((state) => state.canAccessRoute);
   const capabilities = useOrgCapabilities();
+  const planRestrictions = usePlanRestrictions();
   const { config } = usePublicConfig();
   const platformMode = config.platformMode;
 
@@ -24,6 +27,10 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
         }
 
         if (link.capability && !hasOrganizationCapability(capabilities, link.capability)) {
+          return false;
+        }
+
+        if (isPlanRestricted(planRestrictions, link.planCapability)) {
           return false;
         }
 
@@ -46,6 +53,6 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
 
         return canAccessRoute(normalizedPath) || canAccessRoute(link.href);
       }),
-    [canAccessRoute, capabilities, hasPermission, manifest, platformMode],
+    [canAccessRoute, capabilities, hasPermission, manifest, planRestrictions, platformMode],
   );
 }

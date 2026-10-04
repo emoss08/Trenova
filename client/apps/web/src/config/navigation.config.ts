@@ -1,4 +1,5 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
+import { PlanCapability } from "@/lib/plan-capability";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
@@ -196,12 +197,14 @@ const dispatchModule: NavModule = {
       label: "Carrier monitoring",
       path: "/dispatch/carrier-monitoring",
       resource: Resource.CarrierIntelligence,
+      planCapability: PlanCapability.CarrierIntelligencePaid,
     },
     {
       id: "carrier-sourcing",
       label: "Carrier sourcing",
       path: "/dispatch/carrier-sourcing",
       resource: Resource.CarrierSourcing,
+      planCapability: PlanCapability.CarrierIntelligencePaid,
       capability: OrganizationCapability.Brokerage,
     },
     {
@@ -775,6 +778,7 @@ const ediModule: NavModule = {
   description: "Internal partner exchange and load tender workflow",
   basePath: "/edi/overview",
   routePrefixes: ["/edi"],
+  planCapability: PlanCapability.Integrations,
   navigation: [
     {
       id: "edi-overview",
@@ -1613,6 +1617,7 @@ export const adminLinks: SidebarLink[] = [
     group: "AI & Automation",
     resource: Resource.DocumentControl,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/admin/capture",
@@ -1747,6 +1752,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Email & SMS",
     resource: Resource.EmailLog,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.EmailOutbound,
   },
   {
     href: "/organization/email-profiles/",
@@ -1754,6 +1760,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Email & SMS",
     resource: Resource.EmailProfile,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.EmailOutbound,
   },
   {
     href: "#",
@@ -1795,6 +1802,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.Integration,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.Integrations,
   },
   {
     href: "/admin/inbound-mailboxes",
@@ -1809,6 +1817,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.APIKey,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.APIKeys,
   },
   {
     href: "/organization/pattern-config/",

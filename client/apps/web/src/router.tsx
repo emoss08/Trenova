@@ -1,3 +1,5 @@
+import { PlanCapability } from "@/lib/plan-capability";
+import { createPlanCapabilityLoader } from "@/lib/plan-capability-loader";
 import {
   combineLoaders,
   createCapabilityLoader,
@@ -143,7 +145,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/organization/email-profiles",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailProfile)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.EmailOutbound),
+              createPermissionLoader(Resource.EmailProfile),
+            ),
             async lazy() {
               const { EmailProfilesPage } =
                 await import("@/routes/organization/email-profiles/page");
@@ -152,7 +158,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/organization/email-logs",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailLog)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.EmailOutbound),
+              createPermissionLoader(Resource.EmailLog),
+            ),
             async lazy() {
               const { EmailLogsPage } = await import("@/routes/organization/email-logs/page");
               return { Component: EmailLogsPage };
@@ -265,7 +275,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/overview",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIOverviewPage } = await import("@/routes/edi/page");
               return { Component: EDIOverviewPage };
@@ -273,7 +287,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/partners",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIPartnersPage } = await import("@/routes/edi/page");
               return { Component: EDIPartnersPage };
@@ -281,7 +299,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/communication-profiles",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDICommunicationProfilesPage } = await import("@/routes/edi/page");
               return { Component: EDICommunicationProfilesPage };
@@ -289,7 +311,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/mapping-profiles",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIMappingProfilesPage } = await import("@/routes/edi/page");
               return { Component: EDIMappingProfilesPage };
@@ -297,7 +323,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/designer",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIDesignerPage } = await import("@/routes/edi/page");
               return { Component: EDIDesignerPage };
@@ -305,7 +335,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/transfers/inbound",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIInboundTransfersPage } = await import("@/routes/edi/page");
               return { Component: EDIInboundTransfersPage };
@@ -313,7 +347,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/transfers/outbound",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIOutboundTransfersPage } = await import("@/routes/edi/page");
               return { Component: EDIOutboundTransfersPage };
@@ -321,7 +359,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/messages",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIMessagesPage } = await import("@/routes/edi/page");
               return { Component: EDIMessagesPage };
@@ -329,7 +371,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/inbound-files",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIInboundFilesPage } = await import("@/routes/edi/page");
               return { Component: EDIInboundFilesPage };
@@ -337,7 +383,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/test-cases",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDITestCasesPage } = await import("@/routes/edi/page");
               return { Component: EDITestCasesPage };
@@ -1549,6 +1599,7 @@ export const routes: RouteObject[] = [
             path: "/dispatch/carrier-monitoring",
             loader: combineLoaders(
               protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.CarrierIntelligencePaid),
               createPermissionLoader(Resource.CarrierIntelligence),
             ),
             async lazy() {
@@ -1561,6 +1612,7 @@ export const routes: RouteObject[] = [
             loader: combineLoaders(
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPlanCapabilityLoader(PlanCapability.CarrierIntelligencePaid),
               createPermissionLoader(Resource.CarrierSourcing),
             ),
             async lazy() {
@@ -1771,7 +1823,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "document-intelligence",
-                loader: createPermissionLoader(Resource.DocumentControl, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.DocumentControl, Operation.Read),
+                ),
                 async lazy() {
                   const { DocumentIntelligencePage } =
                     await import("@/routes/admin/document-intelligence/page");
@@ -1937,7 +1992,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "integrations",
-                loader: createPermissionLoader(Resource.Integration, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.Integrations),
+                  createPermissionLoader(Resource.Integration, Operation.Read),
+                ),
                 async lazy() {
                   const { IntegrationsPage } = await import("@/routes/admin/integrations/page");
                   return { Component: IntegrationsPage };
@@ -1988,7 +2046,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "api-keys",
-                loader: createPermissionLoader(Resource.APIKey, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.APIKeys),
+                  createPermissionLoader(Resource.APIKey, Operation.Read),
+                ),
                 async lazy() {
                   const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };

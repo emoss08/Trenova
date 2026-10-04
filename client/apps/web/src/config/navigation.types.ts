@@ -1,6 +1,7 @@
 import type { OrganizationCapabilityType } from "@trenova/shared/types/organization-capability";
 import type { OperationType } from "@trenova/shared/types/permission";
 import type { IconComponent } from "@trenova/shared/components/icons";
+import type { PlanCapabilityType } from "@/lib/plan-capability";
 
 export type ModuleId =
   | "home"
@@ -45,6 +46,11 @@ export interface NavItem {
    * product at all.
    */
   capability?: OrganizationCapabilityType;
+  /**
+   * Hides the entry when the organization's Trenova Cloud plan withholds the
+   * capability, as the free demo does for integrations, API keys and the like.
+   */
+  planCapability?: PlanCapabilityType;
   badge?: NavItemBadgeKind;
 }
 
@@ -65,6 +71,7 @@ export interface NavGroup {
   kind?: NavGroupKind;
   resource?: string;
   capability?: OrganizationCapabilityType;
+  planCapability?: PlanCapabilityType;
 }
 
 export interface NavModule {
@@ -92,6 +99,7 @@ export interface NavModule {
   hideSecondarySidebar?: boolean;
   resource?: string;
   capability?: OrganizationCapabilityType;
+  planCapability?: PlanCapabilityType;
 }
 
 export interface NavigationConfig {
@@ -118,6 +126,7 @@ export interface QuickActionCommand {
    * the organization does not run would only lead to a route that refuses it.
    */
   capability?: OrganizationCapabilityType;
+  planCapability?: PlanCapabilityType;
   query?: Record<string, string>;
   keywords?: string[];
 }

@@ -41,3 +41,21 @@ export function useCloudPlan(): CloudPlanState {
     isFetching: summaryQuery.isFetching,
   };
 }
+
+const NO_RESTRICTIONS: readonly string[] = [];
+
+/**
+ * The capabilities the organization's plan withholds. Empty outside Trenova Cloud
+ * and until the summary loads, so nothing is hidden on a guess.
+ */
+export function usePlanRestrictions(): readonly string[] {
+  const { isCloud } = usePublicConfig();
+  const { data } = useQuery({
+    ...queries.platformBilling.summary(),
+    enabled: isCloud,
+    staleTime: BILLING_SUMMARY_STALE_MS,
+    retry: false,
+  });
+
+  return isCloud ? (data?.restrictions ?? NO_RESTRICTIONS) : NO_RESTRICTIONS;
+}
