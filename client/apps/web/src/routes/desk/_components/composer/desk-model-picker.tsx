@@ -5,6 +5,7 @@ import {
   Fragment,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -126,7 +127,15 @@ export function DeskModelPicker({
   const [spin, setSpin] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const close = useCallback(() => setOpen(false), []);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const listId = useId();
+  // Focus that was in the popover goes back to the chip when it closes.
+  const close = useCallback(() => {
+    if (rootRef.current?.contains(document.activeElement)) {
+      buttonRef.current?.focus();
+    }
+    setOpen(false);
+  }, []);
   useOutsideDismiss(rootRef, open, close);
 
   const selected = options.find((option) => option.id === value) ?? null;
@@ -172,13 +181,13 @@ export function DeskModelPicker({
       setSpin((count) => count + 1);
     }
     onChange(id);
-    setOpen(false);
+    close();
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setHighlighted((index) => Math.min(rows.length - 1, index + 1));
+      setHighlighted((index) => Math.max(0, Math.min(rows.length - 1, index + 1)));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setHighlighted((index) => Math.max(0, index - 1));
@@ -197,6 +206,7 @@ export function DeskModelPicker({
       <GeminiGradient />
       <button
         type="button"
+        ref={buttonRef}
         className={cn("dk-mp2-b", open && "dk-on", !selected && "dk-auto")}
         disabled={disabled}
         aria-haspopup="listbox"
@@ -250,16 +260,28 @@ export function DeskModelPicker({
               }}
               placeholder={t("Search models…")}
               aria-label={t("Search models")}
+              role="combobox"
+              aria-expanded
+              aria-autocomplete="list"
+              aria-controls={listId}
+              aria-activedescendant={rows[highlighted] ? `${listId}-${highlighted}` : undefined}
             />
           </div>
-          <div className="dk-mp2-l" role="listbox">
+          <div
+            className="dk-mp2-l"
+            role="listbox"
+            id={listId}
+            aria-label={t("Choose which model answers")}
+          >
             {rows.map((row, index) => {
               if (row.auto) {
                 return (
                   <button
                     key="auto"
+                    id={`${listId}-${index}`}
                     type="button"
                     role="option"
+                    tabIndex={-1}
                     aria-selected={value === ""}
                     className={cn(
                       "dk-mp2-auto",
@@ -321,8 +343,10 @@ export function DeskModelPicker({
                     </div>
                   )}
                   <button
+                    id={`${listId}-${index}`}
                     type="button"
                     role="option"
+                    tabIndex={-1}
                     aria-selected={value === option.id}
                     aria-disabled={option.unavailable}
                     className={cn(

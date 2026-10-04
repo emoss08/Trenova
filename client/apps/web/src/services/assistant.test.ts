@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ get: vi.fn() }));
+const mocks = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }));
 
 vi.mock("@trenova/shared/lib/api", () => ({
-  api: { get: mocks.get },
+  api: { get: mocks.get, put: mocks.put },
   withCsrfHeader: vi.fn(),
 }));
 
@@ -62,5 +62,39 @@ describe("assistantTranscriptUrl", () => {
 
   it("escapes an id that is not a plain identifier", () => {
     expect(assistantTranscriptUrl("a/b")).toContain("/threads/a%2Fb/transcript/");
+  });
+});
+
+/**
+ * A person's rewording of a draft is saved on the proposal behind it, so it
+ * survives a reload; saving is not deciding.
+ */
+describe("AssistantService.saveProposalEdits", () => {
+  beforeEach(() => {
+    mocks.put.mockReset();
+  });
+
+  it("saves the changed values on the thread's proposal", async () => {
+    mocks.put.mockResolvedValue({
+      proposalId: "ap_1",
+      pendingModifications: { subject: "PO needed" },
+    });
+
+    const edits = await new AssistantService().saveProposalEdits("athr_1", "ap_1", {
+      subject: "PO needed",
+    });
+
+    expect(mocks.put).toHaveBeenCalledWith("/assistant/threads/athr_1/proposals/ap_1/edits/", {
+      modifications: { subject: "PO needed" },
+    });
+    expect(edits.pendingModifications).toEqual({ subject: "PO needed" });
+  });
+
+  it("reads a cleared edit as nothing saved", async () => {
+    mocks.put.mockResolvedValue({ proposalId: "ap_1", pendingModifications: null });
+
+    const edits = await new AssistantService().saveProposalEdits("athr_1", "ap_1", {});
+
+    expect(edits.pendingModifications).toBeNull();
   });
 });

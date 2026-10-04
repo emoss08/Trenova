@@ -4,7 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCompactAge } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { DeskAgentTile } from "../desk-agent-tile";
 import { DeskIcon } from "../desk-icons";
 import { useOutsideDismiss } from "../use-outside-dismiss";
@@ -45,7 +53,15 @@ export function DeskAgentPicker({
   const rootRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const close = useCallback(() => setOpen(false), []);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const listId = useId();
+  // Focus that was in the popover goes back to the chip when it closes.
+  const close = useCallback(() => {
+    if (rootRef.current?.contains(document.activeElement)) {
+      buttonRef.current?.focus();
+    }
+    setOpen(false);
+  }, []);
   useOutsideDismiss(rootRef, open, close);
   const agentsQuery = useQuery({ ...queries.assistant.myAgents(), enabled: open });
   const [now] = useState(nowInSeconds);
@@ -96,13 +112,13 @@ export function DeskAgentPicker({
       return;
     }
     onSelect(candidate);
-    setOpen(false);
+    close();
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setHighlighted((index) => Math.min(flat.length - 1, index + 1));
+      setHighlighted((index) => Math.max(0, Math.min(flat.length - 1, index + 1)));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setHighlighted((index) => Math.max(0, index - 1));
@@ -111,7 +127,7 @@ export function DeskAgentPicker({
       setHighlighted(0);
     } else if (event.key === "End") {
       event.preventDefault();
-      setHighlighted(flat.length - 1);
+      setHighlighted(Math.max(0, flat.length - 1));
     } else if (event.key === "Enter") {
       event.preventDefault();
       pick(flat[highlighted]);
@@ -124,8 +140,10 @@ export function DeskAgentPicker({
     return (
       <button
         key={candidate.id}
+        id={`${listId}-${position}`}
         type="button"
         role="option"
+        tabIndex={-1}
         aria-selected={selected}
         data-i={position}
         className={cn("dk-ap-r", highlighted === position && "dk-hi", selected && "dk-sel")}
@@ -153,6 +171,7 @@ export function DeskAgentPicker({
     <span className="dk-ap" ref={rootRef}>
       <button
         type="button"
+        ref={buttonRef}
         className={cn("dk-ap-b", open && "dk-on")}
         disabled={disabled}
         aria-haspopup="listbox"
@@ -191,10 +210,19 @@ export function DeskAgentPicker({
               placeholder={t("Search agents")}
               role="combobox"
               aria-expanded
+              aria-autocomplete="list"
+              aria-controls={listId}
+              aria-activedescendant={flat[highlighted] ? `${listId}-${highlighted}` : undefined}
               aria-label={t("Search agents")}
             />
           </div>
-          <div className="dk-ap-l" ref={listRef} role="listbox">
+          <div
+            className="dk-ap-l"
+            ref={listRef}
+            role="listbox"
+            id={listId}
+            aria-label={t("Search agents")}
+          >
             {agentsQuery.isPending ? (
               <div className="dk-ap-empty">{t("Loading agents…")}</div>
             ) : (

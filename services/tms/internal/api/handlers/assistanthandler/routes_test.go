@@ -76,6 +76,17 @@ func (s *reachedService) PinArtifact(
 	return &services.AssistantArtifact{}, nil
 }
 
+func (s *reachedService) SaveProposalEdits(
+	context.Context,
+	repositories.GetThreadRequest,
+	pulid.ID,
+	map[string]any,
+) (*services.ProposalEdits, error) {
+	s.reached = true
+
+	return &services.ProposalEdits{}, nil
+}
+
 func call(t *testing.T, method, path, body string) (*reachedService, int) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
@@ -144,6 +155,12 @@ func TestOwnConversationNeedsOnlyTheAssistant(t *testing.T) {
 			method: http.MethodPost,
 			path:   threadPath + "artifacts/" + pulid.MustNew("art_").String() + "/pin/",
 			body:   `{"pinned":true}`,
+		},
+		{
+			name:   "save edits to a draft",
+			method: http.MethodPut,
+			path:   threadPath + "proposals/" + pulid.MustNew("ap_").String() + "/edits/",
+			body:   `{"modifications":{"subject":"PO needed"}}`,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

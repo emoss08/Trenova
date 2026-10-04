@@ -117,3 +117,67 @@ func TestMemoryValidate_APersonalScopeNamesItsReaders(t *testing.T) {
 	written.Validate(me)
 	assert.True(t, me.HasErrors(), "a person's own memory is never a suggestion")
 }
+
+// touchedAt is a memory kept for the organization, about nothing in
+// particular, last touched the given number of days after day zero.
+func touchedAt(days int64) *agent.Memory {
+	memory := validMemory("touched on day " + strconv.FormatInt(days, 10))
+	memory.Scope = agent.MemoryScopeOrganization
+	memory.CreatedAt = 1_700_000_000 + days*24*60*60
+	memory.UpdatedAt = memory.CreatedAt
+
+	return memory
+}
+
+// A rule saved in spring that no prompt has carried since, while the rules
+// beside it are read every day, stops riding along in autumn; the rules in
+// use, and one used last week, stay.
+func TestWithoutStaleMemories_LeavesOutWhatWentUnusedWhileItsNeighborsWereRead(t *testing.T) {
+	t.Parallel()
+
+	forgotten := touchedAt(0)
+	recent := touchedAt(0)
+	usedLastWeek := 1_700_000_000 + int64(93)*24*60*60
+	recent.LastUsedAt = &usedLastWeek
+	today := touchedAt(100)
+
+	kept := agent.WithoutStaleMemories([]*agent.Memory{forgotten, recent, today})
+
+	assert.Equal(t, []*agent.Memory{recent, today}, kept,
+		"a hundred days unused is stale; a use last week makes an old memory fresh")
+	assert.Equal(t, 90*24*60*60, agent.MemoryStaleAfterSeconds)
+}
+
+// An organization that paused its agents for half a year comes back to
+// every memory it kept: nothing was used, so nothing fell behind.
+func TestWithoutStaleMemories_MeasuresAgainstTheNewestNeighborNotTheClock(t *testing.T) {
+	t.Parallel()
+
+	first, second := touchedAt(0), touchedAt(10)
+
+	kept := agent.WithoutStaleMemories([]*agent.Memory{first, second})
+
+	assert.Equal(t, []*agent.Memory{first, second}, kept)
+}
+
+// Dana's own note from before her leave is measured against her other
+// notes, not against what the rest of the organization used while she was
+// away; and a memory about one customer stays however long that customer
+// was quiet.
+func TestWithoutStaleMemories_JudgesEachReaderAndSubjectOnItsOwn(t *testing.T) {
+	t.Parallel()
+
+	dana := pulid.MustNew("usr_")
+	hers := touchedAt(0)
+	hers.SetAudience(agent.MemoryScopeUser, dana, pulid.Nil)
+	busyOrg := touchedAt(200)
+
+	customer := pulid.MustNew("cus_")
+	aboutAcme := touchedAt(0)
+	aboutAcme.SubjectType = agent.MemorySubjectCustomer
+	aboutAcme.SubjectID = &customer
+
+	kept := agent.WithoutStaleMemories([]*agent.Memory{hers, busyOrg, aboutAcme})
+
+	assert.Equal(t, []*agent.Memory{hers, busyOrg, aboutAcme}, kept)
+}

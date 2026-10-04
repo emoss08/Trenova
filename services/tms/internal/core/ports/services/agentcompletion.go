@@ -156,6 +156,9 @@ type ChatCompletionResult struct {
 	CostUSD     *decimal.Decimal
 	OutputLimit int
 	CutOffCall  *CutOffToolCall
+	// ContextWindow is the window the answering provider is configured with,
+	// zero when it is left to be read off the model id.
+	ContextWindow int
 	// FallbackFrom is the provider asked first when another one answered:
 	// the reader is told which model replied and which one didn't.
 	FallbackFrom *ChatProviderFailure

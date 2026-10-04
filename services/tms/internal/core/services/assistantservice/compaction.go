@@ -80,8 +80,11 @@ type CompactionReply struct {
 	Summary    string
 	Model      string
 	ProviderID pulid.ID
-	Input      int
-	Output     int
+	// ContextWindow is the window the answering provider is configured
+	// with, zero when it is read off Model.
+	ContextWindow int
+	Input         int
+	Output        int
 }
 
 // CompactionResult is a saved compaction: the summary and the context after.
@@ -230,6 +233,7 @@ func (s *Service) FinishCompaction(
 		History:      append(history, pending),
 		Proposals:    s.proposalOutcomes(ctx, thread, tenant),
 		Model:        usageModel(thread, reply.Model),
+		Window:       usageWindow(thread, reply.Model, reply.ContextWindow),
 		Now:          timeutils.NowUnix(),
 	})
 	message.Compaction.After = usage.Total()
@@ -277,6 +281,7 @@ func (s *Service) measureAfterTurn(
 	thread *conversation.Thread,
 	plan *TurnPlan,
 	saved []conversation.Message,
+	window int,
 	tenant pagination.TenantInfo,
 	emit services.AssistantStreamEmitter,
 ) {
@@ -289,13 +294,15 @@ func (s *Service) measureAfterTurn(
 		return
 	}
 
+	answering := answeringModel(saved)
 	usage := agentruntime.MeasureContext(agentruntime.ContextRequest{
 		System:       plan.Turn.System,
 		Tools:        plan.Turn.Tools.Specs,
 		Instructions: lastInstructions(thread),
 		History:      history,
 		Proposals:    plan.Proposals,
-		Model:        usageModel(thread, answeringModel(saved)),
+		Model:        usageModel(thread, answering),
+		Window:       usageWindow(thread, answering, window),
 		Now:          timeutils.NowUnix(),
 	})
 	s.keepContextUsage(ctx, thread, &usage, tenant)
@@ -360,6 +367,7 @@ func (s *Service) currentUsage(
 		History:      history,
 		Proposals:    outcomes,
 		Model:        usageModel(thread, ""),
+		Window:       usageWindow(thread, "", 0),
 		Now:          timeutils.NowUnix(),
 	})
 }
@@ -396,6 +404,21 @@ func usageModel(thread *conversation.Thread, model string) string {
 	}
 
 	return ""
+}
+
+// usageWindow is the configured window to measure against, taken with the
+// model usageModel picks: the answering provider's when a model answered,
+// and otherwise the window the conversation was last measured against, so a
+// window an operator configured is not lost to a measure that had no reply.
+func usageWindow(thread *conversation.Thread, model string, configured int) int {
+	if model != "" {
+		return configured
+	}
+	if thread.ContextUsage != nil {
+		return thread.ContextUsage.Window
+	}
+
+	return 0
 }
 
 // savedCompaction is the summary already saved for a stretch, when an

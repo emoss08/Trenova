@@ -166,6 +166,54 @@ func TestFitMemories_CutsALongMemoryShortAndNamesItsID(t *testing.T) {
 	assert.Contains(t, prompt, "call recall_memory with that id")
 }
 
+// An agent that had been told two hundred one-line facts carried every one
+// of them, because each was short enough to fit the token budget. The prompt
+// now stops at MaxPromptMemories, keeping the best ranked.
+func TestFitMemories_CarriesNoMoreThanTheCapHoweverShortTheyAre(t *testing.T) {
+	t.Parallel()
+
+	pool := make([]*agent.Memory, 0, 200)
+	for range 200 {
+		pool = append(pool, &agent.Memory{
+			ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact, Content: "Short.",
+		})
+	}
+
+	fitted := definitionWithInstructions("Help.").FitMemories(
+		&agentdefinition.RuntimeContext{Memories: pool},
+	)
+
+	require.Len(t, fitted, agentdefinition.MaxPromptMemories)
+	assert.Equal(t, pool[:agentdefinition.MaxPromptMemories], fitted,
+		"the first in rank order are the ones kept")
+	assert.Equal(t, 50, agentdefinition.MaxPromptMemories)
+}
+
+// A fact from spring that no prompt had room for since is left out once
+// the facts beside it have been read for three months; recall still finds
+// it, and the prompt says so.
+func TestFitMemories_LeavesOutAMemoryThatWentStale(t *testing.T) {
+	t.Parallel()
+
+	const day = 24 * 60 * 60
+	stale := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact,
+		Content: "The old yard closes at 17:00.", CreatedAt: 1_700_000_000,
+	}
+	fresh := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact,
+		Content: "The yard closes at 18:00.", CreatedAt: 1_700_000_000 + 120*day,
+	}
+	d := definitionWithInstructions("Help.")
+	rc := agentdefinition.RuntimeContext{Memories: []*agent.Memory{stale, fresh}}
+
+	assert.Equal(t, []*agent.Memory{fresh}, d.FitMemories(&rc))
+
+	prompt := d.BuildSystemPrompt(rc)
+	assert.NotContains(t, prompt, "The old yard")
+	assert.Contains(t, prompt, "recall_memory still finds them")
+}
+
 func TestBuildSystemPrompt_GroupsMemoriesByWhatTheyAreAbout(t *testing.T) {
 	t.Parallel()
 

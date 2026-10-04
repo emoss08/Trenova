@@ -182,3 +182,27 @@ export function markPlanStatus(
           },
   );
 }
+
+/**
+ * Writes the edits a person saved on a pending proposal into every cached
+ * list that holds it, so a draft shows the saved wording as soon as the
+ * server keeps it rather than when a refetch comes back. Null clears them.
+ */
+export function markProposalEdits(
+  queryClient: QueryClient,
+  proposalId: string,
+  pendingModifications: Record<string, unknown> | null,
+) {
+  queryClient.setQueriesData<{ results: AssistantProposal[] }>(
+    { queryKey: scopeOf(queries.assistant.proposals) },
+    (data) =>
+      data === undefined
+        ? data
+        : {
+            ...data,
+            results: data.results.map((proposal) =>
+              proposal.id === proposalId ? { ...proposal, pendingModifications } : proposal,
+            ),
+          },
+  );
+}

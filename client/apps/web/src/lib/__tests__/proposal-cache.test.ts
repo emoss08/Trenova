@@ -3,6 +3,7 @@ import {
   decidedStatus,
   invalidateProposalViews,
   markProposalDecided,
+  markProposalEdits,
 } from "@/lib/proposal-cache";
 import { queries } from "@/lib/queries";
 import type { AssistantProposal } from "@/types/assistant";
@@ -131,6 +132,29 @@ describe("markProposalDecided", () => {
     markProposalDecided(client, "prop_elsewhere", "Accepted");
 
     expect(proposalsIn(client, THREAD).map((p) => p.status)).toEqual(["Pending", "Pending"]);
+  });
+});
+
+// A draft shows the wording the server kept as soon as it is kept, not when
+// the refetch comes back; clearing puts the agent's own wording back.
+describe("markProposalEdits", () => {
+  it("writes the saved edits into the list the thread is reading", () => {
+    const client = seededClient();
+
+    markProposalEdits(client, "prop_1", { subject: "PO needed" });
+
+    const [first, second] = proposalsIn(client, THREAD);
+    expect(first?.pendingModifications).toEqual({ subject: "PO needed" });
+    expect(second?.pendingModifications).toBeUndefined();
+  });
+
+  it("clears them", () => {
+    const client = seededClient();
+    markProposalEdits(client, "prop_1", { subject: "PO needed" });
+
+    markProposalEdits(client, "prop_1", null);
+
+    expect(proposalsIn(client, THREAD)[0]?.pendingModifications).toBeNull();
   });
 });
 

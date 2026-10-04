@@ -38,6 +38,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { DeskWorkspace } from "./artifacts/desk-workspace";
+import { withoutPendingLookups } from "./artifacts/pending-lookups";
 import { useDeskAttachments } from "./composer/desk-attachments";
 import { usePoorlyReadFiles } from "./conversation/desk-poorly-read";
 import { useOnline } from "./desk-online";
@@ -295,7 +296,15 @@ export function DeskConversation({
   }, [handoffProvider, setProviderId]);
 
   const { setArtifactCount, openArtifact: openInDesk, setWorkspaceOpen, workspaceOpen } = desk;
-  const artifactTotal = artifactsQuery.data?.counts.all ?? artifacts.length;
+  // The running turn's lookups are not counted until the reply keeps them.
+  const artifactTotal = useMemo(() => {
+    const visible = withoutPendingLookups(
+      artifacts,
+      artifactsQuery.data?.counts,
+      desk.pendingLookups,
+    );
+    return visible.counts?.all ?? visible.results.length;
+  }, [artifacts, artifactsQuery.data, desk.pendingLookups]);
   useEffect(() => setArtifactCount(artifactTotal), [artifactTotal, setArtifactCount]);
 
   const togglePin = useCallback(
@@ -1386,6 +1395,7 @@ export function DeskConversation({
                     key={thread.id}
                     threadId={thread.id}
                     liveArtifacts={desk.liveArtifacts}
+                    pendingLookups={desk.pendingLookups}
                     onClose={() => setWorkspaceOpen(false)}
                   />
                 )}

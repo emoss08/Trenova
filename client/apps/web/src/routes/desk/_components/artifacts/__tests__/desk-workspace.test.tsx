@@ -133,7 +133,7 @@ describe("changedCells", () => {
   });
 });
 
-function renderWorkspace(onClose = vi.fn()) {
+function renderWorkspace(onClose = vi.fn(), pendingLookups?: ReadonlySet<string>) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
@@ -141,6 +141,7 @@ function renderWorkspace(onClose = vi.fn()) {
         <DeskWorkspace
           threadId="athr_1"
           liveArtifacts={{ ids: [], revision: 0 }}
+          pendingLookups={pendingLookups}
           onClose={onClose}
         />
       </MemoryRouter>
@@ -198,6 +199,29 @@ describe("DeskWorkspace", () => {
     await waitFor(() => expect(titles()).toEqual(["Workers"]));
     fireEvent.keyDown(search, { key: "Enter" });
     expect(await screen.findByText("Avery Lane")).toBeInTheDocument();
+  });
+
+  it("leaves out the running turn's lookups, in the stack and in the list of everything", async () => {
+    state.artifacts = [
+      workers("art_1", "Active"),
+      artifact({ id: "art_2", title: "Rates", turn: "" }),
+    ];
+    act(() => useDeskStore.getState().setBrowsing(false));
+    renderWorkspace(vi.fn(), new Set(["art_2"]));
+    await screen.findByText("Avery Lane");
+
+    const front = screen.getByTitle("Switch artifact");
+    expect(front).toHaveTextContent("Workers");
+    expect(front.querySelector(".dk-ax-cnt")).toHaveTextContent("1");
+    expect(screen.queryByText("Rates")).not.toBeInTheDocument();
+
+    act(() => useDeskStore.getState().setBrowsing(true));
+    await screen.findByRole("textbox", { name: "Search artifacts" });
+    const titles = () =>
+      [...document.querySelectorAll(".dk-axb-rt b")].map((title) => title.textContent);
+    await waitFor(() => expect(titles()).toEqual(["Workers"]));
+    expect(document.querySelector(".dk-axb-n")).toHaveTextContent("1");
+    act(() => useDeskStore.getState().setBrowsing(false));
   });
 
   it("fans the stack on a click and folds it on Esc without closing the pane", async () => {

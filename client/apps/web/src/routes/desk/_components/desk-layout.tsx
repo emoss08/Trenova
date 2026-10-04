@@ -10,13 +10,14 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { commandJ } from "./artifacts/desk-workspace-state";
+import { NO_PENDING_LOOKUPS, pendingLookupIds } from "./artifacts/pending-lookups";
 import { useDeskStore } from "@/stores/desk-store";
 import {
   LOOKUP_ARTIFACT_KINDS,
   type AssistantArtifactEvent,
   type AssistantThread,
 } from "@/types/assistant";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -52,6 +53,13 @@ export type DeskContextValue = {
   /** Told what a streaming turn has produced so far, so the workspace opens on the newest and follows the set. */
   noteLiveArtifacts: (artifacts: readonly AssistantArtifactEvent[]) => void;
   liveArtifacts: LiveArtifacts;
+  /**
+   * The lookups the running turn has saved, which the server drops unless the
+   * finished reply points to them. Left out of the workspace and its counts
+   * until the artifacts are read again after the turn, so none blinks in and
+   * out of the list while the reply is written.
+   */
+  pendingLookups: ReadonlySet<string>;
   /** Opens an artifact the transcript referred to. */
   openArtifact: (threadId: string, artifactId: string) => void;
   /** Whether the workspace beside the open conversation is showing. */
@@ -74,6 +82,9 @@ export type LiveArtifacts = {
 };
 
 const NO_LIVE_ARTIFACTS: LiveArtifacts = { ids: [], revision: 0 };
+
+/** How long a finished turn's lookups stay hidden if the artifacts are not read again. */
+const LOOKUP_SETTLE_MS = 15_000;
 
 export function useDesk(): DeskContextValue {
   const value = useContext(DeskContext);
@@ -141,6 +152,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   const [working, setWorking] = useState(false);
   const [liveArtifacts, setLiveArtifacts] = useState<LiveArtifacts>(NO_LIVE_ARTIFACTS);
+  const [pendingLookups, setPendingLookups] = useState<ReadonlySet<string>>(NO_PENDING_LOOKUPS);
   const [artifactCount, setArtifactCount] = useState(0);
   const [newArtifact, setNewArtifact] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -201,6 +213,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     setSeenThreadId(activeThreadId);
     setWorking(false);
     setLiveArtifacts(NO_LIVE_ARTIFACTS);
+    setPendingLookups(NO_PENDING_LOOKUPS);
     setNewArtifact(false);
     setArtifactCount(0);
   }
@@ -305,6 +318,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // reply points to it, and it opens from the reply where it is named.
   const noteLiveArtifacts = useCallback(
     (artifacts: readonly AssistantArtifactEvent[]) => {
+      setPendingLookups((current) => pendingLookupIds(artifacts, current));
       // Nor is a move to another page: the app follows it, and the reply
       // names the page as a link.
       const made = artifacts.filter(
@@ -325,6 +339,35 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     },
     [setPane],
   );
+
+  // Once the turn is over the server has dropped the lookups the reply did
+  // not point to; the next read of the artifacts after that holds only the
+  // kept ones, and from then on they show like any other.
+  useEffect(() => {
+    if (working || pendingLookups.size === 0 || activeThreadId === null) {
+      return;
+    }
+    const cache = queryClient.getQueryCache();
+    const queryHash = hashKey(queries.assistant.artifacts(activeThreadId).queryKey);
+    const seen = cache.get(queryHash)?.state.dataUpdateCount ?? 0;
+    const settle = () => setPendingLookups(NO_PENDING_LOOKUPS);
+    const timer = window.setTimeout(settle, LOOKUP_SETTLE_MS);
+    const unsubscribe = cache.subscribe((event) => {
+      const { query } = event;
+      if (
+        query.queryHash === queryHash &&
+        query.state.dataUpdateCount > seen &&
+        query.state.fetchStatus === "idle" &&
+        !query.state.isInvalidated
+      ) {
+        settle();
+      }
+    });
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [activeThreadId, pendingLookups, queryClient, working]);
 
   const openArtifact = useCallback(
     (threadId: string, artifactId: string) => {
@@ -390,6 +433,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       working,
       noteLiveArtifacts,
       liveArtifacts,
+      pendingLookups,
       openArtifact,
       workspaceOpen,
       setWorkspaceOpen,
@@ -407,6 +451,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       liveArtifacts,
       noteLiveArtifacts,
       openArtifact,
+      pendingLookups,
       pinMutation,
       setWorkspaceOpen,
       startMutation,

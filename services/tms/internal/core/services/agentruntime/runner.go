@@ -175,6 +175,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 
 		result.Model = completion.ModelIdentifier
 		result.ProviderID = completion.ProviderID
+		result.ContextWindow = completion.ContextWindow
 		tagReasoning(completion)
 		if stop {
 			return s.finishCutOff(t, fx, completion), nil
@@ -495,6 +496,7 @@ func (s *Service) finalAnswer(
 
 	result.Model = completion.ModelIdentifier
 	result.ProviderID = completion.ProviderID
+	result.ContextWindow = completion.ContextWindow
 	tagReasoning(completion)
 
 	return completion
@@ -704,6 +706,7 @@ func cannedCompletion(
 		canned.OutputTokens = attempt.OutputTokens
 		canned.LatencyMs = attempt.LatencyMs
 		canned.CostUSD = attempt.CostUSD
+		canned.ContextWindow = attempt.ContextWindow
 	}
 
 	return canned

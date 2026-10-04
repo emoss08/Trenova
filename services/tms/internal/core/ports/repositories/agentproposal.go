@@ -53,6 +53,16 @@ type RecordAgentProposalExecutionRequest struct {
 	ExecutedTargetVersion *int64                `json:"executedTargetVersion"`
 }
 
+// SetPendingModificationsRequest keeps the wording a person changed on a
+// pending proposal and has not yet approved with. Nil or empty clears it. The
+// update holds only while the proposal is still pending; a decided one is
+// reported as a conflict.
+type SetPendingModificationsRequest struct {
+	ID            pulid.ID
+	TenantInfo    pagination.TenantInfo
+	Modifications map[string]any
+}
+
 // RecordAgentProposalSimulationRequest stores what a write would have
 // changed, in place of an execution, for a proposal cleared while its agent
 // was in simulation.
@@ -178,6 +188,10 @@ type AgentProposalRepository interface {
 	RecordSimulation(
 		ctx context.Context,
 		req RecordAgentProposalSimulationRequest,
+	) (*agent.AgentProposal, error)
+	SetPendingModifications(
+		ctx context.Context,
+		req SetPendingModificationsRequest,
 	) (*agent.AgentProposal, error)
 	CountExecutedTool(ctx context.Context, req CountExecutedToolRequest) (int, error)
 }

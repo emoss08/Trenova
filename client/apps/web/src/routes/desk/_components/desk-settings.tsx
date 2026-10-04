@@ -1,9 +1,6 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
-import {
-  useDeskSettingsStore,
-  type DeskSettings,
-} from "@/stores/desk-settings-store";
+import { useDeskSettingsStore, type DeskSettings } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@trenova/shared/components/theme-provider";
@@ -12,12 +9,14 @@ import { cn } from "@trenova/shared/lib/utils";
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   type CSSProperties,
   type ReactNode,
 } from "react";
 import { DeskIcon, type DeskIconName } from "./desk-icons";
+import { onRadioArrows, useModalFocus } from "./use-modal-focus";
 
 type Section = "appearance" | "conversation" | "composer" | "files" | "artifacts" | "agent";
 
@@ -59,6 +58,7 @@ function Seg<V extends string>({
   onChange: (value: V) => void;
   label: string;
 }) {
+  const chosen = options.some(([option]) => option === value);
   return (
     <div
       className="dk-sx-seg"
@@ -67,19 +67,31 @@ function Seg<V extends string>({
       style={
         {
           "--n": options.length,
-          "--i": Math.max(0, options.findIndex(([option]) => option === value)),
+          "--i": Math.max(
+            0,
+            options.findIndex(([option]) => option === value),
+          ),
         } as CSSProperties
       }
     >
       <span className="dk-sx-kn" />
-      {options.map(([option, text]) => (
+      {options.map(([option, text], index) => (
         <button
           key={option}
           type="button"
           role="radio"
           aria-checked={value === option}
+          tabIndex={value === option || (!chosen && index === 0) ? 0 : -1}
           className={value === option ? "dk-on" : undefined}
           onClick={() => onChange(option)}
+          onKeyDown={(event) =>
+            onRadioArrows(
+              event,
+              options.map(([choice]) => choice),
+              value,
+              onChange,
+            )
+          }
         >
           {text}
         </button>
@@ -109,6 +121,8 @@ function Row({
     </div>
   );
 }
+
+const WIDTHS = ["narrow", "default", "wide"] as const;
 
 const WIDTH_PREVIEW: Record<DeskSettings["width"], number> = { narrow: 46, default: 62, wide: 84 };
 
@@ -150,9 +164,17 @@ export function DeskSettingsDialog({
   const [section, setSection] = useState<Section>("appearance");
   const [closing, setClosing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useModalFocus(panelRef);
 
-  const devicesQuery = useQuery({ ...queries.capture.myDevices("Active"), enabled: section === "files" });
-  const profilesQuery = useQuery({ ...queries.capture.availableProfiles(), enabled: section === "files" });
+  const devicesQuery = useQuery({
+    ...queries.capture.myDevices("Active"),
+    enabled: section === "files",
+  });
+  const profilesQuery = useQuery({
+    ...queries.capture.availableProfiles(),
+    enabled: section === "files",
+  });
 
   const close = useCallback(() => {
     setClosing(true);
@@ -176,10 +198,23 @@ export function DeskSettingsDialog({
       className={cn("dk-srch-wrap dk-sx-wrap", closing && "dk-out")}
       onMouseDown={(event) => event.target === event.currentTarget && close()}
     >
-      <div className="dk-sx" role="dialog" aria-modal aria-label={t("Desk settings")} ref={panelRef} tabIndex={-1}>
+      <div
+        className="dk-sx"
+        role="dialog"
+        aria-modal
+        aria-labelledby={titleId}
+        ref={panelRef}
+        tabIndex={-1}
+      >
         <div className="dk-sx-top">
-          <h2>{t("Settings")}</h2>
-          <button type="button" className="dk-ib" onClick={close} title={t("Close")} aria-label={t("Close")}>
+          <h2 id={titleId}>{t("Settings")}</h2>
+          <button
+            type="button"
+            className="dk-ib"
+            onClick={close}
+            title={t("Close")}
+            aria-label={t("Close")}
+          >
             <DeskIcon name="x" size={14} />
           </button>
         </div>
@@ -227,28 +262,42 @@ export function DeskSettingsDialog({
               </Row>
               <Row
                 title={t("Conversation width")}
-                detail={t("How wide messages run. Wide fits more of a table or long reply per line.")}
+                detail={t(
+                  "How wide messages run. Wide fits more of a table or long reply per line.",
+                )}
                 wide
               >
                 <div className="dk-sx-wopts" role="radiogroup" aria-label={t("Conversation width")}>
-                  {(["narrow", "default", "wide"] as const).map((width) => (
+                  {WIDTHS.map((width) => (
                     <button
                       key={width}
                       type="button"
                       role="radio"
                       aria-checked={settings.width === width}
+                      tabIndex={settings.width === width ? 0 : -1}
                       className={cn("dk-sx-wo", settings.width === width && "dk-on")}
                       onClick={() => set("width", width)}
+                      onKeyDown={(event) =>
+                        onRadioArrows(event, WIDTHS, settings.width, (next) => set("width", next))
+                      }
                     >
                       <WidthPreview width={width} />
-                      <span>{width === "narrow" ? t("Narrow") : width === "wide" ? t("Wide") : t("Default")}</span>
+                      <span>
+                        {width === "narrow"
+                          ? t("Narrow")
+                          : width === "wide"
+                            ? t("Wide")
+                            : t("Default")}
+                      </span>
                     </button>
                   ))}
                 </div>
               </Row>
               <Row
                 title={t("Motion")}
-                detail={t("Reduced turns off confetti, the working border, typing effects and shimmer.")}
+                detail={t(
+                  "Reduced turns off confetti, the working border, typing effects and shimmer.",
+                )}
               >
                 <Seg
                   label={t("Motion")}
@@ -276,7 +325,10 @@ export function DeskSettingsDialog({
           )}
           {section === "conversation" && (
             <>
-              <Row title={t("Send with")} detail={t("Which keys send a message. The other inserts a new line.")}>
+              <Row
+                title={t("Send with")}
+                detail={t("Which keys send a message. The other inserts a new line.")}
+              >
                 <Seg
                   label={t("Send with")}
                   value={settings.send}
@@ -289,7 +341,9 @@ export function DeskSettingsDialog({
               </Row>
               <Row
                 title={t("Source numbers")}
-                detail={t("Small numbers in replies that show which tool call each fact came from.")}
+                detail={t(
+                  "Small numbers in replies that show which tool call each fact came from.",
+                )}
               >
                 <Seg
                   label={t("Source numbers")}
@@ -318,7 +372,9 @@ export function DeskSettingsDialog({
             <>
               <Row
                 title={t("Start new conversations with")}
-                detail={t("The agent the composer picks when you start fresh. You can still switch per message.")}
+                detail={t(
+                  "The agent the composer picks when you start fresh. You can still switch per message.",
+                )}
               >
                 <select
                   className="dk-sx-select"
@@ -336,7 +392,9 @@ export function DeskSettingsDialog({
               </Row>
               <Row
                 title={t("Share the page you came from")}
-                detail={t("Send the page you came to Desk from with each message so the agent knows what you were looking at.")}
+                detail={t(
+                  "Send the page you came to Desk from with each message so the agent knows what you were looking at.",
+                )}
               >
                 <Seg
                   label={t("Share the page you came from")}
@@ -365,7 +423,10 @@ export function DeskSettingsDialog({
                   ]}
                 />
               </Row>
-              <Row title={t("Slash commands")} detail={t("Type / for /status, /quote, /report and /explain.")}>
+              <Row
+                title={t("Slash commands")}
+                detail={t("Type / for /status, /quote, /report and /explain.")}
+              >
                 <Seg
                   label={t("Slash commands")}
                   value={settings.slash}
@@ -405,7 +466,10 @@ export function DeskSettingsDialog({
           )}
           {section === "files" && (
             <>
-              <Row title={t("Drop files")} detail={t("Where dropping a file attaches it to your message.")}>
+              <Row
+                title={t("Drop files")}
+                detail={t("Where dropping a file attaches it to your message.")}
+              >
                 <Seg
                   label={t("Drop files")}
                   value={settings.drop}
@@ -418,7 +482,9 @@ export function DeskSettingsDialog({
               </Row>
               <Row
                 title={t("Scan with")}
-                detail={t("The computer Scan from Capture starts on. Only your own paired computers are listed.")}
+                detail={t(
+                  "The computer Scan from Capture starts on. Only your own paired computers are listed.",
+                )}
               >
                 <select
                   className="dk-sx-select"
@@ -436,7 +502,9 @@ export function DeskSettingsDialog({
               </Row>
               <Row
                 title={t("Scan settings")}
-                detail={t("The scan profile to start from. Your admin manages profiles in Scanning and printing.")}
+                detail={t(
+                  "The scan profile to start from. Your admin manages profiles in Scanning and printing.",
+                )}
               >
                 <select
                   className="dk-sx-select"
@@ -456,7 +524,10 @@ export function DeskSettingsDialog({
           )}
           {section === "artifacts" && (
             <>
-              <Row title={t("Open new artifacts")} detail={t("When an agent makes a table, record or draft.")}>
+              <Row
+                title={t("Open new artifacts")}
+                detail={t("When an agent makes a table, record or draft.")}
+              >
                 <Seg
                   label={t("Open new artifacts")}
                   value={settings.autoOpen}
@@ -469,7 +540,9 @@ export function DeskSettingsDialog({
               </Row>
               <Row
                 title={t("New artifact dot")}
-                detail={t("Mark Workspace in the top bar when something new arrives while it's closed.")}
+                detail={t(
+                  "Mark Workspace in the top bar when something new arrives while it's closed.",
+                )}
               >
                 <Seg
                   label={t("New artifact dot")}
@@ -485,7 +558,10 @@ export function DeskSettingsDialog({
           )}
           {section === "agent" && (
             <>
-              <Row title={t("Approval celebration")} detail={t("What plays when you approve a proposed change.")}>
+              <Row
+                title={t("Approval celebration")}
+                detail={t("What plays when you approve a proposed change.")}
+              >
                 <Seg
                   label={t("Approval celebration")}
                   value={settings.celebrate}

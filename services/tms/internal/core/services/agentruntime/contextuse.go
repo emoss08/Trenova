@@ -34,9 +34,12 @@ type ContextRequest struct {
 	History   []conversation.Message
 	Proposals []serviceports.ProposalOutcome
 	// Model is the model the conversation is answered by, whose window the
-	// use is measured against.
-	Model string
-	Now   int64
+	// use is measured against. Window is the window its provider is
+	// configured with, which wins over the one Model names; zero reads it
+	// off Model.
+	Model  string
+	Window int
+	Now    int64
 }
 
 // MeasureContext estimates how much of the model's window a conversation's
@@ -49,7 +52,7 @@ type ContextRequest struct {
 func MeasureContext(req ContextRequest) conversation.ContextUsage {
 	usage := conversation.ContextUsage{
 		Instructions: req.Instructions,
-		Window:       aiprovider.ContextWindowFor(req.Model),
+		Window:       aiprovider.WindowOr(req.Window, req.Model),
 		Model:        req.Model,
 		MeasuredAt:   req.Now,
 	}

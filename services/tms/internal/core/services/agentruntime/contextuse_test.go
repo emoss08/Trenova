@@ -164,3 +164,20 @@ func TestMeasureContext_KeepsTheLastInstructionsWithoutAPrompt(t *testing.T) {
 	assert.Equal(t, 6200, usage.Instructions)
 	assert.Zero(t, usage.Compactable, "one turn is all kept whole")
 }
+
+// A provider configured with its window is measured against that window, not
+// the one its model id names: a Qwen served with a 128k context is not near
+// full at 30k tokens.
+func TestMeasureContext_AConfiguredWindowWinsOverTheModelID(t *testing.T) {
+	t.Parallel()
+
+	usage := MeasureContext(ContextRequest{
+		History: numbered(quietTurns(1)),
+		Model:   "qwen2.5-coder:32b",
+		Window:  131_072,
+	})
+	assert.Equal(t, 131_072, usage.Window)
+
+	inferred := MeasureContext(ContextRequest{History: numbered(quietTurns(1)), Model: "qwen2.5-coder:32b"})
+	assert.Equal(t, 32_768, inferred.Window)
+}

@@ -93,6 +93,7 @@ type Service struct {
 	definitions   repositories.AgentDefinitionRepository
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
+	proposalEdits proposalEditStore
 	plans         chatPlanStore
 	providers     repositories.AIProviderRepository
 	shadow        *agentshadow.Resolver
@@ -130,6 +131,7 @@ func New(p Params) *Service {
 		providers:     p.AIProviders,
 		recorder:      p.Recorder,
 		proposals:     p.Proposals,
+		proposalEdits: p.Proposals,
 		plans:         planStoreOrNil(p.Plans),
 		shadow:        p.Shadow,
 		budgets:       p.Budgets,

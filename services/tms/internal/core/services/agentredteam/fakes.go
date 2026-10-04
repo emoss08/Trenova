@@ -129,6 +129,19 @@ func (r *memoryRepository) FindActive(
 	return nil, nil //nolint:nilnil // an absent memory is nil, nil by the repository contract
 }
 
+// MarkUsed is reached when a remember restates a memory already kept and the
+// service refreshes it. The service counts the use on the row FindActive
+// handed it, which here is the stored row itself, so the fake only records
+// which tenant was touched.
+func (r *memoryRepository) MarkUsed(
+	_ context.Context,
+	req repositories.MarkAgentMemoriesUsedRequest,
+) error {
+	r.rec.read(ReadMemoryRepo, "MarkUsed", req.TenantInfo)
+
+	return nil
+}
+
 func (r *memoryRepository) GetByID(
 	_ context.Context,
 	req repositories.GetAgentMemoryByIDRequest,

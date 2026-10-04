@@ -192,6 +192,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listThreadProposals,
 	)
+	// Saving the wording a person changed on a pending proposal is drafting
+	// in their own conversation, not deciding: the approval is still the
+	// decision endpoint's, and it checks the values again.
+	api.PUT(
+		"/threads/:threadID/proposals/:proposalID/edits/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.saveProposalEdits,
+	)
 	api.GET(
 		"/threads/:threadID/plans/",
 		h.pm.RequirePermission(resource, permission.OpRead),
@@ -519,6 +527,45 @@ func (h *Handler) listThreadProposals(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"results": proposals})
+}
+
+// saveProposalEditsRequest is the values a person changed, keyed by
+// parameter; an empty or absent set clears what was saved.
+type saveProposalEditsRequest struct {
+	Modifications map[string]any `json:"modifications"`
+}
+
+func (h *Handler) saveProposalEdits(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	proposalID, err := pulid.Parse(c.Param("proposalID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var body saveProposalEditsRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	edits, err := h.service.SaveProposalEdits(
+		c.Request.Context(),
+		req,
+		proposalID,
+		body.Modifications,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, edits)
 }
 
 type listMessagesQuery struct {

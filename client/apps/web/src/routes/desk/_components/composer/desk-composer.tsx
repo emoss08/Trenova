@@ -10,6 +10,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantEntityRef } from "@/types/assistant";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -27,6 +28,8 @@ import { DeskContextDrain } from "./desk-context-meter";
 
 /** /compact, offered where the conversation can be compacted. */
 const COMPACT_COMMANDS = [COMPACT_COMMAND];
+/** How long a status line has to hold before a screen reader is told it. */
+const STATUS_SETTLE_MS = 900;
 
 /** What the composer says it is doing while an agent works. */
 export type DeskComposerStatus = {
@@ -257,6 +260,14 @@ export function DeskComposer({
     }
   };
 
+  const statusText = compacting
+    ? compacting.auto
+      ? t("Context is nearly full · compacting…")
+      : t("Compacting the conversation…")
+    : (busy || wait > 0) && status
+      ? status.text
+      : "";
+  const spokenStatus = useDebounce(statusText, STATUS_SETTLE_MS);
   const dropping = Boolean(drag?.on) && !lock && attachments !== undefined;
   const full = attachments?.full ?? false;
 
@@ -280,8 +291,14 @@ export function DeskComposer({
         </span>
       )}
       <span className="dk-cmp-ring" aria-hidden />
+      {/* One region that is always there, so what the agent is doing is read
+          out as it settles: a step that flashes past is not, and neither is
+          a countdown's every second. */}
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic>
+        {spokenStatus}
+      </span>
       {(busy || wait > 0) && status && (
-        <div className="dk-cmp-st dk-ec-st" key={status.text} role="status">
+        <div className="dk-cmp-st dk-ec-st" key={status.text}>
           {status.pose === "check" ? (
             <span className="dk-ec-shield">
               <DeskIcon name="shield" size={13} stroke={2} />
@@ -306,7 +323,7 @@ export function DeskComposer({
         </div>
       )}
       {compacting && (
-        <div className="dk-cmp-st dk-cx-st" role="status">
+        <div className="dk-cmp-st dk-cx-st">
           <DeskContextDrain
             from={compacting.before}
             to={compacting.after}
@@ -389,6 +406,8 @@ export function DeskComposer({
               className={cn("dk-ib", menu && "dk-on")}
               title={full ? t("Up to {0} files per message", MAX_ATTACHMENTS) : t("Attach files")}
               aria-label={t("Attach files")}
+              aria-haspopup="menu"
+              aria-expanded={menu !== null}
               data-attach-toggle
               disabled={Boolean(lock) || Boolean(compacting) || full}
               onClick={() => setMenu((current) => (current ? null : "menu"))}

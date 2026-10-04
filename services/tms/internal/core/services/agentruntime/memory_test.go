@@ -162,3 +162,27 @@ func TestOpenTurn_ReadsNoMemoryForAnAgentThatDoesNotAskForIt(t *testing.T) {
 	assert.False(t, turn.Taint().Tainted())
 	assert.NotContains(t, turn.State().System, "From an email.")
 }
+
+// An agent asked to remember what it already knew got a "saved" card with
+// an Undo, and undoing it retired the memory the person had kept for months.
+// A refreshed memory is now named as used, never offered for undo, and the
+// model is told nothing new was recorded.
+func TestSavedOrRefreshed_ARefreshedMemoryIsUsedNotSaved(t *testing.T) {
+	t.Parallel()
+
+	kept := &agent.Memory{ID: pulid.MustNew("amem_"), Status: agent.MemoryStatusActive}
+	saved, refreshed := savedOrRefreshed(kept, "call_1")
+	require.NotNil(t, saved)
+	assert.Nil(t, refreshed)
+	assert.Equal(t, kept.ID, saved.ID)
+	assert.Equal(t, "call_1", saved.CallID)
+
+	again := &agent.Memory{ID: pulid.MustNew("amem_"), Refreshed: true}
+	saved, refreshed = savedOrRefreshed(again, "call_2")
+	assert.Nil(t, saved)
+	assert.Same(t, again, refreshed)
+
+	content := refreshedContent("remember", again)
+	assert.Contains(t, content, "already remembered as memory "+again.ID.String())
+	assert.Contains(t, content, "instead of saving a duplicate")
+}

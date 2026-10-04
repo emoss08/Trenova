@@ -384,6 +384,13 @@ func (s *stubProposalRepo) RecordSimulation(
 	return nil, nil
 }
 
+func (s *stubProposalRepo) SetPendingModifications(
+	context.Context,
+	repositories.SetPendingModificationsRequest,
+) (*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (s *stubProposalRepo) CountExecutedTool(
 	context.Context,
 	repositories.CountExecutedToolRequest,

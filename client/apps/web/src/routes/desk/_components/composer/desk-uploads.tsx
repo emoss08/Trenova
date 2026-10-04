@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react";
 import { DeskIcon } from "../desk-icons";
@@ -46,11 +47,14 @@ function usePreviewUrl(file: File | undefined): string | null {
     () => (file && file.type.startsWith("image/") ? URL.createObjectURL(file) : null),
     [file],
   );
-  useEffect(() => () => {
-    if (url) {
-      URL.revokeObjectURL(url);
-    }
-  }, [url]);
+  useEffect(
+    () => () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    },
+    [url],
+  );
   return url;
 }
 
@@ -65,7 +69,10 @@ export function DeskFileIcon({
   size?: number;
 }) {
   const extension = extensionOf(name);
-  const [label, kind] = FILE_KINDS[extension] ?? [extension.toUpperCase().slice(0, 4) || "FILE", "bad"];
+  const [label, kind] = FILE_KINDS[extension] ?? [
+    extension.toUpperCase().slice(0, 4) || "FILE",
+    "bad",
+  ];
   const preview = usePreviewUrl(kind === "img" ? file : undefined);
   if (preview) {
     return (
@@ -121,9 +128,7 @@ function FileChip({
           ))}
         </span>
         {pages > 0 && (
-          <span className="dk-fp-pc">
-            {t("{0, plural, one {# page} other {# pages}}", pages)}
-          </span>
+          <span className="dk-fp-pc">{t("{0, plural, one {# page} other {# pages}}", pages)}</span>
         )}
         {pages > 0 && onFinishScan && (
           <button
@@ -270,7 +275,11 @@ export function DeskDropGhosts({ count, taken }: { count: number; taken: number 
     <div className="dk-ar dk-ghosts">
       <div className="dk-ar-l">
         {Array.from({ length: shown }, (_, index) => (
-          <span key={index} className="dk-fp dk-ghost" style={{ animationDelay: `${index * 50}ms` }}>
+          <span
+            key={index}
+            className="dk-fp dk-ghost"
+            style={{ animationDelay: `${index * 50}ms` }}
+          >
             <span className="dk-fi" style={{ width: 18, height: 18 }} />
             <span className="dk-fp-n" />
           </span>
@@ -309,7 +318,17 @@ export function DeskAttachMenu({
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+      // Focus inside the menu goes back to the button that opened it, rather
+      // than to the page when the menu goes.
+      if (rootRef.current?.contains(document.activeElement)) {
+        rootRef.current.parentElement?.querySelector<HTMLElement>("[data-attach-toggle]")?.focus();
+      }
+      onClose();
+    };
     const onPointer = (event: PointerEvent) => {
       const target = event.target as Element | null;
       if (rootRef.current?.contains(target) || target?.closest?.("[data-attach-toggle]")) {
@@ -325,6 +344,23 @@ export function DeskAttachMenu({
     };
   }, [onClose]);
 
+  // The menu opens on its first item, so the arrow keys work at once.
+  const hasChildren = children !== undefined && children !== null;
+  useEffect(() => {
+    if (!hasChildren) {
+      rootRef.current?.querySelector<HTMLElement>("[role='menuitem']")?.focus();
+    }
+  }, [hasChildren]);
+  const onMenuKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const items = [...(rootRef.current?.querySelectorAll<HTMLElement>("[role='menuitem']") ?? [])];
+    const at = items.indexOf(document.activeElement as HTMLElement);
+    const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
+    if (step !== 0 && items.length > 0) {
+      event.preventDefault();
+      items[(at + step + items.length) % items.length]?.focus();
+    }
+  };
+
   if (children) {
     return (
       <div className="dk-am dk-cap-w" ref={rootRef}>
@@ -334,7 +370,7 @@ export function DeskAttachMenu({
   }
 
   return (
-    <div className="dk-am" ref={rootRef} role="menu">
+    <div className="dk-am" ref={rootRef} role="menu" onKeyDown={onMenuKey}>
       <input
         ref={inputRef}
         type="file"
@@ -382,7 +418,15 @@ export function DeskAttachMenu({
 }
 
 /** The whole Desk while files are dragged over it. */
-export function DeskDropOverlay({ show, hot, count }: { show: boolean; hot: boolean; count: number }) {
+export function DeskDropOverlay({
+  show,
+  hot,
+  count,
+}: {
+  show: boolean;
+  hot: boolean;
+  count: number;
+}) {
   const t = useT();
   return (
     <div className={cn("dk-dz", show && "dk-on", hot && "dk-hot")} aria-hidden={!show}>
@@ -475,7 +519,9 @@ export function useDeskDrop(onDrop: ((files: FileList) => void) | null): DragSta
         event.dataTransfer.dropEffect = "copy";
       }
       const hot = Boolean((event.target as Element | null)?.closest?.(".dk-cmp"));
-      setDrag((current) => (current.on && current.hot === hot ? current : { ...current, on: true, hot }));
+      setDrag((current) =>
+        current.on && current.hot === hot ? current : { ...current, on: true, hot },
+      );
     };
     const leave = (event: DragEvent) => {
       if (!carriesFiles(event)) {

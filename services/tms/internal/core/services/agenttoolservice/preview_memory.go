@@ -67,7 +67,8 @@ func (t *rememberTool) Preview(
 	}
 	if plan.Existing != nil {
 		return toolpreview.Build(
-			"This is already remembered as it stands, so nothing would be recorded again.",
+			"This is already remembered as it stands, so that memory would be refreshed " +
+				"rather than recorded again.",
 		), nil
 	}
 

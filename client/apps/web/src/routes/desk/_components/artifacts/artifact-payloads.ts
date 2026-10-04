@@ -528,6 +528,41 @@ export function emailDraftFrom(artifact: AssistantArtifact): EmailDraftArtifact 
   };
 }
 
+/** The subject and body as a draft shows them, or as a person changed them. */
+export type EmailWording = { subject: string; body: string };
+
+/**
+ * The wording a draft opens with: what the person saved over the agent's, kept
+ * on the proposal behind the draft, or the agent's own where they changed
+ * nothing.
+ */
+export function savedEmailWording(
+  draft: EmailDraftArtifact,
+  saved: Record<string, unknown> | null | undefined,
+): EmailWording {
+  return {
+    subject: typeof saved?.subject === "string" ? saved.subject : draft.subject,
+    body: typeof saved?.body === "string" ? saved.body : draft.body,
+  };
+}
+
+/**
+ * What a person changed on a draft, keyed by the proposal's parameter: only
+ * what differs from the agent's wording, so putting it back clears the edit.
+ * A part the proposal does not carry, such as a body written from the
+ * organization's template, is never sent.
+ */
+export function emailDraftEdits(
+  draft: EmailDraftArtifact,
+  wording: EmailWording,
+  editable: { subject: boolean; body: boolean },
+): Record<string, unknown> {
+  const edits: Record<string, unknown> = {};
+  if (editable.subject && wording.subject !== draft.subject) edits.subject = wording.subject;
+  if (editable.body && wording.body !== draft.body) edits.body = wording.body;
+  return edits;
+}
+
 export type DocumentArtifact = {
   body: string;
   /** What kind of write-up it is: "Brief", "Handover". */

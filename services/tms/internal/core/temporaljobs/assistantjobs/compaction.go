@@ -545,6 +545,7 @@ func compactionReply(reply *agentruntime.ModelReply) *assistantservice.Compactio
 	out.Summary = completion.Text
 	out.Model = completion.ModelIdentifier
 	out.ProviderID = completion.ProviderID
+	out.ContextWindow = completion.ContextWindow
 	out.Input = completion.InputTokens
 	out.Output = completion.OutputTokens
 

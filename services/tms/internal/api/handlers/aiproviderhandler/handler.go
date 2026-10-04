@@ -126,6 +126,7 @@ type saveProviderRequest struct {
 	InputCostPerMillion  *decimal.Decimal                `json:"inputCostPerMillion"`
 	OutputCostPerMillion *decimal.Decimal                `json:"outputCostPerMillion"`
 	MaxTokens            int                             `json:"maxTokens"`
+	ContextWindow        *int                            `json:"contextWindow"`
 	Tasks                []aiprovider.Task               `json:"tasks"`
 	Priority             int                             `json:"priority"`
 	EmbeddingDimensions  *int                            `json:"embeddingDimensions"`
@@ -155,6 +156,7 @@ func (r *saveProviderRequest) toServiceRequest(
 		InputCostPerMillion:  r.InputCostPerMillion,
 		OutputCostPerMillion: r.OutputCostPerMillion,
 		MaxTokens:            r.MaxTokens,
+		ContextWindow:        r.ContextWindow,
 		Tasks:                r.Tasks,
 		Priority:             r.Priority,
 		EmbeddingDimensions:  r.EmbeddingDimensions,

@@ -31,6 +31,11 @@ const (
 	maxExtraBodyKeys      = 24
 	maxExtraBodyBytes     = 8192
 	defaultMaxTokens      = 8192
+	// minContextWindow and maxContextWindow bound a configured window. Below
+	// the floor a turn's prompt and tools alone would not fit; above the
+	// ceiling is a typo, not a model.
+	minContextWindow = 4096
+	maxContextWindow = 10_000_000
 )
 
 // Provider is one configured model endpoint belonging to an organization. An
@@ -69,6 +74,11 @@ type Provider struct {
 
 	StructuredOutputMode StructuredOutputMode `json:"structuredOutputMode" bun:"structured_output_mode,type:VARCHAR(50),notnull"`
 	MaxTokens            int                  `json:"maxTokens"            bun:"max_tokens,type:INTEGER,notnull"`
+	// ContextWindowTokens is the model's context window, in tokens, when the
+	// operator knows it better than the model id does: a self-hosted model
+	// served with a shorter context than its family's, or an id nothing here
+	// can place. Nil reads the window off the model id.
+	ContextWindowTokens *int `json:"contextWindow" bun:"context_window,type:INTEGER,nullzero"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort"      bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
@@ -423,6 +433,12 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 				Error("Max tokens must be at least 256"),
 			validation.Max(maxMaxTokens).
 				Error("Max tokens cannot exceed 200000"),
+		),
+		validation.Field(&p.ContextWindowTokens,
+			validation.Min(minContextWindow).
+				Error("Context window must be at least 4096 tokens"),
+			validation.Max(maxContextWindow).
+				Error("Context window cannot exceed 10000000 tokens"),
 		),
 		validation.Field(&p.Priority,
 			validation.Min(0).Error("Priority cannot be negative"),

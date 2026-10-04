@@ -124,7 +124,10 @@ function RawArguments({ value }: { value: unknown }) {
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span style={{ display: "inline-flex", transform: open ? "rotate(90deg)" : undefined }}>
+        <span
+          aria-hidden
+          style={{ display: "inline-flex", transform: open ? "rotate(90deg)" : undefined }}
+        >
           <DeskIcon name="chevR" size={10} stroke={2.4} />
         </span>
         {t("Arguments the agent sent")}
@@ -295,8 +298,12 @@ function ProposalCard({
                 >
                   <span className="dk-dc2-dk">{row.key}</span>
                   <s>{row.before}</s>
-                  <i>→</i>
-                  <b title={row.refused ?? undefined}>{row.refused ? t("Refused") : row.after}</b>
+                  <i aria-hidden>→</i>
+                  <span className="sr-only">{t("to")}</span>
+                  <b title={row.refused ?? undefined}>
+                    {row.refused ? t("Refused") : row.after}
+                    {row.refused && <span className="sr-only">: {row.refused}</span>}
+                  </b>
                 </div>
               ))}
               {facts.count > Math.min(rows.length, SHOWN_ROWS) && (

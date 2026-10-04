@@ -31,3 +31,25 @@ func TestContextWindowFor_ReadsTheFamilyWhateverFormTheIDTakes(t *testing.T) {
 		assert.Equal(t, tc.want, ContextWindowFor(tc.model), tc.model)
 	}
 }
+
+/*
+An operator serving a Qwen model with its context stretched to 128k, or a
+Llama with it cut to 16k to fit a GPU, knows the window better than the id
+does, and a window read off the id would compact the first conversation far
+too late or far too soon.
+*/
+func TestContextWindow_TheConfiguredWindowWinsOverTheModelID(t *testing.T) {
+	t.Parallel()
+
+	stretched := 131_072
+	provider := &Provider{Model: "qwen2.5-coder:32b", ContextWindowTokens: &stretched}
+	assert.Equal(t, 131_072, provider.ContextWindow())
+	assert.Equal(t, 131_072, provider.ConfiguredContextWindow())
+
+	provider.ContextWindowTokens = nil
+	assert.Equal(t, 32_768, provider.ContextWindow(), "left unset, the id is read")
+	assert.Zero(t, provider.ConfiguredContextWindow())
+
+	assert.Equal(t, 16_384, WindowOr(16_384, "llama3.3:70b"))
+	assert.Equal(t, 128_000, WindowOr(0, "llama3.3:70b"))
+}

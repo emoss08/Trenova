@@ -342,9 +342,11 @@ func (r *repository) search(
 }
 
 // FindActive returns the active memory that already says this in this
-// scope, or nil. Content is compared case-insensitively after trimming,
-// because the same sentence recorded twice with different spacing is the
-// same memory.
+// scope, or nil. Content is compared by its words alone, ignoring case,
+// spacing and punctuation, because "Quote in dollars." and "quote in
+// dollars" are the same memory, and an agent restating one should refresh it
+// rather than record a second. Both sides go through the same SQL, so the
+// database's own idea of a letter decides, never a Go copy of it.
 func (r *repository) FindActive(
 	ctx context.Context,
 	req repositories.FindActiveAgentMemoryRequest,
@@ -358,8 +360,7 @@ func (r *repository) FindActive(
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now).
-					Where(cols.Content.Expr("LOWER(TRIM({})) = ?"),
-						strings.ToLower(strings.TrimSpace(req.Content)))
+					Where(cols.Content.Expr(memoryWords("{}")+" = "+memoryWords("?")), req.Content)
 				sq = sameReaders(sq, &req)
 				if !req.Tainted {
 					sq = sq.Where(cols.Tainted.IsFalse())
@@ -690,6 +691,12 @@ func activeOnly(sq *bun.SelectQuery, now int64) *bun.SelectQuery {
 		WhereGroup(" AND ", func(expiry *bun.SelectQuery) *bun.SelectQuery {
 			return expiry.Where(cols.ExpiresAt.IsNull()).WhereOr(cols.ExpiresAt.Gt(), now)
 		})
+}
+
+// memoryWords is what a memory says with the case, spacing and punctuation
+// taken out: every run of anything but letters and digits becomes one space.
+func memoryWords(operand string) string {
+	return "BTRIM(REGEXP_REPLACE(LOWER(" + operand + "), '[^[:alnum:]]+', ' ', 'g'))"
 }
 
 // kindOrder puts instructions before corrections before facts, the order a

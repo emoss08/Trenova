@@ -562,19 +562,16 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	writeCtx, write := s.startWrite(ctx, &a, false)
 	action.ExecutedAt = timeutils.NowUnix()
 	var (
-		result *agent.ToolExecutionResult
-		saved  *serviceports.SavedMemory
-		err    error
+		result    *agent.ToolExecutionResult
+		saved     *serviceports.SavedMemory
+		refreshed *agent.Memory
+		err       error
 	)
 	if recorder, records := a.tool.(serviceports.MemoryRecordingTool); records {
 		var memory *agent.Memory
 		memory, err = recorder.Record(writeCtx, a.executeParams())
 		if err == nil && memory != nil {
-			saved = &serviceports.SavedMemory{
-				ID:      memory.ID,
-				CallID:  call.ID,
-				Pending: memory.Status == agent.MemoryStatusSuggested,
-			}
+			saved, refreshed = savedOrRefreshed(memory, call.ID)
 		}
 	} else {
 		result, err = serviceports.ExecuteTool(writeCtx, a.tool, a.executeParams())
@@ -599,13 +596,49 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	}
 	write.End()
 
-	return toolOutcome{
+	outcome := toolOutcome{
 		content: ranContent(call.Name, result),
 		action:  action,
 		taint:   callTaint(a.tool.Policy(), call, nil, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 		saved:   saved,
 	}
+	if refreshed != nil {
+		outcome.content = refreshedContent(call.Name, refreshed)
+		outcome.memories = []pulid.ID{refreshed.ID}
+	}
+
+	return outcome
+}
+
+// savedOrRefreshed sorts what a remember returned. A memory it kept or
+// offered is shown to the person with an Undo. One it only refreshed is not:
+// nothing new was kept, and undoing would retire the memory they already had,
+// so the turn names it as a memory it used instead.
+func savedOrRefreshed(
+	memory *agent.Memory,
+	callID string,
+) (*serviceports.SavedMemory, *agent.Memory) {
+	if memory.Refreshed {
+		return nil, memory
+	}
+
+	return &serviceports.SavedMemory{
+		ID:      memory.ID,
+		CallID:  callID,
+		Pending: memory.Status == agent.MemoryStatusSuggested,
+	}, nil
+}
+
+// refreshedContent tells the model that what it asked to save was already
+// remembered, so it says so to the person rather than announcing a new memory
+// and does not try again with other words.
+func refreshedContent(name string, memory *agent.Memory) string {
+	return fmt.Sprintf(
+		"Tool %q ran successfully. This was already remembered as memory %s, so that "+
+			"memory was refreshed instead of saving a duplicate; nothing new was recorded.",
+		name, memory.ID,
+	)
 }
 
 func (s *Service) startWrite(

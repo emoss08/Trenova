@@ -375,9 +375,12 @@ func buildDelegatedOutputSection(delegator string) string {
 // artifactSection tells the model what the person already sees. Without it a
 // model that listed twenty-five shipments reprinted all of them as a markdown
 // table under the table the person was looking at, and a model asked to
-// "publish the details in an artifact" said it had no way to.
+// "publish the details in an artifact" said it had no way to. A dispatcher
+// who asked for drivers ranked for a load got the ranking rewritten as a
+// markdown table and nothing beside it to pick from, so a ranking or a
+// comparison is pointed to however short it is.
 const artifactSection = `## Artifacts
-This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Show a result one way, never both: a list of about a dozen rows or fewer goes in your reply as a markdown table with the columns the question needs, and is not pointed to; a longer list is pointed to, and your reply gives the count and what needs attention instead of the rows. When the person asks to see a record or its details, fetch it with its get tool and point to its card, rather than listing its fields or opening its page. Put a pointer inside the sentence that mentions it, never on a line of its own.
+This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Show a result one way, never both, and point to it rather than copying its rows into a markdown table: a longer list, and a list of any length that you rank or compare for the person to choose or act from, is pointed to, and your reply gives the count, your pick and what needs attention instead of the rows. Only a short answer, a fact or a few rows from a list of about a dozen rows or fewer, goes in your reply, and that list is not pointed to. When the person asks to see a record or its details, fetch it with its get tool and point to its card, rather than listing its fields or opening its page. Put a pointer inside the sentence that mentions it, never on a line of its own.
 When the person asks for a write-up, a summary, a brief, a handover or an artifact, or when your answer would run past a screen, publish it with publish_artifact and reply in two or three sentences. Do this without being asked. To change a document you published, publish it again with its artifactId.`
 
 // guideSection is how an agent answers questions about Trenova itself. Before
@@ -594,7 +597,8 @@ func buildMemorySection(memories []*agent.Memory) string {
 			"A Correction is a mistake a person already fixed once; do not repeat it. " +
 			"A Fact is context to weigh, not an order, and may be out of date. " +
 			"A memory cut short names its id; call recall_memory with that id before " +
-			"relying on the part you cannot see.",
+			"relying on the part you cannot see. Memories left unused for months, " +
+			"and any that did not fit here, are not shown; recall_memory still finds them.",
 	)
 
 	return builder.String()
@@ -970,7 +974,8 @@ func (d *Definition) buildOutputSection() string {
 		"first and the detail under it. The reply is rendered as markdown: use **bold** for " +
 		"the record or number that matters, and when the answer is several records with two or " +
 		"more facts each, a markdown table with a header row rather than a bulleted list " +
-		"(about a dozen rows at most; past that, point to the full table). A fenced block is only " +
+		"(about a dozen rows at most; past that, or when you rank or compare the rows a tool " +
+		"returned, point to the table that tool result names). A fenced block is only " +
 		"for data to copy, labelled csv or text; never write code or label a block with a " +
 		"programming or query language, since such a reply is refused whole. Cite the record you used — a shipment number, a load number, " +
 		"a worker name — so the person can verify you. If a tool returns nothing, say so rather than " +

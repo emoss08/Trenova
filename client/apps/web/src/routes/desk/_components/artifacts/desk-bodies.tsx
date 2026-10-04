@@ -2,8 +2,8 @@ import { decisionRequestOf } from "@/components/assistant/decision-requests";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { decideMyPlan, decideMyProposal, decideMyProposals } from "@/lib/graphql/agent-decisions";
-import { useDraftEditsStore } from "@/stores/desk-draft-edits-store";
-import { invalidateProposalViews } from "@/lib/proposal-cache";
+import { invalidateProposalViews, markProposalEdits } from "@/lib/proposal-cache";
+import { apiService } from "@/services/api";
 import { DisplayValue } from "@/components/assistant/display-value";
 import {
   formatDisplayValue,
@@ -22,6 +22,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   composedViewFrom,
+  emailDraftEdits,
   emailDraftFrom,
   entityCardFrom,
   navigationFrom,
@@ -29,6 +30,8 @@ import {
   rateExplanationFrom,
   reportRunFrom,
   runDiffFrom,
+  savedEmailWording,
+  type EmailWording,
 } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
 import { DeskBillingItem } from "./desk-billing-item";
@@ -434,11 +437,13 @@ export function DeskPlanBody({ artifact }: { artifact: AssistantArtifact }) {
 /**
  * A message waiting to go: who it goes to, what it says and why it is worded
  * so. The subject and body can be changed here. "Send for approval" does not
- * decide anything: it hands the wording to the decision card on the composer,
- * which approves the proposal behind the draft with it.
+ * decide anything: it saves the wording on the proposal behind the draft, so
+ * it survives a reload, and the decision card on the composer approves the
+ * proposal with it.
  */
 export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
+  const queryClient = useQueryClient();
   const draft = useMemo(() => emailDraftFrom(artifact), [artifact]);
   const proposalsQuery = useQuery({
     ...queries.assistant.proposals(artifact.threadId),
@@ -448,13 +453,6 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
     (candidate) => candidate.id === artifact.proposalId,
   );
   const { copy, isCopied: copied } = useCopyToClipboard();
-  const sentEdits = useDraftEditsStore((store) => store.edits[artifact.proposalId]);
-  const [subject, setSubject] = useState(
-    typeof sentEdits?.subject === "string" ? sentEdits.subject : draft.subject,
-  );
-  const [body, setBody] = useState(
-    typeof sentEdits?.body === "string" ? sentEdits.body : draft.body,
-  );
   const subjectKey = typeof artifact.payload.subject === "string" ? "subject" : "";
   const bodyKey = typeof artifact.payload.body === "string" ? "body" : "";
   const state =
@@ -467,15 +465,45 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
           : "unknown";
   const editable = state === "waiting";
 
-  const setEdits = useDraftEditsStore((store) => store.setEdits);
-  const [sentForApproval, setSentForApproval] = useState(sentEdits !== undefined);
-  const sendForApproval = () => {
-    const modifications: Record<string, unknown> = {};
-    if (subjectKey && subject !== draft.subject) modifications[subjectKey] = subject;
-    if (bodyKey && body !== draft.body) modifications[bodyKey] = body;
-    setEdits(artifact.proposalId, modifications);
-    setSentForApproval(true);
-  };
+  // What the person saved is read from the proposal, which may arrive after
+  // the draft; what they are typing now sits over it until it is saved.
+  const saved = state === "waiting" ? proposal?.pendingModifications : null;
+  const savedWording = savedEmailWording(draft, saved);
+  const [typed, setTyped] = useState<Partial<EmailWording>>({});
+  const subject = typed.subject ?? savedWording.subject;
+  const body = typed.body ?? savedWording.body;
+  const dirty = typed.subject !== undefined || typed.body !== undefined;
+  // Sending the agent's wording unchanged saves nothing, so the hand-over is
+  // remembered here until the page is left; a change is remembered by the server.
+  const [handedOver, setHandedOver] = useState(false);
+  const sentForApproval =
+    !dirty && (handedOver || (saved != null && Object.keys(saved).length > 0));
+
+  const save = useApiMutation({
+    mutationFn: (modifications: Record<string, unknown>) =>
+      apiService.assistantService.saveProposalEdits(
+        artifact.threadId,
+        artifact.proposalId,
+        modifications,
+      ),
+    onSuccess: (edits) => {
+      markProposalEdits(queryClient, edits.proposalId, edits.pendingModifications ?? null);
+      setTyped({});
+      setHandedOver(true);
+      void queryClient.invalidateQueries({
+        queryKey: queries.assistant.proposals(artifact.threadId).queryKey,
+      });
+    },
+    resourceName: "Draft",
+  });
+  const sendForApproval = () =>
+    save.mutate(
+      emailDraftEdits(
+        draft,
+        { subject, body },
+        { subject: subjectKey !== "", body: bodyKey !== "" },
+      ),
+    );
 
   return (
     <div className="dk-ax-mail">
@@ -495,8 +523,8 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
           value={subject}
           readOnly={!editable || subjectKey === ""}
           onChange={(event) => {
-            setSubject(event.target.value);
-            setSentForApproval(false);
+            const value = event.target.value;
+            setTyped((current) => ({ ...current, subject: value }));
           }}
           aria-label={t("Subject")}
         />
@@ -509,8 +537,8 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
         }
         readOnly={!editable || bodyKey === ""}
         onChange={(event) => {
-          setBody(event.target.value);
-          setSentForApproval(false);
+          const value = event.target.value;
+          setTyped((current) => ({ ...current, body: value }));
         }}
         spellCheck={false}
         aria-label={t("Message")}
@@ -546,7 +574,7 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
           <button
             type="button"
             className="dk-ax-btn dk-ink"
-            disabled={artifact.proposalId === ""}
+            disabled={artifact.proposalId === "" || save.isPending}
             onClick={sendForApproval}
           >
             {t("Send for approval")}

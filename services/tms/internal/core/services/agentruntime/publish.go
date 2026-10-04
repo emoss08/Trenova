@@ -233,7 +233,9 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 // made to find something out is not worth a place beside the conversation
 // unless the answer rests on it. A small model otherwise reprints a
 // twenty-five row list as a markdown table, or fetches every row of a list
-// again one by one.
+// again one by one. A ranking is pointed to however short it is: the Desk
+// rewrote five ranked drivers as its own table and linked nothing, and the
+// dispatcher lost the findings and the driver links the table carries.
 func shownNote(shown *serviceports.ShownArtifact) string {
 	if tabular(shown.Kind) && shown.Opens {
 		return fmt.Sprintf("\n\n[This view is kept beside the conversation as %q, with how many "+
@@ -250,12 +252,23 @@ func shownNote(shown *serviceports.ShownArtifact) string {
 			"need attention. Work from the fields it already has instead of looking up each row "+
 			"again.%s]", shown.Title, artifactRefNote(shown))
 	}
+	if tabular(shown.Kind) && shown.Ranked {
+		return fmt.Sprintf("\n\n[This result is kept as a ranked table titled %q, best first, "+
+			"that the person picks from beside the conversation, with the findings behind each "+
+			"row and a link to each record. Point to it in the sentence that names your pick, "+
+			"however few rows it has, and do not write its rows out as a markdown table. Answer "+
+			"with the one you would choose and why, and anything that rules out or holds back "+
+			"the others. Work from the fields it already has instead of looking up each row "+
+			"again.%s]", shown.Title, artifactRefNote(shown))
+	}
 	if tabular(shown.Kind) && shown.Rows > 0 && shown.Rows <= InlineRows {
-		return fmt.Sprintf("\n\n[This result has %d rows, few enough to answer in your reply: "+
-			"show the rows that answer the question as a markdown table with only the columns "+
-			"it needs, and do not point to the table titled %q; a table you do not point to is "+
-			"not kept. Work from the fields it already has instead of looking up each row "+
-			"again.]", shown.Rows, shown.Title)
+		return fmt.Sprintf("\n\n[This result has %d rows, few enough to answer in your reply "+
+			"when the answer is a fact or a few of its rows: give them with only the columns the "+
+			"question needs, and do not point to the table titled %q; a table you do not point "+
+			"to is not kept. When you would rank or compare its rows for the person to choose "+
+			"from, or write most of them out, point to the table instead and do not write its "+
+			"rows out as a markdown table. Work from the fields it already has instead of "+
+			"looking up each row again.%s]", shown.Rows, shown.Title, artifactRefNote(shown))
 	}
 	if tabular(shown.Kind) {
 		return fmt.Sprintf("\n\n[This result is kept as %s titled %q, which the person can "+
@@ -269,13 +282,15 @@ func shownNote(shown *serviceports.ShownArtifact) string {
 	return fmt.Sprintf("\n\n[This result can be shown to the person as %s titled %q, which "+
 		"they can open beside the conversation. Point to it only if your answer rests on it; "+
 		"a result you do not point to is not shown. Answer with what matters rather than "+
-		"repeating its fields; the person reads the rest on it.%s]",
+		"repeating its fields, and never set them out as a markdown table; the person reads "+
+		"the rest on it.%s]",
 		artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
 }
 
 // InlineRows is the most rows a reply repeats as a markdown table. A table
-// that short is answered in the reply and not kept; a longer one is kept and
-// pointed to, and its rows are not repeated. One or the other, never both.
+// that short is answered in the reply and not kept, unless the reply ranks or
+// compares its rows; a longer one is kept and pointed to, and its rows are
+// not repeated. One or the other, never both.
 const InlineRows = 12
 
 func tabular(kind string) bool {

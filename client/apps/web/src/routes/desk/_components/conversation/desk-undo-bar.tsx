@@ -185,7 +185,10 @@ export function DeskUndoBar({
       </svg>
       <span className="dk-udo-t">
         <b>{t("Approved {0}", title)}</b>
-        <span>{t("{0} in {1}s", held.what, left)}</span>
+        {/* The seconds tick every second; a screen reader is told what will
+            happen once, not each tick. */}
+        <span aria-hidden>{t("{0} in {1}s", held.what, left)}</span>
+        <em className="sr-only">{held.what}</em>
       </span>
       <button type="button" className="dk-bt dk-sm" disabled={busy} onClick={onUndo}>
         <DeskIcon name="undo" size={12} stroke={2} />

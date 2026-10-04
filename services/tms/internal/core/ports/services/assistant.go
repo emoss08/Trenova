@@ -164,6 +164,10 @@ type AssistantProposal struct {
 	// Modifications are the values the approver changed before approving,
 	// keyed by parameter. Nil when it was approved as proposed.
 	Modifications map[string]any `json:"modifications"`
+	// PendingModifications are the values a person changed and has not yet
+	// approved with, keyed by parameter, kept so the edit survives a reload.
+	// Nil once the proposal is decided, or when nothing was changed.
+	PendingModifications map[string]any `json:"pendingModifications"`
 	// AgentID and AgentName are the agent that proposed it: the
 	// conversation's own, or another agent it handed a task to, whose
 	// proposal it is and whose trust a decision on it teaches.
@@ -174,6 +178,13 @@ type AssistantProposal struct {
 	DecidedAt       *int64   `json:"decidedAt"`
 	DecidedByUserID pulid.ID `json:"decidedByUserId"`
 	DecisionNote    string   `json:"decisionNote"`
+}
+
+// ProposalEdits is what a pending proposal holds as changed once a person
+// saved their edits: only the values that differ from what the agent proposed.
+type ProposalEdits struct {
+	ProposalID           pulid.ID       `json:"proposalId"`
+	PendingModifications map[string]any `json:"pendingModifications"`
 }
 
 // AssistantPlan is several of a turn's proposals as one decision, as the
@@ -756,6 +767,15 @@ type AssistantService interface {
 		ctx context.Context,
 		req repositories.GetThreadRequest,
 	) ([]AssistantProposal, error)
+	// SaveProposalEdits keeps the values a person changed on one of the
+	// conversation's pending proposals, for the approval to go with; an empty
+	// set clears them.
+	SaveProposalEdits(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		proposalID pulid.ID,
+		modifications map[string]any,
+	) (*ProposalEdits, error)
 	ListThreadPlans(
 		ctx context.Context,
 		req repositories.GetThreadRequest,

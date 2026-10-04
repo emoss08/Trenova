@@ -256,6 +256,10 @@ type ShownArtifact struct {
 	// Opens is a composed view: it opens the live table rather than being
 	// worked from where it is drawn.
 	Opens bool
+	// Ranked is a table whose order is the answer, such as drivers ranked
+	// for a move: the person picks from it, so it is pointed to however
+	// short it is.
+	Ranked bool
 }
 
 // PublishedDocument is a write-up the model asked to keep beside the
@@ -297,6 +301,9 @@ type RunResult struct {
 	OutputRule    string
 	Model         string
 	ProviderID    pulid.ID
+	// ContextWindow is the window the answering provider is configured
+	// with, zero when it is read off Model.
+	ContextWindow int `json:",omitempty"`
 	ToolCallsUsed int
 	Exhausted     bool
 	// Truncated reports that the provider stopped partway through the reply.

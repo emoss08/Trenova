@@ -25,6 +25,7 @@ import {
   agentBudgetStatusSchema,
   assistantPlanListSchema,
   assistantProposalListSchema,
+  proposalEditsSchema,
   assistantProviderListSchema,
   assistantThreadListSchema,
   assistantThreadSchema,
@@ -593,6 +594,23 @@ export class AssistantService {
   public async listProposals(threadId: AssistantThread["id"]) {
     const response = await api.get(`/assistant/threads/${threadId}/proposals/`);
     return safeParse(assistantProposalListSchema, response, "Assistant Proposal");
+  }
+
+  /**
+   * Keeps the values a person changed on a pending proposal, such as the
+   * wording of a drafted message, so the edit survives a reload and goes with
+   * the approval. Saving is not deciding; an empty set clears what was saved.
+   */
+  public async saveProposalEdits(
+    threadId: AssistantThread["id"],
+    proposalId: string,
+    modifications: Record<string, unknown>,
+  ) {
+    const response = await api.put(
+      `/assistant/threads/${threadId}/proposals/${proposalId}/edits/`,
+      { modifications },
+    );
+    return safeParse(proposalEditsSchema, response, "Proposal Edits");
   }
 
   /**

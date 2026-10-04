@@ -37,6 +37,7 @@ import { DeskDocBody } from "./desk-doc-body";
 import { DeskExtractBody } from "./desk-extract-body";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
 import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
+import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
 import {
   DeskReportBars,
   DeskTableBody,
@@ -141,6 +142,7 @@ function ArtStack({
             }}
             title={index === 0 && !fan ? t("Switch artifact") : undefined}
             aria-expanded={index === 0 ? fan : undefined}
+            aria-hidden={index === 0 || fan ? undefined : true}
             tabIndex={index === 0 || fan ? 0 : -1}
             style={{
               zIndex: count - index,
@@ -179,6 +181,8 @@ function ArtStack({
           close();
         }}
         tabIndex={fan ? 0 : -1}
+        aria-hidden={fan ? undefined : true}
+        aria-keyshortcuts="Meta+J"
         style={{
           zIndex: 0,
           transform: `translateY(${fan ? count * gap : 12}px) scale(${fan ? 1 : 0.93})`,
@@ -193,7 +197,9 @@ function ArtStack({
           <b>{t("All {0} artifacts", total)}</b>
           <span>{t("Search everything this conversation made")}</span>
         </span>
-        <span className="dk-kbd">⌘J</span>
+        <span className="dk-kbd" aria-hidden>
+          ⌘J
+        </span>
       </button>
     </div>
   );
@@ -212,16 +218,52 @@ function VersionPicker({
   const t = useT();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLSpanElement>(null);
-  const close = useCallback(() => setOpen(false), []);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  // Closing hands focus back to the button when it was inside the list, so
+  // it is not dropped on the page when the list goes.
+  const close = useCallback(() => {
+    if (rootRef.current?.contains(document.activeElement)) {
+      buttonRef.current?.focus();
+    }
+    setOpen(false);
+  }, []);
   useOutsideDismiss(rootRef, open, close);
   const last = lineage.versions.length - 1;
+  useEffect(() => {
+    if (open) {
+      listRef.current?.querySelector<HTMLElement>("[aria-selected='true']")?.focus();
+    }
+  }, [open]);
+  const onListKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const options = [...(listRef.current?.querySelectorAll<HTMLElement>("[role='option']") ?? [])];
+    const at = options.indexOf(document.activeElement as HTMLElement);
+    const next =
+      event.key === "ArrowDown"
+        ? Math.min(options.length - 1, at + 1)
+        : event.key === "ArrowUp"
+          ? Math.max(0, at - 1)
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? options.length - 1
+              : null;
+    if (next !== null) {
+      event.preventDefault();
+      options[next]?.focus();
+    } else if (event.key === "Tab") {
+      close();
+    }
+  };
 
   return (
     <span className="dk-axv" ref={rootRef}>
       <button
         type="button"
         className={cn("dk-axv-b", open && "dk-on", index !== last && "dk-old")}
+        ref={buttonRef}
         title={t("Versions")}
+        aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
@@ -229,7 +271,13 @@ function VersionPicker({
         <ArtIcon name="down" size={9} stroke={2.6} />
       </button>
       {open && (
-        <div className="dk-axv-pop" role="listbox">
+        <div
+          className="dk-axv-pop"
+          role="listbox"
+          aria-label={t("Versions")}
+          ref={listRef}
+          onKeyDown={onListKey}
+        >
           {[...lineage.versions].reverse().map((version) => {
             const at = lineage.versions.indexOf(version);
             return (
@@ -238,10 +286,11 @@ function VersionPicker({
                 type="button"
                 role="option"
                 aria-selected={at === index}
+                tabIndex={at === index ? 0 : -1}
                 className={cn("dk-axv-r", at === index && "dk-on")}
                 onClick={() => {
                   onChange(at);
-                  setOpen(false);
+                  close();
                 }}
               >
                 <b>v{at + 1}</b>
@@ -401,20 +450,29 @@ function useRememberedLineage(
 export function DeskWorkspace({
   threadId,
   liveArtifacts,
+  pendingLookups = NO_PENDING_LOOKUPS,
   onClose,
 }: {
   threadId: string;
   liveArtifacts: LiveArtifacts;
+  /** The running turn's lookups, left out until the reply says which it keeps. */
+  pendingLookups?: ReadonlySet<string>;
   onClose: () => void;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
   const artifactsQuery = useQuery(queries.assistant.artifacts(threadId));
-  const lineages = useMemo(
-    () => groupLineages(artifactsQuery.data?.results ?? []),
-    [artifactsQuery.data],
+  const page = useMemo(
+    () =>
+      withoutPendingLookups(
+        artifactsQuery.data?.results ?? [],
+        artifactsQuery.data?.counts,
+        pendingLookups,
+      ),
+    [artifactsQuery.data, pendingLookups],
   );
-  const total = Math.max(artifactsQuery.data?.counts.all ?? 0, lineages.length);
+  const lineages = useMemo(() => groupLineages(page.results), [page.results]);
+  const total = Math.max(page.counts?.all ?? 0, lineages.length);
   const remembered = useDeskStore((state) => state.activeArtifactByThread[threadId]);
   const setActiveArtifact = useDeskStore((state) => state.setActiveArtifact);
   const browsing = useDeskStore((state) => state.browsing);
@@ -459,6 +517,20 @@ export function DeskWorkspace({
   }, [arrived, liveRevision]);
 
   const paneRef = useRef<HTMLDivElement>(null);
+  // Leaving the list of every artifact takes away whatever had focus in it;
+  // focus lands on the open artifact's card rather than on the page.
+  const browsedRef = useRef(browsing);
+  useEffect(() => {
+    const left = browsedRef.current && !browsing;
+    browsedRef.current = browsing;
+    if (!left) {
+      return;
+    }
+    const active = document.activeElement;
+    if (active === null || active === document.body || !active.isConnected) {
+      paneRef.current?.querySelector<HTMLElement>(".dk-ax-card.dk-front")?.focus();
+    }
+  }, [browsing]);
   const [height, setHeight] = useState(700);
   const hasArtifacts = active !== null;
   useLayoutEffect(() => {
@@ -574,6 +646,7 @@ export function DeskWorkspace({
         <DeskArtifactBrowser
           threadId={threadId}
           total={total}
+          pendingLookups={pendingLookups}
           activeId={active.id}
           onPick={(id) => {
             open(id);
@@ -661,6 +734,7 @@ export function DeskWorkspace({
               type="button"
               className={cn("dk-ax-ib", pinned && "dk-on")}
               title={pinned ? t("Unpin") : t("Pin to conversation")}
+              aria-label={t("Pin to conversation")}
               aria-pressed={pinned}
               onClick={() => pinMutation.mutate({ id: artifact.id, pinned: !pinned })}
             >
@@ -671,6 +745,7 @@ export function DeskWorkspace({
                 type="button"
                 className="dk-ax-ib"
                 title={t("Export CSV")}
+                aria-label={t("Export CSV")}
                 onClick={() => downloadFromUrl(artifactCsvUrl(threadId, artifact.id))}
               >
                 <ArtIcon name="dl" size={14} />
@@ -682,6 +757,7 @@ export function DeskWorkspace({
               target="_blank"
               rel="noreferrer"
               title={t("Open on its own page")}
+              aria-label={t("Open on its own page")}
             >
               <ArtIcon name="ext" size={14} />
             </a>

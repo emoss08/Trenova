@@ -641,10 +641,11 @@ earlier ones allowed.
 - **Short billing queues**: a list of twelve rows or fewer is answered as a
   markdown table in the reply, except the billing queue, which always opens
   as the selectable table the design draws.
-- **Email draft**: "Send for approval" hands the edited wording to the
-  decision card on the composer, which approves with it as a modification;
-  the wording is held in the page, so an edit sent and not approved before a
-  reload goes back to the agent's.
+- **Email draft**: "Send for approval" saves the edited wording on the
+  proposal behind the draft and the decision card on the composer approves
+  with it as a modification, rather than the draft deciding on its own. The
+  saved wording survives a reload and is cleared once the proposal is
+  decided.
 - **Extraction actions**: "Create shipment" and "Fix fields" ask the agent,
   which proposes the change for a decision, rather than writing directly.
 - **Fonts**: the prototype's Geist and IBM Plex Mono are the app's font

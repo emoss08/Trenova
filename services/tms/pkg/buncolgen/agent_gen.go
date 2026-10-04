@@ -881,6 +881,7 @@ var AgentProposalColumns = struct {
 	StepKey               Column // "step_key" → qualified: "ap.step_key"
 	ExecutedByUserID      Column // "executed_by_user_id" → qualified: "ap.executed_by_user_id"
 	ExecutedTargetVersion Column // "executed_target_version" → qualified: "ap.executed_target_version"
+	PendingModifications  Column // "pending_modifications" → qualified: "ap.pending_modifications"
 	Version               Column // "version" → qualified: "ap.version"
 	CreatedAt             Column // "created_at" → qualified: "ap.created_at"
 	UpdatedAt             Column // "updated_at" → qualified: "ap.updated_at"
@@ -918,6 +919,7 @@ var AgentProposalColumns = struct {
 	StepKey:               NewColumn("step_key", "ap"),
 	ExecutedByUserID:      NewColumn("executed_by_user_id", "ap"),
 	ExecutedTargetVersion: NewColumn("executed_target_version", "ap"),
+	PendingModifications:  NewColumn("pending_modifications", "ap"),
 	Version:               NewColumn("version", "ap"),
 	CreatedAt:             NewColumn("created_at", "ap"),
 	UpdatedAt:             NewColumn("updated_at", "ap"),
@@ -961,6 +963,7 @@ var AgentProposalFieldMap = map[string]string{
 	"stepKey":               "step_key",
 	"executedByUserId":      "executed_by_user_id",
 	"executedTargetVersion": "executed_target_version",
+	"pendingModifications":  "pending_modifications",
 	"version":               "version",
 	"createdAt":             "created_at",
 	"updatedAt":             "updated_at",
@@ -1002,6 +1005,7 @@ var AgentProposalInsertableColumns = []string{
 	"step_key",
 	"executed_by_user_id",
 	"executed_target_version",
+	"pending_modifications",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1105,6 +1109,7 @@ var AgentProposalFilter = struct {
 	StepKey               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
 	ExecutedByUserID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedByUserId" → DB: "executed_by_user_id"
 	ExecutedTargetVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedTargetVersion" → DB: "executed_target_version"
+	PendingModifications  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pendingModifications" → DB: "pending_modifications"
 	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1207,6 +1212,9 @@ var AgentProposalFilter = struct {
 	},
 	ExecutedTargetVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("executedTargetVersion", op, value)
+	},
+	PendingModifications: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pendingModifications", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

@@ -516,12 +516,13 @@ func clockLine(now int64, timezone string) string {
 	return "Now: " + time.Unix(now, 0).In(loc).Format(clockLineLayout) + " " + name + "\n\n"
 }
 
-// completionRequest is what the turn is ready to send the model now.
+// completionRequest is what the turn is ready to send the model now, with its
+// older tool results shortened when they would no longer fit the window.
 func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 	req := t.req
 	definition := req.Definition
 
-	return &serviceports.ChatCompletionRequest{
+	completion := &serviceports.ChatCompletionRequest{
 		TenantInfo:          req.Actor.TenantInfo(),
 		System:              t.system,
 		SystemStable:        t.systemStable,
@@ -532,6 +533,9 @@ func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 		Attribution:         turnAttribution(req),
 		MaxTokens:           t.cutOff.budget,
 	}
+	fitWindow(completion, t.window())
+
+	return completion
 }
 
 func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttribution {

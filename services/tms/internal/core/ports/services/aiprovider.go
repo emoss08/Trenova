@@ -32,14 +32,16 @@ type SaveAIProviderRequest struct {
 	InputCostPerMillion  *decimal.Decimal
 	OutputCostPerMillion *decimal.Decimal
 	MaxTokens            int
-	Tasks                []aiprovider.Task
-	Priority             int
-	EmbeddingDimensions  *int
-	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle
-	Trusted              bool
-	Enabled              bool
-	Version              int64
-	TenantInfo           pagination.TenantInfo
+	// ContextWindow is the model's window in tokens; nil reads it off Model.
+	ContextWindow       *int
+	Tasks               []aiprovider.Task
+	Priority            int
+	EmbeddingDimensions *int
+	EmbeddingInputStyle aiprovider.EmbeddingInputStyle
+	Trusted             bool
+	Enabled             bool
+	Version             int64
+	TenantInfo          pagination.TenantInfo
 }
 
 // TestAIProviderResult reports what a live call to the endpoint revealed.

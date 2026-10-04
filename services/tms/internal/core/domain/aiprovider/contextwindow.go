@@ -49,7 +49,29 @@ func ContextWindowFor(model string) int {
 	return DefaultContextWindow
 }
 
-// ContextWindow is the context window of the provider's model.
+// ConfiguredContextWindow is the window the provider is configured with, or
+// zero when it is left to be read off the model id.
+func (p *Provider) ConfiguredContextWindow() int {
+	if p.ContextWindowTokens == nil || *p.ContextWindowTokens <= 0 {
+		return 0
+	}
+
+	return *p.ContextWindowTokens
+}
+
+// ContextWindow is the context window of the provider's model: the one it is
+// configured with, and otherwise the one its model id names.
 func (p *Provider) ContextWindow() int {
-	return ContextWindowFor(p.Model)
+	return WindowOr(p.ConfiguredContextWindow(), p.Model)
+}
+
+// WindowOr is configured when it is set, and otherwise the window of model.
+// A configured window wins because the operator saw the server; the id is
+// only a guess at what is behind it.
+func WindowOr(configured int, model string) int {
+	if configured > 0 {
+		return configured
+	}
+
+	return ContextWindowFor(model)
 }

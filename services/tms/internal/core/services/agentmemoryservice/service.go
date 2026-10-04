@@ -129,7 +129,7 @@ func (s *Service) Remember(
 		return nil, err
 	}
 	if plan.Existing != nil {
-		return plan.Existing, nil
+		return s.refresh(ctx, req.TenantInfo, plan.Existing)
 	}
 
 	created, err := s.repo.Create(ctx, plan.Memory)
@@ -141,6 +141,31 @@ func (s *Service) Remember(
 	s.queueForRetrieval(ctx, created)
 
 	return created, nil
+}
+
+// refresh keeps the memory that already says what was asked to be saved, in
+// place of a duplicate beside it. Being told it again is a use: the memory is
+// counted as used now, so a memory people keep restating never goes stale,
+// and it is marked Refreshed so the caller can say nothing new was recorded.
+func (s *Service) refresh(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	existing *agent.Memory,
+) (*agent.Memory, error) {
+	now := timeutils.NowUnix()
+	if err := s.repo.MarkUsed(ctx, repositories.MarkAgentMemoriesUsedRequest{
+		TenantInfo: tenant,
+		IDs:        []pulid.ID{existing.ID},
+		At:         now,
+	}); err != nil {
+		return nil, err
+	}
+
+	existing.UseCount++
+	existing.LastUsedAt = &now
+	existing.Refreshed = true
+
+	return existing, nil
 }
 
 func (s *Service) PreviewRemember(

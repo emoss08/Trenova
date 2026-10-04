@@ -1330,6 +1330,12 @@ export const assistantProposalSchema = z.object({
   /** The values the approver changed before approving, keyed by parameter. */
   modifications: z.record(z.string(), z.unknown()).nullish(),
   /**
+   * The values a person changed and saved but has not yet approved with, keyed
+   * by parameter, such as the rewording of a drafted message. Kept on the
+   * server so the edit survives a reload; absent once decided.
+   */
+  pendingModifications: z.record(z.string(), z.unknown()).nullish(),
+  /**
    * The agent that proposed it: the conversation's own, or another agent it
    * handed a task to. Absent from a server that does not say.
    */
@@ -1353,6 +1359,12 @@ export const assistantProposalSchema = z.object({
 
 export const assistantProposalListSchema = z.object({
   results: z.array(assistantProposalSchema),
+});
+
+/** What a pending proposal holds as changed once a person saved their edits. */
+export const proposalEditsSchema = z.object({
+  proposalId: z.string(),
+  pendingModifications: z.record(z.string(), z.unknown()).nullish(),
 });
 
 /**

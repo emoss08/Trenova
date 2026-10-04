@@ -704,6 +704,105 @@ func TestArtifactFromObservation_ADescribedViewWithNoLinkIsNotOne(t *testing.T) 
 	})))
 }
 
+/*
+Drivers ranked for a move are a table the dispatcher picks from.
+
+Asked to rank drivers for a load, the Desk read the ranking, found nothing
+beside the conversation to point to, and wrote its own markdown table of the
+five candidates: the order survived, the findings and the driver links did
+not. The ranking is now a table of its own, in the order it was ranked, each
+row opening its driver, and the model is told to point to it however short
+it is.
+*/
+func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("rank_move_candidates", map[string]any{
+		"moveId": "smv_1",
+		"count":  float64(2),
+		"candidates": []any{
+			map[string]any{
+				"workerId":            "wrk_01JEMILY0000000000000000",
+				"workerName":          "Emily Chen",
+				"tractorId":           "trc_01JTRACTOR00000000000000",
+				"score":               float64(92),
+				"verdict":             "Feasible",
+				"blocked":             false,
+				"deadheadMiles":       float64(14.2),
+				"projectedArrival":    float64(1790187600),
+				"minutesOfSlack":      float64(240),
+				"driveRemainingHours": 9.333333,
+				"findings": []any{
+					map[string]any{"code": "home_time", "severity": "Info", "message": "Home Friday"},
+				},
+			},
+			map[string]any{
+				"workerId":            "wrk_01JMARCUS000000000000000",
+				"workerName":          "Marcus Webb",
+				"score":               float64(61),
+				"verdict":             "Tight",
+				"projectedArrival":    "unknown",
+				"minutesOfSlack":      float64(45),
+				"driveRemainingHours": float64(3),
+				"findings": []any{
+					map[string]any{"code": "slack", "severity": "Warn", "message": "45 minutes of slack"},
+				},
+			},
+		},
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
+	assert.Equal(t, "Drivers ranked for the move", artifact.Title)
+	assert.Equal(t, "rank_move_candidates", artifact.Payload["tool"])
+	assert.Equal(t, "worker", artifact.Payload["recordEntity"])
+	assert.Equal(t, true, artifact.Payload[payloadRanked])
+
+	columns, ok := artifact.Payload["columns"].([]assistantartifact.DisplayColumn)
+	require.True(t, ok)
+	keys := make([]string, 0, len(columns))
+	for _, column := range columns {
+		keys = append(keys, column.Key)
+	}
+	// The rank leads, because the order is the answer; the tractor is an id a
+	// person cannot read, and stays in the model's copy for assign_move.
+	assert.Equal(t, "rank", keys[0])
+	assert.Equal(t, "driver", keys[1])
+	assert.NotContains(t, keys, "tractorId")
+
+	rows, ok := artifact.Payload["rows"].([]any)
+	require.True(t, ok)
+	require.Len(t, rows, 2)
+	first, _ := rows[0].(map[string]any)
+	second, _ := rows[1].(map[string]any)
+	assert.Equal(t, "Emily Chen", first["driver"])
+	assert.Equal(t, "wrk_01JEMILY0000000000000000", first[recordIDKey])
+	assert.Equal(t, 9.3, first["driveRemainingHours"])
+	// A note that changes nothing is not the finding a dispatcher reads first.
+	assert.NotContains(t, first, "finding")
+	assert.Equal(t, "45 minutes of slack", second["finding"])
+	// An unknown arrival is left blank rather than written into a column of
+	// times.
+	assert.NotContains(t, second, "projectedArrival")
+
+	shown := shownArtifact(artifact)
+	assert.True(t, shown.Ranked)
+	assert.False(t, shown.Actionable, "it is picked from, not selected and approved in bulk")
+}
+
+// No driver can cover the move: that is the tool's sentence to say, not an
+// empty table.
+func TestArtifactFromObservation_NoCandidatesLeavesThePaneAlone(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, artifactFromObservation(observation("rank_move_candidates", map[string]any{
+		"moveId":     "smv_1",
+		"count":      float64(0),
+		"candidates": []any{},
+		"note":       "No driver can cover this move as things stand.",
+	})))
+}
+
 func TestArtifactFromObservation_ARateBecomesALedger(t *testing.T) {
 	t.Parallel()
 

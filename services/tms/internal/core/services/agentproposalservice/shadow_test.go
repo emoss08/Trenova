@@ -274,6 +274,13 @@ func (r *fakeProposalRepo) RecordSimulation(
 	return nil, nil
 }
 
+func (r *fakeProposalRepo) SetPendingModifications(
+	context.Context,
+	repositories.SetPendingModificationsRequest,
+) (*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (r *fakeProposalRepo) ListByRun(
 	context.Context,
 	repositories.ListAgentProposalsByRunRequest,

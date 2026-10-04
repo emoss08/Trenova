@@ -54,6 +54,29 @@
   color: oklch(0.5 0.205 262);
   text-decoration: none;
 }
+/* Keyboard focus wears the design's field ring (0 0 0 3px var(--ring)),
+   drawn as an outline so it shows over a control's own shadow. No
+   specificity, so a control with a focus treatment of its own keeps it, and
+   a pointer never sees it. */
+.dsk
+  :where(
+    button,
+    a[href],
+    [role="option"],
+    [role="tab"],
+    [role="radio"],
+    [role="switch"],
+    [role="menuitem"],
+    [tabindex="0"]
+  ):focus-visible {
+  outline: 3px solid var(--dsk-ring);
+  outline-offset: 0;
+}
+/* A dialog's panel takes focus only to hold it when it opens; it is not a
+   control and draws no ring. */
+.dk-sx:focus-visible {
+  outline: none;
+}
 .dsk .dk-mono {
   font-family: var(--font-mono);
   font-feature-settings: "tnum";

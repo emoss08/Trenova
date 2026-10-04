@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
 	"strings"
 
@@ -43,6 +44,7 @@ const (
 	toolCompareRuns      = "compare_report_runs"
 	toolOpenPage         = "open_page"
 	toolGetShipmentDraft = "get_shipment_draft"
+	toolRankCandidates   = "rank_move_candidates"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -55,6 +57,10 @@ const (
 
 	// billingQueueRecordEntity is the record a billing queue table's rows are.
 	billingQueueRecordEntity = "billing_queue_item"
+
+	// payloadRanked marks a table whose order is the answer: drivers ranked
+	// for a move, best first.
+	payloadRanked = "ranked"
 )
 
 // draftSpec names how an outbound message proposal reads as a draft: which
@@ -529,7 +535,18 @@ func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact
 		Rows:       int(numberOf(artifact.Payload, "rowCount")),
 		Actionable: actionableTable(artifact),
 		Opens:      opensView(artifact),
+		Ranked:     rankedTable(artifact),
 	}
+}
+
+// rankedTable is a table whose order is what the person decides from: the
+// drivers ranked for a move. Five rows are few enough to reprint, and the
+// Desk did, as a markdown table that kept the order and lost the findings
+// behind it and the link to each driver.
+func rankedTable(artifact *assistantartifact.Artifact) bool {
+	ranked, _ := artifact.Payload[payloadRanked].(bool)
+
+	return artifact.Kind == assistantartifact.KindTableView && ranked
 }
 
 // opensView is a composed view: a table that opens the live page.
@@ -821,6 +838,8 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 	switch {
 	case name == toolPreviewReport:
 		return previewArtifact(observation.Call.ID, result, observation.Call.Arguments)
+	case name == toolRankCandidates:
+		return candidateRankingArtifact(observation.Call.ID, result)
 	case name == toolRunReport || name == toolGetReportRun:
 		return runArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, getToolPrefix) && isRowSet(result):
@@ -908,6 +927,107 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+// candidateColumns are a ranked driver as a dispatcher weighs one: where it
+// stands, who it is, the console's verdict and score, and the figures the
+// score was made from. The tractor and trailer are ids only, which a person
+// cannot read, so they stay in the model's copy for assign_move.
+var candidateColumns = []string{
+	"rank",
+	"driver",
+	"fit",
+	"score",
+	"deadheadMiles",
+	"minutesOfSlack",
+	"driveRemainingHours",
+	"projectedArrival",
+	"finding",
+}
+
+// candidateRankingArtifact is a move's ranked drivers as a table, best
+// first.
+//
+// It used to be nothing at all. Asked to rank drivers for a load, the Desk
+// read the ranking and wrote it out again as a markdown table: the order
+// survived, the findings behind each verdict and the link to each driver did
+// not, and the dispatcher had nothing beside the conversation to pick from.
+// The rank is a column of its own because the order is the answer, and a
+// table re-sorted by deadhead would otherwise lose it.
+func candidateRankingArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	candidates, ok := result["candidates"].([]any)
+	if !ok || len(candidates) == 0 {
+		return nil
+	}
+
+	rows := make([]any, 0, len(candidates))
+	for _, raw := range candidates {
+		candidate, isRecord := raw.(map[string]any)
+		if !isRecord {
+			continue
+		}
+		row := map[string]any{
+			recordIDKey:           candidate["workerId"],
+			"rank":                float64(len(rows) + 1),
+			"driver":              candidate["workerName"],
+			"fit":                 candidate["verdict"],
+			"score":               candidate["score"],
+			"deadheadMiles":       candidate["deadheadMiles"],
+			"minutesOfSlack":      candidate["minutesOfSlack"],
+			"driveRemainingHours": math.Round(numberOf(candidate, "driveRemainingHours")*10) / 10,
+			"finding":             leadingFinding(candidate),
+		}
+		// An unknown arrival is a phrase in the model's copy; in a column of
+		// times it would be the one cell that is not one.
+		if arrival := numberOf(candidate, "projectedArrival"); arrival > 0 {
+			row["projectedArrival"] = arrival
+		}
+		rows = append(rows, row)
+	}
+
+	projection := projectTable("workers", candidateColumns, rows)
+	if len(projection.columns) == 0 {
+		return nil
+	}
+
+	payload := map[string]any{
+		"display":     assistantartifact.DisplayVersion,
+		"tool":        toolRankCandidates,
+		"entity":      "workers",
+		"columns":     projection.columns,
+		"rows":        projection.rows,
+		"rowCount":    float64(len(projection.rows)),
+		"searchedFor": []string{},
+		payloadRanked: true,
+	}
+	if projection.recordEntity != "" {
+		payload["recordEntity"] = projection.recordEntity
+	}
+	fitRows(payload, "rows")
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindTableView,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle("Drivers ranked for the move"),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+// leadingFinding is the one finding a dispatcher reads first: what rules the
+// driver out, or failing that what to watch. A note that changes nothing is
+// left in the model's copy.
+func leadingFinding(candidate map[string]any) string {
+	findings := listOf(candidate["findings"])
+	for _, severity := range []string{"Block", "Warn"} {
+		for _, finding := range findings {
+			if textOf(finding, "severity") == severity {
+				return textOf(finding, "message")
+			}
+		}
+	}
+
+	return ""
 }
 
 // composedViewArtifact is a described view as something to open.

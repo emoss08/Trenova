@@ -403,7 +403,7 @@ export function DecisionFlow() {
                     current?.id === item.id && "dk-on",
                     batch?.includes(item.id) && "dk-in",
                   )}
-                  aria-current={current?.id === item.id}
+                  aria-current={current?.id === item.id ? "true" : undefined}
                   onClick={() => setCurrentId(item.id)}
                 >
                   <DeskAgentTile agent={item.node.run?.definition ?? null} size="xs" />
@@ -415,7 +415,9 @@ export function DecisionFlow() {
                     </em>
                   </span>
                   {!seen.has(item.id) && (
-                    <span className="dk-dc2-new" aria-label={t("Not opened yet")} />
+                    <span className="dk-dc2-new">
+                      <span className="sr-only">{t("Not opened yet")}</span>
+                    </span>
                   )}
                 </button>
               ))}
@@ -463,6 +465,13 @@ export function DecisionFlow() {
                         stroke={2.6}
                       />
                     </span>
+                    <em className="sr-only">
+                      {failed
+                        ? t("Approved, didn't go through")
+                        : ok
+                          ? t("Approved")
+                          : t("Declined")}
+                    </em>
                     {presentProposal(asAssistantProposal(row.proposal)).title}
                   </div>
                 );
@@ -510,7 +519,9 @@ export function DecisionFlow() {
                       >
                         {t("Decide all {0} together", like.length)}
                       </button>
-                      <span className="dk-kbd">X</span>
+                      <span className="dk-kbd" aria-hidden>
+                        X
+                      </span>
                     </>
                   )}
                 </div>
@@ -541,6 +552,7 @@ export function DecisionFlow() {
               onClick={() => go(-1)}
               title={t("Previous (K)")}
               aria-label={t("Previous")}
+              aria-keyshortcuts="K"
             >
               <DeskIcon name="chevR" size={12} stroke={2.4} />
             </button>
@@ -550,6 +562,7 @@ export function DecisionFlow() {
               onClick={() => go(1)}
               title={t("Next (J)")}
               aria-label={t("Next")}
+              aria-keyshortcuts="J"
             >
               <DeskIcon name="chevR" size={12} stroke={2.4} />
             </button>
@@ -570,18 +583,24 @@ export function DecisionFlow() {
                   className="dk-dc2-btn"
                   disabled={busy}
                   onClick={() => decline()}
+                  aria-keyshortcuts="D"
                 >
                   {batch ? t("Decline {0}", batch.length) : t("Decline")}
-                  <span className="dk-kbd">D</span>
+                  <span className="dk-kbd" aria-hidden>
+                    D
+                  </span>
                 </button>
                 <button
                   type="button"
                   className="dk-dc2-btn dk-ink"
                   disabled={busy || (batch === null && !gate?.approvable)}
                   onClick={() => void approve()}
+                  aria-keyshortcuts="A"
                 >
                   {approveLabel}
-                  <span className="dk-kbd">A</span>
+                  <span className="dk-kbd" aria-hidden>
+                    A
+                  </span>
                 </button>
               </>
             ) : (

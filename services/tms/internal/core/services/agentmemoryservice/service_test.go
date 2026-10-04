@@ -156,10 +156,14 @@ func TestRemember_RefusesASubjectThatDoesNotExist(t *testing.T) {
 	assert.Contains(t, err.Error(), "No worker with that id")
 }
 
-func TestRemember_ReturnsTheExistingRowForTheSameSentence(t *testing.T) {
+// An agent told "Quote in dollars" on Monday and again on Friday kept two
+// identical memories, both carried by every prompt. Saying it again now
+// refreshes the one already kept: counted as used, so it does not go stale,
+// and marked so the agent can tell the person nothing new was saved.
+func TestRemember_RefreshesTheExistingRowForTheSameSentence(t *testing.T) {
 	t.Parallel()
 
-	existing := &agent.Memory{ID: pulid.MustNew("amem_"), Content: "Same"}
+	existing := &agent.Memory{ID: pulid.MustNew("amem_"), Content: "Same", UseCount: 3}
 	repo := &fakeMemoryRepo{found: existing}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
 
@@ -171,6 +175,25 @@ func TestRemember_ReturnsTheExistingRowForTheSameSentence(t *testing.T) {
 
 	assert.Same(t, existing, got)
 	assert.Empty(t, repo.created)
+	assert.True(t, got.Refreshed)
+	assert.Equal(t, []pulid.ID{existing.ID}, repo.used)
+	assert.Equal(t, 4, got.UseCount)
+	require.NotNil(t, got.LastUsedAt)
+	assert.Positive(t, *got.LastUsedAt)
+}
+
+func TestRemember_ANewMemoryIsNotMarkedRefreshed(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeMemoryRepo{}
+	created, err := newService(repo, &fakeRuns{}, &fakeLabeler{}).Remember(t.Context(),
+		&services.RememberRequest{TenantInfo: tenant(), Content: "Quote in dollars."},
+		userActor(),
+	)
+	require.NoError(t, err)
+
+	assert.False(t, created.Refreshed)
+	assert.Empty(t, repo.used, "saving a memory is not using it")
 }
 
 func TestRemember_LooksForTheSameMemoryOnlyWhereItWouldBeRead(t *testing.T) {

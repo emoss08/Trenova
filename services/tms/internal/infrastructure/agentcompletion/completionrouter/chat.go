@@ -554,6 +554,7 @@ func (s *Service) attemptChat(
 		ReasoningTokens: resp.ReasoningTokens,
 		OutputLimit:     cmp.Or(resp.OutputLimit, maxTokens),
 		CutOffCall:      resp.CutOffCall,
+		ContextWindow:   provider.ConfiguredContextWindow(),
 	}, streamed, nil
 }
 
@@ -575,6 +576,7 @@ func partialReply(
 		ProviderID:      provider.ID,
 		ProviderKind:    provider.Kind,
 		Truncated:       true,
+		ContextWindow:   provider.ConfiguredContextWindow(),
 	}
 }
 

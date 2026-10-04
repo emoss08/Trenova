@@ -96,6 +96,12 @@ type AgentProposal struct {
 	ExecutedByUserID      pulid.ID `json:"executedByUserId"      bun:"executed_by_user_id,type:VARCHAR(100),nullzero"`
 	ExecutedTargetVersion *int64   `json:"executedTargetVersion" bun:"executed_target_version,type:BIGINT,nullzero"`
 
+	// PendingModifications is the wording a person changed on the proposal
+	// and has not yet approved with, keyed by parameter, kept so the edit
+	// survives a reload. Set only while the proposal is pending; deciding it
+	// clears it, and the decision keeps what was approved.
+	PendingModifications map[string]any `json:"pendingModifications" bun:"pending_modifications,type:JSONB,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

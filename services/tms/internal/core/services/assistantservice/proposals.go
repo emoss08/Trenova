@@ -726,6 +726,9 @@ func toAssistantProposal(
 	if proposal.PlanID != nil {
 		out.PlanID = *proposal.PlanID
 	}
+	if proposal.Status == agent.ProposalStatusPending && len(proposal.PendingModifications) > 0 {
+		out.PendingModifications = proposal.PendingModifications
+	}
 
 	return out
 }

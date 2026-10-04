@@ -13,6 +13,7 @@ import {
 } from "./desk-art-kinds";
 import { artifactPreview } from "./artifact-preview";
 import { groupLineages, type ArtifactLineage } from "./desk-lineage";
+import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
 
 /** How many lineages each page the browser reads holds. */
 const PAGE = 60;
@@ -62,6 +63,7 @@ function toolOf(lineage: ArtifactLineage): string {
 export function DeskArtifactBrowser({
   threadId,
   total,
+  pendingLookups = NO_PENDING_LOOKUPS,
   activeId,
   onPick,
   onBack,
@@ -70,6 +72,8 @@ export function DeskArtifactBrowser({
   threadId: string;
   /** How many lineages the conversation has, from the pane's own read. */
   total: number;
+  /** The running turn's lookups, left out until the reply says which it keeps. */
+  pendingLookups?: ReadonlySet<string>;
   activeId: string;
   onPick: (id: string) => void;
   onBack: () => void;
@@ -110,13 +114,19 @@ export function DeskArtifactBrowser({
   });
 
   const needle = searched.toLowerCase();
-  const shown = useMemo(
-    () => groupLineages(pages.data?.pages.flatMap((page) => page.results) ?? []),
-    [pages.data],
-  );
   const first = pages.data?.pages[0];
-  const counts = first?.counts;
-  const matching = first?.total ?? 0;
+  const visible = useMemo(
+    () =>
+      withoutPendingLookups(
+        pages.data?.pages.flatMap((page) => page.results) ?? [],
+        pages.data?.pages[0]?.counts,
+        pendingLookups,
+      ),
+    [pages.data, pendingLookups],
+  );
+  const shown = useMemo(() => groupLineages(visible.results), [visible.results]);
+  const counts = visible.counts;
+  const matching = Math.max(0, (first?.total ?? 0) - visible.hidden);
   const remaining = Math.max(0, matching - shown.length);
 
   const resetPaging = () => {
@@ -178,6 +188,11 @@ export function DeskArtifactBrowser({
         </button>
         <b>{t("All artifacts")}</b>
         <span className="dk-axb-n">{counts?.all ?? total}</span>
+        <span className="sr-only" aria-live="polite">
+          {pages.isSuccess && searched !== ""
+            ? t("{0, plural, one {# artifact} other {# artifacts}}", matching)
+            : ""}
+        </span>
         <span className="flex-1" />
         <button
           type="button"
@@ -214,11 +229,14 @@ export function DeskArtifactBrowser({
             }
           }}
         />
-        <span className="dk-kbd">⌘J</span>
+        <span className="dk-kbd" aria-hidden>
+          ⌘J
+        </span>
       </div>
-      <div className="dk-axb-f">
+      <div className="dk-axb-f" role="group" aria-label={t("Filter artifacts")}>
         <button
           type="button"
+          aria-pressed={kind === "all" && !onlyPinned}
           className={kind === "all" && !onlyPinned ? "dk-on" : undefined}
           onClick={() => {
             setKind("all");
@@ -230,6 +248,7 @@ export function DeskArtifactBrowser({
         </button>
         <button
           type="button"
+          aria-pressed={onlyPinned}
           className={onlyPinned ? "dk-on" : undefined}
           onClick={() => {
             setOnlyPinned((value) => !value);
@@ -244,6 +263,7 @@ export function DeskArtifactBrowser({
             <button
               key={candidate}
               type="button"
+              aria-pressed={kind === candidate}
               className={kind === candidate ? "dk-on" : undefined}
               onClick={() => {
                 setKind((current) => (current === candidate ? "all" : candidate));
@@ -279,6 +299,7 @@ export function DeskArtifactBrowser({
                       <button
                         type="button"
                         className={cn("dk-axb-r", lineage.id === activeId && "dk-on")}
+                        aria-current={lineage.id === activeId ? "true" : undefined}
                         onClick={() => onPick(lineage.id)}
                       >
                         <span className={cn("dk-ax-ki", `dk-k-${itemKind}`)}>

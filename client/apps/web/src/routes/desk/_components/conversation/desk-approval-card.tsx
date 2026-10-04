@@ -9,7 +9,6 @@ import {
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { decideMyPlan, decideMyProposal } from "@/lib/graphql/agent-decisions";
-import { useDraftEditsStore } from "@/stores/desk-draft-edits-store";
 import {
   invalidateProposalViews,
   markPlanDecided,
@@ -97,10 +96,13 @@ function ProposalCard({
   const approval = useApprovalGate(previewQuery);
   const facts = approvalFacts(previewQuery.data, t);
 
-  // Wording the person changed on the draft and sent for approval goes with
-  // the approval, as a modification of what the agent proposed.
-  const edits = useDraftEditsStore((store) => store.edits[proposal.id]);
-  const clearEdits = useDraftEditsStore((store) => store.clearEdits);
+  // Wording the person changed on the draft and sent for approval is kept on
+  // the proposal, and goes with the approval as a modification of what the
+  // agent proposed. Deciding clears it on the server.
+  const edits =
+    proposal.pendingModifications && Object.keys(proposal.pendingModifications).length > 0
+      ? proposal.pendingModifications
+      : null;
   const mutation = useMutation({
     mutationFn: () =>
       decideMyProposal(
@@ -119,7 +121,6 @@ function ProposalCard({
         planId: null,
       }),
     onSuccess: (decision) => {
-      clearEdits(proposal.id);
       const commitsAt = decision.commitsAt ?? null;
       if (commitsAt !== null) {
         markProposalsStatus(queryClient, [proposal.id], "Approving");
@@ -450,7 +451,9 @@ function CardRow({
             t("This changed since it was drafted. Read it again before approving.")
           ) : facts.field ? (
             <>
-              {facts.field.label} <s>{facts.field.before}</s> → <em>{facts.field.after}</em>
+              {facts.field.label} <span className="sr-only">{t("from")}</span>
+              <s>{facts.field.before}</s> <span aria-hidden>→</span>
+              <span className="sr-only">{t("to")}</span> <em>{facts.field.after}</em>
             </>
           ) : null}
           <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
@@ -462,9 +465,17 @@ function CardRow({
       <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
         {t("Not now")}
       </button>
-      <button type="button" className="dk-apv-b" disabled={!approvable} onClick={onApprove}>
+      <button
+        type="button"
+        className="dk-apv-b"
+        disabled={!approvable}
+        aria-keyshortcuts="Meta+Enter"
+        onClick={onApprove}
+      >
         {t("Approve")}
-        <span className="dk-kbd">⌘↵</span>
+        <span className="dk-kbd" aria-hidden>
+          ⌘↵
+        </span>
       </button>
     </div>
   );

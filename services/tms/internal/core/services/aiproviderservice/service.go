@@ -303,6 +303,7 @@ func (s *Service) apply(
 	}
 	provider.AllowPrivateNetwork = req.AllowPrivateNetwork
 	provider.MaxTokens = req.MaxTokens
+	provider.ContextWindowTokens = req.ContextWindow
 	provider.Tasks = req.Tasks
 	provider.Priority = req.Priority
 	provider.Trusted = req.Trusted

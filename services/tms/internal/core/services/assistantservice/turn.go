@@ -312,7 +312,7 @@ func (s *Service) FinishTurn(
 	}
 	s.runtime.MarkToolEffects(saved)
 	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
-	s.measureAfterTurn(ctx, thread, plan, saved, req.TenantInfo, emit)
+	s.measureAfterTurn(ctx, thread, plan, saved, runWindow(req.Run), req.TenantInfo, emit)
 	s.describeMemories(ctx, req.TenantInfo, req.Actor.UserID, saved)
 
 	if req.Failure == nil && !plan.FollowUp {
@@ -360,6 +360,16 @@ func (s *Service) FinishTurn(
 	result.Artifacts = artifacts.artifacts()
 
 	return result, nil
+}
+
+// runWindow is the window the turn's answering provider is configured with,
+// zero for a turn the runtime handed nothing back from.
+func runWindow(run *services.RunResult) int {
+	if run == nil {
+		return 0
+	}
+
+	return run.ContextWindow
 }
 
 // turnTaint is the outside content the turn read: what the runtime handed

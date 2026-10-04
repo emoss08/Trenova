@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 import { useNavigate } from "react-router";
 import { DeskArtKindIcon, deskArtKind, deskArtKindName } from "./artifacts/desk-art-kinds";
 import { DeskIcon, type DeskIconName } from "./desk-icons";
+import { useModalFocus } from "./use-modal-focus";
 
 const SEARCH_DEBOUNCE_MS = 160;
 
@@ -116,6 +117,10 @@ export function DeskSearchPalette({
   const [now] = useState(() => Date.now());
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Tab is the palette's own key, to change filters, so focus stays in the
+  // box without a trap; it goes back where it was when the palette closes.
+  useModalFocus(dialogRef, false);
 
   const typed = text.trim();
   const query = useDebounce(typed, SEARCH_DEBOUNCE_MS);
@@ -196,11 +201,17 @@ export function DeskSearchPalette({
       close();
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
-      setSelected((current) => Math.min(flat.length - 1, current + 1));
+      setSelected((current) => Math.max(0, Math.min(flat.length - 1, current + 1)));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setSelected((current) => Math.max(0, current - 1));
-    } else if (event.key === "Enter") {
+    } else if (event.key === "Home" && event.target === inputRef.current && text === "") {
+      event.preventDefault();
+      setSelected(0);
+    } else if (event.key === "End" && event.target === inputRef.current && text === "") {
+      event.preventDefault();
+      setSelected(Math.max(0, flat.length - 1));
+    } else if (event.key === "Enter" && event.target === inputRef.current) {
       event.preventDefault();
       pick(flat[selected]);
     } else if (event.key === "Tab") {
@@ -243,7 +254,14 @@ export function DeskSearchPalette({
       className={cn("dk-srch-wrap", closing && "dk-out")}
       onMouseDown={(event) => event.target === event.currentTarget && close()}
     >
-      <div className="dk-srch" role="dialog" aria-modal aria-label={t("Search")} onKeyDown={onKeyDown}>
+      <div
+        className="dk-srch"
+        role="dialog"
+        aria-modal
+        aria-label={t("Search")}
+        ref={dialogRef}
+        onKeyDown={onKeyDown}
+      >
         <div className="dk-srch-in">
           <DeskIcon name="search" size={16} />
           <input
@@ -254,6 +272,7 @@ export function DeskSearchPalette({
             aria-label={t("Search the Desk")}
             role="combobox"
             aria-expanded
+            aria-autocomplete="list"
             aria-controls="dk-srch-list"
             aria-activedescendant={flat[selected] ? `dk-srch-${selected}` : undefined}
           />
@@ -279,6 +298,8 @@ export function DeskSearchPalette({
               type="button"
               role="tab"
               aria-selected={filter === kind}
+              aria-controls="dk-srch-list"
+              tabIndex={filter === kind ? 0 : -1}
               className={filter === kind ? "dk-on" : undefined}
               onClick={() => {
                 setFilter(kind);
@@ -322,6 +343,7 @@ export function DeskSearchPalette({
                     type="button"
                     role="option"
                     aria-selected={selected === at}
+                    tabIndex={-1}
                     data-i={at}
                     className={cn("dk-srch-r", `dk-k-${result.kind}`, selected === at && "dk-on")}
                     onMouseMove={() => selected !== at && setSelected(at)}
@@ -333,7 +355,13 @@ export function DeskSearchPalette({
                           <i />
                         </span>
                       ) : result.kind === "art" ? (
-                        <DeskArtKindIcon kind={deskArtKind({ kind: result.artifactKind ?? "document", payload: {} })} size={13} />
+                        <DeskArtKindIcon
+                          kind={deskArtKind({
+                            kind: result.artifactKind ?? "document",
+                            payload: {},
+                          })}
+                          size={13}
+                        />
                       ) : (
                         <DeskIcon name={GROUP_ICONS[result.kind]} size={13} />
                       )}
@@ -347,7 +375,7 @@ export function DeskSearchPalette({
                       </span>
                       <span className="dk-srch-m">{meta(result)}</span>
                     </span>
-                    <span className="dk-srch-go">
+                    <span className="dk-srch-go" aria-hidden>
                       <DeskIcon name="enter" size={12} />
                     </span>
                   </button>

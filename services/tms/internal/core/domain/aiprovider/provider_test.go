@@ -520,3 +520,24 @@ func TestValidate_RejectsAThinkingStyleOnAnotherProtocol(t *testing.T) {
 	p.ThinkingStyle = aiprovider.ThinkingStyleEffort
 	assert.False(t, fieldErrors(t, p)["thinkingStyle"])
 }
+
+// A configured window is optional, but one too small to hold a turn's own
+// prompt, or one no model has, is a typo the form should catch.
+func TestValidate_ContextWindowMustBeOneAModelCouldHave(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	assert.False(t, fieldErrors(t, p)["contextWindow"], "left unset, the id is read")
+
+	tiny := 512
+	p.ContextWindowTokens = &tiny
+	assert.True(t, fieldErrors(t, p)["contextWindow"])
+
+	huge := 50_000_000
+	p.ContextWindowTokens = &huge
+	assert.True(t, fieldErrors(t, p)["contextWindow"])
+
+	served := 65_536
+	p.ContextWindowTokens = &served
+	assert.False(t, fieldErrors(t, p)["contextWindow"])
+}

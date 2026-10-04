@@ -181,7 +181,7 @@ func TestMeasureAfterTurn_KeepsTheMeasureAndTellsTheReader(t *testing.T) {
 	saved := []conversation.Message{{Role: conversation.RoleAssistant, Model: "gpt-4o"}}
 
 	var events []serviceports.StreamEvent
-	svc.measureAfterTurn(t.Context(), conversations.thread, plan, saved, actor.TenantInfo(),
+	svc.measureAfterTurn(t.Context(), conversations.thread, plan, saved, 0, actor.TenantInfo(),
 		func(event serviceports.StreamEvent) { events = append(events, event) })
 
 	require.NotNil(t, conversations.thread.ContextUsage)
@@ -196,4 +196,30 @@ func TestMeasureAfterTurn_KeepsTheMeasureAndTellsTheReader(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, conversations.thread.ID, data.ThreadID)
 	assert.Equal(t, usage.Total(), data.Usage.Total())
+}
+
+/*
+A turn answered by a provider configured with its own window is measured
+against that window, and a later measure taken without a reply, such as the
+one a compaction plans from, keeps it rather than reading the model id again.
+*/
+func TestMeasureAfterTurn_KeepsTheProvidersConfiguredWindow(t *testing.T) {
+	t.Parallel()
+
+	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
+	conversations.messages = longConversation(3)
+	actor := testActor()
+
+	plan := &TurnPlan{Turn: agentruntime.TurnState{System: "Help dispatch."}}
+	saved := []conversation.Message{{Role: conversation.RoleAssistant, Model: "qwen2.5-coder:32b"}}
+
+	svc.measureAfterTurn(t.Context(), conversations.thread, plan, saved, 131_072, actor.TenantInfo(), nil)
+
+	require.NotNil(t, conversations.thread.ContextUsage)
+	assert.Equal(t, 131_072, conversations.thread.ContextUsage.Window,
+		"the configured window wins over the 32k the id names")
+
+	later := svc.currentUsage(conversations.thread, conversations.messages, nil)
+	assert.Equal(t, 131_072, later.Window)
+	assert.Equal(t, "qwen2.5-coder:32b", later.Model)
 }

@@ -36,6 +36,13 @@ const (
 	MaxMemoryRecallLimit     = 50
 )
 
+// MemoryStaleAfterSeconds is how long a memory that belongs in every prompt
+// may go untouched, while the memories kept for the same readers are being
+// used, before the prompt stops carrying it. A stale memory is not retired:
+// recall_memory still finds it and the Memory page still lists it, and the
+// first time it is recalled, restated or edited it is fresh again.
+const MemoryStaleAfterSeconds = 90 * 24 * 60 * 60
+
 type MemoryMatch string
 
 const (
@@ -335,6 +342,11 @@ type Memory struct {
 
 	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
 
+	// Refreshed is set, never stored, on the memory a save returns when an
+	// active one already said the same thing for the same readers: that one
+	// was refreshed rather than a duplicate recorded beside it.
+	Refreshed bool `json:"-" bun:"-"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -458,6 +470,70 @@ func (m *Memory) Active(now int64) bool {
 // whole rather than one record or one tool, and so belongs in every prompt.
 func (m *Memory) OrganizationWide() bool {
 	return m.SubjectType == "" && strings.TrimSpace(m.ToolName) == ""
+}
+
+// LastTouchedAt is the last time anyone had a reason to keep the memory: it
+// was recorded, changed, restated, recalled or carried by a prompt.
+func (m *Memory) LastTouchedAt() int64 {
+	touched := max(m.CreatedAt, m.UpdatedAt)
+	if m.LastUsedAt != nil {
+		touched = max(touched, *m.LastUsedAt)
+	}
+
+	return touched
+}
+
+// WithoutStaleMemories drops the memories a prompt should no longer carry
+// because they have gone unused.
+//
+// Only a memory about nothing in particular can go stale. One about a
+// customer or a tool rides along only when that record or tool comes up, so
+// its going unused says the record was quiet, not that the memory is wrong.
+//
+// Staleness is measured against the newest touch among the memories kept for
+// the same readers, not against the clock: a person back from three months
+// away, or an organization that paused its agents, finds what it kept still
+// in the prompt, while a memory that sat unused as its neighbors were read
+// every day is left out.
+func WithoutStaleMemories(memories []*Memory) []*Memory {
+	newest := make(map[string]int64, len(memories))
+	for _, memory := range memories {
+		if memory == nil {
+			continue
+		}
+		key := memory.audienceKey()
+		newest[key] = max(newest[key], memory.LastTouchedAt())
+	}
+
+	kept := make([]*Memory, 0, len(memories))
+	for _, memory := range memories {
+		if memory == nil {
+			continue
+		}
+		if memory.OrganizationWide() &&
+			newest[memory.audienceKey()]-memory.LastTouchedAt() > MemoryStaleAfterSeconds {
+			continue
+		}
+		kept = append(kept, memory)
+	}
+
+	return kept
+}
+
+// audienceKey names who reads the memory: the organization, one agent, one
+// person or one role.
+func (m *Memory) audienceKey() string {
+	key := string(m.Scope)
+	switch {
+	case m.Scope == MemoryScopeAgent && m.AgentDefinitionID != nil:
+		key += ":" + m.AgentDefinitionID.String()
+	case m.Scope == MemoryScopeUser && m.OwnerUserID != nil:
+		key += ":" + m.OwnerUserID.String()
+	case m.Scope == MemoryScopeRole && m.RoleID != nil:
+		key += ":" + m.RoleID.String()
+	}
+
+	return key
 }
 
 func (m *Memory) AgentScoped() bool {

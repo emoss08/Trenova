@@ -60,17 +60,23 @@ func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 	return records
 }
 
+// FitMemories picks what the prompt carries: the memories that have not gone
+// stale, best first, as many as fit both the agent's token budget and
+// MaxPromptMemories. Whatever is left out stays recallable.
 func (d *Definition) FitMemories(rc *RuntimeContext) []*agent.Memory {
 	if rc == nil || len(rc.Memories) == 0 {
 		return nil
 	}
 
-	ordered := orderMemoriesForPrompt(rc)
+	ordered := orderMemoriesForPrompt(rc, agent.WithoutStaleMemories(rc.Memories))
 	budget := d.EffectiveMemoryTokenBudget()
 	spent := 0
 	headed := make(map[string]struct{}, len(ordered))
-	fitted := make([]*agent.Memory, 0, len(ordered))
+	fitted := make([]*agent.Memory, 0, min(len(ordered), MaxPromptMemories))
 	for _, memory := range ordered {
+		if len(fitted) == MaxPromptMemories {
+			break
+		}
 		if memory.DrawnFromOutside() {
 			cost := llmtokens.Estimate(outsideMemoryLine(memory))
 			if spent+cost <= budget {
@@ -104,12 +110,12 @@ type rankedMemory struct {
 	rank   int
 }
 
-func orderMemoriesForPrompt(rc *RuntimeContext) []*agent.Memory {
+func orderMemoriesForPrompt(rc *RuntimeContext, memories []*agent.Memory) []*agent.Memory {
 	relations := memoryRelations(rc.MemorySubjects)
 	loaded := loadedToolNames(rc)
 
-	ranked := make([]rankedMemory, 0, len(rc.Memories))
-	for idx, memory := range rc.Memories {
+	ranked := make([]rankedMemory, 0, len(memories))
+	for idx, memory := range memories {
 		if memory == nil || strings.TrimSpace(memory.Content) == "" {
 			continue
 		}
