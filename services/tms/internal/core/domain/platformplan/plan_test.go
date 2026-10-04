@@ -197,3 +197,17 @@ func TestResolvedPlan(t *testing.T) {
 	assert.True(t, none.Allows(platformplan.CapabilitySMS))
 	assert.True(t, none.AllowsWrites())
 }
+
+func TestTrialEndingMeters(t *testing.T) {
+	t.Parallel()
+
+	plan, err := platformplan.FreeDemo(nil)
+	require.NoError(t, err)
+
+	assert.True(t, plan.EndsTrial(platformcatalog.MeterShipmentsTotal))
+	assert.False(t, plan.EndsTrial(platformcatalog.MeterTrailersTotal))
+	assert.False(t, platformplan.Unlimited().EndsTrial(platformcatalog.MeterShipmentsTotal))
+
+	var nilPlan *platformplan.Plan
+	assert.False(t, nilPlan.EndsTrial(platformcatalog.MeterShipmentsTotal))
+}

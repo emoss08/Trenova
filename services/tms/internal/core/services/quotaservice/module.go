@@ -14,11 +14,12 @@ var Module = fx.Module("quota-service", fx.Provide(New))
 type Params struct {
 	fx.In
 
-	Config   *config.Config
-	Plans    services.PlanService
-	Counters repositories.QuotaCounterRepository
-	DB       ports.DBConnection
-	Logger   *zap.Logger
+	Config        *config.Config
+	Plans         services.PlanService
+	Counters      repositories.QuotaCounterRepository
+	Subscriptions repositories.SubscriptionRepository
+	DB            ports.DBConnection
+	Logger        *zap.Logger
 }
 
 func New(p Params) services.QuotaGuard {
@@ -27,9 +28,10 @@ func New(p Params) services.QuotaGuard {
 	}
 
 	return NewCloud(CloudConfig{
-		Plans:    p.Plans,
-		Counters: p.Counters,
-		DB:       p.DB,
-		Logger:   p.Logger,
+		Plans:         p.Plans,
+		Counters:      p.Counters,
+		Subscriptions: p.Subscriptions,
+		DB:            p.DB,
+		Logger:        p.Logger,
 	})
 }

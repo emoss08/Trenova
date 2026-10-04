@@ -31,8 +31,10 @@ Keywords: how many shipments left, usage, limit, quota, remaining
 ### Free room under a limit
 Keywords: limit reached, cannot create, delete to free space
 1. Open [Plan & usage](/admin/plan-usage) and find the limit that was reached.
-2. Delete records of that kind that you no longer need, for example sample shipments. Limits on
-   records count what the organization holds now, so each deletion frees a slot.
+2. Delete records of that kind that you no longer need, for example sample customers or
+   locations. Limits on records count what the organization holds now, so each deletion frees a
+   slot. Shipments are the exception: using up the shipment limit ends the trial, so deleting
+   shipments afterwards does not reopen it.
 3. Monthly limits such as **Assistant messages** and **AI spend** reset at the start of the next
    month instead.
 
@@ -40,13 +42,15 @@ Keywords: limit reached, cannot create, delete to free space
 Keywords: trial days left, demo expiry, when does my trial end
 1. Open [Plan & usage](/admin/plan-usage).
 2. Read **Trial ends** in the strip at the top. The banner above every page also counts the days
-   down.
+   down. The trial ends on that date or as soon as every shipment in the plan has been used,
+   whichever comes first.
 
 ## Notes
 Opening the page needs read access to the organization.
 
 When an action would go over a limit, or uses something the free demo leaves out, a dialog
-explains which limit was reached; **View plan & usage** in that dialog opens this page. After the
-trial ends the workspace is read-only: everything can be opened and exported, but nothing can be
+explains which limit was reached; **View plan & usage** in that dialog opens this page. The free demo
+trial lasts 7 days, and ends early once the organization has used its whole shipment allowance.
+After the trial ends the workspace is read-only: everything can be opened and exported, but nothing can be
 created or changed, and the workspace is deleted on the date shown. Paid plans with higher limits
 are coming soon.

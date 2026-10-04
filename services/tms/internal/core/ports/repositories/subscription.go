@@ -19,6 +19,12 @@ type UpdateSubscriptionStatusRequest struct {
 	Status     subscription.Status
 }
 
+type EndSubscriptionTrialRequest struct {
+	TenantInfo pagination.TenantInfo
+	ID         pulid.ID
+	EndedAt    int64
+}
+
 type ListDueSubscriptionsRequest struct {
 	Now   int64
 	Limit int
@@ -46,6 +52,7 @@ type SubscriptionRepository interface {
 		ctx context.Context,
 		req *UpdateSubscriptionStatusRequest,
 	) (*subscription.Subscription, error)
+	EndTrial(ctx context.Context, req *EndSubscriptionTrialRequest) (bool, error)
 	ListDue(
 		ctx context.Context,
 		req *ListDueSubscriptionsRequest,

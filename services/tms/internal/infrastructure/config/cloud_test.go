@@ -55,7 +55,7 @@ platform:
 	assert.Equal(t, DefaultCloudSystemEmailFromAddress, cloud.SystemEmail.GetFromAddress())
 	assert.Equal(t, DefaultCloudSystemEmailFromName, cloud.SystemEmail.GetFromName())
 	assert.False(t, cloud.SystemEmail.HasAPIKey())
-	assert.Equal(t, 720*time.Hour, cloud.Trial.GetLifetime())
+	assert.Equal(t, 7*24*time.Hour, cloud.Trial.GetLifetime())
 	assert.Equal(t, 336*time.Hour, cloud.Trial.GetReadOnlyGrace())
 	assert.Empty(t, cloud.FreePlan.GetLimitOverrides())
 }
@@ -272,7 +272,7 @@ func TestExampleConfigPlatformSectionDecodesStrictly(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "1x00000000000000000000AA", cfg.Platform.Cloud.Turnstile.SiteKey)
 	assert.Equal(t, "1x0000000000000000000000000000000AA", cfg.Platform.Cloud.Turnstile.SecretKey)
-	assert.Equal(t, 720*time.Hour, cfg.Platform.Cloud.Trial.GetLifetime())
+	assert.Equal(t, 7*24*time.Hour, cfg.Platform.Cloud.Trial.GetLifetime())
 
 	encryption, ok := example["security"].(map[string]any)["encryption"].(map[string]any)
 	require.True(t, ok)

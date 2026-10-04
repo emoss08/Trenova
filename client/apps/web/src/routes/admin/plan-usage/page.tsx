@@ -2,7 +2,7 @@ import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { useCloudPlan } from "@/hooks/use-cloud-plan";
-import { isFreeDemoPlan, type CloudTrialStatus } from "@/lib/cloud-trial";
+import { isFreeDemoPlan, trialEndingLimit, type CloudTrialStatus } from "@/lib/cloud-trial";
 import {
   comparePlanMeters,
   formatPlanMeterValue,
@@ -79,6 +79,7 @@ export function PlanUsagePage() {
   const planName = summary?.plan
     ? planDisplayName(summary.plan.key, summary.plan.name)
     : t("Unlimited");
+  const shipmentAllowance = trialEndingLimit(summary);
 
   return (
     <PageLayout
@@ -149,6 +150,20 @@ export function PlanUsagePage() {
               />
             ) : null}
           </KpiStrip>
+
+          {trial?.kind === "trialing" ? (
+            <Alert variant="info" size="sm">
+              <InfoCircleIcon />
+              <AlertDescription>
+                {shipmentAllowance === null
+                  ? t("The trial ends on the date above.")
+                  : t(
+                      "The trial ends on the date above, or as soon as all {0} shipments are used, whichever comes first.",
+                      String(shipmentAllowance),
+                    )}
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
           {trial?.kind === "read_only" || trial?.kind === "expired" ? (
             <Alert variant="warning" size="sm">

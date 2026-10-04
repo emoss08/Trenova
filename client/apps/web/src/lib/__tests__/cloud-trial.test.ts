@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cloudTrialStatus } from "@/lib/cloud-trial";
+import { cloudTrialStatus, trialEndingLimit } from "@/lib/cloud-trial";
 import type { BillingSummary } from "@/types/platform-billing";
 
 const DAY = 86_400;
@@ -62,5 +62,29 @@ describe("cloudTrialStatus", () => {
       kind: "trialing",
       daysRemaining: null,
     });
+  });
+});
+
+describe("trialEndingLimit", () => {
+  const usage = (meterKey: string, limit: number) => ({
+    meterKey,
+    unit: "",
+    limit,
+    used: 0,
+    remaining: limit,
+    windowStart: 0,
+    windowEnd: 0,
+  });
+
+  it("reads the shipment allowance that ends the trial", () => {
+    expect(
+      trialEndingLimit({ usage: [usage("trailers.total", 3), usage("shipments.total", 12)] }),
+    ).toBe(12);
+  });
+
+  it("is null without a shipment limit or a summary", () => {
+    expect(trialEndingLimit({ usage: [usage("trailers.total", 3)] })).toBeNull();
+    expect(trialEndingLimit({ usage: [usage("shipments.total", 0)] })).toBeNull();
+    expect(trialEndingLimit(undefined)).toBeNull();
   });
 });

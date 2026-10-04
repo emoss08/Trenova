@@ -119,6 +119,44 @@ func (r *repository) UpdateStatus(
 	})
 }
 
+func (r *repository) EndTrial(
+	ctx context.Context,
+	req *repositories.EndSubscriptionTrialRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		cols := buncolgen.SubscriptionColumns
+
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*subscription.Subscription)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.SubscriptionScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID).
+					Where(cols.Status.Eq(), subscription.StatusTrialing).
+					Where(cols.TrialEndsAt.Gt(), req.EndedAt)
+			}).
+			Set(cols.ReadOnlyUntil.SetExpr("? + ({} - "+cols.TrialEndsAt.Bare()+")"), req.EndedAt).
+			Set(cols.TrialEndsAt.Set(), req.EndedAt).
+			Set(cols.Version.Inc(1)).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to end subscription trial",
+				zap.String("subscriptionId", req.ID.String()),
+				zap.Error(err),
+			)
+			return false, err
+		}
+
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return false, err
+		}
+
+		return affected > 0, nil
+	})
+}
+
 func (r *repository) ListDue(
 	ctx context.Context,
 	req *repositories.ListDueSubscriptionsRequest,

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
+	"github.com/emoss08/trenova/internal/core/domain/subscription"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -20,6 +21,7 @@ import (
 type CloudConfig struct {
 	Plans         services.PlanService
 	Counters      repositories.QuotaCounterRepository
+	Subscriptions repositories.SubscriptionRepository
 	DB            ports.DBConnection
 	Logger        *zap.Logger
 	Clock         func() time.Time
@@ -29,6 +31,7 @@ type CloudConfig struct {
 type CloudGuard struct {
 	plans         services.PlanService
 	counters      repositories.QuotaCounterRepository
+	subscriptions repositories.SubscriptionRepository
 	l             *zap.Logger
 	now           func() time.Time
 	inTransaction func(context.Context) bool
@@ -60,6 +63,7 @@ func NewCloud(cfg CloudConfig) *CloudGuard {
 	return &CloudGuard{
 		plans:         cfg.Plans,
 		counters:      cfg.Counters,
+		subscriptions: cfg.Subscriptions,
 		l:             logger.Named("quota-guard"),
 		now:           clock,
 		inTransaction: inTransaction,
@@ -113,6 +117,48 @@ func (g *CloudGuard) Enforce(ctx context.Context, req *services.QuotaRequest) er
 			resolved.Key().String(),
 		)
 	}
+
+	if used+req.Quantity >= limit.Max {
+		return g.endTrialOnExhaustion(ctx, req, resolved)
+	}
+
+	return nil
+}
+
+func (g *CloudGuard) endTrialOnExhaustion(
+	ctx context.Context,
+	req *services.QuotaRequest,
+	resolved *platformplan.ResolvedPlan,
+) error {
+	if g.subscriptions == nil || !resolved.IsManaged() || !resolved.Plan.EndsTrial(req.Meter) {
+		return nil
+	}
+
+	now := g.now().Unix()
+	if resolved.Subscription.EffectiveStatus(now) != subscription.StatusTrialing {
+		return nil
+	}
+
+	ended, err := g.subscriptions.EndTrial(ctx, &repositories.EndSubscriptionTrialRequest{
+		TenantInfo: req.TenantInfo,
+		ID:         resolved.Subscription.ID,
+		EndedAt:    now,
+	})
+	if err != nil {
+		return fmt.Errorf("end the trial when %s was used up: %w", req.Meter, err)
+	}
+	if !ended {
+		return nil
+	}
+
+	g.l.Info("trial ended early because a trial-ending limit was used up",
+		zap.String("organizationId", req.TenantInfo.OrgID.String()),
+		zap.String("meter", string(req.Meter)),
+	)
+	orgID := req.TenantInfo.OrgID
+	ports.AfterCommit(ctx, func(context.Context) {
+		g.plans.Invalidate(orgID)
+	})
 
 	return nil
 }
