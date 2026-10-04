@@ -84,9 +84,12 @@ type BillingPlanSummary struct {
 type BillingSubscriptionSummary struct {
 	ID                 string `json:"id"`
 	PlanID             string `json:"planId"`
+	PlanKey            string `json:"planKey,omitempty"`
 	Status             string `json:"status"`
 	CurrentPeriodStart int64  `json:"currentPeriodStart"`
 	CurrentPeriodEnd   int64  `json:"currentPeriodEnd"`
+	TrialEndsAt        int64  `json:"trialEndsAt,omitempty"`
+	ReadOnlyUntil      int64  `json:"readOnlyUntil,omitempty"`
 }
 
 type BillingFeatureSummary struct {
@@ -102,6 +105,7 @@ type BillingUsageSummary struct {
 	Remaining   int64                    `json:"remaining"`
 	WindowStart int64                    `json:"windowStart"`
 	WindowEnd   int64                    `json:"windowEnd"`
+	Window      string                   `json:"window,omitempty"`
 }
 
 type BillingSummaryResult struct {
@@ -113,6 +117,7 @@ type BillingSummaryResult struct {
 	Subscription   *BillingSubscriptionSummary `json:"subscription,omitempty"`
 	Features       []BillingFeatureSummary     `json:"features"`
 	Usage          []BillingUsageSummary       `json:"usage"`
+	Restrictions   []string                    `json:"restrictions,omitempty"`
 	CheckedAt      int64                       `json:"checkedAt"`
 }
 
@@ -136,6 +141,7 @@ type UsageLimitCheckResult struct {
 	Limit     int64                    `json:"limit,omitempty"`
 	Used      int64                    `json:"used,omitempty"`
 	Remaining int64                    `json:"remaining,omitempty"`
+	Plan      string                   `json:"plan,omitempty"`
 	CheckedAt int64                    `json:"checkedAt"`
 	FailOpen  bool                     `json:"failOpen"`
 }

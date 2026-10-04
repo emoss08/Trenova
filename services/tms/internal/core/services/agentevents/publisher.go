@@ -6,8 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,12 +21,14 @@ type Params struct {
 	Logger      *zap.Logger
 	Definitions repositories.AgentDefinitionRepository
 	RunService  services.AgentRunService
+	Plans       services.PlanService `optional:"true"`
 }
 
 type Publisher struct {
 	l           *zap.Logger
 	definitions repositories.AgentDefinitionRepository
 	runService  services.AgentRunService
+	plans       services.PlanService
 }
 
 func New(p Params) services.AgentEventPublisher {
@@ -32,6 +36,7 @@ func New(p Params) services.AgentEventPublisher {
 		l:           p.Logger.Named("service.agentevents"),
 		definitions: p.Definitions,
 		runService:  p.RunService,
+		plans:       p.Plans,
 	}
 }
 
@@ -51,6 +56,21 @@ func (p *Publisher) Publish(ctx context.Context, event services.AgentEvent) {
 		return
 	}
 	ctx = dbscope.WithTenant(ctx, event.TenantInfo.DBTenant())
+
+	allowed, err := planservice.Allows(
+		ctx,
+		p.plans,
+		event.TenantInfo,
+		platformplan.CapabilityAgentAutomation,
+	)
+	if err != nil {
+		log.Error("failed to resolve the organization's plan for an agent event", zap.Error(err))
+		return
+	}
+	if !allowed {
+		log.Debug("the organization's plan does not include automated agents; event skipped")
+		return
+	}
 
 	definitions, err := p.definitions.ListEnabledByTrigger(
 		ctx,

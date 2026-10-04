@@ -84,6 +84,20 @@ func WithValidTenant(ctx context.Context, tenant Tenant) context.Context {
 	return WithTenant(ctx, tenant)
 }
 
+func EnsureTenant(ctx context.Context, tenant Tenant) context.Context {
+	if !tenant.Valid() || IsSystem(ctx) {
+		return ctx
+	}
+
+	if current, ok := TenantFrom(ctx); ok &&
+		current.OrganizationID == tenant.OrganizationID &&
+		current.BusinessUnitID == tenant.BusinessUnitID {
+		return ctx
+	}
+
+	return WithTenant(ctx, tenant)
+}
+
 func WithSystem(ctx context.Context, reason string) context.Context {
 	return context.WithValue(
 		ctx,

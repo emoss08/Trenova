@@ -5,9 +5,13 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -26,17 +30,20 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
+	Quota  services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota services.QuotaGuard
 }
 
 func New(p Params) repositories.DocumentRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.document-repository"),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.document-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -377,13 +384,20 @@ func (r *repository) Create(
 			zap.String("fileName", entity.FileName),
 		)
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Value("is_current_version", "?", entity.IsCurrentVersion).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create document", zap.Error(err))
+		err := quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
+			if _, insertErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(entity).
+				Value("is_current_version", "?", entity.IsCurrentVersion).
+				Returning("*").
+				Exec(c); insertErr != nil {
+				log.Error("failed to create document", zap.Error(insertErr))
+				return insertErr
+			}
+
+			return nil
+		}, documentQuotaRequests(entity)...)
+		if err != nil {
 			return nil, err
 		}
 
@@ -710,4 +724,18 @@ func (r *repository) DeleteByLineageIDs(
 			Exec(ctx)
 		return err
 	})
+}
+
+func documentQuotaRequests(entity *document.Document) []services.QuotaRequest {
+	tenantInfo := pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}
+	size := max(entity.FileSize, 0)
+
+	return []services.QuotaRequest{
+		{TenantInfo: tenantInfo, Meter: platformcatalog.MeterDocumentFileBytes, Quantity: size},
+		{TenantInfo: tenantInfo, Meter: platformcatalog.MeterDocumentUploads, Quantity: 1},
+		{TenantInfo: tenantInfo, Meter: platformcatalog.MeterDocumentStorageBytes, Quantity: size},
+	}
 }

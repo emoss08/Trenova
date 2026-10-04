@@ -2,6 +2,7 @@ import { LOCAL_DEV_API_BASE_URL } from "@trenova/shared/lib/constants";
 
 const reactScanScriptSource = "https://unpkg.com";
 const reactScanConnectSource = "https://www.react-grab.com";
+const turnstileSource = "https://challenges.cloudflare.com";
 
 const scriptSources = [
   "'self'",
@@ -11,6 +12,7 @@ const scriptSources = [
   "'sha256-XtR73bEqMUD7aevUCpctukznhxuFL3vHjrYpUg9FkbI='",
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
+  turnstileSource,
 ] as const;
 const localDevelopmentScriptSources = [
   "'self'",
@@ -19,8 +21,10 @@ const localDevelopmentScriptSources = [
   "https://static.cloudflareinsights.com",
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
+  turnstileSource,
   reactScanScriptSource,
 ] as const;
+const frameSources = ["'self'", turnstileSource] as const;
 const styleSources = ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"] as const;
 const fontSources = ["'self'", "data:", "https://fonts.gstatic.com"] as const;
 const imageSources = [
@@ -289,6 +293,7 @@ function contentSecurityPolicy(request: Request | null): string {
     `font-src ${fontSources.join(" ")}`,
     `img-src ${effectiveImageSources.join(" ")}`,
     `connect-src ${effectiveConnectSources.join(" ")}`,
+    `frame-src ${frameSources.join(" ")}`,
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "upgrade-insecure-requests",

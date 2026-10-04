@@ -63,6 +63,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/cloudsignuprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationschedulerepository"
@@ -164,6 +165,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/modeprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/networkpulserepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/onboardingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orgholidayrepository"
@@ -175,6 +177,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ptoledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ptopolicyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pushsubscriptionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/quotacounterrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateagreementrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateconfirmationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateimportrepository"
@@ -214,11 +217,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoidentitylinkrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/storedmileagerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/subscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcasubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/telematicsrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantprovisioningrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantpurgerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/timesheetrepository"
@@ -247,6 +253,12 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	tenantsyncrepository.New,
 	tenantprovisioningrepository.New,
 	organizationrepository.New,
+	subscriptionrepository.New,
+	tenantpurgerepository.New,
+	onboardingrepository.New,
+	cloudsignuprepository.New,
+	tenantbootstraprepository.New,
+	quotacounterrepository.New,
 	iamrepository.New,
 	iamrepository.NewAuthEventRepository,
 	ssoconfigrepository.New,

@@ -62,7 +62,10 @@ var (
 	_ validationframework.TenantedEntity = (*User)(nil)
 )
 
-const UserIDPrefix = "usr_"
+const (
+	UserIDPrefix   = "usr_"
+	SystemUsername = "system"
+)
 
 type User struct {
 	bun.BaseModel `bun:"table:users,alias:usr" json:"-"`

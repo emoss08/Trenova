@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -73,7 +74,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	})
 	if err != nil {
 		a.logger.Error("Shipment bulk duplication failed", zap.Error(err))
-		return nil, err
+		return nil, temporaltype.ToPlanRefusal(err)
 	}
 
 	shipmentIDs := make([]pulid.ID, 0, len(duplicated))

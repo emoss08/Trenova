@@ -180,6 +180,17 @@ func prepareOutcome(plan *assistantservice.TurnPlan, err error) string {
 // rejectionParams are the figures a refusal carries for the client, empty
 // for one that carries none.
 func rejectionParams(err error) map[string]string {
+	if quota, ok := errors.AsType[*errortypes.QuotaExceededError](err); ok {
+		params := quota.Params()
+		params["code"] = planLimitCode
+		return params
+	}
+	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		params := restriction.Params()
+		params["code"] = planRestrictedCode
+		return params
+	}
+
 	var business *errortypes.BusinessError
 	if errors.As(err, &business) && len(business.Params) > 0 {
 		return business.Params
@@ -190,6 +201,8 @@ func rejectionParams(err error) map[string]string {
 
 func rejected(err error) bool {
 	return errortypes.IsBusinessError(err) ||
+		errortypes.IsQuotaExceededError(err) ||
+		errortypes.IsPlanRestrictionError(err) ||
 		errortypes.IsMultiError(err) ||
 		errortypes.IsNotFoundError(err) ||
 		errortypes.IsAuthorizationError(err)
@@ -496,6 +509,11 @@ func failedEndingFor(
 	}
 	data := map[string]any{"message": message}
 	switch {
+	case failure.Plan != nil:
+		ending = failedEnding(status, failure.Plan.Message)
+		data["message"] = failure.Plan.Message
+		data["code"] = errorCodeUsageLimit
+		data["limit"] = planLimit(failure.Plan)
 	case failure.NoProvider:
 		data["code"] = errorCodeNoProvider
 	case len(failure.Providers) > 0:
@@ -528,13 +546,37 @@ const (
 	// errorCodeUsageLimit is a question a usage cap turned away: the agent's
 	// monthly budget or daily runs, or the person's own monthly allowance.
 	errorCodeUsageLimit = "usage_limit"
+
+	planLimitCode      = "quota_exceeded"
+	planRestrictedCode = "plan_restricted"
+	planLimitKind      = "plan_limit"
 )
+
+func planLimit(refusal *modelcall.PlanRefusal) map[string]any {
+	return map[string]any{
+		"kind":     planLimitKind,
+		"used":     strconv.FormatInt(refusal.Used, 10),
+		"limit":    strconv.FormatInt(refusal.Limit, 10),
+		"meter":    refusal.Meter,
+		"plan":     refusal.Plan,
+		"resetsAt": int64(0),
+	}
+}
 
 // usageLimit is the cap a refusal names, in the shape the client reads, or
 // nil when the refusal was not a usage cap.
 func usageLimit(params map[string]string) map[string]any {
 	var kind, used string
 	switch {
+	case params["code"] == planLimitCode:
+		return map[string]any{
+			"kind":     planLimitKind,
+			"used":     params["used"],
+			"limit":    params["limit"],
+			"meter":    params["meter"],
+			"plan":     params["plan"],
+			"resetsAt": int64(0),
+		}
 	case params["code"] == "person_allowance":
 		kind, used = "person_allowance", params["used"]
 	case params["code"] == "agent_budget" &&

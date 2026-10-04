@@ -243,6 +243,17 @@ func (s *Service) Upload(
 	); err != nil {
 		return nil, err
 	}
+	if err = usageservice.CheckDocumentBytesLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentBytesUsageParams{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			Bytes:      req.File.Size,
+		},
+	); err != nil {
+		return nil, err
+	}
 
 	lineageID, lineageInfo, err := s.prepareUploadLineage(ctx, req, docID)
 	if err != nil {

@@ -198,4 +198,13 @@ type AuthService interface {
 		ipAddress, userAgent string,
 	) (*AuthenticatedPrincipal, error)
 	Logout(ctx context.Context, sessionID pulid.ID) error
+	CreateSessionForUser(
+		ctx context.Context,
+		req *CreateSessionForUserRequest,
+	) (*LoginResponse, error)
+}
+
+type CreateSessionForUserRequest struct {
+	User         *tenant.User
+	AuthProvider string
 }

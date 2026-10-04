@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/configspec"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/secretconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,6 +43,7 @@ type Params struct {
 	Encryption   *encryptionservice.Service
 	AuditService serviceports.AuditService
 	WebSearch    serviceports.WebSearchProvider
+	Plans        serviceports.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -50,6 +53,7 @@ type Service struct {
 	secrets   secretconfig.Codec
 	audit     serviceports.AuditService
 	webSearch serviceports.WebSearchProvider
+	plans     serviceports.PlanService
 	now       func() int64
 }
 
@@ -61,6 +65,7 @@ func New(p Params) *Service {
 		secrets:   secretconfig.NewCodec(p.Encryption, p.Logger),
 		audit:     p.AuditService,
 		webSearch: p.WebSearch,
+		plans:     p.Plans,
 		now:       timeutils.NowUnix,
 	}
 }
@@ -262,6 +267,11 @@ func (s *Service) UpdateConfig(
 	}
 
 	tenantInfo := req.TenantInfo
+	if req.Enabled {
+		if err = s.requireWebSearch(ctx, tenantInfo); err != nil {
+			return nil, err
+		}
+	}
 	existing, err := s.find(ctx, tenantInfo, typ)
 	if err != nil {
 		return nil, err
@@ -472,6 +482,19 @@ func (s *Service) ActiveExtensions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (map[agentextension.Type]agentextension.Availability, error) {
+	allowed, err := planservice.Allows(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityAgentWebSearch,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return map[agentextension.Type]agentextension.Availability{}, nil
+	}
+
 	records, err := s.repo.ListByTenant(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -505,6 +528,20 @@ func (s *Service) runtime(
 		return nil, err
 	}
 
+	allowed, err := planservice.Allows(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityAgentWebSearch,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, &ToolError{Message: def.Vendor + " " + def.Name + " is not included in this " +
+			"organization's plan."}
+	}
+
 	record, err := s.find(ctx, tenantInfo, typ)
 	if err != nil {
 		return nil, err
@@ -526,6 +563,15 @@ func (s *Service) runtime(
 	}
 
 	return &runtimeSettings{values: values, record: record}, nil
+}
+
+func (s *Service) requireWebSearch(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityAgentWebSearch,
+	)
 }
 
 type ToolError struct {

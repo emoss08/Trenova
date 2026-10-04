@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -83,6 +84,7 @@ type Params struct {
 	DistanceCalculation  services.DistanceCalculationService `optional:"true"`
 	TenderGuard          services.TenderGuard                `optional:"true"`
 	AgentEvents          services.AgentEventPublisher        `optional:"true"`
+	Quota                services.QuotaGuard                 `optional:"true"`
 }
 
 type service struct {
@@ -121,6 +123,7 @@ type service struct {
 	distanceCalculation  services.DistanceCalculationService
 	tenderGuard          services.TenderGuard
 	agentEvents          services.AgentEventPublisher
+	quota                services.QuotaGuard
 	mutationObservers    []services.ShipmentMutationObserver
 }
 
@@ -161,6 +164,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		distanceCalculation:  p.DistanceCalculation,
 		tenderGuard:          p.TenderGuard,
 		agentEvents:          p.AgentEvents,
+		quota:                quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -1175,6 +1179,13 @@ func (s *service) Duplicate(
 	req *repositories.BulkDuplicateShipmentRequest,
 ) (*repositories.ShipmentDuplicateWorkflowResponse, error) {
 	if _, err := s.planDuplicate(ctx, req); err != nil {
+		return nil, err
+	}
+	if err := quotaservice.Preflight(ctx, s.quota, &services.QuotaRequest{
+		TenantInfo: req.TenantInfo,
+		Meter:      platformcatalog.MeterShipmentsTotal,
+		Quantity:   int64(max(req.Count, 0)),
+	}); err != nil {
 		return nil, err
 	}
 

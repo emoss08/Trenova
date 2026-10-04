@@ -7,10 +7,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -36,6 +39,7 @@ type Params struct {
 	ChargeAllocationRepository repositories.ChargeAllocationRepository
 	CommodityRepository        repositories.ShipmentCommodityRepository
 	OrderRepository            repositories.OrderRepository
+	Quota                      services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
@@ -47,6 +51,7 @@ type repository struct {
 	chargeAllocationRepository repositories.ChargeAllocationRepository
 	commodityRepository        repositories.ShipmentCommodityRepository
 	orderRepository            repositories.OrderRepository
+	quota                      services.QuotaGuard
 }
 
 //nolint:gocritic // This is a constructor function
@@ -60,6 +65,7 @@ func New(p Params) repositories.ShipmentRepository {
 		chargeAllocationRepository: p.ChargeAllocationRepository,
 		commodityRepository:        p.CommodityRepository,
 		orderRepository:            p.OrderRepository,
+		quota:                      quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -415,6 +421,11 @@ func (r *repository) Create(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		quotaReq := shipmentQuotaRequest(entity.OrganizationID, entity.BusinessUnitID, 1)
+		if err := quotaservice.Preflight(ctx, r.quota, &quotaReq); err != nil {
+			return nil, err
+		}
+
 		locationCode, businessUnitCode, err := r.resolveSequenceCodes(ctx, entity)
 		if err != nil {
 			return nil, err
@@ -441,6 +452,10 @@ func (r *repository) Create(
 		}
 
 		err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if err = quotaservice.EnforceAll(c, r.quota, quotaReq); err != nil {
+				return err
+			}
+
 			if newOrder != nil {
 				if err = r.orderRepository.CreateInTx(c, tx, newOrder); err != nil {
 					return err
@@ -1001,6 +1016,15 @@ func (r *repository) BulkDuplicate(
 	req *repositories.BulkDuplicateShipmentRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		quotaReq := shipmentQuotaRequest(
+			req.TenantInfo.OrgID,
+			req.TenantInfo.BuID,
+			int64(max(req.Count, 0)),
+		)
+		if err := quotaservice.Preflight(ctx, r.quota, &quotaReq); err != nil {
+			return nil, err
+		}
+
 		source, err := r.getDuplicateSource(ctx, req)
 		if err != nil {
 			return nil, err
@@ -1054,7 +1078,12 @@ func (r *repository) BulkDuplicate(
 			autoOrders = append(autoOrders, autoOrder)
 		}
 
+		quotaReq.Quantity = int64(len(graph.shipments))
 		err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if quotaErr := quotaservice.EnforceAll(c, r.quota, quotaReq); quotaErr != nil {
+				return quotaErr
+			}
+
 			if len(autoOrders) > 0 {
 				if _, insertErr := tx.
 					NewInsert().
@@ -1214,4 +1243,12 @@ func ResolveSequenceCodes(
 	}
 
 	return locationCode, businessUnitCode, nil
+}
+
+func shipmentQuotaRequest(orgID, buID pulid.ID, quantity int64) services.QuotaRequest {
+	return services.QuotaRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		Meter:      platformcatalog.MeterShipmentsTotal,
+		Quantity:   quantity,
+	}
 }

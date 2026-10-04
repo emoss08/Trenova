@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -88,6 +91,10 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 		WithUsageStats(usageStats).
 		WithParams(params).
 		Build()
+
+	if retryAfter, ok := errortypes.RetryAfterOf(err); ok {
+		c.Header("Retry-After", strconv.FormatInt(int64(math.Ceil(retryAfter.Seconds())), 10))
+	}
 
 	c.Header("Content-Type", ProblemJSONContentType)
 	c.JSON(problem.Status, problem)

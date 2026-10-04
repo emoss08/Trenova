@@ -1,6 +1,7 @@
 package documenttemplateservice_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -322,4 +324,34 @@ func TestContentHashDistinguishesWhereContentLives(t *testing.T) {
 		documenttemplateservice.ContentHash(subjectSide),
 		documenttemplateservice.ContentHash(bodySide),
 	)
+}
+
+func TestRenderMessageBuiltInOnlyNeverReadsTheOrganizationsTemplate(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.inliner.EXPECT().InlineAssets(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, req *services.AssetInlineRequest) (*services.AssetInlineResult, error) {
+			return &services.AssetInlineResult{HTML: req.HTML}, nil
+		},
+	).Maybe()
+
+	rendered, err := h.service.RenderMessage(t.Context(), &services.RenderMessageRequest{
+		TenantInfo: h.tenantInfo,
+		Kind:       documenttemplate.KindPasswordResetEmail,
+		Data: documenttemplate.PasswordResetContext{
+			FirstName:        "Dana",
+			FullName:         "Dana Scully",
+			CompanyName:      "Acme",
+			ResetURL:         "https://app.trenova.test/reset?token=abc",
+			ExpiresInMinutes: 30,
+			ExpiresAt:        "Jan 1, 2027 9:00 AM",
+		},
+		Locale:      i18n.Default,
+		BuiltInOnly: true,
+	})
+	require.NoError(t, err)
+	require.Equal(t, documenttemplate.SourceBuiltIn, rendered.Source)
+	require.Nil(t, rendered.TemplateID)
+	require.NotEmpty(t, rendered.HTML)
 }

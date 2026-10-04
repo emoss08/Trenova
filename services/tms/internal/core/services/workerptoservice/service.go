@@ -9,12 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,6 +46,7 @@ type Params struct {
 	AuditService    services.AuditService
 	DriverNotify    *drivernotificationservice.Service `optional:"true"`
 	Realtime        services.RealtimeService           `optional:"true"`
+	Plans           services.PlanService               `optional:"true"`
 }
 
 type Service struct {
@@ -57,6 +60,7 @@ type Service struct {
 	auditService    services.AuditService
 	driverNotify    *drivernotificationservice.Service
 	realtime        services.RealtimeService
+	plans           services.PlanService
 }
 
 const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
@@ -75,6 +79,7 @@ func New(p Params) *Service {
 		auditService:    p.AuditService,
 		driverNotify:    p.DriverNotify,
 		realtime:        p.Realtime,
+		plans:           p.Plans,
 	}
 }
 
@@ -444,6 +449,15 @@ func (s *Service) sendTransitionSMS(
 ) {
 	if !s.sendsSMS() {
 		log.Warn("workflow starter disabled; skipping PTO SMS")
+		return
+	}
+	allowed, err := planservice.Allows(ctx, s.plans, req.TenantInfo, platformplan.CapabilitySMS)
+	if err != nil {
+		log.Error("failed to resolve the organization's plan for PTO SMS", zap.Error(err))
+		return
+	}
+	if !allowed {
+		log.Debug("the organization's plan does not include SMS; skipping PTO SMS")
 		return
 	}
 

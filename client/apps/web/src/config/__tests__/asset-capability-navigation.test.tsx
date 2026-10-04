@@ -7,7 +7,11 @@ import {
   filterNavModules,
   type NavAccessContext,
 } from "@/hooks/use-filtered-navigation";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
+import { publicConfigQueryOptions } from "@trenova/shared/hooks/use-public-config";
+import { SELF_HOSTED_PUBLIC_CONFIG, type PlatformMode } from "@trenova/shared/types/platform";
+import type { ReactNode } from "react";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
@@ -212,6 +216,23 @@ function signIn(capabilities: OrganizationCapabilities) {
   usePermissionStore.setState({ manifest: manifest(), lastFetched: Date.now(), isLoading: false });
 }
 
+/**
+ * The admin links read the install's public config, which the app serves from the
+ * query cache. Seeding it keeps these tests off the network and lets one of them
+ * stand in for a Trenova Cloud install.
+ */
+function renderAdminLinks(platformMode: PlatformMode = "self_hosted") {
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(publicConfigQueryOptions.queryKey, {
+    ...SELF_HOSTED_PUBLIC_CONFIG,
+    platformMode,
+  });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  return renderHook(() => useAccessibleAdminLinks(), { wrapper });
+}
+
 describe("asset-only admin links", () => {
   afterEach(() => {
     usePermissionStore.getState().clearPermissions();
@@ -221,7 +242,7 @@ describe("asset-only admin links", () => {
   it("lists the driver settlement and driver portal controls for an asset organization", () => {
     signIn(hybrid);
 
-    const { result } = renderHook(() => useAccessibleAdminLinks());
+    const { result } = renderAdminLinks();
     const hrefs = result.current.map((link) => link.href);
 
     expect(hrefs).toContain("/admin/settlement-control");
@@ -231,7 +252,7 @@ describe("asset-only admin links", () => {
   it("withholds them from a brokerage while keeping the neutral controls", () => {
     signIn(brokerageOnly);
 
-    const { result } = renderHook(() => useAccessibleAdminLinks());
+    const { result } = renderAdminLinks();
     const hrefs = result.current.map((link) => link.href);
 
     expect(hrefs).not.toContain("/admin/settlement-control");
@@ -243,8 +264,19 @@ describe("asset-only admin links", () => {
   it("keeps every admin link declared in the config reachable when both halves run", () => {
     signIn(hybrid);
 
-    const { result } = renderHook(() => useAccessibleAdminLinks());
+    const { result } = renderAdminLinks("cloud");
 
     expect(result.current).toHaveLength(adminLinks.filter((link) => !link.disabled).length);
+  });
+
+  it("shows Plan & usage only on a Trenova Cloud install", () => {
+    signIn(hybrid);
+
+    const selfHosted = renderAdminLinks("self_hosted").result.current.map((link) => link.href);
+    const cloud = renderAdminLinks("cloud").result.current.map((link) => link.href);
+
+    expect(selfHosted).not.toContain("/admin/plan-usage");
+    expect(cloud).toContain("/admin/plan-usage");
+    expect(selfHosted).toContain("/admin/organization-settings");
   });
 });

@@ -57,6 +57,9 @@ func (s *Service) CreateConnection(
 			"EDI connection request is required",
 		)
 	}
+	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 
 	method := req.Method
 	if method == "" {

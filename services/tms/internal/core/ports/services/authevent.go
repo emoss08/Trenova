@@ -12,6 +12,11 @@ const (
 	AuthEventProviderLogout               = "session.logout"
 	AuthEventProviderPasswordResetRequest = "password_reset.request"
 	AuthEventProviderPasswordResetConfirm = "password_reset.confirm"
+	AuthEventProviderSignupRequested      = "signup_requested"
+	AuthEventProviderSignupRejected       = "signup_rejected"
+	AuthEventProviderSignupVerified       = "signup_verified"
+	AuthEventProviderSignupProvisioned    = "signup_provisioned"
+	AuthEventProviderLoginThrottled       = "login_throttled"
 )
 
 type AuthEventRecord struct {

@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -39,6 +41,7 @@ type Params struct {
 	// Access sets who may use an agent in the transaction that saves it.
 	Access      services.AgentAccessService
 	Permissions services.PermissionEngine `optional:"true"`
+	Plans       services.PlanService      `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +55,7 @@ type Service struct {
 	extensions  services.AgentExtensionGate
 	access      services.AgentAccessService
 	permissions services.PermissionEngine
+	plans       services.PlanService
 }
 
 func New(p Params) services.AgentDefinitionService {
@@ -66,6 +70,7 @@ func New(p Params) services.AgentDefinitionService {
 		extensions:  p.Extensions,
 		access:      p.Access,
 		permissions: p.Permissions,
+		plans:       p.Plans,
 	}
 }
 
@@ -117,6 +122,9 @@ func (s *Service) Create(
 	if err := s.checkDataAccess(ctx, definition, nil, actor); err != nil {
 		return nil, err
 	}
+	if err := s.requireAutomation(ctx, req.TenantInfo, definition, nil); err != nil {
+		return nil, err
+	}
 	if err := s.schedule(definition); err != nil {
 		return nil, err
 	}
@@ -160,6 +168,9 @@ func (s *Service) Update(
 		return nil, err
 	}
 	if err = s.checkDataAccess(ctx, &updated, &previous, actor); err != nil {
+		return nil, err
+	}
+	if err = s.requireAutomation(ctx, req.TenantInfo, &updated, &previous); err != nil {
 		return nil, err
 	}
 	if scheduleChanged(&previous, &updated) {
@@ -390,6 +401,31 @@ func (s *Service) schedule(definition *agentdefinition.Definition) error {
 	}
 
 	return nil
+}
+
+func automated(definition *agentdefinition.Definition) bool {
+	return definition != nil && definition.Enabled &&
+		definition.TriggerMode != "" && definition.TriggerMode != agentdefinition.TriggerChat
+}
+
+func (s *Service) requireAutomation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	updated, previous *agentdefinition.Definition,
+) error {
+	if !automated(updated) {
+		return nil
+	}
+	if automated(previous) && previous.TriggerMode == updated.TriggerMode {
+		return nil
+	}
+
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityAgentAutomation,
+	)
 }
 
 func scheduleChanged(previous, updated *agentdefinition.Definition) bool {

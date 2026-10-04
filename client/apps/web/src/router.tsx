@@ -3,8 +3,14 @@ import {
   createCapabilityLoader,
   createPermissionLoader,
 } from "@/lib/route-permission";
+import {
+  onboardingExitRedirect,
+  loadOnboardingSnapshot,
+  resolveOnboardingRedirect,
+} from "@/lib/onboarding-gate";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
-import { AppErrorLayout, AppLayout } from "@/routes/app-layout";
+import { signupRouteRedirect } from "@/lib/signup-gate";
+import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
 import { RootLayout } from "@/routes/root-layout";
@@ -16,7 +22,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import { AdminLayout } from "./routes/admin-layout";
 
-const protectedLoader: LoaderFunction = async () => {
+const protectedLoader: LoaderFunction = async ({ request }) => {
   const { checkAuth } = useAuthStore.getState();
   const isAuthenticated = await checkAuth();
 
@@ -24,7 +30,28 @@ const protectedLoader: LoaderFunction = async () => {
     return redirect("/login");
   }
 
+  // A cloud organization that has not finished the welcome wizard is sent to it from
+  // every signed-in page; the wizard's own path is exempt, so this cannot loop.
+  const onboardingTarget = await resolveOnboardingRedirect(new URL(request.url).pathname);
+  if (onboardingTarget) {
+    return redirect(onboardingTarget);
+  }
+
   return null;
+};
+
+// The wizard is only for an organization that still owes it. Anybody else who opens
+// the address — a completed organization, a self-hosted install — goes home.
+const onboardingLoader: LoaderFunction = async () => {
+  const target = onboardingExitRedirect(await loadOnboardingSnapshot());
+  return target ? redirect(target) : null;
+};
+
+// Signup exists only on Trenova Cloud with signup switched on; everywhere else the
+// address falls back to sign-in rather than showing a form the server would refuse.
+const signupLoader: LoaderFunction = async () => {
+  const target = await signupRouteRedirect();
+  return target ? redirect(target) : null;
 };
 
 const guestLoader: LoaderFunction = async () => {
@@ -1569,6 +1596,14 @@ export const routes: RouteObject[] = [
             loader: protectedLoader,
             children: [
               {
+                path: "plan-usage",
+                loader: createPermissionLoader(Resource.Organization, Operation.Read),
+                async lazy() {
+                  const { PlanUsagePage } = await import("@/routes/admin/plan-usage/page");
+                  return { Component: PlanUsagePage };
+                },
+              },
+              {
                 path: "billing-controls",
                 loader: createPermissionLoader(Resource.BillingControl),
                 async lazy() {
@@ -1986,6 +2021,24 @@ export const routes: RouteObject[] = [
         ],
       },
       {
+        // The welcome wizard a new cloud organization walks through once. It is a
+        // full-screen step of its own rather than a page in the app: nothing in the
+        // sidebar is useful until the organization has a profile. It still runs the
+        // session's gates, so a password change or role activation comes first.
+        element: <OnboardingLayout />,
+        loader: protectedLoader,
+        children: [
+          {
+            path: "/onboarding",
+            loader: combineLoaders(protectedLoader, onboardingLoader),
+            async lazy() {
+              const { OnboardingPage } = await import("@/routes/onboarding/page");
+              return { Component: OnboardingPage };
+            },
+          },
+        ],
+      },
+      {
         // The Desk runs outside the app chrome.
         //
         // It is a room rather than a page: a conversation on one side and
@@ -2131,6 +2184,24 @@ export const routes: RouteObject[] = [
             async lazy() {
               const { AuthPage } = await import("@/routes/auth/page");
               return { Component: AuthPage };
+            },
+          },
+          {
+            path: "/signup",
+            loader: signupLoader,
+            async lazy() {
+              const { SignupPage } = await import("@/routes/signup/page");
+              return { Component: SignupPage };
+            },
+          },
+          {
+            // Opened from the emailed verification link. It signs the new owner in, so
+            // it is guest-only for the same reason the sign-in page is.
+            path: "/signup/verify",
+            loader: signupLoader,
+            async lazy() {
+              const { SignupVerifyPage } = await import("@/routes/signup/verify-page");
+              return { Component: SignupVerifyPage };
             },
           },
           {

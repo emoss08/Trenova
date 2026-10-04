@@ -27,6 +27,7 @@ var RedisRepositoriesModule = fx.Module("redis-repositories",
 		repositories.NewWorkerCacheRepository,
 		repositories.NewStoredMileageBufferRepository,
 		repositories.NewIdempotencyStore,
+		repositories.NewLoginThrottleStore,
 	),
 )
 

@@ -3,10 +3,14 @@ package recurringshipmentrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -26,12 +30,14 @@ type Params struct {
 	DB        *postgres.Connection
 	Logger    *zap.Logger
 	Generator seqgen.Generator
+	Quota     services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db        *postgres.Connection
 	l         *zap.Logger
 	generator seqgen.Generator
+	quota     services.QuotaGuard
 }
 
 func New(p Params) repositories.RecurringShipmentRepository {
@@ -39,6 +45,7 @@ func New(p Params) repositories.RecurringShipmentRepository {
 		db:        p.DB,
 		l:         p.Logger.Named("postgres.recurring-shipment-repository"),
 		generator: p.Generator,
+		quota:     quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -224,16 +231,33 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := r.insertSeries(ctx, entity); err != nil {
 			log.Error("failed to create recurring shipment", zap.Error(err))
 			return nil, err
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) insertSeries(
+	ctx context.Context,
+	entity *recurringshipment.RecurringShipment,
+) error {
+	return quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
+		_, err := r.db.DBForContext(c).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(c)
+		return err
+	}, services.QuotaRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		Meter:    platformcatalog.MeterRecurringShipmentSeries,
+		Quantity: 1,
 	})
 }
 

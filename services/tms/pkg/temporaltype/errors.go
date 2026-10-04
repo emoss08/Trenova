@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/samber/lo"
 	"go.temporal.io/sdk/temporal"
 )
@@ -28,6 +29,8 @@ const (
 	// template does not compile or render. Retrying cannot help: the same
 	// template will fail identically until someone edits it.
 	ErrorTypeTemplateInvalid = ErrorType("template_invalid")
+	ErrorTypeQuotaExceeded   = ErrorType("quota_exceeded")
+	ErrorTypePlanRestricted  = ErrorType("plan_restricted")
 )
 
 func (e ErrorType) String() string {
@@ -164,6 +167,45 @@ func NewThrottleError(message string, retryAfter int) *ApplicationError {
 	}
 }
 
+func NewPlanRefusalError(err error) (*ApplicationError, bool) {
+	if quota, ok := errors.AsType[*errortypes.QuotaExceededError](err); ok {
+		return &ApplicationError{
+			Type:    ErrorTypeQuotaExceeded,
+			Message: quota.Message,
+			Details: planRefusalDetails(quota.Params()),
+			Cause:   err,
+		}, true
+	}
+
+	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		return &ApplicationError{
+			Type:    ErrorTypePlanRestricted,
+			Message: restriction.Message,
+			Details: planRefusalDetails(restriction.Params()),
+			Cause:   err,
+		}, true
+	}
+
+	return nil, false
+}
+
+func ToPlanRefusal(err error) error {
+	if refusal, ok := NewPlanRefusalError(err); ok {
+		return refusal.ToTemporalError()
+	}
+
+	return err
+}
+
+func planRefusalDetails(params map[string]string) map[string]any {
+	details := make(map[string]any, len(params))
+	for key, value := range params {
+		details[key] = value
+	}
+
+	return details
+}
+
 func IsRetryable(err error) bool {
 	var appErr *ApplicationError
 	if errors.As(err, &appErr) {
@@ -177,7 +219,9 @@ func IsRetryable(err error) bool {
 				ErrorTypeInvalidInput.String(),
 				ErrorTypeResourceNotFound.String(),
 				ErrorTypePermissionDenied.String(),
-				ErrorTypeDataIntegrity.String():
+				ErrorTypeDataIntegrity.String(),
+				ErrorTypeQuotaExceeded.String(),
+				ErrorTypePlanRestricted.String():
 				return false
 			}
 		}

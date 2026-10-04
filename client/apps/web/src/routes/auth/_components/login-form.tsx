@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
 import { authService } from "@trenova/shared/services/auth";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { TenantLoginMetadata } from "@trenova/shared/types/organization";
@@ -16,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building03Icon, Truck01Icon } from "@trenova/shared/components/icons";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
 import { StepCrumbs, StepHeading } from "./auth-primitives";
@@ -49,6 +50,9 @@ export function LoginForm({
   const ssoError = searchParams.get("sso_error");
   const setUser = useAuthStore((state) => state.setUser);
   const [audience, setAudience] = useState<AuthAudience>("office");
+  // Self-serve signup exists only on Trenova Cloud with signup switched on. Anywhere
+  // else accounts are made by an administrator, so the link would lead nowhere.
+  const { signupAvailable } = usePublicConfig();
 
   // The audience toggle only makes sense on the generic sign-in page: a tenant login
   // page is already scoped to one organization's office users.
@@ -102,17 +106,18 @@ export function LoginForm({
           t("Dash is where drivers see loads and pay.")
         ) : tenantMetadata ? (
           t("Sign in to {0}", tenantMetadata.organizationName)
-        ) : (
+        ) : signupAvailable ? (
           <>
             {t("Don't have an account yet?")}{" "}
-            <a
-              href="#"
+            <Link
+              to="/signup"
               className="text-foreground decoration-foreground/35 hover:decoration-foreground underline underline-offset-[3px]"
-              onClick={(event) => event.preventDefault()}
             >
               {t("Create an account")}
-            </a>
+            </Link>
           </>
+        ) : (
+          t("Sign in with the account your organization set up for you.")
         )}
       </StepHeading>
 

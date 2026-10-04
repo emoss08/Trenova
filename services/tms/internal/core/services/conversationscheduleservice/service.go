@@ -23,9 +23,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -104,6 +106,7 @@ type Params struct {
 	Workflows     serviceports.WorkflowStarter
 	Syncer        serviceports.ConversationScheduleSyncer
 	Realtime      serviceports.RealtimeService `optional:"true"`
+	Plans         serviceports.PlanService     `optional:"true"`
 }
 
 type Service struct {
@@ -117,6 +120,7 @@ type Service struct {
 	syncer      serviceports.ConversationScheduleSyncer
 	realtime    serviceports.RealtimeService
 	clocks      clocks
+	plans       serviceports.PlanService
 	now         func() int64
 }
 
@@ -134,8 +138,18 @@ func New(p Params) *Service {
 		syncer:      p.Syncer,
 		realtime:    p.Realtime,
 		clocks:      repositoryClocks{users: p.Users, organizations: p.Organizations},
+		plans:       p.Plans,
 		now:         timeutils.NowUnix,
 	}
+}
+
+func (s *Service) requireAutomation(ctx context.Context, tenant pagination.TenantInfo) error {
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenant,
+		platformplan.CapabilityAgentAutomation,
+	)
 }
 
 // NewRunner is the same service, as what a firing schedule asks to run.
@@ -160,13 +174,17 @@ type CreateResult struct {
 // Create reads a message as a scheduled request and keeps it: the schedule,
 // its card in the conversation, and the Temporal schedule that fires it.
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult, error) {
+	tenant := tenantOf(req.Actor)
+	if err := s.requireAutomation(ctx, tenant); err != nil {
+		return nil, err
+	}
+
 	text := strings.TrimSpace(req.Text)
 	parsed, err := conversationschedule.ParseRequest(text)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := tenantOf(req.Actor)
 	thread, err := s.threads.GetThread(ctx, repositories.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
@@ -350,6 +368,11 @@ func (s *Service) SetEnabled(
 	}
 	if schedule.Enabled == enabled {
 		return schedule, nil
+	}
+	if enabled {
+		if err = s.requireAutomation(ctx, tenantOf(req.Actor)); err != nil {
+			return nil, err
+		}
 	}
 
 	schedule.Enabled = enabled

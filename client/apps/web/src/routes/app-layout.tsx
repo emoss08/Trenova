@@ -130,6 +130,15 @@ export function AppSession({ children }: { children: (outlet: ReactNode) => Reac
   return children(<Outlet key={datePreferenceKey} />);
 }
 
+/**
+ * The welcome wizard's frame: the session's gates and connections, and nothing else.
+ * It wears no sidebar, because nothing behind it is useful until the organization has
+ * a profile.
+ */
+export function OnboardingLayout() {
+  return <AppSession>{(outlet) => outlet}</AppSession>;
+}
+
 export function AppLayout() {
   return <AppSession>{(outlet) => <SidebarLayout>{outlet}</SidebarLayout>}</AppSession>;
 }

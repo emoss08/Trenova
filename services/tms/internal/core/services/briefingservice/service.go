@@ -14,10 +14,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingfacts"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingwriter"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -47,6 +49,7 @@ type Params struct {
 	// Days writes a page a person asked for again, on a worker.
 	Days    services.BriefingDayWriter
 	Sources briefingfacts.Sources
+	Plans   services.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -58,6 +61,7 @@ type Service struct {
 	permissions  services.PermissionEngine
 	realtime     services.RealtimeService
 	days         services.BriefingDayWriter
+	plans        services.PlanService
 	now          func() int64
 }
 
@@ -73,6 +77,7 @@ func New(p Params) *Service {
 		permissions:  p.Permissions,
 		realtime:     p.Realtime,
 		days:         p.Days,
+		plans:        p.Plans,
 		now:          timeutils.NowUnix,
 	}
 }
@@ -303,6 +308,14 @@ func (s *Service) Regenerate(
 	actor *services.RequestActor,
 ) (*briefing.Briefing, error) {
 	if err := s.assertMay(ctx, actor, permission.OpCreate); err != nil {
+		return nil, err
+	}
+	if err := planservice.RequireCapability(
+		ctx,
+		s.plans,
+		req.TenantInfo,
+		platformplan.CapabilityAgentAutomation,
+	); err != nil {
 		return nil, err
 	}
 

@@ -6,12 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/restx"
@@ -60,6 +62,7 @@ type Params struct {
 	// Publisher wakes whichever agent covers carrier risk on a finding the
 	// tower would show a person.
 	Publisher services.AgentEventPublisher `optional:"true"`
+	Plans     services.PlanService         `optional:"true"`
 }
 
 type Service struct {
@@ -89,6 +92,7 @@ type Service struct {
 	publisher       services.AgentEventPublisher
 	interactiveWait time.Duration
 	breaker         *circuitBreaker
+	plans           services.PlanService
 	now             func() int64
 }
 
@@ -132,6 +136,7 @@ func New(p Params) *Service {
 		publisher:       p.Publisher,
 		interactiveWait: p.Config.CarrierIntelligence.GetInteractiveWait(),
 		breaker:         newCircuitBreaker(),
+		plans:           p.Plans,
 		now:             timeutils.NowUnix,
 	}
 
@@ -140,6 +145,18 @@ func New(p Params) *Service {
 	}
 
 	return svc
+}
+
+func (s *Service) requirePaidLookups(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityCarrierIntelligencePaid,
+	)
 }
 
 func (s *Service) Connector(typ integration.Type) (services.CarrierIntelConnector, bool) {

@@ -1,0 +1,9 @@
+Hi {{.FirstName}},
+
+Confirm your email address to create the {{.CompanyName}} workspace on {{.ProductName}}. Nothing is set up until you do.
+
+{{.VerifyURL}}
+
+This link works once and expires {{.ExpiresAt}}.
+
+If you did not sign up, ignore this email and no account will be created.

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
@@ -56,25 +56,17 @@ func (s *OrganizationRolesSeed) Run(ctx context.Context, tx bun.Tx) error {
 	now := timeutils.NowUnix()
 
 	for _, org := range orgs {
-		adminRole := &permission.Role{
-			ID:             pulid.MustNew("rol_"),
-			BusinessUnitID: org.BusinessUnitID,
-			OrganizationID: org.ID,
-			Name:           "Organization Administrator",
-			Description:    "Full access to all resources within the organization",
-			MaxSensitivity: permission.SensitivityConfidential,
-			IsSystem:       true,
-			CreatedBy:      adminUser.ID,
-			CreatedAt:      now,
-			UpdatedAt:      now,
-		}
-
-		if _, err := tx.NewInsert().Model(adminRole).Exec(ctx); err != nil {
+		adminRole, err := tenantbootstrap.CreateAdminRole(ctx, tx, tenantbootstrap.AdminRoleParams{
+			Scope: tenantbootstrap.Scope{
+				OrganizationID: org.ID,
+				BusinessUnitID: org.BusinessUnitID,
+				Now:            now,
+			},
+			CreatedBy: adminUser.ID,
+			Registry:  s.registry,
+		})
+		if err != nil {
 			return fmt.Errorf("create admin role for org %s: %w", org.Name, err)
-		}
-
-		if err := s.createAdminPermissions(ctx, tx, adminRole.ID, now); err != nil {
-			return fmt.Errorf("create admin permissions for org %s: %w", org.Name, err)
 		}
 
 		adminUsers, err := s.getAdminUsersForOrganization(ctx, tx, org, adminUser)
@@ -83,17 +75,19 @@ func (s *OrganizationRolesSeed) Run(ctx context.Context, tx bun.Tx) error {
 		}
 
 		for _, user := range adminUsers {
-			assignment := &permission.UserRoleAssignment{
-				ID:             pulid.MustNew("ura_"),
+			if err = tenantbootstrap.AssignRole(ctx, tx, tenantbootstrap.RoleAssignmentParams{
 				UserID:         user.ID,
 				OrganizationID: org.ID,
 				RoleID:         adminRole.ID,
 				AssignedBy:     adminUser.ID,
 				AssignedAt:     now,
-			}
-
-			if _, err := tx.NewInsert().Model(assignment).Exec(ctx); err != nil {
-				return fmt.Errorf("assign admin role for user %s in org %s: %w", user.Username, org.Name, err)
+			}); err != nil {
+				return fmt.Errorf(
+					"assign admin role for user %s in org %s: %w",
+					user.Username,
+					org.Name,
+					err,
+				)
 			}
 		}
 	}
@@ -137,36 +131,4 @@ func organizationAdminUsername(scacCode string) string {
 	default:
 		return ""
 	}
-}
-
-func (s *OrganizationRolesSeed) createAdminPermissions(
-	ctx context.Context,
-	tx bun.Tx,
-	roleID pulid.ID,
-	now int64,
-) error {
-	resources := s.registry.All()
-
-	for _, res := range resources {
-		ops := make([]permission.Operation, 0, len(res.Operations))
-		for _, op := range res.Operations {
-			ops = append(ops, op.Operation)
-		}
-
-		perm := &permission.ResourcePermission{
-			ID:         pulid.MustNew("rp_"),
-			RoleID:     roleID,
-			Resource:   res.Resource,
-			Operations: ops,
-			DataScope:  permission.DataScopeOrganization,
-			CreatedAt:  now,
-			UpdatedAt:  now,
-		}
-
-		if _, err := tx.NewInsert().Model(perm).Exec(ctx); err != nil {
-			return fmt.Errorf("create permission for resource %s: %w", res.Resource, err)
-		}
-	}
-
-	return nil
 }

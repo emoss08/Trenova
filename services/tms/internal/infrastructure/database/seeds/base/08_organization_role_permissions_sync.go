@@ -6,12 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
-
-const organizationAdministratorRoleName = "Organization Administrator"
 
 type OrganizationRolePermissionsSyncSeed struct {
 	seedhelpers.BaseSeed
@@ -45,7 +44,7 @@ func (s *OrganizationRolePermissionsSyncSeed) Run(ctx context.Context, tx bun.Tx
 		Model(&roles).
 		Column("id").
 		Where("is_system = ?", true).
-		Where("name = ?", organizationAdministratorRoleName).
+		Where("name = ?", tenantbootstrap.AdministratorRoleName).
 		Scan(ctx); err != nil {
 		return fmt.Errorf("get organization administrator roles: %w", err)
 	}

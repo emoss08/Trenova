@@ -34,6 +34,9 @@ func (s *Service) VerifyEquipment(
 	req *VerifyEquipmentRequest,
 ) (*carrierintel.CarrierEquipmentVerification, error) {
 	ctx = carrierintel.WithPurpose(ctx, carrierintel.PurposeVerify)
+	if err := s.requirePaidLookups(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 
 	entity, carrierEntity, err := s.PlanVerifyEquipment(ctx, req)
 	if err != nil {

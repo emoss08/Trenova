@@ -94,8 +94,8 @@ export function BillingUsageTab() {
           label={t("Tracked usage")}
           value={numberFormatter.format(trackedMeters)}
           detail={formatPeriod(
-            summary.subscription?.currentPeriodStart,
-            summary.subscription?.currentPeriodEnd,
+            summary.subscription?.currentPeriodStart ?? undefined,
+            summary.subscription?.currentPeriodEnd ?? undefined,
           )}
           tone="warning"
         />

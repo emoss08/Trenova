@@ -430,6 +430,9 @@ func (s *Service) SaveApp(
 	if err := validateSaveApp(req); err != nil {
 		return nil, err
 	}
+	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err

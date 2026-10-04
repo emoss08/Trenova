@@ -32,3 +32,28 @@ func Slugify(text string, maxLen int) string {
 
 	return slug
 }
+
+func SlugifyASCII(text string, maxLen int) string {
+	var builder strings.Builder
+	builder.Grow(len(text))
+	pendingHyphen := false
+
+	for _, r := range strings.ToLower(text) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			if pendingHyphen && builder.Len() > 0 {
+				builder.WriteByte('-')
+			}
+			pendingHyphen = false
+			builder.WriteRune(r)
+			continue
+		}
+		pendingHyphen = true
+	}
+
+	slug := builder.String()
+	if maxLen > 0 && len(slug) > maxLen {
+		slug = strings.TrimRight(slug[:maxLen], "-")
+	}
+
+	return slug
+}

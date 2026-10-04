@@ -171,6 +171,8 @@ type RenderMessageRequest struct {
 	// failure surfaces to the sender instead.
 	FallbackToBuiltIn bool
 
+	BuiltInOnly bool
+
 	// Locale is the language the recipient reads; see ResolveTemplateRequest.
 	Locale i18n.Locale
 }

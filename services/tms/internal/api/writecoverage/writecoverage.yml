@@ -559,6 +559,17 @@ writes:
   "mutation voidCarrierSettlement":
     tools: [void_carrier_settlement]
 
+  # cloudsignup
+  "POST /api/v1/cloud/signups":
+    exempt: security
+    reason: "Signing up creates an account and proves a person owns an email address; an agent holds no identity of its own and acts only inside an organization that already exists."
+  "POST /api/v1/cloud/signups/resend":
+    exempt: security
+    reason: "Resending a signup verification link is part of a stranger proving they own an email address before any organization exists."
+  "POST /api/v1/cloud/signups/verify":
+    exempt: security
+    reason: "Redeeming a signup link signs a person in and provisions their organization; it is identity proof, not an operation an agent performs."
+
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
     tools: [update_commodity]
@@ -1863,6 +1874,11 @@ writes:
   "mutation restoreNotifications":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # onboarding
+  "POST /api/v1/onboarding/complete/":
+    exempt: configuration
+    reason: "The owner's one-time setup of a new organization's profile and operating mode; every later write depends on it and it runs before any agent is configured."
 
   # order
   "mutation addOrderCharge":

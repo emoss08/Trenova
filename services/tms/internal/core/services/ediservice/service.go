@@ -1,6 +1,9 @@
 package ediservice
 
 import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	coreports "github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -8,9 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -59,7 +64,8 @@ type Params struct {
 	Coordinator         *shipmentstate.Coordinator
 	Transport           services.EDITransportDispatcher
 	OrderDerivation     services.OrderDerivationService
-	Metrics             *metrics.Registry `optional:"true"`
+	Metrics             *metrics.Registry    `optional:"true"`
+	Plans               services.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -106,6 +112,7 @@ type Service struct {
 	orderDerivation     services.OrderDerivationService
 	lifecycleApplier    *internaledilifecycle.Applier
 	metrics             *metrics.EDI
+	plans               services.PlanService
 }
 
 func New(p Params) *Service {
@@ -156,11 +163,24 @@ func New(p Params) *Service {
 		coordinator:         p.Coordinator,
 		transport:           p.Transport,
 		orderDerivation:     p.OrderDerivation,
+		plans:               p.Plans,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
 			Coordinator:  p.Coordinator,
 		}),
 	}
+}
+
+func (s *Service) requireIntegrations(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityIntegrations,
+	)
 }
 
 func mapEDIConnectionConstraint(err error) error {

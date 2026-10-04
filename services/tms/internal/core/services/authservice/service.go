@@ -44,6 +44,8 @@ type Params struct {
 	UsageRecorder     services.UsageRecorder
 	TurnStopper       services.AssistantTurnStopper
 	AuthEvents        services.AuthEventRecorder
+	LoginThrottle     repositories.LoginThrottleStore `optional:"true"`
+	Plans             services.PlanService            `optional:"true"`
 	Encryption        *encryptionservice.Service
 	Config            *config.Config
 	Logger            *zap.Logger
@@ -62,6 +64,8 @@ type Service struct {
 	usageBuf   services.UsageRecorder
 	turns      services.AssistantTurnStopper
 	authEvents services.AuthEventRecorder
+	throttle   repositories.LoginThrottleStore
+	plans      services.PlanService
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	l          *zap.Logger
@@ -81,6 +85,8 @@ func New(p Params) services.AuthService {
 		usageBuf:   p.UsageRecorder,
 		turns:      p.TurnStopper,
 		authEvents: p.AuthEvents,
+		throttle:   p.LoginThrottle,
+		plans:      p.Plans,
 		enc:        p.Encryption,
 		cfg:        p.Config,
 		l:          p.Logger.Named("service.auth"),
@@ -122,9 +128,15 @@ func (s *Service) Login(
 	attempt := newAuthAttempt(services.AuthEventProviderPassword)
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
 
+	throttleKey := loginThrottleKey(ctx, req.EmailAddress)
+	if err = s.checkLoginThrottle(ctx, throttleKey, attempt); err != nil {
+		return nil, err
+	}
+
 	usr, err := s.ur.FindByEmail(ctx, req.EmailAddress)
 	if err != nil {
 		attempt.fail(authErrorUnknownAccount)
+		s.recordLoginFailure(ctx, throttleKey)
 		return nil, errInvalidCredentials
 	}
 	attempt.forUser(usr)
@@ -135,8 +147,10 @@ func (s *Service) Login(
 			return nil, err
 		}
 		attempt.fail(authErrorRejectedLogin)
+		s.recordLoginFailure(ctx, throttleKey)
 		return nil, errInvalidCredentials
 	}
+	s.resetLoginThrottle(ctx, throttleKey)
 
 	scoped := userScope(ctx, usr)
 
@@ -155,6 +169,12 @@ func (s *Service) Login(
 		usr,
 		targetOrg,
 	); err != nil {
+		return nil, err
+	}
+
+	targetOrg, err = s.enforcePlanLogin(scoped, usr, targetOrg)
+	if err != nil {
+		attempt.fail(authErrorSubscriptionExpired)
 		return nil, err
 	}
 

@@ -225,12 +225,7 @@ func (s *Service) RenderMessage(
 		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
 	}
 
-	resolved, err := s.Resolve(ctx, &services.ResolveTemplateRequest{
-		TenantInfo: req.TenantInfo,
-		Kind:       req.Kind,
-		CustomerID: req.CustomerID,
-		Locale:     req.Locale,
-	})
+	resolved, err := s.resolveForMessage(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -266,6 +261,26 @@ func (s *Service) RenderMessage(
 	}
 
 	return s.renderMessageWith(ctx, def, fallback, data, fallback.Locale)
+}
+
+func (s *Service) resolveForMessage(
+	ctx context.Context,
+	req *services.RenderMessageRequest,
+) (*services.ResolvedTemplate, error) {
+	if req.BuiltInOnly {
+		return s.builtIn(req.Kind, s.localeFor(ctx, &services.ResolveTemplateRequest{
+			TenantInfo: req.TenantInfo,
+			Kind:       req.Kind,
+			Locale:     req.Locale,
+		}))
+	}
+
+	return s.Resolve(ctx, &services.ResolveTemplateRequest{
+		TenantInfo: req.TenantInfo,
+		Kind:       req.Kind,
+		CustomerID: req.CustomerID,
+		Locale:     req.Locale,
+	})
 }
 
 func (s *Service) renderMessageWith(

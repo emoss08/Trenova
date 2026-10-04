@@ -15,6 +15,7 @@ const (
 	FailureDownloadFailed               = FailureCode("DOWNLOAD_FAILED")
 	FailureReadFailed                   = FailureCode("READ_FAILED")
 	FailureExtractionFailed             = FailureCode("EXTRACTION_FAILED")
+	FailurePlanLimitReached             = FailureCode("PLAN_LIMIT_REACHED")
 )
 
 func (f FailureCode) String() string {

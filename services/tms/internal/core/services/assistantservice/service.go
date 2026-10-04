@@ -70,6 +70,7 @@ type Params struct {
 	// Memories describes the memories a reply used or saved, as the thread
 	// is served.
 	Memories serviceports.AgentMemoryService `optional:"true"`
+	Quota    serviceports.QuotaGuard         `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -118,6 +119,7 @@ type Service struct {
 	queries       serviceports.AgentQueryToolRegistry
 	pdfs          serviceports.PDFRenderer
 	memories      serviceports.AgentMemoryService
+	quota         serviceports.QuotaGuard
 }
 
 func New(p Params) *Service {
@@ -155,6 +157,7 @@ func New(p Params) *Service {
 		pdfs:          p.PDFs,
 		reports:       p.Reports,
 		memories:      p.Memories,
+		quota:         p.Quota,
 	}
 
 	return s

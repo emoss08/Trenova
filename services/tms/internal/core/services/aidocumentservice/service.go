@@ -30,6 +30,7 @@ type Params struct {
 	Config     *config.Config
 	Metrics    *metrics.Registry
 	Completion serviceports.CompletionService
+	Plans      serviceports.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -37,6 +38,7 @@ type Service struct {
 	cfg        *config.AIConfig
 	metrics    *metrics.Registry
 	completion serviceports.CompletionService
+	plans      serviceports.PlanService
 }
 
 func New(p Params) serviceports.AIDocumentService {
@@ -45,6 +47,7 @@ func New(p Params) serviceports.AIDocumentService {
 		cfg:        p.Config.GetAIConfig(),
 		metrics:    p.Metrics,
 		completion: p.Completion,
+		plans:      p.Plans,
 	}
 }
 
@@ -209,6 +212,9 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 
 	call := s.extractCall(req)
 	call.metric = "extract_background_submit"
+	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
+		return nil, err
+	}
 
 	request := call.request()
 	request.MaxTokens = s.cfg.GetExtractionMaxTokens()

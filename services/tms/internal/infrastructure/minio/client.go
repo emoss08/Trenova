@@ -20,6 +20,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var ErrUnsafePrefix = errors.New("a prefix delete needs a non-empty prefix that ends in a slash")
+
 type Params struct {
 	fx.In
 
@@ -290,6 +292,64 @@ func (c *Client) DeleteObject(
 	}
 
 	return nil
+}
+
+func (c *Client) DeletePrefix(ctx context.Context, prefix string) (int64, error) {
+	prefix = strings.TrimLeft(prefix, "/")
+	if prefix == "" || !strings.HasSuffix(prefix, "/") {
+		return 0, ErrUnsafePrefix
+	}
+
+	listCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	objects := c.client.ListObjects(listCtx, c.bucket, minio.ListObjectsOptions{
+		Prefix:       prefix,
+		Recursive:    true,
+		WithVersions: true,
+	})
+
+	var listErr error
+	var queued int64
+	toRemove := make(chan minio.ObjectInfo)
+	go func() {
+		defer close(toRemove)
+		for object := range objects {
+			if object.Err != nil {
+				listErr = object.Err
+				cancel()
+				return
+			}
+			select {
+			case toRemove <- object:
+				queued++
+			case <-listCtx.Done():
+				return
+			}
+		}
+	}()
+
+	var failed int64
+	var removeErr error
+	for result := range c.client.RemoveObjects(ctx, c.bucket, toRemove, minio.RemoveObjectsOptions{}) {
+		failed++
+		removeErr = result.Err
+		c.l.Warn("failed to remove an object under a purged prefix",
+			zap.String("key", result.ObjectName),
+			zap.String("versionId", result.VersionID),
+			zap.Error(result.Err),
+		)
+	}
+
+	deleted := queued - failed
+	if listErr != nil {
+		return deleted, fmt.Errorf("list objects under %s: %w", prefix, listErr)
+	}
+	if removeErr != nil {
+		return deleted, fmt.Errorf("remove objects under %s: %w", prefix, removeErr)
+	}
+
+	return deleted, nil
 }
 
 func (c *Client) GetPresignedURL(

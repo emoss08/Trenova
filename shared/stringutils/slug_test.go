@@ -17,3 +17,12 @@ func TestSlugify(t *testing.T) {
 	assert.Equal(t, "", Slugify("???", 20))
 	assert.Equal(t, "café-au-lait", Slugify("Café au lait", 0))
 }
+
+func TestSlugifyASCII(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "acme-freight-llc", SlugifyASCII("ACME Freight, LLC", 0))
+	assert.Equal(t, "caf-au-lait", SlugifyASCII("Café au lait", 0))
+	assert.Equal(t, "acme", SlugifyASCII("Acme Freight", 5))
+	assert.Equal(t, "", SlugifyASCII("日本", 10))
+}

@@ -3,16 +3,11 @@ package base
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
 
@@ -26,13 +21,10 @@ import (
 // built-in already does.
 type DocumentTemplateStartersSeed struct {
 	seedhelpers.BaseSeed
-	registry *documenttemplate.Registry
 }
 
 func NewDocumentTemplateStartersSeed() *DocumentTemplateStartersSeed {
-	seed := &DocumentTemplateStartersSeed{
-		registry: documenttemplate.NewRegistry(),
-	}
+	seed := &DocumentTemplateStartersSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"DocumentTemplateStarters",
 		"1.0.0",
@@ -70,7 +62,11 @@ func (s *DocumentTemplateStartersSeed) Run(ctx context.Context, tx bun.Tx) error
 
 			created, orgsTouched := 0, 0
 			for i := range orgs {
-				count, err := s.seedOrganization(ctx, tx, sc, &orgs[i])
+				count, err := tenantbootstrap.CreateDocumentTemplateStarters(ctx, tx, tenantbootstrap.Scope{
+					OrganizationID: orgs[i].ID,
+					BusinessUnitID: orgs[i].BusinessUnitID,
+					Record:         seedRecorder(sc, s.Name()),
+				})
 				if err != nil {
 					return fmt.Errorf(
 						"seed document template starters for org %s: %w", orgs[i].Name, err,
@@ -94,154 +90,6 @@ func (s *DocumentTemplateStartersSeed) Run(ctx context.Context, tx bun.Tx) error
 			return nil
 		},
 	)
-}
-
-func (s *DocumentTemplateStartersSeed) seedOrganization(
-	ctx context.Context,
-	tx bun.Tx,
-	sc *seedhelpers.SeedContext,
-	org *tenant.Organization,
-) (int, error) {
-	existing, err := s.existingKinds(ctx, tx, org)
-	if err != nil {
-		return 0, err
-	}
-
-	created := 0
-	for _, kind := range documenttemplate.AllKinds() {
-		if existing[kind] {
-			// The organization already has a template of this kind. Adding a
-			// second would give the editor two entries for one slot.
-			continue
-		}
-
-		if err = s.seedKind(ctx, tx, sc, org, kind); err != nil {
-			return 0, fmt.Errorf("seed %s: %w", kind, err)
-		}
-		created++
-	}
-
-	return created, nil
-}
-
-func (s *DocumentTemplateStartersSeed) seedKind(
-	ctx context.Context,
-	tx bun.Tx,
-	sc *seedhelpers.SeedContext,
-	org *tenant.Organization,
-	kind documenttemplate.Kind,
-) error {
-	def, ok := s.registry.Get(kind)
-	if !ok {
-		return fmt.Errorf("kind %s is not registered", kind)
-	}
-
-	starter, err := starters.For(kind)
-	if err != nil {
-		return err
-	}
-
-	template := &documenttemplate.DocumentTemplate{
-		ID:             pulid.MustNew("dtpl_"),
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		Kind:           kind,
-		Code:           templateCodeFor(kind),
-		Name:           def.DisplayName,
-		Description:    def.Description,
-		// Never the default and never live: publishing is the administrator's
-		// decision, and until they make it the built-in renders unchanged.
-		IsOrgDefault:    false,
-		ActiveVersionID: nil,
-	}
-
-	if _, err = tx.NewInsert().Model(template).Exec(ctx); err != nil {
-		return fmt.Errorf("insert template: %w", err)
-	}
-
-	if err = sc.TrackCreated(ctx, "document_templates", template.ID, s.Name()); err != nil {
-		return fmt.Errorf("track template: %w", err)
-	}
-
-	version := &documenttemplate.DocumentTemplateVersion{
-		ID:             pulid.MustNew("dtv_"),
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		TemplateID:     template.ID,
-		VersionNumber:  1,
-		Status:         documenttemplate.VersionStatusDraft,
-		Subject:        starter.Subject,
-		BodyHTML:       starter.BodyHTML,
-		BodyText:       starter.BodyText,
-		CSSContent:     starter.CSS,
-	}
-
-	if def.Paged {
-		version.PageSize = starter.PageSize
-		version.Orientation = starter.Orientation
-		version.MarginTop = &starter.Margins.Top
-		version.MarginBottom = &starter.Margins.Bottom
-		version.MarginLeft = &starter.Margins.Left
-		version.MarginRight = &starter.Margins.Right
-	}
-
-	content := services.TemplateContent{
-		Subject:    version.Subject,
-		BodyHTML:   version.BodyHTML,
-		BodyText:   version.BodyText,
-		CSSContent: version.CSSContent,
-	}
-	version.ContentHash = documenttemplateservice.ContentHash(&content)
-
-	// The starter's own hash is recorded separately so a later deploy can tell
-	// the administrator the built-in has moved on since they copied it.
-	starterHash, err := starters.Hash(kind)
-	if err != nil {
-		return err
-	}
-	version.StarterHash = starterHash
-
-	if _, err = tx.NewInsert().Model(version).Exec(ctx); err != nil {
-		return fmt.Errorf("insert version: %w", err)
-	}
-
-	return sc.TrackCreated(ctx, "document_template_versions", version.ID, s.Name())
-}
-
-func (s *DocumentTemplateStartersSeed) existingKinds(
-	ctx context.Context,
-	tx bun.Tx,
-	org *tenant.Organization,
-) (map[documenttemplate.Kind]bool, error) {
-	rows := make([]string, 0, len(documenttemplate.AllKinds()))
-	if err := tx.NewSelect().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		Column("kind").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("get existing template kinds: %w", err)
-	}
-
-	existing := make(map[documenttemplate.Kind]bool, len(rows))
-	for _, row := range rows {
-		existing[documenttemplate.Kind(row)] = true
-	}
-
-	return existing, nil
-}
-
-// templateCodeFor turns a kind into the human-facing code the code column holds.
-//
-// A kind is dotted and lowercase; a code is the uppercase identifier an
-// administrator sees and searches by, and it is unique per organization.
-func templateCodeFor(kind documenttemplate.Kind) string {
-	code := strings.ToUpper(strings.NewReplacer(".", "_", "-", "_").Replace(string(kind)))
-	if len(code) > documenttemplate.MaxCodeLength {
-		code = code[:documenttemplate.MaxCodeLength]
-	}
-
-	return code
 }
 
 func (s *DocumentTemplateStartersSeed) Down(ctx context.Context, tx bun.Tx) error {

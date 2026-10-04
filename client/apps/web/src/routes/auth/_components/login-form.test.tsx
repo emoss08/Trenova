@@ -23,6 +23,17 @@ vi.mock("@trenova/shared/services/auth", () => ({
   },
 }));
 
+const publicConfig = vi.hoisted(() => ({ signupAvailable: false }));
+
+vi.mock("@trenova/shared/hooks/use-public-config", () => ({
+  usePublicConfig: () => ({
+    config: {},
+    isLoading: false,
+    isCloud: publicConfig.signupAvailable,
+    signupAvailable: publicConfig.signupAvailable,
+  }),
+}));
+
 vi.mock("@trenova/shared/stores/auth-store", () => ({
   useAuthStore: (selector: (state: { setUser: typeof mocks.setUser }) => unknown) =>
     selector({ setUser: mocks.setUser }),
@@ -89,10 +100,40 @@ describe("LoginForm", () => {
   });
 
   beforeEach(() => {
+    publicConfig.signupAvailable = false;
     Object.values(mocks).forEach((mock) => mock.mockClear());
     mocks.login.mockResolvedValue(loginResponse());
     mocks.listProviders.mockResolvedValue([]);
     mocks.onAuthenticated.mockResolvedValue(undefined);
+  });
+
+  it("links to signup when Trenova Cloud has signup open", () => {
+    publicConfig.signupAvailable = true;
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute(
+      "href",
+      "/signup",
+    );
+  });
+
+  it("offers no signup link where accounts are made by an administrator", () => {
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: "Create an account" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Create an account")).not.toBeInTheDocument();
   });
 
   it("hands the authenticated session to the flow instead of routing itself", async () => {

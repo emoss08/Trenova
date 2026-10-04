@@ -28,8 +28,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/core/services/platformemailservice"
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/retrievalquery"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
@@ -52,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/capturejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/cloudlifecyclejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/completionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/conversationschedulejobs"
@@ -123,8 +127,11 @@ func Options() fx.Option {
 		infrastructure.DatabaseModule,
 		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
+		planservice.Module,
+		quotaservice.Module,
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
+		fx.Provide(platformemailservice.New),
 		fx.Provide(integrationservice.New),
 		fx.Provide(fx.Annotate(
 			func(svc *integrationservice.Service) services.FuelCardFeedResolver { return svc },
@@ -203,6 +210,7 @@ func Options() fx.Option {
 		inboundjobs.Module,
 		capturejobs.Module,
 		briefingjobs.Module,
+		cloudlifecyclejobs.Module,
 		aicorrectionjobs.Module,
 		extractionevaljobs.Module,
 		extractionshadowjobs.Module,

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:517807985ec6e4f68f4d4bd118b8e00da3c86b4645944c571897b6c7214a7ba3",
+  "version": "sha256:5bddeb1462b2ba3ba734809d357513ed279d3f7eff3a9742a028a21bf868ba08",
   "modules": [
     {
       "id": "home",
@@ -5478,6 +5478,86 @@
         "/admin/integrations",
         "/admin/audit-logs",
         "/organization/data-retention"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/admin/plan-usage",
+      "name": "Plan & usage",
+      "module": "admin",
+      "breadcrumb": [
+        "Organization settings",
+        "Organization",
+        "Plan & usage"
+      ],
+      "description": "Your organization's plan, where its trial stands and how much of each limit it has used.",
+      "summary": "Plan & usage shows which Trenova Cloud plan the organization is on, where its free demo trial stands, and how much of each limit it has used. It appears in Organization settings only on Trenova Cloud; a self-hosted installation has no plan limits.\n\nThe strip at the top shows the **Plan**, its **Status** and, during the trial, the date the **Trial ends** with the days left. Once the trial is over it shows the date the workspace is **Deleted on**. The **Usage** panel lists every limit with a bar: records the organization holds (shipments, customers, locations, workers, tractors, trailers, user seats, documents and document storage), the largest single upload, and the assistant messages and AI spend that reset each month. On the free demo a second panel, **Not included in the free demo**, lists what the demo leaves out, such as outbound email, integrations, API keys and agent automation.",
+      "requires": [
+        {
+          "resource": "organization",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "free demo",
+        "trial",
+        "plan limits",
+        "usage limits",
+        "quota",
+        "subscription",
+        "read-only workspace",
+        "upgrade",
+        "billing plan"
+      ],
+      "tasks": [
+        {
+          "title": "Check how much of the free demo is used",
+          "keywords": [
+            "how many shipments left",
+            "usage",
+            "limit",
+            "quota",
+            "remaining"
+          ],
+          "steps": [
+            "Open [Plan & usage](/admin/plan-usage).",
+            "Read the **Usage** panel. Each row shows what is used against the limit; a bar turns amber near the limit and red when it is reached.",
+            "Select **Refresh** to read the latest figures."
+          ]
+        },
+        {
+          "title": "Free room under a limit",
+          "keywords": [
+            "limit reached",
+            "cannot create",
+            "delete to free space"
+          ],
+          "steps": [
+            "Open [Plan & usage](/admin/plan-usage) and find the limit that was reached.",
+            "Delete records of that kind that you no longer need, for example sample shipments. Limits on records count what the organization holds now, so each deletion frees a slot.",
+            "Monthly limits such as **Assistant messages** and **AI spend** reset at the start of the next month instead."
+          ]
+        },
+        {
+          "title": "See when the trial ends",
+          "keywords": [
+            "trial days left",
+            "demo expiry",
+            "when does my trial end"
+          ],
+          "steps": [
+            "Open [Plan & usage](/admin/plan-usage).",
+            "Read **Trial ends** in the strip at the top. The banner above every page also counts the days down."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to the organization.\n\nWhen an action would go over a limit, or uses something the free demo leaves out, a dialog explains which limit was reached; **View plan & usage** in that dialog opens this page. After the trial ends the workspace is read-only: everything can be opened and exported, but nothing can be created or changed, and the workspace is deleted on the date shown. Paid plans with higher limits are coming soon.",
+      "related": [
+        "/admin/organization-settings",
+        "/onboarding"
       ],
       "covers": [],
       "createAction": null,
@@ -13321,6 +13401,62 @@
       "related": [
         "/inbox",
         "/shipment-management/shipments"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
+    },
+    {
+      "path": "/onboarding",
+      "name": "Welcome to Trenova",
+      "module": "",
+      "breadcrumb": [
+        "Welcome to Trenova"
+      ],
+      "description": "The welcome wizard is the first thing a new Trenova Cloud organization sees after its owner verifies their email.",
+      "summary": "The welcome wizard is the first thing a new Trenova Cloud organization sees after its owner verifies their email. It collects the company profile, asks how the company moves freight, and offers to load sample data, then opens the app. Until it is finished, every page sends you back to it. It never appears on a self-hosted installation.",
+      "requires": [],
+      "capabilities": [],
+      "aliases": [
+        "setup wizard",
+        "getting started",
+        "first run",
+        "onboarding",
+        "company setup",
+        "sample data"
+      ],
+      "tasks": [
+        {
+          "title": "Finish setting up a new organization",
+          "keywords": [
+            "complete onboarding",
+            "company profile",
+            "first time setup"
+          ],
+          "steps": [
+            "Under **Company profile**, enter **Company name**, **Timezone**, **Street address**, **City**, **State** and **ZIP code**. **SCAC code** and **DOT number** are optional.",
+            "Select **Continue**, then choose an **Operation type**: **Asset carrier** if you run your own trucks, **Freight brokerage** if you arrange freight with outside carriers, or **Both**.",
+            "Select **Continue**. Leave **Load sample data** on to start with a few customers, locations, equipment and shipments, or turn it off to start empty.",
+            "Select **Continue**, check the summary, and select **Finish setup**."
+          ]
+        },
+        {
+          "title": "Change an answer before finishing",
+          "keywords": [
+            "go back",
+            "edit setup",
+            "fix company name"
+          ],
+          "steps": [
+            "Select **Back** to return to an earlier step, or select **Edit** beside a section on the review step.",
+            "Change the answer and select **Continue** until you reach the review step again."
+          ]
+        }
+      ],
+      "notes": "Everything the wizard sets can be changed later in [Organization settings](/admin/organization-settings). Sample records count toward the free demo's limits like any other record and can be deleted at any time; see [Plan & usage](/admin/plan-usage).",
+      "related": [
+        "/admin/organization-settings",
+        "/admin/plan-usage"
       ],
       "covers": [],
       "createAction": null,

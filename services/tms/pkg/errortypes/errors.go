@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -550,7 +551,8 @@ func (e *NotImplementedError) WithContext(ctx *ErrorContext) *NotImplementedErro
 
 type RateLimitError struct {
 	BaseError
-	Field string `json:"field,omitempty"`
+	Field      string        `json:"field,omitempty"`
+	RetryAfter time.Duration `json:"-"`
 }
 
 func NewRateLimitError(field, message string, args ...any) *RateLimitError {
@@ -567,6 +569,20 @@ func NewRateLimitError(field, message string, args ...any) *RateLimitError {
 func IsRateLimitError(err error) bool {
 	_, ok := errors.AsType[*RateLimitError](err)
 	return ok
+}
+
+func (e *RateLimitError) WithRetryAfter(retryAfter time.Duration) *RateLimitError {
+	e.RetryAfter = max(retryAfter, 0)
+	return e
+}
+
+func RetryAfterOf(err error) (time.Duration, bool) {
+	rateLimitErr, ok := errors.AsType[*RateLimitError](err)
+	if !ok || rateLimitErr.RetryAfter <= 0 {
+		return 0, false
+	}
+
+	return rateLimitErr.RetryAfter, true
 }
 
 func (e *RateLimitError) WithInternal(err error) *RateLimitError {

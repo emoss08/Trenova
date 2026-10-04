@@ -1,0 +1,5 @@
+{{define "content"}}<p style="margin:0 0 16px 0;">Hi {{.FirstName}},</p>
+<p style="margin:0 0 16px 0;">The {{.CompanyName}} workspace is ready. Finish the short setup to add your company details, and load a sample data set if you want to explore with realistic shipments.</p>
+{{template "button" (button .AppURL "Open your workspace")}}
+<p style="margin:0 0 16px 0;">Your free trial includes full access until {{.TrialEndsAt}}. After that the workspace stays readable for a while so you can export what you need.</p>
+<p style="margin:0;color:#666666;">Reply to this email if anything gets in your way.</p>{{end}}

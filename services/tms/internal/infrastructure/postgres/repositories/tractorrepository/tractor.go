@@ -3,10 +3,14 @@ package tractorrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,17 +27,20 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
+	Quota  services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota services.QuotaGuard
 }
 
 func New(p Params) repositories.TractorRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.tractor-repository"),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.tractor-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -152,8 +159,26 @@ func (r *repository) Create(
 			zap.String("code", entity.Code),
 		)
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-			log.Error("failed to create tractor", zap.Error(err))
+		err := quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
+			if _, insertErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(c); insertErr != nil {
+				log.Error("failed to create tractor", zap.Error(insertErr))
+				return insertErr
+			}
+
+			return nil
+		}, services.QuotaRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			Meter:    platformcatalog.MeterTractorsTotal,
+			Quantity: 1,
+		})
+		if err != nil {
 			return nil, err
 		}
 

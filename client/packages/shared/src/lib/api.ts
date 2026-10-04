@@ -9,6 +9,7 @@ import {
   parseProblemType,
 } from "@trenova/shared/types/errors";
 import { API_BASE_URL } from "./constants";
+import { reportPlanLimit } from "./plan-limit";
 
 const CSRF_HEADER_NAME =
   (import.meta.env.VITE_CSRF_HEADER_NAME as string | undefined) ?? "X-CSRF-Token";
@@ -118,6 +119,15 @@ export class ApiRequestError extends Error {
   getParams(): Record<string, string> {
     return this.data.params ?? {};
   }
+}
+
+/**
+ * Every failed response becomes its error here, so this is where a plan-limit refusal
+ * is handed to the app's dialog — once, whichever request helper made the call.
+ */
+function failedRequest(error: ApiRequestError): ApiRequestError {
+  reportPlanLimit(error);
+  return error;
 }
 
 function isUnsafeMethod(method: string | undefined): boolean {
@@ -255,7 +265,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     }));
     const parsed = apiErrorResponseSchema.safeParse(errorData);
     const validatedData = parsed.success ? parsed.data : errorData;
-    throw new ApiRequestError(response.status, validatedData, retryAfterOf(response));
+    throw failedRequest(
+      new ApiRequestError(response.status, validatedData, retryAfterOf(response)),
+    );
   }
 
   if (response.status === 204) {
@@ -290,7 +302,9 @@ async function uploadRequest<T>(
     }));
     const parsed = apiErrorResponseSchema.safeParse(errorData);
     const validatedData = parsed.success ? parsed.data : errorData;
-    throw new ApiRequestError(response.status, validatedData, retryAfterOf(response));
+    throw failedRequest(
+      new ApiRequestError(response.status, validatedData, retryAfterOf(response)),
+    );
   }
 
   if (response.status === 204) {
@@ -352,7 +366,7 @@ async function uploadWithProgress<T>(
         }
         const parsed = apiErrorResponseSchema.safeParse(errorData);
         const validatedData = parsed.success ? parsed.data : errorData;
-        reject(new ApiRequestError(xhr.status, validatedData));
+        reject(failedRequest(new ApiRequestError(xhr.status, validatedData)));
       }
     });
 

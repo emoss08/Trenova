@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,6 +29,7 @@ type Params struct {
 	Auditor  services.SecurityAuditor
 
 	Config *config.Config
+	Plans  services.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -35,6 +38,7 @@ type Service struct {
 	registry *permission.Registry
 	auditor  services.SecurityAuditor
 	cfg      *config.Config
+	plans    services.PlanService
 }
 
 func New(p Params) *Service {
@@ -44,6 +48,7 @@ func New(p Params) *Service {
 		registry: p.Registry,
 		auditor:  p.Auditor,
 		cfg:      p.Config,
+		plans:    p.Plans,
 	}
 }
 
@@ -93,6 +98,14 @@ func (s *Service) CreateAPIKey(
 	userID pulid.ID,
 ) (*services.APIKeySecretResponse, error) {
 	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	if err := planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityAPIKeys,
+	); err != nil {
 		return nil, err
 	}
 
@@ -217,6 +230,15 @@ func (s *Service) RotateAPIKey(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*services.APIKeySecretResponse, error) {
+	if err := planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityAPIKeys,
+	); err != nil {
+		return nil, err
+	}
+
 	key, err := s.repo.GetByID(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err

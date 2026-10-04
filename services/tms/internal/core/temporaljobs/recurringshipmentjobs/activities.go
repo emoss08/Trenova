@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -109,6 +110,13 @@ func (a *Activities) dispatchSeries(
 		Trigger:             recurringshipment.RunTriggerAuto,
 		RequestedBy:         series.EnteredByID,
 	})
+	if err != nil && errortypes.IsPlanRestrictionError(err) {
+		log.Info("recurring shipment generation skipped: the organization's plan does not allow writes",
+			zap.Error(err),
+		)
+		result.Skipped++
+		return
+	}
 	if err != nil {
 		log.Error("recurring shipment generation failed", zap.Error(err))
 		result.Failed++
