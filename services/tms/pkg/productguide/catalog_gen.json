@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f4507f54d883b656595008265804ee765e79c6439e6fc9a5e6cb94437f50a953",
+  "version": "sha256:558f2645a2f00c841fcd1fc32e405a37f02d40dcf81acc67278fac4ed3023824",
   "modules": [
     {
       "id": "home",
@@ -5359,7 +5359,7 @@
         "Organization"
       ],
       "description": "Manage your organization profile, compliance, and security settings",
-      "summary": "Organization settings holds the organization's profile, sign-in security and subscription details, in three tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: four sub-tabs. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds priority-ordered access policies, and **Activity** shows authentication events, risk decisions, external identities and MFA authenticators.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
+      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: four sub-tabs. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds priority-ordered access policies, and **Activity** shows authentication events, risk decisions, external identities and MFA authenticators.\n\nOn Trenova Cloud, the plan, trial and usage limits are on [Plan & usage](/admin/plan-usage).\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
       "requires": [
         {
           "resource": "organization",
@@ -5462,7 +5462,8 @@
         "/admin/roles",
         "/admin/integrations",
         "/admin/audit-logs",
-        "/organization/data-retention"
+        "/organization/data-retention",
+        "/admin/plan-usage"
       ],
       "covers": [],
       "createAction": null,
