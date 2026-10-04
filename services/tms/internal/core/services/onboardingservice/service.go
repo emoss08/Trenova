@@ -168,22 +168,28 @@ func (s *Service) Complete(
 		return nil, err
 	}
 
-	var state *services.OnboardingState
+	// The organization update commits on its own. It changes unique-indexed columns
+	// (SCAC, DOT), so the row stays FOR UPDATE locked until commit, and sample data
+	// draws sequence numbers on a detached connection whose foreign-key check on
+	// organizations would wait on that lock until lock_timeout. Retrying after a
+	// failed second step re-applies the same update.
+	var org *tenant.Organization
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, txErr := s.repo.Get(txCtx, repositories.GetOnboardingRequest{
-			TenantInfo: req.TenantInfo,
-		})
-		if txErr != nil {
-			if errortypes.IsNotFoundError(txErr) {
-				return errortypes.NewBusinessError("There is no onboarding to complete")
-			}
+		if _, txErr := s.getPending(txCtx, req.TenantInfo); txErr != nil {
 			return txErr
 		}
-		if entity.IsCompleted() {
-			return errortypes.NewConflictError("Onboarding has already been completed")
-		}
 
-		org, txErr := s.updateOrganization(txCtx, req.TenantInfo, normalized)
+		var txErr error
+		org, txErr = s.updateOrganization(txCtx, req.TenantInfo, normalized)
+		return txErr
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var state *services.OnboardingState
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity, txErr := s.getPending(txCtx, req.TenantInfo)
 		if txErr != nil {
 			return txErr
 		}
@@ -230,6 +236,26 @@ func (s *Service) Complete(
 	)
 
 	return state, nil
+}
+
+func (s *Service) getPending(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*onboarding.Onboarding, error) {
+	entity, err := s.repo.Get(ctx, repositories.GetOnboardingRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, errortypes.NewBusinessError("There is no onboarding to complete")
+		}
+		return nil, err
+	}
+	if entity.IsCompleted() {
+		return nil, errortypes.NewConflictError("Onboarding has already been completed")
+	}
+
+	return entity, nil
 }
 
 func (s *Service) updateOrganization(
