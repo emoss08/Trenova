@@ -1610,6 +1610,7 @@ export const adminLinks: SidebarLink[] = [
     group: "AI & Automation",
     resource: Resource.AgentControl,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.AgentAutomation,
   },
   {
     href: "/admin/document-intelligence",
@@ -1625,6 +1626,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Document Management",
     resource: Resource.CaptureProfile,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/admin/document-parsing-rules",
@@ -1632,6 +1634,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Document Management",
     resource: Resource.DocumentParsingRule,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/admin/sequence-configs",
@@ -1864,6 +1867,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Document Management",
     resource: Resource.DocumentOperation,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/organization/document-templates/",

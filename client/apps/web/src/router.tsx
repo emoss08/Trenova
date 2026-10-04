@@ -1764,7 +1764,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "agent-control",
-                loader: createPermissionLoader(Resource.AgentControl, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.AgentAutomation),
+                  createPermissionLoader(Resource.AgentControl, Operation.Read),
+                ),
                 async lazy() {
                   const { AgentControlPage } = await import("@/routes/agent-control/page");
                   return { Component: AgentControlPage };
@@ -1815,7 +1818,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "capture",
-                loader: createPermissionLoader(Resource.CaptureProfile, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.CaptureProfile, Operation.Read),
+                ),
                 async lazy() {
                   const { CaptureAdminPage } = await import("@/routes/admin/capture/page");
                   return { Component: CaptureAdminPage };
@@ -1835,7 +1841,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "document-parsing-rules",
-                loader: createPermissionLoader(Resource.DocumentParsingRule, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.DocumentParsingRule, Operation.Read),
+                ),
                 async lazy() {
                   const { DocumentParsingRulesPage } =
                     await import("@/routes/admin/document-parsing-rules/page");
@@ -2057,7 +2066,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "document-operations",
-                loader: createPermissionLoader(Resource.DocumentOperation, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.DocumentOperation, Operation.Read),
+                ),
                 async lazy() {
                   const { DocumentOperationsPage } =
                     await import("@/routes/admin/document-operations/page");
