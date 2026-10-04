@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 export const SIGNUP_MIN_PASSWORD_LENGTH = 12;
-export const SIGNUP_MAX_PASSWORD_LENGTH = 128;
+export const SIGNUP_MAX_PASSWORD_BYTES = 72;
+
+const utf8 = new TextEncoder();
 
 export type PasswordRequirement = {
   id: "length" | "not-email";
@@ -101,8 +103,8 @@ export const signupFormSchema = z
       .min(SIGNUP_MIN_PASSWORD_LENGTH, {
         error: `Password must be at least ${SIGNUP_MIN_PASSWORD_LENGTH} characters`,
       })
-      .max(SIGNUP_MAX_PASSWORD_LENGTH, {
-        error: `Password must be ${SIGNUP_MAX_PASSWORD_LENGTH} characters or fewer`,
+      .refine((value) => utf8.encode(value).length <= SIGNUP_MAX_PASSWORD_BYTES, {
+        error: `Password must be ${SIGNUP_MAX_PASSWORD_BYTES} bytes or fewer`,
       }),
     acceptTerms: z.boolean().refine((value) => value, {
       error: "Accept the terms of service and privacy policy to continue",
