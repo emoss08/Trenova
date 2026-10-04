@@ -57,6 +57,7 @@ var nonProjectionObjects = map[string]string{
 	"RecentDecision":                     "GraphQL recent-decisions DTO built by its resolver",
 	"DeskMemory":                         "GraphQL Desk memory DTO built by its resolver",
 	"DeskMemoryCount":                    "GraphQL Desk memory DTO built by its resolver",
+	"DeskMemoryLink":                     "GraphQL Desk memory DTO built by its resolver",
 	"DeskMemoryPage":                     "GraphQL Desk memory DTO built by its resolver",
 	"DeskMemoryRole":                     "GraphQL Desk memory DTO built by its resolver",
 	"DeskMemorySettings":                 "GraphQL Desk memory DTO built by its resolver",

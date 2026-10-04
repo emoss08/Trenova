@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,8 +69,31 @@ func deskMemoryToModel(memory *services.DeskMemory) *gqlmodel.DeskMemory {
 		at := int(*entity.LastUsedAt)
 		out.LastUsedAt = &at
 	}
+	out.Reason, out.Quotes = deskEvidence(entity.Evidence)
+	out.Replaces = deskLinkToModel(memory.Replaces)
+	out.ReplacedBy = deskLinkToModel(memory.ReplacedBy)
 
 	return out
+}
+
+func deskEvidence(evidence *agent.MemoryEvidence) (string, []string) {
+	if evidence == nil || evidence.Quotes == nil {
+		return evidence.GetReason(), []string{}
+	}
+
+	return evidence.Reason, evidence.Quotes
+}
+
+func deskLinkToModel(link *services.DeskMemoryLink) *gqlmodel.DeskMemoryLink {
+	if link == nil {
+		return nil
+	}
+
+	return &gqlmodel.DeskMemoryLink{
+		ID:      link.ID.String(),
+		Content: link.Content,
+		Status:  link.Status,
+	}
 }
 
 func deskPageToModel(page *services.DeskMemoryPage) *gqlmodel.DeskMemoryPage {

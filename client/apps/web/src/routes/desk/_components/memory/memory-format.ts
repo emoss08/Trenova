@@ -108,3 +108,50 @@ export function scopeLabel(
       return t("Organization");
   }
 }
+
+type WhyOf = {
+  reason?: string | null;
+  quotes?: readonly string[] | null;
+  replaces?: { content: string } | null;
+  replacedBy?: { content: string } | null;
+};
+
+export type MemoryWhyLine = {
+  key: "reason" | "quote" | "replaces" | "replacedBy";
+  label: string;
+  text: string;
+};
+
+/** The most of what was said that a memory row quotes. */
+const MAX_WHY_QUOTES = 2;
+
+/**
+ * Why a memory is kept and what it stands in for, as short labelled lines:
+ * the reason an agent gave, a little of what was said, the memory it
+ * replaced and the one that has since replaced it. A memory a person wrote
+ * down has none of these, and shows nothing.
+ */
+export function memoryWhy(memory: WhyOf, t: TranslateFn): MemoryWhyLine[] {
+  const lines: MemoryWhyLine[] = [];
+  const reason = memory.reason?.trim() ?? "";
+  if (reason !== "") {
+    lines.push({ key: "reason", label: t("Why"), text: reason });
+  }
+  for (const quote of (memory.quotes ?? []).slice(0, MAX_WHY_QUOTES)) {
+    if (quote.trim() !== "") {
+      lines.push({ key: "quote", label: t("Said"), text: `“${quote.trim()}”` });
+    }
+  }
+  if (memory.replaces) {
+    lines.push({ key: "replaces", label: t("Replaces"), text: `“${memory.replaces.content}”` });
+  }
+  if (memory.replacedBy) {
+    lines.push({
+      key: "replacedBy",
+      label: t("Replaced by"),
+      text: `“${memory.replacedBy.content}”`,
+    });
+  }
+
+  return lines;
+}

@@ -1246,6 +1246,30 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
+				Name:       "supersedes",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentMemory",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.Memory)
+					return gqlexec.Resolver[resolverAgentMemory](ec, "AgentMemory").Supersedes(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemory),
+			},
+			{
+				Name:       "replacedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentMemory",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.Memory)
+					return gqlexec.Resolver[resolverAgentMemory](ec, "AgentMemory").ReplacedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemory),
+			},
+			{
 				Name:     "createdByUserId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -3703,6 +3727,7 @@ var Shard = &gqlexec.Shard{
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "AgentDecision", Check: func(r any) bool { _, ok := r.(resolverAgentDecision); return ok }},
 		{Root: "AgentEvaluation", Check: func(r any) bool { _, ok := r.(resolverAgentEvaluation); return ok }},
+		{Root: "AgentMemory", Check: func(r any) bool { _, ok := r.(resolverAgentMemory); return ok }},
 		{Root: "AgentProposal", Check: func(r any) bool { _, ok := r.(resolverAgentProposal); return ok }},
 		{Root: "AgentProposalField", Check: func(r any) bool { _, ok := r.(resolverAgentProposalField); return ok }},
 		{Root: "AgentReflection", Check: func(r any) bool { _, ok := r.(resolverAgentReflection); return ok }},
@@ -3723,6 +3748,11 @@ type resolverAgentEvaluation interface {
 	Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+}
+
+type resolverAgentMemory interface {
+	Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+	ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
 }
 
 type resolverAgentProposal interface {

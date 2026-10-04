@@ -557,6 +557,10 @@ type AgentMemory {
   reflectionId: ID
   "The memory this one replaces; once this one is active the other is retired."
   supersedesId: ID
+  "The memory this one replaces, as it reads now."
+  supersedes: AgentMemory
+  "The newest memory that replaced this one and took effect; empty while nothing has."
+  replacedBy: AgentMemory
   createdByUserId: ID
   retiredByUserId: ID
   retiredAt: Timestamp

@@ -4,16 +4,13 @@ import {
   fetchRecentAgentReflections,
   type AgentReflection,
 } from "@/lib/graphql/agent-reflections";
-import type {
-  AgentReflectionAction,
-  AgentReflectionSignalKind,
-} from "@trenova/graphql/generated/graphql";
+import type { AgentReflectionAction } from "@trenova/graphql/generated/graphql";
 import { GraduationHat01Icon } from "@trenova/shared/components/icons";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
-import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useQuery } from "@tanstack/react-query";
+import { reflectionSignalLabel } from "./reflection-signals";
 
 export const agentReflectionsQueryKey = [AGENT_REFLECTIONS_KEY] as const;
 
@@ -23,29 +20,6 @@ const ACTION: Record<AgentReflectionAction, { label: string; variant: BadgeVaria
   Refreshed: { label: "Already kept", variant: "neutral" },
   Refused: { label: "Not kept", variant: "neutral" },
 };
-
-function signalLabel(kind: AgentReflectionSignalKind, t: TranslateFn): string {
-  switch (kind) {
-    case "ToolRecovered":
-      return t("A tool worked after failing");
-    case "ToolFailed":
-      return t("A tool failed");
-    case "PersonCorrected":
-      return t("A person corrected it");
-    case "StandingRequest":
-      return t("A person said how they want it done");
-    case "ProposalModified":
-      return t("A proposal was changed");
-    case "ProposalRejected":
-      return t("A proposal was refused");
-    case "NegativeFeedback":
-      return t("A reply was rated unhelpful");
-    case "LongTask":
-      return t("A long task");
-    default:
-      return kind;
-  }
-}
 
 /**
  * What agents taught themselves lately: each time one looked back over a
@@ -100,7 +74,7 @@ function ReflectionRow({ reflection }: { reflection: AgentReflection }) {
           {reflection.signals.map((signal) => (
             <li key={signal.kind}>
               <Badge variant="neutral" appearance="outline">
-                {signalLabel(signal.kind, t)}
+                {reflectionSignalLabel(signal.kind, t)}
                 {signal.detail ? ` · ${signal.detail}` : ""}
               </Badge>
             </li>

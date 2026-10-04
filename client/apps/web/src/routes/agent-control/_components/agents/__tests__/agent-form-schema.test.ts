@@ -373,3 +373,32 @@ function agentRow(): AgentDefinitionRow {
     updatedAt: 1_758_000_100,
   };
 }
+
+/**
+ * The form asks whether the agent learns from its work; the server stores the
+ * opposite, learningOff, so an agent saved before the switch existed (false)
+ * learns. Each direction has to turn the value over exactly once.
+ */
+describe("learning from its work", () => {
+  it("starts a new agent learning", () => {
+    expect(agentFormDefaults.learnsFromWork).toBe(true);
+    expect(toSaveRequest(values({})).learningOff).toBe(false);
+  });
+
+  it("saves the switch as its opposite", () => {
+    const request = toSaveRequest(values({ learnsFromWork: false }));
+    expect(request.learningOff).toBe(true);
+    expect(request).not.toHaveProperty("learnsFromWork");
+  });
+
+  it("loads an agent that stopped learning with the switch off", () => {
+    expect(toAgentPanelRow({ ...agentRow(), learningOff: true }).learnsFromWork).toBe(false);
+    expect(toAgentPanelRow({ ...agentRow(), learningOff: false }).learnsFromWork).toBe(true);
+  });
+
+  it("keeps what it loaded when saved untouched", () => {
+    expect(toSaveRequest(toAgentPanelRow({ ...agentRow(), learningOff: true })).learningOff).toBe(
+      true,
+    );
+  });
+});

@@ -148,6 +148,7 @@ type Resolver struct {
 	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
 	agentEvalCase                      *agentqualityresolver.AgentEvalCaseResolver
 	agentEvaluation                    *agentresolver.AgentEvaluationResolver
+	agentMemory                        *agentresolver.AgentMemoryResolver
 	agentPlan                          *decisionsresolver.AgentPlanResolver
 	agentPreviewFieldChange            *agentpreviewresolver.AgentPreviewFieldChangeResolver
 	agentPreviewMessage                *agentpreviewresolver.AgentPreviewMessageResolver
@@ -974,6 +975,7 @@ func FromServices(s *Services) *Resolver {
 		agentDefinition:          &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
 		agentEvalCase:            &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
 		agentEvaluation:          &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
+		agentMemory:              &agentresolver.AgentMemoryResolver{Deps: agentDeps},
 		agentPlan:                &decisionsresolver.AgentPlanResolver{Deps: decisionsDeps},
 		agentPreviewFieldChange:  &agentpreviewresolver.AgentPreviewFieldChangeResolver{Deps: agentpreviewDeps},
 		agentPreviewMessage:      &agentpreviewresolver.AgentPreviewMessageResolver{Deps: agentpreviewDeps},
@@ -1464,6 +1466,10 @@ func (r *Resolver) AgentEvalCase() generated.AgentEvalCaseResolver {
 
 func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
 	return r.agentEvaluation
+}
+
+func (r *Resolver) AgentMemory() generated.AgentMemoryResolver {
+	return r.agentMemory
 }
 
 func (r *Resolver) AgentPlan() generated.AgentPlanResolver {

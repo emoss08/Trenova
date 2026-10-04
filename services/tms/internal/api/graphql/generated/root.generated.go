@@ -260,6 +260,7 @@ type ResolverRoot interface {
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
+	AgentMemory() AgentMemoryResolver
 	AgentPlan() AgentPlanResolver
 	AgentPreviewFieldChange() AgentPreviewFieldChangeResolver
 	AgentPreviewMessage() AgentPreviewMessageResolver
@@ -622,6 +623,11 @@ type AgentEvaluationResolver interface {
 	Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+}
+
+type AgentMemoryResolver interface {
+	Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+	ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
 }
 
 type AgentPlanResolver interface {
@@ -3116,6 +3122,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
 			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
 			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
+			"AgentMemory":                        func() any { return r.AgentMemory() },
 			"AgentPlan":                          func() any { return r.AgentPlan() },
 			"AgentPreviewFieldChange":            func() any { return r.AgentPreviewFieldChange() },
 			"AgentPreviewMessage":                func() any { return r.AgentPreviewMessage() },
@@ -5485,6 +5492,10 @@ type AgentMemory {
   reflectionId: ID
   "The memory this one replaces; once this one is active the other is retired."
   supersedesId: ID
+  "The memory this one replaces, as it reads now."
+  supersedes: AgentMemory
+  "The newest memory that replaced this one and took effect; empty while nothing has."
+  replacedBy: AgentMemory
   createdByUserId: ID
   retiredByUserId: ID
   retiredAt: Timestamp
@@ -12310,6 +12321,21 @@ type DeskMemory {
   version: Int!
   "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
   editable: Boolean!
+  "Why it was kept, in the words of the agent that kept it; empty for one a person wrote down."
+  reason: String!
+  "What was said in the work that the memory rests on."
+  quotes: [String!]!
+  "The memory this one replaced, when the person can see it."
+  replaces: DeskMemoryLink
+  "The newest memory that replaced this one, when the person can see it."
+  replacedBy: DeskMemoryLink
+}
+
+"Another memory a Desk memory points to, read as it is now."
+type DeskMemoryLink {
+  id: ID!
+  content: String!
+  status: AgentMemoryStatus!
 }
 
 "How many memories the person keeps in one scope; Role is counted per role."

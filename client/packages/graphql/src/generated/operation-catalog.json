@@ -1285,7 +1285,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:88a2c718047d5948ea170329e38adfc6516a8f6ea058faa3b567a1c927a9c841",
+      "hash": "sha256:c917f36a70202b27cc06a0412a1eb68e6652ed8ddf06ef6a74a54f14c977d2a0",
       "rootFields": [
         "agentMemories"
       ],
@@ -1306,7 +1306,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentMemories(input: $input) {\n    edges {\n      node {\n        ...AgentMemoryTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentMemories(input: $input) {\n    edges {\n      node {\n        ...AgentMemoryTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  supersedes {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n    createdAt\n  }\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentMemoryUsage",
@@ -2503,7 +2503,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:80e159c6347850c5d1c578ba4f6889178e5b3c91edbb3fdd2275a17df15bed09",
+      "hash": "sha256:60783328ff24a4cad10cd2c4e481d10b4ca359ec480d2abc4317e38ad939fd74",
       "rootFields": [
         "approveAgentMemorySuggestion"
       ],
@@ -2523,7 +2523,7 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation ApproveAgentMemorySuggestion($id: ID!, $input: ApproveAgentMemorySuggestionInput!) {\n  approveAgentMemorySuggestion(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation ApproveAgentMemorySuggestion($id: ID!, $input: ApproveAgentMemorySuggestionInput!) {\n  approveAgentMemorySuggestion(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  supersedes {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n    createdAt\n  }\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "ApproveCaptureDevicePairing",
@@ -5705,7 +5705,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/desk-memory.graphql",
-      "hash": "sha256:6554eb2f1d5c3354f9cfb1f658ca53a5bfa63c228ed73ca30328680cd59ef0a1",
+      "hash": "sha256:e1499dc5760e20828544138f799741e5b5594b8bf3705fdd26c1fea90f15d7f6",
       "rootFields": [
         "confirmDeskMemory"
       ],
@@ -5725,7 +5725,7 @@
         "DeskMemoryFields"
       ],
       "usages": [],
-      "sdl": "mutation ConfirmDeskMemory($id: ID!, $input: ConfirmDeskMemoryInput!) {\n  confirmDeskMemory(id: $id, input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "mutation ConfirmDeskMemory($id: ID!, $input: ConfirmDeskMemoryInput!) {\n  confirmDeskMemory(id: $id, input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "CostingControlPage",
@@ -5791,7 +5791,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:2fd8cdc880b8cf39d61c1dfec467dd7a9cf96e1c72f3ee778f6572d73a13197a",
+      "hash": "sha256:4333986d24d87abb8f16baabd5ec4f56d6e6e6e5dbedddfe59dec2b69a137d72",
       "rootFields": [
         "createAgentMemory"
       ],
@@ -5806,7 +5806,7 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateAgentMemory($input: AgentMemoryInput!) {\n  createAgentMemory(input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation CreateAgentMemory($input: AgentMemoryInput!) {\n  createAgentMemory(input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  supersedes {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n    createdAt\n  }\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CreateBenefitPlan",
@@ -5919,7 +5919,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/desk-memory.graphql",
-      "hash": "sha256:af7690eafa7d665d7afc9b920da1ad77cd64e773556a7cc682360f5c92e37d95",
+      "hash": "sha256:79bf78946dfb5fe9e732884b2bd749c80da4fd055c248e7e71f3cd0ba77b9175",
       "rootFields": [
         "createDeskMemory"
       ],
@@ -5934,7 +5934,7 @@
         "DeskMemoryFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateDeskMemory($input: CreateDeskMemoryInput!) {\n  createDeskMemory(input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "mutation CreateDeskMemory($input: CreateDeskMemoryInput!) {\n  createDeskMemory(input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "CreateDetentionPolicy",
@@ -7912,7 +7912,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/desk-memory.graphql",
-      "hash": "sha256:d09800a6522eb4b2e385764231ad814f698d11fddd51c31f503f509ddf5801f1",
+      "hash": "sha256:e2f40c13fce6f49e4596fecccfa24550efda9ec4fb4fe583faf8ddd1f45c9704",
       "rootFields": [
         "deskMemories"
       ],
@@ -7927,14 +7927,14 @@
         "DeskMemoryFields"
       ],
       "usages": [],
-      "sdl": "query DeskMemories($input: DeskMemoriesInput!) {\n  deskMemories(input: $input) {\n    items {\n      ...DeskMemoryFields\n    }\n    next\n    all\n    counts {\n      scope\n      roleId\n      count\n    }\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "query DeskMemories($input: DeskMemoriesInput!) {\n  deskMemories(input: $input) {\n    items {\n      ...DeskMemoryFields\n    }\n    next\n    all\n    counts {\n      scope\n      roleId\n      count\n    }\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "DeskMemoriesByIds",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/desk-memory.graphql",
-      "hash": "sha256:6367f02d6b7dca840d0b9da05edf77313b902c493f01cee1ed60c8c595af6cbc",
+      "hash": "sha256:21819372c5102192c045874bd760c208d59b61dbd409a512fd98aaa6c10c62f5",
       "rootFields": [
         "deskMemoriesByIds"
       ],
@@ -7949,7 +7949,7 @@
         "DeskMemoryFields"
       ],
       "usages": [],
-      "sdl": "query DeskMemoriesByIds($ids: [ID!]!) {\n  deskMemoriesByIds(ids: $ids) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "query DeskMemoriesByIds($ids: [ID!]!) {\n  deskMemoriesByIds(ids: $ids) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "DeskMemorySettings",
@@ -8374,7 +8374,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:64557fd6e50d9150280b579d5c59c12217c362540c4efb1bd2d7bea7891de388",
+      "hash": "sha256:c0d6650ca20dc8326c37c05aa65a0a94c7980b829be53f07a9a9022641025966",
       "rootFields": [
         "dismissAgentMemorySuggestion"
       ],
@@ -8394,14 +8394,14 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation DismissAgentMemorySuggestion($id: ID!, $version: Int!) {\n  dismissAgentMemorySuggestion(id: $id, version: $version) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation DismissAgentMemorySuggestion($id: ID!, $version: Int!) {\n  dismissAgentMemorySuggestion(id: $id, version: $version) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  supersedes {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n    createdAt\n  }\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "DismissDeskMemory",
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/desk-memory.graphql",
-      "hash": "sha256:f234502bb47d0a683360d763055a5525cde451c9835fb9d15da60995a83b78bd",
+      "hash": "sha256:9865c9c06a9f802945053229449689bb4997b7273a69b50b69550bd45deb0345",
       "rootFields": [
         "dismissDeskMemory"
       ],
@@ -8416,7 +8416,7 @@
         "DeskMemoryFields"
       ],
       "usages": [],
-      "sdl": "mutation DismissDeskMemory($id: ID!) {\n  dismissDeskMemory(id: $id) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "mutation DismissDeskMemory($id: ID!) {\n  dismissDeskMemory(id: $id) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "DismissMyNotifications",
@@ -16518,7 +16518,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/desk-memory.graphql",
-      "hash": "sha256:b97a08fbbb8446a7bb2d57e022ef16e297be60cd6edf20547dc5a19123a4545c",
+      "hash": "sha256:24c52dec7d04049e842370798b28f629581b64519b845b16f93ab15ddcb69ccf",
       "rootFields": [
         "reviseDeskMemory"
       ],
@@ -16538,7 +16538,7 @@
         "DeskMemoryFields"
       ],
       "usages": [],
-      "sdl": "mutation ReviseDeskMemory($id: ID!, $input: ReviseDeskMemoryInput!) {\n  reviseDeskMemory(id: $id, input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "mutation ReviseDeskMemory($id: ID!, $input: ReviseDeskMemoryInput!) {\n  reviseDeskMemory(id: $id, input: $input) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "RevokeApprovalDelegation",
@@ -17232,7 +17232,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:1a6c68a510095349e9762642836e06c7271abea95b69082cb193a464d8577b86",
+      "hash": "sha256:aaf88d9ccd4a557f913ba17931d9f0b6bf568fcd9e3d3acc9930c4a63642f0df",
       "rootFields": [
         "setAgentMemoryStatus"
       ],
@@ -17252,7 +17252,7 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setAgentMemoryStatus(id: $id, status: $status) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setAgentMemoryStatus(id: $id, status: $status) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  supersedes {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n    createdAt\n  }\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "SetCarrierMonitoring",
@@ -17306,7 +17306,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/desk-memory.graphql",
-      "hash": "sha256:11cee748d0ba585db013524acca07391bed567db8f85ccd2fd07adf0eea92a9e",
+      "hash": "sha256:ee8266e3f9164922e3f3b6d786c2a858fe09c912a7b96ee475082cbea15532d9",
       "rootFields": [
         "setDeskMemoryStatus"
       ],
@@ -17326,7 +17326,7 @@
         "DeskMemoryFields"
       ],
       "usages": [],
-      "sdl": "mutation SetDeskMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setDeskMemoryStatus(id: $id, status: $status) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "mutation SetDeskMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setDeskMemoryStatus(id: $id, status: $status) {\n    ...DeskMemoryFields\n  }\n}\n\nfragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "SetInboundMailboxSigningSecret",
@@ -19438,7 +19438,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:ae0a1a7379493e12bbc670afd5c041e879906f2b844e0e579923841e6cbb2dd2",
+      "hash": "sha256:ee5e900f903f3eb6d0dee32b45ec8fd7327c69ed0d6c40a89ea80097707f432a",
       "rootFields": [
         "updateAgentMemory"
       ],
@@ -19458,7 +19458,7 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {\n  updateAgentMemory(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {\n  updateAgentMemory(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  supersedes {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n    createdAt\n  }\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateAgentQualityControl",
@@ -22898,7 +22898,7 @@
         "UpdateAgentMemory"
       ],
       "usages": [],
-      "sdl": "fragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  tainted\n  sourceRunId\n  sourceProposalId\n  sourceThreadId\n  reflectionId\n  supersedesId\n  supersedes {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n    createdAt\n  }\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n    signals\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentPlanPreviewFields",
@@ -24028,7 +24028,7 @@
         "SetDeskMemoryStatus"
       ],
       "usages": [],
-      "sdl": "fragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n}"
+      "sdl": "fragment DeskMemoryFields on DeskMemory {\n  id\n  content\n  kind\n  scope\n  roleId\n  roleName\n  status\n  source\n  sourceTitle\n  useCount\n  lastUsedAt\n  createdAt\n  version\n  editable\n  reason\n  quotes\n  replaces {\n    id\n    content\n    status\n  }\n  replacedBy {\n    id\n    content\n    status\n  }\n}"
     },
     {
       "name": "DeskMemorySettingsFields",

@@ -190,7 +190,15 @@ type DeskMemory struct {
 	RoleName string
 	// Editable says the person may change the memory: their own always, a
 	// role's or the organization's only with the permission to.
-	Editable bool
+	Editable   bool
+	Replaces   *DeskMemoryLink
+	ReplacedBy *DeskMemoryLink
+}
+
+type DeskMemoryLink struct {
+	ID      pulid.ID
+	Content string
+	Status  agent.MemoryStatus
 }
 
 // DeskMemoryRole is one of the person's roles, which the Desk offers as a

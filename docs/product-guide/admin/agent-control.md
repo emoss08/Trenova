@@ -429,8 +429,11 @@ Keywords: self-improving agents, learning, reflection, look back, lessons, proce
    back over its work: what made it look (a tool that worked after failing, a person correcting
    it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it
    kept, offered or turned down, with the reason.
-4. A lesson shared beyond one person waits under **Suggested memories**. Select
-   **Review and approve** to edit and keep it, or **Dismiss**.
+4. A lesson shared beyond one person waits under **Suggested memories**, with the memory it
+   would retire. Select **Review and approve** to edit and keep it, or **Dismiss**.
+5. Open any memory in the list to see **Where it came from**: why it was kept, what made the
+   agent look back, what was said, the conversation or run it was drawn from, and the memory it
+   replaces or that has replaced it.
 
 ## Notes
 An embedding provider turns memories, documents and mail into vectors so agents can find them by

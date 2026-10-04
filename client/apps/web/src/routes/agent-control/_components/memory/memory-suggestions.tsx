@@ -153,7 +153,9 @@ function SuggestionRow({
             "Learned by an agent looking back over its work, {0}",
             formatUnixDateTimeMedium(suggestion.createdAt),
           )}
-          {suggestion.supersedesId ? <> · {t("replaces a memory already kept")}</> : null}
+          {suggestion.supersedesId && !suggestion.supersedes ? (
+            <> · {t("replaces a memory already kept")}</>
+          ) : null}
           {suggestion.tainted ? (
             <> · {t("drawn from content written outside the organization")}</>
           ) : null}
@@ -170,6 +172,12 @@ function SuggestionRow({
 
       {learned && evidence?.reason ? (
         <p className="text-foreground-muted text-xs">{evidence.reason}</p>
+      ) : null}
+
+      {suggestion.supersedes ? (
+        <p className="text-foreground-muted text-xs">
+          {t("Approving it retires “{0}”", suggestion.supersedes.content)}
+        </p>
       ) : null}
 
       {quotes.length > 0 && (

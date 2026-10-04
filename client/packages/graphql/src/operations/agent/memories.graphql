@@ -17,6 +17,17 @@ fragment AgentMemoryTableRowFields on AgentMemory {
   sourceThreadId
   reflectionId
   supersedesId
+  supersedes {
+    id
+    content
+    status
+  }
+  replacedBy {
+    id
+    content
+    status
+    createdAt
+  }
   createdByUserId
   retiredByUserId
   retiredAt

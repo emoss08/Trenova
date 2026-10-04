@@ -519,7 +519,13 @@ Paused one) and writes an `audit_entries` row naming its replacement. An agent
 replaces freely only the person's own memory or its own Agent memory
 (`agentmemoryservice.ReplacedFreely`); any other replacement is held as a
 suggestion, and approving it retires the old memory then. A retried write that
-finds its replacement already kept returns it.
+finds its replacement already kept returns it. `AgentMemory.supersedes` and
+`AgentMemory.replacedBy` read both ends of a replacement through per-request
+loaders (`AgentMemoryByID`, `AgentMemoryReplacement`, backed by `ListByIDs` and
+`ListReplacements`); `replacedBy` is the newest replacement that took effect,
+never a suggestion still waiting. The Desk carries the same links, with the
+reason and quotes, on `DeskMemory` and on each reply's memory notes, naming the
+other memory only when the person may see it.
 
 ### Learning from the work
 

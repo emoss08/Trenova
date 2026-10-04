@@ -19,6 +19,16 @@ type GetAgentMemoryByIDRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type ListAgentMemoriesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
+}
+
+type ListAgentMemoryReplacementsRequest struct {
+	TenantInfo  pagination.TenantInfo
+	ReplacedIDs []pulid.ID
+}
+
 type ListAgentMemoryConnectionRequest struct {
 	Filter  *pagination.QueryOptions `json:"filter"`
 	Cursor  pagination.CursorInfo    `json:"-"`
@@ -191,6 +201,11 @@ type AgentMemoryRepository interface {
 	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
 	Update(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
 	GetByID(ctx context.Context, req GetAgentMemoryByIDRequest) (*agent.Memory, error)
+	ListByIDs(ctx context.Context, req ListAgentMemoriesByIDsRequest) ([]*agent.Memory, error)
+	ListReplacements(
+		ctx context.Context,
+		req ListAgentMemoryReplacementsRequest,
+	) ([]*agent.Memory, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentMemoryConnectionRequest,

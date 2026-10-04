@@ -3190,6 +3190,10 @@ type AgentMemory {
   The look back that kept or offered the memory, for one whose source is Reflection.
   """
   reflectionId: ID
+  """
+  The newest memory that replaced this one and took effect; empty while nothing has.
+  """
+  replacedBy: AgentMemory
   retiredAt: Timestamp
   retiredByUserId: ID
   roleId: ID
@@ -3207,6 +3211,8 @@ type AgentMemory {
   """The subject's name at the time it was recorded."""
   subjectLabel: String!
   subjectType: AgentMemorySubjectType
+  """The memory this one replaces, as it reads now."""
+  supersedes: AgentMemory
   """
   The memory this one replaces; once this one is active the other is retired.
   """
@@ -9229,6 +9235,16 @@ type DeskMemory {
   """Instruction, Fact, Correction or Procedure."""
   kind: AgentMemoryKind!
   lastUsedAt: Timestamp
+  """What was said in the work that the memory rests on."""
+  quotes: [String!]!
+  """
+  Why it was kept, in the words of the agent that kept it; empty for one a person wrote down.
+  """
+  reason: String!
+  """The newest memory that replaced this one, when the person can see it."""
+  replacedBy: DeskMemoryLink
+  """The memory this one replaced, when the person can see it."""
+  replaces: DeskMemoryLink
   """The role a Role memory is kept for."""
   roleId: ID
   roleName: String!
@@ -9257,6 +9273,13 @@ type DeskMemoryCount {
   count: Int!
   roleId: ID
   scope: AgentMemoryScope!
+}
+
+"""Another memory a Desk memory points to, read as it is now."""
+type DeskMemoryLink {
+  content: String!
+  id: ID!
+  status: AgentMemoryStatus!
 }
 
 type DeskMemoryPage {

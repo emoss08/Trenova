@@ -828,5 +828,13 @@ func (r *AgentRunResolver) Transcript(ctx context.Context, obj *agent.AgentRun) 
 }
 
 func (r *AgentReflectionResolver) Signals(ctx context.Context, obj *agent.Reflection) ([]*agent.ReflectionSignal, error) {
-	panic(fmt.Errorf("not implemented: Signals - signals"))
+	return reflectionSignals(obj), nil
+}
+
+func (r *AgentMemoryResolver) Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error) {
+	return supersededMemory(ctx, obj)
+}
+
+func (r *AgentMemoryResolver) ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error) {
+	return replacingMemory(ctx, obj)
 }

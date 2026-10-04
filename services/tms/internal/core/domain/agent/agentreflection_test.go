@@ -154,3 +154,38 @@ func TestMemoryRecordKindOfID(t *testing.T) {
 	_, ok = MemoryRecordKindOfID(pulid.ID("cus_not-an-id"))
 	assert.False(t, ok)
 }
+
+func TestNewestReplacements_KeepsTheNewestThatTookEffect(t *testing.T) {
+	t.Parallel()
+
+	first := pulid.MustNew("amem_")
+	second := pulid.MustNew("amem_")
+	retired := &Memory{
+		ID:           pulid.MustNew("amem_"),
+		Status:       MemoryStatusRetired,
+		SupersedesID: &first,
+		CreatedAt:    10,
+	}
+	active := &Memory{
+		ID:           pulid.MustNew("amem_"),
+		Status:       MemoryStatusActive,
+		SupersedesID: &first,
+		CreatedAt:    20,
+	}
+	offered := &Memory{
+		ID:           pulid.MustNew("amem_"),
+		Status:       MemoryStatusSuggested,
+		SupersedesID: &second,
+		CreatedAt:    30,
+	}
+	dismissed := &Memory{
+		ID:           pulid.MustNew("amem_"),
+		Status:       MemoryStatusDismissed,
+		SupersedesID: &first,
+		CreatedAt:    40,
+	}
+
+	newest := NewestReplacements([]*Memory{active, nil, offered, retired, dismissed, {ID: first}})
+
+	assert.Equal(t, map[pulid.ID]*Memory{first: active}, newest)
+}

@@ -10,9 +10,7 @@ import {
   AGENT_CONTROL_QUERY_KEY,
   agentControlQueryOptions,
   updateAgentControl,
-  type AgentControl,
 } from "@/lib/graphql/agent-control";
-import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -24,38 +22,13 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { personAllowanceOptions, promotionThresholdOptions } from "./agent-control-options";
+import {
+  controlInput,
+  personAllowanceOptions,
+  promotionThresholdOptions,
+  type ControlPatch,
+} from "./agent-control-options";
 import { TrainingExportHistory } from "./training-export-history";
-
-type ControlPatch = Partial<
-  Pick<
-    AgentControlInput,
-    | "shadowMode"
-    | "earnedAutonomy"
-    | "promotionThreshold"
-    | "aiTrainingConsent"
-    | "personMonthlyMessages"
-    | "learningOff"
-  >
->;
-
-/**
- * The input the mutation sends: the current switches with one of them changed.
- * Training consent is sent only when it is the switch being changed, so saving
- * any other switch never re-records who consented.
- */
-function controlInput(current: AgentControl, patch: ControlPatch): AgentControlInput {
-  return {
-    shadowMode: patch.shadowMode ?? current.shadowMode,
-    earnedAutonomy: patch.earnedAutonomy ?? current.earnedAutonomy,
-    promotionThreshold: patch.promotionThreshold ?? current.promotionThreshold,
-    personMonthlyMessages: patch.personMonthlyMessages ?? current.personMonthlyMessages,
-    learningOff: patch.learningOff ?? current.learningOff,
-    ...(patch.aiTrainingConsent === undefined
-      ? {}
-      : { aiTrainingConsent: patch.aiTrainingConsent }),
-  };
-}
 
 export default function AgentControlForm() {
   const t = useT();

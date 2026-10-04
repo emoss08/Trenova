@@ -3190,6 +3190,7 @@ func init() {
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
+			"supersedes_id",
 		},
 		Fields: []FieldSpec{
 			{
@@ -3279,6 +3280,14 @@ func init() {
 			{
 				Name:        "supersedesId",
 				FieldMapKey: "supersedesId",
+			},
+			{
+				Name:    "supersedes",
+				Special: "supersedes",
+			},
+			{
+				Name:    "replacedBy",
+				Special: "replacedBy",
 			},
 			{
 				Name:        "createdByUserId",

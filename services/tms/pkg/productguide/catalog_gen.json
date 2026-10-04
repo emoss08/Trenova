@@ -1,5 +1,5 @@
 {
-  "version": "sha256:010cfbba34becf425df175f4992d4332cb0d05ae88caee962076c9da25c71c77",
+  "version": "sha256:517807985ec6e4f68f4d4bd118b8e00da3c86b4645944c571897b6c7214a7ba3",
   "modules": [
     {
       "id": "home",
@@ -2841,7 +2841,8 @@
             "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, turn **Learn from their work** on or off for every agent. It is on unless someone turned it off.",
             "To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on or off, then select **Save**.",
             "Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it kept, offered or turned down, with the reason.",
-            "A lesson shared beyond one person waits under **Suggested memories**. Select **Review and approve** to edit and keep it, or **Dismiss**."
+            "A lesson shared beyond one person waits under **Suggested memories**, with the memory it would retire. Select **Review and approve** to edit and keep it, or **Dismiss**.",
+            "Open any memory in the list to see **Where it came from**: why it was kept, what made the agent look back, what was said, the conversation or run it was drawn from, and the memory it replaces or that has replaced it."
           ]
         }
       ],
@@ -8456,7 +8457,8 @@
           "steps": [
             "Open [What Desk remembers](/desk/memory) and find **Saving new memories**.",
             "Choose **Automatically** to let agents save what they pick up and tell you in the conversation, or **Ask me first** to have each one offered for you to keep or turn down.",
-            "The choice also covers what an agent learns by looking back over a conversation once it goes quiet: kept and shown under the reply it learned from, or offered there for you to keep."
+            "The choice also covers what an agent learns by looking back over a conversation once it goes quiet: kept and shown under the reply it learned from, or offered there for you to keep.",
+            "A memory an agent learned shows why it was kept, and the memory it replaced, under its words. A memory a newer one replaced says so in the conversation instead of offering **Undo**, so the two never apply at once."
           ]
         }
       ],

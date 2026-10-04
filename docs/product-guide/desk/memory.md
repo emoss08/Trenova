@@ -29,3 +29,4 @@ Keywords: ask first, automatic saving, memory preference, learned from conversat
 1. Open [What Desk remembers](/desk/memory) and find **Saving new memories**.
 2. Choose **Automatically** to let agents save what they pick up and tell you in the conversation, or **Ask me first** to have each one offered for you to keep or turn down.
 3. The choice also covers what an agent learns by looking back over a conversation once it goes quiet: kept and shown under the reply it learned from, or offered there for you to keep.
+4. A memory an agent learned shows why it was kept, and the memory it replaced, under its words. A memory a newer one replaced says so in the conversation instead of offering **Undo**, so the two never apply at once.

@@ -341,6 +341,9 @@ func (s *Service) ListDesk(
 	for _, row := range rows {
 		page.Items = append(page.Items, person.desk(row))
 	}
+	if err = s.deskLinks(ctx, person, page.Items); err != nil {
+		return nil, err
+	}
 
 	// The counts are of what the search matches across every scope, so the
 	// chips say how many each would show.
@@ -403,8 +406,75 @@ func (s *Service) deskByIDs(
 			delete(byID, id)
 		}
 	}
+	if err = s.deskLinks(ctx, person, out); err != nil {
+		return nil, err
+	}
 
 	return out, nil
+}
+
+func (s *Service) deskLinks(
+	ctx context.Context,
+	person *deskPerson,
+	items []*services.DeskMemory,
+) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	ids := make([]pulid.ID, 0, len(items))
+	replacedIDs := make([]pulid.ID, 0, len(items))
+	for _, item := range items {
+		ids = append(ids, item.Memory.ID)
+		if item.Memory.Replaces() {
+			replacedIDs = append(replacedIDs, *item.Memory.SupersedesID)
+		}
+	}
+
+	replaced, err := s.repo.ListByIDs(ctx, repositories.ListAgentMemoriesByIDsRequest{
+		TenantInfo: person.tenant,
+		IDs:        replacedIDs,
+	})
+	if err != nil {
+		return err
+	}
+	replacedByID := make(map[pulid.ID]*agent.Memory, len(replaced))
+	for _, memory := range replaced {
+		replacedByID[memory.ID] = memory
+	}
+
+	replacements, err := s.repo.ListReplacements(
+		ctx,
+		repositories.ListAgentMemoryReplacementsRequest{
+			TenantInfo:  person.tenant,
+			ReplacedIDs: ids,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	newest := agent.NewestReplacements(replacements)
+
+	for _, item := range items {
+		if item.Memory.Replaces() {
+			item.Replaces = person.link(replacedByID[*item.Memory.SupersedesID])
+		}
+		item.ReplacedBy = person.link(newest[item.Memory.ID])
+	}
+
+	return nil
+}
+
+func (p *deskPerson) link(memory *agent.Memory) *services.DeskMemoryLink {
+	if memory == nil || !p.sees(memory) {
+		return nil
+	}
+
+	return &services.DeskMemoryLink{
+		ID:      memory.ID,
+		Content: memory.Content,
+		Status:  memory.Status,
+	}
 }
 
 func (s *Service) deskOne(

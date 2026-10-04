@@ -2086,6 +2086,14 @@ type DeskMemory struct {
 	Version    int  `json:"version"`
 	// The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
 	Editable bool `json:"editable"`
+	// Why it was kept, in the words of the agent that kept it; empty for one a person wrote down.
+	Reason string `json:"reason"`
+	// What was said in the work that the memory rests on.
+	Quotes []string `json:"quotes"`
+	// The memory this one replaced, when the person can see it.
+	Replaces *DeskMemoryLink `json:"replaces,omitempty"`
+	// The newest memory that replaced this one, when the person can see it.
+	ReplacedBy *DeskMemoryLink `json:"replacedBy,omitempty"`
 }
 
 // How many memories the person keeps in one scope; Role is counted per role.
@@ -2093,6 +2101,13 @@ type DeskMemoryCount struct {
 	Scope  agent.MemoryScope `json:"scope"`
 	RoleID *string           `json:"roleId,omitempty"`
 	Count  int               `json:"count"`
+}
+
+// Another memory a Desk memory points to, read as it is now.
+type DeskMemoryLink struct {
+	ID      string             `json:"id"`
+	Content string             `json:"content"`
+	Status  agent.MemoryStatus `json:"status"`
 }
 
 type DeskMemoryPage struct {

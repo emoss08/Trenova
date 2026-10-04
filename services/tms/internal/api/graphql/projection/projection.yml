@@ -134,6 +134,9 @@ virtuals:
     - parameterFields
     - modifications
     - traceUrl
+  AgentMemory:
+    - supersedes
+    - replacedBy
   AgentPlan:
     - run
   AgentRun:
@@ -437,6 +440,8 @@ modelOverrides:
   ShipmentCommentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
 
 always:
+  AgentMemory:
+    - supersedesId
   AccountingDriftFinding:
     - kind
     - objectType

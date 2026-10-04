@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -261,6 +262,31 @@ func AllMemoryStatuses() []MemoryStatus {
 	}
 }
 
+func ReplacingMemoryStatuses() []MemoryStatus {
+	return []MemoryStatus{
+		MemoryStatusActive,
+		MemoryStatusPaused,
+		MemoryStatusRetired,
+	}
+}
+
+func NewestReplacements(replacements []*Memory) map[pulid.ID]*Memory {
+	newest := make(map[pulid.ID]*Memory, len(replacements))
+	for _, memory := range replacements {
+		if memory == nil || memory.SupersedesID == nil ||
+			!slices.Contains(ReplacingMemoryStatuses(), memory.Status) {
+			continue
+		}
+		current, ok := newest[*memory.SupersedesID]
+		if !ok || memory.CreatedAt > current.CreatedAt ||
+			(memory.CreatedAt == current.CreatedAt && memory.ID.String() > current.ID.String()) {
+			newest[*memory.SupersedesID] = memory
+		}
+	}
+
+	return newest
+}
+
 type MemoryEvidence struct {
 	FeedbackIDs     []pulid.ID `json:"feedbackIds"`
 	PatternKey      string     `json:"patternKey"`
@@ -272,6 +298,14 @@ type MemoryEvidence struct {
 	FirstRatedAt    int64      `json:"firstRatedAt"`
 	LastRatedAt     int64      `json:"lastRatedAt"`
 	Signals         []string   `json:"signals,omitempty"`
+}
+
+func (e *MemoryEvidence) GetReason() string {
+	if e == nil {
+		return ""
+	}
+
+	return e.Reason
 }
 
 func (e *MemoryEvidence) Count() int {

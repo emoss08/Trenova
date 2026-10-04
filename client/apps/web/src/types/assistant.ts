@@ -776,6 +776,13 @@ export const providerFallbackSchema = z.object({
   status: z.string().optional().default(""),
 });
 
+/** Another memory a note points to, as it reads now. */
+export const memoryNoteLinkSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  status: z.string(),
+});
+
 /**
  * A memory a reply used or saved, as the person reading the conversation may
  * see it. Scope is Organization, User (just them) or Role (their team).
@@ -797,6 +804,12 @@ export const memoryNoteSchema = z.object({
   version: z.number(),
   /** The reader may change, pause and forget it. */
   editable: z.boolean().default(false),
+  /** Why it was kept, in the words of the agent that kept it. */
+  reason: z.string().nullish(),
+  /** The memory it replaced, when the reader can see it. */
+  replaces: memoryNoteLinkSchema.nullish().catch(null),
+  /** The newest memory that replaced it, when the reader can see it. */
+  replacedBy: memoryNoteLinkSchema.nullish().catch(null),
 });
 
 /** A memory the turn kept through remember, or offered to keep when the person asked to be asked. */

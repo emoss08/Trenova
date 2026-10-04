@@ -27,6 +27,8 @@ type AgentDecisionResolver struct{ *Deps }
 
 type AgentEvaluationResolver struct{ *Deps }
 
+type AgentMemoryResolver struct{ *Deps }
+
 type AgentProposalFieldResolver struct{ *Deps }
 
 type AgentProposalResolver struct{ *Deps }

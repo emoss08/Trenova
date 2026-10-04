@@ -17685,7 +17685,7 @@
       "domain/insight"
     ]
   },
-  "An instruction is followed; a fact is weighed.": {
+  "An instruction or a procedure is followed; a fact is weighed; a correction fixes how a tool is used.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -20647,6 +20647,15 @@
     ],
     "areas": [
       "service/billingqueueapprovalservice"
+    ]
+  },
+  "Approving it retires “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Approving makes you their biller.": {
@@ -60752,6 +60761,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Drawn from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Drawn from ratings people gave an agent's answers, or learned by an agent looking back over its work. Agents read none of these until an administrator approves them.": {
@@ -123990,7 +124008,7 @@
     ]
   },
   "Open the conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -124068,6 +124086,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Open the run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Open the selected result in a new browser tab": {
@@ -126919,6 +126946,15 @@
     ],
     "areas": [
       "domain/conversation"
+    ]
+  },
+  "Outside content": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Outside content read": {
@@ -142602,7 +142638,7 @@
     ]
   },
   "Ratings": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -146481,7 +146517,7 @@
     ]
   },
   "Recorded": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -146509,7 +146545,7 @@
     ]
   },
   "Recorded by": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -146587,6 +146623,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Recorded with the memory; editing it does not change this.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Recorded {0}": {
@@ -149933,6 +149978,25 @@
       "apps/web/hooks"
     ]
   },
+  "Replaced by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "Replaced by a newer memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Replaced by a newer version": {
     "sites": 1,
     "scope": [
@@ -149996,6 +150060,16 @@
     "areas": [
       "routes/billing-queue",
       "routes/invoice-approval"
+    ]
+  },
+  "Replaces": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Replaces every occurrence of old with new.": {
@@ -158335,6 +158409,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Said": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Same": {
@@ -212144,6 +212227,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "What made the agent look back": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What made up the rate": {
     "sites": 1,
     "scope": [
@@ -212925,6 +213017,15 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "What was said": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What we would charge for a lane": {
@@ -213795,6 +213896,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Where it came from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Where it happened": {
@@ -215059,13 +215169,14 @@
     ]
   },
   "Why": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/org-structure",
       "routes/time-attendance",
       "routes/worker"
@@ -215240,6 +215351,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Why it was kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Why it would not read": {
@@ -217134,6 +217254,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Written by a run that had read text from outside the organization; an agent that reads it is treated as having read that text too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Written by hand": {
@@ -226404,7 +226533,7 @@
     ]
   },
   "{0, plural, one {# person} other {# people}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -226512,7 +226641,7 @@
     ]
   },
   "{0, plural, one {# rating} other {# ratings}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

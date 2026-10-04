@@ -168,6 +168,63 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) ListByIDs(
+	ctx context.Context,
+	req repositories.ListAgentMemoriesByIDsRequest,
+) ([]*agent.Memory, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
+		if len(req.IDs) == 0 {
+			return []*agent.Memory{}, nil
+		}
+
+		cols := buncolgen.MemoryColumns
+		entities := make([]*agent.Memory, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.List(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list agent memories by ids: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListReplacements(
+	ctx context.Context,
+	req repositories.ListAgentMemoryReplacementsRequest,
+) ([]*agent.Memory, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
+		if len(req.ReplacedIDs) == 0 {
+			return []*agent.Memory{}, nil
+		}
+
+		cols := buncolgen.MemoryColumns
+		entities := make([]*agent.Memory, 0, len(req.ReplacedIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
+					Where(cols.SupersedesID.In(), bun.List(req.ReplacedIDs)).
+					Where(cols.Status.In(), bun.List(agent.ReplacingMemoryStatuses()))
+			}).
+			OrderExpr(cols.CreatedAt.OrderDesc()).
+			OrderExpr(cols.ID.OrderDesc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list agent memory replacements: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAgentMemoryConnectionRequest,
