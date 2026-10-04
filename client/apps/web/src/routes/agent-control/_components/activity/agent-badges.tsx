@@ -76,6 +76,7 @@ const MEMORY_KIND: Record<AgentMemoryKind, { label: string; variant: Variant }> 
   Instruction: { label: "Instruction", variant: "brand" },
   Fact: { label: "Fact", variant: "accent-teal" },
   Correction: { label: "Correction", variant: "accent-amber" },
+  Procedure: { label: "Procedure", variant: "accent-violet" },
 };
 
 const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
@@ -83,6 +84,7 @@ const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
   Agent: "An agent",
   Decision: "A decision",
   Feedback: "Feedback",
+  Reflection: "Learned from work",
 };
 
 const MEMORY_STATUS: Record<AgentMemoryStatus, { label: string; variant: Variant }> = {

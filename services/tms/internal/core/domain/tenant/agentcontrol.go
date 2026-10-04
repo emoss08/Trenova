@@ -47,6 +47,8 @@ type AgentControl struct {
 	// agents in a calendar month; nought leaves it unlimited.
 	PersonMonthlyMessages int `json:"personMonthlyMessages" bun:"person_monthly_messages,type:INTEGER,notnull,default:0"`
 
+	LearningOff bool `json:"learningOff" bun:"learning_off,type:BOOLEAN,notnull,default:false"`
+
 	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
 	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
 

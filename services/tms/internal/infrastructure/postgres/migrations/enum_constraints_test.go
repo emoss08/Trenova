@@ -282,6 +282,18 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agent.AllMemorySavingModes()),
 		},
 		{
+			name:   "ck_agent_reflections_subject_type",
+			values: stringsOf(agent.AllReflectionSubjects()),
+		},
+		{
+			name:   "ck_agent_reflections_status",
+			values: stringsOf(agent.AllReflectionStatuses()),
+		},
+		{
+			name:   "ck_agent_reflections_skip_reason",
+			values: stringsOf(agent.AllReflectionSkips()),
+		},
+		{
 			name:   "chk_agent_proposals_egress_class",
 			values: stringsOf(agent.EgressClasses()),
 		},

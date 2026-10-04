@@ -260,6 +260,7 @@ type ResolverRoot interface {
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
+	AgentMemory() AgentMemoryResolver
 	AgentPlan() AgentPlanResolver
 	AgentPreviewFieldChange() AgentPreviewFieldChangeResolver
 	AgentPreviewMessage() AgentPreviewMessageResolver
@@ -272,6 +273,7 @@ type ResolverRoot interface {
 	AgentProposalField() AgentProposalFieldResolver
 	AgentQualityAgent() AgentQualityAgentResolver
 	AgentQualityControl() AgentQualityControlResolver
+	AgentReflection() AgentReflectionResolver
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
 	AgentSafety() AgentSafetyResolver
@@ -623,6 +625,11 @@ type AgentEvaluationResolver interface {
 	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 }
 
+type AgentMemoryResolver interface {
+	Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+	ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+}
+
 type AgentPlanResolver interface {
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
 }
@@ -682,6 +689,10 @@ type AgentQualityControlResolver interface {
 	ID(ctx context.Context, obj *agentquality.Control) (*string, error)
 	NightlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
 	MonthlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
+}
+
+type AgentReflectionResolver interface {
+	Signals(ctx context.Context, obj *agent.Reflection) ([]*agent.ReflectionSignal, error)
 }
 
 type AgentRunResolver interface {
@@ -2084,6 +2095,7 @@ type QueryResolver interface {
 	AgentEvaluations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvaluationConnection, error)
 	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
 	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
+	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
 	AgentMemoryUsage(ctx context.Context) (*services.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
@@ -3110,6 +3122,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
 			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
 			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
+			"AgentMemory":                        func() any { return r.AgentMemory() },
 			"AgentPlan":                          func() any { return r.AgentPlan() },
 			"AgentPreviewFieldChange":            func() any { return r.AgentPreviewFieldChange() },
 			"AgentPreviewMessage":                func() any { return r.AgentPreviewMessage() },
@@ -3122,6 +3135,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentProposalField":                 func() any { return r.AgentProposalField() },
 			"AgentQualityAgent":                  func() any { return r.AgentQualityAgent() },
 			"AgentQualityControl":                func() any { return r.AgentQualityControl() },
+			"AgentReflection":                    func() any { return r.AgentReflection() },
 			"AgentRun":                           func() any { return r.AgentRun() },
 			"AgentRunEvent":                      func() any { return r.AgentRunEvent() },
 			"AgentSafety":                        func() any { return r.AgentSafety() },
@@ -5336,6 +5350,8 @@ type AgentControl {
   aiTrainingConsentChangedById: ID
   "Questions one person may ask the agents each calendar month (UTC); 0 is unlimited."
   personMonthlyMessages: Int!
+  "Agents no longer look back over their work to keep what they learned as memory."
+  learningOff: Boolean!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -5382,6 +5398,8 @@ enum AgentMemoryKind {
   Instruction
   Fact
   Correction
+  "The steps that worked for a task here, dictated by a person or learned by doing it."
+  Procedure
 }
 
 enum AgentMemorySource {
@@ -5390,6 +5408,8 @@ enum AgentMemorySource {
   Decision
   "Drawn from ratings people gave an agent's output."
   Feedback
+  "Kept by an agent looking back over its own work once a conversation went quiet or a run settled."
+  Reflection
 }
 
 enum AgentMemoryStatus {
@@ -5414,6 +5434,8 @@ type AgentMemoryEvidence {
   quotes: [String!]!
   firstRatedAt: Timestamp!
   lastRatedAt: Timestamp!
+  "For a memory an agent kept from looking back, what in the work made it worth a look."
+  signals: [String!]!
 }
 
 "Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role."
@@ -5464,6 +5486,16 @@ type AgentMemory {
   taintRunId: ID
   sourceRunId: ID
   sourceProposalId: ID
+  "The conversation the memory came from."
+  sourceThreadId: ID
+  "The look back that kept or offered the memory, for one whose source is Reflection."
+  reflectionId: ID
+  "The memory this one replaces; once this one is active the other is retired."
+  supersedesId: ID
+  "The memory this one replaces, as it reads now."
+  supersedes: AgentMemory
+  "The newest memory that replaced this one and took effect; empty while nothing has."
+  replacedBy: AgentMemory
   createdByUserId: ID
   retiredByUserId: ID
   retiredAt: Timestamp
@@ -5486,6 +5518,113 @@ type AgentMemoryUsage {
   activeSoftCap: Int!
   "The count at which AI Control warns that the cap is near."
   warnAt: Int!
+}
+
+enum AgentReflectionSubject {
+  "A stretch of a conversation, read once it went quiet."
+  Thread
+  "One background run, read once every proposal it raised was decided."
+  Run
+}
+
+enum AgentReflectionStatus {
+  Running
+  "Nothing in the work called for a look, or learning was off; the stretch is not read again."
+  Skipped
+  Completed
+  "The look back could not finish; the stretch is read again with the next one."
+  Failed
+}
+
+enum AgentReflectionSkip {
+  NoSignal
+  NothingToRead
+  LearningOff
+  AgentUnavailable
+  OverBudget
+}
+
+enum AgentReflectionSignalKind {
+  ToolRecovered
+  ToolFailed
+  PersonCorrected
+  StandingRequest
+  ProposalModified
+  ProposalRejected
+  NegativeFeedback
+  LongTask
+}
+
+enum AgentReflectionAction {
+  Saved
+  "Offered to a person to accept: they asked to be asked first, it is shared beyond them, or the work read outside content."
+  Suggested
+  "Already kept; counted as used instead of saved again."
+  Refreshed
+  "Not kept, with the reason."
+  Refused
+}
+
+type AgentReflectionSignal {
+  kind: AgentReflectionSignalKind!
+  count: Int!
+  "The tools or proposals the signal is about, when it names any."
+  detail: String!
+}
+
+type AgentReflectionChange {
+  action: AgentReflectionAction!
+  memoryId: ID
+  supersedesId: ID
+  kind: AgentMemoryKind!
+  scope: AgentMemoryScope
+  content: String!
+  reason: String!
+}
+
+"""
+One time an agent looked back over a stretch of a conversation or a settled
+background run and decided what, if anything, to keep as memory.
+"""
+type AgentReflection {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentDefinitionId: ID!
+  subjectType: AgentReflectionSubject!
+  threadId: ID
+  runId: ID
+  "The person whose conversation was read."
+  userId: ID
+  fromSequence: Int!
+  throughSequence: Int!
+  status: AgentReflectionStatus!
+  skipReason: AgentReflectionSkip
+  signals: [AgentReflectionSignal!]!
+  changes: [AgentReflectionChange!]!
+  "The model's one-sentence account of what it looked at and kept."
+  notes: String!
+  "The work had read content from outside the organization, so everything kept waits for a person."
+  tainted: Boolean!
+  model: String!
+  inputTokens: Int!
+  outputTokens: Int!
+  errorMessage: String!
+  finishedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentReflectionEdge {
+  node: AgentReflection!
+  cursor: String!
+}
+
+type AgentReflectionConnection {
+  edges: [AgentReflectionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
 }
 
 type AgentMemoryEdge {
@@ -5640,6 +5779,8 @@ input AgentControlInput {
   aiTrainingConsent: Boolean
   "Absent leaves the per-person monthly allowance as it is; 0 is unlimited."
   personMonthlyMessages: Int
+  "Absent leaves whether agents learn from their work as it is."
+  learningOff: Boolean
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int
@@ -5657,6 +5798,8 @@ extend type Query {
   agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentEvaluation(id: ID!): AgentEvaluation
   agentMemory(id: ID!): AgentMemory
+  "Each time an agent looked back over its work, newest first."
+  agentReflections(input: DataTableConnectionInput!): AgentReflectionConnection!
   "How many active memories the organization keeps, against its soft cap."
   agentMemoryUsage: AgentMemoryUsage!
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
@@ -5852,6 +5995,8 @@ type AgentDefinition {
   1000 to 16000. Absent uses the default of 6000.
   """
   memoryTokenBudget: Int
+  "The agent no longer looks back over its work to keep what it learned, whatever its organization chose."
+  learningOff: Boolean!
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
   "Chosen icon name; empty falls back to the icon the starter template implies."
@@ -12150,13 +12295,16 @@ enum AgentMemorySavingMode {
 
 """
 A memory as a person keeps it on the Desk: one of their own, their role's, or
-the organization's. Agent-scoped memories are administered in AI Control and
-never appear here.
+the organization's. Agent-scoped memories are administered in AI Control; the
+only ones a person sees here are those an agent learned in their own
+conversations.
 """
 type DeskMemory {
   id: ID!
   content: String!
-  "User (Just you), Role (the person's team) or Organization."
+  "Instruction, Fact, Correction or Procedure."
+  kind: AgentMemoryKind!
+  "User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent."
   scope: AgentMemoryScope!
   "The role a Role memory is kept for."
   roleId: ID
@@ -12173,6 +12321,21 @@ type DeskMemory {
   version: Int!
   "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
   editable: Boolean!
+  "Why it was kept, in the words of the agent that kept it; empty for one a person wrote down."
+  reason: String!
+  "What was said in the work that the memory rests on."
+  quotes: [String!]!
+  "The memory this one replaced, when the person can see it."
+  replaces: DeskMemoryLink
+  "The newest memory that replaced this one, when the person can see it."
+  replacedBy: DeskMemoryLink
+}
+
+"Another memory a Desk memory points to, read as it is now."
+type DeskMemoryLink {
+  id: ID!
+  content: String!
+  status: AgentMemoryStatus!
 }
 
 "How many memories the person keeps in one scope; Role is counted per role."

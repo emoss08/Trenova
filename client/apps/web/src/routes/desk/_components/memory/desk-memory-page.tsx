@@ -30,6 +30,7 @@ import {
 } from "react";
 import { DeskIcon } from "../desk-icons";
 import { savedLine, scopeLabel, usageLine } from "./memory-format";
+import { DeskMemoryWhy } from "./desk-memory-why";
 import {
   ALL_MEMORIES,
   filterScope,
@@ -503,7 +504,10 @@ function MemoryRowView({
           </div>
         </div>
       ) : (
-        <p>{memory.content}</p>
+        <>
+          <p>{memory.content}</p>
+          <DeskMemoryWhy memory={memory} />
+        </>
       )}
       <div className="dk-mm-m">
         <select

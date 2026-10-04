@@ -1605,6 +1605,15 @@
       "go/other"
     ]
   },
+  "A background run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A barcode may be at most {0} characters": {
     "sites": 1,
     "scope": [
@@ -2570,11 +2579,12 @@
     ]
   },
   "A conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -4005,6 +4015,33 @@
       "service/agenttoolservice"
     ]
   },
+  "A long task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A look back at a conversation needs it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "A look back at a run needs it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A loop cannot be its own parent": {
     "sites": 1,
     "scope": [
@@ -4192,6 +4229,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A memory an agent kept from looking back over its work needs that look back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "A memory cannot replace itself": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A memory drawn from feedback needs the ratings it was drawn from": {
@@ -4648,6 +4703,15 @@
       "routes/agent-control"
     ]
   },
+  "A person corrected it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A person holds one position, so this replaces any title they hold now.": {
     "sites": 1,
     "scope": [
@@ -4691,6 +4755,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "A person said how they want it done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A person settles billing checks; an agent can only explain them": {
@@ -4989,6 +5062,24 @@
     ]
   },
   "A proposal nobody decides on in this time expires and its run is closed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A proposal was changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A proposal was refused": {
     "sites": 1,
     "scope": [
       "ts"
@@ -5467,6 +5558,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "A reply was rated unhelpful": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A report can carry at most {0} charts": {
@@ -7075,6 +7175,15 @@
       "domain/agentdefinition"
     ]
   },
+  "A tool failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A tool is held once": {
     "sites": 1,
     "scope": [
@@ -7091,6 +7200,15 @@
     ],
     "areas": [
       "domain/agentquality"
+    ]
+  },
+  "A tool worked after failing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A topic can only name an agent this one hands work to": {
@@ -13921,7 +14039,7 @@
     ]
   },
   "Agent is required": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -14292,6 +14410,15 @@
       "routes/desk"
     ]
   },
+  "Agents learn from their work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Agents may read {0} active memories; an organization should keep at most {1}. Each prompt carries only what fits its budget, so retire what no longer holds.": {
     "sites": 1,
     "scope": [
@@ -14344,6 +14471,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Agents stopped learning from their work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Agents this role grants": {
@@ -15878,6 +16014,15 @@
       "routes/billing-queue"
     ]
   },
+  "Already kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Already on file": {
     "sites": 1,
     "scope": [
@@ -16469,7 +16614,7 @@
       "apps/web/components"
     ]
   },
-  "An Instruction or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text.": {
+  "An Instruction, a Procedure or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text.": {
     "sites": 1,
     "scope": [
       "go"
@@ -16806,6 +16951,15 @@
     ]
   },
   "An agent is working on it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "An agent looking back over its work": {
     "sites": 1,
     "scope": [
       "ts"
@@ -17713,7 +17867,7 @@
       "domain/insight"
     ]
   },
-  "An instruction is followed; a fact is weighed.": {
+  "An instruction or a procedure is followed; a fact is weighed; a correction fixes how a tool is used.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -20684,6 +20838,15 @@
     ],
     "areas": [
       "service/billingqueueapprovalservice"
+    ]
+  },
+  "Approving it retires “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Approving makes you their biller.": {
@@ -30148,7 +30311,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 129,
+    "sites": 130,
     "scope": [
       "go"
     ],
@@ -52487,6 +52650,15 @@
       "routes/billing-control"
     ]
   },
+  "Decide what the work taught": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Decide whether a chat message is about this organization's freight at all.": {
     "sites": 1,
     "scope": [
@@ -61371,7 +61543,16 @@
       "routes/random-testing"
     ]
   },
-  "Drawn from ratings people gave an agent's answers. Agents read none of these until an administrator approves them.": {
+  "Drawn from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Drawn from ratings people gave an agent's answers, or learned by an agent looking back over its work. Agents read none of these until an administrator approves them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -70774,6 +70955,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Everyone using this agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Everyone who can use the assistant": {
@@ -94389,7 +94579,7 @@
     ]
   },
   "Keep a memory for yourself, a role you hold or the organization": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -94724,6 +94914,15 @@
       "routes/admin"
     ]
   },
+  "Keep what the work taught": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep your phone and address current so dispatch and payroll can reach you.": {
     "sites": 1,
     "scope": [
@@ -94740,6 +94939,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Keeping a memory for everyone who uses this agent needs permission to create agent memories": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
     ]
   },
   "Keeping a memory for the whole organization needs permission to create agent memories": {
@@ -94815,11 +95023,12 @@
     ]
   },
   "Kept": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/detention-intelligence"
     ]
   },
@@ -96921,6 +97130,69 @@
       "routes/detention-intelligence"
     ]
   },
+  "Learn from their work": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Learned by an agent looking back over its work, {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Learned from this conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Learned something from this conversation. Keep it?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Learned the steps that worked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Learned the steps that worked. Keep them for next time?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Learns from its work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Leave": {
     "sites": 3,
     "scope": [
@@ -97625,6 +97897,15 @@
       "apps/web/types",
       "routes/reports",
       "routes/table-change-alert"
+    ]
+  },
+  "Lessons": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Lessor name is required for leased equipment": {
@@ -101037,6 +101318,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Look back over a conversation once it goes quiet and keep what the agent learned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Look back over a settled background run and keep what the agent learned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Look things up": {
@@ -104993,6 +105292,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Memories already kept": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "Memory": {
@@ -114502,6 +114810,15 @@
       "routes/desk"
     ]
   },
+  "No memory with that id is visible here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
+    ]
+  },
   "No message": {
     "sites": 1,
     "scope": [
@@ -117825,6 +118142,15 @@
       "routes/agent-control"
     ]
   },
+  "Not kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Not linked": {
     "sites": 1,
     "scope": [
@@ -119797,6 +120123,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "Nothing worth keeping.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing would change": {
     "sites": 2,
     "scope": [
@@ -120982,12 +121317,13 @@
     ]
   },
   "Offered": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -121774,6 +122110,33 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Once a conversation goes quiet or a background run settles, its agent looks back over it when something went wrong, took several tries or was corrected. Each lesson it keeps is a memory in the list below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Once a conversation goes quiet or a background run settles, the agent looks back over it. When something went wrong, took several tries or a person corrected it, it keeps the lesson as memory: a preference, a fact, or the steps that worked. Each person's saving preference still applies, lessons shared beyond one person wait for someone allowed to approve them, and anything drawn from outside content is only ever offered. Each agent also has its own switch.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Once a conversation goes quiet or a run settles, it looks back for what went wrong or took several tries and keeps the lesson as memory. Each person's saving preference still applies, and anything shared beyond them waits for approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Once your carrier issues a settlement, your statement will show up here.": {
@@ -122777,6 +123140,15 @@
     ],
     "areas": [
       "domain/aitraining"
+    ]
+  },
+  "Only a skipped look back says why it was skipped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Only a submitted review the worker has not signed can be reopened": {
@@ -125385,7 +125757,7 @@
     ]
   },
   "Open the conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -125463,6 +125835,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Open the run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Open the selected result in a new browser tab": {
@@ -127373,7 +127754,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 128,
+    "sites": 129,
     "scope": [
       "go"
     ],
@@ -128399,6 +128780,15 @@
     ],
     "areas": [
       "domain/conversation"
+    ]
+  },
+  "Outside content": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Outside content read": {
@@ -139619,6 +140009,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Procedure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Proceed despite the insurance warnings above.": {
     "sites": 1,
     "scope": [
@@ -144303,7 +144702,7 @@
     ]
   },
   "Ratings": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -145034,6 +145433,15 @@
   },
   "Read the question": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Read the work to look back over": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -147359,6 +147767,15 @@
       "routes/worker"
     ]
   },
+  "Record a look back that failed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Record a memory for agents": {
     "sites": 1,
     "scope": [
@@ -148192,7 +148609,7 @@
     ]
   },
   "Recorded": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -148220,7 +148637,7 @@
     ]
   },
   "Recorded by": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -148298,6 +148715,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Recorded with the memory; editing it does not change this.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Recorded {0}": {
@@ -148454,6 +148880,15 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "Records the work touched": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "Records who at the carrier confirmed revision {0} — from a signed copy, email reply, or phone confirmation.": {
@@ -151680,6 +152115,25 @@
       "apps/web/hooks"
     ]
   },
+  "Replaced by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "Replaced by a newer memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Replaced by a newer version": {
     "sites": 1,
     "scope": [
@@ -151743,6 +152197,16 @@
     "areas": [
       "routes/billing-queue",
       "routes/invoice-approval"
+    ]
+  },
+  "Replaces": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Replaces every occurrence of old with new.": {
@@ -160147,6 +160611,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Said": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Sales tax collected and owed": {
@@ -177701,7 +178174,7 @@
     ]
   },
   "Status is required": {
-    "sites": 143,
+    "sites": 144,
     "scope": [
       "go"
     ],
@@ -179122,7 +179595,7 @@
     ]
   },
   "Subject type is required": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -179631,15 +180104,6 @@
       "apps/web/hooks"
     ]
   },
-  "Suggested from feedback": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Suggested matches": {
     "sites": 1,
     "scope": [
@@ -179647,6 +180111,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Suggested memories": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Suggested next": {
@@ -183595,6 +184068,15 @@
       "service/billingqueueservice"
     ]
   },
+  "That memory is no longer kept, so there is nothing to replace; save this as a new memory": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
+    ]
+  },
   "That name is too long. Keep it to {0} characters.": {
     "sites": 1,
     "scope": [
@@ -184236,6 +184718,15 @@
     ],
     "areas": [
       "service/invoicedisputeservice"
+    ]
+  },
+  "The agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "The agent answers its cases with every write simulated.": {
@@ -189209,6 +189700,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The look back could not finish: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The lookup didn't run": {
     "sites": 1,
     "scope": [
@@ -189535,6 +190035,15 @@
       "service/assistantservice"
     ]
   },
+  "The model returned nothing to read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
+    ]
+  },
   "The model stopped partway. Starting over on {0}…": {
     "sites": 1,
     "scope": [
@@ -189551,6 +190060,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The model's answer could not be read: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "The moment free time runs out.": {
@@ -193253,6 +193771,15 @@
       "service/reporting"
     ]
   },
+  "The stretch read must run forward": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "The subject the agent composed. Required on the subject channel.": {
     "sites": 1,
     "scope": [
@@ -194181,6 +194708,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "The work": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "The worker becomes inactive, their PTO and pay assignments close on the effective date, and any time off starting after it is cancelled.": {
@@ -198187,6 +198723,15 @@
       "routes/admin"
     ]
   },
+  "This replaces a memory your team or organization shares; saving it needs permission to update agent memories": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
+    ]
+  },
   "This reply failed before it started.": {
     "sites": 1,
     "scope": [
@@ -201383,6 +201928,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Tools the work used": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "Top N categories": {
@@ -214410,6 +214964,15 @@
       "routes/agent-control"
     ]
   },
+  "What agents learned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What can still be saved, first": {
     "sites": 1,
     "scope": [
@@ -214898,6 +215461,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "What made the agent look back": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What made up the rate": {
     "sites": 1,
     "scope": [
@@ -214932,6 +215504,15 @@
     ],
     "areas": [
       "routes/leave-control"
+    ]
+  },
+  "What people decided on the agent's proposals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "What people pick from when they start a scan. The default is used when nobody picks one.": {
@@ -215004,6 +215585,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What taught it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What that means": {
@@ -215661,6 +216251,15 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "What was said": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What we would charge for a lane": {
@@ -216531,6 +217130,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Where it came from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Where it happened": {
@@ -217795,13 +218403,14 @@
     ]
   },
   "Why": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/org-structure",
       "routes/time-attendance",
       "routes/worker"
@@ -217960,6 +218569,15 @@
       "routes/invoice"
     ]
   },
+  "Why it looked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Why it waits": {
     "sites": 2,
     "scope": [
@@ -217967,6 +218585,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Why it was kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Why it would not read": {
@@ -218157,6 +218784,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Why this work was worth a look": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentreflectionservice"
     ]
   },
   "Why you are seeing this": {
@@ -219889,6 +220525,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Written by a run that had read text from outside the organization; an agent that reads it is treated as having read that text too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Written by hand": {
@@ -223173,6 +223818,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "drawn from content written outside the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "driver settlement": {
@@ -226705,6 +227359,15 @@
       "routes/admin"
     ]
   },
+  "read content written outside the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "recent median {0}": {
     "sites": 1,
     "scope": [
@@ -226757,6 +227420,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "replaces a memory already kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "replies@example.com": {
@@ -229313,7 +229985,7 @@
     ]
   },
   "{0, plural, one {# person} other {# people}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -229421,7 +230093,7 @@
     ]
   },
   "{0, plural, one {# rating} other {# ratings}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

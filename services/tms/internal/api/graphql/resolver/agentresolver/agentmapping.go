@@ -45,6 +45,45 @@ func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscri
 	}
 }
 
+func reflectionSignals(reflection *agent.Reflection) []*agent.ReflectionSignal {
+	if reflection == nil {
+		return []*agent.ReflectionSignal{}
+	}
+
+	out := make([]*agent.ReflectionSignal, 0, len(reflection.Signals))
+	for idx := range reflection.Signals {
+		out = append(out, &reflection.Signals[idx])
+	}
+
+	return out
+}
+
+func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
+	l, ok := loaders.FromContext(ctx)
+	if !ok || !memory.Replaces() {
+		return nil, nil
+	}
+
+	loaded, err := l.AgentMemoryByID.Load(ctx, memory.SupersedesID.String())
+	switch {
+	case errortypes.IsNotFoundError(err):
+		return nil, nil
+	case err != nil:
+		return nil, err
+	default:
+		return loaded, nil
+	}
+}
+
+func replacingMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
+	l, ok := loaders.FromContext(ctx)
+	if !ok || memory == nil || memory.ID.IsNil() {
+		return nil, nil
+	}
+
+	return l.AgentMemoryReplacement.Load(ctx, memory.ID.String())
+}
+
 func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {
 	selection := projection.Select(
 		projection.AgentProposalSpec,
@@ -105,6 +144,39 @@ func agentMemoryConnectionToModel(
 	}
 
 	return &gqlmodel.AgentMemoryConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
+func agentReflectionColumns(ctx context.Context, nodePathPrefix string) []string {
+	selection := projection.Select(
+		projection.AgentReflectionSpec,
+		func(path string) bool {
+			return graphql.FieldRequested(ctx, path)
+		},
+		projection.SelectOptions{PathPrefix: nodePathPrefix},
+	)
+
+	return selection.Columns
+}
+
+func agentReflectionConnectionToModel(
+	result *pagination.CursorListResult[*agent.Reflection],
+) (*gqlmodel.AgentReflectionConnection, error) {
+	page, err := base.EntityCursorConnection(
+		result,
+		func(node *agent.Reflection, cursor string) *gqlmodel.AgentReflectionEdge {
+			return &gqlmodel.AgentReflectionEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AgentReflectionEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AgentReflectionConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,

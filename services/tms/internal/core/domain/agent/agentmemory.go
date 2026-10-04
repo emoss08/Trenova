@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -62,11 +63,12 @@ const (
 	// MemoryKindCorrection is what a decision on a proposal taught: what a
 	// person changed or refused, and why.
 	MemoryKindCorrection = MemoryKind("Correction")
+	MemoryKindProcedure  = MemoryKind("Procedure")
 )
 
 func (k MemoryKind) IsValid() bool {
 	switch k {
-	case MemoryKindInstruction, MemoryKindFact, MemoryKindCorrection:
+	case MemoryKindInstruction, MemoryKindFact, MemoryKindCorrection, MemoryKindProcedure:
 		return true
 	default:
 		return false
@@ -80,27 +82,42 @@ func (k MemoryKind) Rank() int {
 		return 0
 	case MemoryKindCorrection:
 		return 1
-	default:
+	case MemoryKindProcedure:
 		return 2
+	default:
+		return 3
 	}
+}
+
+func (k MemoryKind) Followed() bool {
+	return k == MemoryKindInstruction || k == MemoryKindProcedure
 }
 
 type MemorySource string
 
 const (
-	MemorySourceUser     = MemorySource("User")
-	MemorySourceAgent    = MemorySource("Agent")
-	MemorySourceDecision = MemorySource("Decision")
-	MemorySourceFeedback = MemorySource("Feedback")
+	MemorySourceUser       = MemorySource("User")
+	MemorySourceAgent      = MemorySource("Agent")
+	MemorySourceDecision   = MemorySource("Decision")
+	MemorySourceFeedback   = MemorySource("Feedback")
+	MemorySourceReflection = MemorySource("Reflection")
 )
 
 func (s MemorySource) IsValid() bool {
 	switch s {
-	case MemorySourceUser, MemorySourceAgent, MemorySourceDecision, MemorySourceFeedback:
+	case MemorySourceUser,
+		MemorySourceAgent,
+		MemorySourceDecision,
+		MemorySourceFeedback,
+		MemorySourceReflection:
 		return true
 	default:
 		return false
 	}
+}
+
+func (s MemorySource) OfferedByAgent() bool {
+	return s == MemorySourceAgent || s == MemorySourceReflection
 }
 
 func AllMemorySources() []MemorySource {
@@ -109,6 +126,7 @@ func AllMemorySources() []MemorySource {
 		MemorySourceAgent,
 		MemorySourceDecision,
 		MemorySourceFeedback,
+		MemorySourceReflection,
 	}
 }
 
@@ -197,7 +215,12 @@ func AllMemorySavingModes() []MemorySavingMode {
 }
 
 func AllMemoryKinds() []MemoryKind {
-	return []MemoryKind{MemoryKindInstruction, MemoryKindFact, MemoryKindCorrection}
+	return []MemoryKind{
+		MemoryKindInstruction,
+		MemoryKindFact,
+		MemoryKindCorrection,
+		MemoryKindProcedure,
+	}
 }
 
 type MemoryStatus string
@@ -239,6 +262,31 @@ func AllMemoryStatuses() []MemoryStatus {
 	}
 }
 
+func ReplacingMemoryStatuses() []MemoryStatus {
+	return []MemoryStatus{
+		MemoryStatusActive,
+		MemoryStatusPaused,
+		MemoryStatusRetired,
+	}
+}
+
+func NewestReplacements(replacements []*Memory) map[pulid.ID]*Memory {
+	newest := make(map[pulid.ID]*Memory, len(replacements))
+	for _, memory := range replacements {
+		if memory == nil || memory.SupersedesID == nil ||
+			!slices.Contains(ReplacingMemoryStatuses(), memory.Status) {
+			continue
+		}
+		current, ok := newest[*memory.SupersedesID]
+		if !ok || memory.CreatedAt > current.CreatedAt ||
+			(memory.CreatedAt == current.CreatedAt && memory.ID.String() > current.ID.String()) {
+			newest[*memory.SupersedesID] = memory
+		}
+	}
+
+	return newest
+}
+
 type MemoryEvidence struct {
 	FeedbackIDs     []pulid.ID `json:"feedbackIds"`
 	PatternKey      string     `json:"patternKey"`
@@ -249,6 +297,15 @@ type MemoryEvidence struct {
 	Quotes          []string   `json:"quotes,omitempty"`
 	FirstRatedAt    int64      `json:"firstRatedAt"`
 	LastRatedAt     int64      `json:"lastRatedAt"`
+	Signals         []string   `json:"signals,omitempty"`
+}
+
+func (e *MemoryEvidence) GetReason() string {
+	if e == nil {
+		return ""
+	}
+
+	return e.Reason
 }
 
 func (e *MemoryEvidence) Count() int {
@@ -330,6 +387,8 @@ type Memory struct {
 	TaintRunID       *pulid.ID `json:"taintRunId"        bun:"taint_run_id,type:VARCHAR(100),nullzero"`
 	SourceRunID      *pulid.ID `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
 	SourceProposalID *pulid.ID `json:"sourceProposalId"  bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
+	ReflectionID     *pulid.ID `json:"reflectionId"      bun:"reflection_id,type:VARCHAR(100),nullzero"`
+	SupersedesID     *pulid.ID `json:"supersedesId"      bun:"supersedes_id,type:VARCHAR(100),nullzero"`
 	CreatedByUserID  *pulid.ID `json:"createdByUserId"   bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
 	RetiredByUserID  *pulid.ID `json:"retiredByUserId"   bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
 	RetiredAt        *int64    `json:"retiredAt"         bun:"retired_at,type:BIGINT,nullzero"`
@@ -433,9 +492,23 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 	// A suggestion is drawn from feedback, or offered by an agent to the
 	// person who asked to be asked first; nothing else waits to be accepted.
 	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback &&
-		m.Source != MemorySourceAgent {
+		!m.Source.OfferedByAgent() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Only feedback or an agent can suggest a memory")
 	}
+	if m.Source == MemorySourceReflection && (m.ReflectionID == nil || m.ReflectionID.IsNil()) {
+		multiErr.Add(
+			"reflectionId",
+			errortypes.ErrRequired,
+			"A memory an agent kept from looking back over its work needs that look back",
+		)
+	}
+	if m.SupersedesID != nil && m.SupersedesID.IsNotNil() && *m.SupersedesID == m.ID {
+		multiErr.Add("supersedesId", errortypes.ErrInvalid, "A memory cannot replace itself")
+	}
+}
+
+func (m *Memory) Replaces() bool {
+	return m != nil && m.SupersedesID != nil && m.SupersedesID.IsNotNil()
 }
 
 // SetAudience narrows the memory to one scope's readers, clearing whatever

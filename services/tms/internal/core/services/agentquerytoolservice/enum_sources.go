@@ -98,6 +98,7 @@ var (
 		agent.MemoryKindInstruction,
 		agent.MemoryKindFact,
 		agent.MemoryKindCorrection,
+		agent.MemoryKindProcedure,
 	})
 	memoryFilterSubjectTypes = agenttoolschema.Source(
 		"agent.memoryFilterSubjectType",

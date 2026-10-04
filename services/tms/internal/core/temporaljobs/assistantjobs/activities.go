@@ -78,7 +78,8 @@ type ActivitiesParams struct {
 	Metrics       *metrics.Registry                    `optional:"true"`
 	// Workflows starts the compaction a turn that filled its conversation
 	// sets off.
-	Workflows serviceports.WorkflowStarter `optional:"true"`
+	Workflows   serviceports.WorkflowStarter          `optional:"true"`
+	Reflections serviceports.AgentReflectionScheduler `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -95,19 +96,21 @@ type Activities struct {
 	followUps     serviceports.DecisionFollowUpResumer
 	metrics       *metrics.Assistant
 	workflows     serviceports.WorkflowStarter
+	reflections   serviceports.AgentReflectionScheduler
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	a := &Activities{
-		logger:     p.Logger.Named("job.assistant-turn"),
-		assistant:  p.Assistant,
-		turns:      p.Turns,
-		turnRepo:   p.TurnRepo,
-		steps:      p.Steps,
-		trajectory: p.Trajectory,
-		followUps:  p.FollowUps,
-		metrics:    metrics.AssistantFrom(p.Metrics),
-		workflows:  p.Workflows,
+		logger:      p.Logger.Named("job.assistant-turn"),
+		assistant:   p.Assistant,
+		turns:       p.Turns,
+		turnRepo:    p.TurnRepo,
+		steps:       p.Steps,
+		trajectory:  p.Trajectory,
+		followUps:   p.FollowUps,
+		metrics:     metrics.AssistantFrom(p.Metrics),
+		workflows:   p.Workflows,
+		reflections: p.Reflections,
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
@@ -239,6 +242,7 @@ func (a *Activities) FinishTurnActivity(
 
 		ending := a.alreadySaved(ctx, turn)
 		a.resumeFollowUps(ctx, in)
+		a.cueReflection(ctx, in)
 		emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 		return ending, nil
@@ -256,6 +260,7 @@ func (a *Activities) FinishTurnActivity(
 	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
 	a.resumeFollowUps(ctx, in)
+	a.cueReflection(ctx, in)
 	emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 	return ending, nil
@@ -362,6 +367,20 @@ func (a *Activities) resumeFollowUps(ctx context.Context, in *FinishTurnInput) {
 	a.followUps.ResumeFollowUps(ctx, serviceports.ResumeFollowUpsRequest{
 		TenantInfo: in.Payload.tenantInfo(),
 		ThreadID:   in.Payload.ThreadID,
+	})
+}
+
+func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
+	if a.reflections == nil || in.Plan == nil || in.Plan.Refused() {
+		return
+	}
+
+	payload := in.Payload
+	a.reflections.AfterTurn(ctx, &serviceports.ReflectOnThreadRequest{
+		TenantInfo: payload.tenantInfo(),
+		ThreadID:   payload.ThreadID,
+		UserID:     payload.Actor.UserID,
+		TurnID:     payload.TurnID,
 	})
 }
 

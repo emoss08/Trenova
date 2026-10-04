@@ -471,6 +471,7 @@ func (r *repository) Update(
 			Set(cols.ToolDailyLimits.Set(), entity.ToolDailyLimits).
 			Set(cols.SimulationMode.Set(), entity.SimulationMode).
 			Set(cols.MemoryTokenBudget.Set(), entity.MemoryTokenBudget).
+			Set(cols.LearningOff.Set(), entity.LearningOff).
 			Set(cols.Icon.Set(), stringutils.NilIfEmpty(entity.Icon)).
 			Set(cols.Accent.Set(), stringutils.NilIfEmpty(entity.Accent)).
 			Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).

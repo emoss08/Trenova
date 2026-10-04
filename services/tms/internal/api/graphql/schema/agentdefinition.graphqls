@@ -135,6 +135,8 @@ type AgentDefinition {
   1000 to 16000. Absent uses the default of 6000.
   """
   memoryTokenBudget: Int
+  "The agent no longer looks back over its work to keep what it learned, whatever its organization chose."
+  learningOff: Boolean!
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
   "Chosen icon name; empty falls back to the icon the starter template implies."

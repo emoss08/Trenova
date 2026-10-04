@@ -198,7 +198,7 @@ func tierOf(
 
 		return memoryTierRest
 	}
-	if memory.Kind == agent.MemoryKindInstruction {
+	if memory.Kind.Followed() {
 		return memoryTierOrganizationInstruction
 	}
 

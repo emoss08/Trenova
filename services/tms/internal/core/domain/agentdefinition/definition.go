@@ -103,6 +103,7 @@ type Definition struct {
 	SimulationMode  bool           `json:"simulationMode"   bun:"simulation_mode,type:BOOLEAN,notnull"`
 
 	MemoryTokenBudget *int `json:"memoryTokenBudget" bun:"memory_token_budget,type:INTEGER,nullzero"`
+	LearningOff       bool `json:"learningOff"       bun:"learning_off,type:BOOLEAN,notnull,default:false"`
 
 	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero"`
 	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero"`

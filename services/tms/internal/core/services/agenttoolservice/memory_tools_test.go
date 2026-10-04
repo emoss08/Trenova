@@ -169,7 +169,7 @@ func TestRemember_RefusesACorrectionAndHalfASubject(t *testing.T) {
 		memoryParams(map[string]any{"content": "x", "kind": "Correction"}),
 	)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "Instruction or Fact")
+	assert.Contains(t, err.Error(), "kind must be one of Instruction, Fact, Procedure")
 
 	err = tool.Execute(
 		t.Context(),

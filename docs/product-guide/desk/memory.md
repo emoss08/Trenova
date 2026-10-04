@@ -1,39 +1,32 @@
 ---
 path: /desk/memory
-title: What Desk remembers
-aliases: [agent memory, memories, remembered facts, teach the agents, forget, preferences]
+aliases: [agent memory, what the AI remembers, saved preferences, teach the assistant, learned lessons, forget something]
 related:
   - /desk
+  - /admin/agent-control
 ---
 
 ## What it's for
-Memory lists what Desk's agents remember: facts and preferences kept for just you, for a role
-you belong to, or for the whole organization. Agents use these in later conversations. From
-here you choose how new memories are saved, add a memory yourself, and edit, pause or forget
-any memory you can see.
+**What Desk remembers** is everything the agents keep about how you work: what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work. Each memory says who it is for (**Just you**, a team you belong to, or the **Organization**), where it came from and how often it has been used. You can add a memory, edit or pause it, forget it, and choose whether agents save new memories on their own or ask you first.
 
 ## Tasks
 
-### Choose how agents save new memories
-Keywords: ask before remembering, auto save memory
-1. Open [Memory](/desk/memory).
-2. Under **Saving new memories**, select **Automatically** to let agents save useful facts and
-   tell you in the conversation, or **Ask me first** to have them ask before saving anything.
-
 ### Teach Desk something
-Keywords: add memory, remember this
-1. Open [Memory](/desk/memory).
-2. Type the fact in the box at the top, choose **Who it is for** (**Just you**, one of your roles,
-   or **Organization** when you may share with everyone), and select **Save**.
+Keywords: add memory, remember this, standing instruction, preference
+1. Open [What Desk remembers](/desk/memory) and select **Add a memory**.
+2. Write it as you would tell a colleague, choose **Who it is for**, and select **Save**.
+3. Every agent you talk to reads it from your next question. A memory for a team or the organization needs permission to create agent memories.
 
-### Change or forget a memory
-Keywords: edit memory, delete memory, stop using a memory
-1. Open [Memory](/desk/memory) and find the memory, using **Search memories** or the chips above
-   the list.
-2. Select **Edit** to change its text or who it is for, then **Save memory**.
-3. Select **Pause** to stop agents using it for now (**Resume** brings it back), or **Forget** to
-   remove it. **Undo** reverses a forget straight away.
+### Change, pause or forget a memory
+Keywords: edit memory, stop using a memory, delete memory, wrong memory
+1. Open [What Desk remembers](/desk/memory), or use **Search memories** to find one.
+2. Select **Edit** to change the words or **Who it is for**, then **Save**.
+3. Select **Pause** to set it aside without losing it, and **Resume** to bring it back.
+4. Select **Forget** to stop agents using it; **Undo** takes that back while the message shows.
 
-## Notes
-Opening Memory needs access to the assistant. Some roles and **Organization** are offered only
-to people allowed to keep memories for them.
+### Choose whether agents ask before saving
+Keywords: ask first, automatic saving, memory preference, learned from conversation
+1. Open [What Desk remembers](/desk/memory) and find **Saving new memories**.
+2. Choose **Automatically** to let agents save what they pick up and tell you in the conversation, or **Ask me first** to have each one offered for you to keep or turn down.
+3. The choice also covers what an agent learns by looking back over a conversation once it goes quiet: kept and shown under the reply it learned from, or offered there for you to keep.
+4. A memory an agent learned shows why it was kept, and the memory it replaced, under its words. A memory a newer one replaced says so in the conversation instead of offering **Undo**, so the two never apply at once.

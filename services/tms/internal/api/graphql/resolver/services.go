@@ -221,6 +221,7 @@ type Params struct {
 	AgentProposalService         services.AgentProposalService
 	AgentPlanService             services.AgentPlanService
 	AgentMemoryService           services.AgentMemoryService
+	AgentReflectionService       services.AgentReflectionService
 	AIFeedbackService            services.AIFeedbackService
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentEvalCaseService         services.AgentEvalCaseService
@@ -398,6 +399,7 @@ type Services struct {
 	AgentProposalService         services.AgentProposalService
 	AgentPlanService             services.AgentPlanService
 	AgentMemoryService           services.AgentMemoryService
+	AgentReflectionService       services.AgentReflectionService
 	AiFeedbackService            services.AIFeedbackService
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentEvalCaseService         services.AgentEvalCaseService
@@ -581,6 +583,7 @@ func newServices(p *Params) *Services {
 		AgentProposalService:         p.AgentProposalService,
 		AgentPlanService:             p.AgentPlanService,
 		AgentMemoryService:           p.AgentMemoryService,
+		AgentReflectionService:       p.AgentReflectionService,
 		AiFeedbackService:            p.AIFeedbackService,
 		AgentEvaluationService:       p.AgentEvaluationService,
 		AgentEvalCaseService:         p.AgentEvalCaseService,

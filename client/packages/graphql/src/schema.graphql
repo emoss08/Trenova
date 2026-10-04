@@ -2601,6 +2601,10 @@ type AgentControl {
   """
   earnedAutonomy: Boolean!
   id: ID!
+  """
+  Agents no longer look back over their work to keep what they learned as memory.
+  """
+  learningOff: Boolean!
   organizationId: ID!
   """
   Questions one person may ask the agents each calendar month (UTC); 0 is unlimited.
@@ -2624,6 +2628,8 @@ input AgentControlInput {
   decisionTimeoutSeconds: Int @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   """Absent leaves the organization's earned autonomy switch as it is."""
   earnedAutonomy: Boolean
+  """Absent leaves whether agents learn from their work as it is."""
+  learningOff: Boolean
   """
   Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
   """
@@ -2755,6 +2761,10 @@ type AgentDefinition {
   instructions: String!
   intervalSeconds: Int!
   lastRunAt: Timestamp
+  """
+  The agent no longer looks back over its work to keep what it learned, whatever its organization chose.
+  """
+  learningOff: Boolean!
   maxConcurrentRuns: Int!
   maxToolCalls: Int!
   """
@@ -3176,6 +3186,14 @@ type AgentMemory {
   lastUsedAt: Timestamp
   organizationId: ID!
   ownerUserId: ID
+  """
+  The look back that kept or offered the memory, for one whose source is Reflection.
+  """
+  reflectionId: ID
+  """
+  The newest memory that replaced this one and took effect; empty while nothing has.
+  """
+  replacedBy: AgentMemory
   retiredAt: Timestamp
   retiredByUserId: ID
   roleId: ID
@@ -3186,11 +3204,19 @@ type AgentMemory {
   source: AgentMemorySource!
   sourceProposalId: ID
   sourceRunId: ID
+  """The conversation the memory came from."""
+  sourceThreadId: ID
   status: AgentMemoryStatus!
   subjectId: ID
   """The subject's name at the time it was recorded."""
   subjectLabel: String!
   subjectType: AgentMemorySubjectType
+  """The memory this one replaces, as it reads now."""
+  supersedes: AgentMemory
+  """
+  The memory this one replaces; once this one is active the other is retired.
+  """
+  supersedesId: ID
   """The run whose outside content the memory carries."""
   taintRunId: ID
   """
@@ -3231,6 +3257,10 @@ type AgentMemoryEvidence {
   quotes: [String!]!
   ratingCount: Int!
   reason: String!
+  """
+  For a memory an agent kept from looking back, what in the work made it worth a look.
+  """
+  signals: [String!]!
 }
 
 input AgentMemoryInput {
@@ -3249,6 +3279,10 @@ enum AgentMemoryKind {
   Correction
   Fact
   Instruction
+  """
+  The steps that worked for a task here, dictated by a person or learned by doing it.
+  """
+  Procedure
 }
 
 """
@@ -3284,6 +3318,10 @@ enum AgentMemorySource {
   Decision
   """Drawn from ratings people gave an agent's output."""
   Feedback
+  """
+  Kept by an agent looking back over its own work once a conversation went quiet or a run settled.
+  """
+  Reflection
   User
 }
 
@@ -4005,6 +4043,121 @@ enum AgentReachWarningKind {
   Everyone who may use the assistant may use the agent, and it holds tools that reach restricted data or leave the organization.
   """
   OpenWithSensitiveTools
+}
+
+"""
+One time an agent looked back over a stretch of a conversation or a settled
+background run and decided what, if anything, to keep as memory.
+"""
+type AgentReflection {
+  agentDefinitionId: ID!
+  businessUnitId: ID!
+  changes: [AgentReflectionChange!]!
+  createdAt: Timestamp!
+  errorMessage: String!
+  finishedAt: Timestamp
+  fromSequence: Int!
+  id: ID!
+  inputTokens: Int!
+  model: String!
+  """The model's one-sentence account of what it looked at and kept."""
+  notes: String!
+  organizationId: ID!
+  outputTokens: Int!
+  runId: ID
+  signals: [AgentReflectionSignal!]!
+  skipReason: AgentReflectionSkip
+  status: AgentReflectionStatus!
+  subjectType: AgentReflectionSubject!
+  """
+  The work had read content from outside the organization, so everything kept waits for a person.
+  """
+  tainted: Boolean!
+  threadId: ID
+  throughSequence: Int!
+  updatedAt: Timestamp!
+  """The person whose conversation was read."""
+  userId: ID
+  version: Int!
+}
+
+enum AgentReflectionAction {
+  """Already kept; counted as used instead of saved again."""
+  Refreshed
+  """Not kept, with the reason."""
+  Refused
+  Saved
+  """
+  Offered to a person to accept: they asked to be asked first, it is shared beyond them, or the work read outside content.
+  """
+  Suggested
+}
+
+type AgentReflectionChange {
+  action: AgentReflectionAction!
+  content: String!
+  kind: AgentMemoryKind!
+  memoryId: ID
+  reason: String!
+  scope: AgentMemoryScope
+  supersedesId: ID
+}
+
+type AgentReflectionConnection {
+  edges: [AgentReflectionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentReflectionEdge {
+  cursor: String!
+  node: AgentReflection!
+}
+
+type AgentReflectionSignal {
+  count: Int!
+  """The tools or proposals the signal is about, when it names any."""
+  detail: String!
+  kind: AgentReflectionSignalKind!
+}
+
+enum AgentReflectionSignalKind {
+  LongTask
+  NegativeFeedback
+  PersonCorrected
+  ProposalModified
+  ProposalRejected
+  StandingRequest
+  ToolFailed
+  ToolRecovered
+}
+
+enum AgentReflectionSkip {
+  AgentUnavailable
+  LearningOff
+  NoSignal
+  NothingToRead
+  OverBudget
+}
+
+enum AgentReflectionStatus {
+  Completed
+  """
+  The look back could not finish; the stretch is read again with the next one.
+  """
+  Failed
+  Running
+  """
+  Nothing in the work called for a look, or learning was off; the stretch is not read again.
+  """
+  Skipped
+}
+
+enum AgentReflectionSubject {
+  """One background run, read once every proposal it raised was decided."""
+  Run
+  """A stretch of a conversation, read once it went quiet."""
+  Thread
 }
 
 enum AgentResolutionState {
@@ -9067,8 +9220,9 @@ input DeskMemoriesInput {
 
 """
 A memory as a person keeps it on the Desk: one of their own, their role's, or
-the organization's. Agent-scoped memories are administered in AI Control and
-never appear here.
+the organization's. Agent-scoped memories are administered in AI Control; the
+only ones a person sees here are those an agent learned in their own
+conversations.
 """
 type DeskMemory {
   content: String!
@@ -9078,11 +9232,25 @@ type DeskMemory {
   """
   editable: Boolean!
   id: ID!
+  """Instruction, Fact, Correction or Procedure."""
+  kind: AgentMemoryKind!
   lastUsedAt: Timestamp
+  """What was said in the work that the memory rests on."""
+  quotes: [String!]!
+  """
+  Why it was kept, in the words of the agent that kept it; empty for one a person wrote down.
+  """
+  reason: String!
+  """The newest memory that replaced this one, when the person can see it."""
+  replacedBy: DeskMemoryLink
+  """The memory this one replaced, when the person can see it."""
+  replaces: DeskMemoryLink
   """The role a Role memory is kept for."""
   roleId: ID
   roleName: String!
-  """User (Just you), Role (the person's team) or Organization."""
+  """
+  User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent.
+  """
   scope: AgentMemoryScope!
   source: AgentMemorySource!
   """
@@ -9105,6 +9273,13 @@ type DeskMemoryCount {
   count: Int!
   roleId: ID
   scope: AgentMemoryScope!
+}
+
+"""Another memory a Desk memory points to, read as it is now."""
+type DeskMemoryLink {
+  content: String!
+  id: ID!
+  status: AgentMemoryStatus!
 }
 
 type DeskMemoryPage {
@@ -18597,6 +18772,8 @@ type Query {
   agentQualityControl: AgentQualityControl!
   """The organization's AI quality over the last window days."""
   agentQualityOverview(window: Int = 30): AgentQualityOverview!
+  """Each time an agent looked back over its work, newest first."""
+  agentReflections(input: DataTableConnectionInput!): AgentReflectionConnection!
   agentRun(id: ID!): AgentRun
   agentRunEvents(input: DataTableConnectionInput!): AgentRunEventConnection!
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!

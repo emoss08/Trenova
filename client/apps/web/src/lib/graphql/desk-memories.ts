@@ -27,8 +27,12 @@ export type DeskMemorySettings = DeskMemorySettingsFieldsFragment;
 export type DeskMemoryScope = Extract<AgentMemoryScope, "User" | "Role" | "Organization">;
 export type { AgentMemorySavingMode };
 
-/** Who a memory is kept for, as the page names it: one scope, and for Role one role. */
-export type DeskMemoryAudience = { scope: DeskMemoryScope; roleId: string | null };
+/**
+ * Who a memory is kept for, as the page names it: one scope, and for Role one
+ * role. Agent is a lesson an agent learned in the person's conversation for
+ * everyone who uses it; it stays where it is when they save or edit it.
+ */
+export type DeskMemoryAudience = { scope: DeskMemoryScope | "Agent"; roleId: string | null };
 
 export type DeskMemoryCount = { scope: AgentMemoryScope; roleId: string | null; count: number };
 

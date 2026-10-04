@@ -264,6 +264,42 @@
   font-size: 11.5px;
   color: var(--dsk-subtle);
 }
+.dk-mm-why {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dsk-subtle);
+}
+.dk-mm-why > div {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.dk-mm-why dt {
+  flex: none;
+  min-width: 64px;
+  font-weight: 500;
+  color: var(--dsk-muted);
+}
+.dk-mm-why dd {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.dk-mem-card .dk-mm-why {
+  margin-top: 8px;
+}
+.dk-mem-tx .dk-mm-why {
+  margin-top: 3px;
+  font-size: 11.5px;
+}
 .dk-mm-scope {
   height: 22px;
   font-size: 11.5px;

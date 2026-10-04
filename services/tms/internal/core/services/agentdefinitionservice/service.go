@@ -466,6 +466,9 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	definition.ToolDailyLimits = copyLimits(req.ToolDailyLimits)
 	definition.SimulationMode = req.SimulationMode
 	definition.MemoryTokenBudget = req.MemoryTokenBudget
+	if req.LearningOff != nil {
+		definition.LearningOff = *req.LearningOff
+	}
 	definition.Icon = strings.TrimSpace(req.Icon)
 	definition.Accent = strings.TrimSpace(req.Accent)
 	definition.ContextProviders = req.ContextProviders

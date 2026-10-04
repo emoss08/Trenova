@@ -30,6 +30,7 @@ fragment AgentDefinitionCardFields on AgentDefinition {
   toolDailyLimits
   simulationMode
   memoryTokenBudget
+  learningOff
   contextProviders
   outputMode
   preferredProviderId

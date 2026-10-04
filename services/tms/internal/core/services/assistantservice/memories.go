@@ -132,6 +132,7 @@ func memoryNote(memory *serviceports.DeskMemory) conversation.MemoryNote {
 	note := conversation.MemoryNote{
 		ID:          memory.Memory.ID,
 		Content:     memory.Memory.Content,
+		Kind:        string(memory.Memory.Kind),
 		Scope:       string(memory.Memory.Scope),
 		RoleName:    memory.RoleName,
 		Status:      string(memory.Memory.Status),
@@ -140,10 +141,25 @@ func memoryNote(memory *serviceports.DeskMemory) conversation.MemoryNote {
 		CreatedAt:   memory.Memory.CreatedAt,
 		Version:     memory.Memory.Version,
 		Editable:    memory.Editable,
+		Reason:      memory.Memory.Evidence.GetReason(),
+		Replaces:    memoryNoteLink(memory.Replaces),
+		ReplacedBy:  memoryNoteLink(memory.ReplacedBy),
 	}
 	if memory.Memory.RoleID != nil {
 		note.RoleID = *memory.Memory.RoleID
 	}
 
 	return note
+}
+
+func memoryNoteLink(link *serviceports.DeskMemoryLink) *conversation.MemoryNoteLink {
+	if link == nil {
+		return nil
+	}
+
+	return &conversation.MemoryNoteLink{
+		ID:      link.ID,
+		Content: link.Content,
+		Status:  string(link.Status),
+	}
 }

@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -52,13 +53,17 @@ func (t *rememberTool) SearchTerms() []string {
 }
 
 func (t *rememberTool) Description() string {
-	return "Record a standing instruction or a fact for later runs to know. Use kind " +
-		"Instruction for a rule a person gave you, Fact for something you were told or " +
-		"confirmed that is not in any record. Say who it is for with visibleTo: me for the " +
-		"person you are talking to alone (the default when someone is in the conversation), " +
-		"team for everyone in their role, organization for everyone. Scope it to one " +
-		"customer, location, driver or carrier with subjectType and subjectId when it is " +
-		"about that record. Do not record what a record already says, a guess, or anything " +
+	return "Record a standing instruction, a fact or a procedure for later runs to know. Use " +
+		"kind Instruction for a rule a person gave you, Fact for something you were told or " +
+		"confirmed that is not in any record, Procedure for the steps a person told you to " +
+		"follow for a task. Say who it is for with visibleTo: me for the person you are " +
+		"talking to alone (the default when someone is in the conversation), team for " +
+		"everyone in their role, organization for everyone. Scope it to one customer, " +
+		"location, driver or carrier with subjectType and subjectId when it is about that " +
+		"record. When the person changes something already kept, pass that memory's id from " +
+		"recall_memory as replacesMemoryId: the new memory takes its place and " +
+		"keeps its readers, and one shared with a team or the organization waits for a person " +
+		"allowed to change it. Do not record what a record already says, a guess, or anything " +
 		"a person asked you to keep private. Saving what is already kept refreshes it rather " +
 		"than adding a second copy, so there is no need to look first."
 }
@@ -74,7 +79,8 @@ func (t *rememberTool) ParamSchema() map[string]any {
 					agent.MaxMemoryContentChars),
 			},
 			fieldKind: agenttoolschema.Enum(
-				"Instruction for a rule a person gave; Fact for something learned. Defaults to Fact.",
+				"Instruction for a rule a person gave; Procedure for the steps a person gave for a "+
+					"task; Fact for something learned. Defaults to Fact.",
 				rememberedMemoryKinds,
 			),
 			fieldSubjectType: agenttoolschema.Enum(
@@ -90,6 +96,11 @@ func (t *rememberTool) ParamSchema() map[string]any {
 			"expiresOn": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: "Optional YYYY-MM-DD after which the memory no longer applies, such as a temporary arrangement.",
+			},
+			fieldReplacesMemoryID: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The id of a kept memory this one changes, from " +
+					"recall_memory. Omit for a new memory.",
 			},
 			fieldVisibleTo: agenttoolschema.Enum(
 				"Who the memory reaches: me for the person in the conversation alone, team "+
@@ -120,9 +131,9 @@ func (t *rememberTool) Policy() serviceports.ToolPolicy {
 		ReadsExternal:       agent.ExternalReadNever,
 		CarriesTaint:        true,
 		TaintHold: &serviceports.TaintHold{
-			Description: "An Instruction or a Correction recorded after the run read text " +
-				"from outside the organization waits for a person's approval; a Fact is " +
-				"recorded and stays marked as drawn from outside text.",
+			Description: "An Instruction, a Procedure or a Correction recorded after the run " +
+				"read text from outside the organization waits for a person's approval; a Fact " +
+				"is recorded and stays marked as drawn from outside text.",
 			Applies: rememberHeldWhenTainted,
 		},
 		Rationale: "Saves a memory later runs read, so it keeps the taint of the run that " +
@@ -204,8 +215,14 @@ func (t *rememberTool) request(
 	}
 
 	kind := rememberKind(params.Params)
-	if kind == agent.MemoryKindCorrection || !kind.IsValid() {
-		return nil, fmt.Errorf("kind must be Instruction or Fact, not %q", kind)
+	if !slices.Contains(rememberedMemoryKinds.Values, kind) {
+		return nil, fmt.Errorf("kind must be one of %s, not %q",
+			strings.Join(rememberedMemoryKinds.Names(), ", "), kind)
+	}
+
+	replaces, err := optionalPulidParam(params.Params, fieldReplacesMemoryID)
+	if err != nil {
+		return nil, err
 	}
 
 	subjectType, subjectID, err := memorySubject(params.Params)
@@ -229,6 +246,7 @@ func (t *rememberTool) request(
 		ProposalID:   params.ProposalID,
 		Taint:        params.CarriedTaint(timeutils.NowUnix()),
 		PersonUserID: params.Actor.PersonUserID(),
+		Replaces:     pulid.ConvertFromPtr(replaces),
 	}
 	if err = t.audience(ctx, params, request); err != nil {
 		return nil, err
@@ -378,7 +396,11 @@ var (
 	)
 	rememberedMemoryKinds = agenttoolschema.Source(
 		"agent.rememberedMemoryKind",
-		[]agent.MemoryKind{agent.MemoryKindInstruction, agent.MemoryKindFact},
+		[]agent.MemoryKind{
+			agent.MemoryKindInstruction,
+			agent.MemoryKindFact,
+			agent.MemoryKindProcedure,
+		},
 	)
 	memoryAudiences = agenttoolschema.Source(
 		"agent.memoryAudience",
@@ -386,7 +408,10 @@ var (
 	)
 )
 
-const fieldVisibleTo = "visibleTo"
+const (
+	fieldVisibleTo        = "visibleTo"
+	fieldReplacesMemoryID = "replacesMemoryId"
+)
 
 // memorySubject reads the optional subject pair. A type with no id names
 // nothing, so it is read as no subject: a model that fills every field sends
