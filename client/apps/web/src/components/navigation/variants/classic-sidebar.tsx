@@ -41,7 +41,7 @@ export function ClassicSidebar() {
   return (
     <aside
       className={cn(
-        "border-border bg-sidebar flex h-screen flex-col border-r transition-[width] duration-200",
+        "border-border bg-sidebar flex h-full min-h-0 flex-col border-r transition-[width] duration-200",
         collapsed ? "w-0 overflow-hidden border-r-0" : "w-64",
       )}
     >

@@ -25,6 +25,47 @@ export function trialEndingLimit(
   return meter && meter.limit > 0 ? meter.limit : null;
 }
 
+/**
+ * Shipments the organization can still create before the trial ends. Null when the
+ * summary carries no shipment limit.
+ */
+export function shipmentsRemaining(
+  summary: Pick<BillingSummary, "usage"> | undefined,
+): number | null {
+  const meter = summary?.usage.find((entry) => entry.meterKey === TRIAL_ENDING_METER);
+  if (!meter || meter.limit <= 0) {
+    return null;
+  }
+  return Math.max(0, meter.limit - meter.used);
+}
+
+export type DemoBannerMessage = { kind: "days" | "shipments"; value: number };
+
+/**
+ * What the free demo banner counts down, in the order it shows them: days left in
+ * the trial, then shipments left. A count that does not apply, or has already run
+ * out, is left out.
+ */
+export function demoBannerMessages(
+  trial: CloudTrialStatus | null,
+  summary: Pick<BillingSummary, "usage"> | undefined,
+): DemoBannerMessage[] {
+  if (trial?.kind !== "trialing") {
+    return [];
+  }
+
+  const messages: DemoBannerMessage[] = [];
+  if (trial.daysRemaining !== null && trial.daysRemaining > 0) {
+    messages.push({ kind: "days", value: trial.daysRemaining });
+  }
+  const shipments = shipmentsRemaining(summary);
+  if (shipments !== null && shipments > 0) {
+    messages.push({ kind: "shipments", value: shipments });
+  }
+
+  return messages;
+}
+
 export function isFreeDemoPlan(summary: Pick<BillingSummary, "plan" | "subscription"> | undefined) {
   const planKey = summary?.plan?.key || summary?.subscription?.planKey || "";
   return planKey === FREE_DEMO_PLAN_KEY;
