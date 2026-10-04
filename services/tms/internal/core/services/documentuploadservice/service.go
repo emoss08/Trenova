@@ -155,6 +155,17 @@ func (s *Service) CreateSession(
 	); err != nil {
 		return nil, err
 	}
+	if err = usageservice.CheckDocumentBytesLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentBytesUsageParams{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			Bytes:      req.FileSize,
+		},
+	); err != nil {
+		return nil, err
+	}
 
 	if strings.TrimSpace(req.LineageID) != "" {
 		lineageID, lineageErr := pulid.MustParse(req.LineageID)
@@ -398,6 +409,17 @@ func (s *Service) Complete(
 			TenantInfo:     req.TenantInfo,
 			Actor:          req.Actor,
 			IdempotencyKey: "document-upload-session:" + req.SessionID.String(),
+		},
+	); err != nil {
+		return nil, err
+	}
+	if err = usageservice.CheckDocumentBytesLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentBytesUsageParams{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			Bytes:      session.FileSize,
 		},
 	); err != nil {
 		return nil, err

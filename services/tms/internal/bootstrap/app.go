@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/capturejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/cloudlifecyclejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/completionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/conversationschedulejobs"
@@ -129,8 +130,8 @@ func Options() fx.Option {
 		quotaservice.Module,
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
-		fx.Provide(integrationservice.New),
 		fx.Provide(platformemailservice.New),
+		fx.Provide(integrationservice.New),
 		fx.Provide(fx.Annotate(
 			func(svc *integrationservice.Service) services.FuelCardFeedResolver { return svc },
 		)),
@@ -207,6 +208,7 @@ func Options() fx.Option {
 		inboundjobs.Module,
 		capturejobs.Module,
 		briefingjobs.Module,
+		cloudlifecyclejobs.Module,
 		aicorrectionjobs.Module,
 		extractionevaljobs.Module,
 		extractionshadowjobs.Module,

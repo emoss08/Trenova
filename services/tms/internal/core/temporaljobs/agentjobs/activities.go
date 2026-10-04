@@ -13,10 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentscoring"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
@@ -69,8 +71,9 @@ type ActivitiesParams struct {
 	Conversations repositories.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
-	Watchtower serviceports.WatchtowerProjector `optional:"true"`
-	Schedules  *DefinitionSchedules
+	Watchtower    serviceports.WatchtowerProjector `optional:"true"`
+	Schedules     *DefinitionSchedules
+	PlatformPlans serviceports.PlanService `optional:"true"`
 }
 
 type Activities struct {
@@ -99,6 +102,7 @@ type Activities struct {
 	activity      serviceports.AgentActivityPublisher
 	watchtower    serviceports.WatchtowerProjector
 	schedules     *DefinitionSchedules
+	platformPlans serviceports.PlanService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -133,6 +137,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		activity:      p.Activity,
 		watchtower:    p.Watchtower,
 		schedules:     p.Schedules,
+		platformPlans: p.PlatformPlans,
 	}
 }
 
@@ -611,6 +616,19 @@ func (a *Activities) StartScheduledRunActivity(
 	tenant := pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID}
 	now := timeutils.NowUnix()
 
+	allowed, err := planservice.Allows(
+		ctx,
+		a.platformPlans,
+		tenant,
+		platformplan.CapabilityAgentAutomation,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("resolve the organization's plan: %w", err)
+	}
+	if !allowed {
+		return &StartScheduledRunResult{Skipped: "plan_restricted"}, nil
+	}
+
 	definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
 		ID:         payload.DefinitionID,
 		TenantInfo: tenant,
@@ -664,6 +682,9 @@ func (a *Activities) StartScheduledRunActivity(
 	if err != nil {
 		if errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
 			return &StartScheduledRunResult{Skipped: "slot_already_started"}, nil
+		}
+		if errortypes.IsPlanRestrictionError(err) {
+			return &StartScheduledRunResult{Skipped: "plan_restricted"}, nil
 		}
 		if errortypes.IsBusinessError(err) {
 			return &StartScheduledRunResult{Skipped: err.Error()}, nil

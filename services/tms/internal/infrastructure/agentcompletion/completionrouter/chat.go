@@ -58,6 +58,9 @@ func (s *Service) runChat(
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
+	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 
 	usable, err := s.usableFor(ctx, aiprovider.TaskAssistantChat, req.TenantInfo)
 	if err != nil {

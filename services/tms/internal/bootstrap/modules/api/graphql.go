@@ -77,6 +77,7 @@ var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(
 	graphqlapi.NewObservabilityExtension,
 	graphqlapi.NewCostBudgetExtension,
 	graphqlapi.NewFeatureAccessExtension,
+	graphqlapi.NewReadOnlyExtension,
 	graphqlapi.NewServer,
 ))
 

@@ -106,3 +106,7 @@ type Client interface {
 	Exists(ctx context.Context, key string) (bool, error)
 	GetFileInfo(ctx context.Context, key string) (*FileInfo, error)
 }
+
+type PrefixDeleter interface {
+	DeletePrefix(ctx context.Context, prefix string) (int64, error)
+}

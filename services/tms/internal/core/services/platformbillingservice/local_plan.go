@@ -76,9 +76,10 @@ func (p *LocalPlanBillingProvider) GetBillingSummary(
 			Status: status,
 		},
 		Subscription: &services.BillingSubscriptionSummary{
-			ID:     internalPlanID,
-			PlanID: usage.Plan.String(),
-			Status: status,
+			ID:      internalPlanID,
+			PlanID:  usage.Plan.String(),
+			PlanKey: usage.Plan.String(),
+			Status:  status,
 		},
 		Features:     p.features(),
 		Usage:        p.usage(usage),

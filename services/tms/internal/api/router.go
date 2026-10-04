@@ -155,6 +155,7 @@ type RouterParams struct {
 
 	AuthMiddleware                  *middleware.AuthMiddleware
 	ControlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
+	ReadOnlyGuard                   *middleware.ReadOnlyGuard
 	RateLimiter                     *middleware.RateLimiter
 	IdempotencyMiddleware           *middleware.IdempotencyMiddleware
 	PermissionMiddleware            *middleware.PermissionMiddleware
@@ -165,9 +166,9 @@ type RouterParams struct {
 	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
-	DriverPortalHandler             *driverportalhandler.Handler
 	CloudSignupHandler              *cloudsignuphandler.Handler
 	OnboardingHandler               *onboardinghandler.Handler
+	DriverPortalHandler             *driverportalhandler.Handler
 	PushHandler                     *pushhandler.Handler
 	BankReceiptHandler              *bankreceipthandler.Handler
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
@@ -295,6 +296,7 @@ type Router struct {
 	observabilityMiddleware         *observability.Middleware
 	authMiddleware                  *middleware.AuthMiddleware
 	controlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
+	readOnlyGuard                   *middleware.ReadOnlyGuard
 	rateLimiter                     *middleware.RateLimiter
 	idempotencyMiddleware           *middleware.IdempotencyMiddleware
 	permissionMiddleware            *middleware.PermissionMiddleware
@@ -306,10 +308,10 @@ type Router struct {
 	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
-	driverPortalHandler             *driverportalhandler.Handler
-	pushHandler                     *pushhandler.Handler
 	cloudSignupHandler              *cloudsignuphandler.Handler
 	onboardingHandler               *onboardinghandler.Handler
+	driverPortalHandler             *driverportalhandler.Handler
+	pushHandler                     *pushhandler.Handler
 	bankReceiptHandler              *bankreceipthandler.Handler
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -439,6 +441,7 @@ func NewRouter(p RouterParams) *Router {
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
 		controlPlaneAccessMiddleware:    p.ControlPlaneAccessMiddleware,
+		readOnlyGuard:                   p.ReadOnlyGuard,
 		rateLimiter:                     p.RateLimiter,
 		idempotencyMiddleware:           p.IdempotencyMiddleware,
 		permissionMiddleware:            p.PermissionMiddleware,
@@ -449,11 +452,11 @@ func NewRouter(p RouterParams) *Router {
 		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
+		cloudSignupHandler:              p.CloudSignupHandler,
+		onboardingHandler:               p.OnboardingHandler,
 		driverPortalHandler:             p.DriverPortalHandler,
 		pushHandler:                     p.PushHandler,
 		bankReceiptHandler:              p.BankReceiptHandler,
-		cloudSignupHandler:              p.CloudSignupHandler,
-		onboardingHandler:               p.OnboardingHandler,
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
@@ -639,10 +642,10 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	rg := r.publicGroup(parent)
 
 	r.authHandler.RegisterRoutes(rg)
+	r.cloudSignupHandler.RegisterPublicRoutes(rg)
 	r.driverPortalHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)
 	r.networkPulseHandler.RegisterPublicRoutes(rg)
-	r.cloudSignupHandler.RegisterPublicRoutes(rg)
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.telematicsHandler.RegisterPublicRoutes(rg)
@@ -663,10 +666,10 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.driverPortalHandler.RegisterProtectedRoutes(protected)
 	r.pushHandler.RegisterRoutes(protected)
 	r.organizationHandler.RegisterRoutes(protected)
+	r.onboardingHandler.RegisterRoutes(protected)
 	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
-	r.onboardingHandler.RegisterRoutes(protected)
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)
 	r.bankReceiptHandler.RegisterRoutes(protected)
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
@@ -789,6 +792,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	// let it resolve one.
 	protected.Use(middleware.NewPasswordChangeMiddleware(r.errorHandler).RequireCurrentPassword())
 	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	protected.Use(r.readOnlyGuard.Guard())
 	protected.Use(r.idempotencyMiddleware.Handle())
 	return protected
 }
@@ -803,6 +807,7 @@ func (r *Router) captureDeviceGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	device.Use(r.captureHandler.RequireDevice())
 	device.Use(r.rateLimiter.ByPrincipal())
 	device.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	device.Use(r.readOnlyGuard.Guard())
 	return device
 }
 

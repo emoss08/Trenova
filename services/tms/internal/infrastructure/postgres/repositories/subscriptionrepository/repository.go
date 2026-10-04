@@ -23,6 +23,7 @@ const (
 	maxListDueLimit        = 5_000
 	listDueScopeReason     = "list cloud subscriptions due a lifecycle transition across every organization"
 	countStatusScopeReason = "count cloud subscriptions by status across every organization"
+	listExpiredScopeReason = "list expired cloud subscriptions whose organization still awaits its purge"
 )
 
 type Params struct {
@@ -155,6 +156,38 @@ func (r *repository) ListDue(
 		if err != nil {
 			r.l.Error("failed to list due subscriptions", zap.Error(err))
 			return nil, fmt.Errorf("list due subscriptions: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListExpired(
+	ctx context.Context,
+	req *repositories.ListExpiredSubscriptionsRequest,
+) ([]*subscription.Subscription, error) {
+	ctx = dbscope.WithSystem(ctx, listExpiredScopeReason)
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*subscription.Subscription, error) {
+		cols := buncolgen.SubscriptionColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultListDueLimit
+		}
+		limit = min(limit, maxListDueLimit)
+
+		entities := make([]*subscription.Subscription, 0, min(limit, 64))
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where(cols.Status.Eq(), subscription.StatusExpired)
+		if req.AfterID.IsNotNil() {
+			q = q.Where(cols.ID.Gt(), req.AfterID)
+		}
+
+		if err := q.Order(cols.ID.OrderAsc()).Limit(limit).Scan(ctx); err != nil {
+			r.l.Error("failed to list expired subscriptions", zap.Error(err))
+			return nil, fmt.Errorf("list expired subscriptions: %w", err)
 		}
 
 		return entities, nil

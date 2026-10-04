@@ -80,6 +80,9 @@ func (s *Service) CompleteAuthorization(
 	ctx context.Context,
 	req *services.CompleteAccountingAuthorizationRequest,
 ) (*services.AccountingAuthorizationCompletion, error) {
+	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 	accountingProvider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -245,6 +248,9 @@ func (s *Service) ChooseCompany(
 	ctx context.Context,
 	req *services.ChooseAccountingCompanyRequest,
 ) (*accountingsync.AccountingConnection, error) {
+	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 	accountingProvider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err

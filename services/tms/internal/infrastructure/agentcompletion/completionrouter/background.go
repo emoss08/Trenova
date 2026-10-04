@@ -33,6 +33,10 @@ func (s *Service) SubmitBackground(
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
+	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	run := structuredRun(req)
 
 	usable, err := s.candidatesFor(ctx, run)

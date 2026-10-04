@@ -84,6 +84,7 @@ type BillingPlanSummary struct {
 type BillingSubscriptionSummary struct {
 	ID                 string `json:"id"`
 	PlanID             string `json:"planId"`
+	PlanKey            string `json:"planKey,omitempty"`
 	Status             string `json:"status"`
 	CurrentPeriodStart int64  `json:"currentPeriodStart"`
 	CurrentPeriodEnd   int64  `json:"currentPeriodEnd"`

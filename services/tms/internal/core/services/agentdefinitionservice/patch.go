@@ -49,6 +49,9 @@ func (s *Service) Patch(
 	if err = s.checkDataAccess(ctx, &updated, &previous, actor); err != nil {
 		return nil, err
 	}
+	if err = s.requireAutomation(ctx, req.TenantInfo, &updated, &previous); err != nil {
+		return nil, err
+	}
 	if scheduleChanged(&previous, &updated) {
 		if err = s.schedule(&updated); err != nil {
 			return nil, err

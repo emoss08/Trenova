@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
@@ -26,12 +29,14 @@ type Params struct {
 	DB      *postgres.Connection
 	Logger  *zap.Logger
 	M2MSync *m2msync.Syncer
+	Quota   services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db      *postgres.Connection
 	l       *zap.Logger
 	m2mSync *m2msync.Syncer
+	quota   services.QuotaGuard
 }
 
 func New(p Params) repositories.CustomerRepository {
@@ -39,6 +44,7 @@ func New(p Params) repositories.CustomerRepository {
 		db:      p.DB,
 		l:       p.Logger.Named("postgres.customer-repository"),
 		m2mSync: p.M2MSync,
+		quota:   quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -344,6 +350,17 @@ func (r *repository) Create(
 		)
 
 		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if err := quotaservice.EnforceAll(c, r.quota, services.QuotaRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
+				Meter:    platformcatalog.MeterCustomersTotal,
+				Quantity: 1,
+			}); err != nil {
+				return err
+			}
+
 			entity = r.geocodeIfApplicable(entity)
 
 			if _, err := r.db.DBForContext(c).

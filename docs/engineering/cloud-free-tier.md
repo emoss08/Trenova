@@ -211,18 +211,91 @@ API and the worker can depend on it.
 
 ### Lifecycle
 
-`CloudSubscriptionSweepWorkflow` runs hourly on a Temporal schedule (cloud mode only):
+`cloudlifecyclejobs.CloudSubscriptionSweepWorkflow` runs on the `cloud-subscription-sweep`
+Temporal schedule (`7 * * * *`, system queue, overlap skipped). `ScheduleProvider` returns
+it only when `platform.mode: cloud`, so the reconciler removes it from any other
+deployment. `cloudlifecycleservice.Service.Sweep`:
 
-1. `trialing` past `trial_ends_at` → `read_only`; the owner gets a platform email.
-2. `read_only` past `read_only_until` → `expired`; sessions for the organization's
-   users are revoked and the tenant purge job is started.
-3. The purge deletes the business unit, organization and every tenant row under them,
-   then the users who belonged to no other organization, then the storage bucket prefix.
+1. `ListDue` (system scope) returns subscriptions due a transition. Each is bound to its
+   own tenant and moved to its `EffectiveStatus`: `trialing` past `trial_ends_at` →
+   `read_only` (every member but the `system` user gets
+   `PlatformEmailService.SendTrialEnded`); `read_only` (or a trial that is also past its
+   grace) past `read_only_until` → `expired` (members get `SendAccountPurged`, the
+   sessions of members who belong to no other organization are revoked through
+   `SessionRepository.DeleteAllForUser`). `UpdateStatus` is optimistic on `version`; each
+   write is followed by `PlanService.Invalidate`. A failed transition is counted and the
+   sweep carries on.
+2. `ListExpired` (system scope) adds every `expired` subscription whose organization still
+   exists, so a purge that could not finish is retried.
+3. The workflow starts `CloudTenantPurgeWorkflow` as an abandoned child per organization
+   with ID `cloud-tenant-purge/<org>/<yyyymmdd>` and `REJECT_DUPLICATE`, so a purge runs at
+   most once a day per organization however often the sweep fires.
 
-While `read_only`, `ReadOnlyGuard` refuses every unsafe REST method and every GraphQL
-mutation except sign-out, password change and the onboarding/subscription reads, with
-`PLAN_RESTRICTED` and reason `subscription_read_only`. While `expired`, login is refused.
+`CloudTenantPurgeWorkflow` is idempotent and resumable; every step can run again:
 
+| Step | Activity | What it does |
+|---|---|---|
+| check | `CheckCloudTenantPurgeActivity` | refuses (`Skipped`) unless a subscription row exists and is `expired` — an organization with no row is "unlimited internal" and is never purged — and lists the members before their memberships go |
+| rows | `PurgeCloudTenantRowsActivity` | calls `TenantPurgeRepository.PurgeRows` until it reports `Complete` or a pass deletes nothing |
+| storage | `PurgeCloudTenantStorageActivity` | deletes every object (all versions) under `<orgID>/` through `storage.PrefixDeleter` (`minio.Client.DeletePrefix`); a backend without it is skipped and logged |
+| users | `PurgeCloudTenantUsersActivity` | per member: moves a user who belongs elsewhere to that organization; deletes one who belongs nowhere else, or marks them `Inactive` when a retained row (an audit entry) still references them; revokes their sessions |
+| finalize | `FinalizeCloudTenantPurgeActivity` | deletes the `cloud_signups` row, then the organization (cascading the subscription and onboarding rows) and, when no other organization uses it, the business unit; `PlanService.Invalidate` |
+
+`tenantpurgerepository.PurgeRows` discovers the tenant tables from `pg_catalog` (every
+`public` table with `organization_id`, plus tables keyed only by `business_unit_id` when
+the business unit belongs to this organization alone) and the foreign keys between them,
+orders children before parents, clears non-tenant rows that restrict a parent's delete,
+and deletes in batches (`(tableoid, ctid) IN (… LIMIT n)`) inside savepoints under one
+system-scoped transaction per call (budget: 40 batches of 500 rows). A foreign-key
+violation on a self-referencing table deletes that table in one statement; one from a
+non-tenant child deletes the referencing rows; one from another tenant table is retried on
+the next pass. Search documents follow through the GTC CDC pipeline, which sees the
+deletes.
+
+**What a purge keeps.** `audit_entries`, `auth_events`, `ai_audit_events`,
+`ai_audit_chain_heads`, `ai_audit_seals`, `ai_audit_exports` and `ai_logs` are never
+deleted by the purge: their triggers allow deletes only to the retention sweeps
+(`security-audit.md`, `ai-audit-trail.md`). A table whose delete is refused with
+`insufficient_privilege` or a raised exception is reported as retained. Because
+`audit_entries` cascades from `organizations` and its trigger refuses critical rows younger
+than 365 days, deleting the organization row usually fails until those rows age out; the
+finalize step then records `RetainedReason`, the organization row, its `expired`
+subscription and the retained audit rows stay (every other tenant row, stored object and
+signup record is already gone), and the daily re-run completes the purge once retention
+allows. Users still referenced by retained audit rows are deactivated, not deleted.
+
+While `read_only`, `ReadOnlyGuard` refuses unsafe requests and GraphQL mutations (see
+below) with `PLAN_RESTRICTED` reason `subscription_read_only`. While `expired`, every
+request but the account shell is refused with `subscription_expired`.
+
+### Read-only and expired organizations
+
+`middleware.ReadOnlyGuard` runs on the protected and capture-device groups after
+authentication (and the control-plane check), and is inert outside cloud mode. It calls
+`planservice.Admit`, which resolves the plan once (cached) and refuses:
+
+- every request from an `expired` organization except `GET /users/me`, `/users/me/organizations`,
+  `/me/billing`, `/me/entitlements`, `/me/platform-catalog`, `POST /users/me/switch-organization`
+  and the auth logout/CSRF routes;
+- every API-key request when the plan restricts `api_keys`;
+- every unsafe method (`POST`, `PUT`, `PATCH`, `DELETE`) from a `read_only` organization,
+  except `/graphql` (left to the GraphQL guard), `POST /users/me/change-password`,
+  `/users/me/switch-organization`, `PATCH /users/me/settings`,
+  `POST /assistant/turns/:turnID/stop`, comment typing, and routes whose last segment is a
+  read action (`preview`, `bulk-preview`, `simulate`, `validate`, `inspect`, `explain`,
+  `shop`, `match`, `export`, `backtest`, `compose`, `presence`, `calculate-totals`,
+  `calculate-distance`, `check-for-duplicate-bols`, `check-hazmat-segregation`,
+  `check-worker-compliance`, `loading-optimization`, `previous-rates`, `edi-214-payload`,
+  `preview-prompt`, `inspect-certificate`). A new `POST` route that only reads must be added
+  there.
+
+`graphql.ReadOnlyExtension` (registered after `FeatureAccessExtension`) refuses every
+mutation from a read-only or expired organization, and any API-key mutation the plan
+restricts, with the same error and a 403. No mutation is allowlisted. Background writes
+from a read-only organization fail at `QuotaGuard.Enforce`; the recurring-shipment
+dispatcher skips such series instead of recording a failure.
+
+## Enforcing a limit
 ## Enforcing a limit
 
 ```go
@@ -274,16 +347,49 @@ of the month to the first of the next in the organization's timezone
 (`timeutils.MonthStart` / `NextMonthStart`). A new limited meter needs a counter there;
 `TestEveryCountedFreeDemoMeterHasACounter` fails until it has one.
 
-Where the guard sits, per meter:
+Where the guard sits, per meter. Repositories take `Quota services.QuotaGuard`
+(`optional:"true"`, nil-safe). `quotatx.Run(ctx, db, guard, fn, reqs...)` opens the
+transaction only when the guard enforces (`quotaservice.Enforcing`), so outside cloud mode
+a create costs nothing extra; `quotaservice.EnforceAll` is the in-transaction form and
+`quotaservice.Preflight` the non-locking `Check` that turns a refusal into
+`QUOTA_EXCEEDED`.
 
 | Meter | Choke point(s) |
 |---|---|
-| `shipments.total` | `shipmentrepository.Create`, `shipmentrepository.BulkDuplicate`, `recurringshipmentrepository.Generate` — the three places that mint a pro number |
+| `shipments.total` | `shipmentrepository.Create` (preflight before the pro number is minted, enforce in the insert transaction), `shipmentrepository.BulkDuplicate` (quantity = copies; also preflighted by `shipmentservice.Duplicate` before the workflow starts), `recurringshipmentrepository.Generate` (one per generated shipment) |
 | `recurring_shipments.series` | `recurringshipmentrepository.Create` |
-| `customers.total`, `locations.total`, `workers.total`, `tractors.total`, `trailers.total` | each repository's `Create` (covers service, GraphQL, REST, agent tools, import assistant) |
-| `users.seats` | membership insert in `userrepository` and `driverportalrepository.ActivatePortalAccess` |
-| `documents.*` | `documentservice.Upload`, `documentuploadservice.CreateSession`/`Complete` via `LocalPlanUsageProvider`: `usageservice.CheckDocumentUploadLimit` (count) and `usageservice.CheckDocumentBytesLimit` (file size and total storage) |
-| `ai.*` | `completionrouter` before each model call, and `assistantservice` before a turn |
+| `customers.total`, `locations.total`, `workers.total`, `tractors.total`, `trailers.total` | each repository's `Create` — the only insert path for each table (service, GraphQL, REST, agent tools, import assistant and onboarding sample data all go through it) |
+| `users.seats` | `userrepository.ReplaceOrganizationMemberships` (one per newly added organization) and `driverportalrepository.ActivatePortalAccess` |
+| `documents.*` | hard limit in `documentrepository.Create` (`file_bytes`, `uploads`, `storage_bytes`, in that lock order) — covers upload, bulk upload, every new version, the upload-session finalizer and generated documents; preflight in `documentservice.Upload`, `documentuploadservice.CreateSession` and `Complete` through `usageservice.CheckDocumentUploadLimit` and `CheckDocumentBytesLimit` |
+| `ai.assistant_messages` | `assistantturnservice.Start` for a person's turn (quantity 1, before the turn row exists) and `assistantservice` turn checks (quantity 0, the turn row already counted) |
+| `ai.spend_cents` | `completionrouter` `CompleteStructured`, `CompleteChat`/`StreamChat` and `SubmitBackground` (quantity 1, so a spent month refuses); embeddings are not metered |
+
+Temporal paths: `temporaltype.ToPlanRefusal` turns `QUOTA_EXCEEDED` / `PLAN_RESTRICTED`
+into non-retryable application errors of type `quota_exceeded` / `plan_restricted`
+(bulk duplicate, SMS). An upload finalizer refused by a limit marks the session failed
+with `PLAN_LIMIT_REACHED` and removes the uploaded object. `modelcall.Classify` makes a
+plan refusal non-retryable and carries it as `Failure.Plan`, so an agent turn refused by
+the spend limit ends with an error event `{code: "usage_limit", limit: {kind:
+"plan_limit", meter, used, limit, plan}}`; a turn refused while preparing carries the same
+`limit` (rejection params `code: quota_exceeded`).
+
+### Capabilities
+
+`planservice.RequireCapability(ctx, plans, tenant, capability)` and `planservice.Allows`
+are the nil-safe helpers every guard uses; services take `Plans services.PlanService`
+(`optional:"true"`).
+
+| Capability | Guarded at |
+|---|---|
+| `email.outbound` | `emailservice.Send` and `SendPersisted` for every purpose except `Authentication` (a queued message is failed, non-retryable) |
+| `integrations` | `integrationservice.UpdateConfig` when enabling, `TestConnection`, runtime config of an enabled integration (client runtime config reports not ready) — covers Samsara, Google Maps, fuel cards, email providers; `ediservice.CreateConnection`/`CreatePartner`; `accountingconnectionservice.StartAuthorization`/`CompleteAuthorization`/`ChooseCompany`/`SaveApp` |
+| `api_keys` | `apikeyservice.CreateAPIKey`/`RotateAPIKey`, and every API-key request (`ReadOnlyGuard`, GraphQL guard) |
+| `agent.automation` | `agentrunservice.StartForDefinition` (every background run); enabling or switching an agent to a scheduled, event or continuous trigger (`agentdefinitionservice` Create/Update/Patch); `conversationscheduleservice.Create`/enabling; scheduled conversation turns (`assistantturnservice.Start`); `briefingservice.Regenerate`. Sweeps skip restricted organizations: agent events (`agentevents.Publisher`), scheduled runs (`plan_restricted`), the daily briefing (`isDue`) |
+| `agent.web_search` | `agentextensionservice.UpdateConfig` when enabling, `TestConnection`, tool dispatch (a `ToolError` the agent reads), and `ActiveExtensions` (no tools offered) |
+| `carrier_intelligence.paid` | `carrierintelservice.Fetch` (after a cache hit), `SearchCarriers`, `VerifyEquipment`; `AutocompleteCarriers` returns nothing |
+| `document_intelligence` | every model call in `aidocumentservice` (routing, extraction, background extraction — the pipeline's deterministic fallback takes over) and `documentintelligenceservice.Reextract` |
+| `sms` | `smsjobs.SendSMSActivity` (non-retryable `plan_restricted`) and `workerptoservice` before starting the SMS workflow |
+| `sso` | `iamservice` identity provider create/update, SCIM directory and group-mapping create; `organizationservice` Microsoft and Okta SSO config |
 
 ## Errors
 
@@ -309,6 +415,8 @@ reason `quota_exceeded` and carries `plan`, and `usageservice.LimitError` turns 
 `QuotaExceededError`. `platformbillingservice.LocalPlanBillingProvider` makes
 `GET /me/billing` report the real plan, subscription status, `trialEndsAt` /
 `readOnlyUntil`, every limited meter's usage and window, and the plan's `restrictions`.
+The subscription summary also carries `planKey` (omitted by the control plane), matching
+`billingSubscriptionSummarySchema` in the web client.
 
 ## Signup
 
@@ -522,7 +630,10 @@ The web app redirects any signed-in user whose organization's onboarding is
 
 | Port | Implementation | Scope |
 |---|---|---|
-| `repositories.SubscriptionRepository` — `GetByOrganization`, `Create`, `UpdateStatus` (optimistic), `ListDue`, `CountByStatus` | `subscriptionrepository` | tenant; `ListDue` and `CountByStatus` system |
+| `repositories.SubscriptionRepository` — `GetByOrganization`, `Create`, `UpdateStatus` (optimistic), `ListDue`, `ListExpired`, `CountByStatus` | `subscriptionrepository` | tenant; `ListDue`, `ListExpired` and `CountByStatus` system |
+| `repositories.TenantPurgeRepository` — `ListMembers`, `OrganizationProfile`, `PurgeRows`, `PurgeUser`, `DeleteTenant` | `tenantpurgerepository` | system |
+| `storage.PrefixDeleter` | `minio.Client.DeletePrefix` | |
+| `cloudlifecycleservice.Service` | sweep and purge steps | |
 | `repositories.OnboardingRepository` | `onboardingrepository` | tenant |
 | `repositories.CloudSignupRepository` | `cloudsignuprepository` | system |
 | `repositories.TenantBootstrapRepository` — `LockProvisioning`, `Bootstrap` | `tenantbootstraprepository` (wraps `tenantbootstrap`) | system |
@@ -539,5 +650,7 @@ Mocks for each live in `internal/testutil/mocks` (`MockPlanService`, `MockQuotaG
 `MockSubscriptionRepository`, `MockOnboardingRepository`, `MockCloudSignupRepository`,
 `MockQuotaCounterRepository`, `MockTenantBootstrapRepository`, `MockLoginThrottleStore`,
 `MockCloudSignupService`, `MockOnboardingService`, `MockPlatformEmailService`,
-`MockTurnstileVerifier`). The tables arrive in migration
+`MockTurnstileVerifier`). `internal/testutil/plantest` builds resolved plans and
+restricting `MockPlanService`s for guard tests; `dbtest.NewSQLMock` gives a
+`*postgres.Connection` over sqlmock for repository quota tests. The tables arrive in migration
 `20261231008150_cloud_free_tier`.

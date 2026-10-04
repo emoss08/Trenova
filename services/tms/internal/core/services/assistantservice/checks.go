@@ -23,6 +23,7 @@ type turnChecks struct {
 	definitionErr error
 	pageErr       error
 	budgetErr     error
+	planErr       error
 	allowanceErr  error
 	roomErr       error
 
@@ -42,6 +43,7 @@ func (c *turnChecks) err() error {
 		c.definitionErr,
 		c.pageErr,
 		c.budgetErr,
+		c.planErr,
 		c.allowanceErr,
 		c.roomErr,
 		c.historyErr,
@@ -89,6 +91,9 @@ func (s *Service) checkTurn(
 	})
 	wg.Go(func() {
 		checks.allowanceErr = s.assertWithinAllowance(ctx, thread.UserID, req.TenantInfo)
+	})
+	wg.Go(func() {
+		checks.planErr = s.assertWithinPlan(ctx, req.TenantInfo)
 	})
 	// Another agent's steps on a task this one handed it are the thread's to
 	// show, not the model's to read again: it only ever saw its own call and

@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/configspec"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/secretconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,6 +37,7 @@ type Params struct {
 	FuelCardConnectors     []services.FuelCardProvider                `group:"fuelCardConnectors"`
 	CarrierIntelConnectors []services.CarrierIntelConnector           `group:"carrierIntelConnectors"`
 	CarrierIntelControls   repositories.CarrierIntelControlRepository `                               optional:"true"`
+	Plans                  services.PlanService                       `                               optional:"true"`
 }
 
 type Service struct {
@@ -47,6 +50,7 @@ type Service struct {
 	fuelCardConnectors     map[integration.Type]services.FuelCardProvider
 	carrierIntelConnectors map[integration.Type]services.CarrierIntelConnector
 	carrierIntelControls   repositories.CarrierIntelControlRepository
+	plans                  services.PlanService
 }
 
 func New(p Params) *Service {
@@ -77,6 +81,7 @@ func New(p Params) *Service {
 		fuelCardConnectors:     connectors,
 		carrierIntelConnectors: intelConnectors,
 		carrierIntelControls:   p.CarrierIntelControls,
+		plans:                  p.Plans,
 	}
 }
 
@@ -231,6 +236,12 @@ func (s *Service) UpdateConfig(
 		return nil, errortypes.NewBusinessError("unsupported integration type")
 	}
 
+	if req.Enabled {
+		if err := s.requireIntegrations(ctx, tenantInfo); err != nil {
+			return nil, err
+		}
+	}
+
 	existing, err := s.repo.GetByType(ctx, tenantInfo, typ)
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
@@ -339,6 +350,10 @@ func (s *Service) TestConnection(
 		return nil, errortypes.NewBusinessError(
 			"this integration does not support connection testing",
 		)
+	}
+
+	if err := s.requireIntegrations(ctx, tenantInfo); err != nil {
+		return nil, err
 	}
 
 	tester, ok := s.testerFor(typ)
@@ -459,6 +474,18 @@ func (s *Service) GetClientRuntimeConfig(
 	missingRequiredFields := configspec.MissingRequired(record.Configuration, spec.Fields)
 	configured := len(missingRequiredFields) == 0
 	ready := record.Enabled && configured
+	if ready {
+		allowed, planErr := planservice.Allows(
+			ctx,
+			s.plans,
+			tenantInfo,
+			platformplan.CapabilityIntegrations,
+		)
+		if planErr != nil {
+			return nil, planErr
+		}
+		ready = allowed
+	}
 	clientCfg := make(map[string]string, len(allowedFields))
 	if ready {
 		fieldsByKey := configspec.ByKey(spec.Fields)
@@ -517,6 +544,12 @@ func (s *Service) getRuntimeConfig(
 		return nil, errortypes.NewBusinessError("{0} integration is disabled", string(typ))
 	}
 
+	if record.Enabled {
+		if err = s.requireIntegrations(ctx, tenantInfo); err != nil {
+			return nil, err
+		}
+	}
+
 	cfg := make(map[string]string, len(spec.Fields))
 	scope := newSecretScope(tenantInfo, typ, spec)
 	for _, field := range spec.Fields {
@@ -545,6 +578,18 @@ func (s *Service) getRuntimeConfig(
 		MissingRequiredFields: missingRequiredFields,
 		Config:                cfg,
 	}, nil
+}
+
+func (s *Service) requireIntegrations(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityIntegrations,
+	)
 }
 
 func validateRequiredFields(

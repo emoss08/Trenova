@@ -5,9 +5,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -30,17 +33,20 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
+	Quota  services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota services.QuotaGuard
 }
 
 func New(p Params) repositories.UserRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.user-repository"),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.user-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -538,6 +544,16 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 			for _, orgID := range req.OrganizationIDs {
 				if _, ok := currentByOrg[orgID]; ok {
 					continue
+				}
+				if quotaErr := quotaservice.EnforceAll(txCtx, ur.quota, services.QuotaRequest{
+					TenantInfo: pagination.TenantInfo{
+						OrgID: orgID,
+						BuID:  req.BusinessUnitID,
+					},
+					Meter:    platformcatalog.MeterUserSeats,
+					Quantity: 1,
+				}); quotaErr != nil {
+					return quotaErr
 				}
 				newMembership := &tenant.OrganizationMembership{
 					UserID:         req.UserID,

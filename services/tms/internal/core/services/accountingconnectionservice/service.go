@@ -10,12 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -57,6 +59,7 @@ type Params struct {
 	Publisher    services.AgentEventPublisher          `optional:"true"`
 	Refresher    services.AccountingReferenceRefresher `optional:"true"`
 	Poller       services.AccountingChangePoller       `optional:"true"`
+	Plans        services.PlanService                  `optional:"true"`
 }
 
 type Service struct {
@@ -74,6 +77,7 @@ type Service struct {
 	publisher    services.AgentEventPublisher
 	refresher    services.AccountingReferenceRefresher
 	poller       services.AccountingChangePoller
+	plans        services.PlanService
 }
 
 var _ services.AccountingConnectionService = (*Service)(nil)
@@ -95,7 +99,20 @@ func New(p Params) *Service {
 		publisher:    p.Publisher,
 		refresher:    p.Refresher,
 		poller:       p.Poller,
+		plans:        p.Plans,
 	}
+}
+
+func (s *Service) requireIntegrations(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityIntegrations,
+	)
 }
 
 func (s *Service) Status(
@@ -138,6 +155,9 @@ func (s *Service) StartAuthorization(
 	ctx context.Context,
 	req *services.StartAccountingAuthorizationRequest,
 ) (*services.AccountingAuthorizationStart, error) {
+	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err

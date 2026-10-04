@@ -223,6 +223,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/telematicsrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantprovisioningrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantpurgerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/timesheetrepository"
@@ -252,11 +253,12 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	tenantprovisioningrepository.New,
 	organizationrepository.New,
 	subscriptionrepository.New,
+	tenantpurgerepository.New,
 	onboardingrepository.New,
 	cloudsignuprepository.New,
+	tenantbootstraprepository.New,
 	quotacounterrepository.New,
 	iamrepository.New,
-	tenantbootstraprepository.New,
 	iamrepository.NewAuthEventRepository,
 	ssoconfigrepository.New,
 	ssoidentitylinkrepository.New,

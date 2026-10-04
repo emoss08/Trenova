@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -38,6 +40,7 @@ type ActivitiesParams struct {
 	Controls  repositories.AgentControlRepository
 	Tenants   repositories.TenantSyncRepository
 	Cache     repositories.OrganizationCacheRepository
+	Plans     services.PlanService `optional:"true"`
 }
 
 type Activities struct {
@@ -47,6 +50,7 @@ type Activities struct {
 	controls  repositories.AgentControlRepository
 	tenants   repositories.TenantSyncRepository
 	cache     repositories.OrganizationCacheRepository
+	plans     services.PlanService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -57,6 +61,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		controls:  p.Controls,
 		tenants:   p.Tenants,
 		cache:     p.Cache,
+		plans:     p.Plans,
 	}
 }
 
@@ -226,6 +231,16 @@ func (a *Activities) isDue(
 	tenantInfo pagination.TenantInfo,
 	now int64,
 ) (bool, error) {
+	allowed, err := planservice.Allows(
+		ctx,
+		a.plans,
+		tenantInfo,
+		platformplan.CapabilityAgentAutomation,
+	)
+	if err != nil || !allowed {
+		return false, err
+	}
+
 	control, err := a.controls.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return false, err

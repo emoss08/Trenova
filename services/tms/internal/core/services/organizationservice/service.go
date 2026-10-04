@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,6 +41,7 @@ type Params struct {
 	Config       *config.Config
 	Validator    *Validator
 	Encryption   *encryptionservice.Service
+	Plans        services.PlanService `optional:"true"`
 }
 
 type service struct {
@@ -51,6 +54,7 @@ type service struct {
 	storageCfg   *config.StorageConfig
 	v            *Validator
 	enc          *encryptionservice.Service
+	plans        services.PlanService
 }
 
 func New(p Params) services.OrganizationService {
@@ -64,6 +68,7 @@ func New(p Params) services.OrganizationService {
 		storageCfg:   p.Config.GetStorageConfig(),
 		v:            p.Validator,
 		enc:          p.Encryption,
+		plans:        p.Plans,
 	}
 }
 
@@ -390,6 +395,14 @@ func (s *service) UpsertMicrosoftSSOConfig(
 			"Microsoft Entra ID SSO configuration is required",
 		)
 	}
+	if err := planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilitySSO,
+	); err != nil {
+		return nil, err
+	}
 
 	tenantID := strings.TrimSpace(cfg.TenantID)
 	clientID := strings.TrimSpace(cfg.ClientID)
@@ -528,6 +541,14 @@ func (s *service) UpsertOktaSSOConfig(
 			errortypes.ErrRequired,
 			"Okta SSO configuration is required",
 		)
+	}
+	if err := planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilitySSO,
+	); err != nil {
+		return nil, err
 	}
 
 	issuerURL := strings.TrimSpace(cfg.IssuerURL)

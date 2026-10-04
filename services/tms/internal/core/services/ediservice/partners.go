@@ -39,6 +39,12 @@ func (s *Service) CreatePartner(
 	entity *edi.EDIPartner,
 	actor *services.RequestActor,
 ) (*edi.EDIPartner, error) {
+	if err := s.requireIntegrations(ctx, pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}); err != nil {
+		return nil, err
+	}
 	normalizePartnerForCreate(entity)
 	if multiErr := s.validator.ValidatePartner(entity); multiErr != nil {
 		return nil, multiErr

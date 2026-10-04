@@ -24,6 +24,11 @@ type ListDueSubscriptionsRequest struct {
 	Limit int
 }
 
+type ListExpiredSubscriptionsRequest struct {
+	AfterID pulid.ID
+	Limit   int
+}
+
 type CountSubscriptionsByStatusRequest struct {
 	Statuses []subscription.Status
 }
@@ -44,6 +49,10 @@ type SubscriptionRepository interface {
 	ListDue(
 		ctx context.Context,
 		req *ListDueSubscriptionsRequest,
+	) ([]*subscription.Subscription, error)
+	ListExpired(
+		ctx context.Context,
+		req *ListExpiredSubscriptionsRequest,
 	) ([]*subscription.Subscription, error)
 	CountByStatus(ctx context.Context, req *CountSubscriptionsByStatusRequest) (int, error)
 }

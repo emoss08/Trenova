@@ -11,12 +11,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,6 +46,7 @@ type Params struct {
 	AuditService       services.AuditService
 	WorkflowStarter    services.WorkflowStarter
 	Storage            storage.Client
+	Plans              services.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -57,6 +60,7 @@ type Service struct {
 	providerSenders    map[email.Provider]ProviderSender
 	workflowStarter    services.WorkflowStarter
 	storage            storage.Client
+	plans              services.PlanService
 }
 
 type HandleProviderEventParams struct {
@@ -81,6 +85,7 @@ func New(p Params) *Service {
 		},
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,
+		plans:           p.Plans,
 	}
 }
 
@@ -266,6 +271,9 @@ func (s *Service) Send(
 	ctx context.Context,
 	req *services.SendEmailRequest,
 ) (*email.Message, error) {
+	if err := s.requireOutbound(ctx, req.TenantInfo, req.Purpose); err != nil {
+		return nil, err
+	}
 	if multiErr := s.validator.ValidateSend(ctx, req); multiErr != nil {
 		return nil, multiErr
 	}
@@ -331,6 +339,23 @@ func (s *Service) Send(
 		return nil, err
 	}
 	return msg, nil
+}
+
+func (s *Service) requireOutbound(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	purpose email.Purpose,
+) error {
+	if purpose == email.PurposeAuthentication {
+		return nil
+	}
+
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityEmailOutbound,
+	)
 }
 
 func (s *Service) replaySend(
@@ -455,6 +480,12 @@ func (s *Service) SendPersisted(
 	})
 	if err != nil {
 		return nil, err
+	}
+	if planErr := s.requireOutbound(ctx, pagination.TenantInfo{
+		OrgID: msg.OrganizationID,
+		BuID:  msg.BusinessUnitID,
+	}, msg.Purpose); planErr != nil {
+		return s.markFailed(ctx, msg, fmt.Errorf("%w: %w", ErrNonRetryableSend, planErr))
 	}
 	msg.Status = email.MessageStatusSending
 	msg.Attempts++

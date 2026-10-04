@@ -14,9 +14,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -42,6 +44,7 @@ type Params struct {
 	Usage    repositories.AIUsageRepository         `optional:"true"`
 	Metrics  *metrics.Registry                      `optional:"true"`
 	Breakers repositories.ProviderBreakerRepository `optional:"true"`
+	Quota    serviceports.QuotaGuard                `optional:"true"`
 }
 
 type Service struct {
@@ -53,6 +56,7 @@ type Service struct {
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
 	usage      repositories.AIUsageRepository
+	quota      serviceports.QuotaGuard
 	genAI      *metrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
@@ -85,6 +89,7 @@ func newService(p Params) *Service {
 		repo:          p.Repo,
 		encryption:    p.Encryption,
 		usage:         p.Usage,
+		quota:         quotaservice.OrUnlimited(p.Quota),
 		genAI:         p.Metrics.GenAI(),
 		adapters:      modeladapter.NewRegistry(),
 		health:        newProviderHealth(nil).share(p.Breakers, logger),
@@ -102,6 +107,10 @@ func (s *Service) CompleteStructured(
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
+	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	outcome, err := s.run(ctx, structuredRun(req))
 	if err != nil {
 		return nil, err
@@ -117,6 +126,18 @@ func (s *Service) CompleteStructured(
 		ProviderID:      outcome.ProviderID,
 		ProviderKind:    outcome.ProviderKind,
 	}, nil
+}
+
+func (s *Service) assertWithinSpend(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
+		return nil
+	}
+
+	return quotaservice.Preflight(ctx, s.quota, &serviceports.QuotaRequest{
+		TenantInfo: tenantInfo,
+		Meter:      platformcatalog.MeterAISpendCents,
+		Quantity:   1,
+	})
 }
 
 type runRequest struct {
