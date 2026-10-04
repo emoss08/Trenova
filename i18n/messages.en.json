@@ -13793,6 +13793,15 @@
       "template/tender.offer.email"
     ]
   },
+  "After that the workspace becomes read-only.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "After this day agents stop reading it.": {
     "sites": 1,
     "scope": [
@@ -79940,6 +79949,15 @@
       "routes/pay-profile"
     ]
   },
+  "Free demo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Free demo: 1 day left. After that the workspace becomes read-only.": {
     "sites": 1,
     "scope": [
@@ -136264,7 +136282,7 @@
     ]
   },
   "Plan & usage": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -230878,6 +230896,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {day left.} other {days left.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {gave up after # try} other {gave up after # tries}}": {
     "sites": 1,
     "scope": [
@@ -230948,6 +230975,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {shipment left.} other {shipments left.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} (and {1} more)": {

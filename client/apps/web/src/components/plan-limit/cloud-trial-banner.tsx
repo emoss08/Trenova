@@ -1,5 +1,5 @@
 import { useCloudPlan } from "@/hooks/use-cloud-plan";
-import type { CloudTrialStatus } from "@/lib/cloud-trial";
+import { demoBannerMessages, type CloudTrialStatus } from "@/lib/cloud-trial";
 import { PLAN_USAGE_PATH } from "@/lib/plan-meters";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -8,6 +8,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Link } from "react-router";
+import { DemoBanner } from "./demo-banner";
 
 const WARNING_DAYS = 5;
 
@@ -39,19 +40,30 @@ export function trialBannerMessage(trial: CloudTrialStatus, t: TranslateFn): str
 }
 
 /**
- * One line above every page while a cloud organization is on the free demo: how
- * long is left, or that writes have stopped. It is never dismissible, because in
- * read-only it explains why every save is refused.
+ * The free demo's banner above the app header. While the trial runs it is the
+ * animated countdown of days and shipments left; once writes have stopped it is
+ * the plain notice saying why every save is refused. Never dismissible.
  */
 export function CloudTrialBanner() {
   const t = useT();
-  const { trial } = useCloudPlan();
+  const { trial, summary } = useCloudPlan();
   const canOpenPlan = usePermissionStore((state) =>
     state.hasPermission(Resource.Organization, Operation.Read),
   );
 
   if (!trial) {
     return null;
+  }
+
+  const messages = demoBannerMessages(trial, summary);
+  if (messages.length > 0) {
+    return (
+      <DemoBanner
+        key={messages.map((message) => message.kind).join("|")}
+        messages={messages}
+        showPlanLink={canOpenPlan}
+      />
+    );
   }
 
   const ended = trial.kind !== "trialing";

@@ -100,12 +100,12 @@ function useLayoutEffects() {
 function WorkspaceShell({ children }: SidebarLayoutProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
+      <CloudTrialBanner />
       <WorkspaceHeader />
       <div className="flex min-h-0 flex-1">
         <WorkspaceSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <WorkspaceContextBar />
-          <CloudTrialBanner />
           <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
@@ -115,12 +115,14 @@ function WorkspaceShell({ children }: SidebarLayoutProps) {
 
 function ClassicShell({ children }: SidebarLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <ClassicSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header />
-        <CloudTrialBanner />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+    <div className="flex h-screen flex-col overflow-hidden">
+      <CloudTrialBanner />
+      <div className="flex min-h-0 flex-1">
+        <ClassicSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Header />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { cloudTrialStatus, trialEndingLimit } from "@/lib/cloud-trial";
+import {
+  cloudTrialStatus,
+  demoBannerMessages,
+  shipmentsRemaining,
+  trialEndingLimit,
+  type CloudTrialStatus,
+} from "@/lib/cloud-trial";
 import type { BillingSummary } from "@/types/platform-billing";
 
 const DAY = 86_400;
@@ -86,5 +92,63 @@ describe("trialEndingLimit", () => {
     expect(trialEndingLimit({ usage: [usage("trailers.total", 3)] })).toBeNull();
     expect(trialEndingLimit({ usage: [usage("shipments.total", 0)] })).toBeNull();
     expect(trialEndingLimit(undefined)).toBeNull();
+  });
+});
+
+describe("demo banner counts", () => {
+  const meter = (meterKey: string, limit: number, used: number) => ({
+    meterKey,
+    unit: "",
+    limit,
+    used,
+    remaining: Math.max(0, limit - used),
+    windowStart: 0,
+    windowEnd: 0,
+  });
+  const trialing = (daysRemaining: number | null): CloudTrialStatus => ({
+    kind: "trialing",
+    daysRemaining,
+    trialEndsAt: daysRemaining === null ? null : NOW + daysRemaining * DAY,
+  });
+
+  it("counts shipments left from limit minus used, never below zero", () => {
+    expect(shipmentsRemaining({ usage: [meter("shipments.total", 12, 5)] })).toBe(7);
+    expect(shipmentsRemaining({ usage: [meter("shipments.total", 12, 15)] })).toBe(0);
+    expect(shipmentsRemaining({ usage: [meter("customers.total", 8, 1)] })).toBeNull();
+    expect(shipmentsRemaining({ usage: [meter("shipments.total", 0, 0)] })).toBeNull();
+    expect(shipmentsRemaining(undefined)).toBeNull();
+  });
+
+  it("shows days then shipments while the trial runs", () => {
+    expect(
+      demoBannerMessages(trialing(6), {
+        usage: [meter("trailers.total", 3, 0), meter("shipments.total", 12, 2)],
+      }),
+    ).toEqual([
+      { kind: "days", value: 6 },
+      { kind: "shipments", value: 10 },
+    ]);
+  });
+
+  it("leaves out a count that does not apply or has run out", () => {
+    expect(
+      demoBannerMessages(trialing(null), { usage: [meter("shipments.total", 12, 2)] }),
+    ).toEqual([{ kind: "shipments", value: 10 }]);
+    expect(demoBannerMessages(trialing(0), { usage: [meter("shipments.total", 12, 2)] })).toEqual([
+      { kind: "shipments", value: 10 },
+    ]);
+    expect(demoBannerMessages(trialing(3), { usage: [meter("shipments.total", 12, 12)] })).toEqual([
+      { kind: "days", value: 3 },
+    ]);
+    expect(demoBannerMessages(trialing(3), undefined)).toEqual([{ kind: "days", value: 3 }]);
+  });
+
+  it("shows nothing once the trial is over, or off the free demo", () => {
+    const usage = { usage: [meter("shipments.total", 12, 2)] };
+    expect(
+      demoBannerMessages({ kind: "read_only", readOnlyUntil: NOW, daysUntilPurge: 3 }, usage),
+    ).toEqual([]);
+    expect(demoBannerMessages({ kind: "expired" }, usage)).toEqual([]);
+    expect(demoBannerMessages(null, usage)).toEqual([]);
   });
 });
