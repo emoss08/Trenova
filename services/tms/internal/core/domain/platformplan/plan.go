@@ -43,6 +43,7 @@ type Plan struct {
 	Name                   string                             `json:"name"`
 	Limits                 map[platformcatalog.MeterKey]Limit `json:"limits"`
 	RestrictedCapabilities []Capability                       `json:"restrictedCapabilities"`
+	TrialEndingMeters      []platformcatalog.MeterKey         `json:"trialEndingMeters"`
 }
 
 func DefaultFreeDemoLimits() map[platformcatalog.MeterKey]Limit {
@@ -67,6 +68,10 @@ func FreeDemoRestrictedCapabilities() []Capability {
 	return AllCapabilities()
 }
 
+func FreeDemoTrialEndingMeters() []platformcatalog.MeterKey {
+	return []platformcatalog.MeterKey{platformcatalog.MeterShipmentsTotal}
+}
+
 func FreeDemo(overrides map[platformcatalog.MeterKey]int64) (*Plan, error) {
 	limits := DefaultFreeDemoLimits()
 
@@ -88,6 +93,7 @@ func FreeDemo(overrides map[platformcatalog.MeterKey]int64) (*Plan, error) {
 		Name:                   freeDemoName,
 		Limits:                 limits,
 		RestrictedCapabilities: FreeDemoRestrictedCapabilities(),
+		TrialEndingMeters:      FreeDemoTrialEndingMeters(),
 	}, nil
 }
 
@@ -106,6 +112,7 @@ func Unlimited() *Plan {
 		Name:                   unlimitedName,
 		Limits:                 map[platformcatalog.MeterKey]Limit{},
 		RestrictedCapabilities: []Capability{},
+		TrialEndingMeters:      []platformcatalog.MeterKey{},
 	}
 }
 
@@ -124,6 +131,14 @@ func (p *Plan) Restricts(capability Capability) bool {
 	}
 
 	return slices.Contains(p.RestrictedCapabilities, capability)
+}
+
+func (p *Plan) EndsTrial(meter platformcatalog.MeterKey) bool {
+	if p == nil {
+		return false
+	}
+
+	return slices.Contains(p.TrialEndingMeters, meter)
 }
 
 func (p *Plan) Allows(capability Capability) bool {

@@ -45,7 +45,6 @@ import {
 } from "@trenova/shared/types/organization-capability";
 import {
   Building07Icon,
-  CreditCard01Icon,
   Shield01Icon,
   Upload01Icon,
   XCircleIcon,
@@ -55,7 +54,6 @@ import type { ChangeEvent } from "react";
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { BillingUsageTab } from "./billing-usage-tab";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
 
 const emptyOrganizationDefaults: OrganizationSettings = {
@@ -191,10 +189,6 @@ export default function OrganizationSettingsForm() {
           <Shield01Icon size={16} />
           {t("Security")}
         </TabsTab>
-        <TabsTab value="billing-usage">
-          <CreditCard01Icon size={16} />
-          {t("Billing & usage")}
-        </TabsTab>
       </TabsList>
       <TabsContent value="general" className="pb-10">
         <Activity mode={tab === "general" ? "visible" : "hidden"}>
@@ -213,11 +207,6 @@ export default function OrganizationSettingsForm() {
       <TabsContent value="security">
         <Activity mode={tab === "security" ? "visible" : "hidden"}>
           <SecurityAccessWorkspace organizationId={organizationId} />
-        </Activity>
-      </TabsContent>
-      <TabsContent value="billing-usage" className="pb-10">
-        <Activity mode={tab === "billing-usage" ? "visible" : "hidden"}>
-          <BillingUsageTab />
         </Activity>
       </TabsContent>
     </Tabs>

@@ -1,6 +1,6 @@
 import { parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
 
-export const organizationSettingsTabValues = ["general", "security", "billing-usage"] as const;
+export const organizationSettingsTabValues = ["general", "security"] as const;
 export const securityTabValues = ["sign-in", "provisioning", "policies", "activity"] as const;
 export const activityViewValues = ["auth", "risk", "identities", "mfa"] as const;
 export const identityProviderPanelModeValues = ["create", "edit"] as const;

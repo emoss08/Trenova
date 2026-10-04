@@ -9038,15 +9038,6 @@
       "apps/web/hooks"
     ]
   },
-  "Access is not active": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Access is required when roles are given": {
     "sites": 1,
     "scope": [
@@ -9108,15 +9099,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Access state": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Access to an agent can only be changed within your own organization": {
@@ -28206,15 +28188,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Billing & usage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Billing Control settings directly impact your organization's revenue processing, financial reporting, and customer invoicing. Changes to these settings should be made infrequently and only after thorough review by financial stakeholders.": {
@@ -49341,7 +49314,7 @@
     ]
   },
   "Current": {
-    "sites": 29,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -55746,7 +55719,7 @@
     ]
   },
   "Denied": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -55756,7 +55729,6 @@
       "apps/web/components",
       "apps/web/lib",
       "domain/worker",
-      "routes/admin",
       "routes/agent-control",
       "routes/settlement-dispute"
     ]
@@ -67006,7 +66978,7 @@
     ]
   },
   "Enabled": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -67016,15 +66988,6 @@
       "routes/edi",
       "routes/invoice",
       "routes/reports"
-    ]
-  },
-  "Enabled features": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Enclosed": {
@@ -76278,15 +76241,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Features": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Federal identifiers used for safety lookups and compliance monitoring.": {
@@ -98297,15 +98251,6 @@
       "routes/agent-control"
     ]
   },
-  "Limit": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Limit a value to a maximum length.": {
     "sites": 1,
     "scope": [
@@ -110069,13 +110014,12 @@
     ]
   },
   "Needs action": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib",
-      "routes/admin"
+      "packages/shared/lib"
     ]
   },
   "Needs approval": {
@@ -113893,15 +113837,6 @@
       "routes/reports"
     ]
   },
-  "No entitlement records were returned for this tenant.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No equipment has been verified on this assignment yet.": {
     "sites": 1,
     "scope": [
@@ -114046,15 +113981,6 @@
     ],
     "areas": [
       "routes/invoice-adjustment-batch"
-    ]
-  },
-  "No feature data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No feeds have run yet. They start once a provider is connected and carriers are enrolled.": {
@@ -114844,15 +114770,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "No metered usage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No metric matches “{0}”.": {
@@ -136331,7 +136248,7 @@
     ]
   },
   "Plan": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -149562,7 +149479,7 @@
     ]
   },
   "Refresh": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -150645,12 +150562,11 @@
     ]
   },
   "Remaining": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/worker"
     ]
   },
@@ -193798,15 +193714,6 @@
       "domain/documenttemplate"
     ]
   },
-  "The subscription and usage summary could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "The substance abuse professional handling the evaluation and follow-up plan.": {
     "sites": 1,
     "scope": [
@@ -194229,6 +194136,24 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The trial ends on the date above, or as soon as all {0} shipments are used, whichever comes first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The trial ends on the date above.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The trial period is over, so this workspace is read-only: you can open and export everything, but nothing can be created or changed.": {
@@ -199447,15 +199372,6 @@
       "api/handlers"
     ]
   },
-  "This tenant does not have any metered usage configured.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "This test is already {0}; record a correction as a new test": {
     "sites": 1,
     "scope": [
@@ -202738,15 +202654,6 @@
       "routes/pto-policy"
     ]
   },
-  "Tracked usage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Tracking was cleared. Start a new sync to continue.": {
     "sites": 1,
     "scope": [
@@ -205860,15 +205767,6 @@
       "service/shipmentservice"
     ]
   },
-  "Unable to load billing status": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Unable to load commodity hazmat data": {
     "sites": 1,
     "scope": [
@@ -207163,7 +207061,7 @@
     ]
   },
   "Unlimited": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -208871,15 +208769,6 @@
       "routes/organization"
     ]
   },
-  "Usage this period": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Usages ({0})": {
     "sites": 2,
     "scope": [
@@ -209378,12 +209267,11 @@
     ]
   },
   "Used": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/worker"
     ]
   },

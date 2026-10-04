@@ -12,6 +12,19 @@ function daysUntil(timestamp: number, now: number): number {
   return Math.max(0, Math.ceil((timestamp - now) / SECONDS_PER_DAY));
 }
 
+export const TRIAL_ENDING_METER = "shipments.total";
+
+/**
+ * The shipment allowance that ends the free demo trial early once it is used up, as the
+ * server reports it. Null when the summary carries no such limit.
+ */
+export function trialEndingLimit(
+  summary: Pick<BillingSummary, "usage"> | undefined,
+): number | null {
+  const meter = summary?.usage.find((entry) => entry.meterKey === TRIAL_ENDING_METER);
+  return meter && meter.limit > 0 ? meter.limit : null;
+}
+
 export function isFreeDemoPlan(summary: Pick<BillingSummary, "plan" | "subscription"> | undefined) {
   const planKey = summary?.plan?.key || summary?.subscription?.planKey || "";
   return planKey === FREE_DEMO_PLAN_KEY;

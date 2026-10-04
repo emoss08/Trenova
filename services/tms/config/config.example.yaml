@@ -66,7 +66,7 @@ platform:
       replyTo: ""
       timeout: 10s
     trial:
-      lifetime: 720h # 30 days of full use
+      lifetime: 168h # 7 days of full use
       readOnlyGrace: 336h # then 14 days read-only, then purge
     freePlan:
       # Every key is optional; omitted meters keep the defaults in platformplan.

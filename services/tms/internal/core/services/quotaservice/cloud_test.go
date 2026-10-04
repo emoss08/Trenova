@@ -57,6 +57,29 @@ func newHarness(t *testing.T) *harness {
 	return h
 }
 
+func newHarnessWithSubscriptions(t *testing.T) (*harness, *mocks.MockSubscriptionRepository) {
+	t.Helper()
+
+	h := newHarness(t)
+	subs := mocks.NewMockSubscriptionRepository(t)
+	h.guard = quotaservice.NewCloud(quotaservice.CloudConfig{
+		Plans:         h.plans,
+		Counters:      h.counters,
+		Subscriptions: subs,
+		Logger:        zap.NewNop(),
+		Clock:         func() time.Time { return fixedNow },
+		InTransaction: func(context.Context) bool { return h.inTx },
+	})
+
+	return h, subs
+}
+
+func (h *harness) expectShipmentCount(used int64) {
+	h.counters.EXPECT().Supports(platformcatalog.MeterShipmentsTotal).Return(true)
+	h.counters.EXPECT().Lock(mock.Anything, h.tenant, platformcatalog.MeterShipmentsTotal).Return(nil).Once()
+	h.counters.EXPECT().Count(mock.Anything, mock.Anything).Return(used, nil).Once()
+}
+
 func (h *harness) freeDemo(t *testing.T, status subscription.Status) *platformplan.ResolvedPlan {
 	t.Helper()
 
@@ -396,4 +419,70 @@ func TestNewSelectsByPlatformMode(t *testing.T) {
 		Counters: mocks.NewMockQuotaCounterRepository(t),
 		Logger:   zap.NewNop(),
 	}))
+}
+
+func TestEnforce_UsingUpShipmentsEndsTheTrial(t *testing.T) {
+	t.Parallel()
+
+	h, subs := newHarnessWithSubscriptions(t)
+	resolved := h.freeDemo(t, subscription.StatusTrialing)
+	h.resolves(resolved)
+	h.expectShipmentCount(11)
+	subs.EXPECT().
+		EndTrial(mock.Anything, &repositories.EndSubscriptionTrialRequest{
+			TenantInfo: h.tenant,
+			ID:         resolved.Subscription.ID,
+			EndedAt:    fixedNow.Unix(),
+		}).
+		Return(true, nil).
+		Once()
+	h.plans.EXPECT().Invalidate(h.tenant.OrgID).Once()
+
+	require.NoError(t, h.guard.Enforce(t.Context(), h.request(platformcatalog.MeterShipmentsTotal, 1)))
+}
+
+func TestEnforce_ShipmentsBelowTheLimitKeepTheTrial(t *testing.T) {
+	t.Parallel()
+
+	h, _ := newHarnessWithSubscriptions(t)
+	h.resolves(h.freeDemo(t, subscription.StatusTrialing))
+	h.expectShipmentCount(10)
+
+	require.NoError(t, h.guard.Enforce(t.Context(), h.request(platformcatalog.MeterShipmentsTotal, 1)))
+}
+
+func TestEnforce_OtherMetersAtTheirLimitKeepTheTrial(t *testing.T) {
+	t.Parallel()
+
+	h, _ := newHarnessWithSubscriptions(t)
+	h.resolves(h.freeDemo(t, subscription.StatusTrialing))
+	h.counters.EXPECT().Supports(platformcatalog.MeterTrailersTotal).Return(true)
+	h.counters.EXPECT().Lock(mock.Anything, h.tenant, platformcatalog.MeterTrailersTotal).Return(nil).Once()
+	h.counters.EXPECT().Count(mock.Anything, mock.Anything).Return(int64(2), nil).Once()
+
+	require.NoError(t, h.guard.Enforce(t.Context(), h.request(platformcatalog.MeterTrailersTotal, 1)))
+}
+
+func TestEnforce_TrialAlreadyEndedIsLeftAlone(t *testing.T) {
+	t.Parallel()
+
+	h, subs := newHarnessWithSubscriptions(t)
+	resolved := h.freeDemo(t, subscription.StatusTrialing)
+	h.resolves(resolved)
+	h.expectShipmentCount(11)
+	subs.EXPECT().EndTrial(mock.Anything, mock.Anything).Return(false, nil).Once()
+
+	require.NoError(t, h.guard.Enforce(t.Context(), h.request(platformcatalog.MeterShipmentsTotal, 1)))
+}
+
+func TestEnforce_EndingTheTrialFailureFailsTheWrite(t *testing.T) {
+	t.Parallel()
+
+	h, subs := newHarnessWithSubscriptions(t)
+	h.resolves(h.freeDemo(t, subscription.StatusTrialing))
+	h.expectShipmentCount(11)
+	subs.EXPECT().EndTrial(mock.Anything, mock.Anything).Return(false, errors.New("boom")).Once()
+
+	err := h.guard.Enforce(t.Context(), h.request(platformcatalog.MeterShipmentsTotal, 1))
+	require.ErrorContains(t, err, "end the trial when shipments.total was used up")
 }

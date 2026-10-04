@@ -1729,7 +1729,7 @@ const (
 	DefaultCloudSystemEmailFromAddress     = "noreply@trenova.app"
 	DefaultCloudSystemEmailFromName        = "Trenova"
 	DefaultCloudSystemEmailTimeout         = 10 * time.Second
-	DefaultCloudTrialLifetime              = 720 * time.Hour
+	DefaultCloudTrialLifetime              = 7 * 24 * time.Hour
 	DefaultCloudTrialReadOnlyGrace         = 336 * time.Hour
 )
 

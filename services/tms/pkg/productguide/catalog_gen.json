@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5bddeb1462b2ba3ba734809d357513ed279d3f7eff3a9742a028a21bf868ba08",
+  "version": "sha256:558f2645a2f00c841fcd1fc32e405a37f02d40dcf81acc67278fac4ed3023824",
   "modules": [
     {
       "id": "home",
@@ -5359,7 +5359,7 @@
         "Organization"
       ],
       "description": "Manage your organization profile, compliance, and security settings",
-      "summary": "Organization settings holds the organization's profile, sign-in security and subscription details, in three tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: four sub-tabs. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds priority-ordered access policies, and **Activity** shows authentication events, risk decisions, external identities and MFA authenticators. - **Billing & usage**: the access state, plan, enabled features and metered usage for the period.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
+      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: four sub-tabs. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds priority-ordered access policies, and **Activity** shows authentication events, risk decisions, external identities and MFA authenticators.\n\nOn Trenova Cloud, the plan, trial and usage limits are on [Plan & usage](/admin/plan-usage).\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
       "requires": [
         {
           "resource": "organization",
@@ -5376,9 +5376,7 @@
         "SCIM",
         "logo",
         "DOT number",
-        "SCAC",
-        "subscription",
-        "plan usage"
+        "SCAC"
       ],
       "tasks": [
         {
@@ -5456,19 +5454,6 @@
             "With the directory selected, enter a token name under **SCIM tokens** and select **Create token**. Copy the token straight away; it is only shown once.",
             "Under **Group role mappings**, select **Add mapping** and map an **External group ID** to a **Role**, then select **Save**."
           ]
-        },
-        {
-          "title": "Check plan and usage",
-          "keywords": [
-            "subscription",
-            "billing plan",
-            "usage limits",
-            "features"
-          ],
-          "steps": [
-            "Open [Organization settings](/admin/organization-settings) and select the **Billing & usage** tab.",
-            "Review the **Access state**, **Plan**, **Usage this period** and **Enabled features**. Select **Refresh** to reload usage."
-          ]
         }
       ],
       "notes": "Opening the page needs read access to the organization; saving the **General** tab needs update access. The operating model only changes what appears in menus and navigation; it does not change permissions, API access or existing records. Revoke a SCIM token with **Revoke** in its row once it is no longer used.",
@@ -5477,7 +5462,8 @@
         "/admin/roles",
         "/admin/integrations",
         "/admin/audit-logs",
-        "/organization/data-retention"
+        "/organization/data-retention",
+        "/admin/plan-usage"
       ],
       "covers": [],
       "createAction": null,
@@ -5537,7 +5523,7 @@
           ],
           "steps": [
             "Open [Plan & usage](/admin/plan-usage) and find the limit that was reached.",
-            "Delete records of that kind that you no longer need, for example sample shipments. Limits on records count what the organization holds now, so each deletion frees a slot.",
+            "Delete records of that kind that you no longer need, for example sample customers or locations. Limits on records count what the organization holds now, so each deletion frees a slot. Shipments are the exception: using up the shipment limit ends the trial, so deleting shipments afterwards does not reopen it.",
             "Monthly limits such as **Assistant messages** and **AI spend** reset at the start of the next month instead."
           ]
         },
@@ -5550,11 +5536,11 @@
           ],
           "steps": [
             "Open [Plan & usage](/admin/plan-usage).",
-            "Read **Trial ends** in the strip at the top. The banner above every page also counts the days down."
+            "Read **Trial ends** in the strip at the top. The banner above every page also counts the days down. The trial ends on that date or as soon as every shipment in the plan has been used, whichever comes first."
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the organization.\n\nWhen an action would go over a limit, or uses something the free demo leaves out, a dialog explains which limit was reached; **View plan & usage** in that dialog opens this page. After the trial ends the workspace is read-only: everything can be opened and exported, but nothing can be created or changed, and the workspace is deleted on the date shown. Paid plans with higher limits are coming soon.",
+      "notes": "Opening the page needs read access to the organization.\n\nWhen an action would go over a limit, or uses something the free demo leaves out, a dialog explains which limit was reached; **View plan & usage** in that dialog opens this page. The free demo trial lasts 7 days, and ends early once the organization has used its whole shipment allowance. After the trial ends the workspace is read-only: everything can be opened and exported, but nothing can be created or changed, and the workspace is deleted on the date shown. Paid plans with higher limits are coming soon.",
       "related": [
         "/admin/organization-settings",
         "/onboarding"
