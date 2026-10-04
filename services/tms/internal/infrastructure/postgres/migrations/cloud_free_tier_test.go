@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	cloudFreeTierUp   = "20261231008150_cloud_free_tier.tx.up.sql"
-	cloudFreeTierDown = "20261231008150_cloud_free_tier.tx.down.sql"
+	cloudFreeTierUp   = "20261231008160_cloud_free_tier.tx.up.sql"
+	cloudFreeTierDown = "20261231008160_cloud_free_tier.tx.down.sql"
 )
 
 func TestCloudFreeTierMigration_KeepsOneSubscriptionAndOnboardingPerOrganization(t *testing.T) {
