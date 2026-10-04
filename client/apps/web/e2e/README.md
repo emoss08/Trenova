@@ -51,6 +51,9 @@ pnpm --filter @trenova/web dev        # http://localhost:5173
 
 ## 3. The tests
 
+The runner is not in the web app's dependencies yet; add it once with
+`pnpm add -D @playwright/test --filter @trenova/web`, which also updates the lockfile.
+
 ```sh
 cd client/apps/web
 E2E_CHROMIUM_PATH=/opt/pw-browsers/chromium pnpm test:e2e

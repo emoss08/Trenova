@@ -142,6 +142,18 @@ func (r *memoryRepository) MarkUsed(
 	return nil
 }
 
+// GetPreference is reached before every remember, to learn whether the person
+// asked to approve saves first. No one in the harness has chosen, so saves run
+// as they do by default.
+func (r *memoryRepository) GetPreference(
+	_ context.Context,
+	req repositories.GetAgentMemoryPreferenceRequest,
+) (*agent.MemoryPreference, error) {
+	r.rec.read(ReadMemoryRepo, "GetPreference", req.TenantInfo)
+
+	return nil, nil //nolint:nilnil // a person who never chose has no preference row
+}
+
 func (r *memoryRepository) GetByID(
 	_ context.Context,
 	req repositories.GetAgentMemoryByIDRequest,
