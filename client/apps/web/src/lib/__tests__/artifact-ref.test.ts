@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withArtifactRefs } from "../artifact-ref";
+import { keptWhileWriting, withArtifactRefs } from "../artifact-ref";
 
 const queue = { id: "art_1", title: "Billing queue items" };
 const REF = "[Billing queue items](artifact:art_1)";
@@ -30,5 +30,25 @@ describe("withArtifactRefs", () => {
 
   it("keeps a reply with no sentence and puts the badge at its end", () => {
     expect(withArtifactRefs("| A |\n| - |\n| 1 |", [queue])).toBe(`| A |\n| - |\n| 1 |\n\n${REF}`);
+  });
+});
+
+/*
+A lookup the reply never names is not drawn while the reply is written.
+
+A dispatcher asked for drivers to rank. The agent listed shipments and opened
+six of them, each saved as a table or card as its tool finished, and answered
+with a table of its own. Every one was drawn under the reply as it streamed
+and gone when the turn ended, because the server keeps a lookup only when the
+reply points to it.
+*/
+describe("keptWhileWriting", () => {
+  it("leaves out lookups and keeps what the turn made on purpose", () => {
+    const made = [
+      { id: "art_1", kind: "table_view", title: "Shipments" },
+      { id: "art_2", kind: "entity_card", title: "SEED-SHP-001" },
+      { id: "art_3", kind: "document", title: "Ranking" },
+    ];
+    expect(keptWhileWriting(made).map((artifact) => artifact.id)).toEqual(["art_3"]);
   });
 });

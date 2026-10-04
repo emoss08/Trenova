@@ -3,7 +3,7 @@ import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activi
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
 import { ArtifactLinkContext, type ArtifactLinkRenderer } from "@/components/elements/ai-markdown";
-import { withArtifactRefs } from "@/lib/artifact-ref";
+import { keptWhileWriting, withArtifactRefs } from "@/lib/artifact-ref";
 import { DecisionFollowUpProvider } from "@/components/assistant/decision-follow-up";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { readyAttachments } from "@/components/assistant/composer";
@@ -1054,7 +1054,7 @@ export function DeskConversation({
                         time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
                       >
                         <DeskStreamingReply
-                          text={withArtifactRefs(live, turn.artifacts)}
+                          text={withArtifactRefs(live, keptWhileWriting(turn.artifacts))}
                           usedMemoryIds={turn.usedMemoryIds}
                         />
                       </DeskRow>

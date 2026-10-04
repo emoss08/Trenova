@@ -1,3 +1,5 @@
+import { LOOKUP_ARTIFACT_KINDS } from "@/types/assistant";
+
 /**
  * A reply names an artifact inside a sentence with a link whose address is
  * `artifact:<id>`, which the server teaches the model to write. The Desk
@@ -28,6 +30,17 @@ const LONE_REFS = /^\s*(?:\[[^\]\n]*\]\(artifact:[A-Za-z0-9_]+\)[\s.,;:]*)+$/u;
 function isProse(block: string): boolean {
   const first = block.trimStart().split("\n", 1)[0] ?? "";
   return first !== "" && !/^(#{1,6}\s|[|>]|[-*+]\s|\d+[.)]\s|```|~~~|\$\$|\\\[)/u.test(first);
+}
+
+/**
+ * The artifacts a reply being written can name before it has named them:
+ * the ones the turn keeps whatever the reply says. A lookup's table or card is
+ * kept only if the finished reply points to it, so one the reply has not
+ * named yet is left out rather than drawn and then taken away when the turn
+ * ends and the server drops it.
+ */
+export function keptWhileWriting<T extends { kind: string }>(artifacts: readonly T[]): T[] {
+  return artifacts.filter((artifact) => !LOOKUP_ARTIFACT_KINDS.has(artifact.kind));
 }
 
 /**
