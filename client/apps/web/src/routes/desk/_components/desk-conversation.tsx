@@ -77,6 +77,8 @@ import {
   DeskStreamingReply,
 } from "./conversation/desk-turns";
 import { composerStatus, streamingText } from "./conversation/turn-status";
+import { DeskWebLive } from "./conversation/desk-web";
+import { liveWebSearch, turnWebSources } from "./conversation/web-cites";
 import { useStickToBottom } from "./conversation/use-stick-to-bottom";
 import { DeskErrorButton, DeskErrorCard } from "./desk-error-card";
 import { DeskIcon } from "./desk-icons";
@@ -615,6 +617,10 @@ export function DeskConversation({
   }, [model, turn?.userContent]);
   const status = composerStatus(turn, t, switchModel);
   const live = streamingText(turn);
+  // The web search the turn is on, drawn until it writes or takes another
+  // step, and every page it has found, for the citations in its words.
+  const webSearch = useMemo(() => liveWebSearch(turn), [turn]);
+  const liveSources = useMemo(() => turnWebSources(turn), [turn]);
   const chapterOf = (id: string) => (chapters ? chapters.indexOf(id) + 1 : 0);
   const showCard = model.showDock && model.current !== null && !holding;
   // The change waiting on the person, or the approval in its undo window, is
@@ -1056,7 +1062,7 @@ export function DeskConversation({
                           />
                         </DeskRow>
                       )}
-                    {turn && live !== "" && (
+                    {turn && (live !== "" || webSearch !== null) && (
                       <DeskRow
                         kind="reply"
                         first={!layout.any}
@@ -1065,7 +1071,15 @@ export function DeskConversation({
                         <DeskStreamingReply
                           text={withArtifactRefs(live, keptWhileWriting(turn.artifacts))}
                           usedMemoryIds={turn.usedMemoryIds}
+                          webSources={liveSources}
                         />
+                        {webSearch && (
+                          <DeskWebLive
+                            label={t("Searching the web")}
+                            query={webSearch.query}
+                            sources={webSearch.sources}
+                          />
+                        )}
                       </DeskRow>
                     )}
                     {turn?.status === "error" &&

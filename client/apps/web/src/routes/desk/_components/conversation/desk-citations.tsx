@@ -25,10 +25,13 @@ const POPOVER_ROOM = 230;
 const POPOVER_WIDTH = 250;
 
 /** Where a popover goes so all of it stays on screen: below when there is no room above, and nudged in from the sides. */
-function placePopover(anchor: HTMLElement): { below: boolean; shift: number } {
+export function placePopover(
+  anchor: HTMLElement,
+  width: number = POPOVER_WIDTH,
+): { below: boolean; shift: number } {
   const rect = anchor.getBoundingClientRect();
   const center = rect.left + rect.width / 2;
-  const half = POPOVER_WIDTH / 2;
+  const half = width / 2;
   let shift = 0;
   if (center - half < EDGE) shift = EDGE - (center - half);
   else if (center + half > window.innerWidth - EDGE)

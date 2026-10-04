@@ -621,6 +621,46 @@ earlier ones allowed.
   (a Temporal Schedule per request, reconciled hourly), the compaction
   activity, and the billing bulk-approval workflow.
 
+## Web search (design_handoff_with_web)
+
+Shipped per `WEB_SEARCH_HANDOFF.md`, ported from `websrc.jsx` / `websrc.css`
+into `conversation/desk-web.tsx`, `conversation/web-cites.ts` and the
+`websrc.css` block of `desk-v2.css` (`dk-` prefix, `--dsk-*` tokens).
+
+- **Live search block** (`DeskWebLive`): globe, "Searching the web" with the
+  1.6s shimmer, the query pill, and a chip per page. It replaces the reply's
+  words while the turn's latest step is a `web_search` and goes the moment
+  the agent writes or takes another step. Chips appear when the step reports
+  its results, with the 320ms spring; no fake stagger.
+- **Citation pills** (`DeskWebCite`): the agent cites by markdown link to the
+  pages it found; links side by side become one pill, numbered by the page's
+  place among the turn's pages (`#dk-web-1.4`). Label = first site with
+  `.com/.gov/.org` dropped, `+N` for the rest. Hover lists every cited page
+  (site tile, site, date, title, snippet), flipping below when there is no
+  room above; the pill and each entry open the page in a new tab. Pills pop
+  in with the badge animation while streaming. Unknown numbers draw nothing;
+  a link to a page the agent never found stays a plain link.
+- **Sources footer** (`DeskWebSources`): under the reply that closes the
+  turn, only when it found pages: up to 4 stacked site tiles, "N sources",
+  opening (grid-rows) to the query and the numbered pages with site and date.
+- **Site tile** (`DeskFavicon`): monogram on `oklch` from the site's hue, the
+  same in pill, chip and footer; darker in dark theme.
+- **Trace / receipt**: `web_search` and `web_read` read as the other steps
+  ("Searching the web…", "Searched the web" + query, "Read N pages" + sites).
+  Their results are not also cited as step numbers, since the pages are.
+- **Reduced motion**: the system setting and the Desk's own calm setting stop
+  the shimmer and the chip entry.
+- **Backend**: no new stream events or columns. Web search is Trenova's own
+  `web_search` / `web_read` tools (Exa through the organization's
+  extension), not a provider's built-in search, so it works on every model:
+  `tool_started` carries the query, `tool_finished` the pages, and the saved
+  tool exchange holds them, so a reloaded conversation draws identically.
+  Exa returns a search's pages together, so its chips arrive together with
+  the step's result rather than one by one. The model is now told to cite
+  before the sentence's period and to set links side by side for one fact.
+- **Not shipped** (prototype only): the send regex, `desk:web`, the Tweaks
+  button and `TURNS.web`.
+
 ## What does not match one for one, and why
 
 - **Today page**: not built, by instruction; Today opens the home composer.

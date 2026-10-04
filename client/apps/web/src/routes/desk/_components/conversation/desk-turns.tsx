@@ -22,6 +22,8 @@ import { citeSteps, withCitations } from "./citations";
 import { useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
 import { DeskStepFailures } from "./desk-tool-failures";
+import { DeskWebCites, DeskWebSources } from "./desk-web";
+import { deskWebSources, webQueryOf, withWebCites, type DeskWebSource } from "./web-cites";
 
 /** Where a row sits in the conversation's three columns: time, words, margin. */
 export function DeskRow({
@@ -187,11 +189,14 @@ export const DeskReply = memo(function DeskReply({
   // under it says it instead.
   const content = message.truncated ? withoutCutNote(message.content) : message.content;
   const citations = useMemo(() => citeSteps(content, steps), [content, steps]);
+  // The pages the turn found on the web so far; the reply cites them by
+  // number, and the one that closes the turn lists them under it.
+  const webSources = useMemo(() => deskWebSources(steps), [steps]);
   // Every artifact the reply made is opened from its words: one it named
   // where it named it, any other at the end of its last sentence.
   const cited = useMemo(
-    () => withArtifactRefs(withCitations(content, citations), artifacts),
-    [artifacts, citations, content],
+    () => withArtifactRefs(withCitations(withWebCites(content, webSources), citations), artifacts),
+    [artifacts, citations, content, webSources],
   );
   const overrides = useCitationOverrides(citations, threadArtifacts, onOpenArtifact);
   const usedMemories = message.usedMemoryIds ?? NO_IDS;
@@ -205,9 +210,12 @@ export const DeskReply = memo(function DeskReply({
       {usedMemories.length > 0 && <DeskMemoryRecall ids={usedMemories} served={message.memories} />}
       {cited !== "" && (
         <div className={cn("dk-prose", entry.message.truncated && "dk-cut")}>
-          <AiMarkdown content={cited} className="dk-md" overrides={overrides} deskSubset />
+          <DeskWebCites sources={webSources}>
+            <AiMarkdown content={cited} className="dk-md" overrides={overrides} deskSubset />
+          </DeskWebCites>
         </div>
       )}
+      {closesTurn && <DeskWebSources sources={webSources} query={webQueryOf(steps)} />}
       {reportRuns.map((run) => (
         <div key={run.runId} className="dk-extra">
           <ReportRunCard run={run} />
@@ -249,16 +257,32 @@ export const DeskReply = memo(function DeskReply({
 export function DeskStreamingReply({
   text,
   usedMemoryIds = NO_IDS,
+  webSources = NO_SOURCES,
 }: {
   text: string;
   usedMemoryIds?: readonly string[];
+  /** The pages the turn has found so far, so citations draw as the words reach them. */
+  webSources?: readonly DeskWebSource[];
 }) {
+  const content = useMemo(() => withWebCites(text, webSources), [text, webSources]);
+
   return (
     <>
       {usedMemoryIds.length > 0 && <DeskMemoryRecall ids={usedMemoryIds} />}
-      <div className="dk-prose dk-streaming">
-        <StreamingAiMarkdown content={text} className="dk-md" wordClassName="dk-w" deskSubset />
-      </div>
+      {content !== "" && (
+        <div className="dk-prose dk-streaming">
+          <DeskWebCites sources={webSources} live>
+            <StreamingAiMarkdown
+              content={content}
+              className="dk-md"
+              wordClassName="dk-w"
+              deskSubset
+            />
+          </DeskWebCites>
+        </div>
+      )}
     </>
   );
 }
+
+const NO_SOURCES: readonly DeskWebSource[] = [];

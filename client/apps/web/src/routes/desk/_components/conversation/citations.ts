@@ -10,8 +10,13 @@ export type Citation = {
   offset: number;
 };
 
-/** Steps that look nothing up, so there is nothing in the reply for them to back. */
+/**
+ * Steps that look nothing up, so there is nothing in the reply for them to
+ * back; and the web steps, whose pages the reply cites by link instead.
+ */
 const UNCITED = new Set([
+  "web_search",
+  "web_read",
   "ask_user",
   "find_tools",
   "recall_memory",
