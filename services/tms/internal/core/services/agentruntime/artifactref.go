@@ -52,3 +52,20 @@ func ArtifactRefIDs(text string) []string {
 
 	return ids
 }
+
+// artifactLinksIn is every distinct artifact link a reply makes, as written,
+// in the order it makes them.
+func artifactLinksIn(text string) []string {
+	matches := artifactLink.FindAllStringSubmatch(text, -1)
+	links := make([]string, 0, len(matches))
+	seen := make(map[string]bool, len(matches))
+	for _, match := range matches {
+		if seen[match[2]] {
+			continue
+		}
+		seen[match[2]] = true
+		links = append(links, match[0])
+	}
+
+	return links
+}

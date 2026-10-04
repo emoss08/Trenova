@@ -50,7 +50,7 @@ func (t *recallMemoryTool) Description() string {
 		"earlier proposals. Search by text, or narrow to one customer, location, " +
 		"driver or carrier with subjectType and subjectId, or to one tool. Call this " +
 		"before acting on a customer or a driver you have not been told about in this " +
-		"conversation, and before using remember."
+		"conversation. To save something, call remember directly; it handles a repeat."
 }
 
 func (t *recallMemoryTool) ParamSchema() map[string]any {
@@ -145,10 +145,15 @@ func (t *recallMemoryTool) Query(
 		req.IDs = []pulid.ID{memoryID}
 	}
 
+	// A type with no id names no record, so it narrows nothing: a model that
+	// fills every field sends one, and refusing it kept the search from ever
+	// running. An id with no type cannot be looked up.
 	subjectType := agent.MemorySubjectType(optionalString(params.Params, "subjectType"))
 	rawID := optionalString(params.Params, "subjectId")
-	if (subjectType == "") != (rawID == "") {
-		return nil, fmt.Errorf("subjectType and subjectId go together; give both or neither")
+	if rawID == "" {
+		subjectType = ""
+	} else if subjectType == "" {
+		return nil, fmt.Errorf("subjectId needs subjectType: Customer, Location, Worker or Carrier")
 	}
 	if subjectType != "" {
 		if !subjectType.IsValid() {

@@ -6,6 +6,7 @@ import { reportRunsFrom } from "@/components/assistant/report-runs";
 import type { ThreadEntry } from "@/components/assistant/thread-view";
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
 import { withArtifactRefs } from "@/lib/artifact-ref";
+import { withoutRecordIds } from "@/lib/record-ids";
 import { AiMarkdown, StreamingAiMarkdown } from "@/components/elements/ai-markdown";
 import type {
   AssistantArtifact,
@@ -187,7 +188,10 @@ export const DeskReply = memo(function DeskReply({
   const reportRuns = reportRunsFrom(tools);
   // A reply that broke off carries the server's note saying so; the card
   // under it says it instead.
-  const content = message.truncated ? withoutCutNote(message.content) : message.content;
+  // Record ids are the agent's; one that slips into a reply is kept off the page.
+  const content = withoutRecordIds(
+    message.truncated ? withoutCutNote(message.content) : message.content,
+  );
   const citations = useMemo(() => citeSteps(content, steps), [content, steps]);
   // The pages the turn found on the web so far; the reply cites them by
   // number, and the one that closes the turn lists them under it.
@@ -264,7 +268,10 @@ export function DeskStreamingReply({
   /** The pages the turn has found so far, so citations draw as the words reach them. */
   webSources?: readonly DeskWebSource[];
 }) {
-  const content = useMemo(() => withWebCites(text, webSources), [text, webSources]);
+  const content = useMemo(
+    () => withWebCites(withoutRecordIds(text), webSources),
+    [text, webSources],
+  );
 
   return (
     <>

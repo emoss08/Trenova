@@ -206,3 +206,11 @@ func TestEntityCardTitle_NamesABillingItemByNumberAndBillTo(t *testing.T) {
 	assert.Equal(t, "Billing queue item SEED-SHP-009", entityCardTitle("billing_queue_item",
 		map[string]any{"proNumber": "SEED-SHP-009"}), "without both it falls back to the record label")
 }
+
+// An invoice carries its load's pro number too; it is named by its own number.
+func TestEntityCardTitle_NamesAnInvoiceByItsOwnNumber(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "INV2610000011 · Peak Distributing", entityCardTitle("invoice",
+		map[string]any{"number": "INV2610000011", "billToName": "Peak Distributing", "proNumber": "SEED-PAY-009"}))
+}

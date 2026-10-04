@@ -173,10 +173,10 @@ func TestRemember_RefusesACorrectionAndHalfASubject(t *testing.T) {
 
 	err = tool.Execute(
 		t.Context(),
-		memoryParams(map[string]any{"content": "x", "subjectType": "Customer"}),
+		memoryParams(map[string]any{"content": "x", "subjectId": "cus_01M3Q2Y3HYKRA6P275AT81N7TF"}),
 	)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "both or neither")
+	assert.Contains(t, err.Error(), "subjectId needs subjectType")
 
 	err = tool.Execute(
 		t.Context(),
@@ -184,6 +184,28 @@ func TestRemember_RefusesACorrectionAndHalfASubject(t *testing.T) {
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "YYYY-MM-DD")
+}
+
+// A model that fills every field sends a subject type for a memory about no
+// record. Refusing it kept "remember to show me the queue item" from ever
+// being saved, so a type with no id is read as no subject.
+func TestRemember_ReadsATypeWithNoIDAsNoSubject(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{}
+	tool := newRememberTool(memories)
+
+	err := tool.Execute(t.Context(), memoryParams(map[string]any{
+		"content":     "Show the billing queue item, not the invoice, unless the invoice is asked for.",
+		"kind":        "Instruction",
+		"subjectType": "Customer",
+		"subjectId":   "",
+	}))
+
+	require.NoError(t, err)
+	require.NotNil(t, memories.remembered)
+	assert.Empty(t, memories.remembered.SubjectType)
+	assert.True(t, memories.remembered.SubjectID.IsNil())
 }
 
 func TestForgetMemory_RetiresRatherThanDeletes(t *testing.T) {

@@ -270,6 +270,9 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
 		section(&stable, d.buildOutputSection())
+		if d.OutputMode != OutputReport && d.HasContextProvider(ContextMemory) {
+			section(&stable, rememberingSection)
+		}
 	}
 
 	section(&volatile, d.buildContextSection(rc))
@@ -362,14 +365,19 @@ func buildDelegateSection(delegates []RuntimeDelegate) string {
 func buildDelegatedOutputSection(delegator string) string {
 	return "## Output\nThe agent " + delegator + " handed you this task on behalf of the " +
 		"person it is talking to. You act as that person, with your own tools. Nobody reads " +
-		"your reply but that agent, and you cannot ask the person anything, so do the task " +
-		"with what you have. Work from the records and results handed over with the task: " +
-		"open each record by its id with your own tools, and copy a record with the tool " +
-		"that copies it, such as duplicate_shipment, rather than retyping it into a new one. " +
-		"Finish with a short plain answer: what you did, the name and id " +
-		"of every record you created or changed, what is waiting on the person's approval, " +
-		"and what you could not do and why. Never claim a change you did not make through a " +
-		"tool, and never hand another agent the task."
+		"your reply but that agent and the person, who sees it beside the conversation, and " +
+		"you cannot ask the person anything, so do the task with what you have. Work from " +
+		"the records and results handed over with the task: open each record by its id with " +
+		"your own tools, and copy a record with the tool that copies it, such as " +
+		"duplicate_shipment, rather than retyping it into a new one. Finish with a short " +
+		"plain answer: what you did, every record you created or changed by its number or " +
+		"name, what is waiting on the person's approval, and what you could not do and why. " +
+		"Never write a record's internal id (shp_01…, inv_01…) or a proposal's in it, even " +
+		"when the task asks for ids: the agent that asked is given the ids of what you " +
+		"changed with your reply, and finds any other record by its number. When you looked " +
+		"up a list or a record, point to the table or card your tool result names rather " +
+		"than listing its rows. Never claim a change you did not make through a tool, and " +
+		"never hand another agent the task."
 }
 
 // artifactSection tells the model what the person already sees. Without it a
@@ -382,6 +390,14 @@ func buildDelegatedOutputSection(delegator string) string {
 const artifactSection = `## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Show a result one way, never both, and point to it rather than copying its rows into a markdown table: a longer list, and a list of any length that you rank or compare for the person to choose or act from, is pointed to, and your reply gives the count, your pick and what needs attention instead of the rows. Only a short answer, a fact or a few rows from a list of about a dozen rows or fewer, goes in your reply, and that list is not pointed to. When the person asks to see a record or its details, fetch it with its get tool and point to its card, rather than listing its fields or opening its page. Put a pointer inside the sentence that mentions it, never on a line of its own.
 When the person asks for a write-up, a summary, a brief, a handover or an artifact, or when your answer would run past a screen, publish it with publish_artifact and reply in two or three sentences. Do this without being asked. To change a document you published, publish it again with its artifactId.`
+
+// rememberingSection is when an agent saves a memory without being told to
+// use the tool. Before it, a person who said "when I ask for billing queue
+// items, show me the queue item, not the invoice" had it followed for one
+// conversation and asked again in the next, because a model only reached
+// for remember when the word was said.
+const rememberingSection = `## Remembering
+When the person tells you how they want something done from now on, or corrects how you did it — show them the queue item rather than the invoice, copy dispatch on these emails, Acme's terms are net 45 — save it with remember in the same turn, then do it. Use visibleTo me unless they say it is for their team or everyone, and tell them in a few words that you will keep it in mind. Do not save a one-off request, a guess, or anything a record already says.`
 
 // guideSection is how an agent answers questions about Trenova itself. Before
 // it, "how do I add a rate matrix?" had nothing to answer from, and a model
@@ -978,7 +994,10 @@ func (d *Definition) buildOutputSection() string {
 		"returned, point to the table that tool result names). A fenced block is only " +
 		"for data to copy, labelled csv or text; never write code or label a block with a " +
 		"programming or query language, since such a reply is refused whole. Cite the record you used — a shipment number, a load number, " +
-		"a worker name — so the person can verify you. If a tool returns nothing, say so rather than " +
+		"a worker name — so the person can verify you. Never show the person a record's " +
+		"internal id, the kind that starts with letters and an underscore such as shp_01… or " +
+		"inv_01…, nor a proposal's: name a record by its number or name, or point to its " +
+		"card. Ids are for your tool calls. If a tool returns nothing, say so rather than " +
 		"guessing. If you lack a tool for what was asked, say what you would need rather than " +
 		"improvising.\nKeep your working to yourself. Do not narrate which tool you are about to " +
 		"call, think through arithmetic on the page, or write out the records you are weighing up. " +

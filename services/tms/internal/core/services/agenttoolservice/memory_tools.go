@@ -59,8 +59,8 @@ func (t *rememberTool) Description() string {
 		"team for everyone in their role, organization for everyone. Scope it to one " +
 		"customer, location, driver or carrier with subjectType and subjectId when it is " +
 		"about that record. Do not record what a record already says, a guess, or anything " +
-		"a person asked you to keep private. Use recall_memory first to see whether it is " +
-		"already known."
+		"a person asked you to keep private. Saving what is already kept refreshes it rather " +
+		"than adding a second copy, so there is no need to look first."
 }
 
 func (t *rememberTool) ParamSchema() map[string]any {
@@ -388,19 +388,20 @@ var (
 
 const fieldVisibleTo = "visibleTo"
 
-// memorySubject reads the optional subject pair, refusing half of one: a
-// type without an id names nothing, and an id without a type cannot be
-// looked up.
+// memorySubject reads the optional subject pair. A type with no id names
+// nothing, so it is read as no subject: a model that fills every field sends
+// a type for a memory about no record, and refusing that kept it from ever
+// saving one. An id without a type cannot be looked up and is refused.
 func memorySubject(params map[string]any) (agent.MemorySubjectType, pulid.ID, error) {
 	subjectType := agent.MemorySubjectType(optionalString(params, "subjectType"))
 	rawID := optionalString(params, "subjectId")
 
-	if subjectType == "" && rawID == "" {
+	if rawID == "" {
 		return "", pulid.Nil, nil
 	}
-	if subjectType == "" || rawID == "" {
+	if subjectType == "" {
 		return "", pulid.Nil, fmt.Errorf(
-			"subjectType and subjectId go together; give both or neither",
+			"subjectId needs subjectType: %s", strings.Join(memorySubjectTypes.Names(), ", "),
 		)
 	}
 	if !subjectType.IsValid() {

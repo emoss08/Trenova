@@ -137,7 +137,23 @@ func TestRecallMemory_RefusesHalfASubject(t *testing.T) {
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"subjectId": "cus_1"}))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "both or neither")
+	assert.Contains(t, err.Error(), "subjectId needs subjectType")
+}
+
+// A model that fills every field sends a subject type with no id for a search
+// about no record. Refusing it looped the model on recall_memory until the
+// turn gave up, so a type with no id narrows nothing.
+func TestRecallMemory_ReadsATypeWithNoIDAsNoSubject(t *testing.T) {
+	t.Parallel()
+
+	tool := newRecallMemoryTool(&fakeRecall{})
+
+	_, err := tool.Query(t.Context(), testParams(map[string]any{
+		"query":       "billing queue item rather than invoice",
+		"subjectType": "Customer",
+		"subjectId":   "",
+	}))
+	require.NoError(t, err)
 }
 
 func TestRecordedBy_NamesEverySource(t *testing.T) {

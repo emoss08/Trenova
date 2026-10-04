@@ -1425,11 +1425,21 @@ func entityCardArtifact(
 // biller knows it, by its number and who it bills, as the design titles it;
 // any other record by its kind and label.
 func entityCardTitle(entity string, result map[string]any) string {
-	if entity == viewBillingQueueItem {
+	// A billing queue item and an invoice carry the shipment's pro number
+	// too, and a title led by it named the invoice for a load rather than by
+	// its own number.
+	switch entity {
+	case viewBillingQueueItem, viewInvoice:
 		number := typeutils.StringOfTrimmed(result["number"])
 		billTo := typeutils.StringOfTrimmed(result["billTo"])
+		if billTo == "" {
+			billTo = typeutils.StringOfTrimmed(result["billToName"])
+		}
 		if number != "" && billTo != "" {
 			return number + " · " + billTo
+		}
+		if number != "" {
+			return number
 		}
 	}
 

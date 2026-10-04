@@ -1,6 +1,7 @@
 import { useDelegateIdentity } from "@/components/agent-identity/agent-context";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { AiMarkdown } from "@/components/elements/ai-markdown";
+import { withoutRecordIds } from "@/lib/record-ids";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
 import {
   Collapsible,
@@ -136,7 +137,9 @@ export function DelegateStep({
                 {headline}
               </span>
               {view.task !== "" && (
-                <span className="text-foreground-subtle min-w-0 truncate">{view.task}</span>
+                <span className="text-foreground-subtle min-w-0 truncate">
+                  {withoutRecordIds(view.task)}
+                </span>
               )}
             </span>
             {settled && step.durationSeconds !== null && (
@@ -388,7 +391,7 @@ function HandOffDetails({
         <section className="flex min-w-0 flex-col gap-1">
           <h4 className="text-foreground-subtle font-medium">{t("Task")}</h4>
           <p className="text-foreground-muted leading-relaxed break-words whitespace-pre-wrap">
-            {view.task}
+            {withoutRecordIds(view.task)}
           </p>
         </section>
       )}
@@ -412,7 +415,7 @@ function HandOffDetails({
             )}
           </div>
           <AiMarkdown
-            content={view.reply}
+            content={withoutRecordIds(view.reply)}
             className="text-foreground-muted text-xs leading-relaxed"
           />
         </section>

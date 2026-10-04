@@ -157,6 +157,9 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 				agentdefinition.ContextOrganization,
 				agentdefinition.ContextClock,
 				agentdefinition.ContextTools,
+				// Corrections people make to its proposals reach it only
+				// through memory; without it a fix was made again every run.
+				agentdefinition.ContextMemory,
 			},
 			Enabled: false,
 		},
@@ -182,6 +185,9 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 				agentdefinition.ContextOrganization,
 				agentdefinition.ContextClock,
 				agentdefinition.ContextTools,
+				// Corrections people make to its proposals reach it only
+				// through memory; without it a fix was made again every run.
+				agentdefinition.ContextMemory,
 			},
 			Enabled: false,
 		},

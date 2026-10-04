@@ -1,4 +1,5 @@
 import { kfmt } from "@/components/assistant/compaction";
+import { withoutRecordIds } from "@/lib/record-ids";
 import type { AssistantMessage } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -7,7 +8,9 @@ import { DeskIcon, type DeskIconName } from "../desk-icons";
 
 /** The summary's points, one per bullet the model wrote. */
 export function summaryPoints(content: string): string[] {
-  return content
+  // The summary keeps record ids for the agent's next tool calls; the person
+  // reads it by numbers and names.
+  return withoutRecordIds(content)
     .split("\n")
     .map((line) => line.trim().replace(/^[-*•]\s+/, ""))
     .filter((line) => line !== "");

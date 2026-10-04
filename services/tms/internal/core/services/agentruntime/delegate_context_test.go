@@ -293,7 +293,8 @@ func TestDelegateInput_FencesWhatWasHandedOverAfterTheTask(t *testing.T) {
 }
 
 // The parent learns the proposal id of each write the delegate filed, so it
-// can name the card rather than search for what was made.
+// can find the card rather than search for what was made, and is told never
+// to show the person that id.
 func TestDelegateReport_NamesEachWritesProposal(t *testing.T) {
 	t.Parallel()
 
@@ -310,5 +311,26 @@ func TestDelegateReport_NamesEachWritesProposal(t *testing.T) {
 	require.Len(t, report.Awaiting, 1)
 	assert.Equal(t, waiting, report.Awaiting[0].ProposalID)
 	assert.Equal(t, waiting, report.Bounded().Awaiting[0].ProposalID)
-	assert.Contains(t, delegateNote(report), "proposalId")
+	assert.Contains(t, delegateNote(report), "never show them a proposalId")
+}
+
+// A table or record the delegate showed is kept only if the parent's answer
+// links it, so the note hands the parent each link as the delegate wrote it.
+func TestDelegateNote_PassesOnTheArtifactsTheReplyShowed(t *testing.T) {
+	t.Parallel()
+
+	report := serviceports.AssistantDelegateFinishedEvent{
+		AgentName: "Billing exceptions",
+		Status:    serviceports.DelegateStatusCompleted,
+		Reply: "There are 8 items; the [Billing queue items](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ) " +
+			"table lists them, and [Billing queue items](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ) again.",
+	}
+
+	note := delegateNote(report)
+
+	assert.Equal(t, 1, strings.Count(note, "(artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ)"))
+	assert.Contains(t, note, "one your answer does not link is not kept")
+
+	report.Reply = "Nothing to show."
+	assert.NotContains(t, delegateNote(report), "artifact:")
 }

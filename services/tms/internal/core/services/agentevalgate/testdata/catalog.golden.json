@@ -24396,7 +24396,7 @@
     },
     {
       "name": "recall_memory",
-      "description": "Read what this organization has recorded for its agents: standing instructions, facts agents were told, and corrections people made to earlier proposals. Search by text, or narrow to one customer, location, driver or carrier with subjectType and subjectId, or to one tool. Call this before acting on a customer or a driver you have not been told about in this conversation, and before using remember.",
+      "description": "Read what this organization has recorded for its agents: standing instructions, facts agents were told, and corrections people made to earlier proposals. Search by text, or narrow to one customer, location, driver or carrier with subjectType and subjectId, or to one tool. Call this before acting on a customer or a driver you have not been told about in this conversation. To save something, call remember directly; it handles a repeat.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -26322,7 +26322,7 @@
     },
     {
       "name": "remember",
-      "description": "Record a standing instruction or a fact for later runs to know. Use kind Instruction for a rule a person gave you, Fact for something you were told or confirmed that is not in any record. Say who it is for with visibleTo: me for the person you are talking to alone (the default when someone is in the conversation), team for everyone in their role, organization for everyone. Scope it to one customer, location, driver or carrier with subjectType and subjectId when it is about that record. Do not record what a record already says, a guess, or anything a person asked you to keep private. Use recall_memory first to see whether it is already known.",
+      "description": "Record a standing instruction or a fact for later runs to know. Use kind Instruction for a rule a person gave you, Fact for something you were told or confirmed that is not in any record. Say who it is for with visibleTo: me for the person you are talking to alone (the default when someone is in the conversation), team for everyone in their role, organization for everyone. Scope it to one customer, location, driver or carrier with subjectType and subjectId when it is about that record. Do not record what a record already says, a guess, or anything a person asked you to keep private. Saving what is already kept refreshes it rather than adding a second copy, so there is no need to look first.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
