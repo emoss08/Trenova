@@ -1,6 +1,7 @@
 fragment DeskMemoryFields on DeskMemory {
   id
   content
+  kind
   scope
   roleId
   roleName

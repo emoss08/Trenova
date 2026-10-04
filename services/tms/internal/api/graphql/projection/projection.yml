@@ -104,9 +104,6 @@ aliases:
     equipmentStatus: status
   Trailer:
     equipmentStatus: status
-  RecentDecision:
-    decidedAt: createdAt
-    proposal: proposalId
 
 virtuals:
   AICorrection:
@@ -322,8 +319,6 @@ virtuals:
     - starterDrifted
   Order:
     - legs
-  RecentDecision:
-    - decidedByName
   ReportSchedule:
     - formats
     - emailRecipients
@@ -430,6 +425,8 @@ gates:
 
 
 modelOverrides:
+  EdiCarrierInvoiceList: github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.InvoiceAdjustmentBatch
+  CarrierInvoiceMatchList: github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.InvoiceAdjustmentBatch
   ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
   ShipmentOwnershipEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
   ShipmentMoveEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event

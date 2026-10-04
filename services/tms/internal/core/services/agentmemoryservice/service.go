@@ -129,7 +129,15 @@ func (s *Service) Remember(
 		return nil, err
 	}
 	if plan.Existing != nil {
-		return s.refresh(ctx, req.TenantInfo, plan.Existing)
+		refreshed, refreshErr := s.refresh(ctx, req.TenantInfo, plan.Existing)
+		if refreshErr != nil {
+			return nil, refreshErr
+		}
+		if plan.Replaced != nil && !plan.Held && !refreshed.Status.IsSuggestion() {
+			s.retireReplaced(ctx, plan.Replaced, refreshed, actor)
+		}
+
+		return refreshed, nil
 	}
 
 	created, err := s.repo.Create(ctx, plan.Memory)
@@ -139,6 +147,9 @@ func (s *Service) Remember(
 
 	s.log(created, actor, permission.OpCreate, "Agent memory recorded")
 	s.queueForRetrieval(ctx, created)
+	if created.Status == agent.MemoryStatusActive && created.Replaces() {
+		s.recordReplaced(ctx, created, actor)
+	}
 
 	return created, nil
 }
@@ -152,6 +163,11 @@ func (s *Service) refresh(
 	tenant pagination.TenantInfo,
 	existing *agent.Memory,
 ) (*agent.Memory, error) {
+	existing.Refreshed = true
+	if existing.Status.IsSuggestion() {
+		return existing, nil
+	}
+
 	now := timeutils.NowUnix()
 	if err := s.repo.MarkUsed(ctx, repositories.MarkAgentMemoriesUsedRequest{
 		TenantInfo: tenant,
@@ -163,7 +179,6 @@ func (s *Service) refresh(
 
 	existing.UseCount++
 	existing.LastUsedAt = &now
-	existing.Refreshed = true
 
 	return existing, nil
 }
@@ -215,6 +230,19 @@ func (s *Service) planRemember(
 		}
 	}
 
+	plan := &services.RememberPlan{Memory: entity}
+	if req.Replaces.IsNotNil() {
+		replaced, held, err := s.planReplacement(ctx, req, entity)
+		if err != nil {
+			return nil, err
+		}
+		plan.Replaced = replaced
+		plan.Held = held
+		if held {
+			entity.Status = agent.MemoryStatusSuggested
+		}
+	}
+
 	if err := s.label(ctx, req.TenantInfo, entity); err != nil {
 		return nil, err
 	}
@@ -225,12 +253,15 @@ func (s *Service) planRemember(
 		return nil, me
 	}
 
-	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(req.TenantInfo, entity))
+	same := sameMemoryRequest(req.TenantInfo, entity)
+	same.IncludeSuggested = entity.Status == agent.MemoryStatusSuggested
+	existing, err := s.repo.FindActive(ctx, same)
 	if err != nil {
 		return nil, err
 	}
+	plan.Existing = existing
 
-	return &services.RememberPlan{Memory: entity, Existing: existing}, nil
+	return plan, nil
 }
 
 func NewMemory(req *services.RememberRequest, actor *services.RequestActor) *agent.Memory {
@@ -284,6 +315,14 @@ func NewMemory(req *services.RememberRequest, actor *services.RequestActor) *age
 	if req.Suggest {
 		entity.Status = agent.MemoryStatusSuggested
 	}
+	if req.Source.IsValid() {
+		entity.Source = req.Source
+	}
+	entity.AgentDefinitionID = pulid.PtrOrNil(req.AgentDefinitionID)
+	entity.SourceThreadID = pulid.PtrOrNil(req.ThreadID)
+	entity.ReflectionID = pulid.PtrOrNil(req.ReflectionID)
+	entity.SupersedesID = pulid.PtrOrNil(req.Replaces)
+	entity.Evidence = req.Evidence
 
 	return entity
 }
@@ -431,15 +470,17 @@ func (s *Service) ApproveSuggestion(
 	}
 
 	approved, err := s.repo.ResolveSuggestion(ctx, repositories.ResolveAgentMemorySuggestionRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-		Status:     agent.MemoryStatusActive,
-		Kind:       candidate.Kind,
-		Content:    candidate.Content,
-		Scope:      candidate.Scope,
-		ByUserID:   actor.UserID,
-		At:         timeutils.NowUnix(),
-		Version:    req.Version,
+		ID:          req.ID,
+		TenantInfo:  req.TenantInfo,
+		Status:      agent.MemoryStatusActive,
+		Kind:        candidate.Kind,
+		Content:     candidate.Content,
+		Scope:       candidate.Scope,
+		OwnerUserID: pulid.ConvertFromPtr(current.OwnerUserID),
+		RoleID:      pulid.ConvertFromPtr(current.RoleID),
+		ByUserID:    actor.UserID,
+		At:          timeutils.NowUnix(),
+		Version:     req.Version,
 	})
 	if err != nil {
 		return nil, err
@@ -453,6 +494,7 @@ func (s *Service) ApproveSuggestion(
 		"Suggested agent memory approved",
 	)
 	s.queueForRetrieval(ctx, approved)
+	s.recordReplaced(ctx, approved, actor)
 
 	return approved, nil
 }
@@ -463,6 +505,9 @@ func (s *Service) ApproveSuggestion(
 func approvedScope(requested agent.MemoryScope, suggestion *agent.Memory) agent.MemoryScope {
 	if requested == agent.MemoryScopeOrganization {
 		return agent.MemoryScopeOrganization
+	}
+	if suggestion.Source.OfferedByAgent() && suggestion.Scope.IsValid() {
+		return suggestion.Scope
 	}
 	if suggestion.AgentDefinitionID == nil || suggestion.AgentDefinitionID.IsNil() {
 		return agent.MemoryScopeOrganization
@@ -980,9 +1025,9 @@ var (
 	planSuffixPattern = regexp.MustCompile(`\s*\(plan [^)]+\)$`)
 )
 
-// humanReason returns what a person wrote, or nothing when the reason is a
+// HumanReason returns what a person wrote, or nothing when the reason is a
 // code the client filled in for them.
-func humanReason(reason string) string {
+func HumanReason(reason string) string {
 	reason = strings.TrimSpace(planSuffixPattern.ReplaceAllString(reason, ""))
 	if reason == "" || reasonCodePattern.MatchString(reason) {
 		return ""
@@ -994,7 +1039,7 @@ func humanReason(reason string) string {
 // correctionContent writes the lesson in one or two sentences, or nothing
 // when the decision carries none.
 func correctionContent(proposal *agent.AgentProposal, decision *agent.AgentDecision) string {
-	reason := humanReason(decision.ReasonCode)
+	reason := HumanReason(decision.ReasonCode)
 
 	switch agent.OutcomeOfDecision(decision.Decision, decision.Modifications) {
 	case agent.TrustOutcomeModified:

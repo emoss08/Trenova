@@ -695,6 +695,18 @@ export function AgentForm({
             />
           </FormControl>
           <FormControl cols="full">
+            <SwitchField
+              name="learnsFromWork"
+              control={control}
+              label={t("Learns from its work")}
+              description={t(
+                "Once a conversation goes quiet or a run settles, it looks back for what went wrong or took several tries and keeps the lesson as memory. Each person's saving preference still applies, and anything shared beyond them waits for approval.",
+              )}
+              outlined
+              position="left"
+            />
+          </FormControl>
+          <FormControl cols="full">
             <MultiCheckboxField
               name="contextProviders"
               control={control}

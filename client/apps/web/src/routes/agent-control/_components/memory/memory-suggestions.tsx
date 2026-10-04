@@ -51,11 +51,11 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
 
   return (
     <SectionPanel
-      title={t("Suggested from feedback")}
+      title={t("Suggested memories")}
       icon={<AssistMark />}
       count={suggestions.length}
       help={t(
-        "Drawn from ratings people gave an agent's answers. Agents read none of these until an administrator approves them.",
+        "Drawn from ratings people gave an agent's answers, or learned by an agent looking back over its work. Agents read none of these until an administrator approves them.",
       )}
     >
       <ul className="divide-border-subtle flex flex-col divide-y">
@@ -141,21 +141,42 @@ function SuggestionRow({
   const ratings = evidence?.ratingCount ?? evidence?.feedbackIds.length ?? 0;
   const people = evidence?.distinctUsers ?? 0;
   const quotes = evidence?.quotes ?? [];
+  const learned = suggestion.source === "Reflection";
 
   return (
     <li className="flex flex-col gap-2 px-3 py-3">
       <p className="text-sm leading-relaxed">{suggestion.content}</p>
 
-      <p className="text-foreground-muted text-xs">
-        {t("{0, plural, one {Drawn from # rating} other {Drawn from # ratings}}", ratings)} ·{" "}
-        {t("{0, plural, one {# person} other {# people}}", people)}
-        {evidence ? (
-          <> · {t("last rated {0}", formatUnixDateTimeMedium(evidence.lastRatedAt))}</>
-        ) : null}
-      </p>
+      {learned ? (
+        <p className="text-foreground-muted text-xs">
+          {t(
+            "Learned by an agent looking back over its work, {0}",
+            formatUnixDateTimeMedium(suggestion.createdAt),
+          )}
+          {suggestion.supersedesId ? <> · {t("replaces a memory already kept")}</> : null}
+          {suggestion.tainted ? (
+            <> · {t("drawn from content written outside the organization")}</>
+          ) : null}
+        </p>
+      ) : (
+        <p className="text-foreground-muted text-xs">
+          {t("{0, plural, one {Drawn from # rating} other {Drawn from # ratings}}", ratings)} ·{" "}
+          {t("{0, plural, one {# person} other {# people}}", people)}
+          {evidence ? (
+            <> · {t("last rated {0}", formatUnixDateTimeMedium(evidence.lastRatedAt))}</>
+          ) : null}
+        </p>
+      )}
+
+      {learned && evidence?.reason ? (
+        <p className="text-foreground-muted text-xs">{evidence.reason}</p>
+      ) : null}
 
       {quotes.length > 0 && (
-        <ul aria-label={t("What people wrote")} className="flex flex-col gap-1">
+        <ul
+          aria-label={learned ? t("What taught it") : t("What people wrote")}
+          className="flex flex-col gap-1"
+        >
           {quotes.map((quote) => (
             <li
               key={quote}

@@ -82,8 +82,41 @@ func (t *rememberTool) Preview(
 	if err != nil {
 		return nil, err
 	}
+	if plan.Replaced == nil {
+		return toolpreview.Build(summary, change), nil
+	}
 
-	return toolpreview.Build(summary, change), nil
+	replaced := "\"" + stringutils.Ellipsize(plan.Replaced.Content, memoryLabelRunes) + "\""
+	if plan.Held {
+		return toolpreview.Build(
+			summary+" It would replace "+replaced+", which is shared beyond this person, so "+
+				"it would wait for someone allowed to change that memory.",
+			change,
+		), nil
+	}
+
+	retire := agentmemoryservice.StatusChange{
+		Status:   agent.MemoryStatusRetired,
+		ByUserID: agentmemoryservice.StatusActor(params.Actor),
+		At:       timeutils.NowUnix(),
+	}
+	archived, err := planArchive(
+		memoryRecord(plan.Replaced),
+		plan.Replaced,
+		func(retired *agent.Memory) error {
+			return agentmemoryservice.PlanStatus(retired, retire)
+		},
+		toolpreview.Only(retiredMemoryFields...),
+		toolpreview.Volatile("retiredAt"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return archived.preview(
+		summary+" It would replace "+replaced+", which would be retired.",
+		change,
+	), nil
 }
 
 func (t *forgetMemoryTool) Preview(

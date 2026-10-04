@@ -411,6 +411,7 @@ What is kept:
 | `agent_proposals` | `tainted` (the run had read outside content when the write was decided), `taint`, `egress_class`, `held_by` |
 | `assistant_threads` | `taint`, `tainted_at` |
 | `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it |
+| `agent_reflections` | `tainted`, for a look back over a window that read outside content (or whose taint is unknown); every lesson it keeps is a suggestion and carries the window's taint |
 | `shipment_comments` | `metadata.tainted`, for a note `add_shipment_comment` wrote on its own after outside content |
 
 The proposal executor refuses a tainted proposal whose class leaves the
@@ -454,8 +455,10 @@ The records a turn is about come first; the ones they name follow in the order
 a person reads the record. The links are batched reads
 (`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
 to 500 active, unexpired candidates are then read, subject rows first, and
-ordered by `services.MemoryRanker` — recency and use count until retrieval can
-rank by meaning.
+ordered by `services.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
+recency and use count (`agentmemoryservice.RankByRecencyAndUse`) with the
+memories nearest the turn's query vector, and falls back to recency and use
+alone when the organization is not indexed or the search fails.
 
 **What the prompt carries.** `OpenTurn` fits the candidates to the agent's
 `memory_token_budget` (6,000 tokens by default, 1,000–16,000; estimated with
@@ -464,11 +467,14 @@ what is left:
 
 1. memories about a record the turn is about;
 2. memories about a record it names;
-3. organization-wide Instructions;
+3. organization-wide Instructions and Procedures (`MemoryKind.Followed`);
 4. memories about a tool loaded this turn (every held tool when the turn
    disclosed none);
 5. everything else — Facts, and Corrections to tools not loaded — in the
    ranker's order.
+
+Within the first four tiers an Instruction comes before a Correction, a
+Correction before a Procedure and a Procedure before a Fact (`MemoryKind.Rank`).
 
 A memory over 1,200 characters is shown cut short with its id, and the prompt
 tells the model to read the rest with `recall_memory`. Only what fits is counted
@@ -504,6 +510,97 @@ Control and can be restored. It is on no starter template: what a memory says
 is what every later turn is told, an Instruction a person recorded among it, so
 a person retires one in AI Control rather than an agent dropping it on its own
 judgement. An organization adds the tool to an agent it builds.
+
+**Replacing.** `remember` takes `replacesMemoryId` (an id from `recall_memory`),
+and so does a lesson a look back keeps. The new memory inherits the old one's
+readers, subject and tool, and records `supersedes_id`. When it is saved active,
+the repository retires the old memory in the same transaction (only an Active or
+Paused one) and writes an `audit_entries` row naming its replacement. An agent
+replaces freely only the person's own memory or its own Agent memory
+(`agentmemoryservice.ReplacedFreely`); any other replacement is held as a
+suggestion, and approving it retires the old memory then. A retried write that
+finds its replacement already kept returns it.
+
+### Learning from the work
+
+When a conversation goes quiet or a background run settles, its agent looks back
+over what it just did and keeps what the work taught: how to do a task here (a
+Procedure), a Fact it had to work out, or what a person asked for from now on
+(an Instruction, never from a run with nobody in it). Corrections stay with
+`remember` and `RecordCorrection`. `remember` stays the tool
+for what a person says; the prompt tells the agent to save only that, because
+what it worked out for itself is kept for it by the look back. Both write
+through `AgentMemoryService.Remember`, so dedupe, replacement, taint and the
+saving mode apply to both alike. Nothing here changes `RecordCorrection` or the
+nightly feedback job.
+
+**When.** `FinishTurnActivity` cues the conversation's look back
+(`AgentReflectionScheduler.AfterTurn`) once a turn is saved, and
+`CompleteRunActivity` cues a run's (`AfterRun`). Both cues are activity code, so
+no `GetVersion` gate. A conversation has one `AgentThreadReflectionWorkflow`
+(id `agent-reflection:thread:<threadId>`), started or signalled with
+`turn-finished` by signal-with-start. It waits until no turn has finished for
+`QuietPeriod` (10 minutes), but never longer than `LongestWait` (an hour) from
+the first turn it heard, then looks back once over the messages after the last
+look back's `through_sequence`. A turn that finished while it looked starts
+another round; after `RoundsPerRun` (20) rounds it continues as new. A run has
+one `AgentRunReflectionWorkflow` (id `agent-reflection:run:<runId>`), started
+with `ALLOW_DUPLICATE_FAILED_ONLY`. Both run on the agent background queue at
+`PriorityBackground`, fair by organization, registered in the `agentjobs`
+background registry.
+
+**Whether.** `PrepareThread`/`PrepareRun` claim an `agent_reflections` row
+(unique per conversation window and per run, so a retried start reads the same
+row; a Failed row is claimed again) and skip without calling a model when:
+
+| Skip reason | When |
+|---|---|
+| `LearningOff` | the organization's agent control or the agent's definition has `learning_off`, or the control is in shadow mode |
+| `AgentUnavailable` | the agent's definition is missing or disabled |
+| `NothingToRead` | the window holds no new messages (a run that has not settled is not claimed at all) |
+| `NoSignal` | `ReadSignals` finds nothing worth a look |
+| `OverBudget` | the organization's AI budget refuses the call |
+
+`ReadSignals` is cheap and reads only the window: a tool that failed, or failed
+then worked (refusals — `denied`, `duplicate`, `over_budget` — are not lessons);
+a person correcting the agent after it answered; a person saying how they want
+it done from now on; a proposal modified or rejected; a reply rated unhelpful;
+and a task of six or more successful tool calls. A run with nobody in it reads
+no person signals.
+
+**What it asks.** A ready plan carries one structured completion
+(`FeatureAgentReflection`, at most 2,500 output tokens, strict JSON schema of at
+most five lessons of at most 1,200 characters each): the transcript (cut to the
+last 60,000 characters), the decisions and feedback, the signals, and the
+memories the agent already holds for those records, so it refreshes or replaces
+rather than repeats. The model call is its own activity
+(`ReflectionModelActivity`, `modelcall.RetryPolicy`); a failure marks the row
+Failed with its message.
+
+**What it keeps.** `Finish` reads the reply and saves each lesson through
+`Remember` with source `Reflection`, `reflection_id`, the signals as evidence,
+and the agent as its actor:
+
+- a lesson is refused, with the reason on the row, when it names a record or
+  a tool the work did not touch, replaces a memory the look back was not shown,
+  or is an Instruction from a run with nobody in it;
+- a conversation's lesson is kept for the person (`User`), the agent
+  (`Agent`), or offered to the team or organization; a person without
+  agent-memory create permission has shared lessons kept for themselves alone;
+- team and organization lessons are always suggestions, and a run with nobody
+  in it keeps its lessons at `Agent` scope and suggests organization ones;
+- a window that read outside content (or whose taint is unknown) only ever
+  suggests;
+- otherwise the person's saving mode decides: Automatic keeps, Ask first
+  suggests.
+
+The row records each change (Saved, Suggested, Refreshed, Refused), the
+model's notes and token use. A conversation's kept lessons are attached to the
+reply they followed (`ConversationRepository.AddSavedMemories`) and announced on
+the realtime resource `agent_memory`, so the Desk shows "learned" notes the
+person can keep or undo. AI Control's Memory tab lists the look backs
+(`agentReflections`) and queues the Agent and Organization suggestions for an
+administrator.
 
 ### Taint is data
 

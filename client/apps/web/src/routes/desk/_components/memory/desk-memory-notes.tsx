@@ -26,6 +26,7 @@ export type MemoryCard = Pick<
   MemoryNote,
   | "id"
   | "content"
+  | "kind"
   | "scope"
   | "roleId"
   | "roleName"
@@ -41,6 +42,7 @@ function cardOf(memory: DeskMemory): MemoryCard {
   return {
     id: memory.id,
     content: memory.content,
+    kind: memory.kind,
     scope: memory.scope,
     roleId: memory.roleId ?? null,
     roleName: memory.roleName,
@@ -202,6 +204,9 @@ function audienceOf(card: Pick<MemoryCard, "scope" | "roleId">): DeskMemoryAudie
   if (card.scope === "Role") {
     return { scope: "Role", roleId: card.roleId ?? null };
   }
+  if (card.scope === "Agent") {
+    return { scope: "Agent", roleId: null };
+  }
   return { scope: card.scope === "Organization" ? "Organization" : "User", roleId: null };
 }
 
@@ -221,6 +226,8 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
   const [scopeName, setScopeName] = useState(() => scopeLabel(card, t));
   const [version, setVersion] = useState(card.version);
   const area = useRef<HTMLTextAreaElement>(null);
+  const learned = card.source === "Reflection";
+  const procedure = card.kind === "Procedure";
 
   const settings = useQuery({
     queryKey: [DESK_MEMORIES_KEY, "settings"],
@@ -321,7 +328,15 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
           <span className="dk-mem-ic">
             <DeskIcon name="memory" size={12} stroke={2} />
           </span>
-          <b>{asking ? t("Remember this for next time?") : t("Edit memory")}</b>
+          <b>
+            {asking
+              ? learned
+                ? procedure
+                  ? t("Learned the steps that worked. Keep them for next time?")
+                  : t("Learned something from this conversation. Keep it?")
+                : t("Remember this for next time?")
+              : t("Edit memory")}
+          </b>
         </div>
         <textarea
           ref={area}
@@ -388,7 +403,13 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
         <DeskIcon name="memory" size={12} stroke={2} />
       </span>
       <span className="dk-mem-tx">
-        <em>{t("Saved to memory")}</em>
+        <em>
+          {learned
+            ? procedure
+              ? t("Learned the steps that worked")
+              : t("Learned from this conversation")
+            : t("Saved to memory")}
+        </em>
         {text}
       </span>
       <span className="dk-mem-scope">{scopeName}</span>

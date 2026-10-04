@@ -284,6 +284,53 @@ func (r *repository) UpdateThreadContext(
 	})
 }
 
+func (r *repository) AddSavedMemories(
+	ctx context.Context,
+	req repositories.AddSavedMemoriesRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(req.Memories) == 0 {
+			return nil
+		}
+
+		cols := buncolgen.MessageColumns
+		message := new(conversation.Message)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(message).
+			Column(cols.ID.Bare(), cols.SavedMemories.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.MessageID).
+					Where(cols.ThreadID.Eq(), req.ThreadID)
+			}).
+			For("UPDATE").
+			Scan(ctx); err != nil {
+			return dberror.HandleNotFoundError(err, "Message")
+		}
+
+		saved := conversation.MergeSavedMemories(message.SavedMemories, req.Memories)
+		if len(saved) == len(message.SavedMemories) {
+			return nil
+		}
+
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*conversation.Message)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.MessageScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.MessageID)
+			}).
+			Set(cols.SavedMemories.Set(), saved).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("add saved memories to a message: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "Message", req.MessageID.String())
+	})
+}
+
 func (r *repository) DeleteThread(
 	ctx context.Context,
 	req repositories.GetThreadRequest,
@@ -345,6 +392,10 @@ func (r *repository) ListMessages(
 
 		if req.BeforeSequence != nil {
 			query = query.Where(cols.Sequence.Lt(), *req.BeforeSequence)
+		}
+
+		if req.AfterSequence != nil {
+			query = query.Where(cols.Sequence.Gt(), *req.AfterSequence)
 		}
 
 		if len(req.ExcludeKinds) > 0 {

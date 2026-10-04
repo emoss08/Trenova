@@ -52,6 +52,8 @@ export function memorySource(memory: SourceOf, t: TranslateFn): string {
       return t("A decision on a change");
     case "Feedback":
       return t("Ratings of an agent's work");
+    case "Reflection":
+      return t("An agent looking back over its work");
     default:
       return t("A conversation");
   }
@@ -100,6 +102,8 @@ export function scopeLabel(
       return t("Just you");
     case "Role":
       return memory.roleName || t("Your team");
+    case "Agent":
+      return t("Everyone using this agent");
     default:
       return t("Organization");
   }

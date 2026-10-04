@@ -47,6 +47,7 @@ type ListMessagesRequest struct {
 	// order, so a page cut here never repeats or skips a message however
 	// many turns land while the reader scrolls.
 	BeforeSequence *int
+	AfterSequence  *int
 	// ExcludeKinds leaves messages of these kinds out, before Limit counts:
 	// the history replayed to the model leaves out another agent's steps, so
 	// they neither reach the model nor crowd its window.
@@ -59,6 +60,13 @@ type ListMessagesRequest struct {
 	// after the stretch it stands in for. Limit then counts from there. A
 	// conversation never compacted is read as it would be without it.
 	SinceCompaction bool
+}
+
+type AddSavedMemoriesRequest struct {
+	MessageID  pulid.ID
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Memories   []conversation.SavedMemory
 }
 
 // UpdateThreadContextRequest keeps how full a conversation's context is, and
@@ -210,4 +218,5 @@ type ConversationRepository interface {
 	// whether it compacts itself. It leaves the thread's version alone: it
 	// is the system's bookkeeping, not an edit a person could conflict with.
 	UpdateThreadContext(ctx context.Context, req UpdateThreadContextRequest) error
+	AddSavedMemories(ctx context.Context, req AddSavedMemoriesRequest) error
 }

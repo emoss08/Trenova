@@ -412,12 +412,25 @@ Keywords: trace id, tracing, OpenTelemetry, Tempo, Jaeger, span
 Keywords: agent memory, standing instruction, fact, correction, retire memory
 1. Open [AI control](/admin/agent-control) and select **Memory** in the rail.
 2. Select **New memory**.
-3. Choose the **Kind** (**Instruction**, **Fact** or **Correction**), write the **Memory**, and
-   optionally set **Until**.
+3. Choose the **Kind** (**Instruction**, **Fact**, **Correction** or **Procedure**), write the
+   **Memory**, and optionally set **Until**.
 4. To make it about one record, pick a **Kind of record** and the record; leave it empty for
    something every agent should know. Then select **Save**.
 5. To stop agents reading an entry, right-click it and choose **Retire**; **Restore** brings it
    back.
+
+### Let agents learn from their work
+Keywords: self-improving agents, learning, reflection, look back, lessons, procedures, what the agent learned
+1. Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, turn
+   **Learn from their work** on or off for every agent. It is on unless someone turned it off.
+2. To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on
+   or off, then select **Save**.
+3. Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked
+   back over its work: what made it look (a tool that worked after failing, a person correcting
+   it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it
+   kept, offered or turned down, with the reason.
+4. A lesson shared beyond one person waits under **Suggested memories**. Select
+   **Review and approve** to edit and keep it, or **Dismiss**.
 
 ## Notes
 An embedding provider turns memories, documents and mail into vectors so agents can find them by
@@ -443,6 +456,16 @@ run wrote) never sends anything to a customer, driver or outside address, or mov
 its own: that change waits for a person's approval whatever tier the tool has, and the
 proposal is marked as having read outside content. A suggested memory drawn from ratings of
 one agent is kept for that agent alone once approved.
+
+An agent looks back over a conversation once it has been quiet for ten minutes (or after an hour
+of steady back and forth), and over a background run once every proposal it raised is decided.
+It does so only when something in the work is worth learning from, so most conversations cost
+nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no
+record holds, or, from a person's own words, an **Instruction** that was not already saved. It is
+kept for the person in the conversation unless they may create agent memories, follows their
+saving preference, and replaces an older memory rather than contradicting it. A lesson for a team
+or the whole organization, and anything learned from work that read outside content, is only
+ever offered. Retiring or editing a learned memory works like any other.
 
 A memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's
 **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is

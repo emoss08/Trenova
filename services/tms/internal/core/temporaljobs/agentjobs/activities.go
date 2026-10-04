@@ -69,8 +69,9 @@ type ActivitiesParams struct {
 	Conversations repositories.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
-	Watchtower serviceports.WatchtowerProjector `optional:"true"`
-	Schedules  *DefinitionSchedules
+	Watchtower  serviceports.WatchtowerProjector      `optional:"true"`
+	Reflections serviceports.AgentReflectionScheduler `optional:"true"`
+	Schedules   *DefinitionSchedules
 }
 
 type Activities struct {
@@ -98,6 +99,7 @@ type Activities struct {
 	subjects      serviceports.AgentSubjectDescriber
 	activity      serviceports.AgentActivityPublisher
 	watchtower    serviceports.WatchtowerProjector
+	reflections   serviceports.AgentReflectionScheduler
 	schedules     *DefinitionSchedules
 }
 
@@ -132,6 +134,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		subjects:      p.Subjects,
 		activity:      p.Activity,
 		watchtower:    p.Watchtower,
+		reflections:   p.Reflections,
 		schedules:     p.Schedules,
 	}
 }
@@ -528,6 +531,12 @@ func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRun
 	}
 
 	a.projectFailedRun(ctx, input.TenantInfo, completed)
+	if a.reflections != nil {
+		a.reflections.AfterRun(ctx, &serviceports.ReflectOnRunRequest{
+			TenantInfo: input.TenantInfo,
+			RunID:      input.RunID,
+		})
+	}
 
 	return nil
 }

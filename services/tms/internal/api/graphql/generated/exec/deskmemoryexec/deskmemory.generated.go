@@ -45,9 +45,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "scope",
+				Name:     "kind",
 				NonNull:  true,
 				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskMemory)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryKind),
+			},
+			{
+				Name:     "scope",
+				NonNull:  true,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Scope, nil
@@ -76,7 +86,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Status, nil
@@ -86,7 +96,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Source, nil
@@ -106,7 +116,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "useCount",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.UseCount, nil
@@ -115,7 +125,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastUsedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.LastUsedAt, nil
@@ -125,7 +135,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.CreatedAt, nil
@@ -135,7 +145,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Version, nil
@@ -145,7 +155,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "editable",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Editable, nil
@@ -157,7 +167,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "scope",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryCount)
 					return obj.Scope, nil
@@ -176,7 +186,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryCount)
 					return obj.Count, nil
@@ -208,7 +218,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "all",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryPage)
 					return obj.All, nil
@@ -251,7 +261,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "writable",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryRole)
 					return obj.Writable, nil
@@ -263,7 +273,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "savingMode",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemorySettings)
 					return obj.SavingMode, nil
@@ -284,7 +294,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "canShareWithOrganization",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemorySettings)
 					return obj.CanShareWithOrganization, nil
@@ -445,13 +455,14 @@ type resolverQuery interface {
 var (
 	errNoChild0 = errors.New("field of type ID does not have child fields")
 	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type AgentMemoryScope does not have child fields")
-	errNoChild3 = errors.New("field of type AgentMemoryStatus does not have child fields")
-	errNoChild4 = errors.New("field of type AgentMemorySource does not have child fields")
-	errNoChild5 = errors.New("field of type Int does not have child fields")
-	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild7 = errors.New("field of type Boolean does not have child fields")
-	errNoChild8 = errors.New("field of type AgentMemorySavingMode does not have child fields")
+	errNoChild2 = errors.New("field of type AgentMemoryKind does not have child fields")
+	errNoChild3 = errors.New("field of type AgentMemoryScope does not have child fields")
+	errNoChild4 = errors.New("field of type AgentMemoryStatus does not have child fields")
+	errNoChild5 = errors.New("field of type AgentMemorySource does not have child fields")
+	errNoChild6 = errors.New("field of type Int does not have child fields")
+	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild8 = errors.New("field of type Boolean does not have child fields")
+	errNoChild9 = errors.New("field of type AgentMemorySavingMode does not have child fields")
 )
 
 func field_Mutation_createDeskMemory_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -874,6 +885,14 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	}
 	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.MemoryKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNAgentMemorySavingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemorySavingMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.MemorySavingMode) graphql.Marshaler {

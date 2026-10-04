@@ -52,6 +52,7 @@ func deskMemoryToModel(memory *services.DeskMemory) *gqlmodel.DeskMemory {
 	out := &gqlmodel.DeskMemory{
 		ID:          entity.ID.String(),
 		Content:     entity.Content,
+		Kind:        entity.Kind,
 		Scope:       entity.Scope,
 		RoleID:      idString(entity.RoleID),
 		RoleName:    memory.RoleName,

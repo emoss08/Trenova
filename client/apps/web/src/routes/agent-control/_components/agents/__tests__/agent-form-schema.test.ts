@@ -354,6 +354,7 @@ function agentRow(): AgentDefinitionRow {
     toolDailyLimits: {},
     simulationMode: false,
     memoryTokenBudget: null,
+    learningOff: false,
     contextProviders: [],
     outputMode: "Conversational",
     preferredProviderId: "",

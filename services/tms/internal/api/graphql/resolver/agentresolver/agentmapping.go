@@ -111,6 +111,39 @@ func agentMemoryConnectionToModel(
 	}, nil
 }
 
+func agentReflectionColumns(ctx context.Context, nodePathPrefix string) []string {
+	selection := projection.Select(
+		projection.AgentReflectionSpec,
+		func(path string) bool {
+			return graphql.FieldRequested(ctx, path)
+		},
+		projection.SelectOptions{PathPrefix: nodePathPrefix},
+	)
+
+	return selection.Columns
+}
+
+func agentReflectionConnectionToModel(
+	result *pagination.CursorListResult[*agent.Reflection],
+) (*gqlmodel.AgentReflectionConnection, error) {
+	page, err := base.EntityCursorConnection(
+		result,
+		func(node *agent.Reflection, cursor string) *gqlmodel.AgentReflectionEdge {
+			return &gqlmodel.AgentReflectionEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AgentReflectionEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AgentReflectionConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
 // agentMemorySubject reads the optional subject pair from an input,
 // refusing half of one.
 func agentMemorySubject(

@@ -416,13 +416,13 @@ func TestRecordCorrection_SkipsACleanApprovalAndAChangeThatChangedNothing(t *tes
 func TestHumanReason(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, humanReason("approved_from_activity"))
-	assert.Empty(t, humanReason("decided_as_plan (plan apl_1)"))
-	assert.Empty(t, humanReason("   "))
+	assert.Empty(t, HumanReason("approved_from_activity"))
+	assert.Empty(t, HumanReason("decided_as_plan (plan apl_1)"))
+	assert.Empty(t, HumanReason("   "))
 	assert.Equal(
 		t,
 		"Driver asked for Fridays off",
-		humanReason("Driver asked for Fridays off (plan apl_1)"),
+		HumanReason("Driver asked for Fridays off (plan apl_1)"),
 	)
-	assert.Equal(t, "Wrong trailer", humanReason("Wrong trailer"))
+	assert.Equal(t, "Wrong trailer", HumanReason("Wrong trailer"))
 }

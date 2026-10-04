@@ -386,7 +386,9 @@ type AgentControlInput struct {
 	// Absent leaves training consent as it is. Only a signed-in person can change it.
 	AiTrainingConsent *bool `json:"aiTrainingConsent,omitempty"`
 	// Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
-	PersonMonthlyMessages  *int  `json:"personMonthlyMessages,omitempty"`
+	PersonMonthlyMessages *int `json:"personMonthlyMessages,omitempty"`
+	// Absent leaves whether agents learn from their work as it is.
+	LearningOff            *bool `json:"learningOff,omitempty"`
 	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
 	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }
@@ -598,6 +600,17 @@ type AgentReach struct {
 	// The roles granted the agent. Empty for a reader who may not read roles.
 	Roles    []*permission.Role            `json:"roles"`
 	Warnings []*services.AgentReachWarning `json:"warnings"`
+}
+
+type AgentReflectionConnection struct {
+	Edges      []*AgentReflectionEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type AgentReflectionEdge struct {
+	Node   *agent.Reflection `json:"node"`
+	Cursor string            `json:"cursor"`
 }
 
 type AgentRunConnection struct {
@@ -2048,12 +2061,15 @@ type DeskMemoriesInput struct {
 }
 
 // A memory as a person keeps it on the Desk: one of their own, their role's, or
-// the organization's. Agent-scoped memories are administered in AI Control and
-// never appear here.
+// the organization's. Agent-scoped memories are administered in AI Control; the
+// only ones a person sees here are those an agent learned in their own
+// conversations.
 type DeskMemory struct {
 	ID      string `json:"id"`
 	Content string `json:"content"`
-	// User (Just you), Role (the person's team) or Organization.
+	// Instruction, Fact, Correction or Procedure.
+	Kind agent.MemoryKind `json:"kind"`
+	// User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent.
 	Scope agent.MemoryScope `json:"scope"`
 	// The role a Role memory is kept for.
 	RoleID   *string `json:"roleId,omitempty"`

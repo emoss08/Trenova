@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentqualityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentreflectionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/agentscorecardservice"
@@ -376,6 +377,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	approvalwindow.New,
 	agentmemoryservice.NewLabeler,
 	agentmemoryservice.New,
+	agentreflectionservice.New,
 	aicorrectionservice.New,
 	extractionevalservice.New,
 	extractionevalservice.AsService,

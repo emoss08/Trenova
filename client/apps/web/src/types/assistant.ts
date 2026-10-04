@@ -293,6 +293,8 @@ export const agentDefinitionSchema = z.object({
   simulationMode: z.boolean().default(false),
   /** Tokens of recorded memory one prompt may carry; absent for the default. */
   memoryTokenBudget: z.number().int().nullish(),
+  /** The agent no longer looks back over its work to keep what it learned. */
+  learningOff: z.boolean().default(false),
   contextProviders: nullableList(contextProviderSchema),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
@@ -469,6 +471,8 @@ export const saveAgentDefinitionRequestSchema = z.object({
     )
     .nullable()
     .default(null),
+  /** The agent no longer looks back over its work to keep what it learned. */
+  learningOff: z.boolean().default(false),
   contextProviders: z.array(contextProviderSchema).default([]),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
@@ -779,12 +783,14 @@ export const providerFallbackSchema = z.object({
 export const memoryNoteSchema = z.object({
   id: z.string(),
   content: z.string(),
+  /** Instruction, Fact, Correction or Procedure. */
+  kind: z.string().optional().default(""),
   scope: z.string(),
   roleId: z.string().nullish(),
   roleName: z.string().nullish(),
   /** Active, Paused, Retired once forgotten, Suggested while an offer waits, Dismissed once turned down. */
   status: z.string(),
-  /** User, Agent, Decision or Feedback: how it was recorded. */
+  /** User, Agent, Decision, Feedback or Reflection: how it was recorded. */
   source: z.string().optional().default(""),
   sourceTitle: z.string().nullish(),
   createdAt: z.number(),

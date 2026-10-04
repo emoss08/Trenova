@@ -132,6 +132,7 @@ func memoryNote(memory *serviceports.DeskMemory) conversation.MemoryNote {
 	note := conversation.MemoryNote{
 		ID:          memory.Memory.ID,
 		Content:     memory.Memory.Content,
+		Kind:        string(memory.Memory.Kind),
 		Scope:       string(memory.Memory.Scope),
 		RoleName:    memory.RoleName,
 		Status:      string(memory.Memory.Status),

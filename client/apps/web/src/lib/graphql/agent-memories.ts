@@ -110,7 +110,11 @@ export const AGENT_MEMORY_SUGGESTIONS_KEY = "agent-memory-suggestions";
 /** The most suggestions the review list reads at once. */
 const SUGGESTION_PAGE_SIZE = 50;
 
-/** Memories drawn from feedback that wait for an administrator, newest first. */
+/**
+ * Memories that wait for an administrator, newest first: those drawn from
+ * feedback and those an agent learned that reach beyond one person. A memory
+ * offered to one person in their own conversation is theirs to decide on the Desk.
+ */
 export async function fetchAgentMemorySuggestions(options?: {
   signal?: AbortSignal;
 }): Promise<AgentMemorySuggestion[]> {
@@ -120,7 +124,10 @@ export async function fetchAgentMemorySuggestions(options?: {
     variables: {
       input: {
         first: SUGGESTION_PAGE_SIZE,
-        fieldFilters: [{ field: "status", operator: "eq", value: "Suggested" }],
+        fieldFilters: [
+          { field: "status", operator: "eq", value: "Suggested" },
+          { field: "scope", operator: "in", value: ["Agent", "Organization"] },
+        ],
         sort: [{ field: "createdAt", direction: "desc" }],
       },
       includeTotalCount: false,

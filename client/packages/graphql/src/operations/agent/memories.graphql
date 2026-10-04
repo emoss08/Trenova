@@ -11,8 +11,12 @@ fragment AgentMemoryTableRowFields on AgentMemory {
   toolName
   content
   agentDefinitionId
+  tainted
   sourceRunId
   sourceProposalId
+  sourceThreadId
+  reflectionId
+  supersedesId
   createdByUserId
   retiredByUserId
   retiredAt
@@ -29,6 +33,7 @@ fragment AgentMemoryTableRowFields on AgentMemory {
     quotes
     firstRatedAt
     lastRatedAt
+    signals
   }
   version
   createdAt
@@ -90,5 +95,54 @@ mutation ApproveAgentMemorySuggestion($id: ID!, $input: ApproveAgentMemorySugges
 mutation DismissAgentMemorySuggestion($id: ID!, $version: Int!) {
   dismissAgentMemorySuggestion(id: $id, version: $version) {
     ...AgentMemoryTableRowFields
+  }
+}
+
+fragment AgentReflectionRowFields on AgentReflection {
+  id
+  agentDefinitionId
+  subjectType
+  threadId
+  runId
+  userId
+  fromSequence
+  throughSequence
+  status
+  skipReason
+  signals {
+    kind
+    count
+    detail
+  }
+  changes {
+    action
+    memoryId
+    supersedesId
+    kind
+    scope
+    content
+    reason
+  }
+  notes
+  tainted
+  model
+  inputTokens
+  outputTokens
+  errorMessage
+  finishedAt
+  createdAt
+}
+
+query AgentReflections($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  agentReflections(input: $input) {
+    edges {
+      node {
+        ...AgentReflectionRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
   }
 }

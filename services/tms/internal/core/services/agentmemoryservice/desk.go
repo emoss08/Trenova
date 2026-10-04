@@ -195,10 +195,10 @@ func (s *Service) person(ctx context.Context, actor *services.DeskMemoryActor) (
 // conversation it was offered in.
 func (p *deskPerson) sees(memory *agent.Memory) bool {
 	if memory.Scope == agent.MemoryScopeAgent {
-		return false
+		return memory.Source == agent.MemorySourceReflection && p.offeredTo(memory)
 	}
 	if memory.Status.IsSuggestion() {
-		return memory.Source == agent.MemorySourceAgent && p.offeredTo(memory)
+		return memory.Source.OfferedByAgent() && p.offeredTo(memory)
 	}
 
 	return p.reader.Reads(memory)
@@ -220,7 +220,7 @@ func (p *deskPerson) mayChange(memory *agent.Memory) bool {
 		return memory.OwnerUserID != nil && *memory.OwnerUserID == p.userID
 	case agent.MemoryScopeRole:
 		return memory.RoleID != nil && p.holds(*memory.RoleID) && p.MayUpdateShared
-	case agent.MemoryScopeOrganization:
+	case agent.MemoryScopeOrganization, agent.MemoryScopeAgent:
 		return p.MayUpdateShared
 	default:
 		return false
@@ -250,6 +250,14 @@ func (p *deskPerson) mayKeepFor(scope agent.MemoryScope, roleID pulid.ID) error 
 		if !p.MayCreateShared {
 			return errortypes.NewAuthorizationError(
 				"Keeping a memory for the whole organization needs permission to create agent memories",
+			)
+		}
+
+		return nil
+	case agent.MemoryScopeAgent:
+		if !p.MayCreateShared {
+			return errortypes.NewAuthorizationError(
+				"Keeping a memory for everyone who uses this agent needs permission to create agent memories",
 			)
 		}
 
@@ -541,6 +549,13 @@ func (s *Service) ReviseDesk(
 		roleID = *current.RoleID
 	}
 	if req.Scope != "" && (req.Scope != current.Scope || req.RoleID != roleID) {
+		if req.Scope == agent.MemoryScopeAgent {
+			return nil, errortypes.NewValidationError(
+				"scope",
+				errortypes.ErrInvalid,
+				"Keep a memory for yourself, a role you hold or the organization",
+			)
+		}
 		if err = person.mayKeepFor(req.Scope, req.RoleID); err != nil {
 			return nil, err
 		}
@@ -651,7 +666,7 @@ func (s *Service) offered(
 	if err != nil {
 		return nil, err
 	}
-	if current.Source != agent.MemorySourceAgent || !person.offeredTo(current) {
+	if !current.Source.OfferedByAgent() || !person.offeredTo(current) {
 		return nil, errortypes.NewNotFoundError("Memory not found")
 	}
 	waiting := current.Status == agent.MemoryStatusSuggested ||
@@ -683,7 +698,17 @@ func (s *Service) ConfirmDesk(
 	if scope == "" {
 		scope = current.Scope
 	}
+	if scope == agent.MemoryScopeAgent && current.Scope != agent.MemoryScopeAgent {
+		return nil, errortypes.NewValidationError(
+			"scope",
+			errortypes.ErrInvalid,
+			"Keep a memory for yourself, a role you hold or the organization",
+		)
+	}
 	if err = person.mayKeepFor(scope, req.RoleID); err != nil {
+		return nil, err
+	}
+	if err = s.mayReplace(ctx, person, current); err != nil {
 		return nil, err
 	}
 
@@ -708,8 +733,38 @@ func (s *Service) ConfirmDesk(
 	s.logChange(confirmed, jsonutils.MustToJSON(current), person.Actor, permission.OpUpdate,
 		"Suggested agent memory saved from the conversation")
 	s.queueForRetrieval(ctx, confirmed)
+	s.recordReplaced(ctx, confirmed, person.Actor)
 
 	return s.deskOne(ctx, person, confirmed.ID)
+}
+
+func (s *Service) mayReplace(ctx context.Context, person *deskPerson, offered *agent.Memory) error {
+	if !offered.Replaces() {
+		return nil
+	}
+
+	replaced, err := s.repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+		ID:         *offered.SupersedesID,
+		TenantInfo: person.tenant,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil
+		}
+
+		return err
+	}
+	if !Replaceable(replaced.Status) {
+		return nil
+	}
+	shared := replaced.Scope == agent.MemoryScopeAgent && person.MayUpdateShared
+	if !shared && (!person.sees(replaced) || !person.mayChange(replaced)) {
+		return errortypes.NewAuthorizationError(
+			"This replaces a memory your team or organization shares; saving it needs permission to update agent memories",
+		)
+	}
+
+	return nil
 }
 
 func (s *Service) DismissDesk(

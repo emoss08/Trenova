@@ -56,6 +56,8 @@ var AgentProposalSpec TypeSpec
 
 var AgentQualityControlSpec TypeSpec
 
+var AgentReflectionSpec TypeSpec
+
 var AgentRunSpec TypeSpec
 
 var AgentRunEventSpec TypeSpec
@@ -389,8 +391,6 @@ var RateMatrixSpec TypeSpec
 var RateQuoteSpec TypeSpec
 
 var RateZoneSpec TypeSpec
-
-var RecentDecisionSpec TypeSpec
 
 var RecurringDeductionSpec TypeSpec
 
@@ -2498,6 +2498,10 @@ func init() {
 				FieldMapKey: "personMonthlyMessages",
 			},
 			{
+				Name:        "learningOff",
+				FieldMapKey: "learningOff",
+			},
+			{
 				Name:    "billingAgentEnabled",
 				Special: "billingAgentEnabled",
 			},
@@ -2738,6 +2742,10 @@ func init() {
 			{
 				Name:        "memoryTokenBudget",
 				FieldMapKey: "memoryTokenBudget",
+			},
+			{
+				Name:        "learningOff",
+				FieldMapKey: "learningOff",
 			},
 			{
 				Name:        "contextProviders",
@@ -3237,6 +3245,14 @@ func init() {
 				FieldMapKey: "scope",
 			},
 			{
+				Name:        "ownerUserId",
+				FieldMapKey: "ownerUserId",
+			},
+			{
+				Name:        "roleId",
+				FieldMapKey: "roleId",
+			},
+			{
 				Name:        "tainted",
 				FieldMapKey: "tainted",
 			},
@@ -3251,6 +3267,18 @@ func init() {
 			{
 				Name:        "sourceProposalId",
 				FieldMapKey: "sourceProposalId",
+			},
+			{
+				Name:        "sourceThreadId",
+				FieldMapKey: "sourceThreadId",
+			},
+			{
+				Name:        "reflectionId",
+				FieldMapKey: "reflectionId",
+			},
+			{
+				Name:        "supersedesId",
+				FieldMapKey: "supersedesId",
 			},
 			{
 				Name:        "createdByUserId",
@@ -3568,6 +3596,113 @@ func init() {
 			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentReflectionSpec = TypeSpec{
+		TypeName: "AgentReflection",
+		FieldMap: buncolgen.ReflectionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "threadId",
+				FieldMapKey: "threadId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "fromSequence",
+				FieldMapKey: "fromSequence",
+			},
+			{
+				Name:        "throughSequence",
+				FieldMapKey: "throughSequence",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "skipReason",
+				FieldMapKey: "skipReason",
+			},
+			{
+				Name:        "signals",
+				FieldMapKey: "signals",
+			},
+			{
+				Name:        "changes",
+				FieldMapKey: "changes",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "tainted",
+				FieldMapKey: "tainted",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:        "inputTokens",
+				FieldMapKey: "inputTokens",
+			},
+			{
+				Name:        "outputTokens",
+				FieldMapKey: "outputTokens",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "finishedAt",
+				FieldMapKey: "finishedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
 			},
 			{
 				Name:        "updatedAt",
@@ -18805,49 +18940,6 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
-			},
-		},
-	}
-
-	RecentDecisionSpec = TypeSpec{
-		TypeName: "RecentDecision",
-		FieldMap: buncolgen.AgentDecisionFieldMap,
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:        "id",
-				FieldMapKey: "id",
-			},
-			{
-				Name:        "decision",
-				FieldMapKey: "decision",
-			},
-			{
-				Name:        "reasonCode",
-				FieldMapKey: "reasonCode",
-			},
-			{
-				Name:        "note",
-				FieldMapKey: "note",
-			},
-			{
-				Name:        "decidedByUserId",
-				FieldMapKey: "decidedByUserId",
-			},
-			{
-				Name:    "decidedByName",
-				Special: "decidedByName",
-			},
-			{
-				Name:        "decidedAt",
-				FieldMapKey: "createdAt",
-			},
-			{
-				Name:        "proposal",
-				FieldMapKey: "proposalId",
 			},
 		},
 	}

@@ -160,6 +160,7 @@ type Resolver struct {
 	agentProposalField                 *agentresolver.AgentProposalFieldResolver
 	agentQualityAgent                  *agentqualityresolver.AgentQualityAgentResolver
 	agentQualityControl                *agentqualityresolver.AgentQualityControlResolver
+	agentReflection                    *agentresolver.AgentReflectionResolver
 	agentRun                           *agentRunResolver
 	agentRunEvent                      *agentruneventresolver.AgentRunEventResolver
 	agentSafety                        *agentsafetyresolver.AgentSafetyResolver
@@ -378,6 +379,7 @@ func FromServices(s *Services) *Resolver {
 		AgentProposalService:      s.AgentProposalService,
 		AgentPlanService:          s.AgentPlanService,
 		AgentMemoryService:        s.AgentMemoryService,
+		AgentReflectionService:    s.AgentReflectionService,
 		AgentEvaluationService:    s.AgentEvaluationService,
 		AgentExceptionService:     s.AgentExceptionService,
 		AgentDecisionService:      s.AgentDecisionService,
@@ -987,6 +989,7 @@ func FromServices(s *Services) *Resolver {
 		agentProposalField:  &agentresolver.AgentProposalFieldResolver{Deps: agentDeps},
 		agentQualityAgent:   &agentqualityresolver.AgentQualityAgentResolver{Deps: agentqualityDeps},
 		agentQualityControl: &agentqualityresolver.AgentQualityControlResolver{Deps: agentqualityDeps},
+		agentReflection:     &agentresolver.AgentReflectionResolver{Deps: agentDeps},
 		agentRun: &agentRunResolver{
 			agentAgentRun:     &agentAgentRun{Deps: agentDeps},
 			decisionsAgentRun: &decisionsAgentRun{Deps: decisionsDeps},
@@ -1514,6 +1517,10 @@ func (r *Resolver) AgentQualityAgent() generated.AgentQualityAgentResolver {
 
 func (r *Resolver) AgentQualityControl() generated.AgentQualityControlResolver {
 	return r.agentQualityControl
+}
+
+func (r *Resolver) AgentReflection() generated.AgentReflectionResolver {
+	return r.agentReflection
 }
 
 func (r *Resolver) AgentRun() generated.AgentRunResolver {

@@ -81,6 +81,7 @@ type FindActiveAgentMemoryRequest struct {
 	OwnerUserID       pulid.ID
 	RoleID            pulid.ID
 	Tainted           bool
+	IncludeSuggested  bool
 }
 
 type SetAgentMemoryStatusRequest struct {

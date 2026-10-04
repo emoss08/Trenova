@@ -2,7 +2,7 @@ package conversation
 
 import (
 	"context"
-	"github.com/shopspring/decimal"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -141,12 +142,28 @@ type SavedMemory struct {
 	Pending bool     `json:"pending"`
 }
 
+func MergeSavedMemories(current, added []SavedMemory) []SavedMemory {
+	merged := make([]SavedMemory, 0, len(current)+len(added))
+	merged = append(merged, current...)
+	for _, memory := range added {
+		if memory.ID.IsNil() || slices.ContainsFunc(merged, func(kept SavedMemory) bool {
+			return kept.ID == memory.ID
+		}) {
+			continue
+		}
+		merged = append(merged, memory)
+	}
+
+	return merged
+}
+
 // MemoryNote is a memory a reply used or saved, as its reader sees it: what
 // it says, who it is kept for, where it came from, and whether the reader may
 // change it.
 type MemoryNote struct {
 	ID          pulid.ID `json:"id"`
 	Content     string   `json:"content"`
+	Kind        string   `json:"kind"`
 	Scope       string   `json:"scope"`
 	RoleID      pulid.ID `json:"roleId,omitempty"`
 	RoleName    string   `json:"roleName,omitempty"`

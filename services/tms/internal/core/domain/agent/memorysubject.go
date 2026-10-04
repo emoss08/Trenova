@@ -96,6 +96,25 @@ type MemoryRecordRef struct {
 	ID   pulid.ID
 }
 
+var memoryRecordPrefixes = map[string]MemoryRecordKind{
+	"cus_": MemoryRecordCustomer,
+	"loc_": MemoryRecordLocation,
+	"wrk_": MemoryRecordWorker,
+	"car_": MemoryRecordCarrier,
+	"shp_": MemoryRecordShipment,
+	"sm_":  MemoryRecordShipmentMove,
+	"inv_": MemoryRecordInvoice,
+}
+
+func MemoryRecordKindOfID(id pulid.ID) (MemoryRecordKind, bool) {
+	if !pulid.LooksLike(id.String()) {
+		return "", false
+	}
+	kind, ok := memoryRecordPrefixes[id.Prefix()]
+
+	return kind, ok
+}
+
 func MemoryRecordRefOf(kind, id string) (MemoryRecordRef, bool) {
 	parsedKind, ok := ParseMemoryRecordKind(kind)
 	if !ok {
