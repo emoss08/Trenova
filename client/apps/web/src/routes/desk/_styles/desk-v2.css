@@ -15597,3 +15597,11 @@ th.dk-cb .dk-ax-cb:hover {
   padding-bottom: 0;
   padding-top: 8px;
 }
+/* a mark's popover hangs from this point, outside the reply's text, so
+   opening it never changes where the mark's line breaks */
+.dk-pop-at {
+  position: fixed;
+  width: 0;
+  height: 0;
+  z-index: 60;
+}

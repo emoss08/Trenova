@@ -1,9 +1,9 @@
 import { MarkdownLinkContext, type MarkdownLinkRenderer } from "@/components/elements/ai-markdown";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useState, type CSSProperties, type ReactNode } from "react";
 import { DeskIcon } from "../desk-icons";
-import { placePopover } from "./desk-citations";
+import { MarkPopoverLayer, useMarkPopover } from "./desk-citations";
 import { citedSources, citeLabel, siteHue, webCiteIds, type DeskWebSource } from "./web-cites";
 
 /**
@@ -47,17 +47,12 @@ export function DeskWebCite({
   live?: boolean;
 }) {
   const t = useT();
-  const [place, setPlace] = useState<{ below: boolean; shift: number } | null>(null);
-  const anchorRef = useRef<HTMLSpanElement>(null);
+  const { anchorRef, place, show, hide } = useMarkPopover(CITE_POPOVER_WIDTH);
   const list = citedSources(ids, sources);
   if (list.length === 0) {
     return <></>;
   }
   const first = list[0];
-  const show = () => {
-    if (anchorRef.current) setPlace(placePopover(anchorRef.current, CITE_POPOVER_WIDTH));
-  };
-  const hide = () => setPlace(null);
 
   return (
     <span
@@ -83,32 +78,34 @@ export function DeskWebCite({
         {list.length > 1 && <em>+{list.length - 1}</em>}
       </a>
       {place && (
-        <span
-          className={cn("dk-wc-pop", place.below && "dk-below")}
-          role="tooltip"
-          style={place.shift ? { left: `calc(50% + ${place.shift}px)` } : undefined}
-        >
-          <span className="dk-wc-in">
-            {list.map((source) => (
-              <a
-                key={source.url}
-                className="dk-wc-it"
-                href={source.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                tabIndex={-1}
-              >
-                <span className="dk-wc-d">
-                  <DeskFavicon site={source.site} size={12} />
-                  {source.site}
-                  <i>{source.age}</i>
-                </span>
-                <b>{source.title}</b>
-                {source.snippet !== "" && <span className="dk-wc-s">{source.snippet}</span>}
-              </a>
-            ))}
+        <MarkPopoverLayer place={place}>
+          <span
+            className={cn("dk-wc-pop", place.below && "dk-below")}
+            role="tooltip"
+            style={place.shift ? { left: `calc(50% + ${place.shift}px)` } : undefined}
+          >
+            <span className="dk-wc-in">
+              {list.map((source) => (
+                <a
+                  key={source.url}
+                  className="dk-wc-it"
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  tabIndex={-1}
+                >
+                  <span className="dk-wc-d">
+                    <DeskFavicon site={source.site} size={12} />
+                    {source.site}
+                    <i>{source.age}</i>
+                  </span>
+                  <b>{source.title}</b>
+                  {source.snippet !== "" && <span className="dk-wc-s">{source.snippet}</span>}
+                </a>
+              ))}
+            </span>
           </span>
-        </span>
+        </MarkPopoverLayer>
       )}
     </span>
   );

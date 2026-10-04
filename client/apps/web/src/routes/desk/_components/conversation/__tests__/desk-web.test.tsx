@@ -33,7 +33,9 @@ describe("DeskWebCite", () => {
     const { container } = render(<DeskWebCite ids={[1, 4]} sources={sources} />);
     fireEvent.mouseEnter(container.querySelector(".dk-wc-w")!);
 
-    const entries = [...container.querySelectorAll(".dk-wc-it")];
+    // The popover hangs outside the reply's text; nothing is added beside the pill.
+    expect(container.querySelector(".dk-wc-w")?.children).toHaveLength(1);
+    const entries = [...document.querySelectorAll(".dk-wc-it")];
     expect(entries.map((entry) => entry.getAttribute("href"))).toEqual([
       "https://eia.gov/page",
       "https://freightwaves.com/page",

@@ -4,7 +4,16 @@ import { MarkdownLink } from "@/components/elements/ai-markdown";
 import type { AssistantArtifact, StepRationale } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useMemo, useRef, useState, type ComponentProps } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 import type { Components } from "react-markdown";
 import { DeskIcon } from "../desk-icons";
 import { CITATION_HREF, groupCitations, type Citation, type CitationGroup } from "./citations";
@@ -24,11 +33,20 @@ const EDGE = 12;
 const POPOVER_ROOM = 230;
 const POPOVER_WIDTH = 250;
 
+/** Where a mark's popover hangs: the mark's top centre, or its bottom centre when there is no room above. */
+export type PopoverPlace = {
+  below: boolean;
+  /** How far the popover is nudged sideways to stay on screen. */
+  shift: number;
+  /** The point it hangs from, in the viewport. */
+  x: number;
+  y: number;
+  /** The Desk it is drawn in, so it keeps the Desk's tokens. */
+  root: Element;
+};
+
 /** Where a popover goes so all of it stays on screen: below when there is no room above, and nudged in from the sides. */
-export function placePopover(
-  anchor: HTMLElement,
-  width: number = POPOVER_WIDTH,
-): { below: boolean; shift: number } {
+export function placePopover(anchor: HTMLElement, width: number = POPOVER_WIDTH): PopoverPlace {
   const rect = anchor.getBoundingClientRect();
   const center = rect.left + rect.width / 2;
   const half = width / 2;
@@ -36,7 +54,56 @@ export function placePopover(
   if (center - half < EDGE) shift = EDGE - (center - half);
   else if (center + half > window.innerWidth - EDGE)
     shift = window.innerWidth - EDGE - (center + half);
-  return { below: rect.top < POPOVER_ROOM, shift };
+  const below = rect.top < POPOVER_ROOM;
+
+  return {
+    below,
+    shift,
+    x: center,
+    y: below ? rect.bottom : rect.top,
+    root: anchor.closest(".dsk") ?? document.body,
+  };
+}
+
+/**
+ * A mark's popover, open while the mark is rested on or focused. It closes
+ * when the page scrolls, since it no longer hangs from the mark.
+ */
+export function useMarkPopover(width: number = POPOVER_WIDTH) {
+  const [place, setPlace] = useState<PopoverPlace | null>(null);
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const show = useCallback(() => {
+    if (anchorRef.current) setPlace(placePopover(anchorRef.current, width));
+  }, [width]);
+  const hide = useCallback(() => setPlace(null), []);
+  const open = place !== null;
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("scroll", hide, true);
+    return () => window.removeEventListener("scroll", hide, true);
+  }, [hide, open]);
+
+  return { anchorRef, place, show, hide };
+}
+
+/**
+ * Hangs a mark's popover outside the reply's text. Drawn inside the text, an
+ * open popover changes where the line may break, so the mark can wrap away
+ * from the pointer that opened it, close, wrap back and open again.
+ */
+export function MarkPopoverLayer({
+  place,
+  children,
+}: {
+  place: PopoverPlace;
+  children: ReactNode;
+}) {
+  return createPortal(
+    <span className="dk-pop-at" style={{ left: place.x, top: place.y }}>
+      {children}
+    </span>,
+    place.root,
+  );
 }
 
 /** One step as a citation's popover describes it. */
@@ -150,12 +217,7 @@ function CitationNumber({
   onOpenArtifact: (id: string) => void;
 }) {
   const t = useT();
-  const [place, setPlace] = useState<{ below: boolean; shift: number } | null>(null);
-  const anchorRef = useRef<HTMLSpanElement>(null);
-  const show = () => {
-    if (anchorRef.current) setPlace(placePopover(anchorRef.current));
-  };
-  const hide = () => setPlace(null);
+  const { anchorRef, place, show, hide } = useMarkPopover();
   const first = group.citations[0];
   const artifact = artifactOf(first);
   const shown = group.citations.slice(0, MAX_LISTED);
@@ -183,29 +245,31 @@ function CitationNumber({
         {group.label}
       </button>
       {place && (
-        <span
-          className={cn("dk-fnp", place.below && "dk-below")}
-          role="tooltip"
-          style={place.shift ? { left: `calc(50% + ${place.shift}px)` } : undefined}
-        >
-          <span className={cn("dk-fnp-in", group.citations.length > 1 && "dk-many")}>
-            {shown.map((citation, index) => (
-              <span key={citation.step.id} className="dk-fnp-step">
-                {index > 0 && <span className="dk-fnp-sep" />}
-                <StepSummary
-                  citation={citation}
-                  artifact={artifactOf(citation)}
-                  onOpenArtifact={onOpenArtifact}
-                />
-              </span>
-            ))}
-            {more > 0 && (
-              <span className="dk-fnp-more">
-                {t("{0, plural, one {and # more step} other {and # more steps}}", more)}
-              </span>
-            )}
+        <MarkPopoverLayer place={place}>
+          <span
+            className={cn("dk-fnp", place.below && "dk-below")}
+            role="tooltip"
+            style={place.shift ? { left: `calc(50% + ${place.shift}px)` } : undefined}
+          >
+            <span className={cn("dk-fnp-in", group.citations.length > 1 && "dk-many")}>
+              {shown.map((citation, index) => (
+                <span key={citation.step.id} className="dk-fnp-step">
+                  {index > 0 && <span className="dk-fnp-sep" />}
+                  <StepSummary
+                    citation={citation}
+                    artifact={artifactOf(citation)}
+                    onOpenArtifact={onOpenArtifact}
+                  />
+                </span>
+              ))}
+              {more > 0 && (
+                <span className="dk-fnp-more">
+                  {t("{0, plural, one {and # more step} other {and # more steps}}", more)}
+                </span>
+              )}
+            </span>
           </span>
-        </span>
+        </MarkPopoverLayer>
       )}
     </span>
   );
