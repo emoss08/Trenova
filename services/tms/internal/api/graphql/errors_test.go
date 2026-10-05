@@ -36,7 +36,6 @@ func TestProtocolErrorCodesAreRegistered(t *testing.T) {
 		querycost.DepthLimitErrorCode,
 		querycost.ComplexityLimitErrorCode,
 		CostBudgetErrorCode,
-		FeatureAccessErrorCode,
 	} {
 		err := &gqlerror.Error{
 			Message:    "limit exceeded",

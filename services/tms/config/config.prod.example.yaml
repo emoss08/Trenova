@@ -1,0 +1,147 @@
+# Production overrides for a self-hosted Trenova install.
+# Copy this file to config.prod.yaml (or config.production.yaml) next to config.yaml
+# and replace every example.com origin and the KMS key with your own. In production
+# the loader reads config.yaml first, then merges config.production.yaml, falling back
+# to config.prod.yaml when that file does not exist.
+
+app:
+  env: production
+  debug: false
+  webBaseUrl: https://tms.example.com
+
+server:
+  mode: release
+  readTimeout: 30s
+  readHeaderTimeout: 5s
+  writeTimeout: 75s
+  idleTimeout: 120s
+  shutdownTimeout: 10s
+  requestTimeout: 55s
+  # server.trustedProxies defaults to loopback plus the private ranges, so a
+  # reverse proxy on the same network is believed about the client IP and a
+  # direct caller is not. When the API is reachable only through an edge that
+  # overwrites its own client-IP header, name it here instead and
+  # X-Forwarded-For is ignored entirely: cloudflare | google-app-engine | flyio.
+  # trustedPlatform: cloudflare
+  cors:
+    enabled: true
+    allowedOrigins:
+      - https://tms.example.com
+    allowedMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allowedHeaders:
+      - Authorization
+      - Content-Type
+      - Accept
+      - X-CSRF-Token
+      - Last-Event-ID
+      - Idempotency-Key
+    exposeHeaders:
+      - X-Request-Id
+      - Idempotent-Replayed
+    credentials: true
+    maxAge: 86400
+
+database:
+  sslMode: require
+  maxIdleConns: 25
+  maxOpenConns: 75
+  statementTimeout: 10s
+  lockTimeout: 5s
+  idleInTransactionSessionTimeout: 30s
+
+cache:
+  poolSize: 50
+  minIdleConns: 10
+
+security:
+  session:
+    name: __Host-trenova_session
+    secure: true # Force HTTPS cookies in production
+    httpOnly: true
+    sameSite: strict # Stricter CSRF protection
+    path: /
+    domain: ""
+  rateLimit:
+    enabled: true
+    store: redis
+    failureMode: local
+    requestsPerMinute: 30
+    burstSize: 10
+    anonymous:
+      requestsPerMinute: 30
+      burstSize: 10
+    user:
+      requestsPerMinute: 600
+      burstSize: 60
+    apiKey:
+      requestsPerMinute: 300
+      burstSize: 30
+    tenant:
+      requestsPerMinute: 6000
+      burstSize: 600
+    publicToken:
+      requestsPerMinute: 10
+      burstSize: 5
+  passwordReset:
+    baseUrl: https://tms.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
+    tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
+    maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
+  graphql:
+    maxRequestBodyBytes: 1048576
+    costBudget:
+      enabled: true
+      pointsPerMinute: 6000000
+      burst: 3000000
+  csrf:
+    trustedOrigins:
+      - https://tms.example.com
+    browserGuard:
+      mode: enforce
+  encryption:
+    mode: envelope
+    keyManager: gcp-autokey
+    gcpKms:
+      cryptoKey: projects/your-gcp-project/locations/us/keyRings/autokey/cryptoKeys/trenova-envelope
+      credentialsMode: workload-identity
+      timeout: 10s
+      retryAttempts: 3
+
+logging:
+  level: info
+  output: stdout
+
+monitoring:
+  metrics:
+    enabled: true
+    host: 127.0.0.1
+    port: 9090
+    path: /internal/metricsz
+  health:
+    path: /health
+    readinessPath: /ready
+    livenessPath: /live
+  tracing:
+    enabled: true
+    provider: otlp
+    endpoint: localhost:4317
+    serviceName: trenova
+    samplingRate: 1.0
+    aiSamplingRate: 1.0
+    traceUrlTemplate: ""
+  graphql:
+    # Per-resolver metrics and spans stay off in production; enable temporarily
+    # when investigating N+1 queries on a specific operation.
+    resolverMetrics: false
+    slowOperationAfter: 1s
+    maxTrackedOperations: 2000
+
+# HTML-to-PDF rendering sidecar. Must be reachable only from this process:
+# internal network, no published port, never proxied.
+renderer:
+  gotenbergUrl: http://gotenberg:3000

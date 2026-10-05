@@ -464,7 +464,7 @@ func (s *Service) sendResetEmail(
 }
 
 func (s *Service) usesPlatformSender(ctx context.Context, tenantInfo pagination.TenantInfo) bool {
-	if s.plans == nil || s.platform == nil || !s.plans.IsCloud() {
+	if s.plans == nil || s.platform == nil || !s.plans.EnforcesPlans() {
 		return false
 	}
 

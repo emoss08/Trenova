@@ -110,7 +110,7 @@ func (s *Service) enforcePlanLogin(
 	usr *tenant.User,
 	targetOrg *tenant.Organization,
 ) (*tenant.Organization, error) {
-	if s.plans == nil || !s.plans.IsCloud() {
+	if s.plans == nil || !s.plans.EnforcesPlans() {
 		return targetOrg, nil
 	}
 

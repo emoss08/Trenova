@@ -95,7 +95,7 @@ func Cloud(
 	t.Helper()
 
 	plans := mocks.NewMockPlanService(t)
-	plans.EXPECT().IsCloud().Return(true).Maybe()
+	plans.EXPECT().EnforcesPlans().Return(true).Maybe()
 	plans.EXPECT().
 		Resolve(mock.Anything, tenantInfo.OrgID, tenantInfo.BuID).
 		Return(resolved, nil).

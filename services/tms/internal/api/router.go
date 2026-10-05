@@ -31,9 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/cloudsignuphandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
@@ -85,14 +83,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/networkpulsehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
-	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateagreementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
@@ -133,6 +130,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/routegroup"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/gin-contrib/cors"
@@ -154,19 +152,19 @@ type RouterParams struct {
 	ObservabilityMiddleware *observability.Middleware
 
 	AuthMiddleware                  *middleware.AuthMiddleware
-	ControlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	ReadOnlyGuard                   *middleware.ReadOnlyGuard
 	RateLimiter                     *middleware.RateLimiter
 	IdempotencyMiddleware           *middleware.IdempotencyMiddleware
 	PermissionMiddleware            *middleware.PermissionMiddleware
 	TenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	ErrorHandler                    *helpers.ErrorHandler
+	EditionRoutes                   routegroup.Registrars
 	OrganizationHandler             *organizationhandler.Handler
 	DataRetentionHandler            *dataretentionhandler.Handler
 	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
-	CloudSignupHandler              *cloudsignuphandler.Handler
+	PublicConfigHandler             *publicconfighandler.Handler
 	OnboardingHandler               *onboardinghandler.Handler
 	DriverPortalHandler             *driverportalhandler.Handler
 	PushHandler                     *pushhandler.Handler
@@ -183,7 +181,6 @@ type RouterParams struct {
 	GraphQLHandler                  *graphqlapi.Handler
 	WorkerHandler                   *workerhandler.Handler
 	PermissionHandler               *permissionhandler.Handler
-	PlatformCatalogHandler          *platformcataloghandler.Handler
 	RealtimeHandler                 *realtimehandler.Handler
 	RoleHandler                     *rolehandler.Handler
 	RoleAssignmentHandler           *roleassignmenthandler.Handler
@@ -207,8 +204,6 @@ type RouterParams struct {
 	InsightHandler                  *insighthandler.Handler
 	AgentRunHandler                 *agentrunhandler.Handler
 	VersionHandler                  *versionhandler.Handler
-	NetworkPulseHandler             *networkpulsehandler.Handler
-	ControlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
 	ServiceTypeHandler              *servicetypehandler.Handler
 	OrderHandler                    *orderhandler.Handler
@@ -295,7 +290,6 @@ type Router struct {
 	l                               *zap.Logger
 	observabilityMiddleware         *observability.Middleware
 	authMiddleware                  *middleware.AuthMiddleware
-	controlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	readOnlyGuard                   *middleware.ReadOnlyGuard
 	rateLimiter                     *middleware.RateLimiter
 	idempotencyMiddleware           *middleware.IdempotencyMiddleware
@@ -303,12 +297,13 @@ type Router struct {
 	tenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	cfg                             *config.Config
 	errorHandler                    *helpers.ErrorHandler
+	editionRoutes                   routegroup.Registrars
 	organizationHandler             *organizationhandler.Handler
 	dataRetentionHandler            *dataretentionhandler.Handler
 	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
-	cloudSignupHandler              *cloudsignuphandler.Handler
+	publicConfigHandler             *publicconfighandler.Handler
 	onboardingHandler               *onboardinghandler.Handler
 	driverPortalHandler             *driverportalhandler.Handler
 	pushHandler                     *pushhandler.Handler
@@ -336,7 +331,6 @@ type Router struct {
 	graphQLHandler                  *graphqlapi.Handler
 	workerHandler                   *workerhandler.Handler
 	permissionHandler               *permissionhandler.Handler
-	platformCatalogHandler          *platformcataloghandler.Handler
 	realtimeHandler                 *realtimehandler.Handler
 	roleHandler                     *rolehandler.Handler
 	roleAssignmentHandler           *roleassignmenthandler.Handler
@@ -360,8 +354,6 @@ type Router struct {
 	insightHandler                  *insighthandler.Handler
 	agentRunHandler                 *agentrunhandler.Handler
 	versionHandler                  *versionhandler.Handler
-	networkPulseHandler             *networkpulsehandler.Handler
-	controlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	weatherAlertHandler             *weatheralerthandler.Handler
 	shipmentTypeHandler             *shipmenttypehandler.Handler
 	hazardousMaterialHandler        *hazardousmaterialhandler.Handler
@@ -440,19 +432,19 @@ func NewRouter(p RouterParams) *Router {
 		l:                               p.Logger,
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
-		controlPlaneAccessMiddleware:    p.ControlPlaneAccessMiddleware,
 		readOnlyGuard:                   p.ReadOnlyGuard,
 		rateLimiter:                     p.RateLimiter,
 		idempotencyMiddleware:           p.IdempotencyMiddleware,
 		permissionMiddleware:            p.PermissionMiddleware,
 		tenantBoundaryMiddleware:        p.TenantBoundaryMiddleware,
 		errorHandler:                    p.ErrorHandler,
+		editionRoutes:                   p.EditionRoutes,
 		organizationHandler:             p.OrganizationHandler,
 		dataRetentionHandler:            p.DataRetentionHandler,
 		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
-		cloudSignupHandler:              p.CloudSignupHandler,
+		publicConfigHandler:             p.PublicConfigHandler,
 		onboardingHandler:               p.OnboardingHandler,
 		driverPortalHandler:             p.DriverPortalHandler,
 		pushHandler:                     p.PushHandler,
@@ -480,7 +472,6 @@ func NewRouter(p RouterParams) *Router {
 		graphQLHandler:                  p.GraphQLHandler,
 		workerHandler:                   p.WorkerHandler,
 		permissionHandler:               p.PermissionHandler,
-		platformCatalogHandler:          p.PlatformCatalogHandler,
 		realtimeHandler:                 p.RealtimeHandler,
 		roleHandler:                     p.RoleHandler,
 		roleAssignmentHandler:           p.RoleAssignmentHandler,
@@ -504,8 +495,6 @@ func NewRouter(p RouterParams) *Router {
 		insightHandler:                  p.InsightHandler,
 		agentRunHandler:                 p.AgentRunHandler,
 		versionHandler:                  p.VersionHandler,
-		networkPulseHandler:             p.NetworkPulseHandler,
-		controlPlaneProvisioningHandler: p.ControlPlaneProvisioningHandler,
 		weatherAlertHandler:             p.WeatherAlertHandler,
 		shipmentTypeHandler:             p.ShipmentTypeHandler,
 		hazardousMaterialHandler:        p.HazardousMaterialHandler,
@@ -642,11 +631,9 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	rg := r.publicGroup(parent)
 
 	r.authHandler.RegisterRoutes(rg)
-	r.cloudSignupHandler.RegisterPublicRoutes(rg)
+	r.publicConfigHandler.RegisterPublicRoutes(rg)
 	r.driverPortalHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)
-	r.networkPulseHandler.RegisterPublicRoutes(rg)
-	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.telematicsHandler.RegisterPublicRoutes(rg)
 	r.accountingWebhookHandler.RegisterPublicRoutes(rg)
@@ -657,6 +644,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.captureHandler.RegisterDeviceRoutes(r.captureDeviceGroup(parent))
 	r.tenderPublicHandler.RegisterPublicRoutes(rg)
 	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
+	r.editionRoutes.RegisterPublic(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -682,7 +670,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.trailerHandler.RegisterRoutes(protected)
 	r.workerHandler.RegisterRoutes(protected)
 	r.permissionHandler.RegisterRoutes(protected)
-	r.platformCatalogHandler.RegisterRoutes(protected)
 	r.realtimeHandler.RegisterRoutes(protected)
 	r.roleHandler.RegisterRoutes(protected)
 	r.roleAssignmentHandler.RegisterRoutes(protected)
@@ -779,6 +766,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentPacketRuleHandler.RegisterRoutes(protected)
 	r.documentTemplateHandler.RegisterRoutes(protected)
 	r.captureHandler.RegisterRoutes(protected)
+	r.editionRoutes.RegisterProtected(protected)
 }
 
 func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
@@ -791,7 +779,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	// handler: a session that owes a password change may only reach the endpoints that
 	// let it resolve one.
 	protected.Use(middleware.NewPasswordChangeMiddleware(r.errorHandler).RequireCurrentPassword())
-	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	r.editionRoutes.UseProtectedMiddleware(protected)
 	protected.Use(r.readOnlyGuard.Guard())
 	protected.Use(r.idempotencyMiddleware.Handle())
 	return protected
@@ -806,7 +794,7 @@ func (r *Router) captureDeviceGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	device.Use(r.rateLimiter.ByClientIP())
 	device.Use(r.captureHandler.RequireDevice())
 	device.Use(r.rateLimiter.ByPrincipal())
-	device.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	r.editionRoutes.UseProtectedMiddleware(device)
 	device.Use(r.readOnlyGuard.Guard())
 	return device
 }

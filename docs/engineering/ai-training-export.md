@@ -28,7 +28,11 @@ trenova ai training-export withdrawn <export-id> --output withdrawn.tsv
 - Exports are also started by scheduled retraining (`aiRetraining`), with the note
   `Retraining cycle <id>`; see
   [extraction-fine-tuning.md](extraction-fine-tuning.md#9-retrain-on-a-schedule).
-- The command builds only the graph it needs (`bootstrap.TrainingExportCommandOptions`):
+- The export, its workflow and the `trenova ai` commands belong to the Trenova Cloud edition
+  (`services/tms/internal/cloud/aitraining`); a self-hosted build has none of them, and its
+  `aiTrainingExportHistory` query answers an empty list.
+- The command builds only the graph it needs (`aicli.CommandOptions` in
+  `internal/cloud/aitraining/aicli`):
   config, the database, object storage and a Temporal client. `AITrainingExportWorkflow` does
   the work on `system-queue`, so a worker must be running.
 

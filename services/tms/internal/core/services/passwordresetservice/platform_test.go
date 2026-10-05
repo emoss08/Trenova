@@ -63,7 +63,7 @@ func TestResetEmailForAManagedOrganizationUsesThePlatformSender(t *testing.T) {
 
 	h := newPlatformHarness(t)
 	now := time.Now().Unix()
-	h.plans.EXPECT().IsCloud().Return(true)
+	h.plans.EXPECT().EnforcesPlans().Return(true)
 	h.plans.EXPECT().Resolve(mock.Anything, h.user.CurrentOrganizationID, h.user.BusinessUnitID).Return(
 		platformplan.NewManaged(platformplan.Unlimited(), &subscription.Subscription{
 			OrganizationID: h.user.CurrentOrganizationID,
@@ -87,7 +87,7 @@ func TestResetEmailForAnUnmanagedOrganizationUsesTheTenantSender(t *testing.T) {
 	t.Parallel()
 
 	h := newPlatformHarness(t)
-	h.plans.EXPECT().IsCloud().Return(true)
+	h.plans.EXPECT().EnforcesPlans().Return(true)
 	h.plans.EXPECT().Resolve(mock.Anything, mock.Anything, mock.Anything).Return(
 		platformplan.NewUnmanaged(
 			platformplan.Unlimited(),
@@ -109,7 +109,7 @@ func TestResetEmailOutsideCloudUsesTheTenantSender(t *testing.T) {
 	t.Parallel()
 
 	h := newPlatformHarness(t)
-	h.plans.EXPECT().IsCloud().Return(false)
+	h.plans.EXPECT().EnforcesPlans().Return(false)
 	h.tenantMsg.EXPECT().Send(mock.Anything, mock.Anything).Return(nil, nil)
 
 	require.NoError(t, h.svc.RequestReset(t.Context(), h.user.EmailAddress))
