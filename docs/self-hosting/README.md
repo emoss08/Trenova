@@ -35,7 +35,8 @@ itself are yours.
 | `tms-api` | `ghcr.io/emoss08/trenova/tms` | REST and GraphQL API, live updates (server-sent events) |
 | `tms-worker` | `ghcr.io/emoss08/trenova/tms` | Background jobs and every AI feature, on Temporal |
 | `tms-migrate` | `ghcr.io/emoss08/trenova/tms` | One-shot: database migrations and base seeds, on every start |
-| `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication, first-run account hardening |
+| `tms-bootstrap` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the first organization and administrator once (`trenova db bootstrap`); a no-op afterwards |
+| `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication |
 | `postgres` | `ghcr.io/emoss08/trenova/postgres` | PostgreSQL 18 with PostGIS, pg_cron and pgvector |
 | `redis` | `redis:8` | Sessions, rate limits, caches, the live-update streams |
 | `minio` | `pgsty/silo` (MinIO) | Documents and other uploaded files |
@@ -44,7 +45,8 @@ itself are yours.
 | `gotenberg` | `gotenberg/gotenberg` | HTML-to-PDF rendering, locked down and unreachable from outside |
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
 
-The `tms-api`, `tms-worker` and `tms-migrate` services are one image with different commands.
+The `tms-api`, `tms-worker`, `tms-migrate` and `tms-bootstrap` services are one image with
+different commands.
 Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal,
 Gotenberg and GTC sit on an internal Docker network with no route off the host; the API and
 worker get a separate network for outbound calls (AI providers, email, accounting
@@ -83,6 +85,13 @@ integrations, release checks).
    `STORAGE_DOMAIN=storage.trenova.example.com`. Run it with no argument for a trial on
    `https://localhost`. Review the file afterwards; the comments explain every value.
 
+   It also asks for your first organization and its administrator: the organization name,
+   the administrator's name and email address, and a password. Leave the password empty
+   and it generates one and **prints it once**; note it down. Without a terminal (in
+   automation), set `TRENOVA_BOOTSTRAP_ORG_NAME`, `TRENOVA_BOOTSTRAP_ADMIN_NAME`,
+   `TRENOVA_BOOTSTRAP_ADMIN_EMAIL` and optionally `TRENOVA_BOOTSTRAP_ADMIN_PASSWORD` in the
+   environment before running it. No install ever starts with a default password.
+
    **Back up `.env` now, somewhere other than this host.** `TRENOVA_SECURITY_ENCRYPTION_KEY`
    encrypts sensitive fields in the database; lose it and that data is gone.
 
@@ -97,9 +106,10 @@ integrations, release checks).
    ```
 
    The first start takes a few minutes: PostgreSQL initializes, Temporal creates its schema,
-   `tms-migrate` runs every migration and the base seeds, and Caddy obtains certificates.
-   `tms-migrate` and `db-bootstrap` show as `exited (0)` when they have finished; every other
-   service should become `healthy` or `running`.
+   `tms-migrate` runs every migration and the base seeds, `tms-bootstrap` creates your
+   organization and administrator, and Caddy obtains certificates. `tms-migrate`,
+   `tms-bootstrap` and `db-bootstrap` show as `exited (0)` when they have finished; every
+   other service should become `healthy` or `running`.
 
 5. **Sign in** at `https://trenova.example.com` (see [First sign-in](#first-sign-in)).
 
@@ -143,40 +153,64 @@ TLS there and forward to Caddy on 443 with the original `Host` header; the sessi
 
 ## First sign-in
 
-The base seeds, which `tms-migrate` applies on the first start, create:
+An install starts with no account at all. The base seeds that `tms-migrate` applies create
+only the reference data every install needs (US states, DOT hazardous materials, IFTA
+jurisdictions, jurisdiction rules, roles and permissions); they never create a user.
 
-- the reference data every install needs (US states, DOT hazardous materials, document types,
-  IFTA jurisdictions, roles and permissions, document templates);
-- two organizations, **Trenova Logistics** and **Trenova Transportation**, in one business
-  unit;
-- three administrators, all seeded with the password `admin123!`:
+On the first start, `tms-bootstrap` runs `trenova db bootstrap` with the `TRENOVA_BOOTSTRAP_*`
+values `init-env.sh` wrote to `.env`, and creates:
 
-| Username | Email | After the first start |
-|---|---|---|
-| `admin` | `admin@trenova.app` | Active; **must choose a new password at first sign-in** |
-| `admin-logistics` | `admin.logistics@trenova.app` | Locked |
-| `admin-transport` | `admin.transport@trenova.app` | Locked |
+- your organization, in a business unit of its own, with its chart of accounts, document
+  types, document templates, sequences and the other defaults a new organization gets;
+- its first administrator, holding the **Organization Administrator** role, who signs in
+  with `TRENOVA_BOOTSTRAP_ADMIN_EMAIL` and the password you chose or were shown;
+- the internal system account background work runs as (password
+  `TRENOVA_SYSTEM_SYSTEMUSERPASSWORD`, which nobody signs in with).
 
-Because the seeded password is public, `db-bootstrap` secures these accounts once, right
-after the first seeding: `admin` is made to change its password at its first sign-in, and the
-two organization administrators are locked until an administrator gives them a password.
-It never touches them again.
+Each of these is recorded in the audit trail as a critical entry. The password must have at
+least 12 characters, must not be a common password and must not contain the email address;
+`tms-bootstrap` exits with an error naming the value at fault otherwise, and the API does not
+start until it succeeds (`docker compose logs tms-bootstrap`).
+
+`tms-bootstrap` runs on every start, and after the first it does nothing: it recognizes the
+same organization name, administrator name and email and exits successfully without reading
+the password. You may delete `TRENOVA_BOOTSTRAP_ADMIN_PASSWORD` from `.env` once you have
+signed in. It refuses, and leaves the database untouched, when:
+
+- those three values differ from the ones it was first run with: restore them, or empty
+  `TRENOVA_BOOTSTRAP_ADMIN_EMAIL` to skip the step. Rename the organization and manage
+  administrators in the app instead;
+- the database already has users it did not create, such as a restored backup or an install
+  from before this step existed: sign in with an existing administrator.
+
+`docker compose run --rm tms-bootstrap` runs the step on its own (after the migrations), for
+example after correcting a value in `.env`. To give the values on the command line instead of
+in `.env`, leave `TRENOVA_BOOTSTRAP_ADMIN_EMAIL` empty there and run:
+
+```bash
+docker compose run --rm --entrypoint trenova tms-bootstrap db bootstrap \
+  --org-name "Acme Freight" --admin-name "Dana Whitfield" --admin-email dana@acme.example
+```
+
+It prompts for the password (or reads `TRENOVA_BOOTSTRAP_ADMIN_PASSWORD`, or the first line of
+standard input with `--password-stdin`; the password is never a flag). `--dry-run` reports what
+it would do. `trenova db bootstrap --help` lists the optional organization details
+(`--timezone`, `--address-line1`, `--city`, `--state`, `--postal-code`, `--scac`,
+`--dot-number`, each also a `TRENOVA_BOOTSTRAP_*` variable); placeholders are used for any you
+leave out.
 
 Then, straight away:
 
-1. Sign in as `admin` / `admin123!` and choose a strong password. Do this before the hostname
-   is public if you can; until you do, anyone who reaches the sign-in page can try the
-   seeded password.
-2. Change `admin`'s email address to one you control (**Users**, `/admin/users`), so password
-   resets reach you.
-3. Rename the organizations to your company (**Organization settings**,
-   `/admin/organization-settings`). Most carriers use one organization; you can leave the
-   second unused.
-4. Invite your users, and give `admin-logistics` / `admin-transport` a password only if you
-   want them.
-5. Set up outgoing email (**Email profiles**, `/organization/email-profiles`, with a Resend or
+1. Sign in at `https://DOMAIN` with the administrator's email address and password.
+2. Complete your organization's details (**Organization settings**,
+   `/admin/organization-settings`): address, SCAC code, DOT number and time zone, if you did
+   not give them to the bootstrap.
+3. Set up outgoing email (**Email profiles**, `/organization/email-profiles`, with a Resend or
    Postmark account): password resets, invitations and scheduled reports are sent through the
    provider an organization configures.
+4. Add your users (**Users**, `/admin/users`): create each person, give them roles, and send
+   them a password reset link to choose their own password. Give a second person the
+   Organization Administrator role, so you are not locked out if one administrator leaves.
 
 ## Configuration
 
@@ -331,8 +365,8 @@ admin-only Caddy bound to `127.0.0.1` for use over an SSH tunnel or Tailscale.
 ## Hardening
 
 The stack is secure by default for a single-operator host: TLS everywhere, secrets generated
-per install, every backing service on an internal network, Gotenberg sandboxed, the seeded
-accounts secured, and nothing published except Caddy. Beyond that:
+per install, no account with a default or published password, every backing service on an
+internal network, Gotenberg sandboxed, and nothing published except Caddy. Beyond that:
 
 - **Firewall.** Allow inbound 22 (or your SSH port), 80 and 443 only. Docker publishes ports
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that
@@ -356,6 +390,15 @@ accounts secured, and nothing published except Caddy. Beyond that:
 error names the key at fault (an unknown key, a missing secret, a placeholder value). A
 database error usually means PostgreSQL was not ready or the database password in `.env`
 changed after the volume was created; PostgreSQL keeps the password it was initialized with.
+
+**`tms-bootstrap` exited with an error, and the API never starts.** `docker compose logs
+tms-bootstrap`. `bootstrap inputs are not valid` lists each value at fault with the flag and
+variable that set it, for example a password shorter than 12 characters; fix it in `.env` and
+run `docker compose up -d` again. `bootstrap refused: instance was bootstrapped with
+different inputs` means `TRENOVA_BOOTSTRAP_ORG_NAME`, `_ADMIN_NAME` or `_ADMIN_EMAIL` changed
+after the first start: restore them, or empty `TRENOVA_BOOTSTRAP_ADMIN_EMAIL`. `bootstrap
+refused: instance already has users` means the database was set up some other way (a restored
+backup); empty `TRENOVA_BOOTSTRAP_ADMIN_EMAIL` and sign in with an existing administrator.
 
 **`validation failed: encryption key contains insecure default value`.** A secret in `.env`
 is still a placeholder. Run `./scripts/init-env.sh` on a fresh checkout, or generate the value
