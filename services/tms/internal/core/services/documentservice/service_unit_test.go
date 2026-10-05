@@ -423,7 +423,7 @@ func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) 
 			validator,
 			&mocks.NoopAuditService{},
 			storageCfg,
-			thumbnailservice.NewGenerator(),
+			thumbnailservice.NewGenerator(nil),
 			nil,
 		),
 		cacheRepo:   cacheRepo,
@@ -1427,7 +1427,7 @@ func TestNew(t *testing.T) {
 		validator,
 		&mocks.NoopAuditService{},
 		storageCfg,
-		thumbnailservice.NewGenerator(),
+		thumbnailservice.NewGenerator(nil),
 		nil,
 	)
 
@@ -1458,7 +1458,7 @@ func TestNewConstructor(t *testing.T) {
 		Validator:          validator,
 		AuditService:       &mocks.NoopAuditService{},
 		Config:             &config.Config{Storage: *storageCfg},
-		ThumbnailGenerator: thumbnailservice.NewGenerator(),
+		ThumbnailGenerator: thumbnailservice.NewGenerator(nil),
 		WorkflowStarter:    workflowstarter.New(workflowstarter.Params{}),
 	})
 

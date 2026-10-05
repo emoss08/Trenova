@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/cmd/cli/api"
 	"github.com/emoss08/trenova/cmd/cli/db"
 	"github.com/emoss08/trenova/cmd/cli/redis"
-	"github.com/emoss08/trenova/cmd/cli/render"
 	"github.com/emoss08/trenova/cmd/cli/update"
 	"github.com/emoss08/trenova/cmd/cli/worker"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -299,7 +298,6 @@ func init() {
 	rootCmd.AddCommand(api.APICmd)
 	rootCmd.AddCommand(db.DbCmd)
 	rootCmd.AddCommand(redis.RedisCmd)
-	rootCmd.AddCommand(render.RenderCmd)
 	rootCmd.AddCommand(worker.WorkerCmd)
 	rootCmd.AddCommand(update.UpdateCmd)
 	searchVectorCmd.Flags().BoolP("list", "l", false, "List all searchable domains")

@@ -423,6 +423,16 @@ renderer:
     maxAssetBudget: 4194304 # Total inlined image bytes per document (4 MiB)
     maxPdfBytes: 20971520 # Largest PDF accepted back from the renderer (20 MiB)
 
+# Reading uploaded PDFs: thumbnails, capture page inspection, and the text and
+# layout document intelligence extracts. PDFium runs in-process as WebAssembly,
+# so no native library is needed; every instance is sandboxed with its own
+# memory ceiling, and a render that outlives its caller's deadline is stopped.
+pdfReader:
+    maxInstances: 4 # Documents read at once per process; excess callers queue
+    memoryLimitMb: 1024 # Memory ceiling of one instance
+    acquireTimeout: 1m # Longest a caller waits for a free instance
+    maxRenderPixels: 25000000 # Pages larger than this render at a lower DPI
+
 # Driver portal (Dash) settings
 portal:
     # Absolute base URL of the app that serves Dash; used to build portal invitation

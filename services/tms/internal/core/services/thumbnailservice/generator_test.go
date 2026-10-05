@@ -7,7 +7,9 @@ import (
 	"image/png"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +44,7 @@ func requireWebP(t *testing.T, data []byte) {
 }
 
 func TestGenerateFromImage(t *testing.T) {
-	generator := thumbnailservice.NewGenerator()
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
 
 	thumb, err := generator.Generate(t.Context(), bytes.NewReader(testPNG(t)), "image/png")
 	require.NoError(t, err)
@@ -50,40 +52,48 @@ func TestGenerateFromImage(t *testing.T) {
 }
 
 func TestGenerateFromImageInvalidData(t *testing.T) {
-	generator := thumbnailservice.NewGenerator()
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
 
 	_, err := generator.Generate(t.Context(), bytes.NewReader([]byte("not an image")), "image/png")
 	require.ErrorContains(t, err, "failed to decode image")
 }
 
-func TestGenerateFromPDFInProcess(t *testing.T) {
-	generator := thumbnailservice.NewInProcessGenerator()
+func TestGenerateFromPDF(t *testing.T) {
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
 
 	thumb, err := generator.Generate(t.Context(), bytes.NewReader(minimalPDF), "application/pdf")
 	require.NoError(t, err)
 	requireWebP(t, thumb)
 }
 
-func TestGenerateFromPDFInProcessInvalidData(t *testing.T) {
-	generator := thumbnailservice.NewInProcessGenerator()
+func TestGenerateFromPDFInvalidData(t *testing.T) {
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
 
 	_, err := generator.Generate(
 		t.Context(),
 		bytes.NewReader([]byte("not a pdf")),
 		"application/pdf",
 	)
+	require.ErrorIs(t, err, services.ErrPDFUnreadable)
 	require.ErrorContains(t, err, "failed to open PDF")
 }
 
+func TestGenerateFromPDFWithoutReader(t *testing.T) {
+	generator := thumbnailservice.NewGenerator(nil)
+
+	_, err := generator.Generate(t.Context(), bytes.NewReader(minimalPDF), "application/pdf")
+	require.ErrorIs(t, err, thumbnailservice.ErrPDFReaderUnavailable)
+}
+
 func TestGenerateUnsupportedContentType(t *testing.T) {
-	generator := thumbnailservice.NewGenerator()
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
 
 	_, err := generator.Generate(t.Context(), bytes.NewReader(nil), "text/plain")
 	require.ErrorContains(t, err, "unsupported content type")
 }
 
 func TestSupportsThumbnail(t *testing.T) {
-	generator := thumbnailservice.NewGenerator()
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
 
 	require.True(t, generator.SupportsThumbnail("image/png"))
 	require.True(t, generator.SupportsThumbnail("IMAGE/JPEG"))

@@ -312,7 +312,6 @@ otherwise. Record links are built from one registry, `client/apps/web/src/config
 - Connection repositories only run their `COUNT` when `req.Cursor.IncludeTotalCount` is set; the GraphQL layer clears it when `totalCount` is not selected. New `ListConnection` methods must follow that gate.
 - Patch inputs (`*PatchInput`) mark fields `@goField(omittable: true)`: absent leaves the value alone, explicit `null` clears it (or fails validation for fields the entity requires). Generated mappers come from `resolver/mappergen`.
 - Clients send persisted operations by hash only; outside production the server re-reads `persisted-documents.json` on an unknown hash (`security.graphql.persistedDocumentsPath`), so run `pnpm --filter @trenova/graphql codegen` (or `pnpm dev`, which watches) after editing an operation. `/graphql` enforces a body-size limit and a per-user operation-cost budget (`security.graphql.*`).
-- Run GraphQL package tests with `go test -tags nofitz ./internal/api/graphql/...` on machines without `libmupdf`.
 
 ## Agent Runtime
 

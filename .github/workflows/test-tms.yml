@@ -378,7 +378,7 @@ jobs:
           # writecoverage.yml, an entry names a missing write or tool, an
           # exemption has no reason, or the document is stale. Pending writes
           # are counted, never failed.
-          if ! go run -tags nofitz,nomsgpack ./gen -check -output=../../../../../docs/engineering/agent-write-coverage.md; then
+          if ! go run -tags nomsgpack ./gen -check -output=../../../../../docs/engineering/agent-write-coverage.md; then
             echo "::error::Agent write coverage needs attention - fix services/tms/internal/api/writecoverage/writecoverage.yml as the messages above say, run 'go generate ./internal/api/writecoverage/...' in services/tms and commit"
             exit 1
           fi

@@ -1,11 +1,10 @@
-//go:build integration && !nofitz
+//go:build integration
 
 package starters_test
 
 import (
 	"bytes"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -14,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/gotenberg"
+	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/emoss08/trenova/pkg/templateengine"
-	fitz "github.com/gen2brain/go-fitz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -49,34 +48,6 @@ func liveRenderer(t *testing.T) services.PDFRenderer {
 		},
 		Logger: zap.NewNop(),
 	})
-}
-
-// pdfText extracts what a reader would actually see.
-func pdfText(t *testing.T, pdf []byte) string {
-	t.Helper()
-
-	doc, err := fitz.NewFromMemory(pdf)
-	require.NoError(t, err)
-	defer func() { _ = doc.Close() }()
-
-	var b strings.Builder
-	for page := range doc.NumPage() {
-		text, textErr := doc.Text(page)
-		require.NoError(t, textErr)
-		b.WriteString(text)
-		b.WriteByte('\n')
-	}
-	return b.String()
-}
-
-func pdfPageCount(t *testing.T, pdf []byte) int {
-	t.Helper()
-
-	doc, err := fitz.NewFromMemory(pdf)
-	require.NoError(t, err)
-	defer func() { _ = doc.Close() }()
-
-	return doc.NumPage()
 }
 
 // renderStarterPDF runs one document kind all the way to PDF bytes.
@@ -129,10 +100,10 @@ func TestLiveInvoiceStarterProducesALegibleInvoice(t *testing.T) {
 	pdf := renderStarterPDF(t, documenttemplate.KindInvoicePDF)
 
 	require.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
-	assert.LessOrEqual(t, pdfPageCount(t, pdf), 2,
+	assert.LessOrEqual(t, pdftest.PageCount(t, pdf), 2,
 		"the sample invoice should not sprawl past two pages")
 
-	text := pdfText(t, pdf)
+	text := pdftest.Text(t, pdf)
 
 	// The fields that make the document a collectable invoice.
 	for _, want := range []string{
@@ -157,7 +128,7 @@ func TestLiveDetentionNoticeStarterRenders(t *testing.T) {
 
 	require.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
 
-	text := pdfText(t, pdf)
+	text := pdftest.Text(t, pdf)
 	for _, want := range []string{
 		"TRV-884120",     // shipment
 		"Halstead DC 14", // facility
@@ -174,16 +145,12 @@ func TestLiveReportStarterRendersLandscape(t *testing.T) {
 
 	require.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
 
-	doc, err := fitz.NewFromMemory(pdf)
+	layout, err := pdftest.Open(t, pdf).PageLayout(t.Context(), 0)
 	require.NoError(t, err)
-	defer func() { _ = doc.Close() }()
-
-	bounds, err := doc.Bound(0)
-	require.NoError(t, err)
-	assert.Greater(t, bounds.Dx(), bounds.Dy(),
+	assert.Greater(t, layout.Width, layout.Height,
 		"a report must be landscape, or its rightmost columns fall off the page")
 
-	text := pdfText(t, pdf)
+	text := pdftest.Text(t, pdf)
 	assert.Contains(t, text, "Revenue by Customer")
 	assert.Contains(t, text, "Halstead Grocery Group")
 }
@@ -243,18 +210,14 @@ func TestLiveInvoicePaginatesCleanly(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	pages := pdfPageCount(t, pdf)
+	pages := pdftest.PageCount(t, pdf)
 	require.Greater(t, pages, 1, "90 charge lines must spill past one page")
 
-	doc, err := fitz.NewFromMemory(pdf)
-	require.NoError(t, err)
-	defer func() { _ = doc.Close() }()
+	pageTexts := pdftest.PageTexts(t, pdf)
 
 	// A real <thead> repeats on every page a table continues onto. Styled divs get
 	// no such treatment, which is why the starter uses table markup.
-	for page := range pages {
-		text, textErr := doc.Text(page)
-		require.NoError(t, textErr)
+	for page, text := range pageTexts {
 		// The stylesheet uppercases table headings, and text extraction returns what
 		// was rendered rather than the source.
 		assert.Contains(t, text, "AMOUNT",

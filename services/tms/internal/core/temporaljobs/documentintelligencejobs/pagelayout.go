@@ -1,26 +1,19 @@
 package documentintelligencejobs
 
 import (
-	"html"
-	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 )
 
 // The layout of a page is kept beside its text so a value the extraction
 // read can be pointed at on the page: a native PDF says where each line of
 // text sits, and the OCR engine where each word it recognised was.
 
-const (
-	maxLayoutLineRunes = 160
-	// glyphWidthEm is how wide an average glyph is against its font size.
-	// The PDF's text layer gives a line's start but not its end, so a line's
-	// width is estimated from its length.
-	glyphWidthEm = 0.5
-)
+const maxLayoutLineRunes = 160
 
 type tsvLineKey struct {
 	page, block, par, line int
@@ -110,58 +103,38 @@ func tesseractLayout(output string, width, height int) []documentcontent.LayoutL
 	return lines
 }
 
-var (
-	fitzPageStyle = regexp.MustCompile(`<div[^>]*style="[^"]*width:([0-9.]+)pt;height:([0-9.]+)pt`)
-	fitzLine      = regexp.MustCompile(`(?s)<p style="([^"]*)">(.*?)</p>`)
-	fitzStyleNum  = regexp.MustCompile(`(top|left|line-height|font-size):([0-9.]+)pt`)
-	fitzTag       = regexp.MustCompile(`<[^>]+>`)
-)
-
-// fitzLayout reads the lines of a native PDF page out of MuPDF's structured
-// text, which gives each line's top, left and height in points.
-func fitzLayout(page string) []documentcontent.LayoutLine {
-	size := fitzPageStyle.FindStringSubmatch(page)
-	if size == nil {
-		return nil
-	}
-	pageW, _ := strconv.ParseFloat(size[1], 64)
-	pageH, _ := strconv.ParseFloat(size[2], 64)
-	if pageW <= 0 || pageH <= 0 {
+func pdfLayout(layout *services.PDFPageLayout) []documentcontent.LayoutLine {
+	if layout == nil || layout.Width <= 0 || layout.Height <= 0 {
 		return nil
 	}
 
-	var lines []documentcontent.LayoutLine
-	for _, match := range fitzLine.FindAllStringSubmatch(page, -1) {
+	lines := make(
+		[]documentcontent.LayoutLine,
+		0,
+		min(len(layout.Lines), documentcontent.MaxLayoutLines),
+	)
+	for _, line := range layout.Lines {
 		if len(lines) == documentcontent.MaxLayoutLines {
 			break
 		}
-		text := strings.Join(strings.Fields(html.UnescapeString(fitzTag.ReplaceAllString(match[2], " "))), " ")
+		text := strings.Join(strings.Fields(line.Text), " ")
 		if text == "" {
 			continue
 		}
-		style := map[string]float64{}
-		for _, part := range fitzStyleNum.FindAllStringSubmatch(match[1]+" "+match[2], -1) {
-			if _, set := style[part[1]]; set {
-				continue
-			}
-			style[part[1]], _ = strconv.ParseFloat(part[2], 64)
-		}
-		height := style["line-height"]
-		if height <= 0 {
-			height = style["font-size"]
-		}
-		fontSize := style["font-size"]
-		if fontSize <= 0 {
-			fontSize = height
-		}
-		width := float64(utf8.RuneCountInString(text)) * fontSize * glyphWidthEm
-		lines = append(lines, layoutLine(text, style["left"], style["top"], width, height, pageW, pageH))
+		lines = append(lines, layoutLine(
+			text,
+			line.Left, line.Top, line.Width, line.Height,
+			layout.Width, layout.Height,
+		))
 	}
 
 	return lines
 }
 
-func layoutLine(text string, left, top, width, height, pageW, pageH float64) documentcontent.LayoutLine {
+func layoutLine(
+	text string,
+	left, top, width, height, pageW, pageH float64,
+) documentcontent.LayoutLine {
 	if utf8.RuneCountInString(text) > maxLayoutLineRunes {
 		text = string([]rune(text)[:maxLayoutLineRunes])
 	}
@@ -175,10 +148,4 @@ func layoutLine(text string, left, top, width, height, pageW, pageH float64) doc
 		W:    min(documentcontent.Fraction(width, pageW), 1-x),
 		H:    min(documentcontent.Fraction(height, pageH), 1-y),
 	}
-}
-
-// pageHTML is the slice of a PDF reader that gives a page's text with where
-// each line sits.
-type pageHTML interface {
-	HTML(pageNumber int, header bool) (string, error)
 }

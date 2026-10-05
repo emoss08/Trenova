@@ -179,7 +179,7 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 		DocumentIntelligence: contentService,
 		SearchProjection:     searchProjection,
 		Config:               cfg,
-		ThumbnailGenerator:   thumbnailservice.NewGenerator(),
+		ThumbnailGenerator:   thumbnailservice.NewGenerator(nil),
 		WorkflowStarter:      workflowstarter.New(workflowstarter.Params{}),
 		AICorrections:        correctionService(corrections),
 	})

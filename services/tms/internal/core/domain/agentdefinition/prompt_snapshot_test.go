@@ -192,7 +192,7 @@ func TestPromptSnapshots(t *testing.T) {
 					filepath.Join(promptSnapshotDir, name+".golden"),
 					[]byte(system),
 					*updatePrompts,
-					"go test -tags nofitz -run TestPromptSnapshots "+
+					"go test -run TestPromptSnapshots "+
 						"./internal/core/domain/agentdefinition/ -update",
 				)
 			})
@@ -285,7 +285,7 @@ func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
 		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_memory.golden"),
 		[]byte(system),
 		*updatePrompts,
-		"go test -tags nofitz -run TestPromptSnapshots "+
+		"go test -run TestPromptSnapshots "+
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }
@@ -309,7 +309,7 @@ func TestPromptSnapshots_AgentsItCanAsk(t *testing.T) {
 		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_delegates.golden"),
 		[]byte(system),
 		*updatePrompts,
-		"go test -tags nofitz -run TestPromptSnapshots "+
+		"go test -run TestPromptSnapshots "+
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }
@@ -338,7 +338,7 @@ func TestPromptSnapshots_ProposalsAwaitingADecision(t *testing.T) {
 		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_awaiting_decision.golden"),
 		[]byte(system),
 		*updatePrompts,
-		"go test -tags nofitz -run TestPromptSnapshots "+
+		"go test -run TestPromptSnapshots "+
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }

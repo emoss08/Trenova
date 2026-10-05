@@ -27,9 +27,9 @@ const (
 	RequireHybridEnv      = "TRENOVA_EVAL_REQUIRE_HYBRID"
 
 	RecordEmbeddingsCommand = "cd services/tms && ollama pull nomic-embed-text && " +
-		OllamaURLEnv + "=" + DefaultOllamaURL + " go test -tags nofitz -count=1 " +
+		OllamaURLEnv + "=" + DefaultOllamaURL + " go test -count=1 " +
 		"-run 'TestRecordEmbeddingFixture' ./internal/core/services/agentevalgate/ -record && " +
-		"go test -tags nofitz -count=1 -run 'AgainstFloors' " +
+		"go test -count=1 -run 'AgainstFloors' " +
 		"./internal/core/services/agentevalgate/ -update"
 
 	recordBatchSize = 64
