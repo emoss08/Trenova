@@ -2,6 +2,7 @@
 package api
 
 import (
+	"context"
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
@@ -721,6 +722,21 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 		fx.As(new(services.UsageRecorder)),
 	),
 ), fx.Invoke(
+	// The table-change-alert consumer reads the tca:events stream GTC fills
+	// and runs for the API's lifetime. Its loops outlive OnStart, so they get
+	// a context of their own; Stop cancels it.
+	func(lc fx.Lifecycle, consumer *tablechangealertservice.Consumer) {
+		lc.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				consumer.Start(context.Background())
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				consumer.Stop()
+				return nil
+			},
+		})
+	},
 	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
 		setter.SetEDIService(service)
 	},
