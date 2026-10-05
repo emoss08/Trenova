@@ -3,6 +3,7 @@ package documentintelligencejobs
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,25 +30,30 @@ func TestTesseractLayoutGroupsWordsIntoLines(t *testing.T) {
 	assert.Equal(t, "$1,200.00", lines[1].Text)
 }
 
-// MuPDF places each line of a native page by its top and left in points; the
-// width is estimated from the line's length and its font size.
-func TestFitzLayoutReadsLinePositions(t *testing.T) {
+// A native PDF page gives each line's box in points from the top left; the
+// layout keeps it as a fraction of the page.
+func TestPDFLayoutPlacesLinesOnThePage(t *testing.T) {
 	t.Parallel()
 
-	page := `<div id="page0" style="width:600pt;height:800pt">` +
-		`<p style="top:80pt;left:60pt;line-height:12pt">` +
-		`<span style="font-family:Helvetica;font-size:10pt">Rate: $1,359.56</span></p>` +
-		`<p style="top:100pt;left:60pt;line-height:12pt"><span style="font-size:10pt">PO &amp; 77812</span></p>` +
-		`</div>`
-
-	lines := fitzLayout(page)
+	lines := pdfLayout(&services.PDFPageLayout{
+		Width:  600,
+		Height: 800,
+		Lines: []services.PDFTextLine{
+			{Text: "Rate:  $1,359.56", Left: 60, Top: 80, Width: 75, Height: 12},
+			{Text: "   ", Left: 60, Top: 90, Width: 10, Height: 12},
+			{Text: "PO & 77812", Left: 590, Top: 795, Width: 50, Height: 12},
+		},
+	})
 
 	require.Len(t, lines, 2)
 	assert.Equal(t, "Rate: $1,359.56", lines[0].Text)
 	assert.InDelta(t, 0.1, lines[0].X, 0.0001)
 	assert.InDelta(t, 0.1, lines[0].Y, 0.0001)
-	assert.InDelta(t, 15*10*0.5/600, lines[0].W, 0.0001)
+	assert.InDelta(t, 0.125, lines[0].W, 0.0001)
 	assert.InDelta(t, 0.015, lines[0].H, 0.0001)
 	assert.Equal(t, "PO & 77812", lines[1].Text)
-	assert.Nil(t, fitzLayout("<p>no page size</p>"))
+	assert.LessOrEqual(t, lines[1].X+lines[1].W, 1.0)
+	assert.LessOrEqual(t, lines[1].Y+lines[1].H, 1.0)
+	assert.Nil(t, pdfLayout(&services.PDFPageLayout{}))
+	assert.Nil(t, pdfLayout(nil))
 }

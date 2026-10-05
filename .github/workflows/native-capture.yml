@@ -84,16 +84,17 @@ jobs:
 
       - name: Sample pages read back in an independent PDF reader
         run: |
-          pip install --quiet pymupdf
+          pip install --quiet pypdfium2
           cargo run -q -p capture-imaging --example sample_pages -- /tmp/samples
           python3 - <<'EOF'
-          import pymupdf
+          import pypdfium2 as pdfium
+          import pypdfium2.raw as pdfium_c
           for name, pages in (("bilevel.pdf", 1), ("colour.pdf", 1), ("printed.pdf", 2)):
-              doc = pymupdf.open(f"/tmp/samples/{name}")
-              assert doc.page_count == pages, (name, doc.page_count)
+              doc = pdfium.PdfDocument(f"/tmp/samples/{name}")
+              assert len(doc) == pages, (name, len(doc))
               for page in doc:
-                  assert page.get_images(), (name, "no image")
-                  page.get_pixmap()
+                  assert any(page.get_objects(filter=(pdfium_c.FPDF_PAGEOBJ_IMAGE,))), (name, "no image")
+                  page.render()
           print("samples ok")
           EOF
 

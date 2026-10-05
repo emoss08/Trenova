@@ -132,7 +132,7 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 		DocumentIntelligence: contentService,
 		SearchProjection:     searchProjection,
 		Config:               cfg,
-		ThumbnailGenerator:   thumbnailservice.NewGenerator(),
+		ThumbnailGenerator:   thumbnailservice.NewGenerator(nil),
 		Encryption:           encryption,
 	})
 

@@ -28,6 +28,6 @@ func TestToolCatalogSnapshot(t *testing.T) {
 	require.NoError(t, err)
 
 	agentevalgate.Golden(t, catalogGolden, encoded, *update,
-		"go test -tags nofitz -run TestToolCatalogSnapshot "+
+		"go test -run TestToolCatalogSnapshot "+
 			"./internal/core/services/agentevalgate/ -update")
 }

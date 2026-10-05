@@ -13,7 +13,6 @@ import (
 
 	"github.com/disintegration/imaging"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/fitzdoc"
 	"github.com/makiuchi-d/gozxing"
 	multiqr "github.com/makiuchi-d/gozxing/multi/qrcode"
 )
@@ -40,27 +39,25 @@ const (
 
 var ErrNoPages = errors.New("the PDF has no pages")
 
-type Inspector struct{}
+type Inspector struct {
+	pdfReader services.PDFReader
+}
 
-func New() services.CapturePageInspector {
-	return &Inspector{}
+func New(pdfReader services.PDFReader) services.CapturePageInspector {
+	return &Inspector{pdfReader: pdfReader}
 }
 
 func (i *Inspector) Inspect(
 	ctx context.Context,
 	pdf []byte,
 ) (*services.CapturePageInspection, error) {
-	if !fitzdoc.Available() {
-		return nil, services.ErrPageInspectionUnavailable
-	}
-
-	doc, err := fitzdoc.NewFromMemory(pdf)
+	doc, err := i.pdfReader.Open(ctx, pdf)
 	if err != nil {
 		return nil, err
 	}
 	defer doc.Close()
 
-	if doc.NumPage() < 1 {
+	if doc.PageCount() < 1 {
 		return nil, ErrNoPages
 	}
 
@@ -68,7 +65,7 @@ func (i *Inspector) Inspect(
 		return nil, err
 	}
 
-	rendered, err := doc.ImageDPI(0, renderDPI)
+	rendered, err := doc.RenderPage(ctx, 0, renderDPI)
 	if err != nil {
 		return nil, fmt.Errorf("render page: %w", err)
 	}

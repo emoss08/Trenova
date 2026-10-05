@@ -20,11 +20,7 @@ vars:
   TEST_POSTGRES_LOCAL_IMAGE: trenova-postgres:local
   # nomsgpack drops gin's MsgPack binding, which nothing here uses. It is the
   # only thing pulling in ugorji/go/codec, a 20s compile on the critical path.
-  #
-  # go-fitz needs libmupdf, which has no pure-Go build and no bundled Windows DLL.
-  # Windows dev builds drop it so the CLI starts; Linux/macOS/Docker keep PDF support.
-  # Override with `task build-cli GO_TAGS=nomsgpack` to force PDF support back on.
-  GO_TAGS: 'nomsgpack{{if eq OS "windows"}},nofitz{{end}}'
+  GO_TAGS: nomsgpack
   GO_TAG_FLAG: '{{if .GO_TAGS}}-tags {{.GO_TAGS}}{{end}}'
   # Commands that pass -tags on the command line override GOFLAGS rather than
   # merging with it, so they have to spell the base tags out themselves.
@@ -335,7 +331,7 @@ tasks:
     desc: Verify every write has a decision and the write coverage document is up to date
     dir: internal/api/writecoverage
     cmds:
-      - go run -tags nofitz,nomsgpack ./gen -check -output=../../../../../docs/engineering/agent-write-coverage.md
+      - go run -tags nomsgpack ./gen -check -output=../../../../../docs/engineering/agent-write-coverage.md
 
   generate-seeds:
     desc: Regenerate seed IDs from seed files

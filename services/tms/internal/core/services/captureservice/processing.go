@@ -2,7 +2,6 @@ package captureservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -271,10 +270,6 @@ func (s *Service) readPage(
 	}
 
 	inspection, err := s.inspector.Inspect(ctx, data)
-	if errors.Is(err, services.ErrPageInspectionUnavailable) {
-		page.Status = capture.PageProcessed
-		return
-	}
 	if err != nil {
 		fail("The page could not be rendered.", err)
 		return

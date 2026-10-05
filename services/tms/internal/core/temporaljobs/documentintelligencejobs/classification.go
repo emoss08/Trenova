@@ -485,15 +485,8 @@ func isPlainTextType(contentType, ext string) bool {
 		ext == ".html"
 }
 
-func isFitzType(contentType, ext string) bool {
-	switch {
-	case contentType == "application/pdf":
-		return true
-	case ext == ".pdf" || ext == ".docx" || ext == ".xlsx" || ext == ".pptx" || ext == ".epub":
-		return true
-	default:
-		return false
-	}
+func isPDFType(contentType, ext string) bool {
+	return contentType == "application/pdf" || ext == ".pdf"
 }
 
 func readImageDimensions(imageData []byte) (width, height int, err error) {

@@ -28,10 +28,10 @@ const (
 
 	RecordCommand = "cd services/tms && ollama pull nomic-embed-text && " +
 		agentevalgate.OllamaURLEnv + "=" + agentevalgate.DefaultOllamaURL +
-		" go test -tags nofitz -count=1 -run 'TestRecordRetrievalEmbeddingFixture' " +
+		" go test -count=1 -run 'TestRecordRetrievalEmbeddingFixture' " +
 		"./internal/core/services/retrievalservice/ -record"
 	FloorsCommand = "cd services/tms && " +
-		"TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags 'integration nofitz' " +
+		"TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags integration " +
 		"-count=1 -run 'TestRetrievalAgainstFloors' ./internal/core/services/retrievalservice/ -update"
 )
 

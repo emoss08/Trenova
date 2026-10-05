@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/png"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/fitzdoc"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -40,6 +40,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const ocrRenderDPI = 150
 
 type ActivitiesParams struct {
 	fx.In
@@ -63,6 +65,8 @@ type ActivitiesParams struct {
 	AgentEvents         services.AgentEventPublisher     `optional:"true"`
 	ShadowSampler       services.ExtractionShadowSampler `optional:"true"`
 	Rollout             services.ExtractionRolloutRouter `optional:"true"`
+	PDFReader           services.PDFReader
+	OfficeReader        services.OfficeDocumentReader
 }
 
 type Activities struct {
@@ -85,6 +89,8 @@ type Activities struct {
 	agentEvents         services.AgentEventPublisher
 	shadowSampler       services.ExtractionShadowSampler
 	rollout             services.ExtractionRolloutRouter
+	pdfReader           services.PDFReader
+	officeReader        services.OfficeDocumentReader
 }
 
 //nolint:gocritic // dependency injection param
@@ -129,6 +135,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 		agentEvents:         p.AgentEvents,
 		shadowSampler:       p.ShadowSampler,
 		rollout:             p.Rollout,
+		pdfReader:           p.PDFReader,
+		officeReader:        p.OfficeReader,
 	}
 }
 
@@ -624,6 +632,7 @@ func (a *Activities) extractContent(
 ) (*ExtractionResult, error) {
 	contentType := strings.ToLower(doc.FileType)
 	ext := strings.ToLower(filepath.Ext(doc.OriginalName))
+	officeFormat, isOffice := services.OfficeFormatOf(contentType, doc.OriginalName)
 
 	switch {
 	case isPlainTextType(contentType, ext):
@@ -638,8 +647,10 @@ func (a *Activities) extractContent(
 			SourceKind: documentcontent.SourceKindNative,
 			Text:       text,
 		}}, a.cfg.GetMaxExtractedChars()), nil
-	case isFitzType(contentType, ext):
-		return a.extractViaFitz(ctx, data, control.EnableOCR)
+	case isPDFType(contentType, ext):
+		return a.extractPDF(ctx, data, control.EnableOCR)
+	case isOffice:
+		return a.extractOffice(ctx, data, officeFormat, control.EnableOCR)
 	case strings.HasPrefix(contentType, "image/"):
 		if !control.EnableOCR {
 			return finalizeExtraction([]*PageExtractionResult{{
@@ -657,53 +668,41 @@ func (a *Activities) extractContent(
 	}
 }
 
-func (a *Activities) extractViaFitz(
+func (a *Activities) extractPDF(
 	ctx context.Context,
 	data []byte,
 	enableOCR bool,
 ) (*ExtractionResult, error) {
-	doc, err := fitzdoc.NewFromMemory(data)
+	doc, err := a.pdfReader.Open(ctx, data)
 	if err != nil {
 		return nil, err
 	}
 	defer doc.Close()
 
-	pageCount := doc.NumPage()
+	pageCount := doc.PageCount()
 	pages := make([]*PageExtractionResult, 0, pageCount)
 
 	for page := range pageCount {
 		recordHeartbeatIfActivity(ctx, page)
-		pageText, textErr := doc.Text(page)
+		pageText, textErr := doc.PageText(ctx, page)
+		if err = ctx.Err(); err != nil {
+			return nil, err
+		}
 		if textErr == nil && strings.TrimSpace(pageText) != "" {
-			native := &PageExtractionResult{
-				PageNumber: page + 1,
-				SourceKind: documentcontent.SourceKindNative,
-				Text:       pageText,
-			}
-			if layout, ok := doc.(pageHTML); ok {
-				if markup, htmlErr := layout.HTML(page, false); htmlErr == nil {
-					if lines := fitzLayout(markup); len(lines) > 0 {
-						native.Metadata = map[string]any{documentcontent.MetadataLines: lines}
-					}
-				}
-			}
-			pages = append(pages, native)
+			pages = append(pages, a.nativePDFPage(ctx, doc, page, pageText))
 			continue
 		}
 
 		if !enableOCR || page >= a.cfg.GetMaxOCRPages() {
-			pages = append(pages, &PageExtractionResult{
-				PageNumber: page + 1,
-				SourceKind: documentcontent.SourceKindNative,
-				Metadata: map[string]any{
-					"extractionMode": "native_skipped",
-				},
-			})
+			pages = append(pages, skippedOCRPage(page+1))
 			continue
 		}
 
-		imageBytes, imageErr := doc.ImagePNG(page, 150)
+		imageBytes, imageErr := renderPagePNG(ctx, doc, page)
 		if imageErr != nil {
+			if err = ctx.Err(); err != nil {
+				return nil, err
+			}
 			pages = append(pages, &PageExtractionResult{
 				PageNumber: page + 1,
 				SourceKind: documentcontent.SourceKindOCR,
@@ -714,24 +713,176 @@ func (a *Activities) extractViaFitz(
 			continue
 		}
 
-		ocrPage, ocrErr := a.runOCRPage(ctx, imageBytes, ".png", page+1)
-		if ocrErr != nil {
-			pages = append(pages, &PageExtractionResult{
-				PageNumber: page + 1,
-				SourceKind: documentcontent.SourceKindOCR,
-				Metadata: map[string]any{
-					"extractionMode": "ocr_failed",
-					"error":          ocrErr.Error(),
-				},
-			})
-			continue
-		}
-		pages = append(pages, ocrPage)
+		pages = append(pages, a.ocrPageOrFailure(ctx, imageBytes, ".png", page+1))
 	}
 
 	result := finalizeExtraction(pages, a.cfg.GetMaxExtractedChars())
 	result.PageCount = pageCount
 	return result, nil
+}
+
+func (a *Activities) nativePDFPage(
+	ctx context.Context,
+	doc services.PDFDocument,
+	page int,
+	text string,
+) *PageExtractionResult {
+	native := &PageExtractionResult{
+		PageNumber: page + 1,
+		SourceKind: documentcontent.SourceKindNative,
+		Text:       text,
+	}
+
+	layout, err := doc.PageLayout(ctx, page)
+	if err != nil {
+		a.logger.Debug("page layout unavailable", zap.Int("page", page+1), zap.Error(err))
+		return native
+	}
+	if lines := pdfLayout(layout); len(lines) > 0 {
+		native.Metadata = map[string]any{documentcontent.MetadataLines: lines}
+	}
+
+	return native
+}
+
+func (a *Activities) extractOffice(
+	ctx context.Context,
+	data []byte,
+	format services.OfficeFormat,
+	enableOCR bool,
+) (*ExtractionResult, error) {
+	officePages, err := a.officeReader.Read(ctx, data, format)
+	if err != nil {
+		return nil, err
+	}
+
+	pages := make([]*PageExtractionResult, 0, len(officePages))
+	for idx, officePage := range officePages {
+		recordHeartbeatIfActivity(ctx, idx)
+		if err = ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		if strings.TrimSpace(officePage.Text) != "" || len(officePage.Images) == 0 {
+			pages = append(pages, &PageExtractionResult{
+				PageNumber: idx + 1,
+				SourceKind: documentcontent.SourceKindNative,
+				Text:       officePage.Text,
+			})
+			continue
+		}
+
+		if !enableOCR || idx >= a.cfg.GetMaxOCRPages() {
+			pages = append(pages, skippedOCRPage(idx+1))
+			continue
+		}
+
+		pages = append(pages, a.ocrOfficeImages(ctx, officePage.Images, idx+1))
+	}
+
+	result := finalizeExtraction(pages, a.cfg.GetMaxExtractedChars())
+	result.PageCount = len(officePages)
+	return result, nil
+}
+
+func (a *Activities) ocrOfficeImages(
+	ctx context.Context,
+	images []services.OfficeImage,
+	pageNumber int,
+) *PageExtractionResult {
+	if len(images) == 1 {
+		return a.ocrPageOrFailure(ctx, images[0].Data, images[0].Ext, pageNumber)
+	}
+
+	texts := make([]string, 0, len(images))
+	failures := make([]string, 0)
+	confidence := 0.0
+	for _, img := range images {
+		page, err := a.runOCRPage(ctx, img.Data, img.Ext, pageNumber)
+		if err != nil {
+			failures = append(failures, err.Error())
+			continue
+		}
+		if trimmed := strings.TrimSpace(page.Text); trimmed != "" {
+			texts = append(texts, trimmed)
+		}
+		confidence += page.OCRConfidence
+	}
+
+	recognised := len(images) - len(failures)
+	if recognised == 0 {
+		return &PageExtractionResult{
+			PageNumber: pageNumber,
+			SourceKind: documentcontent.SourceKindOCR,
+			Metadata: map[string]any{
+				"extractionMode": "ocr_failed",
+				"error":          strings.Join(failures, "; "),
+			},
+		}
+	}
+
+	merged := &PageExtractionResult{
+		PageNumber: pageNumber,
+		SourceKind: documentcontent.SourceKindOCR,
+		Text: stringutils.TruncateAndTrim(
+			strings.Join(texts, "\n"),
+			a.cfg.GetMaxExtractedChars(),
+		),
+		OCRConfidence: confidence / float64(recognised),
+		Metadata: map[string]any{
+			"ocrLanguage":   a.cfg.GetOCRLanguage(),
+			"ocrConfidence": confidence / float64(recognised),
+			"ocrImages":     len(images),
+		},
+	}
+	if len(failures) > 0 {
+		merged.Metadata["ocrImageFailures"] = len(failures)
+	}
+
+	return merged
+}
+
+func (a *Activities) ocrPageOrFailure(
+	ctx context.Context,
+	imageData []byte,
+	ext string,
+	pageNumber int,
+) *PageExtractionResult {
+	page, err := a.runOCRPage(ctx, imageData, ext, pageNumber)
+	if err != nil {
+		return &PageExtractionResult{
+			PageNumber: pageNumber,
+			SourceKind: documentcontent.SourceKindOCR,
+			Metadata: map[string]any{
+				"extractionMode": "ocr_failed",
+				"error":          err.Error(),
+			},
+		}
+	}
+	return page
+}
+
+func skippedOCRPage(pageNumber int) *PageExtractionResult {
+	return &PageExtractionResult{
+		PageNumber: pageNumber,
+		SourceKind: documentcontent.SourceKindNative,
+		Metadata: map[string]any{
+			"extractionMode": "native_skipped",
+		},
+	}
+}
+
+func renderPagePNG(ctx context.Context, doc services.PDFDocument, page int) ([]byte, error) {
+	img, err := doc.RenderPage(ctx, page, ocrRenderDPI)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	if err = png.Encode(&buf, img); err != nil {
+		return nil, fmt.Errorf("encode page %d: %w", page+1, err)
+	}
+	return buf.Bytes(), nil
 }
 
 func (a *Activities) runOCRPage(
