@@ -85,11 +85,11 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 72 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 259 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 75 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 53 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 47 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 70 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
@@ -97,25 +97,25 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-960 writes: 499 GraphQL mutations and 461 REST writes, after merging 68 REST routes into the mutation they duplicate.
+989 writes: 512 GraphQL mutations and 477 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 376 |
-| Exempt | 584 |
-| — Security | 72 |
-| — Configuration | 259 |
+| Covered by a tool | 380 |
+| Exempt | 606 |
+| — Security | 75 |
+| — Configuration | 260 |
 | — User preference | 27 |
-| — Infrastructure | 46 |
-| — Agent administration | 53 |
+| — Infrastructure | 47 |
+| — Agent administration | 70 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
-| **Pending** | **0** |
-| Total | 960 |
+| **Pending** | **3** |
+| Total | 989 |
 
-Of the 376 writes an agent should be able to make, 376 have a tool (100%).
+Of the 383 writes an agent should be able to make, 380 have a tool (99%).
 
 ## Pending
 
@@ -123,6 +123,9 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
+| billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
+| billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
+| billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
 
 ## By domain
 
@@ -133,8 +136,8 @@ The writes no tool performs yet, and what the tool would do.
 | accountingsync | 31 | 20 | 11 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
-| agent | 13 | 2 | 11 | 0 |
-| agentdefinition | 6 | 0 | 6 | 0 |
+| agent | 15 | 2 | 13 | 0 |
+| agentdefinition | 7 | 0 | 7 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
@@ -144,20 +147,21 @@ The writes no tool performs yet, and what the tool would do.
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
-| assistant | 10 | 0 | 10 | 0 |
+| assistant | 20 | 0 | 20 | 0 |
 | auth | 6 | 0 | 6 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 8 | 5 | 3 | 0 |
+| billingqueue | 14 | 7 | 4 | 3 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
 | capture | 25 | 4 | 21 | 0 |
 | carrier | 4 | 4 | 0 | 0 |
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
+| cloudsignup | 3 | 0 | 3 | 0 |
 | commodity | 4 | 4 | 0 | 0 |
 | controlplaneprovisioning | 1 | 0 | 1 | 0 |
 | costing | 2 | 0 | 2 | 0 |
@@ -168,6 +172,7 @@ The writes no tool performs yet, and what the tool would do.
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
 | decisions | 1 | 0 | 1 | 0 |
+| deskmemory | 6 | 2 | 4 | 0 |
 | detention | 8 | 4 | 4 | 0 |
 | detentionpolicy | 1 | 0 | 1 | 0 |
 | dispatchconsole | 5 | 4 | 1 | 0 |
@@ -226,6 +231,7 @@ The writes no tool performs yet, and what the tool would do.
 | locationcategory | 3 | 0 | 3 | 0 |
 | manualjournal | 7 | 5 | 2 | 0 |
 | notification | 5 | 0 | 5 | 0 |
+| onboarding | 1 | 0 | 1 | 0 |
 | order | 10 | 10 | 0 | 0 |
 | organization | 4 | 0 | 4 | 0 |
 | orgholiday | 3 | 0 | 3 | 0 |
@@ -373,6 +379,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
+| `mutation commitMyDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation createAgentMemory` | Tool: `remember` |
 | `mutation decideAgentPlan`<br>twin `POST /api/v1/agent-plans/:planID/resolve/` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideAgentProposal`<br>twin `POST /api/v1/agent-proposals/:proposalID/resolve/` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
@@ -383,6 +390,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation replayAgentRun` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation resolveAgentException`<br>twin `POST /api/v1/agent-exceptions/:exceptionID/resolve/` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
 | `mutation setAgentMemoryStatus` | Tool: `forget_memory` |
+| `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation updateAgentControl`<br>twin `PUT /api/v1/agent-controls/` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
 | `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
 
@@ -392,6 +400,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation setAgentAccess` | Exempt, security: Decides which people may use which agents. |
 | `mutation setRoleAgentAccess` | Exempt, security: Decides which roles may use which agents. |
+| `mutation updateAgentCapabilities` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `DELETE /api/v1/agent-definitions/:agentID/`<br>agentdefinitionhandler.remove | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `POST /api/v1/agent-definitions/`<br>agentdefinitionhandler.create | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `POST /api/v1/agent-definitions/preview-prompt/`<br>agentdefinitionhandler.previewPrompt | Exempt, read-only: Renders an agent prompt for review and saves nothing. |
@@ -471,16 +480,26 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `DELETE /api/v1/assistant/schedules/:scheduleID/`<br>assistanthandler.deleteSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `DELETE /api/v1/assistant/threads/:threadID/`<br>assistanthandler.deleteThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `PATCH /api/v1/assistant/schedules/:scheduleID/`<br>assistanthandler.updateSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `PATCH /api/v1/assistant/threads/:threadID/`<br>assistanthandler.updateThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/ask/`<br>assistanthandler.ask | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/schedules/:scheduleID/run/`<br>assistanthandler.runSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `POST /api/v1/assistant/threads/`<br>assistanthandler.startThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/pin/`<br>assistanthandler.pinArtifact | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/restore/`<br>assistanthandler.restoreDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
+| `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/rewrite/`<br>assistanthandler.rewriteDocument | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/`<br>assistanthandler.saveDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
+| `POST /api/v1/assistant/threads/:threadID/compact/`<br>assistanthandler.compactThread | Exempt, agent-administration: Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes. |
+| `POST /api/v1/assistant/threads/:threadID/handoff/`<br>assistanthandler.handoff | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/messages/`<br>assistanthandler.sendMessage | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/read/`<br>assistanthandler.markThreadRead | Exempt, agent-administration: Marking a conversation read arranges the person's own Desk; it changes no record an agent acts on. |
 | `POST /api/v1/assistant/threads/:threadID/requests/`<br>assistanthandler.requestMore | Exempt, agent-administration: Asking an administrator for access to an agent, or for more allowance, budget or daily requests, is a person's request about their own use of the assistant; an agent that could ask for its own limits to be raised would defeat them. |
+| `POST /api/v1/assistant/threads/:threadID/schedules/`<br>assistanthandler.createSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `POST /api/v1/assistant/threads/:threadID/turns/`<br>assistanthandler.startTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/turns/:turnID/stop/`<br>assistanthandler.stopTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/`<br>assistanthandler.saveProposalEdits | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 
 ### auth
 
@@ -535,9 +554,15 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `assign_billing_queue_biller`, `assign_billing_queue_billers` |
+| `mutation postBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/post/` | Tool: `post_invoice`, `send_invoice` |
+| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Pending: Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
+| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Pending: Settle one of a billing queue item's checks with one of the options the check offers. |
+| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Pending: Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
 | `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `approve_billing_queue_item`, `approve_billing_queue_items`, `cancel_billing_queue_item`, `hold_billing_queue_item`, `move_billing_item_to_exception`, `send_billing_item_back_to_ops`, `transition_item_to_in_review`, `transition_items_to_in_review` |
 | `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `reassign_billing_charge` |
+| `POST /api/v1/billing-queue/bulk-approve/`<br>billingqueuehandler.startBulkApprove | Tool: `approve_billing_queue_items` |
+| `POST /api/v1/billing-queue/bulk-approve/:runID/cancel/`<br>billingqueuehandler.cancelBulkApprove | Exempt, infrastructure: Stops a bulk approval run the queue screen started in the background; approve_billing_queue_items approves its items within the one proposal a person decides, so an agent has no run to stop. |
 | `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `transfer_to_billing` |
 | `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `correct_charge_code` |
@@ -638,6 +663,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
 
+### cloudsignup
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/cloud/signups`<br>cloudsignuphandler.signup | Exempt, security: Signing up creates an account and proves a person owns an email address; an agent holds no identity of its own and acts only inside an organization that already exists. |
+| `POST /api/v1/cloud/signups/resend`<br>cloudsignuphandler.resend | Exempt, security: Resending a signup verification link is part of a stranger proving they own an email address before any organization exists. |
+| `POST /api/v1/cloud/signups/verify`<br>cloudsignuphandler.verify | Exempt, security: Redeeming a signup link signs a person in and provisions their organization; it is identity proof, not an operation an agent performs. |
+
 ### commodity
 
 | Write | Decision |
@@ -711,6 +744,17 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation decideAgentProposals` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
+
+### deskmemory
+
+| Write | Decision |
+| --- | --- |
+| `mutation confirmDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
+| `mutation createDeskMemory` | Tool: `remember` |
+| `mutation dismissDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
+| `mutation reviseDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
+| `mutation setDeskMemoryStatus` | Tool: `forget_memory` |
+| `mutation setMemorySavingMode` | Exempt, agent-administration: Whether agents keep what they learn in the person's conversations straight away or ask first; an agent that could change it could stop asking. |
 
 ### detention
 
@@ -1417,6 +1461,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation markNotificationsRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation markNotificationsUnread` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation restoreNotifications` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+
+### onboarding
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/onboarding/complete/`<br>onboardinghandler.complete | Exempt, configuration: The owner's one-time setup of a new organization's profile and operating mode; every later write depends on it and it runs before any agent is configured. |
 
 ### order
 
