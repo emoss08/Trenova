@@ -7,6 +7,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, normalizePath } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import { singletonPackages } from "../../singleton-packages";
 
 const require = createRequire(import.meta.url);
 
@@ -54,10 +55,10 @@ export default defineConfig({
       "@": path.resolve(dirname, "./src"),
       "@trenova/shared": path.resolve(dirname, "../../packages/shared/src"),
     },
-    // Shared components call router hooks. A second copy of react-router resolved from
-    // packages/shared carries its own context, and every hook in it then reports that it
-    // is outside a router.
-    dedupe: ["react-router"],
+    // Shared components import these from packages/shared. A second copy resolved there
+    // carries its own React context: router hooks report they are outside a router, a
+    // shared DialogTitle throws Base UI error #27. See singleton-packages.ts.
+    dedupe: [...singletonPackages],
   },
   server: {
     port: 5173,

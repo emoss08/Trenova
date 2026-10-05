@@ -92,6 +92,8 @@ jobs:
             run: pnpm lint -- --format=github
           - name: Design tokens
             run: pnpm lint:design -- --format=github
+          - name: Single copies
+            run: pnpm check:single-copies
           - name: Typecheck
             run: pnpm typecheck
           - name: Test
