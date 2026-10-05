@@ -44,8 +44,10 @@ type Params struct {
 	UsageRecorder     services.UsageRecorder
 	TurnStopper       services.AssistantTurnStopper
 	AuthEvents        services.AuthEventRecorder
-	LoginThrottle     repositories.LoginThrottleStore `optional:"true"`
-	Plans             services.PlanService            `optional:"true"`
+	LoginThrottle     repositories.LoginThrottleStore     `optional:"true"`
+	Plans             services.PlanService                `optional:"true"`
+	MFA               services.MFAService                 `optional:"true"`
+	MFAChallenges     repositories.MFAChallengeRepository `optional:"true"`
 	Encryption        *encryptionservice.Service
 	Config            *config.Config
 	Logger            *zap.Logger
@@ -66,6 +68,8 @@ type Service struct {
 	authEvents services.AuthEventRecorder
 	throttle   repositories.LoginThrottleStore
 	plans      services.PlanService
+	mfa        services.MFAService
+	challenges repositories.MFAChallengeRepository
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	l          *zap.Logger
@@ -87,6 +91,8 @@ func New(p Params) services.AuthService {
 		authEvents: p.AuthEvents,
 		throttle:   p.LoginThrottle,
 		plans:      p.Plans,
+		mfa:        p.MFA,
+		challenges: p.MFAChallenges,
 		enc:        p.Encryption,
 		cfg:        p.Config,
 		l:          p.Logger.Named("service.auth"),
@@ -178,9 +184,29 @@ func (s *Service) Login(
 		return nil, err
 	}
 
+	challenge, err := s.issueMFAChallenge(scoped, usr, targetOrg, attempt)
+	if err != nil || challenge != nil {
+		return challenge, err
+	}
+
+	return s.finishLogin(scoped, usr, targetOrg, loginSessionContext{
+		AuthProvider:          services.AuthEventProviderPassword,
+		AuthenticatorAAL:      1,
+		FederationFAL:         1,
+		LastReauthenticatedAt: timeutils.NowUnix(),
+		RiskDecision:          "allow",
+	})
+}
+
+func (s *Service) finishLogin(
+	ctx context.Context,
+	usr *tenant.User,
+	targetOrg *tenant.Organization,
+	authn loginSessionContext,
+) (*services.LoginResponse, error) {
 	if targetOrg != nil && targetOrg.ID != usr.CurrentOrganizationID {
-		if err = s.ur.UpdateCurrentOrganization(
-			organizationScope(scoped, targetOrg.ID, targetOrg.BusinessUnitID, usr.ID),
+		if err := s.ur.UpdateCurrentOrganization(
+			organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, usr.ID),
 			usr.ID,
 			targetOrg.ID,
 			targetOrg.BusinessUnitID,
@@ -192,13 +218,7 @@ func (s *Service) Login(
 		usr.BusinessUnitID = targetOrg.BusinessUnitID
 	}
 
-	return s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
-		AuthProvider:          services.AuthEventProviderPassword,
-		AuthenticatorAAL:      1,
-		FederationFAL:         1,
-		LastReauthenticatedAt: timeutils.NowUnix(),
-		RiskDecision:          "allow",
-	})
+	return s.createLoginResponse(userScope(ctx, usr), usr, authn)
 }
 
 func (s *Service) GetTenantLoginMetadata(

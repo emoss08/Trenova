@@ -30,6 +30,7 @@ type Params struct {
 	PasswordReset        *passwordresetservice.Service
 	Config               *config.Config
 	PermissionEngine     services.PermissionEngine
+	MFA                  services.MFAService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
@@ -40,6 +41,7 @@ type Handler struct {
 	passwordReset *passwordresetservice.Service
 	cfg           *config.Config
 	permEngine    services.PermissionEngine
+	mfa           services.MFAService
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
 }
@@ -51,6 +53,7 @@ func New(p Params) *Handler {
 		passwordReset: p.PasswordReset,
 		cfg:           p.Config,
 		permEngine:    p.PermissionEngine,
+		mfa:           p.MFA,
 		eh:            p.ErrorHandler,
 		pm:            p.PermissionMiddleware,
 	}
@@ -108,6 +111,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
 		h.replaceOrganizationMemberships,
 	)
+	api.DELETE(
+		"/:userID/mfa/",
+		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
+		h.resetUserMFA,
+	)
 	api.POST("/:userID/permissions/simulate/", h.simulatePermissions)
 
 	meAPI := api.Group("/me")
@@ -118,6 +126,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	meAPI.POST("/profile-picture/", h.uploadProfilePicture)
 	meAPI.DELETE("/profile-picture/", h.deleteProfilePicture)
 	meAPI.POST("/change-password/", h.changeMyPassword)
+	meAPI.GET("/mfa/", h.getMyMFA)
+	meAPI.POST("/mfa/totp/enroll/", h.beginTOTPEnrollment)
+	meAPI.POST("/mfa/totp/confirm/", h.confirmTOTPEnrollment)
+	meAPI.POST("/mfa/totp/disable/", h.disableTOTP)
+	meAPI.POST("/mfa/recovery-codes/", h.regenerateRecoveryCodes)
 	api.GET("/:userID/profile-picture/", h.getProfilePictureURL)
 
 	selectOptions := api.Group("/select-options")

@@ -169,6 +169,7 @@ func administrationRouteRefs() []platformcatalog.RouteRef {
 			"/api/v1/roles/assignments/:assignmentID",
 			"/api/v1/roles/constraints/:constraintID",
 			"/api/v1/roles/hierarchy/:edgeID",
+			"/api/v1/users/:userID/mfa/",
 		),
 	)
 }

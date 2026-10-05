@@ -249,6 +249,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	tenantbootstraprepository.New,
 	iamrepository.New,
 	iamrepository.NewAuthEventRepository,
+	iamrepository.NewMFARepository,
 	ssoconfigrepository.New,
 	ssoidentitylinkrepository.New,
 	userrepository.New,
