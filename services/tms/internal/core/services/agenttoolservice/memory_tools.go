@@ -53,19 +53,16 @@ func (t *rememberTool) SearchTerms() []string {
 }
 
 func (t *rememberTool) Description() string {
-	return "Record a standing instruction, a fact or a procedure for later runs to know. Use " +
-		"kind Instruction for a rule a person gave you, Fact for something you were told or " +
-		"confirmed that is not in any record, Procedure for the steps a person told you to " +
-		"follow for a task. Say who it is for with visibleTo: me for the person you are " +
-		"talking to alone (the default when someone is in the conversation), team for " +
-		"everyone in their role, organization for everyone. Scope it to one customer, " +
-		"location, driver or carrier with subjectType and subjectId when it is about that " +
-		"record. When the person changes something already kept, pass that memory's id from " +
-		"recall_memory as replacesMemoryId: the new memory takes its place and " +
-		"keeps its readers, and one shared with a team or the organization waits for a person " +
-		"allowed to change it. Do not record what a record already says, a guess, or anything " +
-		"a person asked you to keep private. Saving what is already kept refreshes it rather " +
-		"than adding a second copy, so there is no need to look first."
+	return "Record a standing instruction, a fact or a procedure for later runs. Kind " +
+		"Instruction is a rule a person gave you, Fact something told or confirmed that no " +
+		"record holds, Procedure the steps a person gave for a task. visibleTo says who it " +
+		"is for: me (the person in the conversation alone; the default when someone is " +
+		"there), team (their role) or organization. Scope it to one customer, location, " +
+		"driver or carrier with subjectType and subjectId. To change a kept memory, pass its " +
+		"id from recall_memory as replacesMemoryId: the new one takes its place and keeps its " +
+		"readers; a shared one waits for a person allowed to change it. Never record what a " +
+		"record already says, a guess, or anything asked to stay private. Saving what is " +
+		"already kept refreshes it, so there is no need to look first."
 }
 
 func (t *rememberTool) ParamSchema() map[string]any {

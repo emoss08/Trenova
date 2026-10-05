@@ -212,7 +212,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		},
 		"resolve_carrier_intel_event":    {agent.EgressInternal},
 		"dismiss_insight":                {agent.EgressInternal},
-		"remember":                       {agent.EgressInternal},
+		"remember":                       {agent.EgressPersonal, agent.EgressInternal},
 		"forget_memory":                  {agent.EgressInternal},
 		"evaluate_service_failures":      {agent.EgressInternal},
 		"resolve_bank_receipt_work_item": {agent.EgressInternal},
