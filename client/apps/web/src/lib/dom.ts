@@ -15,6 +15,19 @@ export function isWithinDialog(target: EventTarget | null): boolean {
 }
 
 /**
+ * True while the event originated inside a floating list (a command menu, a listbox or a
+ * popover), which owns its own number and Enter keys.
+ */
+export function isWithinPopup(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest(
+      '[cmdk-root], [role="listbox"], [role="dialog"], [data-slot="popover-content"]',
+    ) !== null
+  );
+}
+
+/**
  * The 0-based index of a number key from 1 to `count`, pressed without a modifier and
  * outside a text field, or -1. Pickers that answer to "press 1, 2 or 3" read it.
  */

@@ -241,6 +241,28 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
     expect(group.querySelector("button")).toHaveTextContent("Mountain time");
   });
 
+  it("leaves number keys and Enter to the other-timezone list while it is open", async () => {
+    const user = userEvent.setup();
+    renderOnboarding();
+
+    await answerName(user);
+    await user.click(await screen.findByRole("button", { name: "Other timezone\u2026" }));
+    await user.click(screen.getByRole("button", { name: /Central time \(US\)/ }));
+    const option = await screen.findByRole("option", { name: /London/ });
+    fireEvent.keyDown(option, { key: "1" });
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(screen.queryByPlaceholderText("27377")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Mountain time/, pressed: false })).toBeInTheDocument();
+
+    await user.hover(option);
+    expect(option).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(option, { key: "Enter" });
+
+    expect(await screen.findByPlaceholderText("27377")).toBeInTheDocument();
+    expect(bubbles()).toContain("London (GMT)");
+  });
+
   it("holds the name turn until a name is given", async () => {
     const user = userEvent.setup();
     renderOnboarding();

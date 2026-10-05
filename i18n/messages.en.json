@@ -85441,13 +85441,12 @@
     ]
   },
   "Home": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/__nv_harness.tsx",
       "apps/web/components",
       "apps/web/config",
       "routes/home"

@@ -1,6 +1,6 @@
 import { SelectField } from "@/components/fields/select-field";
 import { timezoneGroupedChoices } from "@/lib/choices";
-import { isTypingTarget, numberKeyIndex } from "@/lib/dom";
+import { isTypingTarget, isWithinPopup, numberKeyIndex } from "@/lib/dom";
 import { onboardingTimezoneTiles, onboardingTimezoneLabel } from "@/lib/onboarding-form";
 import type { OnboardingFormValues } from "@/types/onboarding";
 import { useLocale, useT } from "@trenova/shared/i18n/use-t";
@@ -81,6 +81,9 @@ export function TimezoneAsk({
   };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || isWithinPopup(event.target)) {
+        return;
+      }
       const index = numberKeyIndex(event, tiles.length);
       if (index !== -1) {
         event.preventDefault();
