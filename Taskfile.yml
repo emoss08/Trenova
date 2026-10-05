@@ -6,9 +6,6 @@ includes:
   tms:
     taskfile: ./services/tms/Taskfile.yml
     dir: ./services/tms
-  gtc:
-    taskfile: ./services/gtc/Taskfile.yml
-    dir: ./services/gtc
   samsara:
     taskfile: ./services/samsara-sim/Taskfile.yml
     dir: ./services/samsara-sim
@@ -32,9 +29,6 @@ tasks:
       - echo 'Examples:'
       - echo '  task tms:run'
       - echo '  task tms:test'
-      - echo '  task gtc:run'
-      - echo '  task gtc:validate-config'
-      - echo '  task gtc:backfill projection=shipment-search'
 
   i18n:
     desc: Extract user-facing strings and refresh the translation catalogs

@@ -241,6 +241,35 @@ services:
             timeout: 5s
             retries: 10
 
+    gtc:
+        # Change data capture (github.com/emoss08/gtc): feeds the Meilisearch
+        # indexes, the Redis caches and the table-change-alert stream. Routing
+        # lives in deploy/gtc/sinks.yaml. Locally the slot and a FOR ALL TABLES
+        # publication are created on first start.
+        image: ghcr.io/emoss08/gtc:0.9.0
+        container_name: gtc
+        environment:
+            DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-trenova_go_db}?replication=database&sslmode=disable
+            CDC_SLOT_NAME: gtc_slot
+            CDC_PUBLICATION_NAME: gtc_publication
+            SINK_CONFIG_FILE: /config/sinks.yaml
+            REDIS_URL: redis://redis:6379/0
+            REDIS_JSON_URL: redis://redis:6379/0
+            MEILISEARCH_URL: http://meilisearch:7700
+            MEILISEARCH_API_KEY: CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
+        volumes:
+            - ./deploy/gtc/sinks.yaml:/config/sinks.yaml:ro
+        ports:
+            - "8095:8080"
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            meilisearch:
+                condition: service_healthy
+        restart: unless-stopped
+
     samsara-sim:
         build:
             context: .

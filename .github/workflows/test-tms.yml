@@ -73,7 +73,7 @@ jobs:
       - name: Run unit tests
         run: |
           set -euo pipefail
-          for module in shared services/tms services/gtc services/samsara-sim services/edi-partner-sim; do
+          for module in shared services/tms services/samsara-sim services/edi-partner-sim; do
             echo "::group::${module}"
             (cd "$module" && go test -coverprofile=coverage-unit.out -covermode=atomic ./...)
             echo "::endgroup::"
@@ -86,7 +86,6 @@ jobs:
           path: |
             shared/coverage-unit.out
             services/tms/coverage-unit.out
-            services/gtc/coverage-unit.out
           if-no-files-found: error
 
   integration-tests:
@@ -399,7 +398,7 @@ jobs:
       - name: Build every workspace module
         run: |
           set -euo pipefail
-          for module in shared services/tms services/gtc services/samsara-sim services/edi-partner-sim; do
+          for module in shared services/tms services/samsara-sim services/edi-partner-sim; do
             echo "::group::${module}"
             (cd "$module" && go build ./...)
             echo "::endgroup::"
