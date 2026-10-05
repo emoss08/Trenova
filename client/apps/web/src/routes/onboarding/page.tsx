@@ -1,14 +1,32 @@
-import logoRainbow from "@/assets/logo.webp";
+import "./_components/onboarding.css";
 import { Metadata } from "@/components/metadata";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useSignOut } from "@/hooks/use-sign-out";
+import { fetchGraphQLSelectOptions, type SelectOption } from "@/lib/graphql/select-options";
+import {
+  BOLD_MARKS,
+  boldSegments,
+  firstNameOf,
+  novaLine,
+  plainSegments,
+  segmentsText,
+  type NovaSegment,
+} from "@/lib/onboarding-copy";
 import {
   browserTimezone,
+  firstInvalidOnboardingStep,
+  nextOnboardingStep,
   ONBOARDING_STEPS,
   onboardingFormDefaults,
+  onboardingProgress,
+  OPERATION_TYPES,
+  operationTypeDefinition,
+  REVIEW_STEP_INDEX,
+  SAMPLE_DATA_RECORD_COUNT,
+  onboardingTimezoneLabel,
   type OnboardingStepId,
 } from "@/lib/onboarding-form";
 import { onboardingStateQueryOptions } from "@/lib/queries/onboarding";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { onboardingService } from "@/services/onboarding";
 import {
   onboardingFormSchema,
@@ -19,23 +37,34 @@ import {
 } from "@/types/onboarding";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Form } from "@trenova/shared/components/ui/form";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Stepper, type StepperStep } from "@trenova/shared/components/ui/stepper";
-import { AlertCircleIcon, ArrowLeftIcon, ArrowRightIcon } from "@trenova/shared/components/icons";
+import { Edit02Icon } from "@trenova/shared/components/icons";
 import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { FormProvider, useForm, useWatch, type Control } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { CompanyStep } from "./_components/company-step";
-import { OperationStep } from "./_components/operation-step";
-import { ReviewStep } from "./_components/review-step";
-import { SampleDataStep } from "./_components/sample-data-step";
+import { AddressAsk } from "./_components/address-ask";
+import { BackButton } from "./_components/back-button";
+import { BuildNarration, type BuildOutcome } from "./_components/build-narration";
+import { ChoiceAsk } from "./_components/choice-ask";
+import { ComposerAsk } from "./_components/composer-ask";
+import { IdsAsk } from "./_components/ids-ask";
+import { Kbd } from "./_components/keyboard-hint";
+import { NovaMessage } from "./_components/nova-message";
+import { ReadyCard } from "./_components/ready-card";
+import { ReviewCard, type ReviewGroup } from "./_components/review-card";
+import { ModuleChips, SampleMeters } from "./_components/sample-meters";
+import { TimezoneAsk } from "./_components/timezone-ask";
+
+type Phase = "setup" | "building" | "ready" | "failed";
+type Position = { current: number; furthest: number };
+
+const BUILD_TURN = "build";
+const FAILURE_TURN = "failure";
+const REWIND_DELAY_MS = 900;
+const STATE_LABEL_STALE_MS = 5 * 60 * 1000;
 
 function currentOrganizationName(
   user: ReturnType<typeof useAuthStore.getState>["user"],
@@ -46,10 +75,9 @@ function currentOrganizationName(
 }
 
 /**
- * The welcome wizard a new Trenova Cloud organization finishes once: profile,
- * operation type, sample data, review. The route loader only lets a pending
- * organization in; finishing it marks the organization complete on the server and
- * sends the person home.
+ * The welcome a new Trenova Cloud organization finishes once, as a conversation with
+ * Nova, a scripted setup guide. The route loader only lets a pending organization in;
+ * finishing it marks the organization complete on the server and opens the app.
  */
 export function OnboardingPage() {
   const t = useT();
@@ -60,57 +88,187 @@ export function OnboardingPage() {
   return (
     <>
       <Metadata title={t("Welcome")} description={t("Set up your Trenova organization")} />
-      <OnboardingFrame>
-        {stateQuery.isPending ? (
-          <OnboardingSkeleton />
-        ) : stateQuery.isError ? (
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertTitle>{t("We couldn't load your setup")}</AlertTitle>
-            <AlertDescription>
-              {t("Refresh the page to try again. Your account and organization are safe.")}
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <OnboardingWizard
-            state={stateQuery.data}
-            organizationId={organizationId}
-            organizationName={currentOrganizationName(user)}
-          />
-        )}
-      </OnboardingFrame>
+      {stateQuery.isPending ? (
+        <OnboardingShell progress={4}>
+          <section className="nv-turn">
+            <NovaPending />
+          </section>
+        </OnboardingShell>
+      ) : stateQuery.isError ? (
+        <OnboardingShell progress={4}>
+          <section className="nv-turn">
+            <NovaMessage
+              animate={false}
+              segments={plainSegments(
+                t(
+                  "I couldn't load your setup. Refresh the page to try again. Your account and organization are safe.",
+                ),
+              )}
+            />
+          </section>
+        </OnboardingShell>
+      ) : (
+        <Conversation
+          state={stateQuery.data}
+          organizationId={organizationId}
+          organizationName={currentOrganizationName(user)}
+          firstName={firstNameOf(user?.name)}
+        />
+      )}
     </>
   );
 }
 
-function OnboardingFrame({ children }: { children: React.ReactNode }) {
+function NovaPending() {
   const t = useT();
-  const signOut = useSignOut();
-
   return (
-    <div className="bg-canvas text-foreground min-h-svh">
-      <header className="border-border bg-card flex h-12 items-center justify-between border-b px-4">
-        <div className="flex items-center gap-2.5">
-          <img src={logoRainbow} alt="" className="size-5 object-contain" />
-          <span className="text-base font-semibold">{t("Trenova")}</span>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => void signOut()}>
-          {t("Sign out")}
-        </Button>
-      </header>
-      <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-12">{children}</main>
+    <div>
+      <div className="nv-who">
+        <span className="nv-mark" data-busy="true" aria-hidden="true" />
+        <b>{t("Nova")}</b>
+        <span>{t("Setup guide")}</span>
+      </div>
+      <div className="nv-thk">{t("Typing")}</div>
     </div>
   );
 }
 
-function OnboardingWizard({
+function OnboardingShell({
+  progress,
+  back,
+  live,
+  flowRef,
+  scrollRef,
+  rootRef,
+  children,
+}: {
+  progress: number;
+  back?: ReactNode;
+  live?: string;
+  flowRef?: React.Ref<HTMLElement>;
+  scrollRef?: React.Ref<HTMLDivElement>;
+  rootRef?: React.Ref<HTMLDivElement>;
+  children: ReactNode;
+}) {
+  return (
+    <div className="nv" ref={rootRef}>
+      {back}
+      <span className="nv-tbar" aria-hidden="true">
+        <i style={{ width: `${progress}%` }} />
+      </span>
+      <div className="nv-live" aria-live="polite" aria-atomic="true">
+        {live}
+      </div>
+      <div className="nv-room">
+        <div className="nv-scroll" ref={scrollRef}>
+          <div className="nv-grid">
+            <main className="nv-flow" ref={flowRef}>
+              {children}
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function useStateOption(stateId: string, picked: SelectOption | null) {
+  const usePicked = picked !== null && picked.id === stateId;
+  const query = useQuery({
+    queryKey: ["select-option-labels", "US_STATE", [stateId]],
+    queryFn: ({ signal }) =>
+      fetchGraphQLSelectOptions(
+        { resource: "US_STATE", ids: [stateId], initialLimit: 1 },
+        { signal },
+      ),
+    enabled: stateId !== "" && !usePicked,
+    staleTime: STATE_LABEL_STALE_MS,
+  });
+  const option = usePicked
+    ? picked
+    : (query.data?.results.find((candidate) => candidate.id === stateId) ?? null);
+  return {
+    name: option?.label ?? "",
+    abbreviation: option ? selectOptionMetaString(option, "abbreviation") || option.label : "",
+  };
+}
+
+type Answers = {
+  company: string;
+  timezone: string;
+  address: string;
+  cityState: string;
+  ids: string;
+  operation: string;
+  operationLower: string;
+  operationModules: number;
+  sample: string;
+};
+
+function useAnswers(
+  control: Control<OnboardingFormValues, unknown, OnboardingFormOutput>,
+  pickedState: SelectOption | null,
+  t: TranslateFn,
+): { values: OnboardingFormValues; answers: Answers } {
+  const values = useWatch({ control }) as OnboardingFormValues;
+  const organization = values.organization;
+  const state = useStateOption(organization.stateId ?? "", pickedState);
+  const operation = operationTypeDefinition(values.operationType);
+  const operationLabel = operation ? t(operation.label) : "";
+
+  const scac = (organization.scacCode ?? "").trim().toUpperCase();
+  const dot = (organization.dotNumber ?? "").trim();
+  const zipLine = [state.abbreviation, (organization.postalCode ?? "").trim()]
+    .filter(Boolean)
+    .join(" ");
+
+  return {
+    values,
+    answers: {
+      company: (organization.name ?? "").trim(),
+      timezone: organization.timezone ? t(onboardingTimezoneLabel(organization.timezone)) : "",
+      address: [(organization.addressLine1 ?? "").trim(), (organization.city ?? "").trim(), zipLine]
+        .filter(Boolean)
+        .join(", "),
+      cityState: [(organization.city ?? "").trim(), state.abbreviation].filter(Boolean).join(", "),
+      ids: [scac && t("SCAC {0}", scac), dot && t("USDOT {0}", dot)].filter(Boolean).join(" · "),
+      operation: operationLabel,
+      operationLower: operationLabel.toLocaleLowerCase(),
+      operationModules: operation?.modules.length ?? 0,
+      sample: values.loadSampleData ? t("Load sample data") : t("Start empty"),
+    },
+  };
+}
+
+function answerFor(id: OnboardingStepId, answers: Answers): string {
+  switch (id) {
+    case "name":
+      return answers.company;
+    case "timezone":
+      return answers.timezone;
+    case "address":
+      return answers.address;
+    case "ids":
+      return answers.ids;
+    case "operation":
+      return answers.operation;
+    case "sample-data":
+      return answers.sample;
+    case "review":
+      return "";
+  }
+}
+
+function Conversation({
   state,
   organizationId,
   organizationName,
+  firstName,
 }: {
   state: OnboardingState;
   organizationId: string;
   organizationName: string | undefined;
+  firstName: string;
 }) {
   const t = useT();
   const navigate = useNavigate();
@@ -118,17 +276,32 @@ function OnboardingWizard({
   const checkAuth = useAuthStore((store) => store.checkAuth);
   const fetchManifest = usePermissionStore((store) => store.fetchManifest);
   const { config } = usePublicConfig();
-  const [stepIndex, setStepIndex] = useState(0);
-  const [stateLabel, setStateLabel] = useState("");
+  const [detected] = useState(browserTimezone);
+  const [position, setPosition] = useState<Position>({ current: 0, furthest: 0 });
+  const [seen, setSeen] = useState<ReadonlySet<string>>(() => new Set());
+  const [announcement, setAnnouncement] = useState("");
+  const [phase, setPhase] = useState<Phase>("setup");
+  const [outcome, setOutcome] = useState<BuildOutcome>("pending");
+  const [settledAt, setSettledAt] = useState<number | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [rewinding, setRewinding] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const [pickedState, setPickedState] = useState<SelectOption | null>(null);
+  const completedRef = useRef<OnboardingState | null>(null);
+  const finishingRef = useRef(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const flowRef = useRef<HTMLElement>(null);
+  const { current, furthest } = position;
 
   const defaultValues = useMemo(
     () =>
       onboardingFormDefaults({
         state,
         organizationName,
-        fallbackTimezone: browserTimezone(),
+        fallbackTimezone: detected,
       }),
-    [state, organizationName],
+    [state, organizationName, detected],
   );
 
   const form = useForm<OnboardingFormValues, unknown, OnboardingFormOutput>({
@@ -136,70 +309,151 @@ function OnboardingWizard({
     defaultValues,
     mode: "onTouched",
   });
-  const { handleSubmit, trigger, control } = form;
+  const { handleSubmit, trigger, setValue, getFieldState } = form;
+  const { values, answers } = useAnswers(form.control, pickedState, t);
 
-  const step = ONBOARDING_STEPS[stepIndex];
-  const isLast = stepIndex === ONBOARDING_STEPS.length - 1;
-
-  // A refusal (from zod on the last step, or from the server) can belong to a field on
-  // an earlier step; the wizard goes back to the first step that holds one, so the
-  // message is on screen rather than behind a "Back" button.
-  // getFieldState reads the live error store; form.formState is the snapshot of the last
-  // render, which does not yet hold the errors this very submit just set.
-  const showFirstInvalidStep = () => {
-    const firstInvalid = ONBOARDING_STEPS.findIndex((candidate) =>
-      candidate.fields.some((field) => form.getFieldState(field).error !== undefined),
-    );
-    if (firstInvalid !== -1) {
-      setStepIndex(firstInvalid);
-    }
-  };
-
-  const { mutateAsync, isPending } = useApiMutation({
-    mutationFn: (values: OnboardingFormOutput) =>
-      onboardingService.complete(toCompleteOnboardingRequest(values)),
+  const { mutate } = useApiMutation({
+    mutationFn: (submitted: OnboardingFormOutput) =>
+      onboardingService.complete(toCompleteOnboardingRequest(submitted)),
     form,
     resourceName: "Onboarding",
-    onError: showFirstInvalidStep,
   });
 
-  const steps: StepperStep[] = ONBOARDING_STEPS.map((definition, index) => ({
-    id: definition.id,
-    label: t(definition.label),
-    detail: t(definition.detail),
-    state: index < stepIndex ? "done" : index === stepIndex ? "active" : "pending",
-  }));
-
-  const goNext = async () => {
-    const valid = step.fields.length === 0 || (await trigger([...step.fields]));
-    if (valid) {
-      setStepIndex((current) => Math.min(current + 1, ONBOARDING_STEPS.length - 1));
+  useEffect(() => {
+    const flow = flowRef.current;
+    const scroller = scrollRef.current;
+    if (!flow || !scroller || typeof ResizeObserver === "undefined") {
+      return undefined;
     }
-  };
+    const observer = new ResizeObserver(() => {
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
+    });
+    observer.observe(flow);
+    return () => observer.disconnect();
+  }, []);
 
-  const goTo = (id: OnboardingStepId) => {
-    const index = ONBOARDING_STEPS.findIndex((definition) => definition.id === id);
-    if (index !== -1) {
-      setStepIndex(index);
-    }
-  };
+  const seenRef = useRef(seen);
 
-  const complete = async (values: OnboardingFormOutput) => {
-    let completed: OnboardingState | null;
-    try {
-      completed = await mutateAsync(values);
-    } catch {
+  const markSeen = useCallback((id: string, text: string) => {
+    if (seenRef.current.has(id)) {
       return;
     }
+    const next = new Set(seenRef.current).add(id);
+    seenRef.current = next;
+    setSeen(next);
+    setAnnouncement(text);
+  }, []);
 
-    // Written before navigating so the protected loader, which reads this entry, sees
-    // the organization as finished and does not send the person straight back.
+  const submitStep = (index: number) => async () => {
+    const step = ONBOARDING_STEPS[index];
+    const valid = step.fields.length === 0 || (await trigger([...step.fields]));
+    if (!valid) {
+      return false;
+    }
+    setPosition((previous) => {
+      const next = nextOnboardingStep(previous.current, previous.furthest);
+      return { current: next, furthest: Math.max(previous.furthest, next) };
+    });
+    return true;
+  };
+
+  const back = useCallback(() => {
+    if (phase !== "setup") {
+      return;
+    }
+    setPosition((previous) =>
+      previous.current === 0
+        ? previous
+        : { current: previous.current - 1, furthest: previous.current - 1 },
+    );
+  }, [phase]);
+
+  const edit = (index: number) => {
+    if (phase !== "setup") {
+      return;
+    }
+    setPosition((previous) => ({ current: index, furthest: previous.furthest }));
+  };
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) {
+        return;
+      }
+      const target = event.target;
+      const inside =
+        target === document.body ||
+        (target instanceof Node && rootRef.current?.contains(target) === true);
+      if (inside) {
+        back();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [back]);
+
+  const rewindToFirstInvalid = useCallback(() => {
+    const index = firstInvalidOnboardingStep((field) => getFieldState(field).error !== undefined);
+    if (index === -1) {
+      return false;
+    }
+    setPhase("setup");
+    setPosition({ current: index, furthest: REVIEW_STEP_INDEX });
+    return true;
+  }, [getFieldState]);
+
+  const startBuild = (submitted: OnboardingFormOutput) => {
+    completedRef.current = null;
+    setRewinding(false);
+    setOutcome("pending");
+    setSettledAt(null);
+    setAttempt((previous) => previous + 1);
+    setPhase("building");
+    mutate(submitted, {
+      onSuccess: (completed) => {
+        completedRef.current = completed;
+        setSettledAt(performance.now());
+        setOutcome("success");
+      },
+      onError: () => setOutcome("error"),
+    });
+  };
+
+  const finish = () => {
+    if (finishingRef.current || phase === "building" || phase === "ready") {
+      return;
+    }
+    finishingRef.current = true;
+    void handleSubmit(startBuild, () => {
+      finishingRef.current = false;
+      rewindToFirstInvalid();
+    })();
+  };
+
+  const onFailureTyped = useCallback(() => {
+    const index = firstInvalidOnboardingStep((field) => getFieldState(field).error !== undefined);
+    if (index !== -1) {
+      setRewinding(true);
+    }
+  }, [getFieldState]);
+
+  useEffect(() => {
+    if (!rewinding) {
+      return undefined;
+    }
+    const id = window.setTimeout(() => {
+      setRewinding(false);
+      rewindToFirstInvalid();
+    }, REWIND_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, [rewinding, rewindToFirstInvalid]);
+
+  const open = async () => {
+    setOpening(true);
     queryClient.setQueryData(onboardingStateQueryOptions(organizationId).queryKey, {
-      ...(completed ?? state),
+      ...(completedRef.current ?? state),
       status: "completed",
     });
-    // The profile, the capability flags and possibly a sample data set all changed, so
-    // nothing cached under the old organization profile is worth keeping.
     await Promise.allSettled([checkAuth(), fetchManifest()]);
     await queryClient.invalidateQueries({
       predicate: (query) => query.queryKey[0] !== "onboarding",
@@ -207,75 +461,258 @@ function OnboardingWizard({
     void navigate("/", { replace: true });
   };
 
+  const company = answers.company || t("your company");
+  const context = {
+    firstName,
+    company,
+    browserZoneLabel: detected ? t(onboardingTimezoneLabel(detected)) : "",
+  };
+  const settingUp = phase === "setup";
+  const visibleSteps = ONBOARDING_STEPS.slice(0, settingUp ? current + 1 : REVIEW_STEP_INDEX + 1);
+
+  const buildLines: NovaSegment[][] = [
+    boldSegments(t("Creating {0}", ...BOLD_MARKS), [company]),
+    boldSegments(t("Setting the clock to {0}", ...BOLD_MARKS), [answers.timezone]),
+    boldSegments(t("Saving {0} as headquarters", ...BOLD_MARKS), [answers.cityState]),
+    boldSegments(t("Turning on {0} for {1}", ...BOLD_MARKS), [
+      t("{0, plural, one {# module} other {# modules}}", answers.operationModules),
+      answers.operationLower,
+    ]),
+    values.loadSampleData
+      ? boldSegments(t("Loading {0}", ...BOLD_MARKS), [
+          t(
+            "{0, plural, one {# sample record} other {# sample records}}",
+            SAMPLE_DATA_RECORD_COUNT,
+          ),
+        ])
+      : plainSegments(t("Leaving records empty")),
+    plainSegments(t("Making you the owner")),
+  ];
+
+  const reviewGroups: ReviewGroup[] = [
+    {
+      title: t("Company profile"),
+      rows: [
+        { label: t("Company name"), value: answers.company, step: 0 },
+        { label: t("Timezone"), value: answers.timezone, step: 1 },
+        { label: t("Address"), value: answers.address, step: 2 },
+        {
+          label: t("SCAC code"),
+          value: (values.organization.scacCode ?? "").trim().toUpperCase(),
+          step: 3,
+          mono: true,
+        },
+        {
+          label: t("USDOT number"),
+          value: (values.organization.dotNumber ?? "").trim(),
+          step: 3,
+          mono: true,
+        },
+      ],
+    },
+    {
+      title: t("Setup"),
+      rows: [
+        { label: t("Operation type"), value: answers.operation, step: 4 },
+        { label: t("Sample data"), value: answers.sample, step: 5 },
+      ],
+    },
+  ];
+
+  const ask = (id: OnboardingStepId, index: number): ReactNode => {
+    switch (id) {
+      case "name":
+        return <ComposerAsk onSubmit={submitStep(index)} />;
+      case "timezone":
+        return <TimezoneAsk detected={detected} onSubmit={submitStep(index)} />;
+      case "address":
+        return <AddressAsk onSubmit={submitStep(index)} onStateOptionChange={setPickedState} />;
+      case "ids":
+        return <IdsAsk onSubmit={submitStep(index)} />;
+      case "operation":
+        return (
+          <ChoiceAsk
+            label={t("Operation type")}
+            error={getFieldState("operationType").error?.message}
+            value={furthest > index ? values.operationType : undefined}
+            items={OPERATION_TYPES.map((type) => ({
+              value: type.value,
+              title: t(type.label),
+              description: t(type.description),
+              extra: <ModuleChips modules={type.modules} />,
+            }))}
+            onPick={(value) => {
+              setValue("operationType", value, { shouldDirty: true });
+              return submitStep(index)();
+            }}
+          />
+        );
+      case "sample-data":
+        return (
+          <ChoiceAsk
+            label={t("Sample data")}
+            error={getFieldState("loadSampleData").error?.message}
+            value={furthest > index ? values.loadSampleData : undefined}
+            items={[
+              {
+                value: true,
+                title: t("Load sample data"),
+                description: t(
+                  "A few customers, locations, equipment and shipments, so every screen has something to show.",
+                ),
+                extra: <SampleMeters limits={config.freePlan.limits} />,
+              },
+              {
+                value: false,
+                title: t("Start empty"),
+                description: t("A clean workspace. Add your own records from day one."),
+              },
+            ]}
+            onPick={(value) => {
+              setValue("loadSampleData", value, { shouldDirty: true });
+              return submitStep(index)();
+            }}
+          />
+        );
+      case "review":
+        return <ReviewCard groups={reviewGroups} onEdit={edit} onFinish={finish} />;
+    }
+  };
+
+  const buildLine = boldSegments(
+    t("Creating the workspace for {0}. This only takes a moment.", ...BOLD_MARKS),
+    [company],
+  );
+  const failureLine = plainSegments(
+    t("Something went wrong while I was setting things up. Nothing was lost — let's fix it."),
+  );
+  const rootError = form.formState.errors.root?.message;
+  const failureNeedsRetry =
+    phase === "failed" &&
+    seen.has(`${FAILURE_TURN}-${attempt}`) &&
+    !rewinding &&
+    firstInvalidOnboardingStep((field) => getFieldState(field).error !== undefined) === -1;
+
   return (
     <FormProvider {...form}>
-      <div className="mb-8 flex flex-col gap-1">
-        <h1 className="m-0 text-2xl font-semibold">{t("Welcome to Trenova")}</h1>
-        <p className="text-muted-foreground m-0 text-sm">
-          {t(
-            "A few details and your workspace is ready. Everything here can be changed later in Organization settings.",
-          )}
-        </p>
-      </div>
-
-      <div className="grid gap-8 sm:grid-cols-[12rem_minmax(0,1fr)]">
-        <Stepper steps={steps} aria-label={t("Setup steps")} className="hidden sm:flex" />
-        <p className="text-muted-foreground m-0 text-xs sm:hidden">
-          {t("Step {0} of {1}", String(stepIndex + 1), String(ONBOARDING_STEPS.length))} ·{" "}
-          {t(step.label)}
-        </p>
-
-        <Form
-          onSubmit={(event) => {
-            if (!isLast) {
-              event.preventDefault();
-              void goNext();
-              return;
-            }
-            void handleSubmit(complete, showFirstInvalidStep)(event);
-          }}
-          className="flex min-w-0 flex-col gap-4"
-        >
-          {step.id === "company" ? (
-            <CompanyStep control={control} onStateLabelChange={setStateLabel} />
-          ) : step.id === "operation" ? (
-            <OperationStep control={control} />
-          ) : step.id === "sample-data" ? (
-            <SampleDataStep control={control} freePlanLimits={config.freePlan.limits} />
-          ) : (
-            <ReviewStep control={control} stateLabel={stateLabel} onEdit={goTo} />
-          )}
-
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
-              disabled={stepIndex === 0 || isPending}
-            >
-              <ArrowLeftIcon className="size-4" />
-              {t("Back")}
-            </Button>
-            <Button type="submit" isLoading={isPending} loadingText={t("Setting up")}>
-              {isLast ? t("Finish setup") : t("Continue")}
-              {isLast ? null : <ArrowRightIcon className="size-4" />}
-            </Button>
-          </div>
-        </Form>
-      </div>
+      <OnboardingShell
+        progress={onboardingProgress(current, phase)}
+        rootRef={rootRef}
+        scrollRef={scrollRef}
+        flowRef={flowRef}
+        live={announcement}
+        back={<BackButton hidden={!settingUp || current === 0} onBack={back} />}
+      >
+        {visibleSteps.map((step, index) => {
+          const isCurrent = settingUp && index === current;
+          const answered = (index < current || !settingUp) && step.id !== "review";
+          const answer = answered ? answerFor(step.id, answers) : "";
+          const segments = novaLine(t, step.id, context);
+          return (
+            <section key={step.id} className="nv-turn">
+              <NovaMessage
+                segments={segments}
+                animate={!seen.has(step.id)}
+                onDone={() => markSeen(step.id, segmentsText(segments))}
+              />
+              {isCurrent && seen.has(step.id) ? (
+                <div className="nv-ask">{ask(step.id, index)}</div>
+              ) : null}
+              {answered ? (
+                <div className="nv-ans" data-last={settingUp && index === current - 1}>
+                  {settingUp ? (
+                    <button type="button" className="nv-ans-e" onClick={() => edit(index)}>
+                      <Edit02Icon size={12} strokeWidth={1.5} aria-hidden="true" />
+                      {t("Edit")}
+                    </button>
+                  ) : null}
+                  <span key={answer} className="nv-ans-b" data-skipped={!answer}>
+                    {answer || t("Skip for now")}
+                  </span>
+                </div>
+              ) : null}
+              {index === 0 && current === 1 && settingUp ? (
+                <div className="nv-fix">
+                  {boldSegments(
+                    t("Made a typo? Click Edit, or press {0} to go back.", ...BOLD_MARKS),
+                    ["esc"],
+                  ).map((segment, segmentIndex) =>
+                    segment.bold ? (
+                      <Kbd key={segmentIndex}>{segment.text}</Kbd>
+                    ) : (
+                      <span key={segmentIndex}>{segment.text}</span>
+                    ),
+                  )}
+                </div>
+              ) : null}
+              {step.id === "review" && !settingUp ? (
+                <div className="nv-ans">
+                  <span className="nv-ans-b">{t("Finish setup")}</span>
+                </div>
+              ) : null}
+            </section>
+          );
+        })}
+        {!settingUp ? (
+          <section className="nv-turn">
+            <NovaMessage
+              segments={buildLine}
+              animate={!seen.has(BUILD_TURN)}
+              onDone={() => markSeen(BUILD_TURN, segmentsText(buildLine))}
+            />
+            {seen.has(BUILD_TURN) ? (
+              <BuildNarration
+                key={attempt}
+                lines={buildLines}
+                outcome={outcome}
+                settledAt={settledAt}
+                onReady={() => setPhase("ready")}
+                onFailed={() => {
+                  finishingRef.current = false;
+                  setPhase("failed");
+                }}
+              />
+            ) : null}
+            {phase === "ready" ? (
+              <ReadyCard
+                title={firstName ? t("You're all set, {0}", firstName) : t("{0} is ready", company)}
+                detail={
+                  values.loadSampleData
+                    ? t("{0} is live. Sample data is loaded and ready to explore.", company)
+                    : t("{0} is live and ready for your first records.", company)
+                }
+                opening={opening}
+                onOpen={() => void open()}
+              />
+            ) : null}
+          </section>
+        ) : null}
+        {phase === "failed" ? (
+          <section className="nv-turn">
+            <NovaMessage
+              key={attempt}
+              segments={failureLine}
+              animate={!seen.has(`${FAILURE_TURN}-${attempt}`)}
+              onDone={() => {
+                markSeen(`${FAILURE_TURN}-${attempt}`, segmentsText(failureLine));
+                onFailureTyped();
+              }}
+            />
+            {failureNeedsRetry ? (
+              <div className="nv-ask nv-retry">
+                {rootError ? (
+                  <p className="nv-err" role="alert" style={{ marginBottom: 12 }}>
+                    {rootError}
+                  </p>
+                ) : null}
+                <button type="button" className="nv-bt" data-ink="true" onClick={finish}>
+                  {t("Try again")}
+                </button>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+      </OnboardingShell>
     </FormProvider>
-  );
-}
-
-function OnboardingSkeleton() {
-  return (
-    <div className="grid gap-8 sm:grid-cols-[12rem_minmax(0,1fr)]">
-      <div className="hidden flex-col gap-4 sm:flex">
-        {ONBOARDING_STEPS.map((step) => (
-          <Skeleton key={step.id} className="h-8" />
-        ))}
-      </div>
-      <Skeleton className="h-96" />
-    </div>
   );
 }
