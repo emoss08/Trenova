@@ -2,6 +2,7 @@ import { createPermissionLoader } from "@/lib/route-permission";
 import { defineEdition } from "@trenova/edition";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { redirect, type LoaderFunction } from "react-router";
+import { NetworkPulse } from "./components/network-pulse";
 import { CloudTrialBanner } from "./components/plan-limit/cloud-trial-banner";
 import { SignupPrompt } from "./components/signup-prompt";
 import { usePlanRestrictions } from "./hooks/use-cloud-plan";
@@ -72,6 +73,7 @@ export default defineEdition({
   slots: {
     AppBanner: CloudTrialBanner,
     LoginPrompt: SignupPrompt,
+    AuthAmbient: NetworkPulse,
   },
   plan: {
     useRestrictions: usePlanRestrictions,

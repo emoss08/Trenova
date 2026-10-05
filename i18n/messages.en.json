@@ -4985,7 +4985,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "A preference is required": {
@@ -8884,7 +8884,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Accept with variance (": {
@@ -10737,7 +10737,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Active year for transaction posting (only one allowed per organization)": {
@@ -13109,7 +13109,16 @@
     "areas": [
       "domain/customer",
       "domain/location",
-      "service/tenantprovisioningservice"
+      "go/other"
+    ]
+  },
+  "Address line 1 must be 150 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Address line 1 must be between 1 and 150 characters": {
@@ -13640,6 +13649,42 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Administrator email is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Administrator email must be a valid email address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Administrator name is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Administrator name must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Administrators can see the question, the answer and your rating.": {
@@ -14213,7 +14258,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Agent trust loader is not configured": {
@@ -16655,7 +16700,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "An account balance cannot be pushed or adjusted as a whole. Look for an entry made in {0} by hand, or one missing from it, and correct that entry. The difference closes once the balances agree; dismiss it when both sides stay as they are.": {
@@ -17553,7 +17598,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "An evaluation replays exactly one recorded run or one evaluation case": {
@@ -18061,7 +18106,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "An overridden rate cannot be negative": {
@@ -18209,7 +18254,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Analytics, agent automation, and decision support layered on the dispatch board.": {
@@ -18218,7 +18263,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Analyzing rate confirmation": {
@@ -23941,7 +23986,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Attention": {
@@ -24131,7 +24176,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Authentication": {
@@ -27265,7 +27310,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Benefit plans and who is enrolled on them": {
@@ -29275,6 +29320,15 @@
       "apps/web/components"
     ]
   },
+  "Bootstrap inputs are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/instancebootstrapservice"
+    ]
+  },
   "Borders open": {
     "sites": 1,
     "scope": [
@@ -29346,7 +29400,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "Both versions must exist for comparison": {
@@ -29748,7 +29802,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Budget": {
@@ -30354,7 +30408,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Bytes of documents an organization stores.": {
@@ -30363,7 +30417,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "CAD (C$)": {
@@ -37532,8 +37586,8 @@
       "domain/location",
       "domain/ratezone",
       "domain/worker",
-      "packages/shared/types",
-      "service/tenantprovisioningservice"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "City is required. Please try again": {
@@ -37543,6 +37597,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "City must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "City must be between 1 and 100 characters": {
@@ -38544,7 +38607,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Client Secret": {
@@ -40722,7 +40785,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Company name must be 100 characters or fewer": {
@@ -40731,7 +40794,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Company name must be at most 255 characters": {
@@ -40740,7 +40803,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Company profile": {
@@ -44167,7 +44230,7 @@
       "go"
     ],
     "areas": [
-      "api/middleware"
+      "go/other"
     ]
   },
   "Control-plane body hash is invalid": {
@@ -44176,7 +44239,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Control-plane request targets a different instance": {
@@ -44185,7 +44248,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Control-plane shared secret is not configured": {
@@ -44194,7 +44257,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Control-plane signature has expired": {
@@ -44203,7 +44266,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Control-plane signature is invalid": {
@@ -44212,7 +44275,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Control-plane timestamp is invalid": {
@@ -44221,7 +44284,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Control-plane timestamp is required": {
@@ -44230,7 +44293,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Controlled substances": {
@@ -45207,7 +45270,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Core structure": {
@@ -48795,7 +48858,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Cross-entity search backed by configured search infrastructure.": {
@@ -48804,7 +48867,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Crypto mode cannot be longer than 32 characters": {
@@ -49707,8 +49770,7 @@
     ],
     "areas": [
       "domain/invoice",
-      "go/other",
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Customer Mix": {
@@ -49789,7 +49851,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Customer contact management": {
@@ -49966,7 +50028,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Customer notice": {
@@ -50264,7 +50326,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.": {
@@ -50582,7 +50644,7 @@
     ],
     "areas": [
       "domain/carrierintel",
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "DOT number is required. Please try again": {
@@ -50592,6 +50654,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "DOT number must be 1 to 8 digits": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "DOT number must be at most 12 characters": {
@@ -50629,7 +50700,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "DOT number must contain only digits": {
@@ -50666,7 +50737,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "DOT test": {
@@ -50684,7 +50755,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "DOT {0}": {
@@ -59484,7 +59555,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Document Type updated successfully": {
@@ -59583,7 +59654,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Document could not be attached: {0}": {
@@ -59701,7 +59772,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Document extraction view": {
@@ -60205,7 +60276,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Document uploaded": {
@@ -60478,7 +60549,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Documents will be sent to {0}": {
@@ -61374,7 +61445,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Driver and carrier settlement runs, escrow, advances, deductions, and disputes.": {
@@ -61383,7 +61454,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Driver and employee records, DOT compliance, time off, scheduling, talent, safety, and benefits.": {
@@ -61392,7 +61463,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Driver and owner-operator pay": {
@@ -61838,7 +61909,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Driver qualification management": {
@@ -62019,7 +62090,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Driver-initiated money workflows — reimbursements and settlement challenges.": {
@@ -63596,7 +63667,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "EDI quarantined": {
@@ -65401,9 +65472,9 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup",
       "domain/email",
-      "domain/tenant"
+      "domain/tenant",
+      "go/other"
     ]
   },
   "Email address is required. Please provide a valid email address.": {
@@ -65430,7 +65501,6 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup",
       "domain/email",
       "go/other"
     ]
@@ -65441,7 +65511,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Email address must be between 1 and 255 characters": {
@@ -67526,8 +67596,8 @@
       "ts"
     ],
     "areas": [
-      "packages/shared/types",
-      "service/cloudsignupservice"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "Enter a valid usage window.": {
@@ -67890,7 +67960,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Enter your full name": {
@@ -67908,7 +67978,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Enter your work email": {
@@ -67917,7 +67987,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Enter {0} information": {
@@ -68468,7 +68538,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Equipment: {0}": {
@@ -70912,7 +70982,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "Exceeds eligibility by {0}": {
@@ -71186,7 +71256,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Exclude word": {
@@ -72255,9 +72325,9 @@
     ],
     "areas": [
       "domain/capture",
-      "domain/cloudsignup",
       "domain/documentupload",
-      "domain/invoice"
+      "domain/invoice",
+      "go/other"
     ]
   },
   "Expiry must be a moment in time": {
@@ -73390,7 +73460,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "External email cannot be longer than 255 characters": {
@@ -73471,7 +73541,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "External link": {
@@ -79503,7 +79573,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.": {
@@ -81533,7 +81603,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "General liability": {
@@ -82203,7 +82273,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Go ahead with what you could read from {0}.": {
@@ -82461,7 +82531,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Google cloud console.": {
@@ -89026,7 +89096,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Inline node must be an object": {
@@ -89522,7 +89592,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Instant pay": {
@@ -92452,7 +92522,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Iowa (IA)": {
@@ -100434,7 +100504,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Lock a draft so its figures no longer move": {
@@ -100670,7 +100740,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Login slug may only contain lowercase letters, numbers, and hyphens": {
@@ -106604,7 +106674,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Model usage cost this month.": {
@@ -108809,7 +108879,6 @@
       "domain/capture",
       "domain/carrier",
       "domain/carriersettlement",
-      "domain/cloudsignup",
       "domain/commodity",
       "domain/costingcontrol",
       "domain/customer",
@@ -108883,7 +108952,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Name must be at most 255 characters": {
@@ -108892,7 +108961,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Name must be between 1 and 100 characters": {
@@ -110005,7 +110074,7 @@
       "go"
     ],
     "areas": [
-      "service/networkpulseservice"
+      "go/other"
     ]
   },
   "Network signals": {
@@ -117043,7 +117112,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Normalized email address must be at most 255 characters": {
@@ -117052,7 +117121,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Normalizer": {
@@ -120147,7 +120216,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "OCR-backed document classification, extraction, and review.": {
@@ -120156,7 +120225,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "OIDC application": {
@@ -122431,7 +122500,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "Only a rated reply in a conversation can become an evaluation case": {
@@ -125884,7 +125953,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Operational analytics pages and query providers.": {
@@ -125893,7 +125962,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Operational findings surfaced on the home screen": {
@@ -127228,6 +127297,24 @@
     ],
     "areas": [
       "domain/carrierintel"
+    ]
+  },
+  "Organization name is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Organization name must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Organization not found": {
@@ -129517,7 +129604,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "PTO policy": {
@@ -131037,7 +131124,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Password changed": {
@@ -131074,7 +131161,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Password is required. Please provide a valid password.": {
@@ -131110,7 +131197,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Password must be at least 12 characters": {
@@ -131119,7 +131206,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Password must be at least 8 characters": {
@@ -131138,7 +131225,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Password reset link sent": {
@@ -133036,7 +133123,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "People who waived a plan they were offered, most recent decision first.": {
@@ -137188,8 +137275,17 @@
     "areas": [
       "domain/customer",
       "domain/location",
-      "packages/shared/types",
-      "service/tenantprovisioningservice"
+      "go/other",
+      "packages/shared/types"
+    ]
+  },
+  "Postal code must be a US ZIP code (12345 or 12345-6789)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Postal code of the final delivery stop": {
@@ -140869,7 +140965,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Provisioning payload is invalid JSON": {
@@ -140878,7 +140974,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Provisioning payload is not targeted to this instance": {
@@ -140887,7 +140983,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Provisioning payload is required": {
@@ -140896,7 +140992,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Proximity": {
@@ -142083,7 +142179,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Questions per person each month": {
@@ -145330,7 +145426,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Rear escort": {
@@ -148400,7 +148496,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Recurring shipment series management and scheduled generation": {
@@ -149722,7 +149818,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Rejection reason...": {
@@ -152306,7 +152402,6 @@
     ],
     "areas": [
       "go/other",
-      "service/aitrainingservice",
       "service/bankreceiptbatchservice",
       "service/bankreceiptservice",
       "service/billingqueueservice",
@@ -157779,7 +157874,7 @@
       "go"
     ],
     "areas": [
-      "api/middleware"
+      "go/other"
     ]
   },
   "Route not resolved": {
@@ -159229,7 +159324,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "SCAC code is required. Please try again": {
@@ -159248,7 +159343,16 @@
     ],
     "areas": [
       "domain/tenant",
-      "service/tenantprovisioningservice"
+      "go/other"
+    ]
+  },
+  "SCAC code must be four letters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "SCAC must be 2-4 uppercase letters": {
@@ -160098,7 +160202,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Samsara worker sync": {
@@ -171488,7 +171592,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Shipment must be completed before it can be marked ready to invoice": {
@@ -171872,7 +171976,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Shipments and related configuration": {
@@ -173356,8 +173460,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers",
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Signups are limited to approved email domains": {
@@ -173366,7 +173469,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Signups are paused right now. You have been added to the wait list.": {
@@ -176898,6 +177001,15 @@
       "packages/shared/types"
     ]
   },
+  "State must be a two-letter US state abbreviation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
   "State only": {
     "sites": 1,
     "scope": [
@@ -177267,7 +177379,6 @@
       "domain/capture",
       "domain/carrier",
       "domain/carrierintel",
-      "domain/cloudsignup",
       "domain/conversation",
       "domain/dedicatedlane",
       "domain/detention",
@@ -178542,7 +178653,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "Structured output mode is required": {
@@ -180385,7 +180496,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Table change alert subscriptions and notifications": {
@@ -180412,7 +180523,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Table is not eligible for change alerts": {
@@ -181068,7 +181179,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Tax ID type": {
@@ -181370,7 +181481,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Tell Trenova which {0} account, item, customer and vendor each Trenova record is sent as. Trenova proposes a match where it is sure enough; nothing is used until a person confirms it.": {
@@ -181990,7 +182101,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Tender": {
@@ -185503,7 +185614,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "The computation flagged nothing on this quarter.": {
@@ -185746,7 +185857,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "The correction is kept alongside the original record.": {
@@ -186880,7 +186991,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "The drop that counts as a regression is at least 0.01": {
@@ -187407,7 +187518,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "The export's manifest is larger than any manifest Trenova writes": {
@@ -187416,7 +187527,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "The export's manifest is not one this version of Trenova can render": {
@@ -187425,7 +187536,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "The extended linehaul amount, unformatted.": {
@@ -191863,7 +191974,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "The security check failed or expired. Complete it again": {
@@ -191872,7 +191983,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "The selected carrier cost events are no longer pending; they were attached or voided by a concurrent request": {
@@ -193558,7 +193669,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "The window cannot start before 1970": {
@@ -194062,7 +194173,7 @@
     ]
   },
   "There is no onboarding to complete": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -195903,7 +196014,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "This export is too large to write while you wait. It is being written in the background; you'll be notified when the file is ready, and it will be under Exports.": {
@@ -197151,7 +197262,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "This password reset link is no longer valid. Request a new one.": {
@@ -198313,7 +198424,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "This version": {
@@ -199476,7 +199587,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Timestamp": {
@@ -199547,7 +199658,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Timezone is required": {
@@ -199561,7 +199672,7 @@
       "domain/recurringshipment",
       "domain/report",
       "domain/tenant",
-      "service/tenantprovisioningservice",
+      "go/other",
       "service/userservice"
     ]
   },
@@ -199599,6 +199710,15 @@
     ],
     "areas": [
       "domain/recurringshipment"
+    ]
+  },
+  "Timezone must be an IANA time zone such as America/Chicago": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Timing": {
@@ -200463,7 +200583,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "go/other"
     ]
   },
   "Too many sort fields": {
@@ -201751,7 +201871,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Tractors, trailers, and equipment": {
@@ -201796,7 +201916,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Traffic": {
@@ -202091,7 +202211,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Trailers whose plates expire inside the horizon, with inspection status and fleet assignment": {
@@ -202157,7 +202277,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Training due": {
@@ -202175,7 +202295,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "Training matrix": {
@@ -202203,7 +202323,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "Training part {0} holds an example this version of Trenova cannot render": {
@@ -202212,7 +202332,7 @@
       "go"
     ],
     "areas": [
-      "service/aitrainingservice"
+      "go/other"
     ]
   },
   "Training record is invalid": {
@@ -207682,7 +207802,7 @@
       "go"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "go/other"
     ]
   },
   "Use a previously saved version snapshot": {
@@ -208323,7 +208443,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "User is not a member of this organization": {
@@ -208520,7 +208640,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Uses accessorial code, generic code, description, or MSC.": {
@@ -209401,7 +209521,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Verification token is required": {
@@ -209410,7 +209530,7 @@
       "go"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "go/other"
     ]
   },
   "Verification {0}": {
@@ -218191,7 +218311,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Worker profile must be provided": {
@@ -218209,7 +218329,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Worker request": {
@@ -218323,7 +218443,7 @@
       "go"
     ],
     "areas": [
-      "domain/platformcatalog"
+      "go/other"
     ]
   },
   "Workers are notified in Dash and by SMS once their time off is approved. {0}": {
@@ -218628,7 +218748,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Workspace business unit ID is required": {
@@ -218637,7 +218757,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Workspace business unit ID must match the customer ID": {
@@ -218646,7 +218766,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Workspace name is required": {
@@ -218655,7 +218775,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Workspace state ID is not recognized": {
@@ -218682,7 +218802,7 @@
       "go"
     ],
     "areas": [
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Worse": {
@@ -224989,15 +225109,6 @@
       "api/handlers"
     ]
   },
-  "loads in motion": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "local worker mapping differs from Samsara external ID mapping": {
     "sites": 1,
     "scope": [
@@ -225912,7 +226023,7 @@
       "go"
     ],
     "areas": [
-      "api/middleware"
+      "go/other"
     ]
   },
   "request is required": {

@@ -79,6 +79,8 @@ export type EditionSlots = {
   RootHost?: ComponentType;
   /** The line under the sign-in heading, where a sign-up link belongs. */
   LoginPrompt?: ComponentType<LoginPromptProps>;
+  /** The sign-in panel between the headline and the credential receipt. */
+  AuthAmbient?: ComponentType;
 };
 
 /** The words the plan-limit dialog shows for one refusal. */

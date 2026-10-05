@@ -712,6 +712,15 @@
       "routes/admin"
     ]
   },
+  "loads in motion": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
   "not met": {
     "sites": 1,
     "scope": [

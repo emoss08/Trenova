@@ -54,6 +54,7 @@ export function resolveEdition(definition: EditionDefinition | undefined): Resol
       AppBanner: definition?.slots?.AppBanner ?? EmptySlot,
       RootHost: definition?.slots?.RootHost ?? EmptySlot,
       LoginPrompt: definition?.slots?.LoginPrompt ?? FallbackLoginPrompt,
+      AuthAmbient: definition?.slots?.AuthAmbient ?? EmptySlot,
     },
     protectedLoaders: definition?.protectedLoaders ?? [],
     plan: definition?.plan ?? NO_PLAN,
