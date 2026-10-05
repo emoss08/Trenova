@@ -9,19 +9,29 @@ import (
 	"go.uber.org/fx"
 )
 
+const (
+	communityReason = "community_mode"
+	communityPlanID = "community"
+	communityName   = "Community"
+	activeStatus    = "active"
+	localID         = "local"
+)
+
 type LocalBillingProviderParams struct {
 	fx.In
 
-	Registry *platformcatalog.Registry
+	Catalog platformcatalog.FeatureCatalog `optional:"true"`
 }
 
 type LocalBillingProvider struct {
-	registry *platformcatalog.Registry
+	catalog platformcatalog.FeatureCatalog
 }
+
+var _ services.BillingProvider = (*LocalBillingProvider)(nil)
 
 func NewLocalBillingProvider(p LocalBillingProviderParams) *LocalBillingProvider {
 	return &LocalBillingProvider{
-		registry: p.Registry,
+		catalog: p.Catalog,
 	}
 }
 
@@ -34,7 +44,15 @@ func (p *LocalBillingProvider) GetBillingSummary(
 		checkedAt = time.Now().Unix()
 	}
 
-	features := p.registry.ListFeatures()
+	var (
+		features []platformcatalog.Feature
+		meters   []platformcatalog.Meter
+	)
+	if p.catalog != nil {
+		features = p.catalog.ListFeatures()
+		meters = p.catalog.ListMeters()
+	}
+
 	featureSummaries := make([]services.BillingFeatureSummary, 0, len(features))
 	for i := range features {
 		featureSummaries = append(featureSummaries, services.BillingFeatureSummary{
@@ -43,7 +61,6 @@ func (p *LocalBillingProvider) GetBillingSummary(
 		})
 	}
 
-	meters := p.registry.ListMeters()
 	usageSummaries := make([]services.BillingUsageSummary, 0, len(meters))
 	for i := range meters {
 		usageSummaries = append(usageSummaries, services.BillingUsageSummary{
@@ -56,17 +73,17 @@ func (p *LocalBillingProvider) GetBillingSummary(
 		BusinessUnitID: req.BusinessUnitID,
 		OrganizationID: req.OrganizationID,
 		Active:         true,
-		Reason:         "community_mode",
+		Reason:         communityReason,
 		Plan: &services.BillingPlanSummary{
-			ID:     "community",
-			Key:    "community",
-			Name:   "Community",
-			Status: "active",
+			ID:     communityPlanID,
+			Key:    communityPlanID,
+			Name:   communityName,
+			Status: activeStatus,
 		},
 		Subscription: &services.BillingSubscriptionSummary{
-			ID:     "local",
-			PlanID: "community",
-			Status: "active",
+			ID:     localID,
+			PlanID: communityPlanID,
+			Status: activeStatus,
 		},
 		Features:  featureSummaries,
 		Usage:     usageSummaries,

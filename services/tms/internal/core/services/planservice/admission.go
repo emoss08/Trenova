@@ -17,7 +17,7 @@ type AdmissionRequest struct {
 }
 
 func Admit(ctx context.Context, plans services.PlanService, req *AdmissionRequest) error {
-	if plans == nil || !plans.IsCloud() {
+	if plans == nil || !plans.EnforcesPlans() {
 		return nil
 	}
 	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {

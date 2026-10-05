@@ -36,7 +36,7 @@ func TestAdmitIgnoresNonCloudAndUnscopedRequests(t *testing.T) {
 	))
 
 	plans := mocks.NewMockPlanService(t)
-	plans.EXPECT().IsCloud().Return(true)
+	plans.EXPECT().EnforcesPlans().Return(true)
 	require.NoError(t, planservice.Admit(
 		t.Context(),
 		plans,
@@ -125,7 +125,7 @@ func TestAdmitReturnsResolutionErrors(t *testing.T) {
 	tenant := plantest.Tenant()
 	boom := errors.New("database unavailable")
 	plans := mocks.NewMockPlanService(t)
-	plans.EXPECT().IsCloud().Return(true)
+	plans.EXPECT().EnforcesPlans().Return(true)
 	plans.EXPECT().Resolve(mock.Anything, tenant.OrgID, tenant.BuID).Return(nil, boom)
 
 	err := planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{TenantInfo: tenant})

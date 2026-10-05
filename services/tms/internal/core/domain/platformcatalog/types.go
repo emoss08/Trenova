@@ -101,3 +101,9 @@ type CatalogProvider interface {
 type PackProvider interface {
 	Packs() []Pack
 }
+
+type FeatureCatalog interface {
+	GetFeature(key FeatureKey) (Feature, bool)
+	ListFeatures() []Feature
+	ListMeters() []Meter
+}

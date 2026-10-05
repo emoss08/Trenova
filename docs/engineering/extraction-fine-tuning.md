@@ -30,7 +30,8 @@ preference pairs, and the training itself. Neither re-implements the other.
 trenova ai training-export render aitx_01J... --out ./datasets/aitx_01J
 ```
 
-`aitrainingservice.Renderer` checks, then writes. Before it writes anything, it:
+`aitrainingservice.Renderer` (Cloud edition, `internal/cloud/aitraining/aitrainingservice`)
+checks, then writes. Before it writes anything, it:
 
 - verifies the manifest against the checksum the export recorded;
 - verifies every part against the manifest;
@@ -633,7 +634,7 @@ GPU timer          trenova ai retraining run
   and any failure). With a `secret`, each delivery is signed in the Standard Webhooks scheme
   (`webhook-id`, `webhook-timestamp`, `webhook-signature`, `shared/webhooksig`); `webhook-id` is
   the cycle and state, so a retry can be dropped as a duplicate. The sender is
-  `infrastructure/retrainingalert`: three attempts with 1s and 2s backoff, no retry on a 4xx other
+  `internal/cloud/aitraining/retrainingalert` (Cloud edition): three attempts with 1s and 2s backoff, no retry on a 4xx other
   than 408 and 429, through `shared/httpsafe` (a private or loopback address needs
   `allowPrivateNetwork`). A failed alert is logged and never fails the retraining. Alerts come
   from whichever process changed the cycle, so the worker and the GPU machine both need to reach

@@ -15,8 +15,8 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Sign-out | `auth_events` | `authservice.Logout` | — |
 | Password reset requested or redeemed | `auth_events` | `passwordresetservice` | — |
 | Sign-in throttled (account or IP failure limit) | `auth_events` | `authservice.Login` | — |
-| Cloud signup requested, rejected, verified, provisioned | `auth_events` | `cloudsignupservice` | — |
-| Cloud signup owner granted Organization Administrator | `audit_entries` | `cloudsignupservice` | yes |
+| Cloud signup requested, rejected, verified, provisioned (Cloud edition) | `auth_events` | `internal/cloud/signup/cloudsignupservice` | — |
+| Cloud signup owner granted Organization Administrator (Cloud edition) | `audit_entries` | `internal/cloud/signup/cloudsignupservice` | yes |
 | API key created, updated, rotated, revoked | `audit_entries` | `apikeyservice` | yes |
 | Role created or updated, assigned or unassigned, inheritance, separation of duty constraints, resource permissions | `audit_entries` | `roleservice` | yes |
 | Identity providers, SCIM directories, tokens and group mappings, access policies | `audit_entries` | `iamservice` | yes |

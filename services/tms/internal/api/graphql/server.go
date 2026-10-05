@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"github.com/99designs/gqlgen/graphql"
 	gqlhandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -18,15 +19,25 @@ const (
 	parserTokenLimit = 15000
 )
 
+const ExtensionsGroup = "edition_graphql_extensions"
+
 type ServerParams struct {
 	fx.In
 
-	Config        *config.Config
-	Resolver      *resolver.Resolver
-	Observability *ObservabilityExtension
-	CostBudget    *CostBudgetExtension
-	FeatureAccess *FeatureAccessExtension
-	ReadOnly      *ReadOnlyExtension
+	Config            *config.Config
+	Resolver          *resolver.Resolver
+	Observability     *ObservabilityExtension
+	CostBudget        *CostBudgetExtension
+	ReadOnly          *ReadOnlyExtension
+	EditionExtensions []graphql.HandlerExtension `group:"edition_graphql_extensions"`
+}
+
+func AsExtension(constructor any) any {
+	return fx.Annotate(
+		constructor,
+		fx.As(new(graphql.HandlerExtension)),
+		fx.ResultTags(`group:"`+ExtensionsGroup+`"`),
+	)
 }
 
 func NewServer(p ServerParams) *gqlhandler.Server {
@@ -39,7 +50,11 @@ func NewServer(p ServerParams) *gqlhandler.Server {
 	srv.Use(operationDepthLimit{max: querycost.MaxOperationDepth})
 	srv.Use(extension.FixedComplexityLimit(querycost.MaxOperationCost))
 	srv.Use(p.CostBudget)
-	srv.Use(p.FeatureAccess)
+	for _, extension := range p.EditionExtensions {
+		if extension != nil {
+			srv.Use(extension)
+		}
+	}
 	srv.Use(p.ReadOnly)
 	srv.Use(p.Observability)
 
