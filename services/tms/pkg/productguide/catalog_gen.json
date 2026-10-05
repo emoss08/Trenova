@@ -1,5 +1,5 @@
 {
-  "version": "sha256:558f2645a2f00c841fcd1fc32e405a37f02d40dcf81acc67278fac4ed3023824",
+  "version": "sha256:1174652301971ae583c8744acb409cde9e18d98a9abbbe11eb0be8104f841c14",
   "modules": [
     {
       "id": "home",
@@ -13399,8 +13399,8 @@
       "breadcrumb": [
         "Welcome to Trenova"
       ],
-      "description": "The welcome wizard is the first thing a new Trenova Cloud organization sees after its owner verifies their email.",
-      "summary": "The welcome wizard is the first thing a new Trenova Cloud organization sees after its owner verifies their email. It collects the company profile, asks how the company moves freight, and offers to load sample data, then opens the app. Until it is finished, every page sends you back to it. It never appears on a self-hosted installation.",
+      "description": "The welcome screen is the first thing a new Trenova Cloud organization sees after its owner verifies their email.",
+      "summary": "The welcome screen is the first thing a new Trenova Cloud organization sees after its owner verifies their email. **Nova**, a scripted setup guide, asks for the company profile, how the company moves freight and whether to load sample data, one question at a time, then creates the workspace and opens the app. Nova is not AI; every line is fixed text. Until setup is finished, every page sends you back here. It never appears on a self-hosted installation.",
       "requires": [],
       "capabilities": [],
       "aliases": [
@@ -13409,7 +13409,9 @@
         "first run",
         "onboarding",
         "company setup",
-        "sample data"
+        "sample data",
+        "Nova",
+        "setup guide"
       ],
       "tasks": [
         {
@@ -13417,13 +13419,17 @@
           "keywords": [
             "complete onboarding",
             "company profile",
-            "first time setup"
+            "first time setup",
+            "Nova"
           ],
           "steps": [
-            "Under **Company profile**, enter **Company name**, **Timezone**, **Street address**, **City**, **State** and **ZIP code**. **SCAC code** and **DOT number** are optional.",
-            "Select **Continue**, then choose an **Operation type**: **Asset carrier** if you run your own trucks, **Freight brokerage** if you arrange freight with outside carriers, or **Both**.",
-            "Select **Continue**. Leave **Load sample data** on to start with a few customers, locations, equipment and shipments, or turn it off to start empty.",
-            "Select **Continue**, check the summary, and select **Finish setup**."
+            "Confirm the **Company name** (it is filled in from signup) and press Enter.",
+            "Pick the timezone dispatch, appointments and reports should use. Your browser's zone is listed first and already selected; press Enter to keep it, or press its number. Choose **Other timezone…** for a zone outside the US.",
+            "Enter the **Street address**, **City**, **State** and **ZIP** of your headquarters and select **Continue**.",
+            "Add your **SCAC code** and **USDOT number** if you have them, or select **Skip for now**.",
+            "Choose how the company moves freight: **Asset carrier**, **Freight brokerage** or **Both**.",
+            "Choose **Load sample data** to start with a few customers, locations, equipment and shipments, or **Start empty**.",
+            "Check the summary and select **Looks good, finish setup** (or press Ctrl+Enter, ⌘+Enter on a Mac). Nova narrates the setup while the workspace is created; then select **Open Trenova**."
           ]
         },
         {
@@ -13431,15 +13437,29 @@
           "keywords": [
             "go back",
             "edit setup",
-            "fix company name"
+            "fix company name",
+            "typo"
           ],
           "steps": [
-            "Select **Back** to return to an earlier step, or select **Edit** beside a section on the review step.",
-            "Change the answer and select **Continue** until you reach the review step again."
+            "Select **Edit** beside one of your answers, or select a line in the summary. That question opens again with your answer filled in.",
+            "Change it and answer again. You return straight to where you were.",
+            "To walk back one question at a time, press Esc or select **Back** in the top-left corner."
+          ]
+        },
+        {
+          "title": "If setup fails",
+          "keywords": [
+            "setup error",
+            "onboarding failed",
+            "try again"
+          ],
+          "steps": [
+            "If the server refuses an answer, Nova goes back to that question and shows why. Fix it and continue to the summary again.",
+            "If something else went wrong, select **Try again**. Nothing you entered is lost."
           ]
         }
       ],
-      "notes": "Everything the wizard sets can be changed later in [Organization settings](/admin/organization-settings). Sample records count toward the free demo's limits like any other record and can be deleted at any time; see [Plan & usage](/admin/plan-usage).",
+      "notes": "Everything set here can be changed later in [Organization settings](/admin/organization-settings). Sample records count toward the free demo's limits like any other record and can be deleted at any time; see [Plan & usage](/admin/plan-usage).",
       "related": [
         "/admin/organization-settings",
         "/admin/plan-usage"

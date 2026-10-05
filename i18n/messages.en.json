@@ -755,6 +755,15 @@
       "routes/fleet-safety"
     ]
   },
+  "1200 Industrial Pkwy": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "13w": {
     "sites": 2,
     "scope": [
@@ -954,6 +963,15 @@
     "areas": [
       "routes/accounting-dashboard",
       "routes/fuel-management"
+    ]
+  },
+  "2–4 letters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "3 Days": {
@@ -2244,6 +2262,15 @@
       "service/workerchecklistservice"
     ]
   },
+  "A clean workspace. Add your own records from day one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "A clear internal name for this EDI template.": {
     "sites": 1,
     "scope": [
@@ -3427,7 +3454,7 @@
       "domain/ratequote"
     ]
   },
-  "A few details and your workspace is ready. Everything here can be changed later in Organization settings.": {
+  "A few customers, locations, equipment and shipments, so every screen has something to show.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -14728,7 +14755,7 @@
     ]
   },
   "Alaska time": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -19053,15 +19080,6 @@
       "routes/settlement-dispute"
     ]
   },
-  "Appears on invoices, rate confirmations and other documents, and sets the clock the organization's reports use.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
-    ]
-  },
   "Append a Luhn-computed check digit for validation.": {
     "sites": 1,
     "scope": [
@@ -21298,6 +21316,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Arizona": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Arizona (AZ)": {
@@ -25990,7 +26017,7 @@
     ]
   },
   "Back": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -34394,6 +34421,15 @@
       "apps/web/lib"
     ]
   },
+  "Central time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Central time (US)": {
     "sites": 2,
     "scope": [
@@ -40902,7 +40938,7 @@
     ]
   },
   "Company name": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -40939,12 +40975,11 @@
     ]
   },
   "Company profile": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "routes/onboarding"
     ]
   },
@@ -42420,15 +42455,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Confirm and finish": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Confirm and save": {
@@ -43999,7 +44025,7 @@
     ]
   },
   "Continue": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -48415,6 +48441,15 @@
       "routes/shipment"
     ]
   },
+  "Creating the workspace for {0}. This only takes a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Creating your account": {
     "sites": 1,
     "scope": [
@@ -48422,6 +48457,15 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "Creating {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Creating...": {
@@ -50798,7 +50842,7 @@
     ]
   },
   "DOT number": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -50806,8 +50850,7 @@
       "routes/admin",
       "routes/carrier",
       "routes/customer",
-      "routes/desk",
-      "routes/onboarding"
+      "routes/desk"
     ]
   },
   "DOT number cannot exceed 20 characters": {
@@ -52747,15 +52790,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Decides which halves of Trenova are turned on. You can change it later in Organization settings.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
     ]
   },
   "Decides which items are rated and how they are weighted.": {
@@ -59709,6 +59743,15 @@
       "apps/web/lib"
     ]
   },
+  "Do you have a SCAC code or USDOT number? Both are optional — add them now or skip.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Dock crew was short-staffed; customer asked for a one-time concession": {
     "sites": 1,
     "scope": [
@@ -64877,6 +64920,15 @@
       "domain/driversettlement"
     ]
   },
+  "Eastern time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Eastern time (Canada)": {
     "sites": 2,
     "scope": [
@@ -64896,7 +64948,7 @@
     ]
   },
   "Edit": {
-    "sites": 28,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -67732,13 +67784,12 @@
     ]
   },
   "Enter ZIP code": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/onboarding"
+      "routes/admin"
     ]
   },
   "Enter a 5-digit ZIP code": {
@@ -67897,13 +67948,12 @@
     ]
   },
   "Enter address": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/onboarding"
+      "routes/admin"
     ]
   },
   "Enter all eight letters of the code, like ABCD-EFGH": {
@@ -67934,22 +67984,12 @@
     ]
   },
   "Enter city": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/onboarding"
-    ]
-  },
-  "Enter company name": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/onboarding"
+      "routes/admin"
     ]
   },
   "Enter current password": {
@@ -77212,6 +77252,15 @@
       "routes/fuel-management"
     ]
   },
+  "Fill in the highlighted fields.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Fill in {0} above to load the results.": {
     "sites": 1,
     "scope": [
@@ -82907,6 +82956,24 @@
       "apps/web/components"
     ]
   },
+  "Got it, {0}. Which timezone should dispatch, appointments and reports use?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Got it, {0}. Which timezone should dispatch, appointments and reports use? Your browser is set to {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Grace after expiry": {
     "sites": 1,
     "scope": [
@@ -83980,7 +84047,7 @@
     ]
   },
   "Hawaii time": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -84587,6 +84654,15 @@
       "template/invoice.share.email"
     ]
   },
+  "Hi {0}, I'm Nova. I'll help you set up your Trenova workspace. It takes about a minute, and you can change anything later.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Hi,": {
     "sites": 6,
     "scope": [
@@ -84596,6 +84672,15 @@
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email"
+    ]
+  },
+  "Hi, I'm Nova. I'll help you set up your Trenova workspace. It takes about a minute, and you can change anything later.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Hidden": {
@@ -85356,12 +85441,13 @@
     ]
   },
   "Home": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/web/__nv_harness.tsx",
       "apps/web/components",
       "apps/web/config",
       "routes/home"
@@ -85833,13 +85919,13 @@
       "routes/desk"
     ]
   },
-  "How does your company move freight?": {
+  "How does {0} move freight? This decides which parts of Trenova lead.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/onboarding"
+      "apps/web/lib"
     ]
   },
   "How drivers are told": {
@@ -86888,6 +86974,15 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "I couldn't load your setup. Refresh the page to try again. Your account and organization are safe.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "I couldn't read most of {0}": {
@@ -93034,6 +93129,15 @@
       "template/invoice.pdf"
     ]
   },
+  "Issued by FMCSA.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Issued date": {
     "sites": 2,
     "scope": [
@@ -97621,6 +97725,15 @@
       "domain/worker"
     ]
   },
+  "Leaving records empty": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Ledger": {
     "sites": 1,
     "scope": [
@@ -100503,6 +100616,15 @@
       "routes/my-team"
     ]
   },
+  "Loading {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Loading {0} more…": {
     "sites": 1,
     "scope": [
@@ -101391,6 +101513,15 @@
       "apps/web/components"
     ]
   },
+  "Looks good, finish setup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Looks like we hit a snag. Please try again later.": {
     "sites": 1,
     "scope": [
@@ -101829,6 +101960,15 @@
       "apps/web/components"
     ]
   },
+  "Made a typo? Click Edit, or press {0} to go back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Made-up numbers": {
     "sites": 1,
     "scope": [
@@ -102152,6 +102292,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Making you the owner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Male": {
@@ -108089,6 +108238,15 @@
       "routes/carrier"
     ]
   },
+  "Mountain time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Mountain time (US)": {
     "sites": 2,
     "scope": [
@@ -109729,15 +109887,6 @@
     ],
     "areas": [
       "domain/carrierintel"
-    ]
-  },
-  "Name, timezone and address": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Name, type, and description": {
@@ -120371,6 +120520,15 @@
       "routes/accounting-control"
     ]
   },
+  "Nova": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Now": {
     "sites": 1,
     "scope": [
@@ -124835,6 +124993,15 @@
       "template/notification.dash.training_due"
     ]
   },
+  "Open Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Open a case": {
     "sites": 1,
     "scope": [
@@ -126414,12 +126581,11 @@
     ]
   },
   "Operation type": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "routes/onboarding"
     ]
   },
@@ -126613,7 +126779,7 @@
     ]
   },
   "Optional": {
-    "sites": 13,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -126624,7 +126790,6 @@
       "routes/edi",
       "routes/formula-template",
       "routes/intake",
-      "routes/onboarding",
       "routes/shipment",
       "routes/worker"
     ]
@@ -128365,6 +128530,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Other timezone": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
+  "Other timezone…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Other workers": {
@@ -130145,6 +130328,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Pacific time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Pacific time (Canada)": {
@@ -149618,15 +149810,6 @@
       "routes/detention-desk"
     ]
   },
-  "Refresh the page to try again. Your account and organization are safe.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
-    ]
-  },
   "Refresh to try again.": {
     "sites": 1,
     "scope": [
@@ -156701,7 +156884,7 @@
     ]
   },
   "Review": {
-    "sites": 17,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -160044,11 +160227,13 @@
     ]
   },
   "SCAC {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/onboarding",
       "template/rateconfirmation.pdf"
     ]
   },
@@ -160683,22 +160868,12 @@
     ]
   },
   "Sample data": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib",
-      "routes/onboarding"
-    ]
-  },
-  "Sample data set": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
       "routes/onboarding"
     ]
   },
@@ -161810,6 +161985,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Saving {0} as headquarters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Saving...": {
@@ -165025,7 +165209,7 @@
     ]
   },
   "Select": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -165033,6 +165217,7 @@
       "apps/web/lib",
       "routes/carrier-monitoring",
       "routes/desk",
+      "routes/onboarding",
       "routes/reports"
     ]
   },
@@ -167421,7 +167606,7 @@
     ]
   },
   "Send": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -167430,6 +167615,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/invoice",
+      "routes/onboarding",
       "routes/shipment"
     ]
   },
@@ -169929,7 +170115,7 @@
       "routes/auth"
     ]
   },
-  "Setting up": {
+  "Setting the clock to {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -170501,6 +170687,15 @@
       "routes/onboarding"
     ]
   },
+  "Setup guide": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Setup step is required": {
     "sites": 1,
     "scope": [
@@ -170508,15 +170703,6 @@
     ],
     "areas": [
       "domain/accountingsync"
-    ]
-  },
-  "Setup steps": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
     ]
   },
   "Severity": {
@@ -173948,12 +174134,11 @@
     ]
   },
   "Sign out": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/onboarding",
       "routes/profile.tsx"
     ]
   },
@@ -174381,12 +174566,13 @@
     ]
   },
   "Skip": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-sync"
+      "routes/accounting-sync",
+      "routes/onboarding"
     ]
   },
   "Skip delivery entirely when the result does not meet your condition.": {
@@ -174405,6 +174591,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Skip for now": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Skip item": {
@@ -175183,6 +175378,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Something went wrong while I was setting things up. Nothing was lost — let's fix it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Something went wrong while fetching shipments for this window.": {
@@ -177103,21 +177307,12 @@
     ]
   },
   "Start empty": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "Start empty or with examples": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Start from": {
@@ -177347,15 +177542,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Start with a few customers, locations, equipment and shipments so every screen has something to show. You can delete them at any time.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
     ]
   },
   "Start with a template": {
@@ -177655,7 +177841,7 @@
     ]
   },
   "State": {
-    "sites": 31,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -178480,15 +178666,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Step {0} of {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
     ]
   },
   "Step {0}: {1}": {
@@ -184256,6 +184433,24 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "That's everything, {0}. Please check everything below before I create your workspace. If anything's wrong, click the line to fix it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "That's everything. Please check everything below before I create your workspace. If anything's wrong, click the line to fix it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The 'from' and 'to' versions must be different": {
@@ -201071,6 +201266,15 @@
       "routes/admin"
     ]
   },
+  "To start, what's your company called?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "To weight must be greater than from weight": {
     "sites": 1,
     "scope": [
@@ -204033,7 +204237,7 @@
     ]
   },
   "Trenova": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -204043,8 +204247,7 @@
       "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/auth",
-      "routes/desk",
-      "routes/onboarding"
+      "routes/desk"
     ]
   },
   "Trenova Capture": {
@@ -204652,15 +204855,6 @@
       "apps/web/components"
     ]
   },
-  "Trucks, brokerage or both": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "True / false": {
     "sites": 1,
     "scope": [
@@ -204852,7 +205046,7 @@
     ]
   },
   "Try again": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "ts"
     ],
@@ -204870,6 +205064,7 @@
       "routes/hos.tsx",
       "routes/inbox",
       "routes/intake",
+      "routes/onboarding",
       "routes/rate-confirmation-public",
       "routes/shipment",
       "routes/signup",
@@ -205208,6 +205403,15 @@
       "packages/shared/types"
     ]
   },
+  "Turning on {0} for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "Turns and miles per trailer with last activity — find trailers sitting idle or over-cycled": {
     "sites": 1,
     "scope": [
@@ -205413,6 +205617,15 @@
       "routes/worker"
     ]
   },
+  "Typing": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting.": {
     "sites": 2,
     "scope": [
@@ -205572,12 +205785,13 @@
     ]
   },
   "USDOT number": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/onboarding",
       "routes/worker"
     ]
   },
@@ -205618,14 +205832,15 @@
     ]
   },
   "USDOT {0}": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/carrier-monitoring",
-      "routes/carrier-sourcing"
+      "routes/carrier-sourcing",
+      "routes/onboarding"
     ]
   },
   "USDOT {0} via {1}": {
@@ -213663,6 +213878,15 @@
       "routes/agent-control"
     ]
   },
+  "Want me to load sample data? Every screen will have something to show, and you can delete any of it at any time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Warehouse": {
     "sites": 1,
     "scope": [
@@ -214040,15 +214264,6 @@
     ],
     "areas": [
       "routes/profile.tsx"
-    ]
-  },
-  "We couldn't load your setup": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
     ]
   },
   "We couldn't load your violations.": {
@@ -214709,15 +214924,6 @@
     ]
   },
   "Welcome": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
-    ]
-  },
-  "Welcome to Trenova": {
     "sites": 1,
     "scope": [
       "ts"
@@ -217038,6 +217244,15 @@
       "apps/web/components"
     ]
   },
+  "Where is {0} headquartered? This becomes the default origin on new shipments.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Where it came from": {
     "sites": 1,
     "scope": [
@@ -217972,6 +218187,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Whitsett": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Who": {
@@ -220990,6 +221214,15 @@
       "apps/web/lib"
     ]
   },
+  "You can change all of this in Organization settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "You can close this window — the transfer keeps going.": {
     "sites": 1,
     "scope": [
@@ -221646,6 +221879,15 @@
       "routes/notifications.tsx"
     ]
   },
+  "You're all set, {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "You're clear — nothing flagged.": {
     "sites": 1,
     "scope": [
@@ -221808,16 +222050,7 @@
       "routes/fleet-safety"
     ]
   },
-  "Your Standard Carrier Alpha Code, if you have one.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/onboarding"
-    ]
-  },
-  "Your USDOT number, if you have one.": {
+  "Your Standard Carrier Alpha Code.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -222067,6 +222300,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Your company name is required.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "Your computers could not be loaded.": {
@@ -222819,14 +223061,31 @@
       "routes/home"
     ]
   },
+  "ZIP": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "ZIP code": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/admin",
+      "routes/admin"
+    ]
+  },
+  "ZIP code needs 5 digits.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/onboarding"
     ]
   },
@@ -227999,6 +228258,15 @@
       "routes/home"
     ]
   },
+  "to answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "to approve": {
     "sites": 1,
     "scope": [
@@ -228025,6 +228293,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "to continue": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "to filter": {
@@ -228089,6 +228366,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "to skip": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "to start one.": {
@@ -228691,6 +228977,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "your company": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "{ \"chat_template_kwargs\": { \"enable_thinking\": true }, \"reasoning_budget\": 16384 }": {
@@ -229681,6 +229976,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# module} other {# modules}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "{0, plural, one {# more change} other {# more changes}}": {
     "sites": 1,
     "scope": [
@@ -230200,6 +230504,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# sample record} other {# sample records}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "{0, plural, one {# scored run} other {# scored runs}}": {
@@ -233163,6 +233476,24 @@
       "api/graphql"
     ]
   },
+  "{0} is live and ready for your first records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
+  "{0} is live. Sample data is loaded and ready to explore.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
+    ]
+  },
   "{0} is mapped to {1}": {
     "sites": 1,
     "scope": [
@@ -233591,6 +233922,15 @@
     ],
     "areas": [
       "service/fiscalcloseservice"
+    ]
+  },
+  "{0} is ready": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/onboarding"
     ]
   },
   "{0} is ready for your sign-off": {
