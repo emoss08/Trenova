@@ -37,12 +37,9 @@ func (s *DocumentTypeSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
-			org, err := sc.GetOrganization("default_org")
-			if err != nil {
-				org, err = sc.GetDefaultOrganization(ctx)
-				if err != nil {
-					return fmt.Errorf("get default organization: %w", err)
-				}
+			org, err := defaultOrganization(ctx, sc)
+			if err != nil || org == nil {
+				return err
 			}
 
 			exists, err := tenantbootstrap.HasSystemDocumentTypes(ctx, tx, org.ID, org.BusinessUnitID)

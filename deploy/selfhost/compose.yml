@@ -238,9 +238,10 @@ services:
     logging: *logging
     networks: [data]
 
-  # One-shot: migrations, then the base seeds. Both are idempotent and run on
-  # every start, so an upgrade applies new migrations and any seed a release
-  # adds; a seed already applied is skipped.
+  # One-shot: migrations, then the base seeds (reference data, roles and
+  # permissions; never an account). Both are idempotent and run on every
+  # start, so an upgrade applies new migrations and any seed a release adds;
+  # a seed already applied is skipped.
   tms-migrate:
     <<: *tms-service
     entrypoint: ["/bin/sh", "-c"]
@@ -271,8 +272,46 @@ services:
     restart: "no"
     networks: [data]
 
-  # One-shot: scopes GTC's publication to the tables it routes, and secures
-  # the seeded accounts once per database (scripts/db-bootstrap.sh).
+  # One-shot: creates the first organization and its administrator from the
+  # TRENOVA_BOOTSTRAP_* values in .env (trenova db bootstrap). It runs on every
+  # start: after the first it is a no-op, it never reads the password again,
+  # and it is skipped when TRENOVA_BOOTSTRAP_ADMIN_EMAIL is empty. Different
+  # values, or a database that already has users, are refused and the API
+  # and worker are not started; docker compose logs tms-bootstrap says why.
+  tms-bootstrap:
+    <<: *tms-service
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        if [ -z "$${TRENOVA_BOOTSTRAP_ADMIN_EMAIL:-}" ]; then
+          echo "Skipping bootstrap: TRENOVA_BOOTSTRAP_ADMIN_EMAIL is not set"
+          exit 0
+        fi
+        exec trenova db bootstrap
+    environment:
+      <<: *tms-environment
+      TRENOVA_BOOTSTRAP_ORG_NAME: ${TRENOVA_BOOTSTRAP_ORG_NAME:-}
+      TRENOVA_BOOTSTRAP_ADMIN_NAME: ${TRENOVA_BOOTSTRAP_ADMIN_NAME:-}
+      TRENOVA_BOOTSTRAP_ADMIN_EMAIL: ${TRENOVA_BOOTSTRAP_ADMIN_EMAIL:-}
+      TRENOVA_BOOTSTRAP_ADMIN_PASSWORD: ${TRENOVA_BOOTSTRAP_ADMIN_PASSWORD:-}
+      TRENOVA_BOOTSTRAP_TIMEZONE: ${TRENOVA_BOOTSTRAP_TIMEZONE:-}
+      TRENOVA_BOOTSTRAP_STATE: ${TRENOVA_BOOTSTRAP_STATE:-}
+      TRENOVA_BOOTSTRAP_CITY: ${TRENOVA_BOOTSTRAP_CITY:-}
+      TRENOVA_BOOTSTRAP_POSTAL_CODE: ${TRENOVA_BOOTSTRAP_POSTAL_CODE:-}
+      TRENOVA_BOOTSTRAP_ADDRESS_LINE1: ${TRENOVA_BOOTSTRAP_ADDRESS_LINE1:-}
+      TRENOVA_BOOTSTRAP_SCAC: ${TRENOVA_BOOTSTRAP_SCAC:-}
+      TRENOVA_BOOTSTRAP_DOT_NUMBER: ${TRENOVA_BOOTSTRAP_DOT_NUMBER:-}
+    depends_on:
+      tms-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: "no"
+    networks: [data]
+
+  # One-shot: scopes GTC's publication to the tables it routes
+  # (scripts/db-bootstrap.sh).
   db-bootstrap:
     image: ghcr.io/emoss08/trenova/postgres:${TRENOVA_POSTGRES_VERSION:?set TRENOVA_POSTGRES_VERSION in .env}
     entrypoint: ["/bin/sh", "/scripts/db-bootstrap.sh"]
@@ -300,6 +339,8 @@ services:
     depends_on:
       db-bootstrap:
         condition: service_completed_successfully
+      tms-bootstrap:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       minio:
@@ -324,6 +365,8 @@ services:
     command: ["worker", "run"]
     depends_on:
       db-bootstrap:
+        condition: service_completed_successfully
+      tms-bootstrap:
         condition: service_completed_successfully
       redis:
         condition: service_healthy

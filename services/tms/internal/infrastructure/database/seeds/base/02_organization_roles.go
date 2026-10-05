@@ -27,7 +27,7 @@ func NewOrganizationRolesSeed() *OrganizationRolesSeed {
 		"1.0.0",
 		"Creates organization admin roles and assigns admin user",
 		[]common.Environment{
-			common.EnvProduction, common.EnvStaging, common.EnvDevelopment, common.EnvTest,
+			common.EnvDevelopment, common.EnvTest,
 		},
 	)
 	seed.SetDependencies(seedhelpers.SeedAdminAccount)
