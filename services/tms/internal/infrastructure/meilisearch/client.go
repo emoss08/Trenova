@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	meili "github.com/meilisearch/meilisearch-go"
@@ -93,12 +94,28 @@ func (c *Client) Search(
 
 	documents := make([]map[string]any, 0, len(result.Hits))
 	for _, hit := range result.Hits {
-		document := make(map[string]any, len(hit))
-		for key, value := range hit {
-			document[key] = value
+		document, decodeErr := decodeHit(hit)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("decode hit from index %s: %w", req.Index, decodeErr)
 		}
 		documents = append(documents, document)
 	}
 
 	return documents, nil
+}
+
+// decodeHit turns a hit's raw JSON fields into plain values. The client
+// returns every field as json.RawMessage; passed through as-is, a string
+// renders as its bytes ("[34 83 ...]") wherever it is formatted.
+func decodeHit(hit meili.Hit) (map[string]any, error) {
+	document := make(map[string]any, len(hit))
+	for key, raw := range hit {
+		var value any
+		if err := sonic.Unmarshal(raw, &value); err != nil {
+			return nil, fmt.Errorf("field %s: %w", key, err)
+		}
+		document[key] = value
+	}
+
+	return document, nil
 }
