@@ -15,6 +15,24 @@ var accountShellRoutes = mergeRouteRefs(
 	graphQLTransportShellRoutes,
 	pushSubscriptionShellRoutes,
 	onboardingShellRoutes,
+	supportAccessShellRoutes,
+)
+
+var supportAccessShellRoutes = mergeRouteRefs(
+	routeRefsFor("GET",
+		"/api/v1/support-access/",
+		"/api/v1/support/profile/",
+		"/api/v1/support/organizations/",
+		"/api/v1/support/sessions/current/",
+	),
+	routeRefsFor("POST",
+		"/api/v1/support-access/grant/",
+		"/api/v1/support-access/grant/revoke/",
+		"/api/v1/support/sessions/",
+		"/api/v1/support/sessions/current/elevate/",
+		"/api/v1/support/sessions/current/drop-elevation/",
+		"/api/v1/support/sessions/current/end/",
+	),
 )
 
 var onboardingShellRoutes = mergeRouteRefs(

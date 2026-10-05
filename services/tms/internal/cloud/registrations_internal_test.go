@@ -15,6 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/controlplane/featureaccess"
 	"github.com/emoss08/trenova/internal/cloud/networkpulse/networkpulsehandler"
 	"github.com/emoss08/trenova/internal/cloud/signup/cloudsignuphandler"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessgraphql"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccesshandler"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessmiddleware"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/gin-gonic/gin"
@@ -44,6 +47,9 @@ func populateRegistrations(t *testing.T) registered {
 			&platformcataloghandler.Handler{},
 			&accessmiddleware.ControlPlaneAccessMiddleware{},
 			&featureaccess.FeatureAccessExtension{},
+			&supportaccessmiddleware.Middleware{},
+			&supportaccesshandler.Handler{},
+			&supportaccessgraphql.Extension{},
 		),
 		apiRegistrations(),
 		fx.Populate(&got),
@@ -58,10 +64,10 @@ func TestAPIRegistrationsFillTheEditionGroups(t *testing.T) {
 
 	got := populateRegistrations(t)
 	assert.Len(t, got.Routes.Public, 3)
-	assert.Len(t, got.Routes.Protected, 1)
-	assert.Len(t, got.Routes.Middleware, 1)
+	assert.Len(t, got.Routes.Protected, 2)
+	assert.Len(t, got.Routes.Middleware, 2)
 	assert.Len(t, got.Contributors, 1)
-	assert.Len(t, got.Extensions, 1)
+	assert.Len(t, got.Extensions, 2)
 }
 
 type writeExemption struct {
@@ -84,6 +90,36 @@ var cloudWriteExemptions = map[string]writeExemption{
 		category: "security",
 		reason: "Redeeming a signup link signs a person in and provisions their organization; it is " +
 			"identity proof, not an operation an agent performs.",
+	},
+	"POST /api/v1/support-access/grant/": {
+		category: "security",
+		reason: "Allowing Trenova staff into an organization decides who outside it may act inside it; " +
+			"only the organization's own administrators may decide that, never an agent.",
+	},
+	"POST /api/v1/support-access/grant/revoke/": {
+		category: "security",
+		reason: "Revoking Trenova support access decides who outside the organization may act inside " +
+			"it; only the organization's own administrators may decide that, never an agent.",
+	},
+	"POST /api/v1/support/sessions/": {
+		category: "security",
+		reason: "Opening a support session is a Trenova staff member proving who they are and entering " +
+			"a customer organization; an agent holds no identity of its own and never crosses tenants.",
+	},
+	"POST /api/v1/support/sessions/current/elevate/": {
+		category: "security",
+		reason: "Elevating a support session to write re-authenticates the staff member with their " +
+			"password and second factor; an agent holds no credentials of its own.",
+	},
+	"POST /api/v1/support/sessions/current/drop-elevation/": {
+		category: "security",
+		reason: "Dropping a support session back to read-only changes what a staff member may do in a " +
+			"customer organization; it is the staff member's own session, not an agent operation.",
+	},
+	"POST /api/v1/support/sessions/current/end/": {
+		category: "security",
+		reason: "Ending a support session is the staff member leaving a customer organization; it is " +
+			"their own session, not an agent operation.",
 	},
 	"POST /api/v1/control-plane/tenants/provision": {
 		category: "infrastructure",
@@ -172,6 +208,16 @@ func TestCloudRoutesJoinThePublicRouteTable(t *testing.T) {
 		http.MethodGet + " /api/v1/me/billing",
 		http.MethodGet + " /api/v1/me/entitlements",
 		http.MethodGet + " /api/v1/me/platform-catalog",
+		http.MethodGet + " /api/v1/support-access/",
+		http.MethodPost + " /api/v1/support-access/grant/",
+		http.MethodPost + " /api/v1/support-access/grant/revoke/",
+		http.MethodGet + " /api/v1/support/profile/",
+		http.MethodGet + " /api/v1/support/organizations/",
+		http.MethodPost + " /api/v1/support/sessions/",
+		http.MethodGet + " /api/v1/support/sessions/current/",
+		http.MethodPost + " /api/v1/support/sessions/current/elevate/",
+		http.MethodPost + " /api/v1/support/sessions/current/drop-elevation/",
+		http.MethodPost + " /api/v1/support/sessions/current/end/",
 	}
 	for _, route := range cloudOnly {
 		assert.Contains(t, cloudRoutes, route)
