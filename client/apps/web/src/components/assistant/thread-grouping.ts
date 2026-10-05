@@ -1,50 +1,52 @@
-import { calendarDaysAgo } from "@/lib/calendar-days";
+import {
+  groupDeskThreadsByRecency,
+  matchesThreadSearch,
+  type DeskShelfKey,
+} from "@/components/desk-chat/rail/desk-threads";
 import type { AssistantThread } from "@/types/assistant";
 
-export type ThreadGroupLabel = "Today" | "Yesterday" | "Previous 7 days" | "Older";
+/** A shelf of the assistant's conversation list: the ones waiting on the person, then the Desk's calendar shelves. */
+export type AssistantShelfKey = "waiting" | DeskShelfKey;
 
-export type ThreadGroup = {
-  label: ThreadGroupLabel;
+export type AssistantShelf = {
+  key: AssistantShelfKey;
   threads: AssistantThread[];
 };
 
-const SHELVES: ThreadGroupLabel[] = ["Today", "Yesterday", "Previous 7 days", "Older"];
+export type AssistantShelvesOptions = {
+  now: number;
+  timezone: string;
+  /** What the person typed in the search; empty lists everything. */
+  query: string;
+  /** The agent a conversation is with, so a search can find it by agent. */
+  agentName: (thread: AssistantThread) => string;
+};
 
-/** When a thread was last touched: its last message, or its creation. */
 function touchedAt(thread: AssistantThread): number {
   return thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
 }
 
-function shelfFor(daysAgo: number): ThreadGroupLabel {
-  if (daysAgo <= 0) return "Today";
-  if (daysAgo === 1) return "Yesterday";
-  if (daysAgo <= 7) return "Previous 7 days";
-  return "Older";
+function waitsOnPerson(thread: AssistantThread): boolean {
+  return (thread.attention?.pendingDecisions ?? 0) > 0;
 }
 
 /**
- * Shelves conversations by how recently they were touched, newest first on
- * each shelf, leaving out shelves with nothing on them.
+ * The assistant's conversations as its history and sidebar list them: those
+ * a change is waiting on first, then the rest shelved by when they were last
+ * touched, the same shelves as the Desk's rail. Pins are the Desk's and do not
+ * shelve a conversation apart here. A search narrows by title or agent.
  */
-export function groupThreadsByRecency(
+export function assistantShelves(
   threads: readonly AssistantThread[],
-  now: number,
-  timezone?: string,
-): ThreadGroup[] {
-  const byShelf = new Map<ThreadGroupLabel, AssistantThread[]>();
+  { now, timezone, query, agentName }: AssistantShelvesOptions,
+): AssistantShelf[] {
+  const found = threads.filter((thread) => matchesThreadSearch(thread, agentName(thread), query));
+  const waiting = found.filter(waitsOnPerson).sort((a, b) => touchedAt(b) - touchedAt(a));
+  const rest = groupDeskThreadsByRecency(
+    found.filter((thread) => !waitsOnPerson(thread)),
+    now,
+    { pinnedFirst: false, timezone },
+  );
 
-  for (const thread of [...threads].sort((a, b) => touchedAt(b) - touchedAt(a))) {
-    const label = shelfFor(calendarDaysAgo(touchedAt(thread), now, timezone ?? "UTC"));
-    const shelf = byShelf.get(label);
-    if (shelf) {
-      shelf.push(thread);
-    } else {
-      byShelf.set(label, [thread]);
-    }
-  }
-
-  return SHELVES.flatMap((label) => {
-    const shelf = byShelf.get(label);
-    return shelf ? [{ label, threads: shelf }] : [];
-  });
+  return waiting.length > 0 ? [{ key: "waiting", threads: waiting }, ...rest] : rest;
 }

@@ -5,7 +5,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
-import { AssistantProse } from "@/components/assistant/message-items";
+import { DeskProse } from "@/components/desk-chat/conversation/desk-turns";
 import type { TurnState } from "@/components/assistant/turn-stream";
 import { LayoutAlt02Icon, SquareIcon } from "@trenova/shared/components/icons";
 
@@ -87,7 +87,7 @@ export function AskAnswerCard({
               )}
             </p>
           )}
-          {text !== "" && <AssistantProse content={text} streaming={turn.status === "streaming"} />}
+          {text !== "" && <DeskProse content={text} streaming={turn.status === "streaming"} />}
           {turn.status === "working" && text === "" && (
             <p className="text-muted-foreground flex items-center gap-2 text-xs">
               <Spinner className="size-3" /> {t("Working…")}

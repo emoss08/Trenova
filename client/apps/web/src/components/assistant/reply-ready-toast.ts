@@ -95,6 +95,8 @@ export async function announceReplyReady(
     toast.error(title, toastOptions);
   } else {
     toast(title, toastOptions);
+    // The launcher carries it too, until the panel is next opened.
+    useAssistantStore.getState().noteReplied(reply.threadId);
   }
 
   return "shown";

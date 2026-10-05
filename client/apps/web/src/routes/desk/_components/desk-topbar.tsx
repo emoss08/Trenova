@@ -2,8 +2,8 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { DeskAgentTile } from "./desk-agent-tile";
-import { DeskIcon } from "./desk-icons";
+import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import type { DeskPlace } from "./desk-rail";
 import { DeskHandoffMenu } from "./handoff/desk-handoff-menu";
 

@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssistantDockTargets } from "../assistant-dock-targets";
 import { AssistantLauncher } from "../assistant-launcher";
+import { beaconState } from "../beacon-state";
 
 afterEach(cleanup);
 
@@ -58,7 +59,18 @@ describe("AssistantDockTargets", () => {
 
 describe("AssistantLauncher at rest", () => {
   it("draws no targets until it is dragged", () => {
-    render(<AssistantLauncher pendingCount={0} onClick={vi.fn()} onMove={vi.fn()} />);
+    render(
+      <AssistantLauncher
+        beacon={beaconState({
+          pendingCount: 0,
+          liveTurns: [],
+          repliedAgentName: null,
+          lastAgentName: "",
+        })}
+        onClick={vi.fn()}
+        onMove={vi.fn()}
+      />,
+    );
 
     expect(screen.queryByTestId("assistant-dock-targets")).toBeNull();
   });

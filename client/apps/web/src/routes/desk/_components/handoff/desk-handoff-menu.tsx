@@ -7,9 +7,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useReducer, useRef } from "react";
-import { DeskAgentTile } from "../desk-agent-tile";
-import { DeskIcon } from "../desk-icons";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import { HANDOFF_MENU_CLOSED, handoffMenuReducer, handoffTargets } from "./handoff-state";
 
 /**

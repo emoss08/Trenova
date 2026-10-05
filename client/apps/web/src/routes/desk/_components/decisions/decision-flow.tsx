@@ -20,8 +20,8 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { DeskAgentTile } from "../desk-agent-tile";
-import { DeskIcon } from "../desk-icons";
+import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { DecisionCard, type CardGate } from "./decision-card";
 import { asAssistantProposal } from "./decision-presenters";
 import {

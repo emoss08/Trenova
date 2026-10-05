@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import { documentFrom, type DocumentSource } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
 import type { ArtifactLineage } from "./desk-lineage";

@@ -1,0 +1,150 @@
+/* The shared conversation and composer fitted into a 400px panel. Only the
+   sizes and positions that a narrow column needs change; every rule is scoped
+   to .dk-dense, which DeskThread sets for density="compact" and the assistant
+   sets around its home composer. At the Desk, and in the assistant's full
+   screen layout, none of this applies. */
+
+/* One column: no gutter for times, no margin for artifacts. */
+.dk-dense .dk-grid,
+.dk-dense .dk-open .dk-grid {
+  grid-template-columns: 0px minmax(0, 1fr) 0px;
+  column-gap: 0;
+  padding-inline: 18px;
+}
+.dk-dense .dk-g,
+.dk-dense .dk-m {
+  display: none;
+}
+.dk-dense .dk-flow {
+  padding-top: 8px;
+  padding-bottom: 16px;
+}
+.dk-dense .dk-r > .dk-c {
+  margin-top: 26px;
+}
+.dk-dense .dk-r.dk-a > .dk-c {
+  margin-top: 10px;
+}
+.dk-dense .dk-r.dk-ev > .dk-c {
+  margin-top: 22px;
+}
+.dk-dense .dk-r.dk-first > .dk-c {
+  margin-top: 0;
+}
+.dk-dense .dk-dock {
+  padding: 4px 0 12px;
+}
+.dk-dense .dk-dock .dk-grid {
+  padding-inline: 12px;
+}
+
+/* Type one step down from the Desk's. */
+.dk-dense .dk-q {
+  font-size: 17px;
+}
+.dk-dense .dk-q.dk-mid {
+  font-size: 15px;
+}
+.dk-dense .dk-q.dk-long {
+  font-size: 13.5px;
+  padding: 10px 13px;
+}
+.dk-dense .dk-prose {
+  font-size: 14px;
+  line-height: 1.65;
+}
+.dk-dense .dk-cmp textarea {
+  font-size: 13.5px;
+  padding: 12px 14px 2px;
+  min-height: 42px;
+}
+.dk-dense .dk-tw {
+  left: 14px;
+  right: 14px;
+  top: 12px;
+  font-size: 13.5px;
+}
+/* The typed-out starter ellipsizes, and its hint keeps its keys and drops their words. */
+.dk-dense .dk-tw > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-dense .dk-tw-w {
+  display: none;
+}
+.dk-dense .dk-tw-tab {
+  gap: 3px;
+}
+
+/* The toolbar: the page and the model say which by their mark alone, and a
+   long agent name gives way before the controls do. */
+.dk-dense .dk-cmp-b .dk-pc-t,
+.dk-dense .dk-cmp-b .dk-mp2-bl,
+.dk-dense .dk-cmp-b .dk-mp2-cv {
+  display: none;
+}
+.dk-dense .dk-cmp-b .dk-pc-b {
+  padding: 0 7px;
+}
+.dk-dense .dk-ap-bn {
+  max-width: 110px;
+}
+
+/* Every menu that opens from the composer hangs above the whole composer, as
+   wide as it is, instead of from its own button. */
+.dk-dense .dk-cmp {
+  position: relative;
+}
+.dk-dense .dk-cmp :is(.dk-ap, .dk-pc, .dk-mp2, .dk-cx) {
+  position: static;
+}
+.dk-dense .dk-cmp :is(.dk-ap-pop, .dk-pc-pop, .dk-mp2-pop, .dk-cx-pop, .dk-am) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: calc(100% + 8px);
+  width: auto;
+  max-width: none;
+  transform: none;
+  transform-origin: bottom center;
+}
+
+/* A change waiting on the person: its words take the row, and its actions
+   move to their own row under a hairline, on the right. */
+.dk-dense .dk-dcx {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+.dk-dense .dk-dcx > .dk-dcx-t {
+  flex: 1 1 calc(100% - 40px);
+}
+.dk-dense .dk-dcx::before {
+  content: "";
+  order: 1;
+  flex-basis: 100%;
+  height: 1px;
+  margin: 8px -8px 6px -12px;
+  background: var(--dsk-b-sub);
+}
+.dk-dense .dk-dcx > :is(.dk-bt, .dk-apv-b) {
+  order: 2;
+}
+.dk-dense .dk-dcx > .dk-bt:first-of-type {
+  margin-left: auto;
+}
+
+/* The line under the composer wraps rather than clipping in a narrow column. */
+.dk-dense .dk-hint {
+  height: auto;
+  min-height: 14px;
+  padding-inline: 12px;
+  text-align: center;
+}
+
+/* The jump to the newest reply sits just above the dock, in the one column. */
+.dk-dense .dk-jump-b {
+  height: 28px;
+  font-size: 12px;
+}

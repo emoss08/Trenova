@@ -27,7 +27,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import {
   HOLD_REASONS,
   barReason,

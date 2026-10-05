@@ -11,7 +11,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
-import { AssistantWidget } from "../assistant/assistant-widget";
+import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { CloudTrialBanner } from "../plan-limit/cloud-trial-banner";
 import { Header } from "../header";
@@ -130,6 +130,7 @@ function ClassicShell({ children }: SidebarLayoutProps) {
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const variant = useNavigationStore((state) => state.sidebarVariant);
+  const assistantSide = useAssistantSideInset();
   useLayoutEffects();
 
   const Shell = variant === "classic" ? ClassicShell : WorkspaceShell;
@@ -140,7 +141,11 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       <KeyboardShortcutsDialog />
       <UserSettingsHost />
       <AssistantWidget />
-      <Shell>{children}</Shell>
+      {/* With the assistant docked down one side, the page moves over for it
+          rather than sitting under it. */}
+      <div className="as-reflow" data-assistant-side={assistantSide ?? undefined}>
+        <Shell>{children}</Shell>
+      </div>
     </>
   );
 }

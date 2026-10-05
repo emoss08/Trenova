@@ -1,7 +1,7 @@
 import type { ConversationSchedule } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { DeskIcon } from "../desk-icons";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { scheduleLine } from "./desk-schedules";
 
 /**

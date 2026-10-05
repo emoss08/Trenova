@@ -1,5 +1,5 @@
 import { PageAssistant } from "@/components/assistant/page-assistant";
-import type { PageBinding, PageRequest } from "@/components/assistant/message-thread";
+import type { PageBinding, PageRequest } from "@/components/assistant/use-thread-model";
 import { apiService } from "@/services/api";
 import type { PageDraftEdit } from "@/types/page-draft";
 import { useQuery } from "@tanstack/react-query";

@@ -11,6 +11,7 @@ import {
 } from "./_components/artifacts/desk-art-kinds";
 import { groupLineages } from "./_components/artifacts/desk-lineage";
 import { ArtifactBody, artifactLink } from "./_components/artifacts/desk-workspace";
+import "@/components/desk-chat/desk-chat.css";
 import "./_styles/desk-v2.css";
 
 /**

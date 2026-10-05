@@ -32,9 +32,9 @@ import {
   refusalReasons,
   REFUSED_PREFIX,
   valueText,
-} from "../conversation/approval-facts";
-import { DeskAgentTile } from "../desk-agent-tile";
-import { DeskIcon } from "../desk-icons";
+} from "@/components/desk-chat/conversation/approval-facts";
+import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { asAssistantProposal } from "./decision-presenters";
 import {
   isPendingPlan,

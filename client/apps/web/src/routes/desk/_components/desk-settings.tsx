@@ -15,7 +15,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { DeskIcon, type DeskIconName } from "./desk-icons";
+import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import { onRadioArrows, useModalFocus } from "./use-modal-focus";
 
 type Section = "appearance" | "conversation" | "composer" | "files" | "artifacts" | "agent";
