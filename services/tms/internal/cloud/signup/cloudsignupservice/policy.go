@@ -15,8 +15,6 @@ import (
 const (
 	maxNameLength        = 100
 	maxCompanyNameLength = 100
-	minPasswordLength    = 12
-	maxPasswordBytes     = 72
 	loginSlugBaseLength  = 60
 )
 
@@ -118,48 +116,41 @@ func (s *Service) checkEmail(raw string) (emailutils.Address, *errortypes.Error)
 }
 
 func checkPassword(password string, address emailutils.Address) *errortypes.Error {
+	err := passwordutils.CheckPolicy(password, &address)
 	switch {
-	case utf8.RuneCountInString(password) < minPasswordLength:
+	case err == nil:
+		return nil
+	case errors.Is(err, passwordutils.ErrTooShort):
 		return errortypes.NewValidationError(
 			"password",
 			errortypes.ErrInvalidLength,
 			"Password must be at least 12 characters",
 		)
-	case len(password) > maxPasswordBytes:
+	case errors.Is(err, passwordutils.ErrTooLong):
 		return errortypes.NewValidationError(
 			"password",
 			errortypes.ErrInvalidLength,
 			"Password must be 72 bytes or fewer",
 		)
-	case strings.TrimSpace(password) == "":
+	case errors.Is(err, passwordutils.ErrBlank):
 		return errortypes.NewValidationError(
 			"password",
 			errortypes.ErrInvalid,
 			"Password cannot be only spaces",
 		)
-	}
-
-	if address.Lower != "" {
-		lowered := strings.ToLower(strings.TrimSpace(password))
-		if lowered == address.Lower ||
-			passwordutils.ContainsIgnoringCase(password, address.LocalPart) {
-			return errortypes.NewValidationError(
-				"password",
-				errortypes.ErrInvalid,
-				"Password must not contain your email address",
-			)
-		}
-	}
-
-	if passwordutils.IsCommon(password) {
+	case errors.Is(err, passwordutils.ErrContainsEmail):
+		return errortypes.NewValidationError(
+			"password",
+			errortypes.ErrInvalid,
+			"Password must not contain your email address",
+		)
+	default:
 		return errortypes.NewValidationError(
 			"password",
 			errortypes.ErrInvalid,
 			"This password is too common. Choose something harder to guess",
 		)
 	}
-
-	return nil
 }
 
 func loginSlugBase(companyName string) string {
