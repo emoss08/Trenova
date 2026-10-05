@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, normalizePath } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
-import { singletonPackages } from "../../singleton-packages";
+import { singletonPackages } from "../../singleton-packages.ts";
 
 const require = createRequire(import.meta.url);
 

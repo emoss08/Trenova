@@ -4,7 +4,7 @@ import { copyFile } from "node:fs/promises";
 import path from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { compression } from "vite-plugin-compression2";
-import { singletonPackages } from "../../singleton-packages";
+import { singletonPackages } from "../../singleton-packages.ts";
 
 const proxyConfig = {
   target: "http://localhost:8080",
