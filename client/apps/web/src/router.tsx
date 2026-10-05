@@ -10,8 +10,8 @@ import {
   loadOnboardingSnapshot,
   resolveOnboardingRedirect,
 } from "@/lib/onboarding-gate";
+import { edition } from "@/lib/edition";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
-import { signupRouteRedirect } from "@/lib/signup-gate";
 import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
@@ -24,7 +24,12 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import { AdminLayout } from "./routes/admin-layout";
 
-const protectedLoader: LoaderFunction = async ({ request }) => {
+// An edition's own gates run after the session check and the onboarding redirect; the
+// first one that returns a redirect decides.
+const editionProtectedLoader = combineLoaders(...edition.protectedLoaders);
+
+const protectedLoader: LoaderFunction = async (args) => {
+  const { request } = args;
   const { checkAuth } = useAuthStore.getState();
   const isAuthenticated = await checkAuth();
 
@@ -39,20 +44,13 @@ const protectedLoader: LoaderFunction = async ({ request }) => {
     return redirect(onboardingTarget);
   }
 
-  return null;
+  return editionProtectedLoader(args);
 };
 
 // The wizard is only for an organization that still owes it. Anybody else who opens
 // the address — a completed organization, a self-hosted install — goes home.
 const onboardingLoader: LoaderFunction = async () => {
   const target = onboardingExitRedirect(await loadOnboardingSnapshot());
-  return target ? redirect(target) : null;
-};
-
-// Signup exists only on Trenova Cloud with signup switched on; everywhere else the
-// address falls back to sign-in rather than showing a form the server would refuse.
-const signupLoader: LoaderFunction = async () => {
-  const target = await signupRouteRedirect();
   return target ? redirect(target) : null;
 };
 
@@ -1648,14 +1646,6 @@ export const routes: RouteObject[] = [
             loader: protectedLoader,
             children: [
               {
-                path: "plan-usage",
-                loader: createPermissionLoader(Resource.Organization, Operation.Read),
-                async lazy() {
-                  const { PlanUsagePage } = await import("@/routes/admin/plan-usage/page");
-                  return { Component: PlanUsagePage };
-                },
-              },
-              {
                 path: "billing-controls",
                 loader: createPermissionLoader(Resource.BillingControl),
                 async lazy() {
@@ -2085,8 +2075,10 @@ export const routes: RouteObject[] = [
                   return { Component: CustomFieldDefinitionsPage };
                 },
               },
+              ...edition.routes.admin,
             ],
           },
+          ...edition.routes.protected,
           {
             path: "*",
             element: <NotFoundRoute />,
@@ -2240,6 +2232,7 @@ export const routes: RouteObject[] = [
               return { Component: RateConfirmationPublicPage };
             },
           },
+          ...edition.routes.public,
         ],
       },
       {
@@ -2260,24 +2253,6 @@ export const routes: RouteObject[] = [
             },
           },
           {
-            path: "/signup",
-            loader: signupLoader,
-            async lazy() {
-              const { SignupPage } = await import("@/routes/signup/page");
-              return { Component: SignupPage };
-            },
-          },
-          {
-            // Opened from the emailed verification link. It signs the new owner in, so
-            // it is guest-only for the same reason the sign-in page is.
-            path: "/signup/verify",
-            loader: signupLoader,
-            async lazy() {
-              const { SignupVerifyPage } = await import("@/routes/signup/verify-page");
-              return { Component: SignupVerifyPage };
-            },
-          },
-          {
             // Opened from the emailed reset link. Guest-only, like the sign-in page:
             // somebody already signed in has no use for it.
             path: "/auth/reset",
@@ -2286,6 +2261,7 @@ export const routes: RouteObject[] = [
               return { Component: ResetPasswordPage };
             },
           },
+          ...edition.routes.guest,
         ],
       },
     ],

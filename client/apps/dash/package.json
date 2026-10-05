@@ -8,9 +8,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "build": "tsc -b && vite build",
-    "preview": "pnpm run build && wrangler dev",
-    "lint": "oxlint",
-    "deploy": "pnpm run build && wrangler deploy"
+    "lint": "oxlint"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -37,7 +35,6 @@
     "typescript": "~7.0.2",
     "vite": "^8.2.2",
     "vite-plugin-compression2": "^2.5.3",
-    "vitest": "^5.0.0",
-    "wrangler": "^4.130.0"
+    "vitest": "^5.0.0"
   }
 }

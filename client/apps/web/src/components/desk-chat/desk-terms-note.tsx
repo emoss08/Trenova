@@ -1,6 +1,7 @@
 import { useDeskStore } from "@/stores/desk-store";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
+import { LegalLinks, hasLegalUrls } from "@/components/legal-links";
+import { useLegalUrls } from "@/hooks/use-legal-urls";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { DeskIcon } from "./desk-icons";
@@ -17,8 +18,9 @@ export function DeskTermsNote() {
   const seen = useDeskStore((state) => state.termsSeen);
   const markTermsSeen = useDeskStore((state) => state.markTermsSeen);
   const [leaving, setLeaving] = useState(false);
+  const urls = useLegalUrls();
 
-  if (seen) {
+  if (seen || !hasLegalUrls(urls)) {
     return null;
   }
 
@@ -31,15 +33,7 @@ export function DeskTermsNote() {
     <div className="dk-tnote-w">
       <div className={cn("dk-tnote", leaving && "dk-out")}>
         <span>
-          {t("Make sure you agree to our")}{" "}
-          <a href={TERMS_URL} target="_blank" rel="noreferrer">
-            {t("terms")}
-          </a>{" "}
-          {t("and our")}{" "}
-          <a href={PRIVACY_URL} target="_blank" rel="noreferrer">
-            {t("privacy policy")}
-          </a>
-          .
+          {t("Make sure you agree to our")} <LegalLinks urls={urls} />.
         </span>
         <button type="button" className="dk-tnote-x" onClick={close} aria-label={t("Dismiss")}>
           <DeskIcon name="x" size={12} stroke={2.2} />

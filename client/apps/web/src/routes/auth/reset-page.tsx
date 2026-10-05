@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import logoRainbow from "@/assets/logo.webp";
 import { Metadata } from "@/components/metadata";
-import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
+import { LegalAgreementNote } from "./_components/legal-agreement-note";
 import { useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { AuthCard } from "./_components/auth-card";
@@ -57,27 +57,7 @@ export function ResetPasswordPage() {
           )}
         </AuthCard>
 
-        <p className="text-subtle-foreground m-0 text-center text-xs text-balance">
-          {t("By continuing you agree to our")}{" "}
-          <a
-            href={TERMS_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
-          >
-            {t("Terms of Service")}
-          </a>{" "}
-          and{" "}
-          <a
-            href={PRIVACY_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
-          >
-            {t("Privacy policy")}
-          </a>
-          .
-        </p>
+        <LegalAgreementNote />
       </AuthShell>
     </>
   );

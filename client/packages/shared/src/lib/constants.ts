@@ -16,10 +16,27 @@ function resolveApiBaseUrl(): string {
 export const API_BASE_URL = resolveApiBaseUrl();
 
 export const APP_ENV = (import.meta.env.MODE as string) || "development";
-export const TERMS_URL =
-  (import.meta.env.VITE_TERMS_URL as string | undefined) ?? "https://trenova.app/legal/terms/";
-export const PRIVACY_URL =
-  (import.meta.env.VITE_PRIVACY_URL as string | undefined) ?? "https://trenova.app/legal/privacy/";
+
+/** A build-time setting, trimmed; empty when the build does not set it. */
+export function envSetting(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function envUrl(value: unknown): string {
+  const url = envSetting(value);
+  return /^https?:\/\//i.test(url) ? url : "";
+}
+
+/**
+ * The build's own terms and privacy addresses, used when the server's public config
+ * names none. Empty when unset: a self-hosted install publishes its own documents or
+ * none, and a link must never point at somebody else's.
+ */
+export const TERMS_URL = envUrl(import.meta.env.VITE_TERMS_URL);
+export const PRIVACY_URL = envUrl(import.meta.env.VITE_PRIVACY_URL);
+
+/** Where people are told to write when something is broken. Empty when the build names none. */
+export const SUPPORT_EMAIL = envSetting(import.meta.env.VITE_SUPPORT_EMAIL);
 
 export const US_CENTER = { lat: 39.8, lng: -98.5 };
 export const DEFAULT_ZOOM = 4;

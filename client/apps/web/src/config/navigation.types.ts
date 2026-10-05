@@ -2,6 +2,7 @@ import type { OrganizationCapabilityType } from "@trenova/shared/types/organizat
 import type { OperationType } from "@trenova/shared/types/permission";
 import type { IconComponent } from "@trenova/shared/components/icons";
 import type { PlanCapabilityType } from "@/lib/plan-capability";
+import type { PlatformMode } from "@trenova/shared/types/platform";
 
 export type ModuleId =
   | "home"
@@ -51,6 +52,8 @@ export interface NavItem {
    * capability, as the free demo does for integrations, API keys and the like.
    */
   planCapability?: PlanCapabilityType;
+  /** Shows the entry only on an install running in this platform mode. */
+  platformMode?: PlatformMode;
   badge?: NavItemBadgeKind;
 }
 
@@ -72,6 +75,7 @@ export interface NavGroup {
   resource?: string;
   capability?: OrganizationCapabilityType;
   planCapability?: PlanCapabilityType;
+  platformMode?: PlatformMode;
 }
 
 export interface NavModule {
@@ -100,6 +104,7 @@ export interface NavModule {
   resource?: string;
   capability?: OrganizationCapabilityType;
   planCapability?: PlanCapabilityType;
+  platformMode?: PlatformMode;
 }
 
 export interface NavigationConfig {

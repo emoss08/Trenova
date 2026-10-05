@@ -8,12 +8,17 @@ COPY client/package.json client/pnpm-lock.yaml client/pnpm-workspace.yaml client
 COPY client/apps/web/package.json ./apps/web/
 COPY client/apps/dash/package.json ./apps/dash/
 COPY client/packages/config/package.json ./packages/config/
+COPY client/packages/edition/package.json ./packages/edition/
 COPY client/packages/graphql/package.json ./packages/graphql/
 COPY client/packages/shared/package.json ./packages/shared/
 
 RUN pnpm install --frozen-lockfile
 
 COPY client/ ./
+
+# This image is the self-hosted edition. An edition overlay in packages/cloud is
+# built by its own pipeline (docs/engineering/editions.md), never into this image.
+RUN rm -rf packages/cloud
 
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
@@ -24,7 +29,7 @@ RUN pnpm --filter @trenova/web exec vite build
 
 FROM caddy:2-alpine
 
-COPY --from=builder /build/apps/web/dist/client /srv
+COPY --from=builder /build/apps/web/dist /srv
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80 443

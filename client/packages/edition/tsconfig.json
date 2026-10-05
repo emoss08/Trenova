@@ -1,0 +1,11 @@
+{
+  "extends": "@trenova/config/tsconfig.lib.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@trenova/shared/*": ["../shared/src/*"]
+    }
+  },
+  "include": ["src", "node"]
+}

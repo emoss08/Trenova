@@ -1,0 +1,42 @@
+{
+  "name": "@trenova/cloud",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Trenova Cloud overlay for @trenova/web. Compiled into the web app through @trenova/edition-entry; see docs/engineering/editions.md.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "lint": "oxlint",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@lukemorales/query-key-factory": "^1.3.4",
+    "@tanstack/react-query": "catalog:",
+    "@trenova/edition": "workspace:*",
+    "@trenova/shared": "workspace:*",
+    "react": "catalog:",
+    "react-hook-form": "catalog:",
+    "react-router": "catalog:",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@storybook/react-vite": "^10.6.0",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/google.maps": "^3.66.2",
+    "@types/node": "^26.5.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "happy-dom": "^20.14.0",
+    "storybook": "^10.6.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  }
+}
