@@ -4,6 +4,7 @@ import { copyFile } from "node:fs/promises";
 import path from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { compression } from "vite-plugin-compression2";
+import { singletonPackages } from "../../singleton-packages";
 
 const proxyConfig = {
   target: "http://localhost:8080",
@@ -50,10 +51,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@trenova/shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
-    // Shared components call router hooks. A second copy of react-router resolved from
-    // packages/shared carries its own context, and every hook in it then reports that it
-    // is outside a router.
-    dedupe: ["react-router"],
+    // Shared components import these from packages/shared. A second copy resolved there
+    // carries its own React context: router hooks report they are outside a router, a
+    // shared DialogTitle throws Base UI error #27. See singleton-packages.ts.
+    dedupe: [...singletonPackages],
   },
   server: {
     port: 5174,
