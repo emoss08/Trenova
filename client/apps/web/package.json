@@ -11,7 +11,6 @@
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "preview": "pnpm run build && wrangler dev",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run --project=unit",
@@ -21,7 +20,6 @@
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "b:dev": "bunx --bun vite",
     "b:build": "bunx --bun vite build",
-    "deploy": "pnpm run build && wrangler deploy",
     "doctor": "npx react-doctor@latest",
     "guide:generate": "node scripts/product-guide/generate.mjs",
     "guide:check": "node scripts/product-guide/generate.mjs --check"
@@ -57,6 +55,7 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-table": "catalog:",
     "@tanstack/react-virtual": "^3.14.11",
+    "@trenova/edition": "workspace:*",
     "@trenova/graphql": "workspace:*",
     "@trenova/shared": "workspace:*",
     "@uiw/react-codemirror": "^4.25.11",
@@ -104,7 +103,6 @@
   "devDependencies": {
     "@0no-co/graphqlsp": "^1.17.5",
     "@babel/core": "^8.0.1",
-    "@cloudflare/vite-plugin": "^1.54.6",
     "@eslint/js": "^10.0.1",
     "@graphql-codegen/cli": "^7.4.0",
     "@graphql-codegen/client-preset": "^6.1.3",
@@ -163,8 +161,7 @@
     "vite": "^8.2.2",
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-static-copy": "^4.1.1",
-    "vitest": "^5.0.0",
-    "wrangler": "^4.130.0"
+    "vitest": "^5.0.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "oxlint"

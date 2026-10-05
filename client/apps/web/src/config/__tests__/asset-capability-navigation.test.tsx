@@ -1,4 +1,5 @@
-import { adminLinks, navigationConfig } from "@/config/navigation.config";
+import { appAdminLinks } from "@/config/app-navigation";
+import { navigationConfig } from "@/config/navigation.config";
 import { isNavGroup, type NavGroup, type NavItem } from "@/config/navigation.types";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import {
@@ -266,17 +267,6 @@ describe("asset-only admin links", () => {
 
     const { result } = renderAdminLinks("cloud");
 
-    expect(result.current).toHaveLength(adminLinks.filter((link) => !link.disabled).length);
-  });
-
-  it("shows Plan & usage only on a Trenova Cloud install", () => {
-    signIn(hybrid);
-
-    const selfHosted = renderAdminLinks("self_hosted").result.current.map((link) => link.href);
-    const cloud = renderAdminLinks("cloud").result.current.map((link) => link.href);
-
-    expect(selfHosted).not.toContain("/admin/plan-usage");
-    expect(cloud).toContain("/admin/plan-usage");
-    expect(selfHosted).toContain("/admin/organization-settings");
+    expect(result.current).toHaveLength(appAdminLinks.filter((link) => !link.disabled).length);
   });
 });

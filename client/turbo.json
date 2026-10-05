@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build", "^codegen"],
-      "outputs": ["dist/**", ".wrangler/**"]
+      "outputs": ["dist/**"]
     },
     "codegen": {
       "inputs": [

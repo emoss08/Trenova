@@ -4,7 +4,7 @@ import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { queryClient } from "@/lib/query-client";
 import { apiService } from "@/services/api";
-import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
+import { LegalAgreementNote } from "./legal-agreement-note";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PermissionManifest } from "@trenova/shared/types/permission";
@@ -276,27 +276,7 @@ export function AuthForm({
           )}
         </AuthCard>
 
-        <p className="text-subtle-foreground m-0 text-center text-xs text-balance">
-          {t("By continuing you agree to our")}{" "}
-          <a
-            href={TERMS_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
-          >
-            {t("Terms of Service")}
-          </a>{" "}
-          and{" "}
-          <a
-            href={PRIVACY_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-muted-foreground hover:text-foreground underline underline-offset-[3px]"
-          >
-            {t("Privacy policy")}
-          </a>
-          .
-        </p>
+        <LegalAgreementNote />
       </AuthShell>
     </>
   );

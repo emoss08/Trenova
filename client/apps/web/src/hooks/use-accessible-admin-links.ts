@@ -1,6 +1,6 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { adminLinks } from "@/config/navigation.config";
-import { usePlanRestrictions } from "@/hooks/use-cloud-plan";
+import { appAdminLinks } from "@/config/app-navigation";
+import { usePlanRestrictions } from "@/hooks/use-plan-restrictions";
 import { isPlanRestricted } from "@/lib/plan-capability";
 import { normalizePath } from "@/lib/route-utils";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
@@ -21,7 +21,7 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
 
   return useMemo(
     () =>
-      adminLinks.filter((link) => {
+      appAdminLinks.filter((link) => {
         if (link.disabled) {
           return false;
         }

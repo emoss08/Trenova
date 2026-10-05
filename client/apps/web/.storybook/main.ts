@@ -3,11 +3,21 @@ import type { StorybookConfig } from "@storybook/react-vite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mergeConfig } from "vite";
+import {
+  OVERLAY_SRC,
+  editionAlias,
+  overlayPresent,
+} from "../../../packages/edition/node/resolve-entry.ts";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// An installed edition overlay renders inside this app, so its stories run here too.
+const overlayStories = overlayPresent()
+  ? [path.join(path.relative(dirname, OVERLAY_SRC), "**/*.stories.@(ts|tsx)")]
+  : [];
+
 const config: StorybookConfig = {
-  stories: ["../src/**/*.mdx", "../src/**/*.stories.@(ts|tsx)"],
+  stories: ["../src/**/*.mdx", "../src/**/*.stories.@(ts|tsx)", ...overlayStories],
   addons: [
     "@storybook/addon-docs",
     "@storybook/addon-a11y",
@@ -35,6 +45,7 @@ const config: StorybookConfig = {
       resolve: {
         alias: {
           "@": path.resolve(dirname, "../src"),
+          ...editionAlias(),
         },
       },
       optimizeDeps: {

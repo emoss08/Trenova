@@ -16,7 +16,11 @@
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@trenova/shared/*": ["../../packages/shared/src/*"]
+      "@trenova/shared/*": ["../../packages/shared/src/*"],
+      "@trenova/edition-entry": [
+        "../../packages/cloud/src/index.ts",
+        "../../packages/edition/src/default-entry.ts"
+      ]
     },
     /* Bundler mode */
     "moduleResolution": "bundler",

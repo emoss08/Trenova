@@ -8,12 +8,17 @@ COPY client/package.json client/pnpm-lock.yaml client/pnpm-workspace.yaml client
 COPY client/apps/web/package.json ./apps/web/
 COPY client/apps/dash/package.json ./apps/dash/
 COPY client/packages/config/package.json ./packages/config/
+COPY client/packages/edition/package.json ./packages/edition/
 COPY client/packages/graphql/package.json ./packages/graphql/
 COPY client/packages/shared/package.json ./packages/shared/
 
 RUN pnpm install --frozen-lockfile
 
 COPY client/ ./
+
+# This image is the self-hosted edition. An edition overlay in packages/cloud is
+# built by its own pipeline (docs/engineering/editions.md), never into this image.
+RUN rm -rf packages/cloud
 
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
@@ -24,20 +29,13 @@ RUN pnpm --filter @trenova/web exec vite build
 RUN pnpm --filter @trenova/dash exec vite build
 
 # The site Caddy serves: the web app at the root and Dash under /dash, which is
-# its Vite base. Dash emits its bundle to apps/dash/dist/dash; the copy of its
-# index.html at apps/dash/dist exists only for static hosts and is not used.
-#
-# The web build lands in apps/web/dist. While the Cloudflare Vite plugin is
-# still configured it lands in apps/web/dist/client instead (next to the
-# worker bundle, which is not served here), so that layout is accepted too.
+# its Vite base. Dash emits its bundle to apps/dash/dist/dash.
 RUN set -eu; \
-    web=apps/web/dist; \
-    if [ -f apps/web/dist/client/index.html ]; then web=apps/web/dist/client; fi; \
-    test -f "$web/index.html"; \
+    test -f apps/web/dist/index.html; \
     test -f apps/dash/dist/dash/index.html; \
     mkdir -p /site; \
-    cp -R "$web"/. /site/; \
-    rm -rf /site/dash /site/_headers /site/.assetsignore /site/wrangler.json; \
+    cp -R apps/web/dist/. /site/; \
+    rm -rf /site/dash; \
     cp -R apps/dash/dist/dash /site/dash
 
 FROM caddy:2-alpine

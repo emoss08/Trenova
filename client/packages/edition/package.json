@@ -1,0 +1,29 @@
+{
+  "name": "@trenova/edition",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./default-entry": "./src/default-entry.ts",
+    "./node": "./node/resolve-entry.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "lint": "oxlint",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "catalog:",
+    "react-router": "catalog:"
+  },
+  "devDependencies": {
+    "@trenova/config": "workspace:*",
+    "@types/node": "^26.5.0",
+    "@types/react": "^19.2.18",
+    "typescript": "~7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  }
+}

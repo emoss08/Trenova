@@ -1,5 +1,5 @@
-import { navigationConfig } from "@/config/navigation.config";
-import { usePlanRestrictions } from "@/hooks/use-cloud-plan";
+import { appNavigationModules } from "@/config/app-navigation";
+import { usePlanRestrictions } from "@/hooks/use-plan-restrictions";
 import { isPlanRestricted } from "@/lib/plan-capability";
 import {
   isNavGroup,
@@ -9,6 +9,8 @@ import {
   type QuickActionCommand,
 } from "@/config/navigation.types";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
+import type { PlatformMode } from "@trenova/shared/types/platform";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import {
   hasOrganizationCapability,
@@ -20,8 +22,10 @@ import { useMemo } from "react";
 export interface NavAccessContext {
   hasPermission: (resource: string, operation: OperationType) => boolean;
   capabilities: OrganizationCapabilities;
-  /** What the organization's Trenova Cloud plan withholds; absent means nothing. */
+  /** What the organization's plan withholds; absent means nothing. */
   planRestrictions?: readonly string[];
+  /** The install's platform mode, for entries that exist only in one. */
+  platformMode?: PlatformMode;
 }
 
 /**
@@ -38,6 +42,10 @@ export function canAccessNavEntry(
   }
 
   if (isPlanRestricted(context.planRestrictions, entry.planCapability)) {
+    return false;
+  }
+
+  if (entry.platformMode && entry.platformMode !== context.platformMode) {
     return false;
   }
 
@@ -92,7 +100,10 @@ export function filterNavEntries(
     .filter((entry): entry is NavItem | NavGroup => entry !== null);
 }
 
-export function filterNavModules(modules: NavModule[], context: NavAccessContext): NavModule[] {
+export function filterNavModules(
+  modules: readonly NavModule[],
+  context: NavAccessContext,
+): NavModule[] {
   return modules
     .filter((module) => canAccessNavEntry(module, context))
     .map((module) => ({
@@ -112,6 +123,8 @@ function useNavAccessContext(): NavAccessContext {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const capabilities = useOrgCapabilities();
   const planRestrictions = usePlanRestrictions();
+  const { config } = usePublicConfig();
+  const platformMode = config.platformMode;
 
   return useMemo(
     // Before the manifest lands nothing is known about permissions, so they are
@@ -121,15 +134,16 @@ function useNavAccessContext(): NavAccessContext {
       hasPermission: manifest ? hasPermission : PERMIT_ALL,
       capabilities,
       planRestrictions,
+      platformMode,
     }),
-    [manifest, hasPermission, capabilities, planRestrictions],
+    [manifest, hasPermission, capabilities, planRestrictions, platformMode],
   );
 }
 
 export function useFilteredNavigation() {
   const context = useNavAccessContext();
 
-  return useMemo(() => filterNavModules(navigationConfig.modules, context), [context]);
+  return useMemo(() => filterNavModules(appNavigationModules, context), [context]);
 }
 
 export function useFilteredModuleNavigation(module: NavModule | null) {

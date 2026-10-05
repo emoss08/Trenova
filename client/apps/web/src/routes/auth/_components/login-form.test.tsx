@@ -34,6 +34,22 @@ vi.mock("@trenova/shared/hooks/use-public-config", () => ({
   }),
 }));
 
+vi.mock("@/lib/edition", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/edition")>();
+  return {
+    ...actual,
+    edition: {
+      ...actual.edition,
+      slots: {
+        ...actual.edition.slots,
+        LoginPrompt: ({ fallback }: { fallback: ReactNode }) => (
+          <span data-testid="edition-login-prompt">{fallback}</span>
+        ),
+      },
+    },
+  };
+});
+
 vi.mock("@trenova/shared/stores/auth-store", () => ({
   useAuthStore: (selector: (state: { setUser: typeof mocks.setUser }) => unknown) =>
     selector({ setUser: mocks.setUser }),
@@ -107,8 +123,7 @@ describe("LoginForm", () => {
     mocks.onAuthenticated.mockResolvedValue(undefined);
   });
 
-  it("links to signup when Trenova Cloud has signup open", () => {
-    publicConfig.signupAvailable = true;
+  it("hands the line under the heading to the edition, with the host's line as fallback", () => {
     renderLoginForm(
       <LoginForm
         stepLabel="01 / 03"
@@ -117,9 +132,8 @@ describe("LoginForm", () => {
       />,
     );
 
-    expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute(
-      "href",
-      "/signup",
+    expect(screen.getByTestId("edition-login-prompt")).toHaveTextContent(
+      "Sign in with the account your organization set up for you.",
     );
   });
 
