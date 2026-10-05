@@ -38,6 +38,7 @@ const imageSources = [
   "https://*.googleusercontent.com",
   "https://tilecache.rainviewer.com",
   "https://tile.openweathermap.org",
+  "https://api.trenova.app",
   "https://storage.trenova.app",
 ] as const;
 const localDevelopmentImageSources = [

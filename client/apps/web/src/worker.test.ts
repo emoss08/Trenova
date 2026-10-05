@@ -361,6 +361,9 @@ function expectSecurityHeaders(headers: Headers): void {
   expect(headers.get("Content-Security-Policy")).not.toContain("http://127.0.0.1:8080");
   expect(headers.get("Content-Security-Policy")).not.toContain("http://localhost:9000");
   expect(headers.get("Content-Security-Policy")).not.toContain("http://127.0.0.1:9000");
+  const policy = headers.get("Content-Security-Policy") ?? "";
+  expect(cspDirective(policy, "img-src")).toContain("https://api.trenova.app");
+  expect(cspDirective(policy, "connect-src")).toContain("https://api.trenova.app");
   expect(headers.get("Content-Security-Policy")).toContain("https://tilecache.rainviewer.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://tile.openweathermap.org");
   expectTurnstileAllowed(headers.get("Content-Security-Policy") ?? "");
