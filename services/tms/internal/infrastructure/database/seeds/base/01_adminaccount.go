@@ -33,7 +33,7 @@ func NewAdminAccountSeed() *AdminAccountSeed {
 		"1.0.0",
 		"Creates AdminAccount data",
 		[]common.Environment{
-			common.EnvProduction, common.EnvStaging, common.EnvDevelopment, common.EnvTest,
+			common.EnvDevelopment, common.EnvTest,
 		},
 	)
 
@@ -48,6 +48,10 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
+			if err := requireDevelopmentFixtures(sc); err != nil {
+				return err
+			}
+
 			// An existing core admin means this seed already owns the tenant
 			// below it. Re-running would duplicate the second organization, its
 			// users, memberships, sequences, and control files.

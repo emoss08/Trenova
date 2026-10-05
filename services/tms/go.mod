@@ -83,6 +83,7 @@ require (
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.57.0
+	golang.org/x/term v0.46.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/text v0.42.0
 	golang.org/x/tools v0.50.0
