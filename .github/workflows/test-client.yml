@@ -24,6 +24,9 @@ on:
       - "i18n/messages.en.json"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
+      # The self-hosting client image (built and pushed on release).
+      - "deploy/Dockerfile.client"
+      - "deploy/Caddyfile"
   pull_request:
     branches:
       - master
@@ -46,6 +49,9 @@ on:
       - "i18n/messages.en.json"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
+      # The self-hosting client image (built and pushed on release).
+      - "deploy/Dockerfile.client"
+      - "deploy/Caddyfile"
   workflow_dispatch:
 
 concurrency:
@@ -111,6 +117,32 @@ jobs:
       - name: ${{ matrix.task.name }}
         working-directory: ./client
         run: ${{ matrix.task.run }}
+
+  # The release builds and pushes the self-hosting client image from
+  # deploy/Dockerfile.client. It loads the vite config differently from the
+  # build job above, so it is built here too (not pushed) to fail before a
+  # release rather than at it.
+  client-image:
+    name: Client image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build client image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.client
+          push: false
+          cache-from: type=gha
+          platforms: linux/amd64
+          build-args: |
+            VITE_API_URL=/api/v1
 
   storybook:
     name: Storybook
