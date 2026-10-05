@@ -228,7 +228,7 @@
   white-space: nowrap;
 }
 
-.tdb-phrase > span {
+.tdb-phrase > span:not(.tdb-odo) {
   display: inline-block;
 }
 
