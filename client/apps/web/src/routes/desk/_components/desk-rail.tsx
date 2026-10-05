@@ -3,15 +3,23 @@ import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { Fragment, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router";
-import { DeskIcon } from "./desk-icons";
-import { deskThreadState, type DeskThreadState } from "./desk-thread-state";
-import { groupDeskThreadsByRecency, type DeskShelfKey } from "./desk-threads";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { deskThreadState } from "@/components/desk-chat/rail/desk-thread-state";
+import { groupDeskThreadsByRecency } from "@/components/desk-chat/rail/desk-threads";
+import {
+  RailDot,
+  RailKnobCard,
+  railTime,
+  shelfHeading,
+  stateLabel,
+  useRailKnob,
+} from "@/components/desk-chat/rail/rail-parts";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
 export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "thread" | "agent";
@@ -74,7 +82,6 @@ export function DeskRail({
   const [leaving, setLeaving] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const [knob, setKnob] = useState<{ y: number; h: number } | null>(null);
 
   const shelves = useMemo(
     () => groupDeskThreadsByRecency(threads, now, { pinnedFirst: true, timezone }),
@@ -90,24 +97,11 @@ export function DeskRail({
           ? "n:dec"
           : place === "memory"
             ? "n:memory"
-          : place === "agent"
-            ? "n:agent"
-            : "n:today";
+            : place === "agent"
+              ? "n:agent"
+              : "n:today";
 
-  useLayoutEffect(() => {
-    const root = listRef.current;
-    if (!root) {
-      return;
-    }
-    const element = root.querySelector<HTMLElement>(`[data-k="${CSS.escape(activeKey)}"]`);
-    if (!element) {
-      setKnob(null);
-      return;
-    }
-    const rootBox = root.getBoundingClientRect();
-    const box = element.getBoundingClientRect();
-    setKnob({ y: box.top - rootBox.top + root.scrollTop, h: box.height });
-  }, [activeKey, shelves]);
+  const knob = useRailKnob(listRef, activeKey, shelves);
 
   const remove = (thread: AssistantThread) => {
     if (confirming !== thread.id) {
@@ -165,12 +159,7 @@ export function DeskRail({
       </div>
 
       <div className="dk-sb-list" ref={listRef}>
-        {knob && (
-          <span
-            className="dk-sb-knob"
-            style={{ transform: `translateY(${knob.y}px)`, height: knob.h }}
-          />
-        )}
+        <RailKnobCard knob={knob} />
         <button
           type="button"
           data-k="n:today"
@@ -253,15 +242,7 @@ export function DeskRail({
                   onKeyDown={(event) => editing !== thread.id && openOnKey(event, thread)}
                   onMouseLeave={() => confirming === thread.id && setConfirming(null)}
                 >
-                  <span className={cn("dk-sb-dot", state && `dk-s-${state}`)}>
-                    {state === "wait" ? (
-                      <DeskIcon name="info" size={13} stroke={2} />
-                    ) : state === "error" ? (
-                      <DeskIcon name="alert" size={13} stroke={2} />
-                    ) : (
-                      <i />
-                    )}
-                  </span>
+                  <RailDot state={state} />
                   {editing === thread.id ? (
                     <input
                       className="dk-sb-in"
@@ -366,53 +347,4 @@ export function DeskRail({
       </div>
     </aside>
   );
-}
-
-/** When a conversation was last touched, as its row's tooltip ends: the time today, the day otherwise. */
-function railTime(thread: AssistantThread, now: number, timezone: string): string {
-  const at = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
-  if (!at) return "";
-  const moment = new Date(at * 1000);
-  const sameDay =
-    new Date(now * 1000).toLocaleDateString(undefined, { timeZone: timezone }) ===
-    moment.toLocaleDateString(undefined, { timeZone: timezone });
-  return sameDay
-    ? moment.toLocaleTimeString(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-        timeZone: timezone,
-      })
-    : moment.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: timezone });
-}
-
-function shelfHeading(t: TranslateFn, key: DeskShelfKey): string {
-  switch (key) {
-    case "pinned":
-      return t("Pinned");
-    case "today":
-      return t("Today");
-    case "yesterday":
-      return t("Yesterday");
-    case "week":
-      return t("Previous 7 days");
-    case "month":
-      return t("Previous 30 days");
-    default:
-      return t("Older");
-  }
-}
-
-function stateLabel(t: TranslateFn, state: DeskThreadState): string {
-  switch (state) {
-    case "work":
-      return t("Working");
-    case "wait":
-      return t("Needs your approval");
-    case "error":
-      return t("Last reply failed");
-    case "new":
-      return t("New reply");
-    default:
-      return "";
-  }
 }

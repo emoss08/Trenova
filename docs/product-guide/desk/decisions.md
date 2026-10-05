@@ -8,7 +8,7 @@ related:
 ---
 
 ## What it's for
-Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal leads with **What changes**: every record the change would touch, what happens to it, and each value before and after, worked out by the same code that would make the change and read from your records as they are now. A message the change would send is shown as it would go out, with the recipients it would really reach, and amounts it would move are shown line by line with the totals before and after. Below that are **Why** the agent wants it, how sure it is, the evidence behind it, and under **Details** the arguments Exactly as proposed. A plan shows What changes, in the order it runs, step by step. Changes that cannot be undone are marked **Permanent**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.
+Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal leads with **What changes**: every record the change would touch, what happens to it, and each value before and after, worked out by the same code that would make the change and read from your records as they are now. A message the change would send is shown as it would go out, with the recipients it would really reach, and amounts it would move are shown line by line with the totals before and after. Below that are **Why** the agent wants it, how sure it is, the evidence behind it, and under **Details** the arguments Exactly as proposed. A plan shows What changes, in the order it runs, step by step. Changes that cannot be undone are marked **Can't be undone**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.
 
 ## Tasks
 
@@ -29,7 +29,7 @@ Keywords: approve AI action, deny agent change, review proposal
 ### Change the values before approving
 Keywords: edit proposal, adjust agent change, modify and approve
 1. Open [Decisions](/desk/decisions) and select the proposal.
-2. Select **Modify** (m) and adjust the values. The record the change is about stays as proposed and cannot be edited; a change can alter what is done to that record, never which record it is.
+2. Select **Change values** (m) and adjust the values. The record the change is about stays as proposed and cannot be edited; a change can alter what is done to that record, never which record it is.
 3. As you type, the dialog shows what your values would do. Values the change would refuse say why and cannot be approved.
 4. Optionally add a reason and confirm with **Approve with changes**. The change runs with the values you saw previewed.
 
@@ -49,9 +49,9 @@ Keywords: filter by agent, filter by change type
 2. Select **Open the conversation** or Open the run to see the context the agent was working in.
 
 ### Decide a change in your own conversation instead
-Keywords: approval box, approve in chat, tell the agent why
-1. Open the conversation on the [Desk](/desk) (select **Open the conversation**). The change waits in the approval box at the foot of the conversation.
-2. Select **Approve**, **Reject**, or **Tell the agent** to turn it down with a note the agent answers. A decision made there leaves this queue, and one made here updates the conversation.
+Keywords: approval card, approve in chat, not now
+1. Open the conversation on the [Desk](/desk) (select **Open the conversation**). The change waits on the card above the message box; the floating assistant shows the same card.
+2. Select **Approve**, **Review** to read it in full, or **Not now** to put it off. A decision made there leaves this queue, and one made here updates the conversation.
 
 ## Notes
 Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.

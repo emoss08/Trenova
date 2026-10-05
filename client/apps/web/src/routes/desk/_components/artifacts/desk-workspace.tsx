@@ -18,7 +18,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import type { LiveArtifacts } from "../desk-layout";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import { tableViewFrom } from "./artifact-payloads";
 import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";

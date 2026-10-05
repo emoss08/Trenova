@@ -26,7 +26,7 @@ import type {
   FormulaTemplateFormValues,
   VariableDefinition,
 } from "@trenova/shared/types/formula-template";
-import type { PageRequest } from "@/components/assistant/message-thread";
+import type { PageRequest } from "@/components/assistant/use-thread-model";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";

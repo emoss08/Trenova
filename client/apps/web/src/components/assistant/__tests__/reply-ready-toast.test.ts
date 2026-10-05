@@ -1,4 +1,5 @@
 import { queries } from "@/lib/queries";
+import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -68,6 +69,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  useAssistantStore.setState({ open: false, repliedThreadId: null });
   vi.clearAllMocks();
   getThread.mockReset();
   queryClient.clear();
@@ -240,6 +242,62 @@ describe("announceReplyReady", () => {
 
     expect(navigate).toHaveBeenCalledWith("/desk/t/athr_1");
     expect(markRead).not.toHaveBeenCalled();
+  });
+});
+
+/*
+With the panel closed, the launcher is the other place a finished reply shows:
+it says the agent replied until the panel is next opened. A reply that failed
+is not "replied"; the danger toast says what happened.
+*/
+describe("announceReplyReady and the launcher", () => {
+  it("leaves the launcher saying the conversation replied while the panel was closed", async () => {
+    getThread.mockResolvedValue(thread());
+
+    await announce();
+
+    expect(useAssistantStore.getState().repliedThreadId).toBe("athr_1");
+  });
+
+  it("does the same for a refused reply, which is still an answer", async () => {
+    getThread.mockResolvedValue(thread());
+
+    await announce({ reply: { ...reply, status: "Refused" } });
+
+    expect(useAssistantStore.getState().repliedThreadId).toBe("athr_1");
+  });
+
+  it("leaves the launcher alone for a reply that failed", async () => {
+    getThread.mockResolvedValue(thread());
+
+    await announce({ reply: { ...reply, status: "Failed" } });
+
+    expect(useAssistantStore.getState().repliedThreadId).toBeNull();
+  });
+
+  it("leaves the launcher alone when the notice was not shown", async () => {
+    getThread.mockResolvedValue(thread());
+
+    await announce({
+      viewing: () => ({ pathname: "/desk/t/athr_1", panelOpen: false, panelThreadId: null }),
+    });
+
+    expect(useAssistantStore.getState().repliedThreadId).toBeNull();
+  });
+
+  it("does not mark the launcher while the panel is open, and opening clears it", async () => {
+    getThread.mockResolvedValue(thread());
+    useAssistantStore.setState({ open: true });
+
+    await announce();
+    expect(useAssistantStore.getState().repliedThreadId).toBeNull();
+
+    useAssistantStore.setState({ open: false });
+    await announce({ reply: { ...reply, turnId: "atrn_2" } });
+    expect(useAssistantStore.getState().repliedThreadId).toBe("athr_1");
+
+    useAssistantStore.getState().openWidget();
+    expect(useAssistantStore.getState().repliedThreadId).toBeNull();
   });
 });
 

@@ -1,7 +1,7 @@
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
 import { useRealtimeStore } from "@/stores/realtime-store";
-import type { AssistantLiveTurnList } from "@/types/assistant";
+import type { AssistantLiveTurn, AssistantLiveTurnList } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback } from "react";
@@ -39,6 +39,16 @@ export function useLiveThreadIds(): ReadonlySet<string> {
   const { data } = useActiveTurnsQuery(liveThreadIds);
 
   return data ?? liveThreadIds(undefined);
+}
+
+const NO_TURNS: readonly AssistantLiveTurn[] = [];
+const turnsOf = (list: AssistantLiveTurnList): readonly AssistantLiveTurn[] => list.items;
+
+/** The replies being written, each with its conversation's title and when it started. */
+export function useLiveTurns(): readonly AssistantLiveTurn[] {
+  const { data } = useActiveTurnsQuery(turnsOf);
+
+  return data ?? NO_TURNS;
 }
 
 /** How many replies are being written across every conversation. */

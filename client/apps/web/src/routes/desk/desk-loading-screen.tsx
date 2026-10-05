@@ -1,5 +1,6 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
+import "@/components/desk-chat/desk-chat.css";
 import "./_styles/desk-v2.css";
 
 /**

@@ -23,7 +23,7 @@ import {
   holdsFocus,
   type ApprovalEntry,
 } from "./approval-queue";
-import type { ComposerPayload } from "./composer";
+import type { ComposerPayload } from "./composer-types";
 import { decisionRequestsFromSteps } from "./decision-requests";
 import { stepsFromSegments } from "./activity";
 import { useFollowNavigation } from "./follow-navigation";

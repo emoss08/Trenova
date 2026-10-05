@@ -10,7 +10,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router";
 import { DeskArtKindIcon, deskArtKind, deskArtKindName } from "./artifacts/desk-art-kinds";
-import { DeskIcon, type DeskIconName } from "./desk-icons";
+import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import { useModalFocus } from "./use-modal-focus";
 
 const SEARCH_DEBOUNCE_MS = 160;

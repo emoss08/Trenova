@@ -1,12 +1,16 @@
 import type { AssistantThread } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { groupThreadsByRecency } from "../thread-grouping";
+import { assistantShelves } from "../thread-grouping";
 
 const DAY = 24 * 60 * 60;
 // A Wednesday at 15:00 UTC, so "today" and "yesterday" are unambiguous.
 const NOW = Date.UTC(2026, 8, 16, 15, 0, 0) / 1000;
 
-function thread(id: string, lastMessageAt: number): AssistantThread {
+function thread(
+  id: string,
+  lastMessageAt: number,
+  overrides: Partial<AssistantThread> = {},
+): AssistantThread {
   return {
     id,
     businessUnitId: "bu",
@@ -25,49 +29,79 @@ function thread(id: string, lastMessageAt: number): AssistantThread {
     version: 0,
     createdAt: lastMessageAt,
     updatedAt: lastMessageAt,
+    ...overrides,
   };
 }
 
-/**
- * The sidebar is scanned for "the one from this morning" far more often than
- * searched, so conversations are shelved by how recently they were touched.
- * Empty shelves are left out; a list with a single "Older" heading over
- * everything says nothing.
- */
-describe("groupThreadsByRecency", () => {
-  it("shelves by today, yesterday, this week and older, newest first within each", () => {
-    const groups = groupThreadsByRecency(
-      [
-        thread("old", NOW - 40 * DAY),
-        thread("today-early", NOW - 3 * 60 * 60),
-        thread("week", NOW - 4 * DAY),
-        thread("yesterday", NOW - 1 * DAY),
-        thread("today-late", NOW - 60),
-      ],
-      NOW,
-      "UTC",
-    );
+const waiting = (pendingDecisions: number) => ({
+  attention: { pendingDecisions, lastTurnFailed: false, unread: false },
+});
 
-    expect(groups.map((group) => [group.label, group.threads.map((t) => t.id)])).toEqual([
-      ["Today", ["today-late", "today-early"]],
-      ["Yesterday", ["yesterday"]],
-      ["Previous 7 days", ["week"]],
-      ["Older", ["old"]],
+const agentName = (candidate: AssistantThread) =>
+  candidate.agentDefinitionId === "agdef_2" ? "Dispatch desk" : "Billing exceptions";
+
+const shelve = (threads: AssistantThread[], query = "") =>
+  assistantShelves(threads, { now: NOW, timezone: "UTC", query, agentName });
+
+/**
+ * The assistant's history and its full-screen sidebar list conversations the
+ * way the Desk's rail shelves them, by when they were last touched, with one
+ * shelf ahead of the calendar: the conversations a change is waiting on.
+ */
+describe("assistantShelves", () => {
+  it("shelves by recency, newest first, leaving empty shelves out", () => {
+    const shelves = shelve([
+      thread("older", NOW - 3 * DAY),
+      thread("morning", NOW - 2 * 60 * 60),
+      thread("yesterday", NOW - DAY),
+      thread("noon", NOW - 60 * 60),
+    ]);
+
+    expect(shelves.map((shelf) => shelf.key)).toEqual(["today", "yesterday", "week"]);
+    expect(shelves[0].threads.map((item) => item.id)).toEqual(["noon", "morning"]);
+  });
+
+  it("lifts the conversations a change waits on onto their own shelf, first", () => {
+    const shelves = shelve([
+      thread("quiet", NOW - 60),
+      thread("asks", NOW - 2 * DAY, waiting(1)),
+      thread("asks-more", NOW - 3 * 60, waiting(3)),
+    ]);
+
+    expect(shelves[0]).toEqual({
+      key: "waiting",
+      threads: [
+        expect.objectContaining({ id: "asks-more" }),
+        expect.objectContaining({ id: "asks" }),
+      ],
+    });
+    expect(shelves.slice(1).flatMap((shelf) => shelf.threads.map((item) => item.id))).toEqual([
+      "quiet",
     ]);
   });
 
-  it("omits shelves with nothing on them", () => {
-    const groups = groupThreadsByRecency([thread("a", NOW - 30 * DAY)], NOW, "UTC");
+  it("does not shelve a pinned conversation apart; pins are the Desk's", () => {
+    const shelves = shelve([thread("pinned", NOW - 60, { pinned: true })]);
 
-    expect(groups.map((group) => group.label)).toEqual(["Older"]);
+    expect(shelves.map((shelf) => shelf.key)).toEqual(["today"]);
   });
 
-  // A thread that has never been written to has no last message; it was just
-  // created, which is the most recent thing that could have happened to it.
-  it("treats a thread with no messages as touched when it was created", () => {
-    const fresh = { ...thread("fresh", NOW - 10), lastMessageAt: 0 };
-    const groups = groupThreadsByRecency([fresh], NOW, "UTC");
+  it("finds conversations by title or agent, ignoring case", () => {
+    const threads = [
+      thread("Stuck loads", NOW - 60),
+      thread("Payments due", NOW - 120, { agentDefinitionId: "agdef_2" }),
+    ];
 
-    expect(groups[0]?.label).toBe("Today");
+    expect(shelve(threads, "STUCK").flatMap((shelf) => shelf.threads.map((t) => t.id))).toEqual([
+      "Stuck loads",
+    ]);
+    expect(shelve(threads, "dispatch").flatMap((shelf) => shelf.threads.map((t) => t.id))).toEqual([
+      "Payments due",
+    ]);
+    expect(shelve(threads, "nothing like it")).toEqual([]);
+  });
+
+  it("lists nothing when there is nothing", () => {
+    expect(shelve([])).toEqual([]);
   });
 });

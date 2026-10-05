@@ -102,6 +102,10 @@ type stubDecider struct {
 	execErr map[pulid.ID]error
 }
 
+func (d *stubDecider) Defers(agent.DecisionType) bool {
+	return false
+}
+
 func (d *stubDecider) DecideWithOutcome(
 	_ context.Context,
 	req *services.DecideAgentProposalRequest,

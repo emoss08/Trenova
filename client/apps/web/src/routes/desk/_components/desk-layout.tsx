@@ -6,8 +6,6 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
-import { useAssistantStore } from "@/stores/assistant-store";
-import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { commandJ } from "./artifacts/desk-workspace-state";
 import { NO_PENDING_LOOKUPS, pendingLookupIds } from "./artifacts/pending-lookups";
@@ -24,7 +22,8 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
-import type { DeskStartExtras } from "./desk-home";
+import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
+import { useStartConversation } from "@/components/assistant/use-start-conversation";
 import { DeskRail, type DeskPlace } from "./desk-rail";
 import { DeskSearchPalette } from "./desk-search";
 import { DeskSettingsDialog, deskSettingsClasses } from "./desk-settings";
@@ -135,9 +134,6 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
-  const setHandoff = useDeskHandoffStore((state) => state.setHandoff);
-  const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
   const togglePane = useDeskStore((state) => state.togglePane);
@@ -243,29 +239,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     [queryClient],
   );
 
-  const startMutation = useApiMutation({
-    mutationFn: ({ agentId }: { agentId: string; question?: string; extras?: DeskStartExtras }) =>
-      apiService.assistantService.startThread(agentId, { origin: "Desk" }),
-    onSuccess: async (thread, { agentId, question, extras }) => {
-      setLastAgentId(agentId);
-      if (extras && (extras.files.length > 0 || extras.mentions.length > 0 || extras.providerId)) {
-        setHandoff({
-          threadId: thread.id,
-          files: extras.files,
-          mentions: extras.mentions,
-          providerId: extras.providerId,
-        });
-      }
-      // Handed over rather than sent here: the conversation is the only
-      // place that knows the thread is empty and that history has loaded,
-      // which is what keeps a reload from asking the same question twice.
-      if (question !== undefined && question !== "") {
-        setOpeningQuestion({ threadId: thread.id, text: question });
-      }
-      await refreshThreads();
-      void navigate(conversationPath(thread.id));
-    },
-    resourceName: "Conversation",
+  const startConversation = useStartConversation({
+    origin: "Desk",
+    onStarted: (thread) => void navigate(conversationPath(thread.id)),
   });
 
   const deleteMutation = useApiMutation({
@@ -425,8 +401,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsById,
       agentsUnavailable: agentsQuery.isError,
       isLoading: threadsQuery.isLoading || agentsQuery.isLoading || unlistedQuery.isLoading,
-      isStarting: startMutation.isPending,
-      start: (agentId, question, extras) => startMutation.mutate({ agentId, question, extras }),
+      isStarting: startConversation.isStarting,
+      start: startConversation.start,
       remove: (thread) => deleteMutation.mutate(thread.id),
       togglePin: (thread) => pinMutation.mutate(thread),
       setWorking,
@@ -454,7 +430,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       pendingLookups,
       pinMutation,
       setWorkspaceOpen,
-      startMutation,
+      startConversation.isStarting,
+      startConversation.start,
       threads,
       threadsQuery.isLoading,
       unlistedQuery.isLoading,

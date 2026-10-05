@@ -18,8 +18,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useNavigate, useSearchParams } from "react-router";
-import { DeskAgentTile } from "../desk-agent-tile";
-import { DeskIcon } from "../desk-icons";
+import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 
 const MODE_LABEL: Record<AgentCapabilityMode, string> = {
   Allowed: "Allowed",

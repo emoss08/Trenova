@@ -1,103 +1,120 @@
+import type { AssistantLiveTurn } from "@/types/assistant";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssistantLauncher } from "../assistant-launcher";
+import { beaconState, type BeaconInput } from "../beacon-state";
 
 afterEach(cleanup);
 
-function renderLauncher(pendingCount: number, writingCount?: number) {
+function liveTurn(threadId: string, threadTitle = "Which loads are stuck?"): AssistantLiveTurn {
+  return {
+    turnId: `turn_${threadId}`,
+    threadId,
+    threadTitle,
+    origin: "Person",
+    startedAt: Math.floor(Date.now() / 1000) - 12,
+  };
+}
+
+function renderBeacon(input: Partial<BeaconInput> = {}) {
   render(
-    <AssistantLauncher pendingCount={pendingCount} writingCount={writingCount} onClick={vi.fn()} />,
+    <AssistantLauncher
+      beacon={beaconState({
+        pendingCount: 0,
+        liveTurns: [],
+        repliedAgentName: null,
+        lastAgentName: "Billing exceptions",
+        ...input,
+      })}
+      onClick={vi.fn()}
+    />,
   );
 
-  return screen.getByRole("button");
+  return screen.getByRole("button", { name: /^Open the assistant/ });
 }
 
 /**
- * The launcher is on every page in the product, so what it says and when it
- * says it is the whole design. Quiet by default; a count and a word when
- * something is genuinely waiting on a person.
+ * The beacon is on every page in the product, so what it says and when it
+ * says it is the whole design. At rest it offers the agent it would ask; it
+ * speaks up for a reply being written, a change waiting on the person, and a
+ * reply that came while the panel was closed.
  */
-describe("AssistantLauncher", () => {
-  it("says nothing when nothing is waiting", () => {
-    const button = renderLauncher(0);
+describe("AssistantLauncher at rest", () => {
+  it("offers the agent last asked and the key that opens it", () => {
+    const button = renderBeacon();
 
     expect(button).toHaveAccessibleName("Open the assistant");
-    expect(button).not.toHaveTextContent(/waiting/);
-    expect(button).not.toHaveTextContent(/\d/);
+    expect(button).toHaveTextContent("Ask Billing exceptions");
+    expect(button).toHaveTextContent("⌘J");
+    expect(button).toHaveAttribute("aria-keyshortcuts", "Meta+J");
+    expect(button.closest(".as-beacon")).toHaveAttribute("data-mode", "idle");
+  });
+});
+
+describe("AssistantLauncher with changes waiting", () => {
+  it("says how many changes need approval and offers to review them", () => {
+    const button = renderBeacon({ pendingCount: 3 });
+
+    expect(button).toHaveTextContent("3 changes need your approval");
+    expect(button).toHaveTextContent("Review");
+    expect(button.closest(".as-beacon")).toHaveAttribute("data-mode", "pending");
   });
 
-  // A bare number in the corner could be anything. The word is what makes it
-  // readable without opening the panel.
-  it("names the count and what it is", () => {
-    const button = renderLauncher(3);
-
-    expect(button).toHaveTextContent("3");
-    expect(button).toHaveTextContent("waiting");
-  });
-
-  it("caps a count that would stretch the corner", () => {
-    expect(renderLauncher(150)).toHaveTextContent("99+");
+  it("speaks of one change in the singular", () => {
+    expect(renderBeacon({ pendingCount: 1 })).toHaveTextContent("1 change needs your approval");
   });
 
   // The visible text is capped; what a screen reader is told is not, because
   // "99+ changes" is worse than the number.
-  it("tells a screen reader the real count", () => {
-    expect(renderLauncher(150)).toHaveAccessibleName(
-      "Open the assistant, 150 changes await your decision",
-    );
-  });
-});
+  it("caps a count that would stretch the corner, but tells a screen reader the real one", () => {
+    const button = renderBeacon({ pendingCount: 150 });
 
-/**
- * A reply keeps being written after the panel closes. The launcher is the one
- * place that can say so from every page, and it says it the way it says
- * "waiting": in words, standing still.
- */
-describe("AssistantLauncher while replies are being written", () => {
-  it("says it is writing one reply", () => {
-    const button = renderLauncher(0, 1);
-
-    expect(button).toHaveTextContent("Writing");
-    expect(button).not.toHaveTextContent(/\d/);
-    expect(button).toHaveAccessibleName("Open the assistant, 1 reply is being written");
-  });
-
-  it("counts several replies", () => {
-    const button = renderLauncher(0, 3);
-
-    expect(button).toHaveTextContent("3");
-    expect(button).toHaveTextContent("writing");
-    expect(button).toHaveAccessibleName("Open the assistant, 3 replies are being written");
+    expect(button).toHaveTextContent("99+ changes");
+    expect(button).toHaveAccessibleName("Open the assistant, 150 changes await your decision");
   });
 
   // Decisions lead: they are the only part that needs the person.
-  it("puts waiting decisions ahead of replies being written", () => {
-    const button = renderLauncher(2, 1);
+  it("puts waiting changes ahead of a reply being written", () => {
+    const button = renderBeacon({ pendingCount: 2, liveTurns: [liveTurn("athr_1")] });
 
-    expect(button.textContent).toMatch(/2\s*waiting.*writing/);
+    expect(button).toHaveTextContent("2 changes need your approval");
+    expect(button).not.toHaveTextContent("Which loads are stuck?");
     expect(button).toHaveAccessibleName(
       "Open the assistant, 2 changes await your decision, 1 reply is being written",
     );
   });
+});
 
-  it("caps the visible count but tells a screen reader the real one", () => {
-    const button = renderLauncher(0, 120);
+describe("AssistantLauncher while replies are being written", () => {
+  it("says what one reply is answering and for how long", () => {
+    const button = renderBeacon({ liveTurns: [liveTurn("athr_1")] });
 
-    expect(button).toHaveTextContent("99+");
-    expect(button).toHaveAccessibleName("Open the assistant, 120 replies are being written");
+    expect(button).toHaveTextContent("Which loads are stuck?");
+    expect(button).toHaveTextContent(/\d+s/);
+    expect(button).toHaveAttribute("data-writing", "true");
+    expect(button).toHaveAccessibleName("Open the assistant, 1 reply is being written");
   });
 
-  it("marks the writing state for styling without animating it", () => {
-    const button = renderLauncher(0, 1);
+  it("counts several conversations writing at once", () => {
+    const button = renderBeacon({ liveTurns: [liveTurn("athr_1"), liveTurn("athr_2")] });
 
-    expect(button).toHaveAttribute("data-writing", "true");
-    expect(button.querySelector("[class*='animate-']")).toBeNull();
+    expect(button).toHaveTextContent("2 writing");
+    expect(button).toHaveAccessibleName("Open the assistant, 2 replies are being written");
   });
 
   it("goes quiet again once nothing is being written", () => {
-    const button = renderLauncher(0, 0);
+    const button = renderBeacon();
 
-    expect(button).toHaveAccessibleName("Open the assistant");
     expect(button).not.toHaveAttribute("data-writing");
+  });
+});
+
+describe("AssistantLauncher after a reply came in", () => {
+  it("names who replied while the panel was closed", () => {
+    const button = renderBeacon({ repliedAgentName: "Dispatch desk" });
+
+    expect(button).toHaveTextContent("Dispatch desk replied");
+    expect(button).toHaveAccessibleName("Open the assistant, Dispatch desk replied");
+    expect(button.closest(".as-beacon")).toHaveAttribute("data-mode", "replied");
   });
 });

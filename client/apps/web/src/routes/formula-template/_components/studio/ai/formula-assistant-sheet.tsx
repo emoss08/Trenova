@@ -1,4 +1,4 @@
-import type { PageBinding, PageRequest } from "@/components/assistant/message-thread";
+import type { PageBinding, PageRequest } from "@/components/assistant/use-thread-model";
 import { PageAssistant } from "@/components/assistant/page-assistant";
 import { describeApiError } from "@/lib/api-error-message";
 import { queries } from "@/lib/queries";

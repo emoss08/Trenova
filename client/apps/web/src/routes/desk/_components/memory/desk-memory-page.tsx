@@ -28,9 +28,9 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { DeskIcon } from "../desk-icons";
-import { savedLine, scopeLabel, usageLine } from "./memory-format";
-import { DeskMemoryWhy } from "./desk-memory-why";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { savedLine, scopeLabel, usageLine } from "@/components/desk-chat/memory/memory-format";
+import { DeskMemoryWhy } from "@/components/desk-chat/memory/desk-memory-why";
 import {
   ALL_MEMORIES,
   filterScope,
@@ -42,7 +42,7 @@ import {
   type MemoryFilter,
   type MemoryRow,
 } from "./memory-page-state";
-import "../../_styles/desk-memory.css";
+import "@/components/desk-chat/memory/desk-memory.css";
 
 const PAGE_SIZE = 50;
 /** A row's height before it is measured: one line of text and the meta line. */

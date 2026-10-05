@@ -307,51 +307,57 @@ func (r *repository) ListRecent(
 		limit = maxLimit
 	}
 
-	decisions := buncolgen.AgentDecisionColumns
-	proposals := buncolgen.AgentProposalColumns
-	runs := buncolgen.AgentRunColumns
-	definitions := buncolgen.DefinitionColumns
-	users := buncolgen.UserColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]repositories.RecentDecisionEntry, error) {
+			decisions := buncolgen.AgentDecisionColumns
+			proposals := buncolgen.AgentProposalColumns
+			runs := buncolgen.AgentRunColumns
+			definitions := buncolgen.DefinitionColumns
+			users := buncolgen.UserColumns
 
-	q := &unionQuery{}
-	q.write("SELECT " + decisions.ID.Qualified() + " AS decision_id, " +
-		proposals.ID.Qualified() + " AS proposal_id, " +
-		decisions.Decision.Qualified() + " AS decision, " +
-		decisions.ReasonCode.Qualified() + " AS reason_code, " +
-		"COALESCE(" + decisions.Note.Qualified() + ", '') AS note, " +
-		decisions.DecidedByUserID.Qualified() + " AS decided_by_user_id, " +
-		"COALESCE(" + users.Name.Qualified() + ", '') AS decided_by_name, " +
-		decisions.CreatedAt.Qualified() + " AS decided_at" +
-		" FROM " + buncolgen.AgentDecisionTable.Name + " AS " + buncolgen.AgentDecisionTable.Alias +
-		" JOIN " + buncolgen.AgentProposalTable.Name + " AS " + buncolgen.AgentProposalTable.Alias +
-		" ON " + proposals.ID.Qualified() + " = " + decisions.ProposalID.Qualified() +
-		" AND " + proposals.OrganizationID.Qualified() + " = " + decisions.OrganizationID.Qualified() +
-		" AND " + proposals.BusinessUnitID.Qualified() + " = " + decisions.BusinessUnitID.Qualified() +
-		" JOIN " + buncolgen.AgentRunTable.Name + " AS " + buncolgen.AgentRunTable.Alias +
-		" ON " + runs.ID.Qualified() + " = " + proposals.RunID.Qualified() +
-		" AND " + runs.OrganizationID.Qualified() + " = " + proposals.OrganizationID.Qualified() +
-		" AND " + runs.BusinessUnitID.Qualified() + " = " + proposals.BusinessUnitID.Qualified() +
-		" LEFT JOIN " + buncolgen.DefinitionTable.Name + " AS " + buncolgen.DefinitionTable.Alias +
-		" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
-		" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
-		" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified() +
-		" LEFT JOIN " + buncolgen.UserTable.Name + " AS " + buncolgen.UserTable.Alias +
-		" ON " + users.ID.Qualified() + " = " + decisions.DecidedByUserID.Qualified())
-	q.write(" WHERE "+decisions.OrganizationID.Qualified()+" = ? AND "+
-		decisions.BusinessUnitID.Qualified()+" = ? AND "+
-		decisions.CreatedAt.Qualified()+" >= ? AND "+
-		proposals.PlanID.Qualified()+" IS NULL",
-		req.TenantInfo.OrgID, req.TenantInfo.BuID, req.Since)
-	writeAudience(q, req.Audience)
-	q.write(" ORDER BY "+decisions.CreatedAt.Qualified()+" DESC, "+
-		decisions.ID.Qualified()+" DESC LIMIT ?", limit)
+			q := &unionQuery{}
+			q.write("SELECT " + decisions.ID.Qualified() + " AS decision_id, " +
+				proposals.ID.Qualified() + " AS proposal_id, " +
+				decisions.Decision.Qualified() + " AS decision, " +
+				decisions.ReasonCode.Qualified() + " AS reason_code, " +
+				"COALESCE(" + decisions.Note.Qualified() + ", '') AS note, " +
+				decisions.DecidedByUserID.Qualified() + " AS decided_by_user_id, " +
+				"COALESCE(" + users.Name.Qualified() + ", '') AS decided_by_name, " +
+				decisions.CreatedAt.Qualified() + " AS decided_at" +
+				" FROM " + buncolgen.AgentDecisionTable.Name + " AS " + buncolgen.AgentDecisionTable.Alias +
+				" JOIN " + buncolgen.AgentProposalTable.Name + " AS " + buncolgen.AgentProposalTable.Alias +
+				" ON " + proposals.ID.Qualified() + " = " + decisions.ProposalID.Qualified() +
+				" AND " + proposals.OrganizationID.Qualified() + " = " + decisions.OrganizationID.Qualified() +
+				" AND " + proposals.BusinessUnitID.Qualified() + " = " + decisions.BusinessUnitID.Qualified() +
+				" JOIN " + buncolgen.AgentRunTable.Name + " AS " + buncolgen.AgentRunTable.Alias +
+				" ON " + runs.ID.Qualified() + " = " + proposals.RunID.Qualified() +
+				" AND " + runs.OrganizationID.Qualified() + " = " + proposals.OrganizationID.Qualified() +
+				" AND " + runs.BusinessUnitID.Qualified() + " = " + proposals.BusinessUnitID.Qualified() +
+				" LEFT JOIN " + buncolgen.DefinitionTable.Name + " AS " + buncolgen.DefinitionTable.Alias +
+				" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
+				" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
+				" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified() +
+				" LEFT JOIN " + buncolgen.UserTable.Name + " AS " + buncolgen.UserTable.Alias +
+				" ON " + users.ID.Qualified() + " = " + decisions.DecidedByUserID.Qualified())
+			q.write(" WHERE "+decisions.OrganizationID.Qualified()+" = ? AND "+
+				decisions.BusinessUnitID.Qualified()+" = ? AND "+
+				decisions.CreatedAt.Qualified()+" >= ? AND "+
+				proposals.PlanID.Qualified()+" IS NULL",
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.Since)
+			writeAudience(q, req.Audience)
+			q.write(" ORDER BY "+decisions.CreatedAt.Qualified()+" DESC, "+
+				decisions.ID.Qualified()+" DESC LIMIT ?", limit)
 
-	entries := make([]repositories.RecentDecisionEntry, 0, limit)
-	if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &entries); err != nil {
-		r.l.Error("failed to list recent decisions", zap.Error(err))
+			entries := make([]repositories.RecentDecisionEntry, 0, limit)
+			if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &entries); err != nil {
+				r.l.Error("failed to list recent decisions", zap.Error(err))
 
-		return nil, fmt.Errorf("list recent decisions: %w", err)
-	}
+				return nil, fmt.Errorf("list recent decisions: %w", err)
+			}
 
-	return entries, nil
+			return entries, nil
+		},
+	)
 }

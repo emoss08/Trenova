@@ -690,3 +690,60 @@ into `conversation/desk-web.tsx`, `conversation/web-cites.ts` and the
   which proposes the change for a decision, rather than writing directly.
 - **Fonts**: the prototype's Geist and IBM Plex Mono are the app's font
   variables; colours are the `--dsk-*` tokens, light and dark.
+
+## Assistant refactor
+
+The in-app assistant (the corner widget) and the Desk now draw a conversation with one
+implementation. Handoff: `design_handoff_assistant/` (removed with this change); the audit
+behind it is [assistant-refactor-map.md](assistant-refactor-map.md).
+
+**Shared** (moved, not copied, to `client/apps/web/src/components/desk-chat/`):
+
+- `DeskThread` (`desk-thread.tsx`), split out of `desk-conversation.tsx`. The Desk's
+  `DeskConversation` is now a thin wrapper that passes what only the Desk has: the
+  workspace (`artifacts`), schedules, chapters, pinned facts (`dockTop`) and hand-off cards
+  (`renderHandoff`). `density="compact"` sets the same thread in the assistant's 400px panel.
+- `conversation/*` (turns, citations, web search, message actions, failures, approval card,
+  undo bar, compaction mark, confetti), `composer/*` (composer, agent/model pickers, page
+  chip, context meter, dictation, uploads, Capture, mentions, slash commands, typewriter),
+  the agent tile, icons, countdown, error card, locks, terms note and memory notes.
+- `desk-home-ask.tsx`: the home composer (`useDeskHomeAsk`, `DeskHomeComposer`) and the
+  greeting block (`DeskGreeting`), used by the Desk's front page and the assistant's home.
+- `rail/*`: the rail's sliding knob, state dot and shelf helpers, used by the Desk rail and
+  the assistant's full-screen sidebar.
+- Styles: `desk-chat.css` holds the conversation and composer rules split out of
+  `desk-v2.css` in their original order; base rules apply under `.dsk` or `.dk-chat`.
+  Any Desk rule that could compete with a later shared rule moved with it, so the Desk's
+  cascade is unchanged: rendered against mocked data, the Desk's home, conversation and
+  approval scenes are pixel-identical to `master` in light and dark, with every element's
+  computed style equal. `desk-chat-compact.css` holds the compact fitting rules, scoped to
+  `.dk-dense`.
+- `useStartConversation` (`components/assistant/use-start-conversation.ts`): how the Desk
+  and the panel start a conversation with its question, files and model.
+
+**Deleted** (widget duplicates): `message-thread`, `message-items`, `streaming-turn`,
+`virtual-thread`, `tool-activity`'s thread use, `composer` (types kept in
+`composer-types.ts`), `composer-hints`, `composer-hint`, `model-picker`, `dictation-control`,
+`approval-dock`, `decision-record`, `decision-outcomes`, `deferred-decisions-pill`,
+`read-only-thread-notice`, `floating-slot`, `agent-ask`, `agent-starters`,
+`thread-sidebar`, `live-reply-label`, `thread-rows`, `decision-record-status`,
+`voice/desk-thinking`, `voice/desk-pose`, the old `groupThreadsByRecency`, and their tests.
+`PageAssistant` (formula studio, rate confirmation import), the command palette's answer
+and the agent-control run transcript were repointed to the shared pieces
+(`DeskThread`, `DeskProse`); the transcript's `ReasoningDisclosure` moved beside it.
+
+**New** (the shell): the beacon (orb in the Desk's colours; idle, hover, writing, pending,
+replied) and its edge tab; three layouts — compact (auto height on home, grows into a
+thread, resizable), side (docked full height; the app shell reflows) and full (sidebar
+from the rail's pieces, ⌘K search, ⌘\ collapse); the 46px header with the conversation's
+⋯ menu; home; the searchable history with a "Waiting on you" shelf. The store's
+`expanded` became `layout` with a migration (`expanded: true` → `"full"`).
+
+**Differences from the handoff**: the writing beacon shows the conversation's title rather
+than the live step, which a closed panel does not stream; the composer's preset cycle and
+`hooks/use-typewriter` stay separate (one cycles starters, the other types a line once);
+the widget no longer offers the old per-turn feedback control, which the Desk's message
+actions do not have.
+
+**Net**: `client/apps/web/src` 19,950 insertions, 27,463 deletions (−7,513 lines; −5,357
+excluding tests).

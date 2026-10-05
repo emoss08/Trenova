@@ -4,9 +4,26 @@ export type AssistantDock = (typeof ASSISTANT_DOCKS)[number];
 
 export const DEFAULT_ASSISTANT_DOCK: AssistantDock = "bottom-right";
 
+/**
+ * How the panel sits: floating in its corner, docked down the side of the
+ * screen with the page beside it, or filling the screen.
+ */
+export const ASSISTANT_LAYOUTS = ["compact", "side", "full"] as const;
+
+export type AssistantLayout = (typeof ASSISTANT_LAYOUTS)[number];
+
+export const DEFAULT_ASSISTANT_LAYOUT: AssistantLayout = "compact";
+
+export function isAssistantLayout(value: unknown): value is AssistantLayout {
+  return typeof value === "string" && (ASSISTANT_LAYOUTS as readonly string[]).includes(value);
+}
+
+/** How wide the panel is when it floats or is docked to the side. */
+export const ASSISTANT_PANEL_WIDTH = 400;
+
 export type AssistantPanelSize = { width: number; height: number };
 
-export const DEFAULT_PANEL_SIZE: AssistantPanelSize = { width: 380, height: 560 };
+export const DEFAULT_PANEL_SIZE: AssistantPanelSize = { width: ASSISTANT_PANEL_WIDTH, height: 660 };
 export const MIN_PANEL_SIZE: AssistantPanelSize = { width: 320, height: 360 };
 
 /** One keyboard press on the resize handle. */

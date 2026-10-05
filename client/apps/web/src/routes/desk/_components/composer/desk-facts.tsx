@@ -5,7 +5,7 @@ import type { AssistantThread } from "@/types/assistant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";
-import { DeskIcon } from "../desk-icons";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { MAX_PINNED_FACTS, MAX_PINNED_FACT_LENGTH, pinFact, unpinFact } from "./desk-facts-state";
 
 const NO_FACTS: readonly string[] = [];

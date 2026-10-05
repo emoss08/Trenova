@@ -1,10 +1,16 @@
 import { useDeskSetting } from "@/stores/desk-settings-store";
-import { useAskableAgent } from "@/components/assistant/use-askable-agent";
+import {
+  DeskGreeting,
+  DeskHomeComposer,
+  useDeskHomeAsk,
+  type DeskStartExtras,
+} from "@/components/desk-chat/desk-home-ask";
+import { DeskDropOverlay } from "@/components/desk-chat/composer/desk-uploads";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
-import type { AssistantEntityRef, AssistantThread } from "@/types/assistant";
+import type { AssistantThread } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   partOfDay,
@@ -16,15 +22,9 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
-import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
-import { useDeskAttachments, useHeldAttachments } from "./composer/desk-attachments";
-import { DeskComposer } from "./composer/desk-composer";
-import { DeskModelPicker } from "./composer/desk-model-picker";
-import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
-import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
-import { DeskTermsNote } from "./desk-terms-note";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
+
+export type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
@@ -34,13 +34,6 @@ export type DeskHomeProps = {
   isLoading: boolean;
   isStarting: boolean;
   onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
-};
-
-/** What a question asked at the front page carries to the conversation it starts. */
-export type DeskStartExtras = {
-  files: File[];
-  mentions: AssistantEntityRef[];
-  providerId: string;
 };
 
 function greeting(t: TranslateFn, dayPart: PartOfDay, firstName: string): string {
@@ -73,24 +66,14 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
     Resource.AgentProposal,
     Operation.Read,
   );
-  const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { data: attention } = useAttentionSummary();
   const briefingQuery = useQuery({ ...queries.briefing.today(), retry: false });
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;
   const preferredAgent = useDeskSetting("agent");
-  const askable = useAskableAgent({ threads, preferId: preferredAgent });
-  const noAgents = !isLoading && (agents.length === 0 || askable.noneAvailable);
-  const [draft, setDraft] = useState("");
-  const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);
-  const [providerId, setProviderId] = useState("");
-  const providersQuery = useQuery(queries.assistant.providers());
-  const held = useHeldAttachments();
-  const attachments = useDeskAttachments(held);
-  const deskPage = useDeskPage();
-  const drag = useDeskDrop(noAgents ? null : attachments.add);
-  const explain = SLASH_COMMANDS.find((command) => command.name === "explain");
+  const ask = useDeskHomeAsk({ agents, threads, isLoading, preferId: preferredAgent, onStart });
+  const { noAgents, drag } = ask;
 
   const dateline = useMemo(
     () =>
@@ -126,77 +109,13 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
       <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
       <div className="dk-home">
         <div className="dk-home-in">
-          <div className="dk-date">{dateline}</div>
-          <h1 className="dk-greet">{greeting(t, partOfDay(hour), firstName)}</h1>
-          <p className="dk-headline" data-slot="desk-headline">
-            {headlinePending ? <span className="dk-headline-sk ui-shimmer" data-slot="skeleton" /> : headline}
-          </p>
-          {noAgents ? (
-            <div className="dk-ec-offmsg dk-home-none">
-              <span>
-                <b>{t("No agents are available.")}</b>{" "}
-                {canManageAgents
-                  ? t("Connect an AI provider and enable an agent in AI Control.")
-                  : t("An administrator needs to connect an AI provider and enable an agent first.")}
-              </span>
-              {canManageAgents && (
-                <Link className="dk-ec-link" to="/admin/agent-control">
-                  {t("Open AI Control")}
-                </Link>
-              )}
-            </div>
-          ) : (
-            <>
-              <DeskTermsNote />
-              <DeskComposer
-                home
-                value={draft}
-                onChange={setDraft}
-                agent={askable.agent}
-                onAgentChange={askable.choose}
-                recentAgentIds={askable.recency.ids}
-                agentLastUsedAt={askable.recency.lastUsedAt}
-                busy={false}
-                disabled={isStarting || askable.agent === null}
-                presets={askable.agent?.starters?.map((starter) => starter.prompt) ?? []}
-                suggestions={askable.agent?.starters?.map((starter) => ({
-                  label: starter.label,
-                  prompt: starter.prompt,
-                }))}
-                attachments={attachments}
-                mentions={mentions}
-                onMentionsChange={setMentions}
-                drag={drag}
-                extras={
-                  <DeskPageChip
-                    page={deskPage.page}
-                    share={deskPage.share}
-                    onShareChange={deskPage.setShare}
-                    onExplain={explain ? () => setDraft(fillCommand(explain, [])) : undefined}
-                  />
-                }
-                model={
-                  <DeskModelPicker
-                    options={providersQuery.data ?? []}
-                    value={providerId}
-                    onChange={setProviderId}
-                    hasReplies={false}
-                  />
-                }
-                onSend={(content, payload) => {
-                  if (askable.agent) {
-                    onStart(askable.agent.id, content, {
-                      files: held.files(),
-                      mentions: payload.mentions,
-                      providerId,
-                    });
-                    held.clear();
-                    attachments.clear();
-                  }
-                }}
-              />
-            </>
-          )}
+          <DeskGreeting
+            date={dateline}
+            title={greeting(t, partOfDay(hour), firstName)}
+            line={headline}
+            pending={headlinePending}
+          />
+          <DeskHomeComposer ask={ask} isStarting={isStarting} />
         </div>
       </div>
     </div>

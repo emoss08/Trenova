@@ -1,8 +1,11 @@
 import {
   DEFAULT_ASSISTANT_DOCK,
+  DEFAULT_ASSISTANT_LAYOUT,
   isAssistantDock,
+  isAssistantLayout,
   isPanelSize,
   type AssistantDock,
+  type AssistantLayout,
   type AssistantPanelSize,
 } from "@/lib/assistant-dock";
 import { create } from "zustand";
@@ -35,10 +38,21 @@ export type DecisionFocus = {
 };
 
 interface AssistantState {
-  /** Whether the floating panel is showing. */
+  /** Whether the panel is showing. */
   open: boolean;
-  /** Whether the panel fills the viewport instead of sitting in the corner. */
-  expanded: boolean;
+  /**
+   * How the panel sits: floating in its corner, docked down one side with the
+   * page reflowing beside it, or filling the screen with the conversations
+   * listed down its side.
+   */
+  layout: AssistantLayout;
+  /** The conversation list in the full-screen layout folded away (⌘\). */
+  sidebarCollapsed: boolean;
+  /**
+   * A conversation whose reply finished while the panel was closed; the
+   * launcher says so until the panel is opened. Never persisted.
+   */
+  repliedThreadId: string | null;
   activeThreadId: string | null;
   /** Suggestion prompts the person closed; they stay closed across sessions. */
   dismissedSuggestions: string[];
@@ -66,8 +80,10 @@ interface AssistantState {
   openWidget: () => void;
   closeWidget: () => void;
   toggleWidget: () => void;
-  setExpanded: (expanded: boolean) => void;
-  toggleExpanded: () => void;
+  setLayout: (layout: AssistantLayout) => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
+  noteReplied: (threadId: string) => void;
   setActiveThreadId: (id: string | null) => void;
   dismissSuggestion: (prompt: string) => void;
   setDraft: (threadId: string, draft: string) => void;
@@ -126,6 +142,21 @@ export function rememberDraft(
 }
 
 /**
+ * The layout a saved state asks for. Builds before the three layouts saved
+ * only whether the panel was expanded, and expanded is what full screen was.
+ */
+function savedLayout(saved: Record<string, unknown>): AssistantLayout {
+  if (isAssistantLayout(saved.layout)) {
+    return saved.layout;
+  }
+  if (saved.layout === undefined && saved.expanded === true) {
+    return "full";
+  }
+
+  return DEFAULT_ASSISTANT_LAYOUT;
+}
+
+/**
  * Takes what was saved, but only the parts that still make sense: a corner
  * this build does not know, or a size that is not two numbers, falls back to
  * the default rather than placing the panel somewhere it cannot be seen.
@@ -134,11 +165,16 @@ export function mergePersisted(persisted: unknown, current: AssistantState): Ass
   if (typeof persisted !== "object" || persisted === null) {
     return current;
   }
-  const saved = persisted as Partial<AssistantState>;
+  const { expanded: _expanded, ...saved } = persisted as Partial<AssistantState> & {
+    expanded?: unknown;
+  };
 
   return {
     ...current,
     ...saved,
+    layout: savedLayout(persisted as Record<string, unknown>),
+    sidebarCollapsed: saved.sidebarCollapsed === true,
+    repliedThreadId: null,
     dock: isAssistantDock(saved.dock) ? saved.dock : current.dock,
     launcherHidden: saved.launcherHidden === true,
     panelSize: isPanelSize(saved.panelSize) ? saved.panelSize : null,
@@ -155,7 +191,9 @@ export const useAssistantStore = create<AssistantState>()(
   persist(
     (set) => ({
       open: false,
-      expanded: false,
+      layout: DEFAULT_ASSISTANT_LAYOUT,
+      sidebarCollapsed: false,
+      repliedThreadId: null,
       activeThreadId: null,
       dismissedSuggestions: [],
       lastAgentId: null,
@@ -167,11 +205,15 @@ export const useAssistantStore = create<AssistantState>()(
       deferredDecisions: [],
       decisionFocus: {},
 
-      openWidget: () => set({ open: true }),
+      openWidget: () => set({ open: true, repliedThreadId: null }),
       closeWidget: () => set({ open: false }),
-      toggleWidget: () => set((state) => ({ open: !state.open })),
-      setExpanded: (expanded) => set({ expanded }),
-      toggleExpanded: () => set((state) => ({ expanded: !state.expanded })),
+      toggleWidget: () =>
+        set((state) => (state.open ? { open: false } : { open: true, repliedThreadId: null })),
+      setLayout: (layout) => set({ layout }),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      noteReplied: (threadId) =>
+        set((state) => (state.open ? state : { repliedThreadId: threadId })),
       setActiveThreadId: (id) => set({ activeThreadId: id }),
       dismissSuggestion: (prompt) =>
         set((state) =>
@@ -209,7 +251,8 @@ export const useAssistantStore = create<AssistantState>()(
     {
       name: "trenova-assistant",
       partialize: (state) => ({
-        expanded: state.expanded,
+        layout: state.layout,
+        sidebarCollapsed: state.sidebarCollapsed,
         activeThreadId: state.activeThreadId,
         dismissedSuggestions: state.dismissedSuggestions,
         drafts: state.drafts,
