@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -35,7 +36,6 @@ const (
 )
 
 type tcaEvent struct {
-	Projection    string         `json:"projection"`
 	Operation     string         `json:"operation"`
 	Schema        string         `json:"schema"`
 	Table         string         `json:"table"`
@@ -287,6 +287,9 @@ func (c *Consumer) processMessage(ctx context.Context, msg redis.XMessage) error
 	if err := sonic.UnmarshalString(payloadStr, &event); err != nil {
 		return fmt.Errorf("unmarshal event: %w", err)
 	}
+	if event.ChangedFields == nil && event.Operation == "UPDATE" {
+		event.ChangedFields = changedFields(event.OldData, event.NewData)
+	}
 
 	orgID := extractStringField(event.NewData, event.OldData, "organization_id")
 	buID := extractStringField(event.NewData, event.OldData, "business_unit_id")
@@ -496,4 +499,28 @@ func hasWatchedColumnChanged(watched, changed []string) bool {
 		}
 	}
 	return false
+}
+
+// changedFields lists the columns whose values differ between the old and new
+// row. GTC's stream carries both rows, not a diff. Without the old row (tables
+// on the default replica identity send none for an update) nothing is known
+// to have changed, so it returns nil.
+func changedFields(oldData, newData map[string]any) []string {
+	if oldData == nil || newData == nil {
+		return nil
+	}
+
+	changed := make([]string, 0)
+	for key, newValue := range newData {
+		if oldValue, ok := oldData[key]; !ok || !reflect.DeepEqual(oldValue, newValue) {
+			changed = append(changed, key)
+		}
+	}
+	for key := range oldData {
+		if _, ok := newData[key]; !ok {
+			changed = append(changed, key)
+		}
+	}
+
+	return changed
 }

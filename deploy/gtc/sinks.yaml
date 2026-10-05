@@ -1,0 +1,57 @@
+# GTC sink routing for Trenova (github.com/emoss08/gtc, SINK_CONFIG_FILE).
+#
+# GTC tails the gtc_publication publication; scope it to the tables below.
+# Every Trenova row carries id, organization_id and business_unit_id, so
+# Meilisearch needs primary_key set explicitly (it cannot infer one).
+
+meilisearch:
+  tables:
+    public.shipments:
+      index: shipments
+      primary_key: id
+      searchable_attributes: [pro_number, bol]
+      filterable_attributes: [organization_id, business_unit_id]
+    public.customers:
+      index: customers
+      primary_key: id
+      searchable_attributes: [code, name]
+      filterable_attributes: [organization_id, business_unit_id]
+    public.carriers:
+      index: carriers
+      primary_key: id
+      searchable_attributes: [code, name, dba_name, dot_number, scac]
+      filterable_attributes: [organization_id, business_unit_id]
+    public.workers:
+      index: workers
+      primary_key: id
+      searchable_attributes: [first_name, last_name, type]
+      filterable_attributes: [organization_id, business_unit_id]
+    public.document_search_projections:
+      index: documents
+      primary_key: id
+      searchable_attributes: [file_name, original_name, description, detected_kind, content_text]
+      filterable_attributes:
+        [organization_id, business_unit_id, resource_type, resource_id, status, content_status, detected_kind, shipment_draft_status]
+
+# Latest-state caches read by the TMS synced-read repositories
+# (cache:<entity>:<organization_id>:<business_unit_id>:<id>).
+redis_json:
+  tables:
+    public.organizations: 'cache:organization:{{.Field "id"}}'
+    public.customers: 'cache:customers:{{.Field "organization_id"}}:{{.Field "business_unit_id"}}:{{.Field "id"}}'
+    public.workers: 'cache:workers:{{.Field "organization_id"}}:{{.Field "business_unit_id"}}:{{.Field "id"}}'
+    public.documents: 'cache:documents:{{.Field "organization_id"}}:{{.Field "business_unit_id"}}:{{.Field "id"}}'
+
+# Table change alerts: one stream fed by every watched table, consumed by
+# tablechangealertservice. Backfill rows (READ) are existing data, not
+# changes, so they never reach the stream.
+redis_stream:
+  transform:
+    filter: 'op != "READ"'
+  tables:
+    public.shipments: "tca:events"
+    public.customers: "tca:events"
+    public.carriers: "tca:events"
+    public.workers: "tca:events"
+    public.tractors: "tca:events"
+    public.trailers: "tca:events"

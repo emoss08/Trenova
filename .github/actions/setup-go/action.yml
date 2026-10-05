@@ -51,6 +51,6 @@ runs:
     - name: Download dependencies
       shell: bash
       run: |
-        for module in services/tms shared services/gtc services/samsara-sim services/edi-partner-sim; do
+        for module in services/tms shared services/samsara-sim services/edi-partner-sim; do
           (cd "$module" && go mod download)
         done

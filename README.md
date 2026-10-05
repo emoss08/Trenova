@@ -52,7 +52,7 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 | API | Go 1.26, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL |
 | Database | PostgreSQL via [pgx](https://github.com/jackc/pgx), SQL-first migrations |
 | Search and cache | Meilisearch, Redis (JSON and Streams) |
-| Change data capture | [GTC](./services/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis |
+| Change data capture | [GTC](https://github.com/emoss08/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis (runs as the `ghcr.io/emoss08/gtc` image; routing in `deploy/gtc/sinks.yaml`) |
 | Web client | React 19, TypeScript, Vite, GraphQL |
 | Documents | Gotenberg (PDF), MinIO / S3-compatible object storage |
 | Deployment | Docker images on GHCR, Caddy, Docker Compose |
@@ -61,7 +61,6 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 
 ```text
 services/tms          Core TMS API (Go)
-services/gtc          PostgreSQL change-data-capture connector (Go)
 services/samsara-sim  Samsara telematics simulator for local development
 services/edi-partner-sim  EDI trading-partner simulator
 shared/               Shared Go packages (money, geo, dispatch planner, PC*MILER, AS2, ...)
