@@ -172,12 +172,7 @@ func (r *repository) ThreadReflectedThrough(
 	ctx context.Context,
 	req repositories.ThreadReflectedThroughRequest,
 ) (int, bool, error) {
-	type result struct {
-		through int
-		found   bool
-	}
-
-	got, err := dbtx.Read(ctx, r.db, func(ctx context.Context) (result, error) {
+	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (int, bool, error) {
 		cols := buncolgen.ReflectionColumns
 		latest := new(agent.Reflection)
 		err := r.db.DBForContext(ctx).
@@ -195,19 +190,14 @@ func (r *repository) ThreadReflectedThrough(
 			Scan(ctx)
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
-				return result{}, nil
+				return 0, false, nil
 			}
 
-			return result{}, fmt.Errorf("read how far a conversation was looked back over: %w", err)
+			return 0, false, fmt.Errorf("read how far a conversation was looked back over: %w", err)
 		}
 
-		return result{through: latest.ThroughSequence, found: true}, nil
+		return latest.ThroughSequence, true, nil
 	})
-	if err != nil {
-		return 0, false, err
-	}
-
-	return got.through, got.found, nil
 }
 
 func (r *repository) ListConnection(

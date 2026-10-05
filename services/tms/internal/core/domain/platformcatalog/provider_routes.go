@@ -457,7 +457,13 @@ func billingRouteRefs() []RouteRef {
 			"/api/v1/accounting/customer-payments/:paymentID/reverse/",
 			"/api/v1/accounting/customer-payments/credit-memo-applications/",
 			"/api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/",
+			"/api/v1/billing-queue/:itemID/issues/:issueID/resolve/",
+			"/api/v1/billing-queue/:itemID/issues/:issueID/undo/",
+			"/api/v1/billing-queue/:itemID/post/",
 			"/api/v1/billing-queue/:itemID/reassign-charge/",
+			"/api/v1/billing-queue/:itemID/release/",
+			"/api/v1/billing-queue/bulk-approve/",
+			"/api/v1/billing-queue/bulk-approve/:runID/cancel/",
 			"/api/v1/billing-queue/filter-presets/",
 			"/api/v1/billing-queue/transfer/",
 			"/api/v1/billing/invoice-adjustments/:adjustmentID/approve/",
@@ -1077,6 +1083,9 @@ func agentAutomationRouteRefs() []RouteRef {
 			// Which models the assistant can be pointed at, read by the picker
 			// in the composer rather than by provider administration.
 			"/api/v1/assistant/providers/",
+			"/api/v1/assistant/mentions/",
+			"/api/v1/assistant/schedules/",
+			"/api/v1/assistant/search/",
 			"/api/v1/assistant/threads/",
 			"/api/v1/assistant/threads/:threadID/",
 			"/api/v1/assistant/threads/:threadID/messages/",
@@ -1121,15 +1130,18 @@ func agentAutomationRouteRefs() []RouteRef {
 			// reply, so they are sold with the thread it belongs to.
 			"/api/v1/assistant/threads/:threadID/turns/",
 			"/api/v1/assistant/turns/:turnID/stop/",
+			"/api/v1/assistant/schedules/:scheduleID/run/",
 			"/api/v1/tables/:resource/compose/",
 		),
 		routeRefsFor("PATCH",
 			// Pinning a thread, naming it, or promoting an Ask thread into a
 			// real one.
 			"/api/v1/assistant/threads/:threadID/",
+			"/api/v1/assistant/schedules/:scheduleID/",
 		),
 		routeRefsFor("PUT",
 			"/api/v1/agent-controls/",
+			"/api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/",
 			"/api/v1/ai-providers/:providerID/",
 			"/api/v1/agent-extensions/:type/config/",
 			"/api/v1/agent-definitions/:agentID/",
@@ -1138,6 +1150,7 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/ai-providers/:providerID/",
 			"/api/v1/agent-definitions/:agentID/",
 			"/api/v1/assistant/threads/:threadID/",
+			"/api/v1/assistant/schedules/:scheduleID/",
 		),
 	)
 }

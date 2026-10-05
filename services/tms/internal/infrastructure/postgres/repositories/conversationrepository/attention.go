@@ -68,7 +68,7 @@ WHERE p.organization_id = ?
 	AND p.business_unit_id = ?
 	AND p.status = ?
 	AND p.plan_id IS NULL
-	AND (p.expires_at IS NULL OR p.expires_at = 0 OR p.expires_at > extract(epoch from now())::bigint)
+	AND (p.expires_at IS NULL OR p.expires_at = 0 OR p.expires_at > ?)
 	AND r.subject_type = ?
 	AND r.subject_id IN (?)
 `
@@ -118,6 +118,7 @@ func (r *repository) ListThreadAttention(
 				req.TenantInfo.OrgID,
 				req.TenantInfo.BuID,
 				agent.ProposalStatusPending,
+				bun.Safe(r.db.NowEpoch()),
 				agent.SubjectAssistantThread,
 				bun.In(owned),
 			).Scan(ctx, &runs); err != nil {
