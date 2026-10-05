@@ -19,11 +19,17 @@
 
 .PARAMETER Sign
   Sign every executable and the MSI with sign.ps1.
+
+.PARAMETER SuggestedServerUrl
+  An https:// address the server page fills in, for an MSI made for one
+  Trenova. Defaults to TRENOVA_CAPTURE_SUGGESTED_SERVER, the variable the
+  agent's build reads too; public builds leave both unset and suggest none.
 #>
 [CmdletBinding()]
 param(
     [string]$Version,
-    [switch]$Sign
+    [switch]$Sign,
+    [string]$SuggestedServerUrl = $env:TRENOVA_CAPTURE_SUGGESTED_SERVER
 )
 
 $ErrorActionPreference = 'Stop'
@@ -105,9 +111,19 @@ if ($Sign) {
     & (Join-Path $PSScriptRoot 'sign.ps1') -Path (Get-ChildItem $stage -Filter *.exe | ForEach-Object FullName)
 }
 
+$defines = @()
+if ($SuggestedServerUrl) {
+    $SuggestedServerUrl = $SuggestedServerUrl.Trim()
+    if ($SuggestedServerUrl -notmatch '^https://[A-Za-z0-9.-]+(:\d+)?(/[A-Za-z0-9._~/-]*)?$') {
+        throw "The suggested server must be an https:// address, not '$SuggestedServerUrl'."
+    }
+    $defines += @('-d', "SuggestedServerUrl=$SuggestedServerUrl")
+}
+
 $msi = Join-Path $out "TrenovaCapture-$Version-x64.msi"
 wix build `
     -arch x64 `
+    @defines `
     -d "Version=$Version" `
     -d "StageDir=$stage" `
     -d "LogoPath=$((Resolve-Path $logo).Path)" `

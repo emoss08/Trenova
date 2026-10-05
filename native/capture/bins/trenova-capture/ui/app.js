@@ -8,9 +8,13 @@
   const tabs = document.getElementById("tabs");
   const toasts = document.getElementById("toasts");
 
-  // Trenova's own service, and the web app's dev server when Trenova runs on
-  // this computer; the dev server passes /api on to the API.
-  const CLOUD_ADDRESS = "https://cloud.trenova.app";
+  // The address this build suggests, filled in when the page is built and
+  // empty in public builds: every Trenova is somebody's own, so a person
+  // enters theirs. The example only shows the shape of one. The web app's dev
+  // server is offered when Trenova runs on this computer; it passes /api on
+  // to the API.
+  const SUGGESTED_ADDRESS = "/*SUGGESTED_SERVER*/";
+  const EXAMPLE_ADDRESS = "https://trenova.example.com";
   const DEVELOPMENT_ADDRESS = "http://localhost:5173";
   // The namespace SVG elements are created in; nothing is fetched from it.
   const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -456,14 +460,14 @@
 
   function serverForm(v, submitLabel) {
     const locked = v.account.serverLocked;
-    const value = local.serverDraft ?? v.account.server ?? CLOUD_ADDRESS;
+    const value = local.serverDraft ?? v.account.server ?? SUGGESTED_ADDRESS;
     return el(
       "form",
       {
         class: "field",
         onsubmit: (event) => {
           event.preventDefault();
-          const address = (local.serverDraft ?? v.account.server ?? CLOUD_ADDRESS).trim();
+          const address = (local.serverDraft ?? v.account.server ?? SUGGESTED_ADDRESS).trim();
           if (!address) {
             return;
           }
@@ -482,7 +486,8 @@
           inputmode: "url",
           autocomplete: "off",
           spellcheck: "false",
-          placeholder: CLOUD_ADDRESS,
+          placeholder: SUGGESTED_ADDRESS || EXAMPLE_ADDRESS,
+          required: true,
           value,
           disabled: locked,
           oninput: (event) => {
