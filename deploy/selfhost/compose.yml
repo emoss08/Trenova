@@ -1,0 +1,422 @@
+# Trenova, self-hosted: the released images and everything they need, on one
+# host with Docker Compose. See docs/self-hosting/README.md.
+#
+#   ./scripts/init-env.sh trenova.example.com   # once: writes .env with secrets
+#   docker compose up -d
+#
+# Only Caddy (the client service) publishes ports: 80 and 443. Every other
+# service is reachable only on Docker networks:
+#
+#   data    internal (no route off the host): the databases, queues, search,
+#           storage, Temporal, Gotenberg and GTC, and the TMS processes.
+#   edge    Caddy, and the two services it proxies to: tms-api and minio.
+#   egress  outbound internet for the TMS processes (AI providers, email,
+#           integrations, release checks). Nothing listens on it.
+#
+# Image versions come from .env: TRENOVA_VERSION for the TMS and client
+# images, TRENOVA_POSTGRES_VERSION for the database image (published only when
+# it changes, so it lags TRENOVA_VERSION), GTC_VERSION for change data capture.
+
+name: ${COMPOSE_PROJECT_NAME:-trenova}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "25m"
+    max-file: "5"
+
+x-tms-environment: &tms-environment
+  APP_ENV: production
+  TRENOVA_APP_VERSION: ${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
+  TRENOVA_APP_WEBBASEURL: https://${DOMAIN:?set DOMAIN in .env}
+  TRENOVA_APP_PROBLEMTYPEBASEURI: https://${DOMAIN}/problems/
+  TRENOVA_SERVER_CORS_ALLOWEDORIGINS: https://${DOMAIN}
+  TRENOVA_SECURITY_CSRF_TRUSTEDORIGINS: https://${DOMAIN}
+  TRENOVA_SECURITY_PASSWORDRESET_BASEURL: https://${DOMAIN}
+  TRENOVA_PORTAL_BASEURL: https://${DOMAIN}/dash
+  TRENOVA_REPORTING_DELIVERYLINKBASEURL: https://${DOMAIN}
+  TRENOVA_DATABASE_NAME: ${TRENOVA_DATABASE_NAME:-trenova}
+  TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_USER:-trenova}
+  TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+  TRENOVA_CACHE_PASSWORD: ${TRENOVA_REDIS_PASSWORD:?set TRENOVA_REDIS_PASSWORD in .env}
+  TRENOVA_SEARCH_MEILISEARCH_APIKEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
+  TRENOVA_STORAGE_ENDPOINT: ${TRENOVA_STORAGE_ENDPOINT:-minio:9000}
+  TRENOVA_STORAGE_USESSL: ${TRENOVA_STORAGE_USESSL:-false}
+  TRENOVA_STORAGE_REGION: ${TRENOVA_STORAGE_REGION:-us-east-1}
+  TRENOVA_STORAGE_PUBLICENDPOINT: ${TRENOVA_STORAGE_PUBLICENDPOINT:-https://${STORAGE_DOMAIN:?set STORAGE_DOMAIN in .env}}
+  TRENOVA_STORAGE_ACCESSKEY: ${TRENOVA_STORAGE_ACCESSKEY:-trenova}
+  TRENOVA_STORAGE_SECRETKEY: ${TRENOVA_STORAGE_SECRETKEY:?set TRENOVA_STORAGE_SECRETKEY in .env}
+  TRENOVA_STORAGE_BUCKET: ${TRENOVA_STORAGE_BUCKET:-trenova}
+  TRENOVA_SECURITY_SESSION_SECRET: ${TRENOVA_SECURITY_SESSION_SECRET:?set TRENOVA_SECURITY_SESSION_SECRET in .env}
+  TRENOVA_SECURITY_ENCRYPTION_KEY: ${TRENOVA_SECURITY_ENCRYPTION_KEY:?set TRENOVA_SECURITY_ENCRYPTION_KEY in .env}
+  TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD:?set TRENOVA_SYSTEM_SYSTEMUSERPASSWORD in .env}
+  TRENOVA_AI_AUDIT_CHAIN_KEYS: ${TRENOVA_AI_AUDIT_CHAIN_KEYS:-}
+  TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID: ${TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID:-}
+  TRENOVA_PUSH_VAPIDPUBLICKEY: ${TRENOVA_PUSH_VAPIDPUBLICKEY:-}
+  TRENOVA_PUSH_VAPIDPRIVATEKEY: ${TRENOVA_PUSH_VAPIDPRIVATEKEY:-}
+  TRENOVA_PUSH_SUBJECT: ${TRENOVA_PUSH_SUBJECT:-}
+  TRENOVA_QUICKBOOKS_CLIENT_ID: ${TRENOVA_QUICKBOOKS_CLIENT_ID:-}
+  TRENOVA_QUICKBOOKS_CLIENT_SECRET: ${TRENOVA_QUICKBOOKS_CLIENT_SECRET:-}
+  TRENOVA_QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN: ${TRENOVA_QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN:-}
+  TRENOVA_QUICKBOOKS_ENVIRONMENT: ${TRENOVA_QUICKBOOKS_ENVIRONMENT:-}
+  TRENOVA_XERO_CLIENT_ID: ${TRENOVA_XERO_CLIENT_ID:-}
+  TRENOVA_XERO_CLIENT_SECRET: ${TRENOVA_XERO_CLIENT_SECRET:-}
+  TRENOVA_XERO_WEBHOOK_KEY: ${TRENOVA_XERO_WEBHOOK_KEY:-}
+
+x-tms-service: &tms-service
+  image: ghcr.io/emoss08/trenova/tms:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
+  environment: *tms-environment
+  volumes:
+    - ./config/config.yaml:/app/config/config.yaml:ro
+  security_opt:
+    - "no-new-privileges:true"
+  logging: *logging
+
+services:
+  postgres:
+    image: ghcr.io/emoss08/trenova/postgres:${TRENOVA_POSTGRES_VERSION:?set TRENOVA_POSTGRES_VERSION in .env}
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - cron.database_name=${TRENOVA_DATABASE_NAME:-trenova}
+    environment:
+      POSTGRES_USER: ${TRENOVA_DATABASE_USER:-trenova}
+      POSTGRES_PASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+      POSTGRES_DB: ${TRENOVA_DATABASE_NAME:-trenova}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    shm_size: 1gb
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./initdb/10-temporal-databases.sh:/docker-entrypoint-initdb.d/10-temporal-databases.sh:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" && psql -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -tAc 'SELECT 1' >/dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    stop_grace_period: 1m
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  redis:
+    image: redis:8
+    # Sessions, rate limits and short caches carry a TTL and may be evicted;
+    # GTC's tca:events stream, its dead-letter queue and the synced caches carry
+    # none, so volatile-lru never drops them. AOF keeps them across restarts.
+    command:
+      - sh
+      - -c
+      - >-
+        exec redis-server
+        --requirepass "$${REDIS_PASSWORD}"
+        --maxmemory ${REDIS_MAXMEMORY:-1gb}
+        --maxmemory-policy volatile-lru
+        --appendonly yes
+        --appendfsync everysec
+    environment:
+      REDIS_PASSWORD: ${TRENOVA_REDIS_PASSWORD:?set TRENOVA_REDIS_PASSWORD in .env}
+      REDISCLI_AUTH: ${TRENOVA_REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  minio:
+    # SILO, the maintained MinIO fork: upstream MinIO images are no longer
+    # served to anonymous pulls. Pinned to the release Trenova tests against.
+    # The API creates its bucket on first start (storage.autoCreateBucket).
+    image: docker.io/pgsty/silo:RELEASE.2026-09-16T00-00-00Z@sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${TRENOVA_STORAGE_ACCESSKEY:-trenova}
+      MINIO_ROOT_PASSWORD: ${TRENOVA_STORAGE_SECRETKEY:?set TRENOVA_STORAGE_SECRETKEY in .env}
+      # Browsers upload and download with presigned URLs from the app's origin.
+      MINIO_API_CORS_ALLOW_ORIGIN: https://${DOMAIN:?set DOMAIN in .env}
+      MINIO_BROWSER_REDIRECT: "off"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+    networks: [data, edge]
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    environment:
+      MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_DB_PATH: /meili_data
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  temporal:
+    # Every AI feature runs here. auto-setup creates and migrates its schema
+    # in the temporal and temporal_visibility databases on start; the settings
+    # the agent runtime needs are in temporal/dynamicconfig.yaml.
+    image: temporalio/auto-setup:1.29.7
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_SEEDS: postgres
+      POSTGRES_USER: ${TRENOVA_DATABASE_USER:-trenova}
+      POSTGRES_PWD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+      DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/dynamic_config.yaml
+    volumes:
+      - ./temporal/dynamicconfig.yaml:/etc/temporal/dynamic_config.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "temporal:7233"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  # Renders organization-authored HTML to PDF, so it is locked down rather
+  # than trusted: JavaScript off, only data: and its own staging files
+  # allowed, no published port, no route through Caddy, no network off the
+  # host. See docker-compose-local.yml for why each flag is there.
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    command:
+      - gotenberg
+      - --chromium-disable-javascript=true
+      - "--chromium-allow-list=^(data:|file:///tmp/).*"
+      - --chromium-max-queue-size=16
+      - --libreoffice-disable-routes=true
+      - --pdfengines-disable-routes=true
+      - --api-timeout=30s
+      - --api-disable-health-check-logging=true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /home/gotenberg
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 256
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  # One-shot: migrations, then the base seeds. Both are idempotent and run on
+  # every start, so an upgrade applies new migrations and any seed a release
+  # adds; a seed already applied is skipped.
+  tms-migrate:
+    <<: *tms-service
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        attempt=1
+        until trenova db migrate; do
+          if [ "$$attempt" -ge 5 ]; then
+            echo "Migrations failed after $$attempt attempts" >&2
+            exit 1
+          fi
+          echo "Migration attempt $$attempt failed; retrying in 5s" >&2
+          attempt=$$((attempt + 1))
+          sleep 5
+        done
+        if [ "$${TRENOVA_RUN_SEEDS}" = "true" ]; then
+          trenova db seed --ignore-errors
+        else
+          echo "Skipping seeds: TRENOVA_RUN_SEEDS is not true"
+        fi
+    environment:
+      <<: *tms-environment
+      TRENOVA_RUN_SEEDS: ${TRENOVA_RUN_SEEDS:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks: [data]
+
+  # One-shot: scopes GTC's publication to the tables it routes, and secures
+  # the seeded accounts once per database (scripts/db-bootstrap.sh).
+  db-bootstrap:
+    image: ghcr.io/emoss08/trenova/postgres:${TRENOVA_POSTGRES_VERSION:?set TRENOVA_POSTGRES_VERSION in .env}
+    entrypoint: ["/bin/sh", "/scripts/db-bootstrap.sh"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${TRENOVA_DATABASE_USER:-trenova}
+      PGPASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+      PGDATABASE: ${TRENOVA_DATABASE_NAME:-trenova}
+      PGSSLMODE: require
+      SINKS_FILE: /config/sinks.yaml
+    volumes:
+      - ./scripts/db-bootstrap.sh:/scripts/db-bootstrap.sh:ro
+      - ../gtc/sinks.yaml:/config/sinks.yaml:ro
+    depends_on:
+      tms-migrate:
+        condition: service_completed_successfully
+    restart: "no"
+    logging: *logging
+    networks: [data]
+
+  tms-api:
+    <<: *tms-service
+    command: ["api", "run"]
+    depends_on:
+      db-bootstrap:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "-T", "5", "http://127.0.0.1:8080/api/v1/system/version"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+    networks: [data, edge, egress]
+
+  tms-worker:
+    <<: *tms-service
+    command: ["worker", "run"]
+    depends_on:
+      db-bootstrap:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [data, egress]
+
+  # Change data capture (github.com/emoss08/gtc): tails logical replication
+  # and feeds the Meilisearch indexes, the Redis caches and the tca:events
+  # stream. Routing is ../gtc/sinks.yaml; db-bootstrap owns the publication,
+  # and GTC creates its replication slot, which also starts the first backfill.
+  # Its dashboard (port 8080) can trigger backfills and discard dead letters
+  # without authentication, so it is never published.
+  gtc:
+    image: ghcr.io/emoss08/gtc:${GTC_VERSION:?set GTC_VERSION in .env}
+    environment:
+      DATABASE_URL: postgres://${TRENOVA_DATABASE_USER:-trenova}:${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}@postgres:5432/${TRENOVA_DATABASE_NAME:-trenova}?replication=database&sslmode=require
+      CDC_SLOT_NAME: gtc_slot
+      CDC_PUBLICATION_NAME: gtc_publication
+      CDC_AUTO_CREATE_SLOT: "true"
+      CDC_AUTO_CREATE_PUBLICATION: "false"
+      CDC_BACKFILL_MODE: auto
+      SINK_CONFIG_FILE: /app/sinks/sinks.yaml
+      REDIS_URL: redis://:${TRENOVA_REDIS_PASSWORD:?set TRENOVA_REDIS_PASSWORD in .env}@redis:6379/0
+      REDIS_JSON_URL: redis://:${TRENOVA_REDIS_PASSWORD}@redis:6379/0
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_API_KEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
+    volumes:
+      - ../gtc/sinks.yaml:/app/sinks/sinks.yaml:ro
+    depends_on:
+      db-bootstrap:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 5 http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 6s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  # Caddy: TLS, the web app at /, Dash at /dash/, the API and storage
+  # (deploy/Caddyfile, baked into the image).
+  client:
+    image: ghcr.io/emoss08/trenova/client:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+      STORAGE_DOMAIN: ${STORAGE_DOMAIN:?set STORAGE_DOMAIN in .env}
+      STORAGE_ORIGIN: ${STORAGE_ORIGIN:-https://${STORAGE_DOMAIN}}
+      CADDY_GLOBAL_OPTIONS: ${CADDY_GLOBAL_OPTIONS:-}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      tms-api:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging: *logging
+    networks: [edge]
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  meili_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  data:
+    internal: true
+  edge: {}
+  egress: {}
