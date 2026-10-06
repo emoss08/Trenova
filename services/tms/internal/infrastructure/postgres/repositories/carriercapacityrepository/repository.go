@@ -242,7 +242,7 @@ func (r *repository) Delete(
 	ctx context.Context,
 	req *repositories.DeleteCarrierCapacityPostingRequest,
 ) error {
-	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.PostingColumns
 		result, err := r.db.DBForContext(ctx).NewDelete().
 			Model((*carriercapacity.Posting)(nil)).
@@ -254,13 +254,11 @@ func (r *repository) Delete(
 			Exec(ctx)
 		if err != nil {
 			r.l.Error("failed to delete carrier capacity posting", zap.Error(err))
-			return struct{}{}, err
+			return err
 		}
 
-		return struct{}{}, dberror.CheckRowsAffected(result, entityName, req.ID.String())
+		return dberror.CheckRowsAffected(result, entityName, req.ID.String())
 	})
-
-	return err
 }
 
 func (r *repository) ListOpen(

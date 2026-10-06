@@ -342,6 +342,8 @@ const (
 		"required fields are the layout the tool reads, not what the model sends"
 	bulkDecision = "approves a set of items by one status decision each; the mutation's " +
 		"input decides one item, so the tool takes their ids instead"
+	oneMoveTender = "tenders one move; tenderShipments takes a batch of shipment items, so " +
+		"the tool takes its move instead"
 	pendingBinding = "pending: written before the contract, with parameters named for the " +
 		"model where the input names them differently; binding it is the write waves' work"
 )
@@ -378,6 +380,8 @@ var Unbound = map[string]string{
 	"dismiss_accounting_drift":             pendingBinding,
 	"dispute_detention":                    pendingBinding,
 	"edit_shipment_comment":                pendingBinding,
+	"email_customer": "composes any customer email; notifyShipmentDelay's input is one fixed " +
+		"kind of it, so the tool keeps its own parameters",
 	"fork_report":                          pendingBinding,
 	"generate_carrier_settlement_batch":    pendingBinding,
 	"generate_driver_settlement":           pendingBinding,
@@ -415,6 +419,8 @@ var Unbound = map[string]string{
 	"set_order_charge_allocations":         pendingBinding,
 	"set_worker_availability_preference":   pendingBinding,
 	"skip_accounting_sync":                 pendingBinding,
+	"tender_move_to_carriers":              oneMoveTender,
+	"tender_move_to_routing_guide":         oneMoveTender,
 	"transfer_shipment_ownership":          pendingBinding,
 	"transfer_to_billing": "one tool for four mutations (one shipment, its items, a bulk transfer " +
 		"and a transfer run), so no single input is its shape",
