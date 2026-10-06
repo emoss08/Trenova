@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,6 +19,32 @@ type ShipmentOptions struct {
 	ActivityWindowEnd       int64  `form:"activityWindowEnd"       json:"activityWindowEnd"       query:"activityWindowEnd"`
 	BillingTransferEligible bool   `form:"billingTransferEligible" json:"billingTransferEligible" query:"billingTransferEligible"`
 	IncludeCustomer         bool   `form:"includeCustomer"         json:"includeCustomer"         query:"includeCustomer"`
+
+	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`
+	Timezone         string                     `form:"-" json:"-" query:"-"`
+	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`
+}
+
+func (o ShipmentOptions) HasQuickFilters() bool {
+	return len(o.QuickFilters) > 0
+}
+
+type ShipmentMarginBasis struct {
+	CostPerMile          decimal.Decimal
+	IncludeDeadheadMiles bool
+	TargetMarginPercent  decimal.Decimal
+}
+
+type ShipmentDetentionBasis struct {
+	UsePolicyEngine  bool
+	ThresholdMinutes int64
+}
+
+type ShipmentQuickFilterBasis struct {
+	Now       time.Time
+	Location  *time.Location
+	Margin    *ShipmentMarginBasis
+	Detention *ShipmentDetentionBasis
 }
 
 func (o ShipmentOptions) HasActivityWindow() bool {

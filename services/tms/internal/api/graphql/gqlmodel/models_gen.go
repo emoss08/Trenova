@@ -1247,9 +1247,7 @@ type CapacityUnit struct {
 	Kind     CapacityUnitKind `json:"kind"`
 	Name     string           `json:"name"`
 	Initials string           `json:"initials"`
-	// Stable hue (0-359) for the avatar fill.
-	Hue   int           `json:"hue"`
-	Group CapacityGroup `json:"group"`
+	Group    CapacityGroup    `json:"group"`
 	// When a driver comes free; null when free now.
 	FreeAt *int    `json:"freeAt,omitempty"`
 	City   *string `json:"city,omitempty"`
@@ -1376,7 +1374,6 @@ type CarrierCoverageSuggestion struct {
 	MoveID            string   `json:"moveId"`
 	Name              string   `json:"name"`
 	Initials          string   `json:"initials"`
-	Hue               int      `json:"hue"`
 	McNumber          *string  `json:"mcNumber,omitempty"`
 	Quote             string   `json:"quote"`
 	RatePerMile       string   `json:"ratePerMile"`
@@ -3201,7 +3198,6 @@ type DriverCoverageSuggestion struct {
 	MoveID           string   `json:"moveId"`
 	Name             string   `json:"name"`
 	Initials         string   `json:"initials"`
-	Hue              int      `json:"hue"`
 	UnitLabel        *string  `json:"unitLabel,omitempty"`
 	DistanceMiles    *float64 `json:"distanceMiles,omitempty"`
 	DriveRemainingMs *int     `json:"driveRemainingMs,omitempty"`
@@ -6977,7 +6973,7 @@ type ShipmentBriefing struct {
 type ShipmentBriefingSegment struct {
 	Text string `json:"text"`
 	// The quick filter the segment links to, when it names a set of shipments.
-	Filter *ShipmentQuickFilter `json:"filter,omitempty"`
+	Filter *shipment.QuickFilter `json:"filter,omitempty"`
 }
 
 type ShipmentBulkTransferToBillingInput struct {
@@ -7994,12 +7990,12 @@ type ShipmentProfitabilityEstimate struct {
 }
 
 type ShipmentQuickFilterCount struct {
-	Filter ShipmentQuickFilter `json:"filter"`
-	Count  int                 `json:"count"`
+	Filter shipment.QuickFilter `json:"filter"`
+	Count  int                  `json:"count"`
 }
 
 type ShipmentQuickFilterInput struct {
-	Filter ShipmentQuickFilter `json:"filter"`
+	Filter shipment.QuickFilter `json:"filter"`
 	// Local hour of day (0-23) for DeliveryHour.
 	Hour *int `json:"hour,omitempty"`
 	// Minutes from now where a PickupWindow starts.
@@ -12188,78 +12184,6 @@ func (e *ShipmentFacet) UnmarshalJSON(b []byte) error {
 }
 
 func (e ShipmentFacet) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-// A named predicate over shipments. The server owns every definition; clients only name them.
-type ShipmentQuickFilter string
-
-const (
-	ShipmentQuickFilterLate            ShipmentQuickFilter = "Late"
-	ShipmentQuickFilterUncovered       ShipmentQuickFilter = "Uncovered"
-	ShipmentQuickFilterMoving          ShipmentQuickFilter = "Moving"
-	ShipmentQuickFilterDeliveringToday ShipmentQuickFilter = "DeliveringToday"
-	ShipmentQuickFilterReefer          ShipmentQuickFilter = "Reefer"
-	ShipmentQuickFilterLowMargin       ShipmentQuickFilter = "LowMargin"
-	ShipmentQuickFilterDeliveryHour    ShipmentQuickFilter = "DeliveryHour"
-	ShipmentQuickFilterPickupWindow    ShipmentQuickFilter = "PickupWindow"
-	ShipmentQuickFilterDetention       ShipmentQuickFilter = "Detention"
-	ShipmentQuickFilterReadyToBill     ShipmentQuickFilter = "ReadyToBill"
-)
-
-var AllShipmentQuickFilter = []ShipmentQuickFilter{
-	ShipmentQuickFilterLate,
-	ShipmentQuickFilterUncovered,
-	ShipmentQuickFilterMoving,
-	ShipmentQuickFilterDeliveringToday,
-	ShipmentQuickFilterReefer,
-	ShipmentQuickFilterLowMargin,
-	ShipmentQuickFilterDeliveryHour,
-	ShipmentQuickFilterPickupWindow,
-	ShipmentQuickFilterDetention,
-	ShipmentQuickFilterReadyToBill,
-}
-
-func (e ShipmentQuickFilter) IsValid() bool {
-	switch e {
-	case ShipmentQuickFilterLate, ShipmentQuickFilterUncovered, ShipmentQuickFilterMoving, ShipmentQuickFilterDeliveringToday, ShipmentQuickFilterReefer, ShipmentQuickFilterLowMargin, ShipmentQuickFilterDeliveryHour, ShipmentQuickFilterPickupWindow, ShipmentQuickFilterDetention, ShipmentQuickFilterReadyToBill:
-		return true
-	}
-	return false
-}
-
-func (e ShipmentQuickFilter) String() string {
-	return string(e)
-}
-
-func (e *ShipmentQuickFilter) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ShipmentQuickFilter(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ShipmentQuickFilter", str)
-	}
-	return nil
-}
-
-func (e ShipmentQuickFilter) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ShipmentQuickFilter) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ShipmentQuickFilter) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

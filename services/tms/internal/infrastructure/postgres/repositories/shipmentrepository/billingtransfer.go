@@ -15,72 +15,66 @@ import (
 const billingTransferCandidateAlias = "candidate"
 
 func billingTransferCandidatePredicate(q *bun.SelectQuery) *bun.SelectQuery {
-	sp := buncolgen.ShipmentColumns
-
-	return q.
-		Where(sp.Status.In(), bun.List(shipment.BillingTransferCandidateStatuses())).
-		Where(
-			sp.BillingTransferStatus.Expr("COALESCE({}, '') IN (?)"),
-			bun.List([]shipment.BillingTransferStatus{
-				shipment.BillingTransferNone,
-				shipment.BillingTransferSentBackToOps,
-			}),
-		)
+	return q.Where("?", BillingTransferCandidateCondition())
 }
 
 func (r *repository) ListBillingTransferCandidateIDs(
 	ctx context.Context,
 	req *repositories.ListBillingTransferCandidateIDsRequest,
 ) (*repositories.BillingTransferCandidateIDsResult, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.BillingTransferCandidateIDsResult, error) {
-		dba := r.db.DBForContext(ctx)
-		sp := buncolgen.ShipmentColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*repositories.BillingTransferCandidateIDsResult, error) {
+			dba := r.db.DBForContext(ctx)
+			sp := buncolgen.ShipmentColumns
 
-		scope := func(q *bun.SelectQuery) *bun.SelectQuery {
-			q = querybuilder.ApplyFiltersWithoutSort(
-				q,
-				buncolgen.ShipmentTable.Alias,
-				req.Filter,
-				(*shipment.Shipment)(nil),
-			)
-			q = billingTransferCandidatePredicate(q)
-			if req.Status != "" {
-				q = q.Where(sp.Status.Eq(), req.Status)
+			scope := func(q *bun.SelectQuery) *bun.SelectQuery {
+				q = querybuilder.ApplyFiltersWithoutSort(
+					q,
+					buncolgen.ShipmentTable.Alias,
+					req.Filter,
+					(*shipment.Shipment)(nil),
+				)
+				q = billingTransferCandidatePredicate(q)
+				if req.Status != "" {
+					q = q.Where(sp.Status.Eq(), req.Status)
+				}
+				return q
 			}
-			return q
-		}
 
-		total, err := dba.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			Apply(scope).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := dba.NewSelect().
+				Model((*shipment.Shipment)(nil)).
+				Apply(scope).
+				Count(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		result := &repositories.BillingTransferCandidateIDsResult{
-			IDs:        make([]pulid.ID, 0, min(total, req.Limit)),
-			TotalCount: total,
-		}
-		if total == 0 || req.Limit <= 0 {
+			result := &repositories.BillingTransferCandidateIDsResult{
+				IDs:        make([]pulid.ID, 0, min(total, req.Limit)),
+				TotalCount: total,
+			}
+			if total == 0 || req.Limit <= 0 {
+				return result, nil
+			}
+
+			matched := dba.NewSelect().
+				Model((*shipment.Shipment)(nil)).
+				Apply(scope)
+			candidate := sp.ID.WithAlias(billingTransferCandidateAlias)
+			candidateCreatedAt := sp.CreatedAt.WithAlias(billingTransferCandidateAlias)
+
+			if err = dba.NewSelect().
+				TableExpr("(?) AS ?", matched, bun.Ident(billingTransferCandidateAlias)).
+				ColumnExpr(candidate.Qualified()).
+				Order(candidateCreatedAt.OrderAsc(), candidate.OrderAsc()).
+				Limit(req.Limit).
+				Scan(ctx, &result.IDs); err != nil {
+				return nil, err
+			}
+
 			return result, nil
-		}
-
-		matched := dba.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			Apply(scope)
-		candidate := sp.ID.WithAlias(billingTransferCandidateAlias)
-		candidateCreatedAt := sp.CreatedAt.WithAlias(billingTransferCandidateAlias)
-
-		if err = dba.NewSelect().
-			TableExpr("(?) AS ?", matched, bun.Ident(billingTransferCandidateAlias)).
-			ColumnExpr(candidate.Qualified()).
-			Order(candidateCreatedAt.OrderAsc(), candidate.OrderAsc()).
-			Limit(req.Limit).
-			Scan(ctx, &result.IDs); err != nil {
-			return nil, err
-		}
-
-		return result, nil
-	})
+		},
+	)
 }

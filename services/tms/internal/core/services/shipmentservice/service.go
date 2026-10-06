@@ -85,6 +85,7 @@ type Params struct {
 	TenderGuard          services.TenderGuard                `optional:"true"`
 	AgentEvents          services.AgentEventPublisher        `optional:"true"`
 	Quota                services.QuotaGuard                 `optional:"true"`
+	QuickFilters         services.ShipmentQuickFilterBasisResolver
 }
 
 type service struct {
@@ -118,6 +119,7 @@ type service struct {
 	realtime             services.RealtimeService
 	workflowStarter      services.WorkflowStarter
 	coordinator          *shipmentstate.Coordinator
+	quickFilters         services.ShipmentQuickFilterBasisResolver
 	commercial           *shipmentcommercial.Calculator
 	orderDerivation      services.OrderDerivationService
 	distanceCalculation  services.DistanceCalculationService
@@ -165,6 +167,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		tenderGuard:          p.TenderGuard,
 		agentEvents:          p.AgentEvents,
 		quota:                quotaservice.OrUnlimited(p.Quota),
+		quickFilters:         p.QuickFilters,
 	}
 }
 
@@ -189,6 +192,19 @@ func (s *service) List(
 	ctx context.Context,
 	req *repositories.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	if req.ShipmentOptions.HasQuickFilters() {
+		if s.quickFilters == nil {
+			return nil, errQuickFiltersUnavailable
+		}
+		if err := s.quickFilters.Prepare(
+			ctx,
+			req.Filter.TenantInfo,
+			&req.ShipmentOptions,
+		); err != nil {
+			return nil, err
+		}
+	}
+
 	return s.repo.List(ctx, req)
 }
 

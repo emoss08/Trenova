@@ -26106,8 +26106,6 @@ type CapacityUnit {
   kind: CapacityUnitKind!
   name: String!
   initials: String!
-  "Stable hue (0-359) for the avatar fill."
-  hue: Int!
   group: CapacityGroup!
   "When a driver comes free; null when free now."
   freeAt: Timestamp
@@ -26164,7 +26162,6 @@ type DriverCoverageSuggestion {
   moveId: ID!
   name: String!
   initials: String!
-  hue: Int!
   unitLabel: String
   distanceMiles: Float
   driveRemainingMs: Int
@@ -26176,7 +26173,6 @@ type CarrierCoverageSuggestion {
   moveId: ID!
   name: String!
   initials: String!
-  hue: Int!
   mcNumber: String
   quote: Decimal!
   ratePerMile: Decimal!

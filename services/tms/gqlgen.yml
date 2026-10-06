@@ -3625,6 +3625,9 @@ models:
   OperationType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tenant.OperationType
+  ShipmentQuickFilter:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.QuickFilter
   TenderMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tender.Mode

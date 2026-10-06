@@ -232,19 +232,9 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "hue",
-				NonNull:  true,
-				ChildErr: errNoChild7,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CapacityUnit)
-					return obj.Hue, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
 				Name:     "group",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.CapacityUnit)
 					return obj.Group, nil
@@ -290,7 +280,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "badgeCount",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.CapacityUnit)
 					return obj.BadgeCount, nil
@@ -317,7 +307,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driveRemainingMs",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.CapacityUnit)
 					return obj.DriveRemainingMs, nil
@@ -338,7 +328,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "posting",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.CarrierCapacitySummary)
 					return obj.Posting, nil
@@ -348,7 +338,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "untendered",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.CarrierCapacitySummary)
 					return obj.Untendered, nil
@@ -358,7 +348,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "awaitingAcceptance",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.CarrierCapacitySummary)
 					return obj.AwaitingAcceptance, nil
@@ -417,16 +407,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "hue",
-				NonNull:  true,
-				ChildErr: errNoChild7,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CarrierCoverageSuggestion)
-					return obj.Hue, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
 				Name:     "mcNumber",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -479,7 +459,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hour",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeliveryHourBucket)
 					return obj.Hour, nil
@@ -489,7 +469,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delivered",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeliveryHourBucket)
 					return obj.Delivered, nil
@@ -499,7 +479,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "scheduled",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeliveryHourBucket)
 					return obj.Scheduled, nil
@@ -509,7 +489,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "late",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeliveryHourBucket)
 					return obj.Late, nil
@@ -601,7 +581,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ready",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DriverCapacitySummary)
 					return obj.Ready, nil
@@ -611,7 +591,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "withinTwoHours",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DriverCapacitySummary)
 					return obj.WithinTwoHours, nil
@@ -621,7 +601,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "short",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DriverCapacitySummary)
 					return obj.Short, nil
@@ -631,7 +611,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "uncovered",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DriverCapacitySummary)
 					return obj.Uncovered, nil
@@ -690,16 +670,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "hue",
-				NonNull:  true,
-				ChildErr: errNoChild7,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.DriverCoverageSuggestion)
-					return obj.Hue, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
 				Name:     "unitLabel",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -719,7 +689,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driveRemainingMs",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DriverCoverageSuggestion)
 					return obj.DriveRemainingMs, nil
@@ -759,7 +729,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "deltaMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.LateDelivery)
 					return obj.DeltaMinutes, nil
@@ -1044,7 +1014,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReadyToBillCustomer)
 					return obj.Count, nil
@@ -1066,7 +1036,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWatch)
 					return obj.Count, nil
@@ -1097,7 +1067,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "moreCustomers",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentBillingWatch)
 					return obj.MoreCustomers, nil
@@ -1198,7 +1168,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentBriefingSegment)
 					return obj.Filter, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOShipmentQuickFilter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilter),
+				Marshal: gqlexec.Marshal(marshalOShipmentQuickFilter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter),
 			},
 		}},
 		{Object: "ShipmentCapacity", Fields: []*gqlexec.Field{
@@ -1272,7 +1242,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "onTime",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDeliveryWatch)
 					return obj.OnTime, nil
@@ -1282,7 +1252,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "total",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDeliveryWatch)
 					return obj.Total, nil
@@ -1292,7 +1262,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lateCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDeliveryWatch)
 					return obj.LateCount, nil
@@ -1326,7 +1296,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatch)
 					return obj.StopCount, nil
@@ -1432,7 +1402,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFacetValue)
 					return obj.Count, nil
@@ -1449,12 +1419,12 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentQuickFilterCount)
 					return obj.Filter, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilter),
+				Marshal: gqlexec.Marshal(marshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter),
 			},
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentQuickFilterCount)
 					return obj.Count, nil
@@ -1476,7 +1446,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rank",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStageSummary)
 					return obj.Rank, nil
@@ -1486,7 +1456,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStageSummary)
 					return obj.Count, nil
@@ -1715,7 +1685,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "handledThisShift",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSuggestionQueue)
 					return obj.HandledThisShift, nil
@@ -1737,7 +1707,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentUncoveredWatch)
 					return obj.Count, nil
@@ -1922,7 +1892,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "startMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UncoveredWindowSummary)
 					return obj.StartMinutes, nil
@@ -1931,7 +1901,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "endMinutes",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UncoveredWindowSummary)
 					return obj.EndMinutes, nil
@@ -1941,7 +1911,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UncoveredWindowSummary)
 					return obj.Count, nil
@@ -2002,8 +1972,8 @@ var (
 	errNoChild4  = errors.New("field of type Float does not have child fields")
 	errNoChild5  = errors.New("field of type Boolean does not have child fields")
 	errNoChild6  = errors.New("field of type CapacityUnitKind does not have child fields")
-	errNoChild7  = errors.New("field of type Int does not have child fields")
-	errNoChild8  = errors.New("field of type CapacityGroup does not have child fields")
+	errNoChild7  = errors.New("field of type CapacityGroup does not have child fields")
+	errNoChild8  = errors.New("field of type Int does not have child fields")
 	errNoChild9  = errors.New("field of type OperationType does not have child fields")
 	errNoChild10 = errors.New("field of type ShipmentQuickFilter does not have child fields")
 	errNoChild11 = errors.New("field of type ShipmentFacet does not have child fields")
@@ -2359,7 +2329,7 @@ func unmarshalInputShipmentQuickFilterInput(ctx context.Context, ec *gqlexec.Exe
 		switch k {
 		case "filter":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-			data, err := unmarshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilter(ctx, ec, v)
+			data, err := unmarshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2511,9 +2481,9 @@ func unmarshalNShipmentFacet2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNShipmentFacet2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacet)
 }
 
-func unmarshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilter(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ShipmentQuickFilter, error) {
-	var res gqlmodel.ShipmentQuickFilter
-	err := res.UnmarshalGQL(v)
+func unmarshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter(ctx context.Context, ec *gqlexec.Exec, v any) (shipment.QuickFilter, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := shipment.QuickFilter(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2884,8 +2854,12 @@ func marshalNShipmentFacetValue2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ShipmentFacetValue", v)
 }
 
-func marshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.ShipmentQuickFilter) graphql.Marshaler {
-	return v
+func marshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.QuickFilter) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNShipmentQuickFilterCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilterCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentQuickFilterCount) graphql.Marshaler {
@@ -3133,11 +3107,12 @@ func marshalONextUncoveredPickup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "NextUncoveredPickup", v)
 }
 
-func marshalOShipmentQuickFilter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentQuickFilter) graphql.Marshaler {
+func marshalOShipmentQuickFilter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.QuickFilter) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

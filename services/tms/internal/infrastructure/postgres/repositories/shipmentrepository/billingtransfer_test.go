@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const billingTransferCandidateSQL = `sp\.status IN \('Completed', 'ReadyToInvoice'\)\) AND \(COALESCE\(sp\.billing_transfer_status, ''\) IN \('', 'SentBackToOps'\)`
+const billingTransferCandidateSQL = `sp\.status IN \('Completed', 'ReadyToInvoice'\) AND COALESCE\(sp\.billing_transfer_status, ''\) IN \('', 'SentBackToOps'\)`
 
 func TestApplyShipmentOptionFilters_BillingTransferEligibleKeepsQueuedShipmentsOut(t *testing.T) {
 	t.Parallel()

@@ -3,6 +3,7 @@ package api
 
 import (
 	"context"
+
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
@@ -206,6 +207,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentholdservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
@@ -611,6 +613,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	manualjournalservice.New,
 	billingcontrolservice.New,
 	costingservice.New,
+	shipmentquickfilterservice.New,
 	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
 	billingqueueservice.NewReview,

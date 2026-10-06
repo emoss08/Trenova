@@ -713,6 +713,8 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 			ActivityWindowEnd:       base.Int64Value(input.ActivityWindowEnd),
 			BillingTransferEligible: base.BoolValue(input.BillingTransferEligible),
 			IncludeCustomer:         base.BoolValue(input.IncludeCustomer),
+			QuickFilters:            base.QuickFilterSpecsFromGraphQL(input.QuickFilters),
+			Timezone:                base.StringValue(input.Timezone),
 		},
 	})
 	if err != nil {
