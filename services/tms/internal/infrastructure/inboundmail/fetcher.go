@@ -122,8 +122,11 @@ func (f *Fetcher) Fetch(
 	switch req.Provider {
 	case inboundmessage.ProviderResend:
 		return f.fetchResend(ctx, req)
-	default:
+	case inboundmessage.ProviderPostmark:
 		return nil, fmt.Errorf("%w: %s messages arrive whole and are never fetched",
+			services.ErrInboundContentRejected, req.Provider)
+	default:
+		return nil, fmt.Errorf("%w: %s is not a provider messages are fetched from",
 			services.ErrInboundContentRejected, req.Provider)
 	}
 }
@@ -270,7 +273,7 @@ func (f *Fetcher) downloadAttachment(
 		return attachment, nil
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, target.String(), nil)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, target.String(), http.NoBody)
 	if err != nil {
 		return attachment, fmt.Errorf("%w: build the attachment download: %w",
 			services.ErrInboundContentUnavailable, err)
@@ -323,7 +326,7 @@ func (f *Fetcher) getResend(
 		endpoint += "?" + query.Encode()
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("%w: build the Resend request: %w",
 			services.ErrInboundContentRejected, err)
@@ -371,7 +374,9 @@ func statusError(status int, body []byte) error {
 	case status == http.StatusUnauthorized || status == http.StatusForbidden:
 		return fmt.Errorf(
 			"%w: Resend refused the mailbox's API key (%d%s); reading received mail needs a full access key",
-			services.ErrInboundContentRejected, status, detailSuffix(detail),
+			services.ErrInboundContentRejected,
+			status,
+			detailSuffix(detail),
 		)
 	case status == http.StatusNotFound:
 		return fmt.Errorf(

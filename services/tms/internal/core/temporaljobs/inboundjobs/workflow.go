@@ -181,12 +181,12 @@ func ProcessInboundMessageWorkflow(
 func fetchContent(
 	ctx workflow.Context,
 	payload *ProcessInboundMessagePayload,
-) (*ProcessInboundMessageResult, bool, error) {
+) (result *ProcessInboundMessageResult, done bool, err error) {
 	var a *Activities
 
 	fetchCtx := workflow.WithActivityOptions(ctx, fetchOptions)
 	fetched := new(FetchInboundContentResult)
-	err := workflow.ExecuteActivity(fetchCtx, a.FetchInboundContentActivity, payload).
+	err = workflow.ExecuteActivity(fetchCtx, a.FetchInboundContentActivity, payload).
 		Get(fetchCtx, fetched)
 	if err == nil {
 		if fetched.Readable {
