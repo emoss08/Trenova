@@ -1477,6 +1477,15 @@
       "service/inboundmessageservice"
     ]
   },
+  "A Resend API key starts with re_, as Resend shows it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/inboundmessageservice"
+    ]
+  },
   "A Resend signing secret starts with whsec_, as Resend shows it": {
     "sites": 1,
     "scope": [
@@ -3642,6 +3651,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "A full access key from Resend. Resend sends only the sender and subject to the webhook, so the body and attachments are read with this key.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A full query before the driver's first dispatch, and a limited query every twelve months after (49 CFR 382 Subpart G).": {
@@ -7675,6 +7693,15 @@
       "template/notification.dash.disciplinary_issued"
     ]
   },
+  "A {0} mailbox receives whole messages and needs no API key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/inboundmessageservice"
+    ]
+  },
   "A {0} mapping is named by the Trenova record's id": {
     "sites": 1,
     "scope": [
@@ -8252,13 +8279,14 @@
     ]
   },
   "API key": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/agentextension",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -8272,11 +8300,12 @@
     ]
   },
   "API key (optional)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -8305,6 +8334,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "API key for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "API key has expired": {
@@ -8353,6 +8391,15 @@
     ]
   },
   "API key rotated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "API key saved": {
     "sites": 1,
     "scope": [
       "ts"
@@ -30977,7 +31024,7 @@
     ]
   },
   "Cancel": {
-    "sites": 279,
+    "sites": 280,
     "scope": [
       "ts"
     ],
@@ -35045,7 +35092,7 @@
       "routes/worker"
     ]
   },
-  "Changing the provider clears the signing secret, which belongs to the old one.": {
+  "Changing the provider clears the signing secret and the API key, which belong to the old one.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -87441,25 +87488,25 @@
       "routes/admin"
     ]
   },
+  "In Resend, add this as a webhook for the email.received event, then copy the webhook's signing secret (it starts with whsec_) into Set signing secret. Until then the mailbox refuses every delivery.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "In Resend, add this as a webhook for the email.received event. The signing secret is already saved, so deliveries are verified from the first one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "In Resend, create a webhook endpoint and use this URL:": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "In Resend, set this as the inbound webhook, then copy the webhook's signing secret (it starts with whsec_) into Set signing secret. Until then the mailbox refuses every delivery.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "In Resend, set this as the inbound webhook. The signing secret is already saved, so deliveries are verified from the first one.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -101079,6 +101126,15 @@
       "routes/inbox"
     ]
   },
+  "Mail that arrives after the key is saved is read in full. A sending access key cannot read received mail.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Mailbox": {
     "sites": 1,
     "scope": [
@@ -111122,6 +111178,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No API key is set, so mail arrives without its body or attachments and waits for a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No BASIC over threshold": {
@@ -150870,6 +150935,15 @@
       "routes/policies"
     ]
   },
+  "Replace API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Replace carrier": {
     "sites": 3,
     "scope": [
@@ -153111,7 +153185,25 @@
       "routes/admin"
     ]
   },
+  "Resend forwards everything its account receives, so only mail addressed here lands in this mailbox.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Resend integration updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Resend sends only the sender and subject to the webhook. Create a full access API key in Resend and paste it here so the body and attachments of each message can be read. It starts with re_.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -153130,6 +153222,15 @@
     ]
   },
   "Resend webhook setup instructions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Resend's webhook carries only the sender and subject. Set a full access API key with Set API key so each message's body and attachments are read.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -159937,6 +160038,15 @@
       "routes/worker"
     ]
   },
+  "Save API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Save amendment": {
     "sites": 1,
     "scope": [
@@ -160636,7 +160746,7 @@
       "routes/admin"
     ]
   },
-  "Saved. Set the new provider's signing secret before mail will be accepted.": {
+  "Saved. Set the new provider's signing secret, and for Resend its API key, before mail is read.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -160745,7 +160855,7 @@
     ]
   },
   "Saving…": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -168570,6 +168680,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Set API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Set Fiscal Year {0} as Current?": {

@@ -2805,6 +2805,8 @@ models:
     fields:
       hasSigningSecret:
         resolver: true
+      hasApiKey:
+        resolver: true
   InboundMailboxCredentials:
     model:
       - github.com/emoss08/trenova/internal/core/services/inboundmessageservice.MailboxCredentials

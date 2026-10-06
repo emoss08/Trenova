@@ -162,6 +162,7 @@ virtuals:
     - target
   InboundMailbox:
     - hasSigningSecret
+    - hasApiKey
   InboundMessage:
     - needsReview
     - mailbox

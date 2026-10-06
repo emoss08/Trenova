@@ -1,7 +1,6 @@
 package inboundmessageservice
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -91,6 +90,10 @@ type Params struct {
 	Realtime      services.RealtimeService     `optional:"true"`
 	Notifications *notificationservice.Service `optional:"true"`
 	Indexer       services.RetrievalIndexer    `optional:"true"`
+	// ContentFetcher reads what a metadata-only webhook leaves out. Without it
+	// a Resend message lands with its sender, recipients and subject and is
+	// sent to review saying its content could not be read.
+	ContentFetcher services.InboundContentFetcher `optional:"true"`
 }
 
 // reviewNotifier is the slice of the notification service the inbox uses.
@@ -119,6 +122,7 @@ type Service struct {
 	realtime    services.RealtimeService
 	notifier    reviewNotifier
 	indexer     services.RetrievalIndexer
+	fetcher     services.InboundContentFetcher
 }
 
 func New(p Params) *Service {
@@ -145,6 +149,7 @@ func New(p Params) *Service {
 		realtime:    p.Realtime,
 		notifier:    notifier,
 		indexer:     p.Indexer,
+		fetcher:     p.ContentFetcher,
 	}
 }
 
@@ -203,6 +208,14 @@ func (s *Service) ReceiveWebhook(
 		}
 
 		return nil, err
+	}
+
+	if mailbox.Provider.DeliversAccountWide() && !message.addressedTo(mailbox.Address) {
+		s.l.Info("ignored an inbound delivery not addressed to its mailbox",
+			zap.String("mailboxId", mailbox.ID.String()),
+			zap.Int("recipients", len(message.Recipients)))
+
+		return &ReceiveWebhookResult{Ignored: true}, nil
 	}
 
 	return s.stage(ctx, mailbox, message)
@@ -321,7 +334,7 @@ func (s *Service) stage(
 		return &ReceiveWebhookResult{MessageID: existing.ID.String(), Duplicate: true}, nil
 	}
 
-	htmlKey := s.storeRawBody(ctx, mailbox, parsed)
+	htmlKey := s.storeRawBody(ctx, mailbox, parsed.ProviderMessageID, parsed.HTMLBody)
 
 	entity := &inboundmessage.InboundMessage{
 		BusinessUnitID:    mailbox.BusinessUnitID,
@@ -352,10 +365,11 @@ func (s *Service) stage(
 	attachments := make([]*inboundmessage.InboundAttachment, 0, len(parsed.Attachments))
 	for _, attachment := range parsed.Attachments {
 		attachments = append(attachments, &inboundmessage.InboundAttachment{
-			FileName:    attachment.FileName,
-			ContentType: attachment.ContentType,
-			ByteSize:    int64(len(attachment.Content)),
-			Kind:        inboundmessage.AttachmentUnknown,
+			FileName:             attachment.FileName,
+			ContentType:          attachment.ContentType,
+			ByteSize:             int64(len(attachment.Content)),
+			Kind:                 inboundmessage.AttachmentUnknown,
+			ProviderAttachmentID: attachment.ProviderID,
 		})
 	}
 
@@ -369,7 +383,10 @@ func (s *Service) stage(
 		zap.String("mailboxId", mailbox.ID.String()),
 		zap.Int("attachments", len(attachments)))
 
-	s.stageAttachments(ctx, created, parsed)
+	created.Mailbox = mailbox
+	if !mailbox.Provider.FetchesContent() {
+		s.stageAttachments(ctx, created, parsed)
+	}
 	s.publishMessage(ctx, created, "created")
 	s.startProcessing(ctx, created)
 
@@ -385,23 +402,24 @@ func (s *Service) stage(
 func (s *Service) storeRawBody(
 	ctx context.Context,
 	mailbox *inboundmessage.Mailbox,
-	parsed *providerMessage,
+	providerMessageID string,
+	htmlBody string,
 ) string {
-	if parsed.HTMLBody == "" {
+	if htmlBody == "" {
 		return ""
 	}
 
 	key := fileutils.GenerateStoragePath(
 		mailbox.OrganizationID.String(),
 		"inbound-messages/"+mailbox.ID.String(),
-		parsed.ProviderMessageID+".html",
+		providerMessageID+".html",
 	)
 
 	if _, err := s.storage.Upload(ctx, &storage.UploadParams{
 		Key:         key,
 		ContentType: "text/html; charset=utf-8",
-		Size:        int64(len(parsed.HTMLBody)),
-		Body:        bytes.NewReader([]byte(parsed.HTMLBody)),
+		Size:        int64(len(htmlBody)),
+		Body:        strings.NewReader(htmlBody),
 		Metadata: map[string]string{
 			"organization-id": mailbox.OrganizationID.String(),
 			"mailbox-id":      mailbox.ID.String(),
@@ -424,6 +442,8 @@ func (s *Service) storeRawBody(
 // correctly would be the worse outcome.
 func (s *Service) startProcessing(ctx context.Context, message *inboundmessage.InboundMessage) {
 	if s.workflows == nil || !s.workflows.Enabled() {
+		s.readContentDetached(ctx, message)
+
 		return
 	}
 

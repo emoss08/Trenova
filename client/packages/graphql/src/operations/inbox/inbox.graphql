@@ -30,6 +30,7 @@ fragment InboundMailboxFields on InboundMailbox {
   minConfidence
   status
   hasSigningSecret
+  hasApiKey
   version
   createdAt
   updatedAt
@@ -152,8 +153,12 @@ mutation LinkInboundMessage($id: ID!, $input: LinkInboundMessageInput!) {
   }
 }
 
-mutation CreateInboundMailbox($input: InboundMailboxInput!, $signingSecret: String) {
-  createInboundMailbox(input: $input, signingSecret: $signingSecret) {
+mutation CreateInboundMailbox(
+  $input: InboundMailboxInput!
+  $signingSecret: String
+  $apiKey: String
+) {
+  createInboundMailbox(input: $input, signingSecret: $signingSecret, apiKey: $apiKey) {
     ...InboundMailboxCredentialsFields
   }
 }
@@ -172,6 +177,12 @@ mutation RotateInboundMailboxToken($id: ID!) {
 
 mutation SetInboundMailboxSigningSecret($id: ID!, $secret: String!) {
   setInboundMailboxSigningSecret(id: $id, secret: $secret) {
+    ...InboundMailboxFields
+  }
+}
+
+mutation SetInboundMailboxApiKey($id: ID!, $apiKey: String!) {
+  setInboundMailboxApiKey(id: $id, apiKey: $apiKey) {
     ...InboundMailboxFields
   }
 }

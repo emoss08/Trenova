@@ -15393,6 +15393,10 @@ func init() {
 				Special: "hasSigningSecret",
 			},
 			{
+				Name:    "hasApiKey",
+				Special: "hasApiKey",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},

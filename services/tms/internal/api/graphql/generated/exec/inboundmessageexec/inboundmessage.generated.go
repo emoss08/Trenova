@@ -261,6 +261,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:       "hasApiKey",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessage.Mailbox)
+					return gqlexec.Resolver[resolverInboundMailbox](ec, "InboundMailbox").HasAPIKey(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -980,7 +992,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_createInboundMailbox_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInboundMailbox(ctx, fc.Args["input"].(gqlmodel.InboundMailboxInput), fc.Args["signingSecret"].(*string))
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInboundMailbox(ctx, fc.Args["input"].(gqlmodel.InboundMailboxInput), fc.Args["signingSecret"].(*string), fc.Args["apiKey"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCredentials),
 			},
@@ -1020,6 +1032,19 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetInboundMailboxSigningSecret(ctx, fc.Args["id"].(string), fc.Args["secret"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox),
+			},
+			{
+				Name:       "setInboundMailboxApiKey",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "InboundMailbox",
+				Args:       field_Mutation_setInboundMailboxApiKey_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetInboundMailboxAPIKey(ctx, fc.Args["id"].(string), fc.Args["apiKey"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox),
 			},
@@ -1101,6 +1126,7 @@ type resolverInboundAttachment interface {
 
 type resolverInboundMailbox interface {
 	HasSigningSecret(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
+	HasAPIKey(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
 }
 
 type resolverInboundMailboxCredentials interface {
@@ -1127,10 +1153,11 @@ type resolverInboundMessage interface {
 type resolverMutation interface {
 	ReviewInboundMessage(ctx context.Context, id string, input gqlmodel.ReviewInboundMessageInput) (*inboundmessage.InboundMessage, error)
 	LinkInboundMessage(ctx context.Context, id string, input gqlmodel.LinkInboundMessageInput) (*inboundmessage.InboundMessage, error)
-	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string) (*inboundmessageservice.MailboxCredentials, error)
+	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmessageservice.MailboxCredentials, error)
 	UpdateInboundMailbox(ctx context.Context, id string, version int, input gqlmodel.InboundMailboxInput) (*inboundmessage.Mailbox, error)
 	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
+	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
 }
 
 type resolverQuery interface {
@@ -1198,7 +1225,7 @@ func field_Mutation_linkInboundMessage_args(ctx context.Context, ec *gqlexec.Exe
 }
 
 func field_Mutation_createInboundMailbox_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.InboundMailboxInput, error) {
 			return unmarshalNInboundMailboxInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInboundMailboxInput(ctx, ec, v)
@@ -1215,6 +1242,14 @@ func field_Mutation_createInboundMailbox_args(ctx context.Context, ec *gqlexec.E
 		return nil, err
 	}
 	args["signingSecret"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "apiKey",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["apiKey"] = arg2
 	return args, nil
 }
 
@@ -1278,6 +1313,27 @@ func field_Mutation_setInboundMailboxSigningSecret_args(ctx context.Context, ec 
 		return nil, err
 	}
 	args["secret"] = arg1
+	return args, nil
+}
+
+func field_Mutation_setInboundMailboxApiKey_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "apiKey",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["apiKey"] = arg1
 	return args, nil
 }
 
