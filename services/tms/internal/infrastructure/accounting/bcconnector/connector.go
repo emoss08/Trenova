@@ -205,10 +205,9 @@ func (p *Provider) ValidationToken(raw string) (string, bool) {
 }
 
 func bindingKey(app *services.AccountingApp) string {
-	return hashutils.SHA256Hex(strings.Join([]string{
-		strings.TrimSpace(app.ClientID),
-		strings.TrimSpace(app.ClientSecret),
-	}, "\x00"))
+	return hashutils.SHA256Hex(
+		strings.TrimSpace(app.ClientID) + "\x00" + strings.TrimSpace(app.ClientSecret),
+	)
 }
 
 func (c *Connector) IntegrationType() integration.Type {

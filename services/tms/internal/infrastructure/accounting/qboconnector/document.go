@@ -42,7 +42,7 @@ func (c *Connector) DocumentURL(
 ) string {
 	externalID := link.ExternalID
 	var path string
-	switch link.Kind {
+	switch link.Kind { //nolint:exhaustive // drift-only kinds have no QuickBooks page to link to
 	case accountingsync.SyncObjectCustomer:
 		path = quickbooks.CustomerAppPath()
 	case accountingsync.SyncObjectCarrierVendor, accountingsync.SyncObjectDriverVendor:

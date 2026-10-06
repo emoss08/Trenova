@@ -53,7 +53,10 @@ func (s *Service) receiveSubscribedWebhook(
 	for _, target := range verified {
 		conn, getErr := s.connections.GetByID(
 			dbscope.WithTenant(ctx, target.tenant.DBTenant()),
-			repositories.GetAccountingConnectionByIDRequest{TenantInfo: target.tenant, ID: target.id},
+			repositories.GetAccountingConnectionByIDRequest{
+				TenantInfo: target.tenant,
+				ID:         target.id,
+			},
 		)
 		if getErr != nil {
 			if errortypes.IsNotFoundError(getErr) {

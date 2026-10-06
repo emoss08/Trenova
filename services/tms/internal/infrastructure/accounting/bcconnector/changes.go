@@ -36,7 +36,7 @@ const (
 
 var errChangeCursor = errors.New("businesscentral: the change cursor is not one this adapter wrote")
 
-var documentTargets = map[changeTarget]businesscentral.DocumentKind{
+var documentTargets = map[changeTarget]businesscentral.DocumentKind{ //nolint:exhaustive // only document targets have a document kind
 	targetSalesInvoices:    businesscentral.DocumentSalesInvoice,
 	targetSalesCreditMemos: businesscentral.DocumentSalesCreditMemo,
 	targetPurchaseInvoices: businesscentral.DocumentPurchaseInvoice,
@@ -170,8 +170,13 @@ func (c *Connector) ChangeCursorAt(at time.Time) string {
 func changeTargets(req *services.ReadAccountingChangesRequest) []changeTarget {
 	targets := make([]changeTarget, 0, maxChangeTargets)
 	if req.Documents {
-		targets = append(targets,
-			targetSalesInvoices, targetSalesCreditMemos, targetPurchaseInvoices, targetPurchaseCredits)
+		targets = append(
+			targets,
+			targetSalesInvoices,
+			targetSalesCreditMemos,
+			targetPurchaseInvoices,
+			targetPurchaseCredits,
+		)
 	}
 	for _, kind := range req.ReferenceKinds {
 		var target changeTarget
@@ -292,10 +297,9 @@ func (c *changeCollector) readTarget(
 	target changeTarget,
 	since *time.Time,
 ) error {
-	if kind, ok := documentTargets[target]; ok {
-		return c.readDocuments(ctx, kind, since)
-	}
 	switch target {
+	case targetSalesInvoices, targetSalesCreditMemos, targetPurchaseInvoices, targetPurchaseCredits:
+		return c.readDocuments(ctx, documentTargets[target], since)
 	case targetAccounts:
 		accounts, err := c.client.Accounts(ctx, since)
 		for idx := range accounts {

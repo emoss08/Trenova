@@ -46,16 +46,18 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	rg.GET("/webhooks/accounting/:provider/:app/", h.handshake)
 }
 
-func (h *Handler) resolve(c *gin.Context) (accountingsync.ProviderProfile, services.AccountingProvider, bool) {
+func (h *Handler) resolve(
+	c *gin.Context,
+) (*accountingsync.ProviderProfile, services.AccountingProvider, bool) {
 	profile, ok := accountingsync.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
 	if !ok {
-		return accountingsync.ProviderProfile{}, nil, false
+		return nil, nil, false
 	}
 	provider, ok := h.connectors.For(profile.Type)
 	if !ok {
-		return accountingsync.ProviderProfile{}, nil, false
+		return nil, nil, false
 	}
-	return profile, provider, true
+	return &profile, provider, true
 }
 
 func (h *Handler) handshake(c *gin.Context) {
@@ -71,7 +73,7 @@ func (h *Handler) handshake(c *gin.Context) {
 
 func (h *Handler) answerHandshake(
 	c *gin.Context,
-	profile accountingsync.ProviderProfile,
+	profile *accountingsync.ProviderProfile,
 	provider services.AccountingProvider,
 ) bool {
 	raw, present := c.GetQuery(validationTokenParam)

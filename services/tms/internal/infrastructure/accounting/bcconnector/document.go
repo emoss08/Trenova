@@ -144,7 +144,12 @@ func resumeDocument(
 	if w.input.ExternalDocumentNumber == "" {
 		return nil, false, nil
 	}
-	listed, err := w.client.FindDocuments(ctx, w.kind, w.input.ExternalDocumentNumber, w.input.PartyID)
+	listed, err := w.client.FindDocuments(
+		ctx,
+		w.kind,
+		w.input.ExternalDocumentNumber,
+		w.input.PartyID,
+	)
 	if err != nil {
 		return nil, false, err
 	}

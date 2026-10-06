@@ -145,7 +145,10 @@ func (s *AccountingWebhookSubscription) GetOrganizationID() pulid.ID { return s.
 
 func (s *AccountingWebhookSubscription) GetBusinessUnitID() pulid.ID { return s.BusinessUnitID }
 
-func (s *AccountingWebhookSubscription) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (s *AccountingWebhookSubscription) BeforeAppendModel(
+	_ context.Context,
+	query bun.Query,
+) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

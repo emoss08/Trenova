@@ -168,14 +168,17 @@ func (k *subscriptionKeeper) keep(
 		row, found := byResource[resource]
 		delete(byResource, resource)
 		if !found {
-			created, err := k.svc.subscriptions.Create(ctx, &accountingsync.AccountingWebhookSubscription{
-				OrganizationID:  k.conn.OrganizationID,
-				BusinessUnitID:  k.conn.BusinessUnitID,
-				ConnectionID:    k.conn.ID,
-				IntegrationType: k.conn.IntegrationType,
-				Resource:        resource,
-				Status:          accountingsync.WebhookSubscriptionPending,
-			})
+			created, err := k.svc.subscriptions.Create(
+				ctx,
+				&accountingsync.AccountingWebhookSubscription{
+					OrganizationID:  k.conn.OrganizationID,
+					BusinessUnitID:  k.conn.BusinessUnitID,
+					ConnectionID:    k.conn.ID,
+					IntegrationType: k.conn.IntegrationType,
+					Resource:        resource,
+					Status:          accountingsync.WebhookSubscriptionPending,
+				},
+			)
 			if err != nil {
 				errs = append(errs, err)
 				continue
@@ -326,10 +329,13 @@ func (k *subscriptionKeeper) remove(
 	row *accountingsync.AccountingWebhookSubscription,
 ) error {
 	k.unsubscribeQuietly(ctx, row)
-	if err := k.svc.subscriptions.Delete(ctx, repositories.DeleteAccountingWebhookSubscriptionRequest{
-		TenantInfo: k.tenant,
-		ID:         row.ID,
-	}); err != nil {
+	if err := k.svc.subscriptions.Delete(
+		ctx,
+		repositories.DeleteAccountingWebhookSubscriptionRequest{
+			TenantInfo: k.tenant,
+			ID:         row.ID,
+		},
+	); err != nil {
 		return err
 	}
 	k.sweep.Removed++
@@ -390,13 +396,17 @@ func (s *Service) releaseSubscriptions(
 	ctx context.Context,
 	conn *accountingsync.AccountingConnection,
 ) {
-	if s.subscriptions == nil || !accountingsync.MustProfile(conn.IntegrationType).WebhookSubscriptions {
+	if s.subscriptions == nil ||
+		!accountingsync.MustProfile(conn.IntegrationType).WebhookSubscriptions {
 		return
 	}
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 	rows, err := s.subscriptions.ListByConnection(
 		ctx,
-		repositories.ListAccountingWebhookSubscriptionsRequest{TenantInfo: tenant, ConnectionID: conn.ID},
+		repositories.ListAccountingWebhookSubscriptionsRequest{
+			TenantInfo:   tenant,
+			ConnectionID: conn.ID,
+		},
 	)
 	if err == nil {
 		err = s.dropSubscriptions(ctx, conn, rows, &services.AccountingSubscriptionSweep{})
@@ -412,13 +422,17 @@ func (s *Service) subscriptionSummary(
 	conn *accountingsync.AccountingConnection,
 	provider services.AccountingProvider,
 ) (*services.AccountingWebhookSubscriptionSummary, error) {
-	if s.subscriptions == nil || !accountingsync.MustProfile(conn.IntegrationType).WebhookSubscriptions {
+	if s.subscriptions == nil ||
+		!accountingsync.MustProfile(conn.IntegrationType).WebhookSubscriptions {
 		return nil, nil //nolint:nilnil // the provider pushes its webhooks, so there is nothing to summarize
 	}
 	rows, err := s.subscriptions.ListByConnection(
 		ctx,
 		repositories.ListAccountingWebhookSubscriptionsRequest{
-			TenantInfo:   pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: conn.OrganizationID,
+				BuID:  conn.BusinessUnitID,
+			},
 			ConnectionID: conn.ID,
 		},
 	)

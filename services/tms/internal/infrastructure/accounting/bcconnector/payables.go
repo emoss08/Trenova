@@ -245,7 +245,9 @@ func revisedNumber(number, requestID string) string {
 	if number == "" {
 		return ""
 	}
-	suffix := revisionSeparator + strings.ToUpper(hashutils.SHA256Hex(requestID)[:revisionHashLength])
+	suffix := revisionSeparator + strings.ToUpper(
+		hashutils.SHA256Hex(requestID)[:revisionHashLength],
+	)
 	limit := businesscentral.MaxExternalDocumentNumberLength - len(suffix)
 	if len(number) > limit {
 		number = number[:limit]
@@ -317,7 +319,12 @@ func (c *Connector) retirePurchase(ctx context.Context, r *billRetirement) error
 		return err
 	}
 	if bill.IsDraft() {
-		err = r.client.DeleteDocument(ctx, businesscentral.DocumentPurchaseInvoice, bill.ID, bill.ETag)
+		err = r.client.DeleteDocument(
+			ctx,
+			businesscentral.DocumentPurchaseInvoice,
+			bill.ID,
+			bill.ETag,
+		)
 		if err != nil && !businesscentral.IsNotFound(err) {
 			return err
 		}
