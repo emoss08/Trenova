@@ -211,8 +211,19 @@ async function buildSource() {
     extractTemplates(repoRoot),
   ]);
   go.entries.push(...templates.entries);
+  const editionGo = new Map();
+  const publicGo = [];
+  for (const entry of go.entries) {
+    const edition = goEditionFor(entry.file);
+    if (edition === null) {
+      publicGo.push(entry);
+      continue;
+    }
+    if (!editionGo.has(edition.dir)) editionGo.set(edition.dir, []);
+    editionGo.get(edition.dir).push(entry);
+  }
   const source = {};
-  for (const entry of [...go.entries, ...ts.entries]) {
+  for (const entry of [...publicGo, ...ts.entries]) {
     let record = source[entry.message];
     if (record === undefined) {
       record = { sites: 0, scope: [], areas: [] };
@@ -226,21 +237,31 @@ async function buildSource() {
     record.scope.sort();
     record.areas.sort();
   }
-  return { source: sortedObject(source), parseErrors: ts.errors };
+  return { source: sortedObject(source), parseErrors: ts.errors, editionGo };
 }
 
 // An edition overlay (docs/engineering/editions.md) keeps the strings that exist only in its
 // own code in its own catalog, beside its source, so the public catalogs neither carry them
 // nor lose their translations when the overlay is not in the tree. A string the public app
 // also uses stays public: the runtime layers the edition catalog over the app's.
-const EDITION_DIRS = ["client/packages/cloud"];
+// A Go edition is extracted with the rest of the Go tree and split off by path: its strings
+// never reach the public catalogs, and emit writes it runtime catalogs it embeds itself.
+const EDITIONS = [
+  { dir: "client/packages/cloud", scope: "ts", marker: "package.json" },
+  { dir: "services/tms/internal/cloud", scope: "go", marker: "module.go", runtimeDir: "i18n/catalogs" },
+];
+
+function goEditionFor(file) {
+  const rel = file.replace(/^\.\//, "");
+  return EDITIONS.find((e) => e.scope === "go" && rel.startsWith(`${e.dir}/`)) ?? null;
+}
 
 async function presentEditions() {
   const present = [];
-  for (const dir of EDITION_DIRS) {
+  for (const edition of EDITIONS) {
     try {
-      await readFile(join(repoRoot, dir, "package.json"), "utf8");
-      present.push(dir);
+      await readFile(join(repoRoot, edition.dir, edition.marker), "utf8");
+      present.push(edition);
     } catch (err) {
       if (err.code !== "ENOENT") throw err;
     }
@@ -248,21 +269,29 @@ async function presentEditions() {
   return present;
 }
 
-async function buildEditionSource(dir, publicSource) {
-  const ts = await extractTypeScript(repoRoot, [join(dir, "src")]);
+async function buildEditionSource(edition, publicSource, editionGo) {
+  let entries;
+  let parseErrors = [];
+  if (edition.scope === "go") {
+    entries = editionGo.get(edition.dir) ?? [];
+  } else {
+    const ts = await extractTypeScript(repoRoot, [join(edition.dir, "src")]);
+    entries = ts.entries;
+    parseErrors = ts.errors;
+  }
   const source = {};
-  for (const entry of ts.entries) {
-    if (publicSource[entry.message]?.scope.includes("ts")) continue;
+  for (const entry of entries) {
+    if (publicSource[entry.message]?.scope.includes(edition.scope)) continue;
     let record = source[entry.message];
     if (record === undefined) {
-      record = { sites: 0, scope: ["ts"], areas: [] };
+      record = { sites: 0, scope: [edition.scope], areas: [] };
       source[entry.message] = record;
     }
     record.sites += 1;
     if (!record.areas.includes(entry.area)) record.areas.push(entry.area);
   }
   for (const record of Object.values(source)) record.areas.sort();
-  return { source: sortedObject(source), parseErrors: ts.errors };
+  return { source: sortedObject(source), parseErrors };
 }
 
 function editionLocalePath(dir, locale) {
@@ -271,8 +300,9 @@ function editionLocalePath(dir, locale) {
 
 // syncEdition runs before the public catalogs are pruned, so a string that moved from the
 // app into the overlay takes its existing translation with it instead of losing it.
-async function syncEdition(dir, publicSource) {
-  const { source, parseErrors } = await buildEditionSource(dir, publicSource);
+async function syncEdition(edition, publicSource, editionGo) {
+  const { dir } = edition;
+  const { source, parseErrors } = await buildEditionSource(edition, publicSource, editionGo);
   if (parseErrors.length > 0) {
     console.error(`i18n: ${dir}: ${parseErrors.length} files failed to parse`);
     process.exit(1);
@@ -300,8 +330,9 @@ async function syncEdition(dir, publicSource) {
   }
 }
 
-async function checkEdition(dir, publicSource) {
-  const { source, parseErrors } = await buildEditionSource(dir, publicSource);
+async function checkEdition(edition, publicSource, editionGo) {
+  const { dir } = edition;
+  const { source, parseErrors } = await buildEditionSource(edition, publicSource, editionGo);
   if (parseErrors.length > 0) {
     console.error(`i18n: ${dir}: ${parseErrors.length} files failed to parse`);
     return false;
@@ -329,15 +360,15 @@ async function checkEdition(dir, publicSource) {
 }
 
 async function sync() {
-  const { source, parseErrors } = await buildSource();
+  const { source, parseErrors, editionGo } = await buildSource();
   if (parseErrors.length > 0) {
     console.error(`i18n: ${parseErrors.length} files failed to parse:`);
     for (const e of parseErrors.slice(0, 10)) console.error(`  ${e.file}: ${e.message}`);
     process.exit(1);
   }
 
-  for (const dir of await presentEditions()) {
-    await syncEdition(dir, source);
+  for (const edition of await presentEditions()) {
+    await syncEdition(edition, source, editionGo);
   }
 
   await writeJSON(join(CATALOG_DIR, "messages.en.json"), source);
@@ -422,7 +453,7 @@ async function merge(locale, file) {
 }
 
 async function check() {
-  const { source, parseErrors } = await buildSource();
+  const { source, parseErrors, editionGo } = await buildSource();
   if (parseErrors.length > 0) {
     console.error(`i18n: ${parseErrors.length} files failed to parse`);
     process.exit(1);
@@ -446,8 +477,8 @@ async function check() {
       for (const key of missing.slice(0, 5)) console.error(`    missing: ${JSON.stringify(key)}`);
     }
   }
-  for (const dir of await presentEditions()) {
-    if (!(await checkEdition(dir, source))) failed = true;
+  for (const edition of await presentEditions()) {
+    if (!(await checkEdition(edition, source, editionGo))) failed = true;
   }
   if (failed) process.exit(1);
   console.log("i18n: catalogs are complete and up to date");
@@ -491,6 +522,28 @@ async function emit() {
     }
 
     console.log(`i18n: ${scope} catalogs -> ${dir} (${keys.length} strings in scope)`);
+  }
+
+  for (const edition of await presentEditions()) {
+    if (edition.runtimeDir === undefined) continue;
+    const editionSource = await readJSONIfExists(editionLocalePath(edition.dir, "en"), {});
+    const keys = Object.keys(editionSource);
+    for (const locale of locales) {
+      const out = join(repoRoot, edition.dir, edition.runtimeDir, `${locale}.json`);
+      if (locale === "en") {
+        await writeJSON(out, {});
+        continue;
+      }
+      const translated = await readJSONIfExists(editionLocalePath(edition.dir, locale), {});
+      const subset = {};
+      for (const key of keys) {
+        if (key in translated) subset[key] = translated[key];
+      }
+      await writeJSON(out, sortedObject(subset));
+    }
+    console.log(
+      `i18n: ${edition.scope} edition catalogs -> ${edition.dir}/${edition.runtimeDir} (${keys.length} strings)`,
+    );
   }
 
   await emitLocaleModule(locales);

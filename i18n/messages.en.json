@@ -4979,15 +4979,6 @@
       "domain/journalreversal"
     ]
   },
-  "A prediction is missing its example id": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A preference is required": {
     "sites": 1,
     "scope": [
@@ -5692,15 +5683,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "A retraining cycle is already exporting, waiting for a trainer, or training": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A retry is started from the transfer it retries": {
@@ -7109,15 +7091,6 @@
       "go/other"
     ]
   },
-  "A ticket reference is required to change customer data": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A tier cannot start after an open-ended tier": {
     "sites": 1,
     "scope": [
@@ -7263,15 +7236,6 @@
     ],
     "areas": [
       "service/reporting"
-    ]
-  },
-  "A training export is already running; wait for it to finish or cancel it": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A transfer can include at most 5000 shipments": {
@@ -8887,15 +8851,6 @@
       "template/tender.offer.email"
     ]
   },
-  "Accept the terms of service and privacy policy to continue": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Accept with variance (": {
     "sites": 1,
     "scope": [
@@ -9071,15 +9026,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Access mode is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Access must be Everyone or Roles": {
@@ -10747,15 +10693,6 @@
     ],
     "areas": [
       "routes/org-structure"
-    ]
-  },
-  "Active workers under workforce management, the per-seat billing unit.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Active year for transaction posting (only one allowed per organization)": {
@@ -12754,15 +12691,6 @@
       "apps/web/components"
     ]
   },
-  "Added by must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Added by you": {
     "sites": 1,
     "scope": [
@@ -13129,14 +13057,13 @@
     ]
   },
   "Address line 1 is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/customer",
-      "domain/location",
-      "go/other"
+      "domain/location"
     ]
   },
   "Address line 1 must be 150 characters or fewer": {
@@ -14277,15 +14204,6 @@
     ],
     "areas": [
       "service/assistantservice"
-    ]
-  },
-  "Agent runs, proposals, and exception handling.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Agent trust loader is not configured": {
@@ -16721,15 +16639,6 @@
       "go/other"
     ]
   },
-  "An account already exists for this email address. Sign in instead.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "An account balance cannot be pushed or adjusted as a whole. Look for an entry made in {0} by hand, or one missing from it, and correct that entry. The difference closes once the balances agree; dismiss it when both sides stay as they are.": {
     "sites": 1,
     "scope": [
@@ -17619,15 +17528,6 @@
       "service/driversettlementservice"
     ]
   },
-  "An evaluation record is missing its id or expected values": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "An evaluation replays exactly one recorded run or one evaluation case": {
     "sites": 1,
     "scope": [
@@ -18127,15 +18027,6 @@
       "domain/ifta"
     ]
   },
-  "An output is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "An overridden rate cannot be negative": {
     "sites": 1,
     "scope": [
@@ -18273,24 +18164,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Analytics provider queries.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Analytics, agent automation, and decision support layered on the dispatch board.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Analyzing rate confirmation": {
@@ -24016,15 +23889,6 @@
       "domain/email"
     ]
   },
-  "Attempts must not be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Attention": {
     "sites": 1,
     "scope": [
@@ -24204,15 +24068,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Authenticated API requests made by tenant principals.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Authentication": {
@@ -27359,15 +27214,6 @@
       "apps/web/components"
     ]
   },
-  "Benefit plan administration and worker enrollments.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Benefit plans and who is enrolled on them": {
     "sites": 1,
     "scope": [
@@ -29449,15 +29295,6 @@
       "routes/accounting-drift"
     ]
   },
-  "Both the evaluation set and the predictions are required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Both versions must exist for comparison": {
     "sites": 1,
     "scope": [
@@ -29851,15 +29688,6 @@
       "routes/reports"
     ]
   },
-  "Bucket name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Budget": {
     "sites": 1,
     "scope": [
@@ -30214,7 +30042,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 133,
+    "sites": 130,
     "scope": [
       "go"
     ],
@@ -30278,7 +30106,6 @@
       "domain/watchtower",
       "domain/weatheralert",
       "domain/worker",
-      "go/other",
       "service/distanceprofileservice",
       "service/ediservice"
     ]
@@ -30456,24 +30283,6 @@
     ],
     "areas": [
       "domain/report"
-    ]
-  },
-  "Bytes in a single uploaded document.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Bytes of documents an organization stores.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "CAD (C$)": {
@@ -36704,15 +36513,6 @@
       "routes/customer"
     ]
   },
-  "Choose how long support access lasts, up to {0} days": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Choose how the dispute was resolved": {
     "sites": 1,
     "scope": [
@@ -37641,7 +37441,7 @@
     ]
   },
   "City is required": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -37651,7 +37451,6 @@
       "domain/location",
       "domain/ratezone",
       "domain/worker",
-      "go/other",
       "packages/shared/types"
     ]
   },
@@ -38664,15 +38463,6 @@
       "domain/accountingsync",
       "service/accountingconnectionservice",
       "service/organizationservice"
-    ]
-  },
-  "Client IP must be at most 64 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Client Secret": {
@@ -40852,33 +40642,6 @@
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "Company name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Company name must be 100 characters or fewer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Company name must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Company profile": {
@@ -44317,78 +44080,6 @@
       "routes/customer"
     ]
   },
-  "Control-plane authorization is not configured": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Control-plane body hash is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Control-plane request targets a different instance": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Control-plane shared secret is not configured": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Control-plane signature has expired": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Control-plane signature is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Control-plane timestamp is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Control-plane timestamp is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Controlled substances": {
     "sites": 2,
     "scope": [
@@ -45355,15 +45046,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Core shipment, dispatch, billing, accounting, fleet, and settlement workflows.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Core structure": {
@@ -48963,24 +48645,6 @@
       "routes/customer"
     ]
   },
-  "Cross-cutting platform capabilities.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Cross-entity search backed by configured search infrastructure.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Crypto mode cannot be longer than 32 characters": {
     "sites": 2,
     "scope": [
@@ -49875,7 +49539,7 @@
     ]
   },
   "Customer ID is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -49954,15 +49618,6 @@
     ],
     "areas": [
       "packages/shared/types"
-    ]
-  },
-  "Customer code is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Customer contact management": {
@@ -50131,15 +49786,6 @@
       "packages/shared/types",
       "routes/billing-queue",
       "routes/shipment"
-    ]
-  },
-  "Customer name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Customer notice": {
@@ -50429,15 +50075,6 @@
       "apps/web/lib",
       "apps/web/types",
       "routes/customer"
-    ]
-  },
-  "Customers an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.": {
@@ -50749,13 +50386,12 @@
     ]
   },
   "DOT number is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/carrierintel",
-      "go/other"
+      "domain/carrierintel"
     ]
   },
   "DOT number is required. Please try again": {
@@ -50805,15 +50441,6 @@
       "domain/tenant"
     ]
   },
-  "DOT number must contain 1 to 8 digits": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "DOT number must contain only digits": {
     "sites": 2,
     "scope": [
@@ -50842,15 +50469,6 @@
       "routes/fleet-safety"
     ]
   },
-  "DOT qualification files, drug and alcohol program administration, and workplace safety records.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "DOT test": {
     "sites": 1,
     "scope": [
@@ -50858,15 +50476,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "DOT test orders and Clearinghouse queries run against workers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "DOT {0}": {
@@ -52576,15 +52185,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Decide whether enough new corrections have been confirmed to retrain the document extraction model, and start its training export": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Decided": {
@@ -54829,15 +54429,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Delete every row, stored object and user an expired cloud organization owns": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Delete expired report artifacts and mark runs expired": {
@@ -59660,15 +59251,6 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Document OCR, classification, extraction, and review workflows.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Document Type updated successfully": {
     "sites": 1,
     "scope": [
@@ -59757,15 +59339,6 @@
     ],
     "areas": [
       "domain/documenttype"
-    ]
-  },
-  "Document classification operations.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Document could not be attached: {0}": {
@@ -59875,15 +59448,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Document extraction operations.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Document extraction view": {
@@ -60381,15 +59945,6 @@
       "service/driverportalservice"
     ]
   },
-  "Document upload, storage, packets, and parsing rules.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Document uploaded": {
     "sites": 1,
     "scope": [
@@ -60652,15 +60207,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Documents uploaded into tenant storage.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Documents will be sent to {0}": {
@@ -61550,33 +61096,6 @@
       "routes/accounting-control"
     ]
   },
-  "Driver and carrier settlement runs, escrow, advances, deductions, and dispute handling.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Driver and carrier settlement runs, escrow, advances, deductions, and disputes.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Driver and employee records, DOT compliance, time off, scheduling, talent, safety, and benefits.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Driver and owner-operator pay": {
     "sites": 1,
     "scope": [
@@ -62014,15 +61533,6 @@
       "routes/worker"
     ]
   },
-  "Driver qualification files, credentials, DOT testing, random pools, and Clearinghouse queries.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Driver qualification management": {
     "sites": 1,
     "scope": [
@@ -62193,15 +61703,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Driver-facing loads, pay, hours of service, and document capture.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Driver-initiated money workflows — reimbursements and settlement challenges.": {
@@ -63770,15 +63271,6 @@
     ],
     "areas": [
       "service/ediservice"
-    ]
-  },
-  "EDI partner, profile, document, transfer, and X12 workflows.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "EDI quarantined": {
@@ -65587,14 +65079,13 @@
     ]
   },
   "Email address is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/email",
-      "domain/tenant",
-      "go/other"
+      "domain/tenant"
     ]
   },
   "Email address is required. Please provide a valid email address.": {
@@ -65616,21 +65107,12 @@
     ]
   },
   "Email address must be a valid email address": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/email",
-      "go/other"
-    ]
-  },
-  "Email address must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
       "go/other"
     ]
   },
@@ -67710,13 +67192,11 @@
     ]
   },
   "Enter a valid email address": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/types"
     ]
   },
@@ -67974,7 +67454,7 @@
     ]
   },
   "Enter the code from your authenticator app": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -68119,15 +67599,6 @@
       "routes/auth"
     ]
   },
-  "Enter your company name": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Enter your email and password.": {
     "sites": 1,
     "scope": [
@@ -68146,15 +67617,6 @@
       "routes/admin"
     ]
   },
-  "Enter your name": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Enter your password": {
     "sites": 1,
     "scope": [
@@ -68162,15 +67624,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Enter your work email": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Enter {0} information": {
@@ -68713,15 +68166,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Equipment, tractors, trailers, and fleet reference data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Equipment: {0}": {
@@ -71159,15 +70603,6 @@
       "service/sequenceconfigservice"
     ]
   },
-  "Example {0} has more than one prediction": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Exceeds eligibility by {0}": {
     "sites": 1,
     "scope": [
@@ -71431,15 +70866,6 @@
     ],
     "areas": [
       "service/accountingcontrolservice"
-    ]
-  },
-  "Exchange-rate provider requests and cached exchange-rate data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Exclude word": {
@@ -72502,15 +71928,14 @@
     ]
   },
   "Expiry is required": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/capture",
       "domain/documentupload",
-      "domain/invoice",
-      "go/other"
+      "domain/invoice"
     ]
   },
   "Expiry must be a moment in time": {
@@ -73637,15 +73062,6 @@
       "domain/shipmentimportchat"
     ]
   },
-  "External data and routing integrations.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "External email cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -73716,15 +73132,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "External integration synchronization runs.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "External link": {
@@ -79750,15 +79157,6 @@
       "apps/web/components"
     ]
   },
-  "Foundational tenant, organization, customer, location, and shipment data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.": {
     "sites": 1,
     "scope": [
@@ -81780,15 +81178,6 @@
       "routes/worker"
     ]
   },
-  "General ledger, journal entries, and accounting controls.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "General liability": {
     "sites": 2,
     "scope": [
@@ -82450,15 +81839,6 @@
       "routes/scheduling"
     ]
   },
-  "Global search queries executed by tenant users.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Go ahead with what you could read from {0}.": {
     "sites": 1,
     "scope": [
@@ -82708,15 +82088,6 @@
       "routes/shipment"
     ]
   },
-  "Google Maps-backed location and routing helpers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Google cloud console.": {
     "sites": 1,
     "scope": [
@@ -82862,15 +82233,6 @@
       "domain/permission"
     ]
   },
-  "Grant is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Grant override": {
     "sites": 5,
     "scope": [
@@ -82897,15 +82259,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Granting user is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "GraphQL explorer": {
@@ -89291,15 +88644,6 @@
       "domain/worker"
     ]
   },
-  "Injury reporting, OSHA annual summaries, safety events, and fleet safety standing.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Inline node must be an object": {
     "sites": 1,
     "scope": [
@@ -89785,15 +89129,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Instance ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Instant pay": {
@@ -92715,15 +92050,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Invoicing, billing queues, and customer payments.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Iowa (IA)": {
@@ -100699,15 +100025,6 @@
       "routes/location"
     ]
   },
-  "Locations an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Lock a draft so its figures no longer move": {
     "sites": 1,
     "scope": [
@@ -100933,15 +100250,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Login slug is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Login slug may only contain lowercase letters, numbers, and hyphens": {
@@ -106869,15 +106177,6 @@
       "domain/trailer"
     ]
   },
-  "Model spend in a calendar month.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Model usage cost this month.": {
     "sites": 1,
     "scope": [
@@ -108034,24 +107333,6 @@
       "service/shipmentservice"
     ]
   },
-  "Move cloud trials to read-only and expired, and purge expired organizations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Move cloud trials to read-only and expired, and start the purge of expired organizations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Move completed": {
     "sites": 1,
     "scope": [
@@ -109065,7 +108346,7 @@
     ]
   },
   "Name is required": {
-    "sites": 107,
+    "sites": 106,
     "scope": [
       "go",
       "ts"
@@ -109145,24 +108426,6 @@
     ],
     "areas": [
       "routes/capture"
-    ]
-  },
-  "Name must be 100 characters or fewer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Name must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Name must be between 1 and 100 characters": {
@@ -110267,15 +109530,6 @@
     ],
     "areas": [
       "routes/auth"
-    ]
-  },
-  "Network pulse is not enabled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Network signals": {
@@ -116633,15 +115887,6 @@
       "apps/web/components"
     ]
   },
-  "No user has the address {0}": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.": {
     "sites": 1,
     "scope": [
@@ -117323,24 +116568,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Normalized email address is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Normalized email address must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Normalizer": {
@@ -118485,15 +117712,6 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
-    ]
-  },
-  "Note must be at most 500 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Note must be {0} characters or fewer": {
@@ -120438,24 +119656,6 @@
       "apps/web/components"
     ]
   },
-  "OCR-backed document classification and extraction.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "OCR-backed document classification, extraction, and review.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "OIDC application": {
     "sites": 1,
     "scope": [
@@ -122390,15 +121590,6 @@
       "routes/worker"
     ]
   },
-  "Only Trenova platform staff can open support sessions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only a Billed order can be closed; this order is {0}": {
     "sites": 1,
     "scope": [
@@ -122740,15 +121931,6 @@
     ],
     "areas": [
       "service/accountingmappingservice"
-    ]
-  },
-  "Only a queued or running export can be canceled; this one is {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Only a rated reply in a conversation can become an evaluation case": {
@@ -126204,24 +125386,6 @@
       "domain/homelayout"
     ]
   },
-  "Operational analytics and reporting views.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Operational analytics pages and query providers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Operational findings surfaced on the home screen": {
     "sites": 1,
     "scope": [
@@ -127434,7 +126598,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 132,
+    "sites": 129,
     "scope": [
       "go"
     ],
@@ -127498,7 +126662,6 @@
       "domain/watchtower",
       "domain/weatheralert",
       "domain/worker",
-      "go/other",
       "service/distanceprofileservice",
       "service/ediservice"
     ]
@@ -129856,15 +129019,6 @@
       "routes/pto-policy"
     ]
   },
-  "PTO policies, accrual ledgers, balances, and leave case administration.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "PTO policy": {
     "sites": 2,
     "scope": [
@@ -131376,15 +130530,6 @@
       "routes/login.tsx"
     ]
   },
-  "Password cannot be only spaces": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Password changed": {
     "sites": 2,
     "scope": [
@@ -131414,14 +130559,13 @@
     ]
   },
   "Password is required": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other",
       "service/mfaservice"
     ]
   },
@@ -131452,24 +130596,6 @@
       "routes/admin"
     ]
   },
-  "Password must be 72 bytes or fewer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Password must be at least 12 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Password must be at least 8 characters": {
     "sites": 2,
     "scope": [
@@ -131478,15 +130604,6 @@
     "areas": [
       "service/driverportalservice",
       "service/passwordresetservice"
-    ]
-  },
-  "Password must not contain your email address": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Password reset link sent": {
@@ -133376,15 +132493,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "People who belong to an organization.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "People who waived a plan they were offered, most recent decision first.": {
@@ -137528,7 +136636,7 @@
     ]
   },
   "Postal code is required": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -137536,7 +136644,6 @@
     "areas": [
       "domain/customer",
       "domain/location",
-      "go/other",
       "packages/shared/types"
     ]
   },
@@ -141221,42 +140328,6 @@
       "routes/admin"
     ]
   },
-  "Provisioning payload could not be read": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Provisioning payload is invalid JSON": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Provisioning payload is not targeted to this instance": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Provisioning payload is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Proximity": {
     "sites": 1,
     "scope": [
@@ -142442,15 +141513,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Questions people ask the assistant in a calendar month.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Questions per person each month": {
@@ -145691,15 +144753,6 @@
       "service/accountingcontrolservice"
     ]
   },
-  "Realtime messaging and notifications.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Rear escort": {
     "sites": 1,
     "scope": [
@@ -148789,15 +147842,6 @@
       "apps/web/lib"
     ]
   },
-  "Recurring shipment series an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Recurring shipment series management and scheduled generation": {
     "sites": 1,
     "scope": [
@@ -150109,15 +149153,6 @@
       "service/ediservice",
       "service/journalreversalservice",
       "service/manualjournalservice"
-    ]
-  },
-  "Rejection reason must be at most 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Rejection reason...": {
@@ -152704,7 +151739,7 @@
     ]
   },
   "Request is required": {
-    "sites": 47,
+    "sites": 46,
     "scope": [
       "go"
     ],
@@ -157421,7 +156456,7 @@
     ]
   },
   "Role is required": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -157429,8 +156464,7 @@
       "domain/briefing",
       "domain/conversation",
       "domain/iam",
-      "domain/permission",
-      "go/other"
+      "domain/permission"
     ]
   },
   "Role not found": {
@@ -158193,15 +157227,6 @@
     ],
     "areas": [
       "domain/storedmileage"
-    ]
-  },
-  "Route is not mapped to a platform feature": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Route not resolved": {
@@ -159645,15 +158670,6 @@
       "routes/onboarding"
     ]
   },
-  "SCAC code is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "SCAC code is required. Please try again": {
     "sites": 1,
     "scope": [
@@ -159664,13 +158680,12 @@
     ]
   },
   "SCAC code must be 4 characters": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/tenant",
-      "go/other"
+      "domain/tenant"
     ]
   },
   "SCAC code must be four letters": {
@@ -160521,15 +159536,6 @@
     ],
     "areas": [
       "routes/tractor"
-    ]
-  },
-  "Samsara vehicle and routing integration.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Samsara worker sync": {
@@ -169267,15 +168273,6 @@
       "api/handlers"
     ]
   },
-  "Session secret is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Set": {
     "sites": 2,
     "scope": [
@@ -171950,15 +170947,6 @@
       "service/dispatchconsoleservice"
     ]
   },
-  "Shipment movement planning and execution.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Shipment must be completed before it can be marked ready to invoice": {
     "sites": 1,
     "scope": [
@@ -172332,15 +171320,6 @@
       "routes/rate-agreement",
       "routes/shipment",
       "template/invoice.pdf"
-    ]
-  },
-  "Shipments an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Shipments and related configuration": {
@@ -173630,15 +172609,6 @@
       "routes/auth"
     ]
   },
-  "Sign in with two-factor authentication before opening a support session": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Sign link expires {0}": {
     "sites": 1,
     "scope": [
@@ -173870,24 +172840,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "Signup is not available": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Signups are limited to approved email domains": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Signups are paused right now. You have been added to the wait list.": {
@@ -176321,24 +175273,6 @@
       "routes/org-structure"
     ]
   },
-  "Staff member is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Staff session is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Stage a Comdata, EFS or WEX statement for review": {
     "sites": 1,
     "scope": [
@@ -176627,15 +175561,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Start a document extraction retraining when enough new corrections have been confirmed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Start a fresh conversation with the assistant": {
@@ -177808,7 +176733,7 @@
     ]
   },
   "Status is required": {
-    "sites": 144,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -179093,15 +178018,6 @@
       "routes/agent-control"
     ]
   },
-  "Structured output mode is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Structured output mode is required": {
     "sites": 2,
     "scope": [
@@ -180154,42 +179070,6 @@
       "service/ediservice"
     ]
   },
-  "Support access can only be changed by the organization's own administrators": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Support principal is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Support session not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Support sessions need a signed-in staff member": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Supporting document": {
     "sites": 1,
     "scope": [
@@ -180972,15 +179852,6 @@
       "routes/table-change-alert"
     ]
   },
-  "Table change alert events emitted for delivery.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Table change alert subscriptions and notifications": {
     "sites": 1,
     "scope": [
@@ -180997,15 +179868,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Table change subscriptions and delivery events.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Table is not eligible for change alerts": {
@@ -181655,15 +180517,6 @@
       "routes/carrier"
     ]
   },
-  "Tax ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tax ID type": {
     "sites": 2,
     "scope": [
@@ -181955,15 +180808,6 @@
     ],
     "areas": [
       "service/telematicsservice"
-    ]
-  },
-  "Telematics-backed tracking, geofencing, and customer-facing shipment visibility.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Tell Trenova which {0} account, item, customer and vendor each Trenova record is sent as. Trenova proposes a match where it is sure enough; nothing is used until a person confirms it.": {
@@ -182575,15 +181419,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Tenant-scoped API keys and API usage tracking.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Tender": {
@@ -186108,15 +184943,6 @@
       "routes/agent-control"
     ]
   },
-  "The complete workforce management suite, sellable without any transportation management feature.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The computation flagged nothing on this quarter.": {
     "sites": 1,
     "scope": [
@@ -186349,15 +185175,6 @@
     ],
     "areas": [
       "service/agentevalcaseservice"
-    ]
-  },
-  "The core transportation management platform: shipments, dispatch, billing, accounting, fleet, documents, and currency conversion.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "The correction is kept alongside the original record.": {
@@ -187485,15 +186302,6 @@
       "domain/documenttemplate"
     ]
   },
-  "The driver-facing portal for loads, pay, hours of service, documents, and time-off requests.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The drop that counts as a regression is at least 0.01": {
     "sites": 1,
     "scope": [
@@ -188010,33 +186818,6 @@
     ],
     "areas": [
       "domain/documenttemplate"
-    ]
-  },
-  "The export's manifest does not match its recorded checksum; it has been changed since it was written": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "The export's manifest is larger than any manifest Trenova writes": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "The export's manifest is not one this version of Trenova can render": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "The extended linehaul amount, unformatted.": {
@@ -192486,24 +191267,6 @@
       "domain/shipment"
     ]
   },
-  "The security check could not be verified right now. Try again in a moment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "The security check failed or expired. Complete it again": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The selected carrier cost events are no longer pending; they were attached or voided by a concurrent request": {
     "sites": 1,
     "scope": [
@@ -193388,15 +192151,6 @@
       "routes/agent-control"
     ]
   },
-  "The support session has ended": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The sweep emails the customer the moment the notice window opens, using their configured recipients.": {
     "sites": 1,
     "scope": [
@@ -194188,15 +192942,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "The window cannot end in the future": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "The window cannot start before 1970": {
@@ -195088,15 +193833,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "This Trenova support session is read-only. Elevate to write to make changes.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "This Trenova user is already linked to a different {0} account": {
@@ -196562,15 +195298,6 @@
       "service/aiauditservice"
     ]
   },
-  "This export has not finished; render it once its manifest is written": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "This export is too large to write while you wait. It is being written in the background; you'll be notified when the file is ready, and it will be under Exports.": {
     "sites": 1,
     "scope": [
@@ -197630,15 +196357,6 @@
       "routes/order"
     ]
   },
-  "This organization allowed read-only support access, so the session cannot be elevated": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "This organization does not run its own drivers, so an existing driver assignment cannot be changed here. Unassign the driver to release the move, then cover it with a carrier.": {
     "sites": 1,
     "scope": [
@@ -197655,15 +196373,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "This organization has not allowed Trenova support access, or its access has ended": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "This organization has reached the limit of its plan": {
@@ -197826,15 +196535,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "This password is too common. Choose something harder to guess": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "This password reset link is no longer valid. Request a new one.": {
@@ -198999,15 +197699,6 @@
       "domain/carrierintel"
     ]
   },
-  "This verification link is invalid, expired or already used. Sign up again to get a new one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "This version": {
     "sites": 1,
     "scope": [
@@ -199559,15 +198250,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Ticket reference must be at most 100 characters": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Tie this card to the tractor it lives in, the driver who carries it, or both. Leaving both empty puts it back in the unassigned list.": {
@@ -200171,15 +198853,6 @@
       "routes/time-attendance"
     ]
   },
-  "Timesheets, shift templates, swaps, and rota scheduling.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Timestamp": {
     "sites": 4,
     "scope": [
@@ -200242,17 +198915,8 @@
       "domain/agentquality"
     ]
   },
-  "Timezone is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Timezone is required": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -200262,7 +198926,6 @@
       "domain/recurringshipment",
       "domain/report",
       "domain/tenant",
-      "go/other",
       "service/userservice"
     ]
   },
@@ -201176,15 +199839,6 @@
       "service/authservice"
     ]
   },
-  "Too many signup attempts from this network. Try again later.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Too many sort fields": {
     "sites": 1,
     "scope": [
@@ -201201,15 +199855,6 @@
     ],
     "areas": [
       "domain/pagedraft"
-    ]
-  },
-  "Too many support sessions were opened in the last hour. Try again later.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Too many variable values": {
@@ -202473,15 +201118,6 @@
       "routes/tractor"
     ]
   },
-  "Tractors an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tractors, trailers, and equipment": {
     "sites": 1,
     "scope": [
@@ -202516,15 +201152,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Trading-partner EDI: partners, mapping profiles, templates, transfers, and X12 document exchange.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Traffic": {
@@ -202813,15 +201440,6 @@
       "routes/trailer"
     ]
   },
-  "Trailers an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Trailers whose plates expire inside the horizon, with inspection status and fleet assignment": {
     "sites": 1,
     "scope": [
@@ -202879,15 +201497,6 @@
       "routes/training-course"
     ]
   },
-  "Training courses and records, performance reviews, discipline, and recognition.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Training due": {
     "sites": 1,
     "scope": [
@@ -202895,15 +201504,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Training exports cannot run on this installation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Training matrix": {
@@ -202923,24 +201523,6 @@
     "areas": [
       "packages/shared/lib",
       "routes/home"
-    ]
-  },
-  "Training part {0} does not match the manifest; it has been changed since it was written": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Training part {0} holds an example this version of Trenova cannot render": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Training record is invalid": {
@@ -203950,42 +202532,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Trenova support access is not available": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Trenova support access is not currently allowed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Trenova support opened a session": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Trenova support sessions cannot do this, even with write access.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Trenova's boundary comes first and cannot be overridden. Your instructions follow and are authoritative for everything else.": {
@@ -208540,15 +207086,6 @@
       "routes/edi"
     ]
   },
-  "Use a permanent work email address. Disposable addresses cannot sign up": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Use a previously saved version snapshot": {
     "sites": 1,
     "scope": [
@@ -209201,15 +207738,6 @@
       "domain/notification"
     ]
   },
-  "User agent must be at most 512 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "User is not a member of this organization": {
     "sites": 1,
     "scope": [
@@ -209220,7 +207748,7 @@
     ]
   },
   "User is required": {
-    "sites": 22,
+    "sites": 21,
     "scope": [
       "go"
     ],
@@ -209240,7 +207768,6 @@
       "domain/shipmentimportchat",
       "domain/sidebarpreference",
       "domain/tenant",
-      "go/other",
       "service/mfaservice"
     ]
   },
@@ -209398,15 +207925,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Users, roles, permissions, audit history, custom fields, and table configuration.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Uses accessorial code, generic code, description, or MSC.": {
@@ -210279,24 +208797,6 @@
     ],
     "areas": [
       "domain/jurisdictionrule"
-    ]
-  },
-  "Verification token hash must be 64 lowercase hexadecimal characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Verification token is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Verification {0}": {
@@ -217607,15 +216107,6 @@
       "routes/agent-control"
     ]
   },
-  "Who added the staff member is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Who and when": {
     "sites": 1,
     "scope": [
@@ -217776,15 +216267,6 @@
     ],
     "areas": [
       "domain/documenttemplate"
-    ]
-  },
-  "Who removed the staff member is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Who sees it": {
@@ -219110,15 +217592,6 @@
       "domain/permission"
     ]
   },
-  "Worker portal access, policy acknowledgements, and profile change requests.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Worker profile must be provided": {
     "sites": 1,
     "scope": [
@@ -219126,15 +217599,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Worker records, profiles, job positions, org structure, holidays, and onboarding checklists.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Worker request": {
@@ -219240,15 +217704,6 @@
       "routes/org-structure",
       "routes/pto-policy",
       "routes/worker"
-    ]
-  },
-  "Workers an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Workers are notified in Dash and by SMS once their time off is approved. {0}": {
@@ -219547,69 +218002,6 @@
       "routes/desk"
     ]
   },
-  "Workspace ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace business unit ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace business unit ID must match the customer ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace state ID is not recognized": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace state is not recognized": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace state is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Worse": {
     "sites": 1,
     "scope": [
@@ -219770,15 +218162,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Write an anonymized model-training export from the AI corrections of every organization that consented": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Write it here": {
@@ -221392,24 +219775,6 @@
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "Your Trenova support session has ended": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Your Trenova support session has ended. Return to the support console to start another.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Your access is limited to your own team, which cannot be checked right now": {
@@ -225643,15 +224008,6 @@
       "apps/dash/_components"
     ]
   },
-  "idempotency key is required for cloud usage recording": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "identical to production": {
     "sites": 1,
     "scope": [
@@ -226865,15 +225221,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "request ID is required for deterministic API usage idempotency": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "request is required": {

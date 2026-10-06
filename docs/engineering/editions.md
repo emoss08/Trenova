@@ -86,6 +86,17 @@ string the public app also uses stays in the public catalog. `task i18n-check` c
 both. At runtime the edition's `messages` loaders are layered over the app catalog with
 `registerCatalogSource` (`packages/shared/src/i18n/runtime.ts`).
 
+The Go side works the same way. Go strings under `services/tms/internal/cloud/` never
+enter the public catalogs: `task i18n` splits them off by path into
+`services/tms/internal/cloud/i18n/messages.<locale>.json`, and emit writes the runtime
+catalogs the overlay embeds at `services/tms/internal/cloud/i18n/catalogs/<locale>.json`.
+The overlay's `cloudi18n` package registers them from `init` with
+`i18n.RegisterCatalogFS` (`shared/i18n/catalog.go`), which layers them over the public
+catalogs when they first load. Registering after a lookup has loaded the catalogs returns
+`i18n.ErrCatalogsLoaded`. Run `task i18n` with the overlay in the tree whenever Cloud
+strings change, and commit both the overlay catalogs (in the private repository) and the
+public catalogs.
+
 ## The overlay contract
 
 `client/packages/cloud` must:
