@@ -1,9 +1,0 @@
-{{if .FirstName}}{{t "Hi {0}," .FirstName}}{{else}}{{t "Hi,"}}{{end}}
-
-{{t "Confirm your email address to create the {0} workspace on {1}. Nothing is set up until you do." .CompanyName .ProductName}}
-
-{{.VerifyURL}}
-
-{{t "This link works once and expires {0}." .ExpiresAt}}
-
-{{t "If you did not sign up, ignore this email and no account will be created."}}

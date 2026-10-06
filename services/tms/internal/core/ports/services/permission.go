@@ -146,6 +146,18 @@ type SimulatePermissionsRequest struct {
 	RemoveRoleIDs  []pulid.ID
 }
 
+// DelegatedPermissionSource supplies the permission set of a principal that acts
+// in an organization through a delegation bound to the request rather than through
+// role assignments in it. The engine asks it before computing role permissions; it
+// answers ok=false for every request it does not own. Nothing in the public graph
+// provides one, so without an edition every principal is held to its roles.
+type DelegatedPermissionSource interface {
+	DelegatedPermissions(
+		ctx context.Context,
+		userID, orgID pulid.ID,
+	) (*repositories.CachedPermissions, bool, error)
+}
+
 type PermissionEngine interface {
 	Check(ctx context.Context, req *PermissionCheckRequest) (*PermissionCheckResult, error)
 	CheckBatch(

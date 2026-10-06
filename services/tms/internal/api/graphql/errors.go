@@ -20,7 +20,6 @@ func init() {
 	errcode.RegisterErrorType(querycost.DepthLimitErrorCode, errcode.KindProtocol)
 	errcode.RegisterErrorType(querycost.ComplexityLimitErrorCode, errcode.KindProtocol)
 	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
-	errcode.RegisterErrorType(FeatureAccessErrorCode, errcode.KindProtocol)
 }
 
 func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {

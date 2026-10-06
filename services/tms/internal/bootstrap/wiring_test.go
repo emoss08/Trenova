@@ -92,11 +92,13 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						services.ExtractionPredictor,
 						services.ExtractionEvalRunStarter,
 						services.ExtractionEvalRunner,
-						services.AITrainingExportStarter,
-						services.AITrainingExportOperator,
-						services.AITrainingExportRunner,
 						services.AITrainingHistoryService,
-						services.AITrainingDatasetRenderer,
+						services.EditionInfo,
+						services.EntitlementProvider,
+						services.BillingProvider,
+						services.UsageProvider,
+						services.PlanService,
+						services.QuotaGuard,
 						// The change feed compares edited documents only when
 						// the drift check is there; without it an edit waits
 						// for the nightly run.
@@ -113,18 +115,4 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 			))
 		})
 	}
-}
-
-func TestWiring_TrainingExportCommandResolvesWithoutAProcess(t *testing.T) {
-	t.Parallel()
-
-	require.NoError(t, fx.ValidateApp(
-		bootstrap.TrainingExportCommandOptions(),
-		fx.Invoke(func(
-			services.AITrainingExportOperator,
-			services.AITrainingDatasetRenderer,
-			services.AIRetrainingService,
-		) {
-		}),
-	))
 }

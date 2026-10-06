@@ -535,15 +535,6 @@
       "apps/web/types"
     ]
   },
-  "1 day left": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "1 hour": {
     "sites": 2,
     "scope": [
@@ -4979,15 +4970,6 @@
       "domain/journalreversal"
     ]
   },
-  "A prediction is missing its example id": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
-    ]
-  },
   "A preference is required": {
     "sites": 1,
     "scope": [
@@ -5692,15 +5674,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "A retraining cycle is already exporting, waiting for a trainer, or training": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A retry is started from the transfer it retries": {
@@ -7254,15 +7227,6 @@
     ],
     "areas": [
       "service/reporting"
-    ]
-  },
-  "A training export is already running; wait for it to finish or cancel it": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A transfer can include at most 5000 shipments": {
@@ -8878,15 +8842,6 @@
       "template/tender.offer.email"
     ]
   },
-  "Accept the terms of service and privacy policy to continue": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
   "Accept with variance (": {
     "sites": 1,
     "scope": [
@@ -10465,7 +10420,7 @@
     ]
   },
   "Active": {
-    "sites": 53,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -10729,15 +10684,6 @@
     ],
     "areas": [
       "routes/org-structure"
-    ]
-  },
-  "Active workers under workforce management, the per-seat billing unit.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Active year for transaction posting (only one allowed per organization)": {
@@ -13102,14 +13048,22 @@
     ]
   },
   "Address line 1 is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/customer",
-      "domain/location",
-      "service/tenantprovisioningservice"
+      "domain/location"
+    ]
+  },
+  "Address line 1 must be 150 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Address line 1 must be between 1 and 150 characters": {
@@ -13642,6 +13596,42 @@
       "routes/admin"
     ]
   },
+  "Administrator email is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Administrator email must be a valid email address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Administrator name is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Administrator name must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
   "Administrators can see the question, the answer and your rating.": {
     "sites": 1,
     "scope": [
@@ -13808,24 +13798,6 @@
     ],
     "areas": [
       "template/tender.offer.email"
-    ]
-  },
-  "After that the workspace becomes read-only.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "After that the workspace stays readable for a while so you can export what you need.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
     ]
   },
   "After this day agents stop reading it.": {
@@ -14223,15 +14195,6 @@
     ],
     "areas": [
       "service/assistantservice"
-    ]
-  },
-  "Agent runs, proposals, and exception handling.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Agent trust loader is not configured": {
@@ -15994,15 +15957,6 @@
       "routes/accounting-sync"
     ]
   },
-  "Already have one?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Already imported": {
     "sites": 1,
     "scope": [
@@ -16674,15 +16628,6 @@
     "areas": [
       "domain/shipment",
       "go/other"
-    ]
-  },
-  "An account already exists for this email address. Sign in instead.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
     ]
   },
   "An account balance cannot be pushed or adjusted as a whole. Look for an entry made in {0} by hand, or one missing from it, and correct that entry. The difference closes once the balances agree; dismiss it when both sides stay as they are.": {
@@ -17574,15 +17519,6 @@
       "service/driversettlementservice"
     ]
   },
-  "An evaluation record is missing its id or expected values": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
-    ]
-  },
   "An evaluation replays exactly one recorded run or one evaluation case": {
     "sites": 1,
     "scope": [
@@ -18082,15 +18018,6 @@
       "domain/ifta"
     ]
   },
-  "An output is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
-    ]
-  },
   "An overridden rate cannot be negative": {
     "sites": 1,
     "scope": [
@@ -18228,24 +18155,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Analytics provider queries.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
-  "Analytics, agent automation, and decision support layered on the dispatch board.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Analyzing rate confirmation": {
@@ -21657,6 +21566,24 @@
       "apps/web/components"
     ]
   },
+  "Ask an administrator of your organization about changing the plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Ask an administrator of your organization to restore the subscription.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Ask another agent": {
     "sites": 2,
     "scope": [
@@ -21693,6 +21620,15 @@
     "areas": [
       "domain/agent",
       "routes/agent-control"
+    ]
+  },
+  "Ask for a code from an authenticator app when you sign in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Ask for access, allowance, budget or daily requests": {
@@ -22975,15 +22911,6 @@
       "routes/jurisdiction-rule-override"
     ]
   },
-  "At least 12 characters": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "At least 2 commodity IDs are required": {
     "sites": 1,
     "scope": [
@@ -23953,15 +23880,6 @@
       "domain/email"
     ]
   },
-  "Attempts must not be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
-    ]
-  },
   "Attention": {
     "sites": 1,
     "scope": [
@@ -24143,15 +24061,6 @@
       "apps/web/components"
     ]
   },
-  "Authenticated API requests made by tenant principals.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Authentication": {
     "sites": 2,
     "scope": [
@@ -24179,6 +24088,16 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Authentication code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
     ]
   },
   "Authentication events could not be loaded.": {
@@ -24226,6 +24145,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Authenticator app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Authenticator assurance level is required": {
@@ -25976,13 +25904,12 @@
     ]
   },
   "Back to sign in": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/signup"
+      "routes/auth"
     ]
   },
   "Back to suite runs": {
@@ -27278,15 +27205,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Benefit plan administration and worker enrollments.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Benefit plans and who is enrolled on them": {
@@ -29296,6 +29214,15 @@
       "apps/web/components"
     ]
   },
+  "Bootstrap inputs are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/instancebootstrapservice"
+    ]
+  },
   "Borders open": {
     "sites": 1,
     "scope": [
@@ -29303,15 +29230,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Bot protection is not configured, so signup is unavailable right now.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Both": {
@@ -29368,15 +29286,6 @@
     ],
     "areas": [
       "routes/accounting-drift"
-    ]
-  },
-  "Both the evaluation set and the predictions are required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "Both versions must exist for comparison": {
@@ -29770,15 +29679,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Bucket name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
     ]
   },
   "Budget": {
@@ -30251,7 +30151,7 @@
     ]
   },
   "By continuing you agree to our": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -30376,24 +30276,6 @@
     ],
     "areas": [
       "domain/report"
-    ]
-  },
-  "Bytes in a single uploaded document.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
-  "Bytes of documents an organization stores.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "CAD (C$)": {
@@ -31040,7 +30922,7 @@
     ]
   },
   "Cancel": {
-    "sites": 277,
+    "sites": 281,
     "scope": [
       "ts"
     ],
@@ -35834,13 +35716,12 @@
     ]
   },
   "Check your inbox": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/signup"
+      "routes/auth"
     ]
   },
   "Checked against the state permit office handbook, rev 2026-01": {
@@ -36290,34 +36171,15 @@
       "routes/auth"
     ]
   },
-  "Choose a new one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/password_reset"
-    ]
-  },
   "Choose a new password": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "platform-email/password_reset",
       "routes/auth",
       "template/account.password_reset.email"
-    ]
-  },
-  "Choose a new password for your {0} account. The link works once.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/password_reset"
     ]
   },
   "Choose a new password to continue": {
@@ -37572,7 +37434,7 @@
     ]
   },
   "City is required": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -37582,8 +37444,7 @@
       "domain/location",
       "domain/ratezone",
       "domain/worker",
-      "packages/shared/types",
-      "service/tenantprovisioningservice"
+      "packages/shared/types"
     ]
   },
   "City is required. Please try again": {
@@ -37593,6 +37454,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "City must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "City must be between 1 and 100 characters": {
@@ -38588,15 +38458,6 @@
       "service/organizationservice"
     ]
   },
-  "Client IP must be at most 64 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
-    ]
-  },
   "Client Secret": {
     "sites": 1,
     "scope": [
@@ -39533,8 +39394,17 @@
       "routes/capture"
     ]
   },
+  "Code from the app": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Code is required": {
-    "sites": 50,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -39563,7 +39433,8 @@
       "domain/tenant",
       "domain/worker",
       "packages/shared/types",
-      "service/locationservice"
+      "service/locationservice",
+      "service/mfaservice"
     ]
   },
   "Code must be 32 characters or less": {
@@ -40758,40 +40629,12 @@
     ]
   },
   "Company name": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/onboarding",
-      "routes/signup"
-    ]
-  },
-  "Company name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
-    ]
-  },
-  "Company name must be 100 characters or fewer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
-  "Company name must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
+      "routes/onboarding"
     ]
   },
   "Company profile": {
@@ -41021,24 +40864,6 @@
     ],
     "areas": [
       "service/shipmentmoveservice"
-    ]
-  },
-  "Complete the security check before creating your account.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
-  "Complete the security check first.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Complete these fields to create the shipment": {
@@ -42331,13 +42156,13 @@
       "routes/bank-receipt-queue"
     ]
   },
-  "Confirm email and create workspace": {
+  "Confirm it is you": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "platform-email/signup_verification"
+      "apps/web/components"
     ]
   },
   "Confirm monitoring cost": {
@@ -42479,6 +42304,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "Confirm two-factor reset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Confirm what each record is sent as": {
     "sites": 1,
     "scope": [
@@ -42495,42 +42329,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Confirm your email address to create the {0} workspace on {1}. Nothing is set up until you do.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_verification"
-    ]
-  },
-  "Confirm your email to create the {0} workspace. The link works once.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_verification"
-    ]
-  },
-  "Confirm your email to finish setting up {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_verification"
-    ]
-  },
-  "Confirm your email.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_verification"
     ]
   },
   "Confirm {0}": {
@@ -43880,7 +43678,7 @@
     ]
   },
   "Continue": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -44273,78 +44071,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Control-plane authorization is not configured": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/middleware"
-    ]
-  },
-  "Control-plane body hash is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Control-plane request targets a different instance": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Control-plane shared secret is not configured": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Control-plane signature has expired": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Control-plane signature is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Control-plane timestamp is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Control-plane timestamp is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
     ]
   },
   "Controlled substances": {
@@ -44827,7 +44553,7 @@
     ]
   },
   "Copy": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -45313,15 +45039,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Core shipment, dispatch, billing, accounting, fleet, and settlement workflows.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Core structure": {
@@ -45930,6 +45647,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Could not copy the recovery codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Could not copy. Select the text above instead.": {
@@ -47400,15 +47126,6 @@
       "routes/admin"
     ]
   },
-  "Create account": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Create account & sign in": {
     "sites": 1,
     "scope": [
@@ -47425,15 +47142,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Create an account": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "Create an app on the Intuit developer portal with the com.intuit.quickbooks.accounting scope.": {
@@ -47488,6 +47196,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Create codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Create communication profile": {
@@ -47986,15 +47703,6 @@
       "domain/permission"
     ]
   },
-  "Create shipments and dispatch them": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
   "Create table change alert subscriptions": {
     "sites": 1,
     "scope": [
@@ -48074,15 +47782,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Create your account": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Create your own private copy of this view": {
@@ -48322,15 +48021,6 @@
       "routes/onboarding"
     ]
   },
-  "Creating your account": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Creating {0}": {
     "sites": 1,
     "scope": [
@@ -48341,7 +48031,7 @@
     ]
   },
   "Creating...": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -48948,24 +48638,6 @@
       "routes/customer"
     ]
   },
-  "Cross-cutting platform capabilities.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
-  "Cross-entity search backed by configured search infrastructure.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Crypto mode cannot be longer than 32 characters": {
     "sites": 2,
     "scope": [
@@ -49393,7 +49065,7 @@
     ]
   },
   "Current password": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -49860,14 +49532,13 @@
     ]
   },
   "Customer ID is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/invoice",
-      "go/other",
-      "service/tenantprovisioningservice"
+      "go/other"
     ]
   },
   "Customer Mix": {
@@ -49940,15 +49611,6 @@
     ],
     "areas": [
       "packages/shared/types"
-    ]
-  },
-  "Customer code is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
     ]
   },
   "Customer contact management": {
@@ -50117,15 +49779,6 @@
       "packages/shared/types",
       "routes/billing-queue",
       "routes/shipment"
-    ]
-  },
-  "Customer name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
     ]
   },
   "Customer notice": {
@@ -50415,15 +50068,6 @@
       "apps/web/lib",
       "apps/web/types",
       "routes/customer"
-    ]
-  },
-  "Customers an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.": {
@@ -50735,13 +50379,12 @@
     ]
   },
   "DOT number is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/carrierintel",
-      "service/tenantprovisioningservice"
+      "domain/carrierintel"
     ]
   },
   "DOT number is required. Please try again": {
@@ -50751,6 +50394,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "DOT number must be 1 to 8 digits": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "DOT number must be at most 12 characters": {
@@ -50782,15 +50434,6 @@
       "domain/tenant"
     ]
   },
-  "DOT number must contain 1 to 8 digits": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
   "DOT number must contain only digits": {
     "sites": 2,
     "scope": [
@@ -50819,15 +50462,6 @@
       "routes/fleet-safety"
     ]
   },
-  "DOT qualification files, drug and alcohol program administration, and workplace safety records.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "DOT test": {
     "sites": 1,
     "scope": [
@@ -50835,15 +50469,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "DOT test orders and Clearinghouse queries run against workers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "DOT {0}": {
@@ -52553,15 +52178,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Decide whether enough new corrections have been confirmed to retrain the document extraction model, and start its training export": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Decided": {
@@ -54808,15 +54424,6 @@
       "routes/agent-control"
     ]
   },
-  "Delete every row, stored object and user an expired cloud organization owns": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Delete expired report artifacts and mark runs expired": {
     "sites": 2,
     "scope": [
@@ -54941,6 +54548,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Delete records you no longer need to free room.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Delete reports": {
@@ -55196,15 +54812,6 @@
     ],
     "areas": [
       "apps/web/hooks"
-    ]
-  },
-  "Deleted on": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Deleted or voided": {
@@ -59642,15 +59249,6 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Document OCR, classification, extraction, and review workflows.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Document Type updated successfully": {
     "sites": 1,
     "scope": [
@@ -59739,15 +59337,6 @@
     ],
     "areas": [
       "domain/documenttype"
-    ]
-  },
-  "Document classification operations.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Document could not be attached: {0}": {
@@ -59857,15 +59446,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Document extraction operations.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Document extraction view": {
@@ -60363,15 +59943,6 @@
       "service/driverportalservice"
     ]
   },
-  "Document upload, storage, packets, and parsing rules.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Document uploaded": {
     "sites": 1,
     "scope": [
@@ -60636,15 +60207,6 @@
       "routes/shipment"
     ]
   },
-  "Documents uploaded into tenant storage.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Documents will be sent to {0}": {
     "sites": 1,
     "scope": [
@@ -60754,15 +60316,6 @@
       "routes/admin"
     ]
   },
-  "Don't have an account yet?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "Don't save": {
     "sites": 1,
     "scope": [
@@ -60782,7 +60335,7 @@
     ]
   },
   "Done": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -60849,7 +60402,7 @@
     ]
   },
   "Download": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -61541,33 +61094,6 @@
       "routes/accounting-control"
     ]
   },
-  "Driver and carrier settlement runs, escrow, advances, deductions, and dispute handling.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
-  "Driver and carrier settlement runs, escrow, advances, deductions, and disputes.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
-  "Driver and employee records, DOT compliance, time off, scheduling, talent, safety, and benefits.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Driver and owner-operator pay": {
     "sites": 1,
     "scope": [
@@ -62007,15 +61533,6 @@
       "routes/worker"
     ]
   },
-  "Driver qualification files, credentials, DOT testing, random pools, and Clearinghouse queries.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Driver qualification management": {
     "sites": 1,
     "scope": [
@@ -62186,15 +61703,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Driver-facing loads, pay, hours of service, and document capture.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Driver-initiated money workflows — reimbursements and settlement challenges.": {
@@ -63765,15 +63273,6 @@
       "service/ediservice"
     ]
   },
-  "EDI partner, profile, document, transfer, and X12 workflows.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "EDI quarantined": {
     "sites": 1,
     "scope": [
@@ -64218,6 +63717,15 @@
       "packages/shared/types"
     ]
   },
+  "Each code signs you in once if you lose your authenticator. They are shown only this time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Each component computes pay per completed move; team splits apply on top.": {
     "sites": 1,
     "scope": [
@@ -64351,15 +63859,6 @@
     ],
     "areas": [
       "routes/worker-checklist-template"
-    ]
-  },
-  "Each of these returns a plan notice when tried. They come with paid plans.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Each payment waits on the payments from the books page until someone applies or ignores it.": {
@@ -65552,14 +65051,13 @@
     ]
   },
   "Email address": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
-      "routes/auth",
-      "routes/signup"
+      "routes/auth"
     ]
   },
   "Email address cannot be longer than 320 characters": {
@@ -65581,12 +65079,11 @@
     ]
   },
   "Email address is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/cloudsignup",
       "domain/email",
       "domain/tenant"
     ]
@@ -65610,23 +65107,13 @@
     ]
   },
   "Email address must be a valid email address": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/cloudsignup",
       "domain/email",
       "go/other"
-    ]
-  },
-  "Email address must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
     ]
   },
   "Email address must be between 1 and 255 characters": {
@@ -67705,14 +67192,12 @@
     ]
   },
   "Enter a valid email address": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/types",
-      "service/cloudsignupservice"
+      "packages/shared/types"
     ]
   },
   "Enter a valid usage window.": {
@@ -67851,6 +67336,15 @@
       "routes/admin"
     ]
   },
+  "Enter one of the recovery codes you saved when you set up two-factor authentication.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Enter organization name": {
     "sites": 1,
     "scope": [
@@ -67959,6 +67453,24 @@
       "service/accountingconnectionservice"
     ]
   },
+  "Enter the code from your authenticator app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Enter the code from your authenticator app.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/login.tsx"
+    ]
+  },
   "Enter the day the miles were run": {
     "sites": 1,
     "scope": [
@@ -68024,6 +67536,15 @@
       "apps/web/lib"
     ]
   },
+  "Enter the six-digit code": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Enter the unit number": {
     "sites": 1,
     "scope": [
@@ -68069,13 +67590,22 @@
       "packages/shared/types"
     ]
   },
-  "Enter your company name": {
+  "Enter your code": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "service/cloudsignupservice"
+      "routes/auth"
+    ]
+  },
+  "Enter your email and password.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/login.tsx"
     ]
   },
   "Enter your full name": {
@@ -68087,22 +67617,13 @@
       "routes/admin"
     ]
   },
-  "Enter your name": {
+  "Enter your password": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
-  "Enter your work email": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
+      "apps/web/components"
     ]
   },
   "Enter {0} information": {
@@ -68645,15 +68166,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Equipment, tractors, trailers, and fleet reference data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Equipment: {0}": {
@@ -71091,15 +70603,6 @@
       "service/sequenceconfigservice"
     ]
   },
-  "Example {0} has more than one prediction": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
-    ]
-  },
   "Exceeds eligibility by {0}": {
     "sites": 1,
     "scope": [
@@ -71363,15 +70866,6 @@
     ],
     "areas": [
       "service/accountingcontrolservice"
-    ]
-  },
-  "Exchange-rate provider requests and cached exchange-rate data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Exclude word": {
@@ -72245,7 +71739,7 @@
     ]
   },
   "Expired": {
-    "sites": 24,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -72253,7 +71747,6 @@
       "apps/web/lib",
       "packages/shared/components",
       "packages/shared/lib",
-      "routes/admin",
       "routes/agent-control",
       "routes/carrier",
       "routes/desk",
@@ -72435,13 +71928,12 @@
     ]
   },
   "Expiry is required": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/capture",
-      "domain/cloudsignup",
       "domain/documentupload",
       "domain/invoice"
     ]
@@ -73279,15 +72771,6 @@
       "domain/permission"
     ]
   },
-  "Export your data": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
   "Export “{0}” as a JSON file, including its test scenarios. You can import this template later or share it with others.": {
     "sites": 1,
     "scope": [
@@ -73579,15 +73062,6 @@
       "domain/shipmentimportchat"
     ]
   },
-  "External data and routing integrations.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "External email cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -73658,15 +73132,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "External integration synchronization runs.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "External link": {
@@ -77795,15 +77260,6 @@
       "domain/aifeedback"
     ]
   },
-  "Finish creating your Trenova account": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Finish on the Terms tab first:": {
     "sites": 1,
     "scope": [
@@ -77843,15 +77299,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Finish the short setup with your company details": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
     ]
   },
   "Finish these fields on the Terms tab to price the worked examples.": {
@@ -79095,16 +78542,6 @@
       "routes/pay-advance"
     ]
   },
-  "Forgot your password?": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/password_reset",
-      "platform-email/signup_existing_account"
-    ]
-  },
   "Forgot?": {
     "sites": 1,
     "scope": [
@@ -79720,15 +79157,6 @@
       "apps/web/components"
     ]
   },
-  "Foundational tenant, organization, customer, location, and shipment data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.": {
     "sites": 1,
     "scope": [
@@ -79799,33 +79227,6 @@
     ],
     "areas": [
       "routes/pay-profile"
-    ]
-  },
-  "Free demo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Free demo: 1 day left. After that the workspace becomes read-only.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Free demo: {0} days left. After that the workspace becomes read-only.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Free minutes granted cannot be negative": {
@@ -80962,15 +80363,6 @@
       "service/roleservice"
     ]
   },
-  "Full access until": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
   "Full document text": {
     "sites": 1,
     "scope": [
@@ -81786,15 +81178,6 @@
       "routes/worker"
     ]
   },
-  "General ledger, journal entries, and accounting controls.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "General liability": {
     "sites": 2,
     "scope": [
@@ -82456,15 +81839,6 @@
       "routes/scheduling"
     ]
   },
-  "Global search queries executed by tenant users.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Go ahead with what you could read from {0}.": {
     "sites": 1,
     "scope": [
@@ -82712,15 +82086,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Google Maps-backed location and routing helpers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Google cloud console.": {
@@ -84454,18 +83819,11 @@
     ]
   },
   "Hi {0},": {
-    "sites": 13,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
-      "platform-email/account_purged",
-      "platform-email/components",
-      "platform-email/password_reset",
-      "platform-email/signup_existing_account",
-      "platform-email/signup_verification",
-      "platform-email/trial_ended",
-      "platform-email/welcome",
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email"
@@ -84481,18 +83839,11 @@
     ]
   },
   "Hi,": {
-    "sites": 13,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
-      "platform-email/account_purged",
-      "platform-email/components",
-      "platform-email/password_reset",
-      "platform-email/signup_existing_account",
-      "platform-email/signup_verification",
-      "platform-email/trial_ended",
-      "platform-email/welcome",
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email"
@@ -86799,15 +86150,6 @@
       "apps/web/lib"
     ]
   },
-  "I agree to the": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "I couldn't load your setup. Refresh the page to try again. Your account and organization are safe.": {
     "sites": 1,
     "scope": [
@@ -87396,15 +86738,6 @@
       "routes/auth"
     ]
   },
-  "If the button does not work": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/components"
-    ]
-  },
   "If the driver arrives late": {
     "sites": 1,
     "scope": [
@@ -87442,31 +86775,12 @@
     ]
   },
   "If this was not you, ignore this email. Your password has not changed and your current one still works.": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "platform-email/password_reset",
       "template/account.password_reset.email"
-    ]
-  },
-  "If this was not you, you can ignore this email. Your account has not changed.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_existing_account"
-    ]
-  },
-  "If you did not sign up, ignore this email and no account will be created.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_verification"
     ]
   },
   "If you were not expecting this, you can ignore it.": {
@@ -87476,24 +86790,6 @@
     ],
     "areas": [
       "template/driverportal.invitation.email"
-    ]
-  },
-  "If {0} can be used for a new account, a verification link is on its way. Open it on this device to finish setting up your workspace.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
-  "If {0} has a pending signup, a new link is on its way.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Ignore": {
@@ -89348,15 +88644,6 @@
       "domain/worker"
     ]
   },
-  "Injury reporting, OSHA annual summaries, safety events, and fleet safety standing.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Inline node must be an object": {
     "sites": 1,
     "scope": [
@@ -89842,15 +89129,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Instance ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
     ]
   },
   "Instant pay": {
@@ -92775,15 +92053,6 @@
       "apps/web/config"
     ]
   },
-  "Invoicing, billing queues, and customer payments.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Iowa (IA)": {
     "sites": 1,
     "scope": [
@@ -93469,15 +92738,6 @@
       "routes/insights"
     ]
   },
-  "It works once. If it runs out, sign up again for a new one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_verification"
-    ]
-  },
   "It would go through as shown.": {
     "sites": 1,
     "scope": [
@@ -93834,15 +93094,6 @@
     ],
     "areas": [
       "routes/intake"
-    ]
-  },
-  "Jordan Rivera": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Journal approved": {
@@ -99261,15 +98512,6 @@
       "domain/aicorrection"
     ]
   },
-  "Load a sample data set to explore with realistic shipments": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
   "Load acceptance": {
     "sites": 1,
     "scope": [
@@ -100227,15 +99469,6 @@
       "routes/scheduling"
     ]
   },
-  "Loading security check…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Loading service failure...": {
     "sites": 1,
     "scope": [
@@ -100795,15 +100028,6 @@
       "routes/location"
     ]
   },
-  "Locations an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Lock a draft so its figures no longer move": {
     "sites": 1,
     "scope": [
@@ -101031,15 +100255,6 @@
       "routes/admin"
     ]
   },
-  "Login slug is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
   "Login slug may only contain lowercase letters, numbers, and hyphens": {
     "sites": 1,
     "scope": [
@@ -101257,15 +100472,6 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
-    ]
-  },
-  "Look up records": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
     ]
   },
   "Lookback (settlements)": {
@@ -106976,15 +106182,6 @@
       "domain/trailer"
     ]
   },
-  "Model spend in a calendar month.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Model usage cost this month.": {
     "sites": 1,
     "scope": [
@@ -108141,24 +107338,6 @@
       "service/shipmentservice"
     ]
   },
-  "Move cloud trials to read-only and expired, and purge expired organizations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Move cloud trials to read-only and expired, and start the purge of expired organizations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Move completed": {
     "sites": 1,
     "scope": [
@@ -109172,7 +108351,7 @@
     ]
   },
   "Name is required": {
-    "sites": 107,
+    "sites": 106,
     "scope": [
       "go",
       "ts"
@@ -109187,7 +108366,6 @@
       "domain/capture",
       "domain/carrier",
       "domain/carriersettlement",
-      "domain/cloudsignup",
       "domain/commodity",
       "domain/costingcontrol",
       "domain/customer",
@@ -109253,24 +108431,6 @@
     ],
     "areas": [
       "routes/capture"
-    ]
-  },
-  "Name must be 100 characters or fewer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
-  "Name must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
     ]
   },
   "Name must be between 1 and 100 characters": {
@@ -110377,15 +109537,6 @@
       "routes/auth"
     ]
   },
-  "Network pulse is not enabled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/networkpulseservice"
-    ]
-  },
   "Network signals": {
     "sites": 2,
     "scope": [
@@ -111221,6 +110372,15 @@
     ]
   },
   "New record": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "New recovery codes": {
     "sites": 2,
     "scope": [
       "ts"
@@ -115175,15 +114335,6 @@
       "routes/rate-zone"
     ]
   },
-  "No plan limits on this installation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No plans yet": {
     "sites": 1,
     "scope": [
@@ -117424,24 +116575,6 @@
       "routes/edi"
     ]
   },
-  "Normalized email address is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
-    ]
-  },
-  "Normalized email address must be at most 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
-    ]
-  },
   "Normalizer": {
     "sites": 2,
     "scope": [
@@ -117890,15 +117023,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Not included in the free demo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Not indexed; found by its words only": {
@@ -118506,15 +117630,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Not your email address": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "NotSent": {
@@ -120546,24 +119661,6 @@
       "apps/web/components"
     ]
   },
-  "OCR-backed document classification and extraction.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
-  "OCR-backed document classification, extraction, and review.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "OIDC application": {
     "sites": 1,
     "scope": [
@@ -120915,11 +120012,12 @@
     ]
   },
   "Off": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
@@ -121460,11 +120558,12 @@
     ]
   },
   "On": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-invoice-matching",
@@ -121646,6 +120745,15 @@
       "routes/worker"
     ]
   },
+  "On since {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "On the 300 log": {
     "sites": 1,
     "scope": [
@@ -121709,15 +120817,6 @@
       "routes/reports"
     ]
   },
-  "On this date the workspace and everything in it will be permanently deleted.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
   "On time": {
     "sites": 1,
     "scope": [
@@ -121743,15 +120842,6 @@
     ],
     "areas": [
       "routes/my-team"
-    ]
-  },
-  "On {0} the workspace and everything in it will be permanently deleted.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
     ]
   },
   "On, drivers type their name to sign it; off means they only confirm they have read it.": {
@@ -122248,15 +121338,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "One step left.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_verification"
     ]
   },
   "One way": {
@@ -122855,15 +121936,6 @@
     ],
     "areas": [
       "service/accountingmappingservice"
-    ]
-  },
-  "Only a queued or running export can be canceled; this one is {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "Only a rated reply in a conversation can become an evaluation case": {
@@ -125760,14 +124832,13 @@
       "routes/osha"
     ]
   },
-  "Open your workspace": {
-    "sites": 4,
+  "Open your authenticator app and enter the six-digit code for Trenova.": {
+    "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "platform-email/trial_ended",
-      "platform-email/welcome"
+      "routes/auth"
     ]
   },
   "Open {0}": {
@@ -126318,24 +125389,6 @@
     ],
     "areas": [
       "domain/homelayout"
-    ]
-  },
-  "Operational analytics and reporting views.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
-  "Operational analytics pages and query providers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Operational findings surfaced on the home screen": {
@@ -127670,6 +126723,24 @@
     ],
     "areas": [
       "domain/carrierintel"
+    ]
+  },
+  "Organization name is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
+  "Organization name must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Organization not found": {
@@ -129953,15 +129024,6 @@
       "routes/pto-policy"
     ]
   },
-  "PTO policies, accrual ledgers, balances, and leave case administration.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "PTO policy": {
     "sites": 2,
     "scope": [
@@ -131460,7 +130522,7 @@
     ]
   },
   "Password": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -131470,17 +130532,7 @@
       "routes/accept.tsx",
       "routes/auth",
       "routes/edi",
-      "routes/login.tsx",
-      "routes/signup"
-    ]
-  },
-  "Password cannot be only spaces": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
+      "routes/login.tsx"
     ]
   },
   "Password changed": {
@@ -131512,12 +130564,14 @@
     ]
   },
   "Password is required": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/cloudsignup"
+      "apps/web/components",
+      "service/mfaservice"
     ]
   },
   "Password is required. Please provide a valid password.": {
@@ -131547,24 +130601,6 @@
       "routes/admin"
     ]
   },
-  "Password must be 72 bytes or fewer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
-  "Password must be at least 12 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
   "Password must be at least 8 characters": {
     "sites": 2,
     "scope": [
@@ -131573,24 +130609,6 @@
     "areas": [
       "service/driverportalservice",
       "service/passwordresetservice"
-    ]
-  },
-  "Password must not be your email address": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
-  "Password must not contain your email address": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
     ]
   },
   "Password reset link sent": {
@@ -133482,15 +132500,6 @@
       "routes/agent-control"
     ]
   },
-  "People who belong to an organization.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "People who waived a plan they were offered, most recent decision first.": {
     "sites": 1,
     "scope": [
@@ -134471,15 +133480,6 @@
     ],
     "areas": [
       "routes/fiscal-year"
-    ]
-  },
-  "Permanent deletion": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
     ]
   },
   "Permanently closed": {
@@ -136134,7 +135134,7 @@
     ]
   },
   "Plan": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -136142,22 +135142,10 @@
     "areas": [
       "apps/web/components",
       "domain/watchtower",
-      "routes/admin",
       "routes/agent-control",
       "routes/benefits",
       "routes/desk",
       "routes/worker"
-    ]
-  },
-  "Plan & usage": {
-    "sites": 4,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "apps/web/config",
-      "routes/admin"
     ]
   },
   "Plan Limit Reached": {
@@ -136222,15 +135210,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Plan summary": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Plan type is required": {
@@ -136358,15 +135337,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Plans and usage limits apply only on Trenova Cloud. Every organization here is unlimited.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Plans cannot be actioned while all agents are paused. Turn off \"Pause all agents\" on the AI Control overview, then decide again": {
@@ -137671,7 +136641,7 @@
     ]
   },
   "Postal code is required": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -137679,8 +136649,16 @@
     "areas": [
       "domain/customer",
       "domain/location",
-      "packages/shared/types",
-      "service/tenantprovisioningservice"
+      "packages/shared/types"
+    ]
+  },
+  "Postal code must be a US ZIP code (12345 or 12345-6789)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Postal code of the final delivery stop": {
@@ -138381,11 +137359,12 @@
     ]
   },
   "Preparing...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue"
     ]
   },
@@ -139676,13 +138655,12 @@
     ]
   },
   "Privacy policy": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/signup"
+      "apps/web/components"
     ]
   },
   "Private": {
@@ -141355,42 +140333,6 @@
       "routes/admin"
     ]
   },
-  "Provisioning payload could not be read": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Provisioning payload is invalid JSON": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Provisioning payload is not targeted to this instance": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
-  "Provisioning payload is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
   "Proximity": {
     "sites": 1,
     "scope": [
@@ -142183,6 +141125,15 @@
       "routes/ifta-return"
     ]
   },
+  "QR code for your authenticator app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Qty": {
     "sites": 3,
     "scope": [
@@ -142567,15 +141518,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Questions people ask the assistant in a calendar month.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Questions per person each month": {
@@ -145291,14 +144233,13 @@
     ]
   },
   "Read-only": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "api/writecoverage",
-      "routes/admin",
       "routes/edi"
     ]
   },
@@ -145817,15 +144758,6 @@
     ],
     "areas": [
       "service/accountingcontrolservice"
-    ]
-  },
-  "Realtime messaging and notifications.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Rear escort": {
@@ -148768,6 +147700,34 @@
       "routes/admin"
     ]
   },
+  "Recovery code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
+    ]
+  },
+  "Recovery codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Recovery codes copied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Rectangle": {
     "sites": 1,
     "scope": [
@@ -148887,15 +147847,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Recurring shipment series an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Recurring shipment series management and scheduled generation": {
@@ -149339,7 +148290,7 @@
     ]
   },
   "Refresh": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -150209,15 +149160,6 @@
       "service/ediservice",
       "service/journalreversalservice",
       "service/manualjournalservice"
-    ]
-  },
-  "Rejection reason must be at most 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
     ]
   },
   "Rejection reason...": {
@@ -151338,6 +150280,15 @@
       "service/formula"
     ]
   },
+  "Removes this user's authenticator app and recovery codes, for someone who lost their device. They can set it up again from their settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Removing somebody's hours needs a reason": {
     "sites": 1,
     "scope": [
@@ -152184,24 +151135,6 @@
       "domain/email"
     ]
   },
-  "Reply to this email if anything gets in your way.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
-  "Reply to this email if you want to keep using {0}.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
   "Reply to this message if any detail needs review.": {
     "sites": 2,
     "scope": [
@@ -152816,13 +151749,12 @@
     ]
   },
   "Request is required": {
-    "sites": 47,
+    "sites": 46,
     "scope": [
       "go"
     ],
     "areas": [
       "go/other",
-      "service/aitrainingservice",
       "service/bankreceiptbatchservice",
       "service/bankreceiptservice",
       "service/billingqueueservice",
@@ -154022,15 +152954,6 @@
       "routes/admin"
     ]
   },
-  "Resend in {0}": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Resend integration updated": {
     "sites": 1,
     "scope": [
@@ -154038,15 +152961,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Resend verification email": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Resend webhook setup": {
@@ -154126,15 +153040,6 @@
       "routes/reports"
     ]
   },
-  "Reset it from the sign-in page.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_existing_account"
-    ]
-  },
   "Reset password": {
     "sites": 2,
     "scope": [
@@ -154193,6 +153098,15 @@
       "routes/desk"
     ]
   },
+  "Reset two-factor authentication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Reset your password": {
     "sites": 1,
     "scope": [
@@ -154203,12 +153117,11 @@
     ]
   },
   "Reset your {0} password": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "platform-email/password_reset",
       "template/account.password_reset.email"
     ]
   },
@@ -154231,12 +153144,20 @@
     ]
   },
   "Resets {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "apps/web/components"
+    ]
+  },
+  "Resetting...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/admin"
     ]
   },
@@ -157426,15 +156347,6 @@
       "apps/web/components"
     ]
   },
-  "Rivera Freight LLC": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Road restrictions and supplemental reporting options sent with mileage requests.": {
     "sites": 1,
     "scope": [
@@ -158327,15 +157239,6 @@
     ],
     "areas": [
       "domain/storedmileage"
-    ]
-  },
-  "Route is not mapped to a platform feature": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/middleware"
     ]
   },
   "Route not resolved": {
@@ -159779,15 +158682,6 @@
       "routes/onboarding"
     ]
   },
-  "SCAC code is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
   "SCAC code is required. Please try again": {
     "sites": 1,
     "scope": [
@@ -159798,13 +158692,21 @@
     ]
   },
   "SCAC code must be 4 characters": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/tenant",
-      "service/tenantprovisioningservice"
+      "domain/tenant"
+    ]
+  },
+  "SCAC code must be four letters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "SCAC must be 2-4 uppercase letters": {
@@ -160648,15 +159550,6 @@
       "routes/tractor"
     ]
   },
-  "Samsara vehicle and routing integration.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Samsara worker sync": {
     "sites": 2,
     "scope": [
@@ -161340,6 +160233,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Save these recovery codes now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Save tile": {
@@ -162205,6 +161107,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Scan the code with your authenticator app, or enter this key by hand:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Scan with": {
@@ -167305,15 +166216,6 @@
       "domain/permission"
     ]
   },
-  "Send a new link": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Send a rate agreement back for revision": {
     "sites": 1,
     "scope": [
@@ -167996,7 +166898,7 @@
     ]
   },
   "Sending": {
-    "sites": 9,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -168005,8 +166907,7 @@
       "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
-      "routes/detention-desk",
-      "routes/signup"
+      "routes/detention-desk"
     ]
   },
   "Sending link": {
@@ -168219,15 +167120,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Sent again. Use the newest link; earlier ones stop working.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Sent as bills since {0}. Company driver pay is never sent.": {
@@ -169612,11 +168504,12 @@
     ]
   },
   "Set up": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control",
       "routes/fuel-purchase"
     ]
@@ -169637,6 +168530,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Set up two-factor authentication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Set up your Trenova organization": {
@@ -169718,15 +168620,6 @@
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "Setting up your workspace": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Setting up...": {
@@ -172066,15 +170959,6 @@
       "service/dispatchconsoleservice"
     ]
   },
-  "Shipment movement planning and execution.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Shipment must be completed before it can be marked ready to invoice": {
     "sites": 1,
     "scope": [
@@ -172449,15 +171333,6 @@
       "routes/rate-agreement",
       "routes/shipment",
       "template/invoice.pdf"
-    ]
-  },
-  "Shipments an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Shipments and related configuration": {
@@ -173674,16 +172549,13 @@
     ]
   },
   "Sign in": {
-    "sites": 6,
+    "sites": 3,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "platform-email/signup_existing_account",
       "routes/auth",
-      "routes/login.tsx",
-      "routes/signup"
+      "routes/login.tsx"
     ]
   },
   "Sign in again": {
@@ -173704,22 +172576,13 @@
       "packages/shared/components"
     ]
   },
-  "Sign in instead": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
-  "Sign in instead.": {
+  "Sign in again to continue": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "platform-email/signup_existing_account"
+      "go/other"
     ]
   },
   "Sign in to Trenova": {
@@ -173729,15 +172592,6 @@
     ],
     "areas": [
       "routes/login.tsx"
-    ]
-  },
-  "Sign in to the workspace": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
     ]
   },
   "Sign in to your Trenova account": {
@@ -173811,6 +172665,42 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Sign-in asks for a code from your authenticator app.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Sign-in challenge not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sign-in will ask for a code from an authenticator app as well as your password.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Sign-in will ask only for your password. Your recovery codes stop working.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Signals": {
@@ -173963,25 +172853,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "Signup is not available": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers",
-      "service/cloudsignupservice"
-    ]
-  },
-  "Signups are limited to approved email domains": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
     ]
   },
   "Signups are paused right now. You have been added to the wait list.": {
@@ -174859,12 +173730,11 @@
     ]
   },
   "Somebody asked to reset the password for your {0} account.": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "platform-email/password_reset",
       "template/account.password_reset.email"
     ]
   },
@@ -174951,24 +173821,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Someone tried to sign up for {0} with this email address, but it already belongs to an account. No new account was created.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_existing_account"
-    ]
-  },
-  "Someone tried to sign up with this address. No new account was created.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_existing_account"
     ]
   },
   "Someone with manage access to the accounting integration has to enter the {0} keys.": {
@@ -176724,24 +175576,6 @@
       "domain/permission"
     ]
   },
-  "Start a document extraction retraining when enough new corrections have been confirmed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Start a free Trenova Cloud demo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Start a fresh conversation with the assistant": {
     "sites": 1,
     "scope": [
@@ -176785,15 +175619,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Start a new trial": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
     ]
   },
   "Start a review": {
@@ -176988,12 +175813,13 @@
     ]
   },
   "Start over": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/signup"
+      "routes/auth",
+      "routes/login.tsx"
     ]
   },
   "Start review": {
@@ -177559,6 +176385,15 @@
       "packages/shared/types"
     ]
   },
+  "State must be a two-letter US state abbreviation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
+    ]
+  },
   "State only": {
     "sites": 1,
     "scope": [
@@ -177741,7 +176576,7 @@
     ]
   },
   "Status": {
-    "sites": 267,
+    "sites": 266,
     "scope": [
       "go",
       "ts"
@@ -177911,7 +176746,7 @@
     ]
   },
   "Status is required": {
-    "sites": 144,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -177928,7 +176763,6 @@
       "domain/capture",
       "domain/carrier",
       "domain/carrierintel",
-      "domain/cloudsignup",
       "domain/conversation",
       "domain/dedicatedlane",
       "domain/detention",
@@ -179197,15 +178031,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Structured output mode is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "Structured output mode is required": {
@@ -181042,15 +179867,6 @@
       "routes/table-change-alert"
     ]
   },
-  "Table change alert events emitted for delivery.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Table change alert subscriptions and notifications": {
     "sites": 1,
     "scope": [
@@ -181067,15 +179883,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Table change subscriptions and delivery events.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Table is not eligible for change alerts": {
@@ -181725,15 +180532,6 @@
       "routes/carrier"
     ]
   },
-  "Tax ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
   "Tax ID type": {
     "sites": 2,
     "scope": [
@@ -182025,15 +180823,6 @@
     ],
     "areas": [
       "service/telematicsservice"
-    ]
-  },
-  "Telematics-backed tracking, geofencing, and customer-facing shipment visibility.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Tell Trenova which {0} account, item, customer and vendor each Trenova record is sent as. Trenova proposes a match where it is sure enough; nothing is used until a person confirms it.": {
@@ -182647,15 +181436,6 @@
       "domain/permission"
     ]
   },
-  "Tenant-scoped API keys and API usage tracking.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Tender": {
     "sites": 3,
     "scope": [
@@ -183203,13 +181983,12 @@
     ]
   },
   "Terms of Service": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/signup"
+      "apps/web/components"
     ]
   },
   "Terrain": {
@@ -183498,15 +182277,6 @@
       "apps/web/components"
     ]
   },
-  "Thank you for trying {0}.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
-    ]
-  },
   "Thank you — the dispatcher has been notified of your response.": {
     "sites": 1,
     "scope": [
@@ -183586,6 +182356,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "That code didn't work. Check it and try again, or sign in again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/login.tsx"
     ]
   },
   "That code is not valid or has expired": {
@@ -185972,6 +184751,15 @@
       "routes/fiscal-year"
     ]
   },
+  "The code is incorrect or has already been used": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
+    ]
+  },
   "The code of the account type": {
     "sites": 1,
     "scope": [
@@ -186168,15 +184956,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "The complete workforce management suite, sellable without any transportation management feature.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "The computation flagged nothing on this quarter.": {
@@ -186411,15 +185190,6 @@
     ],
     "areas": [
       "service/agentevalcaseservice"
-    ]
-  },
-  "The core transportation management platform: shipments, dispatch, billing, accounting, fleet, documents, and currency conversion.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "The correction is kept alongside the original record.": {
@@ -187547,15 +186317,6 @@
       "domain/documenttemplate"
     ]
   },
-  "The driver-facing portal for loads, pay, hours of service, documents, and time-off requests.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "The drop that counts as a regression is at least 0.01": {
     "sites": 1,
     "scope": [
@@ -187653,15 +186414,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "The email could not be sent. Try again.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "The embedding provider is failing": {
@@ -188081,33 +186833,6 @@
     ],
     "areas": [
       "domain/documenttemplate"
-    ]
-  },
-  "The export's manifest does not match its recorded checksum; it has been changed since it was written": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
-    ]
-  },
-  "The export's manifest is larger than any manifest Trenova writes": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
-    ]
-  },
-  "The export's manifest is not one this version of Trenova can render": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "The extended linehaul amount, unformatted.": {
@@ -188604,42 +187329,6 @@
     ],
     "areas": [
       "routes/fuel-card"
-    ]
-  },
-  "The free demo is for trying Trenova, so it holds a small amount of data. Delete records you no longer need to free room. {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "The free demo's trial period is over, so this workspace is read-only: everything can be opened and exported, but nothing can be created or changed. Paid plans are coming soon.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "The free trial for the {0} workspace has ended, so it is now read-only.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
-  "The free trial for the {0} workspace has ended, so it is now read-only. You can still sign in, look up records and export your data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
     ]
   },
   "The freight billed, one row per commodity.": {
@@ -189360,15 +188049,6 @@
     ],
     "areas": [
       "domain/agent"
-    ]
-  },
-  "The link works once and expires after a day. Nothing arrived? Check spam, then send it again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "The linked assignment is unavailable. Expected total:": {
@@ -190616,6 +189296,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The password is incorrect": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
+    ]
+  },
   "The password must be at least {0} characters": {
     "sites": 1,
     "scope": [
@@ -190806,15 +189495,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "The plan and usage summary could not be loaded. Try refreshing.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "The plan behind this is no longer in the conversation.": {
@@ -191679,6 +190359,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "The recovery code is incorrect or has already been used": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
     ]
   },
   "The recurring series created this shipment for you — you can discard this manual entry.": {
@@ -192591,33 +191280,6 @@
     ],
     "areas": [
       "domain/shipment"
-    ]
-  },
-  "The security check could not be verified right now. Try again in a moment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
-  "The security check could not load. Check your connection or content blocker.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "The security check failed or expired. Complete it again": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
     ]
   },
   "The selected carrier cost events are no longer pending; they were attached or voided by a concurrent request": {
@@ -193910,33 +192572,6 @@
       "routes/billing-queue"
     ]
   },
-  "The trial ends on the date above, or as soon as all {0} shipments are used, whichever comes first.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "The trial ends on the date above.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "The trial period is over, so this workspace is read-only: you can open and export everything, but nothing can be created or changed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "The truck stop or station, as it appears on the receipt.": {
     "sites": 1,
     "scope": [
@@ -194198,15 +192833,6 @@
       "service/aiauditservice"
     ]
   },
-  "The verification link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or ask for a new one.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "The version signed is required": {
     "sites": 1,
     "scope": [
@@ -194331,15 +192957,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "The window cannot end in the future": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "The window cannot start before 1970": {
@@ -194544,15 +193161,6 @@
       "routes/ifta-return"
     ]
   },
-  "The workspace is deleted when the read-only period ends. Paid plans are coming soon; until then, export anything you want to keep.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).": {
     "sites": 1,
     "scope": [
@@ -194724,51 +193332,6 @@
       "apps/web/components"
     ]
   },
-  "The {0} trial workspace and its data have been permanently deleted.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
-    ]
-  },
-  "The {0} trial workspace reached the end of its read-only period, so it and all of its data have been permanently deleted.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
-    ]
-  },
-  "The {0} workspace is now read-only. You can still sign in and export your data.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
-  "The {0} workspace is ready. Finish the short setup to add your company details, and load a sample data set if you want to explore with realistic shipments.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
-  "The {0} workspace is ready. Here is where to start.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
   "Their claim, verbatim where possible — it decides which evidence matters.": {
     "sites": 1,
     "scope": [
@@ -194878,6 +193441,15 @@
       "service/assistantservice"
     ]
   },
+  "There is no enrollment waiting for a code. Start the enrollment again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
+    ]
+  },
   "There is no extension named {0}": {
     "sites": 1,
     "scope": [
@@ -194897,7 +193469,7 @@
     ]
   },
   "There is no onboarding to complete": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -196632,6 +195204,15 @@
       "routes/worker"
     ]
   },
+  "This enrollment is no longer pending. Start the enrollment again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This entry type must add days": {
     "sites": 1,
     "scope": [
@@ -196730,15 +195311,6 @@
     ],
     "areas": [
       "service/aiauditservice"
-    ]
-  },
-  "This export has not finished; render it once its manifest is written": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "This export is too large to write while you wait. It is being written in the background; you'll be notified when the file is ready, and it will be under Exports.": {
@@ -197192,15 +195764,6 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "This is Trenova Cloud's free demo: the whole product with small limits, for trying it on your own freight. Paid plans with higher limits are coming soon.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "This is a popout window!": {
     "sites": 1,
     "scope": [
@@ -197463,23 +196026,13 @@
       "routes/escrow-account"
     ]
   },
-  "This limit resets at the start of next month. {0}": {
+  "This limit resets at the start of next month.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
-    ]
-  },
-  "This link expires": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/password_reset",
-      "platform-email/signup_verification"
+      "apps/web/lib"
     ]
   },
   "This link expires in {0, plural, one {# day} other {# days}}, on {1}.": {
@@ -197500,32 +196053,21 @@
       "template/driverportal.invitation.email"
     ]
   },
-  "This link has expired": {
+  "This link is incomplete": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/signup"
-    ]
-  },
-  "This link is incomplete": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth",
-      "routes/signup"
+      "routes/auth"
     ]
   },
   "This link works once and expires in {0, plural, one {# minute} other {# minutes}}, at {1}.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "platform-email/password_reset",
       "template/account.password_reset.email"
     ]
   },
@@ -197536,16 +196078,6 @@
     ],
     "areas": [
       "template/account.password_reset.email"
-    ]
-  },
-  "This link works once and expires {0}.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/password_reset",
-      "platform-email/signup_verification"
     ]
   },
   "This link works once. Pick a password you have not used here before.": {
@@ -197755,24 +196287,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "This network has made too many requests. Try again in {0} minutes.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
-  "This network has made too many requests. Wait a while and try again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "This offer expires at {0}.": {
@@ -198002,6 +196516,15 @@
       "routes/dispatch-console"
     ]
   },
+  "This part of Trenova is not included in your current plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "This part of the page ran into a problem it couldn't recover from. Try again, or reload the page if it keeps happening.": {
     "sites": 1,
     "scope": [
@@ -198027,15 +196550,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "This password is too common. Choose something harder to guess": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
     ]
   },
   "This password reset link is no longer valid. Request a new one.": {
@@ -198153,15 +196667,6 @@
     ],
     "areas": [
       "service/agentplanservice"
-    ]
-  },
-  "This plan has no usage limits.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "This plan is {0}, not waiting to go through": {
@@ -199155,6 +197660,15 @@
       "service/invoiceshareservice"
     ]
   },
+  "This user signs in with their password alone until they set it up again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This usually takes a few seconds": {
     "sites": 1,
     "scope": [
@@ -199198,15 +197712,6 @@
     ],
     "areas": [
       "domain/carrierintel"
-    ]
-  },
-  "This verification link is invalid, expired or already used. Sign up again to get a new one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
     ]
   },
   "This version": {
@@ -199514,6 +198019,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "This workspace is read-only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "This workspace's free trial has ended and it is scheduled for deletion, so sign-in is no longer available. Start a new trial or contact support to recover it.": {
@@ -200354,15 +198868,6 @@
       "routes/time-attendance"
     ]
   },
-  "Timesheets, shift templates, swaps, and rota scheduling.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Timestamp": {
     "sites": 4,
     "scope": [
@@ -200425,17 +198930,8 @@
       "domain/agentquality"
     ]
   },
-  "Timezone is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
   "Timezone is required": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -200445,7 +198941,6 @@
       "domain/recurringshipment",
       "domain/report",
       "domain/tenant",
-      "service/tenantprovisioningservice",
       "service/userservice"
     ]
   },
@@ -200483,6 +198978,15 @@
     ],
     "areas": [
       "domain/recurringshipment"
+    ]
+  },
+  "Timezone must be an IANA time zone such as America/Chicago": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/instancebootstrap"
     ]
   },
   "Timing": {
@@ -201204,13 +199708,12 @@
     ]
   },
   "Too many attempts": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/rate-confirmation-public",
-      "routes/signup",
       "routes/tender-offer-public"
     ]
   },
@@ -201277,6 +199780,15 @@
       "domain/agent"
     ]
   },
+  "Too many incorrect codes. Sign in again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
+    ]
+  },
   "Too many live connections are open for this account. Close a tab and try again.": {
     "sites": 1,
     "scope": [
@@ -201340,15 +199852,6 @@
     ],
     "areas": [
       "service/authservice"
-    ]
-  },
-  "Too many signup attempts from this network. Try again later.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
     ]
   },
   "Too many sort fields": {
@@ -202630,15 +201133,6 @@
       "routes/tractor"
     ]
   },
-  "Tractors an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Tractors, trailers, and equipment": {
     "sites": 1,
     "scope": [
@@ -202673,15 +201167,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Trading-partner EDI: partners, mapping profiles, templates, transfers, and X12 document exchange.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Traffic": {
@@ -202970,15 +201455,6 @@
       "routes/trailer"
     ]
   },
-  "Trailers an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Trailers whose plates expire inside the horizon, with inspection status and fleet assignment": {
     "sites": 1,
     "scope": [
@@ -203036,15 +201512,6 @@
       "routes/training-course"
     ]
   },
-  "Training courses and records, performance reviews, discipline, and recognition.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Training due": {
     "sites": 1,
     "scope": [
@@ -203052,15 +201519,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Training exports cannot run on this installation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "Training matrix": {
@@ -203080,24 +201538,6 @@
     "areas": [
       "packages/shared/lib",
       "routes/home"
-    ]
-  },
-  "Training part {0} does not match the manifest; it has been changed since it was written": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
-    ]
-  },
-  "Training part {0} holds an example this version of Trenova cannot render": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/aitrainingservice"
     ]
   },
   "Training record is invalid": {
@@ -204154,15 +202594,6 @@
       "routes/accounting-drift"
     ]
   },
-  "Trial": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Trial balance": {
     "sites": 3,
     "scope": [
@@ -204190,15 +202621,6 @@
     ],
     "areas": [
       "domain/subscription"
-    ]
-  },
-  "Trial ends": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Tried first. Automatic follows the routing on the Providers tab.": {
@@ -204563,7 +202985,7 @@
     ]
   },
   "Try again": {
-    "sites": 53,
+    "sites": 50,
     "scope": [
       "ts"
     ],
@@ -204584,7 +203006,6 @@
       "routes/onboarding",
       "routes/rate-confirmation-public",
       "routes/shipment",
-      "routes/signup",
       "routes/tender-offer-public",
       "routes/tractor",
       "routes/worker"
@@ -204644,15 +203065,6 @@
     ],
     "areas": [
       "routes/intake"
-    ]
-  },
-  "Try the AI assistant on your own data": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
     ]
   },
   "Try the download again": {
@@ -204810,6 +203222,15 @@
       "api/handlers"
     ]
   },
+  "Turn off": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turn off for a company-policy test that is not made under 49 CFR 382.": {
     "sites": 1,
     "scope": [
@@ -204826,6 +203247,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turn off two-factor authentication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Turn on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan": {
@@ -204929,6 +203368,15 @@
       "packages/shared/types"
     ]
   },
+  "Turning off...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turning on {0} for {1}": {
     "sites": 1,
     "scope": [
@@ -204972,6 +203420,70 @@
     ],
     "areas": [
       "domain/ratematrix"
+    ]
+  },
+  "Two-factor authentication": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/auth"
+    ]
+  },
+  "Two-factor authentication is already turned on. Turn it off before enrolling a new authenticator.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Two-factor authentication is not turned on for this account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
+    ]
+  },
+  "Two-factor authentication is off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Two-factor authentication is on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Two-factor authentication reset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Two-factor settings could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Tx age": {
@@ -205578,15 +204090,6 @@
     ],
     "areas": [
       "service/shipmentservice"
-    ]
-  },
-  "Unable to load your plan": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Unable to read X12 separators from ISA; default X12 separators were used.": {
@@ -206821,12 +205324,11 @@
     ]
   },
   "Unlimited": {
-    "sites": 7,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control",
       "routes/pto-policy",
       "routes/recurring-shipment"
@@ -207576,12 +206078,11 @@
     ]
   },
   "Up to {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -208011,13 +206512,13 @@
       "routes/shipment"
     ]
   },
-  "Upload a smaller file, or split it into parts. {0}": {
+  "Upload a smaller file, or split it into parts.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Upload and manage your organization logo used across the application.": {
@@ -208426,13 +206927,12 @@
     ]
   },
   "Usage": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/carrier-monitoring",
       "routes/edi"
     ]
@@ -208601,15 +207101,6 @@
       "routes/edi"
     ]
   },
-  "Use a permanent work email address. Disposable addresses cannot sign up": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/cloudsignupservice"
-    ]
-  },
   "Use a previously saved version snapshot": {
     "sites": 1,
     "scope": [
@@ -208617,6 +207108,16 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Use a recovery code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
     ]
   },
   "Use a three-letter currency code": {
@@ -208998,6 +207499,16 @@
       "routes/admin"
     ]
   },
+  "Use your authenticator app": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
+    ]
+  },
   "Use your own app": {
     "sites": 1,
     "scope": [
@@ -209242,15 +207753,6 @@
       "domain/notification"
     ]
   },
-  "User agent must be at most 512 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
-    ]
-  },
   "User is not a member of this organization": {
     "sites": 1,
     "scope": [
@@ -209261,7 +207763,7 @@
     ]
   },
   "User is required": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go"
     ],
@@ -209280,7 +207782,8 @@
       "domain/shipment",
       "domain/shipmentimportchat",
       "domain/sidebarpreference",
-      "domain/tenant"
+      "domain/tenant",
+      "service/mfaservice"
     ]
   },
   "User message is required": {
@@ -209437,15 +207940,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Users, roles, permissions, audit history, custom fields, and table configuration.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Uses accessorial code, generic code, description, or MSC.": {
@@ -210284,15 +208778,6 @@
       "apps/web/components"
     ]
   },
-  "Verification links work once and expire after a day. If you already used this one, sign in instead; otherwise ask for a new link.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Verification overridden": {
     "sites": 1,
     "scope": [
@@ -210327,24 +208812,6 @@
     ],
     "areas": [
       "domain/jurisdictionrule"
-    ]
-  },
-  "Verification token hash must be 64 lowercase hexadecimal characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
-    ]
-  },
-  "Verification token is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/cloudsignup"
     ]
   },
   "Verification {0}": {
@@ -210389,13 +208856,15 @@
     ]
   },
   "Verify": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/jurisdiction-rule"
+      "routes/auth",
+      "routes/jurisdiction-rule",
+      "routes/login.tsx"
     ]
   },
   "Verify a VIN, plate or unit number": {
@@ -210405,15 +208874,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Verify email": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Verify equipment": {
@@ -210462,13 +208922,13 @@
       "go/other"
     ]
   },
-  "Verifying": {
-    "sites": 2,
+  "Verifying code": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/signup"
+      "routes/auth"
     ]
   },
   "Verifying credentials": {
@@ -210480,22 +208940,14 @@
       "routes/auth"
     ]
   },
-  "Verifying your email and preparing your organization. This takes a few seconds.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Verifying...": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/login.tsx"
     ]
   },
   "Verifying…": {
@@ -213675,15 +212127,6 @@
       "packages/shared/components"
     ]
   },
-  "We could not reach Trenova to verify your email. Check your connection and try again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "We couldn't find that": {
     "sites": 1,
     "scope": [
@@ -213774,13 +212217,13 @@
       "routes/hos.tsx"
     ]
   },
-  "We couldn't verify your email": {
+  "We couldn't sign you in. Check your email and password and try again.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/signup"
+      "routes/login.tsx"
     ]
   },
   "We do not run oversize at night in this state": {
@@ -213955,15 +212398,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Website": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Website URL must be a valid URL": {
@@ -214438,24 +212872,6 @@
     ],
     "areas": [
       "template/driverportal.invitation.email"
-    ]
-  },
-  "Welcome to {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
-  "Welcome to {0}.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
     ]
   },
   "Welcome{0} 👋": {
@@ -215909,15 +214325,6 @@
       "apps/web/components"
     ]
   },
-  "What you can still do": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
   "What you checked": {
     "sites": 1,
     "scope": [
@@ -217065,15 +215472,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Where to start": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
     ]
   },
   "Where volume is concentrating, origin against destination": {
@@ -218941,15 +217339,6 @@
       "routes/my-team"
     ]
   },
-  "Work email": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
-    ]
-  },
   "Work in progress": {
     "sites": 1,
     "scope": [
@@ -219227,15 +217616,6 @@
       "domain/permission"
     ]
   },
-  "Worker portal access, policy acknowledgements, and profile change requests.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
-    ]
-  },
   "Worker profile must be provided": {
     "sites": 1,
     "scope": [
@@ -219243,15 +217623,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Worker records, profiles, job positions, org structure, holidays, and onboarding checklists.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Worker request": {
@@ -219357,15 +217728,6 @@
       "routes/org-structure",
       "routes/pto-policy",
       "routes/worker"
-    ]
-  },
-  "Workers an organization holds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/platformcatalog"
     ]
   },
   "Workers are notified in Dash and by SMS once their time off is approved. {0}": {
@@ -219664,69 +218026,6 @@
       "routes/desk"
     ]
   },
-  "Workspace ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
-  "Workspace business unit ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
-  "Workspace business unit ID must match the customer ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
-  "Workspace name is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
-  "Workspace state ID is not recognized": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace state is not recognized": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Workspace state is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/tenantprovisioningservice"
-    ]
-  },
   "Worse": {
     "sites": 1,
     "scope": [
@@ -219887,15 +218186,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Write an anonymized model-training export from the AI corrections of every organization that consented": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Write it here": {
@@ -220198,15 +218488,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Wrong address? Start over.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Wrong bill-to": {
@@ -220594,15 +218875,6 @@
       "service/billingtransferservice"
     ]
   },
-  "You already have a {0} account": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_existing_account"
-    ]
-  },
   "You already have an open dispute for this item": {
     "sites": 1,
     "scope": [
@@ -220675,15 +218947,6 @@
       "routes/fiscal-year"
     ]
   },
-  "You are already signed up.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/signup_existing_account"
-    ]
-  },
   "You are not the owner of this shipment comment": {
     "sites": 1,
     "scope": [
@@ -220702,6 +218965,15 @@
       "apps/web/hooks"
     ]
   },
+  "You are running out of recovery codes. Create new ones and store them safely.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "You are up to date.": {
     "sites": 1,
     "scope": [
@@ -220709,15 +218981,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "You are welcome to start again at any time.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
     ]
   },
   "You arrange freight with outside carriers. Carrier sourcing, tenders, rate confirmations and carrier settlements lead the product.": {
@@ -221312,15 +219575,6 @@
       "apps/web/components"
     ]
   },
-  "You received this email because of activity on a {0} account. If this was not you, you can ignore it.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/layout"
-    ]
-  },
   "You run your own fleet and broker loads to partner carriers. Every part of the product is turned on.": {
     "sites": 1,
     "scope": [
@@ -221437,24 +219691,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "You're on the free demo. Paid plans are coming soon.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "You're on the wait list": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "You're sending messages quickly · send again in a moment": {
@@ -221836,13 +220072,13 @@
       "apps/web/config"
     ]
   },
-  "Your data is still here.": {
+  "Your current recovery codes stop working as soon as the new ones are made.": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "platform-email/trial_ended"
+      "apps/web/components"
     ]
   },
   "Your details, sessions and security": {
@@ -221879,15 +220115,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Your email is verified, but the free demo is full right now. We open new workspaces as space frees up and will email you when yours is ready — there's nothing else you need to do.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Your emails and documents will use it too.": {
@@ -221953,69 +220180,6 @@
       "routes/fuel-management"
     ]
   },
-  "Your free demo ends today. After that the workspace becomes read-only.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Your free demo has ended": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Your free demo has ended. The workspace is read-only and will be deleted.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Your free demo has ended. The workspace is read-only until {0}, then it is deleted.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Your free demo has expired and this workspace is scheduled for deletion.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Your free trial": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
-  "Your free trial includes full access until {0}. After that the workspace stays readable for a while so you can export what you need.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
-    ]
-  },
   "Your friendly system administrator is just a call away for a swift rescue!": {
     "sites": 1,
     "scope": [
@@ -222068,15 +220232,6 @@
     ],
     "areas": [
       "template/notification.dash.review_submitted"
-    ]
-  },
-  "Your name": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "Your name (required)": {
@@ -222148,7 +220303,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Your organization is not entitled to this feature": {
@@ -222196,13 +220351,13 @@
       "domain/documenttemplate"
     ]
   },
-  "Your organization's plan, where its trial stands and how much of each limit it has used.": {
+  "Your organization's subscription does not allow changes right now: you can open and export everything, but nothing can be created or changed.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "apps/web/lib"
     ]
   },
   "Your own answer": {
@@ -222423,6 +220578,15 @@
       "routes/pay.tsx"
     ]
   },
+  "Your sign-in has expired. Sign in again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
+    ]
+  },
   "Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -222495,24 +220659,6 @@
       "template/notification.dash.pto_reviewed"
     ]
   },
-  "Your trial has ended.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
-  "Your trial is over.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
-    ]
-  },
   "Your work, your numbers, and where to go next": {
     "sites": 1,
     "scope": [
@@ -222529,24 +220675,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "Your workspace has been deleted.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
-    ]
-  },
-  "Your workspace is ready.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/welcome"
     ]
   },
   "Your {0} certification expires in {1, plural, one {# day} other {# days}}.": {
@@ -222619,24 +220747,6 @@
     ],
     "areas": [
       "template/notification.dash.training_due"
-    ]
-  },
-  "Your {0} trial has ended": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/trial_ended"
-    ]
-  },
-  "Your {0} workspace has been deleted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "platform-email/account_purged"
     ]
   },
   "You’re all caught up.": {
@@ -223022,15 +221132,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "and our": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "and {0} more": {
@@ -225530,7 +223631,7 @@
       "routes/table-change-alert"
     ]
   },
-  "edi@trenova.com": {
+  "edi@example.com": {
     "sites": 1,
     "scope": [
       "ts"
@@ -225931,15 +224032,6 @@
       "apps/dash/_components"
     ]
   },
-  "idempotency key is required for cloud usage recording": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "identical to production": {
     "sites": 1,
     "scope": [
@@ -226247,15 +224339,6 @@
       "api/handlers"
     ]
   },
-  "loads in motion": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "local worker mapping differs from Samsara external ID mapping": {
     "sites": 1,
     "scope": [
@@ -226497,15 +224580,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "not met": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/signup"
     ]
   },
   "not yet": {
@@ -226993,15 +225067,6 @@
       "routes/settlement-workspace"
     ]
   },
-  "privacy policy": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "profile, matched on {0}.": {
     "sites": 1,
     "scope": [
@@ -227180,15 +225245,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "request ID is required for deterministic API usage idempotency": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/middleware"
     ]
   },
   "request is required": {
@@ -229878,6 +227934,15 @@
       "routes/accounting-sync"
     ]
   },
+  "{0, plural, one {# recovery code left.} other {# recovery codes left.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# required document} other {# required documents}} missing": {
     "sites": 1,
     "scope": [
@@ -230709,15 +228774,6 @@
       "apps/web/components"
     ]
   },
-  "{0, plural, one {day left.} other {days left.}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "{0, plural, one {gave up after # try} other {gave up after # tries}}": {
     "sites": 1,
     "scope": [
@@ -230788,15 +228844,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "{0, plural, one {shipment left.} other {shipments left.}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} (and {1} more)": {
@@ -231148,7 +229195,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "{0} already covered": {
@@ -231812,15 +229859,6 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
-    ]
-  },
-  "{0} days left": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} days past due": {
@@ -232930,15 +230968,6 @@
       "service/carrierintelservice"
     ]
   },
-  "{0} is for trying Trenova and leaves this out. Paid plans that include it are coming soon.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "{0} is inactive and cannot receive mileage": {
     "sites": 1,
     "scope": [
@@ -233695,7 +231724,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "{0} load(s) on this settlement are still waiting on a resolved carrier invoice match; resolve the matches or recalculate the settlement before approving": {
@@ -234173,7 +232202,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "{0} not covered": {
@@ -236968,7 +234997,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "{0}: {1} of {2}h remaining": {

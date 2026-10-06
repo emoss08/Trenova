@@ -1,8 +1,0 @@
-{{if .FirstName}}{{t "Hi {0}," .FirstName}}{{else}}{{t "Hi,"}}{{end}}
-
-{{t "Someone tried to sign up for {0} with this email address, but it already belongs to an account. No new account was created." .ProductName}}
-
-{{t "Sign in"}}: {{.LoginURL}}
-{{t "Forgot your password?"}} {{.ForgotPasswordURL}}
-
-{{t "If this was not you, you can ignore this email. Your account has not changed."}}

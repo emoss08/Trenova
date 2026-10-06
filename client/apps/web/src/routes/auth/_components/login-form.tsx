@@ -2,9 +2,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
+import { edition } from "@/lib/edition";
 import { authService } from "@trenova/shared/services/auth";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { isMFAChallenge, type MFAChallenge } from "@trenova/shared/types/mfa";
 import type { TenantLoginMetadata } from "@trenova/shared/types/organization";
 import {
   loginRequestSchema,
@@ -17,12 +18,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Building03Icon, Truck01Icon } from "@trenova/shared/components/icons";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
 import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { MFAChallengeForm } from "./mfa-challenge-form";
 
 export type AuthAudience = "office" | "driver";
+
+const LoginPrompt = edition.slots.LoginPrompt;
 
 const AUDIENCE_OPTIONS = [
   { value: "office", label: "Office", icon: Building03Icon },
@@ -50,9 +54,6 @@ export function LoginForm({
   const ssoError = searchParams.get("sso_error");
   const setUser = useAuthStore((state) => state.setUser);
   const [audience, setAudience] = useState<AuthAudience>("office");
-  // Self-serve signup exists only on Trenova Cloud with signup switched on. Anywhere
-  // else accounts are made by an administrator, so the link would lead nowhere.
-  const { signupAvailable } = usePublicConfig();
 
   // The audience toggle only makes sense on the generic sign-in page: a tenant login
   // page is already scoped to one organization's office users.
@@ -80,11 +81,17 @@ export function LoginForm({
   const { control, handleSubmit, formState } = form;
   const rootError = formState.errors.root?.message;
 
+  const [challenge, setChallenge] = useState<MFAChallenge | null>(null);
+
   const { mutateAsync, isPending } = useApiMutation({
     mutationFn: authService.login,
     form,
     resourceName: "Login",
     onSuccess: async (data) => {
+      if (isMFAChallenge(data)) {
+        setChallenge(data);
+        return;
+      }
       setUser(data.user);
       await onAuthenticated(data);
     },
@@ -93,6 +100,20 @@ export function LoginForm({
   const onSubmit = (data: LoginRequest) => {
     void mutateAsync(data);
   };
+
+  if (challenge) {
+    return (
+      <MFAChallengeForm
+        challenge={challenge}
+        stepLabel={stepLabel}
+        onAuthenticated={onAuthenticated}
+        onCancel={() => {
+          setChallenge(null);
+          form.setValue("password", "");
+        }}
+      />
+    );
+  }
 
   return (
     <AuthCardBody>
@@ -106,18 +127,8 @@ export function LoginForm({
           t("Dash is where drivers see loads and pay.")
         ) : tenantMetadata ? (
           t("Sign in to {0}", tenantMetadata.organizationName)
-        ) : signupAvailable ? (
-          <>
-            {t("Don't have an account yet?")}{" "}
-            <Link
-              to="/signup"
-              className="text-foreground decoration-foreground/35 hover:decoration-foreground underline underline-offset-[3px]"
-            >
-              {t("Create an account")}
-            </Link>
-          </>
         ) : (
-          t("Sign in with the account your organization set up for you.")
+          <LoginPrompt fallback={t("Sign in with the account your organization set up for you.")} />
         )}
       </StepHeading>
 

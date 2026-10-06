@@ -162,15 +162,8 @@ echo ""
 echo "GitHub Actions is now building and pushing Docker images to ghcr.io"
 echo "Monitor progress at: $(gh repo view --json url -q .url)/actions"
 echo ""
-echo "Once complete, users can update with:"
-echo "  trenova update apply ${VERSION#v}"
-
-DEPLOY_REPO="${TRENOVA_DEPLOY_REPO:-$(git rev-parse --show-toplevel)/../trenova-cloud-deploy}"
-if [ -x "$DEPLOY_REPO/scripts/ship.sh" ]; then
-    echo ""
-    read -p "Deploy $VERSION to Trenova Cloud once the images are built? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        "$DEPLOY_REPO/scripts/ship.sh" "$VERSION" --yes
-    fi
-fi
+echo "Once complete, self-hosted installs can update by setting"
+echo "  TRENOVA_VERSION=${VERSION#v}"
+echo "in deploy/selfhost/.env and running"
+echo "  docker compose pull && docker compose up -d"
+echo "(see docs/self-hosting/README.md)."

@@ -380,7 +380,7 @@ func TestLoad_RefusesAChainWithoutItsActiveKey(t *testing.T) {
 func TestLoad_ProductionRefusesAPlaceholderChainKey(t *testing.T) {
 	configDir := t.TempDir()
 	copyTrackedConfig(t, "config.test.yaml", filepath.Join(configDir, "config.yaml"))
-	copyTrackedConfig(t, "config.prod.yaml", filepath.Join(configDir, "config.prod.yaml"))
+	copyTrackedConfig(t, "config.prod.example.yaml", filepath.Join(configDir, "config.prod.yaml"))
 	stageProductionBase(t, filepath.Join(configDir, "config.yaml"))
 	placeholder := "change-me-local-ai-audit-chain-key-32chars"
 	t.Setenv("TRENOVA_AI_AUDIT_CHAIN_KEYS", "k2026:"+placeholder)

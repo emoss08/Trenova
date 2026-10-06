@@ -2,7 +2,8 @@
 // i18n.mjs is the single entry point for the translation pipeline.
 //
 //   report                 inventory of source strings, per locale and per area
-//   sync                   rebuild i18n/messages.en.json from source; create locale files
+//   sync                   rebuild i18n/messages.en.json from source; create locale files;
+//                          refresh an edition overlay's own catalog when it is in the tree
 //   pending <locale>       print strings still needing translation (--area, --limit)
 //   merge <locale> <file>  merge a batch of translations into that locale's catalog
 //   emit                   write the per-scope runtime catalogs the apps load
@@ -210,8 +211,19 @@ async function buildSource() {
     extractTemplates(repoRoot),
   ]);
   go.entries.push(...templates.entries);
+  const editionGo = new Map();
+  const publicGo = [];
+  for (const entry of go.entries) {
+    const edition = goEditionFor(entry.file);
+    if (edition === null) {
+      publicGo.push(entry);
+      continue;
+    }
+    if (!editionGo.has(edition.dir)) editionGo.set(edition.dir, []);
+    editionGo.get(edition.dir).push(entry);
+  }
   const source = {};
-  for (const entry of [...go.entries, ...ts.entries]) {
+  for (const entry of [...publicGo, ...ts.entries]) {
     let record = source[entry.message];
     if (record === undefined) {
       record = { sites: 0, scope: [], areas: [] };
@@ -225,15 +237,138 @@ async function buildSource() {
     record.scope.sort();
     record.areas.sort();
   }
-  return { source: sortedObject(source), parseErrors: ts.errors };
+  return { source: sortedObject(source), parseErrors: ts.errors, editionGo };
+}
+
+// An edition overlay (docs/engineering/editions.md) keeps the strings that exist only in its
+// own code in its own catalog, beside its source, so the public catalogs neither carry them
+// nor lose their translations when the overlay is not in the tree. A string the public app
+// also uses stays public: the runtime layers the edition catalog over the app's.
+// A Go edition is extracted with the rest of the Go tree and split off by path: its strings
+// never reach the public catalogs, and emit writes it runtime catalogs it embeds itself.
+const EDITIONS = [
+  { dir: "client/packages/cloud", scope: "ts", marker: "package.json" },
+  { dir: "services/tms/internal/cloud", scope: "go", marker: "module.go", runtimeDir: "i18n/catalogs" },
+];
+
+function goEditionFor(file) {
+  const rel = file.replace(/^\.\//, "");
+  return EDITIONS.find((e) => e.scope === "go" && rel.startsWith(`${e.dir}/`)) ?? null;
+}
+
+async function presentEditions() {
+  const present = [];
+  for (const edition of EDITIONS) {
+    try {
+      await readFile(join(repoRoot, edition.dir, edition.marker), "utf8");
+      present.push(edition);
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+  }
+  return present;
+}
+
+async function buildEditionSource(edition, publicSource, editionGo) {
+  let entries;
+  let parseErrors = [];
+  if (edition.scope === "go") {
+    entries = editionGo.get(edition.dir) ?? [];
+  } else {
+    const ts = await extractTypeScript(repoRoot, [join(edition.dir, "src")]);
+    entries = ts.entries;
+    parseErrors = ts.errors;
+  }
+  const source = {};
+  for (const entry of entries) {
+    if (publicSource[entry.message]?.scope.includes(edition.scope)) continue;
+    let record = source[entry.message];
+    if (record === undefined) {
+      record = { sites: 0, scope: [edition.scope], areas: [] };
+      source[entry.message] = record;
+    }
+    record.sites += 1;
+    if (!record.areas.includes(entry.area)) record.areas.push(entry.area);
+  }
+  for (const record of Object.values(source)) record.areas.sort();
+  return { source: sortedObject(source), parseErrors };
+}
+
+function editionLocalePath(dir, locale) {
+  return join(repoRoot, dir, "i18n", `messages.${locale}.json`);
+}
+
+// syncEdition runs before the public catalogs are pruned, so a string that moved from the
+// app into the overlay takes its existing translation with it instead of losing it.
+async function syncEdition(edition, publicSource, editionGo) {
+  const { dir } = edition;
+  const { source, parseErrors } = await buildEditionSource(edition, publicSource, editionGo);
+  if (parseErrors.length > 0) {
+    console.error(`i18n: ${dir}: ${parseErrors.length} files failed to parse`);
+    process.exit(1);
+  }
+
+  await writeJSON(editionLocalePath(dir, "en"), source);
+  const keys = Object.keys(source);
+  console.log(`i18n: ${keys.length} edition strings -> ${dir}/i18n/messages.en.json`);
+
+  const { locales } = await loadLocales();
+  for (const locale of locales.filter((l) => l !== "en")) {
+    const existing = await readJSONIfExists(editionLocalePath(dir, locale), {});
+    const inherited = await readJSONIfExists(localePath(locale), {});
+    const kept = {};
+    for (const key of keys) {
+      if (key in existing) kept[key] = existing[key];
+      else if (key in inherited) kept[key] = inherited[key];
+    }
+    await writeJSON(editionLocalePath(dir, locale), sortedObject(kept));
+    const missing = keys.filter((k) => !(k in kept)).length;
+    console.log(
+      `  ${locale.padEnd(6)} ${String(Object.keys(kept).length).padStart(6)} translated, ` +
+        `${String(missing).padStart(6)} missing`,
+    );
+  }
+}
+
+async function checkEdition(edition, publicSource, editionGo) {
+  const { dir } = edition;
+  const { source, parseErrors } = await buildEditionSource(edition, publicSource, editionGo);
+  if (parseErrors.length > 0) {
+    console.error(`i18n: ${dir}: ${parseErrors.length} files failed to parse`);
+    return false;
+  }
+
+  const committed = await readJSONIfExists(editionLocalePath(dir, "en"), null);
+  if (committed === null || JSON.stringify(committed) !== JSON.stringify(source)) {
+    console.error(`i18n: ${dir}/i18n/messages.en.json is out of date — run \`task i18n\` and commit`);
+    return false;
+  }
+
+  const { locales } = await loadLocales();
+  let ok = true;
+  for (const locale of locales.filter((l) => l !== "en")) {
+    const translated = await readJSONIfExists(editionLocalePath(dir, locale), {});
+    const missing = Object.keys(source).filter((k) => !(k in translated));
+    const orphans = Object.keys(translated).filter((k) => !(k in source));
+    if (missing.length > 0 || orphans.length > 0) {
+      ok = false;
+      console.error(`i18n: ${dir} ${locale} — ${missing.length} missing, ${orphans.length} orphaned`);
+      for (const key of missing.slice(0, 5)) console.error(`    missing: ${JSON.stringify(key)}`);
+    }
+  }
+  return ok;
 }
 
 async function sync() {
-  const { source, parseErrors } = await buildSource();
+  const { source, parseErrors, editionGo } = await buildSource();
   if (parseErrors.length > 0) {
     console.error(`i18n: ${parseErrors.length} files failed to parse:`);
     for (const e of parseErrors.slice(0, 10)) console.error(`  ${e.file}: ${e.message}`);
     process.exit(1);
+  }
+
+  for (const edition of await presentEditions()) {
+    await syncEdition(edition, source, editionGo);
   }
 
   await writeJSON(join(CATALOG_DIR, "messages.en.json"), source);
@@ -318,7 +453,7 @@ async function merge(locale, file) {
 }
 
 async function check() {
-  const { source, parseErrors } = await buildSource();
+  const { source, parseErrors, editionGo } = await buildSource();
   if (parseErrors.length > 0) {
     console.error(`i18n: ${parseErrors.length} files failed to parse`);
     process.exit(1);
@@ -341,6 +476,9 @@ async function check() {
       console.error(`i18n: ${locale} — ${missing.length} missing, ${orphans.length} orphaned`);
       for (const key of missing.slice(0, 5)) console.error(`    missing: ${JSON.stringify(key)}`);
     }
+  }
+  for (const edition of await presentEditions()) {
+    if (!(await checkEdition(edition, source, editionGo))) failed = true;
   }
   if (failed) process.exit(1);
   console.log("i18n: catalogs are complete and up to date");
@@ -384,6 +522,28 @@ async function emit() {
     }
 
     console.log(`i18n: ${scope} catalogs -> ${dir} (${keys.length} strings in scope)`);
+  }
+
+  for (const edition of await presentEditions()) {
+    if (edition.runtimeDir === undefined) continue;
+    const editionSource = await readJSONIfExists(editionLocalePath(edition.dir, "en"), {});
+    const keys = Object.keys(editionSource);
+    for (const locale of locales) {
+      const out = join(repoRoot, edition.dir, edition.runtimeDir, `${locale}.json`);
+      if (locale === "en") {
+        await writeJSON(out, {});
+        continue;
+      }
+      const translated = await readJSONIfExists(editionLocalePath(edition.dir, locale), {});
+      const subset = {};
+      for (const key of keys) {
+        if (key in translated) subset[key] = translated[key];
+      }
+      await writeJSON(out, sortedObject(subset));
+    }
+    console.log(
+      `i18n: ${edition.scope} edition catalogs -> ${edition.dir}/${edition.runtimeDir} (${keys.length} strings)`,
+    );
   }
 
   await emitLocaleModule(locales);

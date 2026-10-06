@@ -1,7 +1,0 @@
-{{if .FirstName}}{{t "Hi {0}," .FirstName}}{{else}}{{t "Hi,"}}{{end}}
-
-{{t "The {0} trial workspace reached the end of its read-only period, so it and all of its data have been permanently deleted." .CompanyName}}
-
-{{t "You are welcome to start again at any time."}} {{.SignupURL}}
-
-{{t "Thank you for trying {0}." .ProductName}}

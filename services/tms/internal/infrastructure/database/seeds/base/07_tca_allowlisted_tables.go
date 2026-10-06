@@ -2,12 +2,10 @@ package base
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
 
@@ -31,31 +29,6 @@ func NewTCAAllowlistedTablesSeed() *TCAAllowlistedTablesSeed {
 	return seed
 }
 
-type allowlistEntry struct {
-	tableName   string
-	displayName string
-}
-
-var defaultAllowlistedTables = []allowlistEntry{
-	{"shipments", "Shipments"},
-	{"customers", "Customers"},
-	{"carriers", "Carriers"},
-	{"carrier_contacts", "Carrier Contacts"},
-	{"carrier_insurance_policies", "Carrier Insurance Policies"},
-	{"carrier_settlements", "Carrier Settlements"},
-	{"carrier_cost_events", "Carrier Cost Events"},
-	{"carrier_ledger_entries", "Carrier Ledger Entries"},
-	{"carrier_assignments", "Carrier Assignments"},
-	{"rate_confirmations", "Rate Confirmations"},
-	{"carrier_invoice_matches", "Carrier Invoice Matches"},
-	{"tenders", "Tenders"},
-	{"tender_offers", "Tender Offers"},
-	{"routing_guides", "Routing Guides"},
-	{"workers", "Workers"},
-	{"tractors", "Tractors"},
-	{"trailers", "Trailers"},
-}
-
 func (s *TCAAllowlistedTablesSeed) Run(ctx context.Context, tx bun.Tx) error {
 	return seedhelpers.RunInTransaction(
 		ctx,
@@ -63,44 +36,18 @@ func (s *TCAAllowlistedTablesSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
-			org, err := sc.GetOrganization("default_org")
-			if err != nil {
-				org, err = sc.GetDefaultOrganization(ctx)
-				if err != nil {
-					return fmt.Errorf("get default organization: %w", err)
-				}
+			org, err := defaultOrganization(ctx, sc)
+			if err != nil || org == nil {
+				return err
 			}
 
-			count, err := tx.NewSelect().
-				Model((*tablechangealert.TCAAllowlistedTable)(nil)).
-				Where("organization_id = ?", org.ID).
-				Where("business_unit_id = ?", org.BusinessUnitID).
-				Count(ctx)
-			if err != nil {
-				return fmt.Errorf("check existing allowlisted tables: %w", err)
-			}
+			_, err = tenantbootstrap.CreateTCAAllowlist(ctx, tx, tenantbootstrap.Scope{
+				OrganizationID: org.ID,
+				BusinessUnitID: org.BusinessUnitID,
+				Record:         seedRecorder(sc, s.Name()),
+			})
 
-			if count > 0 {
-				return nil
-			}
-
-			entities := make([]*tablechangealert.TCAAllowlistedTable, 0, len(defaultAllowlistedTables))
-			for _, entry := range defaultAllowlistedTables {
-				entities = append(entities, &tablechangealert.TCAAllowlistedTable{
-					ID:             pulid.MustNew("tcaw_"),
-					OrganizationID: org.ID,
-					BusinessUnitID: org.BusinessUnitID,
-					TableName:      entry.tableName,
-					DisplayName:    entry.displayName,
-					Enabled:        true,
-				})
-			}
-
-			if _, err = tx.NewInsert().Model(&entities).Exec(ctx); err != nil {
-				return fmt.Errorf("insert allowlisted tables: %w", err)
-			}
-
-			return nil
+			return err
 		},
 	)
 }

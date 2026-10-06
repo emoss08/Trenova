@@ -18,7 +18,7 @@ type PlanService interface {
 		capability platformplan.Capability,
 	) error
 	RequireWritable(ctx context.Context, tenantInfo pagination.TenantInfo) error
-	IsCloud() bool
+	EnforcesPlans() bool
 	Invalidate(orgID pulid.ID)
 }
 

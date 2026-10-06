@@ -143,7 +143,8 @@ join served by another replica from the join's own `presence` event.
 
 To add a scope for another record, add a route next to these with that resource's
 permission check and a scope prefix of its own. Add the route to the owning
-feature in `platformcatalog/provider_routes.go`, then add a hook that calls
+feature in the Cloud edition's catalog (`internal/cloud/catalog/provider_routes.go`), then
+add a hook that calls
 `realtimeClient.joinScope` / `subscribePresence`.
 
 ## The browser client

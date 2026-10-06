@@ -1,0 +1,17 @@
+# Temporal server settings Trenova's agent runtime needs
+# (docs/engineering/agent-runtime.md, "Running it in production").
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: true
+    constraints: {}
+frontend.enableUpdateWorkflowExecution:
+  - value: true
+    constraints: {}
+# Keeps a busy organization from starving the others on a shared queue.
+matching.enableFairness:
+  - value: true
+    constraints: {}
+# Each poll a streaming reply's reader makes is an Update; the default cap of
+# 2000 per workflow is about three minutes of streaming.
+history.maxTotalUpdates:
+  - value: 20000
+    constraints: {}

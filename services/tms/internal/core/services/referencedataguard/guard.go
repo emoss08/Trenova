@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +14,8 @@ import (
 type Params struct {
 	fx.In
 
-	Config *config.Config
+	Config  *config.Config
+	Edition services.EditionInfo
 }
 
 type Guard struct {
@@ -22,10 +24,10 @@ type Guard struct {
 }
 
 func New(p Params) (*Guard, error) {
-	return FromPlatform(&p.Config.Platform)
+	return FromPlatform(&p.Config.Platform, p.Edition)
 }
 
-func FromPlatform(platform *config.PlatformConfig) (*Guard, error) {
+func FromPlatform(platform *config.PlatformConfig, edition services.EditionInfo) (*Guard, error) {
 	stewards := make(map[pulid.ID]struct{}, len(platform.ReferenceDataStewards))
 	for _, raw := range platform.ReferenceDataStewards {
 		id, err := pulid.Parse(strings.TrimSpace(raw))
@@ -40,10 +42,8 @@ func FromPlatform(platform *config.PlatformConfig) (*Guard, error) {
 	}
 
 	return &Guard{
-		requireListed: platform.GetMode() == config.PlatformModeCloud ||
-			platform.IsCloudBacked() ||
-			len(stewards) > 0,
-		stewards: stewards,
+		requireListed: (edition != nil && edition.SharedTenancy()) || len(stewards) > 0,
+		stewards:      stewards,
 	}, nil
 }
 

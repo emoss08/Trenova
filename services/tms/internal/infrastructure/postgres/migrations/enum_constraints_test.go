@@ -1,9 +1,6 @@
 package migrations
 
 import (
-	"io/fs"
-	"regexp"
-	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -19,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/domain/cloudsignup"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
@@ -465,41 +461,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			name:   "ck_organization_onboarding_operation_type",
 			values: stringsOf(onboarding.AllOperationTypes()),
 		},
-		{
-			name:   "ck_cloud_signups_status",
-			values: stringsOf(cloudsignup.AllStatuses()),
-		},
 	}
 
-	files := embeddedMigrationFiles(t)
-	slices.SortFunc(files, func(a, b migrationFile) int {
-		if a.version < b.version {
-			return -1
-		}
-		if a.version > b.version {
-			return 1
-		}
-		return 0
-	})
-
 	for _, constraint := range constraints {
-		adds := regexp.MustCompile(
-			`(?s)ADD CONSTRAINT "` + constraint.name + `"(.*?);|CONSTRAINT "` +
-				constraint.name + `" CHECK(.*?)\)\s*,?\s*\n`,
-		)
-
-		var latest string
-		for _, file := range files {
-			if file.direction != "up" {
-				continue
-			}
-			body, err := fs.ReadFile(sqlMigrations, file.name)
-			require.NoError(t, err)
-			if match := adds.FindSubmatch(body); match != nil {
-				latest = string(match[0])
-			}
-		}
-		require.NotEmpty(t, latest, "no migration adds %s", constraint.name)
+		latest, err := LatestConstraintDefinition(constraint.name)
+		require.NoError(t, err)
 
 		for _, value := range constraint.values {
 			require.Contains(t, latest, "'"+value+"'",

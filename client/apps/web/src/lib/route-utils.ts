@@ -1,4 +1,4 @@
-import { adminLinks, navigationConfig } from "@/config/navigation.config";
+import { appAdminLinks, appNavigationModules } from "@/config/app-navigation";
 import { recordPath } from "@/config/record-links";
 import type { NavGroup, NavItem } from "@/config/navigation.types";
 
@@ -134,7 +134,7 @@ function collectNavItemEntries(
 function createRouteTitleIndex(): RouteTitleEntry[] {
   const collectedEntries: RouteTitleEntry[] = [];
 
-  for (const module of navigationConfig.modules) {
+  for (const module of appNavigationModules) {
     // A module owns its base path and every prefix it declares; those are
     // its roots, and no group underneath may claim them. The base path
     // carries the full name; a declared prefix carries the short one, since
@@ -159,7 +159,7 @@ function createRouteTitleIndex(): RouteTitleEntry[] {
     collectNavItemEntries(collectedEntries, module.navigation, moduleRoots);
   }
 
-  for (const link of adminLinks) {
+  for (const link of appAdminLinks) {
     const normalizedPath = normalizePath(link.href);
     if (normalizedPath) {
       collectedEntries.push({ path: normalizedPath, label: link.title });

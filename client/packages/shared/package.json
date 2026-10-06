@@ -63,10 +63,12 @@
   "devDependencies": {
     "@tanstack/table-core": "9.2.4",
     "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@trenova/config": "workspace:*",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "happy-dom": "^20.14.0",
+    "react-dom": "catalog:",
     "typescript": "~7.0.2",
     "vite": "^8.2.2",
     "vitest": "^5.0.0"

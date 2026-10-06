@@ -132,6 +132,22 @@ Typed `SeedID` constants are auto-generated and provide compile-time validation.
 
 **Important**: Test and Development environments are isolated. Test seeds do NOT include Development seeds.
 
+**Never create an account with a known password outside `development` and `test`.** The
+`AdminAccount` seed (the `admin` user, `admin@trenova.app`, a member of both of its
+organizations, Trenova Logistics and Trenova Transportation, so organization switching can be
+exercised locally) and `OrganizationRoles` live in `base/` but list only those two environments,
+and `AdminAccount` also refuses to run when the configuration says `production` or
+`staging`, so `--env development` against a production database cannot create them. A
+production or staging database gets its first organization and administrator from
+`trenova db bootstrap` (self-hosted) or from signup (Trenova Cloud). Every other base seed
+must therefore succeed on a database with no organization: per-organization seeds do
+nothing until one exists, and a new organization gets those defaults from
+`tenantbootstrap` when it is created.
+
+Narrowing a seed's environments is safe on a database that already applied it: the
+execution order for an environment contains only seeds that list it, so the existing
+`seed_history` row is left as it is and the seed is simply never scheduled again.
+
 ## CLI Commands
 
 ```bash

@@ -12,7 +12,7 @@ import { join, relative } from "node:path";
 // templates organizations customize, and the Trenova Cloud emails the platform sends.
 const TEMPLATE_ROOTS = [
   { dir: "services/tms/internal/core/domain/documenttemplate/starters/assets", area: "template" },
-  { dir: "services/tms/internal/core/services/platformemailservice/templates", area: "platform-email" },
+  { dir: "services/tms/internal/cloud/platformemailservice/templates", area: "platform-email" },
 ];
 
 // {{ t "message" ...args }}, the whitespace-trimming {{- t "..." -}} forms, and a call

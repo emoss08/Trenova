@@ -151,6 +151,7 @@ type MFAAuthenticator struct {
 	Enabled        bool                 `json:"enabled"        bun:"enabled,notnull"`
 	VerifiedAt     int64                `json:"verifiedAt"     bun:"verified_at"`
 	LastUsedAt     int64                `json:"lastUsedAt"     bun:"last_used_at"`
+	LastUsedStep   int64                `json:"-"              bun:"last_used_step,notnull,default:0"`
 	CreatedAt      int64                `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64                `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

@@ -85,10 +85,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 75 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 78 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 47 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 70 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-989 writes: 512 GraphQL mutations and 477 REST writes, after merging 72 REST routes into the mutation they duplicate.
+991 writes: 512 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 380 |
-| Exempt | 606 |
-| — Security | 75 |
+| Exempt | 608 |
+| — Security | 78 |
 | — Configuration | 260 |
 | — User preference | 27 |
-| — Infrastructure | 47 |
+| — Infrastructure | 46 |
 | — Agent administration | 70 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
 | **Pending** | **3** |
-| Total | 989 |
+| Total | 991 |
 
 Of the 383 writes an agent should be able to make, 380 have a tool (99%).
 
@@ -148,7 +148,7 @@ The writes no tool performs yet, and what the tool would do.
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
 | assistant | 20 | 0 | 20 | 0 |
-| auth | 6 | 0 | 6 | 0 |
+| auth | 7 | 0 | 7 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
@@ -161,9 +161,7 @@ The writes no tool performs yet, and what the tool would do.
 | carrier | 4 | 4 | 0 | 0 |
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
-| cloudsignup | 3 | 0 | 3 | 0 |
 | commodity | 4 | 4 | 0 | 0 |
-| controlplaneprovisioning | 1 | 0 | 1 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
@@ -277,7 +275,7 @@ The writes no tool performs yet, and what the tool would do.
 | timesheet | 7 | 2 | 5 | 0 |
 | tractor | 5 | 5 | 0 | 0 |
 | trailer | 5 | 5 | 0 | 0 |
-| user | 11 | 0 | 11 | 0 |
+| user | 16 | 0 | 16 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 3 | 1 | 2 | 0 |
 | worker | 8 | 5 | 3 | 0 |
@@ -508,6 +506,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/auth/forgot-password`<br>authhandler.forgotPassword | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/login`<br>authhandler.login | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/logout`<br>authhandler.logout | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
+| `POST /api/v1/auth/mfa/verify`<br>authhandler.verifyMFA | Exempt, security: Answering a sign-in's second-factor challenge is a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/reset-password`<br>authhandler.resetPassword | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/session/roles/activate`<br>authhandler.activateSessionRoles | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/validate-session`<br>authhandler.validateSession | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
@@ -663,14 +662,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
 
-### cloudsignup
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/cloud/signups`<br>cloudsignuphandler.signup | Exempt, security: Signing up creates an account and proves a person owns an email address; an agent holds no identity of its own and acts only inside an organization that already exists. |
-| `POST /api/v1/cloud/signups/resend`<br>cloudsignuphandler.resend | Exempt, security: Resending a signup verification link is part of a stranger proving they own an email address before any organization exists. |
-| `POST /api/v1/cloud/signups/verify`<br>cloudsignuphandler.verify | Exempt, security: Redeeming a signup link signs a person in and provisions their organization; it is identity proof, not an operation an agent performs. |
-
 ### commodity
 
 | Write | Decision |
@@ -679,12 +670,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/commodities/`<br>commodityhandler.create | Tool: `create_commodity` |
 | `POST /api/v1/commodities/bulk-update-status/`<br>commodityhandler.bulkUpdateStatus | Tool: `update_commodity_status` |
 | `PUT /api/v1/commodities/:commodityID/`<br>commodityhandler.update | Tool: `update_commodity` |
-
-### controlplaneprovisioning
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/control-plane/tenants/provision`<br>controlplaneprovisioninghandler.provisionTenant | Exempt, infrastructure: Called by the platform control plane with a service credential to provision a tenant. |
 
 ### costing
 
@@ -1930,6 +1915,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `DELETE /api/v1/users/:userID/mfa/`<br>userhandler.resetUserMFA | Exempt, security: Resetting a person's second sign-in factor decides who can sign in as them. |
 | `DELETE /api/v1/users/me/profile-picture/`<br>userhandler.deleteProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `PATCH /api/v1/users/:userID/`<br>userhandler.patch | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PATCH /api/v1/users/me/settings/`<br>userhandler.updateMySettings | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
@@ -1937,6 +1923,10 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/users/:userID/reset-password/`<br>userhandler.sendPasswordReset | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `POST /api/v1/users/bulk-update-status/`<br>userhandler.bulkUpdateStatus | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `POST /api/v1/users/me/change-password/`<br>userhandler.changeMyPassword | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `POST /api/v1/users/me/mfa/recovery-codes/`<br>userhandler.regenerateRecoveryCodes | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
+| `POST /api/v1/users/me/mfa/totp/confirm/`<br>userhandler.confirmTOTPEnrollment | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
+| `POST /api/v1/users/me/mfa/totp/disable/`<br>userhandler.disableTOTP | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
+| `POST /api/v1/users/me/mfa/totp/enroll/`<br>userhandler.beginTOTPEnrollment | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
 | `POST /api/v1/users/me/profile-picture/`<br>userhandler.uploadProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `POST /api/v1/users/me/switch-organization/`<br>userhandler.switchOrganization | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/:userID/`<br>userhandler.update | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
