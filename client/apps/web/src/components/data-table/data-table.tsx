@@ -827,7 +827,7 @@ export function DataTable<TData extends Record<string, any>>({
     >
       <DataTablePanelWrapper>
         <DataTablePanelContent>
-          <div className="bleed:gap-0 flex size-full min-w-0 flex-col gap-2">
+          <div className="bleed:gap-0 bleed:min-h-0 flex size-full min-w-0 flex-col gap-2">
             <DataTableToolbar
               table={table}
               columns={columns}

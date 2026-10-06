@@ -18,7 +18,7 @@ export function ControlsProvider({ children }: { children: React.ReactNode }) {
       <div
         // REMINDER: access the data-expanded state with tailwind via `group-data-[expanded=true]/controls:block`
         // In tailwindcss v4, we could even use `group-data-expanded/controls:block`
-        className="group/controls flex w-full flex-col gap-3"
+        className="group/controls bleed:min-h-0 bleed:flex-1 flex w-full flex-col gap-3"
         data-expanded={open}
       >
         {children}

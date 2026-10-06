@@ -137,7 +137,12 @@ function DriverSummary({
     );
     setTendered(result.tendered.length);
     void setUrl({ capacity: "Carrier" });
-    toast.success(t("Tendered {0} loads to your carrier network", result.tendered.length));
+    toast.success(
+      t(
+        "Tendered {0, plural, one {# load} other {# loads}} to your carrier network",
+        result.tendered.length,
+      ),
+    );
   };
 
   return (
@@ -147,7 +152,7 @@ function DriverSummary({
           {summary.ready}
         </b>
         <span className="text-muted-foreground text-sm">
-          {t("drivers ready for {0} uncovered loads", summary.uncovered)}
+          {CAPACITY_PROVIDERS.Driver.headline(summary.ready, summary.uncovered, t)}
         </span>
       </div>
       <Bar
@@ -171,7 +176,7 @@ function DriverSummary({
           tendered != null ? (
             <span className="text-success inline-flex items-center gap-1 text-sm">
               <CheckIcon className="size-3.5" />
-              {t("{0} loads sent to carriers", tendered)}
+              {t("{0, plural, one {# load} other {# loads}} sent to carriers", tendered)}
             </span>
           ) : (
             <Button
@@ -211,7 +216,12 @@ function CarrierSummary({ capacity }: { capacity: ShipmentCapacity }) {
     const result = await actions.tender.mutateAsync(
       loads.map((load) => ({ shipmentId: load.id ?? "" })).filter((item) => item.shipmentId),
     );
-    toast.success(t("Tendered {0} loads to best-match carriers", result.tendered.length));
+    toast.success(
+      t(
+        "Tendered {0, plural, one {# load} other {# loads}} to best-match carriers",
+        result.tendered.length,
+      ),
+    );
   };
 
   return (
@@ -221,7 +231,7 @@ function CarrierSummary({ capacity }: { capacity: ShipmentCapacity }) {
           {summary.posting}
         </b>
         <span className="text-muted-foreground text-sm">
-          {t("carriers posting trucks for {0} untendered loads", summary.untendered)}
+          {CAPACITY_PROVIDERS.Carrier.headline(summary.posting, summary.untendered, t)}
         </span>
       </div>
       <Bar

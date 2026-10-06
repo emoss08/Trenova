@@ -194,7 +194,11 @@ function Uncovered({ data }: { data: ShipmentWatchlist["uncovered"] }) {
   return (
     <Section
       title={t("Uncovered pickups")}
-      figure={t("{0} · {1} loads", formatCurrency(Number(data.revenue)), data.count)}
+      figure={t(
+        "{0} · {1, plural, one {# load} other {# loads}}",
+        formatCurrency(Number(data.revenue)),
+        data.count,
+      )}
     >
       <div className="grid grid-cols-4 gap-1">
         {data.windows.map((window) => (
@@ -276,7 +280,10 @@ function Detention({ data }: { data: ShipmentWatchlist["detention"] }) {
             ratePerHour={Number(data.ratePerHour)}
             since={data.snapshotAt}
           />
-          <span className="text-muted-foreground"> · {t("{0} stops", data.stopCount)}</span>
+          <span className="text-muted-foreground">
+            {" "}
+            · {t("{0, plural, one {# stop} other {# stops}}", data.stopCount)}
+          </span>
         </>
       }
     >
@@ -357,7 +364,11 @@ function Billing({ data }: { data: ShipmentWatchlist["billing"] }) {
   return (
     <Section
       title={t("Ready to bill")}
-      figure={t("{0} · {1} loads", formatCurrency(Number(data.total)), data.count)}
+      figure={t(
+        "{0} · {1, plural, one {# load} other {# loads}}",
+        formatCurrency(Number(data.total)),
+        data.count,
+      )}
     >
       {data.customers.length > 0 ? (
         <div className="flex flex-col gap-1.5">
@@ -380,7 +391,10 @@ function Billing({ data }: { data: ShipmentWatchlist["billing"] }) {
           ))}
           {data.moreCustomers > 0 ? (
             <span className="text-muted-foreground text-xs">
-              {t("+{0} more customers", data.moreCustomers)}
+              {t(
+                "+{0, plural, one {# more customer} other {# more customers}}",
+                data.moreCustomers,
+              )}
             </span>
           ) : null}
         </div>

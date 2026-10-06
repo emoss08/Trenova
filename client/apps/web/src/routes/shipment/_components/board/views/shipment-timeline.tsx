@@ -9,6 +9,7 @@ import type {
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { fetchAllRows } from "@/lib/data-table-export";
+import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
 import { STAGE_META } from "@/lib/shipment-board/stage";
 import { resolveCoverage } from "@/lib/shipment-board/coverage";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
@@ -46,9 +47,20 @@ export default function ShipmentTimeline({ graphql, queryOptions }: ShipmentTime
   const timezone = useUserTimezone();
   const [, setUrl] = useShipmentBoardUrl();
   const { data, isLoading } = useQuery({
-    queryKey: ["shipment-list", "timeline", graphql.operationName, queryOptions],
-    queryFn: () =>
-      fetchAllRows<Shipment>({ graphql, options: queryOptions, maxRows: TIMELINE_ROW_LIMIT }),
+    queryKey: [
+      "shipment-list",
+      "timeline",
+      graphql,
+      resolveGraphQLVariableSources(graphql, TIMELINE_ROW_LIMIT, queryOptions),
+      queryOptions,
+    ],
+    queryFn: ({ signal }) =>
+      fetchAllRows<Shipment>({
+        graphql,
+        options: queryOptions,
+        maxRows: TIMELINE_ROW_LIMIT,
+        signal,
+      }),
     staleTime: 15_000,
   });
 
@@ -75,7 +87,11 @@ export default function ShipmentTimeline({ graphql, queryOptions }: ShipmentTime
   }
 
   return (
-    <div className="relative min-w-0 overflow-auto" role="list" aria-label={t("Shipment timeline")}>
+    <div
+      className="relative h-full min-w-0 overflow-auto"
+      role="list"
+      aria-label={t("Shipment timeline")}
+    >
       <div
         className="bg-canvas border-border sticky top-0 z-10 grid h-(--row-head-h) border-b text-xs"
         style={{ gridTemplateColumns: `${LABEL_WIDTH}px 1fr` }}

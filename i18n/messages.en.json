@@ -297,6 +297,15 @@
       "routes/desk"
     ]
   },
+  "+{0, plural, one {# more customer} other {# more customers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "+{0, plural, one {# stop} other {# stops}}": {
     "sites": 1,
     "scope": [
@@ -326,15 +335,6 @@
       "routes/invoice",
       "routes/shipment",
       "routes/worker"
-    ]
-  },
-  "+{0} more customers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "+{0} on {1}": {
@@ -615,15 +615,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "1 truck posted": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "1 value changed": {
@@ -4978,6 +4969,15 @@
       "domain/journalreversal"
     ]
   },
+  "A posting cannot stay open longer than 60 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
   "A prediction is missing its example id": {
     "sites": 1,
     "scope": [
@@ -5219,6 +5219,15 @@
     ],
     "areas": [
       "domain/ratezone"
+    ]
+  },
+  "A radius needs an origin location to measure from": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
     ]
   },
   "A ranged column cannot also carry a transform; the range already reshapes the value": {
@@ -18017,6 +18026,15 @@
       "packages/shared/types"
     ]
   },
+  "An origin location or origin state is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
   "An original return cannot amend another return": {
     "sites": 1,
     "scope": [
@@ -25351,6 +25369,15 @@
       "routes/worker"
     ]
   },
+  "Available from is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
   "Available keyboard shortcuts throughout the application.": {
     "sites": 1,
     "scope": [
@@ -25367,6 +25394,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Available to is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
+  "Available to must be after available from": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
     ]
   },
   "Available {0}": {
@@ -33148,11 +33193,12 @@
     ]
   },
   "Carrier is required": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/carriercapacity",
       "domain/carrierintel",
       "domain/carriersettlement",
       "domain/rateagreement",
@@ -118515,6 +118561,15 @@
       "routes/scheduling"
     ]
   },
+  "Notes must be 2000 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
   "Notes must be at most {0} characters": {
     "sites": 3,
     "scope": [
@@ -142814,6 +142869,15 @@
       "apps/web/lib"
     ]
   },
+  "Radius must be between 1 and 1000 miles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
   "Rail yard": {
     "sites": 1,
     "scope": [
@@ -143324,11 +143388,12 @@
     ]
   },
   "Rate cannot be negative": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/carriercapacity",
       "domain/detention",
       "domain/driverpay",
       "domain/ifta",
@@ -143576,11 +143641,12 @@
     ]
   },
   "Rate method is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/carriercapacity",
       "domain/shipment",
       "domain/tender"
     ]
@@ -143592,6 +143658,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Rate must be a number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Rate per Increment": {
@@ -171066,6 +171141,15 @@
       "service/shipmentservice"
     ]
   },
+  "Shipment board": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentbriefingservice"
+    ]
+  },
   "Shipment board views": {
     "sites": 1,
     "scope": [
@@ -175326,7 +175410,7 @@
     ]
   },
   "Source is required": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go"
     ],
@@ -175335,6 +175419,7 @@
       "domain/agentquality",
       "domain/aicorrection",
       "domain/capture",
+      "domain/carriercapacity",
       "domain/carrierintel",
       "domain/distancecalculation",
       "domain/edi",
@@ -182846,6 +182931,24 @@
       "service/ediservice"
     ]
   },
+  "Tendered {0, plural, one {# load} other {# loads}} to best-match carriers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Tendered {0, plural, one {# load} other {# loads}} to your carrier network": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Tendered {0}": {
     "sites": 1,
     "scope": [
@@ -182853,24 +182956,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Tendered {0} loads to best-match carriers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "Tendered {0} loads to your carrier network": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "Tendered {0} to best-match carriers": {
@@ -204255,6 +204340,33 @@
       "domain/agent"
     ]
   },
+  "Truck count is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
+  "Truck count must be 999 or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
+  "Truck count must be at least 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/carriercapacity"
+    ]
+  },
   "Truck departed a stop": {
     "sites": 1,
     "scope": [
@@ -204289,6 +204401,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Trucks carriers say they have available, with lane, window and rate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Trucks posted": {
@@ -209862,6 +209983,15 @@
     ]
   },
   "Value must be a number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Value must be a valid id": {
     "sites": 1,
     "scope": [
       "go"
@@ -223111,15 +223241,6 @@
       "service/carriersettlementservice"
     ]
   },
-  "carriers posting trucks for {0} untendered loads": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "change how they're split": {
     "sites": 1,
     "scope": [
@@ -223415,15 +223536,6 @@
     ],
     "areas": [
       "service/driversettlementservice"
-    ]
-  },
-  "drivers ready for {0} uncovered loads": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "due {0}": {
@@ -229344,6 +229456,15 @@
       "routes/scheduling"
     ]
   },
+  "{0, plural, one {# load} other {# loads}} sent to carriers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "{0, plural, one {# mention rule} other {# mention rules}}": {
     "sites": 1,
     "scope": [
@@ -230085,7 +230206,7 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -230193,6 +230314,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# truck posted} other {# trucks posted}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0, plural, one {# unit} other {# units}}": {
@@ -230619,6 +230749,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {carrier} other {carriers}} posting trucks for {1, plural, one {# untendered load} other {# untendered loads}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0, plural, one {day left.} other {days left.}}": {
     "sites": 1,
     "scope": [
@@ -230626,6 +230765,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {driver} other {drivers}} ready for {1, plural, one {# uncovered load} other {# uncovered loads}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0, plural, one {gave up after # try} other {gave up after # tries}}": {
@@ -233726,15 +233874,6 @@
       "routes/desk"
     ]
   },
-  "{0} loads sent to carriers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "{0} location": {
     "sites": 1,
     "scope": [
@@ -235645,13 +235784,12 @@
     ]
   },
   "{0} stops": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi",
-      "routes/shipment"
+      "routes/edi"
     ]
   },
   "{0} stops · {1} billable": {
@@ -235796,15 +235934,6 @@
     ],
     "areas": [
       "template/notification.dash.training_due"
-    ]
-  },
-  "{0} trucks posted": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "{0} turned off {1} on {2}.": {
@@ -236556,6 +236685,15 @@
       "apps/web/components"
     ]
   },
+  "{0} · {1, plural, one {# load} other {# loads}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "{0} · {1, plural, one {# shipment} other {# shipments}}": {
     "sites": 1,
     "scope": [
@@ -236599,15 +236737,6 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
-    ]
-  },
-  "{0} · {1} loads": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "{0} · {1} points": {

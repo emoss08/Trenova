@@ -57,8 +57,10 @@ vi.mock("@/lib/shipment-board/capabilities", () => ({
 }));
 
 function lastGrouping() {
-  const calls = dataTableProps.mock.calls;
-  return (calls[calls.length - 1]?.[0] as { grouping?: DataTableGrouping<Shipment> }).grouping;
+  const props = dataTableProps.mock.calls.at(-1)?.[0] as
+    | { grouping?: DataTableGrouping<Shipment> }
+    | undefined;
+  return props?.grouping;
 }
 
 describe("ShipmentBoard grouping", () => {
