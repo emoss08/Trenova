@@ -1,0 +1,1 @@
+{"error": {"code": "Internal_EntityWithSameKeyExists", "message": "The record in table Gen. Journal Batch already exists. Identification fields and values: Journal Template Name='CASHRCPT',Name='TRENOVA'  CorrelationId:  5f6e7d8c-9bab-4978-8796-a5b4c3d2e1f0."}}

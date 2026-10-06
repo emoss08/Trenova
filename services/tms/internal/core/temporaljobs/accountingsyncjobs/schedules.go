@@ -26,6 +26,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "accounting-webhook-subscriptions",
+			Description:   "Create, renew and remove the webhook subscriptions accounting systems require",
+			Spec:          schedule.Cron("*/15 * * * *"),
+			Workflow:      KeepAccountingWebhookSubscriptionsWorkflow,
+			TaskQueue:     temporaltype.IntegrationTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "accounting-webhook-subscriptions",
+			},
+		},
+		{
 			ID:            "accounting-reference-refresh",
 			Description:   "Pull every active accounting connection's reference data and re-score open mappings",
 			Spec:          schedule.Cron("17 7 * * *"),

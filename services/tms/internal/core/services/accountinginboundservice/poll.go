@@ -101,14 +101,15 @@ func (s *Service) PollChanges(
 	}
 
 	now := s.now()
+	profile := accountingsync.MustProfile(sess.conn.IntegrationType)
 	page, err := sess.reader.ReadChanges(ctx, &services.ReadAccountingChangesRequest{
 		Auth:           sess.auth,
 		Cursor:         cursor,
 		Now:            now,
-		Payments:       true,
-		BillPayments:   true,
+		Payments:       profile.InboundPayments,
+		BillPayments:   profile.InboundPayments,
 		Documents:      s.drift != nil,
-		ReferenceKinds: accountingsync.MustProfile(sess.conn.IntegrationType).ReferenceKinds,
+		ReferenceKinds: profile.ReferenceKinds,
 	})
 	if err != nil {
 		s.recordReadFailure(ctx, sess, err)
@@ -461,11 +462,11 @@ func (s *Service) observation(
 	}
 	externalURL := ""
 	if sess.writer != nil {
-		externalURL = sess.writer.DocumentURL(
-			sess.auth,
-			payment.Kind.SyncObjectType(),
-			payment.ExternalID,
-		)
+		externalURL = sess.writer.DocumentURL(sess.auth, services.AccountingDocumentLink{
+			Kind:       payment.Kind.SyncObjectType(),
+			ExternalID: payment.ExternalID,
+			DocNumber:  payment.Number,
+		})
 	}
 	return &accountingsync.InboundObservation{
 		TenantInfo:         sess.tenant,

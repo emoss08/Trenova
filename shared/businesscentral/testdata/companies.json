@@ -1,0 +1,7 @@
+{
+  "@odata.context": "https://api.businesscentral.dynamics.com/v2.0/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/Production/api/v2.0/$metadata#companies",
+  "value": [
+    {"id": "A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D", "systemVersion": "25.0.23364.25190", "timestamp": 6127, "name": "CRONUS USA, Inc.", "displayName": "CRONUS USA, Inc.", "businessProfileId": "", "systemCreatedAt": "2026-01-05T14:22:31.177Z", "systemModifiedAt": "2026-09-30T08:15:02.5Z"},
+    {"id": "f0e1d2c3-b4a5-4687-9a8b-7c6d5e4f3a2b", "systemVersion": "25.0.23364.25190", "timestamp": 7001, "name": "Acme Freight", "displayName": "Acme Freight LLC", "businessProfileId": "", "systemCreatedAt": "2026-02-01T00:00:00Z", "systemModifiedAt": "0001-01-01T00:00:00Z"}
+  ]
+}

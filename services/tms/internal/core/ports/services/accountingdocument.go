@@ -12,6 +12,7 @@ type AccountingDocumentAuth struct {
 	RealmID     string
 	AccessToken string
 	CompanyCode string
+	CompanyName string
 }
 
 func DocumentAuthFor(
@@ -22,6 +23,7 @@ func DocumentAuthFor(
 		RealmID:     conn.ExternalRealmID,
 		AccessToken: accessToken,
 		CompanyCode: conn.ExternalShortCode,
+		CompanyName: conn.ExternalCompanyName,
 	}
 }
 
@@ -164,6 +166,12 @@ type AccountingDocumentRef struct {
 	Refs       map[string]string
 }
 
+type AccountingDocumentLink struct {
+	Kind       accountingsync.SyncObjectType
+	ExternalID string
+	DocNumber  string
+}
+
 type AccountingFindDocumentRequest struct {
 	Auth                   AccountingDocumentAuth
 	Kind                   accountingsync.SyncObjectType
@@ -185,11 +193,7 @@ type AccountingDocumentResult struct {
 
 type AccountingDocumentWriter interface {
 	DocumentLimits() AccountingDocumentLimits
-	DocumentURL(
-		auth AccountingDocumentAuth,
-		kind accountingsync.SyncObjectType,
-		externalID string,
-	) string
+	DocumentURL(auth AccountingDocumentAuth, link AccountingDocumentLink) string
 	ClassifyDocumentError(err error) *accountingsync.SyncError
 	UpsertCustomer(
 		ctx context.Context,

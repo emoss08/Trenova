@@ -42,6 +42,9 @@ func (s *Service) ReceiveWebhook(
 	if err != nil {
 		return err
 	}
+	if accountingsync.MustProfile(req.IntegrationType).WebhookSubscriptions {
+		return s.receiveSubscribedWebhook(ctx, provider, req)
+	}
 
 	sender, err := s.webhookSender(ctx, provider, req)
 	if err != nil {
@@ -113,21 +116,9 @@ func (s *Service) tenantWebhookSender(
 	provider services.AccountingProvider,
 	req *services.ReceiveAccountingWebhookRequest,
 ) (*webhookSender, error) {
-	if !pulid.LooksLike(req.AppID) || pulid.ID(req.AppID).Prefix() != appCredentialPrefix {
-		return nil, errWebhookUnverified()
-	}
-	cred, err := s.apps.GetForWebhook(ctx, pulid.ID(req.AppID), req.IntegrationType)
+	app, sender, err := s.namedApp(ctx, req)
 	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errWebhookUnverified()
-		}
 		return nil, err
-	}
-	app, err := s.openCredential(cred)
-	if err != nil {
-		s.l.Warn("could not open the app named by a webhook",
-			zap.String("appId", req.AppID), zap.Error(err))
-		return nil, errWebhookUnverified()
 	}
 	connector, err := provider.Bind(app)
 	if err != nil {
@@ -136,7 +127,30 @@ func (s *Service) tenantWebhookSender(
 	if connector.VerifyWebhook(req.Signature, req.Body) != nil {
 		return nil, errWebhookUnverified()
 	}
-	return &webhookSender{
+	return sender, nil
+}
+
+func (s *Service) namedApp(
+	ctx context.Context,
+	req *services.ReceiveAccountingWebhookRequest,
+) (*services.AccountingApp, *webhookSender, error) {
+	if !pulid.LooksLike(req.AppID) || pulid.ID(req.AppID).Prefix() != appCredentialPrefix {
+		return nil, nil, errWebhookUnverified()
+	}
+	cred, err := s.apps.GetForWebhook(ctx, pulid.ID(req.AppID), req.IntegrationType)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil, errWebhookUnverified()
+		}
+		return nil, nil, err
+	}
+	app, err := s.openCredential(cred)
+	if err != nil {
+		s.l.Warn("could not open the app named by a webhook",
+			zap.String("appId", req.AppID), zap.Error(err))
+		return nil, nil, errWebhookUnverified()
+	}
+	return app, &webhookSender{
 		identity: app.Identity(),
 		tenant:   &pagination.TenantInfo{OrgID: cred.OrganizationID, BuID: cred.BusinessUnitID},
 	}, nil

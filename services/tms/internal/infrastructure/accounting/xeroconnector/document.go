@@ -55,11 +55,11 @@ func (c *Connector) DocumentLimits() services.AccountingDocumentLimits {
 
 func (c *Connector) DocumentURL(
 	auth services.AccountingDocumentAuth,
-	kind accountingsync.SyncObjectType,
-	externalID string,
+	link services.AccountingDocumentLink,
 ) string {
+	kind := link.Kind
 	code := strings.TrimSpace(auth.CompanyCode)
-	id := strings.TrimSpace(externalID)
+	id := strings.TrimSpace(link.ExternalID)
 	if code == "" || id == "" {
 		return ""
 	}

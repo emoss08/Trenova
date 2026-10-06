@@ -1781,8 +1781,47 @@ type Config struct {
 }
 
 type AccountingConfig struct {
-	QuickBooks QuickBooksConfig `mapstructure:"quickbooks"`
-	Xero       XeroConfig       `mapstructure:"xero"`
+	QuickBooks      QuickBooksConfig      `mapstructure:"quickbooks"`
+	Xero            XeroConfig            `mapstructure:"xero"`
+	BusinessCentral BusinessCentralConfig `mapstructure:"businessCentral"`
+}
+
+type BusinessCentralConfig struct {
+	ClientID       string `mapstructure:"clientId"`
+	ClientSecret   string `mapstructure:"clientSecret"`
+	RedirectURL    string `mapstructure:"redirectUrl"    validate:"omitempty,url"`
+	WebhookBaseURL string `mapstructure:"webhookBaseUrl" validate:"omitempty,url"`
+}
+
+const (
+	businessCentralCallbackPath = "/admin/integrations/business-central/callback"
+	apiBasePath                 = "/api/v1"
+)
+
+func (c *BusinessCentralConfig) GetRedirectURL(app *AppConfig) string {
+	if c.RedirectURL != "" {
+		return c.RedirectURL
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + businessCentralCallbackPath
+	}
+	return ""
+}
+
+func (c *BusinessCentralConfig) GetWebhookBaseURL(app *AppConfig) string {
+	if base := strings.TrimSuffix(strings.TrimSpace(c.WebhookBaseURL), "/"); base != "" {
+		return base
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + apiBasePath
+	}
+	return ""
+}
+
+func (c *BusinessCentralConfig) IsConfigured(app *AppConfig) bool {
+	return strings.TrimSpace(c.ClientID) != "" &&
+		strings.TrimSpace(c.ClientSecret) != "" &&
+		c.GetRedirectURL(app) != ""
 }
 
 type XeroConfig struct {

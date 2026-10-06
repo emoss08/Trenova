@@ -54,9 +54,9 @@ func TestDocumentURL(t *testing.T) {
 	for _, tc := range cases {
 		auth := testAuth()
 		auth.CompanyCode = tc.code
-		assert.Equal(t, tc.want, conn.DocumentURL(auth, tc.kind, testInvoice), string(tc.kind))
+		assert.Equal(t, tc.want, conn.DocumentURL(auth, services.AccountingDocumentLink{Kind: tc.kind, ExternalID: testInvoice}), string(tc.kind))
 	}
-	assert.Empty(t, conn.DocumentURL(testAuth(), accountingsync.SyncObjectInvoice, " "))
+	assert.Empty(t, conn.DocumentURL(testAuth(), services.AccountingDocumentLink{Kind: accountingsync.SyncObjectInvoice, ExternalID: " "}))
 }
 
 func salesDoc(kind accountingsync.SyncObjectType) *services.AccountingSalesDocument {

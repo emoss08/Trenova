@@ -416,12 +416,24 @@ func (c *AccountingConnection) SetDriverSettlements(enabled bool, now int64) {
 }
 
 func (c *AccountingConnection) SetInboundPayments(policy InboundPaymentPolicy) {
+	if !c.ReadsPayments() {
+		c.InboundPaymentPolicy = InboundPaymentsOff
+		return
+	}
 	if policy.IsValid() {
 		c.InboundPaymentPolicy = policy
 	}
 }
 
+func (c *AccountingConnection) ReadsPayments() bool {
+	profile := MustProfile(c.IntegrationType)
+	return profile.InboundPayments
+}
+
 func (c *AccountingConnection) PaymentPolicy() InboundPaymentPolicy {
+	if !c.ReadsPayments() {
+		return InboundPaymentsOff
+	}
 	if c.InboundPaymentPolicy.IsValid() {
 		return c.InboundPaymentPolicy
 	}

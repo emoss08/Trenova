@@ -390,3 +390,12 @@ accounting:
   # and TRENOVA_XERO_WEBHOOK_KEY rather than this file.
   xero:
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/xero/callback
+  # Business Central signs in through a Microsoft Entra app: register a multitenant web app in
+  # entra.microsoft.com, add the redirect URI <webBaseUrl>/admin/integrations/business-central/callback,
+  # grant the delegated Dynamics 365 Business Central permission Financials.ReadWrite.All and
+  # create a client secret. Trenova subscribes to Business Central's webhooks itself and renews
+  # them every few days; the notification address must be public https. Instance secrets come
+  # from TRENOVA_BUSINESSCENTRAL_CLIENT_ID and TRENOVA_BUSINESSCENTRAL_CLIENT_SECRET.
+  businessCentral:
+    redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/business-central/callback
+    webhookBaseUrl: "" # Public https API origin with /api/v1; defaults to app.webBaseUrl + /api/v1

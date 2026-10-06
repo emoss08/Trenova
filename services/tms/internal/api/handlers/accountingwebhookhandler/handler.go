@@ -37,23 +37,72 @@ func WebhookPath(provider string) string {
 	return "/webhooks/accounting/" + provider + "/"
 }
 
+const validationTokenParam = "validationToken"
+
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	rg.POST("/webhooks/accounting/:provider/", h.receive)
 	rg.POST("/webhooks/accounting/:provider/:app/", h.receive)
+	rg.GET("/webhooks/accounting/:provider/", h.handshake)
+	rg.GET("/webhooks/accounting/:provider/:app/", h.handshake)
+}
+
+func (h *Handler) resolve(c *gin.Context) (accountingsync.ProviderProfile, services.AccountingProvider, bool) {
+	profile, ok := accountingsync.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
+	if !ok {
+		return accountingsync.ProviderProfile{}, nil, false
+	}
+	provider, ok := h.connectors.For(profile.Type)
+	if !ok {
+		return accountingsync.ProviderProfile{}, nil, false
+	}
+	return profile, provider, true
+}
+
+func (h *Handler) handshake(c *gin.Context) {
+	profile, provider, ok := h.resolve(c)
+	if !ok {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	if !h.answerHandshake(c, profile, provider) {
+		c.Status(http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *Handler) answerHandshake(
+	c *gin.Context,
+	profile accountingsync.ProviderProfile,
+	provider services.AccountingProvider,
+) bool {
+	raw, present := c.GetQuery(validationTokenParam)
+	if !present || !profile.WebhookSubscriptions {
+		return false
+	}
+	subscribing, ok := provider.(services.AccountingSubscriptionProvider)
+	if !ok {
+		return false
+	}
+	token, valid := subscribing.ValidationToken(raw)
+	if !valid {
+		c.Status(http.StatusBadRequest)
+		return true
+	}
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Header("Cache-Control", "no-store")
+	c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(token))
+	return true
 }
 
 func (h *Handler) receive(c *gin.Context) {
-	profile, ok := accountingsync.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
+	profile, provider, ok := h.resolve(c)
 	if !ok {
 		c.Status(http.StatusNotFound)
+		return
+	}
+	if h.answerHandshake(c, profile, provider) {
 		return
 	}
 	typ := profile.Type
-	provider, ok := h.connectors.For(typ)
-	if !ok {
-		c.Status(http.StatusNotFound)
-		return
-	}
 
 	body, err := io.ReadAll(io.LimitReader(c.Request.Body, maxWebhookBodyBytes+1))
 	if err != nil {

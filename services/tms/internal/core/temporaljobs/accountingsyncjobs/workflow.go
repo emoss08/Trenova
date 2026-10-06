@@ -83,7 +83,10 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Start the daily reference data refresh for every active accounting connection",
 		},
-	}, append(append(syncWorkflows(), changesWorkflows()...), driftWorkflows()...)...)
+	}, append(
+		append(append(syncWorkflows(), changesWorkflows()...), driftWorkflows()...),
+		subscriptionWorkflows()...,
+	)...)
 }
 
 func CheckAccountingConnectionsWorkflow(ctx workflow.Context) (*HealthSweepResult, error) {

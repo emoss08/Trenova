@@ -1,0 +1,1 @@
+{"error": {"code": "Application_DialogException", "message": "Posting Date is not within your range of allowed posting dates in Sales Header Document Type='Invoice',No.='S-INV-0003'.  CorrelationId:  4f5e6d7c-8b9a-4978-8796-a5b4c3d2e1f0."}}

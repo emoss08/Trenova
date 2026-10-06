@@ -1,0 +1,4 @@
+{"@odata.context": "https://api.businesscentral.dynamics.com/v2.0/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/Production/api/v2.0/$metadata#companies(a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)/accountingPeriods", "value": [
+  {"id": "11111111-2222-4333-8444-555555555551", "startingDate": "2026-01-01", "name": "January", "newFiscalYear": true, "closed": true, "dateLocked": true},
+  {"id": "11111111-2222-4333-8444-555555555552", "startingDate": "2026-02-01", "name": "February", "newFiscalYear": false, "closed": false, "dateLocked": false}
+]}

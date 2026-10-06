@@ -269,6 +269,15 @@ func (s *Service) UpdateSettings(
 		)
 	}
 
+	if req.InboundPayments != "" && req.InboundPayments != accountingsync.InboundPaymentsOff &&
+		!conn.ReadsPayments() {
+		return nil, errortypes.NewValidationError(
+			"inboundPayments",
+			errortypes.ErrInvalid,
+			accountingsync.MustProfile(conn.IntegrationType).InboundUnavailableReason,
+		)
+	}
+
 	before := jsonutils.MustToJSON(conn)
 	previous := settingsSnapshot{
 		sendingDrivers: conn.SyncsDriverSettlements(),

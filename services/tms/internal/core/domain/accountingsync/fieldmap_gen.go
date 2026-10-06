@@ -66,3 +66,10 @@ func (e *AccountingSyncAttempt) GetStaticFieldMap() map[string]string {
 func (e *AccountingSyncRecord) GetStaticFieldMap() map[string]string {
 	return buncolgen.AccountingSyncRecordFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingWebhookSubscription].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingWebhookSubscriptionFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingWebhookSubscription) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingWebhookSubscriptionFieldMap
+}

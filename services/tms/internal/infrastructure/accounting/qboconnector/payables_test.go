@@ -120,7 +120,7 @@ func TestCreatePurchaseDocumentWritesABill(t *testing.T) {
 		accountingsync.ExternalRefURL:            conn.env.AppBaseURL() + "/app/bill?txnId=210",
 	}, result.Refs)
 	assert.Equal(t, result.Refs[accountingsync.ExternalRefURL],
-		conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectCarrierBill, "210"))
+		conn.DocumentURL(services.AccountingDocumentAuth{}, services.AccountingDocumentLink{Kind: accountingsync.SyncObjectCarrierBill, ExternalID: "210"}))
 
 	writes := fake.writes()
 	require.Len(t, writes, 1)
@@ -418,9 +418,9 @@ func TestPayablesDocumentURLsAndLimits(t *testing.T) {
 		{kind: accountingsync.SyncObjectDriverBillPay, want: base + "/app/billpayment?txnId=91"},
 	}
 	for _, tt := range tests {
-		assert.Equal(t, tt.want, conn.DocumentURL(services.AccountingDocumentAuth{}, tt.kind, " 91 "), tt.kind)
+		assert.Equal(t, tt.want, conn.DocumentURL(services.AccountingDocumentAuth{}, services.AccountingDocumentLink{Kind: tt.kind, ExternalID: " 91 "}), tt.kind)
 	}
-	assert.Empty(t, conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectCarrierBill, ""))
-	assert.Empty(t, conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectType("Estimate"), "91"))
+	assert.Empty(t, conn.DocumentURL(services.AccountingDocumentAuth{}, services.AccountingDocumentLink{Kind: accountingsync.SyncObjectCarrierBill, ExternalID: ""}))
+	assert.Empty(t, conn.DocumentURL(services.AccountingDocumentAuth{}, services.AccountingDocumentLink{Kind: accountingsync.SyncObjectType("Estimate"), ExternalID: "91"}))
 	assert.False(t, conn.DocumentLimits().CanVoidPurchaseDocument)
 }

@@ -138,3 +138,53 @@ type AccountingReferenceCreator interface {
 	IsDuplicateName(err error) bool
 	SanitizeName(kind accountingsync.ReferenceKind, name string) string
 }
+
+type AccountingSubscribeRequest struct {
+	Auth            AccountingDocumentAuth
+	Resource        string
+	NotificationURL string
+	ClientState     string
+}
+
+type AccountingRenewSubscriptionRequest struct {
+	Auth            AccountingDocumentAuth
+	Resource        string
+	ExternalID      string
+	NotificationURL string
+	ClientState     string
+	ETag            string
+}
+
+type AccountingUnsubscribeRequest struct {
+	Auth       AccountingDocumentAuth
+	ExternalID string
+	ETag       string
+}
+
+type AccountingWebhookNotification struct {
+	SubscriptionID string
+	ClientState    string
+	Resource       string
+	ChangeType     string
+}
+
+type AccountingWebhookSubscriber interface {
+	SubscriptionResources() []string
+	SubscriptionRenewWindow() time.Duration
+	Subscribe(
+		ctx context.Context,
+		req *AccountingSubscribeRequest,
+	) (*accountingsync.WebhookSubscriptionGrant, error)
+	RenewSubscription(
+		ctx context.Context,
+		req *AccountingRenewSubscriptionRequest,
+	) (*accountingsync.WebhookSubscriptionGrant, error)
+	Unsubscribe(ctx context.Context, req *AccountingUnsubscribeRequest) error
+	IsSubscriptionGone(err error) bool
+}
+
+type AccountingSubscriptionProvider interface {
+	NotificationBaseURL() string
+	ParseNotifications(body []byte) ([]AccountingWebhookNotification, error)
+	ValidationToken(raw string) (string, bool)
+}

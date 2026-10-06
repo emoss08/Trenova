@@ -1,0 +1,1 @@
+{"error": {"code": "BadRequest_PropertyNotFound", "message": "Could not find a property named 'foo' on type 'Microsoft.NAV.salesInvoice'.  CorrelationId:  6f7e8d9c-0bab-4978-8796-a5b4c3d2e1f0."}}
