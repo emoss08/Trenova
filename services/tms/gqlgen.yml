@@ -3633,6 +3633,9 @@ models:
   EtaVerdict:
     model:
       - github.com/emoss08/trenova/internal/core/services/shipmenttracking.Verdict
+  UncoveredPickupWindow:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.PickupWindow
   ShipmentFacet:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentFacet

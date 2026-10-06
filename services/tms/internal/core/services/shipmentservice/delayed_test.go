@@ -73,7 +73,7 @@ func TestServiceDelayShipments_SkipsWhenAutoDelayDisabled(t *testing.T) {
 		l:           zap.NewNop(),
 		repo:        mocks.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
-		realtime:    mocks.NewMockRealtimeService(t),
+		invalidator: newTestInvalidator(mocks.NewMockRealtimeService(t)),
 	}
 
 	entities, err := svc.DelayShipments(t.Context(), &repositories.DelayShipmentsRequest{
@@ -131,7 +131,7 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
-		realtime:    realtime,
+		invalidator: newTestInvalidator(realtime),
 	}
 
 	entities, err := svc.DelayShipments(t.Context(), &repositories.DelayShipmentsRequest{

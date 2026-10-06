@@ -34,13 +34,17 @@ func (s *stubBoardRepo) StageSummary(
 	return s.stageRows, nil
 }
 
-func (s *stubBoardRepo) QuickFilterCounts(
+func (s *stubBoardRepo) QuickFilterTotals(
 	_ context.Context,
 	req *repositories.CountShipmentQuickFiltersRequest,
-) (map[shipment.QuickFilter]int, error) {
+) ([]repositories.ShipmentQuickFilterTotal, error) {
 	s.lastScope = req.Scope
 	s.lastFilters = req.Filters
-	return s.counts, nil
+	totals := make([]repositories.ShipmentQuickFilterTotal, len(req.Filters))
+	for i, spec := range req.Filters {
+		totals[i].Count = s.counts[spec.Filter]
+	}
+	return totals, nil
 }
 
 func (s *stubBoardRepo) FacetCounts(
@@ -132,7 +136,9 @@ func TestCapabilities(t *testing.T) {
 	t.Parallel()
 
 	svc := NewWithDependencies(&Dependencies{
-		AIProviders: &stubAI{tasks: map[aiprovider.Task]bool{aiprovider.TaskOperationalInsights: true}},
+		AIProviders: &stubAI{
+			tasks: map[aiprovider.Task]bool{aiprovider.TaskOperationalInsights: true},
+		},
 		Organizations: &stubOrgs{caps: &repositories.OrganizationCapabilities{
 			BrokerageEnabled: true,
 		}},

@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +27,7 @@ type ActivitiesParams struct {
 	Repo         repositories.ShipmentRepository
 	AuditService services.AuditService
 	EventService services.ShipmentEventService
-	Realtime     services.RealtimeService
+	Invalidator  services.ShipmentInvalidator
 	AgentEvents  services.AgentEventPublisher `optional:"true"`
 	Logger       *zap.Logger
 }
@@ -37,7 +36,7 @@ type Activities struct {
 	repo         repositories.ShipmentRepository
 	auditService services.AuditService
 	eventService services.ShipmentEventService
-	realtime     services.RealtimeService
+	invalidator  services.ShipmentInvalidator
 	agentEvents  services.AgentEventPublisher
 	logger       *zap.Logger
 }
@@ -47,7 +46,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		repo:         p.Repo,
 		auditService: p.AuditService,
 		eventService: p.EventService,
-		realtime:     p.Realtime,
+		invalidator:  p.Invalidator,
 		agentEvents:  p.AgentEvents,
 		logger:       p.Logger.Named("shipment-activities"),
 	}
@@ -124,24 +123,14 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	}
 
 	if len(duplicated) > 0 {
-		if publishErr := realtimeinvalidation.Publish(
-			ctx,
-			a.realtime,
-			&realtimeinvalidation.PublishParams{
-				OrganizationID: payload.OrganizationID,
-				BusinessUnitID: payload.BusinessUnitID,
-				ActorUserID:    payload.RequestedBy,
-				ActorType:      services.PrincipalTypeUser,
-				ActorID:        payload.RequestedBy,
-				Resource:       "shipments",
-				Action:         "bulk_created",
-			},
-		); publishErr != nil {
-			a.logger.Warn(
-				"failed to publish duplicated shipment invalidation",
-				zap.Error(publishErr),
-			)
-		}
+		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+			ActorUserID:    payload.RequestedBy,
+			ActorType:      services.PrincipalTypeUser,
+			ActorID:        payload.RequestedBy,
+			Action:         "bulk_created",
+		})
 	}
 
 	return &BulkDuplicateShipmentsResult{
@@ -176,20 +165,13 @@ func (a *Activities) AutoDelayShipmentsActivity(
 	for _, entity := range delayedShipments {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		if publishErr := realtimeinvalidation.Publish(
-			ctx,
-			a.realtime,
-			&realtimeinvalidation.PublishParams{
-				OrganizationID: entity.OrganizationID,
-				BusinessUnitID: entity.BusinessUnitID,
-				Resource:       "shipments",
-				Action:         "delayed",
-				RecordID:       entity.ID,
-				Entity:         entity,
-			},
-		); publishErr != nil {
-			a.logger.Warn("failed to publish shipment delay invalidation", zap.Error(publishErr))
-		}
+		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+			OrganizationID: entity.OrganizationID,
+			BusinessUnitID: entity.BusinessUnitID,
+			Action:         "delayed",
+			RecordID:       entity.ID,
+			Entity:         entity,
+		})
 	}
 
 	return &AutoDelayShipmentsResult{
@@ -239,20 +221,13 @@ func (a *Activities) AutoDelayTenantShipmentsActivity(
 	for _, entity := range delayedShipments {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		if publishErr := realtimeinvalidation.Publish(
-			ctx,
-			a.realtime,
-			&realtimeinvalidation.PublishParams{
-				OrganizationID: entity.OrganizationID,
-				BusinessUnitID: entity.BusinessUnitID,
-				Resource:       "shipments",
-				Action:         "delayed",
-				RecordID:       entity.ID,
-				Entity:         entity,
-			},
-		); publishErr != nil {
-			a.logger.Warn("failed to publish shipment delay invalidation", zap.Error(publishErr))
-		}
+		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+			OrganizationID: entity.OrganizationID,
+			BusinessUnitID: entity.BusinessUnitID,
+			Action:         "delayed",
+			RecordID:       entity.ID,
+			Entity:         entity,
+		})
 	}
 
 	return &AutoDelayShipmentsResult{
@@ -286,21 +261,11 @@ func (a *Activities) AutoCancelShipmentsActivity(
 
 	if len(canceledShipments) > 0 {
 		for _, tenantInfo := range uniqueShipmentTenants(canceledShipments) {
-			if publishErr := realtimeinvalidation.Publish(
-				ctx,
-				a.realtime,
-				&realtimeinvalidation.PublishParams{
-					OrganizationID: tenantInfo.OrgID,
-					BusinessUnitID: tenantInfo.BuID,
-					Resource:       "shipments",
-					Action:         "bulk_canceled",
-				},
-			); publishErr != nil {
-				a.logger.Warn(
-					"failed to publish shipment auto cancel invalidation",
-					zap.Error(publishErr),
-				)
-			}
+			services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+				OrganizationID: tenantInfo.OrgID,
+				BusinessUnitID: tenantInfo.BuID,
+				Action:         "bulk_canceled",
+			})
 		}
 	}
 
@@ -353,21 +318,11 @@ func (a *Activities) AutoCancelTenantShipmentsActivity(
 	}
 
 	if len(canceledShipments) > 0 {
-		if publishErr := realtimeinvalidation.Publish(
-			ctx,
-			a.realtime,
-			&realtimeinvalidation.PublishParams{
-				OrganizationID: tenantInfo.OrgID,
-				BusinessUnitID: tenantInfo.BuID,
-				Resource:       "shipments",
-				Action:         "bulk_canceled",
-			},
-		); publishErr != nil {
-			a.logger.Warn(
-				"failed to publish shipment auto cancel invalidation",
-				zap.Error(publishErr),
-			)
-		}
+		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			Action:         "bulk_canceled",
+		})
 	}
 
 	return &AutoCancelShipmentsResult{

@@ -106,7 +106,7 @@ func (s *Service) QuickFilterCounts(
 		specs = append(specs, shipment.Quick(filter))
 	}
 
-	counts, err := s.repo.QuickFilterCounts(ctx, &repositories.CountShipmentQuickFiltersRequest{
+	totals, err := s.repo.QuickFilterTotals(ctx, &repositories.CountShipmentQuickFiltersRequest{
 		Scope:   scope,
 		Filters: specs,
 	})
@@ -115,8 +115,11 @@ func (s *Service) QuickFilterCounts(
 	}
 
 	out := make([]*services.ShipmentQuickFilterCount, 0, len(filters))
-	for _, filter := range filters {
-		out = append(out, &services.ShipmentQuickFilterCount{Filter: filter, Count: counts[filter]})
+	for i, filter := range filters {
+		out = append(
+			out,
+			&services.ShipmentQuickFilterCount{Filter: filter, Count: totals[i].Count},
+		)
 	}
 
 	return out, nil

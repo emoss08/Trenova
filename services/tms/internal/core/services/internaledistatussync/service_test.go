@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
+
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
@@ -474,6 +476,7 @@ func newObserverFixture(t *testing.T) *observerFixture {
 		shipmentLinkRepo:   linkRepo,
 		transferChangeRepo: transferRepo,
 		realtime:           realtime,
+		invalidator:        shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: shipmentRepo,
 			Coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 2_000 }),

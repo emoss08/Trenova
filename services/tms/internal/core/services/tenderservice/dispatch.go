@@ -443,5 +443,9 @@ func (s *Service) publishTenderShipmentInvalidation(
 	if offer.Tender == nil {
 		return
 	}
-	s.publishInvalidation(ctx, tenantInfo, offer.Tender.ShipmentID, action)
+	portservices.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		portservices.ShipmentInvalidationByUser(tenantInfo, offer.Tender.ShipmentID, action),
+	)
 }

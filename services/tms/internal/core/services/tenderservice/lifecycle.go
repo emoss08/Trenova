@@ -600,7 +600,11 @@ func (s *Service) MarkExhausted(
 		Comment:    "Tender exhausted with no acceptance",
 		Current:    entity,
 	})
-	s.publishInvalidation(ctx, tenantInfo, entity.ShipmentID, "tender_exhausted")
+	portservices.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		portservices.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_exhausted"),
+	)
 
 	return nil
 }

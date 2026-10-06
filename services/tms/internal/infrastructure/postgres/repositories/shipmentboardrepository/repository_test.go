@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func newTestRepository(t *testing.T) (*repository, sqlmock.Sqlmock) {
+func newTestRepository(t *testing.T) (*Repository, sqlmock.Sqlmock) {
 	t.Helper()
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
@@ -32,7 +32,7 @@ func newTestRepository(t *testing.T) (*repository, sqlmock.Sqlmock) {
 		require.NoError(t, bunDB.Close())
 	})
 
-	return &repository{db: postgres.NewTestConnection(bunDB), l: zap.NewNop()}, mock
+	return &Repository{db: postgres.NewTestConnection(bunDB), l: zap.NewNop()}, mock
 }
 
 func testScope() *repositories.ShipmentBoardScope {
@@ -79,23 +79,29 @@ func TestStageSummaryGroupsByStageRank(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestQuickFilterCountsIsOneQuery(t *testing.T) {
+func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 	t.Parallel()
 
 	repo, mock := newTestRepository(t)
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FILTER \(WHERE sp\.stage_rank = 1\) AS "qf_Late", COUNT\(\*\) FILTER \(WHERE .*\) AS "qf_Detention" FROM "shipments" AS "sp"`).
-		WillReturnRows(sqlmock.NewRows([]string{"qf_Late", "qf_Detention"}).AddRow(4, 2))
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FILTER \(WHERE sp\.stage_rank = 1\) AS "qf_0_count", COALESCE\(SUM\(sp\.total_charge_amount\) FILTER \(WHERE sp\.stage_rank = 1\), 0\) AS "qf_0_revenue", COUNT\(\*\) FILTER \(WHERE .*\) AS "qf_1_count"`).
+		WillReturnRows(sqlmock.NewRows([]string{"qf_0_count", "qf_0_revenue", "qf_1_count", "qf_1_revenue"}).
+			AddRow(4, "1200.50", 2, "0"))
 
-	counts, err := repo.QuickFilterCounts(t.Context(), &repositories.CountShipmentQuickFiltersRequest{
-		Scope: testScope(),
-		Filters: []shipment.QuickFilterSpec{
-			shipment.Quick(shipment.QuickFilterLate),
-			shipment.Quick(shipment.QuickFilterDetention),
+	totals, err := repo.QuickFilterTotals(
+		t.Context(),
+		&repositories.CountShipmentQuickFiltersRequest{
+			Scope: testScope(),
+			Filters: []shipment.QuickFilterSpec{
+				shipment.Quick(shipment.QuickFilterLate),
+				shipment.Quick(shipment.QuickFilterDetention),
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
-	assert.Equal(t, 4, counts[shipment.QuickFilterLate])
-	assert.Equal(t, 2, counts[shipment.QuickFilterDetention])
+	require.Len(t, totals, 2)
+	assert.Equal(t, 4, totals[0].Count)
+	assert.True(t, totals[0].Revenue.Equal(decimal.RequireFromString("1200.50")))
+	assert.Equal(t, 2, totals[1].Count)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

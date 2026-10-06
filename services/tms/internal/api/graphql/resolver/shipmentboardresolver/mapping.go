@@ -44,7 +44,7 @@ func stageSummariesToModel(
 			Stage:   row.Stage,
 			Rank:    row.Rank,
 			Count:   row.Count,
-			Revenue: row.Revenue.StringFixed(2),
+			Revenue: base.DecimalString(row.Revenue),
 		})
 	}
 	return out

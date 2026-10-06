@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -127,43 +126,4 @@ func tenantRefForShipment(entity shipmentTenantResource) shipmenteventservice.Te
 		OrganizationID: entity.GetOrganizationID(),
 		BusinessUnitID: entity.GetBusinessUnitID(),
 	}
-}
-
-func (s *service) publishShipmentInvalidation(
-	ctx context.Context,
-	entity shipmentTenantResource,
-	actor services.AuditActor,
-	action string,
-	payload any,
-) error {
-	return realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: entity.GetOrganizationID(),
-		BusinessUnitID: entity.GetBusinessUnitID(),
-		ActorUserID:    actor.UserID,
-		ActorType:      actor.PrincipalType,
-		ActorID:        actor.PrincipalID,
-		ActorAPIKeyID:  actor.APIKeyID,
-		Resource:       "shipments",
-		Action:         action,
-		RecordID:       entity.GetID(),
-		Entity:         payload,
-	})
-}
-
-func (s *service) publishBulkShipmentInvalidation(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	actor services.AuditActor,
-	action string,
-) error {
-	return realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ActorUserID:    actor.UserID,
-		ActorType:      actor.PrincipalType,
-		ActorID:        actor.PrincipalID,
-		ActorAPIKeyID:  actor.APIKeyID,
-		Resource:       "shipments",
-		Action:         action,
-	})
 }

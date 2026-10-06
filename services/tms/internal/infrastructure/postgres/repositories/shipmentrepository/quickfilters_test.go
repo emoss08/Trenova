@@ -153,7 +153,8 @@ func TestQuickFilterCondition_DetentionFollowsTheEngine(t *testing.T) {
 	basis.Detention.UsePolicyEngine = true
 	engine := renderQuickFilter(t, dba, basis, shipment.Quick(shipment.QuickFilterDetention))
 	assert.Contains(t, engine, `"detention_occurrences" AS "dto"`)
-	assert.Contains(t, engine, "dto.status = 'Accruing'")
+	assert.Contains(t, engine, "dto.status != 'Billed'")
+	assert.Contains(t, engine, "dto.free_time_expires_at <= "+itoa(basis.Now.Unix()))
 }
 
 func TestQuickFilterCondition_ReeferAndReadyToBill(t *testing.T) {

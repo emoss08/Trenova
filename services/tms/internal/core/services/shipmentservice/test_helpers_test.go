@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
 	"go.uber.org/zap"
 )
 
@@ -27,4 +29,8 @@ func newTestCommercialCalculator(
 		RateEngine:      rateengine.NewFallbackEngine(t, formula),
 		AccessorialRepo: accessorialRepo,
 	})
+}
+
+func newTestInvalidator(realtime services.RealtimeService) services.ShipmentInvalidator {
+	return shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop())
 }

@@ -3,6 +3,7 @@ package shipmentboardrepository
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -42,16 +43,20 @@ type Params struct {
 	Logger *zap.Logger
 }
 
-type repository struct {
+type Repository struct {
 	db *postgres.Connection
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentBoardRepository {
-	return &repository{db: p.DB, l: p.Logger.Named("postgres.shipment-board-repository")}
+func New(p Params) *Repository {
+	return &Repository{db: p.DB, l: p.Logger.Named("postgres.shipment-board-repository")}
 }
 
-func (r *repository) scoped(
+func NewBoardRepository(r *Repository) repositories.ShipmentBoardRepository { return r }
+
+func NewWatchlistRepository(r *Repository) repositories.ShipmentWatchlistRepository { return r }
+
+func (r *Repository) scoped(
 	dba bun.IDB,
 	scope *repositories.ShipmentBoardScope,
 ) (*bun.SelectQuery, error) {
@@ -67,77 +72,90 @@ func (r *repository) scoped(
 	)
 }
 
-func (r *repository) StageSummary(
+func (r *Repository) StageSummary(
 	ctx context.Context,
 	scope *repositories.ShipmentBoardScope,
 ) ([]*repositories.ShipmentStageSummaryRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.ShipmentStageSummaryRow, error) {
-		sp := buncolgen.ShipmentColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*repositories.ShipmentStageSummaryRow, error) {
+			sp := buncolgen.ShipmentColumns
 
-		q, err := r.scoped(r.db.DBForContext(ctx), scope)
-		if err != nil {
-			return nil, err
-		}
+			q, err := r.scoped(r.db.DBForContext(ctx), scope)
+			if err != nil {
+				return nil, err
+			}
 
-		rows := make([]*repositories.ShipmentStageSummaryRow, 0, len(shipment.Stages()))
-		if err = q.
-			ColumnExpr(sp.StageRank.As(stageRankAlias)).
-			ColumnExpr(buncolgen.Count(facetCountAlias)).
-			ColumnExpr(sp.TotalChargeAmount.Expr("COALESCE(SUM({}), 0) AS " + stageRevenueAlias)).
-			GroupExpr(sp.StageRank.Qualified()).
-			OrderExpr(sp.StageRank.OrderAsc()).
-			Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to summarize shipment stages", zap.Error(err))
-			return nil, err
-		}
+			rows := make([]*repositories.ShipmentStageSummaryRow, 0, len(shipment.Stages()))
+			if err = q.
+				ColumnExpr(sp.StageRank.As(stageRankAlias)).
+				ColumnExpr(buncolgen.Count(facetCountAlias)).
+				ColumnExpr(sp.TotalChargeAmount.Expr("COALESCE(SUM({}), 0) AS "+stageRevenueAlias)).
+				GroupExpr(sp.StageRank.Qualified()).
+				OrderExpr(sp.StageRank.OrderAsc()).
+				Scan(ctx, &rows); err != nil {
+				r.l.Error("failed to summarize shipment stages", zap.Error(err))
+				return nil, err
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
-func (r *repository) QuickFilterCounts(
+func (r *Repository) QuickFilterTotals(
 	ctx context.Context,
 	req *repositories.CountShipmentQuickFiltersRequest,
-) (map[shipment.QuickFilter]int, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[shipment.QuickFilter]int, error) {
-		counts := make(map[shipment.QuickFilter]int, len(req.Filters))
-		if len(req.Filters) == 0 {
-			return counts, nil
-		}
-
-		dba := r.db.DBForContext(ctx)
-		q, err := r.scoped(dba, req.Scope)
-		if err != nil {
-			return nil, err
-		}
-
-		values := make([]int, len(req.Filters))
-		dest := make([]any, len(req.Filters))
-		for i, spec := range req.Filters {
-			cond, cErr := shipmentrepository.QuickFilterCondition(
-				dba,
-				req.Scope.Options.QuickFilterBasis,
-				spec,
-			)
-			if cErr != nil {
-				return nil, cErr
+) ([]repositories.ShipmentQuickFilterTotal, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]repositories.ShipmentQuickFilterTotal, error) {
+			totals := make([]repositories.ShipmentQuickFilterTotal, len(req.Filters))
+			if len(req.Filters) == 0 {
+				return totals, nil
 			}
-			q = q.ColumnExpr("COUNT(*) FILTER (WHERE ?) AS ?", cond,
-				bun.Ident(quickCountAliasPfx+string(spec.Filter)))
-			dest[i] = &values[i]
-		}
+			if req.Scope == nil {
+				return nil, ErrScopeMissing
+			}
 
-		if err = q.Scan(ctx, dest...); err != nil {
-			r.l.Error("failed to count shipment quick filters", zap.Error(err))
-			return nil, err
-		}
+			dba := r.db.DBForContext(ctx)
+			q, err := r.scoped(dba, req.Scope)
+			if err != nil {
+				return nil, err
+			}
 
-		for i, spec := range req.Filters {
-			counts[spec.Filter] = values[i]
-		}
+			revenue := buncolgen.ShipmentColumns.TotalChargeAmount.Qualified()
+			dest := make([]any, 0, len(req.Filters)*2)
+			for i, spec := range req.Filters {
+				cond, cErr := shipmentrepository.QuickFilterCondition(
+					dba,
+					req.Scope.Options.QuickFilterBasis,
+					spec,
+				)
+				if cErr != nil {
+					return nil, cErr
+				}
+				alias := quickCountAliasPfx + strconv.Itoa(i)
+				q = q.
+					ColumnExpr("COUNT(*) FILTER (WHERE ?) AS ?", cond, bun.Ident(alias+"_count")).
+					ColumnExpr(
+						"COALESCE(SUM("+revenue+") FILTER (WHERE ?), 0) AS ?",
+						cond,
+						bun.Ident(alias+"_revenue"),
+					)
+				dest = append(dest, &totals[i].Count, &totals[i].Revenue)
+			}
 
-		return counts, nil
-	})
+			if err = q.Scan(ctx, dest...); err != nil {
+				r.l.Error("failed to total shipment quick filters", zap.Error(err))
+				return nil, err
+			}
+
+			return totals, nil
+		},
+	)
 }
 
 type facetDefinition struct {
@@ -176,7 +194,7 @@ func facetDefinitionOf(facet repositories.ShipmentFacet) (facetDefinition, error
 			field: filters.CustomerID(dbtype.OpEqual, nil).Field,
 			apply: func(q *bun.SelectQuery) *bun.SelectQuery {
 				return q.
-					Join("JOIN "+buncolgen.CustomerTable.As(buncolgen.CustomerTable.Alias)).
+					Join("JOIN " + buncolgen.CustomerTable.As(buncolgen.CustomerTable.Alias)).
 					JoinOn(cus.ID.EqColumn(sp.CustomerID)).
 					JoinOn(cus.OrganizationID.EqColumn(sp.OrganizationID)).
 					JoinOn(cus.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
@@ -192,7 +210,11 @@ func facetDefinitionOf(facet repositories.ShipmentFacet) (facetDefinition, error
 			field: filters.TrailerTypeID(dbtype.OpEqual, nil).Field,
 			apply: func(q *bun.SelectQuery) *bun.SelectQuery {
 				return q.
-					Join("JOIN "+buncolgen.EquipmentTypeTable.As(buncolgen.EquipmentTypeTable.Alias)).
+					Join(
+						"JOIN " + buncolgen.EquipmentTypeTable.As(
+							buncolgen.EquipmentTypeTable.Alias,
+						),
+					).
 					JoinOn(et.ID.EqColumn(sp.TrailerTypeID)).
 					JoinOn(et.OrganizationID.EqColumn(sp.OrganizationID)).
 					JoinOn(et.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
@@ -223,56 +245,60 @@ func withoutFieldFilters(filter *pagination.QueryOptions, field string) *paginat
 	return &clone
 }
 
-func (r *repository) FacetCounts(
+func (r *Repository) FacetCounts(
 	ctx context.Context,
 	req *repositories.CountShipmentFacetRequest,
 ) (*repositories.ShipmentFacetCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ShipmentFacetCounts, error) {
-		if req.Scope == nil {
-			return nil, ErrScopeMissing
-		}
-
-		def, err := facetDefinitionOf(req.Facet)
-		if err != nil {
-			return nil, err
-		}
-
-		limit := req.Limit
-		if limit <= 0 {
-			limit = DefaultFacetLimit
-		}
-		limit = min(limit, maxFacetLimit)
-
-		scope := &repositories.ShipmentBoardScope{
-			Filter:  withoutFieldFilters(req.Scope.Filter, def.field),
-			Options: req.Scope.Options,
-		}
-		q, err := r.scoped(r.db.DBForContext(ctx), scope)
-		if err != nil {
-			return nil, err
-		}
-
-		values := make([]*repositories.ShipmentFacetValue, 0, limit)
-		if err = def.apply(q).
-			ColumnExpr(buncolgen.Count(facetCountAlias)).
-			OrderExpr(facetCountAlias + " DESC").
-			OrderExpr(facetValueAlias + " ASC").
-			Limit(limit).
-			Scan(ctx, &values); err != nil {
-			r.l.Error("failed to count shipment facet", zap.Error(err))
-			return nil, err
-		}
-
-		if def.label != nil {
-			for _, value := range values {
-				value.Label = def.label(value.Value)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*repositories.ShipmentFacetCounts, error) {
+			if req.Scope == nil {
+				return nil, ErrScopeMissing
 			}
-		}
 
-		return &repositories.ShipmentFacetCounts{
-			Facet:  req.Facet,
-			Field:  def.field,
-			Values: values,
-		}, nil
-	})
+			def, err := facetDefinitionOf(req.Facet)
+			if err != nil {
+				return nil, err
+			}
+
+			limit := req.Limit
+			if limit <= 0 {
+				limit = DefaultFacetLimit
+			}
+			limit = min(limit, maxFacetLimit)
+
+			scope := &repositories.ShipmentBoardScope{
+				Filter:  withoutFieldFilters(req.Scope.Filter, def.field),
+				Options: req.Scope.Options,
+			}
+			q, err := r.scoped(r.db.DBForContext(ctx), scope)
+			if err != nil {
+				return nil, err
+			}
+
+			values := make([]*repositories.ShipmentFacetValue, 0, limit)
+			if err = def.apply(q).
+				ColumnExpr(buncolgen.Count(facetCountAlias)).
+				OrderExpr(facetCountAlias+" DESC").
+				OrderExpr(facetValueAlias+" ASC").
+				Limit(limit).
+				Scan(ctx, &values); err != nil {
+				r.l.Error("failed to count shipment facet", zap.Error(err))
+				return nil, err
+			}
+
+			if def.label != nil {
+				for _, value := range values {
+					value.Label = def.label(value.Value)
+				}
+			}
+
+			return &repositories.ShipmentFacetCounts{
+				Facet:  req.Facet,
+				Field:  def.field,
+				Values: values,
+			}, nil
+		},
+	)
 }

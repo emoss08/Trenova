@@ -1929,7 +1929,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.UncoveredWindowSummary)
 					return obj.Window, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNUncoveredPickupWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUncoveredPickupWindow),
+				Marshal: gqlexec.Marshal(marshalNUncoveredPickupWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐPickupWindow),
 			},
 			{
 				Name:     "startMinutes",
@@ -3082,8 +3082,12 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalNUncoveredPickupWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUncoveredPickupWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.UncoveredPickupWindow) graphql.Marshaler {
-	return v
+func marshalNUncoveredPickupWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐPickupWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.PickupWindow) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNUncoveredWindowSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUncoveredWindowSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.UncoveredWindowSummary) graphql.Marshaler {

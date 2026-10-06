@@ -145,8 +145,15 @@ func (r *QueryResolver) ShipmentSuggestions(ctx context.Context, timezone string
 }
 
 func (r *QueryResolver) ShipmentWatchlist(ctx context.Context, timezone string) (*gqlmodel.ShipmentWatchlist, error) {
-	if _, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
 		return nil, err
 	}
-	panic(fmt.Errorf("not implemented: ShipmentWatchlist - shipmentWatchlist"))
+
+	watchlist, err := r.BoardWatchlist.Watchlist(ctx, base.TenantInfo(authCtx), timezone)
+	if err != nil {
+		return nil, err
+	}
+
+	return watchlistToModel(watchlist), nil
 }

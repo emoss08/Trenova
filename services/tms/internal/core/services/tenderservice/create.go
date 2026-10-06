@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
@@ -795,7 +796,11 @@ func (s *Service) persistAndStart(
 	}
 	entity.WorkflowID = workflowID
 
-	s.publishInvalidation(ctx, tenantInfo, entity.ShipmentID, "tender_created")
+	portservices.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		portservices.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_created"),
+	)
 	s.markCarriersUsed(ctx, tenantInfo, entity.Offers)
 
 	return entity, nil

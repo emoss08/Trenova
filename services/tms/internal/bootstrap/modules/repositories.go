@@ -421,6 +421,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	seqgen.NewGenerator,
 	shipmentrepository.New,
 	shipmentboardrepository.New,
+	shipmentboardrepository.NewBoardRepository,
+	shipmentboardrepository.NewWatchlistRepository,
 	shipmenttrackingrepository.New,
 	recurringshipmentrepository.New,
 	shipmenttyperepository.New,

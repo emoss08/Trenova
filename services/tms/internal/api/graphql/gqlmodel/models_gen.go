@@ -8879,7 +8879,7 @@ type UnassignDocumentTemplateInput struct {
 }
 
 type UncoveredWindowSummary struct {
-	Window       UncoveredPickupWindow `json:"window"`
+	Window       shipment.PickupWindow `json:"window"`
 	StartMinutes int                   `json:"startMinutes"`
 	// Null for the open-ended window.
 	EndMinutes *int   `json:"endMinutes,omitempty"`
@@ -12735,65 +12735,6 @@ func (e *TimeFormat) UnmarshalJSON(b []byte) error {
 }
 
 func (e TimeFormat) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type UncoveredPickupWindow string
-
-const (
-	UncoveredPickupWindowUnderTwoHours   UncoveredPickupWindow = "UnderTwoHours"
-	UncoveredPickupWindowTwoToSixHours   UncoveredPickupWindow = "TwoToSixHours"
-	UncoveredPickupWindowLaterToday      UncoveredPickupWindow = "LaterToday"
-	UncoveredPickupWindowTomorrowOrLater UncoveredPickupWindow = "TomorrowOrLater"
-)
-
-var AllUncoveredPickupWindow = []UncoveredPickupWindow{
-	UncoveredPickupWindowUnderTwoHours,
-	UncoveredPickupWindowTwoToSixHours,
-	UncoveredPickupWindowLaterToday,
-	UncoveredPickupWindowTomorrowOrLater,
-}
-
-func (e UncoveredPickupWindow) IsValid() bool {
-	switch e {
-	case UncoveredPickupWindowUnderTwoHours, UncoveredPickupWindowTwoToSixHours, UncoveredPickupWindowLaterToday, UncoveredPickupWindowTomorrowOrLater:
-		return true
-	}
-	return false
-}
-
-func (e UncoveredPickupWindow) String() string {
-	return string(e)
-}
-
-func (e *UncoveredPickupWindow) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = UncoveredPickupWindow(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid UncoveredPickupWindow", str)
-	}
-	return nil
-}
-
-func (e UncoveredPickupWindow) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *UncoveredPickupWindow) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e UncoveredPickupWindow) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

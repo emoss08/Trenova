@@ -76,7 +76,7 @@ func TestServiceAutoCancelShipments_SkipsWhenDisabled(t *testing.T) {
 		l:           zap.NewNop(),
 		repo:        mocks.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
-		realtime:    mocks.NewMockRealtimeService(t),
+		invalidator: newTestInvalidator(mocks.NewMockRealtimeService(t)),
 	}
 
 	entities, err := svc.AutoCancelShipments(t.Context(), &repositories.AutoCancelShipmentsRequest{
@@ -135,7 +135,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
-		realtime:    realtime,
+		invalidator: newTestInvalidator(realtime),
 	}
 
 	entities, err := svc.AutoCancelShipments(t.Context(), &repositories.AutoCancelShipmentsRequest{

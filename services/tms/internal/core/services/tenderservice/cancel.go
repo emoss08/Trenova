@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -197,7 +198,11 @@ func (s *Service) CancelDirect(
 		Previous:   entity,
 		Current:    withdrawnTender(entity, tenantInfo, reason, now),
 	})
-	s.publishInvalidation(ctx, tenantInfo, entity.ShipmentID, "tender_canceled")
+	portservices.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		portservices.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_canceled"),
+	)
 
 	return nil
 }

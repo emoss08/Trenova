@@ -303,7 +303,8 @@ func DetentionCondition(
 			Where(dto.OrganizationID.EqColumn(sp.OrganizationID)).
 			Where(dto.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
 			Where(dto.IsOpen.IsTrue()).
-			Where(dto.Status.Eq(), detention.OccurrenceStatusAccruing)
+			Where(dto.Status.Ne(), detention.OccurrenceStatusBilled).
+			Where(dto.FreeTimeExpiresAt.Lte(), now)
 
 		return bun.SafeQuery("EXISTS (?)", occurrences)
 	}

@@ -208,10 +208,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentholdservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
@@ -328,6 +330,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	customfieldservice.NewValuesService,
 	databasesessionservice.New,
 	realtimeservice.New,
+	shipmentinvalidation.New,
 	globalsearchservice.New,
 	thumbnailservice.NewGenerator,
 	documentintelligenceservice.New,
@@ -618,6 +621,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	shipmentquickfilterservice.New,
 	shipmentboardservice.New,
 	shipmentetaservice.New,
+	shipmentwatchlistservice.New,
 	func(s *shipmentboardservice.Service) services.ShipmentBoardCapabilitiesReader { return s },
 	func(s *shipmentboardservice.Service) services.ShipmentStageSummaryReader { return s },
 	func(s *shipmentboardservice.Service) services.ShipmentQuickFilterCounter { return s },
