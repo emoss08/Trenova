@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/aitraining/aicli"
 	"github.com/emoss08/trenova/internal/cloud/catalog"
 	"github.com/emoss08/trenova/internal/cloud/catalog/platformcataloghandler"
+	"github.com/emoss08/trenova/internal/cloud/cloudcli"
 	"github.com/emoss08/trenova/internal/cloud/cloudconfig"
 	"github.com/emoss08/trenova/internal/cloud/cloudplan"
 	"github.com/emoss08/trenova/internal/cloud/cloudquota"
@@ -41,7 +42,7 @@ func Edition() edition.Edition {
 		Name:           EditionName,
 		Options:        []fx.Option{Options()},
 		APIOptions:     []fx.Option{APIOptions()},
-		Commands:       []*cobra.Command{aicli.AICmd},
+		Commands:       []*cobra.Command{aicli.AICmd, cloudcli.CloudCmd},
 		ConfigSections: []config.Section{cloudconfig.Section()},
 	}
 }
