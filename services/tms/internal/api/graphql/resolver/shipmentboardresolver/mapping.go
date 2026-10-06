@@ -81,3 +81,19 @@ func facetCountsToModel(
 	}
 	return out
 }
+
+func briefingToModel(b *services.ShipmentBriefing) *gqlmodel.ShipmentBriefing {
+	segments := make([]*gqlmodel.ShipmentBriefingSegment, 0, len(b.Segments))
+	for _, segment := range b.Segments {
+		segments = append(segments, &gqlmodel.ShipmentBriefingSegment{
+			Text:   segment.Text,
+			Filter: segment.Filter,
+		})
+	}
+
+	return &gqlmodel.ShipmentBriefing{
+		Segments:    segments,
+		Narrated:    b.Narrated,
+		GeneratedAt: int(b.GeneratedAt),
+	}
+}

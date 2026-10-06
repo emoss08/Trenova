@@ -47,3 +47,16 @@ func OperationTypeOf(brokerageEnabled, assetOperationsEnabled bool) OperationTyp
 func (o OperationType) Capabilities() (brokerageEnabled, assetOperationsEnabled bool) {
 	return o.RunsBrokerage(), o.RunsAssets()
 }
+
+func (o OperationType) CoverageNoun() string {
+	switch o {
+	case OperationTypeAsset:
+		return "a driver"
+	case OperationTypeBrokerage:
+		return "a carrier"
+	case OperationTypeBoth:
+		return "coverage"
+	default:
+		return "coverage"
+	}
+}

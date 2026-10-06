@@ -109,6 +109,7 @@ type Params struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardFacetCounts             services.ShipmentFacetCounter
 	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
@@ -294,6 +295,7 @@ type Services struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardFacetCounts             services.ShipmentFacetCounter
 	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
@@ -483,6 +485,7 @@ func newServices(p *Params) *Services {
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
 		ShipmentEventService:         p.ShipmentEventService,
+		BoardBriefing:                p.BoardBriefing,
 		BoardWatchlist:               p.BoardWatchlist,
 		BoardFacetCounts:             p.BoardFacetCounts,
 		BoardQuickFilterCounts:       p.BoardQuickFilterCounts,

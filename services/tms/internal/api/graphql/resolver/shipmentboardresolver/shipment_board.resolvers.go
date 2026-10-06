@@ -110,10 +110,17 @@ func (r *QueryResolver) ShipmentFacetCounts(ctx context.Context, input gqlmodel.
 }
 
 func (r *QueryResolver) ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error) {
-	if _, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
 		return nil, err
 	}
-	panic(fmt.Errorf("not implemented: ShipmentBriefing - shipmentBriefing"))
+
+	briefing, err := r.BoardBriefing.Briefing(ctx, base.TenantInfo(authCtx), timezone)
+	if err != nil {
+		return nil, err
+	}
+
+	return briefingToModel(briefing), nil
 }
 
 func (r *QueryResolver) ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error) {

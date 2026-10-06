@@ -9,6 +9,7 @@ import (
 
 type Deps struct {
 	*base.Core
+	BoardBriefing          services.ShipmentBriefingReader
 	BoardWatchlist         services.ShipmentWatchlistReader
 	BoardFacetCounts       services.ShipmentFacetCounter
 	BoardQuickFilterCounts services.ShipmentQuickFilterCounter

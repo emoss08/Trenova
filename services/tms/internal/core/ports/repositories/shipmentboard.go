@@ -140,3 +140,15 @@ type ShipmentWatchlistRepository interface {
 		req *ListReadyToBillCustomersRequest,
 	) ([]*ShipmentBillingCustomerRow, error)
 }
+
+type ShipmentLateReason struct {
+	Label string `bun:"label"`
+	Count int    `bun:"count"`
+}
+
+type ShipmentBriefingRepository interface {
+	LeadingLateReason(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*ShipmentLateReason, error)
+}
