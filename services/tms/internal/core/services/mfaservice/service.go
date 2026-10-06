@@ -144,7 +144,10 @@ func (s *Service) BeginTOTPEnrollment(
 		return nil, err
 	}
 
-	cipher, err := s.enc.EncryptStringWithAAD(secret, secretAAD(req.TenantInfo.OrgID, usr.ID))
+	cipher, err := s.enc.EncryptStringWithAAD(
+		secret,
+		secretAAD(req.TenantInfo.OrgID, req.TenantInfo.UserID),
+	)
 	if err != nil {
 		return nil, err
 	}
