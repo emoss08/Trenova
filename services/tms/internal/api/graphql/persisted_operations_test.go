@@ -61,9 +61,7 @@ func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) 
 	assert.Nil(t, manifest.reloader)
 
 	for _, operation := range []string{
-		"ShipmentCommandCenterTable",
 		"ShipmentDetail",
-		"ShipmentSavedViewCounts",
 		"ShipmentPageAnalytics",
 		"ShipmentTomorrowsPickups",
 		"UnassignedShipments",

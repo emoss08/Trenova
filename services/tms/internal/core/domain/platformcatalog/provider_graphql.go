@@ -35,6 +35,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 		"service_failure.graphqls",
 		"service_failure_reason_code.graphqls",
 		"shipment.graphqls",
+		"shipment_board.graphqls",
 		"shipment_type.graphqls",
 		"stored_mileage.graphqls",
 		"tender.graphqls",

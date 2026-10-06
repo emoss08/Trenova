@@ -126,14 +126,6 @@ type LaneHeatmapCard struct {
 	Total      int                `json:"total"`
 }
 
-type SavedViewCounts struct {
-	All             int `json:"all"              bun:"all"`
-	Transit         int `json:"transit"          bun:"transit"`
-	AtRisk          int `json:"at-risk"          bun:"at_risk"`
-	Unassigned      int `json:"unassigned"       bun:"unassigned"`
-	DeliveringToday int `json:"delivering-today" bun:"delivering_today"`
-}
-
 type ProfitabilityCard struct {
 	AvgCPM            float64 `json:"avgCpm"`
 	AvgMarginPct      float64 `json:"avgMarginPct"`

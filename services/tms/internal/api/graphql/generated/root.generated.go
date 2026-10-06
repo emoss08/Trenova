@@ -25064,17 +25064,8 @@ type ShipmentComment {
   attachments: [ShipmentCommentAttachment!]
 }
 
-type ShipmentSavedViewCounts {
-  all: Int
-  transit: Int
-  atRisk: Int
-  unassigned: Int
-  deliveringToday: Int
-}
-
 type ShipmentAnalytics {
   page: String!
-  savedViewCounts: ShipmentSavedViewCounts
   activeShipments: ShipmentActiveShipments
   onTimePercent: ShipmentOnTime
   revenueToday: ShipmentRevenueToday

@@ -6708,7 +6708,6 @@ type ShipmentAdditionalChargeInput struct {
 
 type ShipmentAnalytics struct {
 	Page               string                          `json:"page"`
-	SavedViewCounts    *ShipmentSavedViewCounts        `json:"savedViewCounts,omitempty"`
 	ActiveShipments    *ShipmentActiveShipments        `json:"activeShipments,omitempty"`
 	OnTimePercent      *ShipmentOnTime                 `json:"onTimePercent,omitempty"`
 	RevenueToday       *ShipmentRevenueToday           `json:"revenueToday,omitempty"`
@@ -8073,14 +8072,6 @@ type ShipmentRevenueToday struct {
 	Sparkline []*ShipmentSparklinePoint `json:"sparkline"`
 	DeltaPct  float64                   `json:"deltaPct"`
 	Rpm       float64                   `json:"rpm"`
-}
-
-type ShipmentSavedViewCounts struct {
-	All             *int `json:"all,omitempty"`
-	Transit         *int `json:"transit,omitempty"`
-	AtRisk          *int `json:"atRisk,omitempty"`
-	Unassigned      *int `json:"unassigned,omitempty"`
-	DeliveringToday *int `json:"deliveringToday,omitempty"`
 }
 
 type ShipmentServiceFailureBillingContext struct {

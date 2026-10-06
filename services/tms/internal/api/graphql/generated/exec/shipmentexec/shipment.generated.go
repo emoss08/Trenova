@@ -109,7 +109,6 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentRatingGuardrail", Implementors: []string{"ShipmentRatingGuardrail"}},
 		{Name: "ShipmentReadyToDispatch", Implementors: []string{"ShipmentReadyToDispatch"}},
 		{Name: "ShipmentRevenueToday", Implementors: []string{"ShipmentRevenueToday"}},
-		{Name: "ShipmentSavedViewCounts", Implementors: []string{"ShipmentSavedViewCounts"}},
 		{Name: "ShipmentServiceFailureBillingContext", Implementors: []string{"ShipmentServiceFailureBillingContext"}},
 		{Name: "ShipmentSparklinePoint", Implementors: []string{"ShipmentSparklinePoint"}},
 		{Name: "ShipmentStop", Implementors: []string{"ShipmentStop"}},
@@ -2610,16 +2609,6 @@ var Shard = &gqlexec.Shard{
 					return obj.Page, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:      "savedViewCounts",
-				HasChild:  true,
-				ChildType: "ShipmentSavedViewCounts",
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentAnalytics)
-					return obj.SavedViewCounts, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOShipmentSavedViewCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentSavedViewCounts),
 			},
 			{
 				Name:      "activeShipments",
@@ -8754,53 +8743,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
 		}},
-		{Object: "ShipmentSavedViewCounts", Fields: []*gqlexec.Field{
-			{
-				Name:     "all",
-				ChildErr: errNoChild9,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentSavedViewCounts)
-					return obj.All, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
-			},
-			{
-				Name:     "transit",
-				ChildErr: errNoChild9,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentSavedViewCounts)
-					return obj.Transit, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
-			},
-			{
-				Name:     "atRisk",
-				ChildErr: errNoChild9,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentSavedViewCounts)
-					return obj.AtRisk, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
-			},
-			{
-				Name:     "unassigned",
-				ChildErr: errNoChild9,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentSavedViewCounts)
-					return obj.Unassigned, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
-			},
-			{
-				Name:     "deliveringToday",
-				ChildErr: errNoChild9,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentSavedViewCounts)
-					return obj.DeliveringToday, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
-			},
-		}},
 		{Object: "ShipmentServiceFailureBillingContext", Fields: []*gqlexec.Field{
 			{
 				Name:     "hasUnresolved",
@@ -14361,13 +14303,6 @@ func marshalOShipmentRevenueToday2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentRevenueToday", v)
-}
-
-func marshalOShipmentSavedViewCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentSavedViewCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentSavedViewCounts) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "ShipmentSavedViewCounts", v)
 }
 
 func marshalOShipmentStopDivider2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentStopDividerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentStopDivider) graphql.Marshaler {
