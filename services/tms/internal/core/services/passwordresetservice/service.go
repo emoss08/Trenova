@@ -407,6 +407,7 @@ func (s *Service) sendResetEmail(
 	if s.usesPlatformSender(ctx, tenantInfo) {
 		if err = s.platform.SendPasswordReset(ctx, &serviceports.PasswordResetEmail{
 			To:               user.EmailAddress,
+			Locale:           i18n.Locale(user.Locale),
 			Name:             user.Name,
 			CompanyName:      s.companyName(ctx, user),
 			ResetURL:         resetURL,

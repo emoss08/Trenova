@@ -13819,6 +13819,15 @@
       "apps/web/components"
     ]
   },
+  "After that the workspace stays readable for a while so you can export what you need.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
   "After this day agents stop reading it.": {
     "sites": 1,
     "scope": [
@@ -36281,15 +36290,34 @@
       "routes/auth"
     ]
   },
+  "Choose a new one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/password_reset"
+    ]
+  },
   "Choose a new password": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "platform-email/password_reset",
       "routes/auth",
       "template/account.password_reset.email"
+    ]
+  },
+  "Choose a new password for your {0} account. The link works once.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/password_reset"
     ]
   },
   "Choose a new password to continue": {
@@ -42303,6 +42331,15 @@
       "routes/bank-receipt-queue"
     ]
   },
+  "Confirm email and create workspace": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
+    ]
+  },
   "Confirm monitoring cost": {
     "sites": 1,
     "scope": [
@@ -42458,6 +42495,42 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Confirm your email address to create the {0} workspace on {1}. Nothing is set up until you do.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
+    ]
+  },
+  "Confirm your email to create the {0} workspace. The link works once.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
+    ]
+  },
+  "Confirm your email to finish setting up {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
+    ]
+  },
+  "Confirm your email.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
     ]
   },
   "Confirm {0}": {
@@ -47911,6 +47984,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Create shipments and dispatch them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
     ]
   },
   "Create table change alert subscriptions": {
@@ -73197,6 +73279,15 @@
       "domain/permission"
     ]
   },
+  "Export your data": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
   "Export “{0}” as a JSON file, including its test scenarios. You can import this template later or share it with others.": {
     "sites": 1,
     "scope": [
@@ -77754,6 +77845,15 @@
       "routes/shipment"
     ]
   },
+  "Finish the short setup with your company details": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
   "Finish these fields on the Terms tab to price the worked examples.": {
     "sites": 1,
     "scope": [
@@ -78993,6 +79093,16 @@
     ],
     "areas": [
       "routes/pay-advance"
+    ]
+  },
+  "Forgot your password?": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/password_reset",
+      "platform-email/signup_existing_account"
     ]
   },
   "Forgot?": {
@@ -80850,6 +80960,15 @@
     ],
     "areas": [
       "service/roleservice"
+    ]
+  },
+  "Full access until": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
     ]
   },
   "Full document text": {
@@ -84335,11 +84454,18 @@
     ]
   },
   "Hi {0},": {
-    "sites": 6,
+    "sites": 13,
     "scope": [
       "go"
     ],
     "areas": [
+      "platform-email/account_purged",
+      "platform-email/components",
+      "platform-email/password_reset",
+      "platform-email/signup_existing_account",
+      "platform-email/signup_verification",
+      "platform-email/trial_ended",
+      "platform-email/welcome",
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email"
@@ -84355,11 +84481,18 @@
     ]
   },
   "Hi,": {
-    "sites": 6,
+    "sites": 13,
     "scope": [
       "go"
     ],
     "areas": [
+      "platform-email/account_purged",
+      "platform-email/components",
+      "platform-email/password_reset",
+      "platform-email/signup_existing_account",
+      "platform-email/signup_verification",
+      "platform-email/trial_ended",
+      "platform-email/welcome",
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email"
@@ -87263,6 +87396,15 @@
       "routes/auth"
     ]
   },
+  "If the button does not work": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/components"
+    ]
+  },
   "If the driver arrives late": {
     "sites": 1,
     "scope": [
@@ -87300,12 +87442,31 @@
     ]
   },
   "If this was not you, ignore this email. Your password has not changed and your current one still works.": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "platform-email/password_reset",
       "template/account.password_reset.email"
+    ]
+  },
+  "If this was not you, you can ignore this email. Your account has not changed.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_existing_account"
+    ]
+  },
+  "If you did not sign up, ignore this email and no account will be created.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
     ]
   },
   "If you were not expecting this, you can ignore it.": {
@@ -93308,6 +93469,15 @@
       "routes/insights"
     ]
   },
+  "It works once. If it runs out, sign up again for a new one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
+    ]
+  },
   "It would go through as shown.": {
     "sites": 1,
     "scope": [
@@ -99091,6 +99261,15 @@
       "domain/aicorrection"
     ]
   },
+  "Load a sample data set to explore with realistic shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
   "Load acceptance": {
     "sites": 1,
     "scope": [
@@ -101078,6 +101257,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Look up records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
     ]
   },
   "Lookback (settlements)": {
@@ -121521,6 +121709,15 @@
       "routes/reports"
     ]
   },
+  "On this date the workspace and everything in it will be permanently deleted.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
   "On time": {
     "sites": 1,
     "scope": [
@@ -121546,6 +121743,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "On {0} the workspace and everything in it will be permanently deleted.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
     ]
   },
   "On, drivers type their name to sign it; off means they only confirm they have read it.": {
@@ -122042,6 +122248,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "One step left.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_verification"
     ]
   },
   "One way": {
@@ -125543,6 +125758,16 @@
     "areas": [
       "apps/web/components",
       "routes/osha"
+    ]
+  },
+  "Open your workspace": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended",
+      "platform-email/welcome"
     ]
   },
   "Open {0}": {
@@ -134246,6 +134471,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Permanent deletion": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
     ]
   },
   "Permanently closed": {
@@ -151950,6 +152184,24 @@
       "domain/email"
     ]
   },
+  "Reply to this email if anything gets in your way.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
+  "Reply to this email if you want to keep using {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
   "Reply to this message if any detail needs review.": {
     "sites": 2,
     "scope": [
@@ -153874,6 +154126,15 @@
       "routes/reports"
     ]
   },
+  "Reset it from the sign-in page.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_existing_account"
+    ]
+  },
   "Reset password": {
     "sites": 2,
     "scope": [
@@ -153942,11 +154203,12 @@
     ]
   },
   "Reset your {0} password": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "platform-email/password_reset",
       "template/account.password_reset.email"
     ]
   },
@@ -173412,11 +173674,13 @@
     ]
   },
   "Sign in": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "platform-email/signup_existing_account",
       "routes/auth",
       "routes/login.tsx",
       "routes/signup"
@@ -173449,6 +173713,15 @@
       "routes/signup"
     ]
   },
+  "Sign in instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_existing_account"
+    ]
+  },
   "Sign in to Trenova": {
     "sites": 1,
     "scope": [
@@ -173456,6 +173729,15 @@
     ],
     "areas": [
       "routes/login.tsx"
+    ]
+  },
+  "Sign in to the workspace": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
     ]
   },
   "Sign in to your Trenova account": {
@@ -174577,11 +174859,12 @@
     ]
   },
   "Somebody asked to reset the password for your {0} account.": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
+      "platform-email/password_reset",
       "template/account.password_reset.email"
     ]
   },
@@ -174668,6 +174951,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Someone tried to sign up for {0} with this email address, but it already belongs to an account. No new account was created.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_existing_account"
+    ]
+  },
+  "Someone tried to sign up with this address. No new account was created.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_existing_account"
     ]
   },
   "Someone with manage access to the accounting integration has to enter the {0} keys.": {
@@ -176484,6 +176785,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Start a new trial": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
     ]
   },
   "Start a review": {
@@ -183188,6 +183498,15 @@
       "apps/web/components"
     ]
   },
+  "Thank you for trying {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
+    ]
+  },
   "Thank you — the dispatcher has been notified of your response.": {
     "sites": 1,
     "scope": [
@@ -188303,6 +188622,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The free trial for the {0} workspace has ended, so it is now read-only.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
+  "The free trial for the {0} workspace has ended, so it is now read-only. You can still sign in, look up records and export your data.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
     ]
   },
   "The freight billed, one row per commodity.": {
@@ -194387,6 +194724,51 @@
       "apps/web/components"
     ]
   },
+  "The {0} trial workspace and its data have been permanently deleted.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
+    ]
+  },
+  "The {0} trial workspace reached the end of its read-only period, so it and all of its data have been permanently deleted.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
+    ]
+  },
+  "The {0} workspace is now read-only. You can still sign in and export your data.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
+  "The {0} workspace is ready. Finish the short setup to add your company details, and load a sample data set if you want to explore with realistic shipments.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
+  "The {0} workspace is ready. Here is where to start.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
   "Their claim, verbatim where possible — it decides which evidence matters.": {
     "sites": 1,
     "scope": [
@@ -197090,6 +197472,16 @@
       "apps/web/components"
     ]
   },
+  "This link expires": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/password_reset",
+      "platform-email/signup_verification"
+    ]
+  },
   "This link expires in {0, plural, one {# day} other {# days}}, on {1}.": {
     "sites": 2,
     "scope": [
@@ -197128,11 +197520,12 @@
     ]
   },
   "This link works once and expires in {0, plural, one {# minute} other {# minutes}}, at {1}.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "platform-email/password_reset",
       "template/account.password_reset.email"
     ]
   },
@@ -197143,6 +197536,16 @@
     ],
     "areas": [
       "template/account.password_reset.email"
+    ]
+  },
+  "This link works once and expires {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/password_reset",
+      "platform-email/signup_verification"
     ]
   },
   "This link works once. Pick a password you have not used here before.": {
@@ -204241,6 +204644,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Try the AI assistant on your own data": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
     ]
   },
   "Try the download again": {
@@ -214028,6 +214440,24 @@
       "template/driverportal.invitation.email"
     ]
   },
+  "Welcome to {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
+  "Welcome to {0}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
   "Welcome{0} 👋": {
     "sites": 1,
     "scope": [
@@ -215479,6 +215909,15 @@
       "apps/web/components"
     ]
   },
+  "What you can still do": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
   "What you checked": {
     "sites": 1,
     "scope": [
@@ -216626,6 +217065,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Where to start": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
     ]
   },
   "Where volume is concentrating, origin against destination": {
@@ -220146,6 +220594,15 @@
       "service/billingtransferservice"
     ]
   },
+  "You already have a {0} account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_existing_account"
+    ]
+  },
   "You already have an open dispute for this item": {
     "sites": 1,
     "scope": [
@@ -220218,6 +220675,15 @@
       "routes/fiscal-year"
     ]
   },
+  "You are already signed up.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/signup_existing_account"
+    ]
+  },
   "You are not the owner of this shipment comment": {
     "sites": 1,
     "scope": [
@@ -220243,6 +220709,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "You are welcome to start again at any time.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
     ]
   },
   "You arrange freight with outside carriers. Carrier sourcing, tenders, rate confirmations and carrier settlements lead the product.": {
@@ -220837,6 +221312,15 @@
       "apps/web/components"
     ]
   },
+  "You received this email because of activity on a {0} account. If this was not you, you can ignore it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/layout"
+    ]
+  },
   "You run your own fleet and broker loads to partner carriers. Every part of the product is turned on.": {
     "sites": 1,
     "scope": [
@@ -221352,6 +221836,15 @@
       "apps/web/config"
     ]
   },
+  "Your data is still here.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
   "Your details, sessions and security": {
     "sites": 1,
     "scope": [
@@ -221503,6 +221996,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your free trial": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
+    ]
+  },
+  "Your free trial includes full access until {0}. After that the workspace stays readable for a while so you can export what you need.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
     ]
   },
   "Your friendly system administrator is just a call away for a swift rescue!": {
@@ -221984,6 +222495,24 @@
       "template/notification.dash.pto_reviewed"
     ]
   },
+  "Your trial has ended.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
+  "Your trial is over.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
+    ]
+  },
   "Your work, your numbers, and where to go next": {
     "sites": 1,
     "scope": [
@@ -222000,6 +222529,24 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Your workspace has been deleted.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
+    ]
+  },
+  "Your workspace is ready.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/welcome"
     ]
   },
   "Your {0} certification expires in {1, plural, one {# day} other {# days}}.": {
@@ -222072,6 +222619,24 @@
     ],
     "areas": [
       "template/notification.dash.training_due"
+    ]
+  },
+  "Your {0} trial has ended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/trial_ended"
+    ]
+  },
+  "Your {0} workspace has been deleted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "platform-email/account_purged"
     ]
   },
   "You’re all caught up.": {

@@ -1,9 +1,9 @@
-Hi {{.FirstName}},
+{{if .FirstName}}{{t "Hi {0}," .FirstName}}{{else}}{{t "Hi,"}}{{end}}
 
-The free trial for the {{.CompanyName}} workspace has ended, so it is now read-only. You can still sign in, look up records and export your data.
+{{t "The free trial for the {0} workspace has ended, so it is now read-only. You can still sign in, look up records and export your data." .CompanyName}}
 
-Open your workspace: {{.AppURL}}
+{{t "Open your workspace"}}: {{.AppURL}}
 
-On {{.ReadOnlyUntil}} the workspace and everything in it will be permanently deleted.
+{{t "On {0} the workspace and everything in it will be permanently deleted." .ReadOnlyUntil}}
 
-Reply to this email if you want to keep using {{.ProductName}}.
+{{t "Reply to this email if you want to keep using {0}." .ProductName}}

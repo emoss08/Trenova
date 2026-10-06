@@ -1,5 +1,5 @@
 {{define "layout"}}<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html dir="ltr" lang="en">
+<html dir="ltr" lang="{{.Locale}}">
 <head>
 <meta content="width=device-width" name="viewport"/>
 <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
@@ -17,8 +17,8 @@
     .big { font-size: 26px !important; }
   }</style>
 </head>
-<body dir="ltr" lang="en" style="background-color:#f7f6f2;margin:0;padding:0">
-<table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" align="center"><tbody><tr><td dir="ltr" lang="en" style="background-color:#f7f6f2;margin:0;padding:0">
+<body dir="ltr" lang="{{.Locale}}" style="background-color:#f7f6f2;margin:0;padding:0">
+<table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" align="center"><tbody><tr><td dir="ltr" lang="{{.Locale}}" style="background-color:#f7f6f2;margin:0;padding:0">
 <div style="margin:0;padding:0;display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f7f6f2;opacity:0"><p style="margin:0;padding:0">{{template "preheader" .}} &#xFEFF;&#847; &#xFEFF;&#847; &#xFEFF;&#847; &#xFEFF;&#847; &#xFEFF;&#847; &#xFEFF;&#847;</p></div>
 <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;padding:0;width:100%;background-color:#f7f6f2"><tbody><tr style="margin:0;padding:0"><td align="center" style="margin:0;padding:32px 12px 40px">
 <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;padding:0;width:100%;max-width:600px"><tbody>
@@ -40,7 +40,7 @@
 </tbody></table>
 </td></tr>
 <tr style="margin:0;padding:0"><td class="px" style="margin:0;padding:20px 4px 0;font-family:Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:13px;line-height:1.6;color:#55544e">
-<p style="margin:0 0 8px;padding:0">You received this email because of activity on a {{.ProductName}} account. If this was not you, you can ignore it.</p>
+<p style="margin:0 0 8px;padding:0">{{t "You received this email because of activity on a {0} account. If this was not you, you can ignore it." .ProductName}}</p>
 <p style="margin:0;padding:0;font-family:'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase">{{.Eyebrow}}{{if .HomeURL}} &middot; <a href="{{.HomeURL}}" rel="noopener noreferrer nofollow" style="color:#55544e;text-decoration:underline;text-underline-offset:3px" target="_blank">{{.HomeLabel}}</a>{{end}}</p>
 </td></tr>
 </tbody></table>

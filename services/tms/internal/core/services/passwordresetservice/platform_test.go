@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -75,6 +76,7 @@ func TestResetEmailForAManagedOrganizationUsesThePlatformSender(t *testing.T) {
 	)
 	h.platform.EXPECT().SendPasswordReset(mock.Anything, mock.MatchedBy(func(msg *services.PasswordResetEmail) bool {
 		return msg.To == h.user.EmailAddress &&
+			msg.Locale == i18n.Locale(h.user.Locale) &&
 			msg.Name == h.user.Name &&
 			msg.CompanyName == "Acme" &&
 			strings.Contains(msg.ResetURL, "/auth/reset?token=") &&

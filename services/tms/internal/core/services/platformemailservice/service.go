@@ -110,7 +110,8 @@ func (s *Service) SendSignupVerification(
 	verifyURL := s.link(signupVerifyPath, url.Values{"token": {msg.Token}})
 
 	return s.sendKind(ctx, KindSignupVerification, msg.To, &templateData{
-		FirstName:   firstNameOr(msg.Name, "there"),
+		Locale:      msg.Locale,
+		FirstName:   stringutils.FirstName(msg.Name),
 		CompanyName: msg.CompanyName,
 		VerifyURL:   verifyURL,
 		ExpiresAt:   timeutils.FormatStampIn(msg.ExpiresAt, defaultTimezone),
@@ -122,6 +123,7 @@ func (s *Service) SendSignupExistingAccount(
 	msg *services.SignupExistingAccountEmail,
 ) error {
 	return s.sendKind(ctx, KindSignupExistingAccount, msg.To, &templateData{
+		Locale:            msg.Locale,
 		FirstName:         stringutils.FirstName(msg.Name),
 		LoginURL:          s.link(loginPath, nil),
 		ForgotPasswordURL: s.link(loginPath, nil),
@@ -130,7 +132,8 @@ func (s *Service) SendSignupExistingAccount(
 
 func (s *Service) SendWelcome(ctx context.Context, msg *services.WelcomeEmail) error {
 	return s.sendKind(ctx, KindWelcome, msg.To, &templateData{
-		FirstName:   firstNameOr(msg.Name, "there"),
+		Locale:      msg.Locale,
+		FirstName:   stringutils.FirstName(msg.Name),
 		CompanyName: msg.CompanyName,
 		AppURL:      s.link("/", nil),
 		TrialEndsAt: timeutils.FormatStampIn(msg.TrialEndsAt, timezoneOr(msg.Timezone)),
@@ -139,7 +142,8 @@ func (s *Service) SendWelcome(ctx context.Context, msg *services.WelcomeEmail) e
 
 func (s *Service) SendTrialEnded(ctx context.Context, msg *services.TrialEndedEmail) error {
 	return s.sendKind(ctx, KindTrialEnded, msg.To, &templateData{
-		FirstName:     firstNameOr(msg.Name, "there"),
+		Locale:        msg.Locale,
+		FirstName:     stringutils.FirstName(msg.Name),
 		CompanyName:   msg.CompanyName,
 		AppURL:        s.link("/", nil),
 		ReadOnlyUntil: timeutils.FormatStampIn(msg.ReadOnlyUntil, timezoneOr(msg.Timezone)),
@@ -148,6 +152,7 @@ func (s *Service) SendTrialEnded(ctx context.Context, msg *services.TrialEndedEm
 
 func (s *Service) SendAccountPurged(ctx context.Context, msg *services.AccountPurgedEmail) error {
 	return s.sendKind(ctx, KindAccountPurged, msg.To, &templateData{
+		Locale:      msg.Locale,
 		FirstName:   stringutils.FirstName(msg.Name),
 		CompanyName: msg.CompanyName,
 		SignupURL:   s.link(signupPath, nil),
@@ -156,11 +161,12 @@ func (s *Service) SendAccountPurged(ctx context.Context, msg *services.AccountPu
 
 func (s *Service) SendPasswordReset(ctx context.Context, msg *services.PasswordResetEmail) error {
 	return s.sendKind(ctx, KindPasswordReset, msg.To, &templateData{
-		FirstName:   stringutils.FirstName(msg.Name),
-		CompanyName: msg.CompanyName,
-		ResetURL:    msg.ResetURL,
-		ExpiresIn:   expiresInSentence(msg.ExpiresInMinutes),
-		ExpiresAt:   timeutils.FormatStampIn(msg.ExpiresAt, timezoneOr(msg.Timezone)),
+		Locale:           msg.Locale,
+		FirstName:        stringutils.FirstName(msg.Name),
+		CompanyName:      msg.CompanyName,
+		ResetURL:         msg.ResetURL,
+		ExpiresInMinutes: msg.ExpiresInMinutes,
+		ExpiresAt:        timeutils.FormatStampIn(msg.ExpiresAt, timezoneOr(msg.Timezone)),
 	}, msg.IdempotencyKey)
 }
 
@@ -271,25 +277,6 @@ func homeLink(baseURL string) (string, string) {
 	}
 
 	return baseURL + "/", parsed.Host
-}
-
-func expiresInSentence(minutes int) string {
-	switch {
-	case minutes <= 0:
-		return "This link works once."
-	case minutes == 1:
-		return "This link works once and expires in 1 minute."
-	default:
-		return fmt.Sprintf("This link works once and expires in %d minutes.", minutes)
-	}
-}
-
-func firstNameOr(name, fallback string) string {
-	if first := stringutils.FirstName(name); first != "" {
-		return first
-	}
-
-	return fallback
 }
 
 func timezoneOr(timezone string) string {

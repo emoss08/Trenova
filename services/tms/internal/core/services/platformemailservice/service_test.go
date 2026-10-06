@@ -3,6 +3,7 @@ package platformemailservice
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -82,7 +84,7 @@ func TestEveryKindRenders(t *testing.T) {
 			ReadOnlyUntil:     "2026-11-17 14:00 UTC",
 			SignupURL:         "https://app.trenova.test/signup",
 			ResetURL:          "https://app.trenova.test/auth/reset?token=abc",
-			ExpiresIn:         "This link works once and expires in 30 minutes.",
+			ExpiresInMinutes:  30,
 		})
 		require.NoError(t, renderErr, kind)
 		assert.NotEmpty(t, rendered.Subject, kind)
@@ -304,14 +306,6 @@ func TestPasswordResetRendersTheLinkAndExpiry(t *testing.T) {
 	assert.Contains(t, msg.Text, "Acme Freight")
 }
 
-func TestExpiresInSentence(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "This link works once.", expiresInSentence(0))
-	assert.Equal(t, "This link works once and expires in 1 minute.", expiresInSentence(1))
-	assert.Equal(t, "This link works once and expires in 45 minutes.", expiresInSentence(45))
-}
-
 func TestStepsNumberAndMarkTheLastRow(t *testing.T) {
 	t.Parallel()
 
@@ -321,4 +315,106 @@ func TestStepsNumberAndMarkTheLastRow(t *testing.T) {
 	assert.Equal(t, "03", steps.Items[2].Number)
 	assert.False(t, steps.Items[1].Last)
 	assert.True(t, steps.Items[2].Last)
+}
+
+func TestEveryKindRendersInEverySupportedLocale(t *testing.T) {
+	t.Parallel()
+
+	r, err := newRenderer()
+	require.NoError(t, err)
+
+	for _, locale := range i18n.Supported() {
+		for _, kind := range AllKinds() {
+			rendered, renderErr := r.render(kind, &templateData{
+				Locale:           locale,
+				ProductName:      productName,
+				Eyebrow:          eyebrow,
+				FirstName:        "Dana",
+				CompanyName:      "Acme Freight",
+				VerifyURL:        "https://app.trenova.test/signup/verify?token=abc",
+				ExpiresAt:        "2026-10-05 14:00 UTC",
+				ExpiresInMinutes: 30,
+				LoginURL:         "https://app.trenova.test/login",
+				AppURL:           "https://app.trenova.test/",
+				TrialEndsAt:      "2026-11-03 14:00 UTC",
+				ReadOnlyUntil:    "2026-11-17 14:00 UTC",
+				SignupURL:        "https://app.trenova.test/signup",
+				ResetURL:         "https://app.trenova.test/auth/reset?token=abc",
+			})
+			require.NoError(t, renderErr, "%s/%s", locale, kind)
+			assert.Contains(t, rendered.HTML, `lang="`+string(locale)+`"`, "%s/%s", locale, kind)
+			assert.Contains(t, rendered.HTML, "Dana", "%s/%s", locale, kind)
+			assert.NotEmpty(t, rendered.Subject, "%s/%s", locale, kind)
+		}
+	}
+}
+
+func TestEmailsRenderInTheRecipientsLanguage(t *testing.T) {
+	t.Parallel()
+
+	sender := &recordingSender{}
+	svc := newTestService(t, config.CloudSystemEmailConfig{APIKey: "k"}, true, sender, nil)
+
+	ctx := t.Context()
+	require.NoError(t, svc.SendWelcome(ctx, &services.WelcomeEmail{
+		To: "dana@example.com", Locale: i18n.ES, Name: "Dana", CompanyName: "Acme",
+	}))
+	require.NoError(t, svc.SendTrialEnded(ctx, &services.TrialEndedEmail{
+		To: "dana@example.com", Locale: i18n.ZhTW, Name: "Dana", CompanyName: "Acme",
+	}))
+	require.NoError(t, svc.SendPasswordReset(ctx, &services.PasswordResetEmail{
+		To: "dana@example.com", Locale: i18n.ZhCN, Name: "Dana", CompanyName: "Acme",
+		ResetURL: "https://app.trenova.test/auth/reset?token=x", ExpiresInMinutes: 30,
+	}))
+	require.NoError(t, svc.SendAccountPurged(ctx, &services.AccountPurgedEmail{
+		To: "dana@example.com", Locale: "fr-FR", CompanyName: "Acme",
+	}))
+
+	require.Len(t, sender.requests, 4)
+
+	welcome := sender.requests[0].Message
+	assert.Equal(t, "Le damos la bienvenida a Trenova", welcome.Subject)
+	assert.Contains(t, welcome.HTML, "Su espacio de trabajo está listo.")
+	assert.Contains(t, welcome.HTML, "Hola Dana:")
+	assert.Contains(t, welcome.Text, "Abrir su espacio de trabajo")
+	assert.NotContains(t, welcome.HTML, "Your workspace is ready.")
+
+	trial := sender.requests[1].Message
+	assert.Equal(t, "您的 Trenova 試用已結束", trial.Subject)
+	assert.Contains(t, trial.HTML, "您的資料仍然保留。")
+
+	reset := sender.requests[2].Message
+	assert.Equal(t, "重置您的 Trenova 密码", reset.Subject)
+	assert.Contains(t, reset.HTML, "此链接仅能使用一次")
+
+	purged := sender.requests[3].Message
+	assert.Equal(t, "Your Trenova workspace has been deleted", purged.Subject)
+	assert.Contains(t, purged.HTML, `lang="en"`)
+}
+
+func TestEveryTemplateStringIsTranslated(t *testing.T) {
+	t.Parallel()
+
+	call := regexp.MustCompile(`(?:\{\{-?|\()\s*t\s+"((?:[^"\\]|\\.)*)"`)
+	entries, err := templateFS.ReadDir("templates")
+	require.NoError(t, err)
+
+	messages := make(map[string]struct{})
+	for _, entry := range entries {
+		body, readErr := templateFS.ReadFile("templates/" + entry.Name())
+		require.NoError(t, readErr)
+		for _, match := range call.FindAllStringSubmatch(string(body), -1) {
+			messages[match[1]] = struct{}{}
+		}
+	}
+	require.NotEmpty(t, messages)
+
+	for _, locale := range i18n.Supported() {
+		if locale == i18n.Default {
+			continue
+		}
+		for message := range messages {
+			assert.True(t, i18n.Has(locale, message), "%q has no %s translation", message, locale)
+		}
+	}
 }

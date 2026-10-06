@@ -108,6 +108,7 @@ type memberRow struct {
 	Name         string   `bun:"name"`
 	EmailAddress string   `bun:"email_address"`
 	Username     string   `bun:"username"`
+	Locale       string   `bun:"locale"`
 }
 
 type otherMembershipRow struct {
@@ -140,6 +141,7 @@ func (r *repository) ListMembers(
 			ColumnExpr(users.Name.As("name")).
 			ColumnExpr(users.EmailAddress.As("email_address")).
 			ColumnExpr(users.Username.As("username")).
+			ColumnExpr(users.Locale.As("locale")).
 			Apply(buncolgen.OrganizationMembershipApplyTenant(tenantInfo)).
 			Order(memberships.UserID.OrderAsc()).
 			Scan(ctx, &rows)
@@ -180,6 +182,7 @@ func (r *repository) ListMembers(
 				Name:             rows[i].Name,
 				EmailAddress:     rows[i].EmailAddress,
 				Username:         rows[i].Username,
+				Locale:           rows[i].Locale,
 				OtherMemberships: otherByUser[rows[i].UserID],
 			})
 		}

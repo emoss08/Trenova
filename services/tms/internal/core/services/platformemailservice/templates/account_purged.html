@@ -1,10 +1,10 @@
-{{define "preheader"}}The {{.CompanyName}} trial workspace and its data have been permanently deleted.{{end}}
+{{define "preheader"}}{{t "The {0} trial workspace and its data have been permanently deleted." .CompanyName}}{{end}}
 
-{{define "headline"}}Your workspace {{template "mark" "has been deleted."}}{{end}}
+{{define "headline"}}{{t "Your trial is over."}} {{template "mark" (t "Your workspace has been deleted.")}}{{end}}
 
-{{define "content"}}{{template "paragraph" (greeting "Hi" .FirstName)}}
-{{template "paragraph" (printf "The %s trial workspace reached the end of its read-only period, so it and all of its data have been permanently deleted." .CompanyName)}}
-{{template "paragraph" "You are welcome to start again at any time."}}
-{{template "button" (button .SignupURL "Start a new trial")}}{{end}}
+{{define "content"}}{{template "greeting" .FirstName}}
+{{template "paragraph" (t "The {0} trial workspace reached the end of its read-only period, so it and all of its data have been permanently deleted." .CompanyName)}}
+{{template "paragraph" (t "You are welcome to start again at any time.")}}
+{{template "button" (button .SignupURL (t "Start a new trial"))}}{{end}}
 
-{{define "closing"}}{{template "note" (printf "Thank you for trying %s." .ProductName)}}{{end}}
+{{define "closing"}}{{template "note" (t "Thank you for trying {0}." .ProductName)}}{{end}}

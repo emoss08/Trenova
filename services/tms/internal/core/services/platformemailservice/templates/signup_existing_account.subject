@@ -1,1 +1,1 @@
-You already have a {{.ProductName}} account
+{{t "You already have a {0} account" .ProductName}}

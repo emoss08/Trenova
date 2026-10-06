@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -181,6 +182,7 @@ func TestSweepMovesAnEndedTrialToReadOnlyAndTellsTheOwner(t *testing.T) {
 		UserID:       pulid.MustNew("usr_"),
 		Name:         "Owner",
 		EmailAddress: "owner@example.com",
+		Locale:       "es",
 	}
 	system := &repositories.TenantMember{
 		UserID:       pulid.MustNew("usr_"),
@@ -205,6 +207,7 @@ func TestSweepMovesAnEndedTrialToReadOnlyAndTellsTheOwner(t *testing.T) {
 	assert.Equal(t, "Acme Freight", email.CompanyName)
 	assert.Equal(t, "America/Chicago", email.Timezone)
 	assert.Equal(t, sub.ReadOnlyUntil, email.ReadOnlyUntil)
+	assert.Equal(t, i18n.ES, email.Locale)
 	assert.Empty(t, h.emails.purged)
 }
 
@@ -214,7 +217,11 @@ func TestSweepExpiresAPastGraceOrganizationEndsSessionsAndQueuesItsPurge(t *test
 	h := newHarness(t)
 	now := time.Now().Unix()
 	sub := newSubscription(subscription.StatusTrialing, now-7_200, now-60)
-	solo := &repositories.TenantMember{UserID: pulid.MustNew("usr_"), EmailAddress: "solo@example.com"}
+	solo := &repositories.TenantMember{
+		UserID:       pulid.MustNew("usr_"),
+		EmailAddress: "solo@example.com",
+		Locale:       "zh-TW",
+	}
 	shared := &repositories.TenantMember{
 		UserID:           pulid.MustNew("usr_"),
 		EmailAddress:     "shared@example.com",
@@ -236,7 +243,13 @@ func TestSweepExpiresAPastGraceOrganizationEndsSessionsAndQueuesItsPurge(t *test
 	require.Len(t, result.PurgeTargets, 1)
 	assert.Equal(t, sub.OrganizationID, result.PurgeTargets[0].OrganizationID)
 	assert.Len(t, h.emails.trialEnded, 2)
-	assert.Len(t, h.emails.purged, 2)
+	require.Len(t, h.emails.purged, 2)
+	locales := map[string]i18n.Locale{}
+	for _, email := range h.emails.purged {
+		locales[email.To] = email.Locale
+	}
+	assert.Equal(t, i18n.ZhTW, locales[solo.EmailAddress])
+	assert.Empty(t, locales[shared.EmailAddress])
 }
 
 func TestSweepCollectsExpiredOrganizationsStillAwaitingPurgeOnce(t *testing.T) {

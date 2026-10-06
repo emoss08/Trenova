@@ -1,12 +1,12 @@
-{{define "preheader"}}Confirm your email to create the {{.CompanyName}} workspace. The link works once.{{end}}
+{{define "preheader"}}{{t "Confirm your email to create the {0} workspace. The link works once." .CompanyName}}{{end}}
 
-{{define "headline"}}Confirm your email to {{template "mark" "create your workspace."}}{{end}}
+{{define "headline"}}{{t "One step left."}} {{template "mark" (t "Confirm your email.")}}{{end}}
 
-{{define "content"}}{{template "paragraph" (printf "Hi %s," .FirstName)}}
-{{template "paragraph" (printf "Confirm your email address to create the %s workspace on %s. Nothing is set up until you do." .CompanyName .ProductName)}}
-{{template "button" (button .VerifyURL "Confirm email and create workspace")}}
+{{define "content"}}{{template "greeting" .FirstName}}
+{{template "paragraph" (t "Confirm your email address to create the {0} workspace on {1}. Nothing is set up until you do." .CompanyName .ProductName)}}
+{{template "button" (button .VerifyURL (t "Confirm email and create workspace"))}}
 {{template "linkFallback" .VerifyURL}}{{end}}
 
-{{define "details"}}{{template "callout" (callout "This link expires" "It works once. If it runs out, sign up again for a new one." .ExpiresAt)}}{{end}}
+{{define "details"}}{{template "callout" (callout (t "This link expires") (t "It works once. If it runs out, sign up again for a new one.") .ExpiresAt)}}{{end}}
 
-{{define "closing"}}{{template "note" "If you did not sign up, ignore this email and no account will be created."}}{{end}}
+{{define "closing"}}{{template "note" (t "If you did not sign up, ignore this email and no account will be created.")}}{{end}}

@@ -1,12 +1,12 @@
-{{define "preheader"}}The {{.CompanyName}} workspace is now read-only. You can still sign in and export your data.{{end}}
+{{define "preheader"}}{{t "The {0} workspace is now read-only. You can still sign in and export your data." .CompanyName}}{{end}}
 
-{{define "headline"}}Your trial has ended. {{template "mark" "Your data is still here."}}{{end}}
+{{define "headline"}}{{t "Your trial has ended."}} {{template "mark" (t "Your data is still here.")}}{{end}}
 
-{{define "content"}}{{template "paragraph" (printf "Hi %s," .FirstName)}}
-{{template "paragraph" (printf "The free trial for the %s workspace has ended, so it is now read-only." .CompanyName)}}
-{{template "button" (button .AppURL "Open your workspace")}}{{end}}
+{{define "content"}}{{template "greeting" .FirstName}}
+{{template "paragraph" (t "The free trial for the {0} workspace has ended, so it is now read-only." .CompanyName)}}
+{{template "button" (button .AppURL (t "Open your workspace"))}}{{end}}
 
-{{define "details"}}{{template "steps" (steps "What you can still do" "" "Sign in to the workspace" "Look up records" "Export your data")}}
-{{template "callout" (callout "Permanent deletion" "On this date the workspace and everything in it will be permanently deleted." .ReadOnlyUntil)}}{{end}}
+{{define "details"}}{{template "steps" (steps (t "What you can still do") "" (t "Sign in to the workspace") (t "Look up records") (t "Export your data"))}}
+{{template "callout" (callout (t "Permanent deletion") (t "On this date the workspace and everything in it will be permanently deleted.") .ReadOnlyUntil)}}{{end}}
 
-{{define "closing"}}{{template "note" (printf "Reply to this email if you want to keep using %s." .ProductName)}}{{end}}
+{{define "closing"}}{{template "note" (t "Reply to this email if you want to keep using {0}." .ProductName)}}{{end}}
