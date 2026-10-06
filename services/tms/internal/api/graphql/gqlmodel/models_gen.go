@@ -87,6 +87,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -6558,14 +6559,16 @@ type ShiftTemplateInput struct {
 }
 
 type Shipment struct {
-	ID               string         `json:"id"`
-	Stage            shipment.Stage `json:"stage"`
-	BusinessUnitID   string         `json:"businessUnitId"`
-	OrganizationID   string         `json:"organizationId"`
-	SourceDocumentID *string        `json:"sourceDocumentId,omitempty"`
-	ServiceTypeID    string         `json:"serviceTypeId"`
-	ShipmentTypeID   string         `json:"shipmentTypeId"`
-	CustomerID       string         `json:"customerId"`
+	ID    string         `json:"id"`
+	Stage shipment.Stage `json:"stage"`
+	// Projected arrival at the final delivery, read from the latest position and the remaining stops.
+	Eta              *ShipmentEta `json:"eta,omitempty"`
+	BusinessUnitID   string       `json:"businessUnitId"`
+	OrganizationID   string       `json:"organizationId"`
+	SourceDocumentID *string      `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID    string       `json:"serviceTypeId"`
+	ShipmentTypeID   string       `json:"shipmentTypeId"`
+	CustomerID       string       `json:"customerId"`
 	// The customer billed by default. Null means the shipment's customer pays.
 	BillToCustomerID      *string                        `json:"billToCustomerId,omitempty"`
 	FreightTerms          shipment.FreightTerms          `json:"freightTerms"`
@@ -7456,6 +7459,15 @@ type ShipmentEmptyMile struct {
 	EmptyMiles float64 `json:"emptyMiles"`
 	TotalMiles float64 `json:"totalMiles"`
 	DeltaPp    float64 `json:"deltaPp"`
+}
+
+type ShipmentEta struct {
+	EstimatedArrival *int `json:"estimatedArrival,omitempty"`
+	// Minutes between the projected arrival and the end of the delivery window; negative when it will be missed.
+	SlackMinutes *int                     `json:"slackMinutes,omitempty"`
+	Verdict      shipmenttracking.Verdict `json:"verdict"`
+	// Why the load is behind, when the tracking snapshot can say.
+	Reason *string `json:"reason,omitempty"`
 }
 
 type ShipmentEventShipmentReference struct {

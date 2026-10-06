@@ -198,6 +198,8 @@ type ShipmentBillingSplitSummary {
 type Shipment {
   id: ID!
   stage: ShipmentStage!
+  "Projected arrival at the final delivery, read from the latest position and the remaining stops."
+  eta: ShipmentEta
   businessUnitId: ID!
   organizationId: ID!
   sourceDocumentId: String

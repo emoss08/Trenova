@@ -2679,6 +2679,7 @@ type ShiftTemplateResolver interface {
 }
 
 type ShipmentResolver interface {
+	Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error)
 	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
 	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
 	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
@@ -24235,6 +24236,8 @@ type ShipmentBillingSplitSummary {
 type Shipment {
   id: ID!
   stage: ShipmentStage!
+  "Projected arrival at the final delivery, read from the latest position and the remaining stops."
+  eta: ShipmentEta
   businessUnitId: ID!
   organizationId: ID!
   sourceDocumentId: String
@@ -25984,6 +25987,22 @@ enum ShipmentStage {
   Scheduled
   Delivered
   Canceled
+}
+
+enum EtaVerdict {
+  OnTime
+  AtRisk
+  Late
+  Unknown
+}
+
+type ShipmentEta {
+  estimatedArrival: Timestamp
+  "Minutes between the projected arrival and the end of the delivery window; negative when it will be missed."
+  slackMinutes: Int
+  verdict: EtaVerdict!
+  "Why the load is behind, when the tracking snapshot can say."
+  reason: String
 }
 
 "How an organization moves freight: with its own drivers, through carriers, or both."

@@ -1584,6 +1584,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐStage),
 			},
 			{
+				Name:       "eta",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ShipmentEta",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.Shipment)
+					return gqlexec.Resolver[resolverShipment](ec, "Shipment").Eta(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOShipmentEta2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentEta),
+			},
+			{
 				Name:     "businessUnitId",
 				NonNull:  true,
 				ChildErr: errNoChild0,
@@ -9727,6 +9739,7 @@ type resolverQuery interface {
 }
 
 type resolverShipment interface {
+	Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error)
 	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
 	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
 	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
@@ -14271,6 +14284,13 @@ func marshalOShipmentEntryMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return v
+}
+
+func marshalOShipmentEta2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentEta(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentEta) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentEta", v)
 }
 
 func marshalOShipmentEventShipmentReference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentEventShipmentReference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentEventShipmentReference) graphql.Marshaler {

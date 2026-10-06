@@ -1,4 +1,6 @@
 aliases:
+  Shipment:
+    stage: status
   CaptureBatch:
     user: userId
     device: deviceId
@@ -341,6 +343,7 @@ virtuals:
     - orderStatus
     - profitabilityEstimate
     - billingSplitSummary
+    - eta
   ShipmentCustomer:
     - ediPartner
   ShipmentAdditionalCharge:

@@ -20847,6 +20847,14 @@ func init() {
 				FieldMapKey: "id",
 			},
 			{
+				Name:        "stage",
+				FieldMapKey: "status",
+			},
+			{
+				Name:    "eta",
+				Special: "eta",
+			},
+			{
 				Name:        "businessUnitId",
 				FieldMapKey: "businessUnitId",
 			},

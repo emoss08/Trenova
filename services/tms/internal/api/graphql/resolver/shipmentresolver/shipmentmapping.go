@@ -968,3 +968,25 @@ func (r *ShipmentResolver) loadShipmentOrder(
 	}
 	return parent, nil
 }
+
+func shipmentEtaToModel(eta *services.ShipmentEta) *gqlmodel.ShipmentEta {
+	if eta == nil {
+		return nil
+	}
+
+	out := &gqlmodel.ShipmentEta{Verdict: eta.Verdict}
+	if eta.EstimatedArrival != nil {
+		arrival := int(*eta.EstimatedArrival)
+		out.EstimatedArrival = &arrival
+	}
+	if eta.SlackMinutes != nil {
+		slack := int(*eta.SlackMinutes)
+		out.SlackMinutes = &slack
+	}
+	if eta.Reason != "" {
+		reason := eta.Reason
+		out.Reason = &reason
+	}
+
+	return out
+}

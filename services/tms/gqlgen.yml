@@ -78,6 +78,8 @@ models:
         resolver: true
       profitabilityEstimate:
         resolver: true
+      eta:
+        resolver: true
   ShipmentCustomer:
     fields:
       ediPartner:
@@ -3628,6 +3630,9 @@ models:
   ShipmentQuickFilter:
     model:
       - github.com/emoss08/trenova/internal/core/domain/shipment.QuickFilter
+  EtaVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/shipmenttracking.Verdict
   ShipmentFacet:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentFacet

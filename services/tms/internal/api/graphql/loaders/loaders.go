@@ -48,6 +48,7 @@ type FactoryParams struct {
 	LocationByID                              *LocationByIDLoaderFactory
 	OrderByID                                 *OrderByIDLoaderFactory
 	ShipmentProfitabilityByID                 *ShipmentProfitabilityLoaderFactory
+	ShipmentEtaByID                           *ShipmentEtaLoaderFactory
 	EDIPartnerByCustomerID                    *EDIPartnerByCustomerIDLoaderFactory
 	FormulaTemplateStatsByID                  *FormulaTemplateStatsLoaderFactory
 	AgentDefinitionStatsByID                  *AgentDefinitionStatsLoaderFactory
@@ -110,6 +111,7 @@ type Factory struct {
 	locationByID                              *LocationByIDLoaderFactory
 	orderByID                                 *OrderByIDLoaderFactory
 	shipmentProfitabilityByID                 *ShipmentProfitabilityLoaderFactory
+	shipmentEtaByID                           *ShipmentEtaLoaderFactory
 	ediPartnerByCustomerID                    *EDIPartnerByCustomerIDLoaderFactory
 	formulaTemplateStatsByID                  *FormulaTemplateStatsLoaderFactory
 	agentDefinitionStatsByID                  *AgentDefinitionStatsLoaderFactory
@@ -172,6 +174,7 @@ type Loaders struct {
 	LocationByID                              *dataloadgen.Loader[string, *location.Location]
 	OrderByID                                 *dataloadgen.Loader[string, *order.Order]
 	ShipmentProfitabilityByID                 *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
+	ShipmentEtaByID                           *dataloadgen.Loader[string, *services.ShipmentEta]
 	EDIPartnerByCustomerID                    *dataloadgen.Loader[string, *edi.EDIPartner]
 	FormulaTemplateStatsByID                  *dataloadgen.Loader[string, repositories.TemplateStats]
 	AgentDefinitionStatsByID                  *dataloadgen.Loader[string, repositories.AgentDefinitionStats]
@@ -238,6 +241,7 @@ func NewFactory(p FactoryParams) *Factory {
 		locationByID:                              p.LocationByID,
 		orderByID:                                 p.OrderByID,
 		shipmentProfitabilityByID:                 p.ShipmentProfitabilityByID,
+		shipmentEtaByID:                           p.ShipmentEtaByID,
 		ediPartnerByCustomerID:                    p.EDIPartnerByCustomerID,
 		formulaTemplateStatsByID:                  p.FormulaTemplateStatsByID,
 		agentDefinitionStatsByID:                  p.AgentDefinitionStatsByID,
@@ -304,6 +308,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		ShipmentProfitabilityByID: f.shipmentProfitabilityByID.NewForTenant(
 			tenantInfo,
 		),
+		ShipmentEtaByID: f.shipmentEtaByID.NewForTenant(tenantInfo),
 		EDIPartnerByCustomerID: f.ediPartnerByCustomerID.NewForTenant(
 			tenantInfo,
 		),

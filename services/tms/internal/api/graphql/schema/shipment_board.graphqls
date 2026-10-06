@@ -8,6 +8,22 @@ enum ShipmentStage {
   Canceled
 }
 
+enum EtaVerdict {
+  OnTime
+  AtRisk
+  Late
+  Unknown
+}
+
+type ShipmentEta {
+  estimatedArrival: Timestamp
+  "Minutes between the projected arrival and the end of the delivery window; negative when it will be missed."
+  slackMinutes: Int
+  verdict: EtaVerdict!
+  "Why the load is behind, when the tracking snapshot can say."
+  reason: String
+}
+
 "How an organization moves freight: with its own drivers, through carriers, or both."
 enum OperationType {
   asset

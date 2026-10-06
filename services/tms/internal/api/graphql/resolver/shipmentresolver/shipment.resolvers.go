@@ -1139,3 +1139,24 @@ func (r *ShipmentMoveJurisdictionMileResolver) FerryDistance(ctx context.Context
 func (r *ShipmentMoveJurisdictionMileResolver) Source(ctx context.Context, obj *shipmentdomain.ShipmentMoveJurisdictionMile) (string, error) {
 	return obj.Source.String(), nil
 }
+
+func (r *ShipmentResolver) Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error) {
+	if obj == nil || obj.ID == "" {
+		return nil, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("Shipment ETA loader is not configured")
+	}
+
+	eta, err := loadersForRequest.ShipmentEtaByID.Load(ctx, obj.ID)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return shipmentEtaToModel(eta), nil
+}
