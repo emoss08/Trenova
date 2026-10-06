@@ -20,8 +20,10 @@ const (
 	jwtSegments          = 3
 	grantAuthCode        = "authorization_code"
 	grantRefreshToken    = "refresh_token"
-	credentialProbeToken = "trenova-credential-check"
 )
+
+//nolint:gosec // G101: a placeholder refresh token the endpoint rejects, not a credential
+const credentialProbeToken = "trenova-credential-check"
 
 type OAuthConfig struct {
 	ClientID     string
