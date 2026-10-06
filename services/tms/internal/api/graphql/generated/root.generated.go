@@ -2524,7 +2524,7 @@ type QueryResolver interface {
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
 	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
-	ShipmentFacetCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, facets []gqlmodel.ShipmentFacet) ([]*gqlmodel.ShipmentFacetCounts, error)
+	ShipmentFacetCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, facets []repositories.ShipmentFacet) ([]*gqlmodel.ShipmentFacetCounts, error)
 	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
 	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
 	CapacityUnitMatches(ctx context.Context, kind gqlmodel.CapacityUnitKind, unitID string, limit *int) ([]*gqlmodel.CapacityMatch, error)

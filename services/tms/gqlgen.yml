@@ -3628,6 +3628,9 @@ models:
   ShipmentQuickFilter:
     model:
       - github.com/emoss08/trenova/internal/core/domain/shipment.QuickFilter
+  ShipmentFacet:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentFacet
   TenderMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tender.Mode

@@ -7472,7 +7472,7 @@ type ShipmentEventsInput struct {
 }
 
 type ShipmentFacetCounts struct {
-	Facet ShipmentFacet `json:"facet"`
+	Facet repositories.ShipmentFacet `json:"facet"`
 	// The field filter the values apply to.
 	Field  string                `json:"field"`
 	Values []*ShipmentFacetValue `json:"values"`
@@ -12125,65 +12125,6 @@ func (e *ShipmentEventType) UnmarshalJSON(b []byte) error {
 }
 
 func (e ShipmentEventType) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type ShipmentFacet string
-
-const (
-	ShipmentFacetStatus       ShipmentFacet = "Status"
-	ShipmentFacetEquipment    ShipmentFacet = "Equipment"
-	ShipmentFacetTenderStatus ShipmentFacet = "TenderStatus"
-	ShipmentFacetCustomer     ShipmentFacet = "Customer"
-)
-
-var AllShipmentFacet = []ShipmentFacet{
-	ShipmentFacetStatus,
-	ShipmentFacetEquipment,
-	ShipmentFacetTenderStatus,
-	ShipmentFacetCustomer,
-}
-
-func (e ShipmentFacet) IsValid() bool {
-	switch e {
-	case ShipmentFacetStatus, ShipmentFacetEquipment, ShipmentFacetTenderStatus, ShipmentFacetCustomer:
-		return true
-	}
-	return false
-}
-
-func (e ShipmentFacet) String() string {
-	return string(e)
-}
-
-func (e *ShipmentFacet) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ShipmentFacet(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ShipmentFacet", str)
-	}
-	return nil
-}
-
-func (e ShipmentFacet) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ShipmentFacet) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ShipmentFacet) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

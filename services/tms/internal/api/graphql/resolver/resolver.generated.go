@@ -848,7 +848,11 @@ func FromServices(s *Services) *Resolver {
 		ShipmentImportAssistant: s.ShipmentImportAssistant,
 	}
 	shipmentboardDeps := &shipmentboardresolver.Deps{
-		Core: s.Core,
+		Core:                   s.Core,
+		BoardFacetCounts:       s.BoardFacetCounts,
+		BoardQuickFilterCounts: s.BoardQuickFilterCounts,
+		BoardStageSummaries:    s.BoardStageSummaries,
+		BoardCapabilities:      s.BoardCapabilities,
 	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                s.Core,

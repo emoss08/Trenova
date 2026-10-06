@@ -4,10 +4,15 @@ package shipmentboardresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	services "github.com/emoss08/trenova/internal/core/ports/services"
 )
 
 type Deps struct {
 	*base.Core
+	BoardFacetCounts       services.ShipmentFacetCounter
+	BoardQuickFilterCounts services.ShipmentQuickFilterCounter
+	BoardStageSummaries    services.ShipmentStageSummaryReader
+	BoardCapabilities      services.ShipmentBoardCapabilitiesReader
 }
 
 type MutationResolver struct{ *Deps }

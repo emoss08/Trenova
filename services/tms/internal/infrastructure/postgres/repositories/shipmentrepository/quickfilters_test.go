@@ -192,13 +192,13 @@ func TestQuickFilterCondition_RequiresBasis(t *testing.T) {
 	require.ErrorIs(t, err, ErrQuickFilterParameterMissing)
 }
 
-func TestApplyListScope_AndsEveryQuickFilter(t *testing.T) {
+func TestApplyAggregateScope_AndsEveryQuickFilter(t *testing.T) {
 	t.Parallel()
 
 	repo, _ := newCancelTestRepository(t)
 	dba := repo.db.DB()
 
-	q, err := ApplyListScope(
+	q, err := ApplyAggregateScope(
 		dba.NewSelect().Model((*shipment.Shipment)(nil)),
 		dba,
 		&pagination.QueryOptions{
@@ -224,7 +224,7 @@ func TestApplyListScope_AndsEveryQuickFilter(t *testing.T) {
 	assert.NotContains(t, sql, `"customers"`)
 	assert.Contains(t, sql, "sp.organization_id = ")
 
-	_, err = ApplyListScope(dba.NewSelect(), dba, nil, repositories.ShipmentOptions{})
+	_, err = ApplyAggregateScope(dba.NewSelect(), dba, nil, repositories.ShipmentOptions{})
 	require.ErrorIs(t, err, ErrShipmentScopeFilterMissing)
 }
 

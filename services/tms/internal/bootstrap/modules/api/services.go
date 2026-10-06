@@ -200,6 +200,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentboardservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcontrolservice"
@@ -614,6 +615,11 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	billingcontrolservice.New,
 	costingservice.New,
 	shipmentquickfilterservice.New,
+	shipmentboardservice.New,
+	func(s *shipmentboardservice.Service) services.ShipmentBoardCapabilitiesReader { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentStageSummaryReader { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentQuickFilterCounter { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentFacetCounter { return s },
 	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
 	billingqueueservice.NewReview,

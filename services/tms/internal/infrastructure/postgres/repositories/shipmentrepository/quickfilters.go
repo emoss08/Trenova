@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
 )
@@ -342,7 +343,7 @@ func whereAll(conds []schema.QueryAppender) func(*bun.SelectQuery) *bun.SelectQu
 	}
 }
 
-func ApplyListScope(
+func ApplyAggregateScope(
 	q *bun.SelectQuery,
 	dba bun.IDB,
 	filter *pagination.QueryOptions,
@@ -357,11 +358,12 @@ func ApplyListScope(
 		return nil, err
 	}
 
-	opts.ExpandShipmentDetails = false
-	opts.IncludeCustomer = false
+	q = querybuilder.ApplyFilterPredicates(
+		q,
+		buncolgen.ShipmentTable.Alias,
+		filter,
+		(*shipment.Shipment)(nil),
+	)
 
-	return baseShipmentListQuery(q, dba, &repositories.ListShipmentsRequest{
-		Filter:          filter,
-		ShipmentOptions: opts,
-	}).Apply(whereAll(quick)), nil
+	return applyShipmentOptionFilters(q, dba, opts).Apply(whereAll(quick)), nil
 }

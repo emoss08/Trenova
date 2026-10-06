@@ -109,6 +109,10 @@ type Params struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	BoardFacetCounts             services.ShipmentFacetCounter
+	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
+	BoardStageSummaries          services.ShipmentStageSummaryReader
+	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant      services.ShipmentImportAssistantService `optional:"true"`
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EDIService                   *ediservice.Service
@@ -289,6 +293,10 @@ type Services struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	BoardFacetCounts             services.ShipmentFacetCounter
+	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
+	BoardStageSummaries          services.ShipmentStageSummaryReader
+	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant      services.ShipmentImportAssistantService
 	EdiService                   *ediservice.Service
 	EdiInboundService            *ediinboundservice.Service
@@ -473,6 +481,10 @@ func newServices(p *Params) *Services {
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
 		ShipmentEventService:         p.ShipmentEventService,
+		BoardFacetCounts:             p.BoardFacetCounts,
+		BoardQuickFilterCounts:       p.BoardQuickFilterCounts,
+		BoardStageSummaries:          p.BoardStageSummaries,
+		BoardCapabilities:            p.BoardCapabilities,
 		ShipmentImportAssistant:      p.ShipmentImportAssistant,
 		EdiService:                   p.EDIService,
 		EdiInboundService:            p.EDIInboundService,
