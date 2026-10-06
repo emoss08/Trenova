@@ -205,7 +205,7 @@ Keywords: Business Central setup, connect Business Central, Dynamics 365 Busines
 2. Select the connect button. Trenova sends you to Microsoft's sign-in page; sign in with a work
    account that can use Business Central and allow access. Trenova never sees the password.
 3. Microsoft sends you back to Trenova. Trenova lists every company in every Business Central
-   environment the account can open, each named with its environment and marked **(Sandbox)**
+   environment the account can open, each named with its environment and marked (Sandbox)
    when it is a sandbox. When there is more than one, select the company whose books this
    Trenova organization keeps, then connect it. The choice has to be made within a few minutes;
    after that, start the connection again.
@@ -223,7 +223,7 @@ Keywords: Business Central setup, connect Business Central, Dynamics 365 Busines
 7. Select **Finish setup**, choose the **Start date**, then select **Start sending**, as for
    QuickBooks Online. Trenova posts every invoice, credit memo, bill and payment it sends.
    Payments go through a payment journal Trenova creates for each deposit or bank account, named
-   with **TRN** and a short code.
+   with TRN and a short code.
 8. Payments recorded in Business Central are not brought into Trenova: its API does not say which
    invoices a payment paid. An invoice paid in Business Central shows as a balance difference on
    the drift page, where it can be settled in Trenova. The sync settings say this in place of
@@ -231,15 +231,15 @@ Keywords: Business Central setup, connect Business Central, Dynamics 365 Busines
 
 ### Use your own Microsoft Entra app
 Keywords: Business Central app keys, Entra app registration, Azure app registration, client ID, client secret, redirect URI, self-hosted Business Central
-1. In Microsoft Entra, register a multitenant web app. Under **API permissions**, add the
-   delegated **Dynamics 365 Business Central** permission **Financials.ReadWrite.All**.
+1. In Microsoft Entra, register a multitenant web app. Under API permissions, add the
+   delegated Dynamics 365 Business Central permission Financials.ReadWrite.All.
 2. Open [Integrations](/admin/integrations) and open the Business Central card. When this server
    has no Entra app of its own the keys form is already open; otherwise select **Use your own
    app**.
 3. Under the app's **Authentication**, add a web platform with the **Redirect URI** Trenova shows,
    exactly as written.
-4. Enter the **Client ID** (the application ID) and a **Client secret** from **Certificates &
-   secrets**, then select **Save keys**. Trenova checks the keys with Microsoft before saving
+4. Enter the **Client ID** (the application ID) and a **Client secret** from Certificates &
+   secrets, then select **Save keys**. Trenova checks the keys with Microsoft before saving
    them. Business Central has no webhook key: once a company is connected, Trenova subscribes to
    its changes itself and renews the subscriptions every few days.
 5. To go back to the server's app select **Remove**. While a company is connected, only the client
@@ -261,7 +261,7 @@ Keywords: Business Central not syncing, Business Central connection failing, rec
 5. To stop, select **Disconnect** and confirm. Trenova deletes its sign-in and its change
    subscriptions; nothing already in Business Central is changed. Microsoft gives no way to
    withdraw the consent from Trenova's side, so to remove it an administrator removes the app
-   from **Enterprise applications** in Microsoft Entra.
+   from Enterprise applications in Microsoft Entra.
 
 ### Check or disconnect QuickBooks Online
 Keywords: QuickBooks not syncing, QuickBooks connection failing, reconnect QuickBooks, revoke QuickBooks

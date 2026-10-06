@@ -63,7 +63,7 @@ Keywords: closed period, books closed, re-date, first open day, closing date
 1. Open [Sync ledger](/accounting/sync) and open the record held for a closed period.
 2. Select **Send on first open day**. The document goes out dated on the day after the closing
    date in the books (the lock date in Xero, the start of the allowed posting dates in Business
-Central), and its note there keeps Trenova's date. This is
+   Central), and its note there keeps Trenova's date. This is
    offered only while Trenova's closed-period policy is to post to the next open period; otherwise
    reopen the period in the accounting system, then select **Retry now**.
 
