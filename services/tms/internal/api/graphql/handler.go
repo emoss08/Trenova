@@ -28,8 +28,6 @@ const (
 	rejectionReasonBodyTooLarge       = "body_too_large"
 
 	requestTooLargeErrorCode = "REQUEST_TOO_LARGE"
-
-	playgroundContentSecurityPolicy = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
 )
 
 type Params struct {
@@ -68,10 +66,6 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/graphql", h.handle)
-}
-
-func (h *Handler) RegisterPlaygroundRoutes(rg *gin.RouterGroup) {
-	rg.GET("/graphql", h.handlePlayground)
 }
 
 func (h *Handler) handle(c *gin.Context) {
@@ -169,19 +163,4 @@ func (w statusOverrideWriter) WriteHeader(code int) {
 	}
 
 	w.ResponseWriter.WriteHeader(code)
-}
-
-func (h *Handler) handlePlayground(c *gin.Context) {
-	if !h.playgroundEnabled() {
-		c.Status(404)
-		return
-	}
-
-	c.Header("Content-Security-Policy", playgroundContentSecurityPolicy)
-	c.Header("Cache-Control", "no-store")
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(playgroundHTML))
-}
-
-func (h *Handler) playgroundEnabled() bool {
-	return devToolingEnabled(h.cfg)
 }

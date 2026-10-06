@@ -81,13 +81,6 @@ func TestNoAPIEndpointServesTemplateOutputAsHTML(t *testing.T) {
 
 	root := repoAPIRoot(t)
 
-	// One endpoint legitimately serves first-party HTML that no organization can
-	// author: the GraphQL playground. It ships markup compiled into the binary.
-	// Anything else appearing here is a new endpoint that must justify itself.
-	allowed := map[string]string{
-		filepath.Join(root, "graphql", "handler.go"): "GraphQL playground shell",
-	}
-
 	var offenders []string
 	for _, dir := range []string{"handlers", "graphql"} {
 		err := filepath.WalkDir(
@@ -104,9 +97,6 @@ func TestNoAPIEndpointServesTemplateOutputAsHTML(t *testing.T) {
 				source, readErr := os.ReadFile(path)
 				if readErr != nil {
 					return readErr
-				}
-				if _, ok := allowed[path]; ok {
-					return nil
 				}
 				if strings.Contains(string(source), `"text/html`) {
 					offenders = append(offenders, path)

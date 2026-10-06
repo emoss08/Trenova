@@ -73,7 +73,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldvaluerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dashcontrolrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/databasesessionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dataentrycontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/datarententionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/detentionrepository"
@@ -321,7 +320,6 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	usstaterepository.New,
 	customfieldrepository.New,
 	customfieldvaluerepository.New,
-	databasesessionrepository.New,
 	documentrepository.New,
 	documentaiextractionrepository.New,
 	documentcontentrepository.New,

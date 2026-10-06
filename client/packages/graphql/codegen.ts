@@ -19,7 +19,6 @@ const config: CodegenConfig = {
   hooks: {
     afterAllFileWrite: [
       "node scripts/sync-graphql-persisted-documents.mjs",
-      "node scripts/generate-graphql-catalog.mjs",
       "node scripts/generate-error-enums.mjs",
       "node scripts/generate-permission-resources.mjs",
     ],

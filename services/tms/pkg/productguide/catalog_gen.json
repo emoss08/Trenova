@@ -1,5 +1,5 @@
 {
-  "version": "sha256:304fbb9b047648f35a9642aec7fafc7ddae6a8e935aad6b5e1571acf90f137b5",
+  "version": "sha256:f1088b53185f59b395f2fec6d09360332b18d238422e9b5fe931e38d605fe32b",
   "modules": [
     {
       "id": "home",
@@ -2945,7 +2945,6 @@
       "notes": "Viewing the page needs read access to API keys. Creating a key needs create access to API keys, and editing, rotating or revoking one needs update access. Requests made with a key are limited to the permissions granted to that key.\n\nA system that retries writes can send an `Idempotency-Key` header (a unique string, such as a UUID, per write). Repeating a request with the same key within 24 hours returns the first response, marked `Idempotent-Replayed: true`, instead of applying the write again. A shipment created with a key is never created twice for that key.",
       "related": [
         "/admin/integrations",
-        "/admin/graphql-explorer",
         "/admin/audit-logs"
       ],
       "covers": [],
@@ -3716,72 +3715,6 @@
       "inNavigation": true
     },
     {
-      "path": "/admin/database-sessions",
-      "name": "DB sessions",
-      "module": "admin",
-      "breadcrumb": [
-        "Organization settings",
-        "Data & Integrations",
-        "DB sessions"
-      ],
-      "description": "Inspect lock contention and manually terminate blocking database sessions",
-      "summary": "Database sessions shows lock contention in the Trenova database: each card is one session that is waiting on another. The card title reads \"PID {blocked} blocked by PID {blocking}\" and shows the wait type and database, then both sides of the pair with their application, database user, state, **Tx age** (how long the transaction has been open) and **Query age**. Ages over two minutes are highlighted. Expanding **Queries** shows the **Blocked query** and the **Blocking query**.\n\nThe status bar at the top counts the blocked sessions; the list refreshes itself every 15 seconds. When nothing is waiting, the page reads \"All database sessions are running clean\". Technical administrators use this page when screens hang or saves time out because something is holding a lock.",
-      "requires": [
-        {
-          "resource": "database_session",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "DB sessions",
-        "database locks",
-        "lock contention",
-        "blocked queries",
-        "stuck transactions",
-        "kill query",
-        "terminate session"
-      ],
-      "tasks": [
-        {
-          "title": "Check for blocked database sessions",
-          "keywords": [
-            "slow saves",
-            "hanging page",
-            "lock wait",
-            "what is blocking"
-          ],
-          "steps": [
-            "Open [Database sessions](/admin/database-sessions).",
-            "Read the count in the status bar. Select the refresh button (**Refresh**) to check again straight away.",
-            "On a card, compare **Tx age** and **Query age** on both sides, and expand **Queries** to see what each session is running."
-          ]
-        },
-        {
-          "title": "Terminate a blocking session",
-          "keywords": [
-            "kill session",
-            "release lock",
-            "cancel blocking transaction",
-            "unblock"
-          ],
-          "steps": [
-            "Open [Database sessions](/admin/database-sessions) and find the card for the blocked pair.",
-            "Select **Terminate** on the card.",
-            "Read the confirmation, then select the confirm button (it reads \"Terminate PID\" followed by the blocking process number) to end the blocking session. Its in-flight transaction is cancelled and the blocked session is released."
-          ]
-        }
-      ],
-      "notes": "Viewing the page needs read access to database sessions; terminating one needs delete access to database sessions. Terminating cancels whatever the blocking session was in the middle of, so any unsaved work in that transaction is lost. Check the **Blocking query** first.",
-      "related": [
-        "/admin/audit-logs",
-        "/admin/document-operations"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
       "path": "/admin/dispatch-controls",
       "name": "Dispatch controls",
       "module": "admin",
@@ -4361,85 +4294,6 @@
       "related": [
         "/admin/document-intelligence",
         "/admin/document-operations"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
-      "path": "/admin/graphql-explorer",
-      "name": "GraphQL explorer",
-      "module": "admin",
-      "breadcrumb": [
-        "Organization settings",
-        "Data & Integrations",
-        "GraphQL explorer"
-      ],
-      "description": "Browse, search, and run every persisted GraphQL operation in the client",
-      "summary": "GraphQL explorer is a developer tool that lists every persisted GraphQL operation the Trenova web client uses, with the fragments they share. The header shows how many operations and fragments exist. The left side is a searchable list grouped into **Operations** and **Fragments**; the right side shows the selected item.\n\nFor an operation, the **Definition** tab shows its **Variables**, **Input types**, **Root fields**, the fragments it uses and the full definition; the **Run** tab lets you execute it with your own variables and see the **Response**; the usages tab lists the source files that reference it. Developers and technical administrators use it to understand what the app asks the server for and to try an operation directly.",
-      "requires": [
-        {
-          "resource": "organization",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "GraphQL playground",
-        "API explorer",
-        "persisted operations",
-        "query catalog",
-        "run a query",
-        "developer tools"
-      ],
-      "tasks": [
-        {
-          "title": "Find an operation or fragment",
-          "keywords": [
-            "search queries",
-            "find mutation",
-            "look up GraphQL"
-          ],
-          "steps": [
-            "Open [GraphQL explorer](/admin/graphql-explorer).",
-            "Type in **Search operations…** to search by name, field or domain.",
-            "Narrow the list with **All**, **Queries**, **Mutations** or **Fragments**, then select an item.",
-            "Use **Copy name**, **Copy hash** or **Copy definition** to copy what you need."
-          ]
-        },
-        {
-          "title": "Run an operation",
-          "keywords": [
-            "execute query",
-            "test query",
-            "try mutation",
-            "send request"
-          ],
-          "steps": [
-            "Open [GraphQL explorer](/admin/graphql-explorer) and select an operation.",
-            "Select the **Run** tab.",
-            "Edit the JSON under **Variables** (**Reset** puts back the starting template).",
-            "Select **Run** (or press Cmd/Ctrl+Enter). The **Response** appears with its status; use **Copy response** to copy it.",
-            "Select **History** to see the last runs of this operation and replay their variables, or **Clear** to empty the list."
-          ]
-        },
-        {
-          "title": "See where an operation is used",
-          "keywords": [
-            "usages",
-            "which screen uses this query",
-            "fragment used by"
-          ],
-          "steps": [
-            "Open [GraphQL explorer](/admin/graphql-explorer) and select an operation or fragment.",
-            "Select the usages tab to see the source files that reference it. For a fragment, the **Definition** tab also lists the operations that use it and any **Nested fragments**."
-          ]
-        }
-      ],
-      "notes": "Opening the page needs read access to the organization. Runs go to the live server under your own account, so they only return what your permissions allow. A mutation shows \"Mutation — executes against live data\": running it really changes records, with no extra confirmation. An operation with no persisted hash cannot be run.",
-      "related": [
-        "/admin/api-keys",
-        "/admin/audit-logs"
       ],
       "covers": [],
       "createAction": null,

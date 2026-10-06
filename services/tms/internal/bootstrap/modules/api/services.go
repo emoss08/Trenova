@@ -81,7 +81,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/dataretentionservice"
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
@@ -316,7 +315,6 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	shipmentcommercial.New,
 	customfieldservice.New,
 	customfieldservice.NewValuesService,
-	databasesessionservice.New,
 	realtimeservice.New,
 	shipmentinvalidation.New,
 	globalsearchservice.New,

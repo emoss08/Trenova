@@ -574,12 +574,6 @@ Immutable record of who changed what.
 
 ![Audit logs](light/audit-logs.png)
 
-### GraphQL explorer
-
-Built-in explorer over the typed GraphQL API.
-
-![GraphQL explorer](light/graphql-explorer.png)
-
 ### API keys
 
 Programmatic access credentials.

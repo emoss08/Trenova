@@ -6,7 +6,6 @@
   "exports": {
     "./generated": "./src/generated/index.ts",
     "./fragment-data": "./src/fragment-data.ts",
-    "./generated/operation-catalog.json": "./src/generated/operation-catalog.json",
     "./generated/persisted-documents.json": "./src/generated/persisted-documents.json",
     "./generated/graphql": "./src/generated/graphql.ts",
     "./generated/gql": "./src/generated/gql.ts",
@@ -17,7 +16,6 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:watch": "graphql-codegen --config codegen.ts --watch",
     "dev": "graphql-codegen --config codegen.ts --watch",
-    "catalog": "node scripts/generate-graphql-catalog.mjs",
     "enums": "node scripts/generate-error-enums.mjs",
     "resources": "node scripts/generate-permission-resources.mjs",
     "codegen:check": "pnpm codegen && node scripts/assert-codegen-clean.mjs"

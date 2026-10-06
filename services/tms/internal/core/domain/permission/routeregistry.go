@@ -434,16 +434,6 @@ func (rr *RouteRegistry) registerAdministrationRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
-		Path:      "/admin/database-sessions",
-		MatchType: RouteMatchExact,
-		Requirements: []RouteRequirement{
-			{Resource: ResourceDatabaseSession, Operation: OpRead},
-		},
-		DisplayName: "Database Sessions",
-		Category:    "Administration",
-	})
-
-	_ = rr.Register(&RouteDefinition{
 		Path:      "/admin/document-operations",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{

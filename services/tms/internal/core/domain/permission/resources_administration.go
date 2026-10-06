@@ -176,22 +176,6 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceDatabaseSession.String(),
-		DisplayName: "Database Session",
-		Description: "Database session diagnostics and termination",
-		Category:    "Administration",
-		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View database sessions"},
-			{
-				Operation:   OpDelete,
-				DisplayName: "Terminate",
-				Description: "Terminate database sessions",
-			},
-		},
-		DefaultSensitivity: SensitivityConfidential,
-	})
-
-	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceDocumentOperation.String(),
 		DisplayName: "Document Operation",
 		Description: "Document diagnostics, extraction, preview, and search operations",

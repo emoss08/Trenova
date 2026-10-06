@@ -676,11 +676,6 @@ writes:
     exempt: configuration
     reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
 
-  # databasesession
-  "POST /api/v1/admin/database-sessions/:pid/terminate/":
-    exempt: security
-    reason: "Terminating database sessions is a platform administrator's emergency control."
-
   # dataentrycontrol
   "PUT /api/v1/data-entry-controls/":
     exempt: configuration
