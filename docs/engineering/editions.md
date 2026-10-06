@@ -136,3 +136,30 @@ building, so it is always the self-hosted edition. The Cloudflare Workers deploy
 files that used to live in the apps (wrangler configs, the edge worker, `_headers`, the
 Dash root-index fallback) are kept in `client/packages/cloud/cloudflare/` for the
 private build.
+
+## Server seams
+
+The Go side of an edition registers through `internal/bootstrap/edition` (fx options for
+every process, the API or the worker, Cobra commands, Postgres migration sets and
+configuration sections); see CLAUDE.md "Editions". Every seam below has an inert
+self-hosted default, so a build without `internal/cloud` behaves exactly as before.
+
+| Seam | Where | Self-hosted default | Cloud uses it for |
+|---|---|---|---|
+| `services.DelegatedPermissionSource` | `internal/core/ports/services/permission.go`, read by `permission/engine.go` (`optional:"true"`) | not provided; the engine computes permissions from role assignments only | the Trenova support principal's permissions inside a support session (read on every resource when read-only; every operation except identity, role, API key, SSO/SCIM, access policy, two-factor and database-session resources when elevated) |
+| `routegroup.AsProtectedMiddleware` / `AsProtectedRoutes` | `internal/api/routegroup` | empty groups | the support session middleware (resolves the support cookie, refuses denied routes and every write in a read-only session, rebinds the request to the target organization's RLS scope as the principal) and the `/support-access/` and `/support/` routes |
+| GraphQL `AsExtension` (`OperationContextMutator`) | `internal/api/graphql` | none | refusing mutations and denied fields in a support session with `SUPPORT_SESSION_READ_ONLY` / `SUPPORT_SESSION_DENIED` |
+| Root `fx.Decorate` of `services.AuthService` | edition `APIOptions` | undecorated | ending a staff member's support sessions when they sign out |
+
+Two-factor sign-in (TOTP authenticator apps and recovery codes, `mfaservice`,
+`POST /auth/mfa/verify`, `/users/me/mfa/…`) is a public feature, not a seam: support
+access requires that the staff member's session was signed in at assurance level 2,
+which only the public flow produces.
+
+A delegated permission source must answer only for the identities it owns and return
+`ok = false` for everything else; it never widens a customer user's permissions, and it
+never bypasses row-level security — the support middleware enters the target tenant
+through `authctx.SetSessionAuthContext`, so every query still runs under that
+organization's policies. Cloud-only tables (`platform_staff_members`,
+`support_access_grants`, `support_principals`, `support_sessions`) ship in the edition's
+own migration set under `internal/cloud/supportaccess/migrations`.

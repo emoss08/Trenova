@@ -23,6 +23,12 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Identity providers, SCIM directories, tokens and group mappings, access policies | `audit_entries` | `iamservice` | yes |
 | Organization memberships replaced | `audit_entries` | `userservice` | yes |
 | Password changed, reset link sent by an administrator | `audit_entries` | `userservice`, `passwordresetservice` | yes |
+| Two-factor code at sign-in, success or failure | `auth_events` | `authservice.VerifyMFAChallenge` | — |
+| Authenticator app enrolled, confirmed or turned off; recovery codes regenerated; two-factor reset by an administrator | `audit_entries` | `mfaservice` | yes |
+| Trenova support access allowed, changed or revoked (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
+| Trenova support session started, elevated to write, returned to read-only, ended (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
+| Request refused inside a Trenova support session (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
+| Platform staff member added or removed (`trenova cloud staff`, Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice.StaffManager` | yes |
 | Document downloaded or viewed (content or presigned URL) | `audit_entries` | `documentservice` | — |
 | Cross-tenant request refused | `audit_entries` | `middleware.TenantBoundaryMiddleware` | yes |
 
@@ -49,7 +55,7 @@ balancer, list it there, or every row records the balancer's address.
 attempt. The caller fills an `AuthEventRecord` (provider, outcome, user,
 organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
-`session.logout`, `password_reset.request`, `password_reset.confirm`, `login_throttled`,
+`session.logout`, `mfa` (the second step of a sign-in), `password_reset.request`, `password_reset.confirm`, `login_throttled`,
 and for cloud signup `signup_requested`, `signup_rejected`, `signup_verified`,
 `signup_provisioned`. Signup rows carry no user until provisioning; a rejection names
 its reason in `error_code` (`honeypot`, `turnstile_rejected`, `turnstile_unavailable`,
@@ -76,6 +82,13 @@ password check, the per-account bcrypt cost and the signup Turnstile check still
   still answers an unknown, inactive and rate-limited address identically; only the
   row differs.
 
+A password sign-in for an account with an active authenticator app records its
+`password` row with `mfa_state = challenged` and issues no session; the code step
+records an `mfa` row at assurance level 2 on success, or `mfa_state = rejected` with
+`error_code` `mfa_invalid_code`, `mfa_attempts_exhausted` (five wrong codes end the
+challenge) or `mfa_challenge_invalid` (unknown or expired challenge). Secrets, codes and
+recovery codes never reach a row; recovery codes are stored hashed.
+
 API key authentication is not recorded per request; key creation, rotation and
 revocation are, and `api_keys.last_used_*` tracks use.
 
@@ -100,6 +113,28 @@ tokens are identified by prefix only.
 
 Adding a security-relevant mutation means calling the service's `recordChange`
 helper after the write succeeds, never before, and never for a refused change.
+
+## Trenova support sessions
+
+Trenova Cloud staff enter a customer organization only through a grant its own
+administrators made (Admin > Support access). Everything about that access is written
+to the customer's own `audit_entries`, under the organization resource, with
+`metadata.supportAccess` naming the event, so the organization's administrators read it
+in their audit log:
+
+- grant created, changed or revoked, by the administrator who did it;
+- session started (staff member, reason, ticket), elevated to write (reason, ticket),
+  returned to read-only and ended (with the reason it ended: staff exit, expiry, grant
+  revoked or expired, staff removed, replaced by a newer session, sign-out, two-factor
+  sign-in lapsed);
+- every request the session was refused (read-only or deny list), with the method and
+  path or GraphQL field.
+
+Writes made in a write-elevated session are ordinary writes by the session's
+principal, a synthetic, inactive user named "Trenova Support (staff name)", so each
+domain audit entry names support as the actor. Admins who can update the organization
+are notified when a session starts. Platform staff membership changes are recorded by
+`trenova cloud staff add|remove` against the staff member's own organization.
 
 ## Document access
 
