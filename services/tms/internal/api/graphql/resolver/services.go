@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
@@ -111,6 +112,12 @@ type Params struct {
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
 	CarrierCapacityService       *carriercapacityservice.Service
+	CustomerUpdateService        *customerupdateservice.Service
+	BoardCapacity                services.ShipmentCapacityReader
+	BoardCoverage                services.ShipmentCoverageSuggester
+	BoardTenderer                services.ShipmentTenderer
+	BoardSuggestions             services.ShipmentSuggestionReader
+	BoardSuggestionDecider       services.ShipmentSuggestionDecider
 	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardFacetCounts             services.ShipmentFacetCounter
@@ -298,6 +305,12 @@ type Services struct {
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
 	CarrierCapacityService       *carriercapacityservice.Service
+	CustomerUpdateService        *customerupdateservice.Service
+	BoardCapacity                services.ShipmentCapacityReader
+	BoardCoverage                services.ShipmentCoverageSuggester
+	BoardTenderer                services.ShipmentTenderer
+	BoardSuggestions             services.ShipmentSuggestionReader
+	BoardSuggestionDecider       services.ShipmentSuggestionDecider
 	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardFacetCounts             services.ShipmentFacetCounter
@@ -489,6 +502,12 @@ func newServices(p *Params) *Services {
 		ShipmentCommentService:       p.ShipmentCommentService,
 		ShipmentEventService:         p.ShipmentEventService,
 		CarrierCapacityService:       p.CarrierCapacityService,
+		CustomerUpdateService:        p.CustomerUpdateService,
+		BoardCapacity:                p.BoardCapacity,
+		BoardCoverage:                p.BoardCoverage,
+		BoardTenderer:                p.BoardTenderer,
+		BoardSuggestions:             p.BoardSuggestions,
+		BoardSuggestionDecider:       p.BoardSuggestionDecider,
 		BoardBriefing:                p.BoardBriefing,
 		BoardWatchlist:               p.BoardWatchlist,
 		BoardFacetCounts:             p.BoardFacetCounts,

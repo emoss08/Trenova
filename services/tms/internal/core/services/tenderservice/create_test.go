@@ -492,3 +492,24 @@ func TestCreateWaterfallAllBlockedFails(t *testing.T) {
 	assert.Empty(t, deps.workflows.started)
 	assert.Empty(t, deps.events.events)
 }
+
+func TestCreateWaterfallNamesAMissingGuide(t *testing.T) {
+	deps := setupCreateTest(t)
+	tenantInfo := createTestTenant()
+	move := tenderableMove()
+	expectTenderableMove(deps, tenantInfo, move)
+	deps.guideRepo.matched = nil
+
+	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
+		TenantInfo:     tenantInfo,
+		ShipmentMoveID: move.ID,
+	})
+
+	require.Nil(t, created)
+	require.ErrorIs(t, err, ErrNoRoutingGuideMatch)
+	var bizErr *errortypes.BusinessError
+	require.ErrorAs(t, err, &bizErr)
+	assert.Contains(t, bizErr.Message, "No routing guide matches this lane")
+	assert.Nil(t, deps.tenderRepo.created)
+}
+

@@ -152,3 +152,32 @@ type ShipmentBriefingRepository interface {
 		tenantInfo pagination.TenantInfo,
 	) (*ShipmentLateReason, error)
 }
+
+type CarrierPerformance struct {
+	CarrierID      pulid.ID
+	OffersAnswered int
+	OffersAccepted int
+	PerMileLoads   int
+	AvgRatePerMile decimal.NullDecimal
+}
+
+func (p *CarrierPerformance) AcceptancePercent() (float64, bool) {
+	if p == nil || p.OffersAnswered == 0 {
+		return 0, false
+	}
+
+	return float64(p.OffersAccepted) * 100 / float64(p.OffersAnswered), true
+}
+
+type ListCarrierPerformanceRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+	CarrierIDs []pulid.ID
+}
+
+type CarrierPerformanceRepository interface {
+	ListCarrierPerformance(
+		ctx context.Context,
+		req *ListCarrierPerformanceRequest,
+	) ([]*CarrierPerformance, error)
+}

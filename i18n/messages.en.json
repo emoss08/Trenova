@@ -7427,12 +7427,13 @@
     ]
   },
   "A valid IANA time zone is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/shipmentquickfilterservice"
+      "service/shipmentquickfilterservice",
+      "service/shipmentsuggestionservice"
     ]
   },
   "A value must be a number, text or true/false": {
@@ -33166,7 +33167,7 @@
     ]
   },
   "Carrier is invalid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -52741,6 +52742,15 @@
     "areas": [
       "domain/agent",
       "domain/formulatemplate"
+    ]
+  },
+  "Decision must be Done or Later": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentsuggestionservice"
     ]
   },
   "Decision must be approve or reject": {
@@ -105343,7 +105353,7 @@
     ]
   },
   "Message is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -105352,7 +105362,8 @@
       "domain/inboundmessage",
       "domain/modeprofile",
       "domain/notification",
-      "domain/worker"
+      "domain/worker",
+      "service/customerupdateservice"
     ]
   },
   "Message stream": {
@@ -156381,8 +156392,9 @@
     ]
   },
   "Review": {
-    "sites": 17,
+    "sites": 20,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -156393,7 +156405,8 @@
       "routes/driver-expense",
       "routes/fuel-purchase",
       "routes/service-failure",
-      "routes/shipment"
+      "routes/shipment",
+      "service/shipmentsuggestionservice"
     ]
   },
   "Review &amp; sign": {
@@ -165169,6 +165182,15 @@
       "routes/edi"
     ]
   },
+  "Select a shipment to tender": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentcapacityservice"
+    ]
+  },
   "Select a state": {
     "sites": 1,
     "scope": [
@@ -167839,6 +167861,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "Send update": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentsuggestionservice"
     ]
   },
   "Send with": {
@@ -171829,7 +171860,7 @@
     ]
   },
   "Shipment is invalid": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -171847,7 +171878,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go"
     ],
@@ -171864,6 +171895,7 @@
       "domain/shipmentevent",
       "domain/tender",
       "service/aicorrectionservice",
+      "service/customerupdateservice",
       "service/ediservice",
       "service/shipmentservice"
     ]
@@ -179756,12 +179788,14 @@
     ]
   },
   "Suggested actions": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "routes/shipment",
+      "service/shipmentsuggestionservice"
     ]
   },
   "Suggested by the model": {
@@ -182617,15 +182651,17 @@
     ]
   },
   "Tender": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/edi",
       "routes/inbox",
-      "routes/shipment"
+      "routes/shipment",
+      "service/shipmentsuggestionservice"
     ]
   },
   "Tender acceptance needs review": {
@@ -206265,6 +206301,15 @@
       "routes/rate-agreement",
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Unit is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Unit must be greater than or equal to 1": {

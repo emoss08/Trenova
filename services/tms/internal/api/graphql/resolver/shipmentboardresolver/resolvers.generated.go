@@ -5,10 +5,17 @@ package shipmentboardresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
+	customerupdateservice "github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 )
 
 type Deps struct {
 	*base.Core
+	CustomerUpdateService  *customerupdateservice.Service
+	BoardCapacity          services.ShipmentCapacityReader
+	BoardCoverage          services.ShipmentCoverageSuggester
+	BoardTenderer          services.ShipmentTenderer
+	BoardSuggestions       services.ShipmentSuggestionReader
+	BoardSuggestionDecider services.ShipmentSuggestionDecider
 	BoardBriefing          services.ShipmentBriefingReader
 	BoardWatchlist         services.ShipmentWatchlistReader
 	BoardFacetCounts       services.ShipmentFacetCounter

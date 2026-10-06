@@ -297,7 +297,7 @@ func (s *Service) resolveGuide(
 	if guide == nil {
 		return nil, errortypes.NewBusinessError(
 			"No routing guide matches this lane. Create one or use a spot tender",
-		).WithParam("shipmentMoveId", move.ID.String())
+		).WithParam("shipmentMoveId", move.ID.String()).WithInternal(ErrNoRoutingGuideMatch)
 	}
 	if len(guide.Entries) == 0 {
 		return nil, errortypes.NewBusinessError("Matched routing guide has no carrier entries").

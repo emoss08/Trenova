@@ -87,7 +87,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 75 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 29 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 28 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 47 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 70 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
@@ -101,21 +101,21 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 383 |
-| Exempt | 608 |
+| Covered by a tool | 386 |
+| Exempt | 607 |
 | — Security | 75 |
 | — Configuration | 260 |
-| — User preference | 29 |
+| — User preference | 28 |
 | — Infrastructure | 47 |
 | — Agent administration | 70 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
-| **Pending** | **5** |
+| **Pending** | **3** |
 | Total | 996 |
 
-Of the 388 writes an agent should be able to make, 383 have a tool (98%).
+Of the 389 writes an agent should be able to make, 386 have a tool (99%).
 
 ## Pending
 
@@ -126,8 +126,6 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
 | billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
 | billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
-| shipmentboard | `mutation notifyShipmentDelay` | Email the shipment's customer a delay notice and record it on the shipment's timeline. |
-| shipmentboard | `mutation tenderShipments` | Tender uncovered shipments to a named carrier, the routing guide or the best-matched carrier, per shipment. |
 
 ## By domain
 
@@ -265,7 +263,7 @@ The writes no tool performs yet, and what the tool would do.
 | servicefailurereasoncode | 6 | 0 | 6 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
 | shipment | 33 | 21 | 12 | 0 |
-| shipmentboard | 4 | 0 | 2 | 2 |
+| shipmentboard | 4 | 3 | 1 | 0 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
 | shipmentmove | 4 | 4 | 0 | 0 |
 | shipmenttype | 4 | 0 | 4 | 0 |
@@ -301,7 +299,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Tool | Resource | Operation |
 | --- | --- | --- |
-| `email_customer` | customer_communication | create |
 | `escalate_detention` | detention_policy | update |
 | `flag_for_manual_review` | agent_exception | create |
 | `notify_driver` | driver_message | create |
@@ -1817,9 +1814,9 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation decideShipmentSuggestion` | Exempt, user-preference: A person marking an item in their own suggestion queue done or for later; it changes no record, only what that person's queue shows. |
-| `mutation notifyShipmentDelay` | Pending: Email the shipment's customer a delay notice and record it on the shipment's timeline. |
-| `mutation tenderShipments` | Pending: Tender uncovered shipments to a named carrier, the routing guide or the best-matched carrier, per shipment. |
-| `mutation undoShipmentSuggestionDecision` | Exempt, user-preference: Takes back a person's own done or later mark on a suggestion; it changes no record, only what that person's queue shows. |
+| `mutation notifyShipmentDelay` | Tool: `email_customer` |
+| `mutation tenderShipments` | Tool: `tender_move_to_routing_guide`, `tender_move_to_carriers` |
+| `mutation undoShipmentSuggestionDecision` | Tool: `unassign_moves`, `cancel_tender` |
 
 ### shipmentcontrol
 

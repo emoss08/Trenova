@@ -4,10 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/idempotency"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // This file will be automatically regenerated based on the schema, any resolver
@@ -19,60 +26,132 @@ func (r *MutationResolver) TenderShipments(
 	ctx context.Context,
 	input gqlmodel.TenderShipmentsInput,
 ) (*gqlmodel.TenderShipmentsResult, error) {
-	if _, err := r.RequirePermission(
-		ctx,
-		permission.ResourceShipment,
-		permission.OpUpdate,
-	); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
+	if err != nil {
 		return nil, err
 	}
-	panic(fmt.Errorf("not implemented: TenderShipments - tenderShipments"))
+	if _, err = r.RequirePermission(ctx, permission.ResourceTender, permission.OpCreate); err != nil {
+		return nil, err
+	}
+
+	items := make([]services.TenderShipmentItem, 0, len(input.Items))
+	for idx, item := range input.Items {
+		shipmentID, parseErr := pulid.Parse(item.ShipmentID)
+		if parseErr != nil {
+			return nil, errortypes.NewValidationError(
+				fmt.Sprintf("items[%d].shipmentId", idx),
+				errortypes.ErrInvalid,
+				"Shipment is invalid",
+			)
+		}
+		carrierID, parseErr := base.OptionalID(item.CarrierID)
+		if parseErr != nil {
+			return nil, errortypes.NewValidationError(
+				fmt.Sprintf("items[%d].carrierId", idx),
+				errortypes.ErrInvalid,
+				"Carrier is invalid",
+			)
+		}
+		items = append(items, services.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID})
+	}
+
+	result, err := r.BoardTenderer.TenderShipments(ctx, &services.TenderShipmentsRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Items:      items,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return tenderResultToModel(result), nil
 }
 
 func (r *MutationResolver) DecideShipmentSuggestion(
 	ctx context.Context,
 	input gqlmodel.DecideShipmentSuggestionInput,
 ) (bool, error) {
-	if _, err := r.RequirePermission(
-		ctx,
-		permission.ResourceShipment,
-		permission.OpRead,
-	); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
 		return false, err
 	}
-	panic(fmt.Errorf("not implemented: DecideShipmentSuggestion - decideShipmentSuggestion"))
+
+	tenantInfo := base.TenantInfo(authCtx)
+	if err = r.BoardSuggestionDecider.Decide(ctx, &services.DecideSuggestionRequest{
+		TenantInfo: tenantInfo,
+		UserID:     tenantInfo.UserID,
+		Key:        input.Key,
+		Decision:   shipmentsuggestion.Decision(input.Decision),
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *MutationResolver) UndoShipmentSuggestionDecision(
 	ctx context.Context,
 	key string,
 ) (bool, error) {
-	if _, err := r.RequirePermission(
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return false, err
+	}
+	if _, err = r.RequirePermission(
 		ctx,
-		permission.ResourceShipment,
-		permission.OpRead,
+		permission.ResourceShipmentMove,
+		permission.OpUpdate,
 	); err != nil {
 		return false, err
 	}
-	panic(
-		fmt.Errorf(
-			"not implemented: UndoShipmentSuggestionDecision - undoShipmentSuggestionDecision",
-		),
-	)
+
+	tenantInfo := base.TenantInfo(authCtx)
+	if err = r.BoardSuggestionDecider.Undo(ctx, &services.UndoSuggestionRequest{
+		TenantInfo: tenantInfo,
+		UserID:     tenantInfo.UserID,
+		Key:        key,
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *MutationResolver) NotifyShipmentDelay(
 	ctx context.Context,
 	input gqlmodel.NotifyShipmentDelayInput,
 ) (bool, error) {
-	if _, err := r.RequirePermission(
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+	if _, err = r.RequirePermission(
 		ctx,
-		permission.ResourceShipment,
-		permission.OpUpdate,
+		permission.ResourceCustomerCommunication,
+		permission.OpCreate,
 	); err != nil {
 		return false, err
 	}
-	panic(fmt.Errorf("not implemented: NotifyShipmentDelay - notifyShipmentDelay"))
+
+	shipmentID, err := pulid.Parse(input.ShipmentID)
+	if err != nil {
+		return false, errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrInvalid,
+			"Shipment is invalid",
+		)
+	}
+	idempotencyKey, _ := idempotency.KeyFrom(ctx)
+
+	if err = r.CustomerUpdateService.NotifyDelay(ctx, &customerupdateservice.NotifyDelayRequest{
+		TenantInfo:     base.TenantInfo(authCtx),
+		ShipmentID:     shipmentID,
+		Message:        input.Message,
+		IdempotencyKey: idempotencyKey,
+	}, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *QueryResolver) ShipmentBoardCapabilities(
@@ -177,14 +256,21 @@ func (r *QueryResolver) ShipmentCapacity(
 	ctx context.Context,
 	kind gqlmodel.CapacityUnitKind,
 ) (*gqlmodel.ShipmentCapacity, error) {
-	if _, err := r.RequirePermission(
-		ctx,
-		permission.ResourceShipment,
-		permission.OpRead,
-	); err != nil {
+	authCtx, err := r.requireCapacityRead(ctx, kind)
+	if err != nil {
 		return nil, err
 	}
-	panic(fmt.Errorf("not implemented: ShipmentCapacity - shipmentCapacity"))
+
+	capacity, err := r.BoardCapacity.Capacity(
+		ctx,
+		base.TenantInfo(authCtx),
+		services.CapacityUnitKind(kind),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return capacityToModel(capacity), nil
 }
 
 func (r *QueryResolver) CapacityUnitMatches(
@@ -193,42 +279,84 @@ func (r *QueryResolver) CapacityUnitMatches(
 	unitID string,
 	limit *int,
 ) ([]*gqlmodel.CapacityMatch, error) {
-	if _, err := r.RequirePermission(
-		ctx,
-		permission.ResourceShipment,
-		permission.OpRead,
-	); err != nil {
+	authCtx, err := r.requireCapacityRead(ctx, kind)
+	if err != nil {
 		return nil, err
 	}
-	panic(fmt.Errorf("not implemented: CapacityUnitMatches - capacityUnitMatches"))
+	id, err := pulid.Parse(unitID)
+	if err != nil {
+		return nil, errortypes.NewValidationError("unitId", errortypes.ErrInvalid, "Unit is invalid")
+	}
+
+	request := &services.CapacityMatchesRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Kind:       services.CapacityUnitKind(kind),
+		UnitID:     id,
+	}
+	if limit != nil {
+		request.Limit = *limit
+	}
+	matches, err := r.BoardCapacity.Matches(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return capacityMatchesToModel(matches), nil
 }
 
 func (r *QueryResolver) ShipmentCoverageSuggestions(
 	ctx context.Context,
 	shipmentID string,
 ) (*gqlmodel.ShipmentCoverageSuggestions, error) {
-	if _, err := r.RequirePermission(
-		ctx,
-		permission.ResourceShipment,
-		permission.OpRead,
-	); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
 		return nil, err
 	}
-	panic(fmt.Errorf("not implemented: ShipmentCoverageSuggestions - shipmentCoverageSuggestions"))
+	for _, resource := range []permission.Resource{
+		permission.ResourceWorker,
+		permission.ResourceCarrier,
+	} {
+		if _, err = r.RequirePermission(ctx, resource, permission.OpRead); err != nil {
+			return nil, err
+		}
+	}
+	id, err := pulid.Parse(shipmentID)
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrInvalid,
+			"Shipment is invalid",
+		)
+	}
+
+	suggestions, err := r.BoardCoverage.CoverageSuggestions(ctx, base.TenantInfo(authCtx), id)
+	if err != nil {
+		return nil, err
+	}
+
+	return coverageSuggestionsToModel(suggestions), nil
 }
 
 func (r *QueryResolver) ShipmentSuggestions(
 	ctx context.Context,
 	timezone string,
 ) (*gqlmodel.ShipmentSuggestionQueue, error) {
-	if _, err := r.RequirePermission(
-		ctx,
-		permission.ResourceShipment,
-		permission.OpRead,
-	); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
 		return nil, err
 	}
-	panic(fmt.Errorf("not implemented: ShipmentSuggestions - shipmentSuggestions"))
+
+	tenantInfo := base.TenantInfo(authCtx)
+	queue, err := r.BoardSuggestions.Suggestions(ctx, &services.SuggestionRequest{
+		TenantInfo: tenantInfo,
+		UserID:     tenantInfo.UserID,
+		Timezone:   timezone,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return suggestionQueueToModel(queue), nil
 }
 
 func (r *QueryResolver) ShipmentWatchlist(

@@ -2485,12 +2485,11 @@ writes:
     exempt: user-preference
     reason: "A person marking an item in their own suggestion queue done or for later; it changes no record, only what that person's queue shows."
   "mutation notifyShipmentDelay":
-    pending: "Email the shipment's customer a delay notice and record it on the shipment's timeline."
+    tools: [email_customer]
   "mutation tenderShipments":
-    pending: "Tender uncovered shipments to a named carrier, the routing guide or the best-matched carrier, per shipment."
+    tools: [tender_move_to_routing_guide, tender_move_to_carriers]
   "mutation undoShipmentSuggestionDecision":
-    exempt: user-preference
-    reason: "Takes back a person's own done or later mark on a suggestion; it changes no record, only what that person's queue shows."
+    tools: [unassign_moves, cancel_tender]
 
   # shipmentcontrol
   "PUT /api/v1/shipment-controls/":

@@ -80,6 +80,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
@@ -203,6 +204,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentbriefingservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcontrolservice"
@@ -214,6 +216,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
@@ -623,6 +626,14 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	shipmentquickfilterservice.New,
 	shipmentboardservice.New,
 	carriercapacityservice.New,
+	customerupdateservice.New,
+	shipmentcapacityservice.New,
+	shipmentcapacityservice.NewCapacityReader,
+	shipmentcapacityservice.NewCoverageSuggester,
+	shipmentcapacityservice.NewTenderer,
+	shipmentsuggestionservice.New,
+	shipmentsuggestionservice.NewReader,
+	shipmentsuggestionservice.NewDecider,
 	shipmentetaservice.New,
 	shipmentwatchlistservice.New,
 	shipmentbriefingservice.New,

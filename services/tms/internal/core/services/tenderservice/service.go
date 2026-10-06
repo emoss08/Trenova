@@ -2,6 +2,7 @@ package tenderservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
@@ -23,6 +24,8 @@ import (
 var ErrOfferNoLongerAvailable = errortypes.NewBusinessError(
 	"This offer is no longer available",
 )
+
+var ErrNoRoutingGuideMatch = errors.New("no routing guide matches the lane")
 
 type Params struct {
 	fx.In

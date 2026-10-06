@@ -12,15 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
 
@@ -589,7 +588,7 @@ func newEmailCustomerTool(p emailCustomerParams) serviceports.AgentTool {
 	}}
 }
 
-const emailCustomerToolName = "email_customer"
+const emailCustomerToolName = customerupdateservice.SourceAgentEmail
 
 func (t *emailCustomerTool) Name() string { return emailCustomerToolName }
 
@@ -667,41 +666,6 @@ func (t *emailCustomerTool) Execute(
 	}
 
 	return t.record(ctx, composed)
-}
-
-// recipients are the customer's notice contacts, read from the record. The
-// model names the shipment; the customer's own profile says who is written to.
-func (t *emailCustomerTool) recipients(
-	ctx context.Context,
-	sp *shipment.Shipment,
-	tenant pagination.TenantInfo,
-) ([]string, string, error) {
-	if sp.CustomerID.IsNil() {
-		return nil, "", errors.New("the shipment has no customer to write to")
-	}
-
-	entity, err := t.deps.customers.GetByID(ctx, repositories.GetCustomerByIDRequest{
-		ID:                    sp.CustomerID,
-		TenantInfo:            tenant,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeEmailProfile: true},
-	})
-	if err != nil {
-		return nil, "", err
-	}
-
-	var recipients []string
-	if entity.EmailProfile != nil {
-		recipients = stringutils.SplitEmailList(entity.EmailProfile.ToRecipients)
-	}
-	if len(recipients) == 0 {
-		return nil, "", fmt.Errorf(
-			"%s has no notice recipients on file; a person must add an email profile "+
-				"to the customer before anything can be sent",
-			entity.Name,
-		)
-	}
-
-	return recipients, entity.Name, nil
 }
 
 // record leaves the email on the shipment's thread so the desk sees what the
