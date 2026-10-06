@@ -41,3 +41,5 @@ docs/screenshots/dark/
 services/tms/internal/cloud/
 services/tms/cmd/cli/edition_cloud.go
 client/packages/cloud/
+
+*:Zone.Identifier

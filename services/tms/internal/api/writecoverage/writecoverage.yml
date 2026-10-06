@@ -541,6 +541,14 @@ writes:
   "PUT /api/v1/carriers/:carrierID/":
     tools: [update_carrier]
 
+  # carriercapacity
+  "mutation createCarrierCapacityPosting":
+    tools: [create_carrier_capacity_posting]
+  "mutation deleteCarrierCapacityPosting":
+    tools: [delete_carrier_capacity_posting]
+  "mutation updateCarrierCapacityPosting":
+    tools: [update_carrier_capacity_posting]
+
   # carrierintelligence
   "mutation acknowledgeCarrierIntelEvents":
     tools: [acknowledge_carrier_intel_event]
@@ -2456,6 +2464,17 @@ writes:
     tools: [update_shipment]
   "mutation updateShipmentComment":
     tools: [edit_shipment_comment]
+
+  # shipmentboard
+  "mutation decideShipmentSuggestion":
+    exempt: user-preference
+    reason: "A person marking an item in their own suggestion queue done or for later; it changes no record, only what that person's queue shows."
+  "mutation notifyShipmentDelay":
+    tools: [email_customer]
+  "mutation tenderShipments":
+    tools: [tender_move_to_routing_guide, tender_move_to_carriers]
+  "mutation undoShipmentSuggestionDecision":
+    tools: [unassign_moves, cancel_tender]
 
   # shipmentcontrol
   "PUT /api/v1/shipment-controls/":

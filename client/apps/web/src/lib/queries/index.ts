@@ -55,6 +55,7 @@ import { serviceFailureReasonCode } from "./service-failure-reason-code";
 import { rateQuote } from "./rate-quote";
 import { recurringShipment } from "./recurring-shipment";
 import { shipment } from "./shipment";
+import { shipmentBoard } from "./shipment-board";
 import { shipmentControl } from "./shipment-control";
 import { homeLayout } from "./home-layout";
 import { sidebarPreferences } from "./sidebar-preferences";
@@ -107,6 +108,7 @@ const operationsQueries = mergeQueryKeys(
   documentParsingRule,
   location,
   shipment,
+  shipmentBoard,
   rateQuote,
   recurringShipment,
   googleMaps,

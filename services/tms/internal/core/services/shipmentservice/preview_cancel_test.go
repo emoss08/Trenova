@@ -83,7 +83,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).
 		Return(nil).Maybe()
 	svc.auditService = audit
-	svc.realtime = realtime
+	svc.invalidator = newTestInvalidator(realtime)
 
 	saved, err := svc.Cancel(t.Context(), request(), actor)
 	require.NoError(t, err)

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -68,10 +69,12 @@ func newHarness(t *testing.T, ops ...permission.Operation) *harness {
 	handler := New(Params{
 		Service:      h.svc,
 		ErrorHandler: eh,
-		PermissionMiddleware: middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-			PermissionEngine: engine,
-			ErrorHandler:     eh,
-		}),
+		PermissionMiddleware: middleware.NewPermissionMiddleware(
+			middleware.PermissionMiddlewareParams{
+				PermissionEngine: engine,
+				ErrorHandler:     eh,
+			},
+		),
 	})
 
 	h.router = gin.New()
@@ -145,11 +148,11 @@ func TestCompleteOnboarding(t *testing.T) {
 			assert.Equal(t, stateID, req.Organization.StateID)
 			assert.Equal(t, "ACME", req.Organization.ScacCode)
 			assert.Empty(t, req.Organization.DOTNumber)
-			assert.Equal(t, onboarding.OperationTypeBoth, req.OperationType)
+			assert.Equal(t, tenant.OperationTypeBoth, req.OperationType)
 			assert.True(t, req.LoadSampleData)
 			return &services.OnboardingState{
 				Status:           onboarding.StatusCompleted,
-				OperationType:    onboarding.OperationTypeBoth,
+				OperationType:    tenant.OperationTypeBoth,
 				SampleDataLoaded: true,
 				CompletedAt:      &completedAt,
 			}, nil
@@ -192,7 +195,8 @@ func TestCompleteOnboardingReturnsNestedFieldErrors(t *testing.T) {
 
 	h := newHarness(t, permission.OpRead, permission.OpUpdate)
 	multiErr := errortypes.NewMultiError()
-	multiErr.WithPrefix("organization").Add("dotNumber", errortypes.ErrInvalid, "DOT number must be numeric")
+	multiErr.WithPrefix("organization").
+		Add("dotNumber", errortypes.ErrInvalid, "DOT number must be numeric")
 	h.svc.EXPECT().Complete(mock.Anything, mock.Anything).Return(nil, multiErr)
 
 	w := h.do(http.MethodPost, "/onboarding/complete/", map[string]any{"operationType": "asset"})

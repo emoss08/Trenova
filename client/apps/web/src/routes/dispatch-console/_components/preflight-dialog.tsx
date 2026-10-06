@@ -27,9 +27,9 @@ import {
   HelpCircleIcon,
   XOctagonIcon,
 } from "@trenova/shared/components/icons";
+import { formatMinutesSpan } from "@trenova/shared/lib/date";
 import {
   formatMiles,
-  formatMinutesSpan,
   formatMinutesToPickup,
   hosStrategyMeta,
   verdictMeta,

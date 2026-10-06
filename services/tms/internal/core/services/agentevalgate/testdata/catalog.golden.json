@@ -4572,6 +4572,7 @@
               "service types",
               "shipment types",
               "commodities",
+              "carrier capacity postings",
               "hazardous materials",
               "accessorial charges",
               "document types",
@@ -5306,6 +5307,120 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Adds a carrier inside Trenova that colleagues can then book; nothing is sent. Payment and remit-to details decide where money goes, so a call that sets them is money and runs only on a person's approval."
+      }
+    },
+    {
+      "name": "create_carrier_capacity_posting",
+      "description": "Record trucks a carrier says it has available: where they are, when, how many, the equipment and the rate it asked. Coverage suggestions and the capacity strip offer these trucks against uncovered loads.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "availableFrom": {
+            "description": "When the trucks are free. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "availableTo": {
+            "description": "When the offer ends, at most 60 days after it starts. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "carrierId": {
+            "description": "The carrier offering the trucks, from list_carriers.",
+            "type": "string"
+          },
+          "destinationState": {
+            "description": "Where the carrier wants to go, when it said. The two-letter US state abbreviation, such as TX.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "equipmentTypeId": {
+            "description": "The trailer type offered, from list_equipment_types.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Anything else the carrier said.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "originLocationId": {
+            "description": "Where the trucks are, from list_locations. Give this, originState, or both.",
+            "type": "string"
+          },
+          "originRadiusMiles": {
+            "description": "How many miles from the origin location the carrier will pick up; only with an origin location.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "originState": {
+            "description": "The state the trucks are in, when no location is named. The two-letter US state abbreviation, such as TX.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "rate": {
+            "description": "The rate the carrier asked. A decimal such as 2.35.",
+            "type": "string"
+          },
+          "rateMethod": {
+            "description": "Whether the rate is per loaded mile or for the whole move.",
+            "enum": [
+              "Flat",
+              "PerMile"
+            ],
+            "type": "string",
+            "x-enumOf": "carrierCapacity.rateMethod"
+          },
+          "source": {
+            "description": "How the offer reached you.",
+            "enum": [
+              "Manual",
+              "Email",
+              "EDI"
+            ],
+            "type": "string",
+            "x-enumOf": "carrierCapacity.source"
+          },
+          "truckCount": {
+            "description": "How many trucks are offered.",
+            "maximum": 999,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "carrierId",
+          "availableFrom",
+          "availableTo"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "carrier capacity",
+        "truck posting",
+        "available trucks",
+        "lane offer"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_capacity_posting",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a capacity posting inside Trenova; nothing is sent to the carrier, and delete_carrier_capacity_posting removes it."
       }
     },
     {
@@ -7603,6 +7718,48 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Hands a task to another agent of the organization, which runs as the same person under its own tiers."
+      }
+    },
+    {
+      "name": "delete_carrier_capacity_posting",
+      "description": "Remove a carrier capacity posting the carrier withdrew or that was entered by mistake.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "carrierCapacityPostingId": {
+            "description": "The posting to remove, from list_carrier_capacity_postings. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "carrierCapacityPostingId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "remove carrier capacity",
+        "withdraw truck posting"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_capacity_posting",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes trucks a carrier offered from Trenova; nothing is sent, and create_carrier_capacity_posting records them again."
       }
     },
     {
@@ -14250,6 +14407,141 @@
       "policy": {
         "kind": "query",
         "resource": "capture_batch",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_carrier_capacity_postings",
+      "description": "List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked. Filter availableTo on or after today for offers still open. Filters: rateMethod (Flat|PerMile); source (Manual|Email|EDI); text: carrierId, originLocationId, originStateId, destinationStateId, equipmentTypeId; date: availableFrom, availableTo, createdAt; number: truckCount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "carrierId",
+                    "originLocationId",
+                    "originStateId",
+                    "destinationStateId",
+                    "equipmentTypeId",
+                    "availableFrom",
+                    "availableTo",
+                    "truckCount",
+                    "rateMethod",
+                    "source",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_carrier_capacity_postings.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_carrier_capacity_postings.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "availableFrom",
+              "availableTo",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_carrier_capacity_postings.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "carrier capacity",
+        "available trucks",
+        "truck postings"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "carrier_capacity_posting",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -28982,6 +29274,7 @@
               "service types",
               "shipment types",
               "commodities",
+              "carrier capacity postings",
               "hazardous materials",
               "accessorial charges",
               "document types",
@@ -32101,6 +32394,121 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Changes a carrier inside Trenova and keeps its contacts, insurance and EDI channels; nothing is sent. A call that changes payment or remit-to details is money and runs only on a person's approval."
+      }
+    },
+    {
+      "name": "update_carrier_capacity_posting",
+      "description": "Change a carrier capacity posting: its origin, destination, window, truck count, equipment or rate. Fields left out keep their value.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "availableFrom": {
+            "description": "When the trucks are free. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "availableTo": {
+            "description": "When the offer ends, at most 60 days after it starts. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "carrierCapacityPostingId": {
+            "description": "The carrier capacity posting to change, from list_carrier_capacity_postings. Never guess one.",
+            "type": "string"
+          },
+          "carrierId": {
+            "description": "The carrier offering the trucks, from list_carriers. Leave it out to keep it.",
+            "type": "string"
+          },
+          "destinationState": {
+            "description": "Where the carrier wants to go, when it said. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "equipmentTypeId": {
+            "description": "The trailer type offered, from list_equipment_types. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Anything else the carrier said. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "originLocationId": {
+            "description": "Where the trucks are, from list_locations. Give this, originState, or both. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "originRadiusMiles": {
+            "description": "How many miles from the origin location the carrier will pick up; only with an origin location. Leave it out to keep it.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "originState": {
+            "description": "The state the trucks are in, when no location is named. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "rate": {
+            "description": "The rate the carrier asked. A decimal such as 2.35. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "rateMethod": {
+            "description": "Whether the rate is per loaded mile or for the whole move. Leave it out to keep it.",
+            "enum": [
+              "Flat",
+              "PerMile"
+            ],
+            "type": "string",
+            "x-enumOf": "carrierCapacity.rateMethod"
+          },
+          "source": {
+            "description": "How the offer reached you. Leave it out to keep it.",
+            "enum": [
+              "Manual",
+              "Email",
+              "EDI"
+            ],
+            "type": "string",
+            "x-enumOf": "carrierCapacity.source"
+          },
+          "truckCount": {
+            "description": "How many trucks are offered. Leave it out to keep it.",
+            "maximum": 999,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "carrierCapacityPostingId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit carrier capacity",
+        "change truck posting",
+        "capacity rate"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_capacity_posting",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a capacity posting inside Trenova; nothing is sent, and a later change puts it back."
       }
     },
     {

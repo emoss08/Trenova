@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -698,6 +699,12 @@ var lookups = map[permission.Resource]lookup{
 		scope:   buncolgen.CommodityScopeTenant,
 		idEq:    buncolgen.CommodityColumns.ID.Eq(),
 		version: versionOf(func(entity *commodity.Commodity) int64 { return entity.Version }),
+	},
+	permission.ResourceCarrierCapacityPosting: {
+		model:   func() versioned { return new(carriercapacity.Posting) },
+		scope:   buncolgen.PostingScopeTenant,
+		idEq:    buncolgen.PostingColumns.ID.Eq(),
+		version: versionOf(func(entity *carriercapacity.Posting) int64 { return entity.Version }),
 	},
 	permission.ResourceHazardousMaterial: {
 		model: func() versioned { return new(hazardousmaterial.HazardousMaterial) },

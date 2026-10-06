@@ -1,0 +1,252 @@
+query ShipmentBoardCapabilities {
+  shipmentBoardCapabilities {
+    ai
+    operationType
+    hos
+    maps
+  }
+}
+
+query ShipmentStageSummary($input: ShipmentBoardScopeInput!) {
+  shipmentStageSummary(input: $input) {
+    stage
+    rank
+    count
+    revenue
+  }
+}
+
+query ShipmentQuickFilterCounts($input: ShipmentBoardScopeInput!) {
+  shipmentQuickFilterCounts(input: $input) {
+    filter
+    count
+  }
+}
+
+query ShipmentFacetCounts($input: ShipmentBoardScopeInput!, $facets: [ShipmentFacet!]!) {
+  shipmentFacetCounts(input: $input, facets: $facets) {
+    facet
+    field
+    values {
+      value
+      label
+      count
+    }
+  }
+}
+
+query ShipmentBriefing($timezone: String!) {
+  shipmentBriefing(timezone: $timezone) {
+    segments {
+      text
+      filter
+    }
+    narrated
+    generatedAt
+  }
+}
+
+query ShipmentCapacity($kind: CapacityUnitKind!) {
+  shipmentCapacity(kind: $kind) {
+    kind
+    units {
+      id
+      kind
+      name
+      initials
+      group
+      freeAt
+      city
+      unitLabel
+      ring {
+        value
+        max
+        low
+      }
+      badgeCount
+      ratePerMile
+      acceptancePercent
+      driveRemainingMs
+      tractorId
+    }
+    drivers {
+      ready
+      withinTwoHours
+      short
+      uncovered
+    }
+    carriers {
+      posting
+      untendered
+      awaitingAcceptance
+      avgRatePerMile
+    }
+  }
+}
+
+query CapacityUnitMatches($kind: CapacityUnitKind!, $unitId: ID!, $limit: Int) {
+  capacityUnitMatches(kind: $kind, unitId: $unitId, limit: $limit) {
+    shipmentId
+    moveId
+    proNumber
+    originCity
+    destinationCity
+    pickupAt
+    revenue
+    deadheadMiles
+    quote
+    marginPercent
+    fitPercent
+  }
+}
+
+query ShipmentCoverageSuggestions($shipmentId: ID!) {
+  shipmentCoverageSuggestions(shipmentId: $shipmentId) {
+    drivers {
+      workerId
+      tractorId
+      moveId
+      name
+      initials
+      unitLabel
+      distanceMiles
+      driveRemainingMs
+      fitPercent
+    }
+    carriers {
+      carrierId
+      moveId
+      name
+      initials
+      mcNumber
+      quote
+      ratePerMile
+      acceptancePercent
+      posted
+    }
+  }
+}
+
+query ShipmentSuggestions($timezone: String!) {
+  shipmentSuggestions(timezone: $timezone) {
+    handledThisShift
+    narrated
+    items {
+      key
+      kind
+      tone
+      shipmentId
+      proNumber
+      title
+      reason
+      impact
+      manualLabel
+      dueAt
+      deferred
+      primary {
+        type
+        label
+        moveId
+        workerId
+        tractorId
+        carrierId
+        detentionOccurrenceId
+        message
+      }
+    }
+  }
+}
+
+query ShipmentWatchlist($timezone: String!) {
+  shipmentWatchlist(timezone: $timezone) {
+    deliveries {
+      onTime
+      total
+      lateCount
+      buckets {
+        hour
+        delivered
+        scheduled
+        late
+      }
+      worstLate {
+        shipmentId
+        proNumber
+        deltaMinutes
+        city
+        customerName
+      }
+    }
+    uncovered {
+      count
+      revenue
+      windows {
+        window
+        startMinutes
+        endMinutes
+        count
+        revenue
+      }
+      next {
+        shipmentId
+        pickupAt
+        originCity
+        destinationCity
+      }
+    }
+    detention {
+      stopCount
+      amount
+      ratePerHour
+      snapshotAt
+      top {
+        shipmentId
+        stopId
+        occurrenceId
+        facilityName
+        coverageName
+        billableSince
+        ratePerHour
+        amount
+      }
+    }
+    billing {
+      count
+      total
+      moreCustomers
+      customers {
+        customerId
+        name
+        count
+        total
+      }
+    }
+  }
+}
+
+mutation TenderShipments($input: TenderShipmentsInput!) {
+  tenderShipments(input: $input) {
+    tendered {
+      shipmentId
+      tenderId
+      carrierId
+      carrierName
+    }
+    failed {
+      shipmentId
+      message
+    }
+  }
+}
+
+mutation DecideShipmentSuggestion($input: DecideShipmentSuggestionInput!) {
+  decideShipmentSuggestion(input: $input)
+}
+
+mutation UndoShipmentSuggestionDecision($key: String!) {
+  undoShipmentSuggestionDecision(key: $key)
+}
+
+mutation NotifyShipmentDelay($input: NotifyShipmentDelayInput!) {
+  notifyShipmentDelay(input: $input)
+}

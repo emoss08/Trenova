@@ -1,16 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleton";
-import { Button } from "@trenova/shared/components/ui/button";
-import { GOOGLE_MAPS_ERROR_MESSAGE } from "@trenova/shared/lib/constants";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  MarkerPinOffIcon,
-  Settings01Icon,
-} from "@trenova/shared/components/icons";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useNavigate } from "react-router";
 
 export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNode }) {
   const t = useT();
@@ -18,10 +11,7 @@ export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNo
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
-        <ErrorBoundary
-          fallbackRender={({ error }) => <MapErrorFallback error={error as Error} />}
-          onReset={reset}
-        >
+        <ErrorBoundary fallbackRender={() => <MapErrorFallback />} onReset={reset}>
           <Suspense
             fallback={
               <LoadingSkeletonState
@@ -38,11 +28,8 @@ export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNo
   );
 }
 
-function MapErrorFallback({ error }: { error: Error }) {
+function MapErrorFallback() {
   const t = useT();
-
-  const isConfigError = error.message === GOOGLE_MAPS_ERROR_MESSAGE;
-  const navigate = useNavigate();
 
   return (
     <div className="border-border relative h-[clamp(420px,calc(100vh-380px),540px)] w-full overflow-hidden rounded-lg border">
@@ -55,32 +42,16 @@ function MapErrorFallback({ error }: { error: Error }) {
       <div className="relative flex size-full items-center justify-center">
         <div className="flex max-w-sm flex-col items-center gap-3 text-center">
           <div className="border-border bg-background flex size-10 items-center justify-center rounded-lg border">
-            {isConfigError ? (
-              <MarkerPinOffIcon className="text-muted-foreground size-5" />
-            ) : (
-              <AlertTriangleIcon className="text-muted-foreground size-5" />
-            )}
+            <AlertTriangleIcon className="text-muted-foreground size-5" />
           </div>
           <div className="space-y-1">
-            <p className="text-foreground text-sm font-medium">
-              {isConfigError ? t("Map integration not configured") : t("Unable to load map")}
-            </p>
+            <p className="text-foreground text-sm font-medium">{t("Unable to load map")}</p>
             <p className="text-muted-foreground text-xs">
-              {isConfigError
-                ? t(
-                    "A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature.",
-                  )
-                : t(
-                    "An error occurred while loading the map component. Please try refreshing the page.",
-                  )}
+              {t(
+                "An error occurred while loading the map component. Please try refreshing the page.",
+              )}
             </p>
           </div>
-          {isConfigError && (
-            <Button variant="outline" size="sm" onClick={() => navigate("/admin/integrations")}>
-              <Settings01Icon className="size-3.5" />
-              {t("Configure integration")}
-            </Button>
-          )}
         </div>
       </div>
     </div>

@@ -146,6 +146,7 @@ export const Resource = {
 
   // Carriers
   Carrier: "carrier",
+  CarrierCapacityPosting: "carrier_capacity_posting",
   RateConfirmation: "rate_confirmation",
   CarrierSettlement: "carrier_settlement",
   CarrierSettlementControl: "carrier_settlement_control",

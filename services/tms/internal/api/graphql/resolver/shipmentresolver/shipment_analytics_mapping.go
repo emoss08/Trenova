@@ -16,7 +16,6 @@ func shipmentAnalyticsToModel(data services.AnalyticsData) (*gqlmodel.ShipmentAn
 	}
 	return &gqlmodel.ShipmentAnalytics{
 		Page:               string(page),
-		SavedViewCounts:    savedViewCountsFromAnalytics(data["savedViewCounts"]),
 		ActiveShipments:    activeShipmentsFromAnalytics(data["activeShipments"]),
 		OnTimePercent:      onTimeFromAnalytics(data["onTimePercent"]),
 		RevenueToday:       revenueTodayFromAnalytics(data["revenueToday"]),
@@ -39,20 +38,6 @@ func analyticsDateRange(startDate, endDate *int) *services.DateRange {
 	return &services.DateRange{
 		StartDate: base.Int64Value(startDate),
 		EndDate:   base.Int64Value(endDate),
-	}
-}
-
-func savedViewCountsFromAnalytics(value any) *gqlmodel.ShipmentSavedViewCounts {
-	countsMap := analyticsObject(value)
-	if countsMap == nil {
-		return nil
-	}
-	return &gqlmodel.ShipmentSavedViewCounts{
-		All:             intutils.IntPtrValue(countsMap["all"]),
-		Transit:         intutils.IntPtrValue(countsMap["transit"]),
-		AtRisk:          intutils.IntPtrValue(countsMap["at-risk"]),
-		Unassigned:      intutils.IntPtrValue(countsMap["unassigned"]),
-		DeliveringToday: intutils.IntPtrValue(countsMap["delivering-today"]),
 	}
 }
 

@@ -531,6 +531,9 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 
 		"create_carrier":                   {agent.EgressInternal, agent.EgressMoney},
 		"update_carrier":                   {agent.EgressInternal, agent.EgressMoney},
+		"create_carrier_capacity_posting":  {agent.EgressInternal},
+		"update_carrier_capacity_posting":  {agent.EgressInternal},
+		"delete_carrier_capacity_posting":  {agent.EgressInternal},
 		"update_carrier_status":            {agent.EgressInternal},
 		"create_customer":                  {agent.EgressInternal, agent.EgressExternalRecipient},
 		"update_customer":                  {agent.EgressInternal, agent.EgressExternalRecipient},

@@ -387,6 +387,9 @@ func (t Template) StarterTools() []string {
 			"list_rate_confirmations",
 			"generate_rate_confirmation",
 			"send_rate_confirmation",
+			"list_carrier_capacity_postings",
+			"create_carrier_capacity_posting",
+			"update_carrier_capacity_posting",
 		}
 	case TemplateImportAssistant:
 		return []string{

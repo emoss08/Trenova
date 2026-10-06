@@ -104,7 +104,10 @@ type DataTablePanelWrapperProps = {
 
 export function DataTablePanelWrapper({ children, className }: DataTablePanelWrapperProps) {
   return (
-    <div data-slot="data-table" className={cn("flex h-full min-w-0", className)}>
+    <div
+      data-slot="data-table-panel"
+      className={cn("bleed:min-h-0 bleed:flex-1 flex h-full min-w-0", className)}
+    >
       {children}
     </div>
   );
@@ -117,7 +120,7 @@ type DataTablePanelContentProps = {
 
 export function DataTablePanelContent({ className, children }: DataTablePanelContentProps) {
   return (
-    <div className={cn("bleed:gap-0 flex min-w-0 flex-1 flex-col gap-2", className)}>
+    <div className={cn("bleed:gap-0 bleed:min-h-0 flex min-w-0 flex-1 flex-col gap-2", className)}>
       {children}
     </div>
   );

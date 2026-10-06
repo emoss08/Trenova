@@ -30,6 +30,7 @@ const (
 )
 
 var nonProjectionObjects = map[string]string{
+	"ShipmentFacetValue":                 "GraphQL shipment board DTO built by its resolver",
 	"CannedReport":                       "GraphQL report catalog manifest DTO",
 	"ReportCatalog":                      "GraphQL report catalog manifest DTO",
 	"ReportCatalogEntity":                "GraphQL report catalog manifest DTO",

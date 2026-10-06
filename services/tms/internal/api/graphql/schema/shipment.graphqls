@@ -197,6 +197,9 @@ type ShipmentBillingSplitSummary {
 
 type Shipment {
   id: ID!
+  stage: ShipmentStage!
+  "Projected arrival at the final delivery, read from the latest position and the remaining stops."
+  eta: ShipmentEta
   businessUnitId: ID!
   organizationId: ID!
   sourceDocumentId: String
@@ -1023,17 +1026,8 @@ type ShipmentComment {
   attachments: [ShipmentCommentAttachment!]
 }
 
-type ShipmentSavedViewCounts {
-  all: Int
-  transit: Int
-  atRisk: Int
-  unassigned: Int
-  deliveringToday: Int
-}
-
 type ShipmentAnalytics {
   page: String!
-  savedViewCounts: ShipmentSavedViewCounts
   activeShipments: ShipmentActiveShipments
   onTimePercent: ShipmentOnTime
   revenueToday: ShipmentRevenueToday
@@ -1861,6 +1855,9 @@ input ShipmentsInput {
   billingTransferEligible: Boolean = false
   "Load each shipment's customer without expanding the rest of its details."
   includeCustomer: Boolean = false
+  quickFilters: [ShipmentQuickFilterInput!]
+  "IANA time zone for day and hour quick filters."
+  timezone: String
 }
 
 input ShipmentEventsInput {

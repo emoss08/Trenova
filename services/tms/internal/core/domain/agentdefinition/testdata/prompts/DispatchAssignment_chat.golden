@@ -65,16 +65,17 @@ Loaded now:
 - find_in_trenova
 - open_page
 - get_shipment
-- get_worker
 - get_dispatch_board
 - list_carriers
 - assign_move
 - assign_move_to_carrier
-- list_rate_confirmations
 - generate_rate_confirmation
+- list_carrier_capacity_postings
+- create_carrier_capacity_posting
 
 Callable after find_tools:
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
+- get_worker — Retrieve one worker (driver) by id, including their profile and current state.
 - search_worker — List workers (drivers), optionally narrowed by a name or code.
 - rank_move_candidates — Rank the drivers who could cover a shipment move, scored as the dispatch console scores them: hours left, deadhead, slack against the window, equipment fit.
 - plan_dispatch — Dry-run the dispatch optimizer over a window's uncovered moves: the driver it would put on each move and why, and what blocked the rest.
@@ -82,4 +83,6 @@ Callable after find_tools:
 - tender_move_to_routing_guide — Offer an uncovered move to carriers down its routing guide, in the guide's order at the guide's rates.
 - tender_move_to_carriers — Offer an uncovered move to specific carriers at specific rates: broadcast to all of them at once, or sequentially in the order given.
 - list_shipment_tenders — List a shipment's tenders, newest first, with every offer in rank order.
+- list_rate_confirmations — List a move's rate confirmations, newest revision first.
 - send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.
+- update_carrier_capacity_posting — Change a carrier capacity posting: its origin, destination, window, truck count, equipment or rate.

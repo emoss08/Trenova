@@ -43,4 +43,3 @@ export const DEFAULT_ZOOM = 4;
 export const MAP_ID_LIGHT = import.meta.env.VITE_GOOGLE_MAPS_ID_LIGHT as string;
 export const MAP_ID_DARK = import.meta.env.VITE_GOOGLE_MAPS_ID_DARK as string;
 
-export const GOOGLE_MAPS_ERROR_MESSAGE = "GoogleMaps integration is not configured";

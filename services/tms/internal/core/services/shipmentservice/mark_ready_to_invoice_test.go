@@ -46,7 +46,7 @@ func newMarkReadyFixture(t *testing.T) *markReadyFixture {
 		orderDerivation: f.derivation,
 		eventService:    f.events,
 		auditService:    &mocks.NoopAuditService{},
-		realtime:        &mocks.NoopRealtimeService{},
+		invalidator:     newTestInvalidator(&mocks.NoopRealtimeService{}),
 	}
 
 	return f
@@ -203,7 +203,12 @@ func TestMarkReadyToInvoice_ReloadsAShipmentThatDoesNotMatchTheRequest(t *testin
 
 	require.NoError(t, err)
 	assert.Same(t, requested, updated)
-	assert.Equal(t, shipment.StatusCompleted, foreign.Status, "another tenant's copy is never written")
+	assert.Equal(
+		t,
+		shipment.StatusCompleted,
+		foreign.Status,
+		"another tenant's copy is never written",
+	)
 }
 
 func TestMarkReadyToInvoice_LeavesAShipmentAlreadyPastCompletedAlone(t *testing.T) {

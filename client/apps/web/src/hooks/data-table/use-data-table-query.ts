@@ -5,6 +5,11 @@ import type {
 } from "@trenova/shared/types/data-table";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { useQuery } from "@tanstack/react-query";
+import {
+  resolveExtraVariables,
+  resolveGraphQLVariableSources,
+  resolveInputExtraVariables,
+} from "@/lib/data-table-variables";
 import type { PaginationState } from "@tanstack/react-table";
 
 export type { DataTableQueryOptions } from "@trenova/shared/types/data-table";
@@ -36,38 +41,6 @@ type FetchDataTablePageParams<TData extends Record<string, unknown>> = {
   graphql: DataTableGraphQLSource<TData>;
   signal?: AbortSignal;
 };
-
-function resolveExtraVariables<TData extends Record<string, unknown>>(
-  config: DataTableGraphQLSource<TData>,
-  pageSize: number,
-  options?: DataTableQueryOptions,
-): Record<string, unknown> {
-  if (!config.extraVariables) {
-    return {};
-  }
-
-  if (typeof config.extraVariables === "function") {
-    return config.extraVariables({ pageSize, options });
-  }
-
-  return config.extraVariables;
-}
-
-function resolveInputExtraVariables<TData extends Record<string, unknown>>(
-  config: DataTableGraphQLSource<TData>,
-  pageSize: number,
-  options?: DataTableQueryOptions,
-): Record<string, unknown> {
-  if (!config.inputExtraVariables) {
-    return {};
-  }
-
-  if (typeof config.inputExtraVariables === "function") {
-    return config.inputExtraVariables({ pageSize, options });
-  }
-
-  return config.inputExtraVariables;
-}
 
 function buildGraphQLVariables<TData extends Record<string, unknown>>(
   pageSize: number,
@@ -152,8 +125,7 @@ export function buildDataTableQueryKey<TData extends Record<string, unknown>>(
     {
       connectionKey: graphql.connectionKey,
       operationName: graphql.operationName,
-      extraVariables: resolveExtraVariables(graphql, pagination.pageSize, options),
-      inputExtraVariables: resolveInputExtraVariables(graphql, pagination.pageSize, options),
+      ...resolveGraphQLVariableSources(graphql, pagination.pageSize, options),
     },
   ] as const;
 }

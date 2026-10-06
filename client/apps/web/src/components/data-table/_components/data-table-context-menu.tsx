@@ -8,6 +8,7 @@ import {
   ContextMenuItem,
   ContextMenuLabel,
   ContextMenuSeparator,
+  ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@trenova/shared/components/ui/context-menu";
 import { useDataTable } from "@/contexts/data-table-context";
@@ -100,6 +101,7 @@ export function DataTableContextMenu<TData extends RowData>({
                 >
                   {Icon && <Icon className="size-4" />}
                   {t(action.label)}
+                  {action.shortcut ? <ContextMenuShortcut>{action.shortcut}</ContextMenuShortcut> : null}
                 </ContextMenuItem>
               );
             })}

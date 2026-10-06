@@ -509,6 +509,7 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListServiceTypesTool(nil)),
 		specOf(newListShipmentTypesTool(nil)),
 		specOf(newListCommoditiesTool(nil)),
+		specOf(newListCarrierCapacityPostingsTool(nil)),
 		specOf(newListHazardousMaterialsTool(nil)),
 		specOf(newListAccessorialChargesTool(nil)),
 		specOf(newListDocumentTypesTool(nil)),

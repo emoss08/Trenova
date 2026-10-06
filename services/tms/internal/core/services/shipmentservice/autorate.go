@@ -110,11 +110,16 @@ func (s *service) AutoRate(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
-		ctx, updatedEntity, auditActor, "auto-rate", updatedEntity,
-	); err != nil {
-		log.Warn("failed to publish realtime invalidation", zap.Error(err))
-	}
+	services.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		services.ShipmentInvalidationForRecord(
+			updatedEntity,
+			auditActor,
+			"auto-rate",
+			updatedEntity,
+		),
+	)
 
 	return updatedEntity, s.describeContractRate(
 		ctx, updatedEntity, plan.rated, plan.previousLinehaul,

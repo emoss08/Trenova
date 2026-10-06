@@ -213,7 +213,6 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		Permissions:          mocks.NewMockPermissionEngine(t),
 		AuditService:         &mocks.NoopAuditService{},
 		EventService:         events,
-		Realtime:             realtime,
 		Coordinator:          newStateCoordinator(),
 		OrderDerivation:      derivation,
 	})

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -20,19 +21,19 @@ type OnboardingOrganization struct {
 }
 
 type OnboardingState struct {
-	Required         bool                     `json:"required"`
-	Status           onboarding.Status        `json:"status"`
-	OperationType    onboarding.OperationType `json:"operationType,omitempty"`
-	SampleDataLoaded bool                     `json:"sampleDataLoaded"`
-	CompletedAt      *int64                   `json:"completedAt"`
-	Organization     *OnboardingOrganization  `json:"organization,omitempty"`
+	Required         bool                    `json:"required"`
+	Status           onboarding.Status       `json:"status"`
+	OperationType    tenant.OperationType    `json:"operationType,omitempty"`
+	SampleDataLoaded bool                    `json:"sampleDataLoaded"`
+	CompletedAt      *int64                  `json:"completedAt"`
+	Organization     *OnboardingOrganization `json:"organization,omitempty"`
 }
 
 type CompleteOnboardingRequest struct {
 	TenantInfo     pagination.TenantInfo
 	Actor          *RequestActor
 	Organization   OnboardingOrganization
-	OperationType  onboarding.OperationType
+	OperationType  tenant.OperationType
 	LoadSampleData bool
 }
 

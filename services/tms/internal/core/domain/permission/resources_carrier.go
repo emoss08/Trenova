@@ -21,6 +21,16 @@ func (r *Registry) registerCarrierResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceCarrierCapacityPosting.String(),
+		DisplayName:        "Carrier Capacity Posting",
+		Description:        "Trucks carriers say they have available, with lane, window and rate",
+		Category:           "Carriers",
+		ParentResource:     ResourceCarrier.String(),
+		Operations:         slices.Clone(standardOpsWithDelete),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:       ResourceRateConfirmation.String(),
 		DisplayName:    "Rate Confirmation",
 		Description:    "Outbound carrier rate confirmations",

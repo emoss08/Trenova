@@ -147,6 +147,7 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"SourceDocumentID": {intentionallyDropped, "transient ingest field, not persisted"},
 	"SearchVector":     {intentionallyDropped, "scanonly, produced by the database"},
 	"Rank":             {intentionallyDropped, "scanonly, produced by the database"},
+	"StageRank":        {intentionallyDropped, "generated from status by the database"},
 	"Version":          {intentionallyDropped, "optimistic-lock counter starts at zero on insert"},
 	"CreatedAt":        {intentionallyDropped, "stamped by the database default on insert"},
 	"UpdatedAt":        {intentionallyDropped, "stamped by the database default on insert"},

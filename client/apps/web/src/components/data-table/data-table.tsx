@@ -3,6 +3,7 @@ import { DataTableProvider } from "@/contexts/data-table-context";
 import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter-sync";
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
 import { useDataTableQuery } from "@/hooks/data-table/use-data-table-query";
+import { useDataTableRowCursor } from "@/hooks/data-table/use-data-table-row-cursor";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { usePageViewRegistration } from "@/hooks/data-table/use-page-view-registration";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
@@ -16,7 +17,16 @@ import {
   toColumnPinningState,
   updateSortField,
 } from "@/lib/data-table";
-import { fetchAllRows } from "@/lib/data-table-export";
+import {
+  buildCsv,
+  buildExportColumns,
+  downloadCsv,
+  exportFilename,
+  fetchAllRows,
+} from "@/lib/data-table-export";
+import { Download01Icon } from "@trenova/shared/components/icons";
+import { groupedScopeFilters, groupedSort } from "@/lib/data-table-grouping";
+import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
 import { queries } from "@/lib/queries";
 import { stableStringify } from "@/lib/stable-stringify";
 import type {
@@ -80,6 +90,8 @@ const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, to
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 const NO_ROW_ACTIONS: never[] = [];
 const NO_SCOPE_FILTERS: FieldFilter[] = [];
+const noop = () => {};
+const DENSITY_COMPACT_ROW = "[--row-h:var(--row-h-compact)]";
 
 export function DataTable<TData extends Record<string, any>>({
   columns,
@@ -100,8 +112,17 @@ export function DataTable<TData extends Record<string, any>>({
   refetchIntervalMs,
   onCellEditCommit,
   renderEmptyState,
-  scopeFilters = NO_SCOPE_FILTERS,
+  scopeFilters: ownScopeFilters = NO_SCOPE_FILTERS,
   enableExport = true,
+  pageSizeOptions,
+  getRowClassName,
+  grouping,
+  expansion,
+  keyboard,
+  toolbar,
+  alternateView,
+  initialDensity = "comfortable",
+  footerLeading,
 }: DataTableProps<TData>) {
   "use no memo";
   const t = useT();
@@ -119,7 +140,7 @@ export function DataTable<TData extends Record<string, any>>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [cursorState, setCursorState] = useState<CursorState>(EMPTY_CURSOR_STATE);
   const [activeView, setActiveView] = useState<ActiveTableView | null>(null);
-  const [density, setDensity] = useState<TableDensity>("comfortable");
+  const [density, setDensity] = useState<TableDensity>(initialDensity);
   const [formatRules, setFormatRules] = useState<TableFormatRule[]>([]);
   const [isSelectingAll, setIsSelectingAll] = useState(false);
   const defaultConfigAppliedRef = useRef(false);
@@ -271,7 +292,19 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   const zeroBasedPageIndex = pageIndex - 1;
-  const effectiveSort = sort;
+  const effectiveSort = useMemo(() => groupedSort(grouping, sort), [grouping, sort]);
+  const collapsedGroupFilters = useMemo(
+    () => groupedScopeFilters(grouping),
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+    [grouping?.field, grouping?.collapsedKeys],
+  );
+  const scopeFilters = useMemo(
+    () =>
+      collapsedGroupFilters.length > 0
+        ? [...ownScopeFilters, ...collapsedGroupFilters]
+        : ownScopeFilters,
+    [collapsedGroupFilters, ownScopeFilters],
+  );
   const cursorScopeKey = useMemo(
     () =>
       stableStringify({
@@ -284,20 +317,10 @@ export function DataTable<TData extends Record<string, any>>({
         graphql: {
           connectionKey: graphql.connectionKey,
           operationName: graphql.operationName,
-          extraVariables: graphql.extraVariables ?? null,
+          ...resolveGraphQLVariableSources(graphql, pageSize),
         },
       }),
-    [
-      effectiveSort,
-      fieldFilters,
-      filterGroups,
-      graphql.connectionKey,
-      graphql.extraVariables,
-      graphql.operationName,
-      pageSize,
-      query,
-      scopeFilters,
-    ],
+    [effectiveSort, fieldFilters, filterGroups, graphql, pageSize, query, scopeFilters],
   );
   const scopedCursorState =
     cursorState.scopeKey === cursorScopeKey ? cursorState : EMPTY_CURSOR_STATE;
@@ -419,6 +442,7 @@ export function DataTable<TData extends Record<string, any>>({
     enableCellEditing: !!onCellEditCommit && canUpdate,
     onCellEditCommit,
     onRowSelectionChange: setRowSelection,
+    meta: getRowClassName ? { getRowClassName } : undefined,
     initialState: initialColumnVisibility
       ? { columnVisibility: initialColumnVisibility }
       : undefined,
@@ -492,6 +516,77 @@ export function DataTable<TData extends Record<string, any>>({
   const handleClearSelection = useCallback(() => {
     setRowSelection({});
   }, []);
+
+  const pageRowIds = useMemo(
+    () =>
+      (currentPageResults ?? [])
+        .map((row) => (row as { id?: string }).id)
+        .filter((id): id is string => !!id),
+    [currentPageResults],
+  );
+
+  const handleToggleRowSelection = useCallback((rowId: string) => {
+    setRowSelection((current) => {
+      if (!current[rowId]) return { ...current, [rowId]: true };
+      const { [rowId]: _removed, ...rest } = current;
+      return rest;
+    });
+  }, []);
+
+  const cursorRowId = keyboard?.cursorRowId ?? null;
+  const rowShortcuts = useMemo(
+    () =>
+      keyboard?.rowShortcuts?.map((shortcut) => ({
+        key: shortcut.key,
+        mod: shortcut.mod,
+        alt: shortcut.alt,
+        run: (rowId: string) => {
+          const row = currentPageResults?.find((entry) => (entry as { id?: string }).id === rowId);
+          if (row) shortcut.run(row);
+        },
+      })),
+    [keyboard?.rowShortcuts, currentPageResults],
+  );
+  useDataTableRowCursor({
+    enabled: !!keyboard?.enabled && !alternateView?.active,
+    rowIds: pageRowIds,
+    cursorRowId,
+    onCursorRowIdChange: keyboard?.onCursorRowIdChange ?? noop,
+    expandedRowId: expansion?.expandedRowId ?? null,
+    onExpandedRowIdChange: expansion?.onExpandedRowIdChange,
+    hasSelection: selectedCount > 0,
+    onToggleSelect: enableRowSelection ? handleToggleRowSelection : undefined,
+    onClearSelection: handleClearSelection,
+    shortcuts: rowShortcuts,
+  });
+
+  const viewportRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = viewportRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const apply = () => element.style.setProperty("--dt-viewport-w", `${element.clientWidth}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(element);
+    return () => observer.disconnect();
+  });
+
+  useEffect(() => {
+    const focusId = cursorRowId ?? expansion?.expandedRowId ?? null;
+    if (!focusId) return;
+    const row = viewportRef.current?.querySelector<HTMLElement>(
+      `tr[data-row-index][id="${CSS.escape(focusId)}"]`,
+    );
+    row?.scrollIntoView?.({ block: "nearest" });
+  }, [cursorRowId, expansion?.expandedRowId]);
+
+  const handleRowClick = useMemo(() => {
+    if (onRowClick || !expansion) return onRowClick;
+    return (row: Row<TData>) => {
+      expansion.onExpandedRowIdChange(expansion.expandedRowId === row.id ? null : row.id);
+      keyboard?.onCursorRowIdChange(row.id);
+    };
+  }, [onRowClick, expansion, keyboard]);
 
   const handleApplyConfig = useCallback(
     (config: TableConfig, source?: TableViewSource) => {
@@ -635,6 +730,23 @@ export function DataTable<TData extends Record<string, any>>({
     [formatRules, table],
   );
 
+  const resolvedDockActions = useMemo(() => {
+    if (!canExport || dockActions.length === 0) return dockActions;
+    return [
+      ...dockActions,
+      {
+        id: "export-selected",
+        label: t("Export"),
+        icon: Download01Icon,
+        onClick: (rows: TData[]) =>
+          downloadCsv(
+            buildCsv(rows, buildExportColumns(table.getAllLeafColumns(), true)),
+            exportFilename(name),
+          ),
+      },
+    ];
+  }, [canExport, dockActions, name, t, table]);
+
   const hasActiveFilters = filterItems.length > 0 || query !== "";
   const handleClearFilters = useCallback(() => {
     setFilterItems([]);
@@ -671,6 +783,7 @@ export function DataTable<TData extends Record<string, any>>({
   // An empty page is drawn as the table it will become rather than as a
   // table with no rows, so the header row and the pager step aside for it.
   const isEmpty = !dataQuery.isLoading && !dataQuery.isError && currentPageRowCount === 0;
+  const hasCollapsedGroups = (grouping?.collapsedKeys.length ?? 0) > 0;
   const emptyColumns = useMemo(
     () => emptyTableColumns(table.getVisibleLeafColumns()),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -714,7 +827,7 @@ export function DataTable<TData extends Record<string, any>>({
     >
       <DataTablePanelWrapper>
         <DataTablePanelContent>
-          <div className="bleed:gap-0 flex size-full min-w-0 flex-col gap-2">
+          <div className="bleed:gap-0 bleed:min-h-0 flex size-full min-w-0 flex-col gap-2">
             <DataTableToolbar
               table={table}
               columns={columns}
@@ -744,6 +857,7 @@ export function DataTable<TData extends Record<string, any>>({
                 currentPageRows: currentPageResults ?? [],
                 totalCount,
               }}
+              slots={toolbar}
             />
             <DataTableFilterChips
               filters={filterItems}
@@ -762,7 +876,17 @@ export function DataTable<TData extends Record<string, any>>({
                 onClearSelection={handleClearSelection}
               />
             )}
-            {isEmpty ? (
+            {alternateView?.active ? (
+              <div
+                data-density={density}
+                className={cn(
+                  "bleed:min-h-0 bleed:flex-1 relative min-w-0",
+                  density === "compact" && DENSITY_COMPACT_ROW,
+                )}
+              >
+                {alternateView.render({ queryOptions: baseQueryOptions })}
+              </div>
+            ) : isEmpty && !hasCollapsedGroups ? (
               <div className="border-border bleed:rounded-none bleed:border-0 rounded-lg border">
                 {renderEmptyState ? (
                   renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
@@ -777,7 +901,7 @@ export function DataTable<TData extends Record<string, any>>({
                 )}
               </div>
             ) : (
-              <div className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
+              <div ref={viewportRef} className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
                 <DataTableRefreshPill
                   visible={liveRefresh.hasPendingUpdate}
                   onRefresh={liveRefresh.applyStaged}
@@ -796,14 +920,14 @@ export function DataTable<TData extends Record<string, any>>({
                       // Density repoints the row-height token; the cells read it,
                       // so the two densities stay the same table at two sizes
                       // rather than one table with padding patched over it.
-                      density === "compact" && "[--row-h:var(--row-h-compact)] [&_td]:py-0.5",
+                      density === "compact" && cn(DENSITY_COMPACT_ROW, "[&_td]:py-0.5"),
                     )}
                     containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border"
                     style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
                   >
                     <TableHeader className="sticky top-0 z-20">
                       {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id} className="hover:bg-transparent uppercase">
+                        <TableRow key={headerGroup.id} className="hover:bg-transparent">
                           <SortableContext
                             items={reorderableIds}
                             strategy={horizontalListSortingStrategy}
@@ -825,14 +949,19 @@ export function DataTable<TData extends Record<string, any>>({
                       columns={tableColumns}
                       isLoading={dataQuery.isLoading}
                       contextMenuActions={contextMenuActions}
-                      onRowClick={onRowClick}
+                      onRowClick={handleRowClick}
                       getFormatClass={compiledFormatRules}
+                      grouping={grouping}
+                      expansion={expansion}
+                      cursorRowId={cursorRowId}
+                      isFirstPage={zeroBasedPageIndex === 0}
+                      isLastPage={!cursorPageInfo?.hasNextPage}
                     />
                   </Table>
                 </DndContext>
               </div>
             )}
-            {isEmpty ? null : (
+            {isEmpty || alternateView?.active ? null : (
               <DataTablePagination
                 table={table}
                 onPageChange={handlePageChange}
@@ -841,6 +970,8 @@ export function DataTable<TData extends Record<string, any>>({
                 hasNextPage={cursorPageInfo?.hasNextPage}
                 currentPageRowCount={currentPageRowCount}
                 totalCount={totalCount}
+                pageSizeOptions={pageSizeOptions}
+                leading={footerLeading}
               />
             )}
           </div>
@@ -854,8 +985,8 @@ export function DataTable<TData extends Record<string, any>>({
           />
         )}
       </DataTablePanelWrapper>
-      {enableRowSelection && dockActions.length > 0 && (
-        <DataTableDock table={table} actions={dockActions} />
+      {enableRowSelection && resolvedDockActions.length > 0 && (
+        <DataTableDock table={table} actions={resolvedDockActions} />
       )}
     </DataTableProvider>
   );

@@ -434,7 +434,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -571,7 +571,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -675,7 +675,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -810,7 +810,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -932,7 +932,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
@@ -1033,7 +1033,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}

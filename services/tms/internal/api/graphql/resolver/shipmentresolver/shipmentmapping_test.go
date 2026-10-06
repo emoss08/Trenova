@@ -513,13 +513,6 @@ func TestShipmentAnalyticsToModel_MapsTypedCards(t *testing.T) {
 
 	target := 96.5
 	model, err := shipmentAnalyticsToModel(services.AnalyticsData{
-		"savedViewCounts": map[string]any{
-			"all":              10,
-			"transit":          4,
-			"at-risk":          2,
-			"unassigned":       3,
-			"delivering-today": 1,
-		},
 		"activeShipments": map[string]any{
 			"count":               12,
 			"changeFromYesterday": -1,
@@ -566,8 +559,6 @@ func TestShipmentAnalyticsToModel_MapsTypedCards(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, model.SavedViewCounts)
-	assert.Equal(t, 10, *model.SavedViewCounts.All)
 	require.NotNil(t, model.ActiveShipments)
 	assert.Equal(t, 12, model.ActiveShipments.Count)
 	require.Len(t, model.ActiveShipments.Sparkline, 1)

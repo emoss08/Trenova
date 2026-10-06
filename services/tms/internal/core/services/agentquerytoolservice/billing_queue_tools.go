@@ -119,7 +119,7 @@ func buildBillingQueueList(
 			{Name: fieldNumber, Kind: filterText, Sortable: true},
 			{Name: "shipment.proNumber", Kind: filterText},
 			{
-				Name:     agentRunFieldCreatedAt,
+				Name:     fieldCreatedAt,
 				Kind:     filterDate,
 				Sortable: true,
 				Note:     "when it was queued",

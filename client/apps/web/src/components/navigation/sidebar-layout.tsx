@@ -157,6 +157,12 @@ type PageLayoutProps = {
   children: React.ReactNode;
   className?: string;
   fill?: boolean;
+  /**
+   * Lays the body edge to edge for a workspace that is more than a table but
+   * still bleeds one, such as a board with a header block above its table.
+   * The table's chrome answers through the same `bleed:` variant.
+   */
+  bleed?: boolean;
 };
 
 export function PageLayout({
@@ -164,6 +170,7 @@ export function PageLayout({
   children,
   className,
   fill = false,
+  bleed = false,
 }: PageLayoutProps) {
   return (
     <div
@@ -176,10 +183,12 @@ export function PageLayout({
       <PageHeader {...pageHeaderProps} />
       <div
         data-slot="page-body"
+        data-bleed={bleed || undefined}
         className={cn(
           "flex min-w-0 flex-1 flex-col gap-y-4 p-4",
           "has-[>[data-slot=data-table]:only-child]:min-h-0 has-[>[data-slot=data-table]:only-child]:gap-y-0 has-[>[data-slot=data-table]:only-child]:p-0",
           fill && "min-h-0 overflow-y-auto",
+          bleed && "min-h-0 gap-y-0 p-0",
           className,
         )}
       >

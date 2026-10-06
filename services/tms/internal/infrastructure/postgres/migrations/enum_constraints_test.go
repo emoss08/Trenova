@@ -16,11 +16,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/core/domain/subscription"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/stretchr/testify/require"
 )
 
@@ -459,7 +462,19 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_organization_onboarding_operation_type",
-			values: stringsOf(onboarding.AllOperationTypes()),
+			values: stringsOf(tenant.AllOperationTypes()),
+		},
+		{
+			name:   "ck_carrier_capacity_postings_rate_method",
+			values: stringsOf(carriercapacity.RateMethods()),
+		},
+		{
+			name:   "ck_carrier_capacity_postings_source",
+			values: stringsOf(carriercapacity.Sources()),
+		},
+		{
+			name:   "ck_shipment_suggestion_decisions_decision",
+			values: stringsOf(shipmentsuggestion.Decisions()),
 		},
 	}
 

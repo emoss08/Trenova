@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/briefingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/capturerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierassignmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriercapacityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierintelrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierinvoicematchrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierledgerrepository"
@@ -198,6 +199,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicetyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/settlementcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentboardrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
@@ -207,6 +209,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmovejurisdictionmilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentsuggestionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttrackingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sidebarpreferencerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
@@ -401,6 +405,14 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	seqgen.NewFormatProvider,
 	seqgen.NewGenerator,
 	shipmentrepository.New,
+	shipmentboardrepository.New,
+	carriercapacityrepository.New,
+	shipmentboardrepository.NewBoardRepository,
+	shipmentboardrepository.NewWatchlistRepository,
+	shipmentboardrepository.NewBriefingRepository,
+	shipmentboardrepository.NewCarrierPerformanceRepository,
+	shipmentsuggestionrepository.New,
+	shipmenttrackingrepository.New,
 	recurringshipmentrepository.New,
 	shipmenttyperepository.New,
 	hazardousmaterialrepository.New,

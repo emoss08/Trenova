@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -53,7 +52,7 @@ type Params struct {
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
 	EventService        portservices.ShipmentEventService
-	Realtime            portservices.RealtimeService
+	Invalidator         portservices.ShipmentInvalidator
 	DriverNotify        *drivernotificationservice.Service
 	TenderGuard         portservices.TenderGuard         `optional:"true"`
 	AgentEvents         portservices.AgentEventPublisher `optional:"true"`
@@ -79,7 +78,7 @@ type service struct {
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
 	eventService        portservices.ShipmentEventService
-	realtime            portservices.RealtimeService
+	invalidator         portservices.ShipmentInvalidator
 	driverNotify        *drivernotificationservice.Service
 	tenderGuard         portservices.TenderGuard
 	agentEvents         portservices.AgentEventPublisher
@@ -106,7 +105,7 @@ func New(p Params) portservices.AssignmentService {
 		coordinator:         p.Coordinator,
 		commercial:          p.Commercial,
 		eventService:        p.EventService,
-		realtime:            p.Realtime,
+		invalidator:         p.Invalidator,
 		driverNotify:        p.DriverNotify,
 		tenderGuard:         p.TenderGuard,
 		agentEvents:         p.AgentEvents,
@@ -185,30 +184,6 @@ func workerIDSet(ids []pulid.ID) map[pulid.ID]struct{} {
 		set[id] = struct{}{}
 	}
 	return set
-}
-
-func (s *service) publishAssignmentInvalidation(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	shipmentID pulid.ID,
-	action string,
-) {
-	if s.realtime == nil || shipmentID.IsNil() {
-		return
-	}
-	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ActorUserID:    tenantInfo.UserID,
-		ActorType:      portservices.PrincipalTypeUser,
-		ActorID:        tenantInfo.UserID,
-		Resource:       "shipments",
-		Action:         action,
-		RecordID:       shipmentID,
-	})
-	if err != nil {
-		s.l.Warn("failed to publish assignment invalidation", zap.Error(err))
-	}
 }
 
 func (s *service) recordAssignmentEvent(
@@ -299,7 +274,11 @@ func (s *service) AssignToMove(
 			driverDisplayName(result),
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "assigned")
+		portservices.InvalidateShipments(
+			ctx,
+			s.invalidator,
+			portservices.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "assigned"),
+		)
 		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, nil)
 	}
 
@@ -368,7 +347,11 @@ func (s *service) Reassign(
 			driverDisplayName(result),
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "reassigned")
+		portservices.InvalidateShipments(
+			ctx,
+			s.invalidator,
+			portservices.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "reassigned"),
+		)
 		currentWorkers := assignmentWorkerIDs(result)
 		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, workerIDSet(previousWorkers))
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, workerIDSet(currentWorkers))
@@ -396,7 +379,11 @@ func (s *service) Unassign(
 			*ref,
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "unassigned")
+		portservices.InvalidateShipments(
+			ctx,
+			s.invalidator,
+			portservices.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "unassigned"),
+		)
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
 		portservices.PublishAgentEvent(ctx, s.agentEvents, portservices.AgentEvent{
 			Kind:      agent.EventShipmentMoveUnassigned,

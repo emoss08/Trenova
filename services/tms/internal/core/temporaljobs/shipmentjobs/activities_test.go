@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -65,7 +67,7 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: audit,
-		Realtime:     realtime,
+		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		AgentEvents:  agentEvents,
 		Logger:       zap.NewNop(),
 	})
@@ -136,7 +138,7 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: mocks.NewMockAuditService(t),
-		Realtime:     realtime,
+		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		Logger:       zap.NewNop(),
 	})
 
@@ -182,7 +184,7 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: mocks.NewMockAuditService(t),
-		Realtime:     realtime,
+		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		Logger:       zap.NewNop(),
 	})
 
@@ -252,7 +254,7 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: mocks.NewMockAuditService(t),
-		Realtime:     realtime,
+		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		Logger:       zap.NewNop(),
 	})
 

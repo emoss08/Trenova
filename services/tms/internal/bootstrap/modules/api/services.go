@@ -70,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
@@ -77,6 +78,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
@@ -198,15 +200,23 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentboardservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentbriefingservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentetaservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentholdservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
@@ -306,6 +316,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	customfieldservice.New,
 	customfieldservice.NewValuesService,
 	realtimeservice.New,
+	shipmentinvalidation.New,
 	globalsearchservice.New,
 	thumbnailservice.NewGenerator,
 	documentintelligenceservice.New,
@@ -591,6 +602,24 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	manualjournalservice.New,
 	billingcontrolservice.New,
 	costingservice.New,
+	shipmentquickfilterservice.New,
+	shipmentboardservice.New,
+	carriercapacityservice.New,
+	customerupdateservice.New,
+	shipmentcapacityservice.New,
+	shipmentcapacityservice.NewCapacityReader,
+	shipmentcapacityservice.NewCoverageSuggester,
+	shipmentcapacityservice.NewTenderer,
+	shipmentsuggestionservice.New,
+	shipmentsuggestionservice.NewReader,
+	shipmentsuggestionservice.NewDecider,
+	shipmentetaservice.New,
+	shipmentwatchlistservice.New,
+	shipmentbriefingservice.New,
+	func(s *shipmentboardservice.Service) services.ShipmentBoardCapabilitiesReader { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentStageSummaryReader { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentQuickFilterCounter { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentFacetCounter { return s },
 	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
 	billingqueueservice.NewReview,

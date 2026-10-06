@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -37,13 +38,13 @@ func TestCompleteRecordsTheWizard(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	entity.Complete(onboarding.CompleteParams{
 		UserID:           userID,
-		OperationType:    onboarding.OperationTypeBoth,
+		OperationType:    tenant.OperationTypeBoth,
 		SampleDataLoaded: true,
 		CompletedAt:      1_700,
 	})
 
 	assert.True(t, entity.IsCompleted())
-	assert.Equal(t, onboarding.OperationTypeBoth, entity.OperationType)
+	assert.Equal(t, tenant.OperationTypeBoth, entity.OperationType)
 	assert.True(t, entity.SampleDataLoaded)
 	require.NotNil(t, entity.CompletedAt)
 	assert.Equal(t, int64(1_700), *entity.CompletedAt)
@@ -83,10 +84,10 @@ func TestInvalidOperationTypeAndStatus(t *testing.T) {
 func TestOperationTypeCapabilities(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, onboarding.OperationTypeAsset.RunsAssets())
-	assert.False(t, onboarding.OperationTypeAsset.RunsBrokerage())
-	assert.True(t, onboarding.OperationTypeBrokerage.RunsBrokerage())
-	assert.False(t, onboarding.OperationTypeBrokerage.RunsAssets())
-	assert.True(t, onboarding.OperationTypeBoth.RunsAssets())
-	assert.True(t, onboarding.OperationTypeBoth.RunsBrokerage())
+	assert.True(t, tenant.OperationTypeAsset.RunsAssets())
+	assert.False(t, tenant.OperationTypeAsset.RunsBrokerage())
+	assert.True(t, tenant.OperationTypeBrokerage.RunsBrokerage())
+	assert.False(t, tenant.OperationTypeBrokerage.RunsAssets())
+	assert.True(t, tenant.OperationTypeBoth.RunsAssets())
+	assert.True(t, tenant.OperationTypeBoth.RunsBrokerage())
 }

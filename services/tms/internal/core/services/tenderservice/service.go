@@ -2,6 +2,7 @@ package tenderservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
@@ -12,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -24,6 +24,8 @@ import (
 var ErrOfferNoLongerAvailable = errortypes.NewBusinessError(
 	"This offer is no longer available",
 )
+
+var ErrNoRoutingGuideMatch = errors.New("no routing guide matches the lane")
 
 type Params struct {
 	fx.In
@@ -41,7 +43,7 @@ type Params struct {
 	Workflows             portservices.WorkflowStarter
 	EventService          portservices.ShipmentEventService
 	AuditService          portservices.AuditService
-	Realtime              portservices.RealtimeService
+	Invalidator           portservices.ShipmentInvalidator
 	Config                *config.Config
 	Templates             portservices.DocumentTemplateResolver `optional:"true"`
 	EmailService          portservices.EmailService             `optional:"true"`
@@ -65,7 +67,7 @@ type Service struct {
 	workflows             portservices.WorkflowStarter
 	eventService          portservices.ShipmentEventService
 	auditService          portservices.AuditService
-	realtime              portservices.RealtimeService
+	invalidator           portservices.ShipmentInvalidator
 	cfg                   *config.Config
 	templates             portservices.DocumentTemplateResolver
 	emailService          portservices.EmailService
@@ -93,7 +95,7 @@ func New(p Params) *Service {
 		workflows:             p.Workflows,
 		eventService:          p.EventService,
 		auditService:          p.AuditService,
-		realtime:              p.Realtime,
+		invalidator:           p.Invalidator,
 		cfg:                   p.Config,
 		templates:             p.Templates,
 		emailService:          p.EmailService,
@@ -198,30 +200,5 @@ func (s *Service) recordEvent(
 
 	if err := s.eventService.Record(ctx, params); err != nil {
 		s.l.Warn("failed to record tender event", zap.Error(err))
-	}
-}
-
-func (s *Service) publishInvalidation(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	shipmentID pulid.ID,
-	action string,
-) {
-	if s.realtime == nil || shipmentID.IsNil() {
-		return
-	}
-
-	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ActorUserID:    tenantInfo.UserID,
-		ActorType:      portservices.PrincipalTypeUser,
-		ActorID:        tenantInfo.UserID,
-		Resource:       "shipments",
-		Action:         action,
-		RecordID:       shipmentID,
-	})
-	if err != nil {
-		s.l.Warn("failed to publish tender invalidation", zap.Error(err))
 	}
 }
