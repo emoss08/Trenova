@@ -57,7 +57,7 @@ function quickFilterMatches(state, s, token) {
   }
 }
 
-const FIELD_GETTERS = {
+const FIELD_GETTERS = new Map(Object.entries({
   stageRank: (s) => stageRankOf(s),
   status: (s) => s.status,
   tenderStatus: (s) => s.tenderStatus,
@@ -69,10 +69,14 @@ const FIELD_GETTERS = {
   "customer.name": (s) => s.customer.name,
   bol: (s) => s.bol,
   billingTransferStatus: (s) => s.billingTransferStatus ?? "",
-};
+}));
+
+function fieldGetter(field) {
+  return FIELD_GETTERS.get(field) ?? ((s) => (Object.hasOwn(s, field) ? s[field] : undefined));
+}
 
 function fieldFilterMatches(s, filter) {
-  const get = FIELD_GETTERS[filter.field];
+  const get = FIELD_GETTERS.get(filter.field);
   if (!get) return true;
   const value = get(s);
   const list = Array.isArray(filter.value) ? filter.value : [filter.value];
@@ -118,7 +122,7 @@ function sorted(list, sort = []) {
   const terms = sort.length ? sort : [{ field: "createdAt", direction: "desc" }];
   return [...list].sort((a, b) => {
     for (const term of terms) {
-      const get = FIELD_GETTERS[term.field] ?? ((s) => s[term.field]);
+      const get = fieldGetter(term.field);
       const x = get(a);
       const y = get(b);
       if (x === y) continue;
@@ -209,13 +213,13 @@ function facetCounts(state, input, facets) {
     }
     return { field, values: [...counts.values()].sort((a, b) => b.count - a.count) };
   };
-  const defs = {
+  const defs = new Map(Object.entries({
     Status: () => tally("status", (s) => s.status, (_s, v) => STATUS_LABEL[v] ?? v),
     Equipment: () => tally("equipmentClass", (s) => (s.board.reefer ? "Reefer" : "DryVan"), (_s, v) => (v === "Reefer" ? "Reefer" : "Dry van")),
     TenderStatus: () => tally("tenderStatus", (s) => s.tenderStatus, (_s, v) => v),
     Customer: () => tally("customerId", (s) => s.customerId, (s) => s.customer.name),
-  };
-  return facets.map((facet) => ({ facet, ...defs[facet]() }));
+  }));
+  return facets.filter((facet) => defs.has(facet)).map((facet) => ({ facet, ...defs.get(facet)() }));
 }
 
 function coverageNoun(operationType, count) {
@@ -897,7 +901,7 @@ const HANDLERS = {
 };
 
 export function handleGraphQL(state, body) {
-  const handler = HANDLERS[body.operationName];
+  const handler = Object.hasOwn(HANDLERS, body.operationName) ? HANDLERS[body.operationName] : undefined;
   if (!handler) {
     return { known: false, payload: { data: null, errors: [{ message: `mock-api: no handler for ${body.operationName}`, extensions: { code: "MOCK_UNHANDLED" } }] } };
   }

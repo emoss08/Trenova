@@ -18,6 +18,10 @@ pnpm --filter @trenova/web dev
 Open <http://localhost:5173/shipment-management/shipments>. You are signed in as the
 fixture user with every permission.
 
+The server answers credentialed cross-origin requests only from `http://localhost:5173` and
+`http://127.0.0.1:5173`. Set `MOCK_API_ORIGINS` to a comma-separated list to serve the app from
+another origin.
+
 ## Scenarios
 
 The board is drawn for 11:30 UTC today; every timestamp in the fixture is relative to that

@@ -7,6 +7,12 @@ import { createState, SCENARIO_DEFAULTS } from "./state.mjs";
 
 const PORT = Number(process.env.MOCK_API_PORT ?? 8080);
 const LOG_UNKNOWN = process.env.MOCK_API_LOG !== "0";
+const ALLOWED_ORIGINS = new Set(
+  (process.env.MOCK_API_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
 
 let state = createState(SCENARIO_DEFAULTS);
 
@@ -31,9 +37,12 @@ function readBody(req) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const origin = req.headers.origin ?? "http://localhost:5173";
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+  }
   res.setHeader(
     "Access-Control-Allow-Headers",
     req.headers["access-control-request-headers"] ?? "Content-Type, X-CSRF-Token",
