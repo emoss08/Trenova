@@ -181,6 +181,88 @@ export type DataTableProps<TData extends Record<string, any>> = {
    * own, such as an audited, signed file.
    */
   enableExport?: boolean;
+  grouping?: DataTableGrouping<TData>;
+  expansion?: DataTableExpansion<TData>;
+  keyboard?: DataTableKeyboard;
+  toolbar?: DataTableToolbarSlots;
+  alternateView?: DataTableAlternateView;
+  initialDensity?: "comfortable" | "compact";
+  /** Placed at the start of the pagination footer. */
+  footerLeading?: React.ReactNode;
+};
+
+export type DataTableGroupKey = string | number;
+
+export type DataTableGroup = {
+  key: DataTableGroupKey;
+  label: string;
+  /** Class for the group's colour square; a token utility such as `bg-danger`. */
+  swatchClassName?: string;
+  /** Rows in the whole group under the current filters, not on this page. */
+  count?: number;
+  /** Right-aligned summary for the whole group, such as its revenue. */
+  aggregate?: React.ReactNode;
+};
+
+/**
+ * Rows grouped by a server-sortable field. The table sorts by the field ahead
+ * of the person's own sort, so pagination runs over the grouped order, and
+ * drops collapsed groups with a `notin` filter, so a collapsed group costs no
+ * rows. Group totals come from the caller, who can count past the page.
+ */
+export type DataTableGrouping<TData> = {
+  field: string;
+  direction?: SortDirection;
+  groups: DataTableGroup[];
+  getGroupKey: (row: TData) => DataTableGroupKey;
+  collapsedKeys: readonly DataTableGroupKey[];
+  onToggleGroup: (key: DataTableGroupKey) => void;
+};
+
+export type DataTableExpandedRowContext = {
+  collapse: () => void;
+};
+
+/** One row at a time opens inline beneath itself. */
+export type DataTableExpansion<TData extends RowData> = {
+  expandedRowId: string | null;
+  onExpandedRowIdChange: (rowId: string | null) => void;
+  renderExpandedRow: (row: Row<TData>, context: DataTableExpandedRowContext) => React.ReactNode;
+};
+
+/**
+ * Page-level keyboard control of the table: a row cursor moved with J/K or
+ * the arrows, Enter to expand, X to select, Esc to back out one step at a
+ * time. Only one table on a page should take it.
+ */
+export type DataTableKeyboard = {
+  enabled: boolean;
+  cursorRowId: string | null;
+  onCursorRowIdChange: (rowId: string | null) => void;
+};
+
+export type DataTableViewContext = {
+  queryOptions: Omit<DataTableQueryOptions, "cursor">;
+};
+
+export type DataTableToolbarSlots = {
+  /** Replaces the plain search input; receives the table's search state. */
+  search?: (props: { query: string; onSearchChange: (query: string) => void }) => React.ReactNode;
+  /** Replaces the filter builder, for a table that filters by facets. */
+  filter?: (props: {
+    filters: FilterItem[];
+    onFiltersChange: (filters: FilterItem[]) => void;
+  }) => React.ReactNode;
+  /** Controls placed before the display menu. */
+  trailing?: React.ReactNode;
+  /** Controls placed after the saved views. */
+  end?: React.ReactNode;
+};
+
+/** Draws the rows another way, such as a timeline or a map, under the same toolbar and filters. */
+export type DataTableAlternateView = {
+  active: boolean;
+  render: (context: DataTableViewContext) => React.ReactNode;
 };
 
 export type DataTableEmptyStateRenderProps = {

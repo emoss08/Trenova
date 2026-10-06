@@ -1125,6 +1125,21 @@
   --animate-confirm: confirm 320ms var(--ease-spring) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
 
+  /* A work board's motion. Rows rise as a page arrives, an opened row drops
+     into place, a floating panel and a queued item slide in, a committed
+     choice leaves its list, a success settles with a small overshoot, and a
+     streamed sentence resolves word by word. The live ping is the board's
+     one loop and runs only on a marker that is live. */
+  --animate-row-rise: rise 300ms var(--ease-swift) both;
+  --animate-expand-in: expand-in 280ms var(--ease-settle) both;
+  --animate-panel-in: panel-in 320ms var(--ease-settle) both;
+  --animate-slide-in: slide-in 360ms var(--ease-settle) both;
+  --animate-pop-in: pop-in 200ms var(--ease-settle) both;
+  --animate-leave: leave 320ms var(--ease-swift) both;
+  --animate-success: success 360ms var(--ease-spring) both;
+  --animate-word-in: word-in 420ms var(--ease-settle) both;
+  --animate-live-ping: live-ping 1.6s var(--ease-swift) infinite;
+
   /* The Desk's motion vocabulary.
 
      Four verbs, because the Desk has four things that move and each means

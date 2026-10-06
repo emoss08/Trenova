@@ -3,6 +3,7 @@ import { DataTableProvider } from "@/contexts/data-table-context";
 import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter-sync";
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
 import { useDataTableQuery } from "@/hooks/data-table/use-data-table-query";
+import { useDataTableRowCursor } from "@/hooks/data-table/use-data-table-row-cursor";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { usePageViewRegistration } from "@/hooks/data-table/use-page-view-registration";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
@@ -17,6 +18,8 @@ import {
   updateSortField,
 } from "@/lib/data-table";
 import { fetchAllRows } from "@/lib/data-table-export";
+import { groupedScopeFilters, groupedSort } from "@/lib/data-table-grouping";
+import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
 import { queries } from "@/lib/queries";
 import { stableStringify } from "@/lib/stable-stringify";
 import type {
@@ -80,6 +83,7 @@ const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, to
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 const NO_ROW_ACTIONS: never[] = [];
 const NO_SCOPE_FILTERS: FieldFilter[] = [];
+const noop = () => {};
 
 export function DataTable<TData extends Record<string, any>>({
   columns,
@@ -100,8 +104,17 @@ export function DataTable<TData extends Record<string, any>>({
   refetchIntervalMs,
   onCellEditCommit,
   renderEmptyState,
-  scopeFilters = NO_SCOPE_FILTERS,
+  scopeFilters: ownScopeFilters = NO_SCOPE_FILTERS,
   enableExport = true,
+  pageSizeOptions,
+  getRowClassName,
+  grouping,
+  expansion,
+  keyboard,
+  toolbar,
+  alternateView,
+  initialDensity = "comfortable",
+  footerLeading,
 }: DataTableProps<TData>) {
   "use no memo";
   const t = useT();
@@ -119,7 +132,7 @@ export function DataTable<TData extends Record<string, any>>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [cursorState, setCursorState] = useState<CursorState>(EMPTY_CURSOR_STATE);
   const [activeView, setActiveView] = useState<ActiveTableView | null>(null);
-  const [density, setDensity] = useState<TableDensity>("comfortable");
+  const [density, setDensity] = useState<TableDensity>(initialDensity);
   const [formatRules, setFormatRules] = useState<TableFormatRule[]>([]);
   const [isSelectingAll, setIsSelectingAll] = useState(false);
   const defaultConfigAppliedRef = useRef(false);
@@ -271,7 +284,19 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   const zeroBasedPageIndex = pageIndex - 1;
-  const effectiveSort = sort;
+  const effectiveSort = useMemo(() => groupedSort(grouping, sort), [grouping, sort]);
+  const collapsedGroupFilters = useMemo(
+    () => groupedScopeFilters(grouping),
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+    [grouping?.field, grouping?.collapsedKeys],
+  );
+  const scopeFilters = useMemo(
+    () =>
+      collapsedGroupFilters.length > 0
+        ? [...ownScopeFilters, ...collapsedGroupFilters]
+        : ownScopeFilters,
+    [collapsedGroupFilters, ownScopeFilters],
+  );
   const cursorScopeKey = useMemo(
     () =>
       stableStringify({
@@ -284,20 +309,10 @@ export function DataTable<TData extends Record<string, any>>({
         graphql: {
           connectionKey: graphql.connectionKey,
           operationName: graphql.operationName,
-          extraVariables: graphql.extraVariables ?? null,
+          ...resolveGraphQLVariableSources(graphql, pageSize),
         },
       }),
-    [
-      effectiveSort,
-      fieldFilters,
-      filterGroups,
-      graphql.connectionKey,
-      graphql.extraVariables,
-      graphql.operationName,
-      pageSize,
-      query,
-      scopeFilters,
-    ],
+    [effectiveSort, fieldFilters, filterGroups, graphql, pageSize, query, scopeFilters],
   );
   const scopedCursorState =
     cursorState.scopeKey === cursorScopeKey ? cursorState : EMPTY_CURSOR_STATE;
@@ -419,6 +434,7 @@ export function DataTable<TData extends Record<string, any>>({
     enableCellEditing: !!onCellEditCommit && canUpdate,
     onCellEditCommit,
     onRowSelectionChange: setRowSelection,
+    meta: getRowClassName ? { getRowClassName } : undefined,
     initialState: initialColumnVisibility
       ? { columnVisibility: initialColumnVisibility }
       : undefined,
@@ -492,6 +508,63 @@ export function DataTable<TData extends Record<string, any>>({
   const handleClearSelection = useCallback(() => {
     setRowSelection({});
   }, []);
+
+  const pageRowIds = useMemo(
+    () =>
+      (currentPageResults ?? [])
+        .map((row) => (row as { id?: string }).id)
+        .filter((id): id is string => !!id),
+    [currentPageResults],
+  );
+
+  const handleToggleRowSelection = useCallback((rowId: string) => {
+    setRowSelection((current) => {
+      if (!current[rowId]) return { ...current, [rowId]: true };
+      const { [rowId]: _removed, ...rest } = current;
+      return rest;
+    });
+  }, []);
+
+  const cursorRowId = keyboard?.cursorRowId ?? null;
+  useDataTableRowCursor({
+    enabled: !!keyboard?.enabled && !alternateView?.active,
+    rowIds: pageRowIds,
+    cursorRowId,
+    onCursorRowIdChange: keyboard?.onCursorRowIdChange ?? noop,
+    expandedRowId: expansion?.expandedRowId ?? null,
+    onExpandedRowIdChange: expansion?.onExpandedRowIdChange,
+    hasSelection: selectedCount > 0,
+    onToggleSelect: enableRowSelection ? handleToggleRowSelection : undefined,
+    onClearSelection: handleClearSelection,
+  });
+
+  const viewportRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = viewportRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const apply = () => element.style.setProperty("--dt-viewport-w", `${element.clientWidth}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(element);
+    return () => observer.disconnect();
+  });
+
+  useEffect(() => {
+    const focusId = cursorRowId ?? expansion?.expandedRowId ?? null;
+    if (!focusId) return;
+    const row = viewportRef.current?.querySelector<HTMLElement>(
+      `tr[data-row-index][id="${CSS.escape(focusId)}"]`,
+    );
+    row?.scrollIntoView?.({ block: "nearest" });
+  }, [cursorRowId, expansion?.expandedRowId]);
+
+  const handleRowClick = useMemo(() => {
+    if (onRowClick || !expansion) return onRowClick;
+    return (row: Row<TData>) => {
+      expansion.onExpandedRowIdChange(expansion.expandedRowId === row.id ? null : row.id);
+      keyboard?.onCursorRowIdChange(row.id);
+    };
+  }, [onRowClick, expansion, keyboard]);
 
   const handleApplyConfig = useCallback(
     (config: TableConfig, source?: TableViewSource) => {
@@ -671,6 +744,7 @@ export function DataTable<TData extends Record<string, any>>({
   // An empty page is drawn as the table it will become rather than as a
   // table with no rows, so the header row and the pager step aside for it.
   const isEmpty = !dataQuery.isLoading && !dataQuery.isError && currentPageRowCount === 0;
+  const hasCollapsedGroups = (grouping?.collapsedKeys.length ?? 0) > 0;
   const emptyColumns = useMemo(
     () => emptyTableColumns(table.getVisibleLeafColumns()),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -744,6 +818,7 @@ export function DataTable<TData extends Record<string, any>>({
                 currentPageRows: currentPageResults ?? [],
                 totalCount,
               }}
+              slots={toolbar}
             />
             <DataTableFilterChips
               filters={filterItems}
@@ -762,7 +837,11 @@ export function DataTable<TData extends Record<string, any>>({
                 onClearSelection={handleClearSelection}
               />
             )}
-            {isEmpty ? (
+            {alternateView?.active ? (
+              <div className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
+                {alternateView.render({ queryOptions: baseQueryOptions })}
+              </div>
+            ) : isEmpty && !hasCollapsedGroups ? (
               <div className="border-border bleed:rounded-none bleed:border-0 rounded-lg border">
                 {renderEmptyState ? (
                   renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
@@ -777,7 +856,7 @@ export function DataTable<TData extends Record<string, any>>({
                 )}
               </div>
             ) : (
-              <div className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
+              <div ref={viewportRef} className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
                 <DataTableRefreshPill
                   visible={liveRefresh.hasPendingUpdate}
                   onRefresh={liveRefresh.applyStaged}
@@ -825,14 +904,19 @@ export function DataTable<TData extends Record<string, any>>({
                       columns={tableColumns}
                       isLoading={dataQuery.isLoading}
                       contextMenuActions={contextMenuActions}
-                      onRowClick={onRowClick}
+                      onRowClick={handleRowClick}
                       getFormatClass={compiledFormatRules}
+                      grouping={grouping}
+                      expansion={expansion}
+                      cursorRowId={cursorRowId}
+                      isFirstPage={zeroBasedPageIndex === 0}
+                      isLastPage={!cursorPageInfo?.hasNextPage}
                     />
                   </Table>
                 </DndContext>
               </div>
             )}
-            {isEmpty ? null : (
+            {isEmpty || alternateView?.active ? null : (
               <DataTablePagination
                 table={table}
                 onPageChange={handlePageChange}
@@ -841,6 +925,8 @@ export function DataTable<TData extends Record<string, any>>({
                 hasNextPage={cursorPageInfo?.hasNextPage}
                 currentPageRowCount={currentPageRowCount}
                 totalCount={totalCount}
+                pageSizeOptions={pageSizeOptions}
+                leading={footerLeading}
               />
             )}
           </div>

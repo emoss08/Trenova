@@ -16,6 +16,7 @@ import type {
   FilterItem,
   SortField,
   ColumnDef,
+  DataTableToolbarSlots,
   Table,
 } from "@trenova/shared/types/data-table";
 import type { ComposedTableQuery } from "@/types/table-query";
@@ -103,6 +104,7 @@ type DataTableToolbarProps<TData extends Record<string, any>> = {
   density?: TableDensity;
   onDensityChange?: (density: TableDensity) => void;
   exportContext?: DataTableExportContext<TData>;
+  slots?: DataTableToolbarSlots;
 };
 
 export function DataTableToolbar<TData extends Record<string, any>>({
@@ -129,6 +131,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   density = "comfortable",
   onDensityChange,
   exportContext,
+  slots,
 }: DataTableToolbarProps<TData>) {
   const t = useT();
 
@@ -143,17 +146,25 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   return (
     <>
       <div className="bleed:border-border bleed:border-b bleed:px-3 bleed:py-2 flex items-center justify-between gap-2">
-        <div className="flex flex-1 items-center gap-2">
-          <Suspense fallback={<SearchSkeleton />}>
-            <DataTableSearch value={query} onChange={onSearchChange} />
-          </Suspense>
-          <Suspense fallback={<ToolbarButtonSkeleton />}>
-            <DataTableFilterBuilder
-              columns={columns as unknown as ColumnDef<RowData>[]}
-              filters={filters}
-              onFiltersChange={onFiltersChange}
-            />
-          </Suspense>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {slots?.search ? (
+            slots.search({ query, onSearchChange })
+          ) : (
+            <Suspense fallback={<SearchSkeleton />}>
+              <DataTableSearch value={query} onChange={onSearchChange} />
+            </Suspense>
+          )}
+          {slots?.filter ? (
+            slots.filter({ filters, onFiltersChange })
+          ) : (
+            <Suspense fallback={<ToolbarButtonSkeleton />}>
+              <DataTableFilterBuilder
+                columns={columns as unknown as ColumnDef<RowData>[]}
+                filters={filters}
+                onFiltersChange={onFiltersChange}
+              />
+            </Suspense>
+          )}
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableSortBuilder
               columns={columns as unknown as ColumnDef<RowData>[]}
@@ -178,7 +189,8 @@ export function DataTableToolbar<TData extends Record<string, any>>({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
+          {slots?.trailing}
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableDisplayMenu
               table={table as Table<RowData>}
@@ -220,6 +232,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
               />
             )}
           </Suspense>
+          {slots?.end}
           {hasSingleAddRecordAction ? (
             <Button variant="default" size="sm" onClick={addRecordActions[0]?.onClick}>
               <PlusIcon className="size-3.5" />
