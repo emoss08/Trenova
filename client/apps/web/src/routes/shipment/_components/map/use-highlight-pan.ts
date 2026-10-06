@@ -1,7 +1,7 @@
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMap } from "@vis.gl/react-google-maps";
 import { useEffect, useMemo } from "react";
-import { useCommandCenterStore } from "../command-center/store";
+import { useShipmentBoardStore } from "../board/store";
 import { getShipmentCurrentLatLng, type Latlng } from "./shipment-route-coordinates";
 import { useMapShipments } from "./use-map-shipments";
 
@@ -10,7 +10,7 @@ const VIEWPORT_MARGIN_RATIO = 0.1;
 
 export function useHighlightPan(mapInstanceId: string, enabled = true) {
   const map = useMap(mapInstanceId);
-  const highlightId = useCommandCenterStore.use.highlightId();
+  const highlightId = useShipmentBoardStore.use.highlightId();
   const { data } = useMapShipments(enabled);
 
   const highlightedPoint = useMemo(() => {

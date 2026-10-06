@@ -1,12 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   ShipmentCommentsDocument,
-  ShipmentCommandCenterTableDocument,
+  ShipmentBoardTableDocument,
   ShipmentEventsDocument,
-  ShipmentSavedViewCountsDocument,
 } from "@trenova/graphql/generated/graphql";
 import {
-  getShipmentSavedViewCountsGraphQL,
   listShipmentCommentsGraphQL,
   listShipmentEventsGraphQL,
   listShipmentsGraphQL,
@@ -44,8 +42,8 @@ describe("shipment GraphQL helpers", () => {
     });
 
     expect(requestGraphQLMock).toHaveBeenCalledWith({
-      document: ShipmentCommandCenterTableDocument,
-      operationName: "ShipmentCommandCenterTable",
+      document: ShipmentBoardTableDocument,
+      operationName: "ShipmentBoardTable",
       variables: {
         input: {
           first: 20,
@@ -72,35 +70,6 @@ describe("shipment GraphQL helpers", () => {
         endCursor: "cursor-1",
         totalCount: 25,
       },
-    });
-  });
-
-  it("requests saved view counts with the user's timezone", async () => {
-    requestGraphQLMock.mockResolvedValueOnce({
-      shipmentAnalytics: {
-        savedViewCounts: {
-          all: 12,
-          transit: 4,
-          atRisk: 2,
-          unassigned: 3,
-          deliveringToday: 1,
-        },
-      },
-    });
-
-    const counts = await getShipmentSavedViewCountsGraphQL("America/Chicago");
-
-    expect(requestGraphQLMock).toHaveBeenCalledWith({
-      document: ShipmentSavedViewCountsDocument,
-      operationName: "ShipmentSavedViewCounts",
-      variables: { timezone: "America/Chicago" },
-    });
-    expect(counts).toEqual({
-      all: 12,
-      transit: 4,
-      atRisk: 2,
-      unassigned: 3,
-      deliveringToday: 1,
     });
   });
 

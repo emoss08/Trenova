@@ -77,3 +77,12 @@ func TakeStringJSON(ctx context.Context, client *redis.Client, key string, obj a
 
 	return sonic.UnmarshalString(val, obj)
 }
+
+func GetStringJSON(ctx context.Context, client *redis.Client, key string, obj any) error {
+	val, err := client.Get(ctx, key).Result()
+	if err != nil {
+		return err
+	}
+
+	return sonic.UnmarshalString(val, obj)
+}

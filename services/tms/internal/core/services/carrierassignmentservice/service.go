@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -40,7 +39,7 @@ type Params struct {
 	Coordinator       *shipmentstate.Coordinator
 	EventService      portservices.ShipmentEventService
 	AuditService      portservices.AuditService
-	Realtime          portservices.RealtimeService
+	Invalidator       portservices.ShipmentInvalidator
 	CostAccrual       portservices.CarrierCostAccrual `optional:"true"`
 	TenderGuard       portservices.TenderGuard        `optional:"true"`
 	RateEngine        portservices.RateEngine         `optional:"true"`
@@ -62,7 +61,7 @@ type Service struct {
 	coordinator       *shipmentstate.Coordinator
 	eventService      portservices.ShipmentEventService
 	auditService      portservices.AuditService
-	realtime          portservices.RealtimeService
+	invalidator       portservices.ShipmentInvalidator
 	costAccrual       portservices.CarrierCostAccrual
 	tenderGuard       portservices.TenderGuard
 	rateEngine        portservices.RateEngine
@@ -87,7 +86,7 @@ func New(p Params) *Service {
 		coordinator:       p.Coordinator,
 		eventService:      p.EventService,
 		auditService:      p.AuditService,
-		realtime:          p.Realtime,
+		invalidator:       p.Invalidator,
 		costAccrual:       p.CostAccrual,
 		tenderGuard:       p.TenderGuard,
 		rateEngine:        p.RateEngine,
@@ -261,7 +260,15 @@ func (s *Service) AssignToMove(
 		Comment:    "Carrier " + carrierEntity.Name + " assigned to move",
 		Current:    result,
 	})
-	s.publishInvalidation(ctx, req.TenantInfo, shipmentIDOf(result), "carrier_assigned")
+	portservices.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		portservices.ShipmentInvalidationByUser(
+			req.TenantInfo,
+			shipmentIDOf(result),
+			"carrier_assigned",
+		),
+	)
 	if replaced {
 		s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 	}
@@ -403,7 +410,11 @@ func (s *Service) Cancel(
 		Comment:    "Carrier assignment canceled: " + req.Reason,
 		Current:    canceled,
 	})
-	s.publishInvalidation(ctx, req.TenantInfo, shipmentID, "carrier_unassigned")
+	portservices.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		portservices.ShipmentInvalidationByUser(req.TenantInfo, shipmentID, "carrier_unassigned"),
+	)
 	s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 
 	return nil
@@ -577,31 +588,6 @@ func (s *Service) recordEvent(
 
 	if err := s.eventService.Record(ctx, params); err != nil {
 		s.l.Warn("failed to record carrier assignment event", zap.Error(err))
-	}
-}
-
-func (s *Service) publishInvalidation(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	shipmentID pulid.ID,
-	action string,
-) {
-	if s.realtime == nil || shipmentID.IsNil() {
-		return
-	}
-
-	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ActorUserID:    tenantInfo.UserID,
-		ActorType:      portservices.PrincipalTypeUser,
-		ActorID:        tenantInfo.UserID,
-		Resource:       "shipments",
-		Action:         action,
-		RecordID:       shipmentID,
-	})
-	if err != nil {
-		s.l.Warn("failed to publish carrier assignment invalidation", zap.Error(err))
 	}
 }
 

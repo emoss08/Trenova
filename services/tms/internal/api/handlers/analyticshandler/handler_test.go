@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateAnalyticsRequest_AllowsSavedViewCountsInclude(t *testing.T) {
+func TestValidateAnalyticsRequest_AllowsTomorrowsPickupsInclude(t *testing.T) {
 	t.Parallel()
 
 	req := &services.AnaltyicsRequest{
 		Page:    services.ShipmentAnalyticsPage,
-		Include: includeSavedViewCounts,
+		Include: includeTomorrowsPickups,
 	}
 
 	require.NoError(t, validateAnalyticsRequest(req))

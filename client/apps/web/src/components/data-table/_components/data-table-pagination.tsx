@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import type { Table } from "@trenova/shared/types/data-table";
+import type { ReactNode } from "react";
 import {
   ChevronLeftDoubleIcon,
   ChevronLeftIcon,
@@ -27,6 +28,8 @@ type DataTablePaginationProps<TData extends RowData> = {
   pageSizeOptions?: readonly number[];
   onPageChange?: (pageIndex: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
+  /** Placed before the result count, such as a keyboard-shortcuts button. */
+  leading?: ReactNode;
 };
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50] as const;
@@ -40,6 +43,7 @@ export function DataTablePagination<TData extends RowData>({
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   onPageChange,
   onPageSizeChange,
+  leading,
 }: DataTablePaginationProps<TData>) {
   const t = useT();
 
@@ -71,34 +75,37 @@ export function DataTablePagination<TData extends RowData>({
 
   return (
     <div className="bleed:border-border bleed:min-h-10 bleed:shrink-0 bleed:border-t bleed:px-3 bleed:py-1.5 flex items-center justify-between gap-4 px-2 tabular-nums">
-      <div className="text-muted-foreground text-sm">
-        {visibleRowCount < 1 ? (
-          <>{t("No results on this page")}</>
-        ) : (
-          <>
-            {t("Showing")} <span className="text-foreground font-medium">{startRow}</span> to{" "}
-            <span className="text-foreground font-medium">{endRow}</span>
-            {cursorMode ? (
-              totalCount != null ? (
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
+        {leading}
+        <span>
+          {visibleRowCount < 1 ? (
+            <>{t("No results on this page")}</>
+          ) : (
+            <>
+              {t("Showing")} <span className="text-foreground font-medium">{startRow}</span> to{" "}
+              <span className="text-foreground font-medium">{endRow}</span>
+              {cursorMode ? (
+                totalCount != null ? (
+                  <>
+                    {" "}
+                    of{" "}
+                    <span className="text-foreground font-medium">
+                      {totalCount.toLocaleString()}
+                    </span>{" "}
+                    results
+                  </>
+                ) : (
+                  <> results</>
+                )
+              ) : (
                 <>
                   {" "}
-                  of{" "}
-                  <span className="text-foreground font-medium">
-                    {totalCount.toLocaleString()}
-                  </span>{" "}
-                  results
+                  of <span className="text-foreground font-medium">{rowCount}</span> results
                 </>
-              ) : (
-                <> results</>
-              )
-            ) : (
-              <>
-                {" "}
-                of <span className="text-foreground font-medium">{rowCount}</span> results
-              </>
-            )}
-          </>
-        )}
+              )}
+            </>
+          )}
+        </span>
       </div>
 
       <div className="flex items-center gap-4">

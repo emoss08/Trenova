@@ -1,12 +1,12 @@
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { shelfHeading } from "@/components/desk-chat/rail/rail-parts";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatCompactAge, resolveUserTimezone } from "@trenova/shared/lib/date";
+import { formatCompactAge } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Fragment, useMemo, useState } from "react";
 import { assistantShelves, type AssistantShelfKey } from "./thread-grouping";
 
@@ -47,7 +47,7 @@ export function AssistantHistory({
   onNew: () => void;
 }) {
   const t = useT();
-  const timezone = resolveUserTimezone(useAuthStore((state) => state.user?.timezone));
+  const timezone = useUserTimezone();
   const [now] = useState(nowInSeconds);
   const [query, setQuery] = useState("");
   const agentName = (thread: AssistantThread) =>

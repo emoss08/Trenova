@@ -29,6 +29,7 @@ type Params struct {
 	Validator    *Validator
 	AuditService services.AuditService
 	Realtime     services.RealtimeService `optional:"true"`
+	Invalidator  services.ShipmentInvalidator
 }
 
 type Service struct {
@@ -37,6 +38,7 @@ type Service struct {
 	validator    *Validator
 	auditService services.AuditService
 	realtime     services.RealtimeService
+	invalidator  services.ShipmentInvalidator
 }
 
 func New(p Params) *Service {
@@ -46,6 +48,7 @@ func New(p Params) *Service {
 		validator:    p.Validator,
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
+		invalidator:  p.Invalidator,
 	}
 }
 
@@ -268,25 +271,16 @@ func (s *Service) Generate(
 			log.Error("failed to log audit action", zap.Error(err))
 		}
 
-		if s.realtime != nil {
-			if publishErr := realtimeinvalidation.Publish(
-				ctx,
-				s.realtime,
-				&realtimeinvalidation.PublishParams{
-					OrganizationID: result.Shipment.OrganizationID,
-					BusinessUnitID: result.Shipment.BusinessUnitID,
-					ActorUserID:    req.RequestedBy,
-					ActorType:      services.PrincipalTypeUser,
-					ActorID:        req.RequestedBy,
-					Resource:       "shipments",
-					Action:         "created",
-					RecordID:       result.Shipment.ID,
-					Entity:         result.Shipment,
-				},
-			); publishErr != nil {
-				log.Warn("failed to publish generated shipment invalidation", zap.Error(publishErr))
-			}
-		}
+		services.InvalidateShipments(ctx, s.invalidator, &services.ShipmentInvalidation{
+			OrganizationID: result.Shipment.OrganizationID,
+			BusinessUnitID: result.Shipment.BusinessUnitID,
+			ActorUserID:    req.RequestedBy,
+			ActorType:      services.PrincipalTypeUser,
+			ActorID:        req.RequestedBy,
+			Action:         "created",
+			RecordID:       result.Shipment.ID,
+			Entity:         result.Shipment,
+		})
 	}
 
 	if result.Series != nil {

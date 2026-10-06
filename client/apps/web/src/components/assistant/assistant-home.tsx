@@ -1,3 +1,4 @@
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { DeskDropOverlay } from "@/components/desk-chat/composer/desk-uploads";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import {
@@ -9,8 +10,6 @@ import {
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { resolveUserTimezone } from "@trenova/shared/lib/date";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useMemo, useState } from "react";
 import { threadAge } from "./assistant-history";
 
@@ -57,7 +56,7 @@ export function AssistantHome({
   onShowAll,
 }: AssistantHomeProps) {
   const t = useT();
-  const timezone = resolveUserTimezone(useAuthStore((state) => state.user?.timezone));
+  const timezone = useUserTimezone();
   const [now] = useState(nowInSeconds);
   const ask = useDeskHomeAsk({ agents, threads, isLoading, pageSource: "screen", onStart });
   const { drag } = ask;

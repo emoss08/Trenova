@@ -86,6 +86,11 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceCarrier: {
 		OpRead: {},
 	},
+	ResourceCarrierCapacityPosting: {
+		OpRead:   {},
+		OpCreate: {},
+		OpUpdate: {},
+	},
 	ResourceCarrierIntelligence: {
 		OpRead:   {},
 		OpUpdate: {},

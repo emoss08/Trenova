@@ -78,6 +78,8 @@ models:
         resolver: true
       profitabilityEstimate:
         resolver: true
+      eta:
+        resolver: true
   ShipmentCustomer:
     fields:
       ediPartner:
@@ -3621,6 +3623,36 @@ models:
     fields:
       amount:
         resolver: true
+  ShipmentStage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.Stage
+  OperationType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.OperationType
+  ShipmentQuickFilter:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.QuickFilter
+  EtaVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/shipmenttracking.Verdict
+  UncoveredPickupWindow:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.PickupWindow
+  CarrierCapacityRateMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.RateMethod
+  CarrierCapacitySource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.Source
+  CarrierCapacityPosting:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.Posting
+    fields:
+      rate:
+        resolver: true
+  ShipmentFacet:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentFacet
   TenderMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tender.Mode

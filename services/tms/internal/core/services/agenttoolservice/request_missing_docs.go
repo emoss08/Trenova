@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
@@ -160,35 +161,5 @@ func (t *requestMissingDocsTool) applyBranding(
 	tenantInfo pagination.TenantInfo,
 	out *documenttemplate.AgentEmailContext,
 ) {
-	brandAgentEmail(ctx, t.orgRepo, t.inliner, tenantInfo, out)
-}
-
-// brandAgentEmail names the sender and inlines their logo on any email an
-// agent composes.
-//
-// Branding is decoration: an organization that cannot be read still gets its
-// message sent, unsigned, rather than not at all.
-func brandAgentEmail(
-	ctx context.Context,
-	orgRepo repositories.OrganizationRepository,
-	inliner serviceports.AssetInliner,
-	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.AgentEmailContext,
-) {
-	if orgRepo == nil {
-		return
-	}
-
-	org, err := orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil || org == nil {
-		return
-	}
-
-	out.CompanyName = org.Name
-
-	if dataURI, logoErr := serviceports.ResolveLogoDataURI(ctx, inliner, org.LogoURL); logoErr == nil {
-		out.LogoDataURI = dataURI
-	}
+	customerupdateservice.Brand(ctx, t.orgRepo, t.inliner, tenantInfo, out)
 }

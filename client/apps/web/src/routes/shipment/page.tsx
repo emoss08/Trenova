@@ -3,41 +3,38 @@ import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/component
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import { analytics } from "@/lib/queries/analytics";
 import { queries } from "@/lib/queries";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
+import { ShipmentCapabilitiesProvider } from "@/lib/shipment-board/capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
+import { cn } from "@trenova/shared/lib/utils";
 import { createLoader, useQueryStates } from "nuqs";
-import { lazy, useCallback, useMemo, useState } from "react";
-import type { CommandCenterTableSummary } from "./_components/command-center/command-center-table";
-import { ShipmentMapPanelBoundary } from "./_components/map/map-boundary";
-import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
+import { useCallback, useState } from "react";
+import { ShipmentBriefing } from "./_components/board/briefing/shipment-briefing";
+import { CapacityStrip } from "./_components/board/capacity/capacity-strip";
+import { ShipmentSidePanel } from "./_components/board/panel/side-panel";
+import { ShipmentRecordActionsProvider } from "./_components/board/record-actions";
+import { ShipmentBoard } from "./_components/board/shipment-board";
+import { useShipmentBoardUrl } from "./_components/board/url-state";
 import {
   SHIPMENT_LIST_KEY,
   SHIPMENT_TABLE_RESOURCE_NAME,
   shipmentPanelDetailQuery,
 } from "./_components/shipment-queries";
 
-const Table = lazy(() => import("./_components/shipment-table"));
-const ShipmentAnalytics = lazy(() => import("./_components/analytics/kpi-rail"));
-const ShipmentMapPanel = lazy(() => import("./_components/map/shipment-map-panel"));
-const RightStack = lazy(() => import("./_components/command-center/right-stack"));
-const BottomModules = lazy(() => import("./_components/command-center/bottom-modules"));
-
 const loadPanelSearch = createLoader(panelSearchParamsParser);
+const PANEL_DEFAULT_MIN_WIDTH = 900;
 
-// What the first paint asks for unconditionally: the header's organization badge, the
-// KPI rail, the table's saved default view, and the map's key. The rows, the map pins
-// and the right stack wait on the table (backgroundQueriesEnabled) and are left to it.
+// What the first paint reads: the board's capabilities (every conditional on the
+// page waits on them), the saved default view, and the edit panel's record when the
+// link opens one.
 export const prefetch: RoutePrefetch = ({ request }) => {
   const list: RoutePrefetchQuery[] = [
-    queries.userOrganization.all(),
-    analytics.get("shipment-management"),
+    { ...queries.shipmentBoard.capabilities(), staleTime: 60_000 },
     { ...queries.tableConfiguration.default(SHIPMENT_TABLE_RESOURCE_NAME), staleTime: Infinity },
-    queries.integration.runtimeConfig("GoogleMaps"),
   ];
 
   const { panelType, panelEntityId } = loadPanelSearch(request);
@@ -48,83 +45,77 @@ export const prefetch: RoutePrefetch = ({ request }) => {
   return list;
 };
 
+function ShipmentWorkspace() {
+  const [{ panel }, setUrl] = useShipmentBoardUrl();
+  const [defaultPanelOpen] = useState(() => window.innerWidth >= PANEL_DEFAULT_MIN_WIDTH);
+  const panelOpen = panel ?? defaultPanelOpen;
+  const setPanelOpen = useCallback((open: boolean) => void setUrl({ panel: open }), [setUrl]);
+
+  return (
+    <div className="@container/board relative grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">
+      <div className="border-border flex min-w-0 flex-col gap-3.5 border-b px-5 pt-3 pb-3.5">
+        <LazyComponent>
+          <ShipmentBriefing />
+        </LazyComponent>
+        <LazyComponent>
+          <CapacityStrip />
+        </LazyComponent>
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-col">
+        <DataTableLazyComponent>
+          <ShipmentBoard panelOpen={panelOpen} onPanelOpenChange={setPanelOpen} />
+        </DataTableLazyComponent>
+      </div>
+      {panelOpen ? (
+        <LazyComponent>
+          <ShipmentSidePanel onClose={() => setPanelOpen(false)} />
+        </LazyComponent>
+      ) : null}
+    </div>
+  );
+}
+
 export function ShipmentsPage() {
   const t = useT();
-
   const queryClient = useQueryClient();
   const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
-  const [summary, setSummary] = useState<CommandCenterTableSummary | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const { data: organizations } = useQuery(queries.userOrganization.all());
   const canCreateShipment = usePermissionStore((state) =>
     state.hasPermission(Resource.Shipment, Operation.Create),
   );
-  const currentOrg = organizations?.find((org) => org.isCurrent);
-
-  const formattedCount = useMemo(() => {
-    if (!summary) return null;
-    return new Intl.NumberFormat().format(summary.totalCount);
-  }, [summary]);
-  const backgroundQueriesEnabled = summary?.backgroundQueriesEnabled ?? false;
+  const refreshing =
+    useIsFetching({ queryKey: [SHIPMENT_LIST_KEY] }) +
+      useIsFetching({ queryKey: queries.shipmentBoard._def }) >
+    0;
 
   const handleCreateShipment = useCallback(() => {
     void setSearchParams({ panelType: "create", panelEntityId: null });
   }, [setSearchParams]);
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [SHIPMENT_LIST_KEY] }),
-        queryClient.invalidateQueries({
-          queryKey: analytics.get("shipment-management").queryKey,
-        }),
-      ]);
-    } finally {
-      setIsRefreshing(false);
-    }
+  const handleRefresh = useCallback(() => {
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: [SHIPMENT_LIST_KEY] }),
+      queryClient.invalidateQueries({ queryKey: queries.shipmentBoard._def }),
+      queryClient.invalidateQueries({ queryKey: ["shipment-events"] }),
+    ]);
   }, [queryClient]);
 
   return (
     <PageLayout
+      fill
+      bleed
       pageHeaderProps={{
         title: t("Shipments"),
-        description: t("Operations command center for shipments, assignments, and exceptions."),
-        context: (
-          <>
-            {summary && (
-              <div
-                aria-label={t("Live shipment count")}
-                title={`Updated ${formatDateInUserTimezone(new Date(summary.dataUpdatedAt), {
-                  hour: "numeric",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}`}
-                className="border-success-border bg-success-subtle font-table text-success inline-flex h-5 items-center gap-1 rounded-md border px-1.5 text-2xs tabular-nums"
-              >
-                <span className="bg-success size-1 rounded-full" />
-                {t("Live · {0}", formattedCount)}
-              </div>
-            )}
-            {currentOrg && (
-              <span className="font-table text-muted-foreground text-2xs tabular-nums">
-                {t("org · {0}", currentOrg.name)}
-              </span>
-            )}
-          </>
-        ),
+        description: t("Every load on the board, what needs a hand, and who can take it."),
         actions: (
           <>
             <Button
               type="button"
-              variant="outline"
-              size="sm"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("Refresh")}
               onClick={handleRefresh}
-              isLoading={isRefreshing}
-              loadingText={t("Refreshing")}
             >
-              <RefreshCw02Icon className="size-3.5" />
-              {t("Refresh")}
+              <RefreshCw02Icon className={cn("size-3.5", refreshing && "animate-spin")} />
             </Button>
             {canCreateShipment && (
               <Button type="button" size="sm" onClick={handleCreateShipment}>
@@ -136,27 +127,11 @@ export function ShipmentsPage() {
         ),
       }}
     >
-      <div className="cc-workspace flex flex-col gap-3">
-        <LazyComponent>
-          <ShipmentAnalytics />
-        </LazyComponent>
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
-          <ShipmentMapPanelBoundary>
-            <ShipmentMapPanel backgroundEnabled={backgroundQueriesEnabled} />
-          </ShipmentMapPanelBoundary>
-          <div className="relative h-[clamp(420px,calc(100vh-380px),540px)] min-h-0">
-            <LazyComponent>
-              <RightStack backgroundEnabled={backgroundQueriesEnabled} />
-            </LazyComponent>
-          </div>
-        </div>
-        <DataTableLazyComponent>
-          <Table onSummaryChange={setSummary} />
-        </DataTableLazyComponent>
-        <LazyComponent>
-          <BottomModules backgroundEnabled={backgroundQueriesEnabled} />
-        </LazyComponent>
-      </div>
+      <ShipmentCapabilitiesProvider>
+        <ShipmentRecordActionsProvider>
+          <ShipmentWorkspace />
+        </ShipmentRecordActionsProvider>
+      </ShipmentCapabilitiesProvider>
     </PageLayout>
   );
 }

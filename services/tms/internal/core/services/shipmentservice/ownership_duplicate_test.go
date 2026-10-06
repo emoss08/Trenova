@@ -81,7 +81,7 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		userRepo:     userRepo,
 		validator:    NewTestValidator(t),
 		auditService: audit,
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -158,7 +158,7 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 		permissions:  permissions,
 		validator:    NewTestValidator(t),
 		auditService: audit,
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -188,7 +188,7 @@ func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 		userRepo:     mocks.NewMockUserRepository(t),
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -221,7 +221,7 @@ func TestServiceTransferOwnership_RejectsAnAgentCarryingTheSystemUser(t *testing
 		userRepo:     mocks.NewMockUserRepository(t),
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -288,7 +288,7 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}

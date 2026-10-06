@@ -216,7 +216,8 @@
         },
         {
             "files": [
-                "scripts/**"
+                "scripts/**",
+                "**/e2e/mock-api/**"
             ],
             "env": {
                 "node": true

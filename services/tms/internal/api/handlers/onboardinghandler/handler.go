@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/onboarding"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -50,9 +50,9 @@ type organizationBody struct {
 }
 
 type completeBody struct {
-	Organization   organizationBody         `json:"organization"`
-	OperationType  onboarding.OperationType `json:"operationType"`
-	LoadSampleData bool                     `json:"loadSampleData"`
+	Organization   organizationBody     `json:"organization"`
+	OperationType  tenant.OperationType `json:"operationType"`
+	LoadSampleData bool                 `json:"loadSampleData"`
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -92,7 +92,10 @@ func (h *Handler) complete(c *gin.Context) {
 	}
 
 	if authCtx == nil || authCtx.UserID.IsNil() {
-		h.eh.HandleError(c, errortypes.NewAuthorizationError("Onboarding must be completed by a person"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewAuthorizationError("Onboarding must be completed by a person"),
+		)
 		return
 	}
 

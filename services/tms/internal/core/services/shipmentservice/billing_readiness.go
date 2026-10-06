@@ -195,18 +195,11 @@ func (s *service) markReadyToInvoice(
 		s.l.Error("failed to log mark ready to invoice shipment action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
+	services.InvalidateShipments(
 		ctx,
-		updatedEntity,
-		p.Actor,
-		"updated",
-		updatedEntity,
-	); err != nil {
-		s.l.Warn(
-			"failed to publish shipment invalidation after marking ready to invoice",
-			zap.Error(err),
-		)
-	}
+		s.invalidator,
+		services.ShipmentInvalidationForRecord(updatedEntity, p.Actor, "updated", updatedEntity),
+	)
 
 	if p.RecordStatusEvent {
 		s.emitStatusChangeEvent(ctx, &previousEntity, updatedEntity, p.Actor)

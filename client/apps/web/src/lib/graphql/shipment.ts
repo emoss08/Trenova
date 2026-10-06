@@ -21,13 +21,12 @@ import {
   ShipmentCommentCountDocument,
   ShipmentCommentRepliesDocument,
   ShipmentCommentsDocument,
-  ShipmentCommandCenterTableDocument,
+  ShipmentBoardTableDocument,
   ShipmentDetailDocument,
   ShipmentEventsDocument,
   ShipmentPageAnalyticsDocument,
   ShipmentPreviousRatesDocument,
   ShipmentProfitabilityDocument,
-  ShipmentSavedViewCountsDocument,
   ShipmentUiPolicyDocument,
   TransferShipmentOwnershipDocument,
   TransferShipmentToBillingDocument,
@@ -51,6 +50,7 @@ import {
   type ShipmentLoadingOptimizationInput,
   type ShipmentMoveInput,
   type ShipmentPreviousRatesInput,
+  type ShipmentQuickFilterInput,
 } from "@trenova/graphql/generated/graphql";
 import {
   hasAnyAllocations,
@@ -59,7 +59,6 @@ import {
 } from "@trenova/shared/lib/charge-split";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 import type { GraphQLExecutableDocument } from "@trenova/shared/types/graphql";
 import type { LoadingOptimizationRequest } from "@/types/loading-optimization";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
@@ -106,23 +105,35 @@ function requestShipmentGraphQL<TVariables = Record<string, unknown>>(
   return requestGraphQL<Record<string, any>, TVariables>(params);
 }
 
-export const shipmentTableGraphQLConfig = defineDataTableGraphQLConfig({
-  document: ShipmentCommandCenterTableDocument,
-  operationName: "ShipmentCommandCenterTable",
-  connectionKey: "shipments",
-  inputExtraVariables: {
-    expandShipmentDetails: true,
-  },
-});
+export type ShipmentBoardTableParams = {
+  quickFilters: ShipmentQuickFilterInput[];
+  timezone: string;
+};
 
-export type ShipmentTableRow = DataTableConfigRow<typeof shipmentTableGraphQLConfig>;
+/** The shipment board's rows, narrowed by the board's quick filters. */
+export function shipmentBoardTableGraphQLConfig({
+  quickFilters,
+  timezone,
+}: ShipmentBoardTableParams) {
+  return defineDataTableGraphQLConfig({
+    document: ShipmentBoardTableDocument,
+    operationName: "ShipmentBoardTable",
+    connectionKey: "shipments",
+    inputExtraVariables: {
+      expandShipmentDetails: true,
+      quickFilters,
+      timezone,
+    },
+    mapNode: (node) => node as unknown as Shipment,
+  });
+}
 
 export async function listShipmentsGraphQL(
   req: ShipmentPageRequest,
 ): Promise<GenericLimitOffsetResponse<Shipment>> {
   const data = await requestShipmentGraphQL({
-    document: ShipmentCommandCenterTableDocument,
-    operationName: "ShipmentCommandCenterTable",
+    document: ShipmentBoardTableDocument,
+    operationName: "ShipmentBoardTable",
     variables: {
       input: {
         first: req.limit,
@@ -237,15 +248,6 @@ export async function getShipmentProfitabilityGraphQL(shipmentId: Shipment["id"]
     variables: { shipmentId },
   });
   return data.shipmentProfitability;
-}
-
-export async function getShipmentSavedViewCountsGraphQL(timezone: string) {
-  const data = await requestShipmentGraphQL({
-    document: ShipmentSavedViewCountsDocument,
-    operationName: "ShipmentSavedViewCounts",
-    variables: { timezone },
-  });
-  return data.shipmentAnalytics.savedViewCounts;
 }
 
 export async function getShipmentPageAnalyticsGraphQL(req: {

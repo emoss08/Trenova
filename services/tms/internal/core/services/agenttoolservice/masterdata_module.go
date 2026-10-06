@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
@@ -21,6 +22,7 @@ var (
 	_ carrierKeeper       = (*carrierservice.Service)(nil)
 	_ customerKeeper      = (*customerservice.Service)(nil)
 	_ commodityKeeper     = (*commodityservice.Service)(nil)
+	_ capacityKeeper      = (*carriercapacityservice.Service)(nil)
 	_ hazmatKeeper        = (*hazardousmaterialservice.Service)(nil)
 	_ locationKeeper      = (*locationservice.Service)(nil)
 	_ tractorKeeper       = (*tractorservice.Service)(nil)
@@ -44,6 +46,9 @@ func masterDataToolProviders() []any {
 		provideCreateCommodityTool,
 		provideUpdateCommodityTool,
 		provideUpdateCommodityStatusTool,
+		provideCreateCarrierCapacityPostingTool,
+		provideUpdateCarrierCapacityPostingTool,
+		provideDeleteCarrierCapacityPostingTool,
 		provideCreateHazardousMaterialTool,
 		provideUpdateHazardousMaterialTool,
 		provideUpdateHazardousMaterialStatusTool,
@@ -240,4 +245,24 @@ func provideDiscardCaptureItemTool(captures *captureservice.Service) serviceport
 
 func provideDiscardCaptureBatchTool(captures *captureservice.Service) serviceports.AgentTool {
 	return newDiscardCaptureBatchTool(captures)
+}
+
+func provideCreateCarrierCapacityPostingTool(
+	postings *carriercapacityservice.Service,
+	states repositories.UsStateRepository,
+) serviceports.AgentTool {
+	return newCreateCarrierCapacityPostingTool(postings, states)
+}
+
+func provideUpdateCarrierCapacityPostingTool(
+	postings *carriercapacityservice.Service,
+	states repositories.UsStateRepository,
+) serviceports.AgentTool {
+	return newUpdateCarrierCapacityPostingTool(postings, states)
+}
+
+func provideDeleteCarrierCapacityPostingTool(
+	postings *carriercapacityservice.Service,
+) serviceports.AgentTool {
+	return newDeleteCarrierCapacityPostingTool(postings)
 }

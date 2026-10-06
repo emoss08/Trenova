@@ -50,12 +50,14 @@ type DataTableSortBuilderProps<TData extends RowData> = {
   columns: ColumnDef<TData>[];
   sort: SortField[];
   onSortChange: (sort: SortField[]) => void;
+  labelClassName?: string;
 };
 
 export default function DataTableSortBuilder<TData extends RowData>({
   columns,
   sort,
   onSortChange,
+  labelClassName,
 }: DataTableSortBuilderProps<TData>) {
   const t = useT();
 
@@ -159,7 +161,7 @@ export default function DataTableSortBuilder<TData extends RowData>({
         render={
           <Button variant="outline" size="sm">
             <SwitchVertical01Icon className="size-3.5" />
-            {t("Sort")}
+            <span className={labelClassName}>{t("Sort")}</span>
             {sortCount > 0 && (
               <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
                 {sortCount}

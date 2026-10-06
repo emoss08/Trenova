@@ -31,6 +31,12 @@ type QueryBuilder struct {
 	traversalEnabled bool
 	entity           any
 	invalidFields    []string
+	predicatesOnly   bool
+}
+
+func (qb *QueryBuilder) WithPredicatesOnly() *QueryBuilder {
+	qb.predicatesOnly = true
+	return qb
 }
 
 func New(
@@ -690,7 +696,9 @@ func (qb *QueryBuilder) buildSearchVectorConditions(searchQuery, tableAlias stri
 		vectorCol = "search_vector"
 	}
 
-	qb.query = qb.query.ColumnExpr(tableAlias + "*")
+	if !qb.predicatesOnly {
+		qb.query = qb.query.ColumnExpr(tableAlias + "*")
+	}
 
 	usesAdvancedSyntax := qb.hasWebsearchOperators(searchQuery)
 
@@ -747,15 +755,17 @@ func (qb *QueryBuilder) applyWebsearchWithPrefix(searchQuery, tableAlias, vector
 
 	prefixQuery := strings.Join(validPrefixParts, " & ")
 
-	qb.query = qb.query.ColumnExpr(
-		fmt.Sprintf(
-			"ts_rank(%s%s, websearch_to_tsquery('english', ?) || to_tsquery('english', ?)) AS rank",
-			tableAlias,
-			vectorCol,
-		),
-		searchQuery,
-		prefixQuery,
-	)
+	if !qb.predicatesOnly {
+		qb.query = qb.query.ColumnExpr(
+			fmt.Sprintf(
+				"ts_rank(%s%s, websearch_to_tsquery('english', ?) || to_tsquery('english', ?)) AS rank",
+				tableAlias,
+				vectorCol,
+			),
+			searchQuery,
+			prefixQuery,
+		)
+	}
 
 	qb.query = qb.query.Where(
 		fmt.Sprintf(
@@ -778,14 +788,16 @@ func isValidSearchTerm(term string) bool {
 }
 
 func (qb *QueryBuilder) applyWebsearchOnly(searchQuery, tableAlias, vectorCol string) {
-	qb.query = qb.query.ColumnExpr(
-		fmt.Sprintf(
-			"ts_rank(%s%s, websearch_to_tsquery('english', ?)) AS rank",
-			tableAlias,
-			vectorCol,
-		),
-		searchQuery,
-	)
+	if !qb.predicatesOnly {
+		qb.query = qb.query.ColumnExpr(
+			fmt.Sprintf(
+				"ts_rank(%s%s, websearch_to_tsquery('english', ?)) AS rank",
+				tableAlias,
+				vectorCol,
+			),
+			searchQuery,
+		)
+	}
 
 	qb.query = qb.query.Where(
 		fmt.Sprintf("%s%s @@ websearch_to_tsquery('english', ?)", tableAlias, vectorCol),

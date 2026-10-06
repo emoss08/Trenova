@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,9 +25,7 @@ var (
 	ErrAgentCannotApprove = errors.New("agent principals cannot approve billing queue items")
 	// ErrCustomerAlreadyTold is a skip rather than a failure: the customer
 	// has the update, which is the outcome the call wanted.
-	ErrCustomerAlreadyTold = errors.New(
-		"this customer was already emailed about this shipment within the hour",
-	)
+	ErrCustomerAlreadyTold   = customerupdateservice.ErrAlreadyTold
 	ErrTenantMismatch        = errors.New("tool parameters do not match the actor tenant")
 	ErrMissingIdempotencyKey = errors.New("idempotency key is required for this tool")
 )

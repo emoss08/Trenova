@@ -203,9 +203,12 @@ export function PTOTypeBadge({ type }: { type: PTOType }) {
 export function ShipmentStatusBadge({
   status,
   className,
+  brokered = false,
 }: {
   status?: ShipmentStatus;
   className?: string;
+  /** A brokerage books a carrier rather than assigning a driver, so Assigned reads Booked. */
+  brokered?: boolean;
 }) {
   const t = useT();
 
@@ -231,7 +234,7 @@ export function ShipmentStatusBadge({
     },
     [shipmentStatusSchema.enum.Assigned]: {
       phase: "awaiting",
-      text: t("Assigned"),
+      text: brokered ? t("Booked") : t("Assigned"),
       description: t(
         "All required equipment and workers have been assigned to this shipment's moves.",
       ),

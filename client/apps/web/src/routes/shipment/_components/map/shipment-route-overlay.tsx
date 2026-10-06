@@ -1,6 +1,6 @@
 import type { Shipment, ShipmentStatus } from "@trenova/shared/types/shipment";
-import { useCommandCenterStore } from "../command-center/store";
-import { useCommandCenterUrl } from "../command-center/url-state";
+import { useShipmentBoardStore } from "../board/store";
+import { useShipmentBoardUrl } from "../board/url-state";
 import { ShipmentCurrentPin, ShipmentEndpointPin, type PinTone } from "./shipment-pin";
 import {
   getShipmentStopsWithCoords,
@@ -25,9 +25,9 @@ const STATUS_TONE: Record<ShipmentStatus, PinTone | null> = {
 
 export function ShipmentRouteOverlay({ enabled = true }: { enabled?: boolean }) {
   const { data } = useMapShipments(enabled);
-  const highlightId = useCommandCenterStore.use.highlightId();
-  const setHighlightId = useCommandCenterStore.use.setHighlightId();
-  const [, setUrl] = useCommandCenterUrl();
+  const highlightId = useShipmentBoardStore.use.highlightId();
+  const setHighlightId = useShipmentBoardStore.use.setHighlightId();
+  const [, setUrl] = useShipmentBoardUrl();
 
   const shipments = data?.results ?? [];
   if (shipments.length === 0) return null;
@@ -49,7 +49,7 @@ export function ShipmentRouteOverlay({ enabled = true }: { enabled?: boolean }) 
         const onMouseLeave = () => setHighlightId(null);
         const onClick = () => {
           if (!s.id) return;
-          void setUrl({ expanded: s.id });
+          void setUrl({ expanded: s.id, view: "table" });
         };
         const title = `${(s as Shipment).proNumber ?? s.id ?? "Shipment"} · ${s.status}`;
         const currentIdx = pickCurrentStopIndex(stops);

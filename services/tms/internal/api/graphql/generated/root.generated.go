@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
@@ -102,6 +103,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailurereasoncodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sidebarpreferenceexec"
@@ -147,6 +149,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -294,6 +297,7 @@ type ResolverRoot interface {
 	Carrier() CarrierResolver
 	CarrierAssignment() CarrierAssignmentResolver
 	CarrierAssignmentAccessorial() CarrierAssignmentAccessorialResolver
+	CarrierCapacityPosting() CarrierCapacityPostingResolver
 	CarrierEquipmentVerification() CarrierEquipmentVerificationResolver
 	CarrierInsurancePolicy() CarrierInsurancePolicyResolver
 	CarrierIntelControl() CarrierIntelControlResolver
@@ -815,6 +819,10 @@ type CarrierAssignmentResolver interface {
 
 type CarrierAssignmentAccessorialResolver interface {
 	Amount(ctx context.Context, obj *shipment.CarrierAssignmentAccessorial) (string, error)
+}
+
+type CarrierCapacityPostingResolver interface {
+	Rate(ctx context.Context, obj *carriercapacity.Posting) (*string, error)
 }
 
 type CarrierEquipmentVerificationResolver interface {
@@ -1503,6 +1511,9 @@ type MutationResolver interface {
 	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
 	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
 	DeleteCaptureProfile(ctx context.Context, id string) (bool, error)
+	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
+	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
+	DeleteCarrierCapacityPosting(ctx context.Context, id string, version int) (bool, error)
 	UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintel.CarrierIntelControl, error)
 	SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintel.CarrierIntelControl, error)
 	ResumeCarrierIntelMonitoring(ctx context.Context) (bool, error)
@@ -1808,6 +1819,10 @@ type MutationResolver interface {
 	ResolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
 	UnresolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
 	AcknowledgeShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
+	TenderShipments(ctx context.Context, input gqlmodel.TenderShipmentsInput) (*gqlmodel.TenderShipmentsResult, error)
+	DecideShipmentSuggestion(ctx context.Context, input gqlmodel.DecideShipmentSuggestionInput) (bool, error)
+	UndoShipmentSuggestionDecision(ctx context.Context, key string) (bool, error)
+	NotifyShipmentDelay(ctx context.Context, input gqlmodel.NotifyShipmentDelayInput) (bool, error)
 	UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error)
 	CreateTableConfiguration(ctx context.Context, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
@@ -2181,6 +2196,8 @@ type QueryResolver interface {
 	CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error)
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
+	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)
+	CarrierCapacityPosting(ctx context.Context, id string) (*carriercapacity.Posting, error)
 	CarrierIntelControl(ctx context.Context) (*carrierintel.CarrierIntelControl, error)
 	CarrierIntelProvider(ctx context.Context) (*gqlmodel.CarrierIntelProviderInfo, error)
 	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintel.RuleDefinition, error)
@@ -2518,6 +2535,16 @@ type QueryResolver interface {
 	ShipmentEvents(ctx context.Context, input gqlmodel.ShipmentEventsInput) ([]gqlmodel.ShipmentEvent, error)
 	ShipmentAnalytics(ctx context.Context, input gqlmodel.ShipmentAnalyticsInput) (*gqlmodel.ShipmentAnalytics, error)
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
+	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
+	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
+	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
+	ShipmentFacetCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, facets []repositories.ShipmentFacet) ([]*gqlmodel.ShipmentFacetCounts, error)
+	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
+	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
+	CapacityUnitMatches(ctx context.Context, kind gqlmodel.CapacityUnitKind, unitID string, limit *int) ([]*gqlmodel.CapacityMatch, error)
+	ShipmentCoverageSuggestions(ctx context.Context, shipmentID string) (*gqlmodel.ShipmentCoverageSuggestions, error)
+	ShipmentSuggestions(ctx context.Context, timezone string) (*gqlmodel.ShipmentSuggestionQueue, error)
+	ShipmentWatchlist(ctx context.Context, timezone string) (*gqlmodel.ShipmentWatchlist, error)
 	ShipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ShipmentTypeConnection, error)
 	ShipmentType(ctx context.Context, id string) (*shipmenttype.ShipmentType, error)
 	SidebarPreferences(ctx context.Context) (*gqlmodel.SidebarPreferences, error)
@@ -2666,6 +2693,7 @@ type ShiftTemplateResolver interface {
 }
 
 type ShipmentResolver interface {
+	Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error)
 	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
 	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
 	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
@@ -2994,6 +3022,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		briefingexec.Shard,
 		captureexec.Shard,
 		carrierexec.Shard,
+		carriercapacityexec.Shard,
 		carrierintelligenceexec.Shard,
 		carriersettlementexec.Shard,
 		commodityexec.Shard,
@@ -3064,6 +3093,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		servicetypeexec.Shard,
 		sharedexec.Shard,
 		shipmentexec.Shard,
+		shipmentboardexec.Shard,
 		shipmenttypeexec.Shard,
 		sidebarpreferenceexec.Shard,
 		storedmileageexec.Shard,
@@ -3158,6 +3188,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Carrier":                            func() any { return r.Carrier() },
 			"CarrierAssignment":                  func() any { return r.CarrierAssignment() },
 			"CarrierAssignmentAccessorial":       func() any { return r.CarrierAssignmentAccessorial() },
+			"CarrierCapacityPosting":             func() any { return r.CarrierCapacityPosting() },
 			"CarrierEquipmentVerification":       func() any { return r.CarrierEquipmentVerification() },
 			"CarrierInsurancePolicy":             func() any { return r.CarrierInsurancePolicy() },
 			"CarrierIntelControl":                func() any { return r.CarrierIntelControl() },
@@ -9841,6 +9872,96 @@ type CarrierConnection {
 extend type Query {
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   carrier(id: ID!): Carrier
+}
+`, BuiltIn: false},
+	{Name: "../schema/carrier_capacity.graphqls", Input: `enum CarrierCapacityRateMethod {
+  Flat
+  PerMile
+}
+
+enum CarrierCapacitySource {
+  Manual
+  Email
+  EDI
+}
+
+"Trucks a carrier says it has available: where, when, with what equipment and at what rate."
+type CarrierCapacityPosting {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  originLocationId: ID
+  originStateId: ID
+  "How far from the origin location the carrier will pick up."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int!
+  rateMethod: CarrierCapacityRateMethod!
+  "Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote."
+  rate: Decimal
+  source: CarrierCapacitySource!
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  carrier: Carrier
+  originLocation: Location
+  originState: UsState
+  destinationState: UsState
+  equipmentType: EquipmentType
+}
+
+type CarrierCapacityPostingEdge {
+  node: CarrierCapacityPosting!
+  cursor: String!
+}
+
+type CarrierCapacityPostingConnection {
+  edges: [CarrierCapacityPostingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input CarrierCapacityPostingInput {
+  carrierId: ID!
+  "Give an origin location, an origin state, or both."
+  originLocationId: ID
+  originStateId: ID
+  "Only with an origin location."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int = 1
+  rateMethod: CarrierCapacityRateMethod = PerMile
+  rate: Decimal
+  source: CarrierCapacitySource = Manual
+  notes: String
+}
+
+extend type Query {
+  carrierCapacityPostings(
+    input: DataTableConnectionInput!
+    carrierId: ID
+    "Only postings whose window has not closed."
+    openOnly: Boolean = false
+  ): CarrierCapacityPostingConnection!
+  carrierCapacityPosting(id: ID!): CarrierCapacityPosting
+}
+
+extend type Mutation {
+  createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
+  updateCarrierCapacityPosting(
+    id: ID!
+    version: Int!
+    input: CarrierCapacityPostingInput!
+  ): CarrierCapacityPosting!
+  deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/carrier_intelligence.graphqls", Input: `enum CarrierIntelSection {
@@ -24224,6 +24345,9 @@ type ShipmentBillingSplitSummary {
 
 type Shipment {
   id: ID!
+  stage: ShipmentStage!
+  "Projected arrival at the final delivery, read from the latest position and the remaining stops."
+  eta: ShipmentEta
   businessUnitId: ID!
   organizationId: ID!
   sourceDocumentId: String
@@ -25050,17 +25174,8 @@ type ShipmentComment {
   attachments: [ShipmentCommentAttachment!]
 }
 
-type ShipmentSavedViewCounts {
-  all: Int
-  transit: Int
-  atRisk: Int
-  unassigned: Int
-  deliveringToday: Int
-}
-
 type ShipmentAnalytics {
   page: String!
-  savedViewCounts: ShipmentSavedViewCounts
   activeShipments: ShipmentActiveShipments
   onTimePercent: ShipmentOnTime
   revenueToday: ShipmentRevenueToday
@@ -25888,6 +26003,9 @@ input ShipmentsInput {
   billingTransferEligible: Boolean = false
   "Load each shipment's customer without expanding the rest of its details."
   includeCustomer: Boolean = false
+  quickFilters: [ShipmentQuickFilterInput!]
+  "IANA time zone for day and hour quick filters."
+  timezone: String
 }
 
 input ShipmentEventsInput {
@@ -25960,6 +26078,448 @@ extend type Mutation {
   resolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
   unresolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
   acknowledgeShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+}
+`, BuiltIn: false},
+	{Name: "../schema/shipment_board.graphqls", Input: `"Where a shipment sits on the board. Derived from its status alone, so it sorts, filters and groups as a column."
+enum ShipmentStage {
+  Late
+  NeedsCoverage
+  Moving
+  Scheduled
+  Delivered
+  Canceled
+}
+
+enum EtaVerdict {
+  OnTime
+  AtRisk
+  Late
+  Unknown
+}
+
+type ShipmentEta {
+  estimatedArrival: Timestamp
+  "Minutes between the projected arrival and the end of the delivery window; negative when it will be missed."
+  slackMinutes: Int
+  verdict: EtaVerdict!
+  "Why the load is behind, when the tracking snapshot can say."
+  reason: String
+}
+
+"How an organization moves freight: with its own drivers, through carriers, or both."
+enum OperationType {
+  asset
+  brokerage
+  both
+}
+
+"A named predicate over shipments. The server owns every definition; clients only name them."
+enum ShipmentQuickFilter {
+  Late
+  Uncovered
+  Moving
+  DeliveringToday
+  Reefer
+  LowMargin
+  DeliveryHour
+  PickupWindow
+  Detention
+  ReadyToBill
+}
+
+input ShipmentQuickFilterInput {
+  filter: ShipmentQuickFilter!
+  "Local hour of day (0-23) for DeliveryHour."
+  hour: Int
+  "Minutes from now where a PickupWindow starts."
+  windowStartMinutes: Int
+  "Minutes from now where a PickupWindow ends; omit for an open-ended window."
+  windowEndMinutes: Int
+}
+
+input ShipmentBoardScopeInput {
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  quickFilters: [ShipmentQuickFilterInput!]
+  "IANA time zone the day and hour predicates are evaluated in."
+  timezone: String!
+}
+
+type ShipmentBoardCapabilities {
+  "An AI provider is configured for briefings and operational insights."
+  ai: Boolean!
+  operationType: OperationType!
+  "An ELD or telematics integration supplies hours of service."
+  hos: Boolean!
+  "Google Maps is configured for this workspace."
+  maps: Boolean!
+}
+
+type ShipmentStageSummary {
+  stage: ShipmentStage!
+  "Sort position of the stage on the board."
+  rank: Int!
+  count: Int!
+  revenue: Decimal!
+}
+
+type ShipmentQuickFilterCount {
+  filter: ShipmentQuickFilter!
+  count: Int!
+}
+
+enum ShipmentFacet {
+  Status
+  Equipment
+  TenderStatus
+  Customer
+}
+
+type ShipmentFacetValue {
+  value: String!
+  label: String!
+  count: Int!
+}
+
+type ShipmentFacetCounts {
+  facet: ShipmentFacet!
+  "The field filter the values apply to."
+  field: String!
+  values: [ShipmentFacetValue!]!
+}
+
+type ShipmentBriefingSegment {
+  text: String!
+  "The quick filter the segment links to, when it names a set of shipments."
+  filter: ShipmentQuickFilter
+}
+
+type ShipmentBriefing {
+  segments: [ShipmentBriefingSegment!]!
+  "The model wrote the wording; false means the deterministic sentence."
+  narrated: Boolean!
+  generatedAt: Timestamp!
+}
+
+enum CapacityUnitKind {
+  Driver
+  Carrier
+}
+
+enum CapacityGroup {
+  ReadyNow
+  WithinTwoHours
+  TrucksPosted
+  UsuallyAccept
+}
+
+"The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier."
+type CapacityRing {
+  value: Float!
+  max: Float!
+  low: Boolean!
+}
+
+type CapacityUnit {
+  id: ID!
+  kind: CapacityUnitKind!
+  name: String!
+  initials: String!
+  group: CapacityGroup!
+  "When a driver comes free; null when free now."
+  freeAt: Timestamp
+  city: String
+  "Tractor code for a driver, MC number for a carrier."
+  unitLabel: String
+  ring: CapacityRing
+  "Trucks a carrier has posted."
+  badgeCount: Int
+  ratePerMile: Decimal
+  acceptancePercent: Float
+  driveRemainingMs: Int
+  tractorId: ID
+}
+
+type DriverCapacitySummary {
+  ready: Int!
+  withinTwoHours: Int!
+  short: Int!
+  uncovered: Int!
+}
+
+type CarrierCapacitySummary {
+  posting: Int!
+  untendered: Int!
+  awaitingAcceptance: Int!
+  avgRatePerMile: Decimal
+}
+
+type ShipmentCapacity {
+  kind: CapacityUnitKind!
+  units: [CapacityUnit!]!
+  drivers: DriverCapacitySummary
+  carriers: CarrierCapacitySummary
+}
+
+type CapacityMatch {
+  shipmentId: ID!
+  moveId: ID!
+  proNumber: String
+  originCity: String!
+  destinationCity: String!
+  pickupAt: Timestamp
+  revenue: Decimal!
+  deadheadMiles: Float
+  quote: Decimal
+  marginPercent: Float
+  fitPercent: Float
+}
+
+type DriverCoverageSuggestion {
+  workerId: ID!
+  tractorId: ID
+  moveId: ID!
+  name: String!
+  initials: String!
+  unitLabel: String
+  distanceMiles: Float
+  driveRemainingMs: Int
+  fitPercent: Float
+}
+
+type CarrierCoverageSuggestion {
+  carrierId: ID!
+  moveId: ID!
+  name: String!
+  initials: String!
+  mcNumber: String
+  quote: Decimal!
+  ratePerMile: Decimal!
+  acceptancePercent: Float
+  "Whether the carrier has a posting that covers this lane."
+  posted: Boolean!
+}
+
+type ShipmentCoverageSuggestions {
+  drivers: [DriverCoverageSuggestion!]!
+  carriers: [CarrierCoverageSuggestion!]!
+}
+
+input TenderShipmentItemInput {
+  shipmentId: ID!
+  "Tender to this carrier; omit to use the routing guide or the best match."
+  carrierId: ID
+}
+
+input TenderShipmentsInput {
+  items: [TenderShipmentItemInput!]!
+}
+
+type TenderShipmentSuccess {
+  shipmentId: ID!
+  tenderId: ID!
+  carrierId: ID
+  carrierName: String
+}
+
+type TenderShipmentFailure {
+  shipmentId: ID!
+  message: String!
+}
+
+type TenderShipmentsResult {
+  tendered: [TenderShipmentSuccess!]!
+  failed: [TenderShipmentFailure!]!
+}
+
+enum ShipmentSuggestionKind {
+  Coverage
+  Tender
+  DelayNotice
+  HoursOfService
+  Detention
+  Retender
+}
+
+enum ShipmentSuggestionTone {
+  Danger
+  Warning
+  Accent
+  Brand
+}
+
+enum ShipmentSuggestionActionType {
+  AssignDriver
+  TenderCarrier
+  NotifyCustomer
+  ApproveDetention
+  Review
+}
+
+type ShipmentSuggestionAction {
+  type: ShipmentSuggestionActionType!
+  label: String!
+  moveId: ID
+  workerId: ID
+  tractorId: ID
+  carrierId: ID
+  detentionOccurrenceId: ID
+  "Drafted customer message for NotifyCustomer."
+  message: String
+}
+
+type ShipmentSuggestion {
+  key: String!
+  kind: ShipmentSuggestionKind!
+  tone: ShipmentSuggestionTone!
+  shipmentId: ID
+  proNumber: String
+  title: String!
+  reason: String!
+  impact: [String!]!
+  primary: ShipmentSuggestionAction!
+  "Label of the manual action shown when the suggestion is reviewed by hand."
+  manualLabel: String!
+  dueAt: Timestamp
+  "Postponed with Later; sorts to the back of the queue."
+  deferred: Boolean!
+}
+
+type ShipmentSuggestionQueue {
+  items: [ShipmentSuggestion!]!
+  handledThisShift: Int!
+  narrated: Boolean!
+}
+
+enum ShipmentSuggestionDecision {
+  Done
+  Later
+}
+
+input DecideShipmentSuggestionInput {
+  key: String!
+  decision: ShipmentSuggestionDecision!
+}
+
+input NotifyShipmentDelayInput {
+  shipmentId: ID!
+  message: String!
+}
+
+type DeliveryHourBucket {
+  hour: Int!
+  delivered: Int!
+  scheduled: Int!
+  late: Int!
+}
+
+type LateDelivery {
+  shipmentId: ID!
+  proNumber: String
+  deltaMinutes: Int!
+  city: String!
+  customerName: String!
+}
+
+type ShipmentDeliveryWatch {
+  onTime: Int!
+  total: Int!
+  lateCount: Int!
+  buckets: [DeliveryHourBucket!]!
+  worstLate: [LateDelivery!]!
+}
+
+enum UncoveredPickupWindow {
+  UnderTwoHours
+  TwoToSixHours
+  LaterToday
+  TomorrowOrLater
+}
+
+type UncoveredWindowSummary {
+  window: UncoveredPickupWindow!
+  startMinutes: Int!
+  "Null for the open-ended window."
+  endMinutes: Int
+  count: Int!
+  revenue: Decimal!
+}
+
+type NextUncoveredPickup {
+  shipmentId: ID!
+  pickupAt: Timestamp!
+  originCity: String!
+  destinationCity: String!
+}
+
+type ShipmentUncoveredWatch {
+  count: Int!
+  revenue: Decimal!
+  windows: [UncoveredWindowSummary!]!
+  next: NextUncoveredPickup
+}
+
+type DetentionAccrual {
+  shipmentId: ID!
+  stopId: ID!
+  "Present when the detention policy engine tracks the stop, so it can be approved for billing."
+  occurrenceId: ID
+  facilityName: String!
+  coverageName: String
+  "When billable time started; the client accrues from here."
+  billableSince: Timestamp!
+  ratePerHour: Decimal!
+  amount: Decimal!
+}
+
+type ShipmentDetentionWatch {
+  stopCount: Int!
+  amount: Decimal!
+  ratePerHour: Decimal!
+  snapshotAt: Timestamp!
+  top: [DetentionAccrual!]!
+}
+
+type ReadyToBillCustomer {
+  customerId: ID!
+  name: String!
+  count: Int!
+  total: Decimal!
+}
+
+type ShipmentBillingWatch {
+  count: Int!
+  total: Decimal!
+  customers: [ReadyToBillCustomer!]!
+  moreCustomers: Int!
+}
+
+type ShipmentWatchlist {
+  deliveries: ShipmentDeliveryWatch!
+  uncovered: ShipmentUncoveredWatch!
+  detention: ShipmentDetentionWatch!
+  billing: ShipmentBillingWatch!
+}
+
+extend type Query {
+  shipmentBoardCapabilities: ShipmentBoardCapabilities!
+  shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
+  shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
+  shipmentFacetCounts(input: ShipmentBoardScopeInput!, facets: [ShipmentFacet!]!): [ShipmentFacetCounts!]!
+  shipmentBriefing(timezone: String!): ShipmentBriefing!
+  shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
+  capacityUnitMatches(kind: CapacityUnitKind!, unitId: ID!, limit: Int = 2): [CapacityMatch!]!
+  shipmentCoverageSuggestions(shipmentId: ID!): ShipmentCoverageSuggestions!
+  shipmentSuggestions(timezone: String!): ShipmentSuggestionQueue!
+  shipmentWatchlist(timezone: String!): ShipmentWatchlist!
+}
+
+extend type Mutation {
+  tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
+  decideShipmentSuggestion(input: DecideShipmentSuggestionInput!): Boolean!
+  undoShipmentSuggestionDecision(key: String!): Boolean!
+  notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/shipment_type.graphqls", Input: `type ShipmentType {

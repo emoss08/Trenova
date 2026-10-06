@@ -67,6 +67,45 @@ export function getTotalMiles(shipment: Shipment) {
   return shipment.moves.reduce((total, move) => total + (move.distance ?? 0), 0);
 }
 
+export type RouteProgress = {
+  percent: number;
+  milesDone: number;
+  milesLeft: number;
+  totalMiles: number;
+};
+
+const DELIVERED_STATUSES = new Set<ShipmentStatus>(["Completed", "ReadyToInvoice", "Invoiced"]);
+const MOVING_PROGRESS_FLOOR = 2;
+const MOVING_PROGRESS_CEILING = 98;
+
+/**
+ * How far along its route a load is, at `now` (Unix seconds). A delivered
+ * load is done; one that has not left its pickup has not started; a moving
+ * load is placed by elapsed time between its departure and its delivery
+ * appointment, held short of either end so it never reads as not started or
+ * as arrived while it is still rolling.
+ */
+export function getRouteProgress(shipment: Shipment, now: number): RouteProgress {
+  const totalMiles = Math.round(getTotalMiles(shipment));
+  const build = (percent: number): RouteProgress => {
+    const milesDone = Math.round((totalMiles * percent) / 100);
+    return { percent, milesDone, milesLeft: totalMiles - milesDone, totalMiles };
+  };
+
+  if (DELIVERED_STATUSES.has(shipment.status)) return build(100);
+
+  const departedAt = getOriginStop(shipment)?.actualDeparture;
+  const destination = getDestinationStop(shipment);
+  const dueAt = destination?.scheduledWindowEnd ?? destination?.scheduledWindowStart;
+  if (!departedAt || !dueAt || dueAt <= departedAt) return build(0);
+
+  const elapsed = (now - departedAt) / (dueAt - departedAt);
+  const percent = Math.round(
+    Math.min(MOVING_PROGRESS_CEILING, Math.max(MOVING_PROGRESS_FLOOR, elapsed * 100)),
+  );
+  return build(percent);
+}
+
 type ShipmentProgressVariant = "default" | "success" | "warning" | "error";
 
 const SHIPMENT_STATUS_PROGRESS: Record<
