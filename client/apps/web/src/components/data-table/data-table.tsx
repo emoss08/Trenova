@@ -17,7 +17,14 @@ import {
   toColumnPinningState,
   updateSortField,
 } from "@/lib/data-table";
-import { fetchAllRows } from "@/lib/data-table-export";
+import {
+  buildCsv,
+  buildExportColumns,
+  downloadCsv,
+  exportFilename,
+  fetchAllRows,
+} from "@/lib/data-table-export";
+import { Download01Icon } from "@trenova/shared/components/icons";
 import { groupedScopeFilters, groupedSort } from "@/lib/data-table-grouping";
 import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
 import { queries } from "@/lib/queries";
@@ -84,6 +91,7 @@ const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 const NO_ROW_ACTIONS: never[] = [];
 const NO_SCOPE_FILTERS: FieldFilter[] = [];
 const noop = () => {};
+const DENSITY_COMPACT_ROW = "[--row-h:var(--row-h-compact)]";
 
 export function DataTable<TData extends Record<string, any>>({
   columns,
@@ -526,6 +534,19 @@ export function DataTable<TData extends Record<string, any>>({
   }, []);
 
   const cursorRowId = keyboard?.cursorRowId ?? null;
+  const rowShortcuts = useMemo(
+    () =>
+      keyboard?.rowShortcuts?.map((shortcut) => ({
+        key: shortcut.key,
+        mod: shortcut.mod,
+        alt: shortcut.alt,
+        run: (rowId: string) => {
+          const row = currentPageResults?.find((entry) => (entry as { id?: string }).id === rowId);
+          if (row) shortcut.run(row);
+        },
+      })),
+    [keyboard?.rowShortcuts, currentPageResults],
+  );
   useDataTableRowCursor({
     enabled: !!keyboard?.enabled && !alternateView?.active,
     rowIds: pageRowIds,
@@ -536,6 +557,7 @@ export function DataTable<TData extends Record<string, any>>({
     hasSelection: selectedCount > 0,
     onToggleSelect: enableRowSelection ? handleToggleRowSelection : undefined,
     onClearSelection: handleClearSelection,
+    shortcuts: rowShortcuts,
   });
 
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -708,6 +730,23 @@ export function DataTable<TData extends Record<string, any>>({
     [formatRules, table],
   );
 
+  const resolvedDockActions = useMemo(() => {
+    if (!canExport || dockActions.length === 0) return dockActions;
+    return [
+      ...dockActions,
+      {
+        id: "export-selected",
+        label: t("Export"),
+        icon: Download01Icon,
+        onClick: (rows: TData[]) =>
+          downloadCsv(
+            buildCsv(rows, buildExportColumns(table.getAllLeafColumns(), true)),
+            exportFilename(name),
+          ),
+      },
+    ];
+  }, [canExport, dockActions, name, t, table]);
+
   const hasActiveFilters = filterItems.length > 0 || query !== "";
   const handleClearFilters = useCallback(() => {
     setFilterItems([]);
@@ -838,7 +877,13 @@ export function DataTable<TData extends Record<string, any>>({
               />
             )}
             {alternateView?.active ? (
-              <div className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
+              <div
+                data-density={density}
+                className={cn(
+                  "bleed:min-h-0 bleed:flex-1 relative min-w-0",
+                  density === "compact" && DENSITY_COMPACT_ROW,
+                )}
+              >
                 {alternateView.render({ queryOptions: baseQueryOptions })}
               </div>
             ) : isEmpty && !hasCollapsedGroups ? (
@@ -875,14 +920,14 @@ export function DataTable<TData extends Record<string, any>>({
                       // Density repoints the row-height token; the cells read it,
                       // so the two densities stay the same table at two sizes
                       // rather than one table with padding patched over it.
-                      density === "compact" && "[--row-h:var(--row-h-compact)] [&_td]:py-0.5",
+                      density === "compact" && cn(DENSITY_COMPACT_ROW, "[&_td]:py-0.5"),
                     )}
                     containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border"
                     style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
                   >
                     <TableHeader className="sticky top-0 z-20">
                       {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id} className="hover:bg-transparent uppercase">
+                        <TableRow key={headerGroup.id} className="hover:bg-transparent">
                           <SortableContext
                             items={reorderableIds}
                             strategy={horizontalListSortingStrategy}
@@ -940,8 +985,8 @@ export function DataTable<TData extends Record<string, any>>({
           />
         )}
       </DataTablePanelWrapper>
-      {enableRowSelection && dockActions.length > 0 && (
-        <DataTableDock table={table} actions={dockActions} />
+      {enableRowSelection && resolvedDockActions.length > 0 && (
+        <DataTableDock table={table} actions={resolvedDockActions} />
       )}
     </DataTableProvider>
   );

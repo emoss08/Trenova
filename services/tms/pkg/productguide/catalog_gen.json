@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e187c6b2e4f773a524fd1070b24b00eee7dd4da98017c5d5a5807d498c10b4df",
+  "version": "sha256:302ba760ef8d62d21730d3f740173bece5917c9e47546e887dfe669fb878da90",
   "modules": [
     {
       "id": "home",
@@ -15730,8 +15730,8 @@
         "Shipment management",
         "Shipments"
       ],
-      "description": "Operations command center for shipments, assignments, and exceptions.",
-      "summary": "Shipments is the operations command center. The top rail shows shipment KPIs, the map shows where loads are, and the side panels (**Unassigned**, **Exceptions** and other watch lists) surface work that needs a person. The table below lists every shipment with its status, customer, stops and coverage; selecting a row expands it to show the route timeline, financials, documents and quick actions. Dispatchers, customer service and billing staff work loads from here.\n\nOpening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.",
+      "description": "Every load on the board, what needs a hand, and who can take it.",
+      "summary": "Shipments is the dispatcher's board. The table comes first, grouped by stage: loads that need attention, loads that need coverage, moving, scheduled and delivered. Above it is a one-sentence briefing of the day (when an AI provider is connected) and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.\n\nSelecting a row expands it in place, showing the route, the money, the documents, the next step and quick actions. Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.",
       "requires": [
         {
           "resource": "shipment",
@@ -15747,7 +15747,10 @@
         "pro number",
         "BOL",
         "command center",
-        "trips"
+        "trips",
+        "dispatch board",
+        "capacity",
+        "suggested actions"
       ],
       "tasks": [
         {
@@ -15772,13 +15775,45 @@
           "keywords": [
             "search loads",
             "look up pro number",
-            "filter shipments"
+            "filter shipments",
+            "quick filters"
           ],
           "steps": [
             "Open [Shipments](/shipment-management/shipments).",
-            "Type in **Search shipments...**, or pick a view such as **All shipments**, **In transit**, **At risk**, **Unassigned** or **Delivering today**.",
-            "Narrow further with the **At risk**, **Reefer** and **Today** chips or with **Filter**, and switch between **Table** and **Timeline**.",
-            "Select a row to expand it, or choose **Edit** from its row menu to open the full shipment."
+            "Type in **Search shipments…**. Focusing the search (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count.",
+            "Narrow further with **Filter** (status, equipment, tender and customer), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** turns the stage groups on or off; a group's header collapses it.",
+            "Select a row (or move to it with J and K and press Enter) to expand it, or choose **Edit** from its row menu to open the full shipment."
+          ]
+        },
+        {
+          "title": "Cover loads from the capacity strip",
+          "keywords": [
+            "available drivers",
+            "ready drivers",
+            "carrier capacity",
+            "posted trucks",
+            "best load",
+            "tender to carriers"
+          ],
+          "steps": [
+            "Open [Shipments](/shipment-management/shipments). The strip under the briefing shows **Drivers** or **Carriers** (both tabs when the organization does both).",
+            "Select a driver or carrier to see the best loads for them, then select **Assign** or **Tender** on the one you want.",
+            "To clear the backlog at once, use the action under the summary, such as tendering the loads your drivers can't cover to their best-matched carriers."
+          ]
+        },
+        {
+          "title": "Work the suggested actions",
+          "keywords": [
+            "brief",
+            "action queue",
+            "exceptions",
+            "approve suggestion",
+            "notify customer of delay"
+          ],
+          "steps": [
+            "Open [Shipments](/shipment-management/shipments) and open the panel's **Brief** (shown as **Overview** when no AI provider is connected).",
+            "Read the action at the top, then approve it with its button (Ctrl+Enter), open the shipment with **Review**, or push it to the back with **Later** (Alt+L).",
+            "If you approved something by mistake, select **Undo** on the line that confirms it."
           ]
         },
         {
@@ -15822,7 +15857,7 @@
             "Open [Shipments](/shipment-management/shipments) and open the shipment's row menu.",
             "Select **Duplicate**, set the **Number of copies** and whether to **Override dates**, then **Duplicate**. Copies are made in the background.",
             "Or select **Transfer ownership**, choose the **New owner**, and confirm.",
-            "Or select **Cancel**, optionally enter a **Cancel reason**, and select **Cancel shipment**. A canceled shipment can be restored with **Uncancel**."
+            "Or select **Cancel shipment**, optionally enter a **Cancel reason**, and confirm with **Cancel shipment**. A canceled shipment can be restored with **Uncancel**."
           ]
         },
         {

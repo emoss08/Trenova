@@ -1,6 +1,14 @@
 import { isTypingTarget, isWithinDialog, isWithinPopup } from "@/lib/dom";
 import { useEffect, useRef } from "react";
 
+export type DataTableRowCursorShortcut = {
+  /** The lowercase key; an Alt chord is matched by physical key so Option on a Mac still works. */
+  key: string;
+  mod?: boolean;
+  alt?: boolean;
+  run: (rowId: string) => void;
+};
+
 export type DataTableRowCursorParams = {
   enabled: boolean;
   rowIds: readonly string[];
@@ -11,7 +19,17 @@ export type DataTableRowCursorParams = {
   hasSelection: boolean;
   onToggleSelect?: (rowId: string) => void;
   onClearSelection?: () => void;
+  shortcuts?: readonly DataTableRowCursorShortcut[];
 };
+
+function matchesShortcut(event: KeyboardEvent, shortcut: DataTableRowCursorShortcut) {
+  const mod = event.metaKey || event.ctrlKey;
+  if (!!shortcut.mod !== mod || !!shortcut.alt !== event.altKey || event.shiftKey) return false;
+  if (shortcut.alt) {
+    return event.code === `Key${shortcut.key.toUpperCase()}`;
+  }
+  return event.key.toLowerCase() === shortcut.key;
+}
 
 const DOWN_KEYS = new Set(["j", "ArrowDown"]);
 const UP_KEYS = new Set(["k", "ArrowUp"]);
@@ -32,7 +50,7 @@ export function useDataTableRowCursor(params: DataTableRowCursorParams) {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.defaultPrevented) return;
       if (
         isTypingTarget(event.target) ||
         isWithinDialog(event.target) ||
@@ -40,6 +58,16 @@ export function useDataTableRowCursor(params: DataTableRowCursorParams) {
       ) {
         return;
       }
+
+      const shortcut = latest.current.shortcuts?.find((entry) => matchesShortcut(event, entry));
+      if (shortcut) {
+        const target = latest.current.cursorRowId ?? latest.current.expandedRowId;
+        if (!target) return;
+        event.preventDefault();
+        shortcut.run(target);
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       const {
         rowIds,

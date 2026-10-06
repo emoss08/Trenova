@@ -1566,6 +1566,16 @@ export type CancelWorkerTrainingInput = {
   version?: number | null | undefined;
 };
 
+export type CapacityGroup =
+  | 'ReadyNow'
+  | 'TrucksPosted'
+  | 'UsuallyAccept'
+  | 'WithinTwoHours';
+
+export type CapacityUnitKind =
+  | 'Carrier'
+  | 'Driver';
+
 /** The processor a companion was built for. Trenova Capture ships for 64-bit Windows only. */
 export type CaptureArchitecture =
   | 'x64';
@@ -2629,6 +2639,11 @@ export type DecideProfileChangeInput = {
   note?: string | null | undefined;
 };
 
+export type DecideShipmentSuggestionInput = {
+  decision: ShipmentSuggestionDecision;
+  key: string;
+};
+
 export type DelegateApprovalInput = {
   delegateId: string | number;
   /**
@@ -3314,6 +3329,12 @@ export type EscrowTransactionType =
   | 'Contribution'
   | 'InterestAccrual'
   | 'Refund';
+
+export type EtaVerdict =
+  | 'AtRisk'
+  | 'Late'
+  | 'OnTime'
+  | 'Unknown';
 
 export type ExtractionEvalCaseStatus =
   | 'Active'
@@ -4481,6 +4502,11 @@ export type NotificationState =
   | 'archived'
   | 'inbox';
 
+export type NotifyShipmentDelayInput = {
+  message: string;
+  shipmentId: string | number;
+};
+
 /**
  * The column of the OSHA 300 log a case lands in. The log records only the most
  * serious outcome, so a case that was restricted and then went days-away is a
@@ -4541,6 +4567,12 @@ export type OpeningPtoBalanceInput = {
   days: string;
   ptoType: PtoType;
 };
+
+/** How an organization moves freight: with its own drivers, through carriers, or both. */
+export type OperationType =
+  | 'asset'
+  | 'both'
+  | 'brokerage';
 
 export type OrderInput = {
   baseAmount?: string | null | undefined;
@@ -6010,6 +6042,15 @@ export type ShipmentBillingTransferFailureCode =
   /** The transfer failed for a reason outside the billing policy. */
   | 'Unexpected';
 
+export type ShipmentBoardScopeInput = {
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  query?: string | null | undefined;
+  quickFilters?: Array<ShipmentQuickFilterInput> | null | undefined;
+  /** IANA time zone the day and hour predicates are evaluated in. */
+  timezone: string;
+};
+
 export type ShipmentBulkTransferToBillingInput = {
   billType?: BillType | null | undefined;
   /** Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it. */
@@ -6173,6 +6214,12 @@ export type ShipmentEventsInput = {
   types?: Array<ShipmentEventType> | null | undefined;
 };
 
+export type ShipmentFacet =
+  | 'Customer'
+  | 'Equipment'
+  | 'Status'
+  | 'TenderStatus';
+
 export type ShipmentHazmatInput = {
   commodityIds: Array<string | number>;
 };
@@ -6283,6 +6330,38 @@ export type ShipmentPreviousRatesInput = {
   shipmentTypeId: string | number;
 };
 
+/** A named predicate over shipments. The server owns every definition; clients only name them. */
+export type ShipmentQuickFilter =
+  | 'DeliveringToday'
+  | 'DeliveryHour'
+  | 'Detention'
+  | 'Late'
+  | 'LowMargin'
+  | 'Moving'
+  | 'PickupWindow'
+  | 'ReadyToBill'
+  | 'Reefer'
+  | 'Uncovered';
+
+export type ShipmentQuickFilterInput = {
+  filter: ShipmentQuickFilter;
+  /** Local hour of day (0-23) for DeliveryHour. */
+  hour?: number | null | undefined;
+  /** Minutes from now where a PickupWindow ends; omit for an open-ended window. */
+  windowEndMinutes?: number | null | undefined;
+  /** Minutes from now where a PickupWindow starts. */
+  windowStartMinutes?: number | null | undefined;
+};
+
+/** Where a shipment sits on the board. Derived from its status alone, so it sorts, filters and groups as a column. */
+export type ShipmentStage =
+  | 'Canceled'
+  | 'Delivered'
+  | 'Late'
+  | 'Moving'
+  | 'NeedsCoverage'
+  | 'Scheduled';
+
 export type ShipmentStatus =
   | 'Assigned'
   | 'Canceled'
@@ -6315,6 +6394,31 @@ export type ShipmentStopInput = {
   weight?: number | null | undefined;
 };
 
+export type ShipmentSuggestionActionType =
+  | 'ApproveDetention'
+  | 'AssignDriver'
+  | 'NotifyCustomer'
+  | 'Review'
+  | 'TenderCarrier';
+
+export type ShipmentSuggestionDecision =
+  | 'Done'
+  | 'Later';
+
+export type ShipmentSuggestionKind =
+  | 'Coverage'
+  | 'DelayNotice'
+  | 'Detention'
+  | 'HoursOfService'
+  | 'Retender'
+  | 'Tender';
+
+export type ShipmentSuggestionTone =
+  | 'Accent'
+  | 'Brand'
+  | 'Danger'
+  | 'Warning';
+
 export type ShipmentTenderStatus =
   | 'Accepted'
   | 'Canceled'
@@ -6344,8 +6448,11 @@ export type ShipmentsInput = {
   /** Load each shipment's customer without expanding the rest of its details. */
   includeCustomer?: boolean | null | undefined;
   query?: string | null | undefined;
+  quickFilters?: Array<ShipmentQuickFilterInput> | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   status?: string | null | undefined;
+  /** IANA time zone for day and hour quick filters. */
+  timezone?: string | null | undefined;
 };
 
 export type SidebarActivityPreferenceInput = {
@@ -6477,6 +6584,16 @@ export type TenderResponseSource =
   | 'Email'
   | 'Manual';
 
+export type TenderShipmentItemInput = {
+  /** Tender to this carrier; omit to use the routing guide or the best match. */
+  carrierId?: string | number | null | undefined;
+  shipmentId: string | number;
+};
+
+export type TenderShipmentsInput = {
+  items: Array<TenderShipmentItemInput>;
+};
+
 export type TenderStatus =
   | 'Accepted'
   | 'Active'
@@ -6587,6 +6704,12 @@ export type UnapplyCreditMemoApplicationInput = {
   applicationId: string | number;
   reason?: string | null | undefined;
 };
+
+export type UncoveredPickupWindow =
+  | 'LaterToday'
+  | 'TomorrowOrLater'
+  | 'TwoToSixHours'
+  | 'UnderTwoHours';
 
 export type UpcomingWorkerPtoInput = {
   after?: string | null | undefined;
@@ -13510,6 +13633,105 @@ export type ShipmentTypeTableQueryVariables = Exact<{
 
 export type ShipmentTypeTableQuery = { shipmentTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentTypeTableRowFieldsFragment': ShipmentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type ShipmentBoardCapabilitiesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ShipmentBoardCapabilitiesQuery = { shipmentBoardCapabilities: { ai: boolean, operationType: OperationType, hos: boolean, maps: boolean } };
+
+export type ShipmentStageSummaryQueryVariables = Exact<{
+  input: ShipmentBoardScopeInput;
+}>;
+
+
+export type ShipmentStageSummaryQuery = { shipmentStageSummary: Array<{ stage: ShipmentStage, rank: number, count: number, revenue: string }> };
+
+export type ShipmentQuickFilterCountsQueryVariables = Exact<{
+  input: ShipmentBoardScopeInput;
+}>;
+
+
+export type ShipmentQuickFilterCountsQuery = { shipmentQuickFilterCounts: Array<{ filter: ShipmentQuickFilter, count: number }> };
+
+export type ShipmentFacetCountsQueryVariables = Exact<{
+  input: ShipmentBoardScopeInput;
+  facets: Array<ShipmentFacet> | ShipmentFacet;
+}>;
+
+
+export type ShipmentFacetCountsQuery = { shipmentFacetCounts: Array<{ facet: ShipmentFacet, field: string, values: Array<{ value: string, label: string, count: number }> }> };
+
+export type ShipmentBriefingQueryVariables = Exact<{
+  timezone: string;
+}>;
+
+
+export type ShipmentBriefingQuery = { shipmentBriefing: { narrated: boolean, generatedAt: number, segments: Array<{ text: string, filter: ShipmentQuickFilter | null }> } };
+
+export type ShipmentCapacityQueryVariables = Exact<{
+  kind: CapacityUnitKind;
+}>;
+
+
+export type ShipmentCapacityQuery = { shipmentCapacity: { kind: CapacityUnitKind, units: Array<{ id: string, kind: CapacityUnitKind, name: string, initials: string, group: CapacityGroup, freeAt: number | null, city: string | null, unitLabel: string | null, badgeCount: number | null, ratePerMile: string | null, acceptancePercent: number | null, driveRemainingMs: number | null, tractorId: string | null, ring: { value: number, max: number, low: boolean } | null }>, drivers: { ready: number, withinTwoHours: number, short: number, uncovered: number } | null, carriers: { posting: number, untendered: number, awaitingAcceptance: number, avgRatePerMile: string | null } | null } };
+
+export type CapacityUnitMatchesQueryVariables = Exact<{
+  kind: CapacityUnitKind;
+  unitId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type CapacityUnitMatchesQuery = { capacityUnitMatches: Array<{ shipmentId: string, moveId: string, proNumber: string | null, originCity: string, destinationCity: string, pickupAt: number | null, revenue: string, deadheadMiles: number | null, quote: string | null, marginPercent: number | null, fitPercent: number | null }> };
+
+export type ShipmentCoverageSuggestionsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentCoverageSuggestionsQuery = { shipmentCoverageSuggestions: { drivers: Array<{ workerId: string, tractorId: string | null, moveId: string, name: string, initials: string, unitLabel: string | null, distanceMiles: number | null, driveRemainingMs: number | null, fitPercent: number | null }>, carriers: Array<{ carrierId: string, moveId: string, name: string, initials: string, mcNumber: string | null, quote: string, ratePerMile: string, acceptancePercent: number | null, posted: boolean }> } };
+
+export type ShipmentSuggestionsQueryVariables = Exact<{
+  timezone: string;
+}>;
+
+
+export type ShipmentSuggestionsQuery = { shipmentSuggestions: { handledThisShift: number, narrated: boolean, items: Array<{ key: string, kind: ShipmentSuggestionKind, tone: ShipmentSuggestionTone, shipmentId: string | null, proNumber: string | null, title: string, reason: string, impact: Array<string>, manualLabel: string, dueAt: number | null, deferred: boolean, primary: { type: ShipmentSuggestionActionType, label: string, moveId: string | null, workerId: string | null, tractorId: string | null, carrierId: string | null, detentionOccurrenceId: string | null, message: string | null } }> } };
+
+export type ShipmentWatchlistQueryVariables = Exact<{
+  timezone: string;
+}>;
+
+
+export type ShipmentWatchlistQuery = { shipmentWatchlist: { deliveries: { onTime: number, total: number, lateCount: number, buckets: Array<{ hour: number, delivered: number, scheduled: number, late: number }>, worstLate: Array<{ shipmentId: string, proNumber: string | null, deltaMinutes: number, city: string, customerName: string }> }, uncovered: { count: number, revenue: string, windows: Array<{ window: UncoveredPickupWindow, startMinutes: number, endMinutes: number | null, count: number, revenue: string }>, next: { shipmentId: string, pickupAt: number, originCity: string, destinationCity: string } | null }, detention: { stopCount: number, amount: string, ratePerHour: string, snapshotAt: number, top: Array<{ shipmentId: string, stopId: string, occurrenceId: string | null, facilityName: string, coverageName: string | null, billableSince: number, ratePerHour: string, amount: string }> }, billing: { count: number, total: string, moreCustomers: number, customers: Array<{ customerId: string, name: string, count: number, total: string }> } } };
+
+export type TenderShipmentsMutationVariables = Exact<{
+  input: TenderShipmentsInput;
+}>;
+
+
+export type TenderShipmentsMutation = { tenderShipments: { tendered: Array<{ shipmentId: string, tenderId: string, carrierId: string | null, carrierName: string | null }>, failed: Array<{ shipmentId: string, message: string }> } };
+
+export type DecideShipmentSuggestionMutationVariables = Exact<{
+  input: DecideShipmentSuggestionInput;
+}>;
+
+
+export type DecideShipmentSuggestionMutation = { decideShipmentSuggestion: boolean };
+
+export type UndoShipmentSuggestionDecisionMutationVariables = Exact<{
+  key: string;
+}>;
+
+
+export type UndoShipmentSuggestionDecisionMutation = { undoShipmentSuggestionDecision: boolean };
+
+export type NotifyShipmentDelayMutationVariables = Exact<{
+  input: NotifyShipmentDelayInput;
+}>;
+
+
+export type NotifyShipmentDelayMutation = { notifyShipmentDelay: boolean };
+
 export type ShipmentUserFieldsFragment = { id: string, name: string, username: string, emailAddress: string, timezone: string, status: EntityStatus, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'ShipmentUserFieldsFragment' };
 
 export type ShipmentLocationFieldsFragment = { id: string, name: string, code: string, status: EntityStatus, locationCategoryId: string, stateId: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, longitude: number | null, latitude: number | null } & { ' $fragmentName'?: 'ShipmentLocationFieldsFragment' };
@@ -13536,7 +13758,7 @@ export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitI
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number, versionNumber: number, rateQuoteId: string, agreementId: string, agreementName: string, ruleId: string, ruleLabel: string, source: string, explanation: string, breakdown: Array<{ name: string, label: string, amount: number, error: string }>, guardrail: { applied: boolean, bound: string, rawResult: number, minCharge: number | null, maxCharge: number | null } | null } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
-export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, billToCustomerId: string | null, freightTerms: FreightTerms, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, externalReference: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, autoRated: boolean, autoRatedAt: number | null, rateAgreementId: string | null, rateAgreementRuleId: string | null, rateQuoteId: string | null, rateOverrideAmount: string | null, rateOverrideReason: string | null, rateOverrideAt: number | null, rateLocked: boolean, version: number, createdAt: number, updatedAt: number, profitabilityEstimate: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, costPerMile: string, estimatedCost: string, profit: string, marginPercent: string | null, breakEvenRpm: string | null, targetMarginPercent: string | null, missingDistance: boolean } | null, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, chargeAllocations: Array<{ ' $fragmentRefs'?: { 'ChargeAllocationFieldsFragment': ChargeAllocationFieldsFragment } }>, billingSplitSummary: Array<{ payerId: string, payerName: string, payerCode: string, isPrimary: boolean, freightAmount: string, accessorialAmount: string, totalAmount: string, isSplit: boolean }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, ediPartner: { id: string, name: string, code: string } | null } | null, billToCustomer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
+export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, billToCustomerId: string | null, freightTerms: FreightTerms, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, stage: ShipmentStage, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, externalReference: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, autoRated: boolean, autoRatedAt: number | null, rateAgreementId: string | null, rateAgreementRuleId: string | null, rateQuoteId: string | null, rateOverrideAmount: string | null, rateOverrideReason: string | null, rateOverrideAt: number | null, rateLocked: boolean, version: number, createdAt: number, updatedAt: number, eta: { estimatedArrival: number | null, slackMinutes: number | null, verdict: EtaVerdict, reason: string | null } | null, profitabilityEstimate: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, costPerMile: string, estimatedCost: string, profit: string, marginPercent: string | null, breakEvenRpm: string | null, targetMarginPercent: string | null, missingDistance: boolean } | null, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, chargeAllocations: Array<{ ' $fragmentRefs'?: { 'ChargeAllocationFieldsFragment': ChargeAllocationFieldsFragment } }>, billingSplitSummary: Array<{ payerId: string, payerName: string, payerCode: string, isPrimary: boolean, freightAmount: string, accessorialAmount: string, totalAmount: string, isSplit: boolean }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, ediPartner: { id: string, name: string, code: string } | null } | null, billToCustomer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
 
 export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'ShipmentPageInfoFieldsFragment' };
 
@@ -13575,13 +13797,13 @@ export type ShipmentEventFieldsFragment =
   | ShipmentEventFields_ShipmentTenderEvent_Fragment
 ;
 
-export type ShipmentCommandCenterTableQueryVariables = Exact<{
+export type ShipmentBoardTableQueryVariables = Exact<{
   input: ShipmentsInput;
   includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type ShipmentCommandCenterTableQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type ShipmentBoardTableQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentDetailQueryVariables = Exact<{
   id: string | number;
@@ -13590,13 +13812,6 @@ export type ShipmentDetailQueryVariables = Exact<{
 
 
 export type ShipmentDetailQuery = { shipment: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } | null };
-
-export type ShipmentSavedViewCountsQueryVariables = Exact<{
-  timezone: string;
-}>;
-
-
-export type ShipmentSavedViewCountsQuery = { shipmentAnalytics: { page: string, savedViewCounts: { all: number | null, transit: number | null, atRisk: number | null, unassigned: number | null, deliveringToday: number | null } | null } };
 
 export type ShipmentPageAnalyticsQueryVariables = Exact<{
   input: ShipmentAnalyticsInput;
@@ -22862,6 +23077,13 @@ export const ShipmentFieldsFragmentDoc = new TypedDocumentString(`
   orderNumber
   orderStatus
   status
+  stage
+  eta {
+    estimatedArrival
+    slackMinutes
+    verdict
+    reason
+  }
   tenderStatus
   entryMethod
   proNumber
@@ -25362,14 +25584,27 @@ export const ServiceFailureReasonCodeTableDocument = {"__meta__":{"kind":"query"
 export const ServiceFailureTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureTable","hash":"sha256:802d21c82ae8c40acf8a3e43537d88efc7781983e248ad672961a74b46c52bd0"}} as unknown as TypedDocumentString<ServiceFailureTableQuery, ServiceFailureTableQueryVariables>;
 export const ServiceTypeTableDocument = {"__meta__":{"kind":"query","name":"ServiceTypeTable","hash":"sha256:ba2cc0fdc314c6c3e25d306f5ad63a4c09ac96b537a0bf60b874ea22eec70682"}} as unknown as TypedDocumentString<ServiceTypeTableQuery, ServiceTypeTableQueryVariables>;
 export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"ShipmentTypeTable","hash":"sha256:2be2cf7c6760639a92a3977f36a489f31e14b4c27edae1049a9589cce837a534"}} as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;
-export const ShipmentCommandCenterTableDocument = {"__meta__":{"kind":"query","name":"ShipmentCommandCenterTable","hash":"sha256:a0bb51e7f99133ce65d038f559ab8992abc49b068d676d6fba896374ac0c9cfc"}} as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
-export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:953d91d1cfcebb26add6a2de11f288e03d422de025b266cceca76242ce6967cc"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
-export const ShipmentSavedViewCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentSavedViewCounts","hash":"sha256:cbed3f0cc310a0a4c3435b533a963c297ad2bad4a07174563944705242d2d168"}} as unknown as TypedDocumentString<ShipmentSavedViewCountsQuery, ShipmentSavedViewCountsQueryVariables>;
+export const ShipmentBoardCapabilitiesDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardCapabilities","hash":"sha256:aa7e88780f37bb5a758b0290855c8d761b5bc1d418cf4c1766478e43c0787484"}} as unknown as TypedDocumentString<ShipmentBoardCapabilitiesQuery, ShipmentBoardCapabilitiesQueryVariables>;
+export const ShipmentStageSummaryDocument = {"__meta__":{"kind":"query","name":"ShipmentStageSummary","hash":"sha256:8bbb27b2f871a92d7144ecd277f764f615822a8680ff1f1342af69c3905becb3"}} as unknown as TypedDocumentString<ShipmentStageSummaryQuery, ShipmentStageSummaryQueryVariables>;
+export const ShipmentQuickFilterCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentQuickFilterCounts","hash":"sha256:0ec841b49e41c32139149b1d0a7e5c4faf08e719514173109c253ee88945f489"}} as unknown as TypedDocumentString<ShipmentQuickFilterCountsQuery, ShipmentQuickFilterCountsQueryVariables>;
+export const ShipmentFacetCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentFacetCounts","hash":"sha256:fff99efce34b6302db2c948cbfaafa3b48d8ed34fdc155ad987936b294905a49"}} as unknown as TypedDocumentString<ShipmentFacetCountsQuery, ShipmentFacetCountsQueryVariables>;
+export const ShipmentBriefingDocument = {"__meta__":{"kind":"query","name":"ShipmentBriefing","hash":"sha256:5c4146461b574cc8cc32724f790df893af458adf345b453316f3ae843e5fd74e"}} as unknown as TypedDocumentString<ShipmentBriefingQuery, ShipmentBriefingQueryVariables>;
+export const ShipmentCapacityDocument = {"__meta__":{"kind":"query","name":"ShipmentCapacity","hash":"sha256:3afe71c443b98e096c0542ad6ab51196c9178a529bd0dd4fa9360f78a10e7a1c"}} as unknown as TypedDocumentString<ShipmentCapacityQuery, ShipmentCapacityQueryVariables>;
+export const CapacityUnitMatchesDocument = {"__meta__":{"kind":"query","name":"CapacityUnitMatches","hash":"sha256:5a91bf1a9c3a15fd4d1f98288ccb7c2e968c6af30f8006b5210311a31911b6ef"}} as unknown as TypedDocumentString<CapacityUnitMatchesQuery, CapacityUnitMatchesQueryVariables>;
+export const ShipmentCoverageSuggestionsDocument = {"__meta__":{"kind":"query","name":"ShipmentCoverageSuggestions","hash":"sha256:1822c8eca7b5d6e95a8e5bdb5080634b6f1ca8205c2c855e532bb0f851b77b44"}} as unknown as TypedDocumentString<ShipmentCoverageSuggestionsQuery, ShipmentCoverageSuggestionsQueryVariables>;
+export const ShipmentSuggestionsDocument = {"__meta__":{"kind":"query","name":"ShipmentSuggestions","hash":"sha256:ac8fd24298d89999ff20a21267132e7cd02c5fbe2d617d7bb48cf4229f9c385e"}} as unknown as TypedDocumentString<ShipmentSuggestionsQuery, ShipmentSuggestionsQueryVariables>;
+export const ShipmentWatchlistDocument = {"__meta__":{"kind":"query","name":"ShipmentWatchlist","hash":"sha256:3c97d4dfe4f153d13e1482d169c35e34d58ed94ef12baec49eb9823255a19c51"}} as unknown as TypedDocumentString<ShipmentWatchlistQuery, ShipmentWatchlistQueryVariables>;
+export const TenderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"TenderShipments","hash":"sha256:fc17e184f2516aa1bac0b43212d104b5b0109257bae95fc8fc917babb5360d36"}} as unknown as TypedDocumentString<TenderShipmentsMutation, TenderShipmentsMutationVariables>;
+export const DecideShipmentSuggestionDocument = {"__meta__":{"kind":"mutation","name":"DecideShipmentSuggestion","hash":"sha256:c58d215bd70ddacae5cb7bb1db402fe00f516e3b02750be051dba50a8fb157a8"}} as unknown as TypedDocumentString<DecideShipmentSuggestionMutation, DecideShipmentSuggestionMutationVariables>;
+export const UndoShipmentSuggestionDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoShipmentSuggestionDecision","hash":"sha256:70cabba6bbcd1f39dd47f1d0d7c1458757280bef6239eab04b33a90166f9ad16"}} as unknown as TypedDocumentString<UndoShipmentSuggestionDecisionMutation, UndoShipmentSuggestionDecisionMutationVariables>;
+export const NotifyShipmentDelayDocument = {"__meta__":{"kind":"mutation","name":"NotifyShipmentDelay","hash":"sha256:ac9e4fcb73800c23f82a4b48d988a24a084b6aca45e5d9747b7a7c04a0ad7183"}} as unknown as TypedDocumentString<NotifyShipmentDelayMutation, NotifyShipmentDelayMutationVariables>;
+export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:2b14c8b12afb6b80366a2349eaf1568238d7650da24fc7e6897e972e4b5b22fd"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
+export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:07663326eb422daefce4e6005195a493aa0e41b647d4a20238bb08766fe91b18"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentPageAnalyticsDocument = {"__meta__":{"kind":"query","name":"ShipmentPageAnalytics","hash":"sha256:ad48e5077b2ccc6fd13488ff0477d404b19f9a4067a6d2dbc5451ec44869443e"}} as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
 export const ShipmentTomorrowsPickupsDocument = {"__meta__":{"kind":"query","name":"ShipmentTomorrowsPickups","hash":"sha256:4efe02e85e165ab339b90c81ea8d05dad114942c74d9333034f58a4e6a609ee4"}} as unknown as TypedDocumentString<ShipmentTomorrowsPickupsQuery, ShipmentTomorrowsPickupsQueryVariables>;
-export const UnassignedShipmentsDocument = {"__meta__":{"kind":"query","name":"UnassignedShipments","hash":"sha256:e9bd062dcf7ecf8d3f84c7a801e25d279557e1490cba1e42fa926260980aac0d"}} as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
-export const ExceptionShipmentsDocument = {"__meta__":{"kind":"query","name":"ExceptionShipments","hash":"sha256:37cd0a782cd07b47e83b9490a0b264f15bea3d428d822d749aaf29abfe1d163e"}} as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
-export const MapShipmentsDocument = {"__meta__":{"kind":"query","name":"MapShipments","hash":"sha256:ea6c1a521058fb453e49bb4c7a08024ffab3b8a10e4a7d51422801888281f642"}} as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+export const UnassignedShipmentsDocument = {"__meta__":{"kind":"query","name":"UnassignedShipments","hash":"sha256:21a2fd6ffe869b7024d25ff3e4a74beda6bbaf905995924be9fd7c4f9e6dcfba"}} as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+export const ExceptionShipmentsDocument = {"__meta__":{"kind":"query","name":"ExceptionShipments","hash":"sha256:92f2314f5c2296f6634733fb059194631637a8750a7c1f2d45c54e210c6377ab"}} as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+export const MapShipmentsDocument = {"__meta__":{"kind":"query","name":"MapShipments","hash":"sha256:93d207f449b5d30fec976d130f6698958875bbc7e72c00b0d3f6bd50176e09b1"}} as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = {"__meta__":{"kind":"query","name":"ShipmentComments","hash":"sha256:e8ded6c042536cd06b3552020cc7245d5d5585ebae1cee2cdf5d4369b07b33a7"}} as unknown as TypedDocumentString<ShipmentCommentsQuery, ShipmentCommentsQueryVariables>;
 export const ShipmentCommentRepliesDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentReplies","hash":"sha256:c3d7d09953b6ceb3ea38fbc547d409fea336121d2b3bcacefce4b894f29bd3c6"}} as unknown as TypedDocumentString<ShipmentCommentRepliesQuery, ShipmentCommentRepliesQueryVariables>;
 export const ShipmentCommentCountDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentCount","hash":"sha256:1f62df3579f042a9c8914aa2b124bb976b08c30fdb27dc1fa25926487e7d877e"}} as unknown as TypedDocumentString<ShipmentCommentCountQuery, ShipmentCommentCountQueryVariables>;
@@ -25377,18 +25612,18 @@ export const ShipmentEventsDocument = {"__meta__":{"kind":"query","name":"Shipme
 export const ShipmentBillingReadinessDocument = {"__meta__":{"kind":"query","name":"ShipmentBillingReadiness","hash":"sha256:98a2cd4d00d91a045e742b52e3c9a318781d5eb12903f63fe4d141f0aefe449c"}} as unknown as TypedDocumentString<ShipmentBillingReadinessQuery, ShipmentBillingReadinessQueryVariables>;
 export const ShipmentUiPolicyDocument = {"__meta__":{"kind":"query","name":"ShipmentUIPolicy","hash":"sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1"}} as unknown as TypedDocumentString<ShipmentUiPolicyQuery, ShipmentUiPolicyQueryVariables>;
 export const ShipmentPreviousRatesDocument = {"__meta__":{"kind":"query","name":"ShipmentPreviousRates","hash":"sha256:fb9ce636f0cfa91106dfcc559e31eb59e1e6cfa4d229668dbc2208e7a3730f9b"}} as unknown as TypedDocumentString<ShipmentPreviousRatesQuery, ShipmentPreviousRatesQueryVariables>;
-export const CreateShipmentDocument = {"__meta__":{"kind":"mutation","name":"CreateShipment","hash":"sha256:886b547be4c3621983736a04d034234ff59e9a9a7084ab07ba40f25f8f7a54b9"}} as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
-export const UpdateShipmentDocument = {"__meta__":{"kind":"mutation","name":"UpdateShipment","hash":"sha256:2a6f14c44d6a4ce10628600b03147328362f58216cccbfb1fa3cb7927efbed63"}} as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
-export const CancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"CancelShipment","hash":"sha256:e445864f6abccf0fa08e08f057bfcc62401eda8ea1e0c049ff0de50d27587bf1"}} as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
-export const UncancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"UncancelShipment","hash":"sha256:bcaf5dbb55388ef7d0e284ec1271d35cccfc86a04cca209f5c69cc3138a4890d"}} as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+export const CreateShipmentDocument = {"__meta__":{"kind":"mutation","name":"CreateShipment","hash":"sha256:2ec7d1ba17f26ccba62537cd5f1641211d4ad8ac80397ac3c1973a478da56dd1"}} as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+export const UpdateShipmentDocument = {"__meta__":{"kind":"mutation","name":"UpdateShipment","hash":"sha256:dba04b817502eb68b53ddf2fcdee551567f963c2b9720ab854263ee0cb8c6d2f"}} as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+export const CancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"CancelShipment","hash":"sha256:348e32aa442ad79ac2494b0c12426237ea9cc92c79c8be4008fc9ebfc7b95287"}} as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+export const UncancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"UncancelShipment","hash":"sha256:f3b24edbe073097986837e3e3485ce1ca9815ee0f60aa2180288a5b69012af83"}} as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = {"__meta__":{"kind":"mutation","name":"DuplicateShipment","hash":"sha256:0dcc6ec862a4ef66a9e7137e45548bb355204f1bc766d172a035b5e537298ecf"}} as unknown as TypedDocumentString<DuplicateShipmentMutation, DuplicateShipmentMutationVariables>;
-export const TransferShipmentOwnershipDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentOwnership","hash":"sha256:8b4cbde7fa1255bbe699ad4ba0dba4e42f88c3e1a9e3bcce77c4c6e8fd690c54"}} as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+export const TransferShipmentOwnershipDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentOwnership","hash":"sha256:dbfd5b6b1022c1a32604c2ef35d9ab220a4d08782792331eb55d2d3550928ca1"}} as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingItemsDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentToBillingItems","hash":"sha256:880f3a1da6c6411f6be5b37b9171f4724b28a0cf4a4b68c5baf63fdc8fbfe8d6"}} as unknown as TypedDocumentString<TransferShipmentToBillingItemsMutation, TransferShipmentToBillingItemsMutationVariables>;
 export const TransferShipmentToBillingDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentToBilling","hash":"sha256:26bfaf606837906606b2d36e188ad75e47db576e9ed709a5f47b3ddf619cf487"}} as unknown as TypedDocumentString<TransferShipmentToBillingMutation, TransferShipmentToBillingMutationVariables>;
 export const BulkTransferShipmentsToBillingDocument = {"__meta__":{"kind":"mutation","name":"BulkTransferShipmentsToBilling","hash":"sha256:b6cdcdefd2780a75fc875cd010360eb2a5f212bf8e8a84e963cd744c8fed7bf9"}} as unknown as TypedDocumentString<BulkTransferShipmentsToBillingMutation, BulkTransferShipmentsToBillingMutationVariables>;
 export const CalculateShipmentTotalsDocument = {"__meta__":{"kind":"mutation","name":"CalculateShipmentTotals","hash":"sha256:675789448d139ef11053baf07c910d999193810b6acd81ae401229c1e1753a75"}} as unknown as TypedDocumentString<CalculateShipmentTotalsMutation, CalculateShipmentTotalsMutationVariables>;
 export const PreviewShipmentContractRateDocument = {"__meta__":{"kind":"mutation","name":"PreviewShipmentContractRate","hash":"sha256:b3609be8eacbbcd92db634d5a0939e1cf3bd0d4c1635b56ac8a7e1082d7aaaff"}} as unknown as TypedDocumentString<PreviewShipmentContractRateMutation, PreviewShipmentContractRateMutationVariables>;
-export const AutoRateShipmentDocument = {"__meta__":{"kind":"mutation","name":"AutoRateShipment","hash":"sha256:cdf2c487ed71d99b3ca36f93e0a7b87cab6b9b172ed5ae0b6f188db1979d6395"}} as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
+export const AutoRateShipmentDocument = {"__meta__":{"kind":"mutation","name":"AutoRateShipment","hash":"sha256:e80f1b2988b8aacf081df46caae4844bdd0d2d6389959e827495de14b09a2665"}} as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
 export const CalculateShipmentDistanceDocument = {"__meta__":{"kind":"mutation","name":"CalculateShipmentDistance","hash":"sha256:5c8612acf5d98e8e255b7ec31d1fb37d4723fe9cfed4f6e2c2c4203ba5092b5a"}} as unknown as TypedDocumentString<CalculateShipmentDistanceMutation, CalculateShipmentDistanceMutationVariables>;
 export const RecalculateShipmentDistanceDocument = {"__meta__":{"kind":"mutation","name":"RecalculateShipmentDistance","hash":"sha256:c22b19ad3ce0ea5856e7d3b13cbf94d2b5a34aadeaf0f90cf09c5ba8f6f87c51"}} as unknown as TypedDocumentString<RecalculateShipmentDistanceMutation, RecalculateShipmentDistanceMutationVariables>;
 export const CheckShipmentDuplicateBolDocument = {"__meta__":{"kind":"mutation","name":"CheckShipmentDuplicateBol","hash":"sha256:245fce8ae3f1f985031b2343ce03fa257082b6453a6b738c209e49581315c33c"}} as unknown as TypedDocumentString<CheckShipmentDuplicateBolMutation, CheckShipmentDuplicateBolMutationVariables>;

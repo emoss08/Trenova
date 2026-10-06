@@ -55,10 +55,7 @@ export function DataTableGroupHeader({
             />
           </button>
           {group.swatchClassName ? (
-            <span
-              aria-hidden
-              className={cn("size-2 shrink-0 rounded-[2px]", group.swatchClassName)}
-            />
+            <span aria-hidden className={cn("size-2 shrink-0 rounded-xs", group.swatchClassName)} />
           ) : null}
           <span className="text-foreground text-sm font-medium">{group.label}</span>
           {group.count != null ? (

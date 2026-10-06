@@ -189,7 +189,13 @@ describe("DataTable grouping", () => {
   });
 });
 
-function ExpandingTable({ withKeyboard = false }: { withKeyboard?: boolean }) {
+function ExpandingTable({
+  withKeyboard = false,
+  onEdit,
+}: {
+  withKeyboard?: boolean;
+  onEdit?: (row: TestRow) => void;
+}) {
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const [cursor, setCursor] = React.useState<string | null>(null);
   return (
@@ -210,18 +216,23 @@ function ExpandingTable({ withKeyboard = false }: { withKeyboard?: boolean }) {
       }}
       keyboard={
         withKeyboard
-          ? { enabled: true, cursorRowId: cursor, onCursorRowIdChange: setCursor }
+          ? {
+              enabled: true,
+              cursorRowId: cursor,
+              onCursorRowIdChange: setCursor,
+              rowShortcuts: onEdit ? [{ key: "e", run: onEdit }] : undefined,
+            }
           : undefined
       }
     />
   );
 }
 
-function renderExpanding(withKeyboard = false) {
+function renderExpanding(withKeyboard = false, onEdit?: (row: TestRow) => void) {
   return render(
     <QueryClientProvider client={createQueryClient()}>
       <NuqsTestingAdapter hasMemory>
-        <ExpandingTable withKeyboard={withKeyboard} />
+        <ExpandingTable withKeyboard={withKeyboard} onEdit={onEdit} />
       </NuqsTestingAdapter>
     </QueryClientProvider>,
   );
@@ -273,6 +284,17 @@ describe("DataTable expansion", () => {
   });
 });
 
+describe("DataTable row shortcuts", () => {
+  it("hands the cursor row's data to a row shortcut", () => {
+    const onEdit = vi.fn();
+    renderExpanding(true, onEdit);
+    press("j");
+    press("j");
+    press("e");
+    expect(onEdit).toHaveBeenCalledWith({ id: "2", name: "Bob", stage: 1 });
+  });
+});
+
 describe("DataTable slots", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -307,6 +329,26 @@ describe("DataTable slots", () => {
     expect(screen.getByText("View switch")).toBeTruthy();
     expect(screen.getByText("Panel toggle")).toBeTruthy();
     expect(screen.getByText("Shortcuts")).toBeTruthy();
+  });
+
+  it("lets a narrow host collapse the built-in toolbar controls", async () => {
+    renderDataTable({
+      toolbar: { responsive: { label: "label-narrow", secondary: "secondary-narrow" } },
+    });
+
+    const sortLabel = await screen.findByText("Sort");
+    expect(sortLabel.className).toContain("label-narrow");
+    const display = await screen.findByRole("button", { name: /Display/ });
+    expect(display.closest(".secondary-narrow")).toBeTruthy();
+  });
+
+  it("gives an alternate view the table's density", () => {
+    renderDataTable({
+      initialDensity: "compact",
+      alternateView: { active: true, render: () => <div data-testid="timeline" /> },
+    });
+
+    expect(screen.getByTestId("timeline").closest('[data-density="compact"]')).toBeTruthy();
   });
 
   it("starts at the density it is given", () => {

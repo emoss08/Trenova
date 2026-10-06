@@ -32,6 +32,25 @@ export const shipmentStatusSchema = z.enum([
 ]);
 export type ShipmentStatus = z.infer<typeof shipmentStatusSchema>;
 
+/** Where a shipment sits on the board; the server derives it from status. */
+export const shipmentStageSchema = z.enum([
+  "Late",
+  "NeedsCoverage",
+  "Moving",
+  "Scheduled",
+  "Delivered",
+  "Canceled",
+]);
+export type ShipmentStage = z.infer<typeof shipmentStageSchema>;
+
+export const shipmentEtaSchema = z.object({
+  estimatedArrival: z.number().nullish(),
+  slackMinutes: z.number().nullish(),
+  verdict: z.enum(["OnTime", "AtRisk", "Late", "Unknown"]),
+  reason: z.string().nullish(),
+});
+export type ShipmentEta = z.infer<typeof shipmentEtaSchema>;
+
 export const shipmentTenderStatusSchema = z.enum([
   "Tendered",
   "Accepted",
@@ -505,7 +524,7 @@ const additionalChargeBaseSchema = z.object({
   allocations: z.array(chargeAllocationSchema).default([]),
 });
 
-function additionalChargeLineTotal(charge: {
+export function additionalChargeLineTotal(charge: {
   method: string;
   amount: number | null | undefined;
   unit: number;
@@ -689,6 +708,8 @@ const shipmentBaseSchema = z.object({
   autoRatedAt: z.number().nullish(),
 
   status: shipmentStatusSchema.default("New"),
+  stage: shipmentStageSchema.optional(),
+  eta: shipmentEtaSchema.nullish(),
   tenderStatus: shipmentTenderStatusSchema.nullable().optional(),
   entryMethod: shipmentEntryMethodSchema.optional(),
   proNumber: optionalStringSchema,

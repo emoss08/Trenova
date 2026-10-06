@@ -34,7 +34,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
-import { toSentenceFragment } from "@trenova/shared/lib/utils";
+import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 
 const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 
@@ -170,6 +170,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
               columns={columns as unknown as ColumnDef<RowData>[]}
               sort={sort}
               onSortChange={onSortChange}
+              labelClassName={slots?.responsive?.label}
             />
           </Suspense>
           {/* Whether this table can be narrowed by description is a server
@@ -191,15 +192,19 @@ export function DataTableToolbar<TData extends Record<string, any>>({
 
         <div className="flex shrink-0 items-center gap-2">
           {slots?.trailing}
-          <Suspense fallback={<ToolbarButtonSkeleton />}>
-            <DataTableDisplayMenu
-              table={table as Table<RowData>}
-              density={density}
-              onDensityChange={onDensityChange}
-              formatRuleCount={formatRules.length}
-              onEditFormatRules={onFormatRulesChange ? () => setFormatDialogOpen(true) : undefined}
-            />
-          </Suspense>
+          <div className={cn("contents", slots?.responsive?.secondary)}>
+            <Suspense fallback={<ToolbarButtonSkeleton />}>
+              <DataTableDisplayMenu
+                table={table as Table<RowData>}
+                density={density}
+                onDensityChange={onDensityChange}
+                formatRuleCount={formatRules.length}
+                onEditFormatRules={
+                  onFormatRulesChange ? () => setFormatDialogOpen(true) : undefined
+                }
+              />
+            </Suspense>
+          </div>
           {showExport && (
             <Tooltip>
               <TooltipTrigger
@@ -217,21 +222,23 @@ export function DataTableToolbar<TData extends Record<string, any>>({
               <TooltipContent>{t("Export to CSV")}</TooltipContent>
             </Tooltip>
           )}
-          <Suspense fallback={<ToolbarButtonSkeleton />}>
-            {resource && onApplyConfig && (
-              <DataTableConfigManager
-                resource={resource}
-                onApplyConfig={onApplyConfig}
-                onSaveConfig={() => setSaveDialogOpen(true)}
-                currentConfig={currentConfig}
-                activeViewId={activeView?.id ?? null}
-                activeViewName={activeView?.name ?? null}
-                isViewDirty={isViewDirty}
-                onViewPersisted={onViewPersisted}
-                onViewDeleted={onViewDeleted}
-              />
-            )}
-          </Suspense>
+          <div className={cn("contents", slots?.responsive?.secondary)}>
+            <Suspense fallback={<ToolbarButtonSkeleton />}>
+              {resource && onApplyConfig && (
+                <DataTableConfigManager
+                  resource={resource}
+                  onApplyConfig={onApplyConfig}
+                  onSaveConfig={() => setSaveDialogOpen(true)}
+                  currentConfig={currentConfig}
+                  activeViewId={activeView?.id ?? null}
+                  activeViewName={activeView?.name ?? null}
+                  isViewDirty={isViewDirty}
+                  onViewPersisted={onViewPersisted}
+                  onViewDeleted={onViewDeleted}
+                />
+              )}
+            </Suspense>
+          </div>
           {slots?.end}
           {hasSingleAddRecordAction ? (
             <Button variant="default" size="sm" onClick={addRecordActions[0]?.onClick}>

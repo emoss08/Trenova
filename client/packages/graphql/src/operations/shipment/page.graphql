@@ -314,6 +314,13 @@ fragment ShipmentFields on Shipment {
   orderNumber
   orderStatus
   status
+  stage
+  eta {
+    estimatedArrival
+    slackMinutes
+    verdict
+    reason
+  }
   tenderStatus
   entryMethod
   proNumber
@@ -647,7 +654,7 @@ fragment ShipmentEventFields on ShipmentEvent {
   }
 }
 
-query ShipmentCommandCenterTable($input: ShipmentsInput!, $includeTotalCount: Boolean = true) {
+query ShipmentBoardTable($input: ShipmentsInput!, $includeTotalCount: Boolean = true) {
   shipments(input: $input) {
     edges {
       node {
@@ -664,19 +671,6 @@ query ShipmentCommandCenterTable($input: ShipmentsInput!, $includeTotalCount: Bo
 query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
     ...ShipmentFields
-  }
-}
-
-query ShipmentSavedViewCounts($timezone: String!) {
-  shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
-    page
-    savedViewCounts {
-      all
-      transit
-      atRisk
-      unassigned
-      deliveringToday
-    }
   }
 }
 

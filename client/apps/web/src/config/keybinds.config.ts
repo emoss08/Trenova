@@ -229,4 +229,76 @@ export const keybindGroups: KeybindGroup[] = [
       },
     ],
   },
+  {
+    id: "shipments",
+    label: "Shipments",
+    keybinds: [
+      {
+        id: "shipments-next-row",
+        label: "Next shipment",
+        keys: ["J"],
+        description: "Move to the next row; the down arrow does the same",
+      },
+      {
+        id: "shipments-previous-row",
+        label: "Previous shipment",
+        keys: ["K"],
+        description: "Move to the previous row; the up arrow does the same",
+      },
+      {
+        id: "shipments-expand",
+        label: "Open or close a shipment",
+        keys: ["Enter"],
+        description: "Expand the shipment under the cursor, or collapse it if it is open",
+      },
+      {
+        id: "shipments-collapse",
+        label: "Close",
+        keys: ["Esc"],
+        description: "Collapse the open shipment, then clear the cursor",
+      },
+      {
+        id: "shipments-select",
+        label: "Select",
+        keys: ["X"],
+        description: "Select or deselect the shipment under the cursor",
+      },
+      {
+        id: "shipments-edit",
+        label: "Edit",
+        keys: ["E"],
+        description: "Edit the shipment under the cursor",
+      },
+      {
+        id: "shipments-copy-pro",
+        label: "Copy PRO number",
+        keys: ["Alt", "C"],
+        description: "Copy the PRO number of the shipment under the cursor",
+      },
+      {
+        id: "shipments-copy-link",
+        label: "Copy link",
+        keys: ["Ctrl", "L"],
+        description: "Copy a link to the shipment under the cursor",
+      },
+      {
+        id: "shipments-search",
+        label: "Search",
+        keys: ["/"],
+        description: "Focus the shipment search and show the quick filters",
+      },
+      {
+        id: "shipments-approve",
+        label: "Approve suggestion",
+        keys: ["Ctrl", "Enter"],
+        description: "Run the suggested action at the top of the brief",
+      },
+      {
+        id: "shipments-later",
+        label: "Later",
+        keys: ["Alt", "L"],
+        description: "Move the current suggestion to the back of the queue",
+      },
+    ],
+  },
 ];

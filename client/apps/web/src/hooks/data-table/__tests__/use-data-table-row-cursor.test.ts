@@ -155,3 +155,45 @@ describe("useDataTableRowCursor", () => {
     expect(t.state.cursor).toBe("a");
   });
 });
+
+describe("useDataTableRowCursor row shortcuts", () => {
+  it("runs a shortcut against the cursor row, matching its modifiers exactly", () => {
+    const edit = vi.fn();
+    const copyPro = vi.fn();
+    const copyLink = vi.fn();
+    const t = setup({
+      cursorRowId: "b",
+      shortcuts: [
+        { key: "e", run: edit },
+        { key: "c", alt: true, run: copyPro },
+        { key: "l", mod: true, run: copyLink },
+      ],
+    });
+
+    t.press("e");
+    expect(edit).toHaveBeenCalledWith("b");
+    t.press("c");
+    expect(copyPro).not.toHaveBeenCalled();
+    t.press("c", { altKey: true, code: "KeyC" });
+    expect(copyPro).toHaveBeenCalledWith("b");
+    t.press("l", { ctrlKey: true });
+    t.press("l", { metaKey: true });
+    expect(copyLink).toHaveBeenCalledTimes(2);
+    t.press("e", { altKey: true });
+    expect(edit).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads Alt chords by physical key, since Option rewrites the character on a Mac", () => {
+    const copyPro = vi.fn();
+    const t = setup({ cursorRowId: "a", shortcuts: [{ key: "c", alt: true, run: copyPro }] });
+    t.press("ç", { altKey: true, code: "KeyC" });
+    expect(copyPro).toHaveBeenCalledWith("a");
+  });
+
+  it("runs nothing without a cursor or open row", () => {
+    const edit = vi.fn();
+    const t = setup({ shortcuts: [{ key: "e", run: edit }] });
+    t.press("e");
+    expect(edit).not.toHaveBeenCalled();
+  });
+});

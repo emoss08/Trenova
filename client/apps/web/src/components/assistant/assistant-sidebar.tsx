@@ -1,12 +1,11 @@
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { deskThreadState } from "@/components/desk-chat/rail/desk-thread-state";
 import { RailDot, RailKnobCard, useRailKnob } from "@/components/desk-chat/rail/rail-parts";
 import type { AssistantThread } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { AssistantMark } from "./assistant-mark";
 import { assistantShelfHeading, threadAge, type AssistantThreadList } from "./assistant-history";
@@ -36,7 +35,7 @@ export function AssistantSidebar({
   onNew: () => void;
 }) {
   const t = useT();
-  const timezone = resolveUserTimezone(useAuthStore((state) => state.user?.timezone));
+  const timezone = useUserTimezone();
   const liveThreadIds = useLiveThreadIds();
   const [now] = useState(nowInSeconds);
   const [query, setQuery] = useState("");

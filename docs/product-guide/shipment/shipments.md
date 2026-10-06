@@ -1,6 +1,6 @@
 ---
 path: /shipment-management/shipments
-aliases: [loads, freight, load board, shipment list, pro number, BOL, command center, trips]
+aliases: [loads, freight, load board, shipment list, pro number, BOL, command center, trips, dispatch board, capacity, suggested actions]
 related:
   - /shipment-management/orders
   - /shipment-management/service-failures
@@ -11,9 +11,9 @@ related:
 ---
 
 ## What it's for
-Shipments is the operations command center. The top rail shows shipment KPIs, the map shows where loads are, and the side panels (**Unassigned**, **Exceptions** and other watch lists) surface work that needs a person. The table below lists every shipment with its status, customer, stops and coverage; selecting a row expands it to show the route timeline, financials, documents and quick actions. Dispatchers, customer service and billing staff work loads from here.
+Shipments is the dispatcher's board. The table comes first, grouped by stage: loads that need attention, loads that need coverage, moving, scheduled and delivered. Above it is a one-sentence briefing of the day (when an AI provider is connected) and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.
 
-Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.
+Selecting a row expands it in place, showing the route, the money, the documents, the next step and quick actions. Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.
 
 ## Tasks
 
@@ -27,11 +27,23 @@ Keywords: new load, enter a load, book a shipment, add shipment
 6. Select **Save** (or **Save & close**).
 
 ### Find a shipment
-Keywords: search loads, look up pro number, filter shipments
+Keywords: search loads, look up pro number, filter shipments, quick filters
 1. Open [Shipments](/shipment-management/shipments).
-2. Type in **Search shipments...**, or pick a view such as **All shipments**, **In transit**, **At risk**, **Unassigned** or **Delivering today**.
-3. Narrow further with the **At risk**, **Reefer** and **Today** chips or with **Filter**, and switch between **Table** and **Timeline**.
-4. Select a row to expand it, or choose **Edit** from its row menu to open the full shipment.
+2. Type in **Search shipments…**. Focusing the search (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count.
+3. Narrow further with **Filter** (status, equipment, tender and customer), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** turns the stage groups on or off; a group's header collapses it.
+4. Select a row (or move to it with J and K and press Enter) to expand it, or choose **Edit** from its row menu to open the full shipment.
+
+### Cover loads from the capacity strip
+Keywords: available drivers, ready drivers, carrier capacity, posted trucks, best load, tender to carriers
+1. Open [Shipments](/shipment-management/shipments). The strip under the briefing shows **Drivers** or **Carriers** (both tabs when the organization does both).
+2. Select a driver or carrier to see the best loads for them, then select **Assign** or **Tender** on the one you want.
+3. To clear the backlog at once, use the action under the summary, such as tendering the loads your drivers can't cover to their best-matched carriers.
+
+### Work the suggested actions
+Keywords: brief, action queue, exceptions, approve suggestion, notify customer of delay
+1. Open [Shipments](/shipment-management/shipments) and open the panel's **Brief** (shown as **Overview** when no AI provider is connected).
+2. Read the action at the top, then approve it with its button (Ctrl+Enter), open the shipment with **Review**, or push it to the back with **Later** (Alt+L).
+3. If you approved something by mistake, select **Undo** on the line that confirms it.
 
 ### Assign a driver or carrier to a move
 Keywords: dispatch load, cover a load, assign truck, assign driver, broker load
@@ -50,7 +62,7 @@ Keywords: copy load, repeat shipment, change owner, void shipment, cancel load
 1. Open [Shipments](/shipment-management/shipments) and open the shipment's row menu.
 2. Select **Duplicate**, set the **Number of copies** and whether to **Override dates**, then **Duplicate**. Copies are made in the background.
 3. Or select **Transfer ownership**, choose the **New owner**, and confirm.
-4. Or select **Cancel**, optionally enter a **Cancel reason**, and select **Cancel shipment**. A canceled shipment can be restored with **Uncancel**.
+4. Or select **Cancel shipment**, optionally enter a **Cancel reason**, and confirm with **Cancel shipment**. A canceled shipment can be restored with **Uncancel**.
 
 ### Scan or print paperwork into a shipment
 Keywords: scan POD, scan BOL, scan paperwork, print to shipment, cover sheet, Kofax

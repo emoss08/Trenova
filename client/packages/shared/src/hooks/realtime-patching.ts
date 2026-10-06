@@ -99,6 +99,8 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   ],
   shipments: [
     "shipment-list",
+    "shipmentBoard",
+    "shipment-events",
     "dispatch-board",
     "dispatch-live-tender",
     "dispatch-shipment-tenders",
@@ -108,7 +110,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   customers: ["customer-list"],
   tractors: ["tractor-list"],
   trailers: ["trailer-list"],
-  workers: ["worker-list", "dispatch-board"],
+  workers: ["worker-list", "dispatch-board", "shipmentBoard"],
   "audit-logs": ["audit-entry-list"],
   billing_queue: ["billing-queue-list", "billingQueue"],
   // A bulk approval's progress: the run and the items it is approving.

@@ -896,3 +896,17 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
     },
   ];
 }
+
+/**
+ * Renders a span of minutes the way a dispatcher says it out loud, rolling hours into
+ * days once they stop being scannable: "40m", "3h 10m", "11d 12h".
+ */
+export function formatMinutesSpan(minutes: number): string {
+  const total = Math.abs(Math.round(minutes));
+  const days = Math.floor(total / 1440);
+  if (days > 0) {
+    return `${days}d ${Math.floor((total % 1440) / 60)}h`;
+  }
+  const hours = Math.floor(total / 60);
+  return hours > 0 ? `${hours}h ${total % 60}m` : `${total}m`;
+}

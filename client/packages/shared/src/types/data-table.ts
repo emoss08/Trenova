@@ -122,6 +122,8 @@ export type RowAction<TData extends RowData> = {
   id: string;
   label: string;
   icon?: IconComponent;
+  /** A keyboard hint shown beside the action, already formatted for the platform. */
+  shortcut?: string;
   variant?: "default" | "destructive";
   group?: string | { id: string; label: string };
   onClick: (row: Row<TData>) => void | Promise<unknown>;
@@ -183,7 +185,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   enableExport?: boolean;
   grouping?: DataTableGrouping<TData>;
   expansion?: DataTableExpansion<TData>;
-  keyboard?: DataTableKeyboard;
+  keyboard?: DataTableKeyboard<TData>;
   toolbar?: DataTableToolbarSlots;
   alternateView?: DataTableAlternateView;
   initialDensity?: "comfortable" | "compact";
@@ -235,10 +237,20 @@ export type DataTableExpansion<TData extends RowData> = {
  * the arrows, Enter to expand, X to select, Esc to back out one step at a
  * time. Only one table on a page should take it.
  */
-export type DataTableKeyboard = {
+export type DataTableKeyboard<TData = unknown> = {
   enabled: boolean;
   cursorRowId: string | null;
   onCursorRowIdChange: (rowId: string | null) => void;
+  /** Keys that act on the cursor row, or the open row when there is no cursor. */
+  rowShortcuts?: DataTableRowShortcut<TData>[];
+};
+
+export type DataTableRowShortcut<TData> = {
+  /** Lowercase key; an Alt chord is matched by physical key. */
+  key: string;
+  mod?: boolean;
+  alt?: boolean;
+  run: (row: TData) => void;
 };
 
 export type DataTableViewContext = {
@@ -257,6 +269,12 @@ export type DataTableToolbarSlots = {
   trailing?: React.ReactNode;
   /** Controls placed after the saved views. */
   end?: React.ReactNode;
+  /**
+   * Classes that let a narrow host collapse the built-in controls: `label` is
+   * put on button labels so they can give way to icons, `secondary` on the
+   * display menu and saved views so they can hide.
+   */
+  responsive?: { label: string; secondary: string };
 };
 
 /** Draws the rows another way, such as a timeline or a map, under the same toolbar and filters. */
