@@ -1,9 +1,9 @@
-Hi {{.FirstName}},
+{{if .FirstName}}{{t "Hi {0}," .FirstName}}{{else}}{{t "Hi,"}}{{end}}
 
-Confirm your email address to create the {{.CompanyName}} workspace on {{.ProductName}}. Nothing is set up until you do.
+{{t "Confirm your email address to create the {0} workspace on {1}. Nothing is set up until you do." .CompanyName .ProductName}}
 
 {{.VerifyURL}}
 
-This link works once and expires {{.ExpiresAt}}.
+{{t "This link works once and expires {0}." .ExpiresAt}}
 
-If you did not sign up, ignore this email and no account will be created.
+{{t "If you did not sign up, ignore this email and no account will be created."}}

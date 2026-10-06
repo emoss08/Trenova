@@ -1,1 +1,1 @@
-Your {{.ProductName}} workspace has been deleted
+{{t "Your {0} workspace has been deleted" .ProductName}}

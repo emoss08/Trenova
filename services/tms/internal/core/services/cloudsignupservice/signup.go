@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/emailutils"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -56,7 +57,7 @@ func (s *Service) Signup(
 	}
 	if existing != nil {
 		s.rejected(ctx, reasonExistingAccount)
-		s.sendExistingAccount(ctx, input.email.Lower, existing.Name)
+		s.sendExistingAccount(ctx, input.email.Lower, existing)
 		return accepted(), nil
 	}
 
@@ -280,11 +281,12 @@ func (s *Service) findUser(ctx context.Context, emailAddress string) (*userSumma
 		return nil, nil //nolint:nilnil // no user holds the address
 	}
 
-	return &userSummary{Name: user.Name}, nil
+	return &userSummary{Name: user.Name, Locale: user.Locale}, nil
 }
 
 type userSummary struct {
-	Name string
+	Name   string
+	Locale string
 }
 
 func isUserNotFound(err error) bool {
@@ -303,6 +305,7 @@ func (s *Service) sendVerification(
 ) {
 	if err := s.email.SendSignupVerification(ctx, &services.SignupVerificationEmail{
 		To:          signup.EmailAddress,
+		Locale:      i18n.FromContext(ctx),
 		Name:        signup.Name,
 		CompanyName: signup.CompanyName,
 		Token:       token,
@@ -315,10 +318,16 @@ func (s *Service) sendVerification(
 	}
 }
 
-func (s *Service) sendExistingAccount(ctx context.Context, emailAddress, name string) {
+func (s *Service) sendExistingAccount(ctx context.Context, emailAddress string, user *userSummary) {
+	locale, known := i18n.Parse(user.Locale)
+	if !known {
+		locale = i18n.FromContext(ctx)
+	}
+
 	if err := s.email.SendSignupExistingAccount(ctx, &services.SignupExistingAccountEmail{
-		To:   emailAddress,
-		Name: name,
+		To:     emailAddress,
+		Locale: locale,
+		Name:   user.Name,
 	}); err != nil {
 		s.l.Error("failed to send the existing account notice", zap.Error(err))
 	}

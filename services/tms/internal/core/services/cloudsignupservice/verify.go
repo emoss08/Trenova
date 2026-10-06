@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/emailutils"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -171,7 +172,7 @@ func (s *Service) createTenant(
 			Password:           signup.PasswordHash,
 			Status:             domaintypes.StatusActive,
 			Timezone:           defaultTimezone,
-			Locale:             defaultLocale,
+			Locale:             i18n.FromContext(ctx).String(),
 			TimeFormat:         domaintypes.TimeFormat12Hour,
 			MustChangePassword: false,
 		},
@@ -350,6 +351,7 @@ func (s *Service) afterProvisioning(ctx context.Context, out *provisioned) {
 
 	if err := s.email.SendWelcome(ctx, &services.WelcomeEmail{
 		To:          owner.EmailAddress,
+		Locale:      i18n.Locale(owner.Locale),
 		Name:        owner.Name,
 		CompanyName: org.Name,
 		TrialEndsAt: out.sub.TrialEndsAt,

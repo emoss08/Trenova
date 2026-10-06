@@ -20,6 +20,7 @@ import (
 
 const (
 	productName       = "Trenova"
+	eyebrow           = "Trenova Cloud"
 	defaultTimezone   = "UTC"
 	signupVerifyPath  = "/signup/verify"
 	signupPath        = "/signup"
@@ -43,6 +44,9 @@ type Params struct {
 type Service struct {
 	cfg        config.CloudSystemEmailConfig
 	baseURL    string
+	homeURL    string
+	homeLabel  string
+	logoURL    string
 	production bool
 	sender     Sender
 	renderer   *renderer
@@ -83,9 +87,15 @@ func NewService(opts *Options) (*Service, error) {
 		logger = zap.NewNop()
 	}
 
+	baseURL := strings.TrimRight(strings.TrimSpace(opts.BaseURL), "/")
+	homeURL, homeLabel := homeLink(baseURL)
+
 	return &Service{
 		cfg:        opts.Config,
-		baseURL:    strings.TrimRight(strings.TrimSpace(opts.BaseURL), "/"),
+		baseURL:    baseURL,
+		homeURL:    homeURL,
+		homeLabel:  homeLabel,
+		logoURL:    opts.Config.GetLogoURL(),
 		production: opts.Production,
 		sender:     opts.Sender,
 		renderer:   r,
@@ -100,7 +110,8 @@ func (s *Service) SendSignupVerification(
 	verifyURL := s.link(signupVerifyPath, url.Values{"token": {msg.Token}})
 
 	return s.sendKind(ctx, KindSignupVerification, msg.To, &templateData{
-		FirstName:   firstNameOr(msg.Name, "there"),
+		Locale:      msg.Locale,
+		FirstName:   stringutils.FirstName(msg.Name),
 		CompanyName: msg.CompanyName,
 		VerifyURL:   verifyURL,
 		ExpiresAt:   timeutils.FormatStampIn(msg.ExpiresAt, defaultTimezone),
@@ -112,6 +123,7 @@ func (s *Service) SendSignupExistingAccount(
 	msg *services.SignupExistingAccountEmail,
 ) error {
 	return s.sendKind(ctx, KindSignupExistingAccount, msg.To, &templateData{
+		Locale:            msg.Locale,
 		FirstName:         stringutils.FirstName(msg.Name),
 		LoginURL:          s.link(loginPath, nil),
 		ForgotPasswordURL: s.link(loginPath, nil),
@@ -120,7 +132,8 @@ func (s *Service) SendSignupExistingAccount(
 
 func (s *Service) SendWelcome(ctx context.Context, msg *services.WelcomeEmail) error {
 	return s.sendKind(ctx, KindWelcome, msg.To, &templateData{
-		FirstName:   firstNameOr(msg.Name, "there"),
+		Locale:      msg.Locale,
+		FirstName:   stringutils.FirstName(msg.Name),
 		CompanyName: msg.CompanyName,
 		AppURL:      s.link("/", nil),
 		TrialEndsAt: timeutils.FormatStampIn(msg.TrialEndsAt, timezoneOr(msg.Timezone)),
@@ -129,7 +142,8 @@ func (s *Service) SendWelcome(ctx context.Context, msg *services.WelcomeEmail) e
 
 func (s *Service) SendTrialEnded(ctx context.Context, msg *services.TrialEndedEmail) error {
 	return s.sendKind(ctx, KindTrialEnded, msg.To, &templateData{
-		FirstName:     firstNameOr(msg.Name, "there"),
+		Locale:        msg.Locale,
+		FirstName:     stringutils.FirstName(msg.Name),
 		CompanyName:   msg.CompanyName,
 		AppURL:        s.link("/", nil),
 		ReadOnlyUntil: timeutils.FormatStampIn(msg.ReadOnlyUntil, timezoneOr(msg.Timezone)),
@@ -138,14 +152,22 @@ func (s *Service) SendTrialEnded(ctx context.Context, msg *services.TrialEndedEm
 
 func (s *Service) SendAccountPurged(ctx context.Context, msg *services.AccountPurgedEmail) error {
 	return s.sendKind(ctx, KindAccountPurged, msg.To, &templateData{
+		Locale:      msg.Locale,
 		FirstName:   stringutils.FirstName(msg.Name),
 		CompanyName: msg.CompanyName,
 		SignupURL:   s.link(signupPath, nil),
 	}, "")
 }
 
-func (s *Service) SendRendered(ctx context.Context, msg *services.PlatformEmailMessage) error {
-	return s.deliver(ctx, msg)
+func (s *Service) SendPasswordReset(ctx context.Context, msg *services.PasswordResetEmail) error {
+	return s.sendKind(ctx, KindPasswordReset, msg.To, &templateData{
+		Locale:           msg.Locale,
+		FirstName:        stringutils.FirstName(msg.Name),
+		CompanyName:      msg.CompanyName,
+		ResetURL:         msg.ResetURL,
+		ExpiresInMinutes: msg.ExpiresInMinutes,
+		ExpiresAt:        timeutils.FormatStampIn(msg.ExpiresAt, timezoneOr(msg.Timezone)),
+	}, msg.IdempotencyKey)
 }
 
 func (s *Service) sendKind(
@@ -156,6 +178,10 @@ func (s *Service) sendKind(
 	idempotencyKey string,
 ) error {
 	data.ProductName = productName
+	data.Eyebrow = eyebrow
+	data.LogoURL = s.logoURL
+	data.HomeURL = s.homeURL
+	data.HomeLabel = s.homeLabel
 	if data.CompanyName == "" {
 		data.CompanyName = "your company"
 	}
@@ -244,12 +270,13 @@ func (s *Service) link(path string, query url.Values) string {
 	return target
 }
 
-func firstNameOr(name, fallback string) string {
-	if first := stringutils.FirstName(name); first != "" {
-		return first
+func homeLink(baseURL string) (string, string) {
+	parsed, err := url.Parse(baseURL)
+	if err != nil || parsed.Host == "" {
+		return "", ""
 	}
 
-	return fallback
+	return baseURL + "/", parsed.Host
 }
 
 func timezoneOr(timezone string) string {

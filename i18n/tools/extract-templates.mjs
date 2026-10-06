@@ -8,12 +8,16 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
+// Each root names the catalog area its strings land in: the built-in document
+// templates organizations customize, and the Trenova Cloud emails the platform sends.
 const TEMPLATE_ROOTS = [
-  "services/tms/internal/core/domain/documenttemplate/starters/assets",
+  { dir: "services/tms/internal/core/domain/documenttemplate/starters/assets", area: "template" },
+  { dir: "services/tms/internal/core/services/platformemailservice/templates", area: "platform-email" },
 ];
 
-// {{ t "message" ...args }} and the whitespace-trimming {{- t "..." -}} forms.
-const CALL = /\{\{-?\s*t\s+"((?:[^"\\]|\\.)*)"/g;
+// {{ t "message" ...args }}, the whitespace-trimming {{- t "..." -}} forms, and a call
+// nested as an argument — (t "...") — which is how a translated label reaches a helper.
+const CALL = /(?:\{\{-?|\()\s*t\s+"((?:[^"\\]|\\.)*)"/g;
 
 function unquote(raw) {
   return raw.replace(/\\(["\\nrt])/g, (_, ch) => {
@@ -33,7 +37,7 @@ function unquote(raw) {
 export async function extractTemplates(repoRoot) {
   const entries = [];
 
-  for (const root of TEMPLATE_ROOTS) {
+  for (const { dir: root, area: areaPrefix } of TEMPLATE_ROOTS) {
     let files;
     try {
       files = await readdir(join(repoRoot, root));
@@ -48,7 +52,7 @@ export async function extractTemplates(repoRoot) {
 
       // The kind is the filename without its channel extension, which is what
       // groups a subject with the body it is sent beside.
-      const area = `template/${name.replace(/\.(html|txt|subject|css)$/, "")}`;
+      const area = `${areaPrefix}/${name.replace(/\.(html|txt|subject|css)$/, "")}`;
 
       for (const match of source.matchAll(CALL)) {
         const message = unquote(match[1]);

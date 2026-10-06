@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/emailutils"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -350,16 +351,33 @@ func TestSignupForExistingUserSendsNoticeOnly(t *testing.T) {
 	d := setup(t)
 	d.passTurnstile(services.TurnstileActionSignup)
 	d.users.EXPECT().FindByEmail(mock.Anything, "dana.whitfield+trial@gmail.com").
-		Return(&tenant.User{Name: "Dana Whitfield"}, nil)
+		Return(&tenant.User{Name: "Dana Whitfield", Locale: "es"}, nil)
 	d.email.EXPECT().SendSignupExistingAccount(mock.Anything, &services.SignupExistingAccountEmail{
-		To:   "dana.whitfield+trial@gmail.com",
-		Name: "Dana Whitfield",
+		To:     "dana.whitfield+trial@gmail.com",
+		Locale: i18n.ES,
+		Name:   "Dana Whitfield",
 	}).Return(nil)
 
-	resp, err := d.svc.Signup(ctxWithMeta(t), validSignup())
+	ctx := i18n.WithLocale(ctxWithMeta(t), i18n.ZhTW)
+	resp, err := d.svc.Signup(ctx, validSignup())
 	require.NoError(t, err)
 	assert.Equal(t, "pending", resp.Status)
 	assert.Equal(t, []string{"signup_rejected:existing_account"}, d.events.providers())
+}
+
+func TestExistingAccountNoticeFallsBackToTheRequestLanguage(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	d.passTurnstile(services.TurnstileActionSignup)
+	d.users.EXPECT().FindByEmail(mock.Anything, "dana.whitfield+trial@gmail.com").
+		Return(&tenant.User{Name: "Dana Whitfield"}, nil)
+	d.email.EXPECT().SendSignupExistingAccount(mock.Anything, mock.MatchedBy(
+		func(msg *services.SignupExistingAccountEmail) bool { return msg.Locale == i18n.ZhTW },
+	)).Return(nil)
+
+	_, err := d.svc.Signup(i18n.WithLocale(ctxWithMeta(t), i18n.ZhTW), validSignup())
+	require.NoError(t, err)
 }
 
 func TestSignupCreatesAPendingRequest(t *testing.T) {
@@ -389,9 +407,11 @@ func TestSignupCreatesAPendingRequest(t *testing.T) {
 	)
 
 	before := time.Now().Unix()
-	_, err := d.svc.Signup(ctxWithMeta(t), validSignup())
+	_, err := d.svc.Signup(i18n.WithLocale(ctxWithMeta(t), i18n.ES), validSignup())
 	require.NoError(t, err)
 
+	require.NotNil(t, mailed)
+	assert.Equal(t, i18n.ES, mailed.Locale)
 	require.NotNil(t, created)
 	assert.Equal(t, "dana.whitfield+trial@gmail.com", created.EmailAddress)
 	assert.Equal(t, "danawhitfield@gmail.com", created.EmailNormalized)
@@ -746,7 +766,8 @@ func TestVerifyProvisionsTheWorkspaceAndSignsIn(t *testing.T) {
 	)).Return(nil)
 	d.plans.EXPECT().Invalidate(orgID).Return()
 	d.email.EXPECT().SendWelcome(mock.Anything, mock.MatchedBy(func(msg *services.WelcomeEmail) bool {
-		return msg.To == signup.EmailAddress && msg.CompanyName == "Acme Freight, LLC"
+		return msg.To == signup.EmailAddress && msg.CompanyName == "Acme Freight, LLC" &&
+			msg.Locale == i18n.ZhCN
 	})).Return(nil)
 	d.auth.EXPECT().CreateSessionForUser(mock.Anything, mock.MatchedBy(
 		func(req *services.CreateSessionForUserRequest) bool {
@@ -755,7 +776,10 @@ func TestVerifyProvisionsTheWorkspaceAndSignsIn(t *testing.T) {
 	)).Return(&services.LoginResponse{SessionID: "sess", SessionToken: "token"}, nil)
 
 	before := time.Now().Unix()
-	resp, err := d.svc.Verify(t.Context(), &services.CloudSignupVerifyRequest{Token: " good-token "})
+	resp, err := d.svc.Verify(
+		i18n.WithLocale(t.Context(), i18n.ZhCN),
+		&services.CloudSignupVerifyRequest{Token: " good-token "},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "sess", resp.SessionID)
 
@@ -774,6 +798,7 @@ func TestVerifyProvisionsTheWorkspaceAndSignsIn(t *testing.T) {
 	assert.Equal(t, signup.EmailAddress, bootstrapReq.Owner.EmailAddress)
 	assert.Equal(t, domaintypes.StatusActive, bootstrapReq.Owner.Status)
 	assert.False(t, bootstrapReq.Owner.MustChangePassword)
+	assert.Equal(t, string(i18n.ZhCN), bootstrapReq.Owner.Locale)
 
 	require.NotNil(t, sub)
 	assert.Equal(t, string(platformplan.PlanKeyFreeDemo), sub.PlanKey)

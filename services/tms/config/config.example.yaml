@@ -65,6 +65,7 @@ platform:
       fromName: Trenova
       replyTo: ""
       timeout: 10s
+      logoUrl: "" # HTTPS image shown in the header of every Trenova Cloud email; empty uses the default mark
     trial:
       lifetime: 168h # 7 days of full use
       readOnlyGrace: 336h # then 14 days read-only, then purge

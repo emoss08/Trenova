@@ -1,1 +1,1 @@
-Confirm your email to finish setting up {{.ProductName}}
+{{t "Confirm your email to finish setting up {0}" .ProductName}}

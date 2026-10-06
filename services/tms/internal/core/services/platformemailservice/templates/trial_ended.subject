@@ -1,1 +1,1 @@
-Your {{.ProductName}} trial has ended
+{{t "Your {0} trial has ended" .ProductName}}

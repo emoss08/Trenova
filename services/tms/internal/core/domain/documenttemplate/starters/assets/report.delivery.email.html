@@ -1,37 +1,52 @@
-<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:680px">
-  <p style="margin:0 0 4px;font-size:16px;font-weight:700">{{ .Title }}</p>
-  {{ if .Description }}<p style="margin:0 0 16px;color:#4b5563;font-size:13px">{{ .Description }}</p>{{ end }}
-
-  <p style="margin:0 0 16px;color:#4b5563;font-size:13px">
-    {{ t "{0, plural, one {# row} other {# rows}}" .RowCount }}{{ if .Format }} &middot; {{ upper .Format }}{{ end }}{{ if .FileSize }} &middot; {{ .FileSize }}{{ end }}{{ if .CompletedAt }} &middot; {{ t "completed {0}" .CompletedAt }}{{ end }}
-  </p>
-
-  {{ if .Truncated }}
-  <p style="margin:0 0 16px;padding:10px 12px;background:#fef3c7;border-left:3px solid #b45309;color:#78350f;font-size:13px">
-    {{ t "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything." }}
-  </p>
-  {{ end }}
-
-  {{ if .Digest.Rows }}
-  <table style="border-collapse:collapse;margin:0 0 12px;font-size:12px">
-    <tr>
-      {{ range .Digest.Headers }}<th style="padding:5px 10px;border-bottom:2px solid #111827;color:#374151;text-align:left">{{ . }}</th>{{ end }}
-    </tr>
-    {{ range .Digest.Rows }}<tr>
-      {{ range .Cells }}<td style="padding:5px 10px;border-bottom:1px solid #e5e7eb">{{ .Text }}</td>{{ end }}
-    </tr>{{ end }}
-    {{ if .Digest.Totals }}<tr>
-      {{ range .Digest.Totals }}<td style="padding:5px 10px;border-top:2px solid #111827;font-weight:700">{{ . }}</td>{{ end }}
-    </tr>{{ end }}
-  </table>
-  {{ if .Digest.Note }}<p style="margin:0 0 16px;color:#6b7280;font-size:12px">{{ .Digest.Note }}</p>{{ end }}
-  {{ end }}
-
-  <p style="margin:0 0 16px;font-size:13px">
-    {{ if .Attached }}{{ .AttachedNote }}
-    {{ else }}{{ .AttachedNote }}{{ if .DownloadURL }} <a href="{{ .DownloadURL }}" style="color:#1d4ed8">{{ t "Download the report" }}</a>.{{ end }}
-    {{ end }}
-  </p>
-
-  {{ if .ExpiresAt }}<p style="margin:0;color:#6b7280;font-size:12px">{{ t "The download expires {0}." .ExpiresAt }}</p>{{ end }}
-</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0;padding:0;background-color:#f7f6f2">
+  <tr>
+    <td align="center" style="margin:0;padding:32px 12px 40px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;margin:0 auto">
+        <tr>
+          <td style="margin:0;padding:0;background-color:#ffffff;border:1px solid #121210">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%">
+              <tr>
+                <td style="margin:0;padding:36px 36px 16px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#121210">
+                  <p style="margin:0 0 18px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{ t "Report" }} ]</p>
+                  <h1 style="margin:0 0 24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.12;font-weight:600;letter-spacing:-0.9px;color:#141413">{{ .Title }}</h1>
+                  {{ if .Description }}<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#121210">{{ .Description }}</p>{{ end }}
+                  <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#121210;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:13px;color:#55544e">{{ t "{0, plural, one {# row} other {# rows}}" .RowCount }}{{ if .Format }} &middot; {{ upper .Format }}{{ end }}{{ if .FileSize }} &middot; {{ .FileSize }}{{ end }}{{ if .CompletedAt }} &middot; {{ t "completed {0}" .CompletedAt }}{{ end }}</p>
+                </td>
+              </tr>
+              {{ if .Truncated }}
+              <tr>
+                <td style="margin:0;padding:24px 36px;background-color:#ffa31a;border-top:1px solid #121210;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1a1203">
+                  <p style="margin:0">{{ t "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything." }}</p>
+                </td>
+              </tr>
+              {{ end }}
+              {{ if .Digest.Rows }}
+              <tr>
+                <td style="margin:0;padding:8px 36px 24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;border-top:1px solid #121210">
+                    <tr>
+                      {{ range .Digest.Headers }}<th style="margin:0;padding:8px 10px 8px 0;border-bottom:1px solid #121210;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;line-height:1.4;font-weight:400;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;text-align:left">{{ . }}</th>{{ end }}
+                    </tr>
+                    {{ range .Digest.Rows }}<tr>
+                      {{ range .Cells }}<td style="margin:0;padding:8px 10px 8px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.4;color:#121210">{{ .Text }}</td>{{ end }}
+                    </tr>{{ end }}
+                    {{ if .Digest.Totals }}<tr>
+                      {{ range .Digest.Totals }}<td style="margin:0;padding:8px 10px 8px 0;border-top:1px solid #121210;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.4;font-weight:700;color:#121210">{{ . }}</td>{{ end }}
+                    </tr>{{ end }}
+                  </table>
+                  {{ if .Digest.Note }}<p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#55544e">{{ .Digest.Note }}</p>{{ end }}
+                </td>
+              </tr>
+              {{ end }}
+              <tr>
+                <td style="margin:0;padding:20px 36px 28px;border-top:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#55544e">
+                  <p style="margin:0">{{ if .Attached }}{{ .AttachedNote }}{{ else }}{{ .AttachedNote }}{{ if .DownloadURL }} <a href="{{ .DownloadURL }}" style="color:#121210;text-decoration:underline">{{ t "Download the report" }}</a>.{{ end }}{{ end }}{{ if .ExpiresAt }}<br>{{ t "The download expires {0}." .ExpiresAt }}{{ end }}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

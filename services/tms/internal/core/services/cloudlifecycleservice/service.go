@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -271,6 +272,7 @@ func (s *Service) notify(
 		case noticeTrialEnded:
 			err = s.emails.SendTrialEnded(ctx, &services.TrialEndedEmail{
 				To:            member.EmailAddress,
+				Locale:        i18n.Locale(member.Locale),
 				Name:          member.Name,
 				CompanyName:   profile.Name,
 				ReadOnlyUntil: sub.ReadOnlyUntil,
@@ -279,6 +281,7 @@ func (s *Service) notify(
 		case noticeExpired:
 			err = s.emails.SendAccountPurged(ctx, &services.AccountPurgedEmail{
 				To:          member.EmailAddress,
+				Locale:      i18n.Locale(member.Locale),
 				Name:        member.Name,
 				CompanyName: profile.Name,
 			})

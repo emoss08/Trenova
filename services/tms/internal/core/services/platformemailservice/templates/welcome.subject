@@ -1,1 +1,1 @@
-Welcome to {{.ProductName}}
+{{t "Welcome to {0}" .ProductName}}

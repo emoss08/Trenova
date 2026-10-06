@@ -1,50 +1,70 @@
-<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:560px">
-  <p style="margin:0 0 16px">{{ if .CarrierName }}{{ t "Hello {0}," .CarrierName }}{{ else }}{{ t "Hello," }}{{ end }}</p>
-
-  <p style="margin:0 0 20px">
-    {{ if .ShipmentProNumber }}{{ t "{0} has a load available for you (ref {1})." .CompanyName .ShipmentProNumber }}{{ else }}{{ t "{0} has a load available for you." .CompanyName }}{{ end }}
-  </p>
-
-  <table style="width:100%;border-collapse:collapse;margin:0 0 20px;font-size:13px">
-    <tr>
-      <td style="padding:6px 0;color:#6b7280;width:120px;vertical-align:top">{{ t "Origin" }}</td>
-      <td style="padding:6px 0">{{ .OriginSummary }}{{ if .PickupWindow }}<br><span style="color:#6b7280">{{ .PickupWindow }}</span>{{ end }}</td>
-    </tr>
-    <tr>
-      <td style="padding:6px 0;color:#6b7280;vertical-align:top">{{ t "Destination" }}</td>
-      <td style="padding:6px 0">{{ .DestinationSummary }}{{ if .DeliveryWindow }}<br><span style="color:#6b7280">{{ .DeliveryWindow }}</span>{{ end }}</td>
-    </tr>
-    {{ if .EquipmentSummary }}
-    <tr>
-      <td style="padding:6px 0;color:#6b7280">{{ t "Equipment" }}</td>
-      <td style="padding:6px 0">{{ .EquipmentSummary }}</td>
-    </tr>
-    {{ end }}
-    {{ if .WeightSummary }}
-    <tr>
-      <td style="padding:6px 0;color:#6b7280">{{ t "Weight" }}</td>
-      <td style="padding:6px 0">{{ .WeightSummary }}</td>
-    </tr>
-    {{ end }}
-    <tr>
-      <td style="padding:6px 0;color:#6b7280">{{ t "Rate" }}</td>
-      <td style="padding:6px 0;font-weight:600">{{ .RateAmount }}{{ if .RateMethodLabel }} <span style="font-weight:400;color:#6b7280">({{ .RateMethodLabel }})</span>{{ end }}</td>
-    </tr>
-  </table>
-
-  <p style="margin:0 0 20px">
-    <a href="{{ .AcceptURL }}" style="display:inline-block;padding:11px 20px;background:#111827;color:#ffffff;font-weight:600;text-decoration:none;border-radius:6px;margin-right:8px">{{ t "Accept load" }}</a>
-    <a href="{{ .DeclineURL }}" style="display:inline-block;padding:11px 20px;background:#ffffff;color:#111827;font-weight:600;text-decoration:none;border-radius:6px;border:1px solid #d1d5db">{{ t "Decline" }}</a>
-  </p>
-
-  <p style="margin:0 0 20px;color:#4b5563;font-size:13px">
-    {{ t "Or paste one of these links into your browser:" }}<br>
-    {{ t "Accept:" }} <span style="word-break:break-all">{{ .AcceptURL }}</span><br>
-    {{ t "Decline:" }} <span style="word-break:break-all">{{ .DeclineURL }}</span>
-  </p>
-
-  <p style="margin:0;color:#6b7280;font-size:13px">
-    {{ if .ExpiresInHours }}{{ if .ExpiresAt }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}, at {1}." .ExpiresInHours .ExpiresAt }}{{ else }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}." .ExpiresInHours }}{{ end }}{{ else }}{{ if .ExpiresAt }}{{ t "This offer expires at {0}." .ExpiresAt }}{{ end }}{{ end }}
-    After that the load may be offered to another carrier.
-  </p>
-</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0;padding:0;background-color:#f7f6f2">
+  <tr>
+    <td align="center" style="margin:0;padding:32px 12px 40px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;margin:0 auto">
+        <tr>
+          <td style="margin:0;padding:0 4px 20px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.2;font-weight:600;letter-spacing:-0.4px;color:#121210">{{ .CompanyName }}</td>
+        </tr>
+        <tr>
+          <td style="margin:0;padding:0;background-color:#ffffff;border:1px solid #121210">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%">
+              <tr>
+                <td style="margin:0;padding:36px 36px 16px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#121210">
+                  <p style="margin:0 0 18px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{ t "Load offer" }} ]</p>
+                  <h1 style="margin:0 0 24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.12;font-weight:600;letter-spacing:-0.9px;color:#141413">{{ if .ShipmentProNumber }}{{ t "{0} has a load available for you (ref {1})." .CompanyName .ShipmentProNumber }}{{ else }}{{ t "{0} has a load available for you." .CompanyName }}{{ end }}</h1>
+                  <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#121210">{{ if .CarrierName }}{{ t "Hello {0}," .CarrierName }}{{ else }}{{ t "Hello," }}{{ end }}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="margin:0;padding:0 36px 32px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+                  <p style="margin:0 0 10px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{ t "Details" }} ]</p>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;border-top:1px solid #121210">
+                    <tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Origin" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .OriginSummary }}{{ if .PickupWindow }}<br><span style="color:#55544e;font-weight:400">{{ .PickupWindow }}</span>{{ end }}</td>
+                    </tr>
+                    <tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Destination" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .DestinationSummary }}{{ if .DeliveryWindow }}<br><span style="color:#55544e;font-weight:400">{{ .DeliveryWindow }}</span>{{ end }}</td>
+                    </tr>
+                    {{ if .EquipmentSummary }}<tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Equipment" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .EquipmentSummary }}</td>
+                    </tr>{{ end }}
+                    {{ if .WeightSummary }}<tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Weight" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .WeightSummary }}</td>
+                    </tr>{{ end }}
+                    <tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Rate" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top;font-weight:700">{{ .RateAmount }}{{ if .RateMethodLabel }} <span style="color:#55544e;font-weight:400">({{ .RateMethodLabel }})</span>{{ end }}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="margin:0;padding:0 36px 32px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px">
+                    <tr>
+                      <td style="margin:0;padding:0;background-color:#121210;border:1px solid #121210"><a href="{{ .AcceptURL }}" style="display:inline-block;padding:14px 22px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1;font-weight:600;letter-spacing:-0.2px;color:#ffffff;text-decoration:none">{{ t "Accept load" }} &rarr;</a></td>
+                      <td style="margin:0;padding:0;width:10px">&nbsp;</td>
+                      <td style="margin:0;padding:0;background-color:#ffffff;border:1px solid #121210"><a href="{{ .DeclineURL }}" style="display:inline-block;padding:14px 22px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1;font-weight:600;letter-spacing:-0.2px;color:#121210;text-decoration:none">{{ t "Decline" }}</a></td>
+                    </tr>
+                  </table>
+                  <p style="margin:0 0 8px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">{{ t "Or paste one of these links into your browser:" }}</p>
+                  <p style="margin:0 0 16px;padding:12px 14px;background-color:#f7f6f2;border:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.6;color:#121210;word-break:break-all">{{ t "Accept:" }} {{ .AcceptURL }}<br>{{ t "Decline:" }} {{ .DeclineURL }}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="margin:0;padding:20px 36px 28px;border-top:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#55544e">
+                  <p style="margin:0">{{ if .ExpiresInHours }}{{ if .ExpiresAt }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}, at {1}." .ExpiresInHours .ExpiresAt }}{{ else }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}." .ExpiresInHours }}{{ end }}{{ else }}{{ if .ExpiresAt }}{{ t "This offer expires at {0}." .ExpiresAt }}{{ end }}{{ end }}
+                  After that the load may be offered to another carrier.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

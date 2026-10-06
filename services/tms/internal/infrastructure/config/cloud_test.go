@@ -54,6 +54,7 @@ platform:
 	assert.Equal(t, CloudSystemEmailProviderResend, cloud.SystemEmail.GetProvider())
 	assert.Equal(t, DefaultCloudSystemEmailFromAddress, cloud.SystemEmail.GetFromAddress())
 	assert.Equal(t, DefaultCloudSystemEmailFromName, cloud.SystemEmail.GetFromName())
+	assert.Equal(t, DefaultCloudSystemEmailLogoURL, cloud.SystemEmail.GetLogoURL())
 	assert.False(t, cloud.SystemEmail.HasAPIKey())
 	assert.Equal(t, 7*24*time.Hour, cloud.Trial.GetLifetime())
 	assert.Equal(t, 336*time.Hour, cloud.Trial.GetReadOnlyGrace())
