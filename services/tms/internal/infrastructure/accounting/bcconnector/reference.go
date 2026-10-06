@@ -269,7 +269,7 @@ func accountObjectOf(account *businesscentral.Account) *accountingsync.Accountin
 		AccountType:       account.AccountType,
 		AccountSubType:    account.SubCategory,
 		AccountClass:      AccountClassOf(account),
-		Active:            account.Postable() && account.DirectPosting,
+		Active:            account.Postable(),
 		ProviderUpdatedAt: unixOf(account.LastModified),
 	}
 }

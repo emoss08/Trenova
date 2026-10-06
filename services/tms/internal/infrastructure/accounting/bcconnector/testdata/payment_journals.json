@@ -1,0 +1,3 @@
+{"@odata.context": "https://api.businesscentral.dynamics.com/v2.0/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/Production/api/v2.0/$metadata#companies(a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)/customerPaymentJournals", "value": [
+  {"@odata.etag": "W/\"JzE4OzE=\"", "id": "eeeeeeee-ffff-4000-8111-222222222221", "code": "TRENOVA", "displayName": "Trenova receipts", "balancingAccountId": "33333333-4444-4555-8666-777777777771", "balancingAccountNumber": "10100", "lastModifiedDateTime": "2026-09-01T00:00:00Z"}
+]}

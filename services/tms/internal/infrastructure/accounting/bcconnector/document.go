@@ -100,9 +100,9 @@ func salesKindOf(kind accountingsync.SyncObjectType) (businesscentral.DocumentKi
 }
 
 type documentWrite struct {
-	client *businesscentral.Client
-	kind   businesscentral.DocumentKind
-	input  *businesscentral.DocumentInput
+	client  *businesscentral.Client
+	kind    businesscentral.DocumentKind
+	input   *businesscentral.DocumentInput
 	refs    map[string]string
 	refKey  string
 	exclude string

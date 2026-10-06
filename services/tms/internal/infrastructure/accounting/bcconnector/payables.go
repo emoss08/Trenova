@@ -10,12 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/shopspring/decimal"
 )
 
 const (
 	docTypePurchaseInvoice    = "PurchaseInvoice"
 	docTypePurchaseCreditMemo = "PurchaseCreditMemo"
+	revisionSeparator         = "-R"
+	revisionHashLength        = 4
 )
 
 var errPurchaseDocumentType = errors.New(
@@ -232,7 +235,22 @@ func (c *Connector) UpdatePurchaseDocument(
 	}
 	result.Refs[refReplaced] = id
 	result.Refs[refCorrective] = result.Refs[voidCreditKey(id)]
-	return c.writePurchase(ctx, client, doc, result)
+	revised := *doc
+	revised.DocNumber = revisedNumber(doc.DocNumber, doc.RequestID)
+	return c.writePurchase(ctx, client, &revised, result)
+}
+
+func revisedNumber(number, requestID string) string {
+	number = strings.TrimSpace(number)
+	if number == "" {
+		return ""
+	}
+	suffix := revisionSeparator + strings.ToUpper(hashutils.SHA256Hex(requestID)[:revisionHashLength])
+	limit := businesscentral.MaxExternalDocumentNumberLength - len(suffix)
+	if len(number) > limit {
+		number = number[:limit]
+	}
+	return number + suffix
 }
 
 func firstAccount(lines []services.AccountingPurchaseLine) map[string]string {
