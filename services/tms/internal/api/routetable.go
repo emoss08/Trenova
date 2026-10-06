@@ -3,16 +3,22 @@ package api
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/api/routegroup"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/shared/reflectutils"
 	"github.com/gin-gonic/gin"
 )
 
-func RouteTable() (routes gin.RoutesInfo, err error) {
+func RouteTable() (gin.RoutesInfo, error) {
+	return RouteTableWith(routegroup.Registrars{})
+}
+
+func RouteTableWith(edition routegroup.Registrars) (routes gin.RoutesInfo, err error) {
 	var params RouterParams
 	if err = reflectutils.AllocatePointers(&params); err != nil {
 		return nil, err
 	}
+	params.EditionRoutes = edition
 
 	engine := gin.New()
 	params.Server = &Server{router: engine}

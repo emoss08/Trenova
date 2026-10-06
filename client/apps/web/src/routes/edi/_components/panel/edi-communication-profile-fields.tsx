@@ -105,7 +105,7 @@ export function TransportProfileFields({
                 control={control}
                 name="config.mdnUrl"
                 label={t("Async MDN return URL")}
-                placeholder="https://edi.trenova.com/as2/mdn"
+                placeholder="https://edi.example.com/as2/mdn"
                 description={t("Required when MDN mode is asynchronous.")}
               />
             </FormControl>
@@ -264,7 +264,7 @@ export function TransportProfileFields({
               control={control}
               name="config.contactEmail"
               label={t("Contact email")}
-              placeholder={t("edi@trenova.com")}
+              placeholder={t("edi@example.com")}
               description={t("The email address the VAN provider uses for service notifications.")}
             />
           </FormControl>

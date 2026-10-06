@@ -1,8 +1,0 @@
-Hi{{if .FirstName}} {{.FirstName}}{{end}},
-
-Someone tried to sign up for {{.ProductName}} with this email address, but it already belongs to an account. No new account was created.
-
-Sign in: {{.LoginURL}}
-Forgot your password? {{.ForgotPasswordURL}}
-
-If this was not you, you can ignore this email. Your account has not changed.

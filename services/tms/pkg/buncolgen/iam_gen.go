@@ -940,6 +940,7 @@ var MFAAuthenticatorColumns = struct {
 	Enabled        Column // "enabled" → qualified: "mfa.enabled"
 	VerifiedAt     Column // "verified_at" → qualified: "mfa.verified_at"
 	LastUsedAt     Column // "last_used_at" → qualified: "mfa.last_used_at"
+	LastUsedStep   Column // "last_used_step" → qualified: "mfa.last_used_step"
 	CreatedAt      Column // "created_at" → qualified: "mfa.created_at"
 	UpdatedAt      Column // "updated_at" → qualified: "mfa.updated_at"
 }{
@@ -953,6 +954,7 @@ var MFAAuthenticatorColumns = struct {
 	Enabled:        NewColumn("enabled", "mfa"),
 	VerifiedAt:     NewColumn("verified_at", "mfa"),
 	LastUsedAt:     NewColumn("last_used_at", "mfa"),
+	LastUsedStep:   NewColumn("last_used_step", "mfa"),
 	CreatedAt:      NewColumn("created_at", "mfa"),
 	UpdatedAt:      NewColumn("updated_at", "mfa"),
 }
@@ -988,6 +990,7 @@ var MFAAuthenticatorInsertableColumns = []string{
 	"enabled",
 	"verified_at",
 	"last_used_at",
+	"last_used_step",
 	"created_at",
 	"updated_at",
 }
@@ -1044,6 +1047,101 @@ var MFAAuthenticatorFilter = struct {
 	},
 	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// MFARecoveryCode — table "mfa_recovery_codes", alias "mrc"
+// ---------------------------------------------------------------------------
+
+// MFARecoveryCodeTable holds the table name, alias, and primary key columns
+// for the "mfa_recovery_codes" table. The alias "mrc" is used in all generated
+// SQL fragments (e.g. "mrc.id = ?").
+var MFARecoveryCodeTable = TableInfo{
+	Name:       "mfa_recovery_codes",
+	Alias:      "mrc",
+	PrimaryKey: []string{"id"},
+}
+
+// MFARecoveryCodeColumns provides type-safe column references for the "mfa_recovery_codes" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(MFARecoveryCodeColumns.ID.String())
+//	// SELECT mrc.id FROM mfa_recovery_codes AS mrc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(MFARecoveryCodeColumns.ID.Eq(), id)           // WHERE mrc.id = ?
+//	q.Order(MFARecoveryCodeColumns.CreatedAt.OrderDesc())  // ORDER BY mrc.created_at DESC
+var MFARecoveryCodeColumns = struct {
+	ID             Column // "id" → qualified: "mrc.id"
+	UserID         Column // "user_id" → qualified: "mrc.user_id"
+	OrganizationID Column // "organization_id" → qualified: "mrc.organization_id"
+	CodeHash       Column // "code_hash" → qualified: "mrc.code_hash"
+	UsedAt         Column // "used_at" → qualified: "mrc.used_at"
+	CreatedAt      Column // "created_at" → qualified: "mrc.created_at"
+}{
+	ID:             NewColumn("id", "mrc"),
+	UserID:         NewColumn("user_id", "mrc"),
+	OrganizationID: NewColumn("organization_id", "mrc"),
+	CodeHash:       NewColumn("code_hash", "mrc"),
+	UsedAt:         NewColumn("used_at", "mrc"),
+	CreatedAt:      NewColumn("created_at", "mrc"),
+}
+
+// MFARecoveryCodeFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by MFARecoveryCode.GetStaticFieldMap().
+var MFARecoveryCodeFieldMap = map[string]string{
+	"id":             "id",
+	"userId":         "user_id",
+	"organizationId": "organization_id",
+	"usedAt":         "used_at",
+	"createdAt":      "created_at",
+}
+
+// MFARecoveryCodeInsertableColumns lists column names suitable for INSERT statements on the "mfa_recovery_codes" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var MFARecoveryCodeInsertableColumns = []string{
+	"id",
+	"user_id",
+	"organization_id",
+	"code_hash",
+	"used_at",
+	"created_at",
+}
+
+// MFARecoveryCodeFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "mfa_recovery_codes" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	MFARecoveryCodeFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var MFARecoveryCodeFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	UsedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedAt" → DB: "used_at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	UsedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usedAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
 	},
 }
 

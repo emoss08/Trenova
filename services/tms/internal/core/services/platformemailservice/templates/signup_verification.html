@@ -1,6 +1,0 @@
-{{define "content"}}<p style="margin:0 0 16px 0;">Hi {{.FirstName}},</p>
-<p style="margin:0 0 16px 0;">Confirm your email address to create the {{.CompanyName}} workspace on {{.ProductName}}. Nothing is set up until you do.</p>
-{{template "button" (button .VerifyURL "Confirm email and create workspace")}}
-<p style="margin:0 0 16px 0;">This link works once and expires {{.ExpiresAt}}. If the button does not work, paste this address into your browser:</p>
-<p style="margin:0 0 16px 0;word-break:break-all;"><a href="{{.VerifyURL}}" style="color:#0068d6;">{{.VerifyURL}}</a></p>
-<p style="margin:0;color:#666666;">If you did not sign up, ignore this email and no account will be created.</p>{{end}}

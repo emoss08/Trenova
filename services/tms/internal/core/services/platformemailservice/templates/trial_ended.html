@@ -1,5 +1,0 @@
-{{define "content"}}<p style="margin:0 0 16px 0;">Hi {{.FirstName}},</p>
-<p style="margin:0 0 16px 0;">The free trial for the {{.CompanyName}} workspace has ended, so it is now read-only. You can still sign in, look up records and export your data.</p>
-{{template "button" (button .AppURL "Open your workspace")}}
-<p style="margin:0 0 16px 0;">On {{.ReadOnlyUntil}} the workspace and everything in it will be permanently deleted.</p>
-<p style="margin:0;color:#666666;">Reply to this email if you want to keep using {{.ProductName}}.</p>{{end}}

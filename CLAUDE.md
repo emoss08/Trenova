@@ -410,8 +410,8 @@ Operators export consenting organizations' AI corrections for fine-tuning with
 written, consent is read at export time and again before an organization's files are kept,
 and every example is recorded so a withdrawal can be honoured later. **Read
 [docs/engineering/ai-training-export.md](docs/engineering/ai-training-export.md) before
-changing `domain/aitraining`, `aitrainingservice`, `aitrainingjobs`, or what a correction
-stores.** Datasets are rendered from an export with the production prompt builder and scored
+changing `domain/aitraining`, the Cloud edition's `internal/cloud/aitraining` packages
+(`aitrainingservice`, `aitrainingjobs`), or what a correction stores.** Datasets are rendered from an export with the production prompt builder and scored
 with the production reply reader; `ml/extraction-finetune` (Python) owns the training recipe — how a
 confirmed answer becomes a target, which examples become preference pairs — and the training
 itself. **Read [docs/engineering/extraction-fine-tuning.md](docs/engineering/extraction-fine-tuning.md)
@@ -429,6 +429,24 @@ records; nothing else may write it. **Read
 change is a `hash_version` change), or any agent source table the projector reads.** A
 retention sweep that deletes agent rows must stay behind `SourcePruneHorizon`. Never remove a
 chain key while rows signed with it are retained.
+
+## Editions (self-hosted and Trenova Cloud)
+
+This repository builds the self-hosted product. Trenova Cloud code lives in a private repository
+and is overlaid at build time into `services/tms/internal/cloud/` plus one registration file,
+`services/tms/cmd/cli/edition_cloud.go`, which calls `edition.Register(cloud.Edition())`. The
+build must pass with and without that overlay, so **public code never imports
+`internal/cloud`**. The seam is `internal/bootstrap/edition`: an `Edition` adds fx options to
+every process (`Options`), the API (`APIOptions`) or the worker (`WorkerOptions`), Cobra
+commands, Postgres migration sets (run after the public ones) and configuration sections the
+loader decodes strictly on the edition's behalf. The public graph always provides the
+self-hosted implementation of every platform port (`PlanService`, `QuotaGuard`,
+`EntitlementProvider`, `BillingProvider`, `UsageProvider`, `EditionInfo`,
+`AITrainingHistoryService`); an edition swaps them with root-level `fx.Decorate`. Routes and
+middleware join through the `internal/api/routegroup` value groups, GraphQL extensions through
+`edition_graphql_extensions`, and `GET /system/public-config` fields through
+`public_config_contributors`. Decide behaviour from an injected port (`PlanService.EnforcesPlans`,
+`EditionInfo.SharedTenancy`, an onboarding row existing), never from `platform.mode`.
 
 ## Bun ORM
 

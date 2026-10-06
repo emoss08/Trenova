@@ -69,6 +69,10 @@ regex cannot tell `label="Save"` from `name="save"` or skip an SVG `d="M12 2L2 7
   `MultiError.Add`, `errortypes.New*Error`, ozzo `.Error(...)`. An unrecognised
   `New*Error` constructor **fails the build** rather than being skipped, so a whole class
   of messages can never go missing quietly.
+- **Go templates** (`tools/extract-templates.mjs`) collects every `{{ t "..." }}` and nested
+  `(t "...")` call in the built-in document templates (area `template/*`) and, when the
+  Cloud edition is overlaid, the Trenova Cloud emails the platform sends (area
+  `platform-email/*`, from `services/tms/internal/cloud/platformemailservice/templates`).
 - **TypeScript** (`tools/extract-ts.mjs`) parses with Babel and collects JSX text, an
   allowlist of prose-bearing props, and `toast.*` calls.
 

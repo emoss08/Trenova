@@ -7,7 +7,6 @@ related:
   - /admin/integrations
   - /admin/audit-logs
   - /organization/data-retention
-  - /admin/plan-usage
 ---
 
 ## What it's for
@@ -19,8 +18,6 @@ Organization settings holds the organization's profile and sign-in security, in 
   **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds
   priority-ordered access policies, and **Activity** shows authentication events, risk decisions,
   external identities and MFA authenticators.
-
-On Trenova Cloud, the plan, trial and usage limits are on [Plan & usage](/admin/plan-usage).
 
 Administrators use it to keep the company's details current and to set up single sign-on and user
 provisioning.

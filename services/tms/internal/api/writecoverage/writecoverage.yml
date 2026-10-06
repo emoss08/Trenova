@@ -351,6 +351,9 @@ writes:
   "POST /api/v1/auth/login":
     exempt: security
     reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+  "POST /api/v1/auth/mfa/verify":
+    exempt: security
+    reason: "Answering a sign-in's second-factor challenge is a person proving who they are; an agent holds no credentials of its own."
   "POST /api/v1/auth/logout":
     exempt: security
     reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
@@ -619,17 +622,6 @@ writes:
   "mutation voidCarrierSettlement":
     tools: [void_carrier_settlement]
 
-  # cloudsignup
-  "POST /api/v1/cloud/signups":
-    exempt: security
-    reason: "Signing up creates an account and proves a person owns an email address; an agent holds no identity of its own and acts only inside an organization that already exists."
-  "POST /api/v1/cloud/signups/resend":
-    exempt: security
-    reason: "Resending a signup verification link is part of a stranger proving they own an email address before any organization exists."
-  "POST /api/v1/cloud/signups/verify":
-    exempt: security
-    reason: "Redeeming a signup link signs a person in and provisions their organization; it is identity proof, not an operation an agent performs."
-
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
     tools: [update_commodity]
@@ -639,11 +631,6 @@ writes:
     tools: [update_commodity_status]
   "PUT /api/v1/commodities/:commodityID/":
     tools: [update_commodity]
-
-  # controlplaneprovisioning
-  "POST /api/v1/control-plane/tenants/provision":
-    exempt: infrastructure
-    reason: "Called by the platform control plane with a service credential to provision a tenant."
 
   # costing
   "mutation updateCostCategory":
@@ -2652,6 +2639,9 @@ writes:
   "DELETE /api/v1/users/me/profile-picture/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
+  "DELETE /api/v1/users/:userID/mfa/":
+    exempt: security
+    reason: "Resetting a person's second sign-in factor decides who can sign in as them."
   "PATCH /api/v1/users/:userID/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
@@ -2670,6 +2660,18 @@ writes:
   "POST /api/v1/users/me/change-password/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "POST /api/v1/users/me/mfa/recovery-codes/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "POST /api/v1/users/me/mfa/totp/confirm/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "POST /api/v1/users/me/mfa/totp/disable/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "POST /api/v1/users/me/mfa/totp/enroll/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
   "POST /api/v1/users/me/profile-picture/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."

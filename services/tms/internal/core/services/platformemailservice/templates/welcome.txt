@@ -1,7 +1,0 @@
-Hi {{.FirstName}},
-
-The {{.CompanyName}} workspace is ready. Finish the short setup to add your company details, and load a sample data set if you want to explore with realistic shipments.
-
-Open your workspace: {{.AppURL}}
-
-Your free trial includes full access until {{.TrialEndsAt}}. After that the workspace stays readable for a while so you can export what you need.

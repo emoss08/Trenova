@@ -81,7 +81,7 @@ trenova-capture.exe --server http://localhost:5173 --sign-in --show
 `http://localhost:5173` is the web app's Vite server, which passes `/api` on to the API at
 `:8080`; pointing at `:8080` directly works too. Approving the computer opens
 `app.webBaseUrl` + `/capture/pair`, so the API's `app.webBaseUrl` must be the web app's address
-(`http://localhost:5173` in development, `https://cloud.trenova.app` in production); pairing is
+(`http://localhost:5173` in development, the address people open Trenova at in production); pairing is
 refused while it is unset.
 
 `--server` saves the address for this Windows user (`HKCU\SOFTWARE\Trenova\Capture\ServerUrl`);
@@ -227,8 +227,14 @@ A silent install takes the server address, whether computers update themselves, 
 printer's port:
 
 ```powershell
-msiexec /i TrenovaCapture-1.0.0-x64.msi /qn TRENOVAURL=https://cloud.trenova.app AUTOUPDATE=0 PRINTPORT=8631
+msiexec /i TrenovaCapture-1.0.0-x64.msi /qn TRENOVAURL=https://trenova.example.com AUTOUPDATE=0 PRINTPORT=8631
 ```
+
+Neither the agent nor the MSI suggests a server: the address is always the one the person or
+the deployment gives, so the same build serves every Trenova. An MSI made for one Trenova can
+pre-fill it: set `TRENOVA_CAPTURE_SUGGESTED_SERVER=https://…` while building the workspace
+(the agent's server field) and pass the same address to `installer\build.ps1
+-SuggestedServerUrl` (the installer's server page). Public releases set neither.
 
 ## Releases and updates
 

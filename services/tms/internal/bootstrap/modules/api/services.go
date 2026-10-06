@@ -5,7 +5,6 @@ import (
 	"context"
 
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -75,7 +74,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/cloudsignupservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -115,6 +113,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
 	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
@@ -160,8 +159,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/mfaservice"
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
-	"github.com/emoss08/trenova/internal/core/services/networkpulseservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/onboardingservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
@@ -224,7 +223,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
-	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
 	"github.com/emoss08/trenova/internal/core/services/tenanttimezone"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
@@ -251,8 +249,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
-	"github.com/emoss08/trenova/internal/infrastructure/controlplane"
-	"github.com/emoss08/trenova/internal/infrastructure/turnstile"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
 
@@ -264,6 +260,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	iamservice.New,
 	userservice.New,
 	authservice.New,
+	mfaservice.New,
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
 	sidebarpreferenceservice.New,
@@ -300,33 +297,18 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	permissiondomain.NewRegistry,
 	permissiondomain.NewRouteRegistry,
 	fx.Annotate(
-		platformcatalog.NewStaticProvider,
-		fx.ResultTags(`group:"platform_catalog_providers"`),
-		fx.As(new(platformcatalog.CatalogProvider)),
+		entitlementservice.NewLocalEntitlementProvider,
+		fx.As(new(services.EntitlementProvider)),
 	),
-	platformcatalog.NewRegistry,
-	entitlementservice.NewLocalEntitlementProvider,
-	platformbillingservice.NewLocalBillingProvider,
-	platformbillingservice.NewLocalPlanBillingProvider,
-	usageservice.NewNoopUsageProvider,
-	usageservice.NewLocalPlanUsageProvider,
 	fx.Annotate(
-		controlplane.NewHTTPControlPlaneClient,
-		fx.As(new(controlplane.Client)),
+		platformbillingservice.NewLocalBillingProvider,
+		fx.As(new(services.BillingProvider)),
 	),
-	controlplane.NewCloudEntitlementProvider,
-	controlplane.NewCloudBillingProvider,
-	controlplane.NewCloudUsageProvider,
 	fx.Annotate(
-		controlplane.NewCloudAccessAuthorizer,
-		fx.As(new(services.AccessAuthorizer)),
+		usageservice.NewNoopUsageProvider,
+		fx.As(new(services.UsageProvider)),
 	),
-	controlplane.NewHeartbeatReporter,
-	controlplane.NewTenantSyncer,
-	tenantprovisioningservice.New,
-	SelectEntitlementProvider,
-	SelectBillingProvider,
-	SelectUsageProvider,
+	editioninfo.SelfHosted,
 	roleassignmentservice.New,
 	usstateservice.New,
 	shipmentstate.NewCoordinator,
@@ -440,10 +422,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	bankreceiptservice.New,
 	func(s *bankreceiptservice.Service) services.BankReceiptService { return s },
 	bankreceiptworkitemservice.New,
-	networkpulseservice.New,
 	passwordresetservice.New,
-	turnstile.New,
-	cloudsignupservice.New,
 	onboardingservice.New,
 	onboardingservice.NewSampleData,
 	versionservice.New,
@@ -814,6 +793,4 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 		},
 		fx.ParamTags(``, `group:"shipment_mutation_observers"`),
 	),
-	func(*controlplane.HeartbeatReporter) {},
-	func(*controlplane.TenantSyncer) {},
 ))

@@ -85,9 +85,17 @@
     <SetProperty Action="KeepServerUrl" Id="TRENOVAURL" Value="[SAVEDTRENOVAURL]"
                  After="AppSearch" Sequence="both"
                  Condition="NOT TRENOVAURL AND SAVEDTRENOVAURL" />
-    <SetProperty Action="SuggestServerUrl" Id="TRENOVAURL" Value="https://cloud.trenova.app"
+    <!--
+      Public builds suggest no address: every Trenova is somebody's own, so the
+      person installing enters theirs or leaves it for Trenova Capture to ask.
+      A distributor shipping for one Trenova passes -SuggestedServerUrl to
+      build.ps1, which defines SuggestedServerUrl.
+    -->
+    <?ifdef SuggestedServerUrl?>
+    <SetProperty Action="SuggestServerUrl" Id="TRENOVAURL" Value="$(var.SuggestedServerUrl)"
                  After="KeepServerUrl" Sequence="ui"
                  Condition="NOT TRENOVAURL" />
+    <?endif?>
     <SetProperty Action="KeepAutoUpdateOff" Id="AUTOUPDATE" Value="0"
                  After="KeepServerUrl" Sequence="both"
                  Condition="NOT AUTOUPDATE AND SAVEDAUTOUPDATE = &quot;#0&quot;" />

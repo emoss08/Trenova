@@ -78,7 +78,6 @@ func (f *fakeSampleData) Load(_ context.Context, req *SampleDataRequest) error {
 
 type deps struct {
 	repo   *mocks.MockOnboardingRepository
-	plans  *mocks.MockPlanService
 	orgs   *fakeOrganizations
 	sample *fakeSampleData
 	svc    *Service
@@ -94,8 +93,7 @@ func setup(t *testing.T) *deps {
 		UserID: pulid.MustNew("usr_"),
 	}
 	d := &deps{
-		repo:  mocks.NewMockOnboardingRepository(t),
-		plans: mocks.NewMockPlanService(t),
+		repo: mocks.NewMockOnboardingRepository(t),
 		orgs: &fakeOrganizations{org: &tenant.Organization{
 			ID:                     tenantInfo.OrgID,
 			BusinessUnitID:         tenantInfo.BuID,
@@ -117,7 +115,6 @@ func setup(t *testing.T) *deps {
 		db:            fakeDB{},
 		repo:          d.repo,
 		organizations: d.orgs,
-		plans:         d.plans,
 		sampleData:    d.sample,
 		l:             zap.NewNop(),
 	}
@@ -150,24 +147,10 @@ func validRequest(info pagination.TenantInfo) *services.CompleteOnboardingReques
 	}
 }
 
-func TestGetOutsideCloudIsNotRequired(t *testing.T) {
-	t.Parallel()
-
-	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(false)
-
-	state, err := d.svc.Get(t.Context(), d.tenant)
-	require.NoError(t, err)
-	assert.False(t, state.Required)
-	assert.Equal(t, onboarding.StatusCompleted, state.Status)
-	assert.Nil(t, state.Organization)
-}
-
 func TestGetWithoutARowIsNotRequired(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, repositories.GetOnboardingRequest{TenantInfo: d.tenant}).
 		Return(nil, errortypes.NewNotFoundError("Onboarding not found"))
 
@@ -180,7 +163,6 @@ func TestGetPendingHidesPlaceholders(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(pending(d.tenant), nil)
 
 	state, err := d.svc.Get(t.Context(), d.tenant)
@@ -208,7 +190,6 @@ func TestGetCompletedShowsTheProfile(t *testing.T) {
 		UserID:        d.tenant.UserID,
 		OperationType: tenant.OperationTypeAsset,
 	})
-	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(entity, nil)
 
 	state, err := d.svc.Get(t.Context(), d.tenant)
@@ -225,7 +206,6 @@ func TestCompleteUpdatesTheOrganizationAndLoadsSamples(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	entity := pending(d.tenant)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(entity, nil)
 	d.repo.EXPECT().Complete(mock.Anything, mock.MatchedBy(func(o *onboarding.Onboarding) bool {
@@ -267,7 +247,6 @@ func TestCompleteWithoutSampleData(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(pending(d.tenant), nil)
 	d.repo.EXPECT().Complete(mock.Anything, mock.Anything).RunAndReturn(
 		func(_ context.Context, o *onboarding.Onboarding) (*onboarding.Onboarding, error) {
@@ -293,7 +272,6 @@ func TestCompleteValidation(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 
 	req := &services.CompleteOnboardingRequest{
 		TenantInfo: d.tenant,
@@ -329,7 +307,6 @@ func TestCompletePrefixesOrganizationValidation(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(pending(d.tenant), nil)
 	orgErr := errortypes.NewMultiError()
 	orgErr.Add("scacCode", errortypes.ErrInvalidLength, "SCAC code must be 4 characters")
@@ -347,7 +324,6 @@ func TestCompleteSurfacesSampleDataFailures(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(pending(d.tenant), nil)
 	d.sample.err = errortypes.NewQuotaExceededError("shipments.total", 12, 12, "free_demo")
 
@@ -359,7 +335,6 @@ func TestCompleteTwiceIsAConflict(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	entity := pending(d.tenant)
 	entity.Complete(
 		onboarding.CompleteParams{
@@ -373,28 +348,16 @@ func TestCompleteTwiceIsAConflict(t *testing.T) {
 	require.True(t, errortypes.IsConflictError(err))
 }
 
-func TestCompleteOutsideCloud(t *testing.T) {
-	t.Parallel()
-
-	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(false)
-
-	_, err := d.svc.Complete(t.Context(), validRequest(d.tenant))
-	require.True(t, errortypes.IsBusinessError(err))
-}
-
 func TestCompleteMissingRow(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, errortypes.NewNotFoundError("x"))
 
 	_, err := d.svc.Complete(t.Context(), validRequest(d.tenant))
 	require.True(t, errortypes.IsBusinessError(err))
 
 	d2 := setup(t)
-	d2.plans.EXPECT().IsCloud().Return(true)
 	d2.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, errors.New("db down"))
 	_, err = d2.svc.Complete(t.Context(), validRequest(d2.tenant))
 	require.EqualError(t, err, "db down")

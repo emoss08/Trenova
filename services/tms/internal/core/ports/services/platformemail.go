@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"errors"
+
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 var ErrPlatformEmailNotConfigured = errors.New(
@@ -20,6 +22,7 @@ type PlatformEmailMessage struct {
 
 type SignupVerificationEmail struct {
 	To          string
+	Locale      i18n.Locale
 	Name        string
 	CompanyName string
 	Token       string
@@ -27,12 +30,14 @@ type SignupVerificationEmail struct {
 }
 
 type SignupExistingAccountEmail struct {
-	To   string
-	Name string
+	To     string
+	Locale i18n.Locale
+	Name   string
 }
 
 type WelcomeEmail struct {
 	To          string
+	Locale      i18n.Locale
 	Name        string
 	CompanyName string
 	TrialEndsAt int64
@@ -41,6 +46,7 @@ type WelcomeEmail struct {
 
 type TrialEndedEmail struct {
 	To            string
+	Locale        i18n.Locale
 	Name          string
 	CompanyName   string
 	ReadOnlyUntil int64
@@ -49,8 +55,21 @@ type TrialEndedEmail struct {
 
 type AccountPurgedEmail struct {
 	To          string
+	Locale      i18n.Locale
 	Name        string
 	CompanyName string
+}
+
+type PasswordResetEmail struct {
+	To               string
+	Locale           i18n.Locale
+	Name             string
+	CompanyName      string
+	ResetURL         string
+	ExpiresInMinutes int
+	ExpiresAt        int64
+	Timezone         string
+	IdempotencyKey   string
 }
 
 type PlatformEmailService interface {
@@ -59,5 +78,5 @@ type PlatformEmailService interface {
 	SendWelcome(ctx context.Context, msg *WelcomeEmail) error
 	SendTrialEnded(ctx context.Context, msg *TrialEndedEmail) error
 	SendAccountPurged(ctx context.Context, msg *AccountPurgedEmail) error
-	SendRendered(ctx context.Context, msg *PlatformEmailMessage) error
+	SendPasswordReset(ctx context.Context, msg *PasswordResetEmail) error
 }

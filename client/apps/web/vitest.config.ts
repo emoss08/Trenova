@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
+import { editionAlias } from "../../packages/edition/node/resolve-entry.ts";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcAlias = path.resolve(dirname, "./src");
@@ -12,14 +13,14 @@ const sharedAlias = path.resolve(dirname, "../../packages/shared/src");
 
 export default defineConfig({
   resolve: {
-    alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
+    alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
     dedupe: ["react-router"],
   },
   test: {
     projects: [
       {
         resolve: {
-          alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
+          alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
           dedupe: ["react-router"],
         },
         test: {
@@ -40,7 +41,7 @@ export default defineConfig({
           }),
         ],
         resolve: {
-          alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
+          alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
         },
         optimizeDeps: {
           include: [

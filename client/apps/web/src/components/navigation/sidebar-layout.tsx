@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
-import { CloudTrialBanner } from "../plan-limit/cloud-trial-banner";
+import { edition } from "@/lib/edition";
 import { Header } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
@@ -97,10 +97,12 @@ function useLayoutEffects() {
   useTouchRecentRecords();
 }
 
+const AppBanner = edition.slots.AppBanner;
+
 function WorkspaceShell({ children }: SidebarLayoutProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <CloudTrialBanner />
+      <AppBanner />
       <WorkspaceHeader />
       <div className="flex min-h-0 flex-1">
         <WorkspaceSidebar />
@@ -116,7 +118,7 @@ function WorkspaceShell({ children }: SidebarLayoutProps) {
 function ClassicShell({ children }: SidebarLayoutProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <CloudTrialBanner />
+      <AppBanner />
       <div className="flex min-h-0 flex-1">
         <ClassicSidebar />
         <div className="flex min-w-0 flex-1 flex-col">

@@ -188,3 +188,29 @@ describe("filterNavModules", () => {
     expect(filterNavModules([chromeless], context(brokerageOff, granted))).toHaveLength(1);
   });
 });
+
+describe("platform-scoped entries", () => {
+  const planItem: NavItem = {
+    id: "plan",
+    label: "Plan",
+    path: "/admin/plan",
+    platformMode: "cloud",
+  };
+
+  it("shows an entry only on the platform mode it names", () => {
+    const base = context(brokerageOn);
+
+    expect(canAccessNavEntry(planItem, { ...base, platformMode: "cloud" })).toBe(true);
+    expect(canAccessNavEntry(planItem, { ...base, platformMode: "self_hosted" })).toBe(false);
+    expect(canAccessNavEntry(planItem, base)).toBe(false);
+  });
+
+  it("leaves entries that name no platform mode alone", () => {
+    const unscoped: NavItem = { id: "home", label: "Home", path: "/" };
+
+    expect(
+      canAccessNavEntry(unscoped, { ...context(brokerageOn), platformMode: "enterprise" }),
+    ).toBe(true);
+    expect(canAccessNavEntry(unscoped, context(brokerageOn))).toBe(true);
+  });
+});

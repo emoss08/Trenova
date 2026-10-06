@@ -49,7 +49,6 @@ import { location } from "./location";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { reports } from "./reports";
-import { platformBilling } from "./platform-billing";
 import { sequenceConfig } from "./sequence-config";
 import { serviceFailure } from "./service-failure";
 import { serviceFailureReasonCode } from "./service-failure-reason-code";
@@ -124,7 +123,6 @@ const operationsQueries = mergeQueryKeys(
 const workspaceQueries = mergeQueryKeys(
   userOrganization,
   pageFavoite,
-  platformBilling,
   tableConfiguration,
   homeLayout,
   sidebarPreferences,

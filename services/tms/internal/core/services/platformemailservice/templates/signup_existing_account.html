@@ -1,5 +1,0 @@
-{{define "content"}}<p style="margin:0 0 16px 0;">Hi{{if .FirstName}} {{.FirstName}}{{end}},</p>
-<p style="margin:0 0 16px 0;">Someone tried to sign up for {{.ProductName}} with this email address, but it already belongs to an account. No new account was created.</p>
-{{template "button" (button .LoginURL "Sign in")}}
-<p style="margin:0 0 16px 0;">Forgot your password? <a href="{{.ForgotPasswordURL}}" style="color:#0068d6;">Reset it here</a>.</p>
-<p style="margin:0;color:#666666;">If this was not you, you can ignore this email. Your account has not changed.</p>{{end}}

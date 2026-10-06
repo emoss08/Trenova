@@ -20,7 +20,7 @@ func NewUnlimited() *UnlimitedPlanService {
 	return &UnlimitedPlanService{plan: platformplan.Unlimited()}
 }
 
-func (s *UnlimitedPlanService) IsCloud() bool {
+func (s *UnlimitedPlanService) EnforcesPlans() bool {
 	return false
 }
 

@@ -1,6 +1,12 @@
 import { api, clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { authProviderSummariesSchema } from "@trenova/shared/types/iam";
+import {
+  isMFAChallenge,
+  mfaChallengeSchema,
+  type MFAChallenge,
+  type VerifyMFAChallengeRequest,
+} from "@trenova/shared/types/mfa";
 import type { RoleSummary } from "@trenova/shared/types/role";
 import {
   loginResponseSchema,
@@ -9,9 +15,26 @@ import {
 } from "@trenova/shared/types/user";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 
+export type LoginResult = LoginResponse | MFAChallenge;
+
 export const authService = {
-  login: async (credentials: LoginRequest) => {
-    const response = await api.post<LoginResponse>("/auth/login", credentials);
+  /**
+   * Signs in with a password. An account with a second factor gets a challenge back
+   * instead of a session; redeem it with `verifyMFA`.
+   */
+  login: async (credentials: LoginRequest): Promise<LoginResult> => {
+    const response = await api.post<unknown>("/auth/login", credentials);
+    if (isMFAChallenge(response)) {
+      return safeParse(mfaChallengeSchema, response, "Sign-in challenge");
+    }
+
+    const parsed = await safeParse(loginResponseSchema, response, "Login Response");
+    setCsrfToken(parsed.csrfToken);
+    return parsed;
+  },
+
+  verifyMFA: async (request: VerifyMFAChallengeRequest): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>("/auth/mfa/verify", request);
     const parsed = await safeParse(loginResponseSchema, response, "Login Response");
     setCsrfToken(parsed.csrfToken);
     return parsed;

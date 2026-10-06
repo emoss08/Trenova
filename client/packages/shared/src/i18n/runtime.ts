@@ -38,6 +38,28 @@ export function getLocale(): Locale {
   return activeLocale;
 }
 
+export type CatalogLoader = () => Promise<Record<string, string>>;
+
+export type CatalogSource = Partial<Record<Locale, CatalogLoader>>;
+
+const extraSources: CatalogSource[] = [];
+
+/**
+ * registerCatalogSource adds a package's own catalog (an edition's strings) on top of the
+ * app catalog. Its entries win over the app's for the same key, so a package can carry the
+ * strings that exist only in its code. Catalogs already loaded are dropped and the active
+ * locale reloads, so registering after startup still takes effect.
+ */
+export async function registerCatalogSource(source: CatalogSource): Promise<void> {
+  if (!Object.values(source).some((loader) => loader !== undefined)) return;
+
+  extraSources.push(source);
+  loaded.clear();
+  if (activeLocale !== DEFAULT_LOCALE) {
+    await setLocale(activeLocale);
+  }
+}
+
 export async function loadCatalog(locale: Locale): Promise<Record<string, string>> {
   const cached = loaded.get(locale);
   if (cached !== undefined) return cached;
@@ -48,7 +70,11 @@ export async function loadCatalog(locale: Locale): Promise<Record<string, string
     return {};
   }
 
-  const messages = await CATALOG_LOADERS[locale]();
+  const [base, ...extras] = await Promise.all([
+    CATALOG_LOADERS[locale](),
+    ...extraSources.map((source) => source[locale]?.() ?? Promise.resolve({})),
+  ]);
+  const messages = extras.length === 0 ? base : Object.assign({}, base, ...extras);
   loaded.set(locale, messages);
   return messages;
 }

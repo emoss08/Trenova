@@ -13,9 +13,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/structparse"
 )
 
+const (
+	helperPackage    = "buncolgen"
+	helperImportPath = "github.com/emoss08/trenova/pkg/buncolgen"
+)
+
 var (
-	domainDir = flag.String("domain", "", "Path to domain directory containing entity packages")
-	outputDir = flag.String("output", "", "Output directory for generated column files")
+	domainDir     = flag.String("domain", "", "Path to domain directory containing entity packages")
+	outputDir     = flag.String("output", "", "Output directory for generated column files")
+	outputImport  = flag.String("import", helperImportPath, "Import path of the output directory")
+	outputPackage = flag.String("package", helperPackage, "Package name of the output directory")
 )
 
 var excludedPackages = map[string]struct{}{
@@ -102,7 +109,12 @@ func generateColumnsFile(
 	pkgName string,
 ) error {
 	data := columnsTemplateData{
-		Models: models,
+		Package: *outputPackage,
+		Models:  models,
+	}
+	if *outputImport != helperImportPath {
+		data.Qual = helperPackage + "."
+		data.HelperImport = helperImportPath
 	}
 
 	var buf bytes.Buffer
@@ -121,8 +133,10 @@ func generateColumnsFile(
 
 func generateBridgeFile(tmpl *template.Template, models []structparse.Model, pkgDir string) error {
 	data := bridgeTemplateData{
-		PackageName: models[0].PackageName,
-		Models:      models,
+		PackageName:    models[0].PackageName,
+		ColumnsImport:  *outputImport,
+		ColumnsPackage: *outputPackage,
+		Models:         models,
 	}
 
 	var buf bytes.Buffer

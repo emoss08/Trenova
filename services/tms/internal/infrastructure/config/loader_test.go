@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/configtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -1127,13 +1128,18 @@ storage:
 }
 
 func TestProductionConfigFileLoads(t *testing.T) {
-	// The point of this test is that config.prod.yaml applies its security
-	// hardening on top of a base file. config/config.yaml is gitignored, so a
-	// clean checkout has nothing to overlay; stage the tracked test config as
-	// the base so the assertion holds in any working copy.
+	// The point of this test is that config.prod.example.yaml, staged where an
+	// operator puts it, applies its security hardening on top of a base file.
+	// config/config.yaml is gitignored, so a clean checkout has nothing to
+	// overlay; stage the tracked test config as the base so the assertion holds
+	// in any working copy.
 	configDir := t.TempDir()
 	copyTrackedConfig(t, "config.test.yaml", filepath.Join(configDir, "config.yaml"))
-	copyTrackedConfig(t, "config.prod.yaml", filepath.Join(configDir, "config.prod.yaml"))
+	copyTrackedConfig(
+		t,
+		"config.prod.example.yaml",
+		filepath.Join(configDir, "config.prod.yaml"),
+	)
 
 	// config.test.yaml omits sections a production deployment must supply, so
 	// fill them in to get a base the loader will accept. Viper's AutomaticEnv
@@ -1215,18 +1221,13 @@ func copyTrackedConfig(t *testing.T, name, dest string) {
 	require.NoError(t, os.WriteFile(dest, contents, 0o600))
 }
 
-func TestLoad_ControlPlaneEnvAliases(t *testing.T) {
+func TestLoad_PlatformEnvAliases(t *testing.T) {
 	tmpDir := t.TempDir()
 	err := os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(validConfigYAML()), 0o600)
 	require.NoError(t, err)
 
 	t.Setenv("TRENOVA_DEPLOYMENT_MODE", "development")
-	t.Setenv("TRENOVA_CONTROL_PLANE_ENABLED", "true")
-	t.Setenv("TRENOVA_CONTROL_PLANE_ENDPOINT", "https://control.trenova.test")
 	t.Setenv("TRENOVA_INSTANCE_ID", "inst_01")
-	t.Setenv("TRENOVA_CONTROL_PLANE_API_KEY", "cp_test_key")
-	t.Setenv("TRENOVA_CONTROL_PLANE_HEARTBEAT_INTERVAL", "30s")
-	t.Setenv("TRENOVA_CONTROL_PLANE_FAIL_OPEN_ON_ERROR", "true")
 
 	l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("test"))
 
@@ -1234,86 +1235,11 @@ func TestLoad_ControlPlaneEnvAliases(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	assert.Equal(t, PlatformModeDevelopment, cfg.Platform.GetMode())
-	assert.True(t, cfg.Platform.ControlPlane.Enabled)
-	assert.Equal(t, "https://control.trenova.test", cfg.Platform.ControlPlane.Endpoint)
 	assert.Equal(t, "inst_01", cfg.Platform.InstanceID)
-	assert.Equal(t, "cp_test_key", cfg.Platform.ControlPlane.APIKey)
-	assert.Equal(t, 30*time.Second, cfg.Platform.ControlPlane.GetHeartbeatInterval())
-	assert.Equal(t, time.Hour, cfg.Platform.ControlPlane.GetTenantSyncInterval())
-	assert.True(t, cfg.Platform.ControlPlane.FailOpenOnError)
 }
 
 func validConfigYAML() string {
-	return `
-app:
-  name: trenova
-  version: "1.0.0"
-server:
-  host: "0.0.0.0"
-  port: 8080
-database:
-  host: localhost
-  port: 5432
-  name: testdb
-  user: postgres
-  password: testpass
-  sslMode: require
-security:
-  session:
-    secret: "a-very-long-secret-that-is-at-least-32-characters-long"
-    name: "__Host-trenova_session"
-    maxAge: "24h"
-    httpOnly: true
-    secure: true
-    sameSite: "strict"
-    path: "/"
-    domain: ""
-  csrf:
-    tokenName: "csrf_token"
-    headerName: "X-CSRF-Token"
-  rateLimit:
-    requestsPerMinute: 60
-    burstSize: 10
-  encryption:
-    mode: envelope
-    keyManager: gcp-autokey
-    key: "a-very-long-encryption-key-that-is-at-least-32-chars"
-    gcpKms:
-      cryptoKey: "projects/test/locations/us/keyRings/autokey/cryptoKeys/trenova"
-logging:
-  level: info
-  format: json
-  output: stdout
-monitoring:
-  metrics:
-    enabled: false
-    port: 9090
-    path: "/metrics"
-  tracing:
-    enabled: false
-    provider: "otlp"
-    endpoint: "localhost:4317"
-    serviceName: "trenova-tms"
-cache:
-  host: localhost
-  port: 6379
-temporal:
-  hostPort: "localhost:7233"
-  security:
-    enableEncryption: false
-    encryptionKeyID: "test-key-id"
-audit:
-  batchSize: 500
-  maxEntriesPerFlush: 5000
-  dlqMaxRetries: 5
-storage:
-  endpoint: "http://localhost:9000"
-  accessKey: "test"
-  secretKey: "test"
-  bucket: "test"
-system:
-  systemUserPassword: "test-system-password"
-`
+	return configtest.ValidYAML()
 }
 
 func TestValidateTrustedProxies(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -95,7 +96,7 @@ func selfHostedGuard(t *testing.T) *referencedataguard.Guard {
 
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode: config.PlatformModeSelfHosted,
-	})
+	}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 
 	return guard
@@ -280,7 +281,7 @@ func TestWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode:                  config.PlatformModeCloud,
 		ReferenceDataStewards: []string{steward.String()},
-	})
+	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)
 
 	repo := &repoStub{stored: validRule()}

@@ -58,7 +58,6 @@ type Params struct {
 	DB            ports.DBConnection
 	Repository    repositories.OnboardingRepository
 	Organizations services.OrganizationService
-	Plans         services.PlanService
 	SampleData    *SampleData
 	Logger        *zap.Logger
 }
@@ -67,7 +66,6 @@ type Service struct {
 	db            ports.DBConnection
 	repo          repositories.OnboardingRepository
 	organizations OrganizationStore
-	plans         services.PlanService
 	sampleData    SampleDataLoader
 	l             *zap.Logger
 }
@@ -77,7 +75,6 @@ func New(p Params) services.OnboardingService {
 		db:            p.DB,
 		repo:          p.Repository,
 		organizations: p.Organizations,
-		plans:         p.Plans,
 		sampleData:    p.SampleData,
 		l:             p.Logger.Named("service.onboarding"),
 	}
@@ -94,10 +91,6 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*services.OnboardingState, error) {
-	if !s.plans.IsCloud() {
-		return notRequired(), nil
-	}
-
 	entity, err := s.repo.Get(ctx, repositories.GetOnboardingRequest{TenantInfo: tenantInfo})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -159,10 +152,6 @@ func (s *Service) Complete(
 	ctx context.Context,
 	req *services.CompleteOnboardingRequest,
 ) (*services.OnboardingState, error) {
-	if !s.plans.IsCloud() {
-		return nil, errortypes.NewBusinessError("There is no onboarding to complete")
-	}
-
 	normalized, err := normalizeRequest(req)
 	if err != nil {
 		return nil, err

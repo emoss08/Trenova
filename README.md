@@ -112,12 +112,24 @@ Run `task list` to see every available task. Agent-facing engineering guides liv
 
 ## Self-hosting
 
+Trenova runs on a single Linux host with Docker Compose. The production stack in [`deploy/selfhost`](./deploy/selfhost) runs the released images with everything they need (PostgreSQL, Redis, MinIO, Meilisearch, Temporal, Gotenberg, change data capture) and Caddy for automatic HTTPS:
+
+```bash
+git clone --depth 1 --branch v0.9.17 https://github.com/emoss08/trenova.git
+cd trenova/deploy/selfhost
+./scripts/init-env.sh trenova.example.com   # writes .env with generated secrets
+docker compose up -d
+```
+
+Read the **[self-hosting guide](./docs/self-hosting/README.md)** first: it covers requirements, DNS and TLS, the first sign-in, upgrades, backups and troubleshooting.
+
 Container images are published to GitHub Container Registry on every release:
 
-- `ghcr.io/emoss08/trenova/tms`
-- `ghcr.io/emoss08/trenova/client`
+- `ghcr.io/emoss08/trenova/tms` (API, worker and CLI)
+- `ghcr.io/emoss08/trenova/client` (web app and driver portal behind Caddy)
+- `ghcr.io/emoss08/trenova/postgres` (PostgreSQL with PostGIS, pg_cron and pgvector)
 
-Deployment files (Dockerfiles, Caddyfile, observability) are in [`deploy/`](./deploy). See [trenova.app/self-hosted](https://trenova.app/self-hosted/) for the self-hosting overview. Trenova Cloud production servers use a separate private deployment repository that pins released image tags.
+The Dockerfiles and the Caddyfile are in [`deploy/`](./deploy). The product overview is at [trenova.app/self-hosted](https://trenova.app/self-hosted/).
 
 ## Contributing
 

@@ -3,7 +3,7 @@ import { SensitiveField } from "@/components/fields/sensitive-field";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { resetUserPassword } from "@/lib/user-api";
+import { resetUserMFA, resetUserPassword } from "@/lib/user-api";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Lock01Icon } from "@trenova/shared/components/icons";
@@ -17,7 +17,24 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
   const queryClient = useQueryClient();
   const [isResetting, setIsResetting] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [confirmingMFAReset, setConfirmingMFAReset] = useState(false);
+  const [isResettingMFA, setIsResettingMFA] = useState(false);
   const { control } = useFormContext();
+
+  const handleResetMFA = async () => {
+    setIsResettingMFA(true);
+    try {
+      await resetUserMFA(userId);
+      toast.success(t("Two-factor authentication reset"), {
+        description: t("This user signs in with their password alone until they set it up again."),
+      });
+      setConfirmingMFAReset(false);
+    } catch (error) {
+      handleMutationError({ error, resourceName: "Two-factor reset" });
+    } finally {
+      setIsResettingMFA(false);
+    }
+  };
 
   const handleResetPassword = async () => {
     setIsResetting(true);
@@ -63,6 +80,31 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
           >
             {showNewPassword ? t("Cancel") : t("Set new password")}
           </Button>
+          {confirmingMFAReset ? (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1"
+                onClick={handleResetMFA}
+                disabled={isResettingMFA}
+              >
+                {isResettingMFA ? t("Resetting...") : t("Confirm two-factor reset")}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setConfirmingMFAReset(false)}>
+                {t("Cancel")}
+              </Button>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" onClick={() => setConfirmingMFAReset(true)}>
+              {t("Reset two-factor authentication")}
+            </Button>
+          )}
+          <p className="text-muted-foreground text-2xs">
+            {t(
+              "Removes this user's authenticator app and recovery codes, for someone who lost their device. They can set it up again from their settings.",
+            )}
+          </p>
         </div>
       </div>
 
