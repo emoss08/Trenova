@@ -17,6 +17,7 @@ type TenantMember struct {
 	Name             string   `json:"name"`
 	EmailAddress     string   `json:"emailAddress"`
 	Username         string   `json:"username"`
+	Locale           string   `json:"locale"`
 	OtherMemberships int      `json:"otherMemberships"`
 }
 

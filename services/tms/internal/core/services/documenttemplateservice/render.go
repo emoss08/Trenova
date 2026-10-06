@@ -267,14 +267,6 @@ func (s *Service) resolveForMessage(
 	ctx context.Context,
 	req *services.RenderMessageRequest,
 ) (*services.ResolvedTemplate, error) {
-	if req.BuiltInOnly {
-		return s.builtIn(req.Kind, s.localeFor(ctx, &services.ResolveTemplateRequest{
-			TenantInfo: req.TenantInfo,
-			Kind:       req.Kind,
-			Locale:     req.Locale,
-		}))
-	}
-
 	return s.Resolve(ctx, &services.ResolveTemplateRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
