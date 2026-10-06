@@ -70,19 +70,22 @@ var staffAddCmd = &cobra.Command{
 			return err
 		}
 
-		return withStaffManager(cmd.Context(), func(ctx context.Context, m *supportaccessservice.StaffManager) error {
-			member, addErr := m.AddStaff(ctx, &supportaccessservice.AddStaffRequest{
-				EmailAddress: args[0],
-				Role:         role,
-				AddedBy:      operator,
-			})
-			if addErr != nil {
-				return addErr
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "%s (%s) is platform staff with the %s role\n",
-				member.UserName, member.UserEmail, member.Role)
-			return nil
-		})
+		return withStaffManager(
+			cmd.Context(),
+			func(ctx context.Context, m *supportaccessservice.StaffManager) error {
+				member, addErr := m.AddStaff(ctx, &supportaccessservice.AddStaffRequest{
+					EmailAddress: args[0],
+					Role:         role,
+					AddedBy:      operator,
+				})
+				if addErr != nil {
+					return addErr
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "%s (%s) is platform staff with the %s role\n",
+					member.UserName, member.UserEmail, member.Role)
+				return nil
+			},
+		)
 	},
 }
 
@@ -96,22 +99,29 @@ var staffRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		return withStaffManager(cmd.Context(), func(ctx context.Context, m *supportaccessservice.StaffManager) error {
-			result, removeErr := m.RemoveStaff(ctx, &supportaccessservice.RemoveStaffRequest{
-				EmailAddress: args[0],
-				RemovedBy:    operator,
-			})
-			if removeErr != nil {
-				return removeErr
-			}
-			if !result.Removed {
-				fmt.Fprintf(cmd.OutOrStdout(), "%s was not active platform staff\n", args[0])
-			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "Removed %s from platform staff\n", args[0])
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Ended %d open support session(s)\n", result.EndedSessions)
-			return nil
-		})
+		return withStaffManager(
+			cmd.Context(),
+			func(ctx context.Context, m *supportaccessservice.StaffManager) error {
+				result, removeErr := m.RemoveStaff(ctx, &supportaccessservice.RemoveStaffRequest{
+					EmailAddress: args[0],
+					RemovedBy:    operator,
+				})
+				if removeErr != nil {
+					return removeErr
+				}
+				if !result.Removed {
+					fmt.Fprintf(cmd.OutOrStdout(), "%s was not active platform staff\n", args[0])
+				} else {
+					fmt.Fprintf(cmd.OutOrStdout(), "Removed %s from platform staff\n", args[0])
+				}
+				fmt.Fprintf(
+					cmd.OutOrStdout(),
+					"Ended %d open support session(s)\n",
+					result.EndedSessions,
+				)
+				return nil
+			},
+		)
 	},
 }
 
@@ -120,25 +130,35 @@ var staffListCmd = &cobra.Command{
 	Short: "List platform staff",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		return withStaffManager(cmd.Context(), func(ctx context.Context, m *supportaccessservice.StaffManager) error {
-			members, err := m.ListStaff(ctx, includeInactive)
-			if err != nil {
-				return err
-			}
-			if len(members) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "No platform staff yet.")
-				return nil
-			}
+		return withStaffManager(
+			cmd.Context(),
+			func(ctx context.Context, m *supportaccessservice.StaffManager) error {
+				members, err := m.ListStaff(ctx, includeInactive)
+				if err != nil {
+					return err
+				}
+				if len(members) == 0 {
+					fmt.Fprintln(cmd.OutOrStdout(), "No platform staff yet.")
+					return nil
+				}
 
-			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tEMAIL\tROLE\tACTIVE\tADDED BY\tADDED")
-			for _, member := range members {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%t\t%s\t%s\n",
-					member.UserName, member.UserEmail, member.Role, member.Active, member.AddedBy,
-					time.Unix(member.CreatedAt, 0).UTC().Format(time.RFC3339))
-			}
-			return w.Flush()
-		})
+				w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+				fmt.Fprintln(w, "NAME\tEMAIL\tROLE\tACTIVE\tADDED BY\tADDED")
+				for _, member := range members {
+					fmt.Fprintf(
+						w,
+						"%s\t%s\t%s\t%t\t%s\t%s\n",
+						member.UserName,
+						member.UserEmail,
+						member.Role,
+						member.Active,
+						member.AddedBy,
+						time.Unix(member.CreatedAt, 0).UTC().Format(time.RFC3339),
+					)
+				}
+				return w.Flush()
+			},
+		)
 	},
 }
 

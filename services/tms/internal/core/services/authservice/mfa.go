@@ -20,6 +20,7 @@ const (
 	mfaAssuranceLevel       = 2
 
 	mfaStateChallenged = "challenged"
+	riskDecisionAllow  = "allow"
 	mfaStateRejected   = "rejected"
 
 	authErrorMFAChallenge   = "mfa_challenge_invalid"
@@ -162,7 +163,7 @@ func (s *Service) VerifyMFAChallenge(
 		FederationFAL:         1,
 		MFAAuthenticatedAt:    now,
 		LastReauthenticatedAt: now,
-		RiskDecision:          "allow",
+		RiskDecision:          riskDecisionAllow,
 	})
 }
 

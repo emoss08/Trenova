@@ -25,7 +25,10 @@ type staffStore interface {
 		ctx context.Context,
 		req supportaccessrepository.DeactivateStaffRequest,
 	) (bool, error)
-	ListStaffMembers(ctx context.Context, includeInactive bool) ([]*supportaccess.StaffMember, error)
+	ListStaffMembers(
+		ctx context.Context,
+		includeInactive bool,
+	) ([]*supportaccess.StaffMember, error)
 	EndSessionsForStaff(
 		ctx context.Context,
 		req supportaccessrepository.EndStaffSessionsRequest,
@@ -119,11 +122,14 @@ func (s *StaffManager) RemoveStaff(
 	}
 
 	now := s.now().Unix()
-	removed, err := s.repo.DeactivateStaffMember(ctx, supportaccessrepository.DeactivateStaffRequest{
-		UserID:        usr.ID,
-		DeactivatedBy: by,
-		Now:           now,
-	})
+	removed, err := s.repo.DeactivateStaffMember(
+		ctx,
+		supportaccessrepository.DeactivateStaffRequest{
+			UserID:        usr.ID,
+			DeactivatedBy: by,
+			Now:           now,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +149,9 @@ func (s *StaffManager) RemoveStaff(
 			operation: sessionEnded,
 			comment: "Trenova support session of " + session.StaffName + " ended: " +
 				endReasonText(supportaccess.EndReasonStaffRemoved),
-			metadata: map[string]any{"endReason": supportaccess.EndReasonStaffRemoved.String()},
+			metadata: map[string]any{
+				metadataEndReason: supportaccess.EndReasonStaffRemoved.String(),
+			},
 		})
 	}
 

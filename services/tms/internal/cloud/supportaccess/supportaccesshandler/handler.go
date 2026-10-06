@@ -92,13 +92,13 @@ func (h *Handler) rejectSupportSession(c *gin.Context) bool {
 	return false
 }
 
-func (h *Handler) staffOf(c *gin.Context) (supportaccessservice.StaffContext, bool) {
+func (h *Handler) staffOf(c *gin.Context) (*supportaccessservice.StaffContext, bool) {
 	authCtx := authctx.GetAuthContext(c)
 	if authCtx.PrincipalType != authctx.PrincipalTypeUser || authCtx.SessionID.IsNil() {
 		h.eh.HandleError(c, errortypes.NewAuthorizationError(
 			"Support sessions need a signed-in staff member",
 		))
-		return supportaccessservice.StaffContext{}, false
+		return nil, false
 	}
 
 	return supportaccessmiddleware.StaffContextOf(authCtx), true
@@ -295,7 +295,10 @@ func (h *Handler) handleSessionError(c *gin.Context, err error) {
 	if _, ended := supportaccessservice.AsSessionEnded(err); ended {
 		supportaccessmiddleware.ClearCookie(c, h.session, h.service.CookieName())
 		c.Header(supportaccessmiddleware.HeaderSessionState, supportaccessmiddleware.StateEnded)
-		h.eh.HandleError(c, errortypes.NewAuthorizationError("Your Trenova support session has ended"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewAuthorizationError("Your Trenova support session has ended"),
+		)
 		return
 	}
 

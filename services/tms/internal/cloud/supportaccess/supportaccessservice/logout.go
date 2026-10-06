@@ -35,7 +35,7 @@ func (s *Service) EndForSignOut(ctx context.Context, staffUserID pulid.ID) {
 			operation: sessionEnded,
 			comment: "Trenova support session of " + session.StaffName + " ended: " +
 				endReasonText(supportaccess.EndReasonSignedOut),
-			metadata: map[string]any{"endReason": supportaccess.EndReasonSignedOut.String()},
+			metadata: map[string]any{metadataEndReason: supportaccess.EndReasonSignedOut.String()},
 		})
 	}
 }
@@ -57,7 +57,7 @@ func DecorateAuthService(p AuthDecoratorParams) services.AuthService {
 }
 
 func (a *endSupportOnSignOut) Logout(ctx context.Context, sessionID pulid.ID) error {
-	sess, lookupErr := a.AuthService.ValidateSession(ctx, sessionID)
+	sess, lookupErr := a.ValidateSession(ctx, sessionID)
 
 	err := a.AuthService.Logout(ctx, sessionID)
 

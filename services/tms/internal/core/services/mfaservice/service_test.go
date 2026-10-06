@@ -179,7 +179,7 @@ func newHarness(t *testing.T) *harness {
 		clock: time.Unix(1_800_000_000, 0),
 	}
 
-	h.svc = newService(Params{
+	h.svc = newService(&Params{
 		Repository: repo,
 		Users:      users,
 		Sessions:   sessions,

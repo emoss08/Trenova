@@ -194,7 +194,7 @@ func (s *Service) Login(
 		AuthenticatorAAL:      1,
 		FederationFAL:         1,
 		LastReauthenticatedAt: timeutils.NowUnix(),
-		RiskDecision:          "allow",
+		RiskDecision:          riskDecisionAllow,
 	})
 }
 
@@ -516,7 +516,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		FederationFAL:         2,
 		MFAAuthenticatedAt:    mfaAt,
 		LastReauthenticatedAt: timeutils.NowUnix(),
-		RiskDecision:          "allow",
+		RiskDecision:          riskDecisionAllow,
 	})
 	if err != nil {
 		return nil, err

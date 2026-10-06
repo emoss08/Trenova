@@ -73,7 +73,7 @@ func (r *Repository) GetActiveStaffMember(
 			Limit(1).
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil //nolint:nilnil // not being staff is a valid answer
+			return nil, nil
 		}
 		if err != nil {
 			return nil, fmt.Errorf("get platform staff member: %w", err)
@@ -189,7 +189,7 @@ func (r *Repository) GetOpenGrant(
 			Limit(1).
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil //nolint:nilnil // no open grant is a valid answer
+			return nil, nil
 		}
 		if err != nil {
 			return nil, fmt.Errorf("get open support access grant: %w", err)

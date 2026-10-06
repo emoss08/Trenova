@@ -49,7 +49,9 @@ func (l *RedisStartLimiter) Allow(
 	}
 
 	if incr.Val() > int64(limit) {
-		retry := time.Duration((window+1)*int64(startWindow.Seconds())-time.Now().Unix()) * time.Second
+		retry := time.Duration(
+			(window+1)*int64(startWindow.Seconds())-time.Now().Unix(),
+		) * time.Second
 		return false, retry, nil
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/domain/supportaccess"
 	supportctx "github.com/emoss08/trenova/internal/cloud/supportaccess"
 	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessrepository"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
@@ -78,6 +79,7 @@ type Service struct {
 	now      func() time.Time
 }
 
+//nolint:gocritic // fx parameter objects are passed by value
 func New(p Params) *Service {
 	svc := &Service{
 		repo:     p.Repository,
@@ -116,26 +118,26 @@ func (s *Service) requireEnabled() error {
 	return nil
 }
 
-func (s *Service) requireStaff(
-	ctx context.Context,
-	staff StaffContext,
-) (*supportaccess.StaffMember, error) {
+func (s *Service) requireStaff(ctx context.Context, staff *StaffContext) error {
 	if err := s.requireEnabled(); err != nil {
-		return nil, err
+		return err
+	}
+	if staff == nil {
+		return errNotStaff
 	}
 
 	member, err := s.repo.GetActiveStaffMember(staff.scope(ctx), staff.UserID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if member == nil {
-		return nil, errNotStaff
+		return errNotStaff
 	}
 
-	return member, nil
+	return nil
 }
 
-func (s *Service) StaffProfile(ctx context.Context, staff StaffContext) (*StaffProfile, error) {
+func (s *Service) StaffProfile(ctx context.Context, staff *StaffContext) (*StaffProfile, error) {
 	if err := s.requireEnabled(); err != nil {
 		return nil, err
 	}
@@ -158,7 +160,10 @@ func (s *Service) StaffProfile(ctx context.Context, staff StaffContext) (*StaffP
 	profile.Role = member.Role.String()
 	profile.SessionVerified = staff.MFAVerified()
 
-	if profile.MFAEnrolled, err = s.mfa.HasActiveFactor(staff.scope(ctx), staff.UserID); err != nil {
+	if profile.MFAEnrolled, err = s.mfa.HasActiveFactor(
+		staff.scope(ctx),
+		staff.UserID,
+	); err != nil {
 		return nil, err
 	}
 
@@ -176,16 +181,16 @@ func (s *Service) StaffProfile(ctx context.Context, staff StaffContext) (*StaffP
 
 func (s *Service) ListGrantedOrganizations(
 	ctx context.Context,
-	staff StaffContext,
+	staff *StaffContext,
 ) ([]*supportaccessrepository.GrantedOrganization, error) {
-	if _, err := s.requireStaff(ctx, staff); err != nil {
+	if err := s.requireStaff(ctx, staff); err != nil {
 		return nil, err
 	}
 
 	return s.repo.ListGrantedOrganizations(ctx, s.nowUnix())
 }
 
-func (s *Service) requireAssurance(ctx context.Context, staff StaffContext) error {
+func (s *Service) requireAssurance(ctx context.Context, staff *StaffContext) error {
 	if !staff.MFAVerified() {
 		return errMFARequired
 	}
@@ -201,18 +206,15 @@ func (s *Service) requireAssurance(ctx context.Context, staff StaffContext) erro
 	return nil
 }
 
-func (s *Service) StartSession(
-	ctx context.Context,
-	req *StartSessionRequest,
-) (*StartedSession, error) {
-	if _, err := s.requireStaff(ctx, req.Staff); err != nil {
-		return nil, err
+func (s *Service) checkStart(ctx context.Context, req *StartSessionRequest) error {
+	if err := s.requireStaff(ctx, req.Staff); err != nil {
+		return err
 	}
 	if err := s.requireAssurance(ctx, req.Staff); err != nil {
-		return nil, err
+		return err
 	}
 	if err := validateStart(req); err != nil {
-		return nil, err
+		return err
 	}
 
 	allowed, retryAfter, err := s.limiter.Allow(
@@ -221,13 +223,60 @@ func (s *Service) StartSession(
 		s.settings.GetSessionStartsPerHour(),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !allowed {
-		return nil, errortypes.NewRateLimitError(
+		return errortypes.NewRateLimitError(
 			"organizationId",
 			"Too many support sessions were opened in the last hour. Try again later.",
 		).WithRetryAfter(retryAfter)
+	}
+
+	return nil
+}
+
+func (s *Service) preparePrincipal(
+	ctx, targetCtx context.Context,
+	req *StartSessionRequest,
+	now int64,
+) (staffUser, principal *tenant.User, err error) {
+	staffUser, err = s.users.FindByIDForLogin(ctx, req.Staff.UserID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	principalUser, err := newPrincipalUser(&principalUserParams{
+		Staff:          staffUser,
+		OrganizationID: req.OrganizationID,
+		BusinessUnitID: req.BusinessUnitID,
+		EmailDomain:    s.settings.GetPrincipalEmailDomain(),
+		Now:            now,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	principal, err = s.repo.EnsurePrincipal(
+		targetCtx,
+		&supportaccessrepository.EnsurePrincipalRequest{
+			TenantInfo:  pagination.TenantInfo{OrgID: req.OrganizationID, BuID: req.BusinessUnitID},
+			StaffUserID: req.Staff.UserID,
+			NewUser:     principalUser,
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return staffUser, principal, nil
+}
+
+func (s *Service) StartSession(
+	ctx context.Context,
+	req *StartSessionRequest,
+) (*StartedSession, error) {
+	if err := s.checkStart(ctx, req); err != nil {
+		return nil, err
 	}
 
 	now := s.nowUnix()
@@ -243,27 +292,7 @@ func (s *Service) StartSession(
 		return nil, errNoGrant
 	}
 
-	staffUser, err := s.users.FindByIDForLogin(ctx, req.Staff.UserID)
-	if err != nil {
-		return nil, err
-	}
-
-	principalUser, err := newPrincipalUser(&principalUserParams{
-		Staff:          staffUser,
-		OrganizationID: req.OrganizationID,
-		BusinessUnitID: req.BusinessUnitID,
-		EmailDomain:    s.settings.GetPrincipalEmailDomain(),
-		Now:            now,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	principal, err := s.repo.EnsurePrincipal(targetCtx, &supportaccessrepository.EnsurePrincipalRequest{
-		TenantInfo:  pagination.TenantInfo{OrgID: req.OrganizationID, BuID: req.BusinessUnitID},
-		StaffUserID: req.Staff.UserID,
-		NewUser:     principalUser,
-	})
+	staffUser, principal, err := s.preparePrincipal(ctx, targetCtx, req, now)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +359,7 @@ func (s *Service) StartSession(
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	staff StaffContext,
+	staff *StaffContext,
 	rawToken string,
 ) (*supportctx.Active, *supportaccess.Session, error) {
 	if !s.Enabled() {
@@ -397,7 +426,7 @@ func (s *Service) Resolve(
 
 func (s *Service) endReason(
 	ctx context.Context,
-	staff StaffContext,
+	staff *StaffContext,
 	session *supportaccess.Session,
 	now int64,
 ) (supportaccess.EndReason, bool) {
@@ -452,14 +481,16 @@ func (s *Service) endSession(
 	s.recordSessionEvent(ctx, &sessionEvent{
 		session:   session,
 		operation: sessionEnded,
-		comment:   "Trenova support session of " + session.StaffName + " ended: " + endReasonText(reason),
-		metadata:  map[string]any{"endReason": reason.String()},
+		comment: "Trenova support session of " + session.StaffName + " ended: " + endReasonText(
+			reason,
+		),
+		metadata: map[string]any{metadataEndReason: reason.String()},
 	})
 }
 
 func (s *Service) CurrentSession(
 	ctx context.Context,
-	staff StaffContext,
+	staff *StaffContext,
 	rawToken string,
 ) (*CurrentSessionResponse, error) {
 	if rawToken == "" {
@@ -480,7 +511,7 @@ func (s *Service) CurrentSession(
 
 func (s *Service) Elevate(
 	ctx context.Context,
-	staff StaffContext,
+	staff *StaffContext,
 	rawToken string,
 	req *ElevateRequest,
 ) (*SessionView, error) {
@@ -538,7 +569,7 @@ func (s *Service) Elevate(
 
 func (s *Service) DropElevation(
 	ctx context.Context,
-	staff StaffContext,
+	staff *StaffContext,
 	rawToken string,
 ) (*SessionView, error) {
 	active, session, err := s.Resolve(ctx, staff, rawToken)
@@ -566,7 +597,7 @@ func (s *Service) DropElevation(
 	return s.sessionView(session, now), nil
 }
 
-func (s *Service) EndSession(ctx context.Context, staff StaffContext, rawToken string) error {
+func (s *Service) EndSession(ctx context.Context, staff *StaffContext, rawToken string) error {
 	token, err := supportctx.ParseToken(rawToken)
 	if err != nil {
 		return nil //nolint:nilerr // an unreadable cookie has nothing left to end

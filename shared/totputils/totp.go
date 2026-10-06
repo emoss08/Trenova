@@ -136,7 +136,8 @@ func decodeSecret(secret string) ([]byte, error) {
 
 func codeFor(key []byte, step int64) string {
 	var counter [8]byte
-	binary.BigEndian.PutUint64(counter[:], uint64(step)) //nolint:gosec // steps are positive Unix intervals
+	counter64 := uint64(step) //nolint:gosec // steps are positive Unix intervals
+	binary.BigEndian.PutUint64(counter[:], counter64)
 
 	mac := hmac.New(sha1.New, key)
 	mac.Write(counter[:])

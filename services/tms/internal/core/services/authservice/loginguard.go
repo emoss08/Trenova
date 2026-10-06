@@ -206,6 +206,6 @@ func (s *Service) CreateSessionForUser(
 		AuthenticatorAAL:      1,
 		FederationFAL:         1,
 		LastReauthenticatedAt: timeutils.NowUnix(),
-		RiskDecision:          "allow",
+		RiskDecision:          riskDecisionAllow,
 	})
 }

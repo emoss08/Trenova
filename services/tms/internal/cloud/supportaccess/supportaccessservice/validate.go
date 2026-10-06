@@ -24,8 +24,14 @@ func validateStart(req *StartSessionRequest) error {
 	multiErr := errortypes.NewMultiError()
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		req,
-		validation.Field(&req.OrganizationID, validation.Required.Error("Organization is required")),
-		validation.Field(&req.BusinessUnitID, validation.Required.Error("Business unit is required")),
+		validation.Field(
+			&req.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(
+			&req.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
 		validation.Field(&req.Reason, supportaccess.ReasonRules("Reason")...),
 		validation.Field(
 			&req.TicketReference,

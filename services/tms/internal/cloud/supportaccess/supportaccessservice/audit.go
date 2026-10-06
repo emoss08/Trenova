@@ -22,6 +22,8 @@ const (
 	notificationSource    = "support_access"
 	eventSessionStarted   = "support_access.session_started"
 	metadataSupportAccess = "supportAccess"
+	metadataSessionID     = "supportSessionId"
+	metadataEndReason     = "endReason"
 )
 
 type sessionOperation string
@@ -79,7 +81,7 @@ func recordSessionAudit(
 	session := event.session
 	metadata := map[string]any{
 		metadataSupportAccess: string(event.operation),
-		"supportSessionId":    session.ID.String(),
+		metadataSessionID:     session.ID.String(),
 		"grantId":             session.GrantID.String(),
 		"staffUserId":         session.StaffUserID.String(),
 		"staffName":           session.StaffName,
@@ -207,7 +209,7 @@ func (s *Service) RecordRefusal(ctx context.Context, req *RefusalRequest) {
 				") because " + why,
 			Metadata: map[string]any{
 				metadataSupportAccess: string(sessionRefused),
-				"supportSessionId":    req.Active.SessionID.String(),
+				metadataSessionID:     req.Active.SessionID.String(),
 				"staffUserId":         req.Active.StaffUserID.String(),
 				"method":              req.Method,
 				"route":               req.Route,
@@ -245,16 +247,16 @@ func (s *Service) notifyAdmins(
 				Source:        notificationSource,
 				CorrelationID: &correlation,
 				Data: map[string]any{
-					"link":             "/admin/support-access",
-					"supportSessionId": correlation,
-					"staffName":        session.StaffName,
+					"link":            "/admin/support-access",
+					metadataSessionID: correlation,
+					"staffName":       session.StaffName,
 				},
-				RelatedEntities: map[string]any{"supportSessionId": correlation},
+				RelatedEntities: map[string]any{metadataSessionID: correlation},
 			},
 		},
 	); err != nil {
 		s.l.Warn("could not tell administrators a support session started",
-			zap.String("supportSessionId", correlation),
+			zap.String(metadataSessionID, correlation),
 			zap.Error(err),
 		)
 	}

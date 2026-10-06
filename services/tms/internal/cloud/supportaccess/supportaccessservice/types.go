@@ -23,11 +23,11 @@ type StaffContext struct {
 	MFAAuthenticatedAt int64
 }
 
-func (s StaffContext) MFAVerified() bool {
+func (s *StaffContext) MFAVerified() bool {
 	return s.AuthenticatorAAL >= mfaAssuranceLevel && s.MFAAuthenticatedAt > 0
 }
 
-func (s StaffContext) scope(ctx context.Context) context.Context {
+func (s *StaffContext) scope(ctx context.Context) context.Context {
 	return dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: s.OrganizationID,
 		BusinessUnitID: s.BusinessUnitID,
@@ -85,13 +85,13 @@ type StaffProfile struct {
 }
 
 type StartSessionRequest struct {
-	Staff           StaffContext `json:"-"`
-	OrganizationID  pulid.ID     `json:"organizationId"`
-	BusinessUnitID  pulid.ID     `json:"businessUnitId"`
-	Reason          string       `json:"reason"`
-	TicketReference string       `json:"ticketReference"`
-	ClientIP        string       `json:"-"`
-	UserAgent       string       `json:"-"`
+	Staff           *StaffContext `json:"-"`
+	OrganizationID  pulid.ID      `json:"organizationId"`
+	BusinessUnitID  pulid.ID      `json:"businessUnitId"`
+	Reason          string        `json:"reason"`
+	TicketReference string        `json:"ticketReference"`
+	ClientIP        string        `json:"-"`
+	UserAgent       string        `json:"-"`
 }
 
 type StartedSession struct {

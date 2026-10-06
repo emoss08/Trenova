@@ -30,7 +30,7 @@ type harness struct {
 	limiter  *fakeLimiter
 	users    *mocks.MockUserRepository
 	clock    time.Time
-	staff    StaffContext
+	staff    *StaffContext
 	staffUsr *tenant.User
 	customer pagination.TenantInfo
 }
@@ -71,7 +71,7 @@ func newHarness(t *testing.T) *harness {
 		users:    users,
 		clock:    time.Unix(1_800_000_000, 0),
 		staffUsr: staffUser,
-		staff: StaffContext{
+		staff: &StaffContext{
 			UserID:             staffUser.ID,
 			OrganizationID:     staffUser.CurrentOrganizationID,
 			BusinessUnitID:     staffUser.BusinessUnitID,
@@ -222,11 +222,11 @@ func TestStartSessionNeedsAGrantStaffAndTwoFactor(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t)
 		h.grant(t, supportaccess.AccessModeReadOnly, 24)
-		staff := h.staff
+		staff := *h.staff
 		staff.AuthenticatorAAL = 1
 		staff.MFAAuthenticatedAt = 0
 		_, err := h.svc.StartSession(t.Context(), &StartSessionRequest{
-			Staff:          staff,
+			Staff:          &staff,
 			OrganizationID: h.customer.OrgID,
 			BusinessUnitID: h.customer.BuID,
 			Reason:         validReason,

@@ -75,8 +75,15 @@ type ReauthenticateRequest struct {
 }
 
 type MFAService interface {
-	Status(ctx context.Context, tenantInfo pagination.TenantInfo, sessionAAL int) (*MFAStatus, error)
-	BeginTOTPEnrollment(ctx context.Context, req *BeginTOTPEnrollmentRequest) (*TOTPEnrollment, error)
+	Status(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		sessionAAL int,
+	) (*MFAStatus, error)
+	BeginTOTPEnrollment(
+		ctx context.Context,
+		req *BeginTOTPEnrollmentRequest,
+	) (*TOTPEnrollment, error)
 	ConfirmTOTPEnrollment(
 		ctx context.Context,
 		req *ConfirmTOTPEnrollmentRequest,

@@ -32,18 +32,18 @@ var (
 type Grant struct {
 	bun.BaseModel `bun:"table:support_access_grants,alias:sag" json:"-"`
 
-	ID             pulid.ID   `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID   `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID   `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	GrantedByID    pulid.ID   `json:"grantedById"            bun:"granted_by_id,type:VARCHAR(100),notnull"`
-	AccessMode     AccessMode `json:"accessMode"             bun:"access_mode,type:VARCHAR(20),notnull"`
-	Note           string     `json:"note,omitempty"         bun:"note,type:VARCHAR(500),nullzero"`
-	StartsAt       int64      `json:"startsAt"               bun:"starts_at,type:BIGINT,notnull"`
-	ExpiresAt      int64      `json:"expiresAt"              bun:"expires_at,type:BIGINT,notnull"`
-	RevokedAt      *int64     `json:"revokedAt"              bun:"revoked_at,type:BIGINT,nullzero"`
-	RevokedByID    pulid.ID   `json:"revokedById,omitempty"  bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
-	CreatedAt      int64      `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64      `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID   `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID pulid.ID   `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID   `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	GrantedByID    pulid.ID   `json:"grantedById"           bun:"granted_by_id,type:VARCHAR(100),notnull"`
+	AccessMode     AccessMode `json:"accessMode"            bun:"access_mode,type:VARCHAR(20),notnull"`
+	Note           string     `json:"note,omitempty"        bun:"note,type:VARCHAR(500),nullzero"`
+	StartsAt       int64      `json:"startsAt"              bun:"starts_at,type:BIGINT,notnull"`
+	ExpiresAt      int64      `json:"expiresAt"             bun:"expires_at,type:BIGINT,notnull"`
+	RevokedAt      *int64     `json:"revokedAt"             bun:"revoked_at,type:BIGINT,nullzero"`
+	RevokedByID    pulid.ID   `json:"revokedById,omitempty" bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
+	CreatedAt      int64      `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64      `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (g *Grant) IsActive(now int64) bool {
@@ -65,7 +65,10 @@ func (g *Grant) Validate(multiErr *errortypes.MultiError, maxDuration time.Durat
 			validation.Required.Error("Access mode is required"),
 			validation.By(func(any) error {
 				if !g.AccessMode.IsValid() {
-					return validation.NewError("invalid", "Access mode must be read-only or read-write")
+					return validation.NewError(
+						"invalid",
+						"Access mode must be read-only or read-write",
+					)
 				}
 				return nil
 			}),
@@ -113,38 +116,38 @@ func (g *Grant) BeforeAppendModel(_ context.Context, query bun.Query) error {
 type Session struct {
 	bun.BaseModel `bun:"table:support_sessions,alias:sps" json:"-"`
 
-	ID                 pulid.ID  `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID  `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID  `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	GrantID            pulid.ID  `json:"grantId"                     bun:"grant_id,type:VARCHAR(100),notnull"`
-	StaffUserID        pulid.ID  `json:"staffUserId"                 bun:"staff_user_id,type:VARCHAR(100),notnull"`
-	StaffName          string    `json:"staffName"                   bun:"staff_name,type:VARCHAR(255),notnull"`
-	PrincipalUserID    pulid.ID  `json:"principalUserId"             bun:"principal_user_id,type:VARCHAR(100),notnull"`
-	BaseSessionID      pulid.ID  `json:"-"                           bun:"base_session_id,type:VARCHAR(100),notnull"`
-	SecretHash         string    `json:"-"                           bun:"secret_hash,type:VARCHAR(64),notnull"`
-	Reason             string    `json:"reason"                      bun:"reason,type:VARCHAR(500),notnull"`
-	TicketReference    string    `json:"ticketReference,omitempty"   bun:"ticket_reference,type:VARCHAR(100),nullzero"`
-	StartedAt          int64     `json:"startedAt"                   bun:"started_at,type:BIGINT,notnull"`
-	ExpiresAt          int64     `json:"expiresAt"                   bun:"expires_at,type:BIGINT,notnull"`
-	ElevatedAt         *int64    `json:"elevatedAt"                  bun:"elevated_at,type:BIGINT,nullzero"`
-	ElevatedUntil      *int64    `json:"elevatedUntil"               bun:"elevated_until,type:BIGINT,nullzero"`
-	ElevationReason    string    `json:"elevationReason,omitempty"   bun:"elevation_reason,type:VARCHAR(500),nullzero"`
-	ElevationTicket    string    `json:"elevationTicket,omitempty"   bun:"elevation_ticket,type:VARCHAR(100),nullzero"`
-	ElevationCount     int       `json:"elevationCount"              bun:"elevation_count,type:INTEGER,notnull,default:0"`
-	EndedAt            *int64    `json:"endedAt"                     bun:"ended_at,type:BIGINT,nullzero"`
-	EndReason          EndReason `json:"endReason,omitempty"         bun:"end_reason,type:VARCHAR(30),nullzero"`
-	LastSeenAt         int64     `json:"lastSeenAt"                  bun:"last_seen_at,type:BIGINT,notnull"`
-	ClientIP           string    `json:"clientIp,omitempty"          bun:"client_ip,type:VARCHAR(64),nullzero"`
-	UserAgent          string    `json:"userAgent,omitempty"         bun:"user_agent,type:VARCHAR(512),nullzero"`
-	CreatedAt          int64     `json:"createdAt"                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64     `json:"updatedAt"                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	OrganizationName   string    `json:"organizationName,omitempty"  bun:"organization_name,scanonly"`
-	GrantAccessMode    string    `json:"grantAccessMode,omitempty"   bun:"grant_access_mode,scanonly"`
-	GrantExpiresAt     int64     `json:"grantExpiresAt,omitempty"    bun:"grant_expires_at,scanonly"`
-	GrantRevokedAt     *int64    `json:"-"                           bun:"grant_revoked_at,scanonly"`
-	GrantStartsAt      int64     `json:"-"                           bun:"grant_starts_at,scanonly"`
-	StaffMemberActive  bool      `json:"-"                           bun:"staff_member_active,scanonly"`
-	StaffMemberPresent bool      `json:"-"                           bun:"staff_member_present,scanonly"`
+	ID                 pulid.ID  `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID     pulid.ID  `json:"organizationId"             bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID     pulid.ID  `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	GrantID            pulid.ID  `json:"grantId"                    bun:"grant_id,type:VARCHAR(100),notnull"`
+	StaffUserID        pulid.ID  `json:"staffUserId"                bun:"staff_user_id,type:VARCHAR(100),notnull"`
+	StaffName          string    `json:"staffName"                  bun:"staff_name,type:VARCHAR(255),notnull"`
+	PrincipalUserID    pulid.ID  `json:"principalUserId"            bun:"principal_user_id,type:VARCHAR(100),notnull"`
+	BaseSessionID      pulid.ID  `json:"-"                          bun:"base_session_id,type:VARCHAR(100),notnull"`
+	SecretHash         string    `json:"-"                          bun:"secret_hash,type:VARCHAR(64),notnull"`
+	Reason             string    `json:"reason"                     bun:"reason,type:VARCHAR(500),notnull"`
+	TicketReference    string    `json:"ticketReference,omitempty"  bun:"ticket_reference,type:VARCHAR(100),nullzero"`
+	StartedAt          int64     `json:"startedAt"                  bun:"started_at,type:BIGINT,notnull"`
+	ExpiresAt          int64     `json:"expiresAt"                  bun:"expires_at,type:BIGINT,notnull"`
+	ElevatedAt         *int64    `json:"elevatedAt"                 bun:"elevated_at,type:BIGINT,nullzero"`
+	ElevatedUntil      *int64    `json:"elevatedUntil"              bun:"elevated_until,type:BIGINT,nullzero"`
+	ElevationReason    string    `json:"elevationReason,omitempty"  bun:"elevation_reason,type:VARCHAR(500),nullzero"`
+	ElevationTicket    string    `json:"elevationTicket,omitempty"  bun:"elevation_ticket,type:VARCHAR(100),nullzero"`
+	ElevationCount     int       `json:"elevationCount"             bun:"elevation_count,type:INTEGER,notnull,default:0"`
+	EndedAt            *int64    `json:"endedAt"                    bun:"ended_at,type:BIGINT,nullzero"`
+	EndReason          EndReason `json:"endReason,omitempty"        bun:"end_reason,type:VARCHAR(30),nullzero"`
+	LastSeenAt         int64     `json:"lastSeenAt"                 bun:"last_seen_at,type:BIGINT,notnull"`
+	ClientIP           string    `json:"clientIp,omitempty"         bun:"client_ip,type:VARCHAR(64),nullzero"`
+	UserAgent          string    `json:"userAgent,omitempty"        bun:"user_agent,type:VARCHAR(512),nullzero"`
+	CreatedAt          int64     `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt          int64     `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	OrganizationName   string    `json:"organizationName,omitempty" bun:"organization_name,scanonly"`
+	GrantAccessMode    string    `json:"grantAccessMode,omitempty"  bun:"grant_access_mode,scanonly"`
+	GrantExpiresAt     int64     `json:"grantExpiresAt,omitempty"   bun:"grant_expires_at,scanonly"`
+	GrantRevokedAt     *int64    `json:"-"                          bun:"grant_revoked_at,scanonly"`
+	GrantStartsAt      int64     `json:"-"                          bun:"grant_starts_at,scanonly"`
+	StaffMemberActive  bool      `json:"-"                          bun:"staff_member_active,scanonly"`
+	StaffMemberPresent bool      `json:"-"                          bun:"staff_member_present,scanonly"`
 }
 
 func (s *Session) IsOpen(now int64) bool {
@@ -173,7 +176,10 @@ func (s *Session) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&s.BusinessUnitID, validation.Required.Error("Business unit is required")),
 		validation.Field(&s.GrantID, validation.Required.Error("Grant is required")),
 		validation.Field(&s.StaffUserID, validation.Required.Error("Staff member is required")),
-		validation.Field(&s.PrincipalUserID, validation.Required.Error("Support principal is required")),
+		validation.Field(
+			&s.PrincipalUserID,
+			validation.Required.Error("Support principal is required"),
+		),
 		validation.Field(&s.BaseSessionID, validation.Required.Error("Staff session is required")),
 		validation.Field(&s.SecretHash, validation.Required.Error("Session secret is required")),
 		validation.Field(&s.Reason, ReasonRules("Reason")...),
@@ -186,7 +192,10 @@ func (s *Session) Validate(multiErr *errortypes.MultiError) {
 			&s.ExpiresAt,
 			validation.By(func(any) error {
 				if s.ExpiresAt <= s.StartedAt {
-					return validation.NewError("invalid", "A support session must end after it starts")
+					return validation.NewError(
+						"invalid",
+						"A support session must end after it starts",
+					)
 				}
 				return nil
 			}),
@@ -266,7 +275,8 @@ func (m *StaffMember) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&m.AddedBy,
 			validation.Required.Error("Who added the staff member is required"),
-			validation.RuneLength(1, MaxAddedByLength).Error("Added by must be at most 255 characters"),
+			validation.RuneLength(1, MaxAddedByLength).
+				Error("Added by must be at most 255 characters"),
 		),
 	))
 }

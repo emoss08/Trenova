@@ -54,7 +54,7 @@ func (r *mfaRepository) GetTOTP(
 			Limit(1).
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil //nolint:nilnil // no authenticator is a valid state
+			return nil, nil
 		}
 		if err != nil {
 			return nil, fmt.Errorf("get totp authenticator: %w", err)

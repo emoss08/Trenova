@@ -21,7 +21,11 @@ func tenantInfoOf(authCtx *authctx.AuthContext) pagination.TenantInfo {
 func (h *Handler) getMyMFA(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	status, err := h.mfa.Status(c.Request.Context(), tenantInfoOf(authCtx), authCtx.AuthenticatorAAL)
+	status, err := h.mfa.Status(
+		c.Request.Context(),
+		tenantInfoOf(authCtx),
+		authCtx.AuthenticatorAAL,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

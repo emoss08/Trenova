@@ -40,7 +40,7 @@ type sessionResolver interface {
 	CookieName() string
 	Resolve(
 		ctx context.Context,
-		staff supportaccessservice.StaffContext,
+		staff *supportaccessservice.StaffContext,
 		rawToken string,
 	) (*supportctx.Active, *supportaccess.Session, error)
 	RecordRefusal(ctx context.Context, req *supportaccessservice.RefusalRequest)
@@ -164,8 +164,8 @@ func enterTenant(c *gin.Context, staff *authctx.AuthContext, active *supportctx.
 	supportctx.BindActive(c, active)
 }
 
-func StaffContextOf(authCtx *authctx.AuthContext) supportaccessservice.StaffContext {
-	return supportaccessservice.StaffContext{
+func StaffContextOf(authCtx *authctx.AuthContext) *supportaccessservice.StaffContext {
+	return &supportaccessservice.StaffContext{
 		UserID:             authCtx.UserID,
 		OrganizationID:     authCtx.OrganizationID,
 		BusinessUnitID:     authCtx.BusinessUnitID,

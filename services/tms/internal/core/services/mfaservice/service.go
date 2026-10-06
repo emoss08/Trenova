@@ -28,6 +28,7 @@ const (
 	defaultAuthenticatorName = "Authenticator app"
 	qrCodeSize               = 240
 	mfaAssuranceLevel        = 2
+	auditFieldType           = "type"
 )
 
 var (
@@ -74,11 +75,11 @@ type Service struct {
 	now      func() time.Time
 }
 
-func New(p Params) services.MFAService {
-	return newService(p)
+func New(p Params) services.MFAService { //nolint:gocritic // fx params are passed by value
+	return newService(&p)
 }
 
-func newService(p Params) *Service {
+func newService(p *Params) *Service {
 	issuer := defaultIssuer
 	if p.Config != nil && strings.TrimSpace(p.Config.App.Name) != "" {
 		issuer = strings.TrimSpace(p.Config.App.Name)
@@ -236,7 +237,7 @@ func (s *Service) ConfirmTOTPEnrollment(
 		targetID:   req.TenantInfo.UserID,
 		resourceID: authenticator.ID.String(),
 		operation:  permission.OpCreate,
-		after:      map[string]any{"type": iam.MFAAuthenticatorTypeTOTP, "enabled": true},
+		after:      map[string]any{auditFieldType: iam.MFAAuthenticatorTypeTOTP, "enabled": true},
 		comment:    "Turned on two-factor authentication with an authenticator app",
 	})
 
@@ -269,7 +270,7 @@ func (s *Service) DisableTOTP(ctx context.Context, req *services.DisableTOTPRequ
 		targetID:   req.TenantInfo.UserID,
 		resourceID: req.TenantInfo.UserID.String(),
 		operation:  permission.OpDelete,
-		before:     map[string]any{"type": iam.MFAAuthenticatorTypeTOTP, "enabled": true},
+		before:     map[string]any{auditFieldType: iam.MFAAuthenticatorTypeTOTP, "enabled": true},
 		comment:    "Turned off two-factor authentication",
 	})
 
@@ -280,7 +281,7 @@ func (s *Service) RegenerateRecoveryCodes(
 	ctx context.Context,
 	req *services.RegenerateRecoveryCodesRequest,
 ) (*services.RecoveryCodesResponse, error) {
-	if _, err := s.verifyTOTP(ctx, req.TenantInfo.UserID, req.Code); err != nil {
+	if err := s.verifyTOTP(ctx, req.TenantInfo.UserID, req.Code); err != nil {
 		return nil, err
 	}
 
@@ -332,7 +333,7 @@ func (s *Service) ResetUserMFA(ctx context.Context, req *services.ResetUserMFARe
 		targetID:   req.TargetUserID,
 		resourceID: req.TargetUserID.String(),
 		operation:  permission.OpDelete,
-		before:     map[string]any{"type": iam.MFAAuthenticatorTypeTOTP},
+		before:     map[string]any{auditFieldType: iam.MFAAuthenticatorTypeTOTP},
 		comment:    "An administrator reset the user's two-factor authentication",
 	})
 
@@ -353,10 +354,14 @@ func (s *Service) VerifySecondFactor(
 	req *services.VerifySecondFactorRequest,
 ) (string, error) {
 	if strings.TrimSpace(req.RecoveryCode) != "" {
-		return services.MFAMethodRecoveryCode, s.consumeRecoveryCode(ctx, req.UserID, req.RecoveryCode)
+		return services.MFAMethodRecoveryCode, s.consumeRecoveryCode(
+			ctx,
+			req.UserID,
+			req.RecoveryCode,
+		)
 	}
 
-	if _, err := s.verifyTOTP(ctx, req.UserID, req.Code); err != nil {
+	if err := s.verifyTOTP(ctx, req.UserID, req.Code); err != nil {
 		return "", err
 	}
 
@@ -414,22 +419,22 @@ func (s *Service) verifyPassword(
 	return usr, nil
 }
 
-func (s *Service) verifyTOTP(ctx context.Context, userID pulid.ID, code string) (int64, error) {
+func (s *Service) verifyTOTP(ctx context.Context, userID pulid.ID, code string) error {
 	if strings.TrimSpace(code) == "" {
-		return 0, errortypes.NewValidationError("code", errortypes.ErrRequired, "Code is required")
+		return errortypes.NewValidationError("code", errortypes.ErrRequired, "Code is required")
 	}
 
 	authenticator, err := s.repo.GetTOTP(ctx, userID)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	if !authenticator.IsActiveTOTP() {
-		return 0, errNoActiveFactor
+		return errNoActiveFactor
 	}
 
 	secret, err := s.decryptSecret(authenticator)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	now := s.now()
@@ -441,7 +446,7 @@ func (s *Service) verifyTOTP(ctx context.Context, userID pulid.ID, code string) 
 		After:  authenticator.LastUsedStep,
 	})
 	if err != nil {
-		return 0, errInvalidCode
+		return errInvalidCode
 	}
 
 	recorded, err := s.repo.RecordTOTPUse(ctx, repositories.RecordTOTPUseRequest{
@@ -451,13 +456,13 @@ func (s *Service) verifyTOTP(ctx context.Context, userID pulid.ID, code string) 
 		UsedAt:          now.Unix(),
 	})
 	if err != nil {
-		return 0, err
+		return err
 	}
 	if !recorded {
-		return 0, errInvalidCode
+		return errInvalidCode
 	}
 
-	return step, nil
+	return nil
 }
 
 func (s *Service) consumeRecoveryCode(ctx context.Context, userID pulid.ID, code string) error {

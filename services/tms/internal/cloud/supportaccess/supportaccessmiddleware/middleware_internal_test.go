@@ -35,7 +35,7 @@ func (*fakeResolver) CookieName() string { return cookieName }
 
 func (f *fakeResolver) Resolve(
 	context.Context,
-	supportaccessservice.StaffContext,
+	*supportaccessservice.StaffContext,
 	string,
 ) (*supportctx.Active, *supportaccess.Session, error) {
 	if f.err != nil {
