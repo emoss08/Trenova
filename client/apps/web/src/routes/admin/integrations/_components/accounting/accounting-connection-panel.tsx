@@ -32,9 +32,11 @@ import { useState } from "react";
 import type {
   AccountingAppSettings,
   AccountingProviderProfile,
+  AccountingWebhookSubscriptionSummary,
 } from "@/lib/graphql/accounting-sync";
 import { AccountingAppKeys } from "./accounting-app-keys";
 import { AccountingCompanyFacts } from "./accounting-company-facts";
+import { AccountingWebhookSubscriptions } from "./accounting-webhook-subscriptions";
 import { AccountingSyncSettings } from "./accounting-sync-settings";
 import type { AccountingVendor } from "./accounting-vendors";
 
@@ -43,6 +45,7 @@ type AccountingConnectionPanelProps = {
   app: AccountingAppSettings;
   profile: AccountingProviderProfile;
   connection: AccountingConnection;
+  webhookSubscriptions: AccountingWebhookSubscriptionSummary | null;
   canUpdate: boolean;
   canManage: boolean;
   isChecking: boolean;
@@ -58,6 +61,7 @@ export function AccountingConnectionPanel({
   app,
   profile,
   connection,
+  webhookSubscriptions,
   canUpdate,
   canManage,
   isChecking,
@@ -146,6 +150,10 @@ export function AccountingConnectionPanel({
 
       <AccountingCompanyFacts connection={connection} />
 
+      {webhookSubscriptions ? (
+        <AccountingWebhookSubscriptions vendor={vendor} summary={webhookSubscriptions} />
+      ) : null}
+
       <DescriptionList columns={2} className="border-t pt-4">
         <DescriptionItem label={t("What is sent")}>
           {connection.syncMode === "Ledger"
@@ -184,7 +192,12 @@ export function AccountingConnectionPanel({
       </DescriptionList>
 
       {connection.setupStep === "Complete" ? (
-        <AccountingSyncSettings vendor={vendor} connection={connection} canManage={canManage} />
+        <AccountingSyncSettings
+          vendor={vendor}
+          profile={profile}
+          connection={connection}
+          canManage={canManage}
+        />
       ) : null}
 
       <AccountingAppKeys
@@ -218,11 +231,18 @@ export function AccountingConnectionPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Disconnect {0}?", vendor.name)}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t(
-                "Trenova revokes its access to {0} and stops reading from and writing to it. Nothing already in {1} is changed or deleted. You can connect again later.",
-                connection.externalCompanyName || vendor.name,
-                vendor.name,
-              )}
+              {profile.revokesTokens
+                ? t(
+                    "Trenova revokes its access to {0} and stops reading from and writing to it. Nothing already in {1} is changed or deleted. You can connect again later.",
+                    connection.externalCompanyName || vendor.name,
+                    vendor.name,
+                  )
+                : t(
+                    "Trenova deletes its sign-in to {0}, removes its webhook subscriptions and stops reading from and writing to it. {1} offers no way for Trenova to withdraw the consent itself: to remove it, an administrator removes the {2} from Enterprise applications in Microsoft Entra. Nothing already in {1} is changed or deleted.",
+                    connection.externalCompanyName || vendor.name,
+                    vendor.name,
+                    t(profile.appName),
+                  )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

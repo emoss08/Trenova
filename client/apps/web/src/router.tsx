@@ -2019,6 +2019,15 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "integrations/business-central/callback",
+                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
+                async lazy() {
+                  const { BusinessCentralCallbackPage } =
+                    await import("@/routes/admin/integrations/business-central-callback/page");
+                  return { Component: BusinessCentralCallbackPage };
+                },
+              },
+              {
                 // Agents are configured from Agent Control; the old standalone
                 // page forwards so a saved link still lands somewhere useful.
                 path: "agents",

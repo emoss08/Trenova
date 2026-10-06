@@ -1,6 +1,6 @@
 ---
 path: /accounting/sync/drift
-aliases: [QuickBooks drift, invoice changed in QuickBooks, document deleted in QuickBooks, books differ, reconcile QuickBooks, reconciliation differences, QuickBooks does not match, fix QuickBooks mismatch, customer balance differs, sync mismatch, account balance differs, trial balance does not match QuickBooks, Xero drift, invoice changed in Xero, invoice voided in Xero, Xero does not match]
+aliases: [QuickBooks drift, invoice changed in QuickBooks, document deleted in QuickBooks, books differ, reconcile QuickBooks, reconciliation differences, QuickBooks does not match, fix QuickBooks mismatch, customer balance differs, sync mismatch, account balance differs, trial balance does not match QuickBooks, Xero drift, invoice changed in Xero, invoice voided in Xero, Xero does not match, Business Central drift, invoice paid in Business Central, Business Central does not match]
 related:
   - /accounting/sync
   - /accounting/sync/inbound
@@ -8,8 +8,8 @@ related:
 ---
 
 ## What it's for
-Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online or
-Xero) that differ there now: a total someone edited, a document deleted or voided in the books, a
+Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online,
+Xero or Business Central) that differ there now: a total someone edited, a document deleted or voided in the books, a
 document voided in Trenova but still live in the books, or a customer's open balance that no
 longer adds up to the same figure on both sides. Each finding shows both values, when the document
 was changed in the books and, for QuickBooks Online, who changed it, and whether an amount

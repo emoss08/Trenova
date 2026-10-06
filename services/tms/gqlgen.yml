@@ -4320,6 +4320,11 @@ models:
     fields:
       ledgerAvailable:
         fieldName: Ledger
+      inboundPaymentsAvailable:
+        fieldName: InboundPayments
+  AccountingWebhookSubscriptionSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingWebhookSubscriptionSummary
   AccountingCompany:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingCompany

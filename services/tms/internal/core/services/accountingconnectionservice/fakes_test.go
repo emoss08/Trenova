@@ -625,13 +625,20 @@ func (f *fakeConnector) ClassifyError(err error) accountingsync.ErrorCategory {
 	return accountingsync.ErrorCategoryUnknown
 }
 
-type fakeRegistry struct{ connector *fakeConnector }
+type fakeRegistry struct {
+	connector *fakeConnector
+	bc        services.AccountingProvider
+}
 
 func (r fakeRegistry) For(typ integration.Type) (services.AccountingProvider, bool) {
-	if typ == integration.TypeQuickBooksOnline {
+	switch {
+	case typ == integration.TypeQuickBooksOnline:
 		return r.connector, true
+	case typ == integration.TypeBusinessCentral && r.bc != nil:
+		return r.bc, true
+	default:
+		return nil, false
 	}
-	return nil, false
 }
 
 type fakeAudit struct {

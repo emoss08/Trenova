@@ -64,6 +64,7 @@ export function AccountingAppKeys({
   const t = useT();
   const appName = t(profile.appName);
   const webhookKeyLabel = t(profile.webhookKeyLabel);
+  const hasWebhookKey = profile.webhookKeyLabel !== "";
   const choosesEnvironment = profile.environments.length > 1;
   const [editing, setEditing] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -116,9 +117,11 @@ export function AccountingAppKeys({
                 </Badge>
               </DescriptionItem>
             ) : null}
-            <DescriptionItem label={webhookKeyLabel}>
-              {tenantApp.hasWebhookVerifier ? t("Saved") : t("Not set")}
-            </DescriptionItem>
+            {hasWebhookKey ? (
+              <DescriptionItem label={webhookKeyLabel}>
+                {tenantApp.hasWebhookVerifier ? t("Saved") : t("Not set")}
+              </DescriptionItem>
+            ) : null}
             <DescriptionItem label={t("Last changed")} numeric>
               {formatUnixDateMedium(tenantApp.updatedAt)}
             </DescriptionItem>
@@ -175,11 +178,16 @@ export function AccountingAppKeys({
             ) : null}
             {connectedThroughTenant ? (
               <p className="text-foreground-muted text-xs">
-                {t(
-                  "While {0} is connected, only the client secret and {1} can change.",
-                  connection?.externalCompanyName || vendor.name,
-                  toSentenceFragment(webhookKeyLabel),
-                )}
+                {hasWebhookKey
+                  ? t(
+                      "While {0} is connected, only the client secret and {1} can change.",
+                      connection?.externalCompanyName || vendor.name,
+                      toSentenceFragment(webhookKeyLabel),
+                    )
+                  : t(
+                      "While {0} is connected, only the client secret can change.",
+                      connection?.externalCompanyName || vendor.name,
+                    )}
               </p>
             ) : null}
             <div className="flex justify-end gap-2">
@@ -284,6 +292,7 @@ function AccountingAppKeysForm({
   const saved = app.tenantApp;
   const environments = profile.environments;
   const webhookKeyLabel = t(profile.webhookKeyLabel);
+  const hasWebhookKey = profile.webhookKeyLabel !== "";
   const form = useForm<AccountingAppFormValues>({
     resolver: zodResolver(accountingAppFormSchema(saved, environments)),
     defaultValues: accountingAppFormDefaults(saved, environments),
@@ -318,7 +327,12 @@ function AccountingAppKeysForm({
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <AccountingAppRegistration vendor={vendor} app={app} webhookKeyLabel={webhookKeyLabel} />
+      <AccountingAppRegistration
+        vendor={vendor}
+        app={app}
+        webhookKeyLabel={webhookKeyLabel}
+        subscribes={profile.webhookSubscriptions}
+      />
       <FormGroup cols={2}>
         {environments.length > 1 ? (
           <FormControl>
@@ -363,6 +377,7 @@ function AccountingAppKeysForm({
             }
           />
         </FormControl>
+        {hasWebhookKey ? (
         <FormControl cols="full">
           <SensitiveField
             name="webhookVerifierToken"
@@ -378,7 +393,8 @@ function AccountingAppKeysForm({
             )}
           />
         </FormControl>
-        {saved?.hasWebhookVerifier ? (
+        ) : null}
+        {hasWebhookKey && saved?.hasWebhookVerifier ? (
           <FormControl cols="full">
             <CheckboxField
               name="clearWebhookVerifierToken"
@@ -410,13 +426,15 @@ function AccountingAppRegistration({
   vendor,
   app,
   webhookKeyLabel,
+  subscribes,
 }: {
   vendor: AccountingVendor;
   app: AccountingAppSettings;
   webhookKeyLabel: string;
+  subscribes: boolean;
 }) {
   const t = useT();
-  const appWebhookPath = app.tenantApp ? app.webhookPath : "";
+  const appWebhookPath = app.tenantApp && !subscribes ? app.webhookPath : "";
   const webhookUrl = accountingWebhookUrl(appWebhookPath);
   const steps: Record<AccountingSystem, { create: string; redirect: string; keys: string }> = {
     QuickBooksOnline: {
@@ -434,6 +452,17 @@ function AccountingAppRegistration({
         "Under Configuration, add the redirect URI below exactly as written. Xero accepts http://localhost while developing; anything else needs https.",
       ),
       keys: t("Copy the client ID, generate a client secret, and enter both in this form."),
+    },
+    BusinessCentral: {
+      create: t(
+        "Register a multitenant web app in Microsoft Entra and add the delegated Dynamics 365 Business Central permission Financials.ReadWrite.All.",
+      ),
+      redirect: t(
+        "Under Authentication, add a Web platform with the redirect URI below exactly as written. Entra accepts http://localhost while developing; anything else needs https.",
+      ),
+      keys: t(
+        "Copy the application (client) ID, add a client secret under Certificates & secrets, and enter both in this form.",
+      ),
     },
   };
   const step = steps[vendor.system];
@@ -455,7 +484,12 @@ function AccountingAppRegistration({
           </ExternalLink>
         </li>
         <li>
-          {webhookUrl
+          {subscribes
+            ? t(
+                "{0} has no webhook setting to fill in: Trenova subscribes to its changes itself once a company is connected, and renews the subscriptions every few days.",
+                vendor.name,
+              )
+            : webhookUrl
             ? t(
                 "To have {0} tell Trenova about changes, add the webhook endpoint below to the app's webhooks and enter its {1} here.",
                 vendor.name,

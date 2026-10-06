@@ -285,6 +285,7 @@ function AccountingIntegrationBody({
       app={status.app}
       profile={status.profile}
       connection={connection}
+      webhookSubscriptions={status.webhookSubscriptions}
       canUpdate={canUpdate}
       canManage={canManage}
       isChecking={check.isPending}

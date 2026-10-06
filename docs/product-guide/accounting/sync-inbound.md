@@ -1,6 +1,6 @@
 ---
 path: /accounting/sync/inbound
-aliases: [QuickBooks payments, payment entered in QuickBooks, customer paid in QuickBooks, bill paid in QuickBooks, receive payment QuickBooks, payments from QuickBooks, inbound payments, two-way sync, invoice paid in books, settlement paid in books, Xero payments, payment entered in Xero, customer paid in Xero, bill paid in Xero]
+aliases: [QuickBooks payments, payment entered in QuickBooks, customer paid in QuickBooks, bill paid in QuickBooks, receive payment QuickBooks, payments from QuickBooks, inbound payments, two-way sync, invoice paid in books, settlement paid in books, Xero payments, payment entered in Xero, customer paid in Xero, bill paid in Xero, Business Central payments, payment entered in Business Central]
 related:
   - /accounting/sync
   - /admin/integrations
@@ -11,7 +11,10 @@ Payments from the books lists the payments someone recorded in the accounting sy
 Online or Xero) against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that
 pay carrier or owner-operator settlements. Trenova reads them every few minutes, and as soon as
 QuickBooks Online tells it something changed. Each one says what it pays and whether it was brought into
-Trenova, so the invoice or settlement shows as paid here too.
+Trenova, so the invoice or settlement shows as paid here too. Business Central is the exception:
+its API does not say which invoices a payment paid, so payments recorded there are not brought in;
+an invoice paid in Business Central shows as a balance difference on
+[Drift findings](/accounting/sync/drift) instead.
 
 Payments Trenova sent itself are never read back. A payment waits for a person when it does not
 match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays

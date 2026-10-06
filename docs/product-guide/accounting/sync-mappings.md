@@ -1,6 +1,6 @@
 ---
 path: /accounting/sync/mappings
-aliases: [QuickBooks mappings, chart of accounts mapping, account mapping, map accounts, QuickBooks items, map customers to QuickBooks, map carriers to vendors, accounting sync setup, Xero mappings, Xero account codes, map customers to Xero contacts]
+aliases: [QuickBooks mappings, chart of accounts mapping, account mapping, map accounts, QuickBooks items, map customers to QuickBooks, map carriers to vendors, accounting sync setup, Xero mappings, Xero account codes, map customers to Xero contacts, Business Central mappings, Business Central items, map customers to Business Central]
 related:
   - /admin/integrations
 ---
@@ -12,7 +12,8 @@ accounts payable and purchased transportation), invoice line types, accessorial 
 short-pay write-off item, customers, carriers, payment terms and payment methods. Xero invoice lines carry an account, so
 for Xero, line types, accessorial charges and the write-off are mapped to accounts; Xero has no
 payment terms or payment methods to map, and only the deposit account and the freight line's
-account are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that
+account are required. Business Central invoice lines are items, as in QuickBooks Online; it has
+no payment methods to map, and the deposit account and the freight line's item are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that
 carries posted entries needs a QuickBooks account before its entries are sent; an account without
 its own mapping falls back to the account role it plays.
 

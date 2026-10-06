@@ -10,6 +10,7 @@ import {
   AccountingSyncStatusDocument,
   AccountingSyncStatusFieldsFragmentDoc,
   AccountingProviderProfileFieldsFragmentDoc,
+  AccountingWebhookSubscriptionSummaryFieldsFragmentDoc,
   CheckAccountingConnectionDocument,
   ChooseAccountingCompanyDocument,
   ClearAccountingMappingDocument,
@@ -30,6 +31,7 @@ import {
   type AccountingMappingFilterInput,
   type AccountingMappingTargetType,
   type AccountingProviderProfileFieldsFragment,
+  type AccountingWebhookSubscriptionSummaryFieldsFragment,
   type AccountingReferenceKind,
   type AccountingReferenceObjectFieldsFragment,
   type AccountingSystem,
@@ -77,6 +79,8 @@ export type AccountingAuthorizationStart =
 export type AccountingAppSettings = AccountingAppSettingsFieldsFragment;
 export type AccountingAppCredential = NonNullable<AccountingAppSettings["tenantApp"]>;
 export type AccountingProviderProfile = AccountingProviderProfileFieldsFragment;
+export type AccountingWebhookSubscriptionSummary =
+  AccountingWebhookSubscriptionSummaryFieldsFragment;
 export type AccountingSyncStatus = {
   integrationType: AccountingSystem;
   providerName: string;
@@ -84,6 +88,7 @@ export type AccountingSyncStatus = {
   available: boolean;
   app: AccountingAppSettings;
   connection: AccountingConnection | null;
+  webhookSubscriptions: AccountingWebhookSubscriptionSummary | null;
 };
 
 export type AccountingCompanyChoice = { id: string; name: string };
@@ -111,6 +116,12 @@ function toAccountingSyncStatus(
     app: getFragmentData(AccountingAppSettingsFieldsFragmentDoc, status.app),
     connection: status.connection
       ? getFragmentData(AccountingConnectionFieldsFragmentDoc, status.connection)
+      : null,
+    webhookSubscriptions: status.webhookSubscriptions
+      ? getFragmentData(
+          AccountingWebhookSubscriptionSummaryFieldsFragmentDoc,
+          status.webhookSubscriptions,
+        )
       : null,
   };
 }

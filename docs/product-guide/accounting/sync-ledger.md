@@ -1,6 +1,6 @@
 ---
 path: /accounting/sync
-aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, QuickBooks not updating, invoice not in QuickBooks, accounting sync ledger, outbox, settlement not in QuickBooks, carrier bill, bill payment, vendor credit, journal entry not in QuickBooks, daily summary, opening balances entry, Xero sync, invoice not in Xero, Xero not updating]
+aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, QuickBooks not updating, invoice not in QuickBooks, accounting sync ledger, outbox, settlement not in QuickBooks, carrier bill, bill payment, vendor credit, journal entry not in QuickBooks, daily summary, opening balances entry, Xero sync, invoice not in Xero, Xero not updating, Business Central sync, invoice not in Business Central, Business Central not posting]
 related:
   - /accounting/sync/mappings
   - /accounting/sync/inbound
@@ -9,8 +9,8 @@ related:
 ---
 
 ## What it's for
-The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online
-or Xero) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer
+The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online,
+Xero or Business Central) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer
 changes, and on the payables side carrier settlements, owner-operator settlements, their payments,
 and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what
 went through, what is waiting, and fix what did not.
@@ -62,7 +62,8 @@ Keywords: journal entry held, daily summary held, GL account not mapped, custome
 Keywords: closed period, books closed, re-date, first open day, closing date
 1. Open [Sync ledger](/accounting/sync) and open the record held for a closed period.
 2. Select **Send on first open day**. The document goes out dated on the day after the closing
-   date in the books (the lock date in Xero), and its note there keeps Trenova's date. This is
+   date in the books (the lock date in Xero, the start of the allowed posting dates in Business
+Central), and its note there keeps Trenova's date. This is
    offered only while Trenova's closed-period policy is to post to the next open period; otherwise
    reopen the period in the accounting system, then select **Retry now**.
 

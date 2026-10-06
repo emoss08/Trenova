@@ -269,6 +269,13 @@ func (s *Service) Disconnect(
 		return nil, err
 	}
 
+	if current, getErr := s.connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
+		TenantInfo:      req.TenantInfo,
+		IntegrationType: req.IntegrationType,
+	}); getErr == nil && current.IsActive() {
+		s.releaseSubscriptions(ctx, current)
+	}
+
 	now := timeutils.NowUnix()
 	var conn *accountingsync.AccountingConnection
 	var previous map[string]any
@@ -306,7 +313,6 @@ func (s *Service) Disconnect(
 		return conn, nil
 	}
 
-	s.releaseSubscriptions(ctx, conn)
 	if refreshCiphertext != "" {
 		s.revokeStored(ctx, provider, conn, refreshCiphertext)
 	}

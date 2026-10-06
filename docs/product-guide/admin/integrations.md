@@ -1,6 +1,6 @@
 ---
 path: /admin/integrations
-aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit, ledger mode, send journal entries, opening balances, Xero, Xero organisation, Xero app, Xero webhook key, choose organisation]
+aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit, ledger mode, send journal entries, opening balances, Xero, Xero organisation, Xero app, Xero webhook key, choose organisation, Business Central, Dynamics 365 Business Central, Microsoft Entra app, Business Central environment, Business Central company, webhook subscriptions]
 related:
   - /accounting/sync
   - /admin/inbound-mailboxes
@@ -12,6 +12,7 @@ related:
 covers:
   - /admin/integrations/quickbooks/callback
   - /admin/integrations/xero/callback
+  - /admin/integrations/business-central/callback
 ---
 
 ## What it's for
@@ -21,8 +22,8 @@ Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its descript
 its docs, a button to open its settings and a switch showing whether it is connected. Services
 include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and
 routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel
-card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online and Xero
-(accounting). Some cards describe planned providers that cannot be configured yet. An
+card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), QuickBooks Online, Xero and
+Business Central (accounting). Some cards describe planned providers that cannot be configured yet. An
 organization keeps its books in one accounting system at a time.
 
 ## Tasks
@@ -196,6 +197,72 @@ Keywords: Xero not syncing, Xero connection failing, reconnect Xero, disconnect 
    organisation on Xero's page.
 4. To stop, select **Disconnect** and confirm. Nothing already in Xero is changed.
 
+### Connect Business Central
+Keywords: Business Central setup, connect Business Central, Dynamics 365 Business Central, Microsoft sign in, choose company, Business Central environment, sandbox
+1. Open [Integrations](/admin/integrations) and open the Business Central card. When another
+   accounting system is still connected, disconnect it first: an organization sends to one
+   accounting system at a time.
+2. Select the connect button. Trenova sends you to Microsoft's sign-in page; sign in with a work
+   account that can use Business Central and allow access. Trenova never sees the password.
+3. Microsoft sends you back to Trenova. Trenova lists every company in every Business Central
+   environment the account can open, each named with its environment and marked **(Sandbox)**
+   when it is a sandbox. When there is more than one, select the company whose books this
+   Trenova organization keeps, then connect it. The choice has to be made within a few minutes;
+   after that, start the connection again.
+4. Trenova shows the company it connected: its name, legal name, country, **Home currency**,
+   **Multicurrency** and **Books closed through** (the day before Business Central's allowed
+   posting dates begin, or the end of the last closed accounting period). Check it is the right
+   one, then select **Continue**.
+5. On **What is sent**, keep **Send documents**. Business Central cannot receive Trenova's journal
+   entries, because its journal lines cannot post to a customer or vendor or apply to an invoice,
+   so the journal entry option is shown as unavailable with that reason. Select **Continue**.
+6. On **Match records**, Trenova reads the company's accounts, items, customers, vendors and
+   payment terms and proposes a match for each Trenova record. Invoice lines are items, so each
+   charge type is matched to a Business Central item; the freight line's item and the deposit
+   account are required. Business Central has no payment methods on payments to match.
+7. Select **Finish setup**, choose the **Start date**, then select **Start sending**, as for
+   QuickBooks Online. Trenova posts every invoice, credit memo, bill and payment it sends.
+   Payments go through a payment journal Trenova creates for each deposit or bank account, named
+   with **TRN** and a short code.
+8. Payments recorded in Business Central are not brought into Trenova: its API does not say which
+   invoices a payment paid. An invoice paid in Business Central shows as a balance difference on
+   the drift page, where it can be settled in Trenova. The sync settings say this in place of
+   the payment setting.
+
+### Use your own Microsoft Entra app
+Keywords: Business Central app keys, Entra app registration, Azure app registration, client ID, client secret, redirect URI, self-hosted Business Central
+1. In Microsoft Entra, register a multitenant web app. Under **API permissions**, add the
+   delegated **Dynamics 365 Business Central** permission **Financials.ReadWrite.All**.
+2. Open [Integrations](/admin/integrations) and open the Business Central card. When this server
+   has no Entra app of its own the keys form is already open; otherwise select **Use your own
+   app**.
+3. Under the app's **Authentication**, add a web platform with the **Redirect URI** Trenova shows,
+   exactly as written.
+4. Enter the **Client ID** (the application ID) and a **Client secret** from **Certificates &
+   secrets**, then select **Save keys**. Trenova checks the keys with Microsoft before saving
+   them. Business Central has no webhook key: once a company is connected, Trenova subscribes to
+   its changes itself and renews the subscriptions every few days.
+5. To go back to the server's app select **Remove**. While a company is connected, only the client
+   secret can change. Entra client secrets expire; enter the new one here before the old one
+   does.
+
+### Check or disconnect Business Central
+Keywords: Business Central not syncing, Business Central connection failing, reconnect Business Central, disconnect Business Central, change subscriptions, webhook renewal
+1. Open [Integrations](/admin/integrations) and open the Business Central card to see the
+   connection's status, when it was **Last checked**, its **Last successful call**, how many
+   **Change subscriptions** are active and when the **Next renewal due** is.
+2. When the server has no public https address, the card says so and Trenova reads changes every
+   five minutes instead of being told about them. When a subscription cannot be kept, the card
+   shows why; Trenova retries within the hour.
+3. Select **Check now** to test the connection immediately.
+4. When Business Central no longer accepts Trenova's access, select **Reconnect** and approve the
+   same company. Microsoft keeps the sign-in alive as long as Trenova uses it at least every 90
+   days, which it does while connected.
+5. To stop, select **Disconnect** and confirm. Trenova deletes its sign-in and its change
+   subscriptions; nothing already in Business Central is changed. Microsoft gives no way to
+   withdraw the consent from Trenova's side, so to remove it an administrator removes the app
+   from **Enterprise applications** in Microsoft Entra.
+
 ### Check or disconnect QuickBooks Online
 Keywords: QuickBooks not syncing, QuickBooks connection failing, reconnect QuickBooks, revoke QuickBooks
 1. Open [Integrations](/admin/integrations) and open the QuickBooks Online card to see the
@@ -216,8 +283,9 @@ Seeing the QuickBooks Online connection needs read access to the accounting inte
 update access, and connecting, reconnecting or disconnecting needs manage access and must be done
 by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent,
 choosing the start date and changing the sync settings.
-Seeing, connecting and disconnecting Xero need the same access as QuickBooks Online.
-A QuickBooks company or Xero organisation can be connected to only one Trenova organization at a
+Seeing, connecting and disconnecting Xero or Business Central need the same access as QuickBooks
+Online.
+A QuickBooks company, Xero organisation or Business Central company can be connected to only one Trenova organization at a
 time, and a Trenova organization sends to only one accounting system at a time: disconnect one
 before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an
 item that links back here.

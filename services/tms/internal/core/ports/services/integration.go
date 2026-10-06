@@ -504,6 +504,36 @@ var CatalogDefinitions = []CatalogItem{
 		SortOrder:          71,
 		PrimaryActionLabel: "Connect",
 	},
+	{
+		Type:          integration.TypeBusinessCentral,
+		Name:          "Business Central",
+		Description:   "Connect your Microsoft Dynamics 365 Business Central company so Trenova can send and post the invoices, credit memos, payments and bills it records. Trenova keeps Business Central's webhook subscriptions renewed and raises a Watchtower item when the connection needs attention.",
+		Category:      integration.CategoryAccounting,
+		CategoryLabel: catalogAccountingLabel,
+		LogoURL:       "/integrations/logos/business-central-light.svg",
+		LogoLightURL:  "/integrations/logos/business-central-light.svg",
+		LogoDarkURL:   "/integrations/logos/business-central-dark.svg",
+		DocsURL:       "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/",
+		WebsiteURL:    "https://dynamics.microsoft.com/en-us/business-central/overview/",
+		Color:         "#00857A",
+		GlowFrom:      "#00857A",
+		GlowTo:        "#4FD1C5",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: catalogDocsLabel,
+				URL:   "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://dynamics.microsoft.com/en-us/business-central/overview/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          72,
+		PrimaryActionLabel: "Connect",
+	},
 }
 
 type plannedEmailCatalogItemParams struct {
