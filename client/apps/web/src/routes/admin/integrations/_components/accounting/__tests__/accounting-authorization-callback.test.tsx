@@ -87,6 +87,7 @@ function statusFor(system: "QuickBooksOnline" | "Xero"): AccountingSyncStatus {
       tenantApp: null,
     },
     connection: null,
+    webhookSubscriptions: null,
   };
 }
 

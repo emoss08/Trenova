@@ -1,6 +1,6 @@
 {
   "operationCount": 988,
-  "fragmentCount": 279,
+  "fragmentCount": 280,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -521,7 +521,7 @@
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:a1c9468712282840e44dcad38eb7ddf8aa2df61074cc12646af55a49d7426e65",
+      "hash": "sha256:de1d8411eb5d00eceba01d6e63fa915dbd162d65dbd61856c1235646b02a0ccb",
       "rootFields": [
         "accountingSyncStatus"
       ],
@@ -536,10 +536,11 @@
         "AccountingAppSettingsFields",
         "AccountingConnectionFields",
         "AccountingProviderProfileFields",
-        "AccountingSyncStatusFields"
+        "AccountingSyncStatusFields",
+        "AccountingWebhookSubscriptionSummaryFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
+      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n  inboundPaymentsAvailable\n  inboundUnavailableReason\n  webhookSubscriptions\n  revokesTokens\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n  webhookSubscriptions {\n    ...AccountingWebhookSubscriptionSummaryFields\n  }\n}\n\nfragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {\n  configured\n  active\n  pending\n  failed\n  nextExpiryAt\n  lastError\n}"
     },
     {
       "name": "AccountingSyncSummary",
@@ -15385,7 +15386,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:ed1cfb1db9cc5620238cd7eb88ae7e15a694f67f5bbcf776b4f0cc600bc5797f",
+      "hash": "sha256:be9084d55c1073dc01e24f86929e17b091bb35057ce3aadd179f9ca3a3976e51",
       "rootFields": [
         "removeAccountingApp"
       ],
@@ -15400,10 +15401,11 @@
         "AccountingAppSettingsFields",
         "AccountingConnectionFields",
         "AccountingProviderProfileFields",
-        "AccountingSyncStatusFields"
+        "AccountingSyncStatusFields",
+        "AccountingWebhookSubscriptionSummaryFields"
       ],
       "usages": [],
-      "sdl": "mutation RemoveAccountingApp($integrationType: AccountingSystem!) {\n  removeAccountingApp(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
+      "sdl": "mutation RemoveAccountingApp($integrationType: AccountingSystem!) {\n  removeAccountingApp(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n  inboundPaymentsAvailable\n  inboundUnavailableReason\n  webhookSubscriptions\n  revokesTokens\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n  webhookSubscriptions {\n    ...AccountingWebhookSubscriptionSummaryFields\n  }\n}\n\nfragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {\n  configured\n  active\n  pending\n  failed\n  nextExpiryAt\n  lastError\n}"
     },
     {
       "name": "RemoveCarrierSettlementAdjustment",
@@ -16975,7 +16977,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:9780c97705557c32c19b3e5c910b03ef6e544d6f9766b82dea07d1cd5674ad12",
+      "hash": "sha256:0fc992cda75280fa73e5bf5145f1db9afcdc4f27d697a15d6fd9c21c6047b9e5",
       "rootFields": [
         "saveAccountingApp"
       ],
@@ -16990,10 +16992,11 @@
         "AccountingAppSettingsFields",
         "AccountingConnectionFields",
         "AccountingProviderProfileFields",
-        "AccountingSyncStatusFields"
+        "AccountingSyncStatusFields",
+        "AccountingWebhookSubscriptionSummaryFields"
       ],
       "usages": [],
-      "sdl": "mutation SaveAccountingApp($input: SaveAccountingAppInput!) {\n  saveAccountingApp(input: $input) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
+      "sdl": "mutation SaveAccountingApp($input: SaveAccountingAppInput!) {\n  saveAccountingApp(input: $input) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n  inboundPaymentsAvailable\n  inboundUnavailableReason\n  webhookSubscriptions\n  revokesTokens\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n  webhookSubscriptions {\n    ...AccountingWebhookSubscriptionSummaryFields\n  }\n}\n\nfragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {\n  configured\n  active\n  pending\n  failed\n  nextExpiryAt\n  lastError\n}"
     },
     {
       "name": "SaveOshaSummary",
@@ -22941,7 +22944,7 @@
         "SaveAccountingApp"
       ],
       "usages": [],
-      "sdl": "fragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n}"
+      "sdl": "fragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n  inboundPaymentsAvailable\n  inboundUnavailableReason\n  webhookSubscriptions\n  revokesTokens\n}"
     },
     {
       "name": "AccountingReferenceObjectFields",
@@ -22979,7 +22982,8 @@
       "fragments": [
         "AccountingAppSettingsFields",
         "AccountingConnectionFields",
-        "AccountingProviderProfileFields"
+        "AccountingProviderProfileFields",
+        "AccountingWebhookSubscriptionSummaryFields"
       ],
       "usedByOperations": [
         "AccountingSyncStatus",
@@ -22987,7 +22991,21 @@
         "SaveAccountingApp"
       ],
       "usages": [],
-      "sdl": "fragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n}"
+      "sdl": "fragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  profile {\n    ...AccountingProviderProfileFields\n  }\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n  webhookSubscriptions {\n    ...AccountingWebhookSubscriptionSummaryFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncMode\n  ledgerGranularity\n  ledgerOpeningBalancesSentAt\n  externalFiscalYearStartMonth\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingProviderProfileFields on AccountingProviderProfile {\n  appName\n  webhookKeyLabel\n  environments\n  ledgerAvailable\n  ledgerUnavailableReason\n  callbackCarriesCompany\n  callbackPath\n  lineKind\n  referenceKinds\n  inboundPaymentsAvailable\n  inboundUnavailableReason\n  webhookSubscriptions\n  revokesTokens\n}\n\nfragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {\n  configured\n  active\n  pending\n  failed\n  nextExpiryAt\n  lastError\n}"
+    },
+    {
+      "name": "AccountingWebhookSubscriptionSummaryFields",
+      "typeCondition": "AccountingWebhookSubscriptionSummary",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingSyncStatus",
+        "RemoveAccountingApp",
+        "SaveAccountingApp"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {\n  configured\n  active\n  pending\n  failed\n  nextExpiryAt\n  lastError\n}"
     },
     {
       "name": "AccountTypeTableRowFields",
@@ -27104,10 +27122,11 @@
     "AccountingSystem": {
       "kind": "enum",
       "values": [
+        "BusinessCentral",
         "QuickBooksOnline",
         "Xero"
       ],
-      "sdl": "\"\"\"An accounting system Trenova keeps its books in step with.\"\"\"\nenum AccountingSystem {\n  QuickBooksOnline\n  Xero\n}"
+      "sdl": "\"\"\"An accounting system Trenova keeps its books in step with.\"\"\"\nenum AccountingSystem {\n  BusinessCentral\n  QuickBooksOnline\n  Xero\n}"
     },
     "AcknowledgeMyPolicyInput": {
       "kind": "input",

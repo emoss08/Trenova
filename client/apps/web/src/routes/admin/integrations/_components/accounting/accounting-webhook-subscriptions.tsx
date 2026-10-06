@@ -47,24 +47,24 @@ export function AccountingWebhookSubscriptions({
                   "{0} Trenova retries within the hour and reads changes every five minutes meanwhile.",
                   summary.lastError,
                 )
-              : t("Trenova retries within the hour and reads changes every five minutes meanwhile.")}
+              : t(
+                  "Trenova retries within the hour and reads changes every five minutes meanwhile.",
+                )}
           </AlertDescription>
         </Alert>
       ) : null}
       <DescriptionList columns={2}>
         <DescriptionItem label={t("Change subscriptions")} numeric>
-          {summary.active > 0
-            ? t("{0} active", summary.active)
-            : summary.pending > 0
-              ? t("Being created")
-              : <DescriptionEmpty />}
-        </DescriptionItem>
-        <DescriptionItem label={t("Next renewal due")} numeric>
-          {summary.nextExpiryAt ? (
-            formatUnixDateMedium(summary.nextExpiryAt)
+          {summary.active > 0 ? (
+            t("{0} active", summary.active)
+          ) : summary.pending > 0 ? (
+            t("Being created")
           ) : (
             <DescriptionEmpty />
           )}
+        </DescriptionItem>
+        <DescriptionItem label={t("Next renewal due")} numeric>
+          {summary.nextExpiryAt ? formatUnixDateMedium(summary.nextExpiryAt) : <DescriptionEmpty />}
         </DescriptionItem>
       </DescriptionList>
     </div>

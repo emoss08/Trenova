@@ -378,21 +378,21 @@ function AccountingAppKeysForm({
           />
         </FormControl>
         {hasWebhookKey ? (
-        <FormControl cols="full">
-          <SensitiveField
-            name="webhookVerifierToken"
-            control={control}
-            label={t("{0} (optional)", webhookKeyLabel)}
-            autoComplete="new-password"
-            placeholder={
-              saved?.hasWebhookVerifier ? t("Saved. Leave blank to keep it.") : undefined
-            }
-            description={t(
-              "From the app's Webhooks page. Lets Trenova check that notices really come from {0}.",
-              vendor.name,
-            )}
-          />
-        </FormControl>
+          <FormControl cols="full">
+            <SensitiveField
+              name="webhookVerifierToken"
+              control={control}
+              label={t("{0} (optional)", webhookKeyLabel)}
+              autoComplete="new-password"
+              placeholder={
+                saved?.hasWebhookVerifier ? t("Saved. Leave blank to keep it.") : undefined
+              }
+              description={t(
+                "From the app's Webhooks page. Lets Trenova check that notices really come from {0}.",
+                vendor.name,
+              )}
+            />
+          </FormControl>
         ) : null}
         {hasWebhookKey && saved?.hasWebhookVerifier ? (
           <FormControl cols="full">
@@ -490,15 +490,15 @@ function AccountingAppRegistration({
                 vendor.name,
               )
             : webhookUrl
-            ? t(
-                "To have {0} tell Trenova about changes, add the webhook endpoint below to the app's webhooks and enter its {1} here.",
-                vendor.name,
-                toSentenceFragment(webhookKeyLabel),
-              )
-            : t(
-                "To have {0} tell Trenova about changes, save the keys first: the webhook endpoint for your app appears here once they are saved.",
-                vendor.name,
-              )}
+              ? t(
+                  "To have {0} tell Trenova about changes, add the webhook endpoint below to the app's webhooks and enter its {1} here.",
+                  vendor.name,
+                  toSentenceFragment(webhookKeyLabel),
+                )
+              : t(
+                  "To have {0} tell Trenova about changes, save the keys first: the webhook endpoint for your app appears here once they are saved.",
+                  vendor.name,
+                )}
         </li>
       </ol>
       {app.redirectUrl ? <CopyRow label={t("Redirect URI")} value={app.redirectUrl} /> : null}

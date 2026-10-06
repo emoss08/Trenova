@@ -1973,6 +1973,12 @@ type AccountingProviderProfile {
   callbackPath: String!
   """The environments the provider's apps run in."""
   environments: [AccountingAppEnvironment!]!
+  """Whether payments recorded in this system can be brought into Trenova."""
+  inboundPaymentsAvailable: Boolean!
+  """
+  Why payments recorded in this system cannot be brought in. Absent when they can.
+  """
+  inboundUnavailableReason: String
   """Whether journal entries can be sent to this system."""
   ledgerAvailable: Boolean!
   """Why journal entries cannot be sent. Absent when they can."""
@@ -1981,8 +1987,16 @@ type AccountingProviderProfile {
   lineKind: AccountingReferenceKind!
   """The kinds of records Trenova reads from this system."""
   referenceKinds: [AccountingReferenceKind!]!
+  """
+  Whether disconnecting withdraws Trenova's access at the provider. When false, an administrator removes the app's consent there.
+  """
+  revokesTokens: Boolean!
   """What the provider calls the key webhooks are signed with."""
   webhookKeyLabel: String!
+  """
+  Whether Trenova must create and renew this system's webhook subscriptions itself.
+  """
+  webhookSubscriptions: Boolean!
 }
 
 """A kind of record kept in the accounting system."""
@@ -2301,6 +2315,10 @@ type AccountingSyncStatus {
   integrationType: AccountingSystem!
   profile: AccountingProviderProfile!
   providerName: String!
+  """
+  Absent unless the system requires subscriptions and the organization has connected.
+  """
+  webhookSubscriptions: AccountingWebhookSubscriptionSummary
 }
 
 """How many records are in one status."""
@@ -2324,8 +2342,24 @@ type AccountingSyncSummary {
 
 """An accounting system Trenova keeps its books in step with."""
 enum AccountingSystem {
+  BusinessCentral
   QuickBooksOnline
   Xero
+}
+
+"""
+The webhook subscriptions Trenova keeps at an accounting system that requires them.
+"""
+type AccountingWebhookSubscriptionSummary {
+  active: Int!
+  """Whether a public https address is configured for notifications."""
+  configured: Boolean!
+  failed: Int!
+  """The most recent reason a subscription could not be created or renewed."""
+  lastError: String
+  """When the first active subscription expires unless it is renewed."""
+  nextExpiryAt: Timestamp
+  pending: Int!
 }
 
 input AcknowledgeMyPolicyInput {

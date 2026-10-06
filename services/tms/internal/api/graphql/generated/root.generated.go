@@ -3460,6 +3460,7 @@ extend type Query {
 enum AccountingSystem {
   QuickBooksOnline
   Xero
+  BusinessCentral
 }
 
 "How the link to the accounting system is doing right now."
@@ -3842,6 +3843,27 @@ type AccountingProviderProfile {
   lineKind: AccountingReferenceKind!
   "The kinds of records Trenova reads from this system."
   referenceKinds: [AccountingReferenceKind!]!
+  "Whether payments recorded in this system can be brought into Trenova."
+  inboundPaymentsAvailable: Boolean!
+  "Why payments recorded in this system cannot be brought in. Absent when they can."
+  inboundUnavailableReason: String
+  "Whether Trenova must create and renew this system's webhook subscriptions itself."
+  webhookSubscriptions: Boolean!
+  "Whether disconnecting withdraws Trenova's access at the provider. When false, an administrator removes the app's consent there."
+  revokesTokens: Boolean!
+}
+
+"The webhook subscriptions Trenova keeps at an accounting system that requires them."
+type AccountingWebhookSubscriptionSummary {
+  "Whether a public https address is configured for notifications."
+  configured: Boolean!
+  active: Int!
+  pending: Int!
+  failed: Int!
+  "When the first active subscription expires unless it is renewed."
+  nextExpiryAt: Timestamp
+  "The most recent reason a subscription could not be created or renewed."
+  lastError: String
 }
 
 "What an organization's link to one accounting system looks like."
@@ -3854,6 +3876,8 @@ type AccountingSyncStatus {
   app: AccountingAppSettings!
   "Absent until the organization first connects."
   connection: AccountingConnection
+  "Absent unless the system requires subscriptions and the organization has connected."
+  webhookSubscriptions: AccountingWebhookSubscriptionSummary
 }
 
 """
