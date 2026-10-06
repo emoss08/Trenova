@@ -276,6 +276,52 @@ function driverUnits(state) {
     }));
 }
 
+const HAZMAT_NAMES = ["Gasoline", "Diesel fuel", "Propane", "Sulfuric acid", "Ammonia, anhydrous", "Lithium ion batteries", "Paint", "Chlorine"];
+
+function hazardousMaterials(state, input) {
+  const rows = Array.from({ length: state.scenario.listRows }, (_, i) => ({
+    id: `hm_${i}`,
+    businessUnitId: "bu_mock",
+    organizationId: "org_mock",
+    status: "Active",
+    code: `HM${String(i + 1).padStart(3, "0")}`,
+    name: `${HAZMAT_NAMES[i % HAZMAT_NAMES.length]}${i >= HAZMAT_NAMES.length ? ` ${Math.floor(i / HAZMAT_NAMES.length) + 1}` : ""}`,
+    description: "",
+    class: "HazardClass3",
+    unNumber: `UN${1200 + i}`,
+    packingGroup: ["I", "II", "III"][i % 3],
+    subsidiaryHazardClass: null,
+    ergGuideNumber: "128",
+    labelCodes: null,
+    specialProvisions: null,
+    properShippingName: null,
+    handlingInstructions: null,
+    emergencyContact: null,
+    emergencyContactPhoneNumber: null,
+    quantityThreshold: null,
+    placardRequired: true,
+    isReportableQuantity: false,
+    marinePollutant: false,
+    inhalationHazard: false,
+    version: 1,
+    createdAt: state.anchor - i * 86400,
+    updatedAt: state.anchor - i * 86400,
+  }));
+  const offset = input.after ? Number(Buffer.from(input.after, "base64url").toString()) : 0;
+  const page = rows.slice(offset, offset + (input.first ?? 10));
+  const end = offset + page.length;
+  return {
+    edges: page.map((node) => ({ node })),
+    totalCount: rows.length,
+    pageInfo: {
+      hasNextPage: end < rows.length,
+      endCursor: page.length ? Buffer.from(String(end)).toString("base64url") : null,
+      hasPreviousPage: offset > 0,
+      startCursor: null,
+    },
+  };
+}
+
 function billingReadiness(state, shipmentId) {
   const shipment = state.shipments.find((s) => s.id === shipmentId);
   const delivered = shipment ? stageOf(shipment) === "Delivered" : false;
@@ -751,6 +797,7 @@ const HANDLERS = {
     const s = state.shipments.find((x) => x.id === v.id);
     return { shipment: s ? toNode(s) : null };
   },
+  HazardousMaterialTable: (state, v) => ({ hazardousMaterials: hazardousMaterials(state, v.input) }),
   TelematicsStatus: (state) => ({
     telematicsStatus: {
       provider: "Samsara",

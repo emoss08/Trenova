@@ -8,6 +8,8 @@ export const SCENARIO_DEFAULTS = {
   operationType: process.env.MOCK_OPERATION_TYPE ?? "both",
   hos: process.env.MOCK_HOS !== "0",
   maps: process.env.MOCK_MAPS === "1",
+  // rows in the generic list pages (hazardous materials), for checking a short and a long list
+  listRows: Number(process.env.MOCK_LIST_ROWS ?? 3),
 };
 
 const STAGE_RANK = { Late: 1, NeedsCoverage: 2, Moving: 3, Scheduled: 4, Delivered: 5, Canceled: 6 };

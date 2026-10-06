@@ -351,6 +351,29 @@ describe("DataTable slots", () => {
     expect(screen.getByTestId("timeline").closest('[data-density="compact"]')).toBeTruthy();
   });
 
+  it("is the page body's only child, so a list page bleeds it edge to edge", () => {
+    const queryClient = createQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <NuqsTestingAdapter hasMemory>
+          <div data-slot="page-body" data-testid="page-body">
+            <DataTable<TestRow>
+              columns={testColumns}
+              name="test-table"
+              queryKey="test"
+              graphql={testGraphQLConfig}
+            />
+          </div>
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    const pageBody = screen.getByTestId("page-body");
+    expect(pageBody.children).toHaveLength(1);
+    expect(pageBody.firstElementChild?.getAttribute("data-slot")).toBe("data-table");
+    expect(pageBody.querySelectorAll('[data-slot="data-table"]')).toHaveLength(1);
+  });
+
   it("starts at the density it is given", () => {
     renderDataTable({ initialDensity: "compact" });
     expect(document.querySelector('table[data-density="compact"]')).toBeTruthy();

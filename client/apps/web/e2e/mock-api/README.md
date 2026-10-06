@@ -31,6 +31,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `operationType` | `asset` \| `brokerage` \| `both` | `both` | Drivers, carriers or both in the strip and queue |
 | `hos` | `true` \| `false` | `true` | HOS rings, sublines and HOS suggestions |
 | `maps` | `true` \| `false` | `false` | Map view shows the map or "not connected" |
+| `listRows` | number | `3` | Rows on the hazardous materials list, for checking a short and a long list page |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -40,7 +41,7 @@ curl -X POST localhost:8080/__mock/scenario \
 
 `GET /__mock/scenario` returns the current scenario and its anchor (Unix seconds).
 Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`, `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`,
-`MOCK_MAPS=1`.
+`MOCK_MAPS=1`, `MOCK_LIST_ROWS`.
 
 Writes are stateful within a scenario: assigning, tendering, deciding or undoing a
 suggestion, notifying a customer, approving detention and transferring to billing all change
