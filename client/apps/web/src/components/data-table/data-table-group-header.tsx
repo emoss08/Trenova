@@ -33,7 +33,7 @@ export function DataTableGroupHeader({
     >
       <TableCell
         colSpan={colSpan}
-        className="bg-canvas border-border sticky top-(--row-head-h) z-10 h-9 cursor-pointer border-b p-0"
+        className="bg-canvas border-border sticky top-(--row-head-h) h-9 cursor-pointer border-b p-0"
         onClick={toggle}
       >
         <div className="sticky left-0 flex w-(--dt-viewport-w,100%) items-center gap-2 px-3">
