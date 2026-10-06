@@ -1,7 +1,5 @@
 import { formatCurrency, formatFileSize } from "@trenova/shared/lib/utils";
 
-export const PLAN_USAGE_PATH = "/admin/plan-usage";
-
 export type PlanMeterUnit = "count" | "bytes" | "cents";
 export type PlanMeterWindow = "lifetime" | "month" | "item";
 
@@ -148,71 +146,29 @@ export function comparePlanMeters(a: string, b: string): number {
   return ai - bi;
 }
 
-export type PlanCapabilityDefinition = {
-  label: string;
-  explanation: string;
+/**
+ * What each capability a plan can withhold is called, keyed as the server names it
+ * (platformplan.Capability). Why a plan withholds one is the edition's to explain.
+ */
+export const PLAN_CAPABILITY_LABELS: Readonly<Record<string, { label: string }>> = {
+  "email.outbound": { label: "Outbound email" },
+  integrations: { label: "Integrations" },
+  api_keys: { label: "API keys" },
+  "agent.automation": { label: "Agent automation" },
+  "agent.web_search": { label: "Agent web search" },
+  "carrier_intelligence.paid": { label: "Carrier intelligence lookups" },
+  document_intelligence: { label: "Document intelligence" },
+  sms: { label: "Text messages" },
+  sso: { label: "Single sign-on" },
 };
 
-export const PLAN_CAPABILITIES: Readonly<Record<string, PlanCapabilityDefinition>> = {
-  "email.outbound": {
-    label: "Outbound email",
-    explanation:
-      "Invoices, rate confirmations, tenders, detention notices and driver invites are not emailed from a demo organization. Sign-in and password email still arrive.",
-  },
-  integrations: {
-    label: "Integrations",
-    explanation:
-      "Connections to Samsara, QuickBooks, Xero, EDI partners, Google Maps and other third-party services are not available on the demo.",
-  },
-  api_keys: {
-    label: "API keys",
-    explanation: "Programmatic access with API keys is not available on the demo.",
-  },
-  "agent.automation": {
-    label: "Agent automation",
-    explanation:
-      "Scheduled and event-triggered agents, the morning briefing and background agent runs are not available on the demo. You can still talk to the assistant within the AI limits.",
-  },
-  "agent.web_search": {
-    label: "Agent web search",
-    explanation: "Agents cannot search the web from a demo organization.",
-  },
-  "carrier_intelligence.paid": {
-    label: "Carrier intelligence lookups",
-    explanation: "Paid carrier intelligence lookups are not available on the demo.",
-  },
-  document_intelligence: {
-    label: "Document intelligence",
-    explanation:
-      "Automatic document extraction and classification are not available on the demo. Documents can still be uploaded and filed by hand.",
-  },
-  sms: {
-    label: "Text messages",
-    explanation: "Text messages are not sent from a demo organization.",
-  },
-  sso: {
-    label: "Single sign-on",
-    explanation: "Organization SSO and SCIM provisioning are not available on the demo.",
-  },
-};
-
-export function planCapabilityDefinition(capability: string): PlanCapabilityDefinition {
-  return (
-    PLAN_CAPABILITIES[capability] ?? {
-      label: humanizeKey(capability),
-      explanation: "This part of Trenova is not included in your current plan.",
-    }
-  );
+export function planCapabilityLabel(capability: string): string {
+  return PLAN_CAPABILITY_LABELS[capability]?.label ?? humanizeKey(capability);
 }
-
-export const FREE_DEMO_PLAN_KEY = "free_demo";
 
 export function planDisplayName(planKey: string, planName?: string): string {
   if (planName && planName.trim() !== "") {
     return planName;
-  }
-  if (planKey === FREE_DEMO_PLAN_KEY) {
-    return "Free demo";
   }
   return planKey === "" ? "Current plan" : humanizeKey(planKey);
 }

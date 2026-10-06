@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -965,7 +966,7 @@ func selfHostedReferenceGuard(t *testing.T) *referencedataguard.Guard {
 
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode: config.PlatformModeSelfHosted,
-	})
+	}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 
 	return guard
@@ -977,7 +978,7 @@ func TestTaxRateWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testi
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode:                  config.PlatformModeCloud,
 		ReferenceDataStewards: []string{pulid.MustNew("org_").String()},
-	})
+	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)
 
 	h := newHarness(t)

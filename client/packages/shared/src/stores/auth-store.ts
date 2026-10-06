@@ -4,16 +4,26 @@ import { realtimeClient } from "@trenova/shared/services/realtime";
 import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import {
+  isMFAChallenge,
+  type MFAChallenge,
+  type VerifyMFAChallengeRequest,
+} from "@trenova/shared/types/mfa";
 import type { LoginRequest, User } from "@trenova/shared/types/user";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+export type LoginOutcome =
+  | { status: "signed_in" }
+  | { status: "mfa_required"; challenge: MFAChallenge };
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<LoginOutcome>;
+  verifyMFA: (request: VerifyMFAChallengeRequest) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<boolean>;
   setUser: (user: User | null) => void;
@@ -31,6 +41,27 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authService.login(credentials);
+          if (isMFAChallenge(response)) {
+            set({ isLoading: false });
+            return { status: "mfa_required", challenge: response };
+          }
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          usePermissionStore.getState().fetchManifest().catch(console.error);
+          return { status: "signed_in" };
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      verifyMFA: async (request: VerifyMFAChallengeRequest) => {
+        set({ isLoading: true });
+        try {
+          const response = await authService.verifyMFA(request);
           set({
             user: response.user,
             isAuthenticated: true,

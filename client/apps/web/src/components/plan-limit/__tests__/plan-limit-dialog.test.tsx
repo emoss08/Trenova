@@ -13,7 +13,8 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PlanLimitDialogHost, planLimitCopy } from "../plan-limit-dialog";
+import { GENERIC_PLAN_LIMIT_WORDING, planLimitCopy } from "@/lib/plan-limit-copy";
+import { PlanLimitDialogHost } from "../plan-limit-dialog";
 
 const t = (message: string | null | undefined, ...args: unknown[]) =>
   (message ?? "").replace(/\{(\d+)\}/g, (_, index: string) => {
@@ -40,12 +41,20 @@ const readOnly: PlanLimitNotice = {
 
 describe("planLimitCopy", () => {
   it("names the meter and its figures for a lifetime quota, and how to free room", () => {
-    const copy = planLimitCopy(shipmentsQuota, t);
+    const copy = planLimitCopy({ ...shipmentsQuota, plan: "team" }, t);
     expect(copy.title).toBe("Shipments limit reached");
-    expect(copy.description).toBe("Shipments: 12 of 12 used (Free demo).");
-    expect(copy.guidance).toContain("Delete records you no longer need");
-    expect(copy.guidance).toContain("Paid plans with higher limits are coming soon.");
+    expect(copy.description).toBe("Shipments: 12 of 12 used (Team).");
+    expect(copy.guidance).toBe("Delete records you no longer need to free room.");
     expect(copy.usage).toEqual({ used: 12, limit: 12, usedLabel: "12", limitLabel: "12" });
+  });
+
+  it("promises nothing about plans the install may not sell", () => {
+    for (const notice of [shipmentsQuota, readOnly]) {
+      const copy = planLimitCopy({ ...notice, plan: "team" }, t);
+      expect(`${copy.title} ${copy.description} ${copy.guidance}`).not.toMatch(
+        /demo|trial|coming soon/i,
+      );
+    }
   });
 
   it("formats storage in bytes and spend in dollars", () => {
@@ -60,29 +69,35 @@ describe("planLimitCopy", () => {
       t,
     );
     expect(spend.usage?.limitLabel).toBe("$1.50");
-    expect(spend.guidance).toContain("resets at the start of next month");
+    expect(spend.guidance).toBe("This limit resets at the start of next month.");
   });
 
   it("explains a per-file limit without a usage bar", () => {
     const copy = planLimitCopy(
-      { ...shipmentsQuota, meter: "documents.file_bytes", limit: 10485760, used: 25000000 },
+      {
+        ...shipmentsQuota,
+        meter: "documents.file_bytes",
+        limit: 10485760,
+        used: 25000000,
+        plan: "",
+      },
       t,
     );
-    expect(copy.description).toBe("Free demo allows files up to 10.0 MB. This one is larger.");
-    expect(copy.guidance).toContain("Upload a smaller file");
+    expect(copy.description).toBe("Current plan allows files up to 10.0 MB. This one is larger.");
+    expect(copy.guidance).toBe("Upload a smaller file, or split it into parts.");
     expect(copy.usage).toBeNull();
   });
 
   it("still explains a quota whose figures did not arrive", () => {
-    const copy = planLimitCopy({ ...shipmentsQuota, limit: null, used: null }, t);
+    const copy = planLimitCopy({ ...shipmentsQuota, limit: null, used: null, plan: "team" }, t);
     expect(copy.usage).toBeNull();
-    expect(copy.description).toBe("Your organization has reached its Shipments limit (Free demo).");
+    expect(copy.description).toBe("Your organization has reached its Shipments limit (Team).");
   });
 
-  it("explains that the trial ended rather than blaming the action", () => {
+  it("explains that nothing can be saved rather than blaming the action", () => {
     const copy = planLimitCopy(readOnly, t);
-    expect(copy.title).toBe("Your free demo has ended");
-    expect(copy.description).toContain("read-only");
+    expect(copy.title).toBe("This workspace is read-only");
+    expect(copy.description).toContain("nothing can be created or changed");
   });
 
   it("names a restricted capability", () => {
@@ -91,13 +106,27 @@ describe("planLimitCopy", () => {
       t,
     );
     expect(copy.title).toBe("Integrations not available");
-    expect(copy.description).toContain("Samsara");
+    expect(copy.description).toBe("This part of Trenova is not included in your current plan.");
   });
 
-  it("falls back to a readable label for a meter the client does not know", () => {
+  it("falls back to a readable label for a meter or capability the client does not know", () => {
     expect(planLimitCopy({ ...shipmentsQuota, meter: "edi.partners" }, t).title).toBe(
       "Edi partners limit reached",
     );
+    expect(
+      planLimitCopy({ ...readOnly, capability: "edi.partners", reason: "capability_restricted" }, t)
+        .title,
+    ).toBe("Edi partners not available");
+  });
+
+  it("takes an edition's wording in place of the host's", () => {
+    const copy = planLimitCopy(shipmentsQuota, t, {
+      ...GENERIC_PLAN_LIMIT_WORDING,
+      planName: () => "Starter",
+      quotaGuidance: () => "Upgrade.",
+    });
+    expect(copy.description).toBe("Shipments: 12 of 12 used (Starter).");
+    expect(copy.guidance).toBe("Upgrade.");
   });
 });
 
@@ -182,7 +211,7 @@ describe("PlanLimitDialogHost", () => {
     );
     render(
       <MemoryRouter>
-        <PlanLimitDialogHost />
+        <PlanLimitDialogHost plan={{ usagePath: "/admin/plan" }} />
       </MemoryRouter>,
     );
 
@@ -201,6 +230,31 @@ describe("PlanLimitDialogHost", () => {
     await user.click(screen.getByRole("button", { name: "Got it" }));
     expect(usePlanLimitStore.getState().notice).toBeNull();
     expect(usePlanLimitStore.getState().lastDismissed?.key).toBe("quota:customers.total");
+  });
+
+  it("offers no plan page without an edition that has one, and uses the edition's words", async () => {
+    usePlanLimitStore.getState().show(shipmentsQuota);
+    render(
+      <MemoryRouter>
+        <PlanLimitDialogHost
+          plan={{
+            limitCopy: (notice) =>
+              notice.kind === "quota"
+                ? {
+                    title: "Edition title",
+                    description: "Edition words",
+                    guidance: "",
+                    usage: null,
+                  }
+                : null,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Edition title")).toBeInTheDocument();
+    expect(screen.getByText("Edition words")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View plan & usage" })).not.toBeInTheDocument();
   });
 
   it("does not open for a signed-out visitor, and leaves the error to its caller", async () => {

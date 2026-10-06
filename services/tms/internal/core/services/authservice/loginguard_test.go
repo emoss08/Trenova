@@ -211,7 +211,7 @@ func TestLoginRefusedWhenTheOnlySubscriptionExpired(t *testing.T) {
 	usr := newTestUser(t)
 
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	plans.EXPECT().IsCloud().Return(true)
+	plans.EXPECT().EnforcesPlans().Return(true)
 	plans.EXPECT().Resolve(mock.Anything, usr.CurrentOrganizationID, usr.BusinessUnitID).
 		Return(managedPlan(subscription.StatusExpired, usr.CurrentOrganizationID, usr.BusinessUnitID), nil)
 	deps.userRepo.On("GetOrganizations", mock.Anything, usr.ID).Return(
@@ -242,7 +242,7 @@ func TestLoginSwitchesAwayFromAnExpiredOrganization(t *testing.T) {
 	expiredOrg := usr.CurrentOrganizationID
 
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	plans.EXPECT().IsCloud().Return(true)
+	plans.EXPECT().EnforcesPlans().Return(true)
 	plans.EXPECT().Resolve(mock.Anything, expiredOrg, usr.BusinessUnitID).
 		Return(managedPlan(subscription.StatusExpired, expiredOrg, usr.BusinessUnitID), nil)
 	plans.EXPECT().Resolve(mock.Anything, otherOrg, otherBU).Return(
@@ -279,7 +279,7 @@ func TestLoginAllowedForReadOnlySubscription(t *testing.T) {
 	usr := newTestUser(t)
 
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	plans.EXPECT().IsCloud().Return(true)
+	plans.EXPECT().EnforcesPlans().Return(true)
 	plans.EXPECT().Resolve(mock.Anything, usr.CurrentOrganizationID, usr.BusinessUnitID).
 		Return(managedPlan(subscription.StatusReadOnly, usr.CurrentOrganizationID, usr.BusinessUnitID), nil)
 	expectSuccessfulSession(deps, usr)
@@ -298,7 +298,7 @@ func TestLoginSkipsPlanCheckOutsideCloud(t *testing.T) {
 	usr := newTestUser(t)
 
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	plans.EXPECT().IsCloud().Return(false)
+	plans.EXPECT().EnforcesPlans().Return(false)
 	expectSuccessfulSession(deps, usr)
 
 	_, err := deps.svc.Login(t.Context(), services.LoginRequest{

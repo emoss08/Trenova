@@ -10,7 +10,7 @@ import { parse } from "@babel/parser";
 import { foldableRuns } from "./fold.mjs";
 import { reject, TEXT_PROPS } from "./filter.mjs";
 
-const SOURCE_ROOTS = [
+export const SOURCE_ROOTS = [
   "client/apps/web/src",
   "client/apps/dash/src",
   "client/packages/shared/src",
@@ -90,12 +90,12 @@ function featureArea(relPath) {
   return relPath;
 }
 
-export async function extractTypeScript(repoRoot) {
+export async function extractTypeScript(repoRoot, roots = SOURCE_ROOTS) {
   const entries = [];
   const rejected = [];
   const errors = [];
 
-  for (const root of SOURCE_ROOTS) {
+  for (const root of roots) {
     for await (const file of walkFiles(join(repoRoot, root))) {
       const relPath = relative(repoRoot, file);
       const source = await readFile(file, "utf8");

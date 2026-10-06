@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
@@ -38,13 +37,9 @@ func (s *GLAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
-			var orgs []tenant.Organization
-			if err := tx.NewSelect().Model(&orgs).Order("created_at ASC").Scan(ctx); err != nil {
-				return fmt.Errorf("get organizations: %w", err)
-			}
-
-			if len(orgs) == 0 {
-				return fmt.Errorf("no organizations found")
+			orgs, err := listOrganizations(ctx, tx)
+			if err != nil {
+				return err
 			}
 
 			var createdOrgCount int

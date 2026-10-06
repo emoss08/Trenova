@@ -1,9 +1,0 @@
-{{if .FirstName}}{{t "Hi {0}," .FirstName}}{{else}}{{t "Hi,"}}{{end}}
-
-{{t "The {0} workspace is ready. Finish the short setup to add your company details, and load a sample data set if you want to explore with realistic shipments." .CompanyName}}
-
-{{t "Open your workspace"}}: {{.AppURL}}
-
-{{t "Your free trial includes full access until {0}. After that the workspace stays readable for a while so you can export what you need." .TrialEndsAt}}
-
-{{t "Reply to this email if anything gets in your way."}}

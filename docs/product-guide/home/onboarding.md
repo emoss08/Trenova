@@ -4,7 +4,6 @@ title: Welcome to Trenova
 aliases: [setup wizard, getting started, first run, onboarding, company setup, sample data, Nova, setup guide]
 related:
   - /admin/organization-settings
-  - /admin/plan-usage
 ---
 
 ## What it's for
@@ -47,4 +46,4 @@ Keywords: setup error, onboarding failed, try again
 ## Notes
 Everything set here can be changed later in
 [Organization settings](/admin/organization-settings). Sample records count toward the free demo's
-limits like any other record and can be deleted at any time; see [Plan & usage](/admin/plan-usage).
+limits like any other record and can be deleted at any time.

@@ -12,11 +12,11 @@ export type SidebarLink = {
   resource?: string;
   requiredOperation?: OperationType;
   capability?: OrganizationCapabilityType;
-  /** Hides the entry when the organization's Trenova Cloud plan withholds it. */
+  /** Hides the entry when the organization's plan withholds it. */
   planCapability?: PlanCapabilityType;
   /**
-   * Shows the entry only on an install running in this platform mode — the plan page
-   * means nothing on a self-hosted install, where every organization is unlimited.
+   * Shows the entry only on an install running in this platform mode, for an edition
+   * page that means nothing elsewhere.
    */
   platformMode?: PlatformMode;
 };

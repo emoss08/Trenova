@@ -84,6 +84,7 @@ require (
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.57.0
 	golang.org/x/oauth2 v0.37.0
+	golang.org/x/term v0.46.0
 	golang.org/x/text v0.42.0
 	golang.org/x/tools v0.50.0
 	google.golang.org/api v0.297.0
@@ -102,6 +103,7 @@ require (
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
+	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect

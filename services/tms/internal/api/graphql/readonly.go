@@ -53,7 +53,7 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	ctx context.Context,
 	opCtx *graphql.OperationContext,
 ) *gqlerror.Error {
-	if e.plans == nil || !e.plans.IsCloud() {
+	if e.plans == nil || !e.plans.EnforcesPlans() {
 		return nil
 	}
 	if opCtx == nil || opCtx.Operation == nil || opCtx.Operation.Operation != ast.Mutation {

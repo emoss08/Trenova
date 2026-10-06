@@ -1,6 +1,6 @@
 /**
- * Capabilities a Trenova Cloud plan can withhold, as the server names them in the
- * billing summary's `restrictions`. Mirrors platformplan.Capability.
+ * Capabilities a plan can withhold, as the server names them in the edition's
+ * `restrictions`. Mirrors platformplan.Capability.
  */
 export const PlanCapability = {
   EmailOutbound: "email.outbound",
@@ -15,8 +15,6 @@ export const PlanCapability = {
 } as const;
 
 export type PlanCapabilityType = (typeof PlanCapability)[keyof typeof PlanCapability];
-
-export const PLAN_USAGE_PATH = "/admin/plan-usage";
 
 /**
  * Whether the organization's plan withholds the capability. No capability, or no

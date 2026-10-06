@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -46,8 +47,7 @@ func NewDriverPayLedgerSeed() *DriverPayLedgerSeed {
 		},
 	)
 	seed.SetDependencies(
-		seedhelpers.SeedNormalAccount,
-		seedhelpers.SeedDriverPay,
+		slices.Concat(seedhelpers.BaseSeedIDs, []seedhelpers.SeedID{seedhelpers.SeedDriverPay})...,
 	)
 	return seed
 }

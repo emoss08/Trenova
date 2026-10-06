@@ -10,7 +10,7 @@ import (
 	"go.uber.org/fx"
 )
 
-const featureCheckResultKey = "feature_check_result"
+const FeatureCheckResultKey = "feature_check_result"
 
 type EntitlementMiddlewareParams struct {
 	fx.In
@@ -41,7 +41,7 @@ func (m *EntitlementMiddleware) RequireFeature(
 			return
 		}
 
-		c.Set(featureCheckResultKey, result)
+		c.Set(FeatureCheckResultKey, result)
 		if !result.Allowed {
 			m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(
 				"Your organization is not entitled to this feature",
@@ -63,7 +63,7 @@ func (m *EntitlementMiddleware) OptionalFeature(
 			return
 		}
 
-		c.Set(featureCheckResultKey, result)
+		c.Set(FeatureCheckResultKey, result)
 		c.Next()
 	}
 }
@@ -86,7 +86,7 @@ func (m *EntitlementMiddleware) checkFeature(
 }
 
 func GetFeatureCheckResult(c *gin.Context) *services.FeatureCheckResult {
-	result, exists := c.Get(featureCheckResultKey)
+	result, exists := c.Get(FeatureCheckResultKey)
 	if !exists {
 		return nil
 	}

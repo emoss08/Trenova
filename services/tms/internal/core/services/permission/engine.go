@@ -60,6 +60,7 @@ type Params struct {
 	AccessPolicyCacheRepo repositories.AccessPolicyCacheRepository
 	UserRepository        repositories.UserRepository
 	AgentGrants           repositories.RoleAgentGrantRepository `optional:"true"`
+	Delegated             services.DelegatedPermissionSource    `optional:"true"`
 	Registry              *permission.Registry
 	RouteRegistry         *permission.RouteRegistry
 	Metrics               *metrics.Registry
@@ -75,6 +76,7 @@ type engine struct {
 	policyCache   repositories.AccessPolicyCacheRepository
 	userRepo      repositories.UserRepository
 	agentGrants   repositories.RoleAgentGrantRepository
+	delegated     services.DelegatedPermissionSource
 	registry      *permission.Registry
 	routeRegistry *permission.RouteRegistry
 	metrics       *metrics.Registry
@@ -92,6 +94,7 @@ func NewEngine(p Params) services.PermissionEngine {
 		policyCache:   p.AccessPolicyCacheRepo,
 		userRepo:      p.UserRepository,
 		agentGrants:   p.AgentGrants,
+		delegated:     p.Delegated,
 		registry:      p.Registry,
 		routeRegistry: p.RouteRegistry,
 		metrics:       p.Metrics,
@@ -1036,6 +1039,17 @@ func (e *engine) getOrComputePermissions(
 	userID, orgID pulid.ID,
 ) (permissionLoadResult, error) {
 	result := permissionLoadResult{}
+	if e.delegated != nil {
+		perms, delegated, err := e.delegated.DelegatedPermissions(ctx, userID, orgID)
+		if err != nil {
+			return result, err
+		}
+		if delegated {
+			result.perms = perms
+			return result, nil
+		}
+	}
+
 	key := repositories.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,

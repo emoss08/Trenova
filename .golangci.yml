@@ -169,7 +169,7 @@ linters:
       # Domain validation errors are surfaced verbatim as field-level messages in
       # the client's forms, so they are user-facing copy rather than Go error
       # strings destined to be wrapped. Sentence case is correct for them.
-      - path: internal/core/domain/
+      - path: internal/(core|cloud)/domain/
         text: 'ST1005: error strings should not be capitalized'
         linters:
           - staticcheck

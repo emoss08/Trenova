@@ -1,5 +1,5 @@
 {
-  "version": "sha256:eb29285e8b3e792c0866e846efea579d619aba230b02fd8c573ef1ef0b23bec4",
+  "version": "sha256:d7e202d284fd94969dd29ebcfad6c9055973f8aa86af3801ce363f8ea08786fc",
   "modules": [
     {
       "id": "home",
@@ -5377,7 +5377,7 @@
         "Organization"
       ],
       "description": "Manage your organization profile, compliance, and security settings",
-      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: four sub-tabs. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds priority-ordered access policies, and **Activity** shows authentication events, risk decisions, external identities and MFA authenticators.\n\nOn Trenova Cloud, the plan, trial and usage limits are on [Plan & usage](/admin/plan-usage).\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
+      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: four sub-tabs. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds priority-ordered access policies, and **Activity** shows authentication events, risk decisions, external identities and MFA authenticators.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
       "requires": [
         {
           "resource": "organization",
@@ -5480,88 +5480,7 @@
         "/admin/roles",
         "/admin/integrations",
         "/admin/audit-logs",
-        "/organization/data-retention",
-        "/admin/plan-usage"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
-      "path": "/admin/plan-usage",
-      "name": "Plan & usage",
-      "module": "admin",
-      "breadcrumb": [
-        "Organization settings",
-        "Organization",
-        "Plan & usage"
-      ],
-      "description": "Your organization's plan, where its trial stands and how much of each limit it has used.",
-      "summary": "Plan & usage shows which Trenova Cloud plan the organization is on, where its free demo trial stands, and how much of each limit it has used. It appears in Organization settings only on Trenova Cloud; a self-hosted installation has no plan limits.\n\nThe strip at the top shows the **Plan**, its **Status** and, during the trial, the date the **Trial ends** with the days left. Once the trial is over it shows the date the workspace is **Deleted on**. The **Usage** panel lists every limit with a bar: records the organization holds (shipments, customers, locations, workers, tractors, trailers, user seats, documents and document storage), the largest single upload, and the assistant messages and AI spend that reset each month. On the free demo a second panel, **Not included in the free demo**, lists what the demo leaves out, such as outbound email, integrations, API keys and agent automation.",
-      "requires": [
-        {
-          "resource": "organization",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "free demo",
-        "trial",
-        "plan limits",
-        "usage limits",
-        "quota",
-        "subscription",
-        "read-only workspace",
-        "upgrade",
-        "billing plan"
-      ],
-      "tasks": [
-        {
-          "title": "Check how much of the free demo is used",
-          "keywords": [
-            "how many shipments left",
-            "usage",
-            "limit",
-            "quota",
-            "remaining"
-          ],
-          "steps": [
-            "Open [Plan & usage](/admin/plan-usage).",
-            "Read the **Usage** panel. Each row shows what is used against the limit; a bar turns amber near the limit and red when it is reached.",
-            "Select **Refresh** to read the latest figures."
-          ]
-        },
-        {
-          "title": "Free room under a limit",
-          "keywords": [
-            "limit reached",
-            "cannot create",
-            "delete to free space"
-          ],
-          "steps": [
-            "Open [Plan & usage](/admin/plan-usage) and find the limit that was reached.",
-            "Delete records of that kind that you no longer need, for example sample customers or locations. Limits on records count what the organization holds now, so each deletion frees a slot. Shipments are the exception: using up the shipment limit ends the trial, so deleting shipments afterwards does not reopen it.",
-            "Monthly limits such as **Assistant messages** and **AI spend** reset at the start of the next month instead."
-          ]
-        },
-        {
-          "title": "See when the trial ends",
-          "keywords": [
-            "trial days left",
-            "demo expiry",
-            "when does my trial end"
-          ],
-          "steps": [
-            "Open [Plan & usage](/admin/plan-usage).",
-            "Read **Trial ends** in the strip at the top. The banner above every page also counts the days down. The trial ends on that date or as soon as every shipment in the plan has been used, whichever comes first."
-          ]
-        }
-      ],
-      "notes": "Opening the page needs read access to the organization.\n\nWhen an action would go over a limit, or uses something the free demo leaves out, a dialog explains which limit was reached; **View plan & usage** in that dialog opens this page. The free demo trial lasts 7 days, and ends early once the organization has used its whole shipment allowance. After the trial ends the workspace is read-only: everything can be opened and exported, but nothing can be created or changed, and the workspace is deleted on the date shown. Paid plans with higher limits are coming soon.",
-      "related": [
-        "/admin/organization-settings",
-        "/onboarding"
+        "/organization/data-retention"
       ],
       "covers": [],
       "createAction": null,
@@ -13493,10 +13412,9 @@
           ]
         }
       ],
-      "notes": "Everything set here can be changed later in [Organization settings](/admin/organization-settings). Sample records count toward the free demo's limits like any other record and can be deleted at any time; see [Plan & usage](/admin/plan-usage).",
+      "notes": "Everything set here can be changed later in [Organization settings](/admin/organization-settings). Sample records count toward the free demo's limits like any other record and can be deleted at any time.",
       "related": [
-        "/admin/organization-settings",
-        "/admin/plan-usage"
+        "/admin/organization-settings"
       ],
       "covers": [],
       "createAction": null,

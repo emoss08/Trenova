@@ -43,27 +43,6 @@ var (
 	ErrProductionLocalEncryptionKeyRequired = errors.New(
 		"security.encryption.allowLocalKeyManagerInProduction requires security.encryption.key of at least 32 characters",
 	)
-	ErrCloudRequiresPostgres = errors.New(
-		"platform.mode=cloud requires the postgres database driver",
-	)
-	ErrCloudTurnstileSiteKeyRequired = errors.New(
-		"platform.cloud.turnstile.siteKey is required when cloud signup and turnstile are enabled",
-	)
-	ErrCloudTurnstileSecretKeyRequired = errors.New(
-		"platform.cloud.turnstile.secretKey is required when cloud signup and turnstile are enabled",
-	)
-	ErrCloudFreePlanLimitNegative = errors.New(
-		"platform.cloud.freePlan.limits values must not be negative",
-	)
-	ErrProductionCloudTurnstileRequired = errors.New(
-		"production and staging require platform.cloud.turnstile.enabled when cloud signup is enabled",
-	)
-	ErrProductionCloudTurnstileTestSecret = errors.New(
-		"production and staging refuse a Cloudflare Turnstile test secret in platform.cloud.turnstile.secretKey",
-	)
-	ErrProductionCloudSystemEmailRequired = errors.New(
-		"production and staging require platform.cloud.systemEmail.apiKey when cloud signup is enabled",
-	)
 	ErrProductionGCPKMSConfigRequired = errors.New(
 		"production and staging require a GCP KMS crypto key resource",
 	)
@@ -99,5 +78,17 @@ var (
 	)
 	ErrRequestTimeoutExceedsWriteTimeout = errors.New(
 		"server request timeout must be shorter than server write timeout",
+	)
+	ErrPlatformModeRequiresEdition = errors.New(
+		"platform.mode is provided by an edition that is not part of this build",
+	)
+	ErrSectionRequiresEdition = errors.New(
+		"configuration section belongs to an edition that is not part of this build",
+	)
+	ErrSectionNameRequired      = errors.New("configuration section name is required")
+	ErrSectionPathsRequired     = errors.New("configuration section must own at least one path")
+	ErrSectionAlreadyRegistered = errors.New("configuration section is already registered")
+	ErrSectionPathConflict      = errors.New(
+		"configuration section path is already owned by another section or by the base configuration",
 	)
 )

@@ -25,6 +25,11 @@ Because the structure is read from the router and navigation, moving a page,
 renaming it or changing what guards it updates the catalog on the next
 generate. The words are the only hand-written part.
 
+Routes and admin links an edition overlay registers (`edition.routes.*`, see
+[editions.md](editions.md)) are spread into the router at runtime, which the static
+read skips, so the public catalog never lists them and a public guide must not link
+to them. Their guides live in the overlay's own `guide/` directory.
+
 ## Commands
 
 ```bash

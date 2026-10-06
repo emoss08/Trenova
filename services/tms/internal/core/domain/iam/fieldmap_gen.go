@@ -39,6 +39,13 @@ func (e *MFAAuthenticator) GetStaticFieldMap() map[string]string {
 	return buncolgen.MFAAuthenticatorFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [MFARecoveryCode].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.MFARecoveryCodeFieldMap] instead of parsing struct tags via reflection.
+func (e *MFARecoveryCode) GetStaticFieldMap() map[string]string {
+	return buncolgen.MFARecoveryCodeFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ProvisioningAuditRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ProvisioningAuditRecordFieldMap] instead of parsing struct tags via reflection.

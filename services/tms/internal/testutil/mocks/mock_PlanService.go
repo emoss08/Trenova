@@ -80,12 +80,12 @@ func (_c *MockPlanService_Invalidate_Call) RunAndReturn(run func(orgID pulid.ID)
 	return _c
 }
 
-// IsCloud provides a mock function for the type MockPlanService
-func (_mock *MockPlanService) IsCloud() bool {
+// EnforcesPlans provides a mock function for the type MockPlanService
+func (_mock *MockPlanService) EnforcesPlans() bool {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for IsCloud")
+		panic("no return value specified for EnforcesPlans")
 	}
 
 	var r0 bool
@@ -97,14 +97,14 @@ func (_mock *MockPlanService) IsCloud() bool {
 	return r0
 }
 
-// MockPlanService_IsCloud_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsCloud'
+// MockPlanService_IsCloud_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnforcesPlans'
 type MockPlanService_IsCloud_Call struct {
 	*mock.Call
 }
 
-// IsCloud is a helper method to define mock.On call
-func (_e *MockPlanService_Expecter) IsCloud() *MockPlanService_IsCloud_Call {
-	return &MockPlanService_IsCloud_Call{Call: _e.mock.On("IsCloud")}
+// EnforcesPlans is a helper method to define mock.On call
+func (_e *MockPlanService_Expecter) EnforcesPlans() *MockPlanService_IsCloud_Call {
+	return &MockPlanService_IsCloud_Call{Call: _e.mock.On("EnforcesPlans")}
 }
 
 func (_c *MockPlanService_IsCloud_Call) Run(run func()) *MockPlanService_IsCloud_Call {

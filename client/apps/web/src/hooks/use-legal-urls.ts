@@ -7,8 +7,9 @@ export type LegalUrls = {
 };
 
 /**
- * The server's public config names the documents a cloud signup agrees to; the build's
- * VITE_TERMS_URL / VITE_PRIVACY_URL (or their defaults) stand in when it names none.
+ * The terms and privacy documents this install publishes. The server's public config
+ * names them; the build's VITE_TERMS_URL / VITE_PRIVACY_URL stand in when it names
+ * none. Either may be empty, and then there is no document to link to.
  */
 export function useLegalUrls(): LegalUrls {
   const { config } = usePublicConfig();

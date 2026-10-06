@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const editionDir = "internal/cloud/"
+
 func serviceRoot(t *testing.T) string {
 	t.Helper()
 
@@ -29,6 +31,9 @@ func TestEverySystemScopeIsReviewed(t *testing.T) {
 	unreviewed := make([]string, 0)
 	unexplained := make([]string, 0)
 	for _, site := range sites {
+		if strings.HasPrefix(site.Key, editionDir) {
+			continue
+		}
 		seen[site.Key] = struct{}{}
 		if _, ok := allowed[site.Key]; !ok {
 			unreviewed = append(unreviewed, site.Position+" ("+site.Key+")")

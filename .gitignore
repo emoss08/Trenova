@@ -35,3 +35,9 @@ docs/screenshots/dark/
 .turbo
 # Redis snapshots written by a local redis-server
 *.rdb
+
+# Trenova Cloud edition overlay. It lives in the private trenova-cloud-deploy
+# repository and is copied here only for Cloud builds (docs/engineering/editions.md).
+services/tms/internal/cloud/
+services/tms/cmd/cli/edition_cloud.go
+client/packages/cloud/

@@ -110,7 +110,7 @@ func (s *Service) enforcePlanLogin(
 	usr *tenant.User,
 	targetOrg *tenant.Organization,
 ) (*tenant.Organization, error) {
-	if s.plans == nil || !s.plans.IsCloud() {
+	if s.plans == nil || !s.plans.EnforcesPlans() {
 		return targetOrg, nil
 	}
 
@@ -206,6 +206,6 @@ func (s *Service) CreateSessionForUser(
 		AuthenticatorAAL:      1,
 		FederationFAL:         1,
 		LastReauthenticatedAt: timeutils.NowUnix(),
-		RiskDecision:          "allow",
+		RiskDecision:          riskDecisionAllow,
 	})
 }
