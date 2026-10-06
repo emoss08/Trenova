@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -22,12 +23,12 @@ func TestOnboardingRepository_CompletesOnce(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
-	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 
-	created, err := repo.Create(ctx, onboarding.NewPending(tenant.OrgID, tenant.BuID))
+	created, err := repo.Create(ctx, onboarding.NewPending(tenantInfo.OrgID, tenantInfo.BuID))
 	require.NoError(t, err)
 
-	read, err := repo.Get(ctx, repositories.GetOnboardingRequest{TenantInfo: tenant})
+	read, err := repo.Get(ctx, repositories.GetOnboardingRequest{TenantInfo: tenantInfo})
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, read.ID)
 	assert.Equal(t, onboarding.StatusPending, read.Status)
