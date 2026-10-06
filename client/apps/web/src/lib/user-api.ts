@@ -5,3 +5,7 @@ import { api } from "@trenova/shared/lib/api";
 export async function resetUserPassword(userId: string): Promise<{ message: string }> {
   return api.post<{ message: string }>(`/users/${userId}/reset-password/`, {});
 }
+
+export async function resetUserMFA(userId: string): Promise<void> {
+  await api.delete(`/users/${userId}/mfa/`);
+}

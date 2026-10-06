@@ -3,6 +3,7 @@ import { DEFAULT_LOCALE } from "@trenova/shared/i18n/generated/locales";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
+import { TwoFactorSection } from "@/components/navigation/two-factor-section";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
@@ -29,6 +30,7 @@ import {
   Globe02Icon,
   Key01Icon,
   Mail01Icon,
+  ShieldTickIcon,
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import type { ChangeEvent, ComponentType } from "react";
@@ -367,6 +369,17 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                 </FormControl>
               </FormGroup>
             </Form>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <SectionHeader
+              icon={ShieldTickIcon}
+              title={t("Two-factor authentication")}
+              description={t("Ask for a code from an authenticator app when you sign in.")}
+            />
+            <TwoFactorSection />
           </div>
         </div>
 

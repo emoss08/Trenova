@@ -5,6 +5,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { edition } from "@/lib/edition";
 import { authService } from "@trenova/shared/services/auth";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { isMFAChallenge, type MFAChallenge } from "@trenova/shared/types/mfa";
 import type { TenantLoginMetadata } from "@trenova/shared/types/organization";
 import {
   loginRequestSchema,
@@ -21,6 +22,7 @@ import { useSearchParams } from "react-router";
 import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
 import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { MFAChallengeForm } from "./mfa-challenge-form";
 
 export type AuthAudience = "office" | "driver";
 
@@ -79,11 +81,17 @@ export function LoginForm({
   const { control, handleSubmit, formState } = form;
   const rootError = formState.errors.root?.message;
 
+  const [challenge, setChallenge] = useState<MFAChallenge | null>(null);
+
   const { mutateAsync, isPending } = useApiMutation({
     mutationFn: authService.login,
     form,
     resourceName: "Login",
     onSuccess: async (data) => {
+      if (isMFAChallenge(data)) {
+        setChallenge(data);
+        return;
+      }
       setUser(data.user);
       await onAuthenticated(data);
     },
@@ -92,6 +100,20 @@ export function LoginForm({
   const onSubmit = (data: LoginRequest) => {
     void mutateAsync(data);
   };
+
+  if (challenge) {
+    return (
+      <MFAChallengeForm
+        challenge={challenge}
+        stepLabel={stepLabel}
+        onAuthenticated={onAuthenticated}
+        onCancel={() => {
+          setChallenge(null);
+          form.setValue("password", "");
+        }}
+      />
+    );
+  }
 
   return (
     <AuthCardBody>

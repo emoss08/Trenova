@@ -8,6 +8,7 @@ import { LoginForm } from "./login-form";
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
+  verifyMFA: vi.fn(),
   listProviders: vi.fn(),
   getSSOStartUrl: vi.fn(() => "/sso"),
   setUser: vi.fn(),
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@trenova/shared/services/auth", () => ({
   authService: {
     login: mocks.login,
+    verifyMFA: mocks.verifyMFA,
     listProviders: mocks.listProviders,
     getSSOStartUrl: mocks.getSSOStartUrl,
   },
@@ -166,6 +168,72 @@ describe("LoginForm", () => {
       ),
     );
     expect(mocks.setUser).toHaveBeenCalledWith(expect.objectContaining({ id: "usr_1" }));
+  });
+
+  it("asks for the authenticator code when the account has a second factor", async () => {
+    mocks.login.mockResolvedValue({
+      mfaRequired: true,
+      mfaChallengeToken: "challenge-token",
+      mfaMethods: ["totp", "recovery_code"],
+      expiresAt: 1782403304,
+    });
+    mocks.verifyMFA.mockResolvedValue(loginResponse());
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+    const user = await submitCredentials();
+
+    const code = await screen.findByLabelText(/authentication code/i);
+    expect(mocks.onAuthenticated).not.toHaveBeenCalled();
+    expect(mocks.setUser).not.toHaveBeenCalled();
+
+    await user.type(code, "123456");
+    await user.click(screen.getByRole("button", { name: "Verify" }));
+
+    await waitFor(() =>
+      expect(mocks.verifyMFA).toHaveBeenCalledWith(
+        expect.objectContaining({ challengeToken: "challenge-token", code: "123456" }),
+        expect.anything(),
+      ),
+    );
+    await waitFor(() =>
+      expect(mocks.onAuthenticated).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionId: "ses_01K5F3ABCDEFGHJKMNPQRSTVWX" }),
+      ),
+    );
+    expect(mocks.setUser).toHaveBeenCalledWith(expect.objectContaining({ id: "usr_1" }));
+  });
+
+  it("accepts a recovery code instead of an authenticator code", async () => {
+    mocks.login.mockResolvedValue({
+      mfaRequired: true,
+      mfaChallengeToken: "challenge-token",
+      expiresAt: 1782403304,
+    });
+    mocks.verifyMFA.mockResolvedValue(loginResponse());
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+    const user = await submitCredentials();
+
+    await user.click(await screen.findByRole("button", { name: "Use a recovery code" }));
+    await user.type(screen.getByLabelText(/recovery code/i), "abcde-fghjk");
+    await user.click(screen.getByRole("button", { name: "Verify" }));
+
+    await waitFor(() =>
+      expect(mocks.verifyMFA).toHaveBeenCalledWith(
+        expect.objectContaining({ recoveryCode: "abcde-fghjk", code: "" }),
+        expect.anything(),
+      ),
+    );
   });
 
   it("renders the step label supplied by the flow", () => {

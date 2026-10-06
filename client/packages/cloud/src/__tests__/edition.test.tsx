@@ -15,6 +15,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import cloudEdition from "../index";
 import { PLAN_USAGE_PATH } from "../lib/free-demo";
 import { platformBilling } from "../lib/queries/platform-billing";
+import { SUPPORT_ACCESS_ADMIN_PATH, SUPPORT_CONSOLE_PATH } from "../lib/support-access";
 import { billingSummarySchema } from "../types/platform-billing";
 
 const ALL_OPERATIONS = 0xffff;
@@ -81,9 +82,22 @@ describe("the Trenova Cloud edition", () => {
     const { routes } = resolveEdition(cloudEdition);
 
     expect(routes.guest.map((route) => route.path)).toEqual(["/signup", "/signup/verify"]);
-    expect(routes.admin.map((route) => route.path)).toEqual(["plan-usage"]);
-    expect(routes.protected).toEqual([]);
+    expect(routes.admin.map((route) => route.path)).toEqual(["plan-usage", "support-access"]);
+    expect(routes.protected.map((route) => route.path)).toEqual([SUPPORT_CONSOLE_PATH]);
     expect(routes.public).toEqual([]);
+  });
+
+  it("lists Support access right after Plan & usage, only on Cloud", () => {
+    const hrefs = appAdminLinks.map((link) => link.href);
+    expect(hrefs.indexOf(SUPPORT_ACCESS_ADMIN_PATH)).toBe(hrefs.indexOf(PLAN_USAGE_PATH) + 1);
+
+    signIn();
+    expect(renderAdminLinks("self_hosted").result.current.map((link) => link.href)).not.toContain(
+      SUPPORT_ACCESS_ADMIN_PATH,
+    );
+    expect(renderAdminLinks("cloud").result.current.map((link) => link.href)).toContain(
+      SUPPORT_ACCESS_ADMIN_PATH,
+    );
   });
 
   it("lists Plan & usage right after organization settings", () => {
