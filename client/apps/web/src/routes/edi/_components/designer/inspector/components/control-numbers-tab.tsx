@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { CopyIcon } from "lucide-react";
+import { Copy01Icon } from "@trenova/shared/components/icons";
 import type { InspectorContext } from "../inspector-context";
 import { controlNumberText } from "../inspector-utils";
 import InspectorGrid from "./inspector-grid";
@@ -21,7 +21,7 @@ export default function ControlNumbersTab({ context }: { context: InspectorConte
           variant="outline"
           onClick={() => void copy(context.controlCopyText, { withToast: true })}
         >
-          <CopyIcon className="size-4" />
+          <Copy01Icon className="size-4" />
           {t("Copy")}
         </Button>
       </div>

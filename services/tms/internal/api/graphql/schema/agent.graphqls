@@ -48,6 +48,8 @@ enum AgentRunStatus {
 
 enum AgentProposalStatus {
   Pending
+  "Approved from the decider's own conversation and waiting out its undo window; nothing has run yet."
+  Approving
   Accepted
   Modified
   Rejected
@@ -62,6 +64,8 @@ enum AgentProposalStatus {
 
 enum AgentPlanStatus {
   Pending
+  "Approved from the decider's own conversation and waiting out its undo window; no step has run yet."
+  Approving
   Approved
   Completed
   Failed
@@ -245,6 +249,8 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "Why the approved write failed, written for the person; empty unless status is ExecutionFailed."
+  executionError: String!
   "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
   planId: ID
   "Position in the plan, from one; zero outside a plan."
@@ -332,6 +338,10 @@ type AgentPlan {
   decidedByUserId: ID
   decidedAt: Timestamp
   expiresAt: Timestamp
+  "When an approval in its undo window starts to run, unless it is undone first."
+  commitsAt: Timestamp
+  "When the approval was undone in its undo window; absent if it was not."
+  undoneAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -373,6 +383,16 @@ type AgentDecision {
   traceId: String!
   "The decision's trace in the tracing backend, when one is configured and the decision has a trace."
   traceUrl: String
+  """
+  When an approval made from the decider's own conversation goes through,
+  unless it is undone first. Absent for a decision that took effect when it
+  was made.
+  """
+  commitsAt: Timestamp
+  "When the approval went through at the close of its undo window."
+  committedAt: Timestamp
+  "When the approval was undone in its undo window."
+  undoneAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -393,6 +413,10 @@ type AgentControl {
   aiTrainingConsentChangedAt: Timestamp
   "Who last turned training consent on or off."
   aiTrainingConsentChangedById: ID
+  "Questions one person may ask the agents each calendar month (UTC); 0 is unlimited."
+  personMonthlyMessages: Int!
+  "Agents no longer look back over their work to keep what they learned as memory."
+  learningOff: Boolean!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -439,6 +463,8 @@ enum AgentMemoryKind {
   Instruction
   Fact
   Correction
+  "The steps that worked for a task here, dictated by a person or learned by doing it."
+  Procedure
 }
 
 enum AgentMemorySource {
@@ -447,12 +473,16 @@ enum AgentMemorySource {
   Decision
   "Drawn from ratings people gave an agent's output."
   Feedback
+  "Kept by an agent looking back over its own work once a conversation went quiet or a run settled."
+  Reflection
 }
 
 enum AgentMemoryStatus {
   Active
+  "Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed."
+  Paused
   Retired
-  "Drawn from feedback and waiting for an administrator; never read by an agent."
+  "Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent."
   Suggested
   "A suggestion an administrator refused; the same pattern is not suggested again for 30 days."
   Dismissed
@@ -469,12 +499,18 @@ type AgentMemoryEvidence {
   quotes: [String!]!
   firstRatedAt: Timestamp!
   lastRatedAt: Timestamp!
+  "For a memory an agent kept from looking back, what in the work made it worth a look."
+  signals: [String!]!
 }
 
-"Who reads a memory: every agent in the organization, or only the agent it was kept for."
+"Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role."
 enum AgentMemoryScope {
   Organization
   Agent
+  "Kept for one person, read only in their conversations; the Desk calls it Just you."
+  User
+  "Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team."
+  Role
 }
 
 enum AgentMemorySubjectType {
@@ -505,14 +541,26 @@ type AgentMemory {
   toolName: String!
   content: String!
   agentDefinitionId: ID
-  "Organization reaches every agent; Agent reaches only agentDefinitionId."
+  "Organization reaches every agent; Agent reaches only agentDefinitionId; User only ownerUserId's conversations; Role only those of roleId's holders."
   scope: AgentMemoryScope!
+  ownerUserId: ID
+  roleId: ID
   "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
   tainted: Boolean!
   "The run whose outside content the memory carries."
   taintRunId: ID
   sourceRunId: ID
   sourceProposalId: ID
+  "The conversation the memory came from."
+  sourceThreadId: ID
+  "The look back that kept or offered the memory, for one whose source is Reflection."
+  reflectionId: ID
+  "The memory this one replaces; once this one is active the other is retired."
+  supersedesId: ID
+  "The memory this one replaces, as it reads now."
+  supersedes: AgentMemory
+  "The newest memory that replaced this one and took effect; empty while nothing has."
+  replacedBy: AgentMemory
   createdByUserId: ID
   retiredByUserId: ID
   retiredAt: Timestamp
@@ -535,6 +583,113 @@ type AgentMemoryUsage {
   activeSoftCap: Int!
   "The count at which AI Control warns that the cap is near."
   warnAt: Int!
+}
+
+enum AgentReflectionSubject {
+  "A stretch of a conversation, read once it went quiet."
+  Thread
+  "One background run, read once every proposal it raised was decided."
+  Run
+}
+
+enum AgentReflectionStatus {
+  Running
+  "Nothing in the work called for a look, or learning was off; the stretch is not read again."
+  Skipped
+  Completed
+  "The look back could not finish; the stretch is read again with the next one."
+  Failed
+}
+
+enum AgentReflectionSkip {
+  NoSignal
+  NothingToRead
+  LearningOff
+  AgentUnavailable
+  OverBudget
+}
+
+enum AgentReflectionSignalKind {
+  ToolRecovered
+  ToolFailed
+  PersonCorrected
+  StandingRequest
+  ProposalModified
+  ProposalRejected
+  NegativeFeedback
+  LongTask
+}
+
+enum AgentReflectionAction {
+  Saved
+  "Offered to a person to accept: they asked to be asked first, it is shared beyond them, or the work read outside content."
+  Suggested
+  "Already kept; counted as used instead of saved again."
+  Refreshed
+  "Not kept, with the reason."
+  Refused
+}
+
+type AgentReflectionSignal {
+  kind: AgentReflectionSignalKind!
+  count: Int!
+  "The tools or proposals the signal is about, when it names any."
+  detail: String!
+}
+
+type AgentReflectionChange {
+  action: AgentReflectionAction!
+  memoryId: ID
+  supersedesId: ID
+  kind: AgentMemoryKind!
+  scope: AgentMemoryScope
+  content: String!
+  reason: String!
+}
+
+"""
+One time an agent looked back over a stretch of a conversation or a settled
+background run and decided what, if anything, to keep as memory.
+"""
+type AgentReflection {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentDefinitionId: ID!
+  subjectType: AgentReflectionSubject!
+  threadId: ID
+  runId: ID
+  "The person whose conversation was read."
+  userId: ID
+  fromSequence: Int!
+  throughSequence: Int!
+  status: AgentReflectionStatus!
+  skipReason: AgentReflectionSkip
+  signals: [AgentReflectionSignal!]!
+  changes: [AgentReflectionChange!]!
+  "The model's one-sentence account of what it looked at and kept."
+  notes: String!
+  "The work had read content from outside the organization, so everything kept waits for a person."
+  tainted: Boolean!
+  model: String!
+  inputTokens: Int!
+  outputTokens: Int!
+  errorMessage: String!
+  finishedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentReflectionEdge {
+  node: AgentReflection!
+  cursor: String!
+}
+
+type AgentReflectionConnection {
+  edges: [AgentReflectionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
 }
 
 type AgentMemoryEdge {
@@ -687,6 +842,10 @@ input AgentControlInput {
   promotionThreshold: Int
   "Absent leaves training consent as it is. Only a signed-in person can change it."
   aiTrainingConsent: Boolean
+  "Absent leaves the per-person monthly allowance as it is; 0 is unlimited."
+  personMonthlyMessages: Int
+  "Absent leaves whether agents learn from their work as it is."
+  learningOff: Boolean
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int
@@ -704,6 +863,8 @@ extend type Query {
   agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentEvaluation(id: ID!): AgentEvaluation
   agentMemory(id: ID!): AgentMemory
+  "Each time an agent looked back over its work, newest first."
+  agentReflections(input: DataTableConnectionInput!): AgentReflectionConnection!
   "How many active memories the organization keeps, against its soft cap."
   agentMemoryUsage: AgentMemoryUsage!
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
@@ -735,6 +896,19 @@ extend type Mutation {
   each reports its outcome; otherwise the first that fails stops the rest.
   """
   decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  """
+  Takes back the caller's approval of a proposal (with every proposal
+  approved with it in one batch) or of a plan, while it is in its undo window;
+  it waits on them again. Name one of the two. Once the approval has gone
+  through it is a conflict.
+  """
+  undoMyDecision(proposalId: ID, planId: ID): Boolean!
+  """
+  Ends the undo window on the caller's approval of a proposal or a plan, so
+  it goes through now. One that already went through is left as it is; one
+  that was undone is a conflict.
+  """
+  commitMyDecisionNow(proposalId: ID, planId: ID): Boolean!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!

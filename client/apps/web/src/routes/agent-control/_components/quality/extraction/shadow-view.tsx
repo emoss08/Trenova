@@ -24,7 +24,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon, SlidersHorizontalIcon } from "lucide-react";
+import { AlertCircleIcon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { EXTRACTION_STALE_MS } from "./extraction-model";
 import { ShadowFieldsTable } from "./shadow-fields-table";
@@ -91,7 +91,7 @@ export function ShadowView() {
         action={
           canUpdate && settings.data ? (
             <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>
-              <SlidersHorizontalIcon />
+              <Sliders01Icon />
               {t("Edit settings")}
             </Button>
           ) : undefined
@@ -108,7 +108,7 @@ export function ShadowView() {
 
       {report.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t("The shadow comparison could not be loaded. Try again shortly.")}
           </AlertDescription>

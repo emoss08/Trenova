@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { WorkerType } from "@trenova/shared/types/worker";
-import { BriefcaseIcon, ChevronDownIcon, UserIcon } from "lucide-react";
+import { Briefcase01Icon, ChevronDownIcon, User01Icon } from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -29,8 +29,8 @@ const WORKER_TYPE_LABELS: Record<WorkerType, string> = {
 };
 
 const WORKER_TYPE_ICONS: Record<WorkerType, React.ReactNode> = {
-  Employee: <UserIcon className="size-3" />,
-  Contractor: <BriefcaseIcon className="size-3" />,
+  Employee: <User01Icon className="size-3" />,
+  Contractor: <Briefcase01Icon className="size-3" />,
 };
 
 type EditableWorkerTypeBadgeProps = {

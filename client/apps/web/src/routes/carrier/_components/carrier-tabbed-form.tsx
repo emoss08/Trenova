@@ -2,13 +2,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import {
-  LandmarkIcon,
+  Building08Icon,
   RadarIcon,
   ReceiptIcon,
-  ShieldCheckIcon,
-  TruckIcon,
-  UsersIcon,
-} from "lucide-react";
+  ShieldTickIcon,
+  Truck01Icon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { CarrierComplianceForm } from "./carrier-compliance-form";
 import { CarrierContactsForm } from "./carrier-contacts-form";
@@ -35,11 +35,11 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
       <div className="border-border border-b px-4">
         <TabsList variant="underline">
           <TabsTab value="identity">
-            <TruckIcon className="size-4" />
+            <Truck01Icon className="size-4" />
             {t("Identity")}
           </TabsTab>
           <TabsTab value="compliance">
-            <ShieldCheckIcon className="size-4" />
+            <ShieldTickIcon className="size-4" />
             {t("Compliance & insurance")}
           </TabsTab>
           <TabsTab value="tax">
@@ -47,11 +47,11 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
             {t("Tax")}
           </TabsTab>
           <TabsTab value="remittance">
-            <LandmarkIcon className="size-4" />
+            <Building08Icon className="size-4" />
             {t("Remittance")}
           </TabsTab>
           <TabsTab value="contacts">
-            <UsersIcon className="size-4" />
+            <Users01Icon className="size-4" />
             {t("Contacts")}
           </TabsTab>
           {carrierId ? (

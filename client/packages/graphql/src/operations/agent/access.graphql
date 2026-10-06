@@ -44,6 +44,7 @@ mutation DecideMyPlan($id: ID!, $input: AgentPlanDecisionInput!) {
     failureError
     decidedByUserId
     decidedAt
+    commitsAt
     version
     updatedAt
   }
@@ -58,6 +59,7 @@ mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {
     decidedByUserId
     previewDigest
     previewReviewed
+    commitsAt
     version
     createdAt
   }
@@ -162,7 +164,16 @@ mutation DecideMyProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {
       reasonCode
       previewDigest
       previewReviewed
+      commitsAt
       createdAt
     }
   }
+}
+
+mutation UndoMyDecision($proposalId: ID, $planId: ID) {
+  undoMyDecision(proposalId: $proposalId, planId: $planId)
+}
+
+mutation CommitMyDecisionNow($proposalId: ID, $planId: ID) {
+  commitMyDecisionNow(proposalId: $proposalId, planId: $planId)
 }

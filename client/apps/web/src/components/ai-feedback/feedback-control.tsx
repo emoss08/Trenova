@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ThumbsDownIcon, ThumbsUpIcon, type LucideIcon } from "lucide-react";
+import { type IconComponent, ThumbsDownIcon, ThumbsUpIcon } from "@trenova/shared/components/icons";
 import { useRef, useState, type RefObject } from "react";
 import { FeedbackReasonPopover, type FeedbackReasonDraft } from "./feedback-reason-popover";
 import { useAiFeedback } from "./use-ai-feedback";
@@ -101,7 +101,7 @@ function Thumb({
   onClick,
 }: {
   buttonRef: RefObject<HTMLButtonElement | null>;
-  icon: LucideIcon;
+  icon: IconComponent;
   label: string;
   pressed: boolean;
   open: boolean;

@@ -19,7 +19,7 @@ import { type EditTableSheetProps } from "@trenova/shared/types/data-table";
 import { type API_ENDPOINTS } from "@trenova/shared/types/server";
 import { TimeFormat } from "@trenova/shared/types/user";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import React, { useCallback, useEffect, useRef, useTransition } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
@@ -421,7 +421,7 @@ export function FormEditModal<T extends FieldValues>({
               <DialogClose
                 render={
                   <Button size="icon" variant="ghost" className="size-7 [&_svg]:size-4">
-                    <XIcon />
+                    <XCloseIcon />
                     <span className="sr-only">{t("Close")}</span>
                   </Button>
                 }

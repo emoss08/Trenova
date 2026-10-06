@@ -23,7 +23,7 @@ import {
   type Invoice,
   type VoidInvoiceFormValues,
 } from "@trenova/shared/types/invoice";
-import { ClockIcon } from "lucide-react";
+import { ClockIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";

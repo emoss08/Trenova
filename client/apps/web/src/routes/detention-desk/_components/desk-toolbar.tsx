@@ -17,7 +17,7 @@ import {
   type DeskSortId,
 } from "@trenova/shared/lib/detention";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronDownIcon, SearchIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect, useRef } from "react";
 
 type DeskToolbarProps = {
@@ -93,7 +93,7 @@ export function DeskToolbar({
               onClick={() => onLane(filter.id)}
               className={cn(
                 "-mb-px border-b-2 pt-1 pb-2 text-xs transition-colors",
-"ui-focus-ring focus-visible:-outline-offset-2",
+                "ui-focus-ring focus-visible:-outline-offset-2",
                 "disabled:pointer-events-none disabled:opacity-40",
                 isActive
                   ? "border-foreground text-foreground"
@@ -121,7 +121,7 @@ export function DeskToolbar({
           placeholder={t("Search facility, customer, PRO")}
           aria-label={t("Search the detention desk")}
           inputContainerClassName="w-56"
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           rightElement={
             search.length > 0 ? (
               <Button
@@ -131,7 +131,7 @@ export function DeskToolbar({
                 aria-label={t("Clear search")}
                 onClick={() => onSearch("")}
               >
-                <XIcon className="size-3" />
+                <XCloseIcon className="size-3" />
               </Button>
             ) : (
               <Kbd className="text-muted-foreground/60 mr-1 bg-transparent">/</Kbd>

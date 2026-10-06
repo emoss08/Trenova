@@ -36,7 +36,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVerticalIcon } from "lucide-react";
+import { GripVerticalIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -74,9 +74,7 @@ function useVerticalDndSensors() {
 function GroupLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div className="flex items-baseline justify-between">
-      <span className="text-xs text-muted-foreground font-semibold select-none">
-        {children}
-      </span>
+      <span className="text-xs text-muted-foreground font-semibold select-none">{children}</span>
       {hint && <span className="text-2xs text-muted-foreground/70 tabular-nums">{hint}</span>}
     </div>
   );

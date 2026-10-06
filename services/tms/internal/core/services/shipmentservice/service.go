@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -75,7 +76,6 @@ type Params struct {
 	Validator            *Validator
 	AuditService         services.AuditService
 	EventService         services.ShipmentEventService
-	Realtime             services.RealtimeService
 	WorkflowStarter      services.WorkflowStarter
 	Coordinator          *shipmentstate.Coordinator
 	Commercial           *shipmentcommercial.Calculator
@@ -83,6 +83,9 @@ type Params struct {
 	DistanceCalculation  services.DistanceCalculationService `optional:"true"`
 	TenderGuard          services.TenderGuard                `optional:"true"`
 	AgentEvents          services.AgentEventPublisher        `optional:"true"`
+	Quota                services.QuotaGuard                 `optional:"true"`
+	QuickFilters         services.ShipmentQuickFilterBasisResolver
+	Invalidator          services.ShipmentInvalidator
 }
 
 type service struct {
@@ -113,14 +116,16 @@ type service struct {
 	validator            *Validator
 	auditService         services.AuditService
 	eventService         services.ShipmentEventService
-	realtime             services.RealtimeService
 	workflowStarter      services.WorkflowStarter
 	coordinator          *shipmentstate.Coordinator
+	quickFilters         services.ShipmentQuickFilterBasisResolver
+	invalidator          services.ShipmentInvalidator
 	commercial           *shipmentcommercial.Calculator
 	orderDerivation      services.OrderDerivationService
 	distanceCalculation  services.DistanceCalculationService
 	tenderGuard          services.TenderGuard
 	agentEvents          services.AgentEventPublisher
+	quota                services.QuotaGuard
 	mutationObservers    []services.ShipmentMutationObserver
 }
 
@@ -153,7 +158,6 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		validator:            p.Validator,
 		auditService:         p.AuditService,
 		eventService:         p.EventService,
-		realtime:             p.Realtime,
 		workflowStarter:      p.WorkflowStarter,
 		coordinator:          p.Coordinator,
 		commercial:           p.Commercial,
@@ -161,6 +165,9 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		distanceCalculation:  p.DistanceCalculation,
 		tenderGuard:          p.TenderGuard,
 		agentEvents:          p.AgentEvents,
+		quota:                quotaservice.OrUnlimited(p.Quota),
+		quickFilters:         p.QuickFilters,
+		invalidator:          p.Invalidator,
 	}
 }
 
@@ -185,6 +192,19 @@ func (s *service) List(
 	ctx context.Context,
 	req *repositories.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	if req.ShipmentOptions.HasQuickFilters() {
+		if s.quickFilters == nil {
+			return nil, errQuickFiltersUnavailable
+		}
+		if err := s.quickFilters.Prepare(
+			ctx,
+			req.Filter.TenantInfo,
+			&req.ShipmentOptions,
+		); err != nil {
+			return nil, err
+		}
+	}
+
 	return s.repo.List(ctx, req)
 }
 
@@ -385,15 +405,11 @@ func (s *service) announceCreated(
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err := s.publishShipmentInvalidation(
+	services.InvalidateShipments(
 		ctx,
-		created,
-		auditActor,
-		"created",
-		created,
-	); err != nil {
-		s.l.Warn("failed to publish realtime invalidation", zap.Error(err))
-	}
+		s.invalidator,
+		services.ShipmentInvalidationForRecord(created, auditActor, "created", created),
+	)
 
 	services.PublishAgentEvent(ctx, s.agentEvents, services.AgentEvent{
 		Kind:      agent.EventShipmentCreated,
@@ -556,15 +572,11 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
+	services.InvalidateShipments(
 		ctx,
-		updatedEntity,
-		auditActor,
-		"updated",
-		updatedEntity,
-	); err != nil {
-		log.Warn("failed to publish realtime invalidation", zap.Error(err))
-	}
+		s.invalidator,
+		services.ShipmentInvalidationForRecord(updatedEntity, auditActor, "updated", updatedEntity),
+	)
 
 	s.emitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
 	if err = s.recomputeOrdersForShipments(
@@ -694,15 +706,16 @@ func (s *service) TransferOwnership(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
+	services.InvalidateShipments(
 		ctx,
-		updatedEntity,
-		auditActor,
-		"ownership_transferred",
-		updatedEntity,
-	); err != nil {
-		log.Warn("failed to publish realtime invalidation", zap.Error(err))
-	}
+		s.invalidator,
+		services.ShipmentInvalidationForRecord(
+			updatedEntity,
+			auditActor,
+			"ownership_transferred",
+			updatedEntity,
+		),
+	)
 
 	s.recordShipmentEvent(ctx, shipmenteventservice.BuildOwnershipTransferred(
 		tenantRefForShipment(updatedEntity),
@@ -772,11 +785,11 @@ func (s *service) DelayShipments(
 	}
 
 	for _, entity := range delayedShipments {
-		if err = s.publishShipmentInvalidation(
-			ctx, entity, auditActor, "delayed", entity,
-		); err != nil {
-			s.l.Warn("failed to publish realtime invalidation", zap.Error(err))
-		}
+		services.InvalidateShipments(
+			ctx,
+			s.invalidator,
+			services.ShipmentInvalidationForRecord(entity, auditActor, "delayed", entity),
+		)
 	}
 
 	return delayedShipments, nil
@@ -852,11 +865,16 @@ func (s *service) AutoCancelShipments(
 		auditActor = actor.AuditActor()
 	}
 
-	if err = s.publishBulkShipmentInvalidation(
-		ctx, req.TenantInfo, auditActor, "bulk_canceled",
-	); err != nil {
-		s.l.Warn("failed to publish realtime invalidation", zap.Error(err))
-	}
+	services.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		services.ShipmentInvalidationByActor(
+			req.TenantInfo,
+			auditActor,
+			pulid.Nil,
+			"bulk_canceled",
+		),
+	)
 
 	return canceledShipments, nil
 }
@@ -1085,11 +1103,16 @@ func (s *service) Cancel(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
-		ctx, updatedEntity, auditActor, "canceled", updatedEntity,
-	); err != nil {
-		log.Warn("failed to publish realtime invalidation", zap.Error(err))
-	}
+	services.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		services.ShipmentInvalidationForRecord(
+			updatedEntity,
+			auditActor,
+			"canceled",
+			updatedEntity,
+		),
+	)
 
 	s.recordShipmentEvent(ctx, shipmenteventservice.BuildShipmentCanceled(
 		tenantRefForShipment(updatedEntity),
@@ -1155,11 +1178,16 @@ func (s *service) Uncancel(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
-		ctx, updatedEntity, auditActor, "uncanceled", updatedEntity,
-	); err != nil {
-		log.Warn("failed to publish realtime invalidation", zap.Error(err))
-	}
+	services.InvalidateShipments(
+		ctx,
+		s.invalidator,
+		services.ShipmentInvalidationForRecord(
+			updatedEntity,
+			auditActor,
+			"uncanceled",
+			updatedEntity,
+		),
+	)
 
 	s.recordShipmentEvent(ctx, shipmenteventservice.BuildShipmentUncanceled(
 		tenantRefForShipment(updatedEntity),
@@ -1175,6 +1203,13 @@ func (s *service) Duplicate(
 	req *repositories.BulkDuplicateShipmentRequest,
 ) (*repositories.ShipmentDuplicateWorkflowResponse, error) {
 	if _, err := s.planDuplicate(ctx, req); err != nil {
+		return nil, err
+	}
+	if err := quotaservice.Preflight(ctx, s.quota, &services.QuotaRequest{
+		TenantInfo: req.TenantInfo,
+		Meter:      platformcatalog.MeterShipmentsTotal,
+		Quantity:   int64(max(req.Count, 0)),
+	}); err != nil {
 		return nil, err
 	}
 

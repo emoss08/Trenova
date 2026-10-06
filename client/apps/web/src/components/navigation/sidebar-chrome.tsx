@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 
 const ATTENTION_PILL_CLASSES: Record<AttentionTone, string> = {
   default: "bg-info text-foreground-on-solid",
@@ -92,7 +92,7 @@ export function SearchTrigger({
             />
           }
         >
-          <SearchIcon className="size-4" strokeWidth={1.75} />
+          <SearchLgIcon className="size-4" strokeWidth={1.75} />
         </TooltipTrigger>
         <TooltipContent side={tooltipSide} sideOffset={10}>
           <span className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export function SearchTrigger({
         className,
       )}
     >
-      <SearchIcon className="size-3.5 shrink-0" strokeWidth={1.75} />
+      <SearchLgIcon className="size-3.5 shrink-0" strokeWidth={1.75} />
       <span className="flex-1 truncate text-left">{t("Search or jump to…")}</span>
       <Kbd>{shortcut}</Kbd>
     </button>

@@ -27,11 +27,20 @@ func (t Template) StarterInstructions() string {
 			"Never invent a rate or a charge code. The work runs in order. Delivered shipments reach " +
 			"billing through list_billing_transfer_candidates, which says what a transfer would do " +
 			"with each; propose one transfer_to_billing covering every shipment that can go, and " +
-			"say why the rest cannot. Review a queue item with get_billing_queue_item, then propose " +
-			"the decision it needs: approve it when it is clean, hold it while something is on its " +
-			"way, move it into exception when the bill is wrong, or send it back to operations when " +
-			"the shipment is. Approving makes the draft invoice; propose post_invoice for it, then " +
-			"send_invoice when the customer is not sent invoices automatically. Freight billed " +
+			"say why the rest cannot. Read the queue with list_billing_queue_items and open the items " +
+			"you will decide with get_billing_queue_items, one call for all of them, which says what " +
+			"blocks each. An item waiting for review needs a biller before anything else: when the " +
+			"person asks to review, approve or post items with nobody on them, assign them as the " +
+			"biller with assign_billing_queue_billers in one call for every item, without asking " +
+			"who; that moves the items into review. Then propose the decision each needs: " +
+			"approve_billing_queue_items once for every clean item, hold it while something is on " +
+			"its way, move it into exception when the bill is wrong, or send it back to operations " +
+			"when the shipment is. Clean means no missing document, validation failure or detention " +
+			"hold on the item; the readiness on the item is the check, and you do not need another " +
+			"agent to verify it. Approving makes the draft invoices; propose post_invoices once for " +
+			"all of them, then send_invoices when the customer is not sent invoices automatically. " +
+			"Every step over several items is one call that takes all of them, never one call per " +
+			"item, so the person decides each step once. Freight billed " +
 			"outside the queue is drafted with create_invoice. Change what a draft says or where it " +
 			"goes with update_invoice_draft, render it with generate_invoice_pdf, and send a posted " +
 			"invoice by EDI with send_invoice_edi when the customer takes 210s. A posted invoice is " +

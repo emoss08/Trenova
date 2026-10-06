@@ -14,7 +14,7 @@ import {
   toUserWallClock,
   userWallClockNow,
 } from "@trenova/shared/lib/date";
-import { DownloadIcon } from "lucide-react";
+import { Download01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { AgingSummaryHeader } from "./_components/aging-summary-header";
@@ -128,7 +128,7 @@ export function ARAgingPage() {
             onClick={handleExport}
             disabled={filteredRows.length === 0}
           >
-            <DownloadIcon className="size-4" />
+            <Download01Icon className="size-4" />
             {t("Export CSV")}
           </Button>
         ),

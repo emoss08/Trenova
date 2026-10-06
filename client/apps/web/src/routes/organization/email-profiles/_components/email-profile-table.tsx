@@ -27,7 +27,7 @@ import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { testEmailProfileRequestSchema, type EmailProfile } from "@trenova/shared/types/email";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2Icon, SendIcon, TrashIcon } from "lucide-react";
+import { Send01Icon, SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./email-profile-columns";
@@ -109,14 +109,14 @@ export default function EmailProfileTable() {
       {
         id: "send-test",
         label: t("Send test"),
-        icon: SendIcon,
+        icon: Send01Icon,
         onClick: openTestDialog,
         disabled: (row) => row.original.status !== "Active",
       },
       {
         id: "delete",
         label: t("Delete"),
-        icon: TrashIcon,
+        icon: Trash01Icon,
         variant: "destructive",
         onClick: openDeleteDialog,
       },
@@ -174,7 +174,7 @@ export default function EmailProfileTable() {
                 }
               }}
             >
-              <SendIcon />
+              <Send01Icon />
               {t("Send test")}
             </Button>
           </DialogFooter>
@@ -185,7 +185,7 @@ export default function EmailProfileTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <TrashIcon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete email profile")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -206,7 +206,7 @@ export default function EmailProfileTable() {
                 }
               }}
             >
-              {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              {deleteMutation.isPending && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
               {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

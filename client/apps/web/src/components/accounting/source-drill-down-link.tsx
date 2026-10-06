@@ -1,4 +1,4 @@
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { recordPath } from "@/config/record-links";
 
@@ -35,7 +35,7 @@ export function SourceDrillDownLink({ sourceType, sourceId, label }: SourceDrill
       className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 text-xs hover:underline"
     >
       {label ?? sourceType}
-      <ExternalLinkIcon className="size-2.5" />
+      <LinkExternal01Icon className="size-2.5" />
     </Link>
   );
 }

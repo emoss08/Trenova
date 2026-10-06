@@ -1,45 +1,25 @@
-//go:build integration && !nofitz
+//go:build integration
 
 package gotenberg
 
 import (
 	"bytes"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	fitz "github.com/gen2brain/go-fitz"
+	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-// pdfText extracts the visible text of every page, so assertions can talk about
-// what a reader would actually see rather than about compressed bytes.
-func pdfText(t *testing.T, pdf []byte) string {
-	t.Helper()
-
-	doc, err := fitz.NewFromMemory(pdf)
-	require.NoError(t, err)
-	defer func() { _ = doc.Close() }()
-
-	var b strings.Builder
-	for page := range doc.NumPage() {
-		text, textErr := doc.Text(page)
-		require.NoError(t, textErr)
-		b.WriteString(text)
-		b.WriteByte('\n')
-	}
-	return b.String()
-}
-
 func assertPDFLacksMarker(t *testing.T, pdf []byte, marker string) {
 	t.Helper()
-	assert.NotContains(t, pdfText(t, pdf), marker)
+	assert.NotContains(t, pdftest.Text(t, pdf), marker)
 }
 
 // liveClient builds a client against a real sidecar, or skips.

@@ -3,7 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDurationFromSeconds, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
-import { PaperclipIcon, TruckIcon } from "lucide-react";
+import { PaperclipIcon, Truck01Icon } from "@trenova/shared/components/icons";
 import { forwardRef } from "react";
 import { CLASSIFICATION_ICON, CLASSIFICATION_VARIANT, classificationLabel } from "./classification";
 
@@ -110,7 +110,7 @@ export const InboxMessageRow = forwardRef<
             )}
             {message.matchedShipment && (
               <Badge variant="neutral" appearance="outline" className="gap-1">
-                <TruckIcon className="size-3" aria-hidden />
+                <Truck01Icon className="size-3" aria-hidden />
                 {message.matchedShipment.proNumber}
               </Badge>
             )}

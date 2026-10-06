@@ -262,7 +262,7 @@ func (r *repository) UpdateStatus(
 
 		entity := new(agent.AgentProposal)
 		cols := buncolgen.AgentProposalColumns
-		results, err := r.db.DBForContext(ctx).
+		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -275,9 +275,14 @@ func (r *repository) UpdateStatus(
 				return scoped
 			}).
 			Set(cols.Status.Set(), req.Status).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Returning("*").
-			Exec(ctx)
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
+		// Unapproved wording goes once the proposal is decided; the decision
+		// keeps what was approved. An approval still in its undo window keeps
+		// it, so taking the approval back leaves the edit where it was.
+		if clearsPendingModifications(req.Status) {
+			query = query.Set(cols.PendingModifications.SetNull())
+		}
+		results, err := query.Returning("*").Exec(ctx)
 		if err != nil {
 			log.Error("failed to update agent proposal status", zap.Error(err))
 			return nil, err
@@ -311,6 +316,7 @@ func (r *repository) ExpirePendingByRun(
 					Where(cols.Status.Eq(), agent.ProposalStatusPending)
 			}).
 			Set(cols.Status.Set(), agent.ProposalStatusExpired).
+			Set(cols.PendingModifications.SetNull()).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Exec(ctx)
 		if err != nil {
@@ -346,7 +352,14 @@ func (r *repository) ExpirePending(
 			Where(cols.Status.Eq(), agent.ProposalStatusPending).
 			Where(cols.ExpiresAt.IsNotNull()).
 			Where(cols.ExpiresAt.Lte(), req.Before).
+			// A step of a plan in its undo window was approved with the plan,
+			// inside its window, and runs when the plan commits.
+			Where("NOT EXISTS (SELECT 1 FROM agent_plans AS apl WHERE apl.id = "+
+				cols.PlanID.Qualified()+" AND apl.organization_id = "+
+				cols.OrganizationID.Qualified()+" AND apl.business_unit_id = "+
+				cols.BusinessUnitID.Qualified()+" AND apl.status = ?)", agent.PlanStatusApproving).
 			Set(cols.Status.Set(), agent.ProposalStatusExpired).
+			Set(cols.PendingModifications.SetNull()).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Exec(ctx)
 		if err != nil {
@@ -516,6 +529,7 @@ func (r *repository) SkipPendingByPlan(
 					Where(cols.Status.Eq(), agent.ProposalStatusPending)
 			}).
 			Set(cols.Status.Set(), agent.ProposalStatusSkipped).
+			Set(cols.PendingModifications.SetNull()).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Exec(ctx)
 		if err != nil {

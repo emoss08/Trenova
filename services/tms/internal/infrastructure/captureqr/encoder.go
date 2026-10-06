@@ -1,7 +1,7 @@
 // Package captureqr encodes the QR code printed on a capture cover sheet.
 //
 // It is apart from captureimaging, which reads codes off rendered pages and
-// needs MuPDF, because issuing a sheet needs neither.
+// needs a PDF renderer, because issuing a sheet needs neither.
 package captureqr
 
 import (

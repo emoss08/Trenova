@@ -1,7 +1,7 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
 import { appModuleGroups, navigationConfig } from "@/config/navigation.config";
 import type { NavModule } from "@/config/navigation.types";
-import { HomeIcon } from "lucide-react";
+import { Home02Icon } from "@trenova/shared/components/icons";
 import { describe, expect, it } from "vitest";
 import {
   buildModuleView,
@@ -81,7 +81,7 @@ describe("buildModuleView", () => {
     const module: NavModule = {
       id: "reports",
       label: "Reports",
-      icon: HomeIcon,
+      icon: Home02Icon,
       basePath: "/reports",
       navigation: [
         { id: "a", label: "A", path: "/reports/a" },
@@ -101,7 +101,7 @@ describe("buildModuleView", () => {
     const module: NavModule = {
       id: "reports",
       label: "Reports",
-      icon: HomeIcon,
+      icon: Home02Icon,
       basePath: "/reports",
       navigation: [],
     };
@@ -112,7 +112,7 @@ describe("buildModuleView", () => {
     const module: NavModule = {
       id: "reports",
       label: "Reports",
-      icon: HomeIcon,
+      icon: Home02Icon,
       basePath: "/reports",
       navigation: [
         {
@@ -175,7 +175,7 @@ describe("groupModulesByDomain", () => {
     const stray: NavModule = {
       id: "organization",
       label: "Stray",
-      icon: HomeIcon,
+      icon: Home02Icon,
       basePath: "/stray",
       navigation: [],
     };

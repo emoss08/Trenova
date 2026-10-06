@@ -33,7 +33,12 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PTO_LEDGER_ENTRY_LABELS } from "@trenova/shared/types/pto-policy";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarSyncIcon, EllipsisIcon, ScaleIcon, ShieldCheckIcon } from "lucide-react";
+import {
+  CalendarSyncIcon,
+  DotsHorizontalIcon,
+  Scales01Icon,
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AdjustBalanceDialog } from "./adjust-balance-dialog";
@@ -128,7 +133,7 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
         <div className="flex items-center gap-2">
           {canAssign ? (
             <Button size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
-              <ShieldCheckIcon className="size-3.5" />
+              <ShieldTickIcon className="size-3.5" />
               {current ? t("Change policy") : t("Assign policy")}
             </Button>
           ) : null}
@@ -142,7 +147,7 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
                     className="size-8"
                     aria-label={t("Balance actions")}
                   >
-                    <EllipsisIcon />
+                    <DotsHorizontalIcon />
                   </Button>
                 }
               />
@@ -171,7 +176,7 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
         <BalanceCards balances={balances} />
       ) : (
         <div className="rounded-lg border border-dashed p-5 text-center">
-          <ScaleIcon className="text-muted-foreground mx-auto size-6" />
+          <Scales01Icon className="text-muted-foreground mx-auto size-6" />
           <p className="mt-2 text-sm font-medium">{t("No PTO policy assigned")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
             {t(
@@ -257,9 +262,7 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
       data-testid={`pto-balance-${balance.ptoType}`}
     >
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-xs font-medium">
-          {typeLabel(balance.ptoType)}
-        </p>
+        <p className="text-muted-foreground text-xs font-medium">{typeLabel(balance.ptoType)}</p>
         {!balance.enforced ? (
           <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
             {t("Not enforced")}
@@ -391,9 +394,7 @@ function LedgerTable({ workerId }: { workerId: string }) {
                   <td className="px-3 py-2">
                     {PTO_LEDGER_ENTRY_LABELS[entry.entryType]}
                     {entry.periodKey ? (
-                      <span className="text-muted-foreground ml-1 text-2xs">
-                        {entry.periodKey}
-                      </span>
+                      <span className="text-muted-foreground ml-1 text-2xs">{entry.periodKey}</span>
                     ) : null}
                   </td>
                   <td className={cn("px-3 py-2 text-right tabular-nums", entryTone(entry))}>

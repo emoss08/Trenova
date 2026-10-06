@@ -37,6 +37,15 @@ type UpdateAgentPlanStatusRequest struct {
 	FromStatus      agent.PlanStatus
 	DecidedByUserID pulid.ID
 	DecidedAt       int64
+	// CommitsAt, when set, is when an approval in its undo window goes
+	// through; it clears any earlier undo.
+	CommitsAt int64
+	// Reopen clears the decision an approval in its undo window recorded, for
+	// a plan going back to waiting on its decider. UndoneByUserID, when set,
+	// says it was the decider who took it back, and when.
+	Reopen         bool
+	UndoneByUserID pulid.ID
+	UndoneAt       int64
 }
 
 // RecordAgentPlanProgressRequest writes how far execution got: the count of

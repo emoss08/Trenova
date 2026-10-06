@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import type { DataTableEmptyStateRenderProps, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ListChecksIcon } from "lucide-react";
+import { ListChecksIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { FeedRunDetailDialog } from "./feed-run-detail-dialog";
 import { getColumns } from "./feed-run-columns";

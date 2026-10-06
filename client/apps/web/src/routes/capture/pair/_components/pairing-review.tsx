@@ -22,7 +22,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
-import { ShieldAlertIcon } from "lucide-react";
+import { ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 

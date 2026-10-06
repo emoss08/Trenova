@@ -4,7 +4,7 @@ import type { WorkerRecognitionRow } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { RECOGNITION_KIND_LABELS, type RecognitionKind } from "@trenova/shared/types/worker-safety";
-import { AwardIcon, EyeOffIcon, Trash2Icon } from "lucide-react";
+import { Award01Icon, EyeOffIcon, Trash01Icon } from "@trenova/shared/components/icons";
 
 type RecognitionListProps = {
   recognitions: WorkerRecognitionRow[];
@@ -24,9 +24,7 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
-        <h4 className="text-muted-foreground text-xs font-semibold">
-          {t("Recognition")}
-        </h4>
+        <h4 className="text-muted-foreground text-xs font-semibold">{t("Recognition")}</h4>
         <p className="text-muted-foreground truncate text-xs">
           {t("Visible entries show up as kudos in the driver's Dash.")}
         </p>
@@ -45,7 +43,7 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
             >
               <div className="flex items-start gap-3">
                 <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
-                  <AwardIcon className="size-3.5" />
+                  <Award01Icon className="size-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{t(recognition.title)}</p>
@@ -62,7 +60,7 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
                           {
                             id: "remove",
                             label: `Remove ${recognition.title}`,
-                            icon: Trash2Icon,
+                            icon: Trash01Icon,
                             disabled: busy,
                             destructive: true,
                             onSelect: () => onDelete(recognition),

@@ -138,7 +138,7 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 	activities := NewActivities(ActivitiesParams{
 		DocumentRepository: repo,
 		Storage:            storageClient,
-		ThumbnailGenerator: thumbnailservice.NewGenerator(),
+		ThumbnailGenerator: thumbnailservice.NewGenerator(nil),
 		Encryption:         enc,
 	})
 

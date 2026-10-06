@@ -1,10 +1,11 @@
-import { AssistantProse, ReasoningDisclosure } from "@/components/assistant/message-items";
+import { DeskProse } from "@/components/desk-chat/conversation/desk-turns";
 import { stepsFromExchanges } from "@/components/assistant/activity";
 import { ToolActivity } from "@/components/assistant/tool-activity";
 import type { AgentRunTranscript } from "@/lib/graphql/agent-activity-tables";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useMemo } from "react";
+import { ReasoningDisclosure } from "./reasoning-disclosure";
 import { transcriptBlocks, type TranscriptBlock } from "./run-transcript";
 
 /**
@@ -86,7 +87,7 @@ function TranscriptTurn({ block }: { block: Extract<TranscriptBlock, { kind: "tu
       )}
       {message.reasoning?.text ? <ReasoningDisclosure text={message.reasoning.text} /> : null}
       {steps.length > 0 && <ToolActivity steps={steps} />}
-      {message.content !== "" && <AssistantProse content={message.content} />}
+      {message.content !== "" && <DeskProse content={message.content} />}
       {block.clipped && (
         <p className="text-foreground-subtle text-xs">
           {t("Part of this step was too large to keep, so only what was called is shown.")}

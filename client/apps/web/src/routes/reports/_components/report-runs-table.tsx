@@ -11,7 +11,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { reportRunsTableGraphQLConfig, type ReportRun } from "@/lib/graphql/reports";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { BanIcon, DownloadIcon } from "lucide-react";
+import { Download01Icon, SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { getReportRunColumns } from "./report-run-columns";
@@ -38,14 +38,14 @@ export default function ReportRunsTable({ definitionId }: { definitionId?: strin
       {
         id: "download",
         label: t("Download"),
-        icon: DownloadIcon,
+        icon: Download01Icon,
         hidden: (row) => !canExport || !isDownloadable(row.original),
         onClick: (row) => downloadReportRun(row.original),
       },
       {
         id: "cancel",
         label: t("Cancel run"),
-        icon: BanIcon,
+        icon: SlashCircle01Icon,
         variant: "destructive",
         hidden: (row) => !isReportRunActive(row.original.status),
         onClick: (row) =>

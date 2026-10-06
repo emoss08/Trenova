@@ -204,6 +204,8 @@ func (r *repository) UpdateThread(
 			Set(cols.PreferredProviderID.Set(), thread.PreferredProviderID).
 			Set(cols.Origin.Set(), thread.Origin).
 			Set(cols.Pinned.Set(), thread.Pinned).
+			Set(cols.PinnedFacts.Set(), thread.PinnedFacts).
+			Set(cols.AutoCompactOff.Set(), thread.AutoCompactOff).
 			Set(cols.SubjectType.Set(), thread.SubjectType).
 			Set(cols.SubjectID.Set(), thread.SubjectID).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
@@ -246,6 +248,86 @@ func (r *repository) MarkThreadTainted(
 		}
 
 		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+	})
+}
+
+func (r *repository) UpdateThreadContext(
+	ctx context.Context,
+	req repositories.UpdateThreadContextRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if req.Usage == nil && req.AutoCompactOff == nil {
+			return nil
+		}
+
+		cols := buncolgen.ThreadColumns
+		query := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*conversation.Thread)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ThreadID)
+			})
+		if req.Usage != nil {
+			query = query.Set(cols.ContextUsage.Set(), req.Usage)
+		}
+		if req.AutoCompactOff != nil {
+			query = query.Set(cols.AutoCompactOff.Set(), *req.AutoCompactOff)
+		}
+
+		res, err := query.Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("update thread context: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+	})
+}
+
+func (r *repository) AddSavedMemories(
+	ctx context.Context,
+	req repositories.AddSavedMemoriesRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(req.Memories) == 0 {
+			return nil
+		}
+
+		cols := buncolgen.MessageColumns
+		message := new(conversation.Message)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(message).
+			Column(cols.ID.Bare(), cols.SavedMemories.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.MessageID).
+					Where(cols.ThreadID.Eq(), req.ThreadID)
+			}).
+			For("UPDATE").
+			Scan(ctx); err != nil {
+			return dberror.HandleNotFoundError(err, "Message")
+		}
+
+		saved := conversation.MergeSavedMemories(message.SavedMemories, req.Memories)
+		if len(saved) == len(message.SavedMemories) {
+			return nil
+		}
+
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*conversation.Message)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.MessageScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.MessageID)
+			}).
+			Set(cols.SavedMemories.Set(), saved).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("add saved memories to a message: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "Message", req.MessageID.String())
 	})
 }
 
@@ -312,12 +394,40 @@ func (r *repository) ListMessages(
 			query = query.Where(cols.Sequence.Lt(), *req.BeforeSequence)
 		}
 
+		if req.AfterSequence != nil {
+			query = query.Where(cols.Sequence.Gt(), *req.AfterSequence)
+		}
+
 		if len(req.ExcludeKinds) > 0 {
 			query = query.Where(cols.Kind.NotIn(), bun.List(req.ExcludeKinds))
 		}
 
 		if len(req.Kinds) > 0 {
 			query = query.Where(cols.Kind.In(), bun.List(req.Kinds))
+		}
+
+		if req.SinceCompaction {
+			// The latest summary stands in for every message up to the
+			// sequence it names; the summary itself is numbered after that,
+			// so it is read with what follows. The subquery names the thread
+			// outright, so it is planned once rather than once a row.
+			query = query.Where(
+				`? > COALESCE((
+					SELECT ("c"."compaction"->>'through')::int
+					FROM "assistant_messages" AS "c"
+					WHERE "c"."organization_id" = ?
+						AND "c"."business_unit_id" = ?
+						AND "c"."thread_id" = ?
+						AND "c"."kind" = ?
+					ORDER BY "c"."sequence" DESC
+					LIMIT 1
+				), -1)`,
+				bun.Ident("amsg.sequence"),
+				req.TenantInfo.OrgID,
+				req.TenantInfo.BuID,
+				req.ThreadID,
+				conversation.MessageKindCompaction,
+			)
 		}
 
 		if req.Limit > 0 {

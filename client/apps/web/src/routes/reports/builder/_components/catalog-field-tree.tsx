@@ -4,7 +4,13 @@ import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalogEntity, ReportCatalogField } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReportFieldRef } from "@/types/report";
-import { ChevronDownIcon, ChevronRightIcon, LockIcon, PlusIcon, SearchIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Lock01Icon,
+  PlusIcon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { MAX_PATH_DEPTH, type CatalogIndex } from "./builder-state";
 
@@ -58,12 +64,13 @@ function FieldRow({
       title={field.description ?? undefined}
     >
       <span className="flex min-w-0 items-center gap-1.5">
-        {!field.accessible && <LockIcon className="size-3 shrink-0" />}
+        {!field.accessible && <Lock01Icon className="size-3 shrink-0" />}
         <span className="truncate">{t(field.label)}</span>
       </span>
       <span className="flex shrink-0 items-center gap-1">
         <Badge
-          variant="neutral" appearance="outline"
+          variant="neutral"
+          appearance="outline"
           className="font-mono text-2xs transition-opacity group-hover/field:opacity-0"
         >
           {FIELD_TYPE_BADGES[field.type] ?? field.type}
@@ -199,7 +206,7 @@ export function CatalogFieldTree({
           className="h-8 pl-7"
           placeholder={t("Search fields...")}
           value={search}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>

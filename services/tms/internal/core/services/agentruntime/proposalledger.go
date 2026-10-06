@@ -129,6 +129,12 @@ func proposalOutcomeText(toolName string, outcome serviceports.ProposalOutcome) 
 				"give with the button rather than by replying.",
 			toolName,
 		)
+	case agent.ProposalStatusApproving:
+		return fmt.Sprintf(
+			"The person approved the proposal to run %q and it goes through in a few seconds "+
+				"unless they undo it. It has not run yet. Do not propose it again.",
+			toolName,
+		)
 	case agent.ProposalStatusAccepted, agent.ProposalStatusModified:
 		return fmt.Sprintf(
 			"The person approved the proposal to run %q%s and it is being carried out now. "+

@@ -25,7 +25,12 @@ import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 import { Resource } from "@trenova/shared/types/permission";
 import type { WorkerSyncLogLevel, WorkerSyncSummary } from "@/types/samsara";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, CopyIcon, ExternalLinkIcon, RefreshCcwIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  Copy01Icon,
+  LinkExternal01Icon,
+  RefreshCcw02Icon,
+} from "@trenova/shared/components/icons";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -930,7 +935,7 @@ export function SamsaraWorkerSyncCard({
                               }
                               loadingText={t("Retrying...")}
                             >
-                              <RefreshCcwIcon className="size-3.5" />
+                              <RefreshCcw02Icon className="size-3.5" />
                               {t("Retry")}
                             </Button>
                             <Button
@@ -939,7 +944,7 @@ export function SamsaraWorkerSyncCard({
                               className="h-7"
                               onClick={() => handleCopyFailure(failure.message)}
                             >
-                              <CopyIcon className="size-3.5" />
+                              <Copy01Icon className="size-3.5" />
                               {t("Copy")}
                             </Button>
                             <Button
@@ -948,7 +953,7 @@ export function SamsaraWorkerSyncCard({
                               className="h-7"
                               onClick={() => handleOpenWorker(failure.workerId)}
                             >
-                              <ExternalLinkIcon className="size-3.5" />
+                              <LinkExternal01Icon className="size-3.5" />
                               {t("Open")}
                             </Button>
                           </div>

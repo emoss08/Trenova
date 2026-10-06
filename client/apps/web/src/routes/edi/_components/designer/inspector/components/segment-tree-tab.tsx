@@ -16,7 +16,7 @@ import type {
   EDIX12Inspection,
   EDIX12Segment,
 } from "@trenova/shared/types/edi";
-import { CopyIcon } from "lucide-react";
+import { Copy01Icon } from "@trenova/shared/components/icons";
 
 export default function SegmentTreeTab({
   inspection,
@@ -57,7 +57,9 @@ export default function SegmentTreeTab({
                   </span>
                   <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
                   {isControlSegment(segment) ? (
-                    <Badge variant="neutral" appearance="outline">{t("Control")}</Badge>
+                    <Badge variant="neutral" appearance="outline">
+                      {t("Control")}
+                    </Badge>
                   ) : null}
                 </span>
                 <span className="text-muted-foreground block truncate pl-10 text-xs">
@@ -122,7 +124,7 @@ function SegmentDetail({
             variant="outline"
             onClick={() => void copy(segment.raw, { withToast: true })}
           >
-            <CopyIcon className="size-3.5" />
+            <Copy01Icon className="size-3.5" />
             {t("Copy segment")}
           </Button>
         </div>

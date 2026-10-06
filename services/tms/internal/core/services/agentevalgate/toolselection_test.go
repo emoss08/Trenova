@@ -25,7 +25,7 @@ const (
 	minParaphrase   = 20
 	minGuide        = 20
 
-	floorsCommand = "go test -tags nofitz -count=1 -run 'AgainstFloors' " +
+	floorsCommand = "go test -count=1 -run 'AgainstFloors' " +
 		"./internal/core/services/agentevalgate/ -update"
 )
 

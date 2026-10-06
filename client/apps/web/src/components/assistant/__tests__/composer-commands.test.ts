@@ -41,8 +41,10 @@ describe("matchSuggestions", () => {
 import {
   commandEntries,
   fillCommand,
+  isScheduleRequest,
   parseSlashCommand,
   SLASH_COMMANDS,
+  splitScheduleSlots,
 } from "../composer-commands";
 
 /**
@@ -104,5 +106,56 @@ describe("commandEntries", () => {
     const entries = commandEntries("status S1", suggestions);
     expect(entries).toHaveLength(1);
     expect(entries[0].label).toBe("/status");
+  });
+});
+
+/*
+A message that opens with a cadence is a schedule, not a question, and the
+composer reads it with the same pattern the server does. "Every time…" is a
+question.
+*/
+describe("isScheduleRequest", () => {
+  it("reads a cadence at the start as a schedule", () => {
+    expect(isScheduleRequest("every weekday at 7:30am, what's blocking the billing queue?")).toBe(
+      true,
+    );
+    expect(isScheduleRequest("Each Monday summarize detention")).toBe(true);
+    expect(isScheduleRequest("every week, margin by lane")).toBe(true);
+    expect(isScheduleRequest("/schedule every day check loads")).toBe(true);
+    expect(isScheduleRequest("/schedule hourly check loads")).toBe(true);
+  });
+
+  it("leaves ordinary questions alone", () => {
+    expect(isScheduleRequest("Every time I open the queue it is slow, why?")).toBe(false);
+    expect(isScheduleRequest("every hour check the board")).toBe(false);
+    expect(isScheduleRequest("What happens every Monday?")).toBe(false);
+    expect(isScheduleRequest("/schedules")).toBe(false);
+  });
+});
+
+describe("/schedule", () => {
+  it("fills its when slot with the whole cadence and its request with the rest", () => {
+    const parsed = parseSlashCommand("/schedule every Monday at 8am summarize detention");
+    expect(parsed?.command.name).toBe("schedule");
+    expect(parsed?.args).toEqual(["every Monday at 8am", "summarize detention"]);
+    expect(parsed?.complete).toBe(true);
+    expect(fillCommand(parsed!.command, parsed!.args)).toBe(
+      "every Monday at 8am, summarize detention",
+    );
+    expect(isScheduleRequest(fillCommand(parsed!.command, parsed!.args))).toBe(true);
+  });
+
+  it("waits while the cadence or its time is still being typed", () => {
+    expect(parseSlashCommand("/schedule every Mon")?.complete).toBe(false);
+    expect(parseSlashCommand("/schedule every Monday at")?.args).toEqual(["every Monday at", ""]);
+    expect(parseSlashCommand("/schedule every Monday at 8am")?.complete).toBe(false);
+  });
+
+  it("is listed first among the commands", () => {
+    expect(commandEntries("sch", suggestions).map((entry) => entry.label)).toEqual(["/schedule"]);
+    expect(splitScheduleSlots("each morning, list unassigned loads")).toEqual([
+      "each morning",
+      "list unassigned loads",
+    ]);
   });
 });

@@ -17,6 +17,8 @@ const (
 	ProblemTypeConflict        = ProblemType("resource-conflict")
 	ProblemTypeTimeout         = ProblemType("request-timeout")
 	ProblemTypeInternal        = ProblemType("internal-error")
+	ProblemTypeQuotaExceeded   = ProblemType("quota-exceeded")
+	ProblemTypePlanRestricted  = ProblemType("plan-restricted")
 )
 
 type ProblemTypeInfo struct {
@@ -86,6 +88,18 @@ var problemTypeRegistry = map[ProblemType]ProblemTypeInfo{ //nolint:exhaustive /
 		Title:      "Gateway Timeout",
 		StatusCode: http.StatusGatewayTimeout,
 		ShouldLog:  true,
+	},
+	ProblemTypeQuotaExceeded: {
+		Type:       ProblemTypeQuotaExceeded,
+		Title:      "Plan Limit Reached",
+		StatusCode: http.StatusPaymentRequired,
+		ShouldLog:  false,
+	},
+	ProblemTypePlanRestricted: {
+		Type:       ProblemTypePlanRestricted,
+		Title:      "Not Available on Your Plan",
+		StatusCode: http.StatusForbidden,
+		ShouldLog:  false,
 	},
 	ProblemTypeInternal: {
 		Type:       ProblemTypeInternal,

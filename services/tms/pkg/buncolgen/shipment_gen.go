@@ -1303,6 +1303,7 @@ var ShipmentColumns = struct {
 	ConsolidationGroupID      Column // "consolidation_group_id" → qualified: "sp.consolidation_group_id"
 	OrderID                   Column // "order_id" → qualified: "sp.order_id"
 	Status                    Column // "status" → qualified: "sp.status"
+	StageRank                 Column // "stage_rank" → qualified: "sp.stage_rank"
 	TenderStatus              Column // "tender_status" → qualified: "sp.tender_status"
 	EntryMethod               Column // "entry_method" → qualified: "sp.entry_method"
 	ProNumber                 Column // "pro_number" → qualified: "sp.pro_number"
@@ -1365,6 +1366,7 @@ var ShipmentColumns = struct {
 	ConsolidationGroupID:      NewColumn("consolidation_group_id", "sp"),
 	OrderID:                   NewColumn("order_id", "sp"),
 	Status:                    NewColumn("status", "sp"),
+	StageRank:                 NewColumn("stage_rank", "sp"),
 	TenderStatus:              NewColumn("tender_status", "sp"),
 	EntryMethod:               NewColumn("entry_method", "sp"),
 	ProNumber:                 NewColumn("pro_number", "sp"),
@@ -1433,6 +1435,7 @@ var ShipmentFieldMap = map[string]string{
 	"consolidationGroupId":      "consolidation_group_id",
 	"orderId":                   "order_id",
 	"status":                    "status",
+	"stageRank":                 "stage_rank",
 	"tenderStatus":              "tender_status",
 	"entryMethod":               "entry_method",
 	"proNumber":                 "pro_number",

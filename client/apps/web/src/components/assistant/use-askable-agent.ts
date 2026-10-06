@@ -28,11 +28,19 @@ export type AskableAgent = {
  * another — from the picker or anywhere else on the surface — holds until
  * the surface goes away.
  */
-export function useAskableAgent({ threads }: { threads: readonly ThreadActivity[] }): AskableAgent {
+export function useAskableAgent({
+  threads,
+  preferId,
+}: {
+  threads: readonly ThreadActivity[];
+  /** An agent the person has said to start with, ahead of the one they last asked. */
+  preferId?: string;
+}): AskableAgent {
   const lastAgentId = useAssistantStore((state) => state.lastAgentId);
+  const leadId = preferId || lastAgentId;
   const recency = useMemo(
-    () => agentRecency(threads, { limit: RECENT_AGENT_LIMIT, preferId: lastAgentId }),
-    [lastAgentId, threads],
+    () => agentRecency(threads, { limit: RECENT_AGENT_LIMIT, preferId: leadId }),
+    [leadId, threads],
   );
   const choices = useAgentChoices({
     search: "",

@@ -14,7 +14,7 @@ import {
   statusChoices,
 } from "@/lib/choices";
 import type { PayProfileFormValues } from "@trenova/shared/types/driver-pay";
-import { Plus, Trash2 } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 export function PayProfileForm() {
@@ -120,7 +120,7 @@ export function PayProfileForm() {
               })
             }
           >
-            <Plus className="size-3.5" />
+            <PlusIcon className="size-3.5" />
             {t("Add component")}
           </Button>
         }
@@ -281,7 +281,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
             onClick={onRemove}
             aria-label={t("Remove component")}
           >
-            <Trash2 className="size-4" />
+            <Trash01Icon className="size-4" />
           </Button>
         )}
       </div>
@@ -307,7 +307,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
                 })
               }
             >
-              <Plus className="size-3" />
+              <PlusIcon className="size-3" />
               {t("Add band")}
             </Button>
           </div>
@@ -354,7 +354,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
                     onClick={() => bandsArray.remove(bandIndex)}
                     aria-label={t("Remove band")}
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash01Icon className="size-3.5" />
                   </Button>
                 </div>
               ))}

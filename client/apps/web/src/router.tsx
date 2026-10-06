@@ -1,10 +1,18 @@
+import { PlanCapability } from "@/lib/plan-capability";
+import { createPlanCapabilityLoader } from "@/lib/plan-capability-loader";
 import {
   combineLoaders,
   createCapabilityLoader,
   createPermissionLoader,
 } from "@/lib/route-permission";
+import {
+  onboardingExitRedirect,
+  loadOnboardingSnapshot,
+  resolveOnboardingRedirect,
+} from "@/lib/onboarding-gate";
+import { edition } from "@/lib/edition";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
-import { AppErrorLayout, AppLayout } from "@/routes/app-layout";
+import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
 import { RootLayout } from "@/routes/root-layout";
@@ -16,7 +24,12 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import { AdminLayout } from "./routes/admin-layout";
 
-const protectedLoader: LoaderFunction = async () => {
+// An edition's own gates run after the session check and the onboarding redirect; the
+// first one that returns a redirect decides.
+const editionProtectedLoader = combineLoaders(...edition.protectedLoaders);
+
+const protectedLoader: LoaderFunction = async (args) => {
+  const { request } = args;
   const { checkAuth } = useAuthStore.getState();
   const isAuthenticated = await checkAuth();
 
@@ -24,7 +37,21 @@ const protectedLoader: LoaderFunction = async () => {
     return redirect("/login");
   }
 
-  return null;
+  // A cloud organization that has not finished the welcome wizard is sent to it from
+  // every signed-in page; the wizard's own path is exempt, so this cannot loop.
+  const onboardingTarget = await resolveOnboardingRedirect(new URL(request.url).pathname);
+  if (onboardingTarget) {
+    return redirect(onboardingTarget);
+  }
+
+  return editionProtectedLoader(args);
+};
+
+// The wizard is only for an organization that still owes it. Anybody else who opens
+// the address — a completed organization, a self-hosted install — goes home.
+const onboardingLoader: LoaderFunction = async () => {
+  const target = onboardingExitRedirect(await loadOnboardingSnapshot());
+  return target ? redirect(target) : null;
 };
 
 const guestLoader: LoaderFunction = async () => {
@@ -116,7 +143,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/organization/email-profiles",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailProfile)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.EmailOutbound),
+              createPermissionLoader(Resource.EmailProfile),
+            ),
             async lazy() {
               const { EmailProfilesPage } =
                 await import("@/routes/organization/email-profiles/page");
@@ -125,7 +156,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/organization/email-logs",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailLog)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.EmailOutbound),
+              createPermissionLoader(Resource.EmailLog),
+            ),
             async lazy() {
               const { EmailLogsPage } = await import("@/routes/organization/email-logs/page");
               return { Component: EmailLogsPage };
@@ -238,7 +273,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/overview",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIOverviewPage } = await import("@/routes/edi/page");
               return { Component: EDIOverviewPage };
@@ -246,7 +285,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/partners",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIPartnersPage } = await import("@/routes/edi/page");
               return { Component: EDIPartnersPage };
@@ -254,7 +297,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/communication-profiles",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDICommunicationProfilesPage } = await import("@/routes/edi/page");
               return { Component: EDICommunicationProfilesPage };
@@ -262,7 +309,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/mapping-profiles",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIMappingProfilesPage } = await import("@/routes/edi/page");
               return { Component: EDIMappingProfilesPage };
@@ -270,7 +321,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/designer",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIDesignerPage } = await import("@/routes/edi/page");
               return { Component: EDIDesignerPage };
@@ -278,7 +333,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/transfers/inbound",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIInboundTransfersPage } = await import("@/routes/edi/page");
               return { Component: EDIInboundTransfersPage };
@@ -286,7 +345,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/transfers/outbound",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIOutboundTransfersPage } = await import("@/routes/edi/page");
               return { Component: EDIOutboundTransfersPage };
@@ -294,7 +357,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/messages",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIMessagesPage } = await import("@/routes/edi/page");
               return { Component: EDIMessagesPage };
@@ -302,7 +369,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/inbound-files",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDIInboundFilesPage } = await import("@/routes/edi/page");
               return { Component: EDIInboundFilesPage };
@@ -310,7 +381,11 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/edi/test-cases",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
             async lazy() {
               const { EDITestCasesPage } = await import("@/routes/edi/page");
               return { Component: EDITestCasesPage };
@@ -1522,6 +1597,7 @@ export const routes: RouteObject[] = [
             path: "/dispatch/carrier-monitoring",
             loader: combineLoaders(
               protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.CarrierIntelligencePaid),
               createPermissionLoader(Resource.CarrierIntelligence),
             ),
             async lazy() {
@@ -1534,6 +1610,7 @@ export const routes: RouteObject[] = [
             loader: combineLoaders(
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPlanCapabilityLoader(PlanCapability.CarrierIntelligencePaid),
               createPermissionLoader(Resource.CarrierSourcing),
             ),
             async lazy() {
@@ -1677,7 +1754,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "agent-control",
-                loader: createPermissionLoader(Resource.AgentControl, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.AgentAutomation),
+                  createPermissionLoader(Resource.AgentControl, Operation.Read),
+                ),
                 async lazy() {
                   const { AgentControlPage } = await import("@/routes/agent-control/page");
                   return { Component: AgentControlPage };
@@ -1728,7 +1808,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "capture",
-                loader: createPermissionLoader(Resource.CaptureProfile, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.CaptureProfile, Operation.Read),
+                ),
                 async lazy() {
                   const { CaptureAdminPage } = await import("@/routes/admin/capture/page");
                   return { Component: CaptureAdminPage };
@@ -1736,7 +1819,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "document-intelligence",
-                loader: createPermissionLoader(Resource.DocumentControl, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.DocumentControl, Operation.Read),
+                ),
                 async lazy() {
                   const { DocumentIntelligencePage } =
                     await import("@/routes/admin/document-intelligence/page");
@@ -1745,7 +1831,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "document-parsing-rules",
-                loader: createPermissionLoader(Resource.DocumentParsingRule, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.DocumentParsingRule, Operation.Read),
+                ),
                 async lazy() {
                   const { DocumentParsingRulesPage } =
                     await import("@/routes/admin/document-parsing-rules/page");
@@ -1902,7 +1991,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "integrations",
-                loader: createPermissionLoader(Resource.Integration, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.Integrations),
+                  createPermissionLoader(Resource.Integration, Operation.Read),
+                ),
                 async lazy() {
                   const { IntegrationsPage } = await import("@/routes/admin/integrations/page");
                   return { Component: IntegrationsPage };
@@ -1953,7 +2045,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "api-keys",
-                loader: createPermissionLoader(Resource.APIKey, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.APIKeys),
+                  createPermissionLoader(Resource.APIKey, Operation.Read),
+                ),
                 async lazy() {
                   const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };
@@ -1961,7 +2056,10 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "document-operations",
-                loader: createPermissionLoader(Resource.DocumentOperation, Operation.Read),
+                loader: combineLoaders(
+                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPermissionLoader(Resource.DocumentOperation, Operation.Read),
+                ),
                 async lazy() {
                   const { DocumentOperationsPage } =
                     await import("@/routes/admin/document-operations/page");
@@ -1977,11 +2075,31 @@ export const routes: RouteObject[] = [
                   return { Component: CustomFieldDefinitionsPage };
                 },
               },
+              ...edition.routes.admin,
             ],
           },
+          ...edition.routes.protected,
           {
             path: "*",
             element: <NotFoundRoute />,
+          },
+        ],
+      },
+      {
+        // The welcome wizard a new cloud organization walks through once. It is a
+        // full-screen step of its own rather than a page in the app: nothing in the
+        // sidebar is useful until the organization has a profile. It still runs the
+        // session's gates, so a password change or role activation comes first.
+        element: <OnboardingLayout />,
+        loader: protectedLoader,
+        children: [
+          {
+            path: "/onboarding",
+            loader: combineLoaders(protectedLoader, onboardingLoader),
+            async lazy() {
+              const { OnboardingPage } = await import("@/routes/onboarding/page");
+              return { Component: OnboardingPage };
+            },
           },
         ],
       },
@@ -2000,6 +2118,18 @@ export const routes: RouteObject[] = [
         HydrateFallback: DeskLoadingScreen,
         loader: protectedLoader,
         children: [
+          {
+            // An artifact on a page of its own, without the conversation.
+            path: "/desk/c/:threadId/a/:slug/page",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Assistant, Operation.Read),
+            ),
+            async lazy() {
+              const { DeskArtifactPage } = await import("@/routes/desk/artifact-page");
+              return { Component: DeskArtifactPage };
+            },
+          },
           {
             path: "/desk",
             loader: combineLoaders(
@@ -2027,6 +2157,15 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                // A link to one artifact, named by its slug: the conversation
+                // opens with it beside it.
+                path: "c/:threadId/a/:slug",
+                async lazy() {
+                  const { DeskArtifactLinkPage } = await import("@/routes/desk/artifact-link-page");
+                  return { Component: DeskArtifactLinkPage };
+                },
+              },
+              {
                 path: "decisions",
                 loader: createPermissionLoader(Resource.AgentProposal, Operation.Read),
                 async lazy() {
@@ -2035,11 +2174,25 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "agents/:agentId",
+                async lazy() {
+                  const { DeskAgentCapabilitiesPage } = await import("@/routes/desk/agent-page");
+                  return { Component: DeskAgentCapabilitiesPage };
+                },
+              },
+              {
                 path: "watchtower",
                 loader: createPermissionLoader(Resource.Watchtower, Operation.Read),
                 async lazy() {
                   const { DeskWatchtowerPage } = await import("@/routes/desk/watchtower-page");
                   return { Component: DeskWatchtowerPage };
+                },
+              },
+              {
+                path: "memory",
+                async lazy() {
+                  const { DeskMemoryRoutePage } = await import("@/routes/desk/memory-page");
+                  return { Component: DeskMemoryRoutePage };
                 },
               },
             ],
@@ -2079,6 +2232,7 @@ export const routes: RouteObject[] = [
               return { Component: RateConfirmationPublicPage };
             },
           },
+          ...edition.routes.public,
         ],
       },
       {
@@ -2107,6 +2261,7 @@ export const routes: RouteObject[] = [
               return { Component: ResetPasswordPage };
             },
           },
+          ...edition.routes.guest,
         ],
       },
     ],

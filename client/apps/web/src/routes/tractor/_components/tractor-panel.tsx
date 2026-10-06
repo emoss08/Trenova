@@ -5,7 +5,7 @@ import type { TractorRow } from "@/lib/graphql/equipment-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { tractorSchema } from "@/types/tractor";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ClipboardCheckIcon, FileTextIcon } from "lucide-react";
+import { ClipboardCheckIcon, File06Icon } from "@trenova/shared/components/icons";
 import { lazy, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { TractorForm } from "./tractor-form";
@@ -59,7 +59,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       {
         value: "documents",
         label: t("Documents"),
-        icon: FileTextIcon,
+        icon: File06Icon,
         content: DocumentsTab,
         contentProps: {
           resourceType: "tractor",

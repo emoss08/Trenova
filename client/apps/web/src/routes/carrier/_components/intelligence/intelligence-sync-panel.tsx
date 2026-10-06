@@ -17,7 +17,7 @@ import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 

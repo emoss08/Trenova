@@ -2,7 +2,7 @@ package conversation
 
 import (
 	"context"
-	"github.com/shopspring/decimal"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -54,7 +55,19 @@ type Message struct {
 	// and on a call refused before anybody was asked.
 	DelegateReport *DelegateReport `json:"delegateReport,omitempty" bun:"delegate_report,type:JSONB,nullzero"`
 
+	// ScheduleID is the conversation schedule a Schedule message made. The
+	// schedule may since have been deleted; the card then says so.
+	ScheduleID pulid.ID `json:"scheduleId,omitempty" bun:"schedule_id,type:VARCHAR(100),nullzero"`
+	// Handoff is what a hand-off carried, on the card it left in the
+	// conversation handed off and on the brief that opens the new one. Nil
+	// on every other message.
+	Handoff *Handoff `json:"handoff,omitempty" bun:"handoff,type:JSONB,nullzero"`
+
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
+
+	// Compaction says what a compaction summary stands in for. Nil on every
+	// other message.
+	Compaction *Compaction `json:"compaction,omitempty" bun:"compaction,type:JSONB,nullzero"`
 
 	// ToolCalls is what an assistant turn asked for, stored as the normalized
 	// shape rather than any one provider's wire format.
@@ -91,18 +104,84 @@ type Message struct {
 	// did not reason out loud or the provider was not asked to let it.
 	Reasoning *ReasoningTrace `json:"reasoning" bun:"reasoning,type:JSONB,nullzero"`
 
-	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
-	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
-	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
-	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
+	Model string `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
+	// Truncated says the provider stopped partway through this reply, and
+	// FallbackFrom names the provider asked first when another one answered.
+	Truncated    bool              `json:"truncated,omitempty"    bun:"truncated,type:BOOLEAN,notnull,default:false"`
+	FallbackFrom *ProviderFallback `json:"fallbackFrom,omitempty" bun:"fallback_from,type:JSONB,nullzero"`
+	// Failure says why the reply did not finish, for a reply that is only a
+	// closing note: the models that were asked, or that it was stopped.
+	Failure      *ReplyFailure `json:"failure,omitempty" bun:"failure,type:JSONB,nullzero"`
+	ProviderID   pulid.ID      `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
+	InputTokens  int           `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
+	OutputTokens int           `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
 	LatencyMs int64            `json:"latencyMs"    bun:"latency_ms,type:BIGINT,nullzero"`
 	CostUSD   *decimal.Decimal `json:"costUsd"      bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
+	// UsedMemoryIDs are the memories the turn this reply ends used, and
+	// SavedMemories what it kept or offered to keep; both only on a turn's
+	// last reply. Memories is each of them as the reader may see it, filled
+	// as the thread is served.
+	UsedMemoryIDs []pulid.ID    `json:"usedMemoryIds,omitempty" bun:"used_memory_ids,type:JSONB,nullzero"`
+	SavedMemories []SavedMemory `json:"savedMemories,omitempty" bun:"saved_memories,type:JSONB,nullzero"`
+	Memories      []MemoryNote  `json:"memories,omitempty"      bun:"-"`
+
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id"`
+}
+
+// SavedMemory is a memory a turn kept through the remember tool, by the call
+// that kept it. Pending is a memory offered rather than kept: the person asked
+// to be asked first, and it waits for them to accept it.
+type SavedMemory struct {
+	ID      pulid.ID `json:"id"`
+	CallID  string   `json:"callId"`
+	Pending bool     `json:"pending"`
+}
+
+func MergeSavedMemories(current, added []SavedMemory) []SavedMemory {
+	merged := make([]SavedMemory, 0, len(current)+len(added))
+	merged = append(merged, current...)
+	for _, memory := range added {
+		if memory.ID.IsNil() || slices.ContainsFunc(merged, func(kept SavedMemory) bool {
+			return kept.ID == memory.ID
+		}) {
+			continue
+		}
+		merged = append(merged, memory)
+	}
+
+	return merged
+}
+
+// MemoryNote is a memory a reply used or saved, as its reader sees it: what
+// it says, who it is kept for, where it came from, and whether the reader may
+// change it.
+type MemoryNote struct {
+	ID          pulid.ID        `json:"id"`
+	Content     string          `json:"content"`
+	Kind        string          `json:"kind"`
+	Scope       string          `json:"scope"`
+	RoleID      pulid.ID        `json:"roleId,omitempty"`
+	RoleName    string          `json:"roleName,omitempty"`
+	Status      string          `json:"status"`
+	Source      string          `json:"source"`
+	SourceTitle string          `json:"sourceTitle,omitempty"`
+	CreatedAt   int64           `json:"createdAt"`
+	Version     int64           `json:"version"`
+	Editable    bool            `json:"editable"`
+	Reason      string          `json:"reason,omitempty"`
+	Replaces    *MemoryNoteLink `json:"replaces,omitempty"`
+	ReplacedBy  *MemoryNoteLink `json:"replacedBy,omitempty"`
+}
+
+type MemoryNoteLink struct {
+	ID      pulid.ID `json:"id"`
+	Content string   `json:"content"`
+	Status  string   `json:"status"`
 }
 
 // MessageAttachment is one file on a user turn: the document it became, and
@@ -112,6 +191,10 @@ type MessageAttachment struct {
 	FileName    string   `json:"fileName"`
 	ContentType string   `json:"contentType,omitempty"`
 	FileSize    int64    `json:"fileSize,omitempty"`
+	// PoorlyRead marks a file whose reading finished but could make out
+	// little of it, such as a blurred photo, so the Desk can ask for a
+	// clearer copy.
+	PoorlyRead bool `json:"poorlyRead,omitempty"`
 }
 
 // ReasoningTrace is a model's thinking, kept in two parts.
@@ -165,6 +248,17 @@ type ToolCallRecord struct {
 	// signature; another provider would refuse the field itself.
 	ProviderData map[string]any `json:"providerData,omitempty"`
 	ProviderID   pulid.ID       `json:"providerId,omitempty"`
+	// Why is the model's own account of the step, shown under "Why this
+	// step?": what it looked at, why it chose this, and what it passed over.
+	Why *StepRationale `json:"why,omitempty"`
+}
+
+// StepRationale is why the model took one step. It comes from the model with
+// the call, in a short phrase each, and is shown as the model wrote it.
+type StepRationale struct {
+	Saw       string `json:"saw,omitempty"`
+	Because   string `json:"because,omitempty"`
+	InsteadOf string `json:"insteadOf,omitempty"`
 }
 
 func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -241,4 +335,41 @@ func (m *Message) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0).Error("Output tokens cannot be negative"),
 		),
 	))
+}
+
+// ProviderFallback is the provider a reply was asked of first, and why it did
+// not give it.
+// ReplyFailure is why a reply did not finish.
+type ReplyFailure struct {
+	// Kind is no_model when every model asked failed, interrupted when the
+	// reply broke off partway, stopped when the person stopped it, and
+	// before_start for any other failure before a word arrived.
+	Kind string `json:"kind"`
+	// Providers are the models asked, and any the organization has that were
+	// not given the task, each with what happened.
+	Providers []FailedProvider `json:"providers,omitempty"`
+}
+
+// FailedProvider is one model a failed reply was asked of.
+type FailedProvider struct {
+	Name   string `json:"name"`
+	Model  string `json:"model"`
+	Vendor string `json:"vendor"`
+	Status string `json:"status"`
+	Detail string `json:"detail"`
+}
+
+// The kinds of ReplyFailure.
+const (
+	ReplyFailureNoModel     = "no_model"
+	ReplyFailureInterrupted = "interrupted"
+	ReplyFailureStopped     = "stopped"
+	ReplyFailureBeforeStart = "before_start"
+)
+
+type ProviderFallback struct {
+	ProviderID pulid.ID `json:"providerId"`
+	Name       string   `json:"name"`
+	Model      string   `json:"model"`
+	Status     string   `json:"status"`
 }

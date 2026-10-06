@@ -13,7 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Table } from "@trenova/shared/types/data-table";
-import { CheckIcon, Columns3Icon } from "lucide-react";
+import { CheckIcon, Columns03Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type DataTableViewOptionsProps<TData extends RowData> = {
@@ -40,7 +40,7 @@ export function DataTableViewOptions<TData extends RowData>({
       <PopoverTrigger
         render={
           <Button variant="outline" size="sm">
-            <Columns3Icon className="size-4" />
+            <Columns03Icon className="size-4" />
             <span className="hidden pt-0.5 lg:inline">{t("Columns")}</span>
           </Button>
         }

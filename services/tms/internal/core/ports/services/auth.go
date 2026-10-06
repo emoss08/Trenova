@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/session"
@@ -37,6 +38,30 @@ type LoginResponse struct {
 	ActiveRoles            []RoleSummary `json:"activeRoles"`
 	AuthorizedRoles        []RoleSummary `json:"authorizedRoles"`
 	RequiresRoleActivation bool          `json:"requiresRoleActivation"`
+	MFARequired            bool          `json:"mfaRequired"`
+	MFAChallengeToken      string        `json:"mfaChallengeToken,omitempty"`
+	MFAMethods             []string      `json:"mfaMethods,omitempty"`
+}
+
+type VerifyMFAChallengeRequest struct {
+	ChallengeToken string `json:"challengeToken"`
+	Code           string `json:"code"`
+	RecoveryCode   string `json:"recoveryCode"`
+}
+
+func (r *VerifyMFAChallengeRequest) Validate() error {
+	me := errortypes.NewMultiError()
+	if strings.TrimSpace(r.ChallengeToken) == "" {
+		me.Add("challengeToken", errortypes.ErrRequired, "Sign in again to continue")
+	}
+	if strings.TrimSpace(r.Code) == "" && strings.TrimSpace(r.RecoveryCode) == "" {
+		me.Add("code", errortypes.ErrRequired, "Enter the code from your authenticator app")
+	}
+	if me.HasErrors() {
+		return me
+	}
+
+	return nil
 }
 
 type TenantLoginMetadataResponse struct {
@@ -197,5 +222,15 @@ type AuthService interface {
 		token string,
 		ipAddress, userAgent string,
 	) (*AuthenticatedPrincipal, error)
+	VerifyMFAChallenge(ctx context.Context, req VerifyMFAChallengeRequest) (*LoginResponse, error)
 	Logout(ctx context.Context, sessionID pulid.ID) error
+	CreateSessionForUser(
+		ctx context.Context,
+		req *CreateSessionForUserRequest,
+	) (*LoginResponse, error)
+}
+
+type CreateSessionForUserRequest struct {
+	User         *tenant.User
+	AuthProvider string
 }

@@ -8,7 +8,7 @@ import {
 } from "@trenova/shared/lib/detention";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { FacilityDetentionStat } from "@trenova/shared/types/detention";
-import { ChevronDownIcon, WarehouseIcon } from "lucide-react";
+import { ChevronDownIcon, WarehouseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import {
@@ -76,8 +76,7 @@ function FacilityRow({
   const marginPerStop = row.stopCount > 0 ? row.netMargin / row.stopCount : 0;
 
   return (
-    <div
-    >
+    <div>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
@@ -119,10 +118,7 @@ function FacilityRow({
         </div>
 
         <div className="hidden w-16 shrink-0 sm:block">
-          <Meter
-            value={breachRate}
-            barClassName={breachToneClass(breachRate)}
-          />
+          <Meter value={breachRate} barClassName={breachToneClass(breachRate)} />
           <p className="text-2xs text-muted-foreground mt-1.5 tabular-nums">
             {t("{0}% breach", Math.round(breachRate * 100))}
           </p>
@@ -181,9 +177,7 @@ function FacilityRow({
               <MetricCell
                 label={t("Leakage")}
                 value={formatCurrency(row.waivedAmount)}
-                valueClassName={
-                  row.waivedAmount > 0 ? "text-warning-foreground" : undefined
-                }
+                valueClassName={row.waivedAmount > 0 ? "text-warning-foreground" : undefined}
                 detail={
                   row.suppressedCount > 0
                     ? `${row.suppressedCount} suppressed, no notice`

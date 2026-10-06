@@ -7,10 +7,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -33,17 +37,20 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
+	Quota  services.QuotaGuard `optional:"true"`
 }
 
 type portalAccessRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota services.QuotaGuard
 }
 
 func New(p Params) repositories.PortalAccessRepository {
 	return &portalAccessRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.driver-portal-repository"),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.driver-portal-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -270,10 +277,21 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 ) (*tenant.User, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.User, error) {
 		var created *tenant.User
-		err := r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.
+			WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 				invitation, err := r.lockInvitation(txCtx, tx, req.Invitation)
 				if err != nil {
+					return err
+				}
+
+				if err = quotaservice.EnforceAll(txCtx, r.quota, services.QuotaRequest{
+					TenantInfo: pagination.TenantInfo{
+						OrgID: invitation.OrganizationID,
+						BuID:  invitation.BusinessUnitID,
+					},
+					Meter:    platformcatalog.MeterUserSeats,
+					Quantity: 1,
+				}); err != nil {
 					return err
 				}
 

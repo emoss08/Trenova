@@ -1,4 +1,4 @@
-import { DatabaseIcon } from "lucide-react";
+import { Database01Icon } from "@trenova/shared/components/icons";
 
 export default function InspectorState({
   state,
@@ -20,7 +20,7 @@ export default function InspectorState({
       aria-live={state === "loading" ? "polite" : undefined}
       className="text-muted-foreground flex h-48 flex-col items-center justify-center gap-2 p-4 text-sm"
     >
-      <DatabaseIcon className="size-5" />
+      <Database01Icon className="size-5" />
       {displayMessage}
     </div>
   );

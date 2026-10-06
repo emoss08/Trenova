@@ -4,7 +4,7 @@ import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MonitorIcon, SettingsIcon, SlidersHorizontalIcon } from "lucide-react";
+import { Monitor01Icon, Settings01Icon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { FleetPanel } from "./_components/fleet-panel";
@@ -48,19 +48,19 @@ export function CaptureAdminPage() {
         <TabsList variant="underline">
           {canSettings && (
             <TabsTab value="settings">
-              <SettingsIcon size={16} />
+              <Settings01Icon size={16} />
               {t("Settings")}
             </TabsTab>
           )}
           {canProfiles && (
             <TabsTab value="profiles">
-              <SlidersHorizontalIcon size={16} />
+              <Sliders01Icon size={16} />
               {t("Scan profiles")}
             </TabsTab>
           )}
           {canComputers && (
             <TabsTab value="computers">
-              <MonitorIcon size={16} />
+              <Monitor01Icon size={16} />
               {t("Computers")}
             </TabsTab>
           )}

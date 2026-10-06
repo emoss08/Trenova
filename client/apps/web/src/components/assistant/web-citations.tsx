@@ -12,7 +12,12 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatISODateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowUpRightIcon, ChevronRightIcon, GlobeIcon, LandmarkIcon } from "lucide-react";
+import {
+  ArrowUpRightIcon,
+  Building08Icon,
+  ChevronRightIcon,
+  Globe02Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { indexSources, sourceFor, type WebSource } from "./web-sources";
 
@@ -21,7 +26,7 @@ const NAMED_SITES = 2;
 
 /** A government page wears a landmark; anything else, a globe. */
 function SourceMark({ source, className }: { source: WebSource; className?: string }) {
-  const Icon = source.official ? LandmarkIcon : GlobeIcon;
+  const Icon = source.official ? Building08Icon : Globe02Icon;
 
   return <Icon aria-hidden className={cn("text-foreground-subtle size-3 shrink-0", className)} />;
 }
@@ -160,7 +165,7 @@ export function SourcesFooter({ sources }: { sources: readonly WebSource[] }) {
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="min-w-0">
       <CollapsibleTrigger className="text-foreground-muted hover:text-foreground ui-focus-ring -mx-1.5 flex max-w-full min-w-0 items-center gap-1.5 rounded-control px-1.5 py-0.5 text-xs transition-colors">
-        <GlobeIcon aria-hidden className="size-3 shrink-0" />
+        <Globe02Icon aria-hidden className="size-3 shrink-0" />
         <span className="shrink-0">
           {t("{0, plural, one {# source} other {# sources}}", sources.length)}
         </span>

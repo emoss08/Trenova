@@ -6,8 +6,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +30,9 @@ type Params struct {
 	Reader    serviceports.TurnStreamReader
 	Canceller serviceports.AssistantTurnCanceller
 	Realtime  serviceports.RealtimeService
-	Metrics   *metrics.Registry `optional:"true"`
+	Metrics   *metrics.Registry        `optional:"true"`
+	Quota     serviceports.QuotaGuard  `optional:"true"`
+	Plans     serviceports.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -36,6 +42,8 @@ type Service struct {
 	canceller serviceports.AssistantTurnCanceller
 	realtime  serviceports.RealtimeService
 	metrics   *metrics.Assistant
+	quota     serviceports.QuotaGuard
+	plans     serviceports.PlanService
 }
 
 var _ serviceports.AssistantTurnStopper = (*Service)(nil)
@@ -47,19 +55,10 @@ func New(p Params) *Service {
 		reader:    p.Reader,
 		canceller: p.Canceller,
 		realtime:  p.Realtime,
-		metrics:   assistantMetrics(p.Metrics),
+		metrics:   metrics.AssistantFrom(p.Metrics),
+		quota:     p.Quota,
+		plans:     p.Plans,
 	}
-}
-
-// assistantMetrics tolerates a service built without a registry, which a test
-// does and an install with metrics switched off does too. Every method on the
-// returned value is safe on a disabled collector.
-func assistantMetrics(registry *metrics.Registry) *metrics.Assistant {
-	if registry == nil {
-		return metrics.NewAssistant(nil, zap.NewNop(), false)
-	}
-
-	return registry.Assistant
 }
 
 // StartRequest opens a turn on a conversation.
@@ -82,6 +81,10 @@ func (s *Service) Start(
 	ctx context.Context,
 	req StartRequest,
 ) (*conversation.AssistantTurn, error) {
+	if err := s.assertPlanAllows(ctx, req); err != nil {
+		return nil, err
+	}
+
 	id := pulid.MustNew("atrn_")
 	anchor := aitrace.AnchorFor(aitrace.AnchorAssistantTurn, id.String())
 	turn, err := s.turns.Start(ctx, &conversation.AssistantTurn{
@@ -106,6 +109,26 @@ func (s *Service) Start(
 	}
 
 	return turn, nil
+}
+
+func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error {
+	switch req.Origin {
+	case "", conversation.AssistantTurnOriginPerson:
+		return quotaservice.Preflight(ctx, s.quota, &serviceports.QuotaRequest{
+			TenantInfo: req.TenantInfo,
+			Meter:      platformcatalog.MeterAIAssistantMessages,
+			Quantity:   1,
+		})
+	case conversation.AssistantTurnOriginScheduled:
+		return planservice.RequireCapability(
+			ctx,
+			s.plans,
+			req.TenantInfo,
+			platformplan.CapabilityAgentAutomation,
+		)
+	default:
+		return nil
+	}
 }
 
 // Active is the turn a conversation is still producing, or nil.

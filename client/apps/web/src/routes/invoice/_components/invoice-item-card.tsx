@@ -20,7 +20,12 @@ import { shipmentPanelPath } from "@/lib/shipment-utils";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
-import { ExternalLinkIcon, FileTextIcon, PackageIcon, SendIcon } from "lucide-react";
+import {
+  File06Icon,
+  LinkExternal01Icon,
+  PackageIcon,
+  Send01Icon,
+} from "@trenova/shared/components/icons";
 import { recordPath } from "@/config/record-links";
 
 export function InvoiceItemCard({
@@ -100,7 +105,7 @@ export function InvoiceItemCard({
       <ContextMenuContent>
         {billsSingleShipment && shipmentId ? (
           <ContextMenuItem onClick={() => window.open(shipmentPanelPath(shipmentId), "_blank")}>
-            <ExternalLinkIcon className="size-3.5" />
+            <LinkExternal01Icon className="size-3.5" />
             {t("View shipment")}
           </ContextMenuItem>
         ) : null}
@@ -116,12 +121,12 @@ export function InvoiceItemCard({
               window.open(`/billing/queue?item=${invoice.billingQueueItemId}`, "_blank")
             }
           >
-            <FileTextIcon className="size-3.5" />
+            <File06Icon className="size-3.5" />
             {t("View billing queue item")}
           </ContextMenuItem>
         ) : null}
         <ContextMenuItem onClick={onPost} disabled={invoice.status !== "Draft"}>
-          <SendIcon className="size-3.5" />
+          <Send01Icon className="size-3.5" />
           {t("Post invoice")}
         </ContextMenuItem>
       </ContextMenuContent>

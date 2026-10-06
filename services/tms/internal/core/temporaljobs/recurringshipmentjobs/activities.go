@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -39,7 +39,7 @@ type ActivitiesParams struct {
 	Repo                repositories.RecurringShipmentRepository
 	AuditService        services.AuditService
 	NotificationService *notificationservice.Service
-	Realtime            services.RealtimeService `optional:"true"`
+	Invalidator         services.ShipmentInvalidator
 	Logger              *zap.Logger
 }
 
@@ -47,7 +47,7 @@ type Activities struct {
 	repo         repositories.RecurringShipmentRepository
 	auditService services.AuditService
 	notification *notificationservice.Service
-	realtime     services.RealtimeService
+	invalidator  services.ShipmentInvalidator
 	logger       *zap.Logger
 }
 
@@ -56,7 +56,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		repo:         p.Repo,
 		auditService: p.AuditService,
 		notification: p.NotificationService,
-		realtime:     p.Realtime,
+		invalidator:  p.Invalidator,
 		logger:       p.Logger.Named("recurring-shipment-activities"),
 	}
 }
@@ -109,6 +109,14 @@ func (a *Activities) dispatchSeries(
 		Trigger:             recurringshipment.RunTriggerAuto,
 		RequestedBy:         series.EnteredByID,
 	})
+	if err != nil && errortypes.IsPlanRestrictionError(err) {
+		log.Info(
+			"recurring shipment generation skipped: the organization's plan does not allow writes",
+			zap.Error(err),
+		)
+		result.Skipped++
+		return
+	}
 	if err != nil {
 		log.Error("recurring shipment generation failed", zap.Error(err))
 		result.Failed++
@@ -152,20 +160,13 @@ func (a *Activities) dispatchSeries(
 		log.Error("failed to log generated shipment audit action", zap.Error(auditErr))
 	}
 
-	if publishErr := realtimeinvalidation.Publish(
-		tenantCtx,
-		a.realtime,
-		&realtimeinvalidation.PublishParams{
-			OrganizationID: generation.Shipment.OrganizationID,
-			BusinessUnitID: generation.Shipment.BusinessUnitID,
-			Resource:       "shipments",
-			Action:         "created",
-			RecordID:       generation.Shipment.ID,
-			Entity:         generation.Shipment,
-		},
-	); publishErr != nil {
-		log.Warn("failed to publish generated shipment invalidation", zap.Error(publishErr))
-	}
+	services.InvalidateShipments(tenantCtx, a.invalidator, &services.ShipmentInvalidation{
+		OrganizationID: generation.Shipment.OrganizationID,
+		BusinessUnitID: generation.Shipment.BusinessUnitID,
+		Action:         "created",
+		RecordID:       generation.Shipment.ID,
+		Entity:         generation.Shipment,
+	})
 
 	a.notifyIfExpired(tenantCtx, generation.Series)
 }

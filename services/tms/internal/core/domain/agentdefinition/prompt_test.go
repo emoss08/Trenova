@@ -557,3 +557,17 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 		"the section is emitted even without the Tools provider when the turn is disclosed",
 	)
 }
+
+// A preference the person states is saved without their having to say
+// "remember", so it holds in the next conversation.
+func TestBuildSystemPrompt_TellsAConversationAgentToSaveStatedPreferences(t *testing.T) {
+	t.Parallel()
+
+	prompt := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{})
+	assert.Contains(t, prompt, "## Remembering")
+	assert.Contains(t, prompt, "save it with remember in the same turn")
+	assert.Contains(t, prompt, "Never show the person a record's internal id")
+
+	delegated := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{DelegatedBy: "Dispatch desk"})
+	assert.NotContains(t, delegated, "## Remembering", "a delegate answers an agent, not the person")
+}

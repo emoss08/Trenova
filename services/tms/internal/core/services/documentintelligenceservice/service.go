@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -40,6 +42,7 @@ type Params struct {
 	SearchRepo          repositories.SearchRepository
 	SearchProjection    serviceports.DocumentSearchProjectionService
 	WorkflowStarter     serviceports.WorkflowStarter
+	Plans               serviceports.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -53,6 +56,7 @@ type Service struct {
 	searchRepo          repositories.SearchRepository
 	searchProjection    serviceports.DocumentSearchProjectionService
 	workflowStarter     serviceports.WorkflowStarter
+	plans               serviceports.PlanService
 }
 
 var _ serviceports.DocumentContentService = (*Service)(nil)
@@ -79,6 +83,7 @@ func New(p Params) serviceports.DocumentContentService {
 		searchRepo:          p.SearchRepo,
 		searchProjection:    searchProjection,
 		workflowStarter:     workflowStarter,
+		plans:               p.Plans,
 	}
 }
 
@@ -152,6 +157,14 @@ func (s *Service) Reextract(
 		return errortypes.NewConflictError(
 			"Re-extraction is only available for rate confirmation import documents",
 		)
+	}
+	if err = planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityDocumentIntelligence,
+	); err != nil {
+		return err
 	}
 
 	doc.ContentStatus = document.ContentStatusPending

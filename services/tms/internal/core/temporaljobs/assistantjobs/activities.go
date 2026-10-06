@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -74,6 +75,11 @@ type ActivitiesParams struct {
 	Notifications *notificationservice.Service
 	Trajectory    serviceports.AgentRunEventRecorder   `optional:"true"`
 	FollowUps     serviceports.DecisionFollowUpResumer `optional:"true"`
+	Metrics       *metrics.Registry                    `optional:"true"`
+	// Workflows starts the compaction a turn that filled its conversation
+	// sets off.
+	Workflows   serviceports.WorkflowStarter          `optional:"true"`
+	Reflections serviceports.AgentReflectionScheduler `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -88,17 +94,23 @@ type Activities struct {
 	threads       replyThreads
 	notifications replyNotifications
 	followUps     serviceports.DecisionFollowUpResumer
+	metrics       *metrics.Assistant
+	workflows     serviceports.WorkflowStarter
+	reflections   serviceports.AgentReflectionScheduler
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	a := &Activities{
-		logger:     p.Logger.Named("job.assistant-turn"),
-		assistant:  p.Assistant,
-		turns:      p.Turns,
-		turnRepo:   p.TurnRepo,
-		steps:      p.Steps,
-		trajectory: p.Trajectory,
-		followUps:  p.FollowUps,
+		logger:      p.Logger.Named("job.assistant-turn"),
+		assistant:   p.Assistant,
+		turns:       p.Turns,
+		turnRepo:    p.TurnRepo,
+		steps:       p.Steps,
+		trajectory:  p.Trajectory,
+		followUps:   p.FollowUps,
+		metrics:     metrics.AssistantFrom(p.Metrics),
+		workflows:   p.Workflows,
+		reflections: p.Reflections,
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
@@ -130,10 +142,16 @@ func (a *Activities) PrepareTurnActivity(
 		)
 	}
 
+	started := time.Now()
 	plan, err := a.assistant.PrepareTurn(ctx, payload.sendRequest(), &payload.Actor)
+	a.metrics.RecordPrepare(prepareOutcome(plan, err), time.Since(started).Seconds())
 	if err != nil {
 		if rejected(err) {
-			return nil, temporal.NewNonRetryableApplicationError(err.Error(), errTypeRejected, err)
+			// The refusal's figures travel with it, so a usage cap reaches the
+			// reader as the cap it is rather than as a sentence.
+			return nil, temporal.NewNonRetryableApplicationError(
+				err.Error(), errTypeRejected, err, rejectionParams(err),
+			)
 		}
 
 		return nil, fmt.Errorf("prepare this turn: %w", err)
@@ -142,11 +160,49 @@ func (a *Activities) PrepareTurnActivity(
 	return plan, nil
 }
 
+// prepareOutcome names how preparing a turn ended, for its timing.
+func prepareOutcome(plan *assistantservice.TurnPlan, err error) string {
+	switch {
+	case err != nil && rejected(err):
+		return "rejected"
+	case err != nil:
+		return "failed"
+	case plan.Refused():
+		return "refused"
+	default:
+		return "allowed"
+	}
+}
+
 // rejected reports an error that is an answer rather than a fault: something
 // the person asked for that cannot be done, which asking again will not
 // change.
+// rejectionParams are the figures a refusal carries for the client, empty
+// for one that carries none.
+func rejectionParams(err error) map[string]string {
+	if quota, ok := errors.AsType[*errortypes.QuotaExceededError](err); ok {
+		params := quota.Params()
+		params["code"] = planLimitCode
+		return params
+	}
+	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		params := restriction.Params()
+		params["code"] = planRestrictedCode
+		return params
+	}
+
+	var business *errortypes.BusinessError
+	if errors.As(err, &business) && len(business.Params) > 0 {
+		return business.Params
+	}
+
+	return map[string]string{}
+}
+
 func rejected(err error) bool {
 	return errortypes.IsBusinessError(err) ||
+		errortypes.IsQuotaExceededError(err) ||
+		errortypes.IsPlanRestrictionError(err) ||
 		errortypes.IsMultiError(err) ||
 		errortypes.IsNotFoundError(err) ||
 		errortypes.IsAuthorizationError(err)
@@ -186,6 +242,7 @@ func (a *Activities) FinishTurnActivity(
 
 		ending := a.alreadySaved(ctx, turn)
 		a.resumeFollowUps(ctx, in)
+		a.cueReflection(ctx, in)
 		emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 		return ending, nil
@@ -203,6 +260,7 @@ func (a *Activities) FinishTurnActivity(
 	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
 	a.resumeFollowUps(ctx, in)
+	a.cueReflection(ctx, in)
 	emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 	return ending, nil
@@ -312,6 +370,20 @@ func (a *Activities) resumeFollowUps(ctx context.Context, in *FinishTurnInput) {
 	})
 }
 
+func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
+	if a.reflections == nil || in.Plan == nil || in.Plan.Refused() {
+		return
+	}
+
+	payload := in.Payload
+	a.reflections.AfterTurn(ctx, &serviceports.ReflectOnThreadRequest{
+		TenantInfo: payload.tenantInfo(),
+		ThreadID:   payload.ThreadID,
+		UserID:     payload.Actor.UserID,
+		TurnID:     payload.TurnID,
+	})
+}
+
 // finish saves the turn and decides how it ended. cause is why the turn did
 // not finish, for the turn's record; err is a failure to save, which fails the
 // activity so it is tried again.
@@ -326,11 +398,18 @@ func (a *Activities) finish(
 				in.Failure.Err(), nil
 		}
 		if in.Rejection != "" {
-			return failedEnding(conversation.AssistantTurnStatusFailed, in.Rejection),
-				errors.New(in.Rejection), nil
+			ending := failedEnding(conversation.AssistantTurnStatusFailed, in.Rejection)
+			if limit := usageLimit(in.RejectionParams); limit != nil {
+				ending.Event.Data = map[string]any{
+					"message": in.Rejection,
+					"code":    errorCodeUsageLimit,
+					"limit":   limit,
+				}
+			}
+			return ending, errors.New(in.Rejection), nil
 		}
 
-		return failedEnding(conversation.AssistantTurnStatusFailed, failedMessage),
+		return failedEndingFor(conversation.AssistantTurnStatusFailed, failedMessage, in.Failure),
 			in.Failure.Err(), nil
 	}
 
@@ -355,9 +434,9 @@ func (a *Activities) finish(
 	status := assistantturnservice.StatusFor(result.Refused, cause)
 	switch status {
 	case conversation.AssistantTurnStatusStopped:
-		return failedEnding(status, stoppedMessage), cause, nil
+		return keptInThread(failedEnding(status, stoppedMessage)), cause, nil
 	case conversation.AssistantTurnStatusFailed:
-		return failedEnding(status, failedMessage), cause, nil
+		return keptInThread(failedEndingFor(status, failedMessage, in.Failure)), cause, nil
 	default:
 		return &TurnEnding{
 			Result: AssistantTurnResult{
@@ -365,9 +444,28 @@ func (a *Activities) finish(
 				Refused: result.Refused,
 				Result:  result,
 			},
-			Event: temporaltype.StreamItem{Event: serviceports.AssistantEventDone, Data: result},
+			Event:   temporaltype.StreamItem{Event: serviceports.AssistantEventDone, Data: result},
+			Compact: compactionCue(status, result),
 		}, nil, nil
 	}
+}
+
+// compactionCue is the cue to compact a conversation a turn answered, when it
+// compacts itself and the turn left it past conversation.AutoCompactShare.
+// Only an answered turn sets one off: a refusal added nothing worth room.
+func compactionCue(
+	status conversation.AssistantTurnStatus,
+	result *serviceports.SendMessageResult,
+) *CompactionCue {
+	if status != conversation.AssistantTurnStatusCompleted || result.Thread == nil {
+		return nil
+	}
+	usage := result.Thread.ContextUsage
+	if !result.Thread.CompactsItself() || !usage.NeedsCompaction() {
+		return nil
+	}
+
+	return &CompactionCue{Before: usage.Total(), After: usage.Total() - usage.Frees()}
 }
 
 func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput) {
@@ -395,6 +493,105 @@ func failedEnding(status conversation.AssistantTurnStatus, message string) *Turn
 			Event: serviceports.AssistantEventError,
 			Data:  map[string]any{"message": message},
 		},
+	}
+}
+
+// failedEndingFor is a failed ending that says why, where the failure knows:
+// no model is set up, or every model asked was down and which ones.
+func failedEndingFor(
+	status conversation.AssistantTurnStatus,
+	message string,
+	failure *modelcall.Failure,
+) *TurnEnding {
+	ending := failedEnding(status, message)
+	if failure == nil {
+		return ending
+	}
+	data := map[string]any{"message": message}
+	switch {
+	case failure.Plan != nil:
+		ending = failedEnding(status, failure.Plan.Message)
+		data["message"] = failure.Plan.Message
+		data["code"] = errorCodeUsageLimit
+		data["limit"] = planLimit(failure.Plan)
+	case failure.NoProvider:
+		data["code"] = errorCodeNoProvider
+	case len(failure.Providers) > 0:
+		data["code"] = errorCodeNoModelAnswered
+		data["providers"] = failure.Providers
+	default:
+		return ending
+	}
+	ending.Event.Data = data
+
+	return ending
+}
+
+// keptInThread marks a failed ending whose turn was saved, closing note and
+// all, so the reader can hand over to the conversation, which now shows the
+// failure as it will be read back later, instead of keeping its own copy.
+func keptInThread(ending *TurnEnding) *TurnEnding {
+	if data, ok := ending.Event.Data.(map[string]any); ok {
+		data["saved"] = true
+	}
+
+	return ending
+}
+
+// The codes on a failed turn's error event, for a client that shows each
+// differently.
+const (
+	errorCodeNoProvider      = "no_provider"
+	errorCodeNoModelAnswered = "no_model_answered"
+	// errorCodeUsageLimit is a question a usage cap turned away: the agent's
+	// monthly budget or daily runs, or the person's own monthly allowance.
+	errorCodeUsageLimit = "usage_limit"
+
+	planLimitCode      = "quota_exceeded"
+	planRestrictedCode = "plan_restricted"
+	planLimitKind      = "plan_limit"
+)
+
+func planLimit(refusal *modelcall.PlanRefusal) map[string]any {
+	return map[string]any{
+		"kind":     planLimitKind,
+		"used":     strconv.FormatInt(refusal.Used, 10),
+		"limit":    strconv.FormatInt(refusal.Limit, 10),
+		"meter":    refusal.Meter,
+		"plan":     refusal.Plan,
+		"resetsAt": int64(0),
+	}
+}
+
+// usageLimit is the cap a refusal names, in the shape the client reads, or
+// nil when the refusal was not a usage cap.
+func usageLimit(params map[string]string) map[string]any {
+	var kind, used string
+	switch {
+	case params["code"] == planLimitCode:
+		return map[string]any{
+			"kind":     planLimitKind,
+			"used":     params["used"],
+			"limit":    params["limit"],
+			"meter":    params["meter"],
+			"plan":     params["plan"],
+			"resetsAt": int64(0),
+		}
+	case params["code"] == "person_allowance":
+		kind, used = "person_allowance", params["used"]
+	case params["code"] == "agent_budget" &&
+		(params["cap"] == "monthly_budget" || params["cap"] == "daily_runs"):
+		kind, used = params["cap"], params["spent"]
+	default:
+		return nil
+	}
+	resetsAt, _ := strconv.ParseInt(params["resetsAt"], 10, 64)
+
+	return map[string]any{
+		"kind":     kind,
+		"used":     used,
+		"limit":    params["limit"],
+		"resetsAt": resetsAt,
 	}
 }
 

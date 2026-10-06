@@ -23,7 +23,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon, OctagonXIcon, SlidersHorizontalIcon } from "lucide-react";
+import { AlertCircleIcon, Sliders01Icon, XOctagonIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatShare } from "../quality-model";
@@ -70,7 +70,7 @@ function HaltAlert({ rollout }: { rollout: ExtractionRollout }) {
 
   return (
     <Alert variant="destructive" size="sm">
-      <OctagonXIcon />
+      <XOctagonIcon />
       <AlertTitle>{t("A guard stopped the rollout")}</AlertTitle>
       <AlertDescription>
         <p>
@@ -224,12 +224,12 @@ export function RolloutView() {
                   isLoading={stop.isPending}
                   onClick={() => stop.mutate(current)}
                 >
-                  <OctagonXIcon />
+                  <XOctagonIcon />
                   {t("Stop rollout")}
                 </Button>
               ) : null}
               <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>
-                <SlidersHorizontalIcon />
+                <Sliders01Icon />
                 {t("Edit settings")}
               </Button>
             </div>
@@ -249,7 +249,7 @@ export function RolloutView() {
 
       {report.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {t("The rollout comparison could not be loaded. Try again shortly.")}
           </AlertDescription>

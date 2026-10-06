@@ -21,7 +21,7 @@ import {
   type MatrixAxisPosition,
 } from "@trenova/shared/lib/rate-matrix";
 import type { RateMatrix, RateMatrixCell, RateMatrixDimension } from "@trenova/shared/types/rate";
-import { CircleAlertIcon, LoaderCircleIcon, SaveIcon } from "lucide-react";
+import { AlertCircleIcon, Save01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -178,7 +178,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   if (isLoading) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
-        <LoaderCircleIcon className="size-4 animate-spin" />
+        <SpinnerIcon className="size-4 animate-spin" />
         {t("Loading rates")}
       </div>
     );
@@ -219,7 +219,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
 
       {issues.length > 0 && (
         <Alert variant="destructive">
-          <CircleAlertIcon className="size-4" />
+          <AlertCircleIcon className="size-4" />
           <AlertDescription>
             <ul className="list-disc pl-4">
               {issues.map((issue) => (
@@ -301,9 +301,9 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
           onClick={() => save.mutate()}
         >
           {save.isPending ? (
-            <LoaderCircleIcon className="mr-1 size-3.5 animate-spin" />
+            <SpinnerIcon className="mr-1 size-3.5 animate-spin" />
           ) : (
-            <SaveIcon className="mr-1 size-3.5" />
+            <Save01Icon className="mr-1 size-3.5" />
           )}
           {t("Save rates")}
         </Button>

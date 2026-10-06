@@ -1,3 +1,4 @@
+import logoRainbow from "@/assets/logo.webp";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
@@ -70,9 +71,7 @@ export function StepHeading({ title, children }: { title: string; children?: Rea
   return (
     <>
       <h1 className="m-0 text-xl font-semibold tracking-[-0.028em]">{title}</h1>
-      {children ? (
-        <p className="text-muted-foreground mt-1 mb-0 text-sm">{children}</p>
-      ) : null}
+      {children ? <p className="text-muted-foreground mt-1 mb-0 text-sm">{children}</p> : null}
     </>
   );
 }
@@ -320,4 +319,16 @@ export function useMorphHeight() {
   }, []);
 
   return { outerRef, innerRef, animated };
+}
+
+/** The wordmark above the card on narrow screens, where the ambient panel is hidden. */
+export function AuthMobileBrand() {
+  const t = useT();
+
+  return (
+    <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
+      <img src={logoRainbow} alt="" className="size-6 object-contain" />
+      <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
+    </div>
+  );
 }

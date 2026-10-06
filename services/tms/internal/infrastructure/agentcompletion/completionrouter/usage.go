@@ -29,10 +29,13 @@ type usageAttempt struct {
 	attribution serviceports.AIUsageAttribution
 	tenant      pagination.TenantInfo
 	latency     time.Duration
-	streamed    bool
-	operation   string
-	attempt     int
-	failover    bool
+	// firstToken is how long the attempt took to stream its first text or
+	// thinking; zero when it streamed none.
+	firstToken time.Duration
+	streamed   bool
+	operation  string
+	attempt    int
+	failover   bool
 	// outcome is nil when the attempt failed before the provider wrote
 	// anything; tokens then stay zero. An attempt that failed or was stopped
 	// partway carries what was counted from its stream.
@@ -93,6 +96,9 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 		AgentDefinitionVersion: intutils.ClonePointer(
 			attempt.attribution.DefinitionVersion,
 		),
+	}
+	if attempt.firstToken > 0 {
+		row.FirstTokenMs = new(attempt.firstToken.Milliseconds())
 	}
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		row.TraceID = sc.TraceID().String()

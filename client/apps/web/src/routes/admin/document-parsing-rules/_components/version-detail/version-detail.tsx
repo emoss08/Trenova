@@ -30,7 +30,12 @@ import {
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon, ArrowLeftIcon, LockIcon, RocketIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ArrowLeftIcon,
+  Lock01Icon,
+  Rocket02Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -188,7 +193,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                       className="gap-1.5"
                       disabled={publishMutation.isPending}
                     >
-                      <RocketIcon className="size-3.5" />
+                      <Rocket02Icon className="size-3.5" />
                       {t("Publish")}
                     </Button>
                   }
@@ -230,7 +235,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
 
           {isReadOnly && (
             <Alert variant="info">
-              <LockIcon />
+              <Lock01Icon />
               <AlertTitle>{t("Read-only version")}</AlertTitle>
               <AlertDescription>
                 {version.status === "Published"

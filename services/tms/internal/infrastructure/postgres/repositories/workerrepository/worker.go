@@ -5,9 +5,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -27,17 +30,20 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
+	Quota  services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota services.QuotaGuard
 }
 
 func New(p Params) repositories.WorkerRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.worker-repository"),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.worker-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -220,6 +226,17 @@ func (r *repository) Create(
 		)
 
 		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if quotaErr := quotaservice.EnforceAll(c, r.quota, services.QuotaRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
+				Meter:    platformcatalog.MeterWorkersTotal,
+				Quantity: 1,
+			}); quotaErr != nil {
+				return quotaErr
+			}
+
 			if _, insertErr := r.db.
 				DBForContext(c).
 				NewInsert().

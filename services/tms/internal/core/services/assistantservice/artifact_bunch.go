@@ -103,6 +103,16 @@ func (r *artifactRecorder) retire(cards []*assistantartifact.Artifact) {
 			zap.String("thread", r.thread.ID.String()),
 			zap.Error(err),
 		)
+
+		return
+	}
+
+	for _, id := range ids {
+		r.forget(id)
+		r.emit(services.StreamEvent{
+			Event: services.AssistantEventArtifactRemoved,
+			Data:  services.AssistantArtifactRemovedEvent{ID: id},
+		})
 	}
 }
 

@@ -37,7 +37,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { cn } from "@trenova/shared/lib/utils";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 const MAX_METRIC_ROW = 6;
@@ -335,7 +335,7 @@ function MetricPicker({
               placeholder={t("Search metrics…")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             />
           </div>
         )}
@@ -583,7 +583,7 @@ function DashboardPicker({
               placeholder={t("Search dashboards…")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             />
           </div>
         )}

@@ -234,7 +234,7 @@ func setupHandlerWithConfig(
 	logger := zap.NewNop()
 
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
-	thumbnailGen := thumbnailservice.NewGenerator()
+	thumbnailGen := thumbnailservice.NewGenerator(nil)
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
 

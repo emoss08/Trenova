@@ -6,7 +6,7 @@ import * as React from "react";
 
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -78,7 +78,7 @@ function DialogContent({
             data-slot="dialog-close"
             render={
               <Button variant="ghost" className="absolute top-2 right-2" size="icon-sm">
-                <XIcon />
+                <XCloseIcon />
                 <span className="sr-only">{t("Close")}</span>
               </Button>
             }

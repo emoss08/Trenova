@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 
 export type RainViewerFrame = { time: number; path: string };
 
@@ -34,5 +34,5 @@ export type WeatherOption = {
   id: WeatherLayerId;
   label: string;
   description: string;
-  icon: LucideIcon;
+  icon: IconComponent;
 };

@@ -150,3 +150,38 @@ func TestFindActive_NeverHandsATaintedRowToACleanWrite(t *testing.T) {
 	require.NotNil(t, found)
 	assert.Equal(t, clean.ID, found.ID, "a clean row is preferred whenever one says the same")
 }
+
+// An agent told the same rule twice, once with a full stop and odd spacing
+// and once without, should land on the memory it already has; a sentence
+// that says something else, however close, is a memory of its own.
+func TestFindActive_MatchesTheSameWordsWhateverTheCaseSpacingOrPunctuation(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+	now := timeutils.NowUnix()
+
+	created, err := repo.Create(ctx, activeMemory(tenant, "Quote Acme in dollars, never euros."))
+	require.NoError(t, err)
+
+	find := func(content string) *agent.Memory {
+		found, findErr := repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
+			TenantInfo: tenant,
+			Now:        now,
+			Content:    content,
+			Scope:      agent.MemoryScopeOrganization,
+		})
+		require.NoError(t, findErr)
+
+		return found
+	}
+
+	same := find("  quote acme in dollars   never euros ")
+	require.NotNil(t, same)
+	assert.Equal(t, created.ID, same.ID)
+
+	assert.Nil(t, find("Quote Acme in dollars, never pounds."),
+		"one word apart is a different memory")
+}

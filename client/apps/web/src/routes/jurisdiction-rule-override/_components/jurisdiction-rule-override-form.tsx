@@ -6,7 +6,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { JurisdictionRuleOverride } from "@/types/jurisdiction-rule-override";
-import { ShieldIcon } from "lucide-react";
+import { Shield01Icon } from "@trenova/shared/components/icons";
 import { useFormContext } from "react-hook-form";
 
 export function JurisdictionRuleOverrideForm() {
@@ -17,7 +17,7 @@ export function JurisdictionRuleOverrideForm() {
   return (
     <div className="flex flex-col gap-4">
       <Alert>
-        <ShieldIcon className="size-4" />
+        <Shield01Icon className="size-4" />
         <AlertDescription>
           {t(
             "An override can only make a state limit stricter, never looser. Leave a field blank to use whatever the state requires. This applies to your organization alone.",

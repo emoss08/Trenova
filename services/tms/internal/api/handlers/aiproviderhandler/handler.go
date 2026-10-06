@@ -121,10 +121,12 @@ type saveProviderRequest struct {
 	AllowPrivateNetwork  bool                            `json:"allowPrivateNetwork"`
 	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
 	ReasoningEffort      aiprovider.ReasoningEffort      `json:"reasoningEffort"`
+	ThinkingStyle        aiprovider.ThinkingStyle        `json:"thinkingStyle"`
 	ExtraBody            map[string]any                  `json:"extraBody"`
 	InputCostPerMillion  *decimal.Decimal                `json:"inputCostPerMillion"`
 	OutputCostPerMillion *decimal.Decimal                `json:"outputCostPerMillion"`
 	MaxTokens            int                             `json:"maxTokens"`
+	ContextWindow        *int                            `json:"contextWindow"`
 	Tasks                []aiprovider.Task               `json:"tasks"`
 	Priority             int                             `json:"priority"`
 	EmbeddingDimensions  *int                            `json:"embeddingDimensions"`
@@ -149,10 +151,12 @@ func (r *saveProviderRequest) toServiceRequest(
 		AllowPrivateNetwork:  r.AllowPrivateNetwork,
 		StructuredOutputMode: r.StructuredOutputMode,
 		ReasoningEffort:      r.ReasoningEffort,
+		ThinkingStyle:        r.ThinkingStyle,
 		ExtraBody:            r.ExtraBody,
 		InputCostPerMillion:  r.InputCostPerMillion,
 		OutputCostPerMillion: r.OutputCostPerMillion,
 		MaxTokens:            r.MaxTokens,
+		ContextWindow:        r.ContextWindow,
 		Tasks:                r.Tasks,
 		Priority:             r.Priority,
 		EmbeddingDimensions:  r.EmbeddingDimensions,

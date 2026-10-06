@@ -12,7 +12,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, SearchIcon, XIcon } from "lucide-react";
+import { CheckIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -172,7 +172,7 @@ export function ReportSourcePicker({
           placeholder={savedTab ? "Search saved reports…" : "Search the gallery…"}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           rightElement={
             search ? (
               <Button
@@ -182,7 +182,7 @@ export function ReportSourcePicker({
                 className="size-6"
                 onClick={() => setSearch("")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             ) : undefined
           }
@@ -290,7 +290,7 @@ function PickerRow({ row }: { row: Row }) {
       onClick={row.onSelect}
       className={cn(
         "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
-"ui-focus-ring",
+        "ui-focus-ring",
         row.selected
           ? "border-brand/50 bg-brand/10 border"
           : "hover:bg-muted/70 border border-transparent",
@@ -309,9 +309,7 @@ function PickerRow({ row }: { row: Row }) {
         )}
       </span>
       {row.meta && (
-        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-2xs">
-          {row.meta}
-        </span>
+        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-2xs">{row.meta}</span>
       )}
     </button>
   );

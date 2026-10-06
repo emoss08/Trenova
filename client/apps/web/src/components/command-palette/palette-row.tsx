@@ -8,7 +8,12 @@ import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { shipmentStatusSchema } from "@trenova/shared/types/shipment";
-import { CheckIcon, ChevronRightIcon, CircleAlertIcon, PinIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  Pin01Icon,
+} from "@trenova/shared/components/icons";
 import { memo, useMemo } from "react";
 import { BRAND_TILE_CLASS, NEUTRAL_TILE_CLASS, PALETTE_ENTITIES } from "./palette-entities";
 import type { PaletteItem, PaletteRecord } from "./palette-model";
@@ -196,7 +201,7 @@ function RowBody({ item, query }: { item: PaletteItem; query: string }) {
             <Trail trail={item.page.trail} query={query} />
           </span>
           {item.pinned && (
-            <PinIcon
+            <Pin01Icon
               aria-label={t("Pinned")}
               className="text-foreground-subtle size-3.5 shrink-0"
             />
@@ -234,7 +239,7 @@ function RowBody({ item, query }: { item: PaletteItem; query: string }) {
       return (
         <>
           <PaletteTile
-            icon={CircleAlertIcon}
+            icon={AlertCircleIcon}
             className={ATTENTION_TILE[item.attention.tone] ?? NEUTRAL_TILE_CLASS}
           />
           <span className="flex min-w-0 flex-1 flex-col">

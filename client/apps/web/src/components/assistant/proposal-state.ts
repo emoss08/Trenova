@@ -74,6 +74,7 @@ export function classifyProposal(
       // The server refuses every decision while a shadow switch is on. A
       // card with buttons would only teach that by failing the click.
       return proposal.hold ? "held" : "awaiting";
+    case "Approving":
     case "Accepted":
     case "Modified":
       return "running";
@@ -273,14 +274,16 @@ export function pollIntervalFor(
   const running =
     proposals.some(
       (proposal) =>
-        (proposal.status === "Accepted" || proposal.status === "Modified") &&
+        (proposal.status === "Approving" ||
+          proposal.status === "Accepted" ||
+          proposal.status === "Modified") &&
         !proposal.executedAt &&
         !proposal.simulatedAt &&
         proposal.executionError === "",
     ) ||
     plans.some(
       (plan) =>
-        plan.status === "Approved" &&
+        (plan.status === "Approving" || plan.status === "Approved") &&
         plan.completedSteps < plan.stepCount &&
         (plan.failedStep ?? 0) === 0,
     );

@@ -11,7 +11,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useReportDrillThrough } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { ReportIrInput } from "@/lib/graphql/reports";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { ResultGrid } from "./result-grid";
 
@@ -78,7 +78,7 @@ export function DrillThroughSheet({
         <div className="flex min-h-0 flex-1 flex-col px-4 pb-4">
           {drill.isError ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-              <CircleAlertIcon className="text-destructive size-5" />
+              <AlertCircleIcon className="text-destructive size-5" />
               <p className="text-muted-foreground max-w-md text-xs whitespace-pre-wrap">
                 {graphQLErrorMessage(drill.error, "These records could not be loaded")}
               </p>

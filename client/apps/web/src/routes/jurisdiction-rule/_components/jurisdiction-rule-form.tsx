@@ -9,7 +9,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import type { JurisdictionRule } from "@/types/jurisdiction-rule";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { GlobeIcon } from "lucide-react";
+import { Globe02Icon } from "@trenova/shared/components/icons";
 import { useFormContext } from "react-hook-form";
 
 const STATUS_CHOICES = [
@@ -28,7 +28,7 @@ export function JurisdictionRuleForm() {
       {/* This is the one thing an editor most needs to know and would not
           otherwise see: the row is not theirs. */}
       <Alert>
-        <GlobeIcon className="size-4" />
+        <Globe02Icon className="size-4" />
         <AlertDescription>
           {t(
             "These limits are shared by every organization on the platform, not just yours. To hold your fleet to something stricter, record a carrier override instead. Changing any limit below clears the verification on this rule.",

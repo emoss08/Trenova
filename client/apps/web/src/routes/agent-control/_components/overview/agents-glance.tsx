@@ -8,7 +8,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { ActivityView } from "../rail-items";
 import { groupAgentsByTrigger } from "../agents/agent-roster";

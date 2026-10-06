@@ -7,7 +7,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { RecurringShipmentRow } from "@/lib/graphql/recurring-shipment-table";
 import type { RecurringShipmentStatus } from "@/types/recurring-shipment";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 
 const statusStyles: Record<RecurringShipmentStatus, string> = {
   Active: "border-success-border bg-success-subtle text-success-foreground",

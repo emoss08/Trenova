@@ -6,11 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -196,6 +199,10 @@ func (r *repository) Generate(
 				return r.advanceSeriesOnly(c, tx, series, occurrence)
 			}
 
+			if quotaErr := r.enforceGeneratedShipment(c, series); quotaErr != nil {
+				return quotaErr
+			}
+
 			generated, genErr := r.materializeOccurrence(c, tx, series, occurrence, req)
 			if genErr != nil {
 				return genErr
@@ -249,6 +256,20 @@ func (r *repository) Generate(
 		}
 
 		return result, nil
+	})
+}
+
+func (r *repository) enforceGeneratedShipment(
+	ctx context.Context,
+	series *recurringshipment.RecurringShipment,
+) error {
+	return quotaservice.EnforceAll(ctx, r.quota, services.QuotaRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: series.OrganizationID,
+			BuID:  series.BusinessUnitID,
+		},
+		Meter:    platformcatalog.MeterShipmentsTotal,
+		Quantity: 1,
 	})
 }
 

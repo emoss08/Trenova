@@ -3,7 +3,7 @@ import { BrandLogo } from "@trenova/shared/components/brand-logo";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { ExternalLinkIcon, WrenchIcon } from "lucide-react";
+import { LinkExternal01Icon, Tool01Icon } from "@trenova/shared/components/icons";
 import { extensionState, type ExtensionState } from "./extension-roster";
 
 type ExtensionCardProps = {
@@ -53,7 +53,7 @@ export function ExtensionCard({ extension, canUpdate, onOpen }: ExtensionCardPro
       <div className="flex flex-wrap gap-1.5">
         {extension.tools.map((tool) => (
           <Badge key={tool.name} variant="neutral" appearance="outline" title={tool.description}>
-            <WrenchIcon data-icon="inline-start" aria-hidden />
+            <Tool01Icon data-icon="inline-start" aria-hidden />
             <span className="font-mono">{tool.name}</span>
           </Badge>
         ))}
@@ -67,7 +67,7 @@ export function ExtensionCard({ extension, canUpdate, onOpen }: ExtensionCardPro
           className="ui-focus-ring text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-sm text-xs"
         >
           {extension.vendor}
-          <ExternalLinkIcon className="size-3" aria-hidden />
+          <LinkExternal01Icon className="size-3" aria-hidden />
         </a>
         <Button
           size="sm"

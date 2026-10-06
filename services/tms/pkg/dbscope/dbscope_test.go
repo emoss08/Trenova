@@ -92,3 +92,55 @@ func TestWithValidTenant_BindsOnlyACompleteTenant(t *testing.T) {
 	kept := WithValidTenant(system, Tenant{OrganizationID: tenant.OrganizationID})
 	assert.True(t, IsSystem(kept), "an incomplete tenant leaves the caller's scope alone")
 }
+
+func TestEnsureTenant(t *testing.T) {
+	t.Parallel()
+
+	tenant := testTenant()
+
+	t.Run("keeps a scope that already covers the tenant", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := WithTenant(t.Context(), tenant)
+		ensured := EnsureTenant(ctx, Tenant{
+			OrganizationID: tenant.OrganizationID,
+			BusinessUnitID: tenant.BusinessUnitID,
+		})
+		got, ok := TenantFrom(ensured)
+		assert.True(t, ok)
+		assert.Equal(t, tenant, got, "the user on the covering scope must survive")
+	})
+
+	t.Run("binds the tenant when the scope names another", func(t *testing.T) {
+		t.Parallel()
+
+		other := testTenant()
+		ctx := WithTenant(t.Context(), other)
+		ensured := EnsureTenant(ctx, tenant)
+		got, ok := TenantFrom(ensured)
+		assert.True(t, ok)
+		assert.Equal(t, tenant, got)
+	})
+
+	t.Run("binds the tenant on an unscoped context", func(t *testing.T) {
+		t.Parallel()
+
+		got, ok := TenantFrom(EnsureTenant(t.Context(), tenant))
+		assert.True(t, ok)
+		assert.Equal(t, tenant, got)
+	})
+
+	t.Run("keeps a system scope", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := WithSystem(t.Context(), "test")
+		assert.True(t, IsSystem(EnsureTenant(ctx, tenant)))
+	})
+
+	t.Run("ignores an invalid tenant", func(t *testing.T) {
+		t.Parallel()
+
+		ensured := EnsureTenant(t.Context(), Tenant{})
+		assert.Equal(t, KindNone, From(ensured).Kind())
+	})
+}

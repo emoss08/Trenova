@@ -13,17 +13,16 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/emoss08/trenova/cmd/cli/ai"
 	"github.com/emoss08/trenova/cmd/cli/api"
 	"github.com/emoss08/trenova/cmd/cli/db"
 	"github.com/emoss08/trenova/cmd/cli/redis"
-	"github.com/emoss08/trenova/cmd/cli/render"
 	"github.com/emoss08/trenova/cmd/cli/update"
 	"github.com/emoss08/trenova/cmd/cli/worker"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 
+	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/spf13/cobra"
 )
@@ -34,6 +33,8 @@ var (
 )
 
 func main() {
+	rootCmd.AddCommand(edition.Current().Commands...)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -46,7 +47,10 @@ var rootCmd = &cobra.Command{
 	Long: `Trenova CLI provides administrative tools for managing
 the Trenova transportation management system.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		loader := config.NewLoader(config.WithConfigPath("config"))
+		loader := config.NewLoader(append(
+			[]config.LoaderOption{config.WithConfigPath("config")},
+			edition.Current().LoaderOptions()...,
+		)...)
 
 		cf, err := loader.Load()
 		if err != nil {
@@ -66,6 +70,7 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version information",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Trenova %s\n", cfg.App.Version)
+		fmt.Printf("Edition: %s\n", edition.Current().Name)
 		fmt.Printf("Environment: %s\n", cfg.App.Env)
 	},
 }
@@ -295,11 +300,9 @@ func init() {
 		StringVar(&cfgFile, "config", "", "config file (default is config/config.yaml)")
 
 	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(ai.AICmd)
 	rootCmd.AddCommand(api.APICmd)
 	rootCmd.AddCommand(db.DbCmd)
 	rootCmd.AddCommand(redis.RedisCmd)
-	rootCmd.AddCommand(render.RenderCmd)
 	rootCmd.AddCommand(worker.WorkerCmd)
 	rootCmd.AddCommand(update.UpdateCmd)
 	searchVectorCmd.Flags().BoolP("list", "l", false, "List all searchable domains")

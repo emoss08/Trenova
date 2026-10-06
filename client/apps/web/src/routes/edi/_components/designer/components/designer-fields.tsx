@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import type { EDIPartnerSettingField, EDISourceContextField } from "@trenova/shared/types/edi";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { insertPathReference } from "../utils/edi-designer-utils";
@@ -373,13 +373,13 @@ function PathInput({
   return (
     <FieldWrapper label={label}>
       <div className="relative">
-        <SearchIcon className="text-muted-foreground absolute top-1/2 left-2 size-3 -translate-y-1/2" />
+        <SearchLgIcon className="text-muted-foreground absolute top-1/2 left-2 size-3 -translate-y-1/2" />
         <input
           value={value}
           disabled={disabled}
           placeholder={placeholder}
           onChange={(event) => onChange(event.target.value)}
- className="ui-focus-ring border-input bg-background h-8 w-full rounded-md border px-7 text-sm outline-none disabled:opacity-50"
+          className="ui-focus-ring border-input bg-background h-8 w-full rounded-md border px-7 text-sm outline-none disabled:opacity-50"
         />
       </div>
     </FieldWrapper>

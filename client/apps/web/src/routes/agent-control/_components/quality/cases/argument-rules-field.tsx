@@ -3,7 +3,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextChipsField } from "@/components/fields/text-chips-field";
 import { Button } from "@trenova/shared/components/ui/button";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import {
   blankArgumentRule,
@@ -150,7 +150,7 @@ function ArgumentRuleRow({
           aria-label={t("Remove this check")}
           onClick={onRemove}
         >
-          <Trash2Icon />
+          <Trash01Icon />
         </Button>
       </div>
     </div>

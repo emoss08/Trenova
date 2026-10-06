@@ -5,30 +5,30 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { MapStyleId, OverlayId } from "@/types/shipment-map";
-import type { LucideIcon } from "lucide-react";
 import {
+  AlertTriangleIcon,
   CircleDotIcon,
-  CloudSunIcon,
-  LayersIcon,
-  MapPinnedIcon,
+  CloudSun02Icon,
+  type IconComponent,
+  LayersThree01Icon,
+  MarkerPin04Icon,
   TrafficConeIcon,
-  TriangleAlertIcon,
-  TruckIcon,
-} from "lucide-react";
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 
 type OverlayConfig = {
   id: OverlayId;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
 };
 
 const OVERLAY_OPTIONS: OverlayConfig[] = [
-  { id: "vehicles", label: "Live vehicles", icon: TruckIcon },
+  { id: "vehicles", label: "Live vehicles", icon: Truck01Icon },
   { id: "geofences", label: "Geofences", icon: CircleDotIcon },
-  { id: "addresses", label: "Addresses", icon: MapPinnedIcon },
+  { id: "addresses", label: "Addresses", icon: MarkerPin04Icon },
   { id: "traffic", label: "Traffic", icon: TrafficConeIcon },
-  { id: "weather", label: "Weather", icon: CloudSunIcon },
-  { id: "alerts", label: "Weather alerts", icon: TriangleAlertIcon },
+  { id: "weather", label: "Weather", icon: CloudSun02Icon },
+  { id: "alerts", label: "Weather alerts", icon: AlertTriangleIcon },
 ];
 
 const MAP_BASE_OPTIONS: { id: MapStyleId; label: string }[] = [
@@ -57,13 +57,11 @@ export function MapOptionsPopover({
         <TooltipTrigger
           render={
             <PopoverTrigger
-              render={
-                <Button variant="outline" size="icon" className="bg-background size-7" />
-              }
+              render={<Button variant="outline" size="icon" className="bg-background size-7" />}
             />
           }
         >
-          <LayersIcon className="size-4" />
+          <LayersThree01Icon className="size-4" />
         </TooltipTrigger>
         <TooltipContent side="bottom">{t("Map options")}</TooltipContent>
       </Tooltip>
@@ -111,9 +109,5 @@ export function MapOptionsPopover({
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-muted-foreground text-xs font-semibold">
-      {children}
-    </span>
-  );
+  return <span className="text-muted-foreground text-xs font-semibold">{children}</span>;
 }

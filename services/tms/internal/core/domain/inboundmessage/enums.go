@@ -29,6 +29,22 @@ func AllProviders() []Provider {
 	return []Provider{ProviderPostmark, ProviderResend}
 }
 
+// FetchesContent reports whether the provider's webhook carries only a
+// message's metadata, leaving the body, headers and attachments to be read
+// from its API with the mailbox's key. Resend does; Postmark posts the whole
+// message.
+func (p Provider) FetchesContent() bool {
+	return p == ProviderResend
+}
+
+// DeliversAccountWide reports whether the provider posts every message its
+// account receives to each webhook, so a mailbox has to pick out the mail
+// addressed to it. Resend does; a Postmark inbound webhook belongs to one
+// inbound address.
+func (p Provider) DeliversAccountWide() bool {
+	return p == ProviderResend
+}
+
 // Classification is what the message turned out to be.
 //
 // The set is deliberately short. A classifier with thirty categories is one

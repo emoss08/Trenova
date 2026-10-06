@@ -29,6 +29,8 @@ export const ErrorCode = z.enum([
   "RESOURCE_IN_USE",
   "BREAKING_CHANGE",
   "NOT_IMPLEMENTED",
+  "QUOTA_EXCEEDED",
+  "PLAN_RESTRICTED",
 ]);
 
 export type ErrorCode = z.infer<typeof ErrorCode>;
@@ -46,6 +48,8 @@ export const ProblemType = z.enum([
   "resource-conflict",
   "request-timeout",
   "internal-error",
+  "quota-exceeded",
+  "plan-restricted",
 ]);
 
 export type ProblemType = z.infer<typeof ProblemType>;

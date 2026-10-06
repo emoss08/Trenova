@@ -49,6 +49,19 @@ type AgentDecision struct {
 	PreviewReviewed      bool             `json:"previewReviewed"      bun:"preview_reviewed,type:BOOLEAN,notnull,default:false"`
 	PreviewTargetVersion *int64           `json:"previewTargetVersion" bun:"preview_target_version,type:BIGINT,nullzero"`
 
+	// CommitsAt is when an approval made from the person's own conversation
+	// goes through, unless it is undone first. CommittedAt is when it did,
+	// and UndoneAt and UndoneByUserID when and by whom it was taken back; an
+	// undone decision is no decision, and the proposal waits again.
+	// CommitWorkflowID names the workflow that commits it, which every
+	// decision of one batch shares. All are empty for a decision that took
+	// effect when it was made.
+	CommitsAt        *int64    `json:"commitsAt"        bun:"commits_at,type:BIGINT,nullzero"`
+	CommittedAt      *int64    `json:"committedAt"      bun:"committed_at,type:BIGINT,nullzero"`
+	UndoneAt         *int64    `json:"undoneAt"         bun:"undone_at,type:BIGINT,nullzero"`
+	UndoneByUserID   *pulid.ID `json:"undoneByUserId"   bun:"undone_by_user_id,type:VARCHAR(100),nullzero"`
+	CommitWorkflowID string    `json:"commitWorkflowId" bun:"commit_workflow_id,type:VARCHAR(200),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -21,7 +21,7 @@ import {
 } from "@trenova/shared/lib/graphql/driver-portal";
 import { changeRequestTone, describeChanges } from "@trenova/shared/lib/self-service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PencilIcon, ShieldCheckIcon, ShieldAlertIcon } from "lucide-react";
+import { Edit02Icon, ShieldAlertIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
@@ -49,7 +49,7 @@ export function ComplianceCard() {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {data.isQualified ? (
-            <ShieldCheckIcon className="size-4 text-success-foreground" />
+            <ShieldTickIcon className="size-4 text-success-foreground" />
           ) : (
             <ShieldAlertIcon className="size-4 text-danger-foreground" />
           )}
@@ -86,7 +86,7 @@ export function ComplianceCard() {
           <h3 className="text-sm font-semibold">{t("Contact details")}</h3>
           {features.allowContactInfoEdit ? (
             <Button variant="outline" size="sm" className="h-8" onClick={() => setEditOpen(true)}>
-              <PencilIcon className="size-3.5" />
+              <Edit02Icon className="size-3.5" />
               {t("Edit")}
             </Button>
           ) : null}

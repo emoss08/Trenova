@@ -47,6 +47,7 @@ type ListMessagesRequest struct {
 	// order, so a page cut here never repeats or skips a message however
 	// many turns land while the reader scrolls.
 	BeforeSequence *int
+	AfterSequence  *int
 	// ExcludeKinds leaves messages of these kinds out, before Limit counts:
 	// the history replayed to the model leaves out another agent's steps, so
 	// they neither reach the model nor crowd its window.
@@ -54,6 +55,27 @@ type ListMessagesRequest struct {
 	// Kinds, when set, reads only messages of these kinds: the decision notes
 	// a conversation already carries, without the turns around them.
 	Kinds []conversation.MessageKind
+	// SinceCompaction reads only what the model still reads once the
+	// conversation has been compacted: the latest summary, and every message
+	// after the stretch it stands in for. Limit then counts from there. A
+	// conversation never compacted is read as it would be without it.
+	SinceCompaction bool
+}
+
+type AddSavedMemoriesRequest struct {
+	MessageID  pulid.ID
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Memories   []conversation.SavedMemory
+}
+
+// UpdateThreadContextRequest keeps how full a conversation's context is, and
+// whether it still compacts itself. A nil field is left as it is.
+type UpdateThreadContextRequest struct {
+	ThreadID       pulid.ID
+	TenantInfo     pagination.TenantInfo
+	Usage          *conversation.ContextUsage
+	AutoCompactOff *bool
 }
 
 // CountMessagesRequest counts a thread's messages, which is how long the
@@ -91,7 +113,79 @@ type MarkThreadTaintedRequest struct {
 	TaintedAt  int64
 }
 
+type ListThreadAttentionRequest struct {
+	ThreadIDs  []pulid.ID
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+type ThreadAttentionRow struct {
+	PendingPlans        int
+	PendingProposalRuns []pulid.ID
+	LastTurnStatus      conversation.AssistantTurnStatus
+}
+
+type MarkThreadReadRequest struct {
+	ThreadID   pulid.ID
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+	ReadAt     int64
+}
+
+type SearchMentionsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	Query        string
+	Kinds        []string
+	LimitPerKind int
+}
+
+type MentionRow struct {
+	Type     string `bun:"type"`
+	ID       string `bun:"id"`
+	Label    string `bun:"label"`
+	Subtitle string `bun:"subtitle"`
+}
+
+// SearchDeskRequest searches what one person has in the Desk: their
+// conversations, what was said in them, and what they produced.
+type SearchDeskRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	Query      string
+	// Kinds is any of chat, msg, art and dec.
+	Kinds        []string
+	LimitPerKind int
+}
+
+type CountQuestionsSinceRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	Since      int64
+}
+
+type DeskSearchRow struct {
+	Kind         string   `bun:"kind"`
+	ID           string   `bun:"id"`
+	ThreadID     pulid.ID `bun:"thread_id"`
+	AgentID      pulid.ID `bun:"agent_id"`
+	Title        string   `bun:"title"`
+	ThreadTitle  string   `bun:"thread_title"`
+	ArtifactKind string   `bun:"artifact_kind"`
+	Status       string   `bun:"status"`
+	At           int64    `bun:"at"`
+}
+
 type ConversationRepository interface {
+	SearchMentions(ctx context.Context, req SearchMentionsRequest) ([]MentionRow, error)
+	SearchDesk(ctx context.Context, req SearchDeskRequest) ([]DeskSearchRow, error)
+	// CountQuestionsSince counts what one person asked the agents from since
+	// on, across all their conversations.
+	CountQuestionsSince(ctx context.Context, req CountQuestionsSinceRequest) (int, error)
+	ListThreadAttention(
+		ctx context.Context,
+		req ListThreadAttentionRequest,
+	) (map[pulid.ID]ThreadAttentionRow, error)
+	MarkThreadRead(ctx context.Context, req MarkThreadReadRequest) error
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)
 	// GetThreadOwned reads a thread within a tenant whoever owns it, so the
@@ -120,4 +214,9 @@ type ConversationRepository interface {
 	// MarkThreadTainted writes the thread's taint and, the first time, when it
 	// became tainted. It leaves the thread's version alone.
 	MarkThreadTainted(ctx context.Context, req MarkThreadTaintedRequest) error
+	// UpdateThreadContext writes how full the conversation's context is and
+	// whether it compacts itself. It leaves the thread's version alone: it
+	// is the system's bookkeeping, not an edit a person could conflict with.
+	UpdateThreadContext(ctx context.Context, req UpdateThreadContextRequest) error
+	AddSavedMemories(ctx context.Context, req AddSavedMemoriesRequest) error
 }

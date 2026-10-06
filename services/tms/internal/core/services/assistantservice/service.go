@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -49,6 +51,26 @@ type Params struct {
 	Runs         repositories.AgentRunRepository     `optional:"true"`
 	SystemAgents serviceports.SystemAgentProvisioner `optional:"true"`
 	PageThreads  repositories.PageThreadRepository   `optional:"true"`
+	// AgentControls holds the per-person allowance; without it nobody is
+	// limited.
+	AgentControls repositories.AgentControlRepository `optional:"true"`
+	// Users names who turned an agent off.
+	Users repositories.UserRepository `optional:"true"`
+	// Notifier tells the people who run AI Control that someone asked for
+	// more room: access to an agent, more allowance, more budget.
+	Notifications *notificationservice.Service `optional:"true"`
+	// Completion rewrites a passage of a document a person asked to change,
+	// with the same models the conversation's agent uses.
+	Completion serviceports.StructuredCompleter `optional:"true"`
+	// Reports re-runs a report preview whole for its download, and Queries
+	// re-runs the list a table was read from; PDFs prints a document.
+	Reports *reporting.Service                  `optional:"true"`
+	Queries serviceports.AgentQueryToolRegistry `optional:"true"`
+	PDFs    serviceports.PDFRenderer            `optional:"true"`
+	// Memories describes the memories a reply used or saved, as the thread
+	// is served.
+	Memories serviceports.AgentMemoryService `optional:"true"`
+	Quota    serviceports.QuotaGuard         `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -59,6 +81,7 @@ var Module = fx.Module("assistant",
 		fx.As(fx.Self()),
 		fx.As(new(serviceports.AssistantService)),
 		fx.As(new(serviceports.PageAssistant)),
+		fx.As(new(serviceports.AgentRunTranscriptService)),
 	)),
 )
 
@@ -71,6 +94,7 @@ type Service struct {
 	definitions   repositories.AgentDefinitionRepository
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
+	proposalEdits proposalEditStore
 	plans         chatPlanStore
 	providers     repositories.AIProviderRepository
 	shadow        *agentshadow.Resolver
@@ -87,10 +111,19 @@ type Service struct {
 	runs          repositories.AgentRunRepository
 	systemAgents  serviceports.SystemAgentProvisioner
 	pageThreads   repositories.PageThreadRepository
+	agentControls repositories.AgentControlRepository
+	users         repositories.UserRepository
+	notifier      raiseNotifier
+	completion    serviceports.StructuredCompleter
+	reports       *reporting.Service
+	queries       serviceports.AgentQueryToolRegistry
+	pdfs          serviceports.PDFRenderer
+	memories      serviceports.AgentMemoryService
+	quota         serviceports.QuotaGuard
 }
 
 func New(p Params) *Service {
-	return &Service{
+	s := &Service{
 		logger:        p.Logger.Named("service.assistant"),
 		guard:         p.Guard,
 		runtime:       p.Runtime,
@@ -100,6 +133,7 @@ func New(p Params) *Service {
 		providers:     p.AIProviders,
 		recorder:      p.Recorder,
 		proposals:     p.Proposals,
+		proposalEdits: p.Proposals,
 		plans:         planStoreOrNil(p.Plans),
 		shadow:        p.Shadow,
 		budgets:       p.Budgets,
@@ -115,5 +149,26 @@ func New(p Params) *Service {
 		runs:          p.Runs,
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,
+		agentControls: p.AgentControls,
+		users:         p.Users,
+		notifier:      raiseNotifierOf(p.Notifications),
+		completion:    p.Completion,
+		queries:       p.Queries,
+		pdfs:          p.PDFs,
+		reports:       p.Reports,
+		memories:      p.Memories,
+		quota:         p.Quota,
 	}
+
+	return s
+}
+
+// raiseNotifierOf keeps a missing notification service nil as an interface,
+// so the service can tell that requests cannot be sent.
+func raiseNotifierOf(notifications *notificationservice.Service) raiseNotifier {
+	if notifications == nil {
+		return nil
+	}
+
+	return notifications
 }

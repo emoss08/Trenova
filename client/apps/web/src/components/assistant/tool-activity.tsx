@@ -11,29 +11,29 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { cn } from "@trenova/shared/lib/utils";
 import type { ToolEffect } from "@/types/assistant";
 import {
-  BanIcon,
-  BlocksIcon,
-  BookOpenIcon,
+  AlertCircleIcon,
+  BookOpen01Icon,
   CheckIcon,
   ChevronRightIcon,
-  CircleAlertIcon,
-  CodeIcon,
-  CompassIcon,
-  FileTextIcon,
-  ForwardIcon,
-  GaugeIcon,
+  Code01Icon,
+  Compass03Icon,
+  Edit03Icon,
+  File06Icon,
   GitCompareArrowsIcon,
-  GlobeIcon,
-  LockIcon,
-  MessageCircleQuestionIcon,
-  PenLineIcon,
-  PresentationIcon,
-  Repeat2Icon,
+  Globe02Icon,
+  Grid01Icon,
+  type IconComponent,
+  Lock01Icon,
+  MessageQuestionCircleIcon,
+  PresentationChart01Icon,
+  Repeat04Icon,
+  ReverseRightIcon,
   ScrollTextIcon,
-  SearchIcon,
+  SearchLgIcon,
+  SlashCircle01Icon,
+  Speedometer03Icon,
   TableIcon,
-  type LucideIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import {
   delegateRunning,
@@ -43,6 +43,7 @@ import {
   refusalLabel,
   refusalTone,
   toolRefusal,
+  workSummary,
   type ActivityGroup,
   type ActivityLine,
   type ToolRefusal,
@@ -67,32 +68,32 @@ import { sourcesOfStep } from "./web-sources";
 
 export type { ToolActivityStatus, ToolStep } from "./activity";
 
-const EFFECT_ICONS: Record<ToolEffect, LucideIcon> = {
-  lookup: SearchIcon,
-  discover: BlocksIcon,
-  navigate: CompassIcon,
-  present: PresentationIcon,
-  change: PenLineIcon,
-  ask: MessageCircleQuestionIcon,
-  delegate: ForwardIcon,
+const EFFECT_ICONS: Record<ToolEffect, IconComponent> = {
+  lookup: SearchLgIcon,
+  discover: Grid01Icon,
+  navigate: Compass03Icon,
+  present: PresentationChart01Icon,
+  change: Edit03Icon,
+  ask: MessageQuestionCircleIcon,
+  delegate: ReverseRightIcon,
 };
 
 /** A few tools say more about themselves than their effect does. */
-const NAMED_ICONS: Readonly<Record<string, LucideIcon>> = {
-  find_in_trenova: BookOpenIcon,
-  run_report: FileTextIcon,
+const NAMED_ICONS: Readonly<Record<string, IconComponent>> = {
+  find_in_trenova: BookOpen01Icon,
+  run_report: File06Icon,
   publish_artifact: ScrollTextIcon,
   compose_table_view: TableIcon,
   compare_report_runs: GitCompareArrowsIcon,
-  [WEB_SEARCH_TOOL]: GlobeIcon,
-  [WEB_READ_TOOL]: GlobeIcon,
+  [WEB_SEARCH_TOOL]: Globe02Icon,
+  [WEB_READ_TOOL]: Globe02Icon,
 };
 
-const REFUSAL_ICONS: Record<ToolRefusal, LucideIcon> = {
-  denied: LockIcon,
-  invalid: BanIcon,
-  over_budget: GaugeIcon,
-  duplicate: Repeat2Icon,
+const REFUSAL_ICONS: Record<ToolRefusal, IconComponent> = {
+  denied: Lock01Icon,
+  invalid: SlashCircle01Icon,
+  over_budget: Speedometer03Icon,
+  duplicate: Repeat04Icon,
 };
 
 const REFUSAL_TEXT: Record<ReturnType<typeof refusalTone>, string> = {
@@ -104,7 +105,7 @@ function refusalText(refusal: ToolRefusal): string {
   return REFUSAL_TEXT[refusalTone(refusal)];
 }
 
-function iconFor(group: ActivityGroup): LucideIcon {
+function iconFor(group: ActivityGroup): IconComponent {
   const first = group.steps[0];
 
   return NAMED_ICONS[first.name] ?? EFFECT_ICONS[group.effect];
@@ -133,8 +134,24 @@ function groupDuration(group: ActivityGroup): number | null {
  * what happened in the words of what happened, and opens onto the call
  * itself — what was asked, what came back, and the raw payload behind a
  * second click.
+ *
+ * While a reply is being written the rows land one by one. Once it is saved
+ * a `folded` list is one quiet line — "Worked through 6 steps · 12s" — that
+ * opens onto the rows, so the answer is what the eye lands on and the work
+ * is there for whoever wants to check it.
  */
-export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?: boolean }) {
+export function ToolActivity({
+  steps,
+  live = false,
+  folded = false,
+}: {
+  steps: ToolStep[];
+  live?: boolean;
+  /** Draws a settled list as one summary line that opens onto the rows. */
+  folded?: boolean;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
   // While a reply is being written the step under way is told by the working
   // line beneath it; a step joins this list when it lands, with its check.
   // A hand-off is the exception: it opens as soon as the task is handed
@@ -152,7 +169,7 @@ export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?
     return null;
   }
 
-  return (
+  const rows = (
     <ol className="flex min-w-0 flex-col gap-0.5">
       {groups.map((group) =>
         group.effect === "delegate" ? (
@@ -167,6 +184,67 @@ export function ToolActivity({ steps, live = false }: { steps: ToolStep[]; live?
         ),
       )}
     </ol>
+  );
+
+  if (!folded) {
+    return rows;
+  }
+
+  const failed = steps.some((step) => step.status === "failed");
+
+  // Live, the rows stand open with no line above them; the moment the reply
+  // settles they fold up under the summary, so the answer is what remains.
+  return (
+    <Collapsible
+      open={live || open}
+      onOpenChange={setOpen}
+      data-slot="work-log"
+      data-state={live ? "live" : open ? "open" : "closed"}
+      className="min-w-0"
+    >
+      {!live && (
+        <CollapsibleTrigger
+          className={cn(
+            "group/work ui-focus-ring rounded-control -mx-1.5 flex max-w-[calc(100%+0.75rem)] min-w-0 items-center gap-1.5 px-1.5 py-0.5 text-left text-xs transition-colors",
+            "text-foreground-muted hover:bg-surface-hover hover:text-foreground",
+          )}
+        >
+          <ChevronRightIcon
+            aria-hidden
+            className={cn("size-3 shrink-0 transition-transform duration-200", open && "rotate-90")}
+          />
+          <WorkMarks groups={groups} />
+          <span className="min-w-0 truncate">{workSummary(steps, t)}</span>
+          {failed && <AlertCircleIcon aria-hidden className="text-danger size-3 shrink-0" />}
+        </CollapsibleTrigger>
+      )}
+      <CollapsibleContent className="ease-settle h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0">
+        <div className={cn(!live && "border-border-subtle mt-1 ml-1.25 border-l pl-3")}>{rows}</div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/** The marks of the first few pieces of work, overlapped, so a folded line still says what kind of work it was. */
+const WORK_MARK_LIMIT = 3;
+
+function WorkMarks({ groups }: { groups: readonly ActivityGroup[] }) {
+  return (
+    <span aria-hidden className="flex shrink-0 items-center -space-x-1">
+      {groups.slice(0, WORK_MARK_LIMIT).map((group) => (
+        <WorkMark key={group.key} group={group} />
+      ))}
+    </span>
+  );
+}
+
+function WorkMark({ group }: { group: ActivityGroup }) {
+  const Icon = iconFor(group);
+
+  return (
+    <span className="bg-sunken ring-card flex size-4 items-center justify-center rounded-full ring-1">
+      <Icon className="text-foreground-muted size-2.5" />
+    </span>
   );
 }
 
@@ -281,7 +359,7 @@ function ActivityMark({
       ) : Refused && line.refusal ? (
         <Refused className={cn("size-3", refusalText(line.refusal), live && "animate-confirm")} />
       ) : line.state === "failed" ? (
-        <CircleAlertIcon className={cn("text-danger size-3", live && "animate-confirm")} />
+        <AlertCircleIcon className={cn("text-danger size-3", live && "animate-confirm")} />
       ) : live ? (
         <CheckIcon key={line.phrase} className="text-foreground-muted animate-confirm size-3" />
       ) : (
@@ -316,7 +394,7 @@ function StepRow({ step }: { step: ToolStep }) {
           ) : Refused && refusal ? (
             <Refused aria-hidden className={cn("size-3 shrink-0", refusalText(refusal))} />
           ) : failed ? (
-            <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />
+            <AlertCircleIcon aria-hidden className="text-danger size-3 shrink-0" />
           ) : (
             <span aria-hidden className="bg-border-strong mx-1.25 size-1 shrink-0 rounded-full" />
           )}
@@ -406,7 +484,7 @@ function StepDetails({ step }: { step: ToolStep }) {
           aria-expanded={raw}
           onClick={() => setRaw((value) => !value)}
         >
-          <CodeIcon className="size-3" />
+          <Code01Icon className="size-3" />
           {raw ? t("Hide details") : t("Details")}
         </Button>
         {raw && (
@@ -498,7 +576,7 @@ function ResultBody({
 
   switch (result.kind) {
     case "error": {
-      const Mark = refusal ? REFUSAL_ICONS[refusal] : CircleAlertIcon;
+      const Mark = refusal ? REFUSAL_ICONS[refusal] : AlertCircleIcon;
       return (
         <p
           className={cn("flex items-start gap-1.5", refusal ? refusalText(refusal) : "text-danger")}

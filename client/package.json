@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.3.4",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "lint:design": "node scripts/check-design-tokens.mjs",
+    "check:single-copies": "node scripts/check-single-copies.ts",
     "logos:fetch": "node scripts/fetch-brand-logo.mjs",
     "lint:fix": "turbo run lint:fix",
     "fmt": "oxfmt",
@@ -22,5 +22,6 @@
     "oxlint": "^1.82.0",
     "oxlint-tsgolint": "^7.0.2001",
     "turbo": "^2.10.12"
-  }
+  },
+  "packageManager": "pnpm@12.3.4"
 }

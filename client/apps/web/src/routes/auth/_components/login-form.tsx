@@ -2,8 +2,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { edition } from "@/lib/edition";
 import { authService } from "@trenova/shared/services/auth";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { isMFAChallenge, type MFAChallenge } from "@trenova/shared/types/mfa";
 import type { TenantLoginMetadata } from "@trenova/shared/types/organization";
 import {
   loginRequestSchema,
@@ -13,19 +15,22 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { BuildingIcon, TruckIcon } from "lucide-react";
+import { Building03Icon, Truck01Icon } from "@trenova/shared/components/icons";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router";
 import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
 import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { MFAChallengeForm } from "./mfa-challenge-form";
 
 export type AuthAudience = "office" | "driver";
 
+const LoginPrompt = edition.slots.LoginPrompt;
+
 const AUDIENCE_OPTIONS = [
-  { value: "office", label: "Office", icon: BuildingIcon },
-  { value: "driver", label: "Driver", icon: TruckIcon },
+  { value: "office", label: "Office", icon: Building03Icon },
+  { value: "driver", label: "Driver", icon: Truck01Icon },
 ] as const;
 
 export function LoginForm({
@@ -76,11 +81,17 @@ export function LoginForm({
   const { control, handleSubmit, formState } = form;
   const rootError = formState.errors.root?.message;
 
+  const [challenge, setChallenge] = useState<MFAChallenge | null>(null);
+
   const { mutateAsync, isPending } = useApiMutation({
     mutationFn: authService.login,
     form,
     resourceName: "Login",
     onSuccess: async (data) => {
+      if (isMFAChallenge(data)) {
+        setChallenge(data);
+        return;
+      }
       setUser(data.user);
       await onAuthenticated(data);
     },
@@ -89,6 +100,20 @@ export function LoginForm({
   const onSubmit = (data: LoginRequest) => {
     void mutateAsync(data);
   };
+
+  if (challenge) {
+    return (
+      <MFAChallengeForm
+        challenge={challenge}
+        stepLabel={stepLabel}
+        onAuthenticated={onAuthenticated}
+        onCancel={() => {
+          setChallenge(null);
+          form.setValue("password", "");
+        }}
+      />
+    );
+  }
 
   return (
     <AuthCardBody>
@@ -103,16 +128,7 @@ export function LoginForm({
         ) : tenantMetadata ? (
           t("Sign in to {0}", tenantMetadata.organizationName)
         ) : (
-          <>
-            {t("Don't have an account yet?")}{" "}
-            <a
-              href="#"
-              className="text-foreground decoration-foreground/35 hover:decoration-foreground underline underline-offset-[3px]"
-              onClick={(event) => event.preventDefault()}
-            >
-              {t("Create an account")}
-            </a>
-          </>
+          <LoginPrompt fallback={t("Sign in with the account your organization set up for you.")} />
         )}
       </StepHeading>
 

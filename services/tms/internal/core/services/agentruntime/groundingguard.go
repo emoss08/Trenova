@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/shopspring/decimal"
 )
 
 const changeGroundingGuard = "agent-loop-grounding-guard"
@@ -139,7 +140,7 @@ func (s *Service) groundingFindings(t *Turn, reply string) groundingFinding {
 		return finding
 	}
 
-	check := numberguard.CheckNumbers(reply, numberguard.SupportedFromText(t.groundingTexts()...))
+	check := numberguard.CheckNumbers(reply, t.groundingSupport())
 	finding.figures = check.Unsupported
 
 	claims := claimedPhrases(reply)
@@ -164,6 +165,33 @@ func (s *Service) groundingFindings(t *Turn, reply string) groundingFinding {
 	slices.Sort(finding.fields)
 
 	return finding
+}
+
+// groundingSupport is every figure the turn has read: what it was sent, and
+// the figures of older results the replay shortened.
+func (t *Turn) groundingSupport() []decimal.Decimal {
+	supported := numberguard.SupportedFromText(t.groundingTexts()...)
+	for _, figure := range t.evidence {
+		if value, err := decimal.NewFromString(figure); err == nil {
+			supported = append(supported, value)
+		}
+	}
+
+	return supported
+}
+
+// figuresOf is the figures in texts, as the guard reads them.
+func figuresOf(texts []string) []string {
+	if len(texts) == 0 {
+		return nil
+	}
+	values := numberguard.SupportedFromText(texts...)
+	figures := make([]string, 0, len(values))
+	for _, value := range values {
+		figures = append(figures, value.String())
+	}
+
+	return figures
 }
 
 func (t *Turn) groundingTexts() []string {

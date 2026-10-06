@@ -3,7 +3,7 @@ import { ExpressionDiff } from "@/components/formula-editor/expression-diff";
 import { queries } from "@/lib/queries";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { GitCompareIcon } from "lucide-react";
+import { GitCompareIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { describeChangedFields } from "./review-diff";
 
@@ -68,9 +68,7 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
         <div className="space-y-2 p-3">
           {expressionChanged && (
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground font-medium">
-                {t("Expression")}
-              </span>
+              <span className="text-xs text-muted-foreground font-medium">{t("Expression")}</span>
               <ExpressionDiff before={data.baseExpression} after={data.currentExpression} />
             </div>
           )}

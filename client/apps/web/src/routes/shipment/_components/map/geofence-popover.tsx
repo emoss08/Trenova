@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import type { Location } from "@trenova/shared/types/location";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
-import { HashIcon, MapPinIcon, XIcon } from "lucide-react";
+import { Hash01Icon, MarkerPin01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import type { NormalizedGeofence } from "./geofence-types";
 
 function formatCoord(value: number) {
@@ -54,7 +54,7 @@ export function GeofencePopover({
               </span>
               {location?.code && (
                 <span className="text-2xs text-muted-foreground flex items-center gap-1">
-                  <HashIcon className="size-3" />
+                  <Hash01Icon className="size-3" />
                   {location.code}
                 </span>
               )}
@@ -65,7 +65,7 @@ export function GeofencePopover({
               className="text-muted-foreground hover:text-foreground rounded-md"
               aria-label={t("Close geofence info")}
             >
-              <XIcon className="size-3.5" />
+              <XCloseIcon className="size-3.5" />
             </button>
           </div>
 
@@ -79,7 +79,7 @@ export function GeofencePopover({
             <>
               <Separator />
               <div className="flex items-start gap-2">
-                <MapPinIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+                <MarkerPin01Icon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
                 <div className="text-2xs text-foreground flex min-w-0 flex-col leading-relaxed">
                   {location.addressLine1 && <span>{location.addressLine1}</span>}
                   {location.addressLine2 && (

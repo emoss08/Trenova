@@ -511,6 +511,24 @@ export function formatSecondsAgo(seconds: number): string {
   return `${Math.floor(seconds / 3600)}h ago`;
 }
 
+/**
+ * An age at a glance, as the Desk writes it beside a row: "now" under a
+ * minute, then whole minutes, hours or days ("4m", "1h", "2d").
+ */
+export function formatCompactAge(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 60) {
+    return "now";
+  }
+  if (seconds < 3600) {
+    return `${Math.floor(seconds / 60)}m`;
+  }
+  if (seconds < 86400) {
+    return `${Math.floor(seconds / 3600)}h`;
+  }
+
+  return `${Math.floor(seconds / 86400)}d`;
+}
+
 export function formatDurationMs(durationInMs: number): string {
   if (durationInMs === undefined || durationInMs === null || isNaN(durationInMs)) {
     return "0m";
@@ -877,4 +895,18 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       },
     },
   ];
+}
+
+/**
+ * Renders a span of minutes the way a dispatcher says it out loud, rolling hours into
+ * days once they stop being scannable: "40m", "3h 10m", "11d 12h".
+ */
+export function formatMinutesSpan(minutes: number): string {
+  const total = Math.abs(Math.round(minutes));
+  const days = Math.floor(total / 1440);
+  if (days > 0) {
+    return `${days}d ${Math.floor((total % 1440) / 60)}h`;
+  }
+  const hours = Math.floor(total / 60);
+  return hours > 0 ? `${hours}h ${total % 60}m` : `${total}m`;
 }

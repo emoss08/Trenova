@@ -22,7 +22,7 @@ import {
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";

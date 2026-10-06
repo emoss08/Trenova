@@ -16,7 +16,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -51,7 +51,7 @@ export function SettingsPanel() {
       {controlQuery.isError ? (
         <div className="p-3">
           <Alert variant="destructive" size="sm">
-            <CircleAlertIcon />
+            <AlertCircleIcon />
             <AlertDescription>{t("The quality settings could not be loaded.")}</AlertDescription>
           </Alert>
         </div>

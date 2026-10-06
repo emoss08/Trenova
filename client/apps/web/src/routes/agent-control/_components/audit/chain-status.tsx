@@ -9,7 +9,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
-import { CircleAlertIcon, ShieldCheckIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import {
   VERIFY_POLL_MS,
@@ -60,7 +64,7 @@ export function ChainStatusStrip() {
   if (chain.isError) {
     return (
       <Alert variant="destructive" size="sm">
-        <CircleAlertIcon />
+        <AlertCircleIcon />
         <AlertDescription>
           {t("The audit chain's status could not be loaded. Try again shortly.")}
         </AlertDescription>
@@ -114,7 +118,7 @@ export function ChainStatusStrip() {
             loadingText={t("Starting the check…")}
             className="self-start"
           >
-            <ShieldCheckIcon className="size-3.5" />
+            <ShieldTickIcon className="size-3.5" />
             {pending ? t("Verifying…") : t("Verify now")}
           </Button>
           <span className="text-foreground-muted text-xs">
@@ -126,7 +130,7 @@ export function ChainStatusStrip() {
       </KpiStrip>
       {verify.isError ? (
         <Alert variant="destructive" size="sm">
-          <CircleAlertIcon />
+          <AlertCircleIcon />
           <AlertDescription>
             {graphQLErrorMessage(verify.error, t("The check could not be started."))}
           </AlertDescription>
@@ -134,7 +138,7 @@ export function ChainStatusStrip() {
       ) : null}
       {status.lastVerificationStatus === "Mismatch" ? (
         <Alert variant="destructive" size="sm">
-          <TriangleAlertIcon />
+          <AlertTriangleIcon />
           <AlertDescription>
             {status.failedSeq != null
               ? t(
@@ -151,7 +155,7 @@ export function ChainStatusStrip() {
       ) : null}
       {status.lastVerificationStatus === "KeyMissing" ? (
         <Alert variant="warning" size="sm">
-          <TriangleAlertIcon />
+          <AlertTriangleIcon />
           <AlertDescription>
             {t(
               "A row names a signing key that is no longer configured, so the chain cannot be checked past it. Put the key back, then verify again.",

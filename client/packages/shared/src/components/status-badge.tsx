@@ -55,10 +55,14 @@ import type {
 } from "@trenova/shared/types/fuel-ifta-enums";
 import { ptoTypeMeta } from "../lib/pto";
 import type { PTOStatus, PTOType } from "@trenova/shared/types/worker";
-import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
+import {
+  CheckDoubleIcon,
+  CheckIcon,
+  ClockIcon,
+  Lock01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import type React from "react";
-
-
 
 type StatusBadgeProps = {
   status: string;
@@ -88,17 +92,17 @@ const STATUS_PHASES: Record<string, StatusPhase> = {
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-  active: <CheckCheckIcon />,
-  inactive: <XIcon />,
+  active: <CheckDoubleIcon />,
+  inactive: <XCloseIcon />,
   draft: <ClockIcon />,
   pending: <ClockIcon />,
   completed: <CheckIcon />,
-  cancelled: <XIcon />,
+  cancelled: <XCloseIcon />,
   processing: <ClockIcon />,
   inreview: <ClockIcon />,
   // Compliance statuses
-  compliant: <CheckCheckIcon />,
-  noncompliant: <XIcon />,
+  compliant: <CheckDoubleIcon />,
+  noncompliant: <XCloseIcon />,
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
@@ -172,7 +176,7 @@ export function PermissionScopeBadge({ scope }: { scope?: string }) {
     restricted: {
       text: t("Restricted"),
       phase: "draft",
-      icon: <LockIcon />,
+      icon: <Lock01Icon />,
     },
   };
 
@@ -199,9 +203,12 @@ export function PTOTypeBadge({ type }: { type: PTOType }) {
 export function ShipmentStatusBadge({
   status,
   className,
+  brokered = false,
 }: {
   status?: ShipmentStatus;
   className?: string;
+  /** A brokerage books a carrier rather than assigning a driver, so Assigned reads Booked. */
+  brokered?: boolean;
 }) {
   const t = useT();
 
@@ -227,7 +234,7 @@ export function ShipmentStatusBadge({
     },
     [shipmentStatusSchema.enum.Assigned]: {
       phase: "awaiting",
-      text: t("Assigned"),
+      text: brokered ? t("Booked") : t("Assigned"),
       description: t(
         "All required equipment and workers have been assigned to this shipment's moves.",
       ),
@@ -277,10 +284,7 @@ export function ShipmentStatusBadge({
   };
 
   return (
-    <Badge
-      variant={phaseTone(statusAttributes[status].phase)}
-      className={cn(className, "max-h-5")}
-    >
+    <Badge variant={phaseTone(statusAttributes[status].phase)} className={cn(className, "max-h-5")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -321,10 +325,7 @@ export function ShipmentTenderStatusBadge({
   };
 
   return (
-    <Badge
-      variant={phaseTone(statusAttributes[status].phase)}
-      className={cn(className, "max-h-5")}
-    >
+    <Badge variant={phaseTone(statusAttributes[status].phase)} className={cn(className, "max-h-5")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -392,31 +393,38 @@ export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueS
 
   const statusAttributes: Record<BillingQueueStatus, PlainBadgeAttrProps> = {
     ReadyForReview: {
-      className: "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
+      className:
+        "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
       text: t("Ready for review"),
     },
     InReview: {
-      className: "bg-accent-indigo-subtle text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle",
+      className:
+        "bg-accent-indigo-subtle text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle",
       text: t("In review"),
     },
     Approved: {
-      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
+      className:
+        "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Approved"),
     },
     Posted: {
-      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
+      className:
+        "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Posted"),
     },
     OnHold: {
-      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
+      className:
+        "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("On hold"),
     },
     SentBackToOps: {
-      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
+      className:
+        "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("Sent back to ops"),
     },
     Exception: {
-      className: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
+      className:
+        "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
       text: t("Exception"),
     },
     Canceled: {
@@ -475,11 +483,13 @@ export function PlainSettlementStatusBadge({ status }: { status: SettlementStatu
 
   const statusAttributes: Record<SettlementStatus, PlainBadgeAttrProps> = {
     Paid: {
-      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
+      className:
+        "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Paid"),
     },
     PartiallyPaid: {
-      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
+      className:
+        "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("Partial"),
     },
     Unpaid: {
@@ -505,11 +515,13 @@ export function PlainCustomerPaymentStatusBadge({ status }: { status: CustomerPa
 
   const statusAttributes: Record<CustomerPaymentStatus, PlainBadgeAttrProps> = {
     Posted: {
-      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
+      className:
+        "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Posted"),
     },
     Reversed: {
-      className: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
+      className:
+        "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
       text: t("Reversed"),
     },
   };
@@ -535,11 +547,13 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
       text: t("Draft"),
     },
     Posted: {
-      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
+      className:
+        "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Posted"),
     },
     Voided: {
-      className: "bg-danger-subtle text-danger-foreground line-through dark:bg-danger-subtle dark:text-danger-foreground",
+      className:
+        "bg-danger-subtle text-danger-foreground line-through dark:bg-danger-subtle dark:text-danger-foreground",
       text: t("Voided"),
     },
   };
@@ -667,19 +681,23 @@ export function PlainInvoiceScopeBadge({ scope }: { scope: InvoiceScope }) {
 
   const scopeAttributes: Record<Exclude<InvoiceScope, "Shipment">, PlainBadgeAttrProps> = {
     Order: {
-      className: "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
+      className:
+        "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
       text: t("Order"),
     },
     Consolidated: {
-      className: "bg-accent-violet-subtle text-accent-violet-on-subtle dark:bg-accent-violet-subtle dark:text-accent-violet-on-subtle",
+      className:
+        "bg-accent-violet-subtle text-accent-violet-on-subtle dark:bg-accent-violet-subtle dark:text-accent-violet-on-subtle",
       text: t("Consolidated"),
     },
     Adjustment: {
-      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
+      className:
+        "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("Adjustment"),
     },
     Memo: {
-      className: "bg-accent-teal-subtle text-accent-teal-on-subtle dark:bg-accent-teal-subtle dark:text-accent-teal-on-subtle",
+      className:
+        "bg-accent-teal-subtle text-accent-teal-on-subtle dark:bg-accent-teal-subtle dark:text-accent-teal-on-subtle",
       text: t("Memo"),
     },
   };
@@ -810,7 +828,11 @@ export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus 
   };
   const attr = attrs[status as EDITransferStatus];
   if (!attr) {
-    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
+    return (
+      <Badge variant="neutral" appearance="outline">
+        {status}
+      </Badge>
+    );
   }
   return (
     <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
@@ -908,7 +930,11 @@ export function EDIMessageDeliveryStatusBadge({
   };
   const attr = attrs[status as EDIMessageDeliveryStatus];
   if (!attr) {
-    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
+    return (
+      <Badge variant="neutral" appearance="outline">
+        {status}
+      </Badge>
+    );
   }
   return (
     <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
@@ -957,7 +983,11 @@ export function EDIMessageAckStatusBadge({
   };
   const attr = attrs[status as EDIMessageAcknowledgmentStatus];
   if (!attr) {
-    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
+    return (
+      <Badge variant="neutral" appearance="outline">
+        {status}
+      </Badge>
+    );
   }
   return (
     <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
@@ -1005,7 +1035,11 @@ export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileS
   };
   const attr = attrs[status as EDIInboundFileStatus];
   if (!attr) {
-    return <Badge variant="neutral" appearance="outline">{status}</Badge>;
+    return (
+      <Badge variant="neutral" appearance="outline">
+        {status}
+      </Badge>
+    );
   }
   return (
     <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
@@ -1783,13 +1817,13 @@ export function IftaReturnStatusBadge({
       phase: "active",
       text: t("Finalized"),
       description: t("Locked; reopen with a reason to change"),
-      icon: <LockIcon />,
+      icon: <Lock01Icon />,
     },
     Filed: {
       phase: "complete",
       text: t("Filed"),
       description: t("Submitted to the base jurisdiction"),
-      icon: <CheckCheckIcon />,
+      icon: <CheckDoubleIcon />,
     },
   };
 

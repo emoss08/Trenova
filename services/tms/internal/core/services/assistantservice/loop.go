@@ -40,6 +40,9 @@ type TurnRequest struct {
 	// Taint is the outside content the conversation has already read, which
 	// every later turn in it opens with.
 	Taint *agent.RunTaint
+	// Facts are what the person pinned for the agents to keep in mind for
+	// the whole conversation.
+	Facts []string
 }
 
 type TurnResult struct {
@@ -53,22 +56,37 @@ type TurnResult struct {
 
 // admit asks the scope guard about a question and, when it may be answered,
 // builds the run request that answers it. A refused question gets no run
-// request: the point of guarding first is that the expensive call never
-// happens.
+// request: the point of guarding first is that the model is never called.
+//
+// The classifier and the context build run side by side. Neither needs the
+// other, both are network calls, and run one after the other the person
+// waited for their sum before the first token. Building the context writes
+// nothing, so a refusal simply discards it. A request the deterministic rules
+// refuse is refused before either starts.
 func (s *Service) admit(
 	ctx context.Context,
 	req *TurnRequest,
 ) (agentguard.Decision, *serviceports.RunRequest) {
-	decision := s.guard.Evaluate(ctx, agentguard.EvaluateRequest{
+	evaluate := agentguard.EvaluateRequest{
 		TenantInfo: req.Actor.TenantInfo(),
 		Input:      req.Input,
 		Recent:     recentTurns(req.History),
-	})
+	}
+	if !agentguard.EvaluateDeterministic(req.Input).Allowed {
+		return s.guard.Evaluate(ctx, evaluate), nil
+	}
+
+	verdict := make(chan agentguard.Decision, 1)
+	go func() {
+		verdict <- s.guard.Evaluate(ctx, evaluate)
+	}()
+
+	runtimeContext := s.buildContext(ctx, req)
+	decision := <-verdict
 	if !decision.Allowed {
 		return decision, nil
 	}
 
-	runtimeContext := s.buildContext(ctx, req)
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
 
 	return decision, &serviceports.RunRequest{
@@ -143,6 +161,7 @@ func (s *Service) buildContext(
 		Subject:     req.Subject,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
+		Facts:       req.Facts,
 	}
 	if s.contexts == nil {
 		return bare
@@ -156,6 +175,7 @@ func (s *Service) buildContext(
 		Page:        req.Page,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
+		Facts:       req.Facts,
 		Query: (&serviceports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(req.Definition),
@@ -339,6 +359,7 @@ func interruptedTurn(
 		Content:    notice,
 		Model:      run.Model,
 		ProviderID: run.ProviderID,
+		Failure:    replyFailure(err, len(run.Messages) > 1),
 	})
 
 	return &TurnResult{
@@ -349,6 +370,33 @@ func interruptedTurn(
 		Model:    run.Model,
 		Provider: run.ProviderID,
 	}
+}
+
+// replyFailure is the closing note's reason as data, so the Desk can draw the
+// card for it: the models asked and what each said, or that it was stopped.
+func replyFailure(err error, ranAnything bool) *conversation.ReplyFailure {
+	if errors.Is(err, context.Canceled) {
+		return &conversation.ReplyFailure{Kind: conversation.ReplyFailureStopped}
+	}
+	var exhausted *serviceports.ChatProvidersFailedError
+	if errors.As(err, &exhausted) && len(exhausted.Failures) > 0 {
+		failure := &conversation.ReplyFailure{Kind: conversation.ReplyFailureNoModel}
+		for _, provider := range exhausted.Failures {
+			failure.Providers = append(failure.Providers, conversation.FailedProvider{
+				Name:   provider.Name,
+				Model:  provider.Model,
+				Vendor: provider.Vendor,
+				Status: provider.Status,
+				Detail: provider.Detail,
+			})
+		}
+		return failure
+	}
+	if ranAnything {
+		return &conversation.ReplyFailure{Kind: conversation.ReplyFailureInterrupted}
+	}
+
+	return &conversation.ReplyFailure{Kind: conversation.ReplyFailureBeforeStart}
 }
 
 func scopedMessage(
@@ -413,6 +461,12 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 	for _, message := range history {
 		switch message.Role {
 		case conversation.RoleUser:
+			// A compaction summary is the application's account of the
+			// conversation, not anything the person said.
+			if message.Compacted() {
+				turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})
+				continue
+			}
 			turns = append(turns, agentguard.Turn{Role: "user", Content: message.Content})
 		case conversation.RoleAssistant:
 			turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})

@@ -37,7 +37,7 @@ import type {
   Role,
 } from "@trenova/shared/types/role";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -271,7 +271,7 @@ function PermissionRow({
             className="text-destructive hover:bg-danger-subtle hover:text-destructive"
             onClick={onRemove}
           >
-            <TrashIcon className="size-4" />
+            <Trash01Icon className="size-4" />
           </Button>
         )}
       </div>
@@ -665,7 +665,7 @@ function CreatePermissionRow({
           className="text-destructive hover:bg-danger-subtle hover:text-destructive"
           onClick={onRemove}
         >
-          <TrashIcon className="size-4" />
+          <Trash01Icon className="size-4" />
         </Button>
       </div>
     </div>

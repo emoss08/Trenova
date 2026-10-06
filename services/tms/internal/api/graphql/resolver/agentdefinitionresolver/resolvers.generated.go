@@ -10,6 +10,7 @@ import (
 type Deps struct {
 	*base.Core
 	AgentDefinitionService services.AgentDefinitionService
+	AgentCapabilityService services.AgentCapabilityService
 	AgentAccessService     services.AgentAccessService
 }
 

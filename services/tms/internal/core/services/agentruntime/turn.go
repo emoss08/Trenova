@@ -29,11 +29,17 @@ const clockLineLayout = "2006-01-02 15:04"
 // Everything a Turn does outside itself goes through TurnEffects, so the loop
 // never reads a clock, a database or the network, which is what lets it replay.
 type Turn struct {
-	s        *Service
-	req      *serviceports.RunRequest
-	budget   int
-	system   string
-	messages []serviceports.Message
+	s      *Service
+	req    *serviceports.RunRequest
+	budget int
+	system string
+	// systemStable is how many leading bytes of system are the same on every
+	// turn of the agent for the person, which a provider can cache.
+	systemStable int
+	messages     []serviceports.Message
+	// evidence is the figures of the tool results the replay shortened, which
+	// the grounding guard still counts as read.
+	evidence []string
 	tools    *toolSet
 	// held is every tool the agent holds, taken when the turn opened. The
 	// loop decides from it whether a call is dispatched or refused, and in
@@ -150,6 +156,10 @@ type ToolOutcome struct {
 	Taint   []agent.TaintMark `json:"taint,omitempty"`
 	Found   []string          `json:"found,omitempty"`
 	Verdict string            `json:"verdict,omitempty"`
+	// Memories are what a recall read back; SavedMemory is what a remember
+	// kept or offered to keep.
+	Memories    []pulid.ID                `json:"memories,omitempty"`
+	SavedMemory *serviceports.SavedMemory `json:"savedMemory,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -167,6 +177,8 @@ func (o toolOutcome) exported() ToolOutcome {
 		Taint:          o.taint,
 		Found:          o.found,
 		Verdict:        o.verdict,
+		Memories:       o.memories,
+		SavedMemory:    o.saved,
 		Data:           o.data,
 	}
 }
@@ -182,6 +194,8 @@ func (o ToolOutcome) internal() toolOutcome {
 		taint:          o.Taint,
 		found:          o.Found,
 		verdict:        o.Verdict,
+		memories:       o.Memories,
+		saved:          o.SavedMemory,
 		data:           o.Data,
 	}
 }
@@ -200,10 +214,17 @@ func (t *Turn) holds(name string) bool { return slices.Contains(t.held, name) }
 // running in another: built by an activity, which may read permissions and
 // history, and driven by workflow code, which may not.
 type TurnState struct {
-	Budget   int                    `json:"budget"`
-	System   string                 `json:"system"`
-	Messages []serviceports.Message `json:"messages"`
-	Tools    ToolSetState           `json:"tools"`
+	Budget int    `json:"budget"`
+	System string `json:"system"`
+	// SystemStable is how much of System leads every turn unchanged. A state
+	// from before it was kept has none, and the whole prompt is cached as one.
+	SystemStable int                    `json:"systemStable,omitempty"`
+	Messages     []serviceports.Message `json:"messages"`
+	// Evidence is the figures of the tool results the replay shortened. A
+	// state from before it was kept has none, and its replay shortened the
+	// same results without them.
+	Evidence []string     `json:"evidence,omitempty"`
+	Tools    ToolSetState `json:"tools"`
 	// Held is every tool the agent holds, as the turn opened. A state from
 	// before it was kept has none, and the turn works it out again.
 	Held      []string               `json:"held,omitempty"`
@@ -248,7 +269,9 @@ func (t *Turn) State() TurnState {
 	return TurnState{
 		Budget:          t.budget,
 		System:          t.system,
+		SystemStable:    t.systemStable,
 		Messages:        t.messages,
+		Evidence:        slices.Clone(t.evidence),
 		Tools:           t.tools.state(),
 		Held:            slices.Clone(t.held),
 		Failures:        maps.Clone(t.repeats.failures),
@@ -305,23 +328,25 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 	}
 
 	return &Turn{
-		s:           s,
-		req:         req,
-		budget:      state.Budget,
-		system:      state.System,
-		messages:    state.Messages,
-		tools:       restoreToolSet(state.Tools),
-		held:        held,
-		repeats:     &repeatGuard{failures: failures},
-		counts:      &ordinals{seen: seen},
-		questions:   questions,
-		decisions:   make(map[pulid.ID]struct{}, 1),
-		callIDs:     callIDs,
-		result:      &result,
-		delegates:   state.Delegates,
-		delegations: state.Delegations,
-		opened:      state.TaintOpened,
-		external:    state.ExternalContent,
+		s:            s,
+		req:          req,
+		budget:       state.Budget,
+		system:       state.System,
+		systemStable: state.SystemStable,
+		messages:     state.Messages,
+		evidence:     state.Evidence,
+		tools:        restoreToolSet(state.Tools),
+		held:         held,
+		repeats:      &repeatGuard{failures: failures, reads: make(map[string]bool, 4)},
+		counts:       &ordinals{seen: seen},
+		questions:    questions,
+		decisions:    make(map[pulid.ID]struct{}, 1),
+		callIDs:      callIDs,
+		result:       &result,
+		delegates:    state.Delegates,
+		delegations:  state.Delegations,
+		opened:       state.TaintOpened,
+		external:     state.ExternalContent,
 	}
 }
 
@@ -368,7 +393,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	if len(runtimeContext.Tools) == 0 {
 		runtimeContext.Tools = s.ToolSummaries(definition)
 	}
-	granted := s.activeExtensions(ctx, req.Actor).grants()
+	active := s.activeExtensions(ctx, req.Actor)
+	granted := active.grants()
 	runtimeContext.Tools = withSummaries(runtimeContext.Tools, s.summarize(definition, granted))
 
 	// Another agent's steps on a task this one handed it are never replayed:
@@ -408,6 +434,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		publishes:  req.KeepsDocuments(),
 		delegates:  delegates,
 		decisions:  pendingDecisions(req.Proposals),
+		extensions: &active,
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
@@ -417,6 +444,12 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	// the system refusing rather than the person lacking the right.
 	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
 	runtimeContext.Memories = s.memoriesForPrompt(ctx, req, &runtimeContext)
+	// A task handed to another agent reads memories for that agent; the card
+	// under the reply says what the conversation's own agent used.
+	var usedMemories []pulid.ID
+	if req.Delegation == nil {
+		usedMemories = memoryIDs(runtimeContext.Memories)
+	}
 	repeats := newRepeatGuard()
 	counts := newOrdinals()
 	// A delegate's turn shares the ledger of the turn that delegated, and is
@@ -426,7 +459,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		s.seedFromLedger(ctx, req, repeats)
 	}
 
-	messages := toAdapterMessages(history, req.Proposals)
+	messages, shortened := replayHistory(history, req.Proposals)
 	now := timeutils.NowUnix()
 	input := req.Input
 	if req.Delegation == nil {
@@ -441,27 +474,32 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	})
 	taint, opened := openTaint(req, &runtimeContext, now)
 
+	prompt := definition.BuildSystemPromptParts(&runtimeContext)
+
 	return &Turn{
-		s:         s,
-		req:       req,
-		budget:    budget,
-		system:    definition.BuildSystemPrompt(runtimeContext),
-		messages:  messages,
-		tools:     tools,
-		held:      held,
-		repeats:   repeats,
-		counts:    counts,
-		questions: askedQuestions(history),
-		decisions: make(map[pulid.ID]struct{}, 1),
-		callIDs:   usedCallIDs(req.History),
+		s:            s,
+		req:          req,
+		budget:       budget,
+		system:       prompt.Stable + prompt.Volatile,
+		systemStable: len(prompt.Stable),
+		messages:     messages,
+		evidence:     figuresOf(shortened),
+		tools:        tools,
+		held:         held,
+		repeats:      repeats,
+		counts:       counts,
+		questions:    askedQuestions(history),
+		decisions:    make(map[pulid.ID]struct{}, 1),
+		callIDs:      usedCallIDs(req.History),
 		result: &serviceports.RunResult{
 			Messages: []conversation.Message{{
 				Role:      conversation.RoleUser,
 				Content:   req.Input,
 				CreatedAt: now,
 			}},
-			Taint:       taint,
-			Fingerprint: s.Fingerprint(definition, preferredProvider(req, definition), ""),
+			Taint:         taint,
+			Fingerprint:   s.Fingerprint(definition, preferredProvider(req, definition), ""),
+			UsedMemoryIDs: usedMemories,
 		},
 		delegates: delegates,
 		opened:    opened,
@@ -478,21 +516,26 @@ func clockLine(now int64, timezone string) string {
 	return "Now: " + time.Unix(now, 0).In(loc).Format(clockLineLayout) + " " + name + "\n\n"
 }
 
-// completionRequest is what the turn is ready to send the model now.
+// completionRequest is what the turn is ready to send the model now, with its
+// older tool results shortened when they would no longer fit the window.
 func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 	req := t.req
 	definition := req.Definition
 
-	return &serviceports.ChatCompletionRequest{
+	completion := &serviceports.ChatCompletionRequest{
 		TenantInfo:          req.Actor.TenantInfo(),
 		System:              t.system,
+		SystemStable:        t.systemStable,
 		Messages:            t.messages,
-		Tools:               t.tools.specs,
+		Tools:               withRationale(t.tools.specs),
 		PreferredProviderID: preferredProvider(req, definition),
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
 		Attribution:         turnAttribution(req),
 		MaxTokens:           t.cutOff.budget,
 	}
+	fitWindow(completion, t.window())
+
+	return completion
 }
 
 func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttribution {
@@ -739,6 +782,7 @@ func retryEvent(notice serviceports.ChatRetryNotice) serviceports.StreamEvent {
 			Reason:      notice.Reason,
 			Kind:        notice.Kind,
 			WaitSeconds: notice.WaitSeconds,
+			MaxAttempts: notice.MaxAttempts,
 		},
 	}
 }

@@ -56,19 +56,19 @@ import { formatDistanceToNow } from "date-fns";
 import {
   AlertCircleIcon,
   CalendarClockIcon,
-  CalendarOffIcon,
+  CalendarMinus01Icon,
   CheckIcon,
   ClockIcon,
   DotIcon,
-  DownloadIcon,
-  GitBranchIcon,
-  GitCompare,
+  DotsVerticalIcon,
+  Download01Icon,
+  GitBranch01Icon,
   GitCompareArrowsIcon,
-  MoreVertical,
-  RotateCcw,
-  TagIcon,
-  XIcon,
-} from "lucide-react";
+  GitCompareIcon,
+  RefreshCcw01Icon,
+  Tag01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { RollbackConfirmDialog } from "./rollback-confirm-dialog";
@@ -212,7 +212,7 @@ export function VersionHistoryPanel({
                 </AlertDescription>
                 <AlertAction>
                   <Button variant="ghost" size="icon-xs" onClick={handleCancelCompareMode}>
-                    <XIcon className="size-4" />
+                    <XCloseIcon className="size-4" />
                   </Button>
                 </AlertAction>
               </Alert>
@@ -220,7 +220,7 @@ export function VersionHistoryPanel({
 
             {template?.sourceTemplateId && (
               <Alert variant="info" size="sm" className="m-2 w-auto">
-                <GitBranchIcon />
+                <GitBranch01Icon />
                 <AlertDescription>
                   {t("Forked from version {0}", template.sourceVersionNumber)}
                 </AlertDescription>
@@ -544,7 +544,7 @@ function VersionItem({
                                 tagOption?.color ?? "bg-muted text-muted-foreground",
                               )}
                             >
-                              <TagIcon className="size-2.5" />
+                              <Tag01Icon className="size-2.5" />
                               {tag}
                             </span>
                           }
@@ -619,7 +619,7 @@ function VersionItem({
           >
             {canCompareWith ? (
               <Button variant="outline" size="xs" onClick={onCompareWith}>
-                <GitCompare className="mr-1 size-3" />
+                <GitCompareIcon className="mr-1 size-3" />
                 {t("Compare")}
               </Button>
             ) : (
@@ -627,14 +627,14 @@ function VersionItem({
                 <DropdownMenuTrigger
                   render={
                     <Button variant="ghost" size="icon-xs">
-                      <MoreVertical className="size-4" />
+                      <DotsVerticalIcon className="size-4" />
                     </Button>
                   }
                 />
                 <DropdownMenuContent align="end" className="min-w-[180px]">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      startContent={<TagIcon className="size-4" />}
+                      startContent={<Tag01Icon className="size-4" />}
                       title={t("Manage tags")}
                       description={t("Add or remove version labels")}
                       onClick={handleOpenTagsDialog}
@@ -655,7 +655,7 @@ function VersionItem({
                     )}
                     {onComparePrevious && (
                       <DropdownMenuItem
-                        startContent={<GitCompare className="size-4" />}
+                        startContent={<GitCompareIcon className="size-4" />}
                         title={t("Compare previous")}
                         description={t("Compare with previous version")}
                         onClick={onComparePrevious}
@@ -674,7 +674,7 @@ function VersionItem({
                         />
                         {version.effectiveFrom != null && (
                           <DropdownMenuItem
-                            startContent={<CalendarOffIcon className="size-4" />}
+                            startContent={<CalendarMinus01Icon className="size-4" />}
                             title={t("Clear schedule")}
                             description={t("Remove the scheduled activation")}
                             onClick={() => updateEffectiveDateMutation.mutate(null)}
@@ -687,7 +687,7 @@ function VersionItem({
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      startContent={<DownloadIcon className="size-4" />}
+                      startContent={<Download01Icon className="size-4" />}
                       title={t("Export JSON")}
                       description={t("Download version snapshot")}
                       onClick={onExport}
@@ -696,7 +696,7 @@ function VersionItem({
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      startContent={<RotateCcw className="size-4" />}
+                      startContent={<RefreshCcw01Icon className="size-4" />}
                       title={t("Rollback")}
                       description={
                         isCurrent ? "Already on this version" : "Rollback to this version"
@@ -773,7 +773,7 @@ function VersionItem({
         <DialogContent size="xs">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <TagIcon className="size-4" />
+              <Tag01Icon className="size-4" />
               {t("Manage tags")}
             </DialogTitle>
             <DialogDescription>

@@ -74,9 +74,10 @@ func TestRun_AllowsARetryWithDifferentArguments(t *testing.T) {
 	assert.Equal(t, 2, tool.Calls)
 }
 
-// A call that succeeded is not a failure to remember. Asking the same question
-// twice in a turn is ordinary — a second lookup after a write, say.
-func TestRun_DoesNotBlockRepeatingASuccessfulCall(t *testing.T) {
+// A read that succeeded is not run again unchanged while nothing has written:
+// it would return the record the turn already has. The model is pointed back
+// to that result instead, and the turn goes on.
+func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"status": "Completed"}
@@ -90,14 +91,17 @@ func TestRun_DoesNotBlockRepeatingASuccessfulCall(t *testing.T) {
 		Tools: []serviceports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
 		Definition: testDefinition("list_shipments"),
 		Actor:      testActor(),
 		Input:      "anything",
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, 2, tool.Calls)
+	assert.Equal(t, 1, tool.Calls, "the identical read is answered, not run")
+	repeat := result.Messages[4]
+	assert.False(t, repeat.ToolFailed, "a repeated read is not shown as a failure")
+	assert.Contains(t, repeat.Content, "already ran earlier in this turn")
 }
 
 // Key order is a serialisation detail of whichever provider produced the call,
@@ -127,4 +131,31 @@ func TestCallKey_SeparatesToolsThatShareArguments(t *testing.T) {
 	second, _ := callKey(serviceports.ToolCall{Name: "cancel_shipment", Arguments: args})
 
 	assert.NotEqual(t, first, second)
+}
+
+func TestFanOutNote_RemindsOnlyFromTheThirdSingleFetch(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, fanOutNote("get_billing_queue_item", 2))
+	assert.Empty(t, fanOutNote("list_billing_queue_items", 5))
+	assert.Contains(t, fanOutNote("get_billing_queue_item", 3), "3rd get_billing_queue_item call")
+	assert.Contains(t, fanOutNote("get_billing_queue_item", 12), "12th")
+}
+
+func TestRepeatGuard_AnswersARepeatedReadUntilSomethingWrites(t *testing.T) {
+	t.Parallel()
+
+	guard := newRepeatGuard()
+	read := serviceports.ToolCall{Name: "get_billing_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
+	other := serviceports.ToolCall{Name: "get_billing_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_2"}}
+	write := serviceports.ToolCall{Name: "approve_billing_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
+
+	assert.False(t, guard.readBefore(read), "a first read runs")
+	guard.ran(read)
+	assert.True(t, guard.readBefore(read), "the same read again is answered from the first")
+	assert.False(t, guard.readBefore(other), "a read with other arguments runs")
+
+	guard.ran(write)
+	assert.False(t, guard.readBefore(read), "after a write the record may have changed, so it is read again")
+	assert.False(t, guard.readBefore(write), "a write is never answered from an earlier one")
 }

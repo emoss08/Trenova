@@ -27,7 +27,7 @@ import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { Customer } from "@trenova/shared/types/customer";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlugZapIcon, ScanSearchIcon } from "lucide-react";
+import { PlugIcon, ScanSearchIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Link } from "react-router";
@@ -244,7 +244,7 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
             nativeButton={false}
             render={<Link to={CARRIER_INTEL_INTEGRATIONS_PATH} />}
           >
-            <PlugZapIcon className="size-3.5" />
+            <PlugIcon className="size-3.5" />
             {t("Open integrations")}
           </Button>
         }
@@ -291,7 +291,7 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
       <UnsavedNotice server={server} />
       {!provider?.configured ? (
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
-          <PlugZapIcon className="size-3.5" aria-hidden />
+          <PlugIcon className="size-3.5" aria-hidden />
           {t(
             "No provider is connected, so this is the last snapshot on file and cannot be refreshed.",
           )}

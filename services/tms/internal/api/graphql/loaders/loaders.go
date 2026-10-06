@@ -48,6 +48,7 @@ type FactoryParams struct {
 	LocationByID                              *LocationByIDLoaderFactory
 	OrderByID                                 *OrderByIDLoaderFactory
 	ShipmentProfitabilityByID                 *ShipmentProfitabilityLoaderFactory
+	ShipmentEtaByID                           *ShipmentEtaLoaderFactory
 	EDIPartnerByCustomerID                    *EDIPartnerByCustomerIDLoaderFactory
 	FormulaTemplateStatsByID                  *FormulaTemplateStatsLoaderFactory
 	AgentDefinitionStatsByID                  *AgentDefinitionStatsLoaderFactory
@@ -68,6 +69,8 @@ type FactoryParams struct {
 	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	AgentRunByID                              *AgentRunByIDLoaderFactory
 	AgentRunTranscriptByID                    *AgentRunTranscriptByIDLoaderFactory
+	AgentMemoryByID                           *AgentMemoryByIDLoaderFactory
+	AgentMemoryReplacement                    *AgentMemoryReplacementLoaderFactory
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	ThreadAgentByID                           *ThreadAgentByIDLoaderFactory
 	UsableAgentByID                           *UsableAgentByIDLoaderFactory
@@ -108,6 +111,7 @@ type Factory struct {
 	locationByID                              *LocationByIDLoaderFactory
 	orderByID                                 *OrderByIDLoaderFactory
 	shipmentProfitabilityByID                 *ShipmentProfitabilityLoaderFactory
+	shipmentEtaByID                           *ShipmentEtaLoaderFactory
 	ediPartnerByCustomerID                    *EDIPartnerByCustomerIDLoaderFactory
 	formulaTemplateStatsByID                  *FormulaTemplateStatsLoaderFactory
 	agentDefinitionStatsByID                  *AgentDefinitionStatsLoaderFactory
@@ -128,6 +132,8 @@ type Factory struct {
 	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	agentRunByID                              *AgentRunByIDLoaderFactory
 	agentRunTranscriptByID                    *AgentRunTranscriptByIDLoaderFactory
+	agentMemoryByID                           *AgentMemoryByIDLoaderFactory
+	agentMemoryReplacement                    *AgentMemoryReplacementLoaderFactory
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	threadAgentByID                           *ThreadAgentByIDLoaderFactory
 	usableAgentByID                           *UsableAgentByIDLoaderFactory
@@ -168,6 +174,7 @@ type Loaders struct {
 	LocationByID                              *dataloadgen.Loader[string, *location.Location]
 	OrderByID                                 *dataloadgen.Loader[string, *order.Order]
 	ShipmentProfitabilityByID                 *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
+	ShipmentEtaByID                           *dataloadgen.Loader[string, *services.ShipmentEta]
 	EDIPartnerByCustomerID                    *dataloadgen.Loader[string, *edi.EDIPartner]
 	FormulaTemplateStatsByID                  *dataloadgen.Loader[string, repositories.TemplateStats]
 	AgentDefinitionStatsByID                  *dataloadgen.Loader[string, repositories.AgentDefinitionStats]
@@ -188,6 +195,8 @@ type Loaders struct {
 	AgentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	AgentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
 	AgentRunTranscriptByID                    *dataloadgen.Loader[string, *agent.AgentRun]
+	AgentMemoryByID                           *dataloadgen.Loader[string, *agent.Memory]
+	AgentMemoryReplacement                    *dataloadgen.Loader[string, *agent.Memory]
 	AgentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
 	ThreadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
 	UsableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
@@ -232,6 +241,7 @@ func NewFactory(p FactoryParams) *Factory {
 		locationByID:                              p.LocationByID,
 		orderByID:                                 p.OrderByID,
 		shipmentProfitabilityByID:                 p.ShipmentProfitabilityByID,
+		shipmentEtaByID:                           p.ShipmentEtaByID,
 		ediPartnerByCustomerID:                    p.EDIPartnerByCustomerID,
 		formulaTemplateStatsByID:                  p.FormulaTemplateStatsByID,
 		agentDefinitionStatsByID:                  p.AgentDefinitionStatsByID,
@@ -252,6 +262,8 @@ func NewFactory(p FactoryParams) *Factory {
 		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
 		agentRunByID:                              p.AgentRunByID,
 		agentRunTranscriptByID:                    p.AgentRunTranscriptByID,
+		agentMemoryByID:                           p.AgentMemoryByID,
+		agentMemoryReplacement:                    p.AgentMemoryReplacement,
 		agentDefinitionByID:                       p.AgentDefinitionByID,
 		threadAgentByID:                           p.ThreadAgentByID,
 		usableAgentByID:                           p.UsableAgentByID,
@@ -296,6 +308,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		ShipmentProfitabilityByID: f.shipmentProfitabilityByID.NewForTenant(
 			tenantInfo,
 		),
+		ShipmentEtaByID: f.shipmentEtaByID.NewForTenant(tenantInfo),
 		EDIPartnerByCustomerID: f.ediPartnerByCustomerID.NewForTenant(
 			tenantInfo,
 		),
@@ -344,7 +357,11 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		AgentDecisionsByProposalID: f.agentDecisionsByProposalID.NewForTenant(
 			tenantInfo,
 		),
-		AgentRunByID: f.agentRunByID.NewForTenant(tenantInfo),
+		AgentRunByID:    f.agentRunByID.NewForTenant(tenantInfo),
+		AgentMemoryByID: f.agentMemoryByID.NewForTenant(tenantInfo),
+		AgentMemoryReplacement: f.agentMemoryReplacement.NewForTenant(
+			tenantInfo,
+		),
 		AgentRunTranscriptByID: f.agentRunTranscriptByID.NewForTenant(
 			tenantInfo,
 		),

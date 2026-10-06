@@ -29,7 +29,7 @@ import {
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
-import { CombineIcon, Trash2Icon } from "lucide-react";
+import { GitMergeIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useId, useState } from "react";
 import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
 import { withKind, type Destination } from "./destination";
@@ -210,7 +210,7 @@ export function DocumentCard({
                   onClick={onMergeWithNext}
                   title={t("Join with next")}
                 >
-                  <CombineIcon className="size-3.5" aria-hidden />
+                  <GitMergeIcon className="size-3.5" aria-hidden />
                   <span className="sr-only sm:not-sr-only">{t("Join with next")}</span>
                 </Button>
               )}
@@ -222,7 +222,7 @@ export function DocumentCard({
                   onClick={() => setConfirmDiscard(true)}
                   title={t("Discard document")}
                 >
-                  <Trash2Icon className="size-3.5" aria-hidden />
+                  <Trash01Icon className="size-3.5" aria-hidden />
                   <span className="sr-only sm:not-sr-only">{t("Discard document")}</span>
                 </Button>
               )}

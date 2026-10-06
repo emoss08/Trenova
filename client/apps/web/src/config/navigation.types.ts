@@ -1,6 +1,8 @@
 import type { OrganizationCapabilityType } from "@trenova/shared/types/organization-capability";
 import type { OperationType } from "@trenova/shared/types/permission";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
+import type { PlanCapabilityType } from "@/lib/plan-capability";
+import type { PlatformMode } from "@trenova/shared/types/platform";
 
 export type ModuleId =
   | "home"
@@ -33,7 +35,7 @@ export interface NavItem {
   id: string;
   label: string;
   path: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   disabled?: boolean;
   includeBetaTag?: boolean;
   external?: boolean;
@@ -45,6 +47,13 @@ export interface NavItem {
    * product at all.
    */
   capability?: OrganizationCapabilityType;
+  /**
+   * Hides the entry when the organization's Trenova Cloud plan withholds the
+   * capability, as the free demo does for integrations, API keys and the like.
+   */
+  planCapability?: PlanCapabilityType;
+  /** Shows the entry only on an install running in this platform mode. */
+  platformMode?: PlatformMode;
   badge?: NavItemBadgeKind;
 }
 
@@ -53,7 +62,7 @@ export type NavGroupKind = "configuration";
 export interface NavGroup {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   items: NavItem[];
   defaultOpen?: boolean;
   /**
@@ -65,6 +74,8 @@ export interface NavGroup {
   kind?: NavGroupKind;
   resource?: string;
   capability?: OrganizationCapabilityType;
+  planCapability?: PlanCapabilityType;
+  platformMode?: PlatformMode;
 }
 
 export interface NavModule {
@@ -92,6 +103,8 @@ export interface NavModule {
   hideSecondarySidebar?: boolean;
   resource?: string;
   capability?: OrganizationCapabilityType;
+  planCapability?: PlanCapabilityType;
+  platformMode?: PlatformMode;
 }
 
 export interface NavigationConfig {
@@ -118,6 +131,7 @@ export interface QuickActionCommand {
    * the organization does not run would only lead to a route that refuses it.
    */
   capability?: OrganizationCapabilityType;
+  planCapability?: PlanCapabilityType;
   query?: Record<string, string>;
   keywords?: string[];
 }

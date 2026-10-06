@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { OpenStatement, StatementGroup } from "@trenova/shared/types/statement";
-import { CalendarClockIcon, ClockIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, CalendarClockIcon, ClockIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 export type BillStatementDecision = { reason: string };
@@ -127,7 +127,7 @@ export function BillStatementDialog({
           {offCycle ? (
             <div className="flex flex-col gap-2">
               <Alert variant="warning" size="sm">
-                <TriangleAlertIcon />
+                <AlertTriangleIcon />
                 <AlertDescription>
                   {t(
                     "This period has not closed yet. Billing now does not move {0}'s cycle — anything delivered for the rest of the period still bills on the original date.",

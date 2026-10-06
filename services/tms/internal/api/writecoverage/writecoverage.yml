@@ -125,6 +125,9 @@ writes:
   "mutation approveAgentMemorySuggestion":
     exempt: agent-administration
     reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+  "mutation commitMyDecisionNow":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation createAgentMemory":
     tools: [remember]
   "mutation decideAgentPlan":
@@ -153,6 +156,9 @@ writes:
     reason: "An agent exception is an agent handing a case to a person; the person resolves it."
   "mutation setAgentMemoryStatus":
     tools: [forget_memory]
+  "mutation undoMyDecision":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation updateAgentControl":
     exempt: agent-administration
     reason: "The organization-wide switches and ceilings every agent runs under."
@@ -179,6 +185,9 @@ writes:
   "mutation setRoleAgentAccess":
     exempt: security
     reason: "Decides which roles may use which agents."
+  "mutation updateAgentCapabilities":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
 
   # agentextension
   "POST /api/v1/agent-extensions/:type/test/":
@@ -274,30 +283,66 @@ writes:
     reason: "Checks a worker against compliance rules before an assignment and saves nothing."
 
   # assistant
+  "DELETE /api/v1/assistant/schedules/:scheduleID/":
+    exempt: agent-administration
+    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
   "DELETE /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PATCH /api/v1/assistant/schedules/:scheduleID/":
+    exempt: agent-administration
+    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
   "PATCH /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/ask/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/schedules/:scheduleID/run/":
+    exempt: agent-administration
+    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
   "POST /api/v1/assistant/threads/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/pin/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/restore/":
+    exempt: agent-administration
+    reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
+  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/rewrite/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/":
+    exempt: agent-administration
+    reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
+  "POST /api/v1/assistant/threads/:threadID/compact/":
+    exempt: agent-administration
+    reason: "Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes."
+  "POST /api/v1/assistant/threads/:threadID/handoff/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/threads/:threadID/messages/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/read/":
+    exempt: agent-administration
+    reason: "Marking a conversation read arranges the person's own Desk; it changes no record an agent acts on."
+  "POST /api/v1/assistant/threads/:threadID/requests/":
+    exempt: agent-administration
+    reason: "Asking an administrator for access to an agent, or for more allowance, budget or daily requests, is a person's request about their own use of the assistant; an agent that could ask for its own limits to be raised would defeat them."
+  "POST /api/v1/assistant/threads/:threadID/schedules/":
+    exempt: agent-administration
+    reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
   "POST /api/v1/assistant/threads/:threadID/turns/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/turns/:turnID/stop/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
 
   # auth
   "POST /api/v1/auth/forgot-password":
@@ -306,6 +351,9 @@ writes:
   "POST /api/v1/auth/login":
     exempt: security
     reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+  "POST /api/v1/auth/mfa/verify":
+    exempt: security
+    reason: "Answering a sign-in's second-factor challenge is a person proving who they are; an agent holds no credentials of its own."
   "POST /api/v1/auth/logout":
     exempt: security
     reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
@@ -366,6 +414,11 @@ writes:
     reason: "A saved filter on the billing queue screen."
   "POST /api/v1/billing-queue/:itemID/reassign-charge/":
     tools: [reassign_billing_charge]
+  "POST /api/v1/billing-queue/bulk-approve/":
+    tools: [approve_billing_queue_items]
+  "POST /api/v1/billing-queue/bulk-approve/:runID/cancel/":
+    exempt: infrastructure
+    reason: "Stops a bulk approval run the queue screen started in the background; approve_billing_queue_items approves its items within the one proposal a person decides, so an agent has no run to stop."
   "POST /api/v1/billing-queue/filter-presets/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
@@ -377,9 +430,17 @@ writes:
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "mutation assignBillingQueueBiller":
-    tools: [assign_billing_queue_biller]
+    tools: [assign_billing_queue_biller, assign_billing_queue_billers]
+  "mutation postBillingQueueItem":
+    tools: [post_invoice, send_invoice]
+  "mutation releaseBillingQueueItem":
+    pending: "Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item."
+  "mutation resolveBillingQueueIssue":
+    pending: "Settle one of a billing queue item's checks with one of the options the check offers."
+  "mutation undoBillingQueueIssue":
+    pending: "Take back how a billing queue item's check was settled and put back any charge the settlement changed."
   "mutation updateBillingQueueStatus":
-    tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
+    tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review, transition_items_to_in_review]
 
   # billingtransfer
   "mutation cancelBillingTransferRun":
@@ -480,6 +541,14 @@ writes:
   "PUT /api/v1/carriers/:carrierID/":
     tools: [update_carrier]
 
+  # carriercapacity
+  "mutation createCarrierCapacityPosting":
+    tools: [create_carrier_capacity_posting]
+  "mutation deleteCarrierCapacityPosting":
+    tools: [delete_carrier_capacity_posting]
+  "mutation updateCarrierCapacityPosting":
+    tools: [update_carrier_capacity_posting]
+
   # carrierintelligence
   "mutation acknowledgeCarrierIntelEvents":
     tools: [acknowledge_carrier_intel_event]
@@ -563,11 +632,6 @@ writes:
   "PUT /api/v1/commodities/:commodityID/":
     tools: [update_commodity]
 
-  # controlplaneprovisioning
-  "POST /api/v1/control-plane/tenants/provision":
-    exempt: infrastructure
-    reason: "Called by the platform control plane with a service credential to provision a tenant."
-
   # costing
   "mutation updateCostCategory":
     exempt: configuration
@@ -631,6 +695,24 @@ writes:
   "mutation decideAgentProposals":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+
+  # deskmemory
+  "mutation confirmDeskMemory":
+    exempt: agent-administration
+    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+  "mutation createDeskMemory":
+    tools: [remember]
+  "mutation dismissDeskMemory":
+    exempt: agent-administration
+    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+  "mutation reviseDeskMemory":
+    exempt: agent-administration
+    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+  "mutation setDeskMemoryStatus":
+    tools: [forget_memory]
+  "mutation setMemorySavingMode":
+    exempt: agent-administration
+    reason: "Whether agents keep what they learn in the person's conversations straight away or ask first; an agent that could change it could stop asking."
 
   # detention
   "mutation approveDetentionOccurrence":
@@ -1645,6 +1727,9 @@ writes:
   "mutation rotateInboundMailboxToken":
     exempt: security
     reason: "Replaces the secret that authenticates mail forwarded into the mailbox."
+  "mutation setInboundMailboxApiKey":
+    exempt: security
+    reason: "Sets the provider credential the mailbox reads forwarded mail's content with."
   "mutation setInboundMailboxSigningSecret":
     exempt: security
     reason: "Sets the secret that authenticates mail forwarded into the mailbox."
@@ -1857,6 +1942,11 @@ writes:
   "mutation restoreNotifications":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # onboarding
+  "POST /api/v1/onboarding/complete/":
+    exempt: configuration
+    reason: "The owner's one-time setup of a new organization's profile and operating mode; every later write depends on it and it runs before any agent is configured."
 
   # order
   "mutation addOrderCharge":
@@ -2380,6 +2470,17 @@ writes:
   "mutation updateShipmentComment":
     tools: [edit_shipment_comment]
 
+  # shipmentboard
+  "mutation decideShipmentSuggestion":
+    exempt: user-preference
+    reason: "A person marking an item in their own suggestion queue done or for later; it changes no record, only what that person's queue shows."
+  "mutation notifyShipmentDelay":
+    tools: [email_customer]
+  "mutation tenderShipments":
+    tools: [tender_move_to_routing_guide, tender_move_to_carriers]
+  "mutation undoShipmentSuggestionDecision":
+    tools: [unassign_moves, cancel_tender]
+
   # shipmentcontrol
   "PUT /api/v1/shipment-controls/":
     exempt: configuration
@@ -2541,6 +2642,9 @@ writes:
   "DELETE /api/v1/users/me/profile-picture/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
+  "DELETE /api/v1/users/:userID/mfa/":
+    exempt: security
+    reason: "Resetting a person's second sign-in factor decides who can sign in as them."
   "PATCH /api/v1/users/:userID/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
@@ -2559,6 +2663,18 @@ writes:
   "POST /api/v1/users/me/change-password/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "POST /api/v1/users/me/mfa/recovery-codes/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "POST /api/v1/users/me/mfa/totp/confirm/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "POST /api/v1/users/me/mfa/totp/disable/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
+  "POST /api/v1/users/me/mfa/totp/enroll/":
+    exempt: security
+    reason: "A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one."
   "POST /api/v1/users/me/profile-picture/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."

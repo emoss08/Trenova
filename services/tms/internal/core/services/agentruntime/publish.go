@@ -14,6 +14,10 @@ const (
 
 	maxDocumentTitleRunes = 120
 	maxDocumentBodyBytes  = 60000
+	maxDocumentTypeRunes  = 40
+	maxDocumentBasisRunes = 120
+	maxDocumentSources    = 30
+	maxSourceTextRunes    = 160
 )
 
 // publishArtifactDescription is a constant for the same reason
@@ -25,7 +29,9 @@ const publishArtifactDescription = "Publish a written document beside the conver
 	"a screen: put the full text here in markdown and reply with two or three sentences " +
 	"pointing to it. Not for a list or a single record you looked up (those are shown to " +
 	"the person already, and the tool result says so). To revise a document you published, " +
-	"pass its artifactId with the whole new text."
+	"pass its artifactId with the whole new text; the earlier text is kept as a version. " +
+	"Cite what a sentence rests on with a footnote mark like [^1] and list each mark " +
+	"under sources."
 
 // publishArtifactSpec is the third tool the runtime answers itself. It is
 // offered only where there is somewhere to publish to: a conversation with a
@@ -46,6 +52,40 @@ func publishArtifactSpec() serviceports.ToolSpec {
 					"type": "string",
 					"description": "The whole document in markdown: headings, lists and " +
 						"tables. Only facts your tools returned.",
+				},
+				"docType": map[string]any{
+					"type": "string",
+					"description": "What kind of write-up it is, in a word or two: " +
+						"\"Brief\", \"Summary\", \"Handover\".",
+				},
+				"basis": map[string]any{
+					"type": "string",
+					"description": "What it was written from, in a few words: " +
+						"\"from 42 loads and 3 weather alerts\".",
+				},
+				"sources": map[string]any{
+					"type": "array",
+					"description": "What the body's [^N] marks point to, one entry per " +
+						"number. Only tools you called in this conversation.",
+					"items": map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"n":     map[string]any{"type": "integer"},
+							"tool":  map[string]any{"type": "string", "description": "The tool that found it."},
+							"label": map[string]any{"type": "string", "description": "What it is, in a few words."},
+							"detail": map[string]any{
+								"type":        "string",
+								"description": "One more line: a time, a scope.",
+							},
+							"artifactId": map[string]any{
+								"type": "string",
+								"description": "The artifact that shows it, when its result " +
+									"named one.",
+							},
+						},
+						"required":             []string{"n", "tool", "label"},
+						"additionalProperties": false,
+					},
 				},
 				"artifactId": map[string]any{
 					"type": "string",
@@ -98,6 +138,9 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 		}
 	}
 
+	sources, sourceProblems := publishedSources(arguments["sources"])
+	problems = append(problems, sourceProblems...)
+
 	if len(problems) > 0 {
 		return failedOutcome(
 			"Tool %q was not run: %s.",
@@ -112,8 +155,67 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 			Title:      title,
 			Body:       body,
 			ArtifactID: revises,
+			DocType:    clipRunes(stringArg(arguments, "docType"), maxDocumentTypeRunes),
+			Basis:      clipRunes(stringArg(arguments, "basis"), maxDocumentBasisRunes),
+			Sources:    sources,
 		},
 	}
+}
+
+// publishedSources reads the sources a document cites. A source without a
+// number or a label cannot be shown, and is a problem the model can fix.
+func publishedSources(raw any) ([]serviceports.PublishedSource, []string) {
+	entries, ok := raw.([]any)
+	if !ok || len(entries) == 0 {
+		return nil, nil
+	}
+	if len(entries) > maxDocumentSources {
+		return nil, []string{fmt.Sprintf("at most %d sources", maxDocumentSources)}
+	}
+
+	sources := make([]serviceports.PublishedSource, 0, len(entries))
+	seen := map[int]bool{}
+	for _, entry := range entries {
+		fields, isObject := entry.(map[string]any)
+		if !isObject {
+			return nil, []string{"each source is an object with n, tool and label"}
+		}
+		n, isNumber := fields["n"].(float64)
+		if !isNumber {
+			if whole, isInt := fields["n"].(int); isInt {
+				n, isNumber = float64(whole), true
+			}
+		}
+		label := clipRunes(stringArg(fields, "label"), maxSourceTextRunes)
+		if !isNumber || n < 1 || n != float64(int(n)) || label == "" {
+			return nil, []string{"each source needs a whole number n from 1 and a label"}
+		}
+		if seen[int(n)] {
+			return nil, []string{fmt.Sprintf("source %d is listed twice", int(n))}
+		}
+		seen[int(n)] = true
+		source := serviceports.PublishedSource{
+			N:      int(n),
+			Tool:   clipRunes(stringArg(fields, "tool"), maxSourceTextRunes),
+			Label:  label,
+			Detail: clipRunes(stringArg(fields, "detail"), maxSourceTextRunes),
+		}
+		if id, err := pulid.Parse(strings.TrimSpace(stringArg(fields, "artifactId"))); err == nil {
+			source.ArtifactID = id
+		}
+		sources = append(sources, source)
+	}
+
+	return sources, nil
+}
+
+func clipRunes(text string, most int) string {
+	text = strings.TrimSpace(text)
+	if utf8.RuneCountInString(text) <= most {
+		return text
+	}
+
+	return string([]rune(text)[:most])
 }
 
 // publishedContent is what the model reads after its document was kept.
@@ -123,17 +225,76 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 
 	return FenceToolResult(publishArtifactName, encoded) +
 		"\n\n[The person can open this document beside the conversation. Reply in two or " +
-		"three sentences that point to it; do not repeat its text.]"
+		"three sentences that point to it; do not repeat its text." + artifactRefNote(shown) + "]"
 }
 
-// shownNote tells the model that a result it is reading is already in front
-// of the person. A small model otherwise reprints a twenty-five row list as a
-// markdown table under the table the person is already looking at.
+// shownNote tells the model that a result it is reading can be put in front
+// of the person, and that it is only when the reply points to it: a lookup
+// made to find something out is not worth a place beside the conversation
+// unless the answer rests on it. A small model otherwise reprints a
+// twenty-five row list as a markdown table, or fetches every row of a list
+// again one by one. A ranking is pointed to however short it is: the Desk
+// rewrote five ranked drivers as its own table and linked nothing, and the
+// dispatcher lost the findings and the driver links the table carries.
 func shownNote(shown *serviceports.ShownArtifact) string {
-	return fmt.Sprintf("\n\n[Shown to the person as %s titled %q, which they can open beside "+
-		"the conversation. Answer with what matters (the count, the few rows or fields that "+
-		"answer the question, anything that needs attention) and refer to it rather than "+
-		"repeating it.]", artifactNoun(shown.Kind), shown.Title)
+	if tabular(shown.Kind) && shown.Opens {
+		return fmt.Sprintf("\n\n[This view is kept beside the conversation as %q, with how many "+
+			"rows it holds and the first few; the person opens it as the live table. Point to it "+
+			"in the sentence that describes it, and do not write its rows out or paste a link. Say "+
+			"what it was narrowed to, and anything the description asked for that it could not "+
+			"express.%s]", shown.Title, artifactRefNote(shown))
+	}
+	if tabular(shown.Kind) && shown.Actionable {
+		return fmt.Sprintf("\n\n[This result is kept as a table titled %q that the person works "+
+			"from beside the conversation: they select rows there, review each one and act on "+
+			"them. Point to it in the sentence that mentions it, however few rows it has, and do "+
+			"not write its rows out as a markdown table. Answer with the count and the rows that "+
+			"need attention. Work from the fields it already has instead of looking up each row "+
+			"again.%s]", shown.Title, artifactRefNote(shown))
+	}
+	if tabular(shown.Kind) && shown.Ranked {
+		return fmt.Sprintf("\n\n[This result is kept as a ranked table titled %q, best first, "+
+			"that the person picks from beside the conversation, with the findings behind each "+
+			"row and a link to each record. Point to it in the sentence that names your pick, "+
+			"however few rows it has, and do not write its rows out as a markdown table. Answer "+
+			"with the one you would choose and why, and anything that rules out or holds back "+
+			"the others. Work from the fields it already has instead of looking up each row "+
+			"again.%s]", shown.Title, artifactRefNote(shown))
+	}
+	if tabular(shown.Kind) && shown.Rows > 0 && shown.Rows <= InlineRows {
+		return fmt.Sprintf("\n\n[This result has %d rows, few enough to answer in your reply "+
+			"when the answer is a fact or a few of its rows: give them with only the columns the "+
+			"question needs, and do not point to the table titled %q; a table you do not point "+
+			"to is not kept. When you would rank or compare its rows for the person to choose "+
+			"from, or write most of them out, point to the table instead and do not write its "+
+			"rows out as a markdown table. Work from the fields it already has instead of "+
+			"looking up each row again.%s]", shown.Rows, shown.Title, artifactRefNote(shown))
+	}
+	if tabular(shown.Kind) {
+		return fmt.Sprintf("\n\n[This result is kept as %s titled %q, which the person can "+
+			"open beside the conversation. It is too long to repeat: do not write its rows "+
+			"out as a markdown table. Answer with the count and the rows that need attention, "+
+			"and point to the table in the sentence that mentions it. Work from the fields it "+
+			"already has instead of looking up each row again.%s]",
+			artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
+	}
+
+	return fmt.Sprintf("\n\n[This result can be shown to the person as %s titled %q, which "+
+		"they can open beside the conversation. Point to it only if your answer rests on it; "+
+		"a result you do not point to is not shown. Answer with what matters rather than "+
+		"repeating its fields, and never set them out as a markdown table; the person reads "+
+		"the rest on it.%s]",
+		artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
+}
+
+// InlineRows is the most rows a reply repeats as a markdown table. A table
+// that short is answered in the reply and not kept, unless the reply ranks or
+// compares its rows; a longer one is kept and pointed to, and its rows are
+// not repeated. One or the other, never both.
+const InlineRows = 12
+
+func tabular(kind string) bool {
+	return kind == "table_view" || kind == "report_preview"
 }
 
 func artifactNoun(kind string) string {

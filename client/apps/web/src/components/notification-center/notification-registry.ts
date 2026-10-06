@@ -10,40 +10,40 @@ import { invoicePanelPath } from "@/lib/invoice-links";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { Notification } from "@trenova/shared/types/notification";
 import {
-  ArrowLeftRightIcon,
-  CirclePauseIcon,
-  CoinsIcon,
+  AlertOctagonIcon,
+  AlertTriangleIcon,
+  AtSignIcon,
+  Bell01Icon,
+  Building08Icon,
+  CalendarClockIcon,
+  CalendarMinus01Icon,
+  CheckCircleIcon,
+  ClockAlertIcon,
+  Coins01Icon,
+  CurrencyDollarCircleIcon,
+  Database02Icon,
+  FileAlertIcon,
+  FileCheck02Icon,
+  FileDownload02Icon,
+  FileLock02Icon,
+  FileX02Icon,
+  FilterFunnelXIcon,
+  type IconComponent,
+  IdCardIcon,
   ListChecksIcon,
+  MailAlertIcon,
+  PauseCircleIcon,
+  ReceiptTextIcon,
+  Share07Icon,
+  ShieldAlertIcon,
   ShieldBanIcon,
   ShieldQuestionIcon,
-  TruckIcon,
-  AtSignIcon,
-  BanIcon,
-  BellIcon,
-  CalendarClockIcon,
-  CalendarOffIcon,
-  CircleCheckIcon,
-  CircleDollarSignIcon,
-  DatabaseZapIcon,
-  FileCheckIcon,
-  FileDownIcon,
-  FileLockIcon,
-  FileWarningIcon,
-  FileXIcon,
-  FilterXIcon,
-  IdCardIcon,
-  LandmarkIcon,
-  MailWarningIcon,
-  OctagonAlertIcon,
-  ReceiptTextIcon,
-  Share2Icon,
-  ShieldAlertIcon,
-  ClockAlertIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
-  TriangleAlertIcon,
-  type LucideIcon,
-} from "lucide-react";
+  SlashCircle01Icon,
+  SwitchHorizontal01Icon,
+  TrendDown01Icon,
+  TrendUp01Icon,
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 import { workerRecordHref } from "@/lib/route-utils";
 
 export function notificationDataString(
@@ -99,7 +99,7 @@ export interface NotificationAvatar {
 
 export interface NotificationDescriptor {
   category: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   iconClass: string;
   tileClass: string;
   hideMessage?: boolean;
@@ -138,7 +138,7 @@ const carrierIntelUsageLink = (notification: Notification) =>
 
 const REPORT_READY: NotificationDescriptor = {
   category: "Reports",
-  icon: FileDownIcon,
+  icon: FileDownload02Icon,
   iconClass: "text-success",
   tileClass: "bg-success-subtle",
   getLink: reportRunsLink,
@@ -187,21 +187,21 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   "agent.tool_promoted": {
     category: "AI Control",
-    icon: TrendingUpIcon,
+    icon: TrendUp01Icon,
     iconClass: "text-success",
     tileClass: "bg-success-subtle",
     getLink: aiControlLink,
   },
   "agent.tool_demoted": {
     category: "AI Control",
-    icon: TrendingDownIcon,
+    icon: TrendDown01Icon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: aiControlLink,
   },
   "agent.quality_regression": {
     category: "AI Control",
-    icon: TrendingDownIcon,
+    icon: TrendDown01Icon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: aiControlLink,
@@ -212,21 +212,21 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   [AI_AUDIT_EXPORT_READY_EVENT]: {
     category: "AI Control",
-    icon: FileDownIcon,
+    icon: FileDownload02Icon,
     iconClass: "text-success",
     tileClass: "bg-success-subtle",
     getLink: (n) => aiAuditExportNotice(n)?.link ?? null,
   },
   [AI_AUDIT_EXPORT_FAILED_EVENT]: {
     category: "AI Control",
-    icon: FileXIcon,
+    icon: FileX02Icon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: (n) => aiAuditExportNotice(n)?.link ?? null,
   },
   [AI_AUDIT_CHAIN_MISMATCH_EVENT]: {
     category: "AI Control",
-    icon: FileLockIcon,
+    icon: FileLock02Icon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: () => AI_AUDIT_TRAIL_PATH,
@@ -261,7 +261,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   credential_document_uploaded: {
     category: "Workers",
-    icon: FileCheckIcon,
+    icon: FileCheck02Icon,
     iconClass: "text-brand",
     tileClass: "bg-brand/10",
     getLink: workerCredentialsLink,
@@ -270,28 +270,28 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   report_run_delivered: { ...REPORT_READY, iconClass: "text-brand", tileClass: "bg-brand/10" },
   report_run_failed: {
     category: "Reports",
-    icon: FileXIcon,
+    icon: FileX02Icon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: reportRunsLink,
   },
   report_run_canceled: {
     category: "Reports",
-    icon: BanIcon,
+    icon: SlashCircle01Icon,
     iconClass: "text-muted-foreground",
     tileClass: "bg-muted",
     getLink: reportRunsLink,
   },
   report_schedule_skipped: {
     category: "Reports",
-    icon: CalendarOffIcon,
+    icon: CalendarMinus01Icon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: () => "/reports",
   },
   report_delivery_email_failed: {
     category: "Reports",
-    icon: MailWarningIcon,
+    icon: MailAlertIcon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: reportRunsLink,
@@ -305,7 +305,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   invoice_shared: {
     category: "Billing",
-    icon: Share2Icon,
+    icon: Share07Icon,
     iconClass: "text-brand",
     tileClass: "bg-brand/10",
     avatar: (n) => {
@@ -317,7 +317,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   billing_exception_recorded: {
     category: "Billing",
-    icon: CircleDollarSignIcon,
+    icon: CurrencyDollarCircleIcon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: (n) =>
@@ -325,7 +325,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   bank_receipt_reconciliation_exception: {
     category: "Accounting",
-    icon: LandmarkIcon,
+    icon: Building08Icon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: (n) =>
@@ -353,14 +353,14 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   "edi.message.dead_lettered": {
     category: "EDI",
-    icon: ArrowLeftRightIcon,
+    icon: SwitchHorizontal01Icon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: (n) => notificationDataString(n, "link") ?? "/edi/messages",
   },
   "edi.inbound_file.quarantined": {
     category: "EDI",
-    icon: FileWarningIcon,
+    icon: FileAlertIcon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: (n) => notificationDataString(n, "link") ?? "/edi/inbound-files",
@@ -388,7 +388,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   carrier_intel_provider_paused: {
     category: "Carrier Intelligence",
-    icon: CirclePauseIcon,
+    icon: PauseCircleIcon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: (n) =>
@@ -396,63 +396,63 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   },
   carrier_equipment_mismatch: {
     category: "Carrier Intelligence",
-    icon: TruckIcon,
+    icon: Truck01Icon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: carrierIntelLink,
   },
   carrier_intel_spend_soft_cap: {
     category: "Carrier Intelligence",
-    icon: CoinsIcon,
+    icon: Coins01Icon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: carrierIntelUsageLink,
   },
   carrier_intel_spend_cap: {
     category: "Carrier Intelligence",
-    icon: CoinsIcon,
+    icon: Coins01Icon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: carrierIntelUsageLink,
   },
   tender_accepted: {
     category: "Dispatch",
-    icon: CircleCheckIcon,
+    icon: CheckCircleIcon,
     iconClass: "text-success",
     tileClass: "bg-success-subtle",
     getLink: dispatchConsoleLink,
   },
   tender_needs_review: {
     category: "Dispatch",
-    icon: TriangleAlertIcon,
+    icon: AlertTriangleIcon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: dispatchConsoleLink,
   },
   tender_waterfall_exhausted: {
     category: "Dispatch",
-    icon: OctagonAlertIcon,
+    icon: AlertOctagonIcon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: dispatchConsoleLink,
   },
   rate_confirmation_issue_failed: {
     category: "Dispatch",
-    icon: FileWarningIcon,
+    icon: FileAlertIcon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: dispatchConsoleLink,
   },
   tender_delivery_failed: {
     category: "Dispatch",
-    icon: MailWarningIcon,
+    icon: MailAlertIcon,
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: dispatchConsoleLink,
   },
   tender_entries_skipped: {
     category: "Dispatch",
-    icon: FilterXIcon,
+    icon: FilterFunnelXIcon,
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: dispatchConsoleLink,
@@ -461,7 +461,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
 
 const TCA_DESCRIPTOR: NotificationDescriptor = {
   category: "Data alert",
-  icon: DatabaseZapIcon,
+  icon: Database02Icon,
   iconClass: "text-info",
   tileClass: "bg-info-subtle",
   getLink: (n) => notificationDataString(n, "link"),
@@ -469,7 +469,7 @@ const TCA_DESCRIPTOR: NotificationDescriptor = {
 
 const FALLBACK_DESCRIPTOR: NotificationDescriptor = {
   category: "System",
-  icon: BellIcon,
+  icon: Bell01Icon,
   iconClass: "text-muted-foreground",
   tileClass: "bg-muted",
   getLink: (n) => notificationDataString(n, "link"),

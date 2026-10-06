@@ -117,7 +117,7 @@ Nothing is generated; the check is two Go tests that run under `task test`:
 
 ```bash
 cd services/tms
-go test -tags nofitz ./internal/api/toolcontract/
+go test ./internal/api/toolcontract/
 ```
 
 `TestEveryBoundToolFitsItsGraphQLInput` fails when a bound tool stops requiring a non-null
@@ -138,8 +138,8 @@ schema or policy, or adding or removing a tool means refreshing them**:
 
 ```bash
 cd services/tms
-go test -tags nofitz -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update
-go test -tags nofitz -run TestToolCatalogSnapshot ./internal/core/services/agentevalgate/ -update
+go test -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update
+go test -run TestToolCatalogSnapshot ./internal/core/services/agentevalgate/ -update
 ```
 
 A tool description, a product guide page or an eval request is also embedded, by content

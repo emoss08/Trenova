@@ -34,6 +34,7 @@ const (
 	CommentOriginEDI       = "edi"
 	CommentOriginDash      = "dash"
 	CommentOriginAgent     = "agent"
+	CommentOriginBoard     = "board"
 )
 
 type ShipmentComment struct {

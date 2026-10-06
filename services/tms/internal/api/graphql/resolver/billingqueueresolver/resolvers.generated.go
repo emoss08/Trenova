@@ -9,7 +9,8 @@ import (
 
 type Deps struct {
 	*base.Core
-	BillingQueueService services.BillingQueueService
+	BillingQueueService       services.BillingQueueService
+	BillingQueueReviewService services.BillingQueueReviewService
 }
 
 type MutationResolver struct{ *Deps }

@@ -23,4 +23,6 @@ const (
 	ErrResourceInUse       = ErrorCode("RESOURCE_IN_USE")
 	ErrBreakingChange      = ErrorCode("BREAKING_CHANGE")
 	ErrNotImplemented      = ErrorCode("NOT_IMPLEMENTED")
+	ErrQuotaExceeded       = ErrorCode("QUOTA_EXCEEDED")
+	ErrPlanRestricted      = ErrorCode("PLAN_RESTRICTED")
 )

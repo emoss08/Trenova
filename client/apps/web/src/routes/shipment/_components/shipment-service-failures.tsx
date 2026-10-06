@@ -22,15 +22,15 @@ import type { ServiceFailure, ServiceFailureStopSummary } from "@/types/service-
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertCircleIcon,
   AlertTriangleIcon,
-  CheckCircle2Icon,
-  CircleAlertIcon,
-  InfoIcon,
-  RefreshCwIcon,
-  SendIcon,
-  ShieldCheckIcon,
+  CheckCircleIcon,
+  InfoCircleIcon,
+  RefreshCw02Icon,
+  Send01Icon,
+  ShieldTickIcon,
   XCircleIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -152,7 +152,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
               isLoading={evaluateMutation.isPending}
               loadingText={t("Evaluating...")}
             >
-              <RefreshCwIcon className="size-3.5" />
+              <RefreshCw02Icon className="size-3.5" />
               {t("Evaluate")}
             </Button>
           </ActionTooltip>
@@ -215,7 +215,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                       }
                       onClick={() => lifecycleMutation.mutate({ failure, action: "review" })}
                     >
-                      <ShieldCheckIcon className="size-3.5" />
+                      <ShieldTickIcon className="size-3.5" />
                     </Button>
                   </ActionTooltip>
                   <ActionTooltip
@@ -239,7 +239,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                       }
                       onClick={() => lifecycleMutation.mutate({ failure, action: "resolve" })}
                     >
-                      <CheckCircle2Icon className="size-3.5" />
+                      <CheckCircleIcon className="size-3.5" />
                     </Button>
                   </ActionTooltip>
                   <ActionTooltip
@@ -298,7 +298,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
 
           <div className="bg-muted/20 max-h-[28rem] overflow-y-auto rounded-md border">
             <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-medium">
-              <InfoIcon className="size-4 text-warning-foreground" />
+              <InfoCircleIcon className="size-4 text-warning-foreground" />
               {t("Stop results")}
             </div>
             <EvaluationStopGroup
@@ -392,7 +392,7 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
   if (readinessQuery.isLoading) {
     return (
       <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
-        <SendIcon className="size-3.5" />
+        <Send01Icon className="size-3.5" />
         {t("Checking EDI 214 readiness")}
       </div>
     );
@@ -419,7 +419,7 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
             : "border-muted bg-muted/30 text-muted-foreground",
       )}
     >
-      {blocked ? <CircleAlertIcon className="size-3.5" /> : <SendIcon className="size-3.5" />}
+      {blocked ? <AlertCircleIcon className="size-3.5" /> : <Send01Icon className="size-3.5" />}
       <span className="font-medium">{t("Customer EDI 214 {0}", trigger)}</span>
       <Badge variant={blocked ? "danger" : available || ready ? "success" : "neutral"}>
         {label}

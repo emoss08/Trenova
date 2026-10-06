@@ -39,7 +39,12 @@ import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowLeftIcon, LinkIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  DotsHorizontalIcon,
+  Link01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
 import { isFileable } from "./destination";
@@ -340,7 +345,7 @@ function OpenBatch({
                     variant="outline"
                     aria-label={t("Stack actions")}
                   >
-                    <MoreHorizontalIcon className="size-4" />
+                    <DotsHorizontalIcon className="size-4" />
                   </Button>
                 }
               />
@@ -349,7 +354,7 @@ function OpenBatch({
                   title={t("Copy link")}
                   description={t("Opens this stack in Intake for anyone who can see it")}
                   descriptionClassProps="whitespace-normal"
-                  startContent={<LinkIcon className="size-3.5" />}
+                  startContent={<Link01Icon className="size-3.5" />}
                   onClick={() =>
                     void copy(
                       new URL(recordPath("capture_batch", batch.id), window.location.origin).href,
@@ -362,7 +367,7 @@ function OpenBatch({
                     title={t("Discard the stack")}
                     description={t("Deletes every page not already filed")}
                     descriptionClassProps="whitespace-normal"
-                    startContent={<Trash2Icon className="size-3.5" />}
+                    startContent={<Trash01Icon className="size-3.5" />}
                     color="danger"
                     onClick={() => setConfirmDiscard(true)}
                   />

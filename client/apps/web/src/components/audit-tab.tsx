@@ -26,7 +26,7 @@ import {
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, fromUnixTime } from "date-fns";
-import { ChevronRight, ExternalLinkIcon } from "lucide-react";
+import { ChevronRightIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { AuditAlert } from "./audit-alert";
@@ -198,7 +198,7 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: 
               {relativeTime}
             </span>
             {hasDetails && (
-              <ChevronRight
+              <ChevronRightIcon
                 className={cn(
                   "text-muted-foreground size-4 transition-transform duration-200",
                   open && "rotate-90",
@@ -221,7 +221,7 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: 
                 className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
               >
                 {t("View full record")}
-                <ExternalLinkIcon className="size-3" />
+                <LinkExternal01Icon className="size-3" />
               </Link>
             </div>
           )}

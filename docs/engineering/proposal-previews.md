@@ -226,7 +226,11 @@ an untargeted step keeps the stop at the first failure.
 `decideMyProposals` is `decideAgentProposals` for proposals raised in the caller's own
 conversations (`AgentDecisionQueueService.DecideManyOwn`): every id passes
 `AssertOwnProposal` or nothing is decided, and each carries the digest of the preview the
-person had on screen.
+person had read. The approval box keeps a batch's rows mounted behind its folded **Details**
+(`keepDetailsMounted`), so the first five (`BATCH_OPEN_LIMIT`) read their previews as the box
+appears and an approval made without opening **Details** sends their digests: a batch is
+reviewed by default. A row past the first five reads its preview only once it is opened, and
+the box says how many were not previewed before such an approval records them unreviewed.
 
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it
@@ -315,6 +319,8 @@ records, and approves exactly the set that remains:
 | Bulk tool | Parameter | Runs each record as |
 | --- | --- | --- |
 | `approve_billing_queue_items` | `billingQueueItemIds` (billing queue), `reviewNotes` | `approve_billing_queue_item` |
+| `assign_billing_queue_billers` | `billingQueueItemIds` (billing queue), `billerId` (optional: the person asking) | `assign_billing_queue_biller` |
+| `transition_items_to_in_review` | `billingQueueItemIds` (billing queue), `billerId` (optional: the person asking) | `transition_item_to_in_review` |
 | `post_invoices` | `invoiceIds` (invoice) | `post_invoice` |
 | `send_invoices` | `invoiceIds` (invoice) | `send_invoice` |
 | `approve_driver_settlements` | `settlementIds` (driver settlement) | `approve_driver_settlement` |
@@ -323,7 +329,11 @@ records, and approves exactly the set that remains:
 | `post_carrier_settlements` | `settlementIds` (carrier settlement) | `post_carrier_settlement` |
 
 Each bulk tool wraps its single-record tool (`agenttoolservice/bulk_records.go`) and copies
-its policy: the same class, permission and Propose floor. The preview runs the single tool's
+its policy: the same class, permission and floor. A twin of a person-only tool runs only from a
+person's approval; a twin of a tool that may run on its own (`assign_billing_queue_billers`,
+`transition_items_to_in_review`) runs wherever its single would, and the review twin is held
+to what its most guarded item allows, so one held item among ten waiting ones still puts the
+call before a person. The preview runs the single tool's
 own preview for each of the first 20 records and keeps that record's change, with a `What
 happens` field carrying the single preview's sentence, refusals first; a larger set is
 `Partial` and says the rest are checked when it runs. A record the single tool would refuse,
@@ -350,8 +360,23 @@ tenant-scoped, amounts gated as `get_invoice` gates them) and names ids that are
 invoice of the organization. `list_invoices` and `list_billing_queue_items` also filter on
 `id` with `in`.
 
-The billing assistant template holds the three bulk tools and `get_invoices` (56 tools, under
-the 64-tool cap with room for an organization's own). To make room it gave up `list_insights`,
+Two billing-queue steps that are not money also have twins, because eleven items waiting on a
+biller were eleven proposals: `assign_billing_queue_billers` and `transition_items_to_in_review`.
+Both take `billerId` as optional and, when it is absent, assign **the person asking**: "assign
+me", "start reviewing these" and "get these ready to post" name nobody else, and an item in
+review must carry a biller (`CheckStatusFields`), which is what used to fail a plan at step 1
+after the person had approved it. `transition_item_to_in_review` now assigns that biller as it
+moves an item with nobody on it, validates the move it previews, and pins its target so a plan
+of such steps runs each on its own record. An unattended agent is nobody's biller, so a call
+from one that names none is refused with the parameter it needs. `get_billing_queue_items`
+reads up to 50 items in one call with what blocks each (approvable, missing documents,
+validation failures, detention holds), as `get_invoices` does for drafts, so checking a queue
+is one read and one table rather than a card per item.
+
+The billing assistant template holds the twins in place of `assign_billing_queue_biller` and
+`transition_item_to_in_review` (a twin takes one item as well as fifty), plus `get_billing_queue_items`,
+and gave up `preview_report` (the report analyst's) to stay under the 64-tool cap with room for
+an organization's own. To make room it gave up `list_insights`,
 `get_insight` (the insight analyst's) and `get_report_run` (a run's progress is already on
 screen). A template is copied when an agent is made, so an existing billing agent gains the
 bulk tools only when an administrator adds them in AI control.

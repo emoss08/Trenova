@@ -1,33 +1,46 @@
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { lazy, Suspense } from "react";
-
-const DeskLoading = lazy(() =>
-  import("@/components/assistant/voice/desk-loading").then((module) => ({
-    default: module.DeskLoading,
-  })),
-);
+import "@/components/desk-chat/desk-chat.css";
+import "./_styles/desk-v2.css";
 
 /**
- * The Desk while it is first opened: the desk visitor on the Desk's own
- * canvas, in place of the app-wide loading card.
- *
- * It is the Desk shell's hydrate fallback, so it shows while the session is
- * checked and the Desk's code arrives, and the shell paints the same canvas
- * when it takes over. The drawing is loaded on demand so its keyframes stay
- * out of the bundle every other page pays for; until it arrives the canvas is
- * simply empty, as the shell would be.
+ * The Desk while it is first opened: the room's shape — the rail, the strip
+ * across the top and the box in the middle — in place of the app-wide
+ * loading card, so nothing jumps when the Desk takes over.
  */
 export function DeskLoadingScreen() {
   const t = useT();
 
   return (
-    <main
-      data-slot="desk-loading-screen"
-      className="bg-desk-canvas text-foreground flex h-dvh w-full items-center justify-center"
-    >
-      <Suspense fallback={null}>
-        <DeskLoading label={t("Opening the desk")} />
-      </Suspense>
+    <main data-slot="desk-loading-screen" className="dsk" aria-busy>
+      <span role="status" className="sr-only">
+        {t("Opening the desk")}
+      </span>
+      <aside className="dk-sb" aria-hidden>
+        <div className="dk-sb-top">
+          <Skeleton className="dk-sk-logo" />
+        </div>
+        <div className="dk-sb-list">
+          <Skeleton className="dk-sk-row" />
+          <Skeleton className="dk-sk-row" />
+          <Skeleton className="dk-sk-row" />
+          <Skeleton className="dk-sk-gh" />
+          <Skeleton className="dk-sk-row" />
+          <Skeleton className="dk-sk-row" />
+        </div>
+      </aside>
+      <div className="dk-mainc">
+        <header className="dk-top" aria-hidden>
+          <Skeleton className="dk-sk-title" />
+        </header>
+        <div className="dk-home-w">
+          <div className="dk-home">
+            <div className="dk-home-in">
+              <Skeleton className="dk-sk-cmp" />
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

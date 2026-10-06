@@ -3,6 +3,7 @@ package referencedataguard_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,7 +17,7 @@ func TestGuard_CloudDeniesEveryoneWhenNoStewardIsConfigured(t *testing.T) {
 
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode: config.PlatformModeCloud,
-	})
+	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)
 
 	err = guard.RequireSteward(pulid.MustNew("org_"))
@@ -31,7 +32,7 @@ func TestGuard_CloudAllowsOnlyListedStewards(t *testing.T) {
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode:                  config.PlatformModeCloud,
 		ReferenceDataStewards: []string{" " + steward.String() + " "},
-	})
+	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)
 
 	require.NoError(t, guard.RequireSteward(steward))
@@ -46,7 +47,7 @@ func TestGuard_SelfHostedAllowsOperatorOrganizationsByDefault(t *testing.T) {
 
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode: config.PlatformModeSelfHosted,
-	})
+	}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 
 	require.NoError(t, guard.RequireSteward(pulid.MustNew("org_")))
@@ -59,11 +60,19 @@ func TestGuard_SelfHostedHonoursAnExplicitList(t *testing.T) {
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		Mode:                  config.PlatformModeSelfHosted,
 		ReferenceDataStewards: []string{steward.String()},
-	})
+	}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 
 	require.NoError(t, guard.RequireSteward(steward))
 	require.Error(t, guard.RequireSteward(pulid.MustNew("org_")))
+}
+
+func TestGuard_WithoutAnEditionBehavesAsSelfHosted(t *testing.T) {
+	t.Parallel()
+
+	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{}, nil)
+	require.NoError(t, err)
+	require.NoError(t, guard.RequireSteward(pulid.MustNew("org_")))
 }
 
 func TestGuard_FailsClosed(t *testing.T) {
@@ -72,7 +81,7 @@ func TestGuard_FailsClosed(t *testing.T) {
 	var guard *referencedataguard.Guard
 	require.Error(t, guard.RequireSteward(pulid.MustNew("org_")))
 
-	open, err := referencedataguard.FromPlatform(&config.PlatformConfig{})
+	open, err := referencedataguard.FromPlatform(&config.PlatformConfig{}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 	require.Error(t, open.RequireSteward(pulid.Nil))
 }
@@ -82,17 +91,16 @@ func TestGuard_RejectsMalformedStewardIDs(t *testing.T) {
 
 	_, err := referencedataguard.FromPlatform(&config.PlatformConfig{
 		ReferenceDataStewards: []string{"not-an-id"},
-	})
+	}, editioninfo.SelfHosted())
 	require.Error(t, err)
 }
 
-func TestGuard_ControlPlaneBackedInstancesRequireListedStewards(t *testing.T) {
+func TestGuard_SharedTenancyRequiresListedStewardsWhateverTheMode(t *testing.T) {
 	t.Parallel()
 
 	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
-		Mode:         config.PlatformModeSelfHosted,
-		ControlPlane: config.PlatformControlPlaneConfig{Enabled: true},
-	})
+		Mode: config.PlatformModeSelfHosted,
+	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)
 
 	require.Error(t, guard.RequireSteward(pulid.MustNew("org_")))

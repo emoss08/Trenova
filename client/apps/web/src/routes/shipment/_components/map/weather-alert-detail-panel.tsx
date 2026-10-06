@@ -12,7 +12,7 @@ import {
 } from "@/types/weather-alert";
 import { useQuery } from "@tanstack/react-query";
 import { ControlPosition, MapControl } from "@vis.gl/react-google-maps";
-import { ClockIcon, MapPinIcon, XIcon } from "lucide-react";
+import { ClockIcon, MarkerPin01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { formatUnixDateTimeShort, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
 function formatUnixTimestamp(unix: number | null | undefined): string {
@@ -112,7 +112,7 @@ export function WeatherAlertDetailPanel({
             onClick={onClose}
             className="text-muted-foreground hover:bg-muted hover:text-foreground shrink-0 rounded-sm p-0.5 transition-colors"
           >
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
           </button>
         </div>
 
@@ -120,7 +120,7 @@ export function WeatherAlertDetailPanel({
           <div className="flex flex-col">
             {props.areaDesc && (
               <div className="flex items-start gap-1.5 px-3 pb-2">
-                <MapPinIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
+                <MarkerPin01Icon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
                 <span className="text-muted-foreground text-xs">{props.areaDesc}</span>
               </div>
             )}
@@ -172,9 +172,7 @@ export function WeatherAlertDetailPanel({
             <Separator className="mx-3" />
 
             <div className="p-3">
-              <span className="text-xs text-muted-foreground font-medium">
-                {t("Activity")}
-              </span>
+              <span className="text-xs text-muted-foreground font-medium">{t("Activity")}</span>
               <div className="mt-2">
                 {isLoading ? (
                   <p className="text-muted-foreground text-xs">{t("Loading activity...")}</p>

@@ -19,7 +19,12 @@ import { fetchOrderDetail, removeOrderCharge, type OrderCharge } from "@/lib/gra
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Order } from "@trenova/shared/types/order";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { PencilIcon, PlusIcon, ReceiptTextIcon, Trash2Icon } from "lucide-react";
+import {
+  Edit02Icon,
+  PlusIcon,
+  ReceiptTextIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -132,7 +137,7 @@ export function OrderChargesSection() {
                           onClick={() => openEditCharge(charge)}
                           aria-label={t("Edit charge")}
                         >
-                          <PencilIcon className="size-3.5" />
+                          <Edit02Icon className="size-3.5" />
                         </Button>
                         <Button
                           type="button"
@@ -142,7 +147,7 @@ export function OrderChargesSection() {
                           onClick={() => setChargePendingRemoval(charge)}
                           aria-label={t("Remove charge")}
                         >
-                          <Trash2Icon className="text-destructive size-3.5" />
+                          <Trash01Icon className="text-destructive size-3.5" />
                         </Button>
                       </>
                     )}

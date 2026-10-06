@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -32,7 +34,7 @@ const (
 	SystemKeyBillingException   = "billing_exception"
 	SystemKeyDispatchAssignment = "dispatch_assignment"
 
-	definitionPromptVersion = "agent-definition/v2"
+	definitionPromptVersion = agentdefinition.PromptVersion
 	inlinePromptVersion     = "inline-v1"
 	provisionalHash         = "pending"
 	workflowIDPrefix        = "agent-run-"
@@ -49,6 +51,7 @@ type Params struct {
 	AuditService services.AuditService
 	Budgets      services.AgentBudgetService     `optional:"true"`
 	Activity     services.AgentActivityPublisher `optional:"true"`
+	Plans        services.PlanService            `optional:"true"`
 }
 
 type Service struct {
@@ -60,6 +63,7 @@ type Service struct {
 	audit       services.AuditService
 	budgets     services.AgentBudgetService
 	activity    services.AgentActivityPublisher
+	plans       services.PlanService
 }
 
 func New(p Params) services.AgentRunService {
@@ -72,6 +76,7 @@ func New(p Params) services.AgentRunService {
 		audit:       p.AuditService,
 		budgets:     p.Budgets,
 		activity:    p.Activity,
+		plans:       p.Plans,
 	}
 }
 func (s *Service) StartForDefinition(
@@ -81,6 +86,14 @@ func (s *Service) StartForDefinition(
 ) (*agent.AgentRun, error) {
 	if !s.workflows.Enabled() {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
+	}
+	if err := planservice.RequireCapability(
+		ctx,
+		s.plans,
+		req.TenantInfo,
+		platformplan.CapabilityAgentAutomation,
+	); err != nil {
+		return nil, err
 	}
 
 	definition, err := s.resolveDefinition(ctx, req)

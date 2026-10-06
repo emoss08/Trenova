@@ -24,7 +24,7 @@ import type {
   PreviewScenario,
 } from "@trenova/shared/types/detention";
 import { useQueries } from "@tanstack/react-query";
-import { ChevronDownIcon, FlaskConicalIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, Beaker02Icon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useInView } from "motion/react";
 import { useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -425,7 +425,7 @@ export function DetentionPolicyPreview() {
 
       {!ready ? (
         <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border border-dashed py-10 text-center">
-          <FlaskConicalIcon className="text-muted-foreground/60 size-5" />
+          <Beaker02Icon className="text-muted-foreground/60 size-5" />
           <p className="text-muted-foreground max-w-[16rem] text-xs">
             {t("Finish these fields on the Terms tab to price the worked examples.")}
           </p>
@@ -458,7 +458,7 @@ export function DetentionPolicyPreview() {
 
             {active.isError ? (
               <div className="flex items-start gap-2.5 px-4 py-6">
-                <TriangleAlertIcon className="mt-px size-4 shrink-0 text-warning-foreground" />
+                <AlertTriangleIcon className="mt-px size-4 shrink-0 text-warning-foreground" />
                 <div className="min-w-0">
                   <p className="text-xs font-medium">{t("This scenario could not be priced")}</p>
                   <p className="text-muted-foreground mt-0.5 text-xs">

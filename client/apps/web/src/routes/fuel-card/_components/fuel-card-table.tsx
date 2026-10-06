@@ -13,7 +13,7 @@ import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import type { DataTableEmptyStateRenderProps, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { BanIcon, LinkIcon } from "lucide-react";
+import { Link01Icon, SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { AssignFuelCardDialog } from "./assign-fuel-card-dialog";
 import { CancelFuelCardDialog } from "./cancel-fuel-card-dialog";
@@ -93,7 +93,7 @@ export default function FuelCardTable({ unassignedOnly = false }: { unassignedOn
       actions.push({
         id: "assign",
         label: t("Assign card"),
-        icon: LinkIcon,
+        icon: Link01Icon,
         hidden: (row) => row.original.status === "Cancelled",
         onClick: (row) => setAssigning(row.original),
       });
@@ -103,7 +103,7 @@ export default function FuelCardTable({ unassignedOnly = false }: { unassignedOn
       actions.push({
         id: "cancel",
         label: t("Cancel card"),
-        icon: BanIcon,
+        icon: SlashCircle01Icon,
         variant: "destructive",
         hidden: (row) => row.original.status === "Cancelled",
         onClick: (row) => setCancelling(row.original),

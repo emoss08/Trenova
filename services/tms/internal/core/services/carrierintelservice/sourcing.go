@@ -8,7 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -107,6 +109,9 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 			"Enter a name, EIN, VIN or choose a state to search")
 	}
 	if err := validateSourcingQuery(query); err != nil {
+		return nil, err
+	}
+	if err := s.requirePaidLookups(ctx, query.TenantInfo); err != nil {
 		return nil, err
 	}
 	limit := query.Limit
@@ -396,6 +401,18 @@ func (s *Service) AutocompleteCarriers(
 ) ([]services.CarrierIntelSuggestion, error) {
 	query = strings.TrimSpace(query)
 	if len(query) < minAutocompleteChars {
+		return []services.CarrierIntelSuggestion{}, nil
+	}
+	allowed, err := planservice.Allows(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityCarrierIntelligencePaid,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
 		return []services.CarrierIntelSuggestion{}, nil
 	}
 	if limit <= 0 || limit > maxAutocompleteLimit {

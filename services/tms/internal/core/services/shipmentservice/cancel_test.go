@@ -93,7 +93,7 @@ func TestServiceCancel_Success(t *testing.T) {
 		continuityRepo: continuityRepo,
 		validator:      NewTestValidator(t),
 		auditService:   audit,
-		realtime:       realtime,
+		invalidator:    newTestInvalidator(realtime),
 		eventService:   noopShipmentEventService{},
 		coordinator:    newStateCoordinator(),
 	}
@@ -131,7 +131,7 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 		repo:         repo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -180,7 +180,10 @@ func TestServiceUncancel_Success(t *testing.T) {
 		Return(original, nil).
 		Once()
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&tenant.ShipmentControl{}, nil).Once()
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.Anything).
+		Return(&tenant.ShipmentControl{}, nil).
+		Once()
 	repo.EXPECT().
 		Uncancel(mock.Anything, mock.MatchedBy(func(req *repositories.UncancelShipmentRequest) bool {
 			return req.ShipmentID == shipmentID && req.TenantInfo.OrgID == orgID &&
@@ -207,7 +210,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: audit,
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -244,7 +247,7 @@ func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 		repo:         repo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -298,7 +301,7 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 				repo:         repo,
 				validator:    NewTestValidator(t),
 				auditService: mocks.NewMockAuditService(t),
-				realtime:     mocks.NewMockRealtimeService(t),
+				invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 				eventService: noopShipmentEventService{},
 				coordinator:  newStateCoordinator(),
 			}
@@ -367,7 +370,10 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 	}
 
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(original, nil).Once()
-	controlRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&tenant.ShipmentControl{}, nil).Once()
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.Anything).
+		Return(&tenant.ShipmentControl{}, nil).
+		Once()
 
 	svc := &service{
 		l:            zap.NewNop(),

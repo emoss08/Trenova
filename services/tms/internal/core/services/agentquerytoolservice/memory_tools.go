@@ -50,7 +50,7 @@ func (t *recallMemoryTool) Description() string {
 		"earlier proposals. Search by text, or narrow to one customer, location, " +
 		"driver or carrier with subjectType and subjectId, or to one tool. Call this " +
 		"before acting on a customer or a driver you have not been told about in this " +
-		"conversation, and before using remember."
+		"conversation. To save something, call remember directly; it handles a repeat."
 }
 
 func (t *recallMemoryTool) ParamSchema() map[string]any {
@@ -69,8 +69,8 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 			},
 			"kind": agenttoolschema.Enum(
 				"Optional: Instruction for standing rules to follow, Fact "+
-					"for things agents were told, or Correction for fixes people made to "+
-					"earlier proposals.",
+					"for things agents were told, Correction for fixes people made to "+
+					"earlier proposals, or Procedure for the steps that worked for a task.",
 				memoryKinds,
 			),
 			"subjectType": agenttoolschema.Enum(
@@ -127,13 +127,15 @@ func (t *recallMemoryTool) Query(
 	req := serviceports.RecallAgentMemoriesRequest{
 		TenantInfo:        tenantOf(params),
 		AgentDefinitionID: params.AgentDefinitionID,
+		ReaderUserID:      params.Actor.PersonUserID(),
 		Query:             optionalString(params.Params, "query"),
 		Kind:              agent.MemoryKind(optionalString(params.Params, "kind")),
 		ToolName:          optionalString(params.Params, "toolName"),
 		Limit:             limit,
 	}
 	if req.Kind != "" && !req.Kind.IsValid() {
-		return nil, fmt.Errorf("kind %q is not Instruction, Fact or Correction", req.Kind)
+		return nil, fmt.Errorf("kind %q is not one of %s",
+			req.Kind, strings.Join(memoryKinds.Names(), ", "))
 	}
 	rawMemoryID := optionalString(params.Params, "id")
 	if rawMemoryID != "" {
@@ -144,10 +146,15 @@ func (t *recallMemoryTool) Query(
 		req.IDs = []pulid.ID{memoryID}
 	}
 
+	// A type with no id names no record, so it narrows nothing: a model that
+	// fills every field sends one, and refusing it kept the search from ever
+	// running. An id with no type cannot be looked up.
 	subjectType := agent.MemorySubjectType(optionalString(params.Params, "subjectType"))
 	rawID := optionalString(params.Params, "subjectId")
-	if (subjectType == "") != (rawID == "") {
-		return nil, fmt.Errorf("subjectType and subjectId go together; give both or neither")
+	if rawID == "" {
+		subjectType = ""
+	} else if subjectType == "" {
+		return nil, fmt.Errorf("subjectId needs subjectType: Customer, Location, Worker or Carrier")
 	}
 	if subjectType != "" {
 		if !subjectType.IsValid() {
@@ -180,9 +187,11 @@ func (t *recallMemoryTool) Query(
 
 	rows := make([]memoryRow, 0, len(memories))
 	tainted := make([]agent.RecordRef, 0, len(memories))
+	ids := make([]pulid.ID, 0, len(memories))
 	for _, recalled := range memories {
 		memory := recalled.Memory
 		tainted = append(tainted, memory.TaintedRecords()...)
+		ids = append(ids, memory.ID)
 		rows = append(rows, memoryRow{
 			ID:         memory.ID.String(),
 			Kind:       string(memory.Kind),
@@ -198,22 +207,36 @@ func (t *recallMemoryTool) Query(
 		})
 	}
 
+	// A memory read back is a memory used, as much as one a prompt carried;
+	// counting only the prompt's left the ones agents look up reading as
+	// never used. A count that fails costs the count, not the answer.
+	if len(ids) > 0 {
+		_ = t.memories.RecordUse(ctx, serviceports.RecordMemoryUseRequest{
+			TenantInfo: req.TenantInfo,
+			IDs:        ids,
+		})
+	}
+
 	return recallOutcome{
 		searchOutcome: searchResult(criteria, rows, len(rows)),
 		tainted:       tainted,
+		recalled:      ids,
 	}, nil
 }
 
 // recallOutcome is a recall's answer, which names the memories in it that
-// were written by a run that had read outside content. Only the runtime reads
-// that; the model reads the rows.
+// were written by a run that had read outside content, and every memory it
+// read back. Only the runtime reads those; the model reads the rows.
 type recallOutcome struct {
 	searchOutcome
 
-	tainted []agent.RecordRef
+	tainted  []agent.RecordRef
+	recalled []pulid.ID
 }
 
 func (o recallOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+
+func (o recallOutcome) RecalledMemoryIDs() []pulid.ID { return o.recalled }
 
 func recordedBy(source agent.MemorySource) string {
 	switch source {
@@ -225,6 +248,8 @@ func recordedBy(source agent.MemorySource) string {
 		return "a decision on a proposal"
 	case agent.MemorySourceFeedback:
 		return "people's ratings of an agent's work"
+	case agent.MemorySourceReflection:
+		return "an agent looking back over its own work"
 	default:
 		return string(source)
 	}

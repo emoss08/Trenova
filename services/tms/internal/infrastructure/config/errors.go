@@ -38,7 +38,10 @@ var (
 		"production and staging require security.encryption.mode=envelope",
 	)
 	ErrProductionKMSRequired = errors.New(
-		"production and staging require security.encryption.keyManager=gcp-autokey",
+		"production and staging require security.encryption.keyManager=gcp-autokey, or keyManager=local with security.encryption.allowLocalKeyManagerInProduction",
+	)
+	ErrProductionLocalEncryptionKeyRequired = errors.New(
+		"security.encryption.allowLocalKeyManagerInProduction requires security.encryption.key of at least 32 characters",
 	)
 	ErrProductionGCPKMSConfigRequired = errors.New(
 		"production and staging require a GCP KMS crypto key resource",
@@ -75,5 +78,17 @@ var (
 	)
 	ErrRequestTimeoutExceedsWriteTimeout = errors.New(
 		"server request timeout must be shorter than server write timeout",
+	)
+	ErrPlatformModeRequiresEdition = errors.New(
+		"platform.mode is provided by an edition that is not part of this build",
+	)
+	ErrSectionRequiresEdition = errors.New(
+		"configuration section belongs to an edition that is not part of this build",
+	)
+	ErrSectionNameRequired      = errors.New("configuration section name is required")
+	ErrSectionPathsRequired     = errors.New("configuration section must own at least one path")
+	ErrSectionAlreadyRegistered = errors.New("configuration section is already registered")
+	ErrSectionPathConflict      = errors.New(
+		"configuration section path is already owned by another section or by the base configuration",
 	)
 )

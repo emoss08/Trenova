@@ -4,7 +4,7 @@ import { useReportDashboard } from "@/hooks/use-reports";
 import { usePermission } from "@/hooks/use-permission";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useParams } from "react-router";
 import { DashboardView } from "./_components/dashboard-view";
 
@@ -26,7 +26,7 @@ export function ReportDashboardPage() {
   if (dashboard.isError) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
-        <CircleAlertIcon className="text-destructive size-8" />
+        <AlertCircleIcon className="text-destructive size-8" />
         <p className="text-muted-foreground text-sm">
           {graphQLErrorMessage(dashboard.error, "Failed to load this dashboard")}
         </p>

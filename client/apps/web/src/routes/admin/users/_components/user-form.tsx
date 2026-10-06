@@ -11,7 +11,7 @@ import { statusChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { UserOrganization } from "@trenova/shared/types/organization";
 import type { User, UserOrganizationMembership } from "@trenova/shared/types/user";
-import { Loader2Icon } from "lucide-react";
+import { SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
@@ -219,10 +219,9 @@ function OrganizationMembershipSection({
           "Choose which organizations this user can access in the current business unit.",
         )}
       >
-
         {isLoading ? (
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <Loader2Icon className="size-4 animate-spin" />
+            <SpinnerIcon className="size-4 animate-spin" />
             {t("Loading organizations...")}
           </div>
         ) : availableOrganizations.length === 0 ? (

@@ -13,10 +13,12 @@ type Deps struct {
 	AgentProposalService      services.AgentProposalService
 	AgentPlanService          services.AgentPlanService
 	AgentMemoryService        services.AgentMemoryService
+	AgentReflectionService    services.AgentReflectionService
 	AgentEvaluationService    services.AgentEvaluationService
 	AgentExceptionService     services.AgentExceptionService
 	AgentDecisionService      services.AgentDecisionService
 	AgentDecisionQueueService services.AgentDecisionQueueService
+	ApprovalCommitter         services.ApprovalCommitter
 	AgentTools                services.AgentToolRegistry
 	AgentControlService       services.AgentControlService
 }
@@ -25,9 +27,13 @@ type AgentDecisionResolver struct{ *Deps }
 
 type AgentEvaluationResolver struct{ *Deps }
 
+type AgentMemoryResolver struct{ *Deps }
+
 type AgentProposalFieldResolver struct{ *Deps }
 
 type AgentProposalResolver struct{ *Deps }
+
+type AgentReflectionResolver struct{ *Deps }
 
 type AgentRunResolver struct{ *Deps }
 

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/emoss08/trenova/shared/urlutils"
 	"github.com/go-playground/validator/v10"
@@ -21,6 +22,7 @@ type Loader struct {
 	env        string
 	viper      *viper.Viper
 	validator  *validator.Validate
+	sections   []Section
 }
 
 type LoaderOption func(*Loader)
@@ -43,6 +45,12 @@ func WithEnvPrefix(prefix string) LoaderOption {
 	}
 }
 
+func WithSections(sections ...Section) LoaderOption {
+	return func(l *Loader) {
+		l.sections = slices.Clone(sections)
+	}
+}
+
 func NewLoader(opts ...LoaderOption) *Loader {
 	l := &Loader{
 		configPath: "config",
@@ -55,14 +63,17 @@ func NewLoader(opts ...LoaderOption) *Loader {
 		opt(l)
 	}
 
-	l.validator = validator.New()
-	l.registerValidators()
+	l.validator = newValidator()
 
 	return l
 }
 
 // Load loads configuration from all sources
 func (l *Loader) Load() (*Config, error) {
+	if err := validateSections(l.sections); err != nil {
+		return nil, err
+	}
+
 	if err := l.determineEnvironment(); err != nil {
 		return nil, fmt.Errorf("failed to determine environment: %w", err)
 	}
@@ -83,9 +94,13 @@ func (l *Loader) Load() (*Config, error) {
 		return nil, err
 	}
 
-	config := &Config{}
-	if err := l.viper.UnmarshalExact(config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	if err := l.rejectUnownedEditionSections(); err != nil {
+		return nil, err
+	}
+
+	config, err := l.decode()
+	if err != nil {
+		return nil, err
 	}
 
 	if err := l.applyEnvironmentOverrides(config); err != nil {
@@ -115,6 +130,67 @@ var retiredSections = map[string]string{
 		"aiMaxRetries is ai.maxRetries, aiMaxInputChars is ai.maxInputChars, " +
 		"aiExtractionMaxTokens is ai.extractionMaxTokens, and the OCR keys " +
 		"keep their names",
+}
+
+func (l *Loader) rejectUnownedEditionSections() error {
+	for _, path := range editionSectionPaths {
+		if !l.viper.IsSet(path) || l.ownedBySection(path) {
+			continue
+		}
+
+		return fmt.Errorf("%w: remove %q", ErrSectionRequiresEdition, path)
+	}
+
+	return nil
+}
+
+func (l *Loader) ownedBySection(path string) bool {
+	for _, section := range l.sections {
+		for _, owned := range section.Paths() {
+			if pathsOverlap(path, owned) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (l *Loader) decode() (*Config, error) {
+	settings := l.viper.AllSettings()
+
+	extensions := make(map[string]any, len(l.sections))
+	for _, section := range l.sections {
+		owned := make(map[string]any)
+		for _, path := range section.Paths() {
+			if value, ok := extractPath(settings, path); ok {
+				insertPath(owned, path, value)
+			}
+		}
+
+		sectionViper := viper.New()
+		if err := sectionViper.MergeConfigMap(owned); err != nil {
+			return nil, fmt.Errorf("failed to stage %s configuration: %w", section.Name(), err)
+		}
+
+		value, err := section.Decode(sectionViper)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s configuration: %w", section.Name(), err)
+		}
+		extensions[section.Name()] = value
+	}
+
+	base := viper.New()
+	if err := base.MergeConfigMap(settings); err != nil {
+		return nil, fmt.Errorf("failed to stage config: %w", err)
+	}
+
+	config := &Config{extensions: extensions}
+	if err := base.UnmarshalExact(config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	return config, nil
 }
 
 func (l *Loader) rejectRetiredSections() error {
@@ -170,9 +246,13 @@ func (l *Loader) configureViper() {
 	l.viper.AllowEmptyEnv(false)
 
 	l.setDefaults()
-	l.bindControlPlaneEnvAliases()
+	l.bindPlatformEnvAliases()
 	l.bindAccountingEnv()
 	l.bindAIAuditEnv()
+
+	for _, section := range l.sections {
+		section.SetDefaults(l.viper, l.envPrefix)
+	}
 }
 
 func (l *Loader) bindAIAuditEnv() {
@@ -315,8 +395,6 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("monitoring.tracing.aiSamplingRate", defaultAISamplingRate)
 	l.viper.SetDefault("monitoring.tracing.traceUrlTemplate", "")
 	l.viper.SetDefault("aiAudit.chain.activeKeyId", "")
-	l.viper.SetDefault("aiRetraining.alerts.webhookUrl", "")
-	l.viper.SetDefault("aiRetraining.alerts.secret", "")
 	l.viper.SetDefault("aiAudit.export.syncMaxRows", defaultAIAuditExportSyncMaxRows)
 	l.viper.SetDefault("aiAudit.export.maxRows", defaultAIAuditExportMaxRows)
 	l.viper.SetDefault("aiAudit.export.ttl", defaultAIAuditExportTTL.String())
@@ -391,35 +469,16 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 
 	// Platform defaults
 	l.viper.SetDefault("platform.mode", string(PlatformModeSelfHosted))
-	l.viper.SetDefault("platform.controlPlane.enabled", false)
-	l.viper.SetDefault("platform.controlPlane.timeout", "5s")
-	l.viper.SetDefault("platform.controlPlane.heartbeatInterval", "5m")
-	l.viper.SetDefault("platform.controlPlane.tenantSyncInterval", "1h")
-	l.viper.SetDefault("platform.controlPlane.failOpenOnError", false)
+	l.viper.SetDefault("security.encryption.allowLocalKeyManagerInProduction", false)
 
 	// Storage defaults
 	l.viper.SetDefault("storage.provider", StorageProviderMinio)
 	l.viper.SetDefault("storage.autoCreateBucket", true)
 }
 
-func (l *Loader) bindControlPlaneEnvAliases() {
+func (l *Loader) bindPlatformEnvAliases() {
 	_ = l.viper.BindEnv("platform.mode", "TRENOVA_DEPLOYMENT_MODE")
 	_ = l.viper.BindEnv("platform.instanceId", "TRENOVA_INSTANCE_ID")
-	_ = l.viper.BindEnv("platform.controlPlane.enabled", "TRENOVA_CONTROL_PLANE_ENABLED")
-	_ = l.viper.BindEnv("platform.controlPlane.endpoint", "TRENOVA_CONTROL_PLANE_ENDPOINT")
-	_ = l.viper.BindEnv("platform.controlPlane.apiKey", "TRENOVA_CONTROL_PLANE_API_KEY")
-	_ = l.viper.BindEnv(
-		"platform.controlPlane.heartbeatInterval",
-		"TRENOVA_CONTROL_PLANE_HEARTBEAT_INTERVAL",
-	)
-	_ = l.viper.BindEnv(
-		"platform.controlPlane.tenantSyncInterval",
-		"TRENOVA_CONTROL_PLANE_TENANT_SYNC_INTERVAL",
-	)
-	_ = l.viper.BindEnv(
-		"platform.controlPlane.failOpenOnError",
-		"TRENOVA_CONTROL_PLANE_FAIL_OPEN_ON_ERROR",
-	)
 }
 
 // loadConfigFiles loads base and environment-specific config files
@@ -458,7 +517,7 @@ func (l *Loader) loadConfigFiles() error {
 
 func (l *Loader) validateConfig(config *Config) error {
 	if err := l.validator.Struct(config); err != nil {
-		return l.formatValidationError(err)
+		return formatValidationError(err)
 	}
 
 	validators := []func(*Config) error{
@@ -468,11 +527,9 @@ func (l *Loader) validateConfig(config *Config) error {
 		validateTrustedProxies,
 		validateHostPrefixCookie,
 		validateLoggingConfig,
-		validatePlatformConfig,
 		validateR2PublicEndpoint,
 		validateTracingConfig,
 		validateAIAuditConfig,
-		validateAIRetrainingConfig,
 	}
 	for _, validator := range validators {
 		if err := validator(config); err != nil {
@@ -480,14 +537,40 @@ func (l *Loader) validateConfig(config *Config) error {
 		}
 	}
 
+	if err := l.validatePlatformMode(config); err != nil {
+		return err
+	}
 	if err := validateCORSConfig(config, l.env); err != nil {
 		return err
 	}
 	if isProductionLike(l.env) {
-		return validateProductionSecurity(config)
+		if err := validateProductionSecurity(config); err != nil {
+			return err
+		}
+	}
+
+	for _, section := range l.sections {
+		if err := section.Validate(config, l.env); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func (l *Loader) validatePlatformMode(config *Config) error {
+	mode := config.Platform.GetMode()
+	if !slices.Contains(editionPlatformModes, mode) {
+		return nil
+	}
+
+	for _, section := range l.sections {
+		if slices.Contains(section.PlatformModes(), mode) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%w: %q", ErrPlatformModeRequiresEdition, mode)
 }
 
 func validateDatabasePool(config *Config) error {
@@ -568,29 +651,39 @@ func validateLoggingConfig(config *Config) error {
 	return nil
 }
 
-func validatePlatformConfig(config *Config) error {
-	if config.Platform.GetMode() == PlatformModeCloud && !config.Platform.ControlPlane.Enabled {
-		return fmt.Errorf(
-			"platform.controlplane.enabled is required for %s platform mode",
-			config.Platform.GetMode(),
-		)
+func validateProductionKeyManager(config *Config) error {
+	keyManager := strings.ToLower(strings.TrimSpace(config.Security.Encryption.KeyManager))
+	if keyManager == EncryptionKeyManagerLocal &&
+		config.Security.Encryption.AllowLocalKeyManagerInProduction {
+		return validateProductionLocalKey(config.Security.Encryption.Key)
+	}
+	if keyManager != EncryptionKeyManagerGCPAutokey {
+		return ErrProductionKMSRequired
 	}
 
-	if config.Platform.ControlPlane.Enabled {
-		if config.Platform.ControlPlane.Endpoint == "" {
-			return errors.New(
-				"platform.controlplane.endpoint is required when control plane is enabled",
-			)
-		}
-		if config.Platform.ControlPlane.APIKey == "" {
-			return errors.New(
-				"platform.controlplane.apikey is required when control plane is enabled",
-			)
-		}
-		if config.Platform.InstanceID == "" {
-			return errors.New(
-				"platform.instanceid is required when control plane is enabled",
-			)
+	gcpKey := strings.TrimSpace(config.Security.Encryption.GCPKMS.CryptoKey)
+	if gcpKey == "" {
+		gcpKey = strings.TrimSpace(config.Security.Encryption.GCPKMS.KeyResource)
+	}
+	if gcpKey == "" {
+		return ErrProductionGCPKMSConfigRequired
+	}
+
+	return nil
+}
+
+const minProductionLocalEncryptionKeyLength = 32
+
+func validateProductionLocalKey(key string) error {
+	trimmed := strings.TrimSpace(key)
+	if len(trimmed) < minProductionLocalEncryptionKeyLength {
+		return ErrProductionLocalEncryptionKeyRequired
+	}
+
+	lowered := strings.ToLower(trimmed)
+	for _, placeholder := range InsecureDefaultValues {
+		if strings.Contains(lowered, placeholder) {
+			return ErrEncryptionKeyIsInsecure
 		}
 	}
 
@@ -620,24 +713,12 @@ func validateProductionSecurity(config *Config) error {
 	if encryptionMode != EncryptionModeEnvelope {
 		return ErrProductionEncryptionModeRequired
 	}
-	keyManager := strings.ToLower(strings.TrimSpace(config.Security.Encryption.KeyManager))
-	if keyManager != EncryptionKeyManagerGCPAutokey {
-		return ErrProductionKMSRequired
-	}
-	gcpKey := strings.TrimSpace(config.Security.Encryption.GCPKMS.CryptoKey)
-	if gcpKey == "" {
-		gcpKey = strings.TrimSpace(config.Security.Encryption.GCPKMS.KeyResource)
-	}
-	if gcpKey == "" {
-		return ErrProductionGCPKMSConfigRequired
+	if err := validateProductionKeyManager(config); err != nil {
+		return err
 	}
 	if config.Storage.GetProvider() == StorageProviderR2 &&
 		(!config.Storage.UseSSL || !strings.HasPrefix(config.Storage.Endpoint, "https://")) {
 		return ErrProductionStorageTLSRequired
-	}
-
-	if err := validateAIRetrainingAlertsProduction(config); err != nil {
-		return err
 	}
 
 	return validateAIAuditChainSecrets(config)
@@ -668,25 +749,42 @@ func isProductionLike(env string) bool {
 	return env == EnvProduction || env == EnvStaging
 }
 
-func (l *Loader) registerValidators() {
-	_ = l.validator.RegisterValidation("semver", func(fl validator.FieldLevel) bool {
+func newValidator() *validator.Validate {
+	v := validator.New()
+	registerValidators(v)
+
+	return v
+}
+
+var structValidator = sync.OnceValue(newValidator)
+
+func ValidateStruct(value any) error {
+	if err := structValidator().Struct(value); err != nil {
+		return formatValidationError(err)
+	}
+
+	return nil
+}
+
+func registerValidators(v *validator.Validate) {
+	_ = v.RegisterValidation("semver", func(fl validator.FieldLevel) bool {
 		version := fl.Field().String()
 		parts := strings.Split(version, ".")
 		return len(parts) == 3
 	})
 
-	_ = l.validator.RegisterValidation("hostname_port", func(fl validator.FieldLevel) bool {
+	_ = v.RegisterValidation("hostname_port", func(fl validator.FieldLevel) bool {
 		addr := fl.Field().String()
 		parts := strings.Split(addr, ":")
 		return len(parts) == 2
 	})
 
-	_ = l.validator.RegisterValidation("no_trailing_slash", func(fl validator.FieldLevel) bool {
+	_ = v.RegisterValidation("no_trailing_slash", func(fl validator.FieldLevel) bool {
 		addr := fl.Field().String()
 		return !strings.HasSuffix(addr, "/")
 	})
 
-	_ = l.validator.RegisterValidation("origin_or_wildcard", func(fl validator.FieldLevel) bool {
+	_ = v.RegisterValidation("origin_or_wildcard", func(fl validator.FieldLevel) bool {
 		raw := strings.TrimSpace(fl.Field().String())
 		if raw == "*" {
 			return true
@@ -704,7 +802,7 @@ func (l *Loader) registerValidators() {
 	})
 }
 
-func (l *Loader) formatValidationError(err error) error {
+func formatValidationError(err error) error {
 	var validationErrs validator.ValidationErrors
 	if !errors.As(err, &validationErrs) {
 		return err

@@ -1,3 +1,4 @@
+import { fetchAgentCapabilities } from "@/lib/graphql/agent-capabilities";
 import {
   fetchAgentChoicesByIds,
   fetchAgentDefinitions,
@@ -12,6 +13,7 @@ import {
   type AgentAccessPreviewRequest,
 } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
+import type { DeskSearchKind } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const assistant = createQueryKeys("assistant", {
@@ -36,10 +38,27 @@ export const assistant = createQueryKeys("assistant", {
   }),
   // Every reply the person's conversations are still writing. Kept fresh by
   // the "assistant_turns" realtime event and by the turn hooks, not polled.
+  threadBudget: (threadId: string) => ({
+    queryKey: ["assistant-thread-budget", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.threadBudget(threadId, { signal }),
+  }),
+  // The requests scheduled in a conversation, for its schedule cards. Kept
+  // fresh by the "conversation_schedules" realtime event, not polled.
+  schedules: (threadId: string) => ({
+    queryKey: ["assistant-schedules", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listThreadSchedules(threadId, { signal }),
+  }),
   activeTurns: () => ({
     queryKey: ["assistant-active-turns"],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listActiveTurns({ signal }),
+  }),
+  deskSearch: (query: string, kind: DeskSearchKind) => ({
+    queryKey: [query, kind],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.searchDesk(query, kind, { signal }),
   }),
   providers: () => ({
     queryKey: ["assistant-providers"],
@@ -53,10 +72,26 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["assistant-plans", threadId],
     queryFn: () => apiService.assistantService.listPlans(threadId),
   }),
+  // The first page of a conversation's artifacts by lineage, pinned and
+  // newest first: what the transcript points at and the stack is built from.
+  // Every artifact query of a thread shares this key's prefix, so one
+  // invalidation refreshes them all.
   artifacts: (threadId: string) => ({
     queryKey: ["assistant-artifacts", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listArtifacts(threadId, { signal }),
+      apiService.assistantService.listArtifacts(threadId, { signal, limit: ARTIFACT_FIRST_PAGE }),
+  }),
+  // Every version of one lineage, for an artifact a link or the store names
+  // that the first page does not hold.
+  artifactLineage: (threadId: string, artifactId: string) => ({
+    queryKey: ["assistant-artifacts", threadId, "lineage", artifactId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.artifactLineage(threadId, artifactId, { signal }),
+  }),
+  artifactBySlug: (threadId: string, slug: string) => ({
+    queryKey: ["assistant-artifacts", threadId, "slug", slug],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.artifactBySlug(threadId, slug, { signal }),
   }),
   // The organization's agents with everything an administrator configures;
   // AI Control only. Chat surfaces read myAgents.
@@ -70,6 +105,11 @@ export const assistant = createQueryKeys("assistant", {
   myAgents: () => ({
     queryKey: ["my-agents"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchMyAgents({ signal }),
+  }),
+  // What an agent can do, for its capabilities page.
+  agentCapabilities: (agentId: string) => ({
+    queryKey: ["agent-capabilities", agentId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentCapabilities(agentId, { signal }),
   }),
   // Paged: read by useAgentChoices as an infinite query, one cursor at a time.
   agentChoices: (query: AgentChoiceQuery, source: AgentChoiceSource, pageSize: number) => ({
@@ -134,3 +174,6 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: () => apiService.agentDefinitionService.templates(),
   }),
 });
+
+/** How many lineages the first page of a conversation's artifacts holds. */
+export const ARTIFACT_FIRST_PAGE = 100;

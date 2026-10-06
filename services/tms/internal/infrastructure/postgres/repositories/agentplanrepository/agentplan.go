@@ -273,6 +273,23 @@ func (r *repository) UpdateStatus(
 				Set(cols.DecidedByUserID.Set(), req.DecidedByUserID).
 				Set(cols.DecidedAt.Set(), req.DecidedAt)
 		}
+		if req.CommitsAt != 0 {
+			query = query.
+				Set(cols.CommitsAt.Set(), req.CommitsAt).
+				Set(cols.UndoneAt.SetNull()).
+				Set(cols.UndoneByUserID.SetNull())
+		}
+		if req.Reopen {
+			query = query.
+				Set(cols.CommitsAt.SetNull()).
+				Set(cols.DecidedByUserID.SetNull()).
+				Set(cols.DecidedAt.SetNull())
+		}
+		if req.UndoneByUserID.IsNotNil() {
+			query = query.
+				Set(cols.UndoneByUserID.Set(), req.UndoneByUserID).
+				Set(cols.UndoneAt.Set(), req.UndoneAt)
+		}
 
 		results, err := query.Returning("*").Exec(ctx)
 		if err != nil {

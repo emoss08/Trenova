@@ -2,16 +2,9 @@ package services
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/pagination"
 )
-
-// ErrPageInspectionUnavailable is returned by an inspector that cannot render
-// pages in this build. Capture still works without it: pages are kept and
-// filed, and only what inspection would have found (thumbnails, blank pages,
-// cover sheets) is missing.
-var ErrPageInspectionUnavailable = errors.New("page inspection is unavailable in this build")
 
 // CapturePageInspection is what reading one captured page found.
 type CapturePageInspection struct {

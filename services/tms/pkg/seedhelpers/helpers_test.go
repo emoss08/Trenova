@@ -141,14 +141,14 @@ func TestBaseSeed_DependsOn_ConvertsToStrings(t *testing.T) {
 	t.Parallel()
 
 	seed := NewBaseSeed("Test", "1.0.0", "desc", nil)
-	seed.SetDependencies(SeedAdminAccount, SeedFormulaTemplate, SeedNormalAccount)
+	seed.SetDependencies(SeedAdminAccount, SeedFormulaTemplate, SeedWorker)
 
 	deps := seed.DependsOn()
 
 	assert.Len(t, deps, 3)
 	assert.Equal(t, "AdminAccount", deps[0])
 	assert.Equal(t, "FormulaTemplate", deps[1])
-	assert.Equal(t, "NormalAccount", deps[2])
+	assert.Equal(t, "Worker", deps[2])
 }
 
 func TestBaseSeed_Dependencies_MatchesDependsOn(t *testing.T) {
@@ -262,7 +262,6 @@ func TestSeedID_StringConversion(t *testing.T) {
 	}{
 		{SeedAdminAccount, "AdminAccount"},
 		{SeedFormulaTemplate, "FormulaTemplate"},
-		{SeedNormalAccount, "NormalAccount"},
 		{SeedOrganizationRoles, "OrganizationRoles"},
 		{SeedTestOrganizations, "TestOrganizations"},
 		{SeedUSStates, "USStates"},

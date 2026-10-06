@@ -22,7 +22,7 @@ import {
   type UnsettledWorkerSummary,
 } from "@/lib/graphql/driver-settlement";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { PauseCircle, Zap } from "lucide-react";
+import { PauseCircleIcon, ZapIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { InstantPayDialog } from "./instant-pay-dialog";
@@ -160,7 +160,7 @@ export function UnsettledDriversDialog({
                         <AmountDisplay value={worker.grossAmountMinor} currency="USD" />
                         {worker.heldCount > 0 && (
                           <span className="ml-1.5 inline-flex items-center gap-0.5 text-info-foreground">
-                            <PauseCircle className="size-3" />
+                            <PauseCircleIcon className="size-3" />
                             {t("{0} held (", worker.heldCount)}
                             <AmountDisplay value={worker.heldGrossMinor} currency="USD" />)
                           </span>
@@ -207,7 +207,7 @@ export function UnsettledDriversDialog({
                             "Pay this driver immediately — approve, post, and mark paid in one pass",
                           )}
                         >
-                          <Zap className="size-3" />
+                          <ZapIcon className="size-3" />
                           {t("Pay now")}
                         </Button>
                       </div>

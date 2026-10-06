@@ -1,12 +1,29 @@
-import { MessageThread } from "@/components/assistant/message-thread";
-import { queries } from "@/lib/queries";
+import {
+  DeskThread,
+  type DeskThreadArtifacts,
+  type DeskThreadSchedules,
+} from "@/components/desk-chat/desk-thread";
+import { turnTime } from "@/components/desk-chat/turn-time";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import type { AssistantThread } from "@/types/assistant";
-import { useOpeningQuestion } from "@/components/assistant/use-opening-question";
+import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useDeskStore } from "@/stores/desk-store";
+import type { AssistantMessage, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DeskWorkspace } from "./artifacts/desk-workspace";
+import { withoutPendingLookups } from "./artifacts/pending-lookups";
+import { DeskFactsBar } from "./composer/desk-facts";
+import { DeskScheduleCard } from "./conversation/desk-schedule-card";
+import {
+  isScheduleRequest,
+  useCreateSchedule,
+  useScheduleActions,
+} from "./conversation/desk-schedules";
 import { useDesk } from "./desk-layout";
+import { DeskHandoffCard } from "./handoff/desk-handoff-card";
 
 export type DeskConversationProps = {
   thread: AssistantThread;
@@ -16,16 +33,10 @@ export type DeskConversationProps = {
 };
 
 /**
- * One conversation at the Desk.
- *
- * It is only the conversation. The title, the pin, the transcript and the
- * delete used to live in a second header inside this component, underneath
- * the one the room already had, which gave a person two strips of chrome to
- * read before the first sentence. They belong to the room, so the room has
- * them, and this column is the thread and nothing else.
- *
- * What the turn produces goes to the workspace beside it rather than being
- * drawn twice: the transcript refers to an artifact, the workspace holds it.
+ * A conversation at the Desk: the shared thread with everything the Desk adds
+ * to it — the workspace that slides in beside it and the conversation
+ * narrowing to make room, schedules, chapters, pinned facts and hand-offs
+ * between agents.
  */
 export function DeskConversation({
   thread,
@@ -34,13 +45,14 @@ export function DeskConversation({
   onStartNew,
 }: DeskConversationProps) {
   const desk = useDesk();
-  const opening = useOpeningQuestion(thread.id);
-  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
-  const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
+  const t = useT();
+  const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
+  const chapters = useDeskStore((state) => state.chaptersByThread[thread.id]);
+  const toggleChapter = useDeskStore((state) => state.toggleChapter);
+  const activeArtifactId = useDeskStore((state) => state.activeArtifactByThread[thread.id] ?? null);
 
-  // Opening a page leaves the Desk, so the conversation moves to the
-  // floating assistant, which is on every page, before the page changes; it
-  // picks up the reply still being written there.
+  // A page the agent opens takes the person out of the Desk; the conversation
+  // goes with them, open in the corner panel.
   const setActiveThreadId = useAssistantStore((state) => state.setActiveThreadId);
   const openWidget = useAssistantStore((state) => state.openWidget);
   const carryConversation = useCallback(() => {
@@ -48,27 +60,132 @@ export function DeskConversation({
     openWidget();
   }, [openWidget, setActiveThreadId, thread.id]);
 
-  const openArtifact = useCallback(
-    (artifactId: string) => desk.openArtifact(thread.id, artifactId),
-    [desk, thread.id],
+  // The running turn's lookups are not counted until the reply keeps them.
+  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
+  const { setArtifactCount, pendingLookups } = desk;
+  const artifactTotal = useMemo(() => {
+    const visible = withoutPendingLookups(
+      artifactsQuery.data?.results ?? [],
+      artifactsQuery.data?.counts,
+      pendingLookups,
+    );
+    return visible.counts?.all ?? visible.results.length;
+  }, [artifactsQuery.data, pendingLookups]);
+  useEffect(() => setArtifactCount(artifactTotal), [artifactTotal, setArtifactCount]);
+
+  const { openArtifact, setWorkspaceOpen, workspaceOpen, liveArtifacts, noteLiveArtifacts } = desk;
+  const open = useCallback(
+    (artifactId: string) => openArtifact(thread.id, artifactId),
+    [openArtifact, thread.id],
+  );
+  const artifacts = useMemo<DeskThreadArtifacts>(
+    () => ({
+      open,
+      activeId: activeArtifactId,
+      onLive: noteLiveArtifacts,
+      workspace: {
+        open: workspaceOpen,
+        setOpen: setWorkspaceOpen,
+        content: (
+          <DeskWorkspace
+            key={thread.id}
+            threadId={thread.id}
+            liveArtifacts={liveArtifacts}
+            pendingLookups={pendingLookups}
+            onClose={() => setWorkspaceOpen(false)}
+          />
+        ),
+      },
+    }),
+    [
+      activeArtifactId,
+      liveArtifacts,
+      noteLiveArtifacts,
+      open,
+      pendingLookups,
+      setWorkspaceOpen,
+      thread.id,
+      workspaceOpen,
+    ],
+  );
+
+  const schedules = useDeskSchedules(thread.id, timezone);
+  const chapterApi = useMemo(
+    () => ({
+      of: (messageId: string) => (chapters ? chapters.indexOf(messageId) + 1 : 0),
+      toggle: (messageId: string) => toggleChapter(thread.id, messageId),
+    }),
+    [chapters, thread.id, toggleChapter],
+  );
+  const { agentsById } = desk;
+  const renderHandoff = useCallback(
+    (message: AssistantMessage) =>
+      message.handoff ? (
+        <DeskHandoffCard
+          handoff={message.handoff}
+          incoming={message.kind === "HandoffBrief"}
+          time={turnTime(message.createdAt, timezone, t)}
+          agentsById={agentsById}
+        />
+      ) : null,
+    [agentsById, t, timezone],
   );
 
   return (
-    <MessageThread
-      key={thread.id}
+    <DeskThread
       thread={thread}
       agent={agent}
       agentsUnavailable={agentsUnavailable}
-      expanded
+      threads={desk.threads}
+      onSwitchAgent={desk.start}
       onStartNew={onStartNew}
-      artifacts={artifacts}
-      onOpenArtifact={openArtifact}
-      onLiveArtifact={desk.noteLiveArtifact}
       onWorkingChange={desk.setWorking}
       onNavigate={carryConversation}
-      openingQuestion={opening.openingQuestion}
-      onOpeningQuestionSent={opening.onOpeningQuestionSent}
-      agentAccent
+      followNavigation={false}
+      artifacts={artifacts}
+      schedules={schedules}
+      chapters={chapterApi}
+      renderHandoff={renderHandoff}
+      dockTop={thread.canContinue ? <DeskFactsBar thread={thread} /> : null}
     />
+  );
+}
+
+/** The Desk's schedules for a conversation, in the shape the shared thread takes them. */
+function useDeskSchedules(threadId: string, timezone: string): DeskThreadSchedules {
+  const scheduling = useCreateSchedule(threadId);
+  const schedulesQuery = useQuery(queries.assistant.schedules(threadId));
+  const actions = useScheduleActions(threadId);
+  const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    // "Today" and "Tomorrow" on a schedule's next run move at midnight; a
+    // minute is close enough for a label.
+    const timer = window.setInterval(() => setClock(Math.floor(Date.now() / 1000)), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const byId = useMemo(
+    () => new Map((schedulesQuery.data?.items ?? []).map((item) => [item.id, item])),
+    [schedulesQuery.data],
+  );
+  const loaded = schedulesQuery.data !== undefined;
+  const { create, pending } = scheduling;
+
+  return useMemo(
+    () => ({
+      isRequest: isScheduleRequest,
+      create,
+      pending,
+      card: (scheduleId: string) => (
+        <DeskScheduleCard
+          schedule={loaded ? (byId.get(scheduleId) ?? null) : undefined}
+          now={clock}
+          timezone={timezone}
+          disabled={actions.busy}
+          onToggle={actions.toggle}
+          onDelete={actions.remove}
+        />
+      ),
+    }),
+    [actions.busy, actions.remove, actions.toggle, byId, clock, create, loaded, pending, timezone],
   );
 }

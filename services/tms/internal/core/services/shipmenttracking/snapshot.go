@@ -163,16 +163,29 @@ type ArrivalEstimate struct {
 	WindowEnd            int64   `json:"windowEnd,omitempty"`
 	SlackMinutes         int64   `json:"slackMinutes"`
 	// Verdict is OnTime, AtRisk, Late or Unknown.
-	Verdict string `json:"verdict"`
-	Basis   string `json:"basis"`
+	Verdict Verdict `json:"verdict"`
+	Basis   string  `json:"basis"`
 }
 
+type Verdict string
+
 const (
-	VerdictOnTime  = "OnTime"
-	VerdictAtRisk  = "AtRisk"
-	VerdictLate    = "Late"
-	VerdictUnknown = "Unknown"
+	VerdictOnTime  = Verdict("OnTime")
+	VerdictAtRisk  = Verdict("AtRisk")
+	VerdictLate    = Verdict("Late")
+	VerdictUnknown = Verdict("Unknown")
 )
+
+func (v Verdict) String() string { return string(v) }
+
+func (v Verdict) IsValid() bool {
+	switch v {
+	case VerdictOnTime, VerdictAtRisk, VerdictLate, VerdictUnknown:
+		return true
+	default:
+		return false
+	}
+}
 
 func Build(in Input) *Snapshot {
 	sp := in.Shipment

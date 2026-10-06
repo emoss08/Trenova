@@ -22,7 +22,12 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { LayersIcon, ListChecksIcon, PlusIcon, XIcon } from "lucide-react";
+import {
+  LayersThree01Icon,
+  ListChecksIcon,
+  PlusIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmRoundDialog, type RoundAction } from "./confirm-round-dialog";
@@ -197,7 +202,7 @@ export default function RandomTestingConsole() {
 
       <SectionPanel
         title={t("Pools")}
-        icon={<LayersIcon />}
+        icon={<LayersThree01Icon />}
         help={t(
           "Each pool names the drivers in the hat and the annual rates its draws must meet. The strip is this year's rounds: filled is final, dashed is drawn but not final, red was never drawn.",
         )}
@@ -253,7 +258,7 @@ export default function RandomTestingConsole() {
                 onClick={() => setPoolId(null)}
               >
                 {selectedPool.code}
-                <XIcon className="size-3" />
+                <XCloseIcon className="size-3" />
               </Button>
             ) : null}
             <SegmentedControl<RoundStatusFilter>

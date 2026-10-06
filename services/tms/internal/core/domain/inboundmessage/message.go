@@ -194,6 +194,9 @@ type InboundAttachment struct {
 	ContentType string         `json:"contentType" bun:"content_type,type:VARCHAR(100),nullzero"`
 	ByteSize    int64          `json:"byteSize"    bun:"byte_size,type:BIGINT,nullzero"`
 	Kind        AttachmentKind `json:"kind"        bun:"kind,type:VARCHAR(30),notnull"`
+	// ProviderAttachmentID is the provider's own id for the file. Content
+	// fetched after the webhook is matched to its row by it.
+	ProviderAttachmentID string `json:"providerAttachmentId" bun:"provider_attachment_id,type:VARCHAR(255),nullzero"`
 
 	// UploadSessionID and DocumentID trace the file through the document
 	// pipeline, so an attachment that failed extraction says where it stopped

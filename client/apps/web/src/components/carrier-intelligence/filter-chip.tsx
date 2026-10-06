@@ -10,7 +10,12 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon, ChevronLeftIcon, ListFilterIcon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  FilterLinesIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 
 export type FilterChipProps = {
@@ -45,7 +50,7 @@ export function FilterChip({ label, value, onClear, onEdit, className }: FilterC
         aria-label={t("Clear filter")}
         className="flex h-full items-center border-l px-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
       >
-        <XIcon className="size-3" aria-hidden="true" />
+        <XCloseIcon className="size-3" aria-hidden="true" />
       </button>
     </span>
   );
@@ -129,7 +134,7 @@ export function AddFilterMenu({
       <PopoverTrigger
         render={
           <Button variant="outline" className={cn("gap-1.5", className)}>
-            <ListFilterIcon className="size-3.5" aria-hidden="true" />
+            <FilterLinesIcon className="size-3.5" aria-hidden="true" />
             {t("Filter")}
           </Button>
         }

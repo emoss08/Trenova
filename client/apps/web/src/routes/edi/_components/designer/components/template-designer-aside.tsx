@@ -10,7 +10,12 @@ import { useTemplateDesignerUrlActions } from "@/hooks/use-template-designer-sta
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
 import { createTemplateFormSchema, type EDITemplate } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileCode2Icon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
+import {
+  FileCode02Icon,
+  FilterFunnel01Icon,
+  PlusIcon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTemplateDesignerUrlState } from "../hooks/use-edi-designer-url-state";
@@ -98,7 +103,7 @@ export default function TemplateDesignerAside() {
   return (
     <aside className="bg-background flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
       <PanelHeader
-        icon={<FileCode2Icon />}
+        icon={<FileCode02Icon />}
         title={t("Templates")}
         actions={
           <Button
@@ -119,7 +124,7 @@ export default function TemplateDesignerAside() {
             onChange={(event) => setTemplateSearch(event.target.value)}
             placeholder={t("Search templates")}
             inputContainerClassName="w-full"
-            leftElement={<SearchIcon className="text-muted-foreground size-3" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3" />}
           />
           <TemplateFilterPopover
             activeFilterCount={activeFilterCount}
@@ -184,7 +189,7 @@ function TemplateFilterPopover({
       <PopoverTrigger
         render={
           <Button type="button" variant="outline" className="h-7 shrink-0">
-            <FilterIcon className="size-3" />
+            <FilterFunnel01Icon className="size-3" />
             <span className="text-xs">{t("Filter")}</span>
             {activeFilterCount > 0 ? (
               <Badge variant="success" className="ml-0.5 px-1.5 py-0 text-2xs">

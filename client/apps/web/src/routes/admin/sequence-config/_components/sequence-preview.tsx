@@ -7,7 +7,7 @@ import {
 } from "@trenova/shared/components/ui/hover-card";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SequenceConfig, SequenceConfigDocument } from "@/types/sequence-config";
-import { CheckIcon, CopyIcon, InfoIcon } from "lucide-react";
+import { CheckIcon, Copy01Icon, InfoCircleIcon } from "@trenova/shared/components/icons";
 import { memo, useMemo, useState } from "react";
 import { useWatch } from "react-hook-form";
 import { tokenLegend } from "./sequence-config-constants";
@@ -42,16 +42,14 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
   return (
     <div className="border-border bg-muted/30 rounded-lg border px-4 py-3.5">
       <div className="mb-1.5 flex items-center justify-between gap-3">
-        <span className="text-muted-foreground text-xs font-medium">
-          {t("Live preview")}
-        </span>
+        <span className="text-muted-foreground text-xs font-medium">{t("Live preview")}</span>
         <div className="flex items-center gap-1">
           {showTokens ? (
             <HoverCard>
               <HoverCardTrigger
                 render={
                   <Button type="button" variant="ghost" size="xs" className="gap-1.5">
-                    <InfoIcon className="size-3.5" />
+                    <InfoCircleIcon className="size-3.5" />
                     {t("Tokens")}
                   </Button>
                 }
@@ -82,7 +80,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
             {copied ? (
               <CheckIcon className="size-3.5 text-success-foreground" />
             ) : (
-              <CopyIcon className="size-3.5" />
+              <Copy01Icon className="size-3.5" />
             )}
             {copied ? t("Copied") : t("Copy")}
           </Button>

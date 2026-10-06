@@ -14,6 +14,7 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewLocationByIDLoaderFactory,
 	loaders.NewOrderByIDLoaderFactory,
 	loaders.NewShipmentProfitabilityLoaderFactory,
+	loaders.NewShipmentEtaLoaderFactory,
 	loaders.NewEDIPartnerByCustomerIDLoaderFactory,
 	loaders.NewFormulaTemplateStatsLoaderFactory,
 	loaders.NewAgentDefinitionStatsLoaderFactory,
@@ -35,6 +36,8 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewSubsetLabelsLoaderFactory,
 	loaders.NewAgentRunByIDLoaderFactory,
 	loaders.NewAgentRunTranscriptByIDLoaderFactory,
+	loaders.NewAgentMemoryByIDLoaderFactory,
+	loaders.NewAgentMemoryReplacementLoaderFactory,
 	loaders.NewAgentDefinitionByIDLoaderFactory,
 	loaders.NewThreadAgentByIDLoaderFactory,
 	loaders.NewUsableAgentByIDLoaderFactory,
@@ -76,7 +79,7 @@ var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(
 	graphqlapi.NewPersistedOperationManifest,
 	graphqlapi.NewObservabilityExtension,
 	graphqlapi.NewCostBudgetExtension,
-	graphqlapi.NewFeatureAccessExtension,
+	graphqlapi.NewReadOnlyExtension,
 	graphqlapi.NewServer,
 ))
 

@@ -54,10 +54,71 @@ func CheckDocumentUploadLimit(
 		return err
 	}
 	if !result.Allowed {
-		return errortypes.NewAuthorizationError(result.Reason)
+		return LimitError(result)
 	}
 
 	return nil
+}
+
+type DocumentBytesUsageParams struct {
+	TenantInfo pagination.TenantInfo
+	Actor      services.RequestActor
+	Bytes      int64
+	CheckedAt  int64
+}
+
+func CheckDocumentBytesLimit(
+	ctx context.Context,
+	provider services.UsageProvider,
+	params DocumentBytesUsageParams,
+) error {
+	if provider == nil || params.Bytes <= 0 {
+		return nil
+	}
+
+	checkedAt := params.CheckedAt
+	if checkedAt == 0 {
+		checkedAt = time.Now().Unix()
+	}
+
+	actor := normalizeActor(params.TenantInfo, params.Actor)
+	for _, meter := range []platformcatalog.MeterKey{
+		platformcatalog.MeterDocumentFileBytes,
+		platformcatalog.MeterDocumentStorageBytes,
+	} {
+		result, err := provider.CheckLimit(ctx, &services.UsageLimitCheckRequest{
+			OrganizationID: actor.OrganizationID,
+			BusinessUnitID: actor.BusinessUnitID,
+			PrincipalType:  actor.PrincipalType,
+			PrincipalID:    actor.PrincipalID,
+			UserID:         actor.UserID,
+			APIKeyID:       actor.APIKeyID,
+			MeterKey:       meter,
+			Quantity:       params.Bytes,
+			CheckedAt:      checkedAt,
+		})
+		if err != nil {
+			return err
+		}
+		if !result.Allowed {
+			return LimitError(result)
+		}
+	}
+
+	return nil
+}
+
+func LimitError(result *services.UsageLimitCheckResult) error {
+	if result.Reason == ReasonQuotaExceeded {
+		return errortypes.NewQuotaExceededError(
+			string(result.MeterKey),
+			result.Limit,
+			result.Used,
+			result.Plan,
+		)
+	}
+
+	return errortypes.NewAuthorizationError(result.Reason)
 }
 
 func RecordDocumentUpload(

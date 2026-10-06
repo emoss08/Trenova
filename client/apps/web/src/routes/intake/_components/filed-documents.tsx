@@ -6,7 +6,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
-import { ExternalLinkIcon } from "lucide-react";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 function RecordLink({ item }: { item: CaptureItem }) {
@@ -35,7 +35,7 @@ function RecordLink({ item }: { item: CaptureItem }) {
       className="ui-focus-ring text-brand inline-flex items-center gap-1 hover:underline"
     >
       {label}
-      <ExternalLinkIcon className="size-3" aria-hidden />
+      <LinkExternal01Icon className="size-3" aria-hidden />
     </Link>
   );
 }

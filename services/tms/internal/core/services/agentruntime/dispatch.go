@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -37,6 +38,10 @@ type toolOutcome struct {
 	found   []string
 	verdict string
 	reason  string
+	// memories are the memories a recall read back, and saved the one a
+	// remember kept or offered.
+	memories []pulid.ID
+	saved    *serviceports.SavedMemory
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -161,6 +166,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		call.Arguments = resolved
 	}
 	p.call = call
+	if outcome, refused := oversizedChange(req, call.Name, tool.ParamSchema(), call.Arguments); refused {
+		return outcome
+	}
 	tierParams := runToolParams(req, call.ID, call.Arguments)
 	decision := s.decideCall(ctx, agenttoolpolicy.DecideInput{
 		Policy:     policy,
@@ -170,6 +178,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Taint:      decisionTaint(p.taint, p.afterExternal),
 	})
 	tier, heldForExternal := afterExternalContent(decision.Tier, p.afterExternal)
+	tier, heldForHours := s.heldForBusinessHours(ctx, req, tier)
 	if tier != agent.TierAutoExecute {
 		if pinner, pins := tool.(serviceports.ToolProposalSelectionResolver); pins {
 			pinned, pErr := pinner.ResolveProposalSelection(
@@ -200,8 +209,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
 	}
+	if heldForHours {
+		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByBusinessHours)
+	}
 	source := decision.Source
-	if heldForExternal {
+	if heldForExternal || heldForHours {
 		source = agent.TierSourcePolicyDefault
 	}
 	stampAction(ctx, action, source, p.stepKey)
@@ -273,6 +285,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		if heldForExternal {
 			content += externalContentNote
+		}
+		if heldForHours {
+			content += businessHoursNote
 		}
 		if req.Definition.SimulationMode {
 			content += " This agent is in simulation: an approval will preview the change, not make it."
@@ -523,13 +538,18 @@ func (s *Service) runQueryTool(
 			"Tool %q returned data that could not be encoded.", call.Name)
 	}
 
-	return toolOutcome{
+	outcome := toolOutcome{
 		content: FenceToolResult(call.Name, encoded),
 		data:    data,
 		summary: summarizeResult(call.Name, document),
 		taint:   callTaint(tool.Policy(), call, data, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 	}
+	if recall, ok := data.(serviceports.MemoryRecall); ok {
+		outcome.memories = recall.RecalledMemoryIDs()
+	}
+
+	return outcome
 }
 
 func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome {
@@ -541,7 +561,21 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 
 	writeCtx, write := s.startWrite(ctx, &a, false)
 	action.ExecutedAt = timeutils.NowUnix()
-	result, err := serviceports.ExecuteTool(writeCtx, a.tool, a.executeParams())
+	var (
+		result    *agent.ToolExecutionResult
+		saved     *serviceports.SavedMemory
+		refreshed *agent.Memory
+		err       error
+	)
+	if recorder, records := a.tool.(serviceports.MemoryRecordingTool); records {
+		var memory *agent.Memory
+		memory, err = recorder.Record(writeCtx, a.executeParams())
+		if err == nil && memory != nil {
+			saved, refreshed = savedOrRefreshed(memory, call.ID)
+		}
+	} else {
+		result, err = serviceports.ExecuteTool(writeCtx, a.tool, a.executeParams())
+	}
 	if err != nil {
 		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
 		write.End()
@@ -562,12 +596,49 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	}
 	write.End()
 
-	return toolOutcome{
+	outcome := toolOutcome{
 		content: ranContent(call.Name, result),
 		action:  action,
 		taint:   callTaint(a.tool.Policy(), call, nil, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
+		saved:   saved,
 	}
+	if refreshed != nil {
+		outcome.content = refreshedContent(call.Name, refreshed)
+		outcome.memories = []pulid.ID{refreshed.ID}
+	}
+
+	return outcome
+}
+
+// savedOrRefreshed sorts what a remember returned. A memory it kept or
+// offered is shown to the person with an Undo. One it only refreshed is not:
+// nothing new was kept, and undoing would retire the memory they already had,
+// so the turn names it as a memory it used instead.
+func savedOrRefreshed(
+	memory *agent.Memory,
+	callID string,
+) (*serviceports.SavedMemory, *agent.Memory) {
+	if memory.Refreshed {
+		return nil, memory
+	}
+
+	return &serviceports.SavedMemory{
+		ID:      memory.ID,
+		CallID:  callID,
+		Pending: memory.Status == agent.MemoryStatusSuggested,
+	}, nil
+}
+
+// refreshedContent tells the model that what it asked to save was already
+// remembered, so it says so to the person rather than announcing a new memory
+// and does not try again with other words.
+func refreshedContent(name string, memory *agent.Memory) string {
+	return fmt.Sprintf(
+		"Tool %q ran successfully. This was already remembered as memory %s, so that "+
+			"memory was refreshed instead of saving a duplicate; nothing new was recorded.",
+		name, memory.ID,
+	)
 }
 
 func (s *Service) startWrite(

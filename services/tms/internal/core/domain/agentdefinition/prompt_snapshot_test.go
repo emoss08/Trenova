@@ -103,6 +103,7 @@ func promptContexts() []promptContext {
 					Title: "Shipments",
 				}
 				rc.Guide = true
+				rc.Facts = []string{"Invoice date is Oct 3", "Acme pays net 45"}
 
 				return &serviceports.RunRequest{
 					Definition: definition,
@@ -191,7 +192,7 @@ func TestPromptSnapshots(t *testing.T) {
 					filepath.Join(promptSnapshotDir, name+".golden"),
 					[]byte(system),
 					*updatePrompts,
-					"go test -tags nofitz -run TestPromptSnapshots "+
+					"go test -run TestPromptSnapshots "+
 						"./internal/core/domain/agentdefinition/ -update",
 				)
 			})
@@ -247,21 +248,21 @@ func snapshotMemories() ([]*agent.Memory, []agent.MemorySubject) {
 	outside.Tainted = true
 
 	return []*agent.Memory{
-		memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
-			"The yard closes at 18:00."),
-		holdFix,
-		long,
-		assignFix,
-		memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
-			"Quote every lane in US dollars."),
-		outside,
-		dockRule,
-		aboutCustomer,
-		customerRule,
-	}, []agent.MemorySubject{
-		{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
-		{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
-	}
+			memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
+				"The yard closes at 18:00."),
+			holdFix,
+			long,
+			assignFix,
+			memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
+				"Quote every lane in US dollars."),
+			outside,
+			dockRule,
+			aboutCustomer,
+			customerRule,
+		}, []agent.MemorySubject{
+			{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
+			{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
+		}
 }
 
 func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
@@ -284,7 +285,7 @@ func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
 		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_memory.golden"),
 		[]byte(system),
 		*updatePrompts,
-		"go test -tags nofitz -run TestPromptSnapshots "+
+		"go test -run TestPromptSnapshots "+
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }
@@ -308,7 +309,7 @@ func TestPromptSnapshots_AgentsItCanAsk(t *testing.T) {
 		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_delegates.golden"),
 		[]byte(system),
 		*updatePrompts,
-		"go test -tags nofitz -run TestPromptSnapshots "+
+		"go test -run TestPromptSnapshots "+
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }
@@ -337,7 +338,7 @@ func TestPromptSnapshots_ProposalsAwaitingADecision(t *testing.T) {
 		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_awaiting_decision.golden"),
 		[]byte(system),
 		*updatePrompts,
-		"go test -tags nofitz -run TestPromptSnapshots "+
+		"go test -run TestPromptSnapshots "+
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }

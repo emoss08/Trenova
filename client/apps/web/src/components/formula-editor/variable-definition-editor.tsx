@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
 import type { VariableDefinition, VariableValueType } from "@trenova/shared/types/formula-template";
-import { Plus, Trash2, Variable } from "lucide-react";
+import { PlusIcon, Trash01Icon, VariableIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect } from "react";
 import {
   useController,
@@ -94,7 +94,7 @@ export function VariableDefinitionEditor({
           </div>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="gap-1.5">
-          <Plus className="size-3.5" />
+          <PlusIcon className="size-3.5" />
           {t("Add")}
         </Button>
       </CardHeader>
@@ -102,7 +102,7 @@ export function VariableDefinitionEditor({
         {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-              <Variable className="text-muted-foreground size-5" />
+              <VariableIcon className="text-muted-foreground size-5" />
             </div>
             <p className="mt-3 text-sm font-medium">{t("No custom variables")}</p>
             <p className="text-muted-foreground mt-1 text-xs">
@@ -115,7 +115,7 @@ export function VariableDefinitionEditor({
               onClick={handleAdd}
               className="mt-4 gap-1.5"
             >
-              <Plus className="size-3.5" />
+              <PlusIcon className="size-3.5" />
               {t("Add variable")}
             </Button>
           </div>
@@ -248,7 +248,7 @@ function VariableDefinitionRow({
           aria-label={t("Remove variable")}
           className="text-muted-foreground hover:bg-danger-subtle hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
         >
-          <Trash2 className="size-4" />
+          <Trash01Icon className="size-4" />
         </Button>
       </div>
     </div>

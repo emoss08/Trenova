@@ -12,7 +12,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { MAX_MATRIX_DIMENSIONS } from "@trenova/shared/lib/rate-matrix";
 import type { RateMatrix, RateMatrixDimension } from "@trenova/shared/types/rate";
-import { PlusIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 /**
@@ -53,7 +53,7 @@ export function DimensionEditor() {
 
       {fields.length > 0 && (
         <Alert>
-          <TriangleAlertIcon className="size-4" />
+          <AlertTriangleIcon className="size-4" />
           <AlertDescription>
             {t(
               "Changing an axis after rates exist changes what every existing cell means. Re-upload the grid after any change here.",

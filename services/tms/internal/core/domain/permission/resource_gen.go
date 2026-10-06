@@ -144,6 +144,7 @@ const (
 
 	// Carriers
 	ResourceCarrier                  Resource = "carrier"
+	ResourceCarrierCapacityPosting   Resource = "carrier_capacity_posting"
 	ResourceRateConfirmation         Resource = "rate_confirmation"
 	ResourceCarrierSettlement        Resource = "carrier_settlement"
 	ResourceCarrierSettlementControl Resource = "carrier_settlement_control"

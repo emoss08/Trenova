@@ -4,7 +4,7 @@ import { InputField } from "@/components/fields/input-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import type { CustomFieldDefinition } from "@/types/custom-field";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { type Control, useFieldArray } from "react-hook-form";
 
 interface SelectOptionsFieldProps {
@@ -58,7 +58,7 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
             <ColorField control={control} name={`options.${index}.color`} label={t("Color")} />
             <div className="pb-0.5">
               <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                <TrashIcon className="text-destructive size-4" />
+                <Trash01Icon className="text-destructive size-4" />
               </Button>
             </div>
           </div>

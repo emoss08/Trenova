@@ -43,6 +43,12 @@ type AgentControl struct {
 	AITrainingConsentChangedAt   *int64    `json:"aiTrainingConsentChangedAt"   bun:"ai_training_consent_changed_at,type:BIGINT,nullzero"`
 	AITrainingConsentChangedByID *pulid.ID `json:"aiTrainingConsentChangedById" bun:"ai_training_consent_changed_by_id,type:VARCHAR(100),nullzero"`
 
+	// PersonMonthlyMessages is how many questions one person may ask the
+	// agents in a calendar month; nought leaves it unlimited.
+	PersonMonthlyMessages int `json:"personMonthlyMessages" bun:"person_monthly_messages,type:INTEGER,notnull,default:0"`
+
+	LearningOff bool `json:"learningOff" bun:"learning_off,type:BOOLEAN,notnull,default:false"`
+
 	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
 	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
 
@@ -63,6 +69,7 @@ const (
 	// that the night's work is in the numbers.
 	DefaultBriefingHourLocal = 6
 	maxBriefingHour          = 23
+	maxPersonMonthlyMessages = 1_000_000
 )
 
 func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
@@ -79,6 +86,13 @@ func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
 			"briefingHourLocal",
 			errortypes.ErrInvalid,
 			"The briefing hour must be between 0 and 23",
+		)
+	}
+	if ac.PersonMonthlyMessages < 0 || ac.PersonMonthlyMessages > maxPersonMonthlyMessages {
+		multiErr.Add(
+			"personMonthlyMessages",
+			errortypes.ErrInvalid,
+			"The monthly allowance must be between 0 (unlimited) and 1,000,000 questions",
 		)
 	}
 }

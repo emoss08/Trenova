@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"io"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -25,6 +26,14 @@ type StartThreadRequest struct {
 	// when it was opened from one.
 	SubjectType agent.SubjectType
 	SubjectID   pulid.ID
+	// HandedFromThreadID is the conversation a hand-off started this one
+	// from, and Taint the outside content that conversation had read, which
+	// the summary carried over may repeat.
+	HandedFromThreadID pulid.ID
+	Taint              *agent.RunTaint
+	TaintedAt          *int64
+	// PinnedFacts are the facts the conversation opens keeping in mind.
+	PinnedFacts []string
 }
 
 // UpdateThreadRequest changes what a person may change about their own
@@ -35,8 +44,13 @@ type UpdateThreadRequest struct {
 	TenantInfo pagination.TenantInfo
 	Title      *string
 	Pinned     *bool
+	// PinnedFacts, when set, replaces what the agents keep in mind for the
+	// whole conversation. An empty list unpins them all.
+	PinnedFacts *[]string
 	// Keep promotes an Ask thread to the Desk so it is listed.
 	Keep bool
+	// AutoCompact turns the conversation's compacting itself on or off.
+	AutoCompact *bool
 }
 
 // SendMessageRequest is one turn from a person.
@@ -125,6 +139,9 @@ type AssistantProposal struct {
 	// accepted proposal with neither set was approved but has not run yet.
 	ExecutedAt     *int64 `json:"executedAt"`
 	ExecutionError string `json:"executionError"`
+	// ExecutionResult is what the run made, and for a write over many
+	// records each one that did not go through.
+	ExecutionResult *agent.ToolExecutionResult `json:"executionResult,omitempty"`
 	// ExpiresAt is when a pending proposal stops being decidable. Zero means
 	// it was made before expiry existed.
 	ExpiresAt int64 `json:"expiresAt"`
@@ -147,6 +164,10 @@ type AssistantProposal struct {
 	// Modifications are the values the approver changed before approving,
 	// keyed by parameter. Nil when it was approved as proposed.
 	Modifications map[string]any `json:"modifications"`
+	// PendingModifications are the values a person changed and has not yet
+	// approved with, keyed by parameter, kept so the edit survives a reload.
+	// Nil once the proposal is decided, or when nothing was changed.
+	PendingModifications map[string]any `json:"pendingModifications"`
 	// AgentID and AgentName are the agent that proposed it: the
 	// conversation's own, or another agent it handed a task to, whose
 	// proposal it is and whose trust a decision on it teaches.
@@ -157,6 +178,13 @@ type AssistantProposal struct {
 	DecidedAt       *int64   `json:"decidedAt"`
 	DecidedByUserID pulid.ID `json:"decidedByUserId"`
 	DecisionNote    string   `json:"decisionNote"`
+}
+
+// ProposalEdits is what a pending proposal holds as changed once a person
+// saved their edits: only the values that differ from what the agent proposed.
+type ProposalEdits struct {
+	ProposalID           pulid.ID       `json:"proposalId"`
+	PendingModifications map[string]any `json:"pendingModifications"`
 }
 
 // AssistantPlan is several of a turn's proposals as one decision, as the
@@ -198,8 +226,72 @@ type AssistantArtifact struct {
 	// so the transcript can point at it.
 	SourceToolCallID string `json:"sourceToolCallId"`
 	Pinned           bool   `json:"pinned"`
-	CreatedAt        int64  `json:"createdAt"`
-	UpdatedAt        int64  `json:"updatedAt"`
+	// LineageID names the first artifact of the lineage this one is a later
+	// version of, and LineageSeq its version number; empty and 1 for the first.
+	LineageID  pulid.ID `json:"lineageId"`
+	LineageSeq int      `json:"lineageSeq"`
+	// Slug names the lineage in a link; the same for every version.
+	Slug string `json:"slug"`
+	// Turn is the question the person asked in the turn that made the
+	// artifact, so an artifact from an earlier day says which turn it was.
+	Turn      string `json:"turn,omitempty"`
+	CreatedAt int64  `json:"createdAt"`
+	UpdatedAt int64  `json:"updatedAt"`
+}
+
+// ListArtifactsOptions is one page of a conversation's artifacts and what
+// narrows it, all decided on the server so a long conversation pages rather
+// than truncates.
+type ListArtifactsOptions struct {
+	Limit      int
+	Cursor     string
+	Query      string
+	Family     assistantartifact.Family
+	PinnedOnly bool
+}
+
+// AssistantArtifactPage is one page of lineages, every version of each, how
+// many lineages match in all and how they split by family.
+type AssistantArtifactPage struct {
+	Results    []AssistantArtifact         `json:"results"`
+	Total      int                         `json:"total"`
+	NextCursor string                      `json:"nextCursor,omitempty"`
+	Counts     repositories.ArtifactCounts `json:"counts"`
+}
+
+// DocumentRewriteMode is how a person asked a passage to change.
+type DocumentRewriteMode string
+
+const (
+	DocumentRewriteShorter DocumentRewriteMode = "shorter"
+	DocumentRewritePlainer DocumentRewriteMode = "plain"
+	DocumentRewriteAsk     DocumentRewriteMode = "ask"
+)
+
+// DocumentRewriteRequest is a passage of a document to rewrite and how. The
+// suggestion is not saved; accepting it saves a new version.
+type DocumentRewriteRequest struct {
+	Text   string              `json:"text"`
+	Mode   DocumentRewriteMode `json:"mode"`
+	Prompt string              `json:"prompt"`
+}
+
+type DocumentRewriteSuggestion struct {
+	Text string `json:"text"`
+}
+
+// SaveDocumentVersionRequest is a person's edit of a document, kept as its
+// next version.
+type SaveDocumentVersionRequest struct {
+	Body string `json:"body"`
+	Note string `json:"note"`
+}
+
+// ArtifactFile is an artifact rendered as a file to download.
+type ArtifactFile struct {
+	FileName    string
+	ContentType string
+	Body        []byte
 }
 
 // AssistantArtifactEvent announces an artifact as a turn produces it, so the
@@ -215,6 +307,11 @@ type AssistantArtifactEvent struct {
 	// artifact itself has been fetched.
 	Path  string          `json:"path,omitempty"`
 	Draft *pagedraft.Edit `json:"draft,omitempty"`
+}
+
+// AssistantArtifactRemovedEvent names an artifact the turn withdrew.
+type AssistantArtifactRemovedEvent struct {
+	ID pulid.ID `json:"id"`
 }
 
 // ProposalHold names the switch holding a proposal and, when it is an agent's
@@ -238,7 +335,12 @@ const (
 	AssistantEventToolFinished = "tool_finished"
 	AssistantEventRetrying     = "retrying"
 	AssistantEventArtifact     = "artifact"
-	AssistantEventDone         = "done"
+	// AssistantEventArtifactRemoved withdraws an artifact the turn announced:
+	// a record card a later read of the same tool folded into one table. The
+	// server has deleted it, so a reader drops it rather than keeping it
+	// beside the table that replaced it.
+	AssistantEventArtifactRemoved = "artifact_removed"
+	AssistantEventDone            = "done"
 	// AssistantEventThread names the conversation a quick question was
 	// answered on, before the turn begins, so the reader can keep it even
 	// when the answer fails partway.
@@ -269,7 +371,58 @@ const (
 	// the organization, once for each new place it came from.
 	AssistantEventRunTainted      = "run_tainted"
 	AssistantEventReplyRegrounded = "reply_regrounded"
+	// AssistantEventContext says how full the conversation's context is now,
+	// sent as a turn is saved so the composer's meter moves with the reply.
+	AssistantEventContext = "context"
+	// AssistantEventCompactionStarted, AssistantEventCompactionFinished and
+	// AssistantEventCompactionCancelled follow a compaction: from the turn
+	// that set one off on its own, which names the compaction's turn so the
+	// reader can follow it, and on the compaction's own stream. Finished and
+	// cancelled each end that stream.
+	AssistantEventCompactionStarted   = "compaction_started"
+	AssistantEventCompactionFinished  = "compaction_finished"
+	AssistantEventCompactionCancelled = "compaction_cancelled"
+	// AssistantEventMemoryUsed names every memory the turn has used so far:
+	// those its prompt carried, then each one recall_memory read back. Each
+	// event repeats the whole list, so a reader keeps the latest.
+	AssistantEventMemoryUsed = "memory_used"
+	// AssistantEventMemorySaved says the turn kept a memory, or offered one
+	// for the person to accept when they asked to be asked first.
+	AssistantEventMemorySaved = "memory_saved"
 )
+
+// AssistantContextEvent is how full a conversation's context is.
+type AssistantContextEvent struct {
+	ThreadID       pulid.ID                   `json:"threadId"`
+	Usage          *conversation.ContextUsage `json:"usage"`
+	AutoCompactOff bool                       `json:"autoCompactOff"`
+}
+
+// AssistantCompactionEvent is where a compaction stands. Before and After are
+// the context use either side, in tokens: After is the estimate until the
+// compaction finishes.
+type AssistantCompactionEvent struct {
+	TurnID   pulid.ID `json:"turnId"`
+	ThreadID pulid.ID `json:"threadId"`
+	Auto     bool     `json:"auto"`
+	Before   int      `json:"before"`
+	After    int      `json:"after"`
+	// Message is the summary, once it is saved; Usage the context after it.
+	Message *conversation.Message      `json:"message,omitempty"`
+	Usage   *conversation.ContextUsage `json:"usage,omitempty"`
+	// AutoCompactOff is set when cancelling a compaction that started on its
+	// own turned compacting on its own off.
+	AutoCompactOff bool `json:"autoCompactOff,omitempty"`
+}
+
+// AssistantMemoryUsedEvent is the memories a turn has used, in the order it
+// used them.
+type AssistantMemoryUsedEvent struct {
+	IDs []pulid.ID `json:"ids"`
+}
+
+// AssistantMemorySavedEvent is a memory the turn saved, or offered to save.
+type AssistantMemorySavedEvent = SavedMemory
 
 type RegroundAction string
 
@@ -337,6 +490,10 @@ func (s DelegateScope) Tag(event StreamEvent) (StreamEvent, bool) {
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: event.Event, Data: data}, true
 	case AssistantRefusedEvent:
+		return StreamEvent{}, false
+	// What another agent remembered on a task is its own; the card under the
+	// reply is for what the conversation's agent kept.
+	case AssistantMemoryUsedEvent, AssistantMemorySavedEvent:
 		return StreamEvent{}, false
 	default:
 		return event, true
@@ -415,6 +572,8 @@ type AssistantRetryingEvent struct {
 	// the wait, for the reader.
 	Kind        RetryKind `json:"kind,omitempty"`
 	WaitSeconds int       `json:"waitSeconds,omitempty"`
+	// MaxAttempts is how many times the provider is asked in all.
+	MaxAttempts int `json:"maxAttempts,omitempty"`
 	// AgentID and DelegateCallID are set when it is another agent's reply
 	// starting over, on a task this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
@@ -468,6 +627,11 @@ type AssistantMessageEvent struct {
 	Content   string                        `json:"content"`
 	ToolCalls []conversation.ToolCallRecord `json:"toolCalls"`
 	Model     string                        `json:"model"`
+	// ProviderID is the provider that answered; FallbackFrom the one asked
+	// first, when that one didn't. Truncated says the reply stopped partway.
+	ProviderID   pulid.ID                       `json:"providerId,omitempty"`
+	FallbackFrom *conversation.ProviderFallback `json:"fallbackFrom,omitempty"`
+	Truncated    bool                           `json:"truncated,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's message, on a
 	// task this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
@@ -480,6 +644,8 @@ type AssistantToolStartedEvent struct {
 	Name      string           `json:"name"`
 	Arguments map[string]any   `json:"arguments"`
 	Effect    agent.ToolEffect `json:"effect,omitempty"`
+	// Why is the model's reason for the step, when it gave one.
+	Why *conversation.StepRationale `json:"why,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
@@ -522,9 +688,7 @@ type ListThreadMessagesRequest struct {
 // ThreadMessagesPage is one page of a thread in reading order, with what a
 // client needs to ask for the page above it and to say how long the
 // conversation has become.
-// ThreadTranscript is a conversation rendered as Markdown, with the name the
-// file should be saved under.
-type ThreadTranscript struct {
+type TranscriptFile struct {
 	FileName string
 	Body     string
 }
@@ -586,10 +750,32 @@ type AssistantService interface {
 		ctx context.Context,
 		req repositories.GetThreadRequest,
 	) (*conversation.Thread, error)
+	MarkThreadRead(ctx context.Context, req repositories.GetThreadRequest) error
+	SearchMentions(
+		ctx context.Context,
+		actor RequestActor,
+		req MentionSearchRequest,
+	) ([]MentionCandidate, error)
+	SearchDesk(
+		ctx context.Context,
+		actor RequestActor,
+		req DeskSearchRequest,
+	) ([]DeskSearchResult, error)
+	ThreadBudget(ctx context.Context, req repositories.GetThreadRequest) (*ThreadBudget, error)
+	RequestMore(ctx context.Context, req RequestMoreRequest) (*RequestMoreResult, error)
 	ListThreadProposals(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
 	) ([]AssistantProposal, error)
+	// SaveProposalEdits keeps the values a person changed on one of the
+	// conversation's pending proposals, for the approval to go with; an empty
+	// set clears them.
+	SaveProposalEdits(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		proposalID pulid.ID,
+		modifications map[string]any,
+	) (*ProposalEdits, error)
 	ListThreadPlans(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
@@ -597,7 +783,57 @@ type AssistantService interface {
 	ListThreadArtifacts(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
+		opts ListArtifactsOptions,
+	) (*AssistantArtifactPage, error)
+	// ArtifactLineage reads every version of the lineage an artifact belongs
+	// to, oldest first, and ArtifactBySlug the lineage a link names.
+	ArtifactLineage(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
 	) ([]AssistantArtifact, error)
+	ArtifactBySlug(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		slug string,
+	) ([]AssistantArtifact, error)
+	SaveDocumentVersion(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		version SaveDocumentVersionRequest,
+	) (*AssistantArtifact, error)
+	RestoreDocumentVersion(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+	) (*AssistantArtifact, error)
+	RewriteDocument(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		rewrite DocumentRewriteRequest,
+	) (*DocumentRewriteSuggestion, error)
+	// ExportArtifactCSV writes a table or report preview whole, read again
+	// from its source rather than from the rows the pane holds.
+	ExportArtifactCSV(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		sink io.Writer,
+	) error
+	ArtifactCSVName(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+	) (string, error)
+	// ExportDocument renders a document as a PDF or a Word file.
+	ExportDocument(
+		ctx context.Context,
+		req repositories.GetThreadRequest,
+		artifactID pulid.ID,
+		format string,
+	) (*ArtifactFile, error)
 	PinArtifact(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
@@ -624,7 +860,7 @@ type AssistantService interface {
 	Transcript(
 		ctx context.Context,
 		req repositories.GetThreadRequest,
-	) (*ThreadTranscript, error)
+	) (*TranscriptFile, error)
 	DeleteThread(ctx context.Context, req repositories.GetThreadRequest) error
 	// StartAsk opens the hidden thread a quick question is answered on. The
 	// answer is a turn like any other; the thread is listed only when the
@@ -649,7 +885,95 @@ type AssistantProviderOption struct {
 	Model string `json:"model"`
 	// Trusted is shown because it decides whether this choice can serve work
 	// that reaches financial records.
-	Trusted bool `json:"trusted"`
+	Trusted     bool   `json:"trusted"`
+	Vendor      string `json:"vendor"`
+	Reasoning   string `json:"reasoning"`
+	Unavailable bool   `json:"unavailable"`
+}
+
+type MentionSearchRequest struct {
+	Query string
+	Kind  string
+}
+
+// ThreadBudget is where a conversation's agent stands against its monthly
+// budget and daily run cap. LimitUSD is empty when the agent has no budget.
+type ThreadBudget struct {
+	AgentName     string  `json:"agentName"`
+	SpentUSD      string  `json:"spentUsd"`
+	LimitUSD      string  `json:"limitUsd"`
+	Share         float64 `json:"share"`
+	Near          bool    `json:"near"`
+	MonthStart    int64   `json:"monthStart"`
+	ResetsAt      int64   `json:"resetsAt"`
+	RunsToday     int     `json:"runsToday"`
+	DailyRunLimit int     `json:"dailyRunLimit"`
+	// BudgetUsed and DailyUsed say a cap is spent, so the composer locks
+	// before a question is sent rather than after it is refused.
+	BudgetUsed bool `json:"budgetUsed"`
+	DailyUsed  bool `json:"dailyUsed"`
+	// DayResetsAt is when the daily run cap clears.
+	DayResetsAt int64 `json:"dayResetsAt"`
+	// DisabledBy and DisabledAt say who turned the agent off and when.
+	DisabledBy string `json:"disabledBy,omitempty"`
+	DisabledAt int64  `json:"disabledAt,omitempty"`
+	// Person is the asker's own monthly allowance, nil when unlimited.
+	Person *PersonAllowance `json:"person"`
+}
+
+// The things a person can ask AI Control for from a conversation.
+const (
+	RequestMoreAccess    = "access"
+	RequestMoreAllowance = "allowance"
+	RequestMoreBudget    = "budget"
+	RequestMoreDailyRuns = "daily_runs"
+)
+
+// RequestMoreRequest asks for what a person ran out of in a conversation.
+type RequestMoreRequest struct {
+	Thread repositories.GetThreadRequest
+	Kind   string
+}
+
+// RequestMoreResult says how many people were asked.
+type RequestMoreResult struct {
+	Sent int `json:"sent"`
+}
+
+// PersonAllowance is how many questions one person has asked this month
+// against how many their organization allows.
+type PersonAllowance struct {
+	Used     int   `json:"used"`
+	Limit    int   `json:"limit"`
+	ResetsAt int64 `json:"resetsAt"`
+}
+
+// DeskSearchRequest searches a person's own Desk. Kind is chat, msg, art,
+// dec or empty for all of them; an empty query lists what is recent.
+type DeskSearchRequest struct {
+	Query string
+	Kind  string
+}
+
+// DeskSearchResult is one conversation, message, artifact or decision. For a
+// message Title is the part of it around what matched.
+type DeskSearchResult struct {
+	Kind         string   `json:"kind"`
+	ID           string   `json:"id"`
+	ThreadID     pulid.ID `json:"threadId"`
+	AgentID      pulid.ID `json:"agentId"`
+	Title        string   `json:"title"`
+	ThreadTitle  string   `json:"threadTitle"`
+	ArtifactKind string   `json:"artifactKind"`
+	Status       string   `json:"status"`
+	At           int64    `json:"at"`
+}
+
+type MentionCandidate struct {
+	Type     string `json:"type"`
+	ID       string `json:"id"`
+	Label    string `json:"label"`
+	Subtitle string `json:"subtitle"`
 }
 
 // DecisionFollowUpRequest names a decision on a proposal or a plan an agent

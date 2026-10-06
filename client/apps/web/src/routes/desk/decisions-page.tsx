@@ -1,5 +1,5 @@
-import { DecisionQueue } from "./_components/decisions/decision-queue";
+import { DecisionFlow } from "./_components/decisions/decision-flow";
 
 export function DeskDecisionsPage() {
-  return <DecisionQueue />;
+  return <DecisionFlow />;
 }

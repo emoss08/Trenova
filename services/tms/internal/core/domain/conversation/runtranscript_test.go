@@ -126,3 +126,54 @@ func TestRunTranscriptOf_LeavesOutTheMiddleOfALongRun(t *testing.T) {
 	assert.Equal(t, int64(26), kept[4].CreatedAt)
 	assert.Equal(t, int64(29), kept[7].CreatedAt)
 }
+
+func TestMessageOfTranscript_ReadsBackWhatTheRunKept(t *testing.T) {
+	t.Parallel()
+
+	delegate := pulid.MustNew("agdef_")
+	original := []conversation.Message{
+		{
+			Role:      conversation.RoleAssistant,
+			Kind:      conversation.MessageKindMessage,
+			Content:   "Looking it up.",
+			Reasoning: &conversation.ReasoningTrace{Text: "Find the shipment first."},
+			ToolCalls: []conversation.ToolCallRecord{{
+				ID:        "c1",
+				Name:      "get_shipment",
+				Arguments: map[string]any{"id": "shp_1"},
+			}},
+			CreatedAt: 10,
+		},
+		{
+			Role:              conversation.RoleTool,
+			Kind:              conversation.MessageKindDelegated,
+			ToolCallID:        "c1",
+			ToolName:          "get_shipment",
+			ToolFailed:        true,
+			ToolVerdict:       "denied",
+			ToolSummary:       "Not permitted",
+			AgentDefinitionID: delegate,
+			DelegateCallID:    "d1",
+			Content:           "refused",
+			CreatedAt:         11,
+		},
+	}
+
+	transcript := conversation.RunTranscriptOf(original)
+	require.NotNil(t, transcript)
+	require.Len(t, transcript.Messages, len(original))
+
+	for idx := range original {
+		assert.Equal(t, original[idx], conversation.MessageOfTranscript(&transcript.Messages[idx]))
+	}
+}
+
+func TestMessageOfTranscript_AnUnmarkedEntryIsAPlainMessage(t *testing.T) {
+	t.Parallel()
+
+	message := conversation.MessageOfTranscript(&agent.TranscriptMessage{Role: "User"})
+
+	assert.Equal(t, conversation.MessageKindMessage, message.Kind)
+	assert.Nil(t, message.Reasoning)
+	assert.Nil(t, message.ToolCalls)
+}

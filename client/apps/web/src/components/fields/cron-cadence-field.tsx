@@ -17,7 +17,7 @@ import {
   type CronParts,
 } from "@/lib/cron";
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { useController, type Control, type FieldPath, type FieldValues } from "react-hook-form";
 

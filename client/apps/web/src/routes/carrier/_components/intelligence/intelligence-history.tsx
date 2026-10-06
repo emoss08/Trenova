@@ -20,7 +20,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { RawPayloadDialog } from "./raw-payload-dialog";
 

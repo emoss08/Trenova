@@ -228,6 +228,57 @@ func (s *Service) Count(
 
 // withheld reports a reader who may use no agent at all, so nothing any
 // agent raised is theirs to see.
+// Recent reads the decisions made since a moment and the proposals they
+// decided. A proposal gone since is left out rather than failing the list.
+func (s *Service) Recent(
+	ctx context.Context,
+	req services.ListRecentDecisionsRequest,
+) ([]services.RecentDecision, error) {
+	if withheld(req.Usable) {
+		return []services.RecentDecision{}, nil
+	}
+
+	entries, err := s.queue.ListRecent(ctx, repositories.ListRecentDecisionsRequest{
+		TenantInfo: req.TenantInfo,
+		Since:      req.Since,
+		Limit:      req.First,
+		Audience:   audienceOf(req.Usable),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(entries) == 0 {
+		return []services.RecentDecision{}, nil
+	}
+
+	ids := make([]pulid.ID, 0, len(entries))
+	for _, entry := range entries {
+		ids = append(ids, entry.ProposalID)
+	}
+	proposals, err := s.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
+		IDs:        ids,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[pulid.ID]*agent.AgentProposal, len(proposals))
+	for _, proposal := range proposals {
+		byID[proposal.ID] = proposal
+	}
+
+	out := make([]services.RecentDecision, 0, len(entries))
+	for _, entry := range entries {
+		proposal, ok := byID[entry.ProposalID]
+		if !ok {
+			continue
+		}
+		out = append(out, services.RecentDecision{RecentDecisionEntry: entry, Proposal: proposal})
+	}
+
+	return out, nil
+}
+
 func withheld(usable *services.UsableAgents) bool {
 	return usable != nil && !usable.Assistant
 }
@@ -275,51 +326,8 @@ func (s *Service) DecideMany(
 	req *services.DecideAgentProposalsRequest,
 	actor *services.RequestActor,
 ) ([]services.AgentProposalDecisionResult, error) {
-	if err := validateBatch(req); err != nil {
+	if err := s.checkBatch(ctx, req); err != nil {
 		return nil, err
-	}
-
-	proposals, err := s.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
-		IDs:        req.ProposalIDs,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	byID := make(map[pulid.ID]*agent.AgentProposal, len(proposals))
-	for _, proposal := range proposals {
-		byID[proposal.ID] = proposal
-	}
-
-	multiErr := errortypes.NewMultiError()
-	tools := make(map[string]struct{}, 1)
-	for i, id := range req.ProposalIDs {
-		field := fmt.Sprintf("proposalIds[%d]", i)
-		proposal, ok := byID[id]
-		switch {
-		case !ok:
-			multiErr.Add(field, errortypes.ErrNotFound, "Proposal not found")
-		case proposal.PlanID != nil:
-			multiErr.Add(
-				field,
-				errortypes.ErrInvalid,
-				"This proposal is a step of a plan; decide the plan",
-			)
-		default:
-			tools[proposal.ToolName] = struct{}{}
-		}
-	}
-	if len(tools) > 1 {
-		names := make([]string, 0, len(tools))
-		for name := range tools {
-			names = append(names, name)
-		}
-		sort.Strings(names)
-		multiErr.Add("proposalIds", errortypes.ErrInvalid,
-			"A batch decides one tool at a time; these span "+strings.Join(names, ", "))
-	}
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	results := make([]services.AgentProposalDecisionResult, 0, len(req.ProposalIDs))
@@ -356,6 +364,59 @@ func (s *Service) DecideMany(
 	}
 
 	return results, nil
+}
+
+// checkBatch refuses a batch before anything in it is decided: one that
+// names a proposal twice, a plan's step, or more than one tool.
+func (s *Service) checkBatch(ctx context.Context, req *services.DecideAgentProposalsRequest) error {
+	if err := validateBatch(req); err != nil {
+		return err
+	}
+
+	proposals, err := s.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
+		IDs:        req.ProposalIDs,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	byID := make(map[pulid.ID]*agent.AgentProposal, len(proposals))
+	for _, proposal := range proposals {
+		byID[proposal.ID] = proposal
+	}
+
+	multiErr := errortypes.NewMultiError()
+	tools := make(map[string]struct{}, 1)
+	for i, id := range req.ProposalIDs {
+		field := fmt.Sprintf("proposalIds[%d]", i)
+		proposal, ok := byID[id]
+		switch {
+		case !ok:
+			multiErr.Add(field, errortypes.ErrNotFound, "Proposal not found")
+		case proposal.PlanID != nil:
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"This proposal is a step of a plan; decide the plan",
+			)
+		default:
+			tools[proposal.ToolName] = struct{}{}
+		}
+	}
+	if len(tools) > 1 {
+		names := make([]string, 0, len(tools))
+		for name := range tools {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		multiErr.Add("proposalIds", errortypes.ErrInvalid,
+			"A batch decides one tool at a time; these span "+strings.Join(names, ", "))
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }
 
 func validateBatch(req *services.DecideAgentProposalsRequest) error {
@@ -454,5 +515,56 @@ func (s *Service) DecideManyOwn(
 		return nil, multiErr
 	}
 
+	if s.decisions.Defers(req.Decision) {
+		return s.approveDeferred(ctx, req, actor)
+	}
+
 	return s.DecideMany(ctx, req, actor)
+}
+
+// approveDeferred approves a batch from the person's own conversations in
+// one undo window: every proposal is recorded now, each reporting its own
+// outcome, and all of them commit together when the window closes.
+func (s *Service) approveDeferred(
+	ctx context.Context,
+	req *services.DecideAgentProposalsRequest,
+	actor *services.RequestActor,
+) ([]services.AgentProposalDecisionResult, error) {
+	if err := s.checkBatch(ctx, req); err != nil {
+		return nil, err
+	}
+
+	reqs := make([]*services.DecideAgentProposalRequest, 0, len(req.ProposalIDs))
+	for _, id := range req.ProposalIDs {
+		reqs = append(reqs, &services.DecideAgentProposalRequest{
+			ProposalID:    id,
+			Decision:      req.Decision,
+			ReasonCode:    req.ReasonCode,
+			Note:          req.Note,
+			TenantInfo:    req.TenantInfo,
+			PreviewDigest: req.PreviewDigests[id],
+		})
+	}
+
+	deferred, err := s.decisions.ApproveDeferred(ctx, reqs, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]services.AgentProposalDecisionResult, 0, len(deferred))
+	for _, approval := range deferred {
+		result := services.AgentProposalDecisionResult{ProposalID: approval.ProposalID}
+		if approval.Err != nil {
+			result.Error = decisionErrorMessage(approval.Err)
+			s.l.Warn("batch approval refused for a proposal",
+				zap.String("proposal", approval.ProposalID.String()),
+				zap.Error(approval.Err),
+			)
+		} else {
+			result.Decision = approval.Decision
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }

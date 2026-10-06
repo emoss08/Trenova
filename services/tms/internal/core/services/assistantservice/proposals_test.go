@@ -29,6 +29,24 @@ type stubRunRepo struct {
 	// byID serves reads for runs this stub did not create; reads counts them.
 	byID  map[pulid.ID]*agent.AgentRun
 	reads int
+
+	transcripts     map[pulid.ID]*agent.RunTranscript
+	transcriptReads []repositories.ListAgentRunsByIDsRequest
+}
+
+func (r *stubRunRepo) ListTranscriptsByIDs(
+	_ context.Context,
+	req repositories.ListAgentRunsByIDsRequest,
+) ([]*agent.AgentRun, error) {
+	r.transcriptReads = append(r.transcriptReads, req)
+	runs := make([]*agent.AgentRun, 0, len(req.IDs))
+	for _, id := range req.IDs {
+		if transcript, ok := r.transcripts[id]; ok {
+			runs = append(runs, &agent.AgentRun{ID: id, Transcript: transcript})
+		}
+	}
+
+	return runs, nil
 }
 
 func (r *stubRunRepo) GetByID(
@@ -104,6 +122,21 @@ type stubProposalRepo struct {
 	err      error
 	listErr  error
 	lastList repositories.ListAgentProposalsByThreadRequest
+
+	byRun   []*agent.AgentProposal
+	lastRun repositories.ListAgentProposalsByRunRequest
+}
+
+func (r *stubProposalRepo) ListByRun(
+	_ context.Context,
+	req repositories.ListAgentProposalsByRunRequest,
+) ([]*agent.AgentProposal, error) {
+	r.lastRun = req
+	if r.listErr != nil {
+		return nil, r.listErr
+	}
+
+	return r.byRun, nil
 }
 
 func (r *stubProposalRepo) Create(

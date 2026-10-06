@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
-import { ActivityIcon } from "lucide-react";
+import { ActivityIcon } from "@trenova/shared/components/icons";
 import { ActivityItem, EmptyState, OverviewSkeleton } from "./shared";
 
 export type RecentActivity = {

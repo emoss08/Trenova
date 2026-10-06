@@ -139,6 +139,7 @@ func (t *postInvoiceTool) Policy() serviceports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressMoney},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
+		Artifact:      invoiceRecordEntity,
 		Rationale: "Books a receivable to the ledger and queues it for the accounting system " +
 			"and the customer's EDI; only a person posts, and hands-off posting is the " +
 			"billing-control auto-post setting.",
@@ -191,6 +192,55 @@ func (t *postInvoiceTool) Execute(
 	_, err = t.invoices.Post(ctx, req, params.Actor)
 
 	return err
+}
+
+// ExecuteWithResult posts the invoice and says where it stands after, so the
+// agent can tell the person it is posted, for how much and to whom, rather
+// than sending them to look.
+func (t *postInvoiceTool) ExecuteWithResult(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+) (*agent.ToolExecutionResult, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, err
+	}
+	if !params.ApprovedFromProposal() {
+		return nil, ErrInvoiceNeedsAPerson
+	}
+
+	req, err := invoiceRequest(t, &params)
+	if err != nil {
+		return nil, err
+	}
+	posted, err := t.invoices.Post(ctx, req, params.Actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return postedInvoiceResult(posted), nil
+}
+
+// postedInvoiceResult names a posted invoice and where it stands.
+func postedInvoiceResult(posted *invoice.Invoice) *agent.ToolExecutionResult {
+	result := &agent.ToolExecutionResult{Action: "posted", Kind: invoiceRecordEntity}
+	if posted == nil || posted.ID.IsNil() {
+		return result
+	}
+	result.Name = posted.Number
+	result.IDs = map[string]string{paramInvoiceID: posted.ID.String()}
+	result.Record = &agent.RecordRef{EntityType: invoiceRecordEntity, ID: posted.ID.String()}
+
+	state := string(posted.Status) + ", " + posted.TotalAmount.StringFixed(2) + " " +
+		posted.CurrencyCode
+	if posted.BillToName != "" {
+		state += " to " + posted.BillToName
+	}
+	if posted.SettlementStatus != "" {
+		state += ", " + strings.ToLower(string(posted.SettlementStatus))
+	}
+	result.State = state
+
+	return result
 }
 
 // sendInvoiceTool proposes emailing a posted invoice to the customer, to the

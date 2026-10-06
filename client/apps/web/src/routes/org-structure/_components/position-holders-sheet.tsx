@@ -27,7 +27,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { jobDepartmentLabel } from "@trenova/shared/lib/org-structure";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -230,7 +230,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                           disabled={assign.isPending}
                           onClick={() => assign.mutate({ holderId: holder.id, positionId: null })}
                         >
-                          <XIcon className="size-3.5" />
+                          <XCloseIcon className="size-3.5" />
                         </Button>
                       ) : null}
                     </span>

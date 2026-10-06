@@ -78,6 +78,8 @@ models:
         resolver: true
       profitabilityEstimate:
         resolver: true
+      eta:
+        resolver: true
   ShipmentCustomer:
     fields:
       ediPartner:
@@ -1654,6 +1656,9 @@ models:
   BillingQueueExceptionReasonCode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.ExceptionReasonCode
+  BillingQueueHoldReasonCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.HoldReasonCode
   InvoiceStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.Status
@@ -1916,6 +1921,30 @@ models:
   AgentMemoryUsage:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentMemoryUsage
+  AgentReflection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.Reflection
+  AgentReflectionSignal:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSignal
+  AgentReflectionChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionChange
+  AgentReflectionSubject:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSubject
+  AgentReflectionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionStatus
+  AgentReflectionSkip:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSkip
+  AgentReflectionSignalKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionSignalKind
+  AgentReflectionAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ReflectionAction
   AICorrection:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aicorrection.Correction
@@ -2230,6 +2259,9 @@ models:
   AgentMemoryScope:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.MemoryScope
+  AgentMemorySavingMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemorySavingMode
   AIProvider:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Provider
@@ -2251,6 +2283,9 @@ models:
   AIEmbeddingInputStyle:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.EmbeddingInputStyle
+  AIThinkingStyle:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.ThinkingStyle
   AIRetrievalSourceType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/airetrieval.SourceType
@@ -2313,6 +2348,21 @@ models:
         resolver: true
       delegates:
         resolver: true
+  AgentCapabilityMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityMode
+  AgentCapabilityTool:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityTool
+  AgentCapabilityHandoff:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityHandoff
+  AgentCapabilityLimits:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityLimits
+  AgentCapabilities:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilities
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AccessMode
@@ -2754,6 +2804,8 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/inboundmessage.Mailbox
     fields:
       hasSigningSecret:
+        resolver: true
+      hasApiKey:
         resolver: true
   InboundMailboxCredentials:
     model:
@@ -3571,6 +3623,36 @@ models:
     fields:
       amount:
         resolver: true
+  ShipmentStage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.Stage
+  OperationType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.OperationType
+  ShipmentQuickFilter:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.QuickFilter
+  EtaVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/shipmenttracking.Verdict
+  UncoveredPickupWindow:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.PickupWindow
+  CarrierCapacityRateMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.RateMethod
+  CarrierCapacitySource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.Source
+  CarrierCapacityPosting:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.Posting
+    fields:
+      rate:
+        resolver: true
+  ShipmentFacet:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentFacet
   TenderMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tender.Mode

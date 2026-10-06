@@ -10,7 +10,7 @@ import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { ManualJournal, ManualJournalLine } from "@/types/manual-journal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, SendIcon, StampIcon, XIcon } from "lucide-react";
+import { CheckIcon, Send01Icon, StampIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -225,7 +225,7 @@ function EditPanel({
         disabled={submitMutation.isPending}
         isLoading={submitMutation.isPending}
       >
-        <SendIcon className="mr-1.5 size-3.5" />
+        <Send01Icon className="mr-1.5 size-3.5" />
         {t("Submit")}
       </Button>
       <Button
@@ -283,7 +283,7 @@ function EditPanel({
                 </Button>
                 {!showRejectInput ? (
                   <Button size="sm" variant="outline" onClick={() => setShowRejectInput(true)}>
-                    <XIcon className="mr-1.5 size-3.5" />
+                    <XCloseIcon className="mr-1.5 size-3.5" />
                     {t("Reject")}
                   </Button>
                 ) : (

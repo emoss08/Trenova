@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
@@ -242,13 +243,13 @@ func (a *Activities) generateThumbnail(
 					ToTemporalError()
 		}
 
-		if errors.Is(err, thumbnailservice.ErrRendererCrashed) {
+		if errors.Is(err, services.ErrPDFUnreadable) {
 			return nil, a.failure(
 					payload,
 					"thumbnail generation failed: %v",
 					err,
 				), temporaltype.NewDataIntegrityError(
-					"PDF renderer crashed while generating thumbnail",
+					"PDF could not be read while generating thumbnail",
 					map[string]any{
 						"documentId": payload.DocumentID.String(),
 						"error":      err.Error(),

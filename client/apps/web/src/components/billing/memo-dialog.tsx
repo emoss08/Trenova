@@ -26,7 +26,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { memoFormSchema, memoFormTotal, type MemoFormValues } from "@trenova/shared/types/invoice";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -251,7 +251,7 @@ export function MemoDialog({
                       disabled={fields.length <= 1}
                       onClick={() => remove(index)}
                     >
-                      <Trash2Icon className="size-3.5" />
+                      <Trash01Icon className="size-3.5" />
                     </Button>
                   </div>
                 ))}

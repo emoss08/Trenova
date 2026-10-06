@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/lib/report-format";
 import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon } from "@trenova/shared/components/icons";
 import { useMemo, useRef } from "react";
 
 export type GridSort = { columnId: string; direction: "asc" | "desc" };

@@ -4,7 +4,11 @@ import type { BenefitEnrollmentListRow } from "@/lib/graphql/benefits";
 import { endingSoon, recentDeclines, startingSoon } from "@/lib/benefits-console";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { CalendarClockIcon, CalendarPlusIcon, CircleSlashIcon } from "lucide-react";
+import {
+  CalendarClockIcon,
+  CalendarPlus01Icon,
+  SlashCircle01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { enrollmentWorkerName } from "./plan-enrollments-sheet";
@@ -87,7 +91,7 @@ export function BenefitsAside({ openEnrollments, declined, now }: BenefitsAsideP
     <aside className="flex min-w-0 flex-col gap-4">
       <SectionPanel
         title={t("Starting soon")}
-        icon={<CalendarPlusIcon />}
+        icon={<CalendarPlus01Icon />}
         count={starting.length}
         help={t("Cover that has been arranged but has not begun, soonest first.")}
       >
@@ -125,7 +129,7 @@ export function BenefitsAside({ openEnrollments, declined, now }: BenefitsAsideP
 
       <SectionPanel
         title={t("Recently declined")}
-        icon={<CircleSlashIcon />}
+        icon={<SlashCircle01Icon />}
         count={declines.length}
         help={t("People who waived a plan they were offered, most recent decision first.")}
       >

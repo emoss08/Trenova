@@ -17,7 +17,7 @@ import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BankReceipt } from "@/types/bank-receipt";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 

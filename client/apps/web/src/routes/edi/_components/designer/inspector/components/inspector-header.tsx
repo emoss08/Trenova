@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { DatabaseIcon } from "lucide-react";
+import { Database01Icon } from "@trenova/shared/components/icons";
 import type { InspectorContext } from "../inspector-context";
 
 export default function InspectorHeader({
@@ -16,7 +16,7 @@ export default function InspectorHeader({
     <div className="flex flex-wrap items-start justify-between gap-3 border-b p-4">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <DatabaseIcon className="text-muted-foreground size-4" />
+          <Database01Icon className="text-muted-foreground size-4" />
           <h2 className="truncate text-base font-semibold">{context?.title ?? fallbackTitle}</h2>
           {context?.status ? (
             <Badge variant={context.status.variant}>{t(context.status.label)}</Badge>

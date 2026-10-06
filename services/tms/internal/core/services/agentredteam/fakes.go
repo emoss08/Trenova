@@ -129,6 +129,31 @@ func (r *memoryRepository) FindActive(
 	return nil, nil //nolint:nilnil // an absent memory is nil, nil by the repository contract
 }
 
+// MarkUsed is reached when a remember restates a memory already kept and the
+// service refreshes it. The service counts the use on the row FindActive
+// handed it, which here is the stored row itself, so the fake only records
+// which tenant was touched.
+func (r *memoryRepository) MarkUsed(
+	_ context.Context,
+	req repositories.MarkAgentMemoriesUsedRequest,
+) error {
+	r.rec.read(ReadMemoryRepo, "MarkUsed", req.TenantInfo)
+
+	return nil
+}
+
+// GetPreference is reached before every remember, to learn whether the person
+// asked to approve saves first. No one in the harness has chosen, so saves run
+// as they do by default.
+func (r *memoryRepository) GetPreference(
+	_ context.Context,
+	req repositories.GetAgentMemoryPreferenceRequest,
+) (*agent.MemoryPreference, error) {
+	r.rec.read(ReadMemoryRepo, "GetPreference", req.TenantInfo)
+
+	return nil, nil //nolint:nilnil // a person who never chose has no preference row
+}
+
 func (r *memoryRepository) GetByID(
 	_ context.Context,
 	req repositories.GetAgentMemoryByIDRequest,

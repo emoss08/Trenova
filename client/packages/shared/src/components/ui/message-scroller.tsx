@@ -9,7 +9,7 @@ import * as React from "react";
 
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowDownIcon } from "lucide-react";
+import { ArrowDownIcon } from "@trenova/shared/components/icons";
 
 function MessageScrollerProvider(
   props: React.ComponentProps<typeof MessageScrollerPrimitive.Provider>,

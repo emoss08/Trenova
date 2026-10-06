@@ -20,7 +20,6 @@ func init() {
 	errcode.RegisterErrorType(querycost.DepthLimitErrorCode, errcode.KindProtocol)
 	errcode.RegisterErrorType(querycost.ComplexityLimitErrorCode, errcode.KindProtocol)
 	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
-	errcode.RegisterErrorType(FeatureAccessErrorCode, errcode.KindProtocol)
 }
 
 func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
@@ -101,6 +100,10 @@ func errorCode(err error, problemType helpers.ProblemType) errortypes.ErrorCode 
 		return errortypes.ErrNotFound
 	case helpers.ProblemTypeRateLimit:
 		return errortypes.ErrTooManyRequests
+	case helpers.ProblemTypeQuotaExceeded:
+		return errortypes.ErrQuotaExceeded
+	case helpers.ProblemTypePlanRestricted:
+		return errortypes.ErrPlanRestricted
 	case helpers.ProblemTypeConflict:
 		return errortypes.ErrResourceInUse
 	case helpers.ProblemTypeValidation, helpers.ProblemTypeBusiness:

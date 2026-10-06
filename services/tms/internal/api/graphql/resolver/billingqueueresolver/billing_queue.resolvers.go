@@ -34,6 +34,7 @@ func (r *MutationResolver) UpdateBillingQueueStatus(ctx context.Context, id stri
 		ExceptionNotes:      base.StringValue(input.ExceptionNotes),
 		ReviewNotes:         base.StringValue(input.ReviewNotes),
 		CancelReason:        base.StringValue(input.CancelReason),
+		HoldReasonCode:      input.HoldReasonCode,
 		TenantInfo:          base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
@@ -62,6 +63,120 @@ func (r *MutationResolver) AssignBillingQueueBiller(ctx context.Context, id stri
 	item, err := r.BillingQueueService.AssignBiller(ctx, &services.AssignBillerRequest{
 		ItemID:     itemID,
 		BillerID:   billerID,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.RequiredBillingQueueItemToModel(item)
+}
+
+func (r *MutationResolver) PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.BillingQueueReviewService.Post(ctx, &services.BillingQueueItemRequest{
+		ItemID:     itemID,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	item, err := base.RequiredBillingQueueItemToModel(result.Item)
+	if err != nil {
+		return nil, err
+	}
+	out := &gqlmodel.BillingQueuePostResult{
+		Item:          item,
+		InvoiceID:     result.InvoiceID.String(),
+		InvoiceNumber: result.InvoiceNumber,
+		Recipients:    result.Recipients,
+	}
+	if result.SentTo != "" {
+		sentTo := result.SentTo
+		out.SentTo = &sentTo
+	}
+
+	return out, nil
+}
+
+func (r *MutationResolver) ReleaseBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueueItem, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	item, err := r.BillingQueueReviewService.Release(ctx, &services.BillingQueueItemRequest{
+		ItemID:     itemID,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.RequiredBillingQueueItemToModel(item)
+}
+
+func (r *MutationResolver) ResolveBillingQueueIssue(ctx context.Context, id string, issueID string, optionKey string) (*gqlmodel.BillingQueueItem, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	parsedIssueID, err := pulid.MustParse(issueID)
+	if err != nil {
+		return nil, err
+	}
+
+	item, err := r.BillingQueueReviewService.ResolveIssue(ctx, &services.ResolveBillingQueueIssueRequest{
+		ItemID:     itemID,
+		IssueID:    parsedIssueID,
+		OptionKey:  optionKey,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.RequiredBillingQueueItemToModel(item)
+}
+
+func (r *MutationResolver) UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	parsedIssueID, err := pulid.MustParse(issueID)
+	if err != nil {
+		return nil, err
+	}
+
+	item, err := r.BillingQueueReviewService.UndoIssue(ctx, &services.UndoBillingQueueIssueRequest{
+		ItemID:     itemID,
+		IssueID:    parsedIssueID,
 		TenantInfo: base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {

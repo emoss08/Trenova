@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KeyRoundIcon, ShieldAlertIcon, WaypointsIcon } from "lucide-react";
+import { Dataflow01Icon, Key01Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { ProviderFormValues } from "./build-save-payload";
@@ -332,7 +332,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
             </FormControl>
           </FormGroup>
           <Alert variant="info" size="sm">
-            <WaypointsIcon />
+            <Dataflow01Icon />
             <AlertDescription>
               {t(
                 "Documents are sent with social security, card and bank account numbers masked. Only one embedding model is searched at a time; providers with the same model and size back each other up.",
@@ -395,23 +395,62 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
                   control={control}
                   label={t("Reasoning")}
                   // Off is the safe default: the reasoning parameter is refused by
-                  // models without it. The levels are a categorical scale of
+                  // models without it. None is what turns a reasoning-by-default
+                  // model's thinking off. The levels are a categorical scale of
                   // effort, not severities, so they take one accent.
                   options={[
                     {
-                      label: t("Off — answer directly"),
+                      label: t("Off — send no reasoning setting"),
                       value: "Off",
                       color: toneVar("muted"),
                     },
+                    {
+                      label: t("None — the least thinking the model allows (fastest)"),
+                      value: "None",
+                      color: toneVar("muted"),
+                    },
+                    { label: t("Minimal"), value: "Minimal", color: accentVar("teal") },
                     { label: t("Low"), value: "Low", color: accentVar("teal") },
                     { label: t("Medium"), value: "Medium", color: accentVar("teal") },
                     { label: t("High"), value: "High", color: accentVar("teal") },
                   ]}
                   description={t(
-                    "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.",
+                    "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Off sends nothing, so a model that reasons by default (GPT-5 and later, Claude Opus 5.5 and Fable) still thinks; choose None to stop it. Opus 5.5 and Fable cannot stop thinking, so None asks them for the least they allow. Any setting but Off is rejected by a model that cannot reason.",
                   )}
                 />
               </FormControl>
+
+              {kind === "AnthropicMessages" && (
+                <FormControl cols="full">
+                  <SelectField
+                    name="thinkingStyle"
+                    control={control}
+                    label={t("Thinking style")}
+                    // Two ways of asking, not an ordering, so each takes its own
+                    // accent; Auto is the default and reads as neutral.
+                    options={[
+                      {
+                        label: t("Auto — read it from the model ID"),
+                        value: "Auto",
+                        color: toneVar("muted"),
+                      },
+                      {
+                        label: t("Effort — Claude Opus 4.6, Sonnet 4.6 and later"),
+                        value: "Effort",
+                        color: accentVar("teal"),
+                      },
+                      {
+                        label: t("Budget — older Claude models"),
+                        value: "Budget",
+                        color: accentVar("violet"),
+                      },
+                    ]}
+                    description={t(
+                      "How the model is asked to think. Auto reads the model ID, which works for the IDs Anthropic, Bedrock and Vertex use. Behind a gateway alias the ID says nothing and is read as an older model, so a current model refuses every reasoning level; choose Effort for it.",
+                    )}
+                  />
+                </FormControl>
+              )}
             </>
           )}
 
@@ -496,7 +535,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
         </FormGroup>
         {mode === "edit" && (
           <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <KeyRoundIcon className="size-3.5" />
+            <Key01Icon className="size-3.5" />
             {t("Save, then use Test on the card to check the endpoint honours JSON schemas.")}
           </p>
         )}

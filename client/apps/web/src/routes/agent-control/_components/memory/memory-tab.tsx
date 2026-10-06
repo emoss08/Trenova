@@ -11,10 +11,11 @@ import { aiControlStatsQueryKey } from "../overview/use-ai-control-stats";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArchiveRestoreIcon, ArchiveIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { getMemoryColumns } from "./memory-columns";
+import { AgentReflections } from "./agent-reflections";
 import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
 import { MemoryUsageNotice } from "./memory-usage-notice";
@@ -63,6 +64,7 @@ export default function MemoryTab() {
     <div className="flex min-w-0 flex-col gap-4">
       <MemoryUsageNotice />
       <MemorySuggestions canDecide={canUpdate} />
+      <AgentReflections />
       <DataTable<AgentMemoryRow>
         name="Memory"
         queryKey={AGENT_MEMORY_LIST_KEY}

@@ -8,6 +8,7 @@
 package inboundmessageservice
 
 import (
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -25,20 +26,28 @@ type providerMessage struct {
 	FromName          string
 	ToAddresses       []string
 	CcAddresses       []string
-	Subject           string
-	TextBody          string
-	HTMLBody          string
-	ReceivedAt        int64
-	SpamScore         float64
-	Attachments       []providerAttachment
+	// Recipients is every address the provider says the message was for,
+	// including Bcc and the address it was received on, so a mailbox can tell
+	// mail meant for it from mail its provider forwards for the whole account.
+	Recipients  []string
+	Subject     string
+	TextBody    string
+	HTMLBody    string
+	ReceivedAt  int64
+	SpamScore   float64
+	Attachments []providerAttachment
 }
 
 type providerAttachment struct {
+	// ProviderID is the provider's own id for the file, which is how content
+	// fetched after the webhook finds its row.
+	ProviderID  string
 	FileName    string
 	ContentType string
-	// Content is the decoded bytes. Providers send these base64-encoded inside
+	// Content is the decoded bytes. Postmark sends these base64-encoded inside
 	// the webhook body, which is why the body cap is measured in tens of
-	// megabytes rather than the one the outbound event hooks use.
+	// megabytes rather than the one the outbound event hooks use. Resend sends
+	// none, and the bytes are fetched afterwards.
 	Content []byte
 }
 
@@ -94,4 +103,52 @@ func splitAddressList(raw string) []string {
 	}
 
 	return addresses
+}
+
+// normalizeAddresses normalizes a provider's address list, dropping blanks.
+func normalizeAddresses(raw []string) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	addresses := make([]string, 0, len(raw))
+	for _, entry := range raw {
+		_, address := splitMailbox(entry)
+		if address != "" {
+			addresses = append(addresses, address)
+		}
+	}
+	if len(addresses) == 0 {
+		return nil
+	}
+
+	return addresses
+}
+
+// recipientsOf joins address lists without repeating an address.
+func recipientsOf(lists ...[]string) []string {
+	size := 0
+	for _, list := range lists {
+		size += len(list)
+	}
+
+	seen := make(map[string]struct{}, size)
+	recipients := make([]string, 0, size)
+	for _, list := range lists {
+		for _, address := range list {
+			if _, ok := seen[address]; ok {
+				continue
+			}
+			seen[address] = struct{}{}
+			recipients = append(recipients, address)
+		}
+	}
+
+	return recipients
+}
+
+// addressedTo reports whether the message names the mailbox's address among
+// its recipients.
+func (m *providerMessage) addressedTo(address string) bool {
+	return slices.Contains(m.Recipients, normalizeAddress(address))
 }

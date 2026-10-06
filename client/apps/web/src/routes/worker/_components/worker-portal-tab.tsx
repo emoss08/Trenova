@@ -21,7 +21,7 @@ import {
   type PortalInvitationRow,
 } from "@trenova/shared/lib/graphql/driver-portal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, CopyIcon, SmartphoneIcon } from "lucide-react";
+import { CheckIcon, Copy01Icon, Phone01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
@@ -114,7 +114,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
       <div className="border-border rounded-lg border p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <SmartphoneIcon className="text-muted-foreground size-4" />
+            <Phone01Icon className="text-muted-foreground size-4" />
             <p className="text-sm font-semibold">{t("Dash access")}</p>
           </div>
           {data.linked ? (
@@ -191,7 +191,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           <div className="border-border bg-muted/40 mt-3 flex items-center gap-2 rounded-md border p-2">
             <p className="min-w-0 flex-1 truncate font-mono text-xs">{inviteUrl}</p>
             <Button variant="ghost" size="sm" className="h-7 px-2" onClick={copyInviteUrl}>
-              {copied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
+              {copied ? <CheckIcon className="size-3.5" /> : <Copy01Icon className="size-3.5" />}
             </Button>
           </div>
         ) : null}

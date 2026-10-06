@@ -7,9 +7,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/geofence"
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -28,17 +32,20 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
+	Quota  services.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota services.QuotaGuard
 }
 
 func New(p Params) repositories.LocationRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.location-repository"),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.location-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -316,14 +323,28 @@ func (r *repository) Create(
 			zap.String("operation", "Create"),
 		)
 
-		query := r.db.DBForContext(ctx).NewInsert().Model(entity)
-		if err := applyLocationGeofence(query, nil, entity); err != nil {
-			log.Error("failed to prepare geofence for location insert", zap.Error(err))
-			return nil, err
-		}
+		err := quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
+			query := r.db.DBForContext(c).NewInsert().Model(entity)
+			if geofenceErr := applyLocationGeofence(query, nil, entity); geofenceErr != nil {
+				log.Error("failed to prepare geofence for location insert", zap.Error(geofenceErr))
+				return geofenceErr
+			}
 
-		if _, err := query.Exec(ctx); err != nil {
-			log.Error("failed to create location", zap.Error(err))
+			if _, insertErr := query.Exec(c); insertErr != nil {
+				log.Error("failed to create location", zap.Error(insertErr))
+				return insertErr
+			}
+
+			return nil
+		}, services.QuotaRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			Meter:    platformcatalog.MeterLocationsTotal,
+			Quantity: 1,
+		})
+		if err != nil {
 			return nil, err
 		}
 

@@ -4,7 +4,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
-import { FileTextIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
+import { File06Icon, ZoomInIcon, ZoomOutIcon } from "@trenova/shared/components/icons";
 import { useCallback, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -54,7 +54,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
     return (
       <div className="bg-muted/20 flex h-full items-center justify-center">
         <div className="text-muted-foreground flex flex-col items-center gap-2">
-          <FileTextIcon className="size-6 opacity-40" />
+          <File06Icon className="size-6 opacity-40" />
           <span className="text-xs">{t("Preview unavailable")}</span>
         </div>
       </div>

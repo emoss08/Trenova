@@ -25,7 +25,12 @@ import { Progress } from "@trenova/shared/components/ui/progress";
 import { apiService } from "@/services/api";
 import type { Document, DocumentShipmentDraft } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, CheckCircle2Icon, FileUpIcon, LoaderCircleIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  FileUploadIcon,
+  SpinnerIcon,
+} from "@trenova/shared/components/icons";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -444,7 +449,7 @@ export function ShipmentRateConfirmationImportPanel({
                               : "bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full"
                         }
                       >
-                        {isComplete ? <CheckCircle2Icon className="size-4" /> : index + 1}
+                        {isComplete ? <CheckCircleIcon className="size-4" /> : index + 1}
                       </div>
                       <CardTitle>{t(step.label)}</CardTitle>
                     </div>
@@ -461,7 +466,7 @@ export function ShipmentRateConfirmationImportPanel({
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <FileUpIcon className="size-4" />
+                  <FileUploadIcon className="size-4" />
                   <CardTitle>{t("Upload rate confirmation")}</CardTitle>
                 </div>
                 <CardDescription>
@@ -487,7 +492,7 @@ export function ShipmentRateConfirmationImportPanel({
                         </div>
                       </div>
                       {currentUpload.status === "uploading" ? (
-                        <LoaderCircleIcon className="text-primary size-4 animate-spin" />
+                        <SpinnerIcon className="text-primary size-4 animate-spin" />
                       ) : null}
                     </div>
                     <div className="mt-4 grid gap-3">
@@ -568,7 +573,7 @@ export function ShipmentRateConfirmationImportPanel({
                             disabled={retryExtraction.isPending}
                           >
                             {retryExtraction.isPending ? (
-                              <LoaderCircleIcon className="size-4 animate-spin" />
+                              <SpinnerIcon className="size-4 animate-spin" />
                             ) : null}
                             {t("Retry extraction")}
                           </Button>
@@ -622,7 +627,7 @@ export function ShipmentRateConfirmationImportPanel({
             <Card className="border-success-border bg-success-subtle">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2Icon className="size-5 text-success-foreground" />
+                  <CheckCircleIcon className="size-5 text-success-foreground" />
                   <CardTitle>{t("Shipment created")}</CardTitle>
                 </div>
                 <CardDescription>
@@ -650,7 +655,7 @@ export function ShipmentRateConfirmationImportPanel({
                   </Alert>
                 ) : (
                   <Alert variant="success" size="sm" className="bg-card">
-                    <CheckCircle2Icon />
+                    <CheckCircleIcon />
                     <AlertDescription>
                       {t("The source document was attached to the new shipment successfully.")}
                     </AlertDescription>

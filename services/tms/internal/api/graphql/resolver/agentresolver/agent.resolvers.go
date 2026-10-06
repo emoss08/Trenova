@@ -272,6 +272,42 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *MutationResolver) UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return false, err
+	}
+
+	req, err := settleApprovalRequest(proposalID, planID, base.TenantInfo(authCtx))
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.ApprovalCommitter.UndoOwnApproval(ctx, req, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return false, err
+	}
+
+	req, err := settleApprovalRequest(proposalID, planID, base.TenantInfo(authCtx))
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.ApprovalCommitter.CommitOwnApprovalNow(ctx, req, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpCreate)
 	if err != nil {
@@ -447,6 +483,8 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		BillingAgentEnabled:    input.BillingAgentEnabled,
 		DecisionTimeoutSeconds: input.DecisionTimeoutSeconds,
 		AITrainingConsent:      input.AiTrainingConsent,
+		PersonMonthlyMessages:  input.PersonMonthlyMessages,
+		LearningOff:            input.LearningOff,
 		TenantInfo:             base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -624,6 +662,32 @@ func (r *QueryResolver) AgentMemories(ctx context.Context, input gqlmodel.DataTa
 	return agentMemoryConnectionToModel(result)
 }
 
+func (r *QueryResolver) AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.AgentReflectionService.ListConnection(
+		ctx,
+		&repositories.ListAgentReflectionConnectionRequest{
+			Filter:  tableInput.Filter,
+			Cursor:  tableInput.Cursor,
+			Columns: agentReflectionColumns(ctx, "edges.node"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return agentReflectionConnectionToModel(result)
+}
+
 func (r *QueryResolver) AgentEvaluations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvaluationConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
 	if err != nil {
@@ -761,4 +825,16 @@ func (r *AgentRunResolver) Transcript(ctx context.Context, obj *agent.AgentRun) 
 	}
 
 	return runTranscript(ctx, obj)
+}
+
+func (r *AgentReflectionResolver) Signals(ctx context.Context, obj *agent.Reflection) ([]*agent.ReflectionSignal, error) {
+	return reflectionSignals(obj), nil
+}
+
+func (r *AgentMemoryResolver) Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error) {
+	return supersededMemory(ctx, obj)
+}
+
+func (r *AgentMemoryResolver) ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error) {
+	return replacingMemory(ctx, obj)
 }

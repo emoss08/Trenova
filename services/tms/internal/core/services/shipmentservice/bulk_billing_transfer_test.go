@@ -64,7 +64,7 @@ func newBulkTransferFixture(t *testing.T) *bulkTransferFixture {
 		billingRepo:         f.billingRepo,
 		billingQueueService: f.billingQueue,
 		auditService:        f.audit,
-		realtime:            f.realtime,
+		invalidator:         newTestInvalidator(f.realtime),
 		eventService:        noopShipmentEventService{},
 	}
 

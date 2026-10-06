@@ -21,7 +21,12 @@ const (
 	memoryTierRest
 )
 
-const organizationMemoryHeading = "For the whole organization"
+const (
+	organizationMemoryHeading = "For the whole organization"
+	personalMemoryHeading     = "For the person you are talking to"
+	roleMemoryHeading         = "For everyone in their role"
+	agentMemoryHeading        = "For this agent"
+)
 
 func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 	records := make([]agent.EntityRef, 0, 2+len(rc.Mentions)+len(rc.DelegatorRecords))
@@ -55,17 +60,23 @@ func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 	return records
 }
 
+// FitMemories picks what the prompt carries: the memories that have not gone
+// stale, best first, as many as fit both the agent's token budget and
+// MaxPromptMemories. Whatever is left out stays recallable.
 func (d *Definition) FitMemories(rc *RuntimeContext) []*agent.Memory {
 	if rc == nil || len(rc.Memories) == 0 {
 		return nil
 	}
 
-	ordered := orderMemoriesForPrompt(rc)
+	ordered := orderMemoriesForPrompt(rc, agent.WithoutStaleMemories(rc.Memories))
 	budget := d.EffectiveMemoryTokenBudget()
 	spent := 0
 	headed := make(map[string]struct{}, len(ordered))
-	fitted := make([]*agent.Memory, 0, len(ordered))
+	fitted := make([]*agent.Memory, 0, min(len(ordered), MaxPromptMemories))
 	for _, memory := range ordered {
+		if len(fitted) == MaxPromptMemories {
+			break
+		}
 		if memory.DrawnFromOutside() {
 			cost := llmtokens.Estimate(outsideMemoryLine(memory))
 			if spent+cost <= budget {
@@ -99,12 +110,12 @@ type rankedMemory struct {
 	rank   int
 }
 
-func orderMemoriesForPrompt(rc *RuntimeContext) []*agent.Memory {
+func orderMemoriesForPrompt(rc *RuntimeContext, memories []*agent.Memory) []*agent.Memory {
 	relations := memoryRelations(rc.MemorySubjects)
 	loaded := loadedToolNames(rc)
 
-	ranked := make([]rankedMemory, 0, len(rc.Memories))
-	for idx, memory := range rc.Memories {
+	ranked := make([]rankedMemory, 0, len(memories))
+	for idx, memory := range memories {
 		if memory == nil || strings.TrimSpace(memory.Content) == "" {
 			continue
 		}
@@ -187,7 +198,7 @@ func tierOf(
 
 		return memoryTierRest
 	}
-	if memory.Kind == agent.MemoryKindInstruction {
+	if memory.Kind.Followed() {
 		return memoryTierOrganizationInstruction
 	}
 
@@ -201,16 +212,28 @@ func memoryGroupKey(memory *agent.Memory) string {
 	case strings.TrimSpace(memory.ToolName) != "":
 		return "tool:" + strings.TrimSpace(memory.ToolName)
 	default:
-		return ""
+		return "scope:" + string(memory.Scope)
 	}
 }
 
+// memoryHeading says what a group of memories is about, or, for one about
+// nothing in particular, who it is for: a person's own preference must not
+// read as a rule for the whole organization.
 func memoryHeading(memory *agent.Memory) string {
 	if about := memory.About(); about != "" {
 		return "About " + about
 	}
 
-	return organizationMemoryHeading
+	switch memory.Scope {
+	case agent.MemoryScopeUser:
+		return personalMemoryHeading
+	case agent.MemoryScopeRole:
+		return roleMemoryHeading
+	case agent.MemoryScopeAgent:
+		return agentMemoryHeading
+	default:
+		return organizationMemoryHeading
+	}
 }
 
 func memoryLine(memory *agent.Memory) string {

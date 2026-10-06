@@ -121,6 +121,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	tools := t.tools
 
 	t.announceOpened(fx)
+	t.announceMemories(fx)
 
 	retries := 0
 	asked := false
@@ -174,6 +175,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 
 		result.Model = completion.ModelIdentifier
 		result.ProviderID = completion.ProviderID
+		result.ContextWindow = completion.ContextWindow
 		tagReasoning(completion)
 		if stop {
 			return s.finishCutOff(t, fx, completion), nil
@@ -205,6 +207,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			return s.finish(result, completion, fx), nil
 		}
 
+		liftRationales(completion.ToolCalls)
 		assistantTurn := conversation.Message{
 			Role:         conversation.RoleAssistant,
 			Content:      completion.Text,
@@ -212,6 +215,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			Reasoning:    completion.Reasoning,
 			Model:        completion.ModelIdentifier,
 			ProviderID:   completion.ProviderID,
+			FallbackFrom: fallbackOf(completion),
 			InputTokens:  completion.InputTokens,
 			OutputTokens: completion.OutputTokens,
 			LatencyMs:    completion.LatencyMs,
@@ -230,9 +234,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		fx.Emit(serviceports.StreamEvent{
 			Event: serviceports.AssistantEventMessage,
 			Data: serviceports.AssistantMessageEvent{
-				Content:   assistantTurn.Content,
-				ToolCalls: s.callsWithEffects(assistantTurn.ToolCalls),
-				Model:     assistantTurn.Model,
+				Content:      assistantTurn.Content,
+				ToolCalls:    s.callsWithEffects(assistantTurn.ToolCalls),
+				Model:        assistantTurn.Model,
+				ProviderID:   assistantTurn.ProviderID,
+				FallbackFrom: assistantTurn.FallbackFrom,
 			},
 		})
 
@@ -244,6 +250,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 					Name:      call.Name,
 					Arguments: call.Arguments,
 					Effect:    s.ToolEffect(call.Name),
+					Why:       call.Why,
 				},
 			})
 
@@ -388,6 +395,14 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				continue
 			}
 
+			if t.repeats.readBefore(call) {
+				outcome := toolOutcome{content: repeatedRead(call.Name)}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
+			earlier := t.earlier(call.Name)
 			outcome := fx.Dispatch(t, DispatchCall{
 				Call:                 call,
 				CompletionText:       completion.Text,
@@ -395,14 +410,21 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				Ordinal:              t.counts.next(call),
 				AfterExternalContent: t.external,
 				Taint:                result.Taint,
-				Earlier:              t.earlier(call.Name),
+				Earlier:              earlier,
 			}).internal()
+			if !outcome.failed {
+				outcome.content += fanOutNote(call.Name, len(earlier)+1)
+			}
 			if outcome.failed {
 				t.repeats.record(call, outcome.content)
-			} else if ReadsExternalContent(call.Name) {
+			} else {
+				t.repeats.ran(call)
+			}
+			if !outcome.failed && ReadsExternalContent(call.Name) {
 				t.external = true
 			}
 			t.absorbTaint(fx, outcome.taint)
+			t.noteMemories(fx, &outcome)
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
 			if !outcome.failed {
@@ -474,6 +496,7 @@ func (s *Service) finalAnswer(
 
 	result.Model = completion.ModelIdentifier
 	result.ProviderID = completion.ProviderID
+	result.ContextWindow = completion.ContextWindow
 	tagReasoning(completion)
 
 	return completion
@@ -641,6 +664,8 @@ func (s *Service) finish(
 		Reasoning:    completion.Reasoning,
 		Model:        completion.ModelIdentifier,
 		ProviderID:   completion.ProviderID,
+		Truncated:    completion.Truncated,
+		FallbackFrom: fallbackOf(completion),
 		InputTokens:  completion.InputTokens,
 		OutputTokens: completion.OutputTokens,
 		LatencyMs:    completion.LatencyMs,
@@ -649,6 +674,21 @@ func (s *Service) finish(
 	})
 
 	return result
+}
+
+// fallbackOf is the provider asked first, when another one gave the reply.
+func fallbackOf(completion *serviceports.ChatCompletionResult) *conversation.ProviderFallback {
+	if completion == nil || completion.FallbackFrom == nil {
+		return nil
+	}
+	from := completion.FallbackFrom
+
+	return &conversation.ProviderFallback{
+		ProviderID: from.ProviderID,
+		Name:       from.Name,
+		Model:      from.Model,
+		Status:     from.Status,
+	}
 }
 
 // cannedCompletion stands a fixed line in for a reply the model could not
@@ -666,6 +706,7 @@ func cannedCompletion(
 		canned.OutputTokens = attempt.OutputTokens
 		canned.LatencyMs = attempt.LatencyMs
 		canned.CostUSD = attempt.CostUSD
+		canned.ContextWindow = attempt.ContextWindow
 	}
 
 	return canned

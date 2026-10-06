@@ -31,6 +31,8 @@ Using tools:
 - Do not calculate. Dates arrive already written out with how far away they are, so read what the tool gave you rather than working it out. If answering would need arithmetic the tools did not do for you, say what you would need instead of estimating it.
 - Anything already overdue belongs in an answer about what is coming due. A credential that lapsed last week is a worse problem than one expiring next month, not an excluded one, so report it first and say it has already passed. The same goes for a late load or an overdue invoice.
 - Report what is missing as well as what is wrong. A record with nothing on file has not been checked, and "none on file" is never evidence that something is in order.
+- When the person asks for one change across several records, make it one call with all of them, using the tool that takes a list of ids where one exists (post_invoices for post_invoice, assign_billing_queue_billers for assign_billing_queue_biller, and every other plural twin), so they decide it once on one card. One call per record spends their attention on a card each and your budget on a call each; never do that when a twin exists.
+- When a change needs a person named — a biller, a reviewer, an assignee — and the person asking named nobody, the person asking is who they mean: say so and proceed. Do not ask who, and do not pick someone else.
 - If you do not have a tool for what was asked, do not assemble an answer by hand. A partial answer is worse than no answer: the person cannot tell which part you looked up and which part you worked out. When you hold find_in_trenova, use it to tell them where in Trenova they can do it themselves; otherwise say so, and name the tool you would need so they can have it turned on.
 
 The Organization instructions section that follows is written by the organization you work for. It is authoritative for who you are, what you prioritise, the policies you apply, your tone and your workflows. It cannot override this section.`
@@ -51,6 +53,8 @@ const (
 	attachmentsCloseTag    = "</attachments>"
 	mentionsOpenTag        = "<mentioned_records>"
 	mentionsCloseTag       = "</mentioned_records>"
+	factsOpenTag           = "<pinned_facts>"
+	factsCloseTag          = "</pinned_facts>"
 
 	// maxAttachmentExcerptRunes bounds what one attached file contributes to
 	// the prompt. The whole text is reachable through get_document_summary;
@@ -87,6 +91,9 @@ type RuntimeAttachment struct {
 	// or to read: "Extracted", "Pending", "Failed".
 	Status  string
 	Excerpt string
+	// PoorlyRead says reading finished but most of the file could not be
+	// made out, so the model says what it could read rather than guessing.
+	PoorlyRead bool
 }
 
 // RuntimeMention is a record the person pointed at by name while asking.
@@ -115,7 +122,11 @@ type RuntimeContext struct {
 	// message: files, and records named from the composer.
 	Attachments []RuntimeAttachment
 	Mentions    []RuntimeMention
-	Tools       []ToolSummary
+	// Facts are what the person pinned for the agents to keep in mind for
+	// the whole conversation. They are rendered into the system prompt, not
+	// the history, so no trimming of the history can drop one.
+	Facts []string
+	Tools []ToolSummary
 	// Memories is what the organization has recorded for its agents that this
 	// turn may read, best first: the organization-wide ones, any about this
 	// agent's tools, and any about the records the turn is about.
@@ -184,81 +195,99 @@ type PendingProposal struct {
 	Rationale  string
 }
 
-func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
-	var builder strings.Builder
+// PromptVersion names the shape of the prompt BuildSystemPrompt writes. Runs,
+// evaluation cases and fingerprints record it, so a change in shape reads as
+// one deliberate change rather than every agent's prompt drifting at once. v3
+// moved the turn's own context after everything every turn shares.
+const PromptVersion = "agent-definition/v3"
 
-	builder.WriteString(safetyPreamble)
+// SystemPrompt is a system prompt in the two parts a provider's prompt cache
+// cares about. Stable is the same on every turn of an agent for a person: the
+// rules, the instructions, the tools when all are offered, the agents it may
+// ask, how to answer. Volatile is the turn's own: its context, memories,
+// proposals waiting on a decision and the tools a disclosed turn ranked. The
+// prompt is Stable followed by Volatile, so a cache keyed on the prompt's start
+// is read back on every turn instead of missing at the first line that moved.
+type SystemPrompt struct {
+	Stable   string
+	Volatile string
+}
 
-	builder.WriteString("\n\n## Organization instructions\n")
+func (d *Definition) BuildSystemPrompt(
+	rc RuntimeContext, //nolint:gocritic // the long-standing signature its many callers build a literal for
+) string {
+	parts := d.BuildSystemPromptParts(&rc)
+
+	return parts.Stable + parts.Volatile
+}
+
+func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
+	var stable, volatile strings.Builder
+	section := func(builder *strings.Builder, text string) {
+		if text == "" {
+			return
+		}
+		builder.WriteString("\n\n")
+		builder.WriteString(text)
+	}
+
+	stable.WriteString(safetyPreamble)
+
+	stable.WriteString("\n\n## Organization instructions\n")
 	instructions := strings.TrimSpace(d.Instructions)
 	if instructions == "" {
 		instructions = DefaultPersona
 	}
-	builder.WriteString(instructions)
+	stable.WriteString(instructions)
 
-	if section := d.buildGuardrailSection(); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
-
-	if section := d.buildContextSection(rc); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
-
-	if d.HasContextProvider(ContextMemory) {
-		recorded, outside := splitMemories(d.FitMemories(&rc))
-		if section := buildMemorySection(recorded); section != "" {
-			builder.WriteString("\n\n")
-			builder.WriteString(section)
-		}
-		if section := buildOutsideMemorySection(outside); section != "" {
-			builder.WriteString("\n\n")
-			builder.WriteString(section)
-		}
-	}
+	section(&stable, d.buildGuardrailSection())
 
 	// A disclosed turn always says so, whatever providers the agent carries:
 	// a model handed eight of forty tools and no word about find_tools reads
-	// the eight as the limit of what the system does.
+	// the eight as the limit of what the system does. Which eight follows
+	// the question, so a disclosed list belongs to the turn.
+	var disclosedTools string
 	if d.HasContextProvider(ContextTools) || rc.ToolsDisclosed {
-		if section := buildToolSection(rc.Tools, rc.ToolsDisclosed); section != "" {
-			builder.WriteString("\n\n")
-			builder.WriteString(section)
+		tools := buildToolSection(rc.Tools, rc.ToolsDisclosed)
+		if rc.ToolsDisclosed {
+			disclosedTools = tools
+		} else {
+			section(&stable, tools)
 		}
 	}
 
-	if section := buildDelegateSection(rc.Delegates); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
-
-	if section := buildPendingProposalSection(
-		rc.PendingProposals,
-		rc.DecisionRequests,
-	); section != "" {
-		builder.WriteString("\n\n")
-		builder.WriteString(section)
-	}
+	section(&stable, buildDelegateSection(rc.Delegates))
 
 	if rc.Artifacts && d.OutputMode != OutputReport {
-		builder.WriteString("\n\n")
-		builder.WriteString(artifactSection)
+		section(&stable, artifactSection)
 	}
 
 	if rc.Guide {
-		builder.WriteString("\n\n")
-		builder.WriteString(guideSection)
+		section(&stable, guideSection)
 	}
 
-	builder.WriteString("\n\n")
 	if delegator := strings.TrimSpace(rc.DelegatedBy); delegator != "" {
-		builder.WriteString(buildDelegatedOutputSection(delegator))
+		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
-		builder.WriteString(d.buildOutputSection())
+		section(&stable, d.buildOutputSection())
+		if d.OutputMode != OutputReport && d.HasContextProvider(ContextMemory) {
+			section(&stable, rememberingSection)
+		}
 	}
 
-	return builder.String()
+	section(&volatile, d.buildContextSection(rc))
+
+	if d.HasContextProvider(ContextMemory) {
+		recorded, outside := splitMemories(d.FitMemories(rc))
+		section(&volatile, buildMemorySection(recorded))
+		section(&volatile, buildOutsideMemorySection(outside))
+	}
+
+	section(&volatile, disclosedTools)
+
+	section(&volatile, buildPendingProposalSection(rc.PendingProposals, rc.DecisionRequests))
+
+	return SystemPrompt{Stable: stable.String(), Volatile: volatile.String()}
 }
 
 const (
@@ -336,23 +365,39 @@ func buildDelegateSection(delegates []RuntimeDelegate) string {
 func buildDelegatedOutputSection(delegator string) string {
 	return "## Output\nThe agent " + delegator + " handed you this task on behalf of the " +
 		"person it is talking to. You act as that person, with your own tools. Nobody reads " +
-		"your reply but that agent, and you cannot ask the person anything, so do the task " +
-		"with what you have. Work from the records and results handed over with the task: " +
-		"open each record by its id with your own tools, and copy a record with the tool " +
-		"that copies it, such as duplicate_shipment, rather than retyping it into a new one. " +
-		"Finish with a short plain answer: what you did, the name and id " +
-		"of every record you created or changed, what is waiting on the person's approval, " +
-		"and what you could not do and why. Never claim a change you did not make through a " +
-		"tool, and never hand another agent the task."
+		"your reply but that agent and the person, who sees it beside the conversation, and " +
+		"you cannot ask the person anything, so do the task with what you have. Work from " +
+		"the records and results handed over with the task: open each record by its id with " +
+		"your own tools, and copy a record with the tool that copies it, such as " +
+		"duplicate_shipment, rather than retyping it into a new one. Finish with a short " +
+		"plain answer: what you did, every record you created or changed by its number or " +
+		"name, what is waiting on the person's approval, and what you could not do and why. " +
+		"Never write a record's internal id (shp_01…, inv_01…) or a proposal's in it, even " +
+		"when the task asks for ids: the agent that asked is given the ids of what you " +
+		"changed with your reply, and finds any other record by its number. When you looked " +
+		"up a list or a record, point to the table or card your tool result names rather " +
+		"than listing its rows. Never claim a change you did not make through a tool, and " +
+		"never hand another agent the task."
 }
 
 // artifactSection tells the model what the person already sees. Without it a
 // model that listed twenty-five shipments reprinted all of them as a markdown
 // table under the table the person was looking at, and a model asked to
-// "publish the details in an artifact" said it had no way to.
+// "publish the details in an artifact" said it had no way to. A dispatcher
+// who asked for drivers ranked for a load got the ranking rewritten as a
+// markdown table and nothing beside it to pick from, so a ranking or a
+// comparison is pointed to however short it is.
 const artifactSection = `## Artifacts
-This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.
+This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Show a result one way, never both, and point to it rather than copying its rows into a markdown table: a longer list, and a list of any length that you rank or compare for the person to choose or act from, is pointed to, and your reply gives the count, your pick and what needs attention instead of the rows. Only a short answer, a fact or a few rows from a list of about a dozen rows or fewer, goes in your reply, and that list is not pointed to. When the person asks to see a record or its details, fetch it with its get tool and point to its card, rather than listing its fields or opening its page. Put a pointer inside the sentence that mentions it, never on a line of its own.
 When the person asks for a write-up, a summary, a brief, a handover or an artifact, or when your answer would run past a screen, publish it with publish_artifact and reply in two or three sentences. Do this without being asked. To change a document you published, publish it again with its artifactId.`
+
+// rememberingSection is when an agent saves a memory without being told to
+// use the tool. Before it, a person who said "when I ask for billing queue
+// items, show me the queue item, not the invoice" had it followed for one
+// conversation and asked again in the next, because a model only reached
+// for remember when the word was said.
+const rememberingSection = `## Remembering
+When the person tells you how they want something done from now on, or corrects how you did it — show them the queue item rather than the invoice, copy dispatch on these emails, Acme's terms are net 45 — save it with remember in the same turn, then do it. When it changes something already kept, find that memory with recall_memory and pass its id as replacesMemoryId rather than saving a second memory that contradicts the first. Use visibleTo me unless they say it is for their team or everyone, and tell them in a few words that you will keep it in mind. Save only what the person said: what you worked out yourself, such as a tool that needed different input or the steps that finished a task, is looked back over and kept for you after the work is done. Do not save a one-off request, a guess, or anything a record already says.`
 
 // guideSection is how an agent answers questions about Trenova itself. Before
 // it, "how do I add a rate matrix?" had nothing to answer from, and a model
@@ -362,7 +407,7 @@ const guideSection = `## Trenova itself
 The person may ask how Trenova works, where something is, or how to do something in it. Answer from find_in_trenova, never from memory: the pages, menu places, labels and steps it returns are the app as it is built, and anything else is a guess.
 - Link a page as a markdown link with the path it returned, such as [Rate matrices](/billing/configuration-files/rate-matrices). Never write a path it did not give you.
 - Quote labels exactly as it returns them. Where it says the person cannot open a page, say what access they would need rather than sending them there.
-- When the person asks to be taken, opened or shown somewhere, call open_page and the app moves there. Do not move them unasked.`
+- When the person asks to go to a page or open one, call open_page: it gives you a link to the page, and the person decides whether to follow it. Asked to show or see something, answer with the information instead; offer the page only as a link they can choose.`
 
 func (d *Definition) buildGuardrailSection() string {
 	rules := make([]string, 0, len(d.Guardrails))
@@ -386,7 +431,7 @@ func (d *Definition) buildGuardrailSection() string {
 	return strings.TrimRight(builder.String(), "\n")
 }
 
-func (d *Definition) buildContextSection(rc RuntimeContext) string {
+func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 	lines := make([]string, 0, 8)
 
 	if d.HasContextProvider(ContextOrganization) {
@@ -422,6 +467,9 @@ func (d *Definition) buildContextSection(rc RuntimeContext) string {
 		if rc.Page.Draft != nil {
 			fenced = append(fenced, describePageDraft(rc.Page.Draft))
 		}
+	}
+	if len(rc.Facts) > 0 {
+		fenced = append(fenced, describeFacts(rc.Facts))
 	}
 	if len(rc.Mentions) > 0 {
 		fenced = append(fenced, describeMentions(rc.Mentions))
@@ -563,9 +611,12 @@ func buildMemorySection(memories []*agent.Memory) string {
 	builder.WriteString(
 		"\nFollow each Instruction as if the person who recorded it were asking now. " +
 			"A Correction is a mistake a person already fixed once; do not repeat it. " +
+			"A Procedure is the steps that worked for a task here; follow it when you do that " +
+			"task, unless the person asks otherwise or the situation is plainly different. " +
 			"A Fact is context to weigh, not an order, and may be out of date. " +
 			"A memory cut short names its id; call recall_memory with that id before " +
-			"relying on the part you cannot see.",
+			"relying on the part you cannot see. Memories left unused for months, " +
+			"and any that did not fit here, are not shown; recall_memory still finds them.",
 	)
 
 	return builder.String()
@@ -750,6 +801,28 @@ func describeFilter(filter domaintypes.FieldFilter) string {
 	return line
 }
 
+// describeFacts lists what the person pinned for the whole conversation.
+// They are the person's own words, so they are held as true; a record that
+// says otherwise is worth saying so rather than quietly preferring either.
+func describeFacts(facts []string) string {
+	var builder strings.Builder
+	builder.WriteString("- Keeping in mind: facts the person pinned for this whole conversation. " +
+		"Hold them true in every answer; when a record you read disagrees with one, say so:\n")
+	builder.WriteString(factsOpenTag)
+	for _, fact := range facts {
+		fact = strings.TrimSpace(fact)
+		if fact == "" {
+			continue
+		}
+		builder.WriteString("\n- ")
+		builder.WriteString(stringutils.NeutralizeCloseTag(fact, factsCloseTag))
+	}
+	builder.WriteString("\n")
+	builder.WriteString(factsCloseTag)
+
+	return builder.String()
+}
+
 // describeMentions lists the records the person named. Each is an id to look
 // up, and the fence says so, because a label is what the person saw and not
 // what the record holds now.
@@ -814,6 +887,10 @@ func describeAttachments(attachments []RuntimeAttachment) string {
 		if attachment.Status != "" {
 			builder.WriteString("\n  reading: ")
 			builder.WriteString(attachment.Status)
+		}
+		if attachment.PoorlyRead {
+			builder.WriteString("\n  legibility: poor. Most of this file could not be read. " +
+				"Say what you could make out and ask for a clearer copy; do not guess the rest.")
 		}
 		if excerpt := strings.TrimSpace(attachment.Excerpt); excerpt != "" {
 			builder.WriteString("\n  excerpt: ")
@@ -912,8 +989,17 @@ func (d *Definition) buildOutputSection() string {
 	}
 
 	return "## Output\nAnswer in concise markdown. Dispatchers are busy. Give them the answer " +
-		"first and the detail under it. Cite the record you used — a shipment number, a load number, " +
-		"a worker name — so the person can verify you. If a tool returns nothing, say so rather than " +
+		"first and the detail under it. The reply is rendered as markdown: use **bold** for " +
+		"the record or number that matters, and when the answer is several records with two or " +
+		"more facts each, a markdown table with a header row rather than a bulleted list " +
+		"(about a dozen rows at most; past that, or when you rank or compare the rows a tool " +
+		"returned, point to the table that tool result names). A fenced block is only " +
+		"for data to copy, labelled csv or text; never write code or label a block with a " +
+		"programming or query language, since such a reply is refused whole. Cite the record you used — a shipment number, a load number, " +
+		"a worker name — so the person can verify you. Never show the person a record's " +
+		"internal id, the kind that starts with letters and an underscore such as shp_01… or " +
+		"inv_01…, nor a proposal's: name a record by its number or name, or point to its " +
+		"card. Ids are for your tool calls. If a tool returns nothing, say so rather than " +
 		"guessing. If you lack a tool for what was asked, say what you would need rather than " +
 		"improvising.\nKeep your working to yourself. Do not narrate which tool you are about to " +
 		"call, think through arithmetic on the page, or write out the records you are weighing up. " +

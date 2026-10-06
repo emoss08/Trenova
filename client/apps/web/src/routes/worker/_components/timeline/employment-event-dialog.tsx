@@ -37,7 +37,7 @@ import {
   type EmploymentEventFormValues,
   type EmploymentEventKind,
 } from "@trenova/shared/types/worker-employment";
-import { TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -244,7 +244,7 @@ function RecordSheet({
               {kind === "Terminated" ? (
                 <FormControl cols="full">
                   <Alert variant="destructive" className="py-2">
-                    <TriangleAlertIcon className="size-4" />
+                    <AlertTriangleIcon className="size-4" />
                     <AlertTitle>{t("This ends employment")}</AlertTitle>
                     <AlertDescription>
                       {t(

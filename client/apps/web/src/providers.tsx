@@ -1,10 +1,13 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { edition } from "@/lib/edition";
+import { installPlanLimitHandler } from "@/lib/plan-limit-handler";
 import { queryClient } from "@/lib/query-client";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
 import { I18nProvider } from "@trenova/shared/i18n/provider";
+import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
@@ -25,6 +28,14 @@ setSessionExpiryHandler(() => {
     window.location.assign("/login");
   }
 });
+
+// QUOTA_EXCEEDED and PLAN_RESTRICTED from any request open the plan-limit dialog; the
+// transports report them here because they cannot reach the dialog themselves.
+installPlanLimitHandler();
+
+// An edition's strings live in its own catalog; layering it over the app's before the
+// first locale loads means its pages render translated like everything else.
+void registerCatalogSource(edition.messages);
 
 setPartialErrorReporter((errors, { operationName }) => {
   for (const error of errors) {

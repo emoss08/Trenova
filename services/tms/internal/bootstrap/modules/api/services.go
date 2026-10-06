@@ -2,8 +2,9 @@
 package api
 
 import (
+	"context"
+
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
 	"github.com/emoss08/trenova/internal/core/services/agentactivityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentbudgetservice"
+	"github.com/emoss08/trenova/internal/core/services/agentcapabilityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
@@ -34,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentqualityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentreflectionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/agentscorecardservice"
@@ -47,7 +50,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/airetrievalstatusservice"
 	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	"github.com/emoss08/trenova/internal/core/services/approvalwindow"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/assistanthandoffservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/autheventservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
@@ -57,6 +62,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/billingqueueapprovalservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice"
@@ -64,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
@@ -71,6 +78,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
@@ -105,6 +113,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
 	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
@@ -150,9 +159,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/mfaservice"
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
-	"github.com/emoss08/trenova/internal/core/services/networkpulseservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/onboardingservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
@@ -191,21 +201,28 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentboardservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentbriefingservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentetaservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentholdservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
-	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
 	"github.com/emoss08/trenova/internal/core/services/tenanttimezone"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
@@ -232,7 +249,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
-	"github.com/emoss08/trenova/internal/infrastructure/controlplane"
+	"github.com/emoss08/trenova/internal/infrastructure/inboundmail"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
 
@@ -244,6 +261,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	iamservice.New,
 	userservice.New,
 	authservice.New,
+	mfaservice.New,
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
 	sidebarpreferenceservice.New,
@@ -280,31 +298,18 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	permissiondomain.NewRegistry,
 	permissiondomain.NewRouteRegistry,
 	fx.Annotate(
-		platformcatalog.NewStaticProvider,
-		fx.ResultTags(`group:"platform_catalog_providers"`),
-		fx.As(new(platformcatalog.CatalogProvider)),
+		entitlementservice.NewLocalEntitlementProvider,
+		fx.As(new(services.EntitlementProvider)),
 	),
-	platformcatalog.NewRegistry,
-	entitlementservice.NewLocalEntitlementProvider,
-	platformbillingservice.NewLocalBillingProvider,
-	usageservice.NewNoopUsageProvider,
 	fx.Annotate(
-		controlplane.NewHTTPControlPlaneClient,
-		fx.As(new(controlplane.Client)),
+		platformbillingservice.NewLocalBillingProvider,
+		fx.As(new(services.BillingProvider)),
 	),
-	controlplane.NewCloudEntitlementProvider,
-	controlplane.NewCloudBillingProvider,
-	controlplane.NewCloudUsageProvider,
 	fx.Annotate(
-		controlplane.NewCloudAccessAuthorizer,
-		fx.As(new(services.AccessAuthorizer)),
+		usageservice.NewNoopUsageProvider,
+		fx.As(new(services.UsageProvider)),
 	),
-	controlplane.NewHeartbeatReporter,
-	controlplane.NewTenantSyncer,
-	tenantprovisioningservice.New,
-	SelectEntitlementProvider,
-	SelectBillingProvider,
-	SelectUsageProvider,
+	editioninfo.SelfHosted,
 	roleassignmentservice.New,
 	usstateservice.New,
 	shipmentstate.NewCoordinator,
@@ -313,6 +318,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	customfieldservice.NewValuesService,
 	databasesessionservice.New,
 	realtimeservice.New,
+	shipmentinvalidation.New,
 	globalsearchservice.New,
 	thumbnailservice.NewGenerator,
 	documentintelligenceservice.New,
@@ -325,6 +331,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	accessorialchargeservice.New,
 	agentcontrolservice.New,
 	agentdefinitionservice.New,
+	agentcapabilityservice.New,
+	assistanthandoffservice.New,
 	func(s services.AgentDefinitionService) services.SystemAgentProvisioner { return s },
 	agentaccessservice.New,
 	agentsafetyservice.New,
@@ -367,8 +375,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	agentproposalnotifier.New,
 	agentdecisionservice.New,
 	agentplanservice.New,
+	approvalwindow.New,
 	agentmemoryservice.NewLabeler,
 	agentmemoryservice.New,
+	agentreflectionservice.New,
 	aicorrectionservice.New,
 	extractionevalservice.New,
 	extractionevalservice.AsService,
@@ -413,8 +423,9 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	bankreceiptservice.New,
 	func(s *bankreceiptservice.Service) services.BankReceiptService { return s },
 	bankreceiptworkitemservice.New,
-	networkpulseservice.New,
 	passwordresetservice.New,
+	onboardingservice.New,
+	onboardingservice.NewSampleData,
 	versionservice.New,
 	capturereleaseservice.New,
 	servicetypeservice.New,
@@ -459,6 +470,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	ediservice.New,
 	ediinboundservice.New,
 	inboundmessageservice.New,
+	inboundmail.New,
 	captureservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },
 	fx.Annotate(
@@ -592,8 +604,28 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	manualjournalservice.New,
 	billingcontrolservice.New,
 	costingservice.New,
+	shipmentquickfilterservice.New,
+	shipmentboardservice.New,
+	carriercapacityservice.New,
+	customerupdateservice.New,
+	shipmentcapacityservice.New,
+	shipmentcapacityservice.NewCapacityReader,
+	shipmentcapacityservice.NewCoverageSuggester,
+	shipmentcapacityservice.NewTenderer,
+	shipmentsuggestionservice.New,
+	shipmentsuggestionservice.NewReader,
+	shipmentsuggestionservice.NewDecider,
+	shipmentetaservice.New,
+	shipmentwatchlistservice.New,
+	shipmentbriefingservice.New,
+	func(s *shipmentboardservice.Service) services.ShipmentBoardCapabilitiesReader { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentStageSummaryReader { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentQuickFilterCounter { return s },
+	func(s *shipmentboardservice.Service) services.ShipmentFacetCounter { return s },
 	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
+	billingqueueservice.NewReview,
+	billingqueueapprovalservice.New,
 	dataentrycontrolservice.New,
 	dispatchcontrolservice.New,
 	documentcontrolservice.New,
@@ -701,6 +733,21 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 		fx.As(new(services.UsageRecorder)),
 	),
 ), fx.Invoke(
+	// The table-change-alert consumer reads the tca:events stream GTC fills
+	// and runs for the API's lifetime. Its loops outlive OnStart, so they get
+	// a context of their own; Stop cancels it.
+	func(lc fx.Lifecycle, consumer *tablechangealertservice.Consumer) {
+		lc.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				consumer.Start(context.Background())
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				consumer.Stop()
+				return nil
+			},
+		})
+	},
 	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
 		setter.SetEDIService(service)
 	},
@@ -748,6 +795,4 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 		},
 		fx.ParamTags(``, `group:"shipment_mutation_observers"`),
 	),
-	func(*controlplane.HeartbeatReporter) {},
-	func(*controlplane.TenantSyncer) {},
 ))

@@ -63,6 +63,10 @@ var ArtifactColumns = struct {
 	Payload          Column // "payload" → qualified: "aart.payload"
 	SourceToolCallID Column // "source_tool_call_id" → qualified: "aart.source_tool_call_id"
 	Pinned           Column // "pinned" → qualified: "aart.pinned"
+	LineageKey       Column // "lineage_key" → qualified: "aart.lineage_key"
+	LineageID        Column // "lineage_id" → qualified: "aart.lineage_id"
+	LineageSeq       Column // "lineage_seq" → qualified: "aart.lineage_seq"
+	Slug             Column // "slug" → qualified: "aart.slug"
 	Version          Column // "version" → qualified: "aart.version"
 	CreatedAt        Column // "created_at" → qualified: "aart.created_at"
 	UpdatedAt        Column // "updated_at" → qualified: "aart.updated_at"
@@ -81,6 +85,10 @@ var ArtifactColumns = struct {
 	Payload:          NewColumn("payload", "aart"),
 	SourceToolCallID: NewColumn("source_tool_call_id", "aart"),
 	Pinned:           NewColumn("pinned", "aart"),
+	LineageKey:       NewColumn("lineage_key", "aart"),
+	LineageID:        NewColumn("lineage_id", "aart"),
+	LineageSeq:       NewColumn("lineage_seq", "aart"),
+	Slug:             NewColumn("slug", "aart"),
 	Version:          NewColumn("version", "aart"),
 	CreatedAt:        NewColumn("created_at", "aart"),
 	UpdatedAt:        NewColumn("updated_at", "aart"),
@@ -105,6 +113,10 @@ var ArtifactFieldMap = map[string]string{
 	"payload":          "payload",
 	"sourceToolCallId": "source_tool_call_id",
 	"pinned":           "pinned",
+	"lineageKey":       "lineage_key",
+	"lineageId":        "lineage_id",
+	"lineageSeq":       "lineage_seq",
+	"slug":             "slug",
 	"version":          "version",
 	"createdAt":        "created_at",
 	"updatedAt":        "updated_at",
@@ -127,6 +139,10 @@ var ArtifactInsertableColumns = []string{
 	"payload",
 	"source_tool_call_id",
 	"pinned",
+	"lineage_key",
+	"lineage_id",
+	"lineage_seq",
+	"slug",
 	"version",
 	"created_at",
 	"updated_at",
@@ -209,6 +225,10 @@ var ArtifactFilter = struct {
 	Payload          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
 	SourceToolCallID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceToolCallId" → DB: "source_tool_call_id"
 	Pinned           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinned" → DB: "pinned"
+	LineageKey       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageKey" → DB: "lineage_key"
+	LineageID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageId" → DB: "lineage_id"
+	LineageSeq       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageSeq" → DB: "lineage_seq"
+	Slug             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "slug" → DB: "slug"
 	Version          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -254,6 +274,18 @@ var ArtifactFilter = struct {
 	},
 	Pinned: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("pinned", op, value)
+	},
+	LineageKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineageKey", op, value)
+	},
+	LineageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineageId", op, value)
+	},
+	LineageSeq: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineageSeq", op, value)
+	},
+	Slug: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("slug", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

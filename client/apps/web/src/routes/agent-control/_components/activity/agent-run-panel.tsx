@@ -2,8 +2,10 @@ import { DataTablePanelContainer } from "@/components/data-table/data-table-pane
 import { SectionPanel } from "@/components/section-panel";
 import type { AgentRunRow } from "@/lib/graphql/agent-activity-tables";
 import { queries } from "@/lib/queries";
+import { downloadAgentRunTranscript } from "@/services/agent-run";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,7 +21,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { ChevronRightIcon, CircleAlertIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  ChevronRightIcon,
+  Download01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { agentTypeLabel, RunStatusBadge, TriggerBadge } from "./agent-badges";
 import { RunTranscriptView } from "./run-transcript-view";
@@ -109,7 +115,7 @@ function TranscriptDisclosure({ runId, active }: { runId: string; active: boolea
         <div className="border-border border-t p-3">
           {transcript.isError ? (
             <Alert variant="destructive" size="sm">
-              <CircleAlertIcon />
+              <AlertCircleIcon />
               <AlertDescription>
                 {t("The transcript could not be loaded. Try again shortly.")}
               </AlertDescription>
@@ -122,7 +128,20 @@ function TranscriptDisclosure({ runId, active }: { runId: string; active: boolea
                 )}
               </p>
             ) : (
-              <RunTranscriptView runId={runId} transcript={transcript.data} />
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    aria-label={t("Download transcript")}
+                    onClick={() => downloadAgentRunTranscript(runId)}
+                  >
+                    <Download01Icon className="size-3" />
+                    {t("Download")}
+                  </Button>
+                </div>
+                <RunTranscriptView runId={runId} transcript={transcript.data} />
+              </div>
             )
           ) : (
             <div className="flex flex-col gap-2" aria-busy>

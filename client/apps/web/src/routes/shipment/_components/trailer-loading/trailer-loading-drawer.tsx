@@ -11,7 +11,12 @@ import {
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { ContainerIcon, LoaderIcon, PrinterIcon, SaveIcon } from "lucide-react";
+import {
+  Loading02Icon,
+  PrinterIcon,
+  Save01Icon,
+  ShippingContainerIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { COMMODITY_PALETTE } from "./constants";
@@ -138,7 +143,7 @@ export default function LoadPlannerDialog({
             ) : (
               <div className="flex flex-col items-center justify-center gap-4 py-20">
                 <div className="bg-muted flex size-14 items-center justify-center rounded-2xl">
-                  <ContainerIcon className="text-muted-foreground/40 size-7" />
+                  <ShippingContainerIcon className="text-muted-foreground/40 size-7" />
                 </div>
                 <div className="text-center">
                   <p className="text-foreground text-sm font-medium">{t("No loading plan yet")}</p>
@@ -169,16 +174,16 @@ export default function LoadPlannerDialog({
                 disabled={saving || !shipmentMeta.shipmentId}
               >
                 {saving ? (
-                  <LoaderIcon className="size-3.5 animate-spin" />
+                  <Loading02Icon className="size-3.5 animate-spin" />
                 ) : (
-                  <SaveIcon className="size-3.5" />
+                  <Save01Icon className="size-3.5" />
                 )}
                 {t("Save")}
               </Button>
             </>
           )}
           <Button type="button" onClick={calculate} disabled={isPending || !hasCommodities}>
-            {isPending && <LoaderIcon className="size-3.5 animate-spin" />}
+            {isPending && <Loading02Icon className="size-3.5 animate-spin" />}
             {data ? t("Recalculate") : t("Calculate optimal loading")}
           </Button>
         </DialogFooter>

@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 
 export function ReferenceRefreshStatus({
   connection,
@@ -31,7 +31,7 @@ export function ReferenceRefreshStatus({
       disabled={running}
       onClick={onRefresh}
     >
-      <RefreshCwIcon className="size-3.5" />
+      <RefreshCw02Icon className="size-3.5" />
       {t("Read {0} again", providerName)}
     </Button>
   ) : null;

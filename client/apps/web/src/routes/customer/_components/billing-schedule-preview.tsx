@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeBillingSchedule, type BillingSchedule } from "@/lib/billing-schedule";
-import { ReceiptTextIcon } from "lucide-react";
+import { ReceiptTextIcon } from "@trenova/shared/components/icons";
 
 /**
  * States the configured schedule as a sentence.

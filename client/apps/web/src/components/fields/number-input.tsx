@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon } from "@trenova/shared/components/icons";
 import { NumericFormat, type NumericFormatProps } from "react-number-format";
 
 type NumberInputProps = Omit<
@@ -74,7 +74,7 @@ export function NumberInput({
         className={cn(
           "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 text-base outline-none md:text-sm",
           "placeholder:text-muted-foreground",
-"ui-focus-ring",
+          "ui-focus-ring",
           "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
           sideText ? "pr-16" : "pr-12",
           className,

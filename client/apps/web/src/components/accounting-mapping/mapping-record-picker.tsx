@@ -8,7 +8,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 const SEARCH_DELAY_MS = 250;
@@ -43,7 +43,7 @@ export function MappingRecordPicker({
         onChange={(event) => setQuery(event.target.value)}
         placeholder={t("Search {0} records", providerName)}
         aria-label={t("Search {0} records", providerName)}
-        leftElement={<SearchIcon className="text-foreground-subtle size-3.5" />}
+        leftElement={<SearchLgIcon className="text-foreground-subtle size-3.5" />}
         disabled={disabled}
       />
       {results.isLoading ? (

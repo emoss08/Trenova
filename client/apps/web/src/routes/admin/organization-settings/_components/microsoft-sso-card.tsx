@@ -26,10 +26,10 @@ import {
   AlertTriangleIcon,
   CheckIcon,
   ChevronRightIcon,
-  CopyIcon,
-  InfoIcon,
-  LinkIcon,
-} from "lucide-react";
+  Copy01Icon,
+  InfoCircleIcon,
+  Link01Icon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -63,7 +63,7 @@ function CopyableInput({ value, label }: { value: string; label: string }) {
             onClick={() => copy(value, { timeout: 3000, withToast: true })}
             className="text-muted-foreground hover:bg-accent hover:text-foreground flex size-7 items-center justify-center rounded-md transition-colors"
           >
-            {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
+            {isCopied ? <CheckIcon className="size-3.5" /> : <Copy01Icon className="size-3.5" />}
           </button>
         }
       />
@@ -190,7 +190,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                 <div className="flex flex-col gap-6">
                   {/* Setup Guide */}
                   <Alert variant="info">
-                    <InfoIcon />
+                    <InfoCircleIcon />
                     <AlertDescription>
                       <p>
                         {t("To configure SSO, register an app in")}{" "}
@@ -267,7 +267,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         description={t("Copy this value into your Entra ID app registration.")}
                       >
                         <Alert variant="info">
-                          <LinkIcon />
+                          <Link01Icon />
                           <AlertDescription>
                             {t(
                               "Add this redirect URL to your Entra ID app under Authentication > Redirect URIs.",
@@ -348,9 +348,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       <FormSection
                         className="gap-3"
                         title={t("Tenant login URL")}
-                        description={t(
-                          "Share this URL with your users for Entra ID SSO sign-in.",
-                        )}
+                        description={t("Share this URL with your users for Entra ID SSO sign-in.")}
                       >
                         <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">

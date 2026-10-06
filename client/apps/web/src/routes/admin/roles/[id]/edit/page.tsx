@@ -21,7 +21,7 @@ import type { AddPermission, CreateRole, Role } from "@trenova/shared/types/role
 import { createRoleSchema } from "@trenova/shared/types/role";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";

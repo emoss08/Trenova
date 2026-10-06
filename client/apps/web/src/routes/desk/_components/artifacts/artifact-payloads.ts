@@ -1,5 +1,6 @@
 import {
   RECORD_ID_KEY,
+  formatDisplayValue,
   projectColumns,
   projectRecord,
   projectValue,
@@ -13,6 +14,7 @@ import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/
 import { isAppPath } from "@/lib/app-path";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
 /*
  * The server stores each artifact's payload in the shape the tool published
@@ -96,16 +98,22 @@ export type TableViewRow = {
   values: Record<string, unknown>;
   /** The record's page, built from the registry; empty when it has none. */
   path: string;
+  /** The record's id, for a table whose rows are acted on in place. */
+  recordId?: string;
 };
 
 export type TableViewArtifact = {
   tool: string;
   entity: string;
+  /** The record kind the rows are, when the registry knows it. */
+  recordEntity: string;
   searchedFor: string[];
   columns: DisplayColumn[];
   rows: TableViewRow[];
   rowCount: number;
   truncated: boolean;
+  /** How many tool calls the server read this table together from; zero for one search's result. */
+  calls: number;
 };
 
 function singular(plural: string): string {
@@ -175,6 +183,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
       key: String(index),
       values,
       path: entity !== null && id !== "" ? recordPath(entity, id) : "",
+      recordId: id,
     };
   });
   const rowCount = numberOf(payload.rowCount) || rows.length;
@@ -182,6 +191,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
   return {
     tool: stringOf(payload.tool),
     entity: stringOf(payload.entity),
+    recordEntity: entity ?? "",
     searchedFor: listOf(payload.searchedFor).filter(
       (term): term is string => typeof term === "string" && term !== "",
     ),
@@ -191,7 +201,69 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
     // The count is what the search found; the rows are what fitted in the
     // payload. A table that says 400 above 200 rows has to say why.
     truncated: rowCount > rows.length,
+    calls: bunchedCallCount(payload),
   };
+}
+
+/**
+ * How many calls a table the server read together was made from. The server
+ * folds one record after another into one table and lists the calls it
+ * folded; a table it did not fold was one search and counts no calls.
+ */
+function bunchedCallCount(payload: Record<string, unknown>): number {
+  if (payload.bunched !== true) {
+    return 0;
+  }
+  const calls = listOf(payload.calls).filter(
+    (call): call is string => typeof call === "string" && call !== "",
+  ).length;
+
+  return calls > 0 ? calls : numberOf(payload.rowCount) || listOf(payload.rows).length;
+}
+
+/**
+ * What the provenance line adds for an artifact whose title does not say how
+ * it was made: a table read together from several calls says so, because
+ * "Billing queue item (11)" alone reads as one search's result.
+ */
+export function artifactProvenanceNote(artifact: AssistantArtifact, t: TranslateFn): string {
+  if (artifact.kind !== "table_view") {
+    return "";
+  }
+  const calls = bunchedCallCount(artifact.payload);
+
+  return calls > 0 ? t("Read together from {0, plural, one {# call} other {# calls}}", calls) : "";
+}
+
+/**
+ * The rows a few typed letters keep: any cell, read as a person reads it, that
+ * contains them. A status matches its words and its code, so "transit" and
+ * "InTransit" both find a shipment on the road.
+ */
+export function filterTableRows(
+  rows: readonly TableViewRow[],
+  columns: readonly DisplayColumn[],
+  query: string,
+  t: TranslateFn,
+): TableViewRow[] {
+  const needle = query.trim().toLocaleLowerCase();
+  if (needle === "") {
+    return [...rows];
+  }
+
+  return rows.filter((row) =>
+    columns.some((column) => {
+      const value = row.values[column.key];
+      if (value === undefined || value === null) {
+        return false;
+      }
+      if (formatDisplayValue(column.type, value, t).toLocaleLowerCase().includes(needle)) {
+        return true;
+      }
+
+      return typeof value === "string" && value.toLocaleLowerCase().includes(needle);
+    }),
+  );
 }
 
 export type TableSort = { key: string; direction: "asc" | "desc" };
@@ -235,26 +307,64 @@ export type ComposedViewArtifact = {
   terms: string[];
   filterCount: number;
   unresolved: { phrase: string; reason: string }[];
+  /** How many records the view holds, when the view was counted; null for one stored before views were. */
+  count: number | null;
+  /** The count stopped at its limit, so there are more than it says. */
+  countCapped: boolean;
+  /**
+   * The columns a preview row shows, in the card's three places: the first
+   * column as the row's name, one to read beside it, and its status at the
+   * end when it has one. Empty when the view was not run.
+   */
+  columns: DisplayColumn[];
+  /** The first records it holds, to read before opening it. */
+  preview: TableViewRow[];
 };
+
+/**
+ * The columns a view's preview row has room for. The card draws a row as a
+ * name, a line beside it and a mark at the end, so a table of many columns is
+ * read down to the three that say most: its first column, its status when it
+ * has one, and the next column between them.
+ */
+function previewColumns(columns: readonly DisplayColumn[]): DisplayColumn[] {
+  const [first, ...rest] = columns;
+  if (!first) {
+    return [];
+  }
+  const end = rest.find((column) => column.type === "status") ?? rest[1];
+  const middle = rest.find((column) => column !== end);
+
+  return [first, middle, end].filter((column): column is DisplayColumn => column !== undefined);
+}
 
 export function composedViewFrom(artifact: AssistantArtifact): ComposedViewArtifact | null {
   const path = stringOf(artifact.payload.path);
   if (path === "") {
     return null;
   }
+  const payload = artifact.payload;
+  const table = listOf(payload.rows).length > 0 ? tableViewFrom(artifact) : null;
 
   return {
-    entity: stringOf(artifact.payload.entity),
+    entity: stringOf(payload.entity),
     path,
-    explanation: stringOf(artifact.payload.explanation),
-    terms: listOf(artifact.payload.terms).filter(
+    explanation: stringOf(payload.explanation),
+    terms: listOf(payload.terms).filter(
       (term): term is string => typeof term === "string" && term !== "",
     ),
-    filterCount: numberOf(artifact.payload.filterCount),
-    unresolved: listOf(artifact.payload.unresolved)
+    filterCount: numberOf(payload.filterCount),
+    unresolved: listOf(payload.unresolved)
       .filter(isRecord)
       .map((entry) => ({ phrase: stringOf(entry.phrase), reason: stringOf(entry.reason) }))
       .filter((entry) => entry.phrase !== ""),
+    count:
+      typeof payload.rowCount === "number" && Number.isFinite(payload.rowCount)
+        ? payload.rowCount
+        : null,
+    countCapped: payload.countCapped === true,
+    columns: table ? previewColumns(table.columns) : [],
+    preview: table?.rows ?? [],
   };
 }
 
@@ -278,6 +388,14 @@ export type RateExplanationArtifact = {
   guardrails: RateGuardrail[];
   totals: { linehaul: string; fuel: string; accessorial: string; total: string };
   warnings: string[];
+  /** How a shipment no agreement priced got its price: its formula template, or an entered amount. */
+  pricedBy: {
+    method: string;
+    explanation: string;
+    expression: string;
+    override: string;
+    overrideReason: string;
+  } | null;
 };
 
 /**
@@ -291,6 +409,7 @@ export type RateExplanationArtifact = {
 export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanationArtifact {
   const payload = artifact.payload;
   const winner = isRecord(payload.winner) ? payload.winner : null;
+  const pricedBy = isRecord(payload.pricedBy) ? payload.pricedBy : null;
 
   return {
     shipmentId: stringOf(payload.shipmentId),
@@ -333,6 +452,16 @@ export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanatio
     warnings: listOf(payload.warnings).filter(
       (warning): warning is string => typeof warning === "string" && warning !== "",
     ),
+    pricedBy:
+      pricedBy === null
+        ? null
+        : {
+            method: stringOf(pricedBy.method),
+            explanation: stringOf(pricedBy.explanation),
+            expression: stringOf(pricedBy.expression),
+            override: amountOf(pricedBy.override),
+            overrideReason: stringOf(pricedBy.overrideReason),
+          },
   };
 }
 
@@ -399,21 +528,193 @@ export function emailDraftFrom(artifact: AssistantArtifact): EmailDraftArtifact 
   };
 }
 
+/** The subject and body as a draft shows them, or as a person changed them. */
+export type EmailWording = { subject: string; body: string };
+
+/**
+ * The wording a draft opens with: what the person saved over the agent's, kept
+ * on the proposal behind the draft, or the agent's own where they changed
+ * nothing.
+ */
+export function savedEmailWording(
+  draft: EmailDraftArtifact,
+  saved: Record<string, unknown> | null | undefined,
+): EmailWording {
+  return {
+    subject: typeof saved?.subject === "string" ? saved.subject : draft.subject,
+    body: typeof saved?.body === "string" ? saved.body : draft.body,
+  };
+}
+
+/**
+ * What a person changed on a draft, keyed by the proposal's parameter: only
+ * what differs from the agent's wording, so putting it back clears the edit.
+ * A part the proposal does not carry, such as a body written from the
+ * organization's template, is never sent.
+ */
+export function emailDraftEdits(
+  draft: EmailDraftArtifact,
+  wording: EmailWording,
+  editable: { subject: boolean; body: boolean },
+): Record<string, unknown> {
+  const edits: Record<string, unknown> = {};
+  if (editable.subject && wording.subject !== draft.subject) edits.subject = wording.subject;
+  if (editable.body && wording.body !== draft.body) edits.body = wording.body;
+  return edits;
+}
+
 export type DocumentArtifact = {
   body: string;
+  /** What kind of write-up it is: "Brief", "Handover". */
+  docType: string;
+  /** Who wrote it, and what from. */
+  author: string;
+  basis: string;
+  /** Who wrote this version: the agent, or a person editing on the Desk. */
+  editedBy: "agent" | "person";
+  editor: string;
+  versionNote: string;
+  sources: DocumentSource[];
+};
+
+/** What a citation mark in a document points to. */
+export type DocumentSource = {
+  n: number;
+  tool: string;
+  label: string;
+  detail: string;
+  artifactId: string;
 };
 
 /** A write-up the agent published: markdown, read as it was written. */
 export function documentFrom(artifact: AssistantArtifact): DocumentArtifact {
-  return { body: stringOf(artifact.payload.body) };
+  const payload = artifact.payload;
+  const sources = Array.isArray(payload.sources) ? payload.sources : [];
+  return {
+    body: stringOf(payload.body),
+    docType: stringOf(payload.docType),
+    author: stringOf(payload.author),
+    basis: stringOf(payload.basis),
+    editedBy: payload.editedBy === "person" ? "person" : "agent",
+    editor: stringOf(payload.editor),
+    versionNote: stringOf(payload.versionNote),
+    sources: sources
+      .filter(
+        (source): source is Record<string, unknown> =>
+          typeof source === "object" && source !== null,
+      )
+      .map((source) => ({
+        n: numberOf(source.n),
+        tool: stringOf(source.tool),
+        label: stringOf(source.label),
+        detail: stringOf(source.detail),
+        artifactId: stringOf(source.artifactId),
+      }))
+      .filter((source) => source.n > 0 && source.label !== ""),
+  };
+}
+
+/** One end of a shipment's route, and the time that matters there. */
+export type RouteEnd = {
+  city: string;
+  place: string;
+  /** Whether the time is when it happened or when it is due. */
+  when: "departed" | "arrived" | "scheduled" | "";
+  /** A local date and time, "2026-10-02T09:12". */
+  at: string;
+};
+
+/** A stop a shipment makes between its pickup and its delivery. */
+export type RouteStop = RouteEnd & { type: string; done: boolean };
+
+/** A fact on a record card, keyed so the reader names it in their own words. */
+export type RecordFact = { key: string; value: string | number };
+
+/**
+ * A record laid out for its kind: a shipment's route and who is moving it, an
+ * invoice's amount and whether it is paid, a billing item's amount and what
+ * stands in its way. Null for a kind that has no view of its own.
+ */
+export type RecordView = {
+  type: string;
+  status: string;
+  subtitle: string;
+  from: RouteEnd | null;
+  to: RouteEnd | null;
+  via: RouteStop[];
+  progress: number | null;
+  amount: { total: string; balance: string; currency: string } | null;
+  ready: { canApprove: boolean; blockedBy: string; blockers: number } | null;
+  facts: RecordFact[];
+};
+
+function routeEndOf(value: unknown): RouteEnd | null {
+  if (!isRecord(value)) return null;
+  const when = stringOf(value.when);
+  return {
+    city: stringOf(value.city),
+    place: stringOf(value.place),
+    when: when === "departed" || when === "arrived" || when === "scheduled" ? when : "",
+    at: stringOf(value.at),
+  };
+}
+
+function recordViewOf(value: unknown): RecordView | null {
+  if (!isRecord(value) || stringOf(value.type) === "") return null;
+  const amount = isRecord(value.amount) ? value.amount : null;
+  const ready = isRecord(value.ready) ? value.ready : null;
+  const facts = Array.isArray(value.facts)
+    ? value.facts.flatMap((entry): RecordFact[] =>
+        isRecord(entry) &&
+        typeof entry.key === "string" &&
+        (typeof entry.value === "string" || typeof entry.value === "number")
+          ? [{ key: entry.key, value: entry.value }]
+          : [],
+      )
+    : [];
+  return {
+    type: stringOf(value.type),
+    status: stringOf(value.status),
+    subtitle: stringOf(value.subtitle),
+    from: routeEndOf(value.from),
+    to: routeEndOf(value.to),
+    via: Array.isArray(value.via)
+      ? value.via.flatMap((entry): RouteStop[] => {
+          const end = routeEndOf(entry);
+          return end && isRecord(entry) && (end.city !== "" || end.place !== "")
+            ? [{ ...end, type: stringOf(entry.type), done: entry.done === true }]
+            : [];
+        })
+      : [],
+    progress: typeof value.progress === "number" ? Math.min(1, Math.max(0, value.progress)) : null,
+    amount: amount
+      ? {
+          total: stringOf(amount.total),
+          balance: stringOf(amount.balance),
+          currency: stringOf(amount.currency),
+        }
+      : null,
+    ready: ready
+      ? {
+          canApprove: ready.canApprove === true,
+          blockedBy: stringOf(ready.blockedBy),
+          blockers: typeof ready.blockers === "number" ? ready.blockers : 0,
+        }
+      : null,
+    facts,
+  };
 }
 
 export type EntityCardArtifact = {
   entity: string;
+  /** The record laid out for its kind, when its kind has a layout. */
+  view: RecordView | null;
   /** The record's readable fields, its name first; never its id. */
   fields: DisplayField[];
   /** Where the record opens in the app; empty when its kind has no page. */
   path: string;
+  /** The record's id, for a body that reads the record live. */
+  recordId: string;
 };
 
 /** A link the server put on an artifact, kept only when it stays in the app. */
@@ -440,8 +741,10 @@ export function entityCardFrom(artifact: AssistantArtifact): EntityCardArtifact 
 
   return {
     entity: stringOf(payload.entity),
+    view: recordViewOf(payload.view),
     fields,
     path: appPathOf(payload.path),
+    recordId: stringOf(payload.recordId),
   };
 }
 

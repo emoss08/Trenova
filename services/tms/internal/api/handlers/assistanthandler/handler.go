@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -27,6 +29,8 @@ type Params struct {
 	Service              serviceports.AssistantService
 	Turns                *assistantturnservice.Service
 	Workflows            serviceports.WorkflowStarter
+	Schedules            *conversationscheduleservice.Service
+	Handoffs             serviceports.AssistantHandoffService `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -36,20 +40,30 @@ type Handler struct {
 	service   serviceports.AssistantService
 	turns     *assistantturnservice.Service
 	workflows serviceports.WorkflowStarter
+	schedules scheduleService
+	handoffs  serviceports.AssistantHandoffService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
 }
 
 func New(p Params) *Handler {
-	return &Handler{
+	h := &Handler{
 		service:   p.Service,
 		turns:     p.Turns,
 		workflows: p.Workflows,
+		handoffs:  p.Handoffs,
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
 	}
+	// A nil service put in the interface would no longer compare equal to
+	// nil, and the schedule routes would call through it.
+	if p.Schedules != nil {
+		h.schedules = p.Schedules
+	}
+
+	return h
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -60,12 +74,24 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// response is a projection, so this does not widen access to the provider
 	// records themselves.
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
+	api.GET("/mentions/", h.pm.RequirePermission(resource, permission.OpRead), h.searchMentions)
+	api.GET("/search/", h.pm.RequirePermission(resource, permission.OpRead), h.searchDesk)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting
 	// one needs.
 	api.POST("/ask/", h.pm.RequirePermission(resource, permission.OpCreate), h.ask)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
+	api.GET(
+		"/threads/:threadID/budget/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.threadBudget,
+	)
+	api.POST(
+		"/threads/:threadID/requests/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.requestMore,
+	)
 	// Renaming, pinning and deleting a conversation need no more than being
 	// allowed to use the assistant.
 	//
@@ -85,6 +111,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/threads/:threadID/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.deleteThread,
+	)
+	// Handing a conversation to another agent starts a conversation, so it
+	// needs what starting one needs.
+	api.POST(
+		"/threads/:threadID/handoff/",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.handoff,
+	)
+	api.POST(
+		"/threads/:threadID/read/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.markThreadRead,
 	)
 	api.GET(
 		"/threads/:threadID/messages/",
@@ -131,6 +169,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpCreate),
 		h.startTurn,
 	)
+	// Compacting summarizes the older part of a conversation into a message
+	// of its own, which is writing to it like asking a question.
+	api.POST(
+		"/threads/:threadID/compact/",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.compactThread,
+	)
 	// Stopping a reply is arranging one's own conversation, like naming or
 	// deleting it, and every turn here is read under the caller's own user id.
 	api.POST(
@@ -147,6 +192,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listThreadProposals,
 	)
+	// Saving the wording a person changed on a pending proposal is drafting
+	// in their own conversation, not deciding: the approval is still the
+	// decision endpoint's, and it checks the values again.
+	api.PUT(
+		"/threads/:threadID/proposals/:proposalID/edits/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.saveProposalEdits,
+	)
 	api.GET(
 		"/threads/:threadID/plans/",
 		h.pm.RequirePermission(resource, permission.OpRead),
@@ -155,16 +208,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// Artifacts are part of what the conversation produced, read with it;
 	// pinning one is the reader arranging their own pane, which is the same
 	// kind of act as naming the conversation and gated the same way.
-	api.GET(
-		"/threads/:threadID/artifacts/",
-		h.pm.RequirePermission(resource, permission.OpRead),
-		h.listThreadArtifacts,
-	)
 	api.POST(
 		"/threads/:threadID/artifacts/:artifactID/pin/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.pinArtifact,
 	)
+	h.registerScheduleRoutes(api, resource)
+	h.registerArtifactRoutes(api, resource)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
@@ -299,11 +349,74 @@ func (h *Handler) getThread(c *gin.Context) {
 	c.JSON(http.StatusOK, thread)
 }
 
+func (h *Handler) threadBudget(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	budget, err := h.service.ThreadBudget(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, budget)
+}
+
+func (h *Handler) requestMore(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	var body struct {
+		Kind string `json:"kind"`
+	}
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"kind", errortypes.ErrInvalid, "Say what is being asked for",
+		))
+		return
+	}
+
+	result, err := h.service.RequestMore(c.Request.Context(), serviceports.RequestMoreRequest{
+		Thread: req,
+		Kind:   body.Kind,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) markThreadRead(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.service.MarkThreadRead(c.Request.Context(), req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
 type updateThreadRequest struct {
 	Title  *string `json:"title"`
 	Pinned *bool   `json:"pinned"`
+	// PinnedFacts replaces the facts the agents keep in mind, when sent.
+	PinnedFacts *[]string `json:"pinnedFacts"`
 	// Keep lists a quick question as a conversation.
 	Keep bool `json:"keep"`
+	// AutoCompact turns the conversation's compacting itself on or off.
+	AutoCompact *bool `json:"autoCompact"`
 }
 
 func (h *Handler) updateThread(c *gin.Context) {
@@ -321,11 +434,13 @@ func (h *Handler) updateThread(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
 	thread, err := h.service.UpdateThread(c.Request.Context(), &serviceports.UpdateThreadRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
-		Title:      body.Title,
-		Pinned:     body.Pinned,
-		Keep:       body.Keep,
+		ThreadID:    req.ID,
+		TenantInfo:  req.TenantInfo,
+		Title:       body.Title,
+		Pinned:      body.Pinned,
+		PinnedFacts: body.PinnedFacts,
+		Keep:        body.Keep,
+		AutoCompact: body.AutoCompact,
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -333,22 +448,6 @@ func (h *Handler) updateThread(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, thread)
-}
-
-func (h *Handler) listThreadArtifacts(c *gin.Context) {
-	req, err := threadRequest(c)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	artifacts, err := h.service.ListThreadArtifacts(c.Request.Context(), req)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"results": artifacts})
 }
 
 type pinArtifactRequest struct {
@@ -428,6 +527,45 @@ func (h *Handler) listThreadProposals(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"results": proposals})
+}
+
+// saveProposalEditsRequest is the values a person changed, keyed by
+// parameter; an empty or absent set clears what was saved.
+type saveProposalEditsRequest struct {
+	Modifications map[string]any `json:"modifications"`
+}
+
+func (h *Handler) saveProposalEdits(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	proposalID, err := pulid.Parse(c.Param("proposalID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var body saveProposalEditsRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	edits, err := h.service.SaveProposalEdits(
+		c.Request.Context(),
+		req,
+		proposalID,
+		body.Modifications,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, edits)
 }
 
 type listMessagesQuery struct {
@@ -544,6 +682,60 @@ func (r *sendMessageRequest) provider() (pulid.ID, bool) {
 
 func (r *sendMessageRequest) page() *agent.PageContext {
 	return r.Context.page()
+}
+
+type searchMentionsQuery struct {
+	Query string `form:"query"`
+	Type  string `form:"type"`
+}
+
+func (h *Handler) searchMentions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var query searchMentionsQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	results, err := h.service.SearchMentions(
+		c.Request.Context(),
+		requestActorFromAuthContext(authCtx),
+		serviceports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": results})
+}
+
+type searchDeskQuery struct {
+	Query string `form:"query"`
+	Kind  string `form:"kind"`
+}
+
+func (h *Handler) searchDesk(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var query searchDeskQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	results, err := h.service.SearchDesk(
+		c.Request.Context(),
+		requestActorFromAuthContext(authCtx),
+		serviceports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": results})
 }
 
 func (h *Handler) listProviders(c *gin.Context) {

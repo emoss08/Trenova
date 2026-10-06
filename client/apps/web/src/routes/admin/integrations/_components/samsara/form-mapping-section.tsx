@@ -25,7 +25,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
@@ -180,7 +180,7 @@ function MappingItemRow({
           disabled={!canRemove}
           aria-label={`Remove field ${index + 1}`}
         >
-          <Trash2Icon className="size-3.5" />
+          <Trash01Icon className="size-3.5" />
         </Button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -395,7 +395,7 @@ function MappingRow({
         onClick={onDelete}
         aria-label={`Delete ${mapping.name}`}
       >
-        <Trash2Icon className="size-3.5" />
+        <Trash01Icon className="size-3.5" />
       </Button>
     </div>
   );

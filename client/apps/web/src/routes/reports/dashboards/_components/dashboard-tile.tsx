@@ -5,7 +5,7 @@ import { useReportPreview } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReportChartSpec, ReportDashboardFilter, ReportDashboardTile } from "@/types/report";
-import { CircleAlertIcon, ExternalLinkIcon } from "lucide-react";
+import { AlertCircleIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { irToInput } from "../../builder/_components/builder-state";
@@ -129,7 +129,7 @@ export function DashboardTileBody({
     return (
       <TileMessage tone="error">
         <span className="flex flex-col items-center gap-1">
-          <CircleAlertIcon className="size-4" />
+          <AlertCircleIcon className="size-4" />
           {graphQLErrorMessage(data.error, "This tile could not be loaded")}
         </span>
       </TileMessage>
@@ -197,7 +197,7 @@ export function TileFooterLink({ tile }: { tile: ReportDashboardTile }) {
       aria-label={t("Open this report")}
       title={t("Open this report")}
     >
-      <ExternalLinkIcon className="size-3.5" />
+      <LinkExternal01Icon className="size-3.5" />
     </Button>
   );
 }

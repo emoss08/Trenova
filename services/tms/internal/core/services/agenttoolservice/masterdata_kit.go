@@ -39,6 +39,25 @@ type masterRecord[T any] struct {
 	stateIDs func(*T) []pulid.ID
 	view     func(entity *T, states map[pulid.ID]string) any
 	options  []toolpreview.Option
+	// linkEntity and linkID point the reported record at another page when
+	// the record has none of its own, such as a carrier's capacity posting
+	// shown on the carrier.
+	linkEntity string
+	linkID     func(*T) pulid.ID
+}
+
+func (r *masterRecord[T]) artifact() string {
+	if r.linkEntity != "" {
+		return r.linkEntity
+	}
+	return r.entity
+}
+
+func (r *masterRecord[T]) artifactID(entity *T) pulid.ID {
+	if r.linkID != nil {
+		return r.linkID(entity)
+	}
+	return r.id(entity)
 }
 
 type stateLookup interface {
@@ -135,7 +154,7 @@ func (r *masterRecord[T]) result(action string, entity *T) *agent.ToolExecutionR
 		Kind:   r.kind,
 		Name:   r.label(entity),
 		IDs:    map[string]string{r.idParam: id.String()},
-		Record: recordOf(r.entity, id),
+		Record: recordOf(r.artifact(), r.artifactID(entity)),
 	}
 }
 
@@ -670,7 +689,7 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) serviceports.AgentToo
 		description: spec.description,
 		resource:    record.resource,
 		operation:   permission.OpCreate,
-		artifact:    record.entity,
+		artifact:    record.artifact(),
 		reversible:  true,
 		idempotent:  true,
 		rationale:   spec.rationale,
@@ -807,7 +826,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) serviceports.AgentToo
 		description: spec.description,
 		resource:    record.resource,
 		operation:   permission.OpUpdate,
-		artifact:    record.entity,
+		artifact:    record.artifact(),
 		reversible:  true,
 		rationale:   spec.rationale,
 		properties:  properties,

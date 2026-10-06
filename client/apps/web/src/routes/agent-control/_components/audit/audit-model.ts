@@ -3,6 +3,7 @@ import { isRecordEntityType, recordPath } from "@/config/record-links";
 import { agentSubjectPath } from "@/lib/agent-subjects";
 import type {
   AIAuditChainStatus,
+  AIAuditEventRow,
   AiAuditEventKind,
   AiAuditEventOutcome,
   AiAuditExportFormat,
@@ -420,6 +421,36 @@ export function auditTierLabel(t: TranslateFn, tier: string): string {
       return t("Propose");
     default:
       return tier;
+  }
+}
+
+type ActingAsFields = Pick<
+  AIAuditEventRow,
+  "principalType" | "tier" | "ownerKind" | "onBehalfOfUserId" | "agentName"
+>;
+
+/**
+ * Who an event acted as. A run nobody is in executes its automatic writes as
+ * the instance's system account, so a user principal on an automatic write in
+ * a background run is that account, named with the agent that ran it.
+ */
+export function auditActingAsLabel(t: TranslateFn, event: ActingAsFields): string {
+  switch (event.principalType) {
+    case "User":
+      if (
+        event.tier === "AutoExecute" &&
+        event.ownerKind === "AgentRun" &&
+        !event.onBehalfOfUserId
+      ) {
+        return event.agentName
+          ? t("The system account (Ran by {0})", event.agentName)
+          : t("The system account");
+      }
+      return t("A person");
+    case "Agent":
+      return t("An agent");
+    default:
+      return t("The system");
   }
 }
 

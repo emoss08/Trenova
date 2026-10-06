@@ -5,7 +5,7 @@ import {
   DescriptionList,
 } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { formatPreviewAmount } from "./preview-format";
 import { HiddenValue } from "./value-change";
 

@@ -20,6 +20,13 @@ import (
 // a context the reader leaving cannot cancel, so it needs a bound of its own.
 const releaseTimeout = 5 * time.Second
 
+// pollCooldown is how long the reader rests after a delivered batch before it
+// asks again. The library's default is 100ms, which on top of the publisher's
+// own batching turned a reply into clumps. A poll waits on the workflow until
+// there is something to return, so a short rest costs no extra polls; zero
+// would mean the default, so it is small rather than nothing.
+const pollCooldown = 5 * time.Millisecond
+
 type Params struct {
 	fx.In
 
@@ -56,11 +63,7 @@ type frame struct {
 func (s *Service) Read(ctx context.Context, req serviceports.ReadTurnStreamRequest) error {
 	stream := workflowstreams.NewClient(s.client, req.Ref.WorkflowID, workflowstreams.Options{})
 
-	subscription := stream.Subscribe(ctx, workflowstreams.SubscribeOptions{
-		Topics:     []string{temporaltype.StreamEventsTopic},
-		FromOffset: after(req.Cursor),
-	})
-	for item, err := range subscription {
+	for item, err := range stream.Subscribe(ctx, subscription(req.Cursor)) {
 		if err != nil {
 			return err
 		}
@@ -93,6 +96,15 @@ func (s *Service) Read(ctx context.Context, req serviceports.ReadTurnStreamReque
 	}
 
 	return nil
+}
+
+// subscription is how a reader follows a turn's events from its cursor.
+func subscription(cursor string) workflowstreams.SubscribeOptions {
+	return workflowstreams.SubscribeOptions{
+		Topics:       []string{temporaltype.StreamEventsTopic},
+		FromOffset:   after(cursor),
+		PollCooldown: pollCooldown,
+	}
 }
 
 // after is where a reader resumes: the event after the last one it applied.

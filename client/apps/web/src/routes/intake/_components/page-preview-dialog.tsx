@@ -13,11 +13,11 @@ import { apiUrl } from "@trenova/shared/lib/api-url";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  RotateCcwIcon,
-  RotateCwIcon,
+  RefreshCcw01Icon,
+  RefreshCw01Icon,
   ZoomInIcon,
   ZoomOutIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { useState, type KeyboardEvent } from "react";
 import type { PagePlace } from "./page-layout";
 
@@ -166,7 +166,7 @@ export function PagePreviewDialog({
                   onClick={() => onRotate(-1)}
                   aria-label={t("Rotate left")}
                 >
-                  <RotateCcwIcon className="size-4" />
+                  <RefreshCcw01Icon className="size-4" />
                 </Button>
                 <Button
                   type="button"
@@ -175,7 +175,7 @@ export function PagePreviewDialog({
                   onClick={() => onRotate(1)}
                   aria-label={t("Rotate right")}
                 >
-                  <RotateCwIcon className="size-4" />
+                  <RefreshCw01Icon className="size-4" />
                 </Button>
               </>
             )}

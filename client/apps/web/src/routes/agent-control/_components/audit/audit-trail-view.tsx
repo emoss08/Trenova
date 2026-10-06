@@ -11,7 +11,7 @@ import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTableEmptyStateRenderProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { FileDownIcon } from "lucide-react";
+import { FileDownload02Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
 import { getAuditEventColumns } from "./audit-event-columns";
@@ -106,7 +106,7 @@ export default function AuditTrailView({ onOpenExports }: { onOpenExports: () =>
         actions={
           canExport ? (
             <Button type="button" variant="outline" size="sm" onClick={() => setExportOpen(true)}>
-              <FileDownIcon className="size-3.5" />
+              <FileDownload02Icon className="size-3.5" />
               {t("Export trail…")}
             </Button>
           ) : null

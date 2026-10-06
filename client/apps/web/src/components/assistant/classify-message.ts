@@ -6,20 +6,30 @@ import type { AssistantMessage } from "@/types/assistant";
  * - `delegated` — a step another agent took on a task this conversation's
  *   agent handed it, shown only inside that hand-off and never as a turn
  * - `tool` — a step the assistant took, shown collapsed under its turn
+ * - `handoff` — the card left where a person took the conversation to another
+ *   agent, or the brief that opens the conversation they took it to; neither
+ *   is something either side said
  * - `decision` — the note the application wrote to start the turn after a
  *   decision, shown as the decision it records and never as its text
  * - `refusal` — a boundary the guard enforced, shown as a notice rather than as
  *   something the assistant said
  * - `declined-prompt` — the user turn that was refused, shown muted so the
  *   conversation still reads in order without implying it was answered
+ * - `schedule` — a request the person scheduled, shown in their words with
+ *   the schedule's card under it; nothing answered it there and then
+ * - `compaction` — the summary a compaction wrote, shown as the line where the
+ *   conversation was compacted and never as something the person said
  * - `user` / `assistant` — ordinary turns
  */
 export type MessagePresentation =
+  | "compaction"
   | "delegated"
+  | "handoff"
   | "tool"
   | "decision"
   | "refusal"
   | "declined-prompt"
+  | "schedule"
   | "user"
   | "assistant";
 
@@ -50,8 +60,22 @@ export function classifyMessage(message: AssistantMessage): MessagePresentation 
     return "delegated";
   }
 
+  // A compaction summary is saved in the User role because the model reads
+  // it in the person's place; the person never wrote it.
+  if (message.kind === "Compaction") {
+    return "compaction";
+  }
+
   if (message.role === "Tool") {
     return "tool";
+  }
+
+  if (message.kind === "Schedule") {
+    return "schedule";
+  }
+
+  if (message.kind === "Handoff" || message.kind === "HandoffBrief") {
+    return "handoff";
   }
 
   if (message.kind === "DecisionNote") {

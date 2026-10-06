@@ -17,7 +17,7 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { EDIConnection } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatUnix } from "../edi-display-utils";
@@ -71,7 +71,9 @@ export function PendingConnectionsPanel() {
             {t("Accepting creates reciprocal internal partners and communication profiles.")}
           </div>
         </div>
-        <Badge variant="neutral" appearance="outline">{pending.length}</Badge>
+        <Badge variant="neutral" appearance="outline">
+          {pending.length}
+        </Badge>
       </div>
       <Table>
         <TableHeader>
@@ -98,7 +100,7 @@ export function PendingConnectionsPanel() {
                 {canUpdate && (
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" size="sm" onClick={() => setRejecting(connection)}>
-                      <XIcon data-icon="inline-start" />
+                      <XCloseIcon data-icon="inline-start" />
                       {t("Reject")}
                     </Button>
                     <Button

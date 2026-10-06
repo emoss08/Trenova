@@ -14,7 +14,7 @@ import {
 import { allocationRemainder } from "@trenova/shared/lib/charge-split";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { ChargeAllocation, ChargeAllocationMethod } from "@trenova/shared/types/shipment";
-import { PlusIcon, SplitIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, SplitIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import {
   useFieldArray,
@@ -226,7 +226,7 @@ export function ChargeSplitEditor({
                 disabled={disabled}
                 onClick={() => remove(index)}
               >
-                <Trash2Icon className="text-muted-foreground size-3.5" />
+                <Trash01Icon className="text-muted-foreground size-3.5" />
               </Button>
             </div>
           </div>

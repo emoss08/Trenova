@@ -13,20 +13,20 @@ import {
   type SafetySeverity,
 } from "@trenova/shared/types/worker-safety";
 import {
-  CarFrontIcon,
-  CheckCircle2Icon,
+  Car01Icon,
+  CheckCircleIcon,
   ClipboardCheckIcon,
+  Edit02Icon,
   EyeIcon,
-  FileCheckIcon,
+  FileCheck02Icon,
   GavelIcon,
-  PencilIcon,
-  RotateCcwIcon,
+  type IconComponent,
+  RefreshCcw01Icon,
   ScrollTextIcon,
-  SearchIcon,
-  Trash2Icon,
+  SearchLgIcon,
+  Trash01Icon,
   ZapIcon,
-  type LucideIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { ViolationList } from "./violation-list";
 
 export type SafetyEventPermissions = {
@@ -55,8 +55,8 @@ const STATUS_VARIANT: Record<SafetyEventStatus, "success" | "warning" | "danger"
   Closed: "neutral",
 };
 
-const KIND_ICONS: Record<string, LucideIcon> = {
-  Accident: CarFrontIcon,
+const KIND_ICONS: Record<string, IconComponent> = {
+  Accident: Car01Icon,
   Incident: ZapIcon,
   NearMiss: EyeIcon,
   Citation: ScrollTextIcon,
@@ -105,7 +105,7 @@ export function SafetyEventRow({
     actions.push({
       id: "close",
       label: t("Close event"),
-      icon: CheckCircle2Icon,
+      icon: CheckCircleIcon,
       disabled: busy,
       onSelect: () => onClose(event),
     });
@@ -114,7 +114,7 @@ export function SafetyEventRow({
     actions.push({
       id: "review",
       label: t("Mark under review"),
-      icon: SearchIcon,
+      icon: SearchLgIcon,
       disabled: busy,
       onSelect: () => onReview(event),
     });
@@ -123,7 +123,7 @@ export function SafetyEventRow({
     actions.push({
       id: "reopen",
       label: t("Reopen"),
-      icon: RotateCcwIcon,
+      icon: RefreshCcw01Icon,
       disabled: busy,
       onSelect: () => onReopen(event),
     });
@@ -141,7 +141,7 @@ export function SafetyEventRow({
     actions.push({
       id: "edit",
       label: `Edit ${headline}`,
-      icon: PencilIcon,
+      icon: Edit02Icon,
       disabled: busy,
       onSelect: () => onEdit(event),
     });
@@ -150,7 +150,7 @@ export function SafetyEventRow({
     actions.push({
       id: "delete",
       label: `Delete ${headline}`,
-      icon: Trash2Icon,
+      icon: Trash01Icon,
       disabled: busy,
       destructive: true,
       onSelect: () => onDelete(event),
@@ -209,7 +209,7 @@ export function SafetyEventRow({
             ) : null}
             {event.document ? (
               <span className="flex items-center gap-1">
-                <FileCheckIcon className="size-3" />
+                <FileCheck02Icon className="size-3" />
                 {t("Document on file")}
               </span>
             ) : null}

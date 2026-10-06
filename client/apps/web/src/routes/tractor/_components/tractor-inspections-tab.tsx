@@ -13,13 +13,13 @@ import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, metersToMiles, pluralize, toTitleCase } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CableIcon,
+  AlertOctagonIcon,
   CheckIcon,
   ChevronDownIcon,
   ClipboardCheckIcon,
-  MapPinIcon,
-  OctagonAlertIcon,
-} from "lucide-react";
+  MarkerPin01Icon,
+  PlugIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -74,7 +74,7 @@ function InspectionsErrorState({ message, onRetry }: { message: string; onRetry:
 
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
-      <OctagonAlertIcon className="text-destructive mx-auto size-5" />
+      <AlertOctagonIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{message}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
         {t("Try again")}
@@ -141,7 +141,9 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
     <>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="neutral" appearance="outline">{toTitleCase(inspection.inspectionType)}</Badge>
+          <Badge variant="neutral" appearance="outline">
+            {toTitleCase(inspection.inspectionType)}
+          </Badge>
           <Badge variant={safetyMeta.variant}>{t(safetyMeta.label)}</Badge>
           {inspection.signed ? (
             <span className="inline-flex items-center gap-0.5 text-xs text-success-foreground">
@@ -155,7 +157,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
           {metaParts.map((part) => (
             <span key={part.key} className="flex items-center gap-1">
               <span aria-hidden>·</span>
-              {part.isLocation ? <MapPinIcon className="size-3" /> : null}
+              {part.isLocation ? <MarkerPin01Icon className="size-3" /> : null}
               <span className="truncate tabular-nums">{t(part.label)}</span>
             </span>
           ))}
@@ -246,7 +248,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
   if (!telematicsEnabled) {
     return (
       <InspectionsEmptyState
-        icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
+        icon={<PlugIcon className="text-muted-foreground mx-auto size-6" />}
         title={t("Telematics not connected")}
         description={t(
           "Connect your Samsara account to stream driver vehicle inspection reports (DVIR) and defect history for this tractor.",

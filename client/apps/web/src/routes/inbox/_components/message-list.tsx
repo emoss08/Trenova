@@ -7,7 +7,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixWeekday, getStartOfDay } from "@trenova/shared/lib/date";
-import { SearchIcon, XIcon } from "lucide-react";
+import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { groupByDay, type DayGroup } from "./day-groups";
 import { InboxMessageRow } from "./message-row";
@@ -117,7 +117,7 @@ export function MessageList({
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder={t("Search sender or subject")}
           aria-label={t("Search sender or subject")}
-          leftElement={<SearchIcon className="text-foreground-subtle size-3.5" />}
+          leftElement={<SearchLgIcon className="text-foreground-subtle size-3.5" />}
           rightElement={
             search === "" ? (
               <Kbd className="mr-1">/</Kbd>
@@ -128,7 +128,7 @@ export function MessageList({
                 aria-label={t("Clear the search")}
                 onClick={() => onSearchChange("")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             )
           }

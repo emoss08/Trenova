@@ -98,14 +98,15 @@ describe("DelegateStep", () => {
     renderStep(false);
 
     expect(screen.getByText("What it did")).toBeTruthy();
-    expect(screen.getByText("Its answer")).toBeTruthy();
+    expect(screen.getByText("What Shipment Desk found")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Shipment Desk/, expanded: true })).toBeTruthy();
   });
 
   it("always shows the chevron that opens and closes it", () => {
-    const { container } = renderStep(false);
+    renderStep(false);
 
-    const chevron = container.querySelector("svg.lucide-chevron-right");
+    const trigger = screen.getByRole("button", { name: /Shipment Desk/ });
+    const chevron = trigger.querySelector(":scope > svg:last-child");
     expect(chevron).not.toBeNull();
     expect(chevron?.getAttribute("class")).not.toContain("opacity-0");
   });

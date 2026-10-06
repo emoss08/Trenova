@@ -13,7 +13,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import type { BatchDetailResponse, CreateBatchRequest } from "@/types/bank-receipt-batch";
 import { useQueryClient } from "@tanstack/react-query";
-import { UploadIcon } from "lucide-react";
+import { Upload01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -126,7 +126,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
                 {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
-                <UploadIcon className="mr-1.5 size-3.5" />
+                <Upload01Icon className="mr-1.5 size-3.5" />
                 {t("Import batch")}
               </Button>
             </DialogFooter>

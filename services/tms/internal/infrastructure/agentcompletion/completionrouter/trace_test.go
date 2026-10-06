@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -190,4 +191,40 @@ func TestCompleteStructured_TracesItsAttemptInTheCallersTrace(t *testing.T) {
 
 func otelTracer() trace.Tracer {
 	return otel.Tracer("completionrouter-test")
+}
+
+// A replayed thinking block the provider had to drop is the harness editing a
+// conversation it should not, so the attempt that saw it says how many.
+func TestCompleteChat_TracesTheThinkingTheProviderDropped(t *testing.T) {
+	t.Parallel()
+	aitracetest.Install()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"model":"claude-opus-5-5","stop_reason":"end_turn",` +
+			`"content":[{"type":"text","text":"Answered."}],` +
+			`"usage":{"input_tokens":10,"output_tokens":2},` +
+			`"input_transformations":[` +
+			`{"type":"thinking_dropped","path":"messages.1.content.0","reason":"prefix_binding_mismatch"}]}`))
+	}))
+	t.Cleanup(server.Close)
+
+	provider := chatProvider("claude", server.URL, 10)
+	provider.Kind = aiprovider.KindAnthropicMessages
+	provider.Model = "claude-opus-5-5"
+	svc := newTestService(t, provider)
+	key, err := svc.encryption.EncryptString("sk-ant-test")
+	require.NoError(t, err)
+	provider.APIKey = key
+	attribution := turnAttribution()
+	req := chatRequest(pulid.Nil)
+	req.Attribution = attribution
+
+	result, err := svc.CompleteChat(t.Context(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "Answered.", result.Text)
+
+	anchor := aitrace.ForAttribution(&attribution)
+	answered := aitracetest.One(t, anchor.TraceID, "chat claude-opus-5-5")
+	assert.Contains(t, answered.Attributes, aitrace.AIThinkingDropped.Int64(1))
 }

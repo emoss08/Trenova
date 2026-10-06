@@ -2,6 +2,7 @@ package assistantartifactrepository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -20,8 +21,8 @@ import (
 )
 
 const (
-	defaultListLimit = 100
-	maxListLimit     = 500
+	defaultListLimit = 60
+	maxListLimit     = 200
 )
 
 // ErrNoIdentity is returned when an artifact carries none of the keys an
@@ -102,47 +103,12 @@ func buildUpsert(db bun.IDB, artifact *assistantartifact.Artifact, target string
 		Set(cols.Title.SetExcluded()).
 		Set(cols.Payload.SetExcluded()).
 		Set(cols.SourceToolCallID.SetExcluded()).
+		Set(cols.LineageKey.SetExcluded()).
+		Set(cols.LineageID.SetExcluded()).
+		Set(cols.LineageSeq.SetExcluded()).
 		Set(cols.Version.IncConflict(1)).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Returning("*")
-}
-
-func (r *repository) ListByThread(
-	ctx context.Context,
-	req repositories.ListArtifactsRequest,
-) ([]*assistantartifact.Artifact, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*assistantartifact.Artifact, error) {
-		cols := buncolgen.ArtifactColumns
-
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultListLimit
-		}
-		if limit > maxListLimit {
-			limit = maxListLimit
-		}
-
-		entities := make([]*assistantartifact.Artifact, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID)
-			}).
-			Order(cols.Pinned.OrderDesc(), cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list assistant artifacts",
-				zap.String("threadId", req.ThreadID.String()),
-				zap.Error(err))
-
-			return nil, fmt.Errorf("list assistant artifacts: %w", err)
-		}
-
-		return entities, nil
-	})
 }
 
 func (r *repository) GetByID(
@@ -165,6 +131,40 @@ func (r *repository) GetByID(
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) LatestInLineage(
+	ctx context.Context,
+	req repositories.LatestInLineageRequest,
+) (*assistantartifact.Artifact, error) {
+	if req.LineageKey == "" {
+		return nil, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
+		cols := buncolgen.ArtifactColumns
+		entities := make([]*assistantartifact.Artifact, 0, 1)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+					Where(cols.ThreadID.Eq(), req.ThreadID).
+					Where(cols.LineageKey.Eq(), req.LineageKey).
+					Where(cols.SourceToolCallID.Ne(), req.ExceptToolCall)
+			}).
+			Order(cols.LineageSeq.OrderDesc(), cols.CreatedAt.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("read latest artifact in lineage: %w", err)
+		}
+		if len(entities) == 0 {
+			return nil, nil
+		}
+
+		return entities[0], nil
 	})
 }
 
@@ -235,15 +235,19 @@ func (r *repository) SetPinned(
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
 		cols := buncolgen.ArtifactColumns
-		entity := new(assistantartifact.Artifact)
+		root, err := r.rootOf(ctx, req.TenantInfo, req.ThreadID, req.ID)
+		if err != nil {
+			return nil, err
+		}
 
-		res, err := r.db.DBForContext(ctx).
+		updated := make([]*assistantartifact.Artifact, 0, 1)
+		_, err = r.db.DBForContext(ctx).
 			NewUpdate().
-			Model(entity).
+			Model(&updated).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return buncolgen.ArtifactScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.ThreadID.Eq(), req.ThreadID)
+					Where(cols.ThreadID.Eq(), req.ThreadID).
+					Where(rootExpr+" = ?", root)
 			}).
 			Set(cols.Pinned.Set(), req.Pinned).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
@@ -253,12 +257,18 @@ func (r *repository) SetPinned(
 		if err != nil {
 			return nil, fmt.Errorf("pin assistant artifact: %w", err)
 		}
-
-		if err = dberror.CheckRowsAffected(res, "AssistantArtifact", req.ID.String()); err != nil {
-			return nil, err
+		if len(updated) == 0 {
+			return nil, dberror.HandleNotFoundError(sql.ErrNoRows, "AssistantArtifact")
 		}
 
-		return entity, nil
+		latest := updated[0]
+		for _, artifact := range updated[1:] {
+			if artifact.LineageSeq > latest.LineageSeq {
+				latest = artifact
+			}
+		}
+
+		return latest, nil
 	})
 }
 

@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { ClockIcon } from "lucide-react";
+import { ClockIcon } from "@trenova/shared/components/icons";
 import { describeVersion } from "@/lib/version-summary";
 
 type VersionsTabProps = {

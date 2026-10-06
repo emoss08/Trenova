@@ -8,7 +8,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { Notification } from "@trenova/shared/types/notification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCheckIcon, CheckIcon, InboxIcon } from "lucide-react";
+import { CheckDoubleIcon, CheckIcon, Inbox01Icon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
@@ -125,7 +125,7 @@ export default function NotificationList() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-16">
-        <InboxIcon className="text-muted-foreground/40 size-6" />
+        <Inbox01Icon className="text-muted-foreground/40 size-6" />
         <p className="text-muted-foreground text-sm">{t("Loading notifications...")}</p>
       </div>
     );
@@ -135,7 +135,7 @@ export default function NotificationList() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16">
         <div className="bg-muted flex size-14 items-center justify-center rounded-full">
-          <InboxIcon className="text-muted-foreground/60 size-7" />
+          <Inbox01Icon className="text-muted-foreground/60 size-7" />
         </div>
         <div className="text-center">
           <p className="text-foreground text-sm font-medium">{t("No notifications yet")}</p>
@@ -164,7 +164,7 @@ export default function NotificationList() {
               className="text-2xs text-muted-foreground"
               onClick={handleMarkAllRead}
             >
-              <CheckCheckIcon className="size-3" />
+              <CheckDoubleIcon className="size-3" />
               {t("Mark all read")}
             </Button>
           </div>

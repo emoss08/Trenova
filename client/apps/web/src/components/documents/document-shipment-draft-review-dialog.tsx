@@ -25,7 +25,7 @@ import type {
 import { shipmentCreateSchema, type ShipmentCreateInput } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, CircleCheckIcon, LoaderCircleIcon } from "lucide-react";
+import { AlertCircleIcon, CheckCircleIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -329,7 +329,7 @@ export function DocumentShipmentDraftReviewDialog({
             </div>
             {isAttached ? (
               <Alert variant="success" size="sm">
-                <CircleCheckIcon />
+                <CheckCircleIcon />
                 <AlertTitle>{t("This source document is already attached.")}</AlertTitle>
                 <AlertDescription>
                   {t(
@@ -454,7 +454,7 @@ export function DocumentShipmentDraftReviewDialog({
           form="document-shipment-draft-form"
           disabled={createShipment.isPending || isAttached}
         >
-          {createShipment.isPending ? <LoaderCircleIcon className="size-4 animate-spin" /> : null}
+          {createShipment.isPending ? <SpinnerIcon className="size-4 animate-spin" /> : null}
           {isAttached ? t("Shipment attached") : t("Create shipment")}
         </Button>
       </DialogFooter>

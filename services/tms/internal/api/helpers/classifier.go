@@ -52,6 +52,8 @@ func NewDefaultClassifier() *ChainClassifier {
 		ClassifierFunc(classifyBadRequest),
 		ClassifierFunc(classifyBusiness),
 		ClassifierFunc(classifyDatabase),
+		ClassifierFunc(classifyQuotaExceeded),
+		ClassifierFunc(classifyPlanRestricted),
 		ClassifierFunc(classifyAuthentication),
 		ClassifierFunc(classifyAuthorization),
 		ClassifierFunc(classifyNotFound),
@@ -147,6 +149,20 @@ func classifyBusiness(err error) (ProblemType, bool) {
 func classifyDatabase(err error) (ProblemType, bool) {
 	if errortypes.IsDatabaseError(err) {
 		return ProblemTypeDatabase, true
+	}
+	return "", false
+}
+
+func classifyQuotaExceeded(err error) (ProblemType, bool) {
+	if errortypes.IsQuotaExceededError(err) {
+		return ProblemTypeQuotaExceeded, true
+	}
+	return "", false
+}
+
+func classifyPlanRestricted(err error) (ProblemType, bool) {
+	if errortypes.IsPlanRestrictionError(err) {
+		return ProblemTypePlanRestricted, true
 	}
 	return "", false
 }

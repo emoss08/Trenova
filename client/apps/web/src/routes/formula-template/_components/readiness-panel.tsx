@@ -4,16 +4,16 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReadinessCheck, ReadinessResponse } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, CheckCircle2Icon, XCircleIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckCircleIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 
 export type ReadinessStep = "submit" | "approve";
 
 const STATUS_STYLES: Record<
   ReadinessCheck["status"],
-  { icon: typeof CheckCircle2Icon; className: string }
+  { icon: typeof CheckCircleIcon; className: string }
 > = {
-  pass: { icon: CheckCircle2Icon, className: "text-success-foreground" },
+  pass: { icon: CheckCircleIcon, className: "text-success-foreground" },
   warn: { icon: AlertTriangleIcon, className: "text-warning-foreground" },
   fail: { icon: XCircleIcon, className: "text-destructive" },
 };

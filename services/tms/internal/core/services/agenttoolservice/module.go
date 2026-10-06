@@ -35,7 +35,9 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 // builds each one to read what a model is shown.
 func ToolProviders() []any {
 	providers := []any{
-		newTransitionToInReviewTool,
+		provideTransitionToInReviewTool,
+		provideTransitionItemsToInReviewTool,
+		provideAssignBillersTool,
 		provideTransferToBillingTool,
 		provideApproveBillingQueueItemTool,
 		provideSendBackToOpsTool,
@@ -354,6 +356,20 @@ func provideCancelBillingQueueItemTool(billing services.BillingQueueService) ser
 
 func provideAssignBillerTool(billing services.BillingQueueService) services.AgentTool {
 	return newAssignBillerTool(billing)
+}
+
+func provideAssignBillersTool(billing services.BillingQueueService) services.AgentTool {
+	return newAssignBillersTool(billing)
+}
+
+func provideTransitionToInReviewTool(billing services.BillingQueueService) services.AgentTool {
+	return newTransitionToInReviewTool(billing)
+}
+
+func provideTransitionItemsToInReviewTool(
+	billing services.BillingQueueService,
+) services.AgentTool {
+	return newTransitionItemsToInReviewTool(billing)
 }
 
 func providePostInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {

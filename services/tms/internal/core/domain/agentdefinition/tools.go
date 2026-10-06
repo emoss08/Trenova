@@ -78,8 +78,9 @@ func (t Template) StarterTools() []string {
 			"transfer_to_billing",
 			"list_billing_queue_items",
 			"get_billing_queue_item",
-			"assign_billing_queue_biller",
-			"transition_item_to_in_review",
+			"get_billing_queue_items",
+			"assign_billing_queue_billers",
+			"transition_items_to_in_review",
 			"hold_billing_queue_item",
 			"move_billing_item_to_exception",
 			"send_billing_item_back_to_ops",
@@ -95,7 +96,6 @@ func (t Template) StarterTools() []string {
 			"send_invoices",
 			"list_reports",
 			"describe_report",
-			"preview_report",
 			"run_report",
 			"list_email_profiles",
 			"request_missing_docs",
@@ -387,6 +387,9 @@ func (t Template) StarterTools() []string {
 			"list_rate_confirmations",
 			"generate_rate_confirmation",
 			"send_rate_confirmation",
+			"list_carrier_capacity_postings",
+			"create_carrier_capacity_posting",
+			"update_carrier_capacity_posting",
 		}
 	case TemplateImportAssistant:
 		return []string{

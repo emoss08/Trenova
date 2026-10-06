@@ -164,7 +164,7 @@ func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	t.Parallel()
 
 	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
-		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments",
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments", Rows: 25,
 	}}
 	tool := queryTool("search_shipments", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
@@ -173,8 +173,113 @@ func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	)
 
 	content := result.Messages[2].Content
-	assert.Contains(t, content, `Shown to the person as a table titled "Shipments"`)
+	assert.Contains(t, content, `kept as a table titled "Shipments"`)
+	assert.Contains(t, content, "do not write its rows out as a markdown table")
 	_, payload, fenced := UnfenceToolResult(content)
 	require.True(t, fenced, "the note sits after the fence and does not break reading it back")
 	assert.Contains(t, payload, `"items"`)
+}
+
+/*
+A short list is answered in the reply, not kept beside it.
+
+A billing queue of nine items came back both as a markdown table and as a
+table artifact under it: the same rows twice. A result of a dozen rows or
+fewer is now answered with a table in the reply, and the model is told not
+to point to the artifact, so it is not kept — unless it would rank or
+compare the rows, when it points to the table instead, and so is given the
+pointer to write.
+*/
+func TestRun_ShortListsAreAnsweredInTheReply(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 9,
+	}}
+	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
+	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
+		textTurn("Nine items."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, "9 rows, few enough to answer in your reply")
+	assert.Contains(t, content, "do not point to the table")
+	assert.Contains(t, content, "When you would rank or compare its rows")
+	assert.Contains(t, content, "artifact:", "a ranking from a short list is pointed to")
+}
+
+/*
+A table the person works from is pointed to however short it is.
+
+The billing queue opens with a checkbox on each row and a bar to approve the
+ones selected. Two items answered as a markdown table leave nothing to select.
+*/
+func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 2,
+		Actionable: true,
+	}}
+	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
+	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
+		textTurn("Two items."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, "works from beside the conversation")
+	assert.Contains(t, content, "artifact:", "the reply is given the pointer to write")
+	assert.NotContains(t, content, "few enough to answer in your reply")
+}
+
+// A composed view is pointed to as a view: what it was narrowed to, not rows
+// to work from where it is drawn.
+func TestRun_AViewIsPointedToAsAView(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Late loads", Rows: 3,
+		Actionable: true, Opens: true,
+	}}
+	tool := queryTool("compose_table_view", map[string]any{"path": "/shipments"}, nil)
+	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+		toolTurn("compose_table_view", map[string]any{"entity": "shipments", "description": "late"}),
+		textTurn("Three loads are late."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, "the person opens it as the live table")
+	assert.Contains(t, content, "artifact:")
+	assert.NotContains(t, content, "select rows there")
+}
+
+/*
+A ranking is pointed to however short it is, and never rewritten.
+
+A dispatcher asked for drivers ranked for a load. The Desk read five ranked
+candidates and answered with its own markdown table of them, linking nothing:
+the order survived, the findings behind each verdict and the link to each
+driver did not. A ranked table is now one the model points to by its pick.
+*/
+func TestRun_ARankingIsPointedToHoweverShort(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Drivers ranked for the move",
+		Rows: 5, Ranked: true,
+	}}
+	tool := queryTool("rank_move_candidates", map[string]any{"candidates": []any{}}, nil)
+	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+		toolTurn("rank_move_candidates", map[string]any{"shipmentMoveId": "smv_1"}),
+		textTurn("Emily Chen is the best fit."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, `kept as a ranked table titled "Drivers ranked for the move"`)
+	assert.Contains(t, content, "however few rows it has")
+	assert.Contains(t, content, "do not write its rows out as a markdown table")
+	assert.Contains(t, content, "artifact:", "the reply is given the pointer to write")
+	assert.NotContains(t, content, "few enough to answer in your reply")
 }

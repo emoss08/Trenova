@@ -12,7 +12,7 @@ import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { FuelDashboardEmpty } from "./fuel-management-empty";
@@ -180,7 +180,7 @@ function IndexPriceCard({
               isDown && "text-success-foreground",
             )}
           >
-            {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+            {isUp ? <TrendUp01Icon className="size-3" /> : <TrendDown01Icon className="size-3" />}
             {delta > 0 ? "+" : ""}
             {delta.toFixed(3)}
           </span>

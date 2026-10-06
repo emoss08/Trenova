@@ -7,7 +7,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatRange } from "@trenova/shared/lib/date";
 import { formatFileSize } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { DownloadIcon } from "lucide-react";
+import { Download01Icon } from "@trenova/shared/components/icons";
 import { AuditExportStatusBadge } from "./audit-badges";
 import { auditExportStatusAttrs } from "./audit-model";
 
@@ -52,7 +52,7 @@ function DownloadCell({
         options.onDownload(row);
       }}
     >
-      <DownloadIcon className="size-3.5" />
+      <Download01Icon className="size-3.5" />
       {t("Download")}
     </Button>
   );

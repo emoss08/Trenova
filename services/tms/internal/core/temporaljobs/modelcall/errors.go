@@ -112,6 +112,10 @@ func Classify(err error) error {
 		return fail(ErrTypeProvidersResting, false, restingBackoff)
 	}
 
+	if detail.Plan != nil {
+		return fail(ErrTypeModelRejected, true, 0)
+	}
+
 	// The router reports a refusal, and a provider it cannot use (a missing
 	// API key, say), as business errors: something a person has to change.
 	var business *errortypes.BusinessError
@@ -132,13 +136,59 @@ func Classify(err error) error {
 // the workflow is its own type, so without these the saved turn could no
 // longer say whether the provider refused the request or was unreachable.
 type modelFailure struct {
-	Status        int      `json:"status,omitempty"`
-	Retryable     bool     `json:"retryable,omitempty"`
-	Resting       bool     `json:"resting,omitempty"`
-	TimedOut      bool     `json:"timedOut,omitempty"`
-	NoProvider    bool     `json:"noProvider,omitempty"`
-	SchemaInvalid bool     `json:"schemaInvalid,omitempty"`
-	Refusal       *refusal `json:"refusal,omitempty"`
+	Status        int          `json:"status,omitempty"`
+	Retryable     bool         `json:"retryable,omitempty"`
+	Resting       bool         `json:"resting,omitempty"`
+	TimedOut      bool         `json:"timedOut,omitempty"`
+	NoProvider    bool         `json:"noProvider,omitempty"`
+	SchemaInvalid bool         `json:"schemaInvalid,omitempty"`
+	Refusal       *refusal     `json:"refusal,omitempty"`
+	Plan          *PlanRefusal `json:"plan,omitempty"`
+	// Providers are the providers asked, when every one of them failed.
+	Providers []serviceports.ChatProviderFailure `json:"providers,omitempty"`
+}
+
+type PlanRefusal struct {
+	Code       string `json:"code"`
+	Message    string `json:"message"`
+	Meter      string `json:"meter,omitempty"`
+	Limit      int64  `json:"limit,omitempty"`
+	Used       int64  `json:"used,omitempty"`
+	Capability string `json:"capability,omitempty"`
+	Reason     string `json:"reason,omitempty"`
+	Plan       string `json:"plan,omitempty"`
+}
+
+func planRefusalOf(err error) *PlanRefusal {
+	if quota, ok := errors.AsType[*errortypes.QuotaExceededError](err); ok {
+		return &PlanRefusal{
+			Code:    string(errortypes.ErrQuotaExceeded),
+			Message: quota.Message,
+			Meter:   quota.Meter,
+			Limit:   quota.Limit,
+			Used:    quota.Used,
+			Plan:    quota.Plan,
+		}
+	}
+	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		return &PlanRefusal{
+			Code:       string(errortypes.ErrPlanRestricted),
+			Message:    restriction.Message,
+			Capability: restriction.Capability,
+			Reason:     restriction.Reason,
+			Plan:       restriction.Plan,
+		}
+	}
+
+	return nil
+}
+
+func (r *PlanRefusal) Err() error {
+	if r.Code == string(errortypes.ErrQuotaExceeded) {
+		return errortypes.NewQuotaExceededError(r.Meter, r.Limit, r.Used, r.Plan)
+	}
+
+	return errortypes.NewPlanRestrictionError(r.Capability, r.Reason, r.Plan)
 }
 
 // refusal is a business error as data: the message key the error handler
@@ -155,6 +205,7 @@ func modelFailureOf(err error) modelFailure {
 		TimedOut:      errors.Is(err, context.DeadlineExceeded),
 		NoProvider:    errors.Is(err, serviceports.ErrNoProviderConfigured),
 		SchemaInvalid: errors.Is(err, serviceports.ErrModelSchemaValidation),
+		Plan:          planRefusalOf(err),
 	}
 
 	var failure serviceports.ProviderFailure
@@ -170,6 +221,11 @@ func modelFailureOf(err error) modelFailure {
 			args = append(args, fmt.Sprint(arg))
 		}
 		detail.Refusal = &refusal{Message: business.Message, Args: args, Details: business.Details}
+	}
+
+	var exhausted *serviceports.ChatProvidersFailedError
+	if errors.As(err, &exhausted) {
+		detail.Providers = exhausted.Failures
 	}
 
 	return detail
@@ -193,7 +249,10 @@ type Failure struct {
 	SchemaInvalid bool `json:"schemaInvalid,omitempty"`
 	// Refusal is a business error, kept whole so the person is told what
 	// they would have been told had the call run in their request.
-	Refusal *refusal `json:"refusal,omitempty"`
+	Refusal *refusal     `json:"refusal,omitempty"`
+	Plan    *PlanRefusal `json:"plan,omitempty"`
+	// Providers are the providers asked, when every one of them failed.
+	Providers []serviceports.ChatProviderFailure `json:"providers,omitempty"`
 }
 
 // FailureOf reads why a run ended from the error workflow code was handed.
@@ -220,6 +279,8 @@ func FailureOf(err error) *Failure {
 			failure.NoProvider = detail.NoProvider
 			failure.SchemaInvalid = detail.SchemaInvalid
 			failure.Refusal = detail.Refusal
+			failure.Plan = detail.Plan
+			failure.Providers = detail.Providers
 		}
 	}
 
@@ -235,11 +296,24 @@ func FailureOf(err error) *Failure {
 // understand: a stop is context.Canceled, a provider's answer is a
 // ProviderFailure, and so on.
 func (f *Failure) Err() error {
+	err := f.err()
+	// Every model the reply was asked of failed: the error says which, so the
+	// saved reply can list them the way the reader saw them.
+	if f != nil && len(f.Providers) > 0 && err != nil {
+		return &serviceports.ChatProvidersFailedError{Failures: f.Providers, Err: err}
+	}
+
+	return err
+}
+
+func (f *Failure) err() error {
 	switch {
 	case f == nil:
 		return nil
 	case f.Stopped:
 		return fmt.Errorf("%s: %w", f.Message, context.Canceled)
+	case f.Plan != nil:
+		return f.Plan.Err()
 	case f.Refusal != nil:
 		return f.Refusal.err()
 	case f.NoProvider:

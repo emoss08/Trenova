@@ -21,13 +21,13 @@ import { apiService } from "@/services/api";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  GitBranchIcon,
+  AlertTriangleIcon,
+  Beaker01Icon,
+  GitBranch01Icon,
   PlayIcon,
-  Settings2Icon,
-  TestTube2Icon,
-  TrashIcon,
-  TriangleAlertIcon,
-} from "lucide-react";
+  Sliders04Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { lazy, Suspense } from "react";
 import { toast } from "sonner";
 
@@ -81,7 +81,7 @@ function TabPanelSkeleton() {
 function RuleSetDetailError({ message }: { message: string }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-      <TriangleAlertIcon className="text-muted-foreground size-8" />
+      <AlertTriangleIcon className="text-muted-foreground size-8" />
       <p className="text-muted-foreground text-sm">{message}</p>
     </div>
   );
@@ -142,7 +142,7 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
                   <AlertDialogTrigger
                     render={
                       <Button variant="ghost" size="icon" className="text-destructive">
-                        <TrashIcon className="size-4" />
+                        <Trash01Icon className="size-4" />
                       </Button>
                     }
                   />
@@ -153,7 +153,7 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogMedia className="bg-danger-subtle">
-                  <TrashIcon className="text-destructive size-5" />
+                  <Trash01Icon className="text-destructive size-5" />
                 </AlertDialogMedia>
                 <AlertDialogTitle>{t("Delete rule set")}</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -181,15 +181,15 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
       <Tabs defaultValue="metadata" className="flex flex-1 flex-col">
         <TabsList variant="underline" className="mx-4 mt-2 w-fit">
           <TabsTab value="metadata">
-            <Settings2Icon className="mr-1.5 size-3.5" />
+            <Sliders04Icon className="mr-1.5 size-3.5" />
             {t("Metadata")}
           </TabsTab>
           <TabsTab value="versions">
-            <GitBranchIcon className="mr-1.5 size-3.5" />
+            <GitBranch01Icon className="mr-1.5 size-3.5" />
             {t("Versions")}
           </TabsTab>
           <TabsTab value="fixtures">
-            <TestTube2Icon className="mr-1.5 size-3.5" />
+            <Beaker01Icon className="mr-1.5 size-3.5" />
             {t("Fixtures")}
           </TabsTab>
           <TabsTab value="simulation">

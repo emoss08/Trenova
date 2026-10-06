@@ -118,11 +118,14 @@ type FinishTurnInput struct {
 	Plan *assistantservice.TurnPlan `json:"plan,omitempty"`
 	// Rejection is why the question was turned away, written for the person
 	// who asked.
-	Rejection string                        `json:"rejection,omitempty"`
-	Run       *serviceports.RunResult       `json:"run,omitempty"`
-	Failure   *modelcall.Failure            `json:"failure,omitempty"`
-	Artifacts []*assistantartifact.Artifact `json:"artifacts,omitempty"`
-	Events    []temporaltype.StreamItem     `json:"events,omitempty"`
+	Rejection string `json:"rejection,omitempty"`
+	// RejectionParams are the figures the refusal carried, such as which
+	// usage cap and when it lifts.
+	RejectionParams map[string]string             `json:"rejectionParams,omitempty"`
+	Run             *serviceports.RunResult       `json:"run,omitempty"`
+	Failure         *modelcall.Failure            `json:"failure,omitempty"`
+	Artifacts       []*assistantartifact.Artifact `json:"artifacts,omitempty"`
+	Events          []temporaltype.StreamItem     `json:"events,omitempty"`
 }
 
 // TurnEnding is how the turn ended: its result, and the last event its reader
@@ -130,6 +133,15 @@ type FinishTurnInput struct {
 type TurnEnding struct {
 	Result AssistantTurnResult     `json:"result"`
 	Event  temporaltype.StreamItem `json:"event"`
+	// Compact is set when the turn left the conversation full enough to
+	// compact itself, with the context use either side of doing so.
+	Compact *CompactionCue `json:"compact,omitempty"`
+}
+
+// CompactionCue is a conversation a turn left full enough to compact itself.
+type CompactionCue struct {
+	Before int `json:"before"`
+	After  int `json:"after"`
 }
 
 // NotifyUnseenTurnInput is a turn that ended with nobody reading it, for

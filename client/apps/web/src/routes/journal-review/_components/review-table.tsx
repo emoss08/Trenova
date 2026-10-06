@@ -11,7 +11,7 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { BookCheckIcon, CheckIcon } from "lucide-react";
+import { BookCheckIcon, CheckIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";

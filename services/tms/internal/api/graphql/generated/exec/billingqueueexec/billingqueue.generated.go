@@ -4,6 +4,7 @@ package billingqueueexec
 
 import (
 	"context"
+	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
@@ -14,7 +15,62 @@ import (
 
 var Shard = &gqlexec.Shard{
 	Name: "billingqueue",
+	Objects: []*gqlexec.Object{
+		{Name: "BillingQueuePostResult", Implementors: []string{"BillingQueuePostResult"}},
+	},
 	Fields: []gqlexec.Fields{
+		{Object: "BillingQueuePostResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "item",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BillingQueueItem",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueuePostResult)
+					return obj.Item, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
+			},
+			{
+				Name:     "invoiceId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueuePostResult)
+					return obj.InvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "invoiceNumber",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueuePostResult)
+					return obj.InvoiceNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "sentTo",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueuePostResult)
+					return obj.SentTo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "recipients",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueuePostResult)
+					return obj.Recipients, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
 				Name:       "updateBillingQueueStatus",
@@ -42,6 +98,58 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
 			},
+			{
+				Name:       "postBillingQueueItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "BillingQueuePostResult",
+				Args:       field_Mutation_postBillingQueueItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostBillingQueueItem(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueuePostResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueuePostResult),
+			},
+			{
+				Name:       "releaseBillingQueueItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "BillingQueueItem",
+				Args:       field_Mutation_releaseBillingQueueItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReleaseBillingQueueItem(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
+			},
+			{
+				Name:       "resolveBillingQueueIssue",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "BillingQueueItem",
+				Args:       field_Mutation_resolveBillingQueueIssue_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveBillingQueueIssue(ctx, fc.Args["id"].(string), fc.Args["issueId"].(string), fc.Args["optionKey"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
+			},
+			{
+				Name:       "undoBillingQueueIssue",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "BillingQueueItem",
+				Args:       field_Mutation_undoBillingQueueIssue_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UndoBillingQueueIssue(ctx, fc.Args["id"].(string), fc.Args["issueId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -56,7 +164,16 @@ var Shard = &gqlexec.Shard{
 type resolverMutation interface {
 	UpdateBillingQueueStatus(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateStatusInput) (*gqlmodel.BillingQueueItem, error)
 	AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error)
+	PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error)
+	ReleaseBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueueItem, error)
+	ResolveBillingQueueIssue(ctx context.Context, id string, issueID string, optionKey string) (*gqlmodel.BillingQueueItem, error)
+	UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error)
 }
+
+var (
+	errNoChild0 = errors.New("field of type ID does not have child fields")
+	errNoChild1 = errors.New("field of type String does not have child fields")
+)
 
 func field_Mutation_updateBillingQueueStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)
@@ -97,6 +214,82 @@ func field_Mutation_assignBillingQueueBiller_args(ctx context.Context, ec *gqlex
 		return nil, err
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_postBillingQueueItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_releaseBillingQueueItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_resolveBillingQueueIssue_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "issueId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["issueId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "optionKey",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["optionKey"] = arg2
+	return args, nil
+}
+
+func field_Mutation_undoBillingQueueIssue_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "issueId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["issueId"] = arg1
 	return args, nil
 }
 
@@ -141,7 +334,7 @@ func unmarshalInputBillingQueueUpdateStatusInput(ctx context.Context, ec *gqlexe
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "exceptionReasonCode", "exceptionNotes", "reviewNotes", "cancelReason"}
+	fieldsInOrder := [...]string{"status", "exceptionReasonCode", "exceptionNotes", "reviewNotes", "cancelReason", "holdReasonCode"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -183,6 +376,13 @@ func unmarshalInputBillingQueueUpdateStatusInput(ctx context.Context, ec *gqlexe
 				return it, err
 			}
 			it.CancelReason = data
+		case "holdReasonCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("holdReasonCode"))
+			data, err := unmarshalOBillingQueueHoldReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐHoldReasonCode(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HoldReasonCode = data
 		}
 	}
 	return it, nil
@@ -209,12 +409,26 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐExceptionReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.ExceptionReasonCode, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
 	res := billingqueue.ExceptionReasonCode(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBillingQueueHoldReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐHoldReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.HoldReasonCode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := billingqueue.HoldReasonCode(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -232,4 +446,45 @@ func marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BillingQueueItem", v)
+}
+
+func marshalNBillingQueuePostResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueuePostResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.BillingQueuePostResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueuePostResult", v)
+}
+
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
 }

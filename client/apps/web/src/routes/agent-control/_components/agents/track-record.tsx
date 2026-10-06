@@ -7,7 +7,7 @@ import { Progress } from "@trenova/shared/components/ui/progress";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
-import { AwardIcon } from "lucide-react";
+import { Award01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { tierWithin } from "./agent-form-schema";
 import { TIER_LABEL, TIER_ORDER } from "./tool-catalog";
@@ -141,7 +141,7 @@ export function TrackRecord({
               </Badge>
               {summary.state === "earned" && (
                 <Badge variant="success" className="h-4 gap-1 px-1.5 text-2xs">
-                  <AwardIcon className="size-2.5" />
+                  <Award01Icon className="size-2.5" />
                   {t("Earned")}
                 </Badge>
               )}

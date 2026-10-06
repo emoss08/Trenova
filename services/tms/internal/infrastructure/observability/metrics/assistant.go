@@ -16,8 +16,19 @@ var TurnDurationBuckets = []float64{
 	.05, .25, .5, 1, 2.5, 5, 10, 20, 30, 60, 120, 300, 600,
 }
 
+// PhaseBuckets span the parts of a turn before its first token: a database
+// read is milliseconds, a classifier call a second or two, and the guard gives
+// up at three.
+var PhaseBuckets = []float64{
+	.005, .01, .025, .05, .1, .25, .5, 1, 2, 3, 5, 10, 30,
+}
+
 type Assistant struct {
 	Base
+
+	prepare       *prometheus.HistogramVec
+	guard         *prometheus.HistogramVec
+	modelCallWait prometheus.Histogram
 
 	turnDuration     *prometheus.HistogramVec
 	firstEvent       prometheus.Histogram
@@ -116,7 +127,43 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		[]string{labelResult},
 	)
 
+	// The wait before the first token, part by part: preparing the turn
+	// (reads, the scope check, the context), the scope check alone, and how
+	// long a model call sat in the queue before a worker took it.
+	m.prepare = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: Namespace,
+			Subsystem: "assistant",
+			Name:      "prepare_seconds",
+			Help:      "How long preparing a turn took, by whether the question was answered",
+			Buckets:   PhaseBuckets,
+		},
+		[]string{"outcome"},
+	)
+	m.guard = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: Namespace,
+			Subsystem: "assistant",
+			Name:      "guard_seconds",
+			Help:      "How long the scope check took, by the stage that decided it",
+			Buckets:   PhaseBuckets,
+		},
+		[]string{"stage"},
+	)
+	m.modelCallWait = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Namespace: Namespace,
+			Subsystem: "assistant",
+			Name:      "model_call_wait_seconds",
+			Help:      "How long a model call waited between being scheduled and a worker starting it",
+			Buckets:   PhaseBuckets,
+		},
+	)
+
 	m.mustRegister(
+		m.prepare,
+		m.guard,
+		m.modelCallWait,
 		m.turnDuration,
 		m.firstEvent,
 		m.turnTotal,
@@ -127,6 +174,17 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 	)
 
 	return m
+}
+
+// AssistantFrom is the registry's assistant collector, or a disabled one when
+// there is no registry, which a test does and an install with metrics switched
+// off does too. Every method on the result is safe.
+func AssistantFrom(registry *Registry) *Assistant {
+	if registry == nil || registry.Assistant == nil {
+		return NewAssistant(nil, zap.NewNop(), false)
+	}
+
+	return registry.Assistant
 }
 
 // enabled is nil-safe on the receiver as well as the flag.
@@ -204,4 +262,31 @@ func (m *Assistant) RecordStreamAttach(result string) {
 	}
 
 	m.streamAttached.WithLabelValues(result).Inc()
+}
+
+// RecordPrepare files how long preparing a turn took.
+func (m *Assistant) RecordPrepare(outcome string, seconds float64) {
+	if !m.enabled() {
+		return
+	}
+
+	m.prepare.WithLabelValues(outcome).Observe(seconds)
+}
+
+// RecordGuard files how long the scope check took.
+func (m *Assistant) RecordGuard(stage string, seconds float64) {
+	if !m.enabled() {
+		return
+	}
+
+	m.guard.WithLabelValues(stage).Observe(seconds)
+}
+
+// RecordModelCallWait files how long a model call waited for a worker.
+func (m *Assistant) RecordModelCallWait(seconds float64) {
+	if !m.enabled() {
+		return
+	}
+
+	m.modelCallWait.Observe(seconds)
 }

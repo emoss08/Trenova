@@ -2,7 +2,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
-import { CheckCheckIcon, CheckIcon, ChevronDownIcon, ClockIcon, XIcon } from "lucide-react";
+import {
+  CheckDoubleIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -36,12 +42,12 @@ const STATUS_VARIANTS: Record<string, BadgeVariant> = {
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-  active: <CheckCheckIcon className="size-3" />,
-  inactive: <XIcon className="size-3" />,
+  active: <CheckDoubleIcon className="size-3" />,
+  inactive: <XCloseIcon className="size-3" />,
   draft: <ClockIcon className="size-3" />,
   pending: <ClockIcon className="size-3" />,
   completed: <CheckIcon className="size-3" />,
-  cancelled: <XIcon className="size-3" />,
+  cancelled: <XCloseIcon className="size-3" />,
   processing: <ClockIcon className="size-3" />,
   inreview: <ClockIcon className="size-3" />,
 };

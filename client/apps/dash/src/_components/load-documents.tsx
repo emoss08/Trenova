@@ -10,7 +10,12 @@ import {
 } from "@trenova/shared/lib/portal";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CameraIcon, FileTextIcon, PaperclipIcon, XIcon } from "lucide-react";
+import {
+  Camera01Icon,
+  File06Icon,
+  PaperclipIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
@@ -58,7 +63,7 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <FileTextIcon className="size-4 text-muted-foreground" />
+          <File06Icon className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold">{t("Documents")}</h2>
         </div>
         {!pendingFile && features.allowLoadDocumentUpload ? (
@@ -68,7 +73,7 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
             className="h-8"
             onClick={() => fileInputRef.current?.click()}
           >
-            <CameraIcon className="size-3.5" />
+            <Camera01Icon className="size-3.5" />
             {t("Add")}
           </Button>
         ) : null}
@@ -96,7 +101,7 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
                 setDocumentTypeId(null);
               }}
             >
-              <XIcon className="size-4" />
+              <XCloseIcon className="size-4" />
             </button>
           </div>
           <p className="text-xs text-muted-foreground">{formatFileSize(pendingFile.size)}</p>

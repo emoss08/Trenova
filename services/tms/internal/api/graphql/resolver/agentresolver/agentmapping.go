@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,6 +43,45 @@ func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscri
 	default:
 		return loaded.Transcript, nil
 	}
+}
+
+func reflectionSignals(reflection *agent.Reflection) []*agent.ReflectionSignal {
+	if reflection == nil {
+		return []*agent.ReflectionSignal{}
+	}
+
+	out := make([]*agent.ReflectionSignal, 0, len(reflection.Signals))
+	for idx := range reflection.Signals {
+		out = append(out, &reflection.Signals[idx])
+	}
+
+	return out
+}
+
+func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
+	l, ok := loaders.FromContext(ctx)
+	if !ok || !memory.Replaces() {
+		return nil, nil
+	}
+
+	loaded, err := l.AgentMemoryByID.Load(ctx, memory.SupersedesID.String())
+	switch {
+	case errortypes.IsNotFoundError(err):
+		return nil, nil
+	case err != nil:
+		return nil, err
+	default:
+		return loaded, nil
+	}
+}
+
+func replacingMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
+	l, ok := loaders.FromContext(ctx)
+	if !ok || memory == nil || memory.ID.IsNil() {
+		return nil, nil
+	}
+
+	return l.AgentMemoryReplacement.Load(ctx, memory.ID.String())
 }
 
 func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -104,6 +144,39 @@ func agentMemoryConnectionToModel(
 	}
 
 	return &gqlmodel.AgentMemoryConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
+func agentReflectionColumns(ctx context.Context, nodePathPrefix string) []string {
+	selection := projection.Select(
+		projection.AgentReflectionSpec,
+		func(path string) bool {
+			return graphql.FieldRequested(ctx, path)
+		},
+		projection.SelectOptions{PathPrefix: nodePathPrefix},
+	)
+
+	return selection.Columns
+}
+
+func agentReflectionConnectionToModel(
+	result *pagination.CursorListResult[*agent.Reflection],
+) (*gqlmodel.AgentReflectionConnection, error) {
+	page, err := base.EntityCursorConnection(
+		result,
+		func(node *agent.Reflection, cursor string) *gqlmodel.AgentReflectionEdge {
+			return &gqlmodel.AgentReflectionEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AgentReflectionEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AgentReflectionConnection{
 		Edges:      page.Edges,
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
@@ -251,4 +324,32 @@ func agentExceptionConnectionToModel(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+// settleApprovalRequest reads which approval an undo or a commit-now names:
+// a proposal or a plan, exactly one.
+func settleApprovalRequest(
+	proposalID, planID *string,
+	tenant pagination.TenantInfo,
+) (*services.SettleApprovalRequest, error) {
+	req := &services.SettleApprovalRequest{TenantInfo: tenant}
+	hasProposal := proposalID != nil && *proposalID != ""
+	hasPlan := planID != nil && *planID != ""
+	if hasProposal == hasPlan {
+		return nil, errortypes.NewValidationError(
+			"proposalId", errortypes.ErrInvalid, "Name a proposal or a plan, not both or neither",
+		)
+	}
+
+	var err error
+	if hasProposal {
+		req.ProposalID, err = pulid.MustParse(*proposalID)
+	} else {
+		req.PlanID, err = pulid.MustParse(*planID)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }

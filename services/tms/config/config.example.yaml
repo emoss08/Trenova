@@ -11,31 +11,16 @@ app:
   webBaseUrl: http://localhost:5173 # Origin of the web app (the Vite dev server in development, https://cloud.trenova.app in production), used for links in user emails such as invoice shares and for approving Trenova Capture computers. Leave empty and those emails are not sent and computers cannot be paired.
 
 platform:
-  mode: self_hosted # community/self_hosted/development/cloud/enterprise
+  mode: self_hosted # community/self_hosted/development/enterprise
   # Organization IDs allowed to change reference data every tenant shares (IFTA tax rates,
-  # jurisdiction rules). Required in cloud mode or with the control plane enabled, where no
-  # tenant may change it otherwise.
-  # Self-hosted installs may leave it empty: every organization there belongs to the operator.
+  # jurisdiction rules). Self-hosted installs may leave it empty: every organization there
+  # belongs to the operator. When it lists any organization, only those may change it.
   referenceDataStewards: []
-  instanceId: "" # Set from TRENOVA_INSTANCE_ID when control plane is enabled
-  controlPlane:
-    enabled: false
-    endpoint: "" # Example: http://localhost:8090
-    apiKey: "" # Set from TRENOVA_CONTROL_PLANE_API_KEY
-    timeout: 5s
-    heartbeatInterval: 5m
-    tenantSyncInterval: 1h
-    failOpenOnError: false # Development only
-    maxProvisioningBodyBytes: 1048576 # Max /control-plane/tenants/provision body (bytes); bounded before the HMAC check
-    # Per-operation GraphQL entitlement checks. disabled: no checks (default).
-    # observe: check and log denials without blocking, to size the blast radius before enforcing.
-    # enforce: deny unentitled or unmapped root fields with 403 FEATURE_NOT_ENTITLED.
-    graphqlAccessMode: disabled
-    # Legacy grants let a tenant provisioned before the workforce/settlement/driver-portal
-    # split keep reaching those surfaces through the feature key it already holds.
-    # Set to true once the control plane issues the new keys; until then the packs that
-    # own those features are reachable by any tenant holding tms.core.
-    disableLegacyGrants: false
+  instanceId: "" # Identifies this installation; set from TRENOVA_INSTANCE_ID
+  # The Trenova Cloud edition adds the cloud platform mode and its own sections
+  # (platform.cloud, platform.controlPlane, system.networkPulse and aiRetraining). They
+  # are not part of the self-hosted build, and the loader refuses them here because
+  # configuration is decoded strictly.
 
 # HTTP Server configuration
 server:
@@ -292,37 +277,16 @@ security:
     mode: envelope # envelope, disabled (tests only)
     keyManager: local # local for dev/test; production/staging must use gcp-autokey
     key: super-secret-key # Encryption key (min 32 chars)
+    # Lets a single-host production deploy run keyManager: local. The key must then be at
+    # least 32 characters and contain no placeholder text. Leave false wherever a cloud KMS
+    # is available.
+    allowLocalKeyManagerInProduction: false
     gcpKms:
       cryptoKey: "" # Full Cloud KMS crypto key name for production/staging
       credentialsMode: adc # adc, workload-identity, or credentials-file
       credentialsFile: ""
       timeout: 10s
       retryAttempts: 3
-
-# Scheduled retraining of the document extraction model. Every Monday at
-# 08:10 UTC the worker checks whether enough new corrections have been
-# confirmed by consenting organizations; when they have, it starts a training
-# export and records a retraining cycle. A GPU machine running
-# "trenova ai retraining run" on a timer trains, scores and records it.
-# See docs/engineering/extraction-fine-tuning.md, "Retrain on a schedule".
-aiRetraining:
-  enabled: false # The schedule starts nothing until this is true; "trenova ai retraining start" works either way
-  lookbackDays: 365 # Corrections captured this far back are exported for each retraining (30-1095)
-  minNewExamples: 1000 # Trainable corrections needed since the last retraining's window (each organization counts up to maxPerOrganization)
-  minIntervalDays: 28 # Least time between two retrainings (1-365)
-  retrainOnDrift: true # A provider drifting below its own recent weeks lifts the interval, not the minimum of new corrections
-  maxPerOrganization: 2000 # Most examples one organization contributes (1-20000)
-  validationPercent: 10 # Share held out to score the model (1-50)
-  structuredOutputMode: JSONSchema # How the served model will be asked for JSON: JSONSchema, JSONMode or Prompted
-  minAccuracyPercent: 85 # The model must read at least this share of validation fields correctly (0-100)
-  maxRegressionPoints: 0 # How far below production's accuracy on the same documents the model may score (0-100)
-  leaseDuration: 2h # How long a trainer holds a cycle between heartbeats before another may take it (10m-24h)
-  alerts: # A JSON POST when a cycle starts, becomes ready, trains, passes, is rejected, fails or is canceled
-    webhookUrl: "" # e.g. a Slack incoming webhook; must be https in production and staging
-    secret: "" # Optional Standard Webhooks signing secret, whsec_ + base64 (at least 24 bytes); pass as TRENOVA_AIRETRAINING_ALERTS_SECRET
-    includeSkipped: false # Also send the weekly "not enough new corrections" skips
-    allowPrivateNetwork: false # Allow a webhook on a private or loopback address, such as an internal relay
-    timeout: 10s # Per attempt; three attempts with 1s and 2s backoff (1s-1m)
 
 # AI audit trail. Each row is chained to the one before it with HMAC-SHA256
 # under a key kept outside the database, so an edit or a deleted row breaks the
@@ -381,6 +345,16 @@ renderer:
     maxAssetBudget: 4194304 # Total inlined image bytes per document (4 MiB)
     maxPdfBytes: 20971520 # Largest PDF accepted back from the renderer (20 MiB)
 
+# Reading uploaded PDFs: thumbnails, capture page inspection, and the text and
+# layout document intelligence extracts. PDFium runs in-process as WebAssembly,
+# so no native library is needed; every instance is sandboxed with its own
+# memory ceiling, and a render that outlives its caller's deadline is stopped.
+pdfReader:
+    maxInstances: 4 # Documents read at once per process; excess callers queue
+    memoryLimitMb: 1024 # Memory ceiling of one instance
+    acquireTimeout: 1m # Longest a caller waits for a free instance
+    maxRenderPixels: 25000000 # Pages larger than this render at a lower DPI
+
 # Driver portal (Dash) settings
 portal:
     # Absolute base URL of the app that serves Dash; used to build portal invitation
@@ -416,11 +390,3 @@ accounting:
   # and TRENOVA_XERO_WEBHOOK_KEY rather than this file.
   xero:
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/xero/callback
-
-system:
-  # Instance-wide figures on the sign-in screen, served without a session. Off by
-  # default: enabling it lets anyone who can load the login page read the shipment
-  # volume and service level of every organization on this instance.
-  networkPulse:
-    enabled: false
-    cacheTtl: 60s

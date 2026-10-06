@@ -1,26 +1,27 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
+import { PlanCapability } from "@/lib/plan-capability";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
-  BarChart3Icon,
+  BarChart07Icon,
   CalculatorIcon,
-  ContainerIcon,
-  FileSlidersIcon,
+  ClockStopwatchIcon,
+  File06Icon,
   FuelIcon,
   HandshakeIcon,
-  HomeIcon,
-  InboxIcon,
-  MessagesSquareIcon,
-  Package,
+  Home02Icon,
+  Inbox01Icon,
+  MessageChatSquareIcon,
+  PackageIcon,
   ReceiptTextIcon,
   RouteIcon,
-  ScanLineIcon,
-  SettingsIcon,
-  TimerIcon,
-  TruckIcon,
-  UsersIcon,
-  WalletIcon,
-} from "lucide-react";
+  ScanIcon,
+  Settings01Icon,
+  ShippingContainerIcon,
+  Truck01Icon,
+  Users01Icon,
+  Wallet02Icon,
+} from "@trenova/shared/components/icons";
 import type { ModuleId, NavigationConfig, NavModule } from "./navigation.types";
 
 interface AppModuleGroup {
@@ -32,7 +33,7 @@ interface AppModuleGroup {
 const homeModule: NavModule = {
   id: "home",
   label: "Home",
-  icon: HomeIcon,
+  icon: Home02Icon,
   description: "Your work, your numbers, and where to go next",
   basePath: "/",
   hideSecondarySidebar: true,
@@ -41,7 +42,7 @@ const homeModule: NavModule = {
 const deskModule: NavModule = {
   id: "desk",
   label: "Desk",
-  icon: MessagesSquareIcon,
+  icon: MessageChatSquareIcon,
   description:
     "Your conversations with the agents, what they produced, and what they ask you to decide",
   basePath: "/desk",
@@ -58,7 +59,7 @@ const deskModule: NavModule = {
 const inboxModule: NavModule = {
   id: "inbox",
   label: "Inbox",
-  icon: InboxIcon,
+  icon: Inbox01Icon,
   description: "Mail that arrived on a monitored address, and what was made of it",
   basePath: "/inbox",
   routePrefixes: ["/inbox"],
@@ -73,7 +74,7 @@ const inboxModule: NavModule = {
 const intakeModule: NavModule = {
   id: "intake",
   label: "Intake",
-  icon: ScanLineIcon,
+  icon: ScanIcon,
   description: "Scanned and printed paper, split into documents and waiting to be filed",
   basePath: "/intake",
   routePrefixes: ["/intake"],
@@ -86,7 +87,7 @@ const adminModule: NavModule = {
   id: "admin",
   label: "Organization settings",
   shortLabel: "Settings",
-  icon: SettingsIcon,
+  icon: Settings01Icon,
   description: "System administration",
   basePath: "/admin/organization-settings",
   routePrefixes: ["/admin", "/organization"],
@@ -99,7 +100,7 @@ const shipmentManagementModule: NavModule = {
   id: "shipment",
   label: "Shipment management",
   shortLabel: "Shipments",
-  icon: TruckIcon,
+  icon: Truck01Icon,
   description: "Shipments and related configuration",
   basePath: "#",
   routePrefixes: ["/shipment-management"],
@@ -108,7 +109,7 @@ const shipmentManagementModule: NavModule = {
       id: "shipments",
       label: "Shipments",
       path: "/shipment-management/shipments",
-      icon: Package,
+      icon: PackageIcon,
       resource: Resource.Shipment,
     },
     {
@@ -196,12 +197,14 @@ const dispatchModule: NavModule = {
       label: "Carrier monitoring",
       path: "/dispatch/carrier-monitoring",
       resource: Resource.CarrierIntelligence,
+      planCapability: PlanCapability.CarrierIntelligencePaid,
     },
     {
       id: "carrier-sourcing",
       label: "Carrier sourcing",
       path: "/dispatch/carrier-sourcing",
       resource: Resource.CarrierSourcing,
+      planCapability: PlanCapability.CarrierIntelligencePaid,
       capability: OrganizationCapability.Brokerage,
     },
     {
@@ -244,7 +247,7 @@ const humanResourcesModule: NavModule = {
   id: "hr",
   label: "Human resource management",
   shortLabel: "People",
-  icon: UsersIcon,
+  icon: Users01Icon,
   description: "Employee records, qualifications, time off, and performance",
   basePath: "/hr",
   capability: OrganizationCapability.AssetOperations,
@@ -383,7 +386,7 @@ const equipmentModule: NavModule = {
   id: "fleet",
   label: "Equipment management",
   shortLabel: "Equipment",
-  icon: ContainerIcon,
+  icon: ShippingContainerIcon,
   description: "Tractors, trailers, and equipment",
   basePath: "/equipment",
   navigation: [
@@ -602,7 +605,7 @@ const detentionModule: NavModule = {
   id: "detention",
   label: "Detention management",
   shortLabel: "Detention",
-  icon: TimerIcon,
+  icon: ClockStopwatchIcon,
   description: "Live dwell clocks, detention billing, and contract terms",
   basePath: "/detention",
   navigation: [
@@ -639,7 +642,7 @@ const payrollModule: NavModule = {
   id: "payroll",
   label: "Payroll & settlements",
   shortLabel: "Payroll",
-  icon: WalletIcon,
+  icon: Wallet02Icon,
   description: "Driver and owner-operator pay",
   basePath: "/payroll",
   capability: OrganizationCapability.AssetOperations,
@@ -771,10 +774,11 @@ const carrierSettlementsModule: NavModule = {
 const ediModule: NavModule = {
   id: "edi",
   label: "EDI",
-  icon: FileSlidersIcon,
+  icon: File06Icon,
   description: "Internal partner exchange and load tender workflow",
   basePath: "/edi/overview",
   routePrefixes: ["/edi"],
+  planCapability: PlanCapability.Integrations,
   navigation: [
     {
       id: "edi-overview",
@@ -1031,7 +1035,7 @@ const accountingModule: NavModule = {
 const reportsModule: NavModule = {
   id: "reports",
   label: "Reports",
-  icon: BarChart3Icon,
+  icon: BarChart07Icon,
   description: "Analytics and reporting",
   basePath: "/reports",
   routePrefixes: ["/reports", "/insights"],
@@ -1598,6 +1602,7 @@ export const adminLinks: SidebarLink[] = [
     group: "AI & Automation",
     resource: Resource.AgentControl,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.AgentAutomation,
   },
   {
     href: "/admin/document-intelligence",
@@ -1605,6 +1610,7 @@ export const adminLinks: SidebarLink[] = [
     group: "AI & Automation",
     resource: Resource.DocumentControl,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/admin/capture",
@@ -1612,6 +1618,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Document Management",
     resource: Resource.CaptureProfile,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/admin/document-parsing-rules",
@@ -1619,6 +1626,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Document Management",
     resource: Resource.DocumentParsingRule,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/admin/sequence-configs",
@@ -1739,6 +1747,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Email & SMS",
     resource: Resource.EmailLog,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.EmailOutbound,
   },
   {
     href: "/organization/email-profiles/",
@@ -1746,6 +1755,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Email & SMS",
     resource: Resource.EmailProfile,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.EmailOutbound,
   },
   {
     href: "#",
@@ -1787,6 +1797,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.Integration,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.Integrations,
   },
   {
     href: "/admin/inbound-mailboxes",
@@ -1801,6 +1812,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.APIKey,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.APIKeys,
   },
   {
     href: "/organization/pattern-config/",
@@ -1847,6 +1859,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Document Management",
     resource: Resource.DocumentOperation,
     requiredOperation: Operation.Read,
+    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/organization/document-templates/",

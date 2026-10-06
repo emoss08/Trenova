@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -201,9 +202,10 @@ func newOpenPageTool(guide serviceports.ProductGuide) serviceports.AgentQueryToo
 func (t *openPageTool) Name() string { return "open_page" }
 
 func (t *openPageTool) Description() string {
-	return "Take the person to a page or a record in Trenova, such as the shipments page or " +
-		"one customer: the app moves there as soon as you call it. Use it only when they " +
-		"ask to be taken, opened or shown somewhere. Pass a page's path from " +
+	return "Give the person a link to a page or a record in Trenova, such as the shipments " +
+		"page or one customer, to open if they choose; the app does not move on " +
+		"its own. Use it only when they ask to go to or open a page; to show them a record, " +
+		"fetch it with its get tool instead. Pass a page's path from " +
 		"find_in_trenova, or a record's entity and id from the tool that found it; action " +
 		"create opens the page's create form. It refuses a page they may not open."
 }
@@ -253,7 +255,9 @@ type NavigationResult struct {
 	Name     string `json:"name"`
 	Location string `json:"location"`
 	Page     string `json:"page"`
-	Note     string `json:"note"`
+	// Link is the page as a markdown link, ready to put in the reply.
+	Link string `json:"link"`
+	Note string `json:"note"`
 }
 
 func (t *openPageTool) Query(
@@ -281,7 +285,13 @@ func (t *openPageTool) Query(
 		Name:     destination.Label,
 		Location: destination.Page.Location(),
 		Page:     destination.Page.Path,
-		Note: "The app is moving there now. Say where you took them in one short sentence; " +
-			"do not repeat the link.",
+		Link:     "[" + markdownLinkText(destination.Label) + "](" + destination.Path + ")",
+		Note: "The app has not moved. Offer the page in one short sentence with the markdown " +
+			"link in link, so the person can open it if they want to; do not say you took them there.",
 	}, nil
+}
+
+// markdownLinkText is a name made safe to sit between a link's brackets.
+func markdownLinkText(name string) string {
+	return strings.NewReplacer("[", "", "]", "").Replace(strings.TrimSpace(name))
 }

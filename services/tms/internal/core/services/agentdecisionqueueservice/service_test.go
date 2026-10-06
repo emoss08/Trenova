@@ -20,9 +20,11 @@ import (
 type stubQueue struct {
 	repositories.AgentDecisionQueueRepository
 
-	page  *repositories.PendingDecisionsPage
-	count int
-	last  repositories.ListPendingDecisionsRequest
+	page       *repositories.PendingDecisionsPage
+	count      int
+	last       repositories.ListPendingDecisionsRequest
+	recent     []repositories.RecentDecisionEntry
+	lastRecent repositories.ListRecentDecisionsRequest
 }
 
 func (q *stubQueue) ListPending(
@@ -32,6 +34,15 @@ func (q *stubQueue) ListPending(
 	q.last = req
 
 	return q.page, nil
+}
+
+func (q *stubQueue) ListRecent(
+	_ context.Context,
+	req repositories.ListRecentDecisionsRequest,
+) ([]repositories.RecentDecisionEntry, error) {
+	q.lastRecent = req
+
+	return q.recent, nil
 }
 
 func (q *stubQueue) CountPending(
@@ -89,6 +100,10 @@ type stubDecider struct {
 	digests map[pulid.ID]string
 	fail    map[pulid.ID]error
 	execErr map[pulid.ID]error
+}
+
+func (d *stubDecider) Defers(agent.DecisionType) bool {
+	return false
 }
 
 func (d *stubDecider) DecideWithOutcome(
@@ -468,4 +483,41 @@ func TestDecideMany_RecordsTheNoteOnEveryProposal(t *testing.T) {
 		"These customers are on credit hold.",
 		"These customers are on credit hold.",
 	}, decider.notes)
+}
+
+func TestRecent_PairsEachDecisionWithItsProposalAndDropsTheGone(t *testing.T) {
+	t.Parallel()
+
+	kept := proposal("post_invoices")
+	gone := pulid.MustNew("ap_")
+	queue := &stubQueue{recent: []repositories.RecentDecisionEntry{
+		{DecisionID: pulid.MustNew("adec_"), ProposalID: kept.ID, Decision: "Accepted", DecidedByName: "Jordan Pike", DecidedAt: 50},
+		{DecisionID: pulid.MustNew("adec_"), ProposalID: gone, Decision: "Rejected", DecidedAt: 40},
+	}}
+	svc := &Service{
+		l:         zap.NewNop(),
+		queue:     queue,
+		proposals: &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{kept.ID: kept}},
+	}
+
+	recent, err := svc.Recent(t.Context(), services.ListRecentDecisionsRequest{Since: 10, First: 5})
+	require.NoError(t, err)
+	require.Len(t, recent, 1)
+	assert.Equal(t, kept, recent[0].Proposal)
+	assert.Equal(t, "Jordan Pike", recent[0].DecidedByName)
+	assert.EqualValues(t, 10, queue.lastRecent.Since)
+	assert.Equal(t, 5, queue.lastRecent.Limit)
+}
+
+func TestRecent_IsEmptyForSomeoneWhoCannotUseTheAssistant(t *testing.T) {
+	t.Parallel()
+
+	queue := &stubQueue{}
+	svc := &Service{l: zap.NewNop(), queue: queue}
+
+	recent, err := svc.Recent(t.Context(), services.ListRecentDecisionsRequest{
+		Usable: &services.UsableAgents{},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, recent)
 }

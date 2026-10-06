@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const billingTransferCandidateSQL = `sp\.status IN \('Completed', 'ReadyToInvoice'\)\) AND \(COALESCE\(sp\.billing_transfer_status, ''\) IN \('', 'SentBackToOps'\)`
+const billingTransferCandidateSQL = `sp\.status IN \('Completed', 'ReadyToInvoice'\) AND COALESCE\(sp\.billing_transfer_status, ''\) IN \('', 'SentBackToOps'\)`
 
 func TestApplyShipmentOptionFilters_BillingTransferEligibleKeepsQueuedShipmentsOut(t *testing.T) {
 	t.Parallel()
@@ -56,7 +56,7 @@ func TestListBillingTransferCandidateIDs_ReturnsOldestFirstUpToTheLimit(t *testi
 
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipments" AS "sp".*` + billingTransferCandidateSQL + `.*sp\.status = 'Completed'`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(7))
-	mock.ExpectQuery(`SELECT "sp"\."id" FROM "shipments" AS "sp".*` + billingTransferCandidateSQL + `.*sp\.status = 'Completed'.*ORDER BY "sp"\."created_at" ASC, "sp"\."id" ASC LIMIT 2`).
+	mock.ExpectQuery(`SELECT candidate\.id FROM \(SELECT .* FROM "shipments" AS "sp".*` + billingTransferCandidateSQL + `.*sp\.status = 'Completed'.*\) AS "candidate" ORDER BY "candidate"\."created_at" ASC, "candidate"\."id" ASC LIMIT 2`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(first).AddRow(second))
 
 	result, err := repo.ListBillingTransferCandidateIDs(
@@ -73,6 +73,37 @@ func TestListBillingTransferCandidateIDs_ReturnsOldestFirstUpToTheLimit(t *testi
 	require.NoError(t, err)
 	assert.Equal(t, 7, result.TotalCount)
 	assert.Equal(t, []pulid.ID{first, second}, result.IDs)
+}
+
+func TestListBillingTransferCandidateIDs_SelectsOnlyIDsWhenSearching(t *testing.T) {
+	t.Parallel()
+
+	repo, mock := newShipmentListTestRepository(t)
+	matched := pulid.MustNew("shp_")
+
+	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipments" AS "sp".*sp\.search_vector @@`).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	mock.ExpectQuery(`SELECT candidate\.id FROM \(SELECT sp\.\*, ts_rank\(.*\) AS rank FROM "shipments" AS "sp".*sp\.search_vector @@.*\) AS "candidate" ORDER BY "candidate"\."created_at" ASC, "candidate"\."id" ASC LIMIT 50`).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(matched))
+
+	result, err := repo.ListBillingTransferCandidateIDs(
+		t.Context(),
+		&repositories.ListBillingTransferCandidateIDsRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: pulid.MustNew("org_"),
+					BuID:  pulid.MustNew("bu_"),
+				},
+				Query: "BOL-2026-0202",
+			},
+			Limit: 50,
+		},
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.TotalCount)
+	assert.Equal(t, []pulid.ID{matched}, result.IDs)
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestListBillingTransferCandidateIDs_SkipsTheIDQueryWhenNothingMatches(t *testing.T) {

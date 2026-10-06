@@ -290,3 +290,103 @@ func TestSetMailboxSigningSecret_SealsASecretInTheMailboxesScheme(t *testing.T) 
 	assert.Equal(t, sealedPrefix+"whsec_bmV3LWtleQ==", updated.SigningSecret)
 	assert.False(t, strings.Contains(updated.TokenHash, "whsec_"))
 }
+
+// Resend's webhook carries no body or files, so a Resend mailbox reads them
+// with its own key. The key is stored sealed, like the signing secret.
+func TestCreateMailbox_SealsTheAPIKeyItIsGiven(t *testing.T) {
+	t.Parallel()
+
+	repo := &adminMailboxRepo{}
+	_, err := adminService(repo).CreateMailbox(t.Context(), CreateMailboxRequest{
+		Actor:          adminActor(pulid.MustNew("org_"), pulid.MustNew("bu_")),
+		Settings:       resendSettings(),
+		SigningSecret:  resendSecret,
+		ProviderAPIKey: "  re_full_access_key  ",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, sealedPrefix+"re_full_access_key", repo.stored.ProviderAPIKey)
+}
+
+func TestCreateMailbox_RefusesAnAPIKeyTheProviderDoesNotIssue(t *testing.T) {
+	t.Parallel()
+
+	postmark := resendSettings()
+	postmark.Provider = inboundmessage.ProviderPostmark
+
+	tests := map[string]struct {
+		settings MailboxSettings
+		key      string
+	}{
+		"not a resend key":          {settings: resendSettings(), key: "whsec_bmV3LWtleQ=="},
+		"only the prefix":           {settings: resendSettings(), key: "re_"},
+		"spaces inside the key":     {settings: resendSettings(), key: "re_abc def"},
+		"postmark needs no api key": {settings: postmark, key: "re_full_access_key"},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &adminMailboxRepo{}
+			_, err := adminService(repo).CreateMailbox(t.Context(), CreateMailboxRequest{
+				Actor:          adminActor(pulid.MustNew("org_"), pulid.MustNew("bu_")),
+				Settings:       tt.settings,
+				ProviderAPIKey: tt.key,
+			})
+
+			var validation *errortypes.Error
+			require.ErrorAs(t, err, &validation)
+			assert.Equal(t, "apiKey", validation.Field)
+			assert.Nil(t, repo.stored, "nothing is created with a key that would never work")
+		})
+	}
+}
+
+func TestSetMailboxAPIKey_SealsAResendKey(t *testing.T) {
+	t.Parallel()
+
+	repo, actor := seededAdminMailbox(t)
+	svc := adminService(repo)
+
+	_, err := svc.SetMailboxAPIKey(t.Context(), SetMailboxAPIKeyRequest{
+		Actor: actor, ID: repo.stored.ID, APIKey: "not-a-key",
+	})
+	require.Error(t, err)
+
+	updated, err := svc.SetMailboxAPIKey(t.Context(), SetMailboxAPIKeyRequest{
+		Actor: actor, ID: repo.stored.ID, APIKey: " re_new_key ",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, sealedPrefix+"re_new_key", updated.ProviderAPIKey)
+	assert.Equal(t, sealedPrefix+resendSecret, updated.SigningSecret, "the secret is untouched")
+}
+
+func TestSetMailboxAPIKey_CannotReachAnotherTenantsMailbox(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := seededAdminMailbox(t)
+
+	_, err := adminService(repo).SetMailboxAPIKey(t.Context(), SetMailboxAPIKeyRequest{
+		Actor:  adminActor(pulid.MustNew("org_"), pulid.MustNew("bu_")),
+		ID:     repo.stored.ID,
+		APIKey: "re_new_key",
+	})
+	require.Error(t, err)
+	assert.Empty(t, repo.updates)
+}
+
+// A Resend key is meaningless to Postmark, and keeping it would keep a live
+// credential nothing reads.
+func TestUpdateMailbox_ClearsTheAPIKeyWhenTheProviderChanges(t *testing.T) {
+	t.Parallel()
+
+	repo, actor := seededAdminMailbox(t)
+	repo.stored.ProviderAPIKey = sealedPrefix + "re_old_key"
+	settings := resendSettings()
+	settings.Provider = inboundmessage.ProviderPostmark
+
+	updated, err := adminService(repo).UpdateMailbox(t.Context(), UpdateMailboxRequest{
+		Actor: actor, ID: repo.stored.ID, Version: 3, Settings: settings,
+	})
+	require.NoError(t, err)
+	assert.Empty(t, updated.ProviderAPIKey)
+}

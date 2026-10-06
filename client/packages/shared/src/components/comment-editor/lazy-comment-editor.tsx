@@ -1,12 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
-  BoldIcon,
-  ItalicIcon,
-  LinkIcon,
+  Bold01Icon,
+  Italic01Icon,
+  Link01Icon,
   ListIcon,
   ListOrderedIcon,
-  UnderlineIcon,
-} from "lucide-react";
+  Underline01Icon,
+} from "@trenova/shared/components/icons";
 import { lazy, Suspense, useCallback, useState } from "react";
 import { Button } from "../ui/button";
 import { cn } from "../../lib/utils";
@@ -27,7 +27,14 @@ export function preloadCommentEditor(): Promise<unknown> {
   return preloadPromise;
 }
 
-const TOOLBAR_ICONS = [BoldIcon, ItalicIcon, UnderlineIcon, ListIcon, ListOrderedIcon, LinkIcon];
+const TOOLBAR_ICONS = [
+  Bold01Icon,
+  Italic01Icon,
+  Underline01Icon,
+  ListIcon,
+  ListOrderedIcon,
+  Link01Icon,
+];
 
 /**
  * Non-interactive stand-in for {@link CommentEditor}. It reproduces the real

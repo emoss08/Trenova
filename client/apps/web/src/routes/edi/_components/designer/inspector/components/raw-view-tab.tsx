@@ -6,7 +6,7 @@ import { downloadTextFile } from "@trenova/shared/lib/utils";
 import type { EDIX12Inspection } from "@trenova/shared/types/edi";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
-import { CopyIcon, DownloadIcon } from "lucide-react";
+import { Copy01Icon, Download01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import type { useEditorTheme } from "../../components/designer-shared";
 import type { InspectorContext } from "../inspector-context";
@@ -50,7 +50,7 @@ export default function RawViewTab({
             variant="outline"
             onClick={() => void copy(context.rawX12, { withToast: true })}
           >
-            <CopyIcon className="size-4" />
+            <Copy01Icon className="size-4" />
             {t("Copy raw")}
           </Button>
           <Button
@@ -58,7 +58,7 @@ export default function RawViewTab({
             variant="outline"
             onClick={() => downloadTextFile(context.rawFilename, context.rawX12, "text/plain")}
           >
-            <DownloadIcon className="size-4" />
+            <Download01Icon className="size-4" />
             {t("Download")}
           </Button>
         </div>

@@ -1075,7 +1075,6 @@ func newIntegrationShipmentServiceWith(
 	})
 
 	audit := &mocks.NoopAuditService{}
-	realtime := &mocks.NoopRealtimeService{}
 	commercial := newTestCommercialCalculator(t, formulaSvc, accessorialRepo)
 
 	params := Params{
@@ -1092,7 +1091,6 @@ func newIntegrationShipmentServiceWith(
 		EventService:    noopShipmentEventService{},
 		Coordinator:     newStateCoordinator(),
 		Commercial:      commercial,
-		Realtime:        realtime,
 	}
 	if override != nil {
 		override(&params)

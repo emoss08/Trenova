@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -90,6 +91,47 @@ func (a *Activities) SettleInboundMessageActivity(
 	}, nil
 }
 
+// FetchInboundContentActivity reads a message's body, headers and attachments
+// from a provider whose webhook carried only its metadata.
+//
+// A provider that could not answer is retried until the last attempt. A
+// rejection, or an outage that outlasts the attempts, is recorded on the
+// message and reported as unreadable rather than as an error, so the message
+// is with a person saying exactly why instead of failing with a generic note.
+func (a *Activities) FetchInboundContentActivity(
+	ctx context.Context,
+	payload *ProcessInboundMessagePayload,
+) (*FetchInboundContentResult, error) {
+	tenantInfo := tenantOf(payload.BasePayload)
+
+	err := a.inbound.FetchContent(ctx, payload.MessageID, tenantInfo)
+	if err == nil {
+		return &FetchInboundContentResult{Readable: true}, nil
+	}
+
+	rejected := errors.Is(err, services.ErrInboundContentRejected)
+	unavailable := errors.Is(err, services.ErrInboundContentUnavailable)
+	if !rejected && !unavailable {
+		return nil, err
+	}
+	if unavailable && !modelcall.FinalAttempt(ctx, fetchAttempts) {
+		a.l.Warn("inbound message content is unavailable; retrying",
+			zap.String("messageId", payload.MessageID.String()), zap.Error(err))
+
+		return nil, err
+	}
+
+	a.l.Warn("inbound message content could not be read",
+		zap.String("messageId", payload.MessageID.String()), zap.Error(err))
+	if markErr := a.inbound.MarkContentUnavailable(
+		ctx, payload.MessageID, tenantInfo, inboundmessageservice.ContentFailureText(err),
+	); markErr != nil {
+		return nil, markErr
+	}
+
+	return &FetchInboundContentResult{Readable: false}, nil
+}
+
 // FailInboundMessageActivity records that the pipeline gave up.
 //
 // A message left mid-pipeline is worse than one that failed visibly: it looks
@@ -98,6 +140,15 @@ func (a *Activities) FailInboundMessageActivity(
 	ctx context.Context,
 	payload *FailInboundMessagePayload,
 ) error {
+	if payload.Code == inboundmessageservice.ContentUnavailableCode {
+		return a.inbound.MarkContentUnavailable(
+			ctx,
+			payload.MessageID,
+			tenantOf(payload.BasePayload),
+			payload.Reason,
+		)
+	}
+
 	return a.inbound.MarkFailed(
 		ctx,
 		payload.MessageID,

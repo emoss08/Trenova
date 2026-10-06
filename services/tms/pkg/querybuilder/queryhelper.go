@@ -49,11 +49,31 @@ func ApplyFiltersWithConfig[T domaintypes.PostgresSearchable](
 	return applyFilterPipeline(qb, fieldConfig, filter)
 }
 
-func applyFilterPipeline(
+func ApplyFilterPredicates[T domaintypes.PostgresSearchable](
+	query *bun.SelectQuery,
+	tableAlias string,
+	filter *pagination.QueryOptions,
+	entity T,
+) *bun.SelectQuery {
+	fieldConfig := GetFieldConfiguration(entity)
+
+	qb := NewWithPostgresSearch(query, tableAlias, fieldConfig, entity).WithPredicatesOnly()
+	qb.WithTraversalSupport(true)
+	qb.ApplyTenantFilters(filter.TenantInfo)
+
+	applyPredicates(qb, fieldConfig, filter)
+	if filter.Query != "" {
+		qb.ApplyTextSearchFilter(filter.Query, ExtractSearchFields(fieldConfig))
+	}
+
+	return qb.GetQuery()
+}
+
+func applyPredicates(
 	qb *QueryBuilder,
 	fieldConfig *domaintypes.FieldConfiguration,
 	filter *pagination.QueryOptions,
-) *bun.SelectQuery {
+) {
 	if len(filter.FieldFilters) > 0 {
 		qb.ApplyFilters(filter.FieldFilters)
 	}
@@ -69,6 +89,14 @@ func applyFilterPipeline(
 	if len(filter.AggregateFilters) > 0 {
 		qb.ApplyAggregateFilters(filter.AggregateFilters)
 	}
+}
+
+func applyFilterPipeline(
+	qb *QueryBuilder,
+	fieldConfig *domaintypes.FieldConfiguration,
+	filter *pagination.QueryOptions,
+) *bun.SelectQuery {
+	applyPredicates(qb, fieldConfig, filter)
 
 	if filter.Query != "" {
 		searchFields := ExtractSearchFields(fieldConfig)

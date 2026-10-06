@@ -217,7 +217,7 @@ func (r *MutationResolver) LinkInboundMessage(ctx context.Context, id string, in
 	return r.InboundMessageService.Link(ctx, req)
 }
 
-func (r *MutationResolver) CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string) (*inboundmessageservice.MailboxCredentials, error) {
+func (r *MutationResolver) CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmessageservice.MailboxCredentials, error) {
 	authCtx, err := r.RequirePermission(
 		ctx, permission.ResourceInboundMailbox, permission.OpCreate,
 	)
@@ -226,9 +226,10 @@ func (r *MutationResolver) CreateInboundMailbox(ctx context.Context, input gqlmo
 	}
 
 	return r.InboundMessageService.CreateMailbox(ctx, inboundmessageservice.CreateMailboxRequest{
-		Actor:         actorutil.FromAuthContext(authCtx),
-		Settings:      mailboxSettings(input),
-		SigningSecret: stringutils.FromPtr(signingSecret),
+		Actor:          actorutil.FromAuthContext(authCtx),
+		Settings:       mailboxSettings(input),
+		SigningSecret:  stringutils.FromPtr(signingSecret),
+		ProviderAPIKey: stringutils.FromPtr(apiKey),
 	})
 }
 
@@ -401,4 +402,28 @@ func (r *QueryResolver) InboundMailboxes(ctx context.Context) ([]*inboundmessage
 	}
 
 	return result.Items, nil
+}
+
+func (r *InboundMailboxResolver) HasAPIKey(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error) {
+	return obj.ProviderAPIKey != "", nil
+}
+
+func (r *MutationResolver) SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMailbox, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mailboxID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.SetMailboxAPIKey(ctx, inboundmessageservice.SetMailboxAPIKeyRequest{
+		Actor:  actorutil.FromAuthContext(authCtx),
+		ID:     mailboxID,
+		APIKey: apiKey,
+	})
 }

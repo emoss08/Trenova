@@ -58,7 +58,56 @@ export const contextProviderSchema = z.enum([
 
 export const messageRoleSchema = z.enum(["User", "Assistant", "Tool"]);
 
-export const messageKindSchema = z.enum(["Message", "DecisionNote", "Delegated"]);
+export const messageKindSchema = z.enum([
+  "Message",
+  "DecisionNote",
+  "Delegated",
+  "Schedule",
+  "Compaction",
+  "Handoff",
+  "HandoffBrief",
+]);
+
+/**
+ * How full a conversation's context window is, in estimated tokens by part,
+ * measured when its last turn or compaction ended.
+ */
+export const contextUsageSchema = z.object({
+  /** The agent's instructions, pinned facts, memories and tool definitions. */
+  instructions: z.number().default(0),
+  /** What was said, and the summary of any compacted stretch. */
+  messages: z.number().default(0),
+  toolResults: z.number().default(0),
+  /** The text of attached files, read through the document tools. */
+  files: z.number().default(0),
+  /** How much a compaction would summarize: everything before the latest two turns. */
+  compactable: z.number().default(0),
+  /** The model's context window. */
+  window: z.number().default(0),
+  model: z.string().optional().default(""),
+  measuredAt: z.number().default(0),
+});
+
+export type ContextUsage = z.infer<typeof contextUsageSchema>;
+
+/** On a compaction summary: what it stands in for. */
+export const compactionRecordSchema = z.object({
+  /** The conversation compacted itself on nearing a full context. */
+  auto: z.boolean().default(false),
+  /** How many earlier messages the summary replaces. */
+  summarized: z.number().default(0),
+  through: z.number().default(0),
+  /** Context use, in tokens, before and after. */
+  before: z.number().default(0),
+  after: z.number().default(0),
+  /** What stayed in full: "recent" for the latest turns, "approvals" for decisions still waiting. */
+  kept: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export type CompactionRecord = z.infer<typeof compactionRecordSchema>;
 
 export const threadStatusSchema = z.enum(["Active", "Archived"]);
 
@@ -107,6 +156,22 @@ export const artifactKindSchema = z.enum([
   "navigation",
   "draft_edit",
   "decision_request",
+  "extraction",
+]);
+
+/**
+ * The views of what a lookup returned: a table, a record card, a report
+ * preview. The server keeps one only when the reply points to it, so the
+ * Desk shows them where the reply names them rather than opening the
+ * workspace on them while the reply is still being written.
+ */
+export const LOOKUP_ARTIFACT_KINDS: ReadonlySet<string> = new Set([
+  "table_view",
+  "entity_card",
+  "report_preview",
+  "rate_explanation",
+  "run_diff",
+  "extraction",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);
@@ -228,6 +293,8 @@ export const agentDefinitionSchema = z.object({
   simulationMode: z.boolean().default(false),
   /** Tokens of recorded memory one prompt may carry; absent for the default. */
   memoryTokenBudget: z.number().int().nullish(),
+  /** The agent no longer looks back over its work to keep what it learned. */
+  learningOff: z.boolean().default(false),
   contextProviders: nullableList(contextProviderSchema),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
@@ -404,6 +471,8 @@ export const saveAgentDefinitionRequestSchema = z.object({
     )
     .nullable()
     .default(null),
+  /** The agent no longer looks back over its work to keep what it learned. */
+  learningOff: z.boolean().default(false),
   contextProviders: z.array(contextProviderSchema).default([]),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
@@ -422,11 +491,20 @@ export const saveAgentDefinitionRequestSchema = z.object({
   version: z.number().default(0),
 });
 
+/** Why the agent took a step, in its own words: what it saw, why, and what it passed over. */
+export const stepRationaleSchema = z.object({
+  saw: z.string().optional().default(""),
+  because: z.string().optional().default(""),
+  insteadOf: z.string().optional().default(""),
+});
+export type StepRationale = z.infer<typeof stepRationaleSchema>;
+
 export const toolCallRecordSchema = z.object({
   id: z.string(),
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()).nullish(),
   effect: optionalToolEffect,
+  why: stepRationaleSchema.nullish(),
 });
 
 /** One filter as a table carries it, in the shape the list tools take. */
@@ -476,6 +554,81 @@ export const pageContextSchema = z.object({
   draft: pageDraftSchema.nullish().catch(null),
 });
 
+/** The kinds of record the composer's @ search can be narrowed to. */
+export const mentionSearchTypes = [
+  "all",
+  "shipment",
+  "customer",
+  "invoice",
+  "worker",
+  "carrier",
+] as const;
+export type MentionSearchType = (typeof mentionSearchTypes)[number];
+
+/** A record the @ search offers. */
+export const mentionCandidateSchema = z.object({
+  type: z.string(),
+  id: z.string(),
+  label: z.string(),
+  subtitle: z.string().optional().default(""),
+});
+
+export const mentionCandidateListSchema = z.object({
+  results: z.array(mentionCandidateSchema).default([]),
+});
+
+export type MentionCandidateRecord = z.infer<typeof mentionCandidateSchema>;
+
+/** Where a conversation's agent and its asker stand against their usage caps. */
+export const threadBudgetSchema = z.object({
+  agentName: z.string().optional().default(""),
+  spentUsd: z.string().optional().default(""),
+  limitUsd: z.string().optional().default(""),
+  share: z.number().optional().default(0),
+  near: z.boolean().optional().default(false),
+  monthStart: z.number().optional().default(0),
+  resetsAt: z.number().optional().default(0),
+  runsToday: z.number().optional().default(0),
+  dailyRunLimit: z.number().optional().default(0),
+  budgetUsed: z.boolean().optional().default(false),
+  dailyUsed: z.boolean().optional().default(false),
+  dayResetsAt: z.number().optional().default(0),
+  /** Who turned the agent off, and when; empty while it is on. */
+  disabledBy: z.string().optional().default(""),
+  disabledAt: z.number().optional().default(0),
+  person: z
+    .object({ used: z.number(), limit: z.number(), resetsAt: z.number() })
+    .nullable()
+    .optional()
+    .default(null),
+});
+
+export type ThreadBudget = z.infer<typeof threadBudgetSchema>;
+
+/** What the Desk's search palette looks through. */
+export const deskSearchKinds = ["all", "chat", "msg", "art", "dec"] as const;
+export type DeskSearchKind = (typeof deskSearchKinds)[number];
+
+/** One conversation, message, artifact or decision the search palette found. */
+export const deskSearchResultSchema = z.object({
+  kind: z.enum(["chat", "msg", "art", "dec"]),
+  id: z.string(),
+  threadId: z.string(),
+  agentId: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+  threadTitle: z.string().optional().default(""),
+  /** On an artifact result: what kind it is; absent when the server names one this client does not know. */
+  artifactKind: artifactKindSchema.optional().catch(undefined),
+  status: z.string().optional().default(""),
+  at: z.number().optional().default(0),
+});
+
+export const deskSearchResultListSchema = z.object({
+  results: z.array(deskSearchResultSchema).default([]),
+});
+
+export type DeskSearchResult = z.infer<typeof deskSearchResultSchema>;
+
 /** A record the person named from the composer; mirrors the server's EntityRef. */
 export const entityRefSchema = z.object({
   type: z.string(),
@@ -489,6 +642,7 @@ export const messageAttachmentSchema = z.object({
   fileName: z.string(),
   contentType: z.string().optional(),
   fileSize: z.number().optional(),
+  poorlyRead: z.boolean().optional(),
 });
 
 /**
@@ -532,6 +686,18 @@ export const toolExecutionResultSchema = z.object({
   name: z.string().optional().default(""),
   ids: z.preprocess((value) => value ?? {}, z.record(z.string(), z.string())),
   record: recordRefSchema.nullish().catch(null),
+  /** On a write over many records: how many it was asked to change. */
+  total: z.number().optional(),
+  /** On a write over many records: each one that did not go through, and why. */
+  failed: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string().optional().default(""),
+        reason: z.string().optional().default(""),
+      }),
+    )
+    .nullish(),
 });
 
 /** One write the other agent made or proposed on the task. */
@@ -579,6 +745,114 @@ export const assistantDelegateFinishedEventSchema = z.object({
   morePublished: z.number().int().nonnegative().optional().default(0),
 });
 
+/** One model a failed reply was asked of, and what happened. */
+export const failedProviderSchema = z.object({
+  name: z.string().optional().default(""),
+  model: z.string().optional().default(""),
+  vendor: z.string().optional().default(""),
+  /** Overloaded, Timed out, Unavailable, Failed, or Not set up. */
+  status: z.string().optional().default(""),
+  detail: z.string().optional().default(""),
+});
+
+export type FailedProvider = z.infer<typeof failedProviderSchema>;
+
+/** Why a saved reply did not finish. */
+export const replyFailureSchema = z.object({
+  kind: z.enum(["no_model", "interrupted", "stopped", "before_start"]).catch("before_start"),
+  providers: z
+    .array(failedProviderSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export type ReplyFailure = z.infer<typeof replyFailureSchema>;
+
+/** The model a reply was asked of first, when another one answered. */
+export const providerFallbackSchema = z.object({
+  providerId: z.string().optional().default(""),
+  name: z.string().optional().default(""),
+  model: z.string().optional().default(""),
+  status: z.string().optional().default(""),
+});
+
+/** Another memory a note points to, as it reads now. */
+export const memoryNoteLinkSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  status: z.string(),
+});
+
+/**
+ * A memory a reply used or saved, as the person reading the conversation may
+ * see it. Scope is Organization, User (just them) or Role (their team).
+ */
+export const memoryNoteSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  /** Instruction, Fact, Correction or Procedure. */
+  kind: z.string().optional().default(""),
+  scope: z.string(),
+  roleId: z.string().nullish(),
+  roleName: z.string().nullish(),
+  /** Active, Paused, Retired once forgotten, Suggested while an offer waits, Dismissed once turned down. */
+  status: z.string(),
+  /** User, Agent, Decision, Feedback or Reflection: how it was recorded. */
+  source: z.string().optional().default(""),
+  sourceTitle: z.string().nullish(),
+  createdAt: z.number(),
+  version: z.number(),
+  /** The reader may change, pause and forget it. */
+  editable: z.boolean().default(false),
+  /** Why it was kept, in the words of the agent that kept it. */
+  reason: z.string().nullish(),
+  /** The memory it replaced, when the reader can see it. */
+  replaces: memoryNoteLinkSchema.nullish().catch(null),
+  /** The newest memory that replaced it, when the reader can see it. */
+  replacedBy: memoryNoteLinkSchema.nullish().catch(null),
+});
+
+/** A memory the turn kept through remember, or offered to keep when the person asked to be asked. */
+export const savedMemorySchema = z.object({
+  id: z.string(),
+  callId: z.string().optional().default(""),
+  pending: z.boolean().default(false),
+});
+
+/** A pinned artifact a hand-off carried: the copy in the new conversation and its source. */
+export const handoffArtifactSchema = z.object({
+  id: z.string(),
+  sourceId: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+  kind: z.string().optional().default(""),
+});
+
+/**
+ * A conversation a person took to another agent, and what went with it. Set
+ * on the Handoff card left where it was handed off and on the HandoffBrief
+ * that opens the new conversation.
+ */
+export const handoffSchema = z.object({
+  fromThreadId: z.string(),
+  toThreadId: z.string(),
+  fromAgentId: z.string().optional().default(""),
+  fromAgentName: z.string().optional().default(""),
+  toAgentId: z.string().optional().default(""),
+  toAgentName: z.string().optional().default(""),
+  summary: z.string().optional().default(""),
+  facts: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  artifacts: z
+    .array(handoffArtifactSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  at: z.number().optional().default(0),
+});
+
+export type AssistantHandoff = z.infer<typeof handoffSchema>;
+
 export const assistantMessageSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -588,9 +862,12 @@ export const assistantMessageSchema = z.object({
    * Message for what a person or the model wrote; DecisionNote for the input
    * of the turn that follows a decision, which the thread shows as a note;
    * Delegated for a step another agent took on a task this conversation's
-   * agent handed it, which the thread shows under the call that handed it.
+   * agent handed it, which the thread shows under the call that handed it;
+   * Schedule for a request the person scheduled, drawn as its schedule card.
    */
   kind: messageKindSchema.catch("Message").default("Message"),
+  /** On a Schedule message: the schedule it made, which may since be deleted. */
+  scheduleId: z.string().nullish(),
   /** On a Delegated message: the agent that took the step. */
   agentId: z.string().nullish(),
   /** On a Delegated message: the delegate_task call it answers. */
@@ -609,7 +886,11 @@ export const assistantMessageSchema = z.object({
    * before it was kept, whose account is read back out of `content`.
    */
   delegateReport: assistantDelegateFinishedEventSchema.nullish().catch(null),
+  /** On a Handoff or HandoffBrief message: what the hand-off carried. */
+  handoff: handoffSchema.nullish().catch(null),
   content: z.string().optional().default(""),
+  /** On a Compaction message: what the summary stands in for. */
+  compaction: compactionRecordSchema.nullish().catch(null),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
   toolCallId: z.string().optional().default(""),
   toolName: z.string().optional().default(""),
@@ -632,14 +913,36 @@ export const assistantMessageSchema = z.object({
   attachments: z.array(messageAttachmentSchema).nullish(),
   mentions: z.array(entityRefSchema).nullish(),
   model: z.string().optional().default(""),
+  /** The model that wrote the reply. */
+  providerId: z.string().nullish(),
+  /** The reply broke off partway; what arrived is kept. */
+  truncated: z.boolean().optional(),
+  /** Another model answered because this one did not. */
+  fallbackFrom: providerFallbackSchema.nullish().catch(null),
+  /** Set on a reply that is only a closing note: why it did not finish. */
+  failure: replyFailureSchema.nullish().catch(null),
   inputTokens: z.number().default(0),
   outputTokens: z.number().default(0),
   reasoning: reasoningTraceSchema.nullish(),
   /** How long the model took, and what the turn cost where the provider is priced. */
   latencyMs: z.number().nullish(),
   costUsd: z.union([z.string(), z.number()]).nullish(),
+  /** On a turn's last reply: the memories the turn used, in the order it used them. */
+  usedMemoryIds: z.array(z.string()).nullish().catch(null),
+  /** On a turn's last reply: what the turn kept, or offered to keep. */
+  savedMemories: z.array(savedMemorySchema).nullish().catch(null),
+  /** Each of those memories as the reader may see them; one moved out of reach is left out. */
+  memories: z.array(memoryNoteSchema).nullish().catch(null),
   createdAt: z.number(),
 });
+
+export const threadAttentionSchema = z.object({
+  pendingDecisions: z.number().default(0),
+  lastTurnFailed: z.boolean().default(false),
+  unread: z.boolean().default(false),
+});
+
+export type ThreadAttention = z.infer<typeof threadAttentionSchema>;
 
 export const assistantThreadSchema = z.object({
   id: z.string(),
@@ -650,10 +953,19 @@ export const assistantThreadSchema = z.object({
   title: z.string().optional().default(""),
   status: threadStatusSchema,
   lastMessageAt: z.number().default(0),
+  /** When the owner last looked at the conversation. */
+  lastReadAt: z.number().optional(),
+  /** What the conversation is waiting on; only the thread list carries it. */
+  attention: threadAttentionSchema.optional(),
   /** The model this conversation is set to. Empty means the org's own order. */
   preferredProviderId: optionalIdSchema,
   origin: threadOriginSchema.default("Panel"),
   pinned: z.boolean().default(false),
+  /**
+   * What the person pinned for the agents to keep in mind for the whole
+   * conversation, in the order they pinned them.
+   */
+  pinnedFacts: z.array(z.string()).nullish(),
   /** The record the conversation was opened from, when it was. */
   subjectType: z.string().optional().default(""),
   subjectId: optionalIdSchema,
@@ -674,6 +986,13 @@ export const assistantThreadSchema = z.object({
    * agent proposes waits for a person.
    */
   taintedAt: z.number().nullish(),
+  /** How full the context was after the last turn or compaction; absent before the first. */
+  contextUsage: contextUsageSchema.nullish().catch(null),
+  /** The conversation no longer compacts itself on nearing a full context. */
+  autoCompactOff: z.boolean().optional(),
+
+  /** The conversation this one was handed off from. */
+  handedFromThreadId: z.string().nullish(),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -726,6 +1045,14 @@ export const assistantArtifactSchema = z.object({
   /** The tool call that produced it, so the transcript can point at it. */
   sourceToolCallId: z.string().optional().default(""),
   pinned: z.boolean().default(false),
+  /** The first artifact of the lineage this one is a later version of; empty for the first. */
+  lineageId: optionalIdSchema,
+  /** This artifact's version within its lineage, from 1. */
+  lineageSeq: z.number().optional().default(1),
+  /** The lineage's name in a link, the same for every version. */
+  slug: z.string().optional().default(""),
+  /** The question asked in the turn that made it. */
+  turn: z.string().optional().default(""),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
@@ -733,6 +1060,23 @@ export const assistantArtifactSchema = z.object({
 export const assistantArtifactListSchema = z.object({
   results: z.array(assistantArtifactSchema),
 });
+
+/** How many of a conversation's lineages match, in all, pinned and per family. */
+export const artifactCountsSchema = z.object({
+  all: z.number().default(0),
+  pinned: z.number().default(0),
+  families: z.preprocess((value) => value ?? {}, z.record(z.string(), z.number())),
+});
+
+/** One page of a conversation's artifacts by lineage, every version of each. */
+export const assistantArtifactPageSchema = z.object({
+  results: z.array(assistantArtifactSchema),
+  total: z.number().default(0),
+  nextCursor: z.string().optional().default(""),
+  counts: artifactCountsSchema.default({ all: 0, pinned: 0, families: {} }),
+});
+
+export const documentRewriteSchema = z.object({ text: z.string() });
 
 /** An artifact as a streamed turn announces it, before the pane reads it whole. */
 export const assistantArtifactEventSchema = z.object({
@@ -748,6 +1092,16 @@ export const assistantArtifactEventSchema = z.object({
 });
 
 /**
+ * An artifact the turn withdrew: a record card a later read of the same tool
+ * folded into one table. The server has deleted it, so a reader drops it from
+ * what the turn produced rather than leaving it beside the table that
+ * replaced it.
+ */
+export const assistantArtifactRemovedEventSchema = z.object({
+  id: z.string(),
+});
+
+/**
  * One entry in the model picker.
  *
  * A provider record also holds the endpoint and an encrypted key; neither is
@@ -760,6 +1114,12 @@ export const assistantProviderOptionSchema = z.object({
   kind: z.string(),
   model: z.string(),
   trusted: z.boolean().default(false),
+  /** The company behind the endpoint, read from where it points; empty when nobody publishes it. */
+  vendor: z.string().optional(),
+  /** The reasoning effort the endpoint is asked for. */
+  reasoning: z.string().optional(),
+  /** The endpoint failed its last connection test. */
+  unavailable: z.boolean().optional(),
 });
 
 export const assistantProviderListSchema = z.object({
@@ -771,8 +1131,43 @@ export const assistantThreadListSchema = z.object({
   total: z.number().default(0),
 });
 
-/** What started a turn: the person, or the application reporting a decision. */
-export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp"]);
+/**
+ * What started a turn: the person, the application reporting a decision, a
+ * request the person scheduled coming round, or the conversation being
+ * compacted.
+ */
+export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp", "Scheduled", "Compaction"]);
+
+/**
+ * A request the person asked to have repeated in a conversation. `cadence` is
+ * when, as the card shows it ("Every weekday · 7:30 AM"); the run times are
+ * Unix seconds.
+ */
+export const conversationScheduleSchema = z.object({
+  id: z.string(),
+  threadId: z.string(),
+  userId: z.string(),
+  prompt: z.string(),
+  cadence: z.string(),
+  cronExpression: z.string().optional().default(""),
+  timezone: z.string().optional().default("UTC"),
+  enabled: z.boolean(),
+  lastRunAt: z.number().nullish(),
+  nextRunAt: z.number().nullish(),
+  lastTurnId: z.string().nullish(),
+  createdAt: z.number(),
+});
+
+export const conversationScheduleListSchema = z.object({
+  items: nullableList(conversationScheduleSchema),
+  total: z.number().default(0),
+});
+
+/** A schedule just made, and the message that draws its card. */
+export const createdScheduleSchema = z.object({
+  schedule: conversationScheduleSchema,
+  message: assistantMessageSchema,
+});
 
 /**
  * A reply the person's assistant is still writing, in any of their
@@ -809,6 +1204,8 @@ export const assistantMessagePageSchema = z.object({
 
 export const proposalStatusSchema = z.enum([
   "Pending",
+  /** Approved, and waiting out the few seconds in which it can be undone. */
+  "Approving",
   "Accepted",
   "Rejected",
   "Modified",
@@ -840,6 +1237,8 @@ export const planDecisionSchema = z.enum(["Accepted", "Rejected"]);
 
 export const planStatusSchema = z.enum([
   "Pending",
+  /** Approved, and waiting out the few seconds in which it can be undone. */
+  "Approving",
   "Approved",
   "Completed",
   "Failed",
@@ -928,6 +1327,8 @@ export const assistantProposalSchema = z.object({
   executedAt: z.number().nullish(),
   /** Why an approved proposal failed to run, shown instead of a success state. */
   executionError: z.string().optional().default(""),
+  /** What the run made; for a write over many records, the ones that did not go through. */
+  executionResult: toolExecutionResultSchema.nullish().catch(null),
   /** When a pending proposal stops being decidable; 0 for one made before expiry existed. */
   expiresAt: z.number().nullish().default(0),
   /**
@@ -947,6 +1348,12 @@ export const assistantProposalSchema = z.object({
   fields: nullableList(proposalFieldSchema),
   /** The values the approver changed before approving, keyed by parameter. */
   modifications: z.record(z.string(), z.unknown()).nullish(),
+  /**
+   * The values a person changed and saved but has not yet approved with, keyed
+   * by parameter, such as the rewording of a drafted message. Kept on the
+   * server so the edit survives a reload; absent once decided.
+   */
+  pendingModifications: z.record(z.string(), z.unknown()).nullish(),
   /**
    * The agent that proposed it: the conversation's own, or another agent it
    * handed a task to. Absent from a server that does not say.
@@ -971,6 +1378,12 @@ export const assistantProposalSchema = z.object({
 
 export const assistantProposalListSchema = z.object({
   results: z.array(assistantProposalSchema),
+});
+
+/** What a pending proposal holds as changed once a person saved their edits. */
+export const proposalEditsSchema = z.object({
+  proposalId: z.string(),
+  pendingModifications: z.record(z.string(), z.unknown()).nullish(),
 });
 
 /**
@@ -1064,6 +1477,7 @@ export const assistantToolStartedEventSchema = z.object({
   name: z.string(),
   arguments: z.record(z.string(), z.unknown()).nullish(),
   effect: optionalToolEffect,
+  why: stepRationaleSchema.nullish(),
   ...delegateScopeShape,
 });
 
@@ -1096,7 +1510,23 @@ export const assistantDelegateTextEventSchema = z.object({
   text: z.string(),
 });
 
-export const assistantErrorEventSchema = z.object({ message: z.string() });
+/** The usage cap that turned a question away, when one did. */
+export const turnLimitSchema = z.object({
+  kind: z.enum(["monthly_budget", "daily_runs", "person_allowance"]),
+  used: z.string().optional().default(""),
+  limit: z.string().optional().default(""),
+  resetsAt: z.number().optional().default(0),
+});
+
+export const assistantErrorEventSchema = z.object({
+  message: z.string(),
+  /** no_model_answered when every model failed, no_provider when none is set up. */
+  code: z.string().optional(),
+  /** The models asked, when every one of them failed. */
+  providers: z.array(failedProviderSchema).nullish(),
+  /** Set when a usage cap turned the question away. */
+  limit: turnLimitSchema.nullish().catch(null),
+});
 
 /**
  * The model died partway through its reply and the turn is starting over,
@@ -1116,12 +1546,48 @@ export const assistantRetryingEventSchema = z.object({
   kind: retryKindSchema.optional().default("restart"),
   /** How long the router is waiting before a busy retry, in seconds. */
   waitSeconds: z.number().int().nonnegative().optional().default(0),
+  /** How many times the model is asked in all, for "attempt 2 of 3". */
+  maxAttempts: z.number().int().nonnegative().optional(),
 });
 
 /** The other agent's reply died partway and is starting over; the reply being shown is untouched. */
 export const assistantDelegateRetryingEventSchema = assistantRetryingEventSchema.extend({
   agentId: z.string().optional().default(""),
   delegateCallId: z.string(),
+});
+
+/** How full the conversation's context is, sent as a turn is saved. */
+export const assistantContextEventSchema = z.object({
+  threadId: z.string(),
+  usage: contextUsageSchema,
+  autoCompactOff: z.boolean().optional().default(false),
+});
+
+/**
+ * Where a compaction stands. From a turn that set one off, it names the
+ * compaction's own turn to follow; on that turn's stream it opens, and
+ * finished or cancelled ends it.
+ */
+export const assistantCompactionEventSchema = z.object({
+  turnId: z.string(),
+  threadId: z.string(),
+  auto: z.boolean().optional().default(false),
+  before: z.number().optional().default(0),
+  after: z.number().optional().default(0),
+  /** The summary, once saved. */
+  message: assistantMessageSchema.nullish(),
+  usage: contextUsageSchema.nullish(),
+  autoCompactOff: z.boolean().optional().default(false),
+});
+
+export type AssistantCompactionEvent = z.infer<typeof assistantCompactionEventSchema>;
+
+/** Every memory the turn has used so far; each event repeats the whole list. */
+export const assistantMemoryUsedEventSchema = z.object({
+  ids: z
+    .array(z.string())
+    .nullish()
+    .transform((ids) => ids ?? []),
 });
 
 export type AssistantStreamEvent =
@@ -1139,6 +1605,9 @@ export type AssistantStreamEvent =
   | { event: "delegate_retrying"; data: z.infer<typeof assistantDelegateRetryingEventSchema> }
   | { event: "delegate_finished"; data: z.infer<typeof assistantDelegateFinishedEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
+  | { event: "artifact_removed"; data: z.infer<typeof assistantArtifactRemovedEventSchema> }
+  | { event: "memory_used"; data: z.infer<typeof assistantMemoryUsedEventSchema> }
+  | { event: "memory_saved"; data: z.infer<typeof savedMemorySchema> }
   | { event: "thread"; data: AssistantThread }
   /**
    * The saved turn, or null when the ending was rebuilt from the turn's record
@@ -1146,7 +1615,11 @@ export type AssistantStreamEvent =
    * conversation rather than trusting what it has on screen.
    */
   | { event: "done"; data: SendMessageResult | null }
-  | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
+  | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> }
+  | { event: "context"; data: z.infer<typeof assistantContextEventSchema> }
+  | { event: "compaction_started"; data: AssistantCompactionEvent }
+  | { event: "compaction_finished"; data: AssistantCompactionEvent }
+  | { event: "compaction_cancelled"; data: AssistantCompactionEvent };
 
 /**
  * An ending the server rebuilt from a turn's record (`replay: true`) rather
@@ -1195,6 +1668,12 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantDelegateFinishedEventSchema.parse(data) };
     case "artifact":
       return { event, data: assistantArtifactEventSchema.parse(data) };
+    case "artifact_removed":
+      return { event, data: assistantArtifactRemovedEventSchema.parse(data) };
+    case "memory_used":
+      return { event, data: assistantMemoryUsedEventSchema.parse(data) };
+    case "memory_saved":
+      return { event, data: savedMemorySchema.parse(data) };
     case "thread":
       return { event, data: assistantThreadSchema.parse(data) };
     case "done":
@@ -1204,6 +1683,12 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       };
     case "error":
       return { event, data: assistantErrorEventSchema.parse(data) };
+    case "context":
+      return { event, data: assistantContextEventSchema.parse(data) };
+    case "compaction_started":
+    case "compaction_finished":
+    case "compaction_cancelled":
+      return { event, data: assistantCompactionEventSchema.parse(data) };
     default:
       return null;
   }
@@ -1224,12 +1709,17 @@ export type ToolSimulation = z.infer<typeof toolSimulationSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
+export type AssistantThreadList = z.infer<typeof assistantThreadListSchema>;
 export type CannotContinueReason = z.infer<typeof cannotContinueReasonSchema>;
 export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
 export type TurnOrigin = z.infer<typeof turnOriginSchema>;
+export type ConversationSchedule = z.infer<typeof conversationScheduleSchema>;
+export type ConversationScheduleList = z.infer<typeof conversationScheduleListSchema>;
+export type CreatedSchedule = z.infer<typeof createdScheduleSchema>;
 export type AssistantLiveTurn = z.infer<typeof assistantLiveTurnSchema>;
 export type AssistantLiveTurnList = z.infer<typeof assistantLiveTurnListSchema>;
 export type AssistantArtifact = z.infer<typeof assistantArtifactSchema>;
+export type AssistantArtifactPage = z.infer<typeof assistantArtifactPageSchema>;
 export type ArtifactKind = z.infer<typeof artifactKindSchema>;
 export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;
 export type AssistantArtifactEvent = z.infer<typeof assistantArtifactEventSchema>;
@@ -1237,6 +1727,8 @@ export type PageAgent = z.infer<typeof pageAgentSchema>;
 export type PageThread = z.infer<typeof pageThreadSchema>;
 export type AssistantProviderOption = z.infer<typeof assistantProviderOptionSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
+export type MemoryNote = z.infer<typeof memoryNoteSchema>;
+export type SavedMemory = z.infer<typeof savedMemorySchema>;
 export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;
 export type AssistantPageContext = z.infer<typeof pageContextSchema>;
 export type AssistantPageView = z.infer<typeof pageViewSchema>;
@@ -1262,3 +1754,10 @@ export type ProposalHold = z.infer<typeof proposalHoldSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;
 export type PlanStatus = z.infer<typeof planStatusSchema>;
 export type PlanDecision = z.infer<typeof planDecisionSchema>;
+
+export const handoffResultSchema = z.object({
+  thread: assistantThreadSchema,
+  message: assistantMessageSchema.nullish(),
+});
+
+export type HandoffResult = z.infer<typeof handoffResultSchema>;

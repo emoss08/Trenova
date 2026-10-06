@@ -6,7 +6,7 @@ import { AGENT_EVALUATION_LIST_KEY, replayAgentRun } from "@/lib/graphql/agent-e
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { RotateCcwIcon } from "lucide-react";
+import { RefreshCcw01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { getRunColumns } from "./agent-run-columns";
@@ -33,7 +33,7 @@ export default function AgentRunTable() {
     {
       id: "replay",
       label: t("Replay against the current agent"),
-      icon: RotateCcwIcon,
+      icon: RefreshCcw01Icon,
       onClick: (row) => void replay(row),
       hidden: (row) =>
         !canReplay ||

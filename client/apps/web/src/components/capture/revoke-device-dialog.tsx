@@ -17,7 +17,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
-import { UnplugIcon } from "lucide-react";
+import { PlugOffIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver, type UseFormReturn } from "react-hook-form";
 import { revokeDeviceFormSchema, type RevokeDeviceFormValues } from "./capture-forms";
@@ -129,7 +129,7 @@ export function RevokeDeviceDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-danger-subtle text-destructive">
-            <UnplugIcon />
+            <PlugOffIcon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Revoke {0}?", device?.name ?? "")}</AlertDialogTitle>
           <AlertDialogDescription>

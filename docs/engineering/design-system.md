@@ -45,36 +45,50 @@ Three, and each may only reference the one above it.
 Everything coloured in the product resolves to one of eleven hues, declared once
 in layer 1.
 
-`--hue-neutral: 260` is the spine, a cool slate. Every grey carries a trace of it
-— the canvas, the panels, the rules, the four text weights — low enough that a
-panel still reads as white and high enough that the ink reads as ink rather than
-as black. A grey at chroma exactly zero is the clearest sign a palette was
-inherited rather than chosen.
+The palette is Vercel's Geist, carried into OKLCH and held to the contrast and
+hue floors below. The greys are true neutrals, as Geist's are, and the two
+themes mirror each other step for step:
+
+| Role | Light | Dark |
+|---|---|---|
+| Page, sidebar, wells inside a panel | #fafafa | #000 |
+| Panels and form fields | #fff | #0a0a0a |
+| Panel hairline (`--border`) | #e5e5e5 | #242424 |
+| Dividers (`--border-subtle`) | #ebebeb | #1f1f1f |
+| Hover | #f2f2f2 | #1a1a1a |
+| Active nav row | #ebebeb | #1f1f1f |
+| Ink | #171717 | #ededed |
+
+Light's hairline is one step darker than Geist's #ebebeb because
+`pnpm lint:design` requires a panel outline to clear 1.2:1 against the page.
+`--hue-neutral` stays as a name so a grey written against it still resolves, but
+it carries no chroma.
 
 **The product is drawn in ink.** The primary action is `--ink`, the foreground
 colour with its own hover and pressed rungs, not a hue. That is what lets every
 colour left on screen mean something: a tone is a severity, an accent is a
 category, and the brand marks place and affordance.
 
-`--hue-brand: 262` is cobalt, and it is spent sparingly: links, the focus ring,
-selection (a selected row, selected text, a checked box), the active nav row and
-tab, the first chart series. It is never the primary button and never a severity.
+`--hue-brand: 258` is Geist blue, and it is spent sparingly: links, the focus
+ring, selection (a selected row, selected text, a checked box), the first chart
+series. As on Vercel, the active nav row is a neutral fill with the ink on it and
+the active tab is underlined in ink, not blue. It is never the primary button and never a severity.
 If you are about to write `bg-brand` on a button, you want `variant="default"`.
 
-Cobalt shares the blue arc with three other things, so that arc is pinned apart:
+Brand blue shares the blue arc with three other things, so that arc is pinned apart:
 
 ```
-info 222  →  sky 232  →  brand 262  →  indigo 283
+info 222  →  sky 232  →  brand 258  →  indigo 283
 ```
 
 Brand keeps 30° from info and 20° from each category. Info is a steel cyan at
-under half of cobalt's chroma for the same reason: a link and an "In transit"
+under half of the brand's chroma for the same reason: a link and an "In transit"
 badge share a row in nearly every table, and they must not read as one thing.
 
 The warm arc keeps its own floor:
 
 ```
-danger 25  →  warning 78  →  amber 98
+danger 25  →  warning 76  →  amber 98
 ```
 
 `pnpm lint:design` fails if any of those gaps closes.
@@ -276,7 +290,7 @@ ui-lift           something you could pick up: a floating composer, a card
 ui-lift-float     something over everything else: a switcher, a menu
 ```
 
-Each is a hairline ring plus a whisper of shadow at `--hue-neutral`, so it reads
+Each is a hairline ring plus a whisper of neutral shadow, so it reads
 as the surface occluding light rather than as grey smudge. The blur is small and
 the offset smaller: a lift should be felt before it is seen. In dark the shadow
 hue goes near-black, because a grey halo on an already dark surface reads as
@@ -308,7 +322,7 @@ wrong here even before dark mode is considered.
 
 | State | Treatment |
 |---|---|
-| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas or the card; it sits below the surface in both themes |
+| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. It is Vercel's panel fill in both themes, white in light and #0a0a0a in dark, so on a panel the hairline is what draws the slot |
 | hover | hairline steps to `--border-strong`; the fill does not change |
 | focus | the one focus ring (`ui-focus-ring`, or `ui-container-focus-ring` when a child takes focus) |
 | open | a trigger whose popup is open holds that same ring (`data-pressed`, `data-popup-open`, `aria-expanded`) |
@@ -459,18 +473,45 @@ hyphen.
 - An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
   `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
 
+## Icons
+
+Every icon is imported from `@trenova/shared/components/icons`. It exports each
+[Untitled UI](https://www.untitledui.com/resources/icons) icon under its own name
+with an `Icon` suffix (`Truck01Icon`, `SearchLgIcon`, `AlertTriangleIcon`), and
+Trenova's custom set beside them: the icons a TMS needs that Untitled's free set
+does not draw (`FuelIcon`, `ShippingContainerIcon`, `SemiTruckIcon`,
+`ShieldAlertIcon`, …). A slot that takes an icon is typed `IconComponent`; its
+props are `IconProps`. Lint refuses `lucide-react` and `@untitledui/icons`, so
+an icon cannot arrive from anywhere else.
+
+All of them sit on a 24px grid with a 2px round-capped stroke in
+`currentColor`. Size an icon with a class (`size-4`) and colour it with a text
+token; `strokeWidth` and `size` still work for the rare icon that needs them.
+
+When Untitled has no icon for something, draw one rather than borrowing it from
+another library, whose stroke and corners will not match. The custom set is drawn
+in `packages/shared/scripts/icons/draw_custom_icons.py`, which builds its corners
+with the same curve Untitled uses and composes badges (`ShieldAlert`,
+`FileClock`) from Untitled's own outlines. Add the drawing there, run
+`python3 packages/shared/scripts/icons/draw_custom_icons.py`, then
+`pnpm --filter @trenova/shared icons:generate`, which rewrites
+`components/icon-set/custom.gen.tsx` and `untitled.gen.ts`. The generator refuses a
+custom name that shadows an Untitled icon. Run it after upgrading
+`@untitledui/icons` too.
+
 ## The assist mark
 
 Anything the system suggests, drafts or fills in on its own is marked with
 `AssistMark` (`@trenova/shared/components/ui/assist-mark`): the diamond of an
 advisory road sign with a point at its centre. On the road that shape means "take
 this into account", which is the standing a machine's suggestion has with a
-dispatcher. It is a real `LucideIcon`, so it takes `size`, `strokeWidth` and
+dispatcher. It is a real `IconComponent`, so it takes `size`, `strokeWidth` and
 `className` and fits any `icon:` slot.
 
-Do not import `Sparkles`, `WandSparkles` or `Wand2` from lucide. Sparkles says
-magic, which is the wrong promise for a rate or a settlement, and it is the glyph
-every generated interface spends. The assistant's launcher uses `AssistantMark`,
+Untitled's `Stars` and `MagicWand` icons are left out of the icon module on
+purpose, and no custom icon draws a sparkle. Sparkles says magic, which is the
+wrong promise for a rate or a settlement, and it is the glyph every generated
+interface spends. The assistant's launcher uses `AssistantMark`,
 the same diamond with a centre point that breathes on hover.
 
 ## Badge
@@ -727,12 +768,15 @@ cell. A card is a `DescriptionList` with the same values, its prose set out belo
 A flag that does not hold — "stale: no" — is not drawn at all.
 
 **The conversation says what the agent did, in the words of what it did.** A person's
-message sits in a `bg-sunken` well under "You" — never their name and avatar, which read
-as someone else once the thread was shared. The reply runs open across the column under
-the agent's mark and name, once: a reply that took four model steps is saved as four
-messages, and `turnPlacements` heads the first and continues the rest beneath it, with
-how long the whole reply took beside the time. Both share the left edge; the difference
-is voice, not side.
+message is a `bg-sunken` bubble on the right (`data-side="right"`, at most 85% of the
+column), with no label — the side says who, and never their name and avatar, which read
+as someone else once the thread was shared; its time and actions show on hover. The reply
+runs open across the column on the left under the agent's mark and name, once: a reply that
+took four model steps is saved as four messages, and `turnPlacements` heads the first and
+continues the rest beneath it, with how long the whole reply took beside the time. On a
+wide column the thread centres a `max-w-3xl` reading measure. Rows present when a
+conversation opens rise once, staggered top-down over the last six (`openingStagger`), and
+never again on scroll-back.
 
 Tool calls are drawn by their **effect** — `lookup`, `change`, `navigate`, `discover`,
 `present`, `ask` — which the server sends on every call and `toolEffect` derives from the
@@ -741,7 +785,10 @@ records"); an action never does, because "opened a page" counted as "looked up 1
 is the report that started this. An action stands on its own line in ink with its mark in
 a small sunken well — "Opened Report library", "Ran Late loads", "Saved Shipments
 for Peak Distributing", "Proposed a change" — and a read is quieter, in muted text with a
-bare mark. The verb is the client's and translated; the server's one-line `summary` only
+bare mark. Once a reply has settled, its steps fold into one work line — "Worked through 6
+steps · 12s", with a danger mark when any did not go through — that opens onto the rows
+(`ToolActivity folded`, the summary from `workSummary`); while the reply is live the rows
+land one by one and fold up when it ends. The verb is the client's and translated; the server's one-line `summary` only
 ever supplies a name, and a count phrase from it ("3 customers") is read for its number,
 never shown. A line opens onto the call as labelled values — what was asked, what came
 back, list results named by their first few records — with the literal JSON behind a
@@ -756,7 +803,10 @@ begin, "Writing the answer…" or "Putting it into words…" while it streams �
 one of them from start to finish, so replies do not all read as the same machine while one
 reply never changes its words for no reason. The words change when the work does and each
 change rises into place; a step joins the list above when it lands, as a check on the confirm
-spring. Nothing else moves: no shimmer on "Thinking", no spinner on a card.
+spring. A reasoning disclosure reads "Thinking…" with a token-only sheen for exactly as long
+as the model is thinking and folds to "Thought for 4s" when it stops — the one sheen a
+working screen allows, because it describes work that is still going, like `breathe`.
+Nothing else moves: no spinner on a card.
 
 **A waiting decision takes the composer's place.** While a conversation has a proposal or a
 plan waiting on the person, the approval box stands in the composer's floating slot
@@ -778,9 +828,11 @@ approves, Esc opens the note, Alt+L decides later; Enter alone never approves), 
 out in the narrow panel. Decided later, the box folds into a `warning-subtle` pill above the
 composer that says how many wait and reopens it. One decision at a time, the oldest first.
 
-**The transcript keeps a line, not a card.** Each proposal or plan is one line in the
-conversation — "Proposed: … · Approved by you 8:52 PM", "Waiting — decide below" — with
-the outcome's mark, opening onto the preview and what came of it, read-only. "Approved"
+**The transcript keeps a quiet card per decision.** Each proposal or plan is one card in
+the conversation — the outcome's mark, "Proposed: …" with the record it is about, and the
+status line "Approved by you 8:52 PM" or "Waiting — decide below", a plan showing its steps
+with a mark each — opening onto the preview and what came of it, read-only; a waiting card
+offers "Open in approval box". "Approved"
 and "done" stay two facts on that line. A write the agent may make on its own (a report
 saved to the person's own list) is recorded at the `AutoExecute` tier and reads "Done on
 its own", never as approved or waiting. The note that starts the turn after a decision is
@@ -838,18 +890,45 @@ In dark the column is a step **above** the canvas rather than below it, because
 a lit surface comes forward in dark and recedes in light. That inversion is why
 one set of values never works for both.
 
-The layout is a 48px strip and two columns: the conversation on the left at
-`clamp(26rem, 38%, 34rem)`, the work it produced filling the rest. The
-conversation is the narrower half on purpose — prose is unreadable past about
-70 characters, so the extra width goes to the tables and drafts that can use
-it. There is one strip of chrome at the top of the room, not one per column,
-which is why the conversation's title, pin and transcript live in the shell
-rather than inside the thread. Folded away with `⌘\`, the workspace gives its
-width back rather than leaving a gap.
+The layout is three columns under one strip: the rail down the left, the
+conversation in the middle, and the work it produced on the right. The rail
+(`DeskRail` in `routes/desk/_components/desk-rail.tsx`) is 272px on
+`--desk-rail`, a half-step below the canvas, with a hairline on its right. It
+reads top to bottom the way a day does: the Desk's mark and the fold, an ink
+"New conversation" control that opens `AgentPicker`, a search field, the
+places (Today, Watchtower, Decisions, each with what is waiting at it), then
+every conversation shelved by when it was last touched — Pinned above the
+calendar, then Today, Yesterday, Previous 7 days, Previous 30 days, Older
+(`groupDeskThreadsByRecency`, counted on the reader's own calendar) — and the
+signed-in person at the foot with the way back to Trenova. Each row carries
+the agent's mark and name under its title, says "Writing a reply" with a still
+`WorkingDot` while a turn runs, and keeps its pin and delete within reach of a
+keyboard though a pointer only sees them on hover. The open row is
+`bg-surface-selected`.
 
-The conversation list is a switcher behind one control, not a rail. A person
-picks a conversation perhaps twice an hour and then reads and writes in it for
-the rest of the hour; a permanent 260px column answers a question asked twice.
+The rail is the conversation's table of contents, and a table of contents is
+read by glancing at it, which is why it is a column rather than a switcher
+behind a control: the question "which one was this morning's" is answered
+without opening anything. It also costs width that belongs to the work, so it
+folds to a zero-width fold with `⌘B` — the same key that folds the sidebar in
+the rest of the app — and the control to unfold it stands at the strip's left
+edge until it is back. The fold is a width animation on `ease-settle`, a cut
+under reduced motion, and the folded column is `inert` so it leaves the tab
+order with the screen. Whether the rail is open is remembered in the Desk's
+store beside the workspace pane, because it is a habit, not a choice made per
+visit. Below `lg` the rail is a sheet from the left, opened from the same
+control, and closes when a row is followed.
+
+The strip is 48px over the conversation and the workspace, not over the rail,
+and holds the agent's mark, the title edited in place, and what can be done to
+the conversation: pin, transcript, delete, and the workspace fold. There is
+one strip of chrome at the top of the room, not one per column, which is why
+the conversation's title, pin and transcript live in the shell rather than
+inside the thread. The conversation takes what the workspace leaves; the
+workspace is `clamp(26rem, 42%, 44rem)` — floored so a table in it can be
+read, capped so prose in the conversation never runs past about 70 characters.
+Folded away with `⌘\`, the workspace gives its width back as it goes rather
+than leaving a gap, on the same curve as the rail.
 
 Both the Desk's front page and the corner panel open onto the same `AgentAsk`
 (`components/assistant/agent-ask.tsx`) rather than a directory. An empty text
@@ -860,22 +939,29 @@ is a wall once an organization has sixty. The questions under the box are the
 agent's own `starters`, from the server, and they trade places when the agent
 changes.
 
-The front page opens with a greeting under the day's own light (`DeskGreeting`
-in `routes/desk/_components/desk-greeting.tsx`). Behind the first lines sits
+The front page opens on a greeting under the day's own light (`DeskGreeting`
+in `routes/desk/_components/desk-greeting.tsx`), centred in the room with the
+ask box under it and nothing else above the fold. Behind the first lines sits
 `ui-daylight`, two soft pools of the part of the day in the person's timezone
 (`skyPhase`): dawn is `--daylight-sun` gold with rose further off, day is sky
 with a little gold, dusk is rose with violet, night is indigo with violet. Each
 pool is the categorical accent at `--daylight-strength` and fades to nothing
 inside its own box, so there is no edge to find, and the page is clipped at the
-window rather than the column so the light never stops at a line. The greeting
+window rather than the column so the light never stops at a line. The dateline
 leads with `SkyMark`, the same sky as a letter-sized glyph in solid shapes: the
-sun on the horizon, the sun high, the sun going down, a moon and a star. The
-greeting is a label (500), the date beside it quieter in `--foreground-subtle`,
-and the headline under both is the page's one heading (600). The page arrives
-once, in reading order, a beat apart on `animate-rise` — the greeting and its
-light, the headline, the line under it, the ask box, then the rest — and then
-holds still. That wash is all the colour here: the agent's accent belongs to a
-conversation, and the front page has not started one.
+sun on the horizon, the sun high, the sun going down, a moon and a star, in
+`--foreground-subtle`. The headline under it is the page's one heading (600),
+in two lines: the greeting by name in ink, and under it in `--foreground-muted`
+what the day looks like — the briefing's headline, or how many decisions are
+waiting, or, when nothing is, "How can I help today?". Only the second line is
+decided by figures, so only the second line holds as a skeleton until they are
+in. Below the fold sit what is waiting and the briefing on one side and the
+agents on the other; the recent conversations are not listed again, because
+the rail carries them on every page. The page arrives once, in reading order, a
+beat apart on `animate-rise` — the light and the dateline, the greeting, the
+line under it, the ask box, then the rest — and then holds still. That wash is
+all the colour here: the agent's accent belongs to a conversation, and the
+front page has not started one.
 
 ## Checking your work
 

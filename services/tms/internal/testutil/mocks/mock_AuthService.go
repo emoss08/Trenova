@@ -20,10 +20,19 @@ func NewMockAuthService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockAuthService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockAuthService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -185,6 +194,142 @@ func (_c *MockAuthService_AuthenticateAPIKey_Call) Return(authenticatedPrincipal
 }
 
 func (_c *MockAuthService_AuthenticateAPIKey_Call) RunAndReturn(run func(ctx context.Context, token string, ipAddress string, userAgent string) (*services.AuthenticatedPrincipal, error)) *MockAuthService_AuthenticateAPIKey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AuthenticateSession provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) AuthenticateSession(ctx context.Context, token string) (*session.Session, error) {
+	ret := _mock.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AuthenticateSession")
+	}
+
+	var r0 *session.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*session.Session, error)); ok {
+		return returnFunc(ctx, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *session.Session); ok {
+		r0 = returnFunc(ctx, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*session.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_AuthenticateSession_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AuthenticateSession'
+type MockAuthService_AuthenticateSession_Call struct {
+	*mock.Call
+}
+
+// AuthenticateSession is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *MockAuthService_Expecter) AuthenticateSession(ctx any, token any) *MockAuthService_AuthenticateSession_Call {
+	return &MockAuthService_AuthenticateSession_Call{Call: _e.mock.On("AuthenticateSession", ctx, token)}
+}
+
+func (_c *MockAuthService_AuthenticateSession_Call) Run(run func(ctx context.Context, token string)) *MockAuthService_AuthenticateSession_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_AuthenticateSession_Call) Return(session1 *session.Session, err error) *MockAuthService_AuthenticateSession_Call {
+	_c.Call.Return(session1, err)
+	return _c
+}
+
+func (_c *MockAuthService_AuthenticateSession_Call) RunAndReturn(run func(ctx context.Context, token string) (*session.Session, error)) *MockAuthService_AuthenticateSession_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateSessionForUser provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) CreateSessionForUser(ctx context.Context, req *services.CreateSessionForUserRequest) (*services.LoginResponse, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSessionForUser")
+	}
+
+	var r0 *services.LoginResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateSessionForUserRequest) (*services.LoginResponse, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateSessionForUserRequest) *services.LoginResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.LoginResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CreateSessionForUserRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_CreateSessionForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateSessionForUser'
+type MockAuthService_CreateSessionForUser_Call struct {
+	*mock.Call
+}
+
+// CreateSessionForUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.CreateSessionForUserRequest
+func (_e *MockAuthService_Expecter) CreateSessionForUser(ctx any, req any) *MockAuthService_CreateSessionForUser_Call {
+	return &MockAuthService_CreateSessionForUser_Call{Call: _e.mock.On("CreateSessionForUser", ctx, req)}
+}
+
+func (_c *MockAuthService_CreateSessionForUser_Call) Run(run func(ctx context.Context, req *services.CreateSessionForUserRequest)) *MockAuthService_CreateSessionForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.CreateSessionForUserRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.CreateSessionForUserRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_CreateSessionForUser_Call) Return(loginResponse *services.LoginResponse, err error) *MockAuthService_CreateSessionForUser_Call {
+	_c.Call.Return(loginResponse, err)
+	return _c
+}
+
+func (_c *MockAuthService_CreateSessionForUser_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateSessionForUserRequest) (*services.LoginResponse, error)) *MockAuthService_CreateSessionForUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -716,74 +861,6 @@ func (_c *MockAuthService_StartSSOLogin_Call) Return(s string, err error) *MockA
 }
 
 func (_c *MockAuthService_StartSSOLogin_Call) RunAndReturn(run func(ctx context.Context, req services.StartSSOLoginRequest) (string, error)) *MockAuthService_StartSSOLogin_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AuthenticateSession provides a mock function for the type MockAuthService
-func (_mock *MockAuthService) AuthenticateSession(ctx context.Context, token string) (*session.Session, error) {
-	ret := _mock.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AuthenticateSession")
-	}
-
-	var r0 *session.Session
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*session.Session, error)); ok {
-		return returnFunc(ctx, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *session.Session); ok {
-		r0 = returnFunc(ctx, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*session.Session)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, token)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAuthService_AuthenticateSession_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AuthenticateSession'
-type MockAuthService_AuthenticateSession_Call struct {
-	*mock.Call
-}
-
-// AuthenticateSession is a helper method to define mock.On call
-//   - ctx context.Context
-//   - token string
-func (_e *MockAuthService_Expecter) AuthenticateSession(ctx any, token any) *MockAuthService_AuthenticateSession_Call {
-	return &MockAuthService_AuthenticateSession_Call{Call: _e.mock.On("AuthenticateSession", ctx, token)}
-}
-
-func (_c *MockAuthService_AuthenticateSession_Call) Run(run func(ctx context.Context, token string)) *MockAuthService_AuthenticateSession_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAuthService_AuthenticateSession_Call) Return(session1 *session.Session, err error) *MockAuthService_AuthenticateSession_Call {
-	_c.Call.Return(session1, err)
-	return _c
-}
-
-func (_c *MockAuthService_AuthenticateSession_Call) RunAndReturn(run func(ctx context.Context, token string) (*session.Session, error)) *MockAuthService_AuthenticateSession_Call {
 	_c.Call.Return(run)
 	return _c
 }

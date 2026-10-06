@@ -28,7 +28,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
-import { Download } from "lucide-react";
+import { Download01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { formatSettlementDate } from "@trenova/shared/lib/date";
 
@@ -193,7 +193,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
           disabled={exportMutation.isPending}
           onClick={() => exportMutation.mutate()}
         >
-          <Download className="size-3.5" />
+          <Download01Icon className="size-3.5" />
           {t("Export remittance CSV")}
         </Button>
       </div>

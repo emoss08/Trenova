@@ -24,7 +24,11 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { dataTableFeatures } from "@trenova/shared/lib/table-features";
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronSelectorVerticalIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
@@ -228,7 +232,7 @@ export function OpenItemsTable({
                           ) : sorted === "desc" ? (
                             <ArrowDownIcon className="size-3" />
                           ) : (
-                            <ChevronsUpDownIcon className="size-3 opacity-40" />
+                            <ChevronSelectorVerticalIcon className="size-3 opacity-40" />
                           )}
                         </button>
                       ) : (

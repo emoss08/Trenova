@@ -11,7 +11,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { DataTableEmptyStateRenderProps, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { DownloadIcon } from "lucide-react";
+import { Download01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getAuditExportColumns } from "./audit-export-columns";
@@ -88,7 +88,7 @@ export default function AuditExportsView() {
     {
       id: "download",
       label: t("Download"),
-      icon: DownloadIcon,
+      icon: Download01Icon,
       onClick: (row) => void download(row.original),
       hidden: (row) =>
         !canExport || row.original.status !== "Succeeded" || !row.original.downloadable,

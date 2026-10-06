@@ -152,6 +152,15 @@ func (a *Activities) FinalizeUploadActivity(
 	activity.RecordHeartbeat(ctx, "finalizing-document")
 
 	doc, err := a.ensureDocument(ctx, session, payload.UserID)
+	if err != nil && planRefusal(err) {
+		a.discardRefusedUpload(ctx, session)
+		return nil, a.failSession(
+			ctx,
+			session,
+			documentupload.FailurePlanLimitReached.String(),
+			err.Error(),
+		)
+	}
 	if err != nil {
 		return nil, a.failSession(
 			ctx,
@@ -585,6 +594,22 @@ func (a *Activities) failSession(
 		return err
 	}
 	return temporal.NewNonRetryableApplicationError(message, "document-upload-finalization", nil)
+}
+
+func planRefusal(err error) bool {
+	return errortypes.IsQuotaExceededError(err) || errortypes.IsPlanRestrictionError(err)
+}
+
+func (a *Activities) discardRefusedUpload(
+	ctx context.Context,
+	session *documentupload.DocumentUploadSession,
+) {
+	if err := a.storage.Delete(ctx, session.StoragePath); err != nil {
+		activity.GetLogger(ctx).Warn("failed to remove an upload its plan refused",
+			"sessionId", session.ID.String(),
+			"error", err,
+		)
+	}
 }
 
 func (a *Activities) ensureDocument(

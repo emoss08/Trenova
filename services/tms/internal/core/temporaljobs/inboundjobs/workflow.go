@@ -4,7 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,6 +47,33 @@ var failOptions = workflow.ActivityOptions{
 		MaximumAttempts: 3,
 	},
 }
+
+// fetchAttempts bounds the content fetch. A provider that is down for longer
+// than these attempts span leaves the message with a person, saying why,
+// rather than waiting on it indefinitely.
+const fetchAttempts = 6
+
+// fetchOptions allow for downloading a message's attachments. Only a provider
+// that could not answer is retried: the activity reports a rejection as a
+// result, since asking again with the same key gets the same answer.
+var fetchOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 5 * time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    10 * time.Second,
+		BackoffCoefficient: 2,
+		MaximumInterval:    5 * time.Minute,
+		MaximumAttempts:    fetchAttempts,
+	},
+}
+
+// changeFetchContent reads a metadata-only provider's content before the
+// message is read. Executions that began before it replay without the step.
+const changeFetchContent = "inbound-message-fetch-content"
+
+// fetchFailedReason is what the inbox shows when the fetch itself failed
+// rather than the provider refusing it.
+const fetchFailedReason = "The body and attachments of this message could not be read " +
+	"from the provider."
 
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
@@ -106,6 +135,12 @@ func ProcessInboundMessageWorkflow(
 
 	settleCtx := workflow.WithActivityOptions(ctx, settleOptions)
 
+	if workflow.GetVersion(ctx, changeFetchContent, workflow.DefaultVersion, 1) == 1 {
+		if result, done, err := fetchContent(ctx, payload); done {
+			return result, err
+		}
+	}
+
 	// Attachments first: what a message is about is often only legible once its
 	// files have been read, so classifying before they land would throw away
 	// the strongest signal the message carries.
@@ -137,6 +172,49 @@ func ProcessInboundMessageWorkflow(
 	}
 
 	return nil, err
+}
+
+// fetchContent reads what a metadata-only webhook left out. It reports done
+// when the message cannot go on to be read: its content is unavailable and it
+// is already with a person, or the fetch failed outright and that failure has
+// been recorded.
+func fetchContent(
+	ctx workflow.Context,
+	payload *ProcessInboundMessagePayload,
+) (result *ProcessInboundMessageResult, done bool, err error) {
+	var a *Activities
+
+	fetchCtx := workflow.WithActivityOptions(ctx, fetchOptions)
+	fetched := new(FetchInboundContentResult)
+	err = workflow.ExecuteActivity(fetchCtx, a.FetchInboundContentActivity, payload).
+		Get(fetchCtx, fetched)
+	if err == nil {
+		if fetched.Readable {
+			return nil, false, nil
+		}
+
+		return &ProcessInboundMessageResult{
+			MessageID: payload.MessageID,
+			Status:    inboundmessage.StatusInReview,
+		}, true, nil
+	}
+
+	workflow.GetLogger(ctx).Error("inbound message content could not be fetched",
+		"messageId", payload.MessageID.String(), "error", err)
+
+	failCtx := workflow.WithActivityOptions(ctx, failOptions)
+	if failErr := workflow.ExecuteActivity(failCtx, a.FailInboundMessageActivity,
+		&FailInboundMessagePayload{
+			BasePayload: payload.BasePayload,
+			MessageID:   payload.MessageID,
+			Code:        inboundmessageservice.ContentUnavailableCode,
+			Reason:      fetchFailedReason,
+		}).Get(failCtx, nil); failErr != nil {
+		workflow.GetLogger(ctx).Error("could not record the failure either",
+			"messageId", payload.MessageID.String(), "error", failErr)
+	}
+
+	return nil, true, err
 }
 
 // The attachment pass has three separate timeouts because the three things it

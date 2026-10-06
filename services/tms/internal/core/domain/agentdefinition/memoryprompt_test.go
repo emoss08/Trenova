@@ -166,6 +166,54 @@ func TestFitMemories_CutsALongMemoryShortAndNamesItsID(t *testing.T) {
 	assert.Contains(t, prompt, "call recall_memory with that id")
 }
 
+// An agent that had been told two hundred one-line facts carried every one
+// of them, because each was short enough to fit the token budget. The prompt
+// now stops at MaxPromptMemories, keeping the best ranked.
+func TestFitMemories_CarriesNoMoreThanTheCapHoweverShortTheyAre(t *testing.T) {
+	t.Parallel()
+
+	pool := make([]*agent.Memory, 0, 200)
+	for range 200 {
+		pool = append(pool, &agent.Memory{
+			ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact, Content: "Short.",
+		})
+	}
+
+	fitted := definitionWithInstructions("Help.").FitMemories(
+		&agentdefinition.RuntimeContext{Memories: pool},
+	)
+
+	require.Len(t, fitted, agentdefinition.MaxPromptMemories)
+	assert.Equal(t, pool[:agentdefinition.MaxPromptMemories], fitted,
+		"the first in rank order are the ones kept")
+	assert.Equal(t, 50, agentdefinition.MaxPromptMemories)
+}
+
+// A fact from spring that no prompt had room for since is left out once
+// the facts beside it have been read for three months; recall still finds
+// it, and the prompt says so.
+func TestFitMemories_LeavesOutAMemoryThatWentStale(t *testing.T) {
+	t.Parallel()
+
+	const day = 24 * 60 * 60
+	stale := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact,
+		Content: "The old yard closes at 17:00.", CreatedAt: 1_700_000_000,
+	}
+	fresh := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact,
+		Content: "The yard closes at 18:00.", CreatedAt: 1_700_000_000 + 120*day,
+	}
+	d := definitionWithInstructions("Help.")
+	rc := agentdefinition.RuntimeContext{Memories: []*agent.Memory{stale, fresh}}
+
+	assert.Equal(t, []*agent.Memory{fresh}, d.FitMemories(&rc))
+
+	prompt := d.BuildSystemPrompt(rc)
+	assert.NotContains(t, prompt, "The old yard")
+	assert.Contains(t, prompt, "recall_memory still finds them")
+}
+
 func TestBuildSystemPrompt_GroupsMemoriesByWhatTheyAreAbout(t *testing.T) {
 	t.Parallel()
 
@@ -188,6 +236,40 @@ func TestBuildSystemPrompt_GroupsMemoriesByWhatTheyAreAbout(t *testing.T) {
 		"- [Fact] The yard closes at 18:00.\n"+
 		"</organization_memory>")
 	assert.Equal(t, 1, strings.Count(prompt, "### About Acme Foods (customer)"))
+}
+
+/*
+A person's own memory is theirs, not the organization's.
+
+"Acme pays net 45", saved as "Just you", was put to the model under "For the
+whole organization", so a preference read as a rule for everyone.
+*/
+func TestBuildSystemPrompt_HeadsMemoriesByWhoTheyAreFor(t *testing.T) {
+	t.Parallel()
+
+	mine := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindInstruction, Scope: agent.MemoryScopeUser,
+		Content: "Acme Manufacturing pays net 45, not net 30.",
+	}
+	team := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact, Scope: agent.MemoryScopeRole,
+		Content: "Billing closes the week on Friday at noon.",
+	}
+	everyone := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact, Scope: agent.MemoryScopeOrganization,
+		Content: "The yard closes at 18:00.",
+	}
+	d := definitionWithInstructions("Help.")
+
+	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		Memories: []*agent.Memory{mine, team, everyone},
+	})
+
+	assert.Contains(t, prompt, "### For the person you are talking to\n"+
+		"- [Instruction] Acme Manufacturing pays net 45, not net 30.\n")
+	assert.Contains(t, prompt, "### For everyone in their role\n"+
+		"- [Fact] Billing closes the week on Friday at noon.\n")
+	assert.Contains(t, prompt, "### For the whole organization\n- [Fact] The yard closes at 18:00.\n")
 }
 
 func TestBuildSystemPrompt_KeepsOutsideMemoryFencedApartWithinTheBudget(t *testing.T) {
@@ -269,4 +351,30 @@ func TestRuntimeContext_MemoryRecordsNameEveryRecordOnce(t *testing.T) {
 	assert.Empty(t, (&agentdefinition.RuntimeContext{
 		Page: &agentdefinition.PageContext{Path: "/shipments"},
 	}).MemoryRecords(), "a list page is about no record")
+}
+
+func TestOrderMemoriesForPrompt_AnOrganizationProcedureIsFollowedLikeAnInstruction(t *testing.T) {
+	t.Parallel()
+
+	fact := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindFact,
+		Content: "Acme ships from two docks.",
+	}
+	procedure := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindProcedure,
+		Content: "1. Read the move. 2. Assign it by move id.",
+	}
+	instruction := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindInstruction,
+		Content: "Quote in dollars.",
+	}
+
+	fitted := definitionWithInstructions("Help.").FitMemories(&agentdefinition.RuntimeContext{
+		Memories: []*agent.Memory{fact, procedure, instruction},
+	})
+
+	assert.Equal(t, []*agent.Memory{instruction, procedure, fact}, fitted)
 }

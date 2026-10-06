@@ -2,7 +2,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useReportCatalog, useReportDefinition } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useParams } from "react-router";
 import { ReportBuilder } from "./_components/report-builder";
 
@@ -22,7 +22,7 @@ function BuilderSkeleton() {
 function BuilderError({ error }: { error: unknown }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
-      <CircleAlertIcon className="text-destructive size-8" />
+      <AlertCircleIcon className="text-destructive size-8" />
       <p className="text-muted-foreground text-sm">
         {graphQLErrorMessage(error, "Failed to load the report builder")}
       </p>

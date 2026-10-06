@@ -1,7 +1,7 @@
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
-import type { AssistantArtifact, PageAgent, PageThread } from "@/types/assistant";
+import type { AssistantArtifact, AssistantThread, PageAgent, PageThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -14,9 +14,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { LockIcon } from "lucide-react";
+import { Lock01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, type ReactNode } from "react";
-import { MessageThread, type PageBinding, type PageRequest } from "./message-thread";
+
+const NO_THREADS: AssistantThread[] = [];
+import { DeskThread } from "@/components/desk-chat/desk-thread";
+import type { PageBinding, PageRequest } from "./use-thread-model";
 import { OutsideContentBadge } from "./outside-content-badge";
 import { pageAssistantAvailability } from "./page-assistant-availability";
 
@@ -123,6 +126,8 @@ export function PageAssistant({
     [artifacts, onOpenArtifact],
   );
 
+  const pageArtifacts = useMemo(() => ({ open: openArtifact }), [openArtifact]);
+
   const working = useRef(false);
   const onWorkingChange = useCallback(
     (active: boolean) => {
@@ -228,19 +233,23 @@ export function PageAssistant({
         </div>
         {header}
       </div>
-      <MessageThread
-        key={thread.id}
-        thread={thread}
-        agent={agent}
-        expanded={false}
-        page={page}
-        openingQuestion={openingQuestion}
-        pageRequest={pageRequest}
-        onPageRequestSent={onPageRequestSent}
-        artifacts={onOpenArtifact ? artifacts : undefined}
-        onOpenArtifact={onOpenArtifact ? openArtifact : undefined}
-        onWorkingChange={onWorkingChange}
-      />
+      <div className="dk-chat flex min-h-0 flex-1 flex-col">
+        <DeskThread
+          key={thread.id}
+          thread={thread}
+          agent={agent}
+          agentsUnavailable={false}
+          density="compact"
+          threads={NO_THREADS}
+          page={page}
+          pageSource="none"
+          openingQuestion={openingQuestion}
+          pageRequest={pageRequest}
+          onPageRequestSent={onPageRequestSent}
+          artifacts={onOpenArtifact ? pageArtifacts : undefined}
+          onWorkingChange={onWorkingChange}
+        />
+      </div>
     </div>
   );
 }
@@ -249,7 +258,7 @@ function PageAssistantNotice({ children, className }: { children: ReactNode; cla
   return (
     <div className={cn("p-3", className)}>
       <Alert size="sm">
-        <LockIcon />
+        <Lock01Icon />
         {children}
       </Alert>
     </div>

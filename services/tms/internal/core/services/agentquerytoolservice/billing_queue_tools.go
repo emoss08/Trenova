@@ -119,7 +119,7 @@ func buildBillingQueueList(
 			{Name: fieldNumber, Kind: filterText, Sortable: true},
 			{Name: "shipment.proNumber", Kind: filterText},
 			{
-				Name:     agentRunFieldCreatedAt,
+				Name:     fieldCreatedAt,
 				Kind:     filterDate,
 				Sortable: true,
 				Note:     "when it was queued",
@@ -340,9 +340,36 @@ func (t *getBillingQueueItemTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	tenant := tenantOf(params)
 
-	item, err := t.items.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	gate := t.access.gate(ctx, params, permission.ResourceBillingQueue)
+	detail, err := t.reader().detail(ctx, tenantOf(params), id, gate)
+	if err != nil {
+		return nil, err
+	}
+	detail.Withheld = gate.Withheld()
+
+	return *detail, nil
+}
+
+func (t *getBillingQueueItemTool) reader() queueDetailReader {
+	return queueDetailReader{items: t.items, readiness: t.readiness, invoices: t.invoices}
+}
+
+// queueDetailReader builds the detail of one item the way get_billing_queue_item
+// shows it, for that tool and for the batch read that shows several.
+type queueDetailReader struct {
+	items     billingQueueReader
+	readiness billingReadinessReader
+	invoices  queueInvoiceReader
+}
+
+func (r queueDetailReader) detail(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
+	gate *fieldGate,
+) (*billingQueueDetail, error) {
+	item, err := r.items.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
 		ItemID:                id,
 		TenantInfo:            tenant,
 		ExpandShipmentDetails: true,
@@ -351,9 +378,8 @@ func (t *getBillingQueueItemTool) Query(
 		return nil, err
 	}
 
-	gate := t.access.gate(ctx, params, permission.ResourceBillingQueue)
 	showAmount := gate.show(fieldAllocatedTotal, withheldAmounts)
-	detail := billingQueueDetail{
+	detail := &billingQueueDetail{
 		billingQueueRow:           billingQueueRowFrom(item, showAmount, timeutils.NowUnix()),
 		ShipmentID:                pulidString(item.ShipmentID),
 		BillToCustomerID:          item.BillToCustomerID.String(),
@@ -370,11 +396,11 @@ func (t *getBillingQueueItemTool) Query(
 		detail.ShipmentStatus = string(item.Shipment.Status)
 		detail.BOL = item.Shipment.BOL
 	}
-	applyPayerShare(&detail, item.PayerShare, showAmount)
+	applyPayerShare(detail, item.PayerShare, showAmount)
 	detail.CanApprove, detail.ApprovalBlockedBy = approvable(item)
 
-	if detail.InvoiceID == "" && item.Status == billingqueue.StatusApproved && t.invoices != nil {
-		if inv, invErr := t.invoices.GetByBillingQueueItemID(
+	if detail.InvoiceID == "" && item.Status == billingqueue.StatusApproved && r.invoices != nil {
+		if inv, invErr := r.invoices.GetByBillingQueueItemID(
 			ctx,
 			repositories.GetInvoiceByBillingQueueItemIDRequest{
 				BillingQueueItemID: item.ID,
@@ -387,15 +413,14 @@ func (t *getBillingQueueItemTool) Query(
 		}
 	}
 
-	if item.ShipmentID.IsNotNil() && t.readiness != nil &&
+	if item.ShipmentID.IsNotNil() && r.readiness != nil &&
 		!billingqueue.IsTerminalStatus(item.Status) {
-		readiness, readErr := t.readiness.GetBillingReadiness(ctx, item.ShipmentID, tenant)
+		readiness, readErr := r.readiness.GetBillingReadiness(ctx, item.ShipmentID, tenant)
 		if readErr != nil {
 			return nil, readErr
 		}
 		detail.Readiness = readinessOf(readiness)
 	}
-	detail.Withheld = gate.Withheld()
 
 	return detail, nil
 }

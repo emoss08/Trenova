@@ -44,14 +44,14 @@ import {
   AlertTriangleIcon,
   CheckIcon,
   ChevronDownIcon,
-  InfoIcon,
-  PencilIcon,
+  Edit02Icon,
+  InfoCircleIcon,
   PlusIcon,
-  RepeatIcon,
-  TrashIcon,
-  UsersRoundIcon,
-  XIcon,
-} from "lucide-react";
+  Repeat01Icon,
+  Trash01Icon,
+  Users01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BillingQueueChargeDialog, type ChargeDialogResult } from "./billing-queue-charge-dialog";
@@ -316,7 +316,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     return [
       {
         label: t("Edit {0}", name),
-        icon: <PencilIcon className="size-3" />,
+        icon: <Edit02Icon className="size-3" />,
         disabled: isPending,
         onClick: () =>
           setEditingCharge({
@@ -331,7 +331,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       },
       {
         label: t("Delete {0}", name),
-        icon: <TrashIcon className="size-3" />,
+        icon: <Trash01Icon className="size-3" />,
         disabled: isPending || charge.isSystemGenerated,
         onClick: () => handleDeleteCharge(index),
       },
@@ -343,7 +343,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       ? [
           {
             label: t("Change payer for {0}", name),
-            icon: <UsersRoundIcon className="size-3" />,
+            icon: <Users01Icon className="size-3" />,
             disabled: isPending,
             onClick: () => setReassignLine(line),
           },
@@ -383,7 +383,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
 
       {share && share.payers.length > 1 && (isEditable || canReassign) ? (
         <Alert variant="info">
-          <InfoIcon className="size-4" />
+          <InfoCircleIcon className="size-4" />
           <AlertDescription className="text-xs">
             {t(
               "Charges belong to the shipment, so changing one here also changes the other payers' bills.",
@@ -417,7 +417,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                     onClick={() => setRerateDialogOpen(true)}
                     disabled={isPending}
                   >
-                    <RepeatIcon className="size-3" />
+                    <Repeat01Icon className="size-3" />
                   </Button>
                 }
               />
@@ -473,7 +473,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 aria-label={t("Cancel")}
                 onClick={() => setEditingFreight(false)}
               >
-                <XIcon className="text-muted-foreground size-3" />
+                <XCloseIcon className="text-muted-foreground size-3" />
               </Button>
             </div>
           ) : (
@@ -501,7 +501,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                             setEditingFreight(true);
                           }}
                         >
-                          <PencilIcon className="size-3" />
+                          <Edit02Icon className="size-3" />
                         </Button>
                       }
                     />
@@ -552,7 +552,9 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       ) : (
         <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2.5">
           <span className="text-sm font-semibold">{t("Total")}</span>
-          <span className="text-base font-semibold tabular-nums">{formatCurrency(totalCharge)}</span>
+          <span className="text-base font-semibold tabular-nums">
+            {formatCurrency(totalCharge)}
+          </span>
         </div>
       )}
 
@@ -640,9 +642,7 @@ function AccessorialsHeader({
   const t = useT();
   return (
     <div className="flex items-center justify-between p-2">
-      <span className="text-muted-foreground text-xs font-medium">
-        {t("Accessorials")}
-      </span>
+      <span className="text-muted-foreground text-xs font-medium">{t("Accessorials")}</span>
       {isEditable && (
         <Tooltip>
           <TooltipTrigger
@@ -702,9 +702,7 @@ function ShipmentChargeLines({
           key={charge.id ?? index}
           name={chargeName(charge, t("Charge"))}
           details={
-            <span className="text-muted-foreground text-xs">
-              {formatChargeBreakdown(charge)}
-            </span>
+            <span className="text-muted-foreground text-xs">{formatChargeBreakdown(charge)}</span>
           }
           amount={chargeLineTotal(charge, freightBasis)}
           actions={chargeActions(index, charge)}

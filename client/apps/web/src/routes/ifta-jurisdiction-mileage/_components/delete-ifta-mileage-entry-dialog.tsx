@@ -21,7 +21,7 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { formatDecimalString } from "@trenova/shared/types/decimal";
 import { IFTA_MILEAGE_SOURCE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { IFTA_MILES_SCALE } from "@trenova/shared/types/ifta-jurisdiction-mileage";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 
 type DeleteIftaMileageEntryDialogProps = {
@@ -61,7 +61,7 @@ export function DeleteIftaMileageEntryDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-danger-subtle text-destructive">
-            <Trash2Icon />
+            <Trash01Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Delete this entry?")}</AlertDialogTitle>
           <AlertDialogDescription>

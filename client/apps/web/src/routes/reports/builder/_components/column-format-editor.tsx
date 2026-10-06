@@ -29,7 +29,7 @@ import {
   type ReportDisplaySpec,
   type ReportTransformOp,
 } from "@/types/report";
-import { RotateCcwIcon } from "lucide-react";
+import { RefreshCcw01Icon } from "@trenova/shared/components/icons";
 import { DisplayRulesEditor } from "./display-rules-editor";
 import { resolvePreviewDisplay, sampleValueFor } from "./display-preview";
 
@@ -133,9 +133,7 @@ export function ColumnFormatEditor({
   return (
     <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border border-dashed p-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground font-medium">
-          {t("Formatting")}
-        </span>
+        <span className="text-xs text-muted-foreground font-medium">{t("Formatting")}</span>
         <span className="bg-background text-2xs text-foreground/80 rounded-sm px-1.5 py-px font-mono tabular-nums">
           {preview || "—"}
         </span>
@@ -148,7 +146,7 @@ export function ColumnFormatEditor({
             aria-label={t("Reset formatting")}
             onClick={() => onUpdate({ ...column, display: undefined, transform: undefined })}
           >
-            <RotateCcwIcon className="size-3.5" />
+            <RefreshCcw01Icon className="size-3.5" />
           </Button>
         )}
       </div>

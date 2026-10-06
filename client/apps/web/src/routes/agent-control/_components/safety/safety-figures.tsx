@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CircleAlertIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 
 /** The figures move with agents' settings and trust; a minute old is still true enough. */
 export const SAFETY_SUMMARY_STALE_MS = 60_000;
@@ -20,7 +20,7 @@ export function SafetyFigures() {
   if (summary.isError) {
     return (
       <Alert variant="destructive" size="sm">
-        <CircleAlertIcon />
+        <AlertCircleIcon />
         <AlertDescription>
           {t("What agents can do without a person could not be loaded. Try again shortly.")}
         </AlertDescription>

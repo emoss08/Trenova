@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "@trenova/shared/components/icons";
 
 export type SplitButtonOption<T extends string = string> = {
   id: T;

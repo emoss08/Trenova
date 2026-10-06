@@ -2,7 +2,6 @@ package completionrouter
 
 import (
 	"context"
-	"net/url"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -64,6 +63,9 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 
 	usage := attemptUsage(attempt, cost)
 	aitrace.RecordUsage(span, usage)
+	if attempt.firstToken > 0 {
+		span.SetAttributes(aitrace.AIFirstTokenMs.Int64(attempt.firstToken.Milliseconds()))
+	}
 	errorType := classifyError(attempt.err)
 	if attempt.err != nil {
 		aitrace.MarkFailed(span, errorType)
@@ -91,6 +93,8 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 		InputTokens:   usage.InputTokens,
 		OutputTokens:  usage.OutputTokens,
 		Duration:      attempt.latency,
+		Task:          string(attempt.task),
+		FirstToken:    attempt.firstToken,
 	})
 }
 
@@ -124,6 +128,7 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	usage.CacheWriteTokens = int64(outcome.CacheWriteTokens)
 	usage.ReasoningTokens = int64(outcome.ReasoningTokens)
 	usage.Truncated = outcome.Truncated
+	usage.ThinkingDropped = int64(outcome.ThinkingDropped)
 	if outcome.FinishReason != "" {
 		usage.FinishReasons = []string{outcome.FinishReason}
 	}
@@ -151,12 +156,7 @@ func serverAddress(provider *aiprovider.Provider) string {
 		return ""
 	}
 
-	parsed, err := url.Parse(provider.ResolvedBaseURL())
-	if err != nil {
-		return ""
-	}
-
-	return parsed.Hostname()
+	return provider.Host()
 }
 
 func recordBusyWait(ctx context.Context, wait time.Duration) {

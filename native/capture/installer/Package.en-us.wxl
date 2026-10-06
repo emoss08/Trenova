@@ -9,7 +9,7 @@
   <String Id="ServerDlgTitle" Value="{\WixUI_Font_Title}Your Trenova" />
   <String Id="ServerDlgDescription" Value="Where Trenova Capture sends what you scan and print." />
   <String Id="ServerDlgAddressLabel" Value="Trenova address" />
-  <String Id="ServerDlgAddressHelp" Value="The address you open Trenova at in your browser, https://cloud.trenova.app, or http://localhost:5173 when Trenova runs on this computer for development. Leave it empty to enter it in Trenova Capture after installing." />
+  <String Id="ServerDlgAddressHelp" Value="The address you open Trenova at in your browser, such as https://trenova.example.com, or http://localhost:5173 when Trenova runs on this computer for development. Leave it empty to enter it in Trenova Capture after installing." />
   <String Id="ServerDlgUpdates" Value="Install new versions of Trenova Capture automatically" />
   <String Id="ServerDlgUpdatesHelp" Value="Trenova Capture checks for a signed release every six hours and installs it when nothing is being scanned. Turn this off if your IT department deploys updates." />
   <String Id="InvalidServerDlgText" Value="Enter an address that starts with https://, or http://localhost for a Trenova running on this computer. Trenova Capture sends documents only over an encrypted connection." />

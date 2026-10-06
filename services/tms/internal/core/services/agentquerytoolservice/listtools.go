@@ -294,19 +294,7 @@ func (t *listTool) Query(
 		Sort:         sorting,
 	}
 
-	var rows []any
-	switch {
-	case gate != nil:
-		rows, err = t.spec.fetchGated(ctx, opts, gate)
-	case t.spec.fetchJoined != nil:
-		rows, err = t.spec.fetchJoined(ctx, opts, func(resource permission.Resource) bool {
-			return t.spec.access.mayRead(ctx, params, resource)
-		})
-	case t.spec.fetchIn != nil:
-		rows, err = t.spec.fetchIn(ctx, opts, criteria.Clock)
-	default:
-		rows, err = t.spec.fetch(ctx, opts)
-	}
+	rows, err := t.fetchRows(ctx, params, opts, gate, criteria)
 	if err != nil {
 		return nil, err
 	}
@@ -318,6 +306,81 @@ func (t *listTool) Query(
 	}
 
 	return outcome, nil
+}
+
+// fetchRows reads one window of rows the way the list's spec says to: through
+// the field gate, joined with what the reader may see, on the caller's clock,
+// or plainly.
+func (t *listTool) fetchRows(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	opts *pagination.QueryOptions,
+	gate *fieldGate,
+	criteria *filtercatalog.Criteria,
+) ([]any, error) {
+	switch {
+	case gate != nil:
+		return t.spec.fetchGated(ctx, opts, gate)
+	case t.spec.fetchJoined != nil:
+		return t.spec.fetchJoined(ctx, opts, func(resource permission.Resource) bool {
+			return t.spec.access.mayRead(ctx, params, resource)
+		})
+	case t.spec.fetchIn != nil:
+		return t.spec.fetchIn(ctx, opts, criteria.Clock)
+	default:
+		return t.spec.fetch(ctx, opts)
+	}
+}
+
+// viewRun is what a composed view holds when it is run: up to its counting
+// limit of rows in the list's own shape, and whether there were more.
+type viewRun struct {
+	outcome  searchOutcome
+	withheld []string
+	more     bool
+}
+
+// runView reads a composed view through this list's own fetch, so the count
+// and the rows a view previews are what its page shows the same person: the
+// same filters, the same tenant and the same withheld fields. It reads one
+// row past limit to say whether there are more.
+func (t *listTool) runView(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	query string,
+	filters []domaintypes.FieldFilter,
+	sorting []domaintypes.SortField,
+	limit int,
+) (*viewRun, error) {
+	var gate *fieldGate
+	if t.spec.fetchGated != nil {
+		gate = t.spec.access.gate(ctx, params, t.spec.resource)
+	}
+	criteria := filtercatalog.NewCriteria(t.spec.entityPlural).At(clockFor(params))
+	criteria.Text(query)
+
+	rows, err := t.fetchRows(ctx, params, &pagination.QueryOptions{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  params.OrganizationID,
+			BuID:   params.BusinessUnitID,
+			UserID: params.Actor.UserID,
+		},
+		Pagination:   pagination.Info{Limit: limit + 1},
+		Query:        query,
+		FieldFilters: filters,
+		Sort:         sorting,
+	}, gate, criteria)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, more := trim(page{limit: limit}, rows)
+	run := &viewRun{outcome: searchResult(criteria, rows, len(rows)), more: more}
+	if gate != nil {
+		run.withheld = gate.Withheld()
+	}
+
+	return run, nil
 }
 
 func refuseWithheldFields(

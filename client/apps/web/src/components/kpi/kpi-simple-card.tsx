@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 import type React from "react";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import { KPI_VALUE_CLASS, KPI_VALUE_LG_CLASS, useInKpiStrip } from "@/components/kpi/kpi-strip";
@@ -6,7 +6,7 @@ import { KPI_VALUE_CLASS, KPI_VALUE_LG_CLASS, useInKpiStrip } from "@/components
 type KPICardProps = {
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   detail?: React.ReactNode;
   children?: React.ReactNode;
 };

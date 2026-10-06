@@ -11,8 +11,9 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
-import { AssistantWidget } from "../assistant/assistant-widget";
+import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
+import { edition } from "@/lib/edition";
 import { Header } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
@@ -96,9 +97,12 @@ function useLayoutEffects() {
   useTouchRecentRecords();
 }
 
+const AppBanner = edition.slots.AppBanner;
+
 function WorkspaceShell({ children }: SidebarLayoutProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
+      <AppBanner />
       <WorkspaceHeader />
       <div className="flex min-h-0 flex-1">
         <WorkspaceSidebar />
@@ -113,11 +117,14 @@ function WorkspaceShell({ children }: SidebarLayoutProps) {
 
 function ClassicShell({ children }: SidebarLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <ClassicSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+    <div className="flex h-screen flex-col overflow-hidden">
+      <AppBanner />
+      <div className="flex min-h-0 flex-1">
+        <ClassicSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Header />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
       </div>
     </div>
   );
@@ -125,6 +132,7 @@ function ClassicShell({ children }: SidebarLayoutProps) {
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const variant = useNavigationStore((state) => state.sidebarVariant);
+  const assistantSide = useAssistantSideInset();
   useLayoutEffects();
 
   const Shell = variant === "classic" ? ClassicShell : WorkspaceShell;
@@ -135,7 +143,11 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       <KeyboardShortcutsDialog />
       <UserSettingsHost />
       <AssistantWidget />
-      <Shell>{children}</Shell>
+      {/* With the assistant docked down one side, the page moves over for it
+          rather than sitting under it. */}
+      <div className="as-reflow" data-assistant-side={assistantSide ?? undefined}>
+        <Shell>{children}</Shell>
+      </div>
     </>
   );
 }
@@ -145,6 +157,12 @@ type PageLayoutProps = {
   children: React.ReactNode;
   className?: string;
   fill?: boolean;
+  /**
+   * Lays the body edge to edge for a workspace that is more than a table but
+   * still bleeds one, such as a board with a header block above its table.
+   * The table's chrome answers through the same `bleed:` variant.
+   */
+  bleed?: boolean;
 };
 
 export function PageLayout({
@@ -152,6 +170,7 @@ export function PageLayout({
   children,
   className,
   fill = false,
+  bleed = false,
 }: PageLayoutProps) {
   return (
     <div
@@ -164,10 +183,12 @@ export function PageLayout({
       <PageHeader {...pageHeaderProps} />
       <div
         data-slot="page-body"
+        data-bleed={bleed || undefined}
         className={cn(
           "flex min-w-0 flex-1 flex-col gap-y-4 p-4",
           "has-[>[data-slot=data-table]:only-child]:min-h-0 has-[>[data-slot=data-table]:only-child]:gap-y-0 has-[>[data-slot=data-table]:only-child]:p-0",
           fill && "min-h-0 overflow-y-auto",
+          bleed && "min-h-0 gap-y-0 p-0",
           className,
         )}
       >

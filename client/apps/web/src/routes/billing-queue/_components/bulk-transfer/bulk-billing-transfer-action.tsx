@@ -3,7 +3,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { SendIcon } from "lucide-react";
+import { Send01Icon } from "@trenova/shared/components/icons";
 import { lazy } from "react";
 
 const BulkBillingTransferDialog = lazy(() =>
@@ -39,7 +39,7 @@ export function BulkBillingTransferAction({
   return (
     <>
       <Button size="sm" variant="outline" onClick={() => onOpenChange(true)}>
-        <SendIcon className="size-3.5" />
+        <Send01Icon className="size-3.5" />
         {t("Transfer to billing")}
       </Button>
       {open ? (

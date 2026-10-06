@@ -6,7 +6,11 @@ import { DayPicker, getDefaultClassNames, type DayButton, type Locale } from "re
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@trenova/shared/components/icons";
 
 function Calendar({
   className,

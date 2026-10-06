@@ -46,7 +46,9 @@ type UpdateBillingQueueStatusRequest struct {
 	ExceptionNotes      string
 	ReviewNotes         string
 	CancelReason        string
-	TenantInfo          pagination.TenantInfo
+	// HoldReasonCode is why the item goes on hold; read only for OnHold.
+	HoldReasonCode *billingqueue.HoldReasonCode
+	TenantInfo     pagination.TenantInfo
 }
 
 type BillingQueueStats struct {

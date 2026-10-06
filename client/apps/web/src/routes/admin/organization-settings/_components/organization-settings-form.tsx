@@ -43,13 +43,17 @@ import {
   resolveOrganizationCapabilityPreset,
   type OrganizationCapabilityPreset,
 } from "@trenova/shared/types/organization-capability";
-import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";
+import {
+  Building07Icon,
+  Shield01Icon,
+  Upload01Icon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { BillingUsageTab } from "./billing-usage-tab";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
 
 const emptyOrganizationDefaults: OrganizationSettings = {
@@ -178,16 +182,12 @@ export default function OrganizationSettingsForm() {
     >
       <TabsList variant="underline">
         <TabsTab value="general">
-          <Building2Icon size={16} />
+          <Building07Icon size={16} />
           {t("General")}
         </TabsTab>
         <TabsTab value="security">
-          <ShieldIcon size={16} />
+          <Shield01Icon size={16} />
           {t("Security")}
-        </TabsTab>
-        <TabsTab value="billing-usage">
-          <CreditCardIcon size={16} />
-          {t("Billing & usage")}
         </TabsTab>
       </TabsList>
       <TabsContent value="general" className="pb-10">
@@ -207,11 +207,6 @@ export default function OrganizationSettingsForm() {
       <TabsContent value="security">
         <Activity mode={tab === "security" ? "visible" : "hidden"}>
           <SecurityAccessWorkspace organizationId={organizationId} />
-        </Activity>
-      </TabsContent>
-      <TabsContent value="billing-usage" className="pb-10">
-        <Activity mode={tab === "billing-usage" ? "visible" : "hidden"}>
-          <BillingUsageTab />
         </Activity>
       </TabsContent>
     </Tabs>
@@ -333,7 +328,7 @@ function LogoForm({
                 aria-label={t("Remove logo")}
                 title={t("Remove logo")}
               >
-                <CircleXIcon className="size-4" />
+                <XCircleIcon className="size-4" />
               </button>
             ) : null}
           </div>
@@ -344,7 +339,7 @@ function LogoForm({
             onClick={() => fileInputRef.current?.click()}
             disabled={isRemovingLogo}
           >
-            <UploadIcon className="size-4" />
+            <Upload01Icon className="size-4" />
             {t("Upload logo")}
           </Button>
           <input

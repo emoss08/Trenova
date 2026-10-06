@@ -79,3 +79,17 @@ func checkStatusTarget(status agent.MemoryStatus) error {
 
 	return nil
 }
+
+// statusComment is what the audit log says a status change did.
+func statusComment(from, to agent.MemoryStatus) string {
+	switch {
+	case to == agent.MemoryStatusPaused:
+		return "Agent memory paused"
+	case to == agent.MemoryStatusRetired:
+		return "Agent memory retired"
+	case from == agent.MemoryStatusPaused:
+		return "Agent memory resumed"
+	default:
+		return "Agent memory restored"
+	}
+}

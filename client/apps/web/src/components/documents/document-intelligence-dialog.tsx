@@ -30,7 +30,12 @@ import type {
   DocumentShipmentDraft,
 } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, CircleCheckIcon, LoaderCircleIcon, RefreshCcwIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  RefreshCcw02Icon,
+  SpinnerIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -490,7 +495,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
 
       {draft.attachedShipmentId ? (
         <Alert variant="success" size="sm">
-          <CircleCheckIcon />
+          <CheckCircleIcon />
           <AlertTitle>{t("This document is already attached to a shipment.")}</AlertTitle>
           <AlertDescription>
             {t(
@@ -846,7 +851,7 @@ export function DocumentIntelligenceDialog({
                     </div>
                     {isDraftLoading ? (
                       <div className="text-muted-foreground flex items-center gap-2 rounded-lg border p-3 text-sm">
-                        <LoaderCircleIcon className="size-4 animate-spin" />
+                        <SpinnerIcon className="size-4 animate-spin" />
                         {t("Loading shipment draft...")}
                       </div>
                     ) : (
@@ -874,7 +879,7 @@ export function DocumentIntelligenceDialog({
                     </div>
                     {isContentLoading ? (
                       <div className="text-muted-foreground flex items-center gap-2 rounded-lg border p-3 text-sm">
-                        <LoaderCircleIcon className="size-4 animate-spin" />
+                        <SpinnerIcon className="size-4 animate-spin" />
                         {t("Loading extracted content...")}
                       </div>
                     ) : (
@@ -902,9 +907,9 @@ export function DocumentIntelligenceDialog({
                 {supportsTargetedReextract ? (
                   <Button variant="outline" onClick={() => reextract()} disabled={isReextracting}>
                     {isReextracting ? (
-                      <LoaderCircleIcon className="size-4 animate-spin" />
+                      <SpinnerIcon className="size-4 animate-spin" />
                     ) : (
-                      <RefreshCcwIcon className="size-4" />
+                      <RefreshCcw02Icon className="size-4" />
                     )}
                     {t("Re-extract")}
                   </Button>

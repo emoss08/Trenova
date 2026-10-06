@@ -40,11 +40,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   ArrowRightIcon,
-  DownloadIcon,
-  HistoryIcon,
+  ClockRewindIcon,
+  Download01Icon,
   PlayIcon,
-  ShieldIcon,
-} from "lucide-react";
+  Shield01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -84,16 +84,8 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
           value={`${summary.evaluatedCount}/${summary.shipmentCount}`}
         />
         <StatTile label={t("Changed")} value={String(summary.changedCount)} />
-        <StatTile
-          label={t("Increased")}
-          value={String(summary.increasedCount)}
-          tone="success"
-        />
-        <StatTile
-          label={t("Decreased")}
-          value={String(summary.decreasedCount)}
-          tone="danger"
-        />
+        <StatTile label={t("Increased")} value={String(summary.increasedCount)} tone="success" />
+        <StatTile label={t("Decreased")} value={String(summary.decreasedCount)} tone="danger" />
         <StatTile
           label={t("Clamped")}
           value={String(summary.guardrailCount)}
@@ -183,7 +175,7 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
         <div className="flex items-center justify-end gap-1.5">
           {result.guardrailApplied && (
             <Tooltip>
-              <TooltipTrigger render={<ShieldIcon className="size-3.5 text-info-foreground" />} />
+              <TooltipTrigger render={<Shield01Icon className="size-3.5 text-info-foreground" />} />
               <TooltipContent side="left" className="text-xs">
                 {t("Guardrail clamped the candidate amount")}
               </TooltipContent>
@@ -384,7 +376,7 @@ export default function FormulaTemplateBacktestTab({
               disabled={mutation.data.results.length === 0}
               className="gap-1.5"
             >
-              <DownloadIcon className="size-3.5" />
+              <Download01Icon className="size-3.5" />
               {t("Export CSV")}
             </Button>
           </div>
@@ -422,7 +414,7 @@ export default function FormulaTemplateBacktestTab({
       ) : (
         !mutation.isPending && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-            <HistoryIcon className="text-muted-foreground mb-3 size-8" />
+            <ClockRewindIcon className="text-muted-foreground mb-3 size-8" />
             <p className="text-sm font-medium">{t("No backtest results yet")}</p>
             <p className="text-muted-foreground mt-1 max-w-sm text-xs">
               {t(

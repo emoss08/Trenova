@@ -69,9 +69,13 @@ type Definition struct {
 
 	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" bun:"data_access_ceiling,type:VARCHAR(20),notnull,default:'Internal'"`
 
-	Enabled                bool `json:"enabled"                bun:"enabled,type:BOOLEAN,notnull"`
-	ShadowMode             bool `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull"`
-	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull"`
+	Enabled bool `json:"enabled"                bun:"enabled,type:BOOLEAN,notnull"`
+	// DisabledAt and DisabledByID say when the agent was last turned off and
+	// by whom; both are cleared when it is turned back on.
+	DisabledAt             *int64    `json:"disabledAt,omitempty"   bun:"disabled_at,type:BIGINT,nullzero"`
+	DisabledByID           *pulid.ID `json:"disabledById,omitempty" bun:"disabled_by_id,type:VARCHAR(100),nullzero"`
+	ShadowMode             bool      `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull"`
+	DecisionTimeoutSeconds int       `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull"`
 
 	TriggerMode       TriggerMode       `json:"triggerMode"       bun:"trigger_mode,type:VARCHAR(20),notnull"`
 	CronExpression    string            `json:"cronExpression"    bun:"cron_expression,type:VARCHAR(100),nullzero"`
@@ -99,6 +103,7 @@ type Definition struct {
 	SimulationMode  bool           `json:"simulationMode"   bun:"simulation_mode,type:BOOLEAN,notnull"`
 
 	MemoryTokenBudget *int `json:"memoryTokenBudget" bun:"memory_token_budget,type:INTEGER,nullzero"`
+	LearningOff       bool `json:"learningOff"       bun:"learning_off,type:BOOLEAN,notnull,default:false"`
 
 	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero"`
 	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero"`
@@ -113,6 +118,35 @@ type Definition struct {
 	// hold. Each delegate works with its own tools, tiers, ceiling and budget,
 	// as the same person, and never delegates further.
 	DelegateIDs []pulid.ID `json:"delegateIds" bun:"delegate_ids,type:TEXT[],array,nullzero"`
+	// DelegateTopics names, per delegate id, the questions that go to that
+	// agent ("Pay rates, people records"), so a person reading what an agent
+	// does sees why it hands work on. A delegate without one is described by
+	// its own description.
+	DelegateTopics map[string]string `json:"delegateTopics" bun:"delegate_topics,type:JSONB,nullzero"`
+
+	// DisabledToolNames are tools switched off from the agent's capabilities
+	// page. Switching a tool off removes it from ToolNames, which is the
+	// grant; it is listed here only so the page can still offer it back.
+	DisabledToolNames []string `json:"disabledToolNames" bun:"disabled_tool_names,type:TEXT[],array,nullzero"`
+
+	// MaxChangeItems is the most records one change by the agent may touch.
+	// A bigger batch is refused with an instruction to split it, so each part
+	// is proposed and approved on its own.
+	MaxChangeItems int `json:"maxChangeItems" bun:"max_change_items,type:INTEGER,notnull,default:500"`
+
+	// BusinessHoursOnly keeps the agent from making changes on its own
+	// outside the window BusinessHoursStart to BusinessHoursEnd (minutes
+	// after midnight) in BusinessHoursTimezone, or the organization's zone
+	// when that is empty. Outside the window a change is held as a proposal
+	// for a person instead of running.
+	BusinessHoursOnly     bool   `json:"businessHoursOnly"     bun:"business_hours_only,type:BOOLEAN,notnull,default:false"`
+	BusinessHoursStart    int    `json:"businessHoursStart"    bun:"business_hours_start,type:INTEGER,notnull,default:420"`
+	BusinessHoursEnd      int    `json:"businessHoursEnd"      bun:"business_hours_end,type:INTEGER,notnull,default:1080"`
+	BusinessHoursTimezone string `json:"businessHoursTimezone" bun:"business_hours_timezone,type:VARCHAR(100),nullzero"`
+
+	// CreatedByID is the person who set the agent up; nil for the agents the
+	// platform provisions and for those made before it was kept.
+	CreatedByID *pulid.ID `json:"createdById,omitempty" bun:"created_by_id,type:VARCHAR(100),nullzero"`
 
 	// AccessMode is who may use the agent among the people who may use the
 	// assistant: everyone, or only the roles granted it. Only the agent
@@ -130,13 +164,15 @@ type Definition struct {
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
+const IDPrefix = "agdef_"
+
 func (d *Definition) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("agdef_")
+			d.ID = pulid.MustNew(IDPrefix)
 		}
 		d.ApplyDefaults()
 		d.CreatedAt = now
@@ -203,6 +239,7 @@ func (d *Definition) ApplyDefaults() {
 	if d.AccessMode == "" {
 		d.AccessMode = AccessEveryone
 	}
+	d.applyCapabilityDefaults()
 }
 
 func (d *Definition) EffectiveTier(tool string, toolTier agent.AutonomyTier) agent.AutonomyTier {
@@ -395,6 +432,7 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 	d.validateMemoryBudget(multiErr)
 	d.validateDelegates(multiErr)
 	d.validateAccess(multiErr)
+	d.validateCapabilities(multiErr)
 }
 
 // Delegates reports whether the agent may hand work to another agent at all:
@@ -666,5 +704,22 @@ func (d *Definition) validateContextProviders(multiErr *errortypes.MultiError) {
 				fmt.Sprintf("%q is not a context this system can provide", provider),
 			)
 		}
+	}
+}
+
+// NoteEnabledChange records who turned the agent off and when, or clears it
+// once the agent is on again.
+func (d *Definition) NoteEnabledChange(wasEnabled bool, by pulid.ID, at int64) {
+	switch {
+	case wasEnabled && !d.Enabled:
+		d.DisabledAt = &at
+		if by.IsNil() {
+			d.DisabledByID = nil
+		} else {
+			d.DisabledByID = &by
+		}
+	case d.Enabled:
+		d.DisabledAt = nil
+		d.DisabledByID = nil
 	}
 }

@@ -4,7 +4,7 @@ import { BrandLogo } from "@trenova/shared/components/brand-logo";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { SelectOptionGroup } from "@trenova/shared/types/fields";
 import type { AIProviderPreset } from "@/types/ai-provider";
-import { SlidersHorizontalIcon } from "lucide-react";
+import { Sliders01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import type { Control } from "react-hook-form";
 import type { ProviderFormValues } from "./build-save-payload";
@@ -53,7 +53,7 @@ export function PresetPicker({ control, presets, isLoading = false, onSelect }: 
           value: CUSTOM_PRESET_VALUE,
           label: "Custom endpoint",
           description: "Any OpenAI-compatible server",
-          icon: <SlidersHorizontalIcon className="text-muted-foreground size-[18px] shrink-0" />,
+          icon: <Sliders01Icon className="text-muted-foreground size-[18px] shrink-0" />,
         },
       ],
     };

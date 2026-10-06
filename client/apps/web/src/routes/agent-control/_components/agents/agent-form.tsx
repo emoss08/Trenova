@@ -26,14 +26,14 @@ import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatTimezoneLabel, listTimezones } from "@trenova/shared/lib/timezones";
 import {
-  BoltIcon,
   CalendarClockIcon,
-  FileTextIcon,
-  LockIcon,
-  MessageSquareIcon,
-  RepeatIcon,
+  File06Icon,
+  Lock01Icon,
+  MessageSquare01Icon,
+  Repeat01Icon,
   ShieldAlertIcon,
-} from "lucide-react";
+  Tool02Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { providerBrandDomain } from "../providers/provider-brand";
@@ -152,17 +152,17 @@ export function AgentForm({
   );
 
   const triggerItems = [
-    { value: "Chat" as const, label: t("Chat"), icon: MessageSquareIcon },
+    { value: "Chat" as const, label: t("Chat"), icon: MessageSquare01Icon },
     { value: "Scheduled" as const, label: t("Scheduled"), icon: CalendarClockIcon },
-    { value: "Event" as const, label: t("Event"), icon: BoltIcon },
-    { value: "Continuous" as const, label: t("Continuous"), icon: RepeatIcon },
+    { value: "Event" as const, label: t("Event"), icon: Tool02Icon },
+    { value: "Continuous" as const, label: t("Continuous"), icon: Repeat01Icon },
   ];
 
   return (
     <div className="flex flex-col gap-7">
       {isSystem && (
         <Alert variant="info" size="sm">
-          <LockIcon className="size-4" />
+          <Lock01Icon className="size-4" />
           <AlertTitle>{t("A system agent")}</AlertTitle>
           <AlertDescription>
             {t(
@@ -651,8 +651,8 @@ export function AgentForm({
                 onValueChange={outputField.onChange}
                 aria-label={t("Output")}
                 items={[
-                  { value: "Conversational", label: t("Conversation"), icon: MessageSquareIcon },
-                  { value: "Report", label: t("Report"), icon: FileTextIcon },
+                  { value: "Conversational", label: t("Conversation"), icon: MessageSquare01Icon },
+                  { value: "Report", label: t("Report"), icon: File06Icon },
                 ]}
               />
             </FieldWrapper>
@@ -692,6 +692,18 @@ export function AgentForm({
               description={t(
                 "How much of what the organization recorded each prompt carries. What the conversation is about comes first.",
               )}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <SwitchField
+              name="learnsFromWork"
+              control={control}
+              label={t("Learns from its work")}
+              description={t(
+                "Once a conversation goes quiet or a run settles, it looks back for what went wrong or took several tries and keeps the lesson as memory. Each person's saving preference still applies, and anything shared beyond them waits for approval.",
+              )}
+              outlined
+              position="left"
             />
           </FormControl>
           <FormControl cols="full">

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,14 +84,19 @@ func (t *emailCustomerTool) compose(
 	// departure, so a shipment crossing a yard can raise several runs in a
 	// few minutes. Telling the customer once is the rule; reading back what
 	// was already sent is what enforces it.
-	composed.alreadyTold, err = alreadyToldCustomer(
+	composed.alreadyTold, err = customerupdateservice.AlreadyTold(
 		ctx, t.deps.comments, tenant, sp.ID, timeutils.NowUnix(),
 	)
 	if err != nil || composed.alreadyTold {
 		return composed, err
 	}
 
-	recipients, customerName, err := t.recipients(ctx, sp, tenant)
+	recipients, customerName, err := customerupdateservice.Recipients(
+		ctx,
+		t.deps.customers,
+		sp,
+		tenant,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +108,7 @@ func (t *emailCustomerTool) compose(
 		CustomerName:      customerName,
 		ShipmentProNumber: sp.ProNumber,
 	}
-	brandAgentEmail(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &composed.data)
+	customerupdateservice.Brand(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &composed.data)
 
 	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
 		TenantInfo: tenant,
@@ -200,25 +206,15 @@ func (t *emailCustomerTool) Preview(
 func customerUpdateComment(
 	composed *customerEmail,
 ) *serviceports.CreateSystemShipmentCommentRequest {
-	return &serviceports.CreateSystemShipmentCommentRequest{
-		TenantInfo: composed.tenant,
+	return customerupdateservice.Comment(&customerupdateservice.CommentParams{
+		Tenant:     composed.tenant,
 		ShipmentID: composed.shipment.ID,
-		Comment: fmt.Sprintf(
-			"Emailed %s: %s\n\n%s",
-			strings.Join(composed.recipients, ", "),
-			composed.data.AgentSubject,
-			composed.data.AgentBody,
-		),
-		Type:       shipment.CommentTypeCustomerUpdate,
-		Visibility: shipment.CommentVisibilityOperations,
-		Priority:   shipment.CommentPriorityNormal,
-		Metadata: map[string]any{
-			shipment.CommentMetadataOrigin: shipment.CommentOriginAgent,
-			"tool":                         emailCustomerToolName,
-			"recipients":                   composed.recipients,
-			previewFieldSubject:            composed.data.AgentSubject,
-		},
-	}
+		Recipients: composed.recipients,
+		Subject:    composed.data.AgentSubject,
+		Body:       composed.data.AgentBody,
+		Origin:     shipment.CommentOriginAgent,
+		Source:     customerupdateservice.SourceAgentEmail,
+	})
 }
 
 // ------------------------------------------------------ request_missing_docs
@@ -363,7 +359,7 @@ func (t *replyToInboundMessageTool) compose(
 		AgentBody:    reply.body,
 	}
 	t.describeMatch(ctx, reply.message, tenant, &data)
-	brandAgentEmail(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &data)
+	customerupdateservice.Brand(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &data)
 
 	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
 		TenantInfo: tenant,

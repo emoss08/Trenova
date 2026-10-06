@@ -265,6 +265,32 @@ describe("ProposalPreview", () => {
     expect(screen.getByText("High")).toBeInTheDocument();
   });
 
+  // A preview that failed already says the values are shown instead; the
+  // coverage notice would say the same thing a second time.
+  it("says once that the values are shown instead when the preview failed", () => {
+    renderIn(
+      <ProposalPreview
+        preview={preview({
+          coverage: "Unavailable",
+          warnings: [{ code: "preview_failed", args: [], message: "", reasons: [] }],
+          tool: "flag_for_manual_review",
+          changes: [],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "What this would change could not be worked out; the values it would run with are shown instead.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "This action can't say exactly what it would change. It would run with the values below.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it("says a stale proposal can only be rejected, and why", () => {
     renderIn(
       <ProposalPreview

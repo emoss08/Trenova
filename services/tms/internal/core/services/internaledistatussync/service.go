@@ -33,6 +33,7 @@ type Params struct {
 	ShipmentLinkRepo   repositories.EDIShipmentLinkRepository
 	TransferChangeRepo repositories.EDITransferChangeRepository
 	Realtime           services.RealtimeService
+	Invalidator        services.ShipmentInvalidator
 	Coordinator        *shipmentstate.Coordinator
 	OrderDerivation    services.OrderDerivationService
 }
@@ -45,6 +46,7 @@ type Observer struct {
 	shipmentLinkRepo   shipmentLinkRepository
 	transferChangeRepo transferChangeRepository
 	realtime           services.RealtimeService
+	invalidator        services.ShipmentInvalidator
 	orderDerivation    services.OrderDerivationService
 	lifecycleApplier   *internaledilifecycle.Applier
 }
@@ -116,6 +118,7 @@ func New(p Params) *Observer {
 		shipmentLinkRepo:   p.ShipmentLinkRepo,
 		transferChangeRepo: p.TransferChangeRepo,
 		realtime:           p.Realtime,
+		invalidator:        p.Invalidator,
 		orderDerivation:    p.OrderDerivation,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
@@ -353,20 +356,13 @@ func (o *Observer) applyChange(
 
 func (o *Observer) publishResult(ctx context.Context, result syncContext) {
 	if result.updated != nil {
-		if err := realtimeinvalidation.Publish(
-			ctx,
-			o.realtime,
-			&realtimeinvalidation.PublishParams{
-				OrganizationID: result.updated.OrganizationID,
-				BusinessUnitID: result.updated.BusinessUnitID,
-				Resource:       "shipments",
-				Action:         "updated",
-				RecordID:       result.updated.ID,
-				Entity:         result.updated,
-			},
-		); err != nil {
-			o.l.Warn("failed to publish mirrored shipment invalidation", zap.Error(err))
-		}
+		services.InvalidateShipments(ctx, o.invalidator, &services.ShipmentInvalidation{
+			OrganizationID: result.updated.OrganizationID,
+			BusinessUnitID: result.updated.BusinessUnitID,
+			Action:         "updated",
+			RecordID:       result.updated.ID,
+			Entity:         result.updated,
+		})
 	}
 	if result.mirroredEvent != nil {
 		if err := realtimeinvalidation.Publish(

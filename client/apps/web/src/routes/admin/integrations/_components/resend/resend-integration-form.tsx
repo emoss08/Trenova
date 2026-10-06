@@ -30,7 +30,12 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, CopyIcon, InfoIcon, MailCheckIcon } from "lucide-react";
+import {
+  CheckIcon,
+  Copy01Icon,
+  InfoCircleIcon,
+  MailCheckIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -227,7 +232,7 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             className="text-muted-foreground hover:text-foreground size-3.5 p-0 hover:bg-transparent"
             aria-label={t("Resend webhook setup instructions")}
           >
-            <InfoIcon className="size-3" />
+            <InfoCircleIcon className="size-3" />
           </Button>
         }
       />
@@ -273,7 +278,7 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             disabled={!webhookURL}
             onClick={() => void copy(webhookURL, { withToast: true })}
           >
-            {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
+            {isCopied ? <CheckIcon className="size-3.5" /> : <Copy01Icon className="size-3.5" />}
             {t("Copy webhook URL")}
           </Button>
         </div>

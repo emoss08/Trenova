@@ -35,6 +35,7 @@ export function classifyPlan(
   switch (plan.status) {
     case "Pending":
       return plan.hold ? "held" : "awaiting";
+    case "Approving":
     case "Approved":
       return "running";
     case "Completed":

@@ -140,12 +140,16 @@ export type AiProviderKind =
 
 /**
  * How hard a model is asked to think before it answers. Off sends no reasoning
- * parameter, which models without reasoning reject outright.
+ * parameter, which models without reasoning reject outright; a model that reasons
+ * by default then reasons at its own default. None tells such a model not to
+ * reason, and Minimal asks for the least reasoning it allows.
  */
 export type AiReasoningEffort =
   | 'High'
   | 'Low'
   | 'Medium'
+  | 'Minimal'
+  | 'None'
   | 'Off';
 
 /** Where one source stands in the index under one embedding model. */
@@ -226,6 +230,17 @@ export type AiTask =
   | 'OperationalInsights'
   | 'QueryCompose'
   | 'ScopeClassification';
+
+/**
+ * How a Claude model is asked to think. Auto reads the model id; Effort asks by
+ * effort, as Claude models from Opus 4.6 and Sonnet 4.6 on require; Budget asks
+ * with a token budget, as older ones require. Only Anthropic Messages providers
+ * take anything but Auto.
+ */
+export type AiThinkingStyle =
+  | 'Auto'
+  | 'Budget'
+  | 'Effort';
 
 /** The product feature that made a model call. */
 export type AiUsageFeature =
@@ -683,6 +698,20 @@ export type AgentAutonomyTier =
   | 'AutoExecute'
   | 'Propose';
 
+/**
+ * How an agent may use one tool, as its capabilities page says it: Allowed runs
+ * on its own, AskFirst waits for a person, Off is a tool the agent does not hold.
+ */
+export type AgentCapabilityMode =
+  | 'Allowed'
+  | 'AskFirst'
+  | 'Off';
+
+export type AgentCapabilityToolInput = {
+  key: string;
+  mode: AgentCapabilityMode;
+};
+
 export type AgentContextProvider =
   | 'Clock'
   | 'Memory'
@@ -700,6 +729,10 @@ export type AgentControlInput = {
   decisionTimeoutSeconds?: number | null | undefined;
   /** Absent leaves the organization's earned autonomy switch as it is. */
   earnedAutonomy?: boolean | null | undefined;
+  /** Absent leaves whether agents learn from their work as it is. */
+  learningOff?: boolean | null | undefined;
+  /** Absent leaves the per-person monthly allowance as it is; 0 is unlimited. */
+  personMonthlyMessages?: number | null | undefined;
   /** Absent leaves the promotion threshold as it is; 1 to 1000 approvals. */
   promotionThreshold?: number | null | undefined;
   shadowMode: boolean;
@@ -716,6 +749,12 @@ export type AgentDecisionType =
   | 'Accepted'
   | 'Modified'
   | 'Rejected';
+
+export type AgentDelegateTopicInput = {
+  agentId: string | number;
+  /** Empty clears the topic. */
+  topic: string;
+};
 
 /** Where a tool's work can be seen or felt. */
 export type AgentEgressClass =
@@ -832,26 +871,43 @@ export type AgentMemoryInput = {
 export type AgentMemoryKind =
   | 'Correction'
   | 'Fact'
-  | 'Instruction';
+  | 'Instruction'
+  /** The steps that worked for a task here, dictated by a person or learned by doing it. */
+  | 'Procedure';
 
-/** Who reads a memory: every agent in the organization, or only the agent it was kept for. */
+/** How a person wants memories an agent picks up in their conversations kept. */
+export type AgentMemorySavingMode =
+  /** Offered in the conversation; nothing is kept until the person accepts it. */
+  | 'AskFirst'
+  /** Saved as the agent picks them up, and said so in the conversation. */
+  | 'Automatic';
+
+/** Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role. */
 export type AgentMemoryScope =
   | 'Agent'
-  | 'Organization';
+  | 'Organization'
+  /** Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team. */
+  | 'Role'
+  /** Kept for one person, read only in their conversations; the Desk calls it Just you. */
+  | 'User';
 
 export type AgentMemorySource =
   | 'Agent'
   | 'Decision'
   /** Drawn from ratings people gave an agent's output. */
   | 'Feedback'
+  /** Kept by an agent looking back over its own work once a conversation went quiet or a run settled. */
+  | 'Reflection'
   | 'User';
 
 export type AgentMemoryStatus =
   | 'Active'
   /** A suggestion an administrator refused; the same pattern is not suggested again for 30 days. */
   | 'Dismissed'
+  /** Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed. */
+  | 'Paused'
   | 'Retired'
-  /** Drawn from feedback and waiting for an administrator; never read by an agent. */
+  /** Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent. */
   | 'Suggested';
 
 export type AgentMemorySubjectType =
@@ -876,6 +932,8 @@ export type AgentPlanDecisionInput = {
 
 export type AgentPlanStatus =
   | 'Approved'
+  /** Approved from the decider's own conversation and waiting out its undo window; no step has run yet. */
+  | 'Approving'
   | 'Completed'
   | 'Expired'
   | 'Failed'
@@ -940,6 +998,8 @@ export type AgentProposalPreviewDigestInput = {
 
 export type AgentProposalStatus =
   | 'Accepted'
+  /** Approved from the decider's own conversation and waiting out its undo window; nothing has run yet. */
+  | 'Approving'
   | 'Executed'
   | 'ExecutionFailed'
   | 'Expired'
@@ -956,6 +1016,46 @@ export type AgentReachWarningKind =
   | 'NoAudience'
   /** Everyone who may use the assistant may use the agent, and it holds tools that reach restricted data or leave the organization. */
   | 'OpenWithSensitiveTools';
+
+export type AgentReflectionAction =
+  /** Already kept; counted as used instead of saved again. */
+  | 'Refreshed'
+  /** Not kept, with the reason. */
+  | 'Refused'
+  | 'Saved'
+  /** Offered to a person to accept: they asked to be asked first, it is shared beyond them, or the work read outside content. */
+  | 'Suggested';
+
+export type AgentReflectionSignalKind =
+  | 'LongTask'
+  | 'NegativeFeedback'
+  | 'PersonCorrected'
+  | 'ProposalModified'
+  | 'ProposalRejected'
+  | 'StandingRequest'
+  | 'ToolFailed'
+  | 'ToolRecovered';
+
+export type AgentReflectionSkip =
+  | 'AgentUnavailable'
+  | 'LearningOff'
+  | 'NoSignal'
+  | 'NothingToRead'
+  | 'OverBudget';
+
+export type AgentReflectionStatus =
+  | 'Completed'
+  /** The look back could not finish; the stretch is read again with the next one. */
+  | 'Failed'
+  | 'Running'
+  /** Nothing in the work called for a look, or learning was off; the stretch is not read again. */
+  | 'Skipped';
+
+export type AgentReflectionSubject =
+  /** One background run, read once every proposal it raised was decided. */
+  | 'Run'
+  /** A stretch of a conversation, read once it went quiet. */
+  | 'Thread';
 
 export type AgentResolutionState =
   | 'Dismissed'
@@ -1318,6 +1418,12 @@ export type BillingQueueExceptionReasonCode =
   | 'ServiceFailure'
   | 'WeightDiscrepancy';
 
+/** Why a biller set an item aside. */
+export type BillingQueueHoldReasonCode =
+  | 'CustomerDispute'
+  | 'RateQuestion'
+  | 'WaitingOnPaperwork';
+
 export type BillingQueueStatus =
   | 'Approved'
   | 'Canceled'
@@ -1332,6 +1438,7 @@ export type BillingQueueUpdateStatusInput = {
   cancelReason?: string | null | undefined;
   exceptionNotes?: string | null | undefined;
   exceptionReasonCode?: BillingQueueExceptionReasonCode | null | undefined;
+  holdReasonCode?: BillingQueueHoldReasonCode | null | undefined;
   reviewNotes?: string | null | undefined;
   status: BillingQueueStatus;
 };
@@ -1458,6 +1565,16 @@ export type CancelWorkerTrainingInput = {
   reason?: string | null | undefined;
   version?: number | null | undefined;
 };
+
+export type CapacityGroup =
+  | 'ReadyNow'
+  | 'TrucksPosted'
+  | 'UsuallyAccept'
+  | 'WithinTwoHours';
+
+export type CapacityUnitKind =
+  | 'Carrier'
+  | 'Driver';
 
 /** The processor a companion was built for. Trenova Capture ships for 64-bit Windows only. */
 export type CaptureArchitecture =
@@ -2086,6 +2203,14 @@ export type ConfirmAccountingMappingInput = {
   id: string | number;
 };
 
+export type ConfirmDeskMemoryInput = {
+  /** The memory as the person edited it. */
+  content: string;
+  roleId?: string | number | null | undefined;
+  scope: AgentMemoryScope;
+  version: number;
+};
+
 export type CostBehavior =
   | 'Fixed'
   | 'Variable';
@@ -2182,6 +2307,13 @@ export type CreateCarrierInvoiceMatchInput = {
   proNumber?: string | null | undefined;
   /** Document AI sources only: the shipment used to locate the assignment. */
   shipmentId?: string | number | null | undefined;
+};
+
+export type CreateDeskMemoryInput = {
+  content: string;
+  roleId?: string | number | null | undefined;
+  /** User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds. */
+  scope: AgentMemoryScope;
 };
 
 export type CreateFuelPurchaseImportInput = {
@@ -2507,6 +2639,11 @@ export type DecideProfileChangeInput = {
   note?: string | null | undefined;
 };
 
+export type DecideShipmentSuggestionInput = {
+  decision: ShipmentSuggestionDecision;
+  key: string;
+};
+
 export type DelegateApprovalInput = {
   delegateId: string | number;
   /**
@@ -2523,6 +2660,18 @@ export type DelegateApprovalInput = {
 export type DeleteTimeEntryInput = {
   id: string | number;
   reason: string;
+};
+
+export type DeskMemoriesInput = {
+  after?: string | null | undefined;
+  /** Page size; 50 when left out, at most 100. */
+  first?: number | null | undefined;
+  /** Words the memory says. */
+  query?: string | null | undefined;
+  /** With scope Role, only this role. */
+  roleId?: string | number | null | undefined;
+  /** Only this scope; every scope when left out. */
+  scope?: AgentMemoryScope | null | undefined;
 };
 
 export type DetachPayEventInput = {
@@ -3180,6 +3329,12 @@ export type EscrowTransactionType =
   | 'Contribution'
   | 'InterestAccrual'
   | 'Refund';
+
+export type EtaVerdict =
+  | 'AtRisk'
+  | 'Late'
+  | 'OnTime'
+  | 'Unknown';
 
 export type ExtractionEvalCaseStatus =
   | 'Active'
@@ -4347,6 +4502,11 @@ export type NotificationState =
   | 'archived'
   | 'inbox';
 
+export type NotifyShipmentDelayInput = {
+  message: string;
+  shipmentId: string | number;
+};
+
 /**
  * The column of the OSHA 300 log a case lands in. The log records only the most
  * serious outcome, so a case that was restricted and then went days-away is a
@@ -4407,6 +4567,12 @@ export type OpeningPtoBalanceInput = {
   days: string;
   ptoType: PtoType;
 };
+
+/** How an organization moves freight: with its own drivers, through carriers, or both. */
+export type OperationType =
+  | 'asset'
+  | 'both'
+  | 'brokerage';
 
 export type OrderInput = {
   baseAmount?: string | null | undefined;
@@ -5441,6 +5607,14 @@ export type ReviewRatingInput = {
   score?: number | null | undefined;
 };
 
+/** Changes what a memory says, who it is kept for, or both; what is left out stays. */
+export type ReviseDeskMemoryInput = {
+  content?: string | null | undefined;
+  roleId?: string | number | null | undefined;
+  scope?: AgentMemoryScope | null | undefined;
+  version: number;
+};
+
 /**
  * What one worker is doing on one day. Anything above Scheduled overrides the
  * pattern, and the strongest override wins, so a driver on approved leave never
@@ -5868,6 +6042,15 @@ export type ShipmentBillingTransferFailureCode =
   /** The transfer failed for a reason outside the billing policy. */
   | 'Unexpected';
 
+export type ShipmentBoardScopeInput = {
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  query?: string | null | undefined;
+  quickFilters?: Array<ShipmentQuickFilterInput> | null | undefined;
+  /** IANA time zone the day and hour predicates are evaluated in. */
+  timezone: string;
+};
+
 export type ShipmentBulkTransferToBillingInput = {
   billType?: BillType | null | undefined;
   /** Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it. */
@@ -6031,6 +6214,12 @@ export type ShipmentEventsInput = {
   types?: Array<ShipmentEventType> | null | undefined;
 };
 
+export type ShipmentFacet =
+  | 'Customer'
+  | 'Equipment'
+  | 'Status'
+  | 'TenderStatus';
+
 export type ShipmentHazmatInput = {
   commodityIds: Array<string | number>;
 };
@@ -6141,6 +6330,38 @@ export type ShipmentPreviousRatesInput = {
   shipmentTypeId: string | number;
 };
 
+/** A named predicate over shipments. The server owns every definition; clients only name them. */
+export type ShipmentQuickFilter =
+  | 'DeliveringToday'
+  | 'DeliveryHour'
+  | 'Detention'
+  | 'Late'
+  | 'LowMargin'
+  | 'Moving'
+  | 'PickupWindow'
+  | 'ReadyToBill'
+  | 'Reefer'
+  | 'Uncovered';
+
+export type ShipmentQuickFilterInput = {
+  filter: ShipmentQuickFilter;
+  /** Local hour of day (0-23) for DeliveryHour. */
+  hour?: number | null | undefined;
+  /** Minutes from now where a PickupWindow ends; omit for an open-ended window. */
+  windowEndMinutes?: number | null | undefined;
+  /** Minutes from now where a PickupWindow starts. */
+  windowStartMinutes?: number | null | undefined;
+};
+
+/** Where a shipment sits on the board. Derived from its status alone, so it sorts, filters and groups as a column. */
+export type ShipmentStage =
+  | 'Canceled'
+  | 'Delivered'
+  | 'Late'
+  | 'Moving'
+  | 'NeedsCoverage'
+  | 'Scheduled';
+
 export type ShipmentStatus =
   | 'Assigned'
   | 'Canceled'
@@ -6173,6 +6394,31 @@ export type ShipmentStopInput = {
   weight?: number | null | undefined;
 };
 
+export type ShipmentSuggestionActionType =
+  | 'ApproveDetention'
+  | 'AssignDriver'
+  | 'NotifyCustomer'
+  | 'Review'
+  | 'TenderCarrier';
+
+export type ShipmentSuggestionDecision =
+  | 'Done'
+  | 'Later';
+
+export type ShipmentSuggestionKind =
+  | 'Coverage'
+  | 'DelayNotice'
+  | 'Detention'
+  | 'HoursOfService'
+  | 'Retender'
+  | 'Tender';
+
+export type ShipmentSuggestionTone =
+  | 'Accent'
+  | 'Brand'
+  | 'Danger'
+  | 'Warning';
+
 export type ShipmentTenderStatus =
   | 'Accepted'
   | 'Canceled'
@@ -6202,8 +6448,11 @@ export type ShipmentsInput = {
   /** Load each shipment's customer without expanding the rest of its details. */
   includeCustomer?: boolean | null | undefined;
   query?: string | null | undefined;
+  quickFilters?: Array<ShipmentQuickFilterInput> | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   status?: string | null | undefined;
+  /** IANA time zone for day and hour quick filters. */
+  timezone?: string | null | undefined;
 };
 
 export type SidebarActivityPreferenceInput = {
@@ -6335,6 +6584,16 @@ export type TenderResponseSource =
   | 'Email'
   | 'Manual';
 
+export type TenderShipmentItemInput = {
+  /** Tender to this carrier; omit to use the routing guide or the best match. */
+  carrierId?: string | number | null | undefined;
+  shipmentId: string | number;
+};
+
+export type TenderShipmentsInput = {
+  items: Array<TenderShipmentItemInput>;
+};
+
 export type TenderStatus =
   | 'Accepted'
   | 'Active'
@@ -6446,6 +6705,12 @@ export type UnapplyCreditMemoApplicationInput = {
   reason?: string | null | undefined;
 };
 
+export type UncoveredPickupWindow =
+  | 'LaterToday'
+  | 'TomorrowOrLater'
+  | 'TwoToSixHours'
+  | 'UnderTwoHours';
+
 export type UpcomingWorkerPtoInput = {
   after?: string | null | undefined;
   endDate?: number | null | undefined;
@@ -6466,6 +6731,23 @@ export type UpdateAccountingSyncSettingsInput = {
   /** What happens to payments recorded in the accounting system. Left out, it stays as it is. */
   inboundPayments?: AccountingInboundPaymentPolicy | null | undefined;
   integrationType: AccountingSystem;
+};
+
+/** Changes to an agent's capabilities. Absent fields are left as they are. */
+export type UpdateAgentCapabilitiesInput = {
+  businessHoursEnd?: number | null | undefined;
+  businessHoursOnly?: boolean | null | undefined;
+  businessHoursStart?: number | null | undefined;
+  businessHoursTimezone?: string | null | undefined;
+  clearMonthlyBudget?: boolean | null | undefined;
+  dailyRequestLimit?: number | null | undefined;
+  delegateTopics?: Array<AgentDelegateTopicInput> | null | undefined;
+  enabled?: boolean | null | undefined;
+  maxChangeItems?: number | null | undefined;
+  monthlyBudgetUsd?: string | null | undefined;
+  tools?: Array<AgentCapabilityToolInput> | null | undefined;
+  /** The version the page was read at. */
+  version: number;
 };
 
 export type UpdateAgentEvalCaseInput = {
@@ -7846,7 +8128,7 @@ export type DecideMyPlanMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyPlanMutation = { decideMyPlan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, version: number, updatedAt: number } };
+export type DecideMyPlanMutation = { decideMyPlan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, commitsAt: number | null, version: number, updatedAt: number } };
 
 export type DecideMyProposalMutationVariables = Exact<{
   id: string | number;
@@ -7854,7 +8136,7 @@ export type DecideMyProposalMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, version: number, createdAt: number } };
+export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, version: number, createdAt: number } };
 
 export type AgentAccessRoleFieldsFragment = { id: string, name: string, description: string, isSystem: boolean } & { ' $fragmentName'?: 'AgentAccessRoleFieldsFragment' };
 
@@ -7912,7 +8194,23 @@ export type DecideMyProposalsMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyProposalsMutation = { decideMyProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
+export type DecideMyProposalsMutation = { decideMyProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, createdAt: number } | null }> };
+
+export type UndoMyDecisionMutationVariables = Exact<{
+  proposalId?: string | number | null | undefined;
+  planId?: string | number | null | undefined;
+}>;
+
+
+export type UndoMyDecisionMutation = { undoMyDecision: boolean };
+
+export type CommitMyDecisionNowMutationVariables = Exact<{
+  proposalId?: string | number | null | undefined;
+  planId?: string | number | null | undefined;
+}>;
+
+
+export type CommitMyDecisionNowMutation = { commitMyDecisionNow: boolean };
 
 export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
 
@@ -7979,7 +8277,26 @@ export type VerifyAiAuditChainMutationVariables = Exact<{ [key: string]: never; 
 
 export type VerifyAiAuditChainMutation = { verifyAIAuditChain: { ' $fragmentRefs'?: { 'AiAuditChainStatusFieldsFragment': AiAuditChainStatusFieldsFragment } } };
 
-export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+export type AgentCapabilityToolFieldsFragment = { key: string, label: string, write: boolean, mode: AgentCapabilityMode, allowedModes: Array<AgentCapabilityMode>, lockReason: string | null } & { ' $fragmentName'?: 'AgentCapabilityToolFieldsFragment' };
+
+export type AgentCapabilitiesFieldsFragment = { agentId: string, name: string, description: string, template: string, icon: string, accent: string, systemKey: string, model: string, setUpBy: string, enabled: boolean, canEdit: boolean, version: number, readTools: Array<{ ' $fragmentRefs'?: { 'AgentCapabilityToolFieldsFragment': AgentCapabilityToolFieldsFragment } }>, writeTools: Array<{ ' $fragmentRefs'?: { 'AgentCapabilityToolFieldsFragment': AgentCapabilityToolFieldsFragment } }>, handoffs: Array<{ agentId: string, name: string, description: string, icon: string, accent: string, template: string, topic: string }>, limits: { requestsToday: number, dailyRequestLimit: number, dayResetsAt: number, monthlySpentUsd: string, monthlyBudgetUsd: string | null, monthStart: number, monthResetsAt: number, maxChangeItems: number, businessHoursOnly: boolean, businessHoursStart: number, businessHoursEnd: number, businessHoursTimezone: string } } & { ' $fragmentName'?: 'AgentCapabilitiesFieldsFragment' };
+
+export type AgentCapabilitiesQueryVariables = Exact<{
+  agentId: string | number;
+}>;
+
+
+export type AgentCapabilitiesQuery = { agentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
+
+export type UpdateAgentCapabilitiesMutationVariables = Exact<{
+  agentId: string | number;
+  input: UpdateAgentCapabilitiesInput;
+}>;
+
+
+export type UpdateAgentCapabilitiesMutation = { updateAgentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
+
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
 export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -8039,7 +8356,18 @@ export type DecideAgentProposalsMutationVariables = Exact<{
 
 export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
 
-export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
+export type RecentDecisionsQueryVariables = Exact<{
+  since: number;
+  first?: number | null | undefined;
+}>;
+
+
+export type RecentDecisionsQuery = { recentDecisions: Array<{ id: string, decision: AgentDecisionType, reasonCode: string, note: string, decidedByUserId: string, decidedByName: string, decidedAt: number, proposal: (
+      { executionError: string }
+      & { ' $fragmentRefs'?: { 'PendingProposalFieldsFragment': PendingProposalFieldsFragment } }
+    ) }> };
+
+export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, learningOff: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
 export type AgentDefinitionCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -8079,6 +8407,74 @@ export type AgentProposalCountQueryVariables = Exact<{
 
 
 export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null } };
+
+export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
+
+export type DeskMemorySettingsFieldsFragment = { savingMode: AgentMemorySavingMode, canShareWithOrganization: boolean, roles: Array<{ id: string, name: string, writable: boolean }> } & { ' $fragmentName'?: 'DeskMemorySettingsFieldsFragment' };
+
+export type DeskMemoriesQueryVariables = Exact<{
+  input: DeskMemoriesInput;
+}>;
+
+
+export type DeskMemoriesQuery = { deskMemories: { next: string | null, all: number, items: Array<{ ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } }>, counts: Array<{ scope: AgentMemoryScope, roleId: string | null, count: number }> } };
+
+export type DeskMemoriesByIdsQueryVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type DeskMemoriesByIdsQuery = { deskMemoriesByIds: Array<{ ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } }> };
+
+export type DeskMemorySettingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DeskMemorySettingsQuery = { deskMemorySettings: { ' $fragmentRefs'?: { 'DeskMemorySettingsFieldsFragment': DeskMemorySettingsFieldsFragment } } };
+
+export type CreateDeskMemoryMutationVariables = Exact<{
+  input: CreateDeskMemoryInput;
+}>;
+
+
+export type CreateDeskMemoryMutation = { createDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type ReviseDeskMemoryMutationVariables = Exact<{
+  id: string | number;
+  input: ReviseDeskMemoryInput;
+}>;
+
+
+export type ReviseDeskMemoryMutation = { reviseDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type SetDeskMemoryStatusMutationVariables = Exact<{
+  id: string | number;
+  status: AgentMemoryStatus;
+}>;
+
+
+export type SetDeskMemoryStatusMutation = { setDeskMemoryStatus: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type ConfirmDeskMemoryMutationVariables = Exact<{
+  id: string | number;
+  input: ConfirmDeskMemoryInput;
+}>;
+
+
+export type ConfirmDeskMemoryMutation = { confirmDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type DismissDeskMemoryMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DismissDeskMemoryMutation = { dismissDeskMemory: { ' $fragmentRefs'?: { 'DeskMemoryFieldsFragment': DeskMemoryFieldsFragment } } };
+
+export type SetMemorySavingModeMutationVariables = Exact<{
+  mode: AgentMemorySavingMode;
+}>;
+
+
+export type SetMemorySavingModeMutation = { setMemorySavingMode: { ' $fragmentRefs'?: { 'DeskMemorySettingsFieldsFragment': DeskMemorySettingsFieldsFragment } } };
 
 export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
 
@@ -8186,7 +8582,7 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
 
-export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, sourceRunId: string | null, sourceProposalId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
+export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
 
 export type AgentMemoryTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -8246,6 +8642,16 @@ export type DismissAgentMemorySuggestionMutationVariables = Exact<{
 
 
 export type DismissAgentMemorySuggestionMutation = { dismissAgentMemorySuggestion: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } };
+
+export type AgentReflectionRowFieldsFragment = { id: string, agentDefinitionId: string, subjectType: AgentReflectionSubject, threadId: string | null, runId: string | null, userId: string | null, fromSequence: number, throughSequence: number, status: AgentReflectionStatus, skipReason: AgentReflectionSkip | null, notes: string, tainted: boolean, model: string, inputTokens: number, outputTokens: number, errorMessage: string, finishedAt: number | null, createdAt: number, signals: Array<{ kind: AgentReflectionSignalKind, count: number, detail: string }>, changes: Array<{ action: AgentReflectionAction, memoryId: string | null, supersedesId: string | null, kind: AgentMemoryKind, scope: AgentMemoryScope | null, content: string, reason: string }> } & { ' $fragmentName'?: 'AgentReflectionRowFieldsFragment' };
+
+export type AgentReflectionsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentReflectionsQuery = { agentReflections: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentReflectionRowFieldsFragment': AgentReflectionRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
 
@@ -8568,7 +8974,7 @@ export type AgentFeedbackSummaryQueryVariables = Exact<{
 
 export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitionId: string, windowDays: number, since: number, positive: number, negative: number, satisfaction: number | null, days: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, worstRated: Array<{ targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, sample: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } | null }> } };
 
-export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
+export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
 export type AiProviderCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -11805,7 +12211,7 @@ export type InboundAttachmentFieldsFragment = { id: string, fileName: string, co
 
 export type InboundShipmentRefFieldsFragment = { id: string, proNumber: string, bol: string, poNumber: string, originCity: string, originState: string, destinationCity: string, destinationState: string } & { ' $fragmentName'?: 'InboundShipmentRefFieldsFragment' };
 
-export type InboundMailboxFieldsFragment = { id: string, name: string, address: string, provider: InboundProvider, purpose: string, reviewPolicy: InboundReviewPolicy, minConfidence: number, status: InboundMailboxStatus, hasSigningSecret: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'InboundMailboxFieldsFragment' };
+export type InboundMailboxFieldsFragment = { id: string, name: string, address: string, provider: InboundProvider, purpose: string, reviewPolicy: InboundReviewPolicy, minConfidence: number, status: InboundMailboxStatus, hasSigningSecret: boolean, hasApiKey: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'InboundMailboxFieldsFragment' };
 
 export type InboundMailboxCredentialsFieldsFragment = { token: string, webhookPath: string, mailbox: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } } & { ' $fragmentName'?: 'InboundMailboxCredentialsFieldsFragment' };
 
@@ -11859,6 +12265,7 @@ export type LinkInboundMessageMutation = { linkInboundMessage: { ' $fragmentRefs
 export type CreateInboundMailboxMutationVariables = Exact<{
   input: InboundMailboxInput;
   signingSecret?: string | null | undefined;
+  apiKey?: string | null | undefined;
 }>;
 
 
@@ -11887,6 +12294,14 @@ export type SetInboundMailboxSigningSecretMutationVariables = Exact<{
 
 
 export type SetInboundMailboxSigningSecretMutation = { setInboundMailboxSigningSecret: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } };
+
+export type SetInboundMailboxApiKeyMutationVariables = Exact<{
+  id: string | number;
+  apiKey: string;
+}>;
+
+
+export type SetInboundMailboxApiKeyMutation = { setInboundMailboxApiKey: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } };
 
 export type InvoiceApprovalQueueItemFieldsFragment = { adjustmentId: string, originalInvoiceId: string, originalInvoiceNumber: string, originalInvoiceStatus: string, customerName: string, kind: InvoiceAdjustmentKind, reason: string, policyReason: string, policySource: string, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, wouldCreateUnappliedCredit: boolean, requiresReconciliationException: boolean, requiresReplacementInvoiceReview: boolean, submittedByName: string, submittedAt: number | null, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, rebillQueueItemId: string | null, batchId: string | null } & { ' $fragmentName'?: 'InvoiceApprovalQueueItemFieldsFragment' };
 
@@ -13227,6 +13642,105 @@ export type ShipmentTypeTableQueryVariables = Exact<{
 
 export type ShipmentTypeTableQuery = { shipmentTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentTypeTableRowFieldsFragment': ShipmentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type ShipmentBoardCapabilitiesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ShipmentBoardCapabilitiesQuery = { shipmentBoardCapabilities: { ai: boolean, operationType: OperationType, hos: boolean, maps: boolean } };
+
+export type ShipmentStageSummaryQueryVariables = Exact<{
+  input: ShipmentBoardScopeInput;
+}>;
+
+
+export type ShipmentStageSummaryQuery = { shipmentStageSummary: Array<{ stage: ShipmentStage, rank: number, count: number, revenue: string }> };
+
+export type ShipmentQuickFilterCountsQueryVariables = Exact<{
+  input: ShipmentBoardScopeInput;
+}>;
+
+
+export type ShipmentQuickFilterCountsQuery = { shipmentQuickFilterCounts: Array<{ filter: ShipmentQuickFilter, count: number }> };
+
+export type ShipmentFacetCountsQueryVariables = Exact<{
+  input: ShipmentBoardScopeInput;
+  facets: Array<ShipmentFacet> | ShipmentFacet;
+}>;
+
+
+export type ShipmentFacetCountsQuery = { shipmentFacetCounts: Array<{ facet: ShipmentFacet, field: string, values: Array<{ value: string, label: string, count: number }> }> };
+
+export type ShipmentBriefingQueryVariables = Exact<{
+  timezone: string;
+}>;
+
+
+export type ShipmentBriefingQuery = { shipmentBriefing: { narrated: boolean, generatedAt: number, segments: Array<{ text: string, filter: ShipmentQuickFilter | null }> } };
+
+export type ShipmentCapacityQueryVariables = Exact<{
+  kind: CapacityUnitKind;
+}>;
+
+
+export type ShipmentCapacityQuery = { shipmentCapacity: { kind: CapacityUnitKind, units: Array<{ id: string, kind: CapacityUnitKind, name: string, initials: string, group: CapacityGroup, freeAt: number | null, city: string | null, unitLabel: string | null, badgeCount: number | null, ratePerMile: string | null, acceptancePercent: number | null, driveRemainingMs: number | null, tractorId: string | null, ring: { value: number, max: number, low: boolean } | null }>, drivers: { ready: number, withinTwoHours: number, short: number, uncovered: number } | null, carriers: { posting: number, untendered: number, awaitingAcceptance: number, avgRatePerMile: string | null } | null } };
+
+export type CapacityUnitMatchesQueryVariables = Exact<{
+  kind: CapacityUnitKind;
+  unitId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type CapacityUnitMatchesQuery = { capacityUnitMatches: Array<{ shipmentId: string, moveId: string, proNumber: string | null, originCity: string, destinationCity: string, pickupAt: number | null, revenue: string, deadheadMiles: number | null, quote: string | null, marginPercent: number | null, fitPercent: number | null }> };
+
+export type ShipmentCoverageSuggestionsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentCoverageSuggestionsQuery = { shipmentCoverageSuggestions: { drivers: Array<{ workerId: string, tractorId: string | null, moveId: string, name: string, initials: string, unitLabel: string | null, distanceMiles: number | null, driveRemainingMs: number | null, fitPercent: number | null }>, carriers: Array<{ carrierId: string, moveId: string, name: string, initials: string, mcNumber: string | null, quote: string, ratePerMile: string, acceptancePercent: number | null, posted: boolean }> } };
+
+export type ShipmentSuggestionsQueryVariables = Exact<{
+  timezone: string;
+}>;
+
+
+export type ShipmentSuggestionsQuery = { shipmentSuggestions: { handledThisShift: number, narrated: boolean, items: Array<{ key: string, kind: ShipmentSuggestionKind, tone: ShipmentSuggestionTone, shipmentId: string | null, proNumber: string | null, title: string, reason: string, impact: Array<string>, manualLabel: string, dueAt: number | null, deferred: boolean, primary: { type: ShipmentSuggestionActionType, label: string, moveId: string | null, workerId: string | null, tractorId: string | null, carrierId: string | null, detentionOccurrenceId: string | null, message: string | null } }> } };
+
+export type ShipmentWatchlistQueryVariables = Exact<{
+  timezone: string;
+}>;
+
+
+export type ShipmentWatchlistQuery = { shipmentWatchlist: { deliveries: { onTime: number, total: number, lateCount: number, buckets: Array<{ hour: number, delivered: number, scheduled: number, late: number }>, worstLate: Array<{ shipmentId: string, proNumber: string | null, deltaMinutes: number, city: string, customerName: string }> }, uncovered: { count: number, revenue: string, windows: Array<{ window: UncoveredPickupWindow, startMinutes: number, endMinutes: number | null, count: number, revenue: string }>, next: { shipmentId: string, pickupAt: number, originCity: string, destinationCity: string } | null }, detention: { stopCount: number, amount: string, ratePerHour: string, snapshotAt: number, top: Array<{ shipmentId: string, stopId: string, occurrenceId: string | null, facilityName: string, coverageName: string | null, billableSince: number, ratePerHour: string, amount: string }> }, billing: { count: number, total: string, moreCustomers: number, customers: Array<{ customerId: string, name: string, count: number, total: string }> } } };
+
+export type TenderShipmentsMutationVariables = Exact<{
+  input: TenderShipmentsInput;
+}>;
+
+
+export type TenderShipmentsMutation = { tenderShipments: { tendered: Array<{ shipmentId: string, tenderId: string, carrierId: string | null, carrierName: string | null }>, failed: Array<{ shipmentId: string, message: string }> } };
+
+export type DecideShipmentSuggestionMutationVariables = Exact<{
+  input: DecideShipmentSuggestionInput;
+}>;
+
+
+export type DecideShipmentSuggestionMutation = { decideShipmentSuggestion: boolean };
+
+export type UndoShipmentSuggestionDecisionMutationVariables = Exact<{
+  key: string;
+}>;
+
+
+export type UndoShipmentSuggestionDecisionMutation = { undoShipmentSuggestionDecision: boolean };
+
+export type NotifyShipmentDelayMutationVariables = Exact<{
+  input: NotifyShipmentDelayInput;
+}>;
+
+
+export type NotifyShipmentDelayMutation = { notifyShipmentDelay: boolean };
+
 export type ShipmentUserFieldsFragment = { id: string, name: string, username: string, emailAddress: string, timezone: string, status: EntityStatus, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'ShipmentUserFieldsFragment' };
 
 export type ShipmentLocationFieldsFragment = { id: string, name: string, code: string, status: EntityStatus, locationCategoryId: string, stateId: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, longitude: number | null, latitude: number | null } & { ' $fragmentName'?: 'ShipmentLocationFieldsFragment' };
@@ -13253,7 +13767,7 @@ export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitI
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number, versionNumber: number, rateQuoteId: string, agreementId: string, agreementName: string, ruleId: string, ruleLabel: string, source: string, explanation: string, breakdown: Array<{ name: string, label: string, amount: number, error: string }>, guardrail: { applied: boolean, bound: string, rawResult: number, minCharge: number | null, maxCharge: number | null } | null } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
-export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, billToCustomerId: string | null, freightTerms: FreightTerms, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, externalReference: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, autoRated: boolean, autoRatedAt: number | null, rateAgreementId: string | null, rateAgreementRuleId: string | null, rateQuoteId: string | null, rateOverrideAmount: string | null, rateOverrideReason: string | null, rateOverrideAt: number | null, rateLocked: boolean, version: number, createdAt: number, updatedAt: number, profitabilityEstimate: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, costPerMile: string, estimatedCost: string, profit: string, marginPercent: string | null, breakEvenRpm: string | null, targetMarginPercent: string | null, missingDistance: boolean } | null, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, chargeAllocations: Array<{ ' $fragmentRefs'?: { 'ChargeAllocationFieldsFragment': ChargeAllocationFieldsFragment } }>, billingSplitSummary: Array<{ payerId: string, payerName: string, payerCode: string, isPrimary: boolean, freightAmount: string, accessorialAmount: string, totalAmount: string, isSplit: boolean }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, ediPartner: { id: string, name: string, code: string } | null } | null, billToCustomer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
+export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, billToCustomerId: string | null, freightTerms: FreightTerms, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, stage: ShipmentStage, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, externalReference: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, autoRated: boolean, autoRatedAt: number | null, rateAgreementId: string | null, rateAgreementRuleId: string | null, rateQuoteId: string | null, rateOverrideAmount: string | null, rateOverrideReason: string | null, rateOverrideAt: number | null, rateLocked: boolean, version: number, createdAt: number, updatedAt: number, eta: { estimatedArrival: number | null, slackMinutes: number | null, verdict: EtaVerdict, reason: string | null } | null, profitabilityEstimate: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, costPerMile: string, estimatedCost: string, profit: string, marginPercent: string | null, breakEvenRpm: string | null, targetMarginPercent: string | null, missingDistance: boolean } | null, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, chargeAllocations: Array<{ ' $fragmentRefs'?: { 'ChargeAllocationFieldsFragment': ChargeAllocationFieldsFragment } }>, billingSplitSummary: Array<{ payerId: string, payerName: string, payerCode: string, isPrimary: boolean, freightAmount: string, accessorialAmount: string, totalAmount: string, isSplit: boolean }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, ediPartner: { id: string, name: string, code: string } | null } | null, billToCustomer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
 
 export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'ShipmentPageInfoFieldsFragment' };
 
@@ -13292,13 +13806,13 @@ export type ShipmentEventFieldsFragment =
   | ShipmentEventFields_ShipmentTenderEvent_Fragment
 ;
 
-export type ShipmentCommandCenterTableQueryVariables = Exact<{
+export type ShipmentBoardTableQueryVariables = Exact<{
   input: ShipmentsInput;
   includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type ShipmentCommandCenterTableQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type ShipmentBoardTableQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentDetailQueryVariables = Exact<{
   id: string | number;
@@ -13308,19 +13822,12 @@ export type ShipmentDetailQueryVariables = Exact<{
 
 export type ShipmentDetailQuery = { shipment: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } | null };
 
-export type ShipmentSavedViewCountsQueryVariables = Exact<{
-  timezone: string;
-}>;
-
-
-export type ShipmentSavedViewCountsQuery = { shipmentAnalytics: { page: string, savedViewCounts: { all: number | null, transit: number | null, atRisk: number | null, unassigned: number | null, deliveringToday: number | null } | null } };
-
 export type ShipmentPageAnalyticsQueryVariables = Exact<{
   input: ShipmentAnalyticsInput;
 }>;
 
 
-export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, savedViewCounts: { all: number | null, transit: number | null, atRisk: number | null, unassigned: number | null, deliveringToday: number | null } | null, activeShipments: { count: number, changeFromYesterday: number, sparkline: Array<{ hour: string, value: number }>, breakdown: { inTransit: number, atRisk: number, loading: number, done: number } } | null, onTimePercent: { percent: number, onTimeCount: number, totalCount: number, target: number | null, deltaPp: number, sevenDayPercent: number } | null, profitability: { avgCpm: number, avgMarginPct: number, hasMargin: boolean, unprofitableCount: number, shipmentCount: number, totalMiles: number } | null, revenueToday: { total: number, deltaPct: number, rpm: number, sparkline: Array<{ hour: string, value: number }> } | null, emptyMilePercent: { percent: number, emptyMiles: number, totalMiles: number, deltaPp: number } | null, atRisk: { count: number, delta: number, etaSlip: number, weather: number, reefer: number } | null, unassigned: { count: number, delta: number, revenueWaiting: number } | null, readyToDispatch: { count: number, delta: number, unassigned: number, driverReady: number } | null, detentionWatchlist: { items: Array<{ shipmentId: string, customer: string, dwellLabel: string, tone: string }> } | null, customerMix: { windowDays: number, entries: Array<{ customerId: string, name: string, revenue: number, share: number, loads: number, trend: number }> } | null, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string, origin: string, destination: string, driver: string, status: string }> } | null, laneHeatmap: { windowDays: number, total: number, cells: Array<{ origin: string, destination: string, count: number }> } | null } };
+export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, activeShipments: { count: number, changeFromYesterday: number, sparkline: Array<{ hour: string, value: number }>, breakdown: { inTransit: number, atRisk: number, loading: number, done: number } } | null, onTimePercent: { percent: number, onTimeCount: number, totalCount: number, target: number | null, deltaPp: number, sevenDayPercent: number } | null, profitability: { avgCpm: number, avgMarginPct: number, hasMargin: boolean, unprofitableCount: number, shipmentCount: number, totalMiles: number } | null, revenueToday: { total: number, deltaPct: number, rpm: number, sparkline: Array<{ hour: string, value: number }> } | null, emptyMilePercent: { percent: number, emptyMiles: number, totalMiles: number, deltaPp: number } | null, atRisk: { count: number, delta: number, etaSlip: number, weather: number, reefer: number } | null, unassigned: { count: number, delta: number, revenueWaiting: number } | null, readyToDispatch: { count: number, delta: number, unassigned: number, driverReady: number } | null, detentionWatchlist: { items: Array<{ shipmentId: string, customer: string, dwellLabel: string, tone: string }> } | null, customerMix: { windowDays: number, entries: Array<{ customerId: string, name: string, revenue: number, share: number, loads: number, trend: number }> } | null, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string, origin: string, destination: string, driver: string, status: string }> } | null, laneHeatmap: { windowDays: number, total: number, cells: Array<{ origin: string, destination: string, count: number }> } | null } };
 
 export type ShipmentTomorrowsPickupsQueryVariables = Exact<{
   limit?: number | null | undefined;
@@ -15713,6 +16220,68 @@ export const AiAuditExportFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AIAuditExportFields"}) as unknown as TypedDocumentString<AiAuditExportFieldsFragment, unknown>;
+export const AgentCapabilityToolFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentCapabilityToolFields on AgentCapabilityTool {
+  key
+  label
+  write
+  mode
+  allowedModes
+  lockReason
+}
+    `, {"fragmentName":"AgentCapabilityToolFields"}) as unknown as TypedDocumentString<AgentCapabilityToolFieldsFragment, unknown>;
+export const AgentCapabilitiesFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentCapabilitiesFields on AgentCapabilities {
+  agentId
+  name
+  description
+  template
+  icon
+  accent
+  systemKey
+  model
+  setUpBy
+  enabled
+  canEdit
+  version
+  readTools {
+    ...AgentCapabilityToolFields
+  }
+  writeTools {
+    ...AgentCapabilityToolFields
+  }
+  handoffs {
+    agentId
+    name
+    description
+    icon
+    accent
+    template
+    topic
+  }
+  limits {
+    requestsToday
+    dailyRequestLimit
+    dayResetsAt
+    monthlySpentUsd
+    monthlyBudgetUsd
+    monthStart
+    monthResetsAt
+    maxChangeItems
+    businessHoursOnly
+    businessHoursStart
+    businessHoursEnd
+    businessHoursTimezone
+  }
+}
+    fragment AgentCapabilityToolFields on AgentCapabilityTool {
+  key
+  label
+  write
+  mode
+  allowedModes
+  lockReason
+}`, {"fragmentName":"AgentCapabilitiesFields"}) as unknown as TypedDocumentString<AgentCapabilitiesFieldsFragment, unknown>;
 export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentControlFields on AgentControl {
   id
@@ -15721,6 +16290,8 @@ export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
   shadowMode
   earnedAutonomy
   promotionThreshold
+  personMonthlyMessages
+  learningOff
   aiTrainingConsent
   aiTrainingConsentChangedAt
   version
@@ -15856,6 +16427,7 @@ export const AgentDefinitionCardFieldsFragmentDoc = new TypedDocumentString(`
   toolDailyLimits
   simulationMode
   memoryTokenBudget
+  learningOff
   contextProviders
   outputMode
   preferredProviderId
@@ -15903,6 +16475,47 @@ export const AgentChoiceFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AgentChoiceFields"}) as unknown as TypedDocumentString<AgentChoiceFieldsFragment, unknown>;
+export const DeskMemoryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DeskMemoryFields on DeskMemory {
+  id
+  content
+  kind
+  scope
+  roleId
+  roleName
+  status
+  source
+  sourceTitle
+  useCount
+  lastUsedAt
+  createdAt
+  version
+  editable
+  reason
+  quotes
+  replaces {
+    id
+    content
+    status
+  }
+  replacedBy {
+    id
+    content
+    status
+  }
+}
+    `, {"fragmentName":"DeskMemoryFields"}) as unknown as TypedDocumentString<DeskMemoryFieldsFragment, unknown>;
+export const DeskMemorySettingsFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DeskMemorySettingsFields on DeskMemorySettings {
+  savingMode
+  canShareWithOrganization
+  roles {
+    id
+    name
+    writable
+  }
+}
+    `, {"fragmentName":"DeskMemorySettingsFields"}) as unknown as TypedDocumentString<DeskMemorySettingsFieldsFragment, unknown>;
 export const AgentEvalCaseTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentEvalCaseTableRowFields on AgentEvalCase {
   id
@@ -16060,8 +16673,23 @@ export const AgentMemoryTableRowFieldsFragmentDoc = new TypedDocumentString(`
   toolName
   content
   agentDefinitionId
+  tainted
   sourceRunId
   sourceProposalId
+  sourceThreadId
+  reflectionId
+  supersedesId
+  supersedes {
+    id
+    content
+    status
+  }
+  replacedBy {
+    id
+    content
+    status
+    createdAt
+  }
   createdByUserId
   retiredByUserId
   retiredAt
@@ -16078,12 +16706,49 @@ export const AgentMemoryTableRowFieldsFragmentDoc = new TypedDocumentString(`
     quotes
     firstRatedAt
     lastRatedAt
+    signals
   }
   version
   createdAt
   updatedAt
 }
     `, {"fragmentName":"AgentMemoryTableRowFields"}) as unknown as TypedDocumentString<AgentMemoryTableRowFieldsFragment, unknown>;
+export const AgentReflectionRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentReflectionRowFields on AgentReflection {
+  id
+  agentDefinitionId
+  subjectType
+  threadId
+  runId
+  userId
+  fromSequence
+  throughSequence
+  status
+  skipReason
+  signals {
+    kind
+    count
+    detail
+  }
+  changes {
+    action
+    memoryId
+    supersedesId
+    kind
+    scope
+    content
+    reason
+  }
+  notes
+  tainted
+  model
+  inputTokens
+  outputTokens
+  errorMessage
+  finishedAt
+  createdAt
+}
+    `, {"fragmentName":"AgentReflectionRowFields"}) as unknown as TypedDocumentString<AgentReflectionRowFieldsFragment, unknown>;
 export const AgentPlanTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentPlanTableRowFields on AgentPlan {
   id
@@ -16829,6 +17494,7 @@ export const AiProviderCardFieldsFragmentDoc = new TypedDocumentString(`
   allowPrivateNetwork
   structuredOutputMode
   reasoningEffort
+  thinkingStyle
   extraBody
   inputCostPerMillion
   outputCostPerMillion
@@ -20411,6 +21077,7 @@ export const InboundMailboxFieldsFragmentDoc = new TypedDocumentString(`
   minConfidence
   status
   hasSigningSecret
+  hasApiKey
   version
   createdAt
   updatedAt
@@ -20434,6 +21101,7 @@ export const InboundMailboxCredentialsFieldsFragmentDoc = new TypedDocumentStrin
   minConfidence
   status
   hasSigningSecret
+  hasApiKey
   version
   createdAt
   updatedAt
@@ -20552,6 +21220,7 @@ fragment InboundMailboxFields on InboundMailbox {
   minConfidence
   status
   hasSigningSecret
+  hasApiKey
   version
   createdAt
   updatedAt
@@ -22420,6 +23089,13 @@ export const ShipmentFieldsFragmentDoc = new TypedDocumentString(`
   orderNumber
   orderStatus
   status
+  stage
+  eta {
+    estimatedArrival
+    slackMinutes
+    verdict
+    reason
+  }
   tenderStatus
   entryMethod
   proNumber
@@ -24223,15 +24899,17 @@ export const ArPaymentStatsDocument = {"__meta__":{"kind":"query","name":"ArPaym
 export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArCustomerProfile","hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}} as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
 export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
 export const MyAgentsDocument = {"__meta__":{"kind":"query","name":"MyAgents","hash":"sha256:fbba5deefba9da56ab81d72cd1815eed78a2855232af5826e2ec73f3f787cbc5"}} as unknown as TypedDocumentString<MyAgentsQuery, MyAgentsQueryVariables>;
-export const DecideMyPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideMyPlan","hash":"sha256:9a89b2fadb3bbade1f0c771624ca6cc51a6f9331c122e4c14d462c629db2e868"}} as unknown as TypedDocumentString<DecideMyPlanMutation, DecideMyPlanMutationVariables>;
-export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:cf3c4ea53d12c1f61f37b2fdefda3a45507f197dcfc721e514db2a83c876a993"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
+export const DecideMyPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideMyPlan","hash":"sha256:88cd6064cb6e3e865a06ce2e86fb4c49f63454065cd0aac26005aaa53b92b42b"}} as unknown as TypedDocumentString<DecideMyPlanMutation, DecideMyPlanMutationVariables>;
+export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:e1a0719c2bd974fb380071b01d02fc55d6fab115f6a1efbc45781ba0bd0126f2"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
 export const AgentAccessDocument = {"__meta__":{"kind":"query","name":"AgentAccess","hash":"sha256:a96fd576cc93fef1d6389a872a52d1d681ed4ce882cba36bb6ef2199d6fda41f"}} as unknown as TypedDocumentString<AgentAccessQuery, AgentAccessQueryVariables>;
 export const SetAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetAgentAccess","hash":"sha256:e6df898351f5a8c4e7ba13ec77ffd0d5b05464e9abe0fff637b90a0d2e6e61ce"}} as unknown as TypedDocumentString<SetAgentAccessMutation, SetAgentAccessMutationVariables>;
 export const RoleAgentAccessDocument = {"__meta__":{"kind":"query","name":"RoleAgentAccess","hash":"sha256:4320bfe8fce105b07adf7782d513aaff38f3b1aa012079c2d259df9de7eaebcc"}} as unknown as TypedDocumentString<RoleAgentAccessQuery, RoleAgentAccessQueryVariables>;
 export const SetRoleAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetRoleAgentAccess","hash":"sha256:dd0999e8751bca239fb25ebad5054c71404e98c83deea9439010bd3b5d3b410b"}} as unknown as TypedDocumentString<SetRoleAgentAccessMutation, SetRoleAgentAccessMutationVariables>;
 export const AgentAccessPreviewDocument = {"__meta__":{"kind":"query","name":"AgentAccessPreview","hash":"sha256:fff0b7d3ee09999aa9a00d4313e756288a2f222e014f1234beb35d3c0619da65"}} as unknown as TypedDocumentString<AgentAccessPreviewQuery, AgentAccessPreviewQueryVariables>;
 export const SuggestedAgentAudienceDocument = {"__meta__":{"kind":"query","name":"SuggestedAgentAudience","hash":"sha256:79bdbda787008c4d10159a18a778009b985209e55670b365e0bc0675e361a021"}} as unknown as TypedDocumentString<SuggestedAgentAudienceQuery, SuggestedAgentAudienceQueryVariables>;
-export const DecideMyProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposals","hash":"sha256:52169b125c46e08fad645a937cf1562258b648d926be2beed8e0689b9a608205"}} as unknown as TypedDocumentString<DecideMyProposalsMutation, DecideMyProposalsMutationVariables>;
+export const DecideMyProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposals","hash":"sha256:43aaeb7e935e724d9714b2248cc2cb5ba10715eb0336f6dbee971c95bd25677d"}} as unknown as TypedDocumentString<DecideMyProposalsMutation, DecideMyProposalsMutationVariables>;
+export const UndoMyDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoMyDecision","hash":"sha256:530fd6518732d5522e0973029600faef0101edb322bbbe1be80defa0b9f77592"}} as unknown as TypedDocumentString<UndoMyDecisionMutation, UndoMyDecisionMutationVariables>;
+export const CommitMyDecisionNowDocument = {"__meta__":{"kind":"mutation","name":"CommitMyDecisionNow","hash":"sha256:b9db4e8528fdfc8d69c46c8b5be4b04ceaea396b4815f12e841aa6d0f8f3eeca"}} as unknown as TypedDocumentString<CommitMyDecisionNowMutation, CommitMyDecisionNowMutationVariables>;
 export const AiAuditEventTableDocument = {"__meta__":{"kind":"query","name":"AIAuditEventTable","hash":"sha256:4df8553a5f6877364cf0f4bf0bf7fd0745b577dd89671d7f6ce85bda0bd5684e"}} as unknown as TypedDocumentString<AiAuditEventTableQuery, AiAuditEventTableQueryVariables>;
 export const AiAuditEventDetailDocument = {"__meta__":{"kind":"query","name":"AIAuditEventDetail","hash":"sha256:ed73402380199934972ba4aa4c9baba8179b23d14cb6e7463f76a9c34c8c89da"}} as unknown as TypedDocumentString<AiAuditEventDetailQuery, AiAuditEventDetailQueryVariables>;
 export const AiAuditChainStatusDocument = {"__meta__":{"kind":"query","name":"AIAuditChainStatus","hash":"sha256:189c7a9b735b0b8ec6b15f9d4a9ce6bc3cd25c26cd30f99b7dda9538c48b6820"}} as unknown as TypedDocumentString<AiAuditChainStatusQuery, AiAuditChainStatusQueryVariables>;
@@ -24240,18 +24918,30 @@ export const AiAuditExportDetailDocument = {"__meta__":{"kind":"query","name":"A
 export const RequestAiAuditExportDocument = {"__meta__":{"kind":"mutation","name":"RequestAIAuditExport","hash":"sha256:58b7441c924c34ef725b97617378507ee9fbc255c4807fa0a1c6728b3a686e3f"}} as unknown as TypedDocumentString<RequestAiAuditExportMutation, RequestAiAuditExportMutationVariables>;
 export const AiAuditExportDownloadDocument = {"__meta__":{"kind":"mutation","name":"AIAuditExportDownload","hash":"sha256:c2de785dfd66b796b3fe28d2540c3661146c4fb1ec351a765baa567758c6a80f"}} as unknown as TypedDocumentString<AiAuditExportDownloadMutation, AiAuditExportDownloadMutationVariables>;
 export const VerifyAiAuditChainDocument = {"__meta__":{"kind":"mutation","name":"VerifyAIAuditChain","hash":"sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5"}} as unknown as TypedDocumentString<VerifyAiAuditChainMutation, VerifyAiAuditChainMutationVariables>;
-export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:cd563025c7cab3cccde8facd8817fb14d5e144c41c6c47214970a4a67833e00a"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
-export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:b86ee623bcf6bbc1b1b4471e5dfb96ce75da9de979b96146ad30bf44a603bf25"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
+export const AgentCapabilitiesDocument = {"__meta__":{"kind":"query","name":"AgentCapabilities","hash":"sha256:6f97bbb889d00e875d1c8ff495ac4845fb7f2f62b01781d09a9f93c96ac916cb"}} as unknown as TypedDocumentString<AgentCapabilitiesQuery, AgentCapabilitiesQueryVariables>;
+export const UpdateAgentCapabilitiesDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentCapabilities","hash":"sha256:3b7b2ebfc4e46941d7688ca51b50113dfb42b495c38fc637bc7e026dcd698a2b"}} as unknown as TypedDocumentString<UpdateAgentCapabilitiesMutation, UpdateAgentCapabilitiesMutationVariables>;
+export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:91be4ca400cfd712b1e9fd6aed7deddf050f9909fa2845b6b132c299299b4d17"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
+export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:0f56c55e9b043c575a4e626c65b3e53a970c4ee59bfdadfc66dfd8b81450cd49"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
 export const AiTrainingExportHistoryDocument = {"__meta__":{"kind":"query","name":"AITrainingExportHistory","hash":"sha256:01cd3c46644654237a5921cf3f7b335abb7d86a142049dcd571463c3667f6f0a"}} as unknown as TypedDocumentString<AiTrainingExportHistoryQuery, AiTrainingExportHistoryQueryVariables>;
 export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:3441ff2b9f09fce0092083222662d0265fd8dadec8cd5c8caba490fa354d6bff"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
 export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:e68bddfe0b04782f1824389948de415819d6122ced863e86a86564431df715ec"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
 export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:307e160ab24ebe206297811b6ef210e7fda7d5f4412f9d5018d00bdce35f4d91"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
-export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:ff67572be665e12db87c087023a2b6d8a8fc15ac2af2add16594e6ef22feca59"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
+export const RecentDecisionsDocument = {"__meta__":{"kind":"query","name":"RecentDecisions","hash":"sha256:cf7f4132c5c849741bd5d0fc415994d6dfbe6eb8d9e22905b0e5c5af1dfb3f6f"}} as unknown as TypedDocumentString<RecentDecisionsQuery, RecentDecisionsQueryVariables>;
+export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:5be5b5c9bae823f8e91c1ba7734369cb04b5c8186538aeb1e7c51df9df67c13a"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
 export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentChoices","hash":"sha256:6bb1514f9329e2c8e1ed77638129117516e2d14d070b7502591fbc60fbe83130"}} as unknown as TypedDocumentString<AgentChoicesQuery, AgentChoicesQueryVariables>;
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
 export const AgentProposalCountDocument = {"__meta__":{"kind":"query","name":"AgentProposalCount","hash":"sha256:2eded728747d5256e64b681abdec7d5ec92e8868262c03bea6249352bc3deb28"}} as unknown as TypedDocumentString<AgentProposalCountQuery, AgentProposalCountQueryVariables>;
+export const DeskMemoriesDocument = {"__meta__":{"kind":"query","name":"DeskMemories","hash":"sha256:e2f40c13fce6f49e4596fecccfa24550efda9ec4fb4fe583faf8ddd1f45c9704"}} as unknown as TypedDocumentString<DeskMemoriesQuery, DeskMemoriesQueryVariables>;
+export const DeskMemoriesByIdsDocument = {"__meta__":{"kind":"query","name":"DeskMemoriesByIds","hash":"sha256:21819372c5102192c045874bd760c208d59b61dbd409a512fd98aaa6c10c62f5"}} as unknown as TypedDocumentString<DeskMemoriesByIdsQuery, DeskMemoriesByIdsQueryVariables>;
+export const DeskMemorySettingsDocument = {"__meta__":{"kind":"query","name":"DeskMemorySettings","hash":"sha256:a1c10b7075d0d8f28ba109131de67585ab2fbaff09ab5f914cd7b85045503d38"}} as unknown as TypedDocumentString<DeskMemorySettingsQuery, DeskMemorySettingsQueryVariables>;
+export const CreateDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateDeskMemory","hash":"sha256:79bf78946dfb5fe9e732884b2bd749c80da4fd055c248e7e71f3cd0ba77b9175"}} as unknown as TypedDocumentString<CreateDeskMemoryMutation, CreateDeskMemoryMutationVariables>;
+export const ReviseDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"ReviseDeskMemory","hash":"sha256:24c52dec7d04049e842370798b28f629581b64519b845b16f93ab15ddcb69ccf"}} as unknown as TypedDocumentString<ReviseDeskMemoryMutation, ReviseDeskMemoryMutationVariables>;
+export const SetDeskMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetDeskMemoryStatus","hash":"sha256:ee8266e3f9164922e3f3b6d786c2a858fe09c912a7b96ee475082cbea15532d9"}} as unknown as TypedDocumentString<SetDeskMemoryStatusMutation, SetDeskMemoryStatusMutationVariables>;
+export const ConfirmDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"ConfirmDeskMemory","hash":"sha256:e1499dc5760e20828544138f799741e5b5594b8bf3705fdd26c1fea90f15d7f6"}} as unknown as TypedDocumentString<ConfirmDeskMemoryMutation, ConfirmDeskMemoryMutationVariables>;
+export const DismissDeskMemoryDocument = {"__meta__":{"kind":"mutation","name":"DismissDeskMemory","hash":"sha256:9865c9c06a9f802945053229449689bb4997b7273a69b50b69550bd45deb0345"}} as unknown as TypedDocumentString<DismissDeskMemoryMutation, DismissDeskMemoryMutationVariables>;
+export const SetMemorySavingModeDocument = {"__meta__":{"kind":"mutation","name":"SetMemorySavingMode","hash":"sha256:9b15a52f5d6e8460694f7fae68e3f02cc10e6696d71a0d9791feee6afd27f0a3"}} as unknown as TypedDocumentString<SetMemorySavingModeMutation, SetMemorySavingModeMutationVariables>;
 export const AgentEvalCaseTableDocument = {"__meta__":{"kind":"query","name":"AgentEvalCaseTable","hash":"sha256:5e3392b2af6f7d552485ad9c8c6e6598132e2b9398f3c7d96465bb66570875e1"}} as unknown as TypedDocumentString<AgentEvalCaseTableQuery, AgentEvalCaseTableQueryVariables>;
 export const AgentEvalCaseDetailDocument = {"__meta__":{"kind":"query","name":"AgentEvalCaseDetail","hash":"sha256:c8f54c60d6575aebc1b527f39b11dbce52859470f602f7a2ee439711ed922799"}} as unknown as TypedDocumentString<AgentEvalCaseDetailQuery, AgentEvalCaseDetailQueryVariables>;
 export const CreateAgentEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentEvalCase","hash":"sha256:75b53ec477e9ad120fe972fdd5d4890e5bb58ba673df78cee3cb879a791a3f1b"}} as unknown as TypedDocumentString<CreateAgentEvalCaseMutation, CreateAgentEvalCaseMutationVariables>;
@@ -24264,14 +24954,15 @@ export const ReplayAgentRunDocument = {"__meta__":{"kind":"mutation","name":"Rep
 export const AgentExceptionTableDocument = {"__meta__":{"kind":"query","name":"AgentExceptionTable","hash":"sha256:25ab7e258b1999dd80da81ecf0ad0c5b956991f6fc73cf33a2cd45def0a97b41"}} as unknown as TypedDocumentString<AgentExceptionTableQuery, AgentExceptionTableQueryVariables>;
 export const AgentExceptionDetailDocument = {"__meta__":{"kind":"query","name":"AgentExceptionDetail","hash":"sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069"}} as unknown as TypedDocumentString<AgentExceptionDetailQuery, AgentExceptionDetailQueryVariables>;
 export const ResolveAgentExceptionDocument = {"__meta__":{"kind":"mutation","name":"ResolveAgentException","hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}} as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;
-export const AgentMemoryTableDocument = {"__meta__":{"kind":"query","name":"AgentMemoryTable","hash":"sha256:d99d28d2422db1a09310ff97b588ad4581e73c2f9ac866e4324be32cbaafea77"}} as unknown as TypedDocumentString<AgentMemoryTableQuery, AgentMemoryTableQueryVariables>;
+export const AgentMemoryTableDocument = {"__meta__":{"kind":"query","name":"AgentMemoryTable","hash":"sha256:c917f36a70202b27cc06a0412a1eb68e6652ed8ddf06ef6a74a54f14c977d2a0"}} as unknown as TypedDocumentString<AgentMemoryTableQuery, AgentMemoryTableQueryVariables>;
 export const AgentMemoryCountDocument = {"__meta__":{"kind":"query","name":"AgentMemoryCount","hash":"sha256:f469da4636039efd1d8bd70aee025ce753109b239d117112aac3f252d4ce968c"}} as unknown as TypedDocumentString<AgentMemoryCountQuery, AgentMemoryCountQueryVariables>;
 export const AgentMemoryUsageDocument = {"__meta__":{"kind":"query","name":"AgentMemoryUsage","hash":"sha256:25550e83d389da60200a818552253cbdb5480aed9789f27f8afe8177b921ae3f"}} as unknown as TypedDocumentString<AgentMemoryUsageQuery, AgentMemoryUsageQueryVariables>;
-export const CreateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentMemory","hash":"sha256:f34dfbfff1a02c5a8544b8cad8f849b33eff8eb9c64ad479110bb66a6048e1e8"}} as unknown as TypedDocumentString<CreateAgentMemoryMutation, CreateAgentMemoryMutationVariables>;
-export const UpdateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentMemory","hash":"sha256:da2b52afcd2ecc9a53be6df3a173ccd003d8bb748d0bb1b58984aebd7631e01b"}} as unknown as TypedDocumentString<UpdateAgentMemoryMutation, UpdateAgentMemoryMutationVariables>;
-export const SetAgentMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetAgentMemoryStatus","hash":"sha256:524e01ce4ee37f8091fc80d5a48b3538a6e12970b4ccd1e2199d9f6cdd0bde0d"}} as unknown as TypedDocumentString<SetAgentMemoryStatusMutation, SetAgentMemoryStatusMutationVariables>;
-export const ApproveAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"ApproveAgentMemorySuggestion","hash":"sha256:e45cf624daecc0ea00cd996541d6f0aaa4d8f79c7176647c972c15cc495a9f88"}} as unknown as TypedDocumentString<ApproveAgentMemorySuggestionMutation, ApproveAgentMemorySuggestionMutationVariables>;
-export const DismissAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"DismissAgentMemorySuggestion","hash":"sha256:11fa59f6e07e839ced6aa31b86540b0a357d81af4f5819ce0774c1f96b1b98fe"}} as unknown as TypedDocumentString<DismissAgentMemorySuggestionMutation, DismissAgentMemorySuggestionMutationVariables>;
+export const CreateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentMemory","hash":"sha256:4333986d24d87abb8f16baabd5ec4f56d6e6e6e5dbedddfe59dec2b69a137d72"}} as unknown as TypedDocumentString<CreateAgentMemoryMutation, CreateAgentMemoryMutationVariables>;
+export const UpdateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentMemory","hash":"sha256:ee5e900f903f3eb6d0dee32b45ec8fd7327c69ed0d6c40a89ea80097707f432a"}} as unknown as TypedDocumentString<UpdateAgentMemoryMutation, UpdateAgentMemoryMutationVariables>;
+export const SetAgentMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetAgentMemoryStatus","hash":"sha256:aaf88d9ccd4a557f913ba17931d9f0b6bf568fcd9e3d3acc9930c4a63642f0df"}} as unknown as TypedDocumentString<SetAgentMemoryStatusMutation, SetAgentMemoryStatusMutationVariables>;
+export const ApproveAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"ApproveAgentMemorySuggestion","hash":"sha256:60783328ff24a4cad10cd2c4e481d10b4ca359ec480d2abc4317e38ad939fd74"}} as unknown as TypedDocumentString<ApproveAgentMemorySuggestionMutation, ApproveAgentMemorySuggestionMutationVariables>;
+export const DismissAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"DismissAgentMemorySuggestion","hash":"sha256:c0d6650ca20dc8326c37c05aa65a0a94c7980b829be53f07a9a9022641025966"}} as unknown as TypedDocumentString<DismissAgentMemorySuggestionMutation, DismissAgentMemorySuggestionMutationVariables>;
+export const AgentReflectionsDocument = {"__meta__":{"kind":"query","name":"AgentReflections","hash":"sha256:eac5580cd723d8c929b5c4fd973ceaac48156672a36d5701f25b990cab0789fe"}} as unknown as TypedDocumentString<AgentReflectionsQuery, AgentReflectionsQueryVariables>;
 export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
 export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
 export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentPlan","hash":"sha256:b2f23a83f557ca02504d0a017043627ff687ebcebb5ac117779eb4d5611ff57c"}} as unknown as TypedDocumentString<DecideAgentPlanMutation, DecideAgentPlanMutationVariables>;
@@ -24308,8 +24999,8 @@ export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"Se
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;
 export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFeedbackTable","hash":"sha256:340427dceb61302fa430510e09fb15618155e62a07eda870abd25d331ae9ee8f"}} as unknown as TypedDocumentString<AiFeedbackTableQuery, AiFeedbackTableQueryVariables>;
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
-export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:59ca8e0065a874a31d83b6439010be456ad24912a224b7718273d2ae50dbfa42"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
-export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:ae91e72c5f112a6aa1f37109bf70a6275196b1229a3459a30b58ee33d63bb356"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:34c633c35b3a5b33d99238f07fbee597b0a654bca74a4c8cf5d8a04c59e9118d"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
+export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:a0c568ce3b9e29ef4c62b6a6f9c95c08b58f39862ecc50de6bf0f63c80db8103"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
@@ -24727,15 +25418,16 @@ export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"Ifta
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
 export const InboundMessagesDocument = {"__meta__":{"kind":"query","name":"InboundMessages","hash":"sha256:f7683dd61b03d3635e618ae7dc12b17ce1aa52d3cf345b63b894169d986e9070"}} as unknown as TypedDocumentString<InboundMessagesQuery, InboundMessagesQueryVariables>;
-export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:b5012ee112f0132470558f1dacf951d5d083a241db79ffd8cb68bc3fae3ab6bf"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
+export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:52e99ea8e8401eb17750af9ecb45f3757ec34b1ed369393b857575b10e9c5bf6"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
 export const InboundMessageCountsDocument = {"__meta__":{"kind":"query","name":"InboundMessageCounts","hash":"sha256:0186e33cceac728a75529ebc6acbce0f61c96012f25f0b3cf1326efab11c6418"}} as unknown as TypedDocumentString<InboundMessageCountsQuery, InboundMessageCountsQueryVariables>;
-export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:03bfa034f29f0ebe88e72a98dfb768bc2505f65c525103be990c360ed8d1d412"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
-export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:2aad04e7ef8dc6ea1dc385f560163fc5b5d751fbee53ce11186e630df537b0b3"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
-export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:194611e396570a43e4758f83c5046369cfaa0e04211a053fa5d9e843014a8580"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
-export const CreateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundMailbox","hash":"sha256:53605eac20152c64ffab6905b3a4cb9fea3f2e394f3c4028cbfae8d27e8a49ae"}} as unknown as TypedDocumentString<CreateInboundMailboxMutation, CreateInboundMailboxMutationVariables>;
-export const UpdateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"UpdateInboundMailbox","hash":"sha256:5de0a2a6e6aacd88d47682fca2a21fcf13464dc6c69e43b4e7b3d10ddd3c73fa"}} as unknown as TypedDocumentString<UpdateInboundMailboxMutation, UpdateInboundMailboxMutationVariables>;
-export const RotateInboundMailboxTokenDocument = {"__meta__":{"kind":"mutation","name":"RotateInboundMailboxToken","hash":"sha256:946e0d596649a249dcfe2ca2e5907df9779e48c1458801e26738a1fc6a2c8d51"}} as unknown as TypedDocumentString<RotateInboundMailboxTokenMutation, RotateInboundMailboxTokenMutationVariables>;
-export const SetInboundMailboxSigningSecretDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxSigningSecret","hash":"sha256:b19baacab4c0b1a7eeceffae35e61a76c60e30919c63202ef12b6c7112010e75"}} as unknown as TypedDocumentString<SetInboundMailboxSigningSecretMutation, SetInboundMailboxSigningSecretMutationVariables>;
+export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:f22b9b487f648767351231e30f3e2bae37b0efd215fac150db14ee4de447253f"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
+export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:86fb1437a2cfb82f25357a4c7c564c4c35f48a0355c0d9241b2a14919c418a11"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
+export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:97dae53cf391479bc0c7d92d9e72620b50ed0cc92d44b445799096ede3960b75"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
+export const CreateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundMailbox","hash":"sha256:e59756e9c0630027ba9a4de428789b4ce0e1be7d2335d5ef174085423be19d85"}} as unknown as TypedDocumentString<CreateInboundMailboxMutation, CreateInboundMailboxMutationVariables>;
+export const UpdateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"UpdateInboundMailbox","hash":"sha256:8af2c7cf19e13659909e9d90e2924497177d9bedd65b71819d432175d0bb86c7"}} as unknown as TypedDocumentString<UpdateInboundMailboxMutation, UpdateInboundMailboxMutationVariables>;
+export const RotateInboundMailboxTokenDocument = {"__meta__":{"kind":"mutation","name":"RotateInboundMailboxToken","hash":"sha256:fc75bed906a1b0701c4bf19c5bd2b5ef538910793a17fa3d81ad4949d04642b8"}} as unknown as TypedDocumentString<RotateInboundMailboxTokenMutation, RotateInboundMailboxTokenMutationVariables>;
+export const SetInboundMailboxSigningSecretDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxSigningSecret","hash":"sha256:691872fd0420b45cca9d6d4e74693fe60eefa63ed4996452d34f3404b1b05689"}} as unknown as TypedDocumentString<SetInboundMailboxSigningSecretMutation, SetInboundMailboxSigningSecretMutationVariables>;
+export const SetInboundMailboxApiKeyDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxApiKey","hash":"sha256:d7a705d50c81f9c93ebdab0d1943cff882e20232b53451d5d6b9f6077ef65593"}} as unknown as TypedDocumentString<SetInboundMailboxApiKeyMutation, SetInboundMailboxApiKeyMutationVariables>;
 export const InvoiceAdjustmentApprovalsDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovals","hash":"sha256:051cda2df75986990c40b1ec9cbcaa20d4a398519581fbf58098f79859a2b0f8"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalsQuery, InvoiceAdjustmentApprovalsQueryVariables>;
 export const InvoiceAdjustmentApprovalDetailDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovalDetail","hash":"sha256:3faee37cd372092eca2df737c1d885af871a825933f88250bc9c91dc0cb6e59b"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalDetailQuery, InvoiceAdjustmentApprovalDetailQueryVariables>;
 export const InvoiceAdjustmentOperationsSummaryDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentOperationsSummary","hash":"sha256:441d3f879bd0cfc9f9aa4483469fc03a694dbdf70ec8831621691b0c8121b5e3"}} as unknown as TypedDocumentString<InvoiceAdjustmentOperationsSummaryQuery, InvoiceAdjustmentOperationsSummaryQueryVariables>;
@@ -24905,14 +25597,27 @@ export const ServiceFailureReasonCodeTableDocument = {"__meta__":{"kind":"query"
 export const ServiceFailureTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureTable","hash":"sha256:802d21c82ae8c40acf8a3e43537d88efc7781983e248ad672961a74b46c52bd0"}} as unknown as TypedDocumentString<ServiceFailureTableQuery, ServiceFailureTableQueryVariables>;
 export const ServiceTypeTableDocument = {"__meta__":{"kind":"query","name":"ServiceTypeTable","hash":"sha256:ba2cc0fdc314c6c3e25d306f5ad63a4c09ac96b537a0bf60b874ea22eec70682"}} as unknown as TypedDocumentString<ServiceTypeTableQuery, ServiceTypeTableQueryVariables>;
 export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"ShipmentTypeTable","hash":"sha256:2be2cf7c6760639a92a3977f36a489f31e14b4c27edae1049a9589cce837a534"}} as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;
-export const ShipmentCommandCenterTableDocument = {"__meta__":{"kind":"query","name":"ShipmentCommandCenterTable","hash":"sha256:a0bb51e7f99133ce65d038f559ab8992abc49b068d676d6fba896374ac0c9cfc"}} as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
-export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:953d91d1cfcebb26add6a2de11f288e03d422de025b266cceca76242ce6967cc"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
-export const ShipmentSavedViewCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentSavedViewCounts","hash":"sha256:cbed3f0cc310a0a4c3435b533a963c297ad2bad4a07174563944705242d2d168"}} as unknown as TypedDocumentString<ShipmentSavedViewCountsQuery, ShipmentSavedViewCountsQueryVariables>;
-export const ShipmentPageAnalyticsDocument = {"__meta__":{"kind":"query","name":"ShipmentPageAnalytics","hash":"sha256:ad48e5077b2ccc6fd13488ff0477d404b19f9a4067a6d2dbc5451ec44869443e"}} as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
+export const ShipmentBoardCapabilitiesDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardCapabilities","hash":"sha256:aa7e88780f37bb5a758b0290855c8d761b5bc1d418cf4c1766478e43c0787484"}} as unknown as TypedDocumentString<ShipmentBoardCapabilitiesQuery, ShipmentBoardCapabilitiesQueryVariables>;
+export const ShipmentStageSummaryDocument = {"__meta__":{"kind":"query","name":"ShipmentStageSummary","hash":"sha256:8bbb27b2f871a92d7144ecd277f764f615822a8680ff1f1342af69c3905becb3"}} as unknown as TypedDocumentString<ShipmentStageSummaryQuery, ShipmentStageSummaryQueryVariables>;
+export const ShipmentQuickFilterCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentQuickFilterCounts","hash":"sha256:0ec841b49e41c32139149b1d0a7e5c4faf08e719514173109c253ee88945f489"}} as unknown as TypedDocumentString<ShipmentQuickFilterCountsQuery, ShipmentQuickFilterCountsQueryVariables>;
+export const ShipmentFacetCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentFacetCounts","hash":"sha256:fff99efce34b6302db2c948cbfaafa3b48d8ed34fdc155ad987936b294905a49"}} as unknown as TypedDocumentString<ShipmentFacetCountsQuery, ShipmentFacetCountsQueryVariables>;
+export const ShipmentBriefingDocument = {"__meta__":{"kind":"query","name":"ShipmentBriefing","hash":"sha256:5c4146461b574cc8cc32724f790df893af458adf345b453316f3ae843e5fd74e"}} as unknown as TypedDocumentString<ShipmentBriefingQuery, ShipmentBriefingQueryVariables>;
+export const ShipmentCapacityDocument = {"__meta__":{"kind":"query","name":"ShipmentCapacity","hash":"sha256:3afe71c443b98e096c0542ad6ab51196c9178a529bd0dd4fa9360f78a10e7a1c"}} as unknown as TypedDocumentString<ShipmentCapacityQuery, ShipmentCapacityQueryVariables>;
+export const CapacityUnitMatchesDocument = {"__meta__":{"kind":"query","name":"CapacityUnitMatches","hash":"sha256:5a91bf1a9c3a15fd4d1f98288ccb7c2e968c6af30f8006b5210311a31911b6ef"}} as unknown as TypedDocumentString<CapacityUnitMatchesQuery, CapacityUnitMatchesQueryVariables>;
+export const ShipmentCoverageSuggestionsDocument = {"__meta__":{"kind":"query","name":"ShipmentCoverageSuggestions","hash":"sha256:1822c8eca7b5d6e95a8e5bdb5080634b6f1ca8205c2c855e532bb0f851b77b44"}} as unknown as TypedDocumentString<ShipmentCoverageSuggestionsQuery, ShipmentCoverageSuggestionsQueryVariables>;
+export const ShipmentSuggestionsDocument = {"__meta__":{"kind":"query","name":"ShipmentSuggestions","hash":"sha256:ac8fd24298d89999ff20a21267132e7cd02c5fbe2d617d7bb48cf4229f9c385e"}} as unknown as TypedDocumentString<ShipmentSuggestionsQuery, ShipmentSuggestionsQueryVariables>;
+export const ShipmentWatchlistDocument = {"__meta__":{"kind":"query","name":"ShipmentWatchlist","hash":"sha256:3c97d4dfe4f153d13e1482d169c35e34d58ed94ef12baec49eb9823255a19c51"}} as unknown as TypedDocumentString<ShipmentWatchlistQuery, ShipmentWatchlistQueryVariables>;
+export const TenderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"TenderShipments","hash":"sha256:fc17e184f2516aa1bac0b43212d104b5b0109257bae95fc8fc917babb5360d36"}} as unknown as TypedDocumentString<TenderShipmentsMutation, TenderShipmentsMutationVariables>;
+export const DecideShipmentSuggestionDocument = {"__meta__":{"kind":"mutation","name":"DecideShipmentSuggestion","hash":"sha256:c58d215bd70ddacae5cb7bb1db402fe00f516e3b02750be051dba50a8fb157a8"}} as unknown as TypedDocumentString<DecideShipmentSuggestionMutation, DecideShipmentSuggestionMutationVariables>;
+export const UndoShipmentSuggestionDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoShipmentSuggestionDecision","hash":"sha256:70cabba6bbcd1f39dd47f1d0d7c1458757280bef6239eab04b33a90166f9ad16"}} as unknown as TypedDocumentString<UndoShipmentSuggestionDecisionMutation, UndoShipmentSuggestionDecisionMutationVariables>;
+export const NotifyShipmentDelayDocument = {"__meta__":{"kind":"mutation","name":"NotifyShipmentDelay","hash":"sha256:ac9e4fcb73800c23f82a4b48d988a24a084b6aca45e5d9747b7a7c04a0ad7183"}} as unknown as TypedDocumentString<NotifyShipmentDelayMutation, NotifyShipmentDelayMutationVariables>;
+export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:2b14c8b12afb6b80366a2349eaf1568238d7650da24fc7e6897e972e4b5b22fd"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
+export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:07663326eb422daefce4e6005195a493aa0e41b647d4a20238bb08766fe91b18"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+export const ShipmentPageAnalyticsDocument = {"__meta__":{"kind":"query","name":"ShipmentPageAnalytics","hash":"sha256:7781708ca578b5c735008b859ff154d5a6cdebb8449afb02f5abf4fdc1cf3214"}} as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
 export const ShipmentTomorrowsPickupsDocument = {"__meta__":{"kind":"query","name":"ShipmentTomorrowsPickups","hash":"sha256:4efe02e85e165ab339b90c81ea8d05dad114942c74d9333034f58a4e6a609ee4"}} as unknown as TypedDocumentString<ShipmentTomorrowsPickupsQuery, ShipmentTomorrowsPickupsQueryVariables>;
-export const UnassignedShipmentsDocument = {"__meta__":{"kind":"query","name":"UnassignedShipments","hash":"sha256:e9bd062dcf7ecf8d3f84c7a801e25d279557e1490cba1e42fa926260980aac0d"}} as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
-export const ExceptionShipmentsDocument = {"__meta__":{"kind":"query","name":"ExceptionShipments","hash":"sha256:37cd0a782cd07b47e83b9490a0b264f15bea3d428d822d749aaf29abfe1d163e"}} as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
-export const MapShipmentsDocument = {"__meta__":{"kind":"query","name":"MapShipments","hash":"sha256:ea6c1a521058fb453e49bb4c7a08024ffab3b8a10e4a7d51422801888281f642"}} as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+export const UnassignedShipmentsDocument = {"__meta__":{"kind":"query","name":"UnassignedShipments","hash":"sha256:21a2fd6ffe869b7024d25ff3e4a74beda6bbaf905995924be9fd7c4f9e6dcfba"}} as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+export const ExceptionShipmentsDocument = {"__meta__":{"kind":"query","name":"ExceptionShipments","hash":"sha256:92f2314f5c2296f6634733fb059194631637a8750a7c1f2d45c54e210c6377ab"}} as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+export const MapShipmentsDocument = {"__meta__":{"kind":"query","name":"MapShipments","hash":"sha256:93d207f449b5d30fec976d130f6698958875bbc7e72c00b0d3f6bd50176e09b1"}} as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = {"__meta__":{"kind":"query","name":"ShipmentComments","hash":"sha256:e8ded6c042536cd06b3552020cc7245d5d5585ebae1cee2cdf5d4369b07b33a7"}} as unknown as TypedDocumentString<ShipmentCommentsQuery, ShipmentCommentsQueryVariables>;
 export const ShipmentCommentRepliesDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentReplies","hash":"sha256:c3d7d09953b6ceb3ea38fbc547d409fea336121d2b3bcacefce4b894f29bd3c6"}} as unknown as TypedDocumentString<ShipmentCommentRepliesQuery, ShipmentCommentRepliesQueryVariables>;
 export const ShipmentCommentCountDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentCount","hash":"sha256:1f62df3579f042a9c8914aa2b124bb976b08c30fdb27dc1fa25926487e7d877e"}} as unknown as TypedDocumentString<ShipmentCommentCountQuery, ShipmentCommentCountQueryVariables>;
@@ -24920,18 +25625,18 @@ export const ShipmentEventsDocument = {"__meta__":{"kind":"query","name":"Shipme
 export const ShipmentBillingReadinessDocument = {"__meta__":{"kind":"query","name":"ShipmentBillingReadiness","hash":"sha256:98a2cd4d00d91a045e742b52e3c9a318781d5eb12903f63fe4d141f0aefe449c"}} as unknown as TypedDocumentString<ShipmentBillingReadinessQuery, ShipmentBillingReadinessQueryVariables>;
 export const ShipmentUiPolicyDocument = {"__meta__":{"kind":"query","name":"ShipmentUIPolicy","hash":"sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1"}} as unknown as TypedDocumentString<ShipmentUiPolicyQuery, ShipmentUiPolicyQueryVariables>;
 export const ShipmentPreviousRatesDocument = {"__meta__":{"kind":"query","name":"ShipmentPreviousRates","hash":"sha256:fb9ce636f0cfa91106dfcc559e31eb59e1e6cfa4d229668dbc2208e7a3730f9b"}} as unknown as TypedDocumentString<ShipmentPreviousRatesQuery, ShipmentPreviousRatesQueryVariables>;
-export const CreateShipmentDocument = {"__meta__":{"kind":"mutation","name":"CreateShipment","hash":"sha256:886b547be4c3621983736a04d034234ff59e9a9a7084ab07ba40f25f8f7a54b9"}} as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
-export const UpdateShipmentDocument = {"__meta__":{"kind":"mutation","name":"UpdateShipment","hash":"sha256:2a6f14c44d6a4ce10628600b03147328362f58216cccbfb1fa3cb7927efbed63"}} as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
-export const CancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"CancelShipment","hash":"sha256:e445864f6abccf0fa08e08f057bfcc62401eda8ea1e0c049ff0de50d27587bf1"}} as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
-export const UncancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"UncancelShipment","hash":"sha256:bcaf5dbb55388ef7d0e284ec1271d35cccfc86a04cca209f5c69cc3138a4890d"}} as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+export const CreateShipmentDocument = {"__meta__":{"kind":"mutation","name":"CreateShipment","hash":"sha256:2ec7d1ba17f26ccba62537cd5f1641211d4ad8ac80397ac3c1973a478da56dd1"}} as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+export const UpdateShipmentDocument = {"__meta__":{"kind":"mutation","name":"UpdateShipment","hash":"sha256:dba04b817502eb68b53ddf2fcdee551567f963c2b9720ab854263ee0cb8c6d2f"}} as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+export const CancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"CancelShipment","hash":"sha256:348e32aa442ad79ac2494b0c12426237ea9cc92c79c8be4008fc9ebfc7b95287"}} as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+export const UncancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"UncancelShipment","hash":"sha256:f3b24edbe073097986837e3e3485ce1ca9815ee0f60aa2180288a5b69012af83"}} as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = {"__meta__":{"kind":"mutation","name":"DuplicateShipment","hash":"sha256:0dcc6ec862a4ef66a9e7137e45548bb355204f1bc766d172a035b5e537298ecf"}} as unknown as TypedDocumentString<DuplicateShipmentMutation, DuplicateShipmentMutationVariables>;
-export const TransferShipmentOwnershipDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentOwnership","hash":"sha256:8b4cbde7fa1255bbe699ad4ba0dba4e42f88c3e1a9e3bcce77c4c6e8fd690c54"}} as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+export const TransferShipmentOwnershipDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentOwnership","hash":"sha256:dbfd5b6b1022c1a32604c2ef35d9ab220a4d08782792331eb55d2d3550928ca1"}} as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingItemsDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentToBillingItems","hash":"sha256:880f3a1da6c6411f6be5b37b9171f4724b28a0cf4a4b68c5baf63fdc8fbfe8d6"}} as unknown as TypedDocumentString<TransferShipmentToBillingItemsMutation, TransferShipmentToBillingItemsMutationVariables>;
 export const TransferShipmentToBillingDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentToBilling","hash":"sha256:26bfaf606837906606b2d36e188ad75e47db576e9ed709a5f47b3ddf619cf487"}} as unknown as TypedDocumentString<TransferShipmentToBillingMutation, TransferShipmentToBillingMutationVariables>;
 export const BulkTransferShipmentsToBillingDocument = {"__meta__":{"kind":"mutation","name":"BulkTransferShipmentsToBilling","hash":"sha256:b6cdcdefd2780a75fc875cd010360eb2a5f212bf8e8a84e963cd744c8fed7bf9"}} as unknown as TypedDocumentString<BulkTransferShipmentsToBillingMutation, BulkTransferShipmentsToBillingMutationVariables>;
 export const CalculateShipmentTotalsDocument = {"__meta__":{"kind":"mutation","name":"CalculateShipmentTotals","hash":"sha256:675789448d139ef11053baf07c910d999193810b6acd81ae401229c1e1753a75"}} as unknown as TypedDocumentString<CalculateShipmentTotalsMutation, CalculateShipmentTotalsMutationVariables>;
 export const PreviewShipmentContractRateDocument = {"__meta__":{"kind":"mutation","name":"PreviewShipmentContractRate","hash":"sha256:b3609be8eacbbcd92db634d5a0939e1cf3bd0d4c1635b56ac8a7e1082d7aaaff"}} as unknown as TypedDocumentString<PreviewShipmentContractRateMutation, PreviewShipmentContractRateMutationVariables>;
-export const AutoRateShipmentDocument = {"__meta__":{"kind":"mutation","name":"AutoRateShipment","hash":"sha256:cdf2c487ed71d99b3ca36f93e0a7b87cab6b9b172ed5ae0b6f188db1979d6395"}} as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
+export const AutoRateShipmentDocument = {"__meta__":{"kind":"mutation","name":"AutoRateShipment","hash":"sha256:e80f1b2988b8aacf081df46caae4844bdd0d2d6389959e827495de14b09a2665"}} as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
 export const CalculateShipmentDistanceDocument = {"__meta__":{"kind":"mutation","name":"CalculateShipmentDistance","hash":"sha256:5c8612acf5d98e8e255b7ec31d1fb37d4723fe9cfed4f6e2c2c4203ba5092b5a"}} as unknown as TypedDocumentString<CalculateShipmentDistanceMutation, CalculateShipmentDistanceMutationVariables>;
 export const RecalculateShipmentDistanceDocument = {"__meta__":{"kind":"mutation","name":"RecalculateShipmentDistance","hash":"sha256:c22b19ad3ce0ea5856e7d3b13cbf94d2b5a34aadeaf0f90cf09c5ba8f6f87c51"}} as unknown as TypedDocumentString<RecalculateShipmentDistanceMutation, RecalculateShipmentDistanceMutationVariables>;
 export const CheckShipmentDuplicateBolDocument = {"__meta__":{"kind":"mutation","name":"CheckShipmentDuplicateBol","hash":"sha256:245fce8ae3f1f985031b2343ce03fa257082b6453a6b738c209e49581315c33c"}} as unknown as TypedDocumentString<CheckShipmentDuplicateBolMutation, CheckShipmentDuplicateBolMutationVariables>;

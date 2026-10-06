@@ -132,7 +132,9 @@ func TestBuildSystemPrompt_ADelegatedTurnReportsToTheAgentThatAsked(t *testing.T
 	})
 
 	assert.Contains(t, prompt, "The agent Homepage Widget Builder handed you this task")
-	assert.Contains(t, prompt, "the name and id of every record you created or changed")
+	assert.Contains(t, prompt, "every record you created or changed by its number or name")
+	assert.Contains(t, prompt, "Never write a record's internal id",
+		"the person reads the delegate's reply too")
 	assert.Contains(t, prompt, "handed over with the task",
 		"the delegate works from the records it was handed rather than retyping them")
 	assert.NotContains(t, prompt, "Dispatchers are busy")

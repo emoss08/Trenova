@@ -19,7 +19,7 @@ import { apiService } from "@/services/api";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { ShieldAlertIcon, ShieldOffIcon } from "lucide-react";
+import { ShieldAlertIcon, ShieldOffIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./api-key-columns";

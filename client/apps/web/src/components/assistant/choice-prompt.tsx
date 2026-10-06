@@ -2,7 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { CornerDownLeftIcon } from "lucide-react";
+import { CornerDownLeftIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { ThreadAskRequest } from "./ask-requests";
 

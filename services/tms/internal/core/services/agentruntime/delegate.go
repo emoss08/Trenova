@@ -665,10 +665,25 @@ func delegateNote(report serviceports.AssistantDelegateFinishedEvent) string {
 	default:
 		return "[" + name + " did this as the same person. Tell the person what it did, " +
 			"naming what it made. Everything under awaiting is a proposal waiting for their " +
-			"approval in this conversation and has not run; name each by its " +
-			"proposalId when you tell them about it. Use the ids under made for your next " +
-			"step; never invent one.]"
+			"approval in this conversation and has not run; say what each would do, by the " +
+			"names of the records it touches: the person approves it from its card here, so " +
+			"never show them a proposalId or any other id. Use the ids under made for your " +
+			"next step; never invent one." + delegateArtifactNote(report.Reply) + "]"
 	}
+}
+
+// delegateArtifactNote passes on what the delegate's reply showed. Only this
+// conversation's own reply is kept with the turn, so a table or record the
+// delegate looked up is gone unless the answer links it again.
+func delegateArtifactNote(reply string) string {
+	links := artifactLinksIn(reply)
+	if len(links) == 0 {
+		return ""
+	}
+
+	return " Its reply shows " + strings.Join(links, ", ") + ". To show the person one of " +
+		"these, link it inside the sentence that mentions it, exactly as written; one your " +
+		"answer does not link is not kept. Link it rather than retyping its rows."
 }
 
 // UsableAgentsFor is what the person may use of the organization's agents in

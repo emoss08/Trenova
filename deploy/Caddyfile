@@ -1,24 +1,124 @@
-{$DOMAIN:trenova.app} {
-	tls internal
+# Trenova's edge for a self-hosted install: serves the web app at /, the driver
+# portal (Dash) at /dash/, and passes every API path on to tms-api. Object
+# storage gets a hostname of its own, because presigned URLs are signed for a
+# host and MinIO cannot live under a path prefix.
+#
+# Configured entirely from the environment (deploy/selfhost/.env):
+#
+#   DOMAIN               Hostname people open Trenova at, e.g. trenova.example.com.
+#                        A public hostname gets a Let's Encrypt certificate
+#                        automatically; its DNS must point here and ports 80 and
+#                        443 must be reachable. Defaults to localhost, which is
+#                        served with Caddy's own local CA for a trial.
+#   STORAGE_DOMAIN       Hostname of the bundled MinIO, e.g. storage.example.com.
+#                        Defaults to storage.localhost.
+#   STORAGE_ORIGIN       Origin the browser fetches stored files from, for the
+#                        Content-Security-Policy. Defaults (in compose.yml) to
+#                        https://STORAGE_DOMAIN; set it to your bucket's origin
+#                        when storage is an external S3 service.
+#   API_UPSTREAM         Defaults to tms-api:8080.
+#   STORAGE_UPSTREAM     Defaults to minio:9000.
+#   CADDY_GLOBAL_OPTIONS One Caddy global option, e.g. "local_certs" to issue every
+#                        certificate from Caddy's local CA on a private network,
+#                        or "email ops@example.com" for Let's Encrypt notices.
+#
+# Nothing here loads third-party analytics. The Content-Security-Policy allows
+# only the origins the app itself uses: Google Maps, Google Fonts, weather map
+# tiles (RainViewer, OpenWeatherMap), Brandfetch logos, and your object storage.
+{
+	{$CADDY_GLOBAL_OPTIONS}
+}
 
+(edge_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+		-X-Powered-By
+	}
+}
+
+(app_headers) {
 	header {
 		X-Frame-Options "DENY"
-		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
-		X-XSS-Protection "1; mode=block"
 		Permissions-Policy "camera=(), microphone=(self), geolocation=()"
-		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://static.cloudflareinsights.com 'sha256-Q9qAP4vtJuwS7pBhw9g2oS9FueKw67t+u398X99GROo=' 'sha256-XtR73bEqMUD7aevUCpctukznhxuFL3vHjrYpUg9FkbI=' https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.googleusercontent.com https://tilecache.rainviewer.com https://tile.openweathermap.org https://storage.trenova.app; connect-src 'self' https://api.trenova.app https://api.rainviewer.com https://cloudflareinsights.com https://storage.trenova.app https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		-Server
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.googleusercontent.com https://tilecache.rainviewer.com https://tile.openweathermap.org https://cdn.brandfetch.io {$STORAGE_ORIGIN}; connect-src 'self' https://api.rainviewer.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com {$STORAGE_ORIGIN}; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
+	}
+}
+
+# A single-page app under {args[0]} (with a trailing slash), from SITE_ROOT
+# (default /srv, where the client image puts the build) plus {args[0]}.
+# Hashed bundles under assets/ are cached for a year; everything else (the
+# HTML shell, Dash's service worker and manifest) is revalidated on every load
+# so a new release is picked up at once. A missing file is a 404, never the
+# HTML shell, so a stale chunk fails loudly instead of being parsed as HTML.
+(spa) {
+	root * {$SITE_ROOT:/srv}
+	encode zstd gzip
+
+	@immutable path {args[0]}assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	@revalidated not path {args[0]}assets/*
+	header @revalidated Cache-Control "no-cache"
+
+	@sourcemap path *.map
+	handle @sourcemap {
+		respond 404
 	}
 
-	handle /api/* {
-		reverse_proxy tms-api:8080
+	@file path_regexp \.[A-Za-z0-9]+$
+	handle @file {
+		file_server {
+			precompressed br gzip
+		}
 	}
 
 	handle {
-		root * /srv
-		try_files {path} /index.html
+		try_files {args[0]}index.html
 		file_server
+	}
+}
+
+{$DOMAIN:localhost} {
+	import edge_headers
+
+	# Every backend path the web app, Dash and Trenova Capture call: the REST
+	# API and its server-sent event streams (/api/v1/**/stream/), and GraphQL
+	# at the root. Event streams are flushed as they are written, and Caddy
+	# sets no read timeout of its own, so a stream stays open for as long as
+	# the API keeps it (realtime.maxStreamLifetime). The API sets its own
+	# security headers on these responses.
+	@backend path /api /api/* /graphql /graphql/*
+	handle @backend {
+		reverse_proxy {$API_UPSTREAM:tms-api:8080} {
+			flush_interval -1
+			stream_close_delay 5m
+		}
+	}
+
+	handle /dash {
+		redir * /dash/ 308
+	}
+
+	handle /dash/* {
+		import app_headers
+		import spa /dash/
+	}
+
+	handle {
+		import app_headers
+		import spa /
+	}
+}
+
+# The bundled MinIO, for presigned uploads and downloads. Caddy passes the
+# original Host header through, which the signature covers. MinIO itself
+# answers CORS for the app's origin (MINIO_API_CORS_ALLOW_ORIGIN).
+{$STORAGE_DOMAIN:storage.localhost} {
+	import edge_headers
+
+	reverse_proxy {$STORAGE_UPSTREAM:minio:9000} {
+		flush_interval -1
 	}
 }

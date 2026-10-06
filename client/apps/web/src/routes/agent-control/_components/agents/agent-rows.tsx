@@ -8,18 +8,18 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AgentTemplate } from "@/types/assistant";
 import {
+  Beaker02Icon,
+  Edit02Icon,
   EyeOffIcon,
-  FlaskConicalIcon,
-  ForwardIcon,
-  InboxIcon,
-  LockIcon,
-  PencilIcon,
+  Inbox01Icon,
+  Lock01Icon,
   PlayIcon,
-  Trash2Icon,
-  UserRoundCheckIcon,
-  UsersIcon,
-  WrenchIcon,
-} from "lucide-react";
+  ReverseRightIcon,
+  Tool01Icon,
+  Trash01Icon,
+  UserCheck01Icon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import type { AgentShelf } from "./agent-roster";
 import { canDelegate, delegatesLine, savedDelegates } from "./delegates";
@@ -143,7 +143,7 @@ export function AgentRow({
               <TooltipTrigger
                 render={
                   <Badge variant="accent-violet" appearance="outline" className="gap-1">
-                    <FlaskConicalIcon className="size-3" />
+                    <Beaker02Icon className="size-3" />
                     {t("Simulation")}
                   </Badge>
                 }
@@ -158,7 +158,7 @@ export function AgentRow({
               <TooltipTrigger
                 render={
                   <Badge variant="neutral" appearance="outline" className="gap-1">
-                    <LockIcon className="size-3" />
+                    <Lock01Icon className="size-3" />
                     {t("System")}
                   </Badge>
                 }
@@ -175,7 +175,7 @@ export function AgentRow({
 
       <div className="text-muted-foreground col-span-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 pt-1 text-xs sm:col-span-1 sm:pt-0">
         <span className="inline-flex items-center gap-1">
-          <WrenchIcon className="size-3" />
+          <Tool01Icon className="size-3" />
           {agent.toolNames.length === 0
             ? t("No task tools")
             : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
@@ -184,7 +184,7 @@ export function AgentRow({
         <DelegatesSummary agent={agent} />
         {agent.pendingProposals > 0 ? (
           <Badge variant="warning" className="gap-1">
-            <InboxIcon className="size-3" />
+            <Inbox01Icon className="size-3" />
             {t(
               "{0, plural, one {# awaiting decision} other {# awaiting decision}}",
               agent.pendingProposals,
@@ -234,7 +234,7 @@ export function AgentRow({
             aria-label={t("Edit agent")}
             onClick={() => actions.onEdit(agent)}
           >
-            <PencilIcon className="size-3.5" />
+            <Edit02Icon className="size-3.5" />
           </Button>
         )}
         {actions.canDelete && (
@@ -250,7 +250,7 @@ export function AgentRow({
                     disabled={isSystem}
                     onClick={() => actions.onDelete(agent)}
                   >
-                    <Trash2Icon className="size-3.5" />
+                    <Trash01Icon className="size-3.5" />
                   </Button>
                 </span>
               }
@@ -300,7 +300,7 @@ export function AccessBadge({
         <TooltipTrigger
           render={
             <Badge variant="neutral" appearance="outline" className="gap-1">
-              <UsersIcon className="size-3" />
+              <Users01Icon className="size-3" />
               {t("Everyone")}
             </Badge>
           }
@@ -317,7 +317,7 @@ export function AccessBadge({
         <TooltipTrigger
           render={
             <Badge variant="warning" className="gap-1">
-              <UserRoundCheckIcon className="size-3" />
+              <UserCheck01Icon className="size-3" />
               {t("No roles")}
             </Badge>
           }
@@ -334,7 +334,7 @@ export function AccessBadge({
       <TooltipTrigger
         render={
           <Badge variant="neutral" appearance="outline" className="gap-1">
-            <UserRoundCheckIcon className="size-3" />
+            <UserCheck01Icon className="size-3" />
             {t("{0, plural, one {# role} other {# roles}}", roles.length)}
           </Badge>
         }
@@ -368,7 +368,7 @@ function DelegatesSummary({ agent }: { agent: AgentDefinitionRow }) {
       <TooltipTrigger
         render={
           <span className="inline-flex min-w-0 cursor-default items-center gap-1">
-            <ForwardIcon className="size-3 shrink-0" />
+            <ReverseRightIcon className="size-3 shrink-0" />
             <span className="truncate">{line}</span>
           </span>
         }

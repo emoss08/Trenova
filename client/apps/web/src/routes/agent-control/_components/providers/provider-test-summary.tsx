@@ -3,7 +3,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AIProviderTestOutcome } from "@/lib/graphql/ai-provider";
-import { AlertTriangleIcon, CheckCircle2Icon, CircleDashedIcon, XCircleIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  CircleDashedIcon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 
 const CLOCK_TICK_MS = 60_000;
@@ -45,7 +50,7 @@ export function ProviderTestSummary({ outcome, embedding, className }: ProviderT
   }
 
   const tone = !outcome.success ? "error" : outcome.schemaHonoured ? "ok" : "warn";
-  const Icon = { ok: CheckCircle2Icon, warn: AlertTriangleIcon, error: XCircleIcon }[tone];
+  const Icon = { ok: CheckCircleIcon, warn: AlertTriangleIcon, error: XCircleIcon }[tone];
   const toneClass = {
     ok: "text-success-foreground",
     warn: "text-warning-foreground",

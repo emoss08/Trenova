@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KPICard } from "@/components/kpi/kpi-simple-card";
-import { KeyRound } from "lucide-react";
+import { Key01Icon } from "@trenova/shared/components/icons";
 import type { ApiKeyAnalyticsData } from "../analytics-data";
 
 type Props = {
@@ -16,7 +16,7 @@ export function TotalKeysCard({ data }: Props) {
     <KPICard
       label={t("Total keys")}
       value={count.toLocaleString()}
-      icon={KeyRound}
+      icon={Key01Icon}
       detail={`+${newThisMonth} this month`}
     />
   );

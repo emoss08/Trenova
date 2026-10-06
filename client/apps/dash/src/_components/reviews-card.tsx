@@ -17,7 +17,7 @@ import {
   type ReviewGoalStatus,
 } from "@trenova/shared/types/performance-review";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardCheckIcon, PenLineIcon, TargetIcon } from "lucide-react";
+import { ClipboardCheckIcon, Edit03Icon, Target05Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -98,7 +98,10 @@ function ReviewRow({ review }: { review: PortalReview }) {
           {review.overallScore ? (
             <span className="text-lg font-semibold tabular-nums">{review.overallScore}</span>
           ) : null}
-          <Badge variant={needsSignOff ? "warning" : "neutral"} appearance={needsSignOff ? "subtle" : "outline"}>
+          <Badge
+            variant={needsSignOff ? "warning" : "neutral"}
+            appearance={needsSignOff ? "subtle" : "outline"}
+          >
             {PERFORMANCE_REVIEW_STATUS_LABELS[status] ?? status}
           </Badge>
         </div>
@@ -134,7 +137,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
         <ul className="mt-2 flex flex-col gap-1">
           {review.goals.map((goal) => (
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
-              <TargetIcon className="size-3.5 text-muted-foreground" />
+              <Target05Icon className="size-3.5 text-muted-foreground" />
               <span>{t(goal.title)}</span>
               <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
@@ -166,7 +169,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
             disabled={acknowledge.isPending}
             onClick={() => acknowledge.mutate()}
           >
-            <PenLineIcon className="size-3.5" />
+            <Edit03Icon className="size-3.5" />
             {acknowledge.isPending ? t("Signing…") : t("Sign off")}
           </Button>
         </div>

@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { RateAgreement } from "@trenova/shared/types/rate";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const NEW_BINDING = {
@@ -88,7 +88,7 @@ export function FuelBindingForm() {
 
         {waived ? (
           <Alert>
-            <InfoIcon className="size-4" />
+            <InfoCircleIcon className="size-4" />
             <AlertDescription>
               {t(
                 "A waived binding cannot also change the program's terms — the two describe opposite intentions.",

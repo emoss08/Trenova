@@ -10,7 +10,7 @@ import { billingQueueItemsByShipmentQuery } from "@/routes/billing-queue/billing
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ShipmentBillingPayerReadiness } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLinkIcon, ShieldAlertIcon } from "lucide-react";
+import { LinkExternal01Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 /**
@@ -40,9 +40,7 @@ export function ShipmentBillingPayerRows({
 
   return (
     <div className="mt-3 space-y-1" data-testid="billing-payer-rows">
-      <p className="text-xs text-muted-foreground font-medium">
-        {t("Payers")}
-      </p>
+      <p className="text-xs text-muted-foreground font-medium">{t("Payers")}</p>
       {payers.map((payer) => {
         const queueItem = (queueItems?.results ?? []).find(
           (item) => item.billToCustomerId === payer.payerId,
@@ -83,7 +81,7 @@ export function ShipmentBillingPayerRows({
                 >
                   <PlainInvoiceStatusBadge status={invoice.status} />
                   <span className="font-mono text-2xs">{invoice.number}</span>
-                  <ExternalLinkIcon className="size-2.5" />
+                  <LinkExternal01Icon className="size-2.5" />
                 </Link>
               ) : queueItem ? (
                 <Link
@@ -91,7 +89,7 @@ export function ShipmentBillingPayerRows({
                   className="inline-flex items-center gap-1 hover:underline"
                 >
                   <PlainBillingQueueStatusBadge status={queueItem.status} />
-                  <ExternalLinkIcon className="size-2.5" />
+                  <LinkExternal01Icon className="size-2.5" />
                 </Link>
               ) : (
                 <span className="text-muted-foreground">{t("Not transferred")}</span>

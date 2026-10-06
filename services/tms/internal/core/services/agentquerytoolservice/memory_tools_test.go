@@ -15,6 +15,7 @@ type fakeRecall struct {
 	serviceports.AgentMemoryService
 	captured serviceports.RecallAgentMemoriesRequest
 	items    []*agent.Memory
+	used     []pulid.ID
 }
 
 func (f *fakeRecall) Recall(
@@ -33,6 +34,12 @@ func (f *fakeRecall) Recall(
 	}
 
 	return recalled, nil
+}
+
+func (f *fakeRecall) RecordUse(_ context.Context, req serviceports.RecordMemoryUseRequest) error {
+	f.used = append(f.used, req.IDs...)
+
+	return nil
 }
 
 func TestRecallMemory_NarrowsToASubjectAndReadsBackTheFilters(t *testing.T) {
@@ -130,7 +137,23 @@ func TestRecallMemory_RefusesHalfASubject(t *testing.T) {
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"subjectId": "cus_1"}))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "both or neither")
+	assert.Contains(t, err.Error(), "subjectId needs subjectType")
+}
+
+// A model that fills every field sends a subject type with no id for a search
+// about no record. Refusing it looped the model on recall_memory until the
+// turn gave up, so a type with no id narrows nothing.
+func TestRecallMemory_ReadsATypeWithNoIDAsNoSubject(t *testing.T) {
+	t.Parallel()
+
+	tool := newRecallMemoryTool(&fakeRecall{})
+
+	_, err := tool.Query(t.Context(), testParams(map[string]any{
+		"query":       "billing queue item rather than invoice",
+		"subjectType": "Customer",
+		"subjectId":   "",
+	}))
+	require.NoError(t, err)
 }
 
 func TestRecordedBy_NamesEverySource(t *testing.T) {
@@ -193,4 +216,29 @@ func TestRecallMemory_ReadsOneMemoryByIDWithoutAMatchLabel(t *testing.T) {
 		testParams(map[string]any{"id": "not an id"}),
 	)
 	require.Error(t, err)
+}
+
+// A recall answers for the person in the conversation: what is kept for them
+// and their roles is read with the organization's, and every memory it reads
+// back is counted as used and named to the runtime, which says so under the
+// reply.
+func TestRecallMemory_ReadsForThePersonAndNamesWhatItUsed(t *testing.T) {
+	t.Parallel()
+
+	first, second := pulid.MustNew("amem_"), pulid.MustNew("amem_")
+	recall := &fakeRecall{items: []*agent.Memory{
+		{ID: first, Kind: agent.MemoryKindFact, Source: agent.MemorySourceUser, Content: "One."},
+		{ID: second, Kind: agent.MemoryKindFact, Source: agent.MemorySourceAgent, Content: "Two."},
+	}}
+	tool := newRecallMemoryTool(recall)
+	params := testParams(map[string]any{"query": "acme"})
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	assert.Equal(t, params.Actor.PersonUserID(), recall.captured.ReaderUserID)
+	used, ok := result.(serviceports.MemoryRecall)
+	require.True(t, ok, "the runtime reads which memories a recall used")
+	assert.Equal(t, []pulid.ID{first, second}, used.RecalledMemoryIDs())
+	assert.Equal(t, []pulid.ID{first, second}, recall.used)
 }

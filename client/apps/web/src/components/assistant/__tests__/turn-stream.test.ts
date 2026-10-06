@@ -305,6 +305,7 @@ describe("reduceTurn restarts and refusals", () => {
     expect(state.retrying).toEqual({
       attempt: 1,
       provider: "Backup",
+      maxAttempts: 0,
       kind: "restart",
       waitSeconds: 0,
     });
@@ -404,6 +405,7 @@ describe("reduceTurn restarts and refusals", () => {
     expect(state.retrying).toEqual({
       attempt: 2,
       provider: "Gemini",
+      maxAttempts: 0,
       kind: "busy",
       waitSeconds: 4,
     });
@@ -506,6 +508,33 @@ describe("reduceTurn artifacts", () => {
     ]);
     expect(state.artifacts).toHaveLength(1);
     expect(state.artifacts[0].status).toBe("Ready");
+  });
+
+  it("drops an artifact the turn withdrew", () => {
+    // A card a later read folded into a table is deleted on the server; the
+    // live pane must drop it too, or eleven reads leave eleven cards beside
+    // the one table that replaced them until the thread is reloaded.
+    const state = run([
+      accepted,
+      artifactEvent("art_1", "Ready"),
+      artifactEvent("art_2", "Ready"),
+      { event: "artifact_removed", data: { id: "art_1" } },
+    ]);
+    expect(state.artifacts.map((artifact) => artifact.id)).toEqual(["art_2"]);
+  });
+
+  it("ignores a withdrawal of an artifact it never saw", () => {
+    const state = run([
+      accepted,
+      artifactEvent("art_2", "Ready"),
+      { event: "artifact_removed", data: { id: "art_9" } },
+    ]);
+    expect(state.artifacts.map((artifact) => artifact.id)).toEqual(["art_2"]);
+  });
+
+  it("parses the artifact_removed frame", () => {
+    const parsed = parseAssistantStreamEvent("artifact_removed", JSON.stringify({ id: "art_1" }));
+    expect(parsed).toEqual({ event: "artifact_removed", data: { id: "art_1" } });
   });
 
   it("parses the artifact frame", () => {
@@ -707,5 +736,26 @@ describe("advanceTurn", () => {
     const next = advanceTurn(state, { event: "thread", data: undefined as never }, 1);
 
     expect(next.segments).toBe(state.segments);
+  });
+});
+
+describe("reduceTurn memory", () => {
+  it("keeps the latest list of memories the turn used, and each one it saved once", () => {
+    const state = run([
+      accepted,
+      parseAssistantStreamEvent("memory_used", JSON.stringify({ ids: ["amem_1"] }))!,
+      parseAssistantStreamEvent("memory_used", JSON.stringify({ ids: ["amem_1", "amem_2"] }))!,
+      parseAssistantStreamEvent(
+        "memory_saved",
+        JSON.stringify({ id: "amem_3", callId: "call_1", pending: true }),
+      )!,
+      parseAssistantStreamEvent(
+        "memory_saved",
+        JSON.stringify({ id: "amem_3", callId: "call_1", pending: true }),
+      )!,
+    ]);
+
+    expect(state.usedMemoryIds).toEqual(["amem_1", "amem_2"]);
+    expect(state.savedMemories).toEqual([{ id: "amem_3", callId: "call_1", pending: true }]);
   });
 });

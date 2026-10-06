@@ -35,6 +35,11 @@ const (
 	KindNavigation      Kind = "navigation"
 	KindDraftEdit       Kind = "draft_edit"
 	KindDecisionRequest Kind = "decision_request"
+	// KindExtraction is what document intelligence read from an uploaded file:
+	// each field with its confidence and where on which page it was found, so
+	// a person can check the reading against the page before a shipment is
+	// made from it.
+	KindExtraction Kind = "extraction"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -59,6 +64,7 @@ func AllKinds() []Kind {
 		KindNavigation,
 		KindDraftEdit,
 		KindDecisionRequest,
+		KindExtraction,
 	}
 }
 

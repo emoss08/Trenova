@@ -15,7 +15,7 @@ import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
-import { LoaderCircle, TriangleAlert } from "lucide-react";
+import { AlertTriangleIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useEffect, useId, useState } from "react";
 import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
@@ -264,7 +264,7 @@ export function GenerateTableDialog({
             <div className="bg-muted/60 flex items-center justify-between border-b px-3 py-2">
               <span className="text-xs font-medium">{t("Preview")}</span>
               <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                {isFetching && <LoaderCircle className="size-3 animate-spin" />}
+                {isFetching && <SpinnerIcon className="size-3 animate-spin" />}
                 {valid && !tooMany ? t("{0} bands", preview?.length ?? estimate) : ""}
               </span>
             </div>
@@ -276,7 +276,7 @@ export function GenerateTableDialog({
               </div>
             ) : tooMany ? (
               <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-xs">
-                <TriangleAlert className="size-5 text-warning-foreground" />
+                <AlertTriangleIcon className="size-5 text-warning-foreground" />
                 <p>
                   {t(
                     "That would create {0} bands (limit {1}). Widen the band width or narrow the price range.",

@@ -12,15 +12,27 @@ import {
   toolCatalogSchema,
   toolTrustListSchema,
   assistantMessagePageSchema,
+  mentionCandidateListSchema,
+  deskSearchResultListSchema,
+  threadBudgetSchema,
+  type DeskSearchKind,
+  type MentionSearchType,
   assistantArtifactListSchema,
+  assistantArtifactPageSchema,
   assistantArtifactSchema,
+  documentRewriteSchema,
   assistantLiveTurnListSchema,
   agentBudgetStatusSchema,
   assistantPlanListSchema,
   assistantProposalListSchema,
+  proposalEditsSchema,
   assistantProviderListSchema,
   assistantThreadListSchema,
   assistantThreadSchema,
+  conversationScheduleListSchema,
+  conversationScheduleSchema,
+  createdScheduleSchema,
+  handoffResultSchema,
   parseAssistantStreamEvent,
   saveAgentDefinitionRequestSchema,
   sendMessageResultSchema,
@@ -31,6 +43,7 @@ import {
   type ThreadOrigin,
   type AssistantStreamEvent,
   type AssistantThread,
+  type ConversationSchedule,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
 
@@ -42,6 +55,29 @@ import {
 export function assistantTranscriptUrl(threadId: AssistantThread["id"]): string {
   return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/transcript/`;
 }
+
+/** A table or report preview, read again from its source as a whole CSV. */
+export function artifactCsvUrl(threadId: string, artifactId: string): string {
+  return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/artifacts/${encodeURIComponent(artifactId)}/export.csv`;
+}
+
+/** A document version printed as a PDF or written as a Word file. */
+export function artifactDocumentUrl(
+  threadId: string,
+  artifactId: string,
+  format: "pdf" | "docx",
+): string {
+  return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/artifacts/${encodeURIComponent(artifactId)}/export/?format=${format}`;
+}
+
+/** What narrows a page of a conversation's artifacts, on the server. */
+export type ArtifactListParams = {
+  cursor?: string;
+  limit?: number;
+  q?: string;
+  kind?: string;
+  pinned?: boolean;
+};
 
 export function downloadAssistantTranscript(threadId: AssistantThread["id"]): void {
   downloadFromUrl(assistantTranscriptUrl(threadId));
@@ -67,8 +103,12 @@ export type ActiveTurn = {
   threadId: string;
   status: string;
   workflowId?: string;
-  /** What started the turn: the person, or the application reporting a decision. */
-  origin?: "Person" | "DecisionFollowUp";
+  /**
+   * What started the turn: the person, the application reporting a decision,
+   * a request the person scheduled coming round, or the conversation being
+   * compacted.
+   */
+  origin?: "Person" | "DecisionFollowUp" | "Scheduled" | "Compaction";
   /** The question the turn answers, when a person asked one. */
   input?: string;
 };
@@ -112,8 +152,12 @@ export type AskOptions = {
 export type UpdateThreadOptions = {
   title?: string;
   pinned?: boolean;
+  /** Replaces what the agents keep in mind for the whole conversation. */
+  pinnedFacts?: readonly string[];
   /** Lists a quick question as a conversation. */
   keep?: boolean;
+  /** Whether the conversation compacts itself on nearing a full context. */
+  autoCompact?: boolean;
 };
 
 export class AssistantService {
@@ -137,9 +181,21 @@ export class AssistantService {
     const response = await api.patch(`/assistant/threads/${id}/`, {
       title: options.title ?? null,
       pinned: options.pinned ?? null,
+      pinnedFacts: options.pinnedFacts ?? null,
       keep: options.keep ?? false,
+      autoCompact: options.autoCompact ?? null,
     });
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
+  }
+
+  /**
+   * Starts summarizing the older part of a conversation to free its context.
+   * It runs as the conversation's turn, followed on its stream and stopped
+   * like a reply.
+   */
+  public async compactThread(threadId: AssistantThread["id"]): Promise<StartedTurn> {
+    const response = await api.post(`/assistant/threads/${threadId}/compact/`, {});
+    return safeParse(startedTurnSchema, response, "Assistant Turn");
   }
 
   /**
@@ -147,11 +203,79 @@ export class AssistantService {
    * than taken from the send response: an artifact outlives the turn, and a
    * draft's status follows the decision made on it anywhere.
    */
-  public async listArtifacts(threadId: AssistantThread["id"], options?: { signal?: AbortSignal }) {
-    const response = await api.get(`/assistant/threads/${threadId}/artifacts/`, {
+  public async listArtifacts(
+    threadId: AssistantThread["id"],
+    options?: { signal?: AbortSignal } & ArtifactListParams,
+  ) {
+    const params = new URLSearchParams();
+    if (options?.cursor) params.set("cursor", options.cursor);
+    if (options?.limit) params.set("limit", String(options.limit));
+    if (options?.q) params.set("q", options.q);
+    if (options?.kind) params.set("kind", options.kind);
+    if (options?.pinned) params.set("pinned", "true");
+    const query = params.toString();
+    const response = await api.get(
+      `/assistant/threads/${threadId}/artifacts/${query ? `?${query}` : ""}`,
+      { signal: options?.signal },
+    );
+    return safeParse(assistantArtifactPageSchema, response, "Assistant Artifact");
+  }
+
+  /** Every version of the lineage an artifact belongs to, oldest first. */
+  public async artifactLineage(
+    threadId: AssistantThread["id"],
+    artifactId: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    const response = await api.get(`/assistant/threads/${threadId}/artifacts/${artifactId}/`, {
       signal: options?.signal,
     });
     return safeParse(assistantArtifactListSchema, response, "Assistant Artifact");
+  }
+
+  /** The lineage a link names by its slug. */
+  public async artifactBySlug(
+    threadId: AssistantThread["id"],
+    slug: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    const response = await api.get(
+      `/assistant/threads/${threadId}/artifacts/by-slug/${encodeURIComponent(slug)}/`,
+      { signal: options?.signal },
+    );
+    return safeParse(assistantArtifactListSchema, response, "Assistant Artifact");
+  }
+
+  public async saveDocumentVersion(
+    threadId: AssistantThread["id"],
+    artifactId: string,
+    body: { body: string; note: string },
+  ) {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/versions/`,
+      body,
+    );
+    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
+  }
+
+  public async restoreDocumentVersion(threadId: AssistantThread["id"], artifactId: string) {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/restore/`,
+      {},
+    );
+    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
+  }
+
+  public async rewriteDocument(
+    threadId: AssistantThread["id"],
+    artifactId: string,
+    body: { text: string; mode: "shorter" | "plain" | "ask"; prompt: string },
+  ) {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/rewrite/`,
+      body,
+    );
+    return safeParse(documentRewriteSchema, response, "Document Rewrite");
   }
 
   public async pinArtifact(
@@ -165,13 +289,99 @@ export class AssistantService {
     return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
   }
 
+  /**
+   * The requests scheduled in one conversation, newest first. A conversation
+   * keeps at most 25, so the first page is all of them.
+   */
+  public async listThreadSchedules(
+    threadId: AssistantThread["id"],
+    options?: { signal?: AbortSignal; limit?: number; offset?: number },
+  ) {
+    const response = await api.get(
+      `/assistant/threads/${threadId}/schedules/?limit=${options?.limit ?? 25}&offset=${options?.offset ?? 0}`,
+      { signal: options?.signal },
+    );
+    return safeParse(conversationScheduleListSchema, response, "Conversation Schedule");
+  }
+
+  /** Every request the person scheduled, across their conversations, newest first. */
+  public async listSchedules(options?: { signal?: AbortSignal; limit?: number; offset?: number }) {
+    const response = await api.get(
+      `/assistant/schedules/?limit=${options?.limit ?? 25}&offset=${options?.offset ?? 0}`,
+      { signal: options?.signal },
+    );
+    return safeParse(conversationScheduleListSchema, response, "Conversation Schedule");
+  }
+
+  /**
+   * Schedules a message: "every weekday at 7:30am, …" or "/schedule …". The
+   * server reads the cadence and answers with the schedule and its card.
+   */
+  public async createSchedule(threadId: AssistantThread["id"], content: string) {
+    const response = await api.post(`/assistant/threads/${threadId}/schedules/`, { content });
+    return safeParse(createdScheduleSchema, response, "Conversation Schedule");
+  }
+
+  /** Pauses or resumes a schedule. */
+  public async setScheduleEnabled(id: ConversationSchedule["id"], enabled: boolean) {
+    const response = await api.patch(`/assistant/schedules/${id}/`, { enabled });
+    return safeParse(conversationScheduleSchema, response, "Conversation Schedule");
+  }
+
+  public async deleteSchedule(id: ConversationSchedule["id"]) {
+    await api.delete(`/assistant/schedules/${id}/`);
+  }
+
+  /** Asks a schedule's request now; answers with the turn to watch. */
+  public async runSchedule(id: ConversationSchedule["id"]) {
+    const response = await api.post(`/assistant/schedules/${id}/run/`, {});
+    return safeParse(startedTurnSchema, response, "Assistant Turn");
+  }
+
   public async getThread(id: AssistantThread["id"]) {
     const response = await api.get(`/assistant/threads/${id}/`);
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
   }
 
+  /** How close the thread's agent, and the person asking, are to their caps. */
+  public async threadBudget(id: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
+    const response = await api.get(`/assistant/threads/${id}/budget/`, { signal });
+    return safeParse(threadBudgetSchema, response, "Assistant Thread Budget");
+  }
+
+  /** Asks the people who run AI Control for what the person ran out of. */
+  public async requestMore(
+    id: AssistantThread["id"],
+    kind: "access" | "allowance" | "budget" | "daily_runs",
+  ) {
+    const response = await api.post(`/assistant/threads/${id}/requests/`, { kind });
+    return response as { sent: number };
+  }
+
+  /**
+   * Takes the conversation to another agent: a new conversation with it,
+   * opened with a summary, the pinned facts and the pinned artifacts, and a
+   * card here saying so.
+   */
+  public async handoffThread(
+    id: AssistantThread["id"],
+    agentDefinitionId: string,
+    facts: readonly string[] = [],
+  ) {
+    const response = await api.post(`/assistant/threads/${id}/handoff/`, {
+      agentDefinitionId,
+      facts,
+    });
+    return safeParse(handoffResultSchema, response, "Assistant Handoff");
+  }
+
   public async deleteThread(id: AssistantThread["id"]) {
     await api.delete(`/assistant/threads/${id}/`);
+  }
+
+  /** Marks everything in the conversation as seen by its owner. */
+  public async markThreadRead(id: AssistantThread["id"]) {
+    await api.post(`/assistant/threads/${id}/read/`);
   }
 
   /**
@@ -198,6 +408,39 @@ export class AssistantService {
    * A refused turn comes back as a normal result with `refused` set, not as an
    * error: the turn was processed, recorded, and explained.
    */
+  /**
+   * Records a person can name with @ from the composer, of one kind or of
+   * every kind they may read, matched on what the record is called.
+   */
+  public async searchMentions(
+    query: string,
+    type: MentionSearchType,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const params = new URLSearchParams({ query, type });
+    const response = await api.get(`/assistant/mentions/?${params.toString()}`, { signal });
+    const parsed = await safeParse(mentionCandidateListSchema, response, "Assistant Mentions");
+
+    return parsed.results;
+  }
+
+  /**
+   * The person's own conversations, what was said in them and what they
+   * produced. With nothing typed, the conversations and artifacts that are
+   * recent.
+   */
+  public async searchDesk(
+    query: string,
+    kind: DeskSearchKind,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const params = new URLSearchParams({ query, kind });
+    const response = await api.get(`/assistant/search/?${params.toString()}`, { signal });
+    const parsed = await safeParse(deskSearchResultListSchema, response, "Desk Search");
+
+    return parsed.results;
+  }
+
   /** The models this organization has made available to the assistant. */
   public async listProviders() {
     const response = await api.get("/assistant/providers/");
@@ -351,6 +594,23 @@ export class AssistantService {
   public async listProposals(threadId: AssistantThread["id"]) {
     const response = await api.get(`/assistant/threads/${threadId}/proposals/`);
     return safeParse(assistantProposalListSchema, response, "Assistant Proposal");
+  }
+
+  /**
+   * Keeps the values a person changed on a pending proposal, such as the
+   * wording of a drafted message, so the edit survives a reload and goes with
+   * the approval. Saving is not deciding; an empty set clears what was saved.
+   */
+  public async saveProposalEdits(
+    threadId: AssistantThread["id"],
+    proposalId: string,
+    modifications: Record<string, unknown>,
+  ) {
+    const response = await api.put(
+      `/assistant/threads/${threadId}/proposals/${proposalId}/edits/`,
+      { modifications },
+    );
+    return safeParse(proposalEditsSchema, response, "Proposal Edits");
   }
 
   /**

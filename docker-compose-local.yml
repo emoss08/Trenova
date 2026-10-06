@@ -207,7 +207,7 @@ services:
         # Fairness is off by default in the server and on here, so a busy
         # organization cannot starve the others on a shared queue. The search
         # attributes let an operator find an organization's or a thread's work
-        # in the UI. Production needs the same two settings; see
+        # in the UI. Production needs the same settings; see
         # docs/engineering/agent-runtime.md.
         image: temporalio/temporal:1.9.1
         container_name: temporal
@@ -217,6 +217,9 @@ services:
             - --ip=0.0.0.0
             - --ui-port=8233
             - --dynamic-config-value=matching.enableFairness=true
+            # Every poll a turn's reader makes is an Update; the default cap of
+            # 2000 per workflow is a little over three minutes of streaming.
+            - --dynamic-config-value=history.maxTotalUpdates=20000
             - --search-attribute=TrenovaOrganizationId=Keyword
             - --search-attribute=TrenovaAIFeature=Keyword
             - --search-attribute=TrenovaThreadId=Keyword
@@ -237,6 +240,35 @@ services:
             interval: 15s
             timeout: 5s
             retries: 10
+
+    gtc:
+        # Change data capture (github.com/emoss08/gtc): feeds the Meilisearch
+        # indexes, the Redis caches and the table-change-alert stream. Routing
+        # lives in deploy/gtc/sinks.yaml. Locally the slot and a FOR ALL TABLES
+        # publication are created on first start.
+        image: ghcr.io/emoss08/gtc:0.9.0
+        container_name: gtc
+        environment:
+            DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-trenova_go_db}?replication=database&sslmode=disable
+            CDC_SLOT_NAME: gtc_slot
+            CDC_PUBLICATION_NAME: gtc_publication
+            SINK_CONFIG_FILE: /config/sinks.yaml
+            REDIS_URL: redis://redis:6379/0
+            REDIS_JSON_URL: redis://redis:6379/0
+            MEILISEARCH_URL: http://meilisearch:7700
+            MEILISEARCH_API_KEY: CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
+        volumes:
+            - ./deploy/gtc/sinks.yaml:/config/sinks.yaml:ro
+        ports:
+            - "8095:8080"
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            meilisearch:
+                condition: service_healthy
+        restart: unless-stopped
 
     samsara-sim:
         build:

@@ -139,6 +139,21 @@ For rate limiting (HTTP 429):
 err := errortypes.NewRateLimitError("api", "Too many requests. Please try again later.")
 ```
 
+### Plan Errors
+
+Trenova Cloud plan limits. A quota error carries the meter, the plan's limit and the usage at
+the time of the refusal; a plan restriction carries the capability (empty when the whole
+organization is read-only or expired), a reason (`plan_restricted`,
+`subscription_read_only`, `subscription_expired`, `signups_paused`) and the plan key:
+
+```go
+err := errortypes.NewQuotaExceededError("shipments.total", 12, 12, "free_demo") // 402, QUOTA_EXCEEDED
+err := errortypes.NewPlanRestrictionError("api_keys", errortypes.PlanRestrictionReasonPlan, "free_demo") // 403, PLAN_RESTRICTED
+```
+
+Both expose `Params()`, which the REST problem document and the GraphQL error
+extensions carry as `params`.
+
 ---
 
 ## Validation Errors
@@ -334,6 +349,8 @@ func handleErrorCode(code errortypes.ErrorCode) int {
 | `AuthenticationError` | 401 Unauthorized |
 | `AuthorizationError` | 403 Forbidden |
 | `RateLimitError` | 429 Too Many Requests |
+| `QuotaExceededError` | 402 Payment Required |
+| `PlanRestrictionError` | 403 Forbidden |
 | `DatabaseError` | 500 Internal Server Error |
 
 | Error Code | HTTP Status |
@@ -590,6 +607,8 @@ func (s *ImportService) ImportUsers(ctx context.Context, records []UserRecord) (
 | `ErrUnauthorized` | Not authenticated | Missing/invalid token |
 | `ErrForbidden` | Not authorized | Insufficient permissions |
 | `ErrTooManyRequests` | Rate limited | API throttling |
+| `ErrQuotaExceeded` | Plan limit reached | Cloud free tier meter at its limit |
+| `ErrPlanRestricted` | Not on this plan | Cloud capability restriction, read-only or expired trial |
 | `ErrBusinessLogic` | Business rule violation | Domain-specific rules |
 | `ErrComplianceViolation` | Compliance rule broken | Regulatory requirements |
 | `ErrVersionMismatch` | Optimistic lock failed | Concurrent modification |

@@ -70,7 +70,6 @@ import { ManualJournalService } from "./manual-journal";
 import { NotificationService, notificationService } from "@trenova/shared/services/notification";
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
-import { PlatformBillingService } from "./platform-billing";
 import { RateConfirmationService } from "./rate-confirmation";
 import { RoutingGuideService } from "./routing-guide";
 import { TenderService } from "./tender";
@@ -183,7 +182,6 @@ class APIService {
   public weatherRadarService: WeatherRadarService;
   public ediService: EDIService;
   public emailService: EmailService;
-  public platformBillingService: PlatformBillingService;
   public serviceFailureService: ServiceFailureService;
   public serviceFailureReasonCodeService: ServiceFailureReasonCodeService;
 
@@ -278,7 +276,6 @@ class APIService {
     this.weatherRadarService = new WeatherRadarService();
     this.ediService = new EDIService();
     this.emailService = new EmailService();
-    this.platformBillingService = new PlatformBillingService();
     this.serviceFailureService = new ServiceFailureService();
     this.serviceFailureReasonCodeService = new ServiceFailureReasonCodeService();
   }

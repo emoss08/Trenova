@@ -2,7 +2,9 @@ package i18n
 
 import (
 	"embed"
+	"errors"
 	"fmt"
+	"io/fs"
 	"path"
 	"sync"
 
@@ -12,32 +14,89 @@ import (
 //go:embed catalogs/*.json
 var catalogFS embed.FS
 
-var (
-	catalogsOnce sync.Once
-	catalogs     map[Locale]map[string]string
-	catalogErr   error
+var ErrCatalogsLoaded = errors.New(
+	"i18n: catalogs are already loaded; register edition catalogs from init",
 )
 
+var (
+	catalogsOnce   sync.Once
+	catalogs       map[Locale]map[string]string
+	catalogErr     error
+	editionMu      sync.Mutex
+	editionSources []fs.FS
+	catalogsLoaded bool
+)
+
+func RegisterCatalogFS(fsys fs.FS) error {
+	if fsys == nil {
+		return errors.New("i18n: edition catalog filesystem is nil")
+	}
+
+	editionMu.Lock()
+	defer editionMu.Unlock()
+
+	if catalogsLoaded {
+		return ErrCatalogsLoaded
+	}
+	editionSources = append(editionSources, fsys)
+	return nil
+}
+
 func loadCatalogs() {
-	catalogs = make(map[Locale]map[string]string, len(supported))
+	editionMu.Lock()
+	catalogsLoaded = true
+	sources := append([]fs.FS(nil), editionSources...)
+	editionMu.Unlock()
+
+	loaded, err := readCatalogs(catalogFS, "catalogs", sources)
+	catalogs = loaded
+	catalogErr = err
+}
+
+func readCatalogs(
+	base fs.FS,
+	baseDir string,
+	editions []fs.FS,
+) (map[Locale]map[string]string, error) {
+	loaded := make(map[Locale]map[string]string, len(supported))
 
 	for _, locale := range supported {
-		name := path.Join("catalogs", string(locale)+".json")
-
-		raw, err := catalogFS.ReadFile(name)
+		messages, err := readCatalog(base, path.Join(baseDir, string(locale)+".json"))
 		if err != nil {
-			catalogErr = fmt.Errorf("i18n: reading %s: %w", name, err)
-			return
+			return loaded, err
 		}
 
-		messages := make(map[string]string)
-		if err = sonic.Unmarshal(raw, &messages); err != nil {
-			catalogErr = fmt.Errorf("i18n: parsing %s: %w", name, err)
-			return
+		for _, edition := range editions {
+			extra, editionErr := readCatalog(edition, string(locale)+".json")
+			if errors.Is(editionErr, fs.ErrNotExist) {
+				continue
+			}
+			if editionErr != nil {
+				return loaded, editionErr
+			}
+			for key, value := range extra {
+				messages[key] = value
+			}
 		}
 
-		catalogs[locale] = messages
+		loaded[locale] = messages
 	}
+
+	return loaded, nil
+}
+
+func readCatalog(fsys fs.FS, name string) (map[string]string, error) {
+	raw, err := fs.ReadFile(fsys, name)
+	if err != nil {
+		return nil, fmt.Errorf("i18n: reading %s: %w", name, err)
+	}
+
+	messages := make(map[string]string)
+	if err = sonic.Unmarshal(raw, &messages); err != nil {
+		return nil, fmt.Errorf("i18n: parsing %s: %w", name, err)
+	}
+
+	return messages, nil
 }
 
 func catalog(locale Locale) map[string]string {

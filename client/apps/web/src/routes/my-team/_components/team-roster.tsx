@@ -19,7 +19,11 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { approvalScopeLabel } from "@trenova/shared/lib/org-structure";
 import { formatTenure } from "@trenova/shared/lib/tenure";
 import { cn } from "@trenova/shared/lib/utils";
-import { AlertTriangleIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ChevronRightIcon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { useId, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { HealthTrio, MemberIdentity, memberHref } from "./member-identity";
@@ -34,7 +38,6 @@ type TeamRosterProps = {
 };
 
 const PATH_ORDER: TeamPath[] = ["direct", "terminal", "covering"];
-
 
 export function TeamRoster({
   rows,
@@ -96,7 +99,7 @@ export function TeamRoster({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("Find someone by name, title or terminal")}
             aria-label={t("Find someone")}
-            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
             inputContainerClassName="w-72 max-w-full"
           />
           <Button
@@ -231,13 +234,10 @@ function RosterGroup({
 }
 
 function MemberList({ rows, now }: { rows: ClassifiedMember[]; now: number }) {
-
   return (
     <ul className="bg-card divide-y overflow-hidden rounded-lg border">
       {rows.map((row) => (
-        <li
-          key={row.member.workerId}
-        >
+        <li key={row.member.workerId}>
           <MemberRow row={row} now={now} />
         </li>
       ))}

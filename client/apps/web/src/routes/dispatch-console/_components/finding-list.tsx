@@ -1,26 +1,26 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchFinding } from "@/lib/graphql/dispatch-console";
 import { cn } from "@trenova/shared/lib/utils";
-import { InfoIcon, OctagonXIcon, TriangleAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, InfoCircleIcon, XOctagonIcon } from "@trenova/shared/components/icons";
 
 const SEVERITY_RANK: Record<string, number> = { Block: 0, Warn: 1, Info: 2 };
 
 const SEVERITY_ROW: Record<
   string,
-  { Icon: typeof InfoIcon; iconClass: string; textClass: string }
+  { Icon: typeof InfoCircleIcon; iconClass: string; textClass: string }
 > = {
   Block: {
-    Icon: OctagonXIcon,
+    Icon: XOctagonIcon,
     iconClass: "text-danger-foreground",
     textClass: "text-foreground",
   },
   Warn: {
-    Icon: TriangleAlertIcon,
+    Icon: AlertTriangleIcon,
     iconClass: "text-warning-foreground",
     textClass: "text-foreground/80",
   },
   Info: {
-    Icon: InfoIcon,
+    Icon: InfoCircleIcon,
     iconClass: "text-muted-foreground",
     textClass: "text-muted-foreground",
   },

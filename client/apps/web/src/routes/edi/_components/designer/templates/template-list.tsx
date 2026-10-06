@@ -19,7 +19,7 @@ import {
 } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { PencilIcon } from "lucide-react";
+import { Edit02Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CreateTemplateForm } from "./create-template-form";
@@ -159,7 +159,7 @@ function TemplateListItem({
                 aria-label={`Edit ${template.name}`}
                 onClick={() => setIsEditDialogOpen(true)}
               >
-                <PencilIcon className="size-3.5" />
+                <Edit02Icon className="size-3.5" />
               </Button>
             }
           />

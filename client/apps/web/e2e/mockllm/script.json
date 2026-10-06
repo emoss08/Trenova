@@ -1,0 +1,79 @@
+{
+  "default": "I looked into it and nothing needs changing right now.",
+  "rules": [
+    {
+      "match": ["e2e-basic"],
+      "text": "Good morning. Four loads are still New and waiting on a driver, two are rolling on I-80 and should make their windows, and the rest delivered overnight without a hitch. The billing queue is quiet: three items need a quick look at their paperwork before they can go out, and none of them is past due. Nothing else on the board needs you before noon."
+    },
+    {
+      "match": ["e2e-artifact"],
+      "tools": [
+        {
+          "name": "find_tools",
+          "arguments": { "need": "look up a driver's profile and a shipment by id" },
+          "delay": 0.4
+        },
+        {
+          "name": "get_shipment",
+          "arguments": { "shipmentId": "shp_01M3Z03ZKBGEXN64ZVQ4QMARG1" },
+          "delay": 0.8
+        },
+        {
+          "name": "get_worker",
+          "arguments": { "workerId": "wrk_01M3Z03Z86B264TGB69Q6NCDG4" },
+          "delay": 0.8
+        }
+      ],
+      "text": "Here is John Smith: {ref}. He is free for the next load out of the terminal."
+    },
+    {
+      "match": ["e2e-approval"],
+      "tools": [
+        {
+          "name": "find_tools",
+          "arguments": { "need": "set a shipment move's status to in transit" },
+          "delay": 0.4
+        },
+        {
+          "name": "update_move_status",
+          "arguments": { "moveIds": ["sm_01M3Z03ZKBGEXN64ZVQ5SQ9WWX"], "status": "InTransit" },
+          "delay": 0.8
+        }
+      ],
+      "text": "SEED-SHP-002 has left the dock, so I drafted marking its move In Transit. It waits on your approval."
+    },
+    {
+      "match": ["e2e-email"],
+      "tools": [
+        {
+          "name": "find_tools",
+          "arguments": { "need": "email a customer asking for missing paperwork, and the email profiles to send from" },
+          "delay": 0.4
+        },
+        {
+          "name": "list_email_profiles",
+          "arguments": {},
+          "delay": 0.6
+        },
+        {
+          "name": "request_missing_docs",
+          "arguments": {
+            "profileId": "{{id:emlprof_}}",
+            "to": ["ap@acme.example"],
+            "subject": "Missing POD for SEED-SHP-001",
+            "body": "We are still missing the signed proof of delivery for SEED-SHP-001. Could you send it over so we can close out the invoice?",
+            "customerName": "Acme Manufacturing",
+            "shipmentProNumber": "SEED-SHP-001",
+            "requestedDocuments": ["Proof of delivery"]
+          },
+          "delay": 0.8
+        }
+      ],
+      "text": "I drafted a request to Acme for the missing proof of delivery on SEED-SHP-001. Read it over before it goes."
+    },
+    {
+      "match": ["e2e-stop"],
+      "text": "Here is the long version of today's board, lane by lane. Chicago to Columbus is running about an hour behind the storms on I-80, and the driver has already called the receiver to warn them. Des Moines to Omaha is two hours behind for the same reason, but its dock is open until seven, so it should still deliver today. Joliet to Indianapolis picks up first thing and has no driver yet; it is the one to cover before anything else. Dallas to Houston is loaded and rolling with plenty of time on its appointment. Atlanta to Charlotte delivered overnight and its paperwork is already in the billing queue. Memphis to Nashville is waiting on a trailer that should be released from the shop by mid morning. Kansas City to Denver is a team move and both drivers are rested and ready. Phoenix to Los Angeles is a reefer load holding thirty four degrees with no alarms. Seattle to Portland delivered early and the customer has asked for the same driver next week. Minneapolis to Milwaukee is still New and needs a driver and a tractor. Louisville to Cincinnati is booked for tomorrow, so nothing needs doing yet. Boston to Albany has a hold on it for a missing rate confirmation that the carrier says is on its way. Salt Lake City to Boise is rolling and the driver has eight hours left on the clock. El Paso to Albuquerque has a detention clock running at the shipper that is now past its free time. That covers every lane, and this last sentence should never arrive because the reply was stopped."
+    }
+  ]
+}

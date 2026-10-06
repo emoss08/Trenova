@@ -106,14 +106,14 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack -count=1 -run 'TestPromptSnapshots' \
+          go test -tags=nomsgpack -count=1 -run 'TestPromptSnapshots' \
             ./internal/core/domain/agentdefinition/
 
       - name: Tool catalog snapshot
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack -count=1 -run 'TestToolCatalogSnapshot' \
+          go test -tags=nomsgpack -count=1 -run 'TestToolCatalogSnapshot' \
             ./internal/core/services/agentevalgate/
 
       # The hybrid gates rank from evals/embeddings/nomic-embed-text.json and
@@ -125,7 +125,7 @@ jobs:
           TRENOVA_EVAL_REQUIRE_HYBRID: ${{ vars.TRENOVA_EVAL_REQUIRE_HYBRID || 'false' }}
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack -count=1 -v \
+          go test -tags=nomsgpack -count=1 -v \
             -run 'AgainstFloors|TestParaphrasesShareNoWordWithTheirTool|EmbeddingFixture' \
             ./internal/core/services/agentevalgate/
 
@@ -133,7 +133,7 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack -count=1 \
+          go test -tags=nomsgpack -count=1 \
             -run 'TestArgumentCases|TestDeclaredArguments|TestAliasedArguments' \
             ./internal/core/services/agentruntime/
 
@@ -141,7 +141,7 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack -count=1 -v ./internal/core/services/agentredteam/ \
+          go test -tags=nomsgpack -count=1 -v ./internal/core/services/agentredteam/ \
             | tee "$RUNNER_TEMP/redteam.log"
           {
             echo "## Red-team known gaps"
@@ -167,7 +167,7 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack -count=1 \
+          go test -tags=nomsgpack -count=1 \
             ./internal/core/services/agenttoolpolicy/... \
             ./internal/core/services/agenttoolcatalog/... \
             ./internal/core/services/agentguard/... \
@@ -218,7 +218,7 @@ jobs:
           UPDATE_BASELINE: ${{ inputs.update-baseline && '-update-baseline' || '' }}
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack,liveeval -count=1 -v -timeout 30m \
+          go test -tags=nomsgpack,liveeval -count=1 -v -timeout 30m \
             -run 'TestLiveRedTeam' ./internal/core/services/agentredteam/ \
             -args $RECORD $UPDATE_BASELINE
 

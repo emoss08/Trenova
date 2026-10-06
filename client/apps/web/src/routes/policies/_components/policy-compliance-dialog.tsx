@@ -22,7 +22,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import { compliancePercent } from "@trenova/shared/lib/self-service";
 import { initials } from "@trenova/shared/lib/utils";
-import { CheckIcon, FileSignatureIcon, SearchIcon, UsersIcon } from "lucide-react";
+import {
+  CheckIcon,
+  FileEditIcon,
+  SearchLgIcon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type Scope = "outstanding" | "signed" | "all";
@@ -76,7 +81,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
       <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <FileSignatureIcon className="text-muted-foreground size-4" />
+            <FileEditIcon className="text-muted-foreground size-4" />
             {policy?.title ?? t("Policy")}
           </SheetTitle>
           <SheetDescription>
@@ -126,7 +131,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                 aria-label={t("Who to show")}
               />
               <div className="relative">
-                <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
+                <SearchLgIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
@@ -154,7 +159,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                     ? "Everybody this policy applies to has signed the version in force."
                     : "Try another view or a different name."
                 }
-                icons={[UsersIcon, FileSignatureIcon, CheckIcon]}
+                icons={[Users01Icon, FileEditIcon, CheckIcon]}
               />
             ) : (
               <ul className="divide-border flex min-h-0 flex-col divide-y overflow-y-auto">

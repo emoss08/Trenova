@@ -26,10 +26,10 @@ import {
   AlertTriangleIcon,
   CheckIcon,
   ChevronRightIcon,
-  CopyIcon,
-  InfoIcon,
-  LinkIcon,
-} from "lucide-react";
+  Copy01Icon,
+  InfoCircleIcon,
+  Link01Icon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -64,7 +64,7 @@ function CopyableInput({ value, label }: { value: string; label: string }) {
             onClick={() => copy(value, { timeout: 3000, withToast: true })}
             className="text-muted-foreground hover:bg-accent hover:text-foreground flex size-7 items-center justify-center rounded-md transition-colors"
           >
-            {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
+            {isCopied ? <CheckIcon className="size-3.5" /> : <Copy01Icon className="size-3.5" />}
           </button>
         }
       />
@@ -191,7 +191,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
               <Form onSubmit={handleSubmit((values) => mutation.mutate(values))}>
                 <div className="flex flex-col gap-6">
                   <Alert variant="info">
-                    <InfoIcon />
+                    <InfoCircleIcon />
                     <AlertDescription>
                       <p>
                         {t("To configure SSO, create an OIDC application in the")}{" "}
@@ -263,12 +263,10 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                       <FormSection
                         className="gap-3"
                         title={t("Service provider")}
-                        description={t(
-                          "Copy this value into your Okta application configuration.",
-                        )}
+                        description={t("Copy this value into your Okta application configuration.")}
                       >
                         <Alert variant="info">
-                          <LinkIcon />
+                          <Link01Icon />
                           <AlertDescription>
                             {t(
                               "Add this redirect URL to your Okta app under Sign-in redirect URIs.",

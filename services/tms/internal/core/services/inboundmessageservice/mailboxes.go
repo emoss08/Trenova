@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -26,6 +27,9 @@ import (
 // delivery is genuine, so it has to be one nobody can guess.
 const minPostmarkPasswordLength = 16
 
+// resendAPIKeyPrefix is how every Resend API key begins.
+const resendAPIKeyPrefix = "re_"
+
 // MailboxSettings is everything about a mailbox a person configures. The token
 // and the signing secret are not settings: the token is minted, never chosen,
 // and the secret is set on its own so it is never echoed back in a form.
@@ -45,6 +49,10 @@ type CreateMailboxRequest struct {
 	// SigningSecret is optional at creation: a mailbox without one refuses
 	// every delivery until it is set, which is the safe way to be half done.
 	SigningSecret string
+	// ProviderAPIKey is optional at creation too. A Resend mailbox without one
+	// accepts mail but cannot read its body or attachments, and sends each
+	// message to review saying so.
+	ProviderAPIKey string
 }
 
 type UpdateMailboxRequest struct {
@@ -63,6 +71,12 @@ type SetMailboxSecretRequest struct {
 	Actor  *services.RequestActor
 	ID     pulid.ID
 	Secret string
+}
+
+type SetMailboxAPIKeyRequest struct {
+	Actor  *services.RequestActor
+	ID     pulid.ID
+	APIKey string
 }
 
 // MailboxCredentials is a mailbox with its webhook token, returned only when
@@ -125,6 +139,39 @@ func (s *Service) sealSecret(provider inboundmessage.Provider, secret string) (s
 	return sealed, nil
 }
 
+// validateAPIKey checks a key is one the provider issues. Only a provider whose
+// webhook leaves the content out has any use for one; storing a key on a
+// Postmark mailbox would be keeping a credential nothing reads.
+func validateAPIKey(provider inboundmessage.Provider, apiKey string) error {
+	if !provider.FetchesContent() {
+		return errortypes.NewValidationError("apiKey", errortypes.ErrInvalid,
+			"A {0} mailbox receives whole messages and needs no API key", string(provider))
+	}
+
+	if !strings.HasPrefix(apiKey, resendAPIKeyPrefix) ||
+		len(apiKey) <= len(resendAPIKeyPrefix) ||
+		strings.ContainsFunc(apiKey, unicode.IsSpace) {
+		return errortypes.NewValidationError("apiKey", errortypes.ErrInvalid,
+			"A Resend API key starts with re_, as Resend shows it")
+	}
+
+	return nil
+}
+
+func (s *Service) sealAPIKey(provider inboundmessage.Provider, apiKey string) (string, error) {
+	apiKey = strings.TrimSpace(apiKey)
+	if err := validateAPIKey(provider, apiKey); err != nil {
+		return "", err
+	}
+
+	sealed, err := s.encryption.EncryptString(apiKey)
+	if err != nil {
+		return "", fmt.Errorf("seal the API key: %w", err)
+	}
+
+	return sealed, nil
+}
+
 func validateMailbox(mailbox *inboundmessage.Mailbox) error {
 	multiErr := errortypes.NewMultiError()
 	mailbox.Validate(multiErr)
@@ -182,6 +229,14 @@ func (s *Service) CreateMailbox(
 		mailbox.SigningSecret = sealed
 	}
 
+	if strings.TrimSpace(req.ProviderAPIKey) != "" {
+		sealed, err := s.sealAPIKey(mailbox.Provider, req.ProviderAPIKey)
+		if err != nil {
+			return nil, err
+		}
+		mailbox.ProviderAPIKey = sealed
+	}
+
 	token, tokenHash, err := tokenutils.New()
 	if err != nil {
 		return nil, err
@@ -199,7 +254,7 @@ func (s *Service) CreateMailbox(
 }
 
 // UpdateMailbox changes a mailbox's settings. Changing its provider clears the
-// signing secret, because the old one belongs to the other provider's scheme;
+// signing secret and the API key, because both belong to the other provider;
 // the mailbox refuses deliveries until the new provider's secret is set,
 // rather than verifying the new provider's mail against the old one's secret.
 func (s *Service) UpdateMailbox(
@@ -217,6 +272,7 @@ func (s *Service) UpdateMailbox(
 	mailbox.Version = req.Version
 	if mailbox.Provider != original.Provider {
 		mailbox.SigningSecret = ""
+		mailbox.ProviderAPIKey = ""
 	}
 
 	if err = validateMailbox(&mailbox); err != nil {
@@ -298,8 +354,37 @@ func (s *Service) SetMailboxSigningSecret(
 	return updated, nil
 }
 
-// auditMailbox records a configuration change. The token hash and the sealed
-// secret are not serialised with the mailbox, so neither reaches the log.
+// SetMailboxAPIKey seals and stores the key the mailbox reads message content
+// with. Like the signing secret it is never returned.
+func (s *Service) SetMailboxAPIKey(
+	ctx context.Context,
+	req SetMailboxAPIKeyRequest,
+) (*inboundmessage.Mailbox, error) {
+	original, err := s.getMailbox(ctx, req.ID, req.Actor.TenantInfo())
+	if err != nil {
+		return nil, err
+	}
+
+	sealed, err := s.sealAPIKey(original.Provider, req.APIKey)
+	if err != nil {
+		return nil, err
+	}
+
+	mailbox := *original
+	mailbox.ProviderAPIKey = sealed
+
+	updated, err := s.mailboxRepo.Update(ctx, &mailbox)
+	if err != nil {
+		return nil, err
+	}
+
+	s.auditMailbox(req.Actor, permission.OpUpdate, original, updated, "Mailbox API key set")
+
+	return updated, nil
+}
+
+// auditMailbox records a configuration change. The token hash, the sealed
+// secret and the sealed API key are not serialised with the mailbox, so neither reaches the log.
 func (s *Service) auditMailbox(
 	actor *services.RequestActor,
 	op permission.Operation,

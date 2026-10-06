@@ -23,7 +23,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { formatUnixDateMedium, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { CheckCircle2Icon, LinkIcon, SearchIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  Link01Icon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { parseAsString, useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -160,7 +165,7 @@ export function BankReceiptPage() {
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
               placeholder={t("Search reference, memo...")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
             <Select
@@ -347,7 +352,7 @@ function ReceiptDetail({
           {receipt.status === "Exception" && receipt.exceptionReason ? (
             <div className="rounded-lg border border-danger-border bg-danger-subtle/50 p-3 dark:border-danger-border/50 dark:bg-danger-subtle/20">
               <div className="flex items-center gap-1.5">
-                <TriangleAlertIcon className="size-3.5 text-danger-foreground" />
+                <AlertTriangleIcon className="size-3.5 text-danger-foreground" />
                 <SectionLabel>{t("Exception reason")}</SectionLabel>
               </div>
               <p className="mt-1.5 text-xs text-danger-foreground">{receipt.exceptionReason}</p>
@@ -357,7 +362,7 @@ function ReceiptDetail({
           {receipt.status === "Matched" ? (
             <div className="rounded-lg border border-success-border bg-success-subtle/50 p-3 dark:border-success-border/50 dark:bg-success-subtle/20">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2Icon className="size-3.5 text-success-foreground" />
+                <CheckCircleIcon className="size-3.5 text-success-foreground" />
                 <SectionLabel>{t("Matched payment")}</SectionLabel>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
@@ -381,7 +386,7 @@ function ReceiptDetail({
             <div className="bg-card rounded-lg border p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <LinkIcon className="text-muted-foreground size-3.5" />
+                  <Link01Icon className="text-muted-foreground size-3.5" />
                   <SectionLabel>{t("Match suggestions")}</SectionLabel>
                 </div>
                 {suggestionsQuery.data ? (

@@ -5,7 +5,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
-import { History, Pencil, Plus } from "lucide-react";
+import { ClockRewindIcon, Edit02Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { FuelIndicesEmpty } from "./fuel-management-empty";
 import { IndexPanel } from "./index-panel";
@@ -38,7 +38,7 @@ export default function IndexSection() {
           )}
         </p>
         <Button type="button" size="sm" onClick={openCreate} className="gap-1.5">
-          <Plus className="size-3.5" />
+          <PlusIcon className="size-3.5" />
           {t("New custom index")}
         </Button>
       </div>
@@ -114,7 +114,7 @@ export default function IndexSection() {
                         className="text-muted-foreground hover:text-foreground size-7 gap-1 p-0"
                         title={t("Price history")}
                       >
-                        <History className="size-3.5" />
+                        <ClockRewindIcon className="size-3.5" />
                       </Button>
                       {entry.index.source === "Custom" && (
                         <Button
@@ -125,7 +125,7 @@ export default function IndexSection() {
                           className="text-muted-foreground hover:text-foreground size-7 p-0"
                           title={t("Edit index")}
                         >
-                          <Pencil className="size-3.5" />
+                          <Edit02Icon className="size-3.5" />
                         </Button>
                       )}
                     </div>

@@ -14,7 +14,12 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { CommentsTabSkeleton } from "@/routes/shipment/_components/comments/comments-skeleton";
 import type { ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, ChevronDownIcon, RefreshCwIcon, TimerIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ChevronDownIcon,
+  ClockStopwatchIcon,
+  RefreshCw02Icon,
+} from "@trenova/shared/components/icons";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
@@ -254,7 +259,7 @@ function AdjustmentOriginBanner({
         className="flex w-full items-center gap-2.5 px-3 py-2 text-left"
         onClick={() => setExpanded((prev) => !prev)}
       >
-        <RefreshCwIcon className="size-3.5 shrink-0 text-info-foreground" />
+        <RefreshCw02Icon className="size-3.5 shrink-0 text-info-foreground" />
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="text-xs font-medium text-info-foreground">
             {t("Adjustment-origin rebill")}
@@ -358,7 +363,7 @@ function ReviewTimer({ startedAt }: { startedAt: number }) {
 
   return (
     <span className="text-muted-foreground inline-flex items-center gap-1 tabular-nums">
-      <TimerIcon className="size-3" />
+      <ClockStopwatchIcon className="size-3" />
       {pad(hours)}:{pad(minutes)}:{pad(seconds)}
     </span>
   );

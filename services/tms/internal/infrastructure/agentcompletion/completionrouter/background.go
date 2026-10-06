@@ -33,6 +33,10 @@ func (s *Service) SubmitBackground(
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
+	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	run := structuredRun(req)
 
 	usable, err := s.candidatesFor(ctx, run)
@@ -223,6 +227,7 @@ func (s *Service) recordBackground(
 			CacheWriteTokens: result.Response.CacheWriteTokens,
 			FinishReason:     finishReason(result.Response),
 			Truncated:        result.Response.Truncated,
+			ThinkingDropped:  result.Response.ThinkingDropped,
 		}
 	}
 	if result.State == modeladapter.BackgroundFailed {

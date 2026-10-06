@@ -223,6 +223,9 @@ func (s *Service) TestConnection(
 	if !spec.SupportsTestConnect {
 		return nil, errortypes.NewBusinessError("{0} cannot be tested", def.Name)
 	}
+	if err = s.requireWebSearch(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
 
 	runtime, err := s.runtime(ctx, tenantInfo, typ, false)
 	if err != nil {

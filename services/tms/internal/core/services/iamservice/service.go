@@ -9,9 +9,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/slugutil"
@@ -34,6 +36,7 @@ type Params struct {
 	Validator   *Validator
 	Auditor     services.SecurityAuditor
 	Logger      *zap.Logger
+	Plans       services.PlanService `optional:"true"`
 }
 
 type service struct {
@@ -43,6 +46,7 @@ type service struct {
 	validator   *Validator
 	auditor     services.SecurityAuditor
 	l           *zap.Logger
+	plans       services.PlanService
 }
 
 func New(p Params) services.IAMService {
@@ -53,7 +57,12 @@ func New(p Params) services.IAMService {
 		validator:   p.Validator,
 		auditor:     p.Auditor,
 		l:           p.Logger.Named("service.iam"),
+		plans:       p.Plans,
 	}
+}
+
+func (s *service) requireSSO(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	return planservice.RequireCapability(ctx, s.plans, tenantInfo, platformplan.CapabilitySSO)
 }
 
 func (s *service) ListIdentityProviders(
@@ -68,6 +77,9 @@ func (s *service) CreateIdentityProvider(
 	tenantInfo pagination.TenantInfo,
 	req *services.IdentityProviderRequest,
 ) (*iam.IdentityProvider, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
 	entity, err := s.identityProviderFromRequest(tenantInfo, req, nil)
 	if err != nil {
 		return nil, err
@@ -95,6 +107,9 @@ func (s *service) UpdateIdentityProvider(
 	id pulid.ID,
 	req *services.IdentityProviderRequest,
 ) (*iam.IdentityProvider, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
 	existing, err := s.repo.GetIdentityProvider(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
@@ -301,6 +316,9 @@ func (s *service) CreateSCIMDirectory(
 	tenantInfo pagination.TenantInfo,
 	entity *iam.SCIMDirectory,
 ) (*iam.SCIMDirectory, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.TenantSlug = strings.TrimSpace(entity.TenantSlug)
@@ -522,6 +540,9 @@ func (s *service) CreateSCIMGroupRoleMapping(
 	directoryID pulid.ID,
 	entity *iam.SCIMGroupRoleMapping,
 ) (*iam.SCIMGroupRoleMapping, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.DirectoryID = directoryID

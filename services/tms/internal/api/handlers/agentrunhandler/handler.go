@@ -1,6 +1,7 @@
 package agentrunhandler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -20,21 +21,24 @@ type Params struct {
 	fx.In
 
 	Service              serviceports.AgentRunService
+	Transcripts          serviceports.AgentRunTranscriptService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service serviceports.AgentRunService
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service     serviceports.AgentRunService
+	transcripts serviceports.AgentRunTranscriptService
+	eh          *helpers.ErrorHandler
+	pm          *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:     p.Service,
+		transcripts: p.Transcripts,
+		eh:          p.ErrorHandler,
+		pm:          p.PermissionMiddleware,
 	}
 }
 
@@ -60,6 +64,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:runID/",
 		h.pm.RequirePermission(permission.ResourceAgentRun.String(), permission.OpRead),
 		h.get,
+	)
+	api.GET(
+		"/:runID/transcript/",
+		h.pm.RequirePermission(permission.ResourceAgentRun.String(), permission.OpRead),
+		h.downloadTranscript,
 	)
 }
 
@@ -100,28 +109,53 @@ func (h *Handler) start(c *gin.Context) {
 	c.JSON(http.StatusAccepted, run)
 }
 
-func (h *Handler) get(c *gin.Context) {
+func runRequest(c *gin.Context) (repositories.GetAgentRunByIDRequest, error) {
+	runID, err := pulid.Parse(c.Param("runID"))
+	if err != nil {
+		return repositories.GetAgentRunByIDRequest{}, err
+	}
+
 	authCtx := authctx.GetAuthContext(c)
 
-	runID, err := pulid.Parse(c.Param("runID"))
+	return repositories.GetAgentRunByIDRequest{
+		ID: runID,
+		TenantInfo: &pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	}, nil
+}
+
+func (h *Handler) get(c *gin.Context) {
+	req, err := runRequest(c)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	tenantInfo := pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
-	}
-
-	run, err := h.service.GetByID(c.Request.Context(), repositories.GetAgentRunByIDRequest{
-		ID:         runID,
-		TenantInfo: &tenantInfo,
-	})
+	run, err := h.service.GetByID(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, run)
+}
+
+func (h *Handler) downloadTranscript(c *gin.Context) {
+	req, err := runRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	transcript, err := h.transcripts.RunTranscript(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", transcript.FileName))
+	c.Header("Cache-Control", "no-store")
+	c.Data(http.StatusOK, "text/markdown; charset=utf-8", []byte(transcript.Body))
 }

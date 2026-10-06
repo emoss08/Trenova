@@ -12,19 +12,19 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  CircleCheckIcon,
-  CircleHelpIcon,
-  CircleXIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  HelpCircleIcon,
+  type IconComponent,
   SearchXIcon,
-  TriangleAlertIcon,
-  type LucideIcon,
-} from "lucide-react";
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type ResultMeta = {
   label: string;
   description: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   iconClassName: string;
 };
 
@@ -37,13 +37,13 @@ export function useEquipmentVerificationLabels() {
         Match: {
           label: t("Match"),
           description: t("The equipment is registered to this carrier."),
-          icon: CircleCheckIcon,
+          icon: CheckCircleIcon,
           iconClassName: "text-success-foreground",
         },
         Mismatch: {
           label: t("Mismatch"),
           description: t("The equipment is registered to a different carrier."),
-          icon: CircleXIcon,
+          icon: XCircleIcon,
           iconClassName: "text-danger-foreground",
         },
         NotFound: {
@@ -55,13 +55,13 @@ export function useEquipmentVerificationLabels() {
         Unverifiable: {
           label: t("Unverifiable"),
           description: t("The equipment could not be checked against a registration."),
-          icon: CircleHelpIcon,
+          icon: HelpCircleIcon,
           iconClassName: "text-muted-foreground",
         },
         ProviderError: {
           label: t("Provider error"),
           description: t("The provider failed to answer. Try again shortly."),
-          icon: TriangleAlertIcon,
+          icon: AlertTriangleIcon,
           iconClassName: "text-warning-foreground",
         },
       } satisfies Record<CarrierEquipmentVerificationResult, ResultMeta>,

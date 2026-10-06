@@ -32,18 +32,18 @@ import type {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,
-  Building2Icon,
+  Building07Icon,
   CheckIcon,
-  EllipsisVerticalIcon,
-  PencilIcon,
+  DotsVerticalIcon,
+  Edit02Icon,
   PlusIcon,
-  ScissorsIcon,
-  TrashIcon,
-  TruckIcon,
-  UserIcon,
-  UserXIcon,
-  XIcon,
-} from "lucide-react";
+  Scissors01Icon,
+  Trash01Icon,
+  Truck01Icon,
+  User01Icon,
+  UserX01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { createElement, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -203,7 +203,7 @@ export function MoveCard({
           <DropdownMenuTrigger
             render={
               <Button type="button" variant="ghost" size="icon" className="size-7">
-                <EllipsisVerticalIcon className="text-muted-foreground size-3.5" />
+                <DotsVerticalIcon className="text-muted-foreground size-3.5" />
               </Button>
             }
           />
@@ -212,7 +212,7 @@ export function MoveCard({
               <DropdownMenuItem
                 label={hasAssignment ? "Reassign" : "Assign"}
                 title={hasAssignment ? "Reassign" : "Assign"}
-                startContent={<UserIcon className="size-3.5" />}
+                startContent={<User01Icon className="size-3.5" />}
                 onClick={() => setAssignmentOpen(true)}
               />
             ) : (
@@ -220,7 +220,7 @@ export function MoveCard({
                 <TooltipTrigger
                   render={
                     <div className="text-muted-foreground flex cursor-not-allowed items-center px-1.5 py-1 text-sm">
-                      <UserIcon className="mr-2 size-3.5" />
+                      <User01Icon className="mr-2 size-3.5" />
                       {hasAssignment ? t("Reassign") : t("Assign")}
                     </div>
                   }
@@ -237,7 +237,7 @@ export function MoveCard({
                 label={t("Unassign")}
                 title={t("Unassign")}
                 color="danger"
-                startContent={<UserXIcon className="size-3.5" />}
+                startContent={<UserX01Icon className="size-3.5" />}
                 onClick={() => unassignMutation.mutate()}
               />
             )}
@@ -246,7 +246,7 @@ export function MoveCard({
                 label={t("Cancel carrier assignment")}
                 title={t("Cancel carrier assignment")}
                 color="danger"
-                startContent={<Building2Icon className="size-3.5" />}
+                startContent={<Building07Icon className="size-3.5" />}
                 onClick={() => setCancelCarrierOpen(true)}
               />
             )}
@@ -254,7 +254,7 @@ export function MoveCard({
               <DropdownMenuItem
                 label={t("Split")}
                 title={t("Split")}
-                startContent={<ScissorsIcon className="size-3.5" />}
+                startContent={<Scissors01Icon className="size-3.5" />}
                 onClick={() => setSplitOpen(true)}
               />
             )}
@@ -262,19 +262,19 @@ export function MoveCard({
               <DropdownMenuItem
                 label={t("Recalculate distance")}
                 title={t("Recalculate distance")}
-                startContent={<TruckIcon className="size-3.5" />}
+                startContent={<Truck01Icon className="size-3.5" />}
                 onClick={() => recalculateDistanceMutation.mutateAsync()}
               />
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              startContent={<PencilIcon className="size-3.5" />}
+              startContent={<Edit02Icon className="size-3.5" />}
               title={t("Edit")}
               label={t("Edit")}
               onClick={onEdit}
             />
             <DropdownMenuItem
-              startContent={<TrashIcon className="size-3.5" />}
+              startContent={<Trash01Icon className="size-3.5" />}
               title={t("Delete")}
               label={t("Delete")}
               description={
@@ -456,11 +456,11 @@ function getStatusIcon(status: StopStatus, isLast: boolean, moveStatus: MoveStat
     case "New":
       return PlusIcon;
     case "InTransit":
-      return TruckIcon;
+      return Truck01Icon;
     case "Completed":
       return ArrowDownIcon;
     case "Canceled":
-      return XIcon;
+      return XCloseIcon;
   }
 }
 
@@ -713,7 +713,7 @@ function CarrierAssignmentDetails({
     <div className="bg-muted rounded-b-md border-t p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+          <Building07Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
           <span className="truncate text-xs font-medium">
             {carrierName}
             {scac ? ` (${scac})` : ""}

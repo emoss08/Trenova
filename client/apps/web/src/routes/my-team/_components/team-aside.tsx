@@ -8,11 +8,11 @@ import { approvalScopeLabel, headcountShare } from "@trenova/shared/lib/org-stru
 import { cn } from "@trenova/shared/lib/utils";
 import {
   ArrowUpRightIcon,
-  AwardIcon,
-  Building2Icon,
-  CalendarDaysIcon,
+  Award01Icon,
+  Building07Icon,
+  CalendarDateIcon,
   HandshakeIcon,
-} from "lucide-react";
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { MemberAvatar, memberHref } from "./member-identity";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -28,7 +28,7 @@ export function ByTerminalPanel({ groups, total }: ByTerminalProps) {
   return (
     <SectionPanel
       title={t("By terminal")}
-      icon={<Building2Icon />}
+      icon={<Building07Icon />}
       help={t(
         "The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.",
       )}
@@ -88,7 +88,7 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
   return (
     <SectionPanel
       title={t("Coming up")}
-      icon={<CalendarDaysIcon />}
+      icon={<CalendarDateIcon />}
       help={t(
         "Work anniversaries and recent starters inside the window. Only whole years count, and only for people still here.",
       )}
@@ -109,7 +109,7 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
                   <span className="truncate text-xs font-medium">{item.member.name}</span>
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
-                    <AwardIcon className="size-3" aria-hidden />
+                    <Award01Icon className="size-3" aria-hidden />
                     {t(
                       "{0} {1} on {2}",
                       item.years,

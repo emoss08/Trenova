@@ -3,8 +3,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { TriangleAlertIcon, XIcon } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  type IconComponent,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 
 function DeskNotice({
@@ -13,7 +16,7 @@ function DeskNotice({
   body,
   action,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   body: string;
   action?: ReactNode;
@@ -59,7 +62,7 @@ export function DeskError({ onRetry }: { onRetry: () => void }) {
 
   return (
     <DeskNotice
-      icon={TriangleAlertIcon}
+      icon={AlertTriangleIcon}
       title={t("The detention desk could not be loaded")}
       body={t(
         "The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now.",
@@ -166,7 +169,7 @@ export function DeskNoMatches({ onReset, className }: { onReset: () => void; cla
       )}
       action={
         <Button variant="outline" size="sm" onClick={onReset}>
-          <XIcon className="size-3.5" />
+          <XCloseIcon className="size-3.5" />
           {t("Clear filters")}
         </Button>
       }

@@ -14,16 +14,16 @@ import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import {
+  AlertTriangleIcon,
   BoxesIcon,
+  Edit02Icon,
   FuelIcon,
-  LockIcon,
-  PencilIcon,
+  Lock01Icon,
   PlusIcon,
   ReceiptIcon,
-  TrashIcon,
-  TriangleAlertIcon,
-  TruckIcon,
-} from "lucide-react";
+  Trash01Icon,
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import {
@@ -277,7 +277,7 @@ export default function AdditionalChargesSection() {
                               }
                               className="text-2xs flex items-center gap-1 rounded-md bg-warning-subtle px-1 py-0.5 text-warning-foreground"
                             >
-                              <LockIcon className="size-2.5" />
+                              <Lock01Icon className="size-2.5" />
                               {t("Locked")}
                             </button>
                           </TooltipTrigger>
@@ -321,7 +321,7 @@ export default function AdditionalChargesSection() {
                             className="size-7"
                             onClick={() => handleEdit(index)}
                           >
-                            <PencilIcon className="text-muted-foreground size-3.5" />
+                            <Edit02Icon className="text-muted-foreground size-3.5" />
                           </Button>
                           <Button
                             type="button"
@@ -330,14 +330,14 @@ export default function AdditionalChargesSection() {
                             className="size-7"
                             onClick={() => remove(index)}
                           >
-                            <TrashIcon className="text-muted-foreground size-3.5" />
+                            <Trash01Icon className="text-muted-foreground size-3.5" />
                           </Button>
                         </>
                       )}
                       {hasErrors && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <TriangleAlertIcon className="text-destructive size-3.5 cursor-help" />
+                            <AlertTriangleIcon className="text-destructive size-3.5 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" sideOffset={10}>
                             <div className="space-y-1">
@@ -360,7 +360,7 @@ export default function AdditionalChargesSection() {
           <EmptyState
             title={t("No additional charges")}
             description={t("Shipment has no associated additional charges")}
-            icons={[ReceiptIcon, BoxesIcon, TruckIcon]}
+            icons={[ReceiptIcon, BoxesIcon, Truck01Icon]}
             className="border-bg-sidebar-border max-h-50 rounded-lg border p-4"
             action={{
               label: t("Add first charge"),

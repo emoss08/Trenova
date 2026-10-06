@@ -13,7 +13,12 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCreateReportView, useDeleteReportView, useReportViews } from "@/hooks/use-reports";
-import { BookmarkIcon, StarIcon, TrashIcon, XIcon } from "lucide-react";
+import {
+  BookmarkIcon,
+  Star01Icon,
+  Trash01Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -149,7 +154,7 @@ export function SavedViewField({
             <SelectValue placeholder={t("No saved view")}>
               {selected?.pinned ? (
                 <>
-                  <StarIcon className="size-3.5" aria-hidden />
+                  <Star01Icon className="size-3.5" aria-hidden />
                   {selected.name}
                 </>
               ) : undefined}
@@ -158,7 +163,7 @@ export function SavedViewField({
           <SelectContent>
             {choices.map((choice) => (
               <SelectItem key={choice.value} value={choice.value}>
-                {choice.pinned ? <StarIcon className="size-3.5" aria-hidden /> : null}
+                {choice.pinned ? <Star01Icon className="size-3.5" aria-hidden /> : null}
                 {t(choice.label)}
               </SelectItem>
             ))}
@@ -172,7 +177,7 @@ export function SavedViewField({
             disabled={deleteView.isPending}
             onClick={handleDelete}
           >
-            <TrashIcon className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         )}
         <Button
@@ -181,7 +186,7 @@ export function SavedViewField({
           aria-label={naming ? "Cancel saving view" : "Save current values as a view"}
           onClick={() => setNaming((prev) => !prev)}
         >
-          {naming ? <XIcon className="size-3.5" /> : <BookmarkIcon className="size-3.5" />}
+          {naming ? <XCloseIcon className="size-3.5" /> : <BookmarkIcon className="size-3.5" />}
         </Button>
       </div>
 

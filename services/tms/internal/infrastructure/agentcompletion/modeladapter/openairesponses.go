@@ -37,23 +37,31 @@ type responsesRequest struct {
 	Include    []string            `json:"include,omitempty"`
 	Background bool                `json:"background,omitempty"`
 	Store      bool                `json:"store,omitempty"`
+	// PromptCacheKey keeps requests that share a prefix on the machines that
+	// cached it. OpenAI's own platform takes it; it is never sent elsewhere.
+	PromptCacheKey string `json:"prompt_cache_key,omitempty"`
 }
 
 // responsesItem is both a message and a function call or its output: this
 // protocol carries tool traffic as input items rather than as message roles.
 type responsesReasoning struct {
 	Effort  string `json:"effort"`
-	Summary string `json:"summary"`
+	Summary string `json:"summary,omitempty"`
 }
 
 // applyReasoning asks for reasoning at the provider's effort, with a summary
-// to show and the encrypted chain to replay on the next call.
+// to show and the encrypted chain to replay on the next call. None asks the
+// model not to reason, so there is neither a summary nor a chain to ask for.
 func (r *responsesRequest) applyReasoning(call *Call) {
-	effort := call.reasoning().Wire()
-	if effort == "" {
+	effort := call.reasoning()
+	if effort.Disabled() {
+		r.Reasoning = &responsesReasoning{Effort: effort.Wire()}
 		return
 	}
-	r.Reasoning = &responsesReasoning{Effort: effort, Summary: "auto"}
+	if !effort.Enabled() {
+		return
+	}
+	r.Reasoning = &responsesReasoning{Effort: effort.Wire(), Summary: "auto"}
 	r.Include = []string{"reasoning.encrypted_content"}
 }
 
@@ -70,10 +78,12 @@ type responsesItem struct {
 
 	// reasoning. A function call is refused when replayed without the
 	// reasoning item that produced it, so the id and encrypted content go
-	// back ahead of the calls exactly as they came.
-	ID               string                 `json:"id,omitempty"`
-	Summary          []responsesSummaryPart `json:"summary,omitempty"`
-	EncryptedContent string                 `json:"encrypted_content,omitempty"`
+	// back ahead of the calls exactly as they came. Summary is a pointer
+	// because a reasoning item must always carry it, empty or not, while a
+	// message item must never carry it at all.
+	ID               string                  `json:"id,omitempty"`
+	Summary          *[]responsesSummaryPart `json:"summary,omitempty"`
+	EncryptedContent string                  `json:"encrypted_content,omitempty"`
 
 	// function_call
 	CallID    string `json:"call_id,omitempty"`
@@ -135,7 +145,8 @@ type responsesUsage struct {
 	} `json:"input_tokens_details"`
 }
 
-func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
+// baseRequest is what a blocking and a streamed call send alike.
+func (a openAIResponsesAdapter) baseRequest(call *Call) responsesRequest {
 	body := responsesRequest{
 		Model:           call.Provider.Model,
 		MaxOutputTokens: call.Request.MaxTokens,
@@ -144,6 +155,23 @@ func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
 	}
 	body.applyReasoning(call)
 	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)
+	if call.Provider.OnOpenAIPlatform() {
+		body.PromptCacheKey = call.Request.CacheKey
+	}
+
+	return body
+}
+
+// streamRequestFor is the body of a streamed call.
+func (a openAIResponsesAdapter) streamRequestFor(call *Call) responsesRequest {
+	body := a.baseRequest(call)
+	body.Stream = true
+
+	return body
+}
+
+func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
+	body := a.baseRequest(call)
 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
@@ -328,15 +356,7 @@ func (a openAIResponsesAdapter) Stream(
 	call *Call,
 	sink StreamSink,
 ) (*Response, error) {
-	body := responsesRequest{
-		Model:           call.Provider.Model,
-		MaxOutputTokens: call.Request.MaxTokens,
-		Input:           toResponsesInput(call.Request.System, call.Request.Messages),
-		Tools:           toResponsesTools(call.Request.Tools),
-		Stream:          true,
-	}
-	body.applyReasoning(call)
-	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)
+	body := a.streamRequestFor(call)
 
 	stream, err := postStream(
 		ctx,
@@ -453,7 +473,7 @@ func responsesReasoningOf(envelope *responsesEnvelope) *ReasoningTrace {
 			continue
 		}
 		found = true
-		for _, part := range item.Summary {
+		for _, part := range item.summaryParts() {
 			if text.Len() > 0 && part.Text != "" {
 				text.WriteString("\n\n")
 			}
@@ -483,8 +503,16 @@ func replayReasoning(trace *ReasoningTrace) []responsesItem {
 		Type:             "reasoning",
 		ID:               trace.Signature,
 		EncryptedContent: trace.Encrypted,
-		Summary:          []responsesSummaryPart{},
+		Summary:          &[]responsesSummaryPart{},
 	}}
+}
+
+func (i *responsesItem) summaryParts() []responsesSummaryPart {
+	if i.Summary == nil {
+		return nil
+	}
+
+	return *i.Summary
 }
 
 // responsesTruncated reads the Responses API's two ways of saying the output
@@ -527,7 +555,7 @@ func toResponsesInput(system string, messages []Message) []responsesItem {
 				})
 			}
 			for _, tc := range msg.ToolCalls {
-				encoded, err := sonic.Marshal(tc.Arguments)
+				encoded, err := requestJSON.Marshal(tc.Arguments)
 				if err != nil {
 					encoded = []byte("{}")
 				}

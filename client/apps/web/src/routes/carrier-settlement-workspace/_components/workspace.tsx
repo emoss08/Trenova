@@ -11,7 +11,7 @@ import {
   type CarrierSettlementRow,
 } from "@/lib/graphql/carrier-settlement";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw02Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -142,7 +142,7 @@ export default function Workspace() {
               onClick={refresh}
               aria-label={t("Refresh workspace data")}
             >
-              <RefreshCcw className="size-3.5" />
+              <RefreshCcw02Icon className="size-3.5" />
               {t("Refresh")}
             </Button>
             <Button

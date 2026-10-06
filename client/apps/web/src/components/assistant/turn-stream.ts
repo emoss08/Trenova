@@ -6,8 +6,11 @@ import type {
   AssistantStreamEvent,
   AssistantThread,
   DelegateReport,
+  FailedProvider,
   SendMessageResult,
   RetryKind,
+  SavedMemory,
+  StepRationale,
   ToolEffect,
   ToolVerdict,
 } from "@/types/assistant";
@@ -47,6 +50,8 @@ export type ToolSegment = {
   finishedAt?: number;
   /** Set on a delegate_task call: the other agent's work on the task, nested under it. */
   delegate?: DelegateProgress;
+  /** Why the agent took the step, when it said. */
+  why?: StepRationale | null;
 };
 
 export type TurnRetry = {
@@ -54,6 +59,8 @@ export type TurnRetry = {
   provider: string;
   kind: RetryKind;
   waitSeconds: number;
+  /** How many times the model is asked in all; 0 when the server did not say. */
+  maxAttempts: number;
 };
 
 /**
@@ -170,6 +177,7 @@ function startTool(segments: TurnSegment[], data: ToolStartedData): TurnSegment[
             name: data.name,
             arguments: data.arguments ?? segment.arguments,
             effect: data.effect ?? segment.effect,
+            why: data.why ?? segment.why,
           }
         : segment,
     );
@@ -184,6 +192,7 @@ function startTool(segments: TurnSegment[], data: ToolStartedData): TurnSegment[
       status: "running",
       content: "",
       effect: data.effect,
+      why: data.why,
     },
   ];
 }
@@ -272,6 +281,18 @@ function delegateScope(data: { delegateCallId?: string }): string {
   return data.delegateCallId ?? "";
 }
 
+/**
+ * A cap that stopped a question before it was asked: the agent's monthly
+ * budget, its daily run count, or the person's own monthly allowance.
+ */
+export type TurnLimit = {
+  kind: "monthly_budget" | "daily_runs" | "person_allowance";
+  used: string;
+  limit: string;
+  /** When the cap lifts, in epoch seconds; 0 when the server did not say. */
+  resetsAt: number;
+};
+
 export type TurnState = {
   status: TurnStatus;
   userContent: string;
@@ -280,11 +301,23 @@ export type TurnState = {
   refusal: { message: string; reason: string; category: string } | null;
   segments: TurnSegment[];
   error: string | null;
+  /** Set when the question was refused because a usage cap was reached. */
+  limit: TurnLimit | null;
+  /** The models asked, when every one of them failed. */
+  failedProviders: FailedProvider[];
+  /** The person stopped the reply themselves. */
+  stopped: boolean;
+  /** Seconds to wait before sending again, when the server said too many too fast. */
+  rateLimited: number | null;
   result: SendMessageResult | null;
   /** Set while the reply is starting over after a model died partway. */
   retrying: TurnRetry | null;
   /** What the turn has produced so far, as announced, so the pane can open it early. */
   artifacts: AssistantArtifactEvent[];
+  /** The memories the turn has used so far, in the order it used them. */
+  usedMemoryIds: string[];
+  /** What the turn kept through remember, or offered to keep. */
+  savedMemories: SavedMemory[];
   /** The files and records the person handed over, shown on their provisional turn. */
   attachments: AssistantMessageAttachment[];
   mentions: AssistantEntityRef[];
@@ -318,9 +351,15 @@ export function initialTurnState(
     refusal: null,
     segments: [],
     error: null,
+    limit: null,
+    failedProviders: [],
+    stopped: false,
+    rateLimited: null,
     result: null,
     retrying: null,
     artifacts: [],
+    usedMemoryIds: [],
+    savedMemories: [],
     attachments: context.attachments ?? [],
     mentions: context.mentions ?? [],
     followUp: context.followUp ?? false,
@@ -454,6 +493,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           provider: data.provider,
           kind: data.kind,
           waitSeconds: data.waitSeconds,
+          maxAttempts: data.maxAttempts ?? 0,
         },
         segments: data.kind === "busy" ? delegate.segments : withdrawAttempt(delegate.segments),
       }));
@@ -485,6 +525,7 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           provider: event.data.provider,
           kind: event.data.kind,
           waitSeconds: event.data.waitSeconds,
+          maxAttempts: event.data.maxAttempts ?? 0,
         },
         segments: event.data.kind === "busy" ? state.segments : withdrawAttempt(state.segments),
       };
@@ -496,6 +537,27 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           ? [...state.artifacts, event.data]
           : state.artifacts.map((artifact, index) => (index === known ? event.data : artifact));
       return { ...state, artifacts };
+    }
+
+    case "artifact_removed":
+      return {
+        ...state,
+        artifacts: state.artifacts.filter((artifact) => artifact.id !== event.data.id),
+      };
+
+    case "memory_used":
+      // Each event names every memory used so far, so the latest stands.
+      return { ...state, usedMemoryIds: event.data.ids };
+
+    case "memory_saved": {
+      const saved = event.data;
+      const known = state.savedMemories.some((memory) => memory.id === saved.id);
+      return {
+        ...state,
+        savedMemories: known
+          ? state.savedMemories.map((memory) => (memory.id === saved.id ? saved : memory))
+          : [...state.savedMemories, saved],
+      };
     }
 
     case "thread":
@@ -510,7 +572,13 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       return { ...state, status: "done", result: event.data };
 
     case "error":
-      return { ...state, status: "error", error: event.data.message };
+      return {
+        ...state,
+        status: "error",
+        error: event.data.message,
+        limit: event.data.limit ?? null,
+        failedProviders: event.data.providers ?? [],
+      };
 
     default:
       return state;

@@ -47,6 +47,8 @@ type recordBatch struct {
 	past        string
 	shared      []string
 	single      singleRecordTool
+	// needsPerson is the refusal a run from anything but a person's approval
+	// gets; nil when the single tool may run on its own, so the twin may too.
 	needsPerson error
 	unchanged   string
 	labels      recordLabels
@@ -289,7 +291,7 @@ func (b *recordBatch) Execute(
 	if err := guardExecute(tool, *params); err != nil {
 		return nil, err
 	}
-	if !params.ApprovedFromProposal() {
+	if b.needsPerson != nil && !params.ApprovedFromProposal() {
 		return nil, b.needsPerson
 	}
 
@@ -317,7 +319,32 @@ func (b *recordBatch) Execute(
 		Action: b.past,
 		Kind:   b.nouns,
 		Name:   outcome,
+		Total:  len(ids),
+		Failed: b.failedItems(ctx, params, failures),
 	}, nil
+}
+
+// failedItems is each record the write did not change, named and with its
+// reason, for the card that lists them.
+func (b *recordBatch) failedItems(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+	failures []batchFailure,
+) []agent.ExecutionItemFail {
+	if len(failures) == 0 {
+		return nil
+	}
+	names := b.failedLabels(ctx, params, failures)
+	out := make([]agent.ExecutionItemFail, 0, len(failures))
+	for _, failure := range failures {
+		out = append(out, agent.ExecutionItemFail{
+			ID:     failure.id.String(),
+			Label:  names[failure.id],
+			Reason: strings.TrimSpace(failure.cause.Error()),
+		})
+	}
+
+	return out
 }
 
 func (b *recordBatch) outcome(

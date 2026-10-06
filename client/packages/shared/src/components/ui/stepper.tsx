@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon } from "@trenova/shared/components/icons";
 import { m, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 

@@ -5,7 +5,7 @@ import { downloadJsonFile } from "@trenova/shared/lib/utils";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
-import { CopyIcon, DownloadIcon } from "lucide-react";
+import { Copy01Icon, Download01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import type { useEditorTheme } from "../../components/designer-shared";
 import type { InspectorContext } from "../inspector-context";
@@ -33,7 +33,7 @@ export default function PayloadTab({
           variant="outline"
           onClick={() => void copy(payloadJson, { withToast: true })}
         >
-          <CopyIcon className="size-4" />
+          <Copy01Icon className="size-4" />
           {t("Copy")}
         </Button>
         <Button
@@ -46,7 +46,7 @@ export default function PayloadTab({
             )
           }
         >
-          <DownloadIcon className="size-4" />
+          <Download01Icon className="size-4" />
           {t("Download")}
         </Button>
       </div>

@@ -10,7 +10,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
 import type { JournalReversalStatus } from "@/types/journal-reversal";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, SendIcon, XIcon } from "lucide-react";
+import { CheckIcon, Send01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -94,7 +94,7 @@ function CreateReversalPanel({
             {t("Cancel")}
           </Button>
           <Button type="submit" form="journal-reversal-create-form" disabled={isSubmitting}>
-            <SendIcon className="mr-1.5 size-3.5" />
+            <Send01Icon className="mr-1.5 size-3.5" />
             {isSubmitting ? t("Creating...") : t("Create reversal")}
           </Button>
         </>
@@ -236,14 +236,14 @@ function ReversalDetailPanel({
                     onClick={() => setShowRejectInput(true)}
                     disabled={showRejectInput}
                   >
-                    <XIcon className="mr-1.5 size-3.5" />
+                    <XCloseIcon className="mr-1.5 size-3.5" />
                     {t("Reject")}
                   </Button>
                 </>
               ) : null}
               {reversal.status === "Approved" ? (
                 <Button size="sm" onClick={() => void postReversal(undefined)} disabled={isPosting}>
-                  <SendIcon className="mr-1.5 size-3.5" />
+                  <Send01Icon className="mr-1.5 size-3.5" />
                   {isPosting ? t("Posting...") : t("Post")}
                 </Button>
               ) : null}

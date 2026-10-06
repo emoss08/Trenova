@@ -8,7 +8,7 @@ import { CustomFieldService } from "@/services/custom-field";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { PowerIcon, PowerOffIcon, TrashIcon } from "lucide-react";
+import { Power01Icon, PowerOffIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./custom-field-definition-columns";
@@ -80,14 +80,14 @@ export default function CustomFieldDefinitionTable() {
       {
         id: "activate",
         label: t("Activate"),
-        icon: PowerIcon,
+        icon: Power01Icon,
         onClick: handleToggleActive,
         hidden: (row) => row.original.isActive,
       },
       {
         id: "delete",
         label: t("Delete"),
-        icon: TrashIcon,
+        icon: Trash01Icon,
         variant: "destructive",
         onClick: handleDelete,
       },

@@ -13,12 +13,12 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { Column, SortDirection } from "@trenova/shared/types/data-table";
 import {
   ArrowDownIcon,
-  ArrowUpDownIcon,
   ArrowUpIcon,
   EyeOffIcon,
-  PinIcon,
+  Pin01Icon,
   PinOffIcon,
-} from "lucide-react";
+  SwitchVertical01Icon,
+} from "@trenova/shared/components/icons";
 
 type DataTableColumnHeaderProps<TData extends RowData, TValue> = {
   column: Column<TData, TValue>;
@@ -66,7 +66,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
             <Button
               variant="ghost"
               size="sm"
-              className="data-open:bg-accent text-foreground-subtle hover:text-foreground -ml-2.5 text-xs font-medium uppercase"
+              className="data-open:bg-accent text-foreground-subtle hover:text-foreground -ml-2.5 text-xs font-medium"
             >
               <span>{title}</span>
               {showSortIndex && (
@@ -79,7 +79,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
               ) : sortDirection === "asc" ? (
                 <ArrowUpIcon className="size-3.5" />
               ) : (
-                <ArrowUpDownIcon className="size-3.5" />
+                <SwitchVertical01Icon className="size-3.5" />
               )}
             </Button>
           }
@@ -102,7 +102,9 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  startContent={<ArrowUpDownIcon className="text-muted-foreground/70 size-3.5" />}
+                  startContent={
+                    <SwitchVertical01Icon className="text-muted-foreground/70 size-3.5" />
+                  }
                   title={t("Clear sort")}
                   label={t("Clear sort")}
                   onClick={() => handleSort(null)}
@@ -116,7 +118,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                   <DropdownMenuItem
                     onClick={() => column.pin("start")}
                     startContent={
-                      <PinIcon className="text-muted-foreground/70 size-3.5 -rotate-45" />
+                      <Pin01Icon className="text-muted-foreground/70 size-3.5 -rotate-45" />
                     }
                     title={t("Pin left")}
                     label={t("Pin left")}
@@ -126,7 +128,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                   <DropdownMenuItem
                     onClick={() => column.pin("end")}
                     startContent={
-                      <PinIcon className="text-muted-foreground/70 size-3.5 rotate-45" />
+                      <Pin01Icon className="text-muted-foreground/70 size-3.5 rotate-45" />
                     }
                     title={t("Pin right")}
                     label={t("Pin right")}

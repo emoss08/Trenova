@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { Fuel, Gauge, ListTree } from "lucide-react";
+import { Dataflow02Icon, FuelIcon, Speedometer03Icon } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { lazy } from "react";
 
@@ -32,15 +32,15 @@ export function FuelManagementPage() {
         <div className="border-border border-b">
           <TabsList variant="underline">
             <TabsTab value="dashboard">
-              <Gauge className="size-4" />
+              <Speedometer03Icon className="size-4" />
               {t("Price dashboard")}
             </TabsTab>
             <TabsTab value="programs">
-              <Fuel className="size-4" />
+              <FuelIcon className="size-4" />
               {t("Surcharge programs")}
             </TabsTab>
             <TabsTab value="indices">
-              <ListTree className="size-4" />
+              <Dataflow02Icon className="size-4" />
               {t("Fuel indices")}
             </TabsTab>
           </TabsList>

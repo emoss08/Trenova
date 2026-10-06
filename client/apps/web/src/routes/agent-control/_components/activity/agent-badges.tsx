@@ -32,6 +32,7 @@ const RUN_STATUS: Record<AgentRunStatus, { label: string; variant: Variant }> = 
 
 const PROPOSAL_STATUS: Record<AgentProposalStatus, { label: string; variant: Variant }> = {
   Pending: { label: "Awaiting decision", variant: "warning" },
+  Approving: { label: "Approved, can be undone", variant: "info" },
   Accepted: { label: "Accepted", variant: "success" },
   Modified: { label: "Accepted with changes", variant: "info" },
   Rejected: { label: "Rejected", variant: "danger" },
@@ -45,6 +46,7 @@ const PROPOSAL_STATUS: Record<AgentProposalStatus, { label: string; variant: Var
 
 const PLAN_STATUS: Record<AgentPlanStatus, { label: string; variant: Variant }> = {
   Pending: { label: "Awaiting decision", variant: "warning" },
+  Approving: { label: "Approved, can be undone", variant: "info" },
   Approved: { label: "Running", variant: "info" },
   Completed: { label: "Done", variant: "success" },
   Failed: { label: "Stopped", variant: "danger" },
@@ -74,6 +76,7 @@ const MEMORY_KIND: Record<AgentMemoryKind, { label: string; variant: Variant }> 
   Instruction: { label: "Instruction", variant: "brand" },
   Fact: { label: "Fact", variant: "accent-teal" },
   Correction: { label: "Correction", variant: "accent-amber" },
+  Procedure: { label: "Procedure", variant: "accent-violet" },
 };
 
 const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
@@ -81,10 +84,12 @@ const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
   Agent: "An agent",
   Decision: "A decision",
   Feedback: "Feedback",
+  Reflection: "Learned from work",
 };
 
 const MEMORY_STATUS: Record<AgentMemoryStatus, { label: string; variant: Variant }> = {
   Active: { label: "Active", variant: "success" },
+  Paused: { label: "Paused", variant: "neutral" },
   Retired: { label: "Retired", variant: "neutral" },
   Suggested: { label: "Suggested", variant: "warning" },
   Dismissed: { label: "Dismissed", variant: "neutral" },

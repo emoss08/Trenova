@@ -10,7 +10,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 
 export type IntelligenceEventsProps = {
@@ -82,7 +82,7 @@ export function IntelligenceEvents({ carrierId, canUpdate, onChanged }: Intellig
             onClick={() => void refetch()}
             isLoading={eventsQuery.isRefetching}
           >
-            <RefreshCwIcon />
+            <RefreshCw02Icon />
           </Button>
         </div>
       </div>

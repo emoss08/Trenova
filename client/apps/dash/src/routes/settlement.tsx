@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/lib/graphql/driver-portal";
 import type { DriverSettlementStatus } from "@trenova/shared/types/driver-pay";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon, FlagIcon } from "lucide-react";
+import { ArrowLeftIcon, Flag01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { DisputeDrawer } from "../_components/dispute-drawer";
@@ -185,7 +185,7 @@ export function DashSettlementPage() {
                     onClick={() => openDispute(line)}
                     className="-mr-1 p-1 text-muted-foreground hover:text-foreground"
                   >
-                    <FlagIcon className="size-3.5" />
+                    <Flag01Icon className="size-3.5" />
                   </button>
                 ) : null}
               </li>
@@ -196,7 +196,7 @@ export function DashSettlementPage() {
 
       {features.allowSettlementDisputes ? (
         <Button variant="outline" className="h-11" onClick={() => openDispute(null)}>
-          <FlagIcon className="size-4" />
+          <Flag01Icon className="size-4" />
           {t("Something looks wrong")}
         </Button>
       ) : null}

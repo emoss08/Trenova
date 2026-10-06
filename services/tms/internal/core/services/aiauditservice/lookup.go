@@ -40,6 +40,10 @@ func (o *owner) startedAt() (int64, bool) {
 	return o.startAt, o.startAt > 0
 }
 
+func (o *owner) unattended() bool {
+	return o.kind == agent.RunOwnerAgentRun && o.onBehalfOf.IsNil()
+}
+
 // needs collects, across one tenant's source rows in a pass, what has to be
 // read to explain them.
 type needs struct {

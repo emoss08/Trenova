@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { InfoIcon } from "lucide-react";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { describeMatch, enforcementLabel, enforcementTone, rulesForField } from "../lib/capability";
 import { cn } from "../lib/utils";
 import type { ResolvedCapabilityRule, ResolvedModeProfile } from "../types/shipment";
@@ -32,7 +32,7 @@ export function CapabilityExplainer({ profile, field, className }: CapabilityExp
           className,
         )}
       >
-        <InfoIcon className="size-3.5" />
+        <InfoCircleIcon className="size-3.5" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-96 p-0">
         <div className="border-b border-border px-4 py-3">

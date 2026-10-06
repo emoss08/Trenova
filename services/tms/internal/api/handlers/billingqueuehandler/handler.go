@@ -25,6 +25,8 @@ type Params struct {
 	fx.In
 
 	Service              services.BillingQueueService
+	Review               services.BillingQueueReviewService
+	Approval             services.BillingQueueApprovalService
 	PresetRepo           repositories.BillingQueueFilterPresetRepository
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
@@ -32,6 +34,8 @@ type Params struct {
 
 type Handler struct {
 	service    services.BillingQueueService
+	review     services.BillingQueueReviewService
+	approval   services.BillingQueueApprovalService
 	presetRepo repositories.BillingQueueFilterPresetRepository
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
@@ -40,6 +44,8 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service:    p.Service,
+		review:     p.Review,
+		approval:   p.Approval,
 		presetRepo: p.PresetRepo,
 		eh:         p.ErrorHandler,
 		pm:         p.PermissionMiddleware,
@@ -64,6 +70,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		),
 		h.stats,
 	)
+	h.registerReviewRoutes(api)
 	api.GET(
 		"/:itemID/",
 		h.pm.RequirePermission(
@@ -436,6 +443,7 @@ type updateStatusRequest struct {
 	ExceptionNotes      string                            `json:"exceptionNotes"`
 	ReviewNotes         string                            `json:"reviewNotes"`
 	CancelReason        string                            `json:"cancelReason"`
+	HoldReasonCode      *billingqueue.HoldReasonCode      `json:"holdReasonCode"`
 }
 
 // @Summary Update billing queue item status
@@ -479,6 +487,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 			ExceptionNotes:      req.ExceptionNotes,
 			ReviewNotes:         req.ReviewNotes,
 			CancelReason:        req.CancelReason,
+			HoldReasonCode:      req.HoldReasonCode,
 			TenantInfo:          pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),

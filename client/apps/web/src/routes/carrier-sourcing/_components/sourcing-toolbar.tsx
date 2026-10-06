@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { ArrowDownWideNarrowIcon } from "lucide-react";
+import { SortDescendingIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSourcingLabels } from "./use-sourcing-labels";
 
@@ -228,7 +228,7 @@ export function SourcingToolbar({
                 <Button variant="ghost" className="gap-1.5" aria-label={t("Sort carriers")} />
               }
             >
-              <ArrowDownWideNarrowIcon className="size-3.5" aria-hidden />
+              <SortDescendingIcon className="size-3.5" aria-hidden />
               {labels.sort[sort]}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">

@@ -4,20 +4,20 @@ import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Operation } from "@trenova/shared/types/permission";
 import {
-  BellIcon,
-  CheckCheckIcon,
-  KeyboardIcon,
-  LinkIcon,
-  LogOutIcon,
-  MessageSquarePlusIcon,
-  MonitorIcon,
-  MoonIcon,
-  PanelLeftIcon,
+  Bell01Icon,
+  CheckDoubleIcon,
+  Keyboard01Icon,
+  LayoutLeftIcon,
+  Link01Icon,
+  LogOut01Icon,
+  MessagePlusSquareIcon,
+  Monitor01Icon,
+  Moon01Icon,
   PlusIcon,
-  SettingsIcon,
+  Settings01Icon,
   SunIcon,
-  UserRoundIcon,
-} from "lucide-react";
+  User01Icon,
+} from "@trenova/shared/components/icons";
 import { buildCommandHref } from "./route-command-data";
 import type {
   PaletteCommand,
@@ -90,7 +90,7 @@ export function buildQuickActionCommands(
           ? AssistMark
           : creates
             ? PlusIcon
-            : (iconForPath(buildCommandHref(definition.path)) ?? LinkIcon),
+            : (iconForPath(buildCommandHref(definition.path)) ?? Link01Icon),
         keywords: [...(definition.keywords ?? []), creates ? "new create add" : ""].filter(Boolean),
         intent: opensAssistant ? { type: "assistant", mode: "open" } : { type: "navigate", href },
       } satisfies PaletteCommand;
@@ -116,7 +116,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("New conversation"),
       description: t("Start a fresh conversation with the assistant"),
       group: "assistant",
-      icon: MessageSquarePlusIcon,
+      icon: MessagePlusSquareIcon,
       keywords: ["assistant", "chat", "ai", "new", "thread", "conversation"],
       intent: { type: "assistant", mode: "new-chat" },
       shortcut: [mod, "J"],
@@ -135,7 +135,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
             )
           : t("You're all caught up"),
       group: "notifications",
-      icon: BellIcon,
+      icon: Bell01Icon,
       keywords: ["notifications", "inbox", "alerts", "bell", "unread"],
       intent: { type: "open-dialog", dialog: "notifications" },
     },
@@ -144,7 +144,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("Copy link to this page"),
       description: t("Share exactly what you're looking at, filters included"),
       group: "navigation",
-      icon: LinkIcon,
+      icon: Link01Icon,
       keywords: ["copy", "link", "url", "share", "page"],
       intent: { type: "copy-link", href: context.currentHref },
     },
@@ -153,7 +153,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("Toggle sidebar"),
       description: t("Show or hide the navigation sidebar"),
       group: "navigation",
-      icon: PanelLeftIcon,
+      icon: LayoutLeftIcon,
       keywords: ["sidebar", "collapse", "expand", "navigation", "hide", "show"],
       intent: { type: "toggle-sidebar" },
       shortcut: [mod, "B"],
@@ -163,7 +163,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("Keyboard shortcuts"),
       description: t("Every shortcut that works across the app"),
       group: "navigation",
-      icon: KeyboardIcon,
+      icon: Keyboard01Icon,
       keywords: ["keyboard", "shortcuts", "hotkeys", "keys", "help"],
       intent: { type: "open-dialog", dialog: "shortcuts" },
       shortcut: [mod, "/"],
@@ -176,7 +176,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("Mark all notifications as read"),
       description: t("Clear the unread count without opening each one"),
       group: "notifications",
-      icon: CheckCheckIcon,
+      icon: CheckDoubleIcon,
       keywords: ["notifications", "read", "clear", "dismiss", "all"],
       intent: { type: "mark-all-notifications-read" },
     });
@@ -184,8 +184,8 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
 
   const themes: { theme: PaletteTheme; label: string; icon: PaletteIcon }[] = [
     { theme: "light", label: t("Use light theme"), icon: SunIcon },
-    { theme: "dark", label: t("Use dark theme"), icon: MoonIcon },
-    { theme: "system", label: t("Match system theme"), icon: MonitorIcon },
+    { theme: "dark", label: t("Use dark theme"), icon: Moon01Icon },
+    { theme: "system", label: t("Match system theme"), icon: Monitor01Icon },
   ];
   for (const option of themes) {
     commands.push({
@@ -206,7 +206,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("Your profile"),
       description: t("Your details, sessions and security"),
       group: "account",
-      icon: UserRoundIcon,
+      icon: User01Icon,
       keywords: ["profile", "account", "me", "user"],
       intent: { type: "navigate", href: "/profile" },
     },
@@ -215,7 +215,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("Settings"),
       description: t("Preferences, time zone and language"),
       group: "account",
-      icon: SettingsIcon,
+      icon: Settings01Icon,
       keywords: ["settings", "preferences", "timezone", "language", "account"],
       intent: { type: "open-dialog", dialog: "settings" },
       shortcut: [mod, "Shift", "S"],
@@ -225,7 +225,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       label: t("Log out"),
       description: t("End this session on this device"),
       group: "account",
-      icon: LogOutIcon,
+      icon: LogOut01Icon,
       keywords: ["log out", "logout", "sign out", "exit"],
       intent: { type: "sign-out" },
       destructive: true,

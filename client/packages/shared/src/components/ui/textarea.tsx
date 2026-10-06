@@ -1,6 +1,6 @@
 import { useAutoResizeTextarea } from "@trenova/shared/hooks/use-auto-resize-textarea";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowDownIcon, CheckIcon, TextIcon } from "lucide-react";
+import { AlignLeftIcon, ArrowDownIcon, CheckIcon } from "@trenova/shared/components/icons";
 import * as React from "react";
 import { useState } from "react";
 import TextareaAutosizeComponent from "react-textarea-autosize";
@@ -29,7 +29,7 @@ function Textarea({ className, isInvalid, ...props }: TextareaProps) {
 const ITEMS = [
   {
     text: "Summary",
-    icon: <TextIcon />,
+    icon: <AlignLeftIcon />,
     colors: {
       icon: "text-warning-foreground",
       border: "border-warning",

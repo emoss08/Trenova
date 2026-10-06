@@ -28,7 +28,12 @@ import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { PlayIcon, SearchIcon, ShieldCheckIcon, UserPlusIcon } from "lucide-react";
+import {
+  PlayIcon,
+  SearchLgIcon,
+  ShieldTickIcon,
+  UserPlus01Icon,
+} from "@trenova/shared/components/icons";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -218,7 +223,7 @@ export function BankReceiptQueuePage() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={t("Search reference, ID...")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
             <Select
@@ -476,7 +481,7 @@ function WorkItemDetail({
                 onClick={() => assignMutation.mutate({ id: workItem.id!, userId: "me" })}
                 disabled={assignMutation.isPending}
               >
-                <UserPlusIcon className="size-3.5" />
+                <UserPlus01Icon className="size-3.5" />
                 {t("Assign to me")}
               </Button>
             </div>
@@ -509,7 +514,7 @@ function WorkItemDetail({
                       setShowDismissForm(false);
                     }}
                   >
-                    <ShieldCheckIcon className="size-3.5" />
+                    <ShieldTickIcon className="size-3.5" />
                     {t("Resolve")}
                   </Button>
                   <Button

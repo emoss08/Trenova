@@ -13,7 +13,7 @@ import type { AROpenItem, ARStatementTransaction } from "@/lib/graphql/accounts-
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";

@@ -1,16 +1,26 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { followTurn, runTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
+import {
+  followTurn,
+  runTurn,
+  stopTurnQuietly,
+  turnFailureDetail,
+  turnLimitOf,
+} from "./follow-turn";
 import type { ActiveTurn } from "@/services/assistant";
 import type {
   AssistantPageContext,
   AssistantStreamEvent,
   SendMessageResult,
 } from "@/types/assistant";
+import { useRealtimeStore } from "@/stores/realtime-store";
+import type { AssistantLiveTurnList } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { listSaysQuiet } from "./active-turns";
 import { appendToHistory, continuesHistory, type ThreadHistory } from "./thread-history";
 import { registerTurnReader } from "./turn-readers";
 import {
@@ -21,6 +31,7 @@ import {
   type TurnContext,
   type TurnFailureCause,
   type TurnFailureKind,
+  type TurnLimit,
   type TurnState,
 } from "./turn-stream";
 
@@ -35,9 +46,21 @@ type PendingSend = { stopped: boolean };
  * The transient turn is cleared only after the refetch lands, so the reply
  * never blinks out and back in between "streamed" and "saved".
  */
-export function useAssistantTurn(threadId: string, getContext?: () => AssistantPageContext | null) {
+export function useAssistantTurn(
+  threadId: string,
+  getContext?: () => AssistantPageContext | null,
+  onConversationEvent?: (event: AssistantStreamEvent) => void,
+) {
   const t = useT();
   const queryClient = useQueryClient();
+  // What a turn says about the conversation rather than the reply — how
+  // full its context is, a compaction it set off — goes to whoever keeps
+  // that. The latest callback is read when an event arrives, so a turn
+  // followed across renders never calls a stale one.
+  const conversationEventRef = useRef(onConversationEvent);
+  useEffect(() => {
+    conversationEventRef.current = onConversationEvent;
+  }, [onConversationEvent]);
 
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -82,7 +105,12 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   );
 
   const fail = useCallback(
-    (cause: TurnFailureCause, detail?: string) => {
+    (
+      cause: TurnFailureCause,
+      detail?: string,
+      limit: TurnLimit | null = null,
+      rateLimited: number | null = null,
+    ) => {
       setTurn((state) => {
         if (!state || !isTurnActive(state)) {
           return state;
@@ -92,6 +120,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           ...state,
           status: "error",
           error: detail && detail !== "" ? `${message} ${detail}` : message,
+          limit,
+          stopped: cause === "stopped",
+          rateLimited,
         };
       });
     },
@@ -145,6 +176,11 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
   // whose numbers skip ahead means something was saved that the client never
   // saw, an aborted turn most often, and that is fetched rather than papered
   // over. Nothing cached also fetches fresh.
+  //
+  // Once the saved rows are in the history the reply is on screen from the
+  // cache, so the lists that only move with it (markers, proposals, plans,
+  // artifacts, the sidebar) refresh behind it rather than holding the
+  // streaming copy up, and the reply shown twice, until the slowest returns.
   const absorbTurn = useCallback(
     async (result: SendMessageResult | null) => {
       const key = queries.assistant.messages(threadId).queryKey;
@@ -156,7 +192,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         queryClient.setQueryData<ThreadHistory>(key, (history) =>
           appendToHistory(history, result.messages),
         );
-        await Promise.all([
+        void Promise.all([
           queryClient.invalidateQueries({
             queryKey: queries.assistant.activeTurns().queryKey,
           }),
@@ -175,6 +211,24 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       await refreshThread();
     },
     [queryClient, refreshThread, seedProposals, threadId],
+  );
+
+  // A reply that failed after the question reached the agent is saved with a
+  // note saying why, and the conversation draws that note as the same card.
+  // Once the refetched conversation holds it, the live copy is dropped, or
+  // the question and its card would show twice.
+  const handOverIfSaved = useCallback(
+    async (startedAt: number) => {
+      await refreshThread();
+      const history = queryClient.getQueryData<ThreadHistory>(
+        queries.assistant.messages(threadId).queryKey,
+      );
+      const newest = history?.pages[0]?.results.at(-1);
+      if (newest?.failure && newest.createdAt >= Math.floor(startedAt / 1000) - 5) {
+        setTurn((state) => (state?.status === "error" ? null : state));
+      }
+    },
+    [queryClient, refreshThread, threadId],
   );
 
   const settle = useCallback(
@@ -229,6 +283,10 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       setTurn(initial);
 
       const onEvent = (event: AssistantStreamEvent) => {
+        if (event.event === "context" || event.event === "compaction_started") {
+          conversationEventRef.current?.(event);
+          return;
+        }
         setTurn((state) => (state ? advanceTurn(state, event) : state));
         if (event.event === "done") {
           terminal = true;
@@ -246,7 +304,12 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           return;
         }
         release();
-        fail("failed", turnFailureDetail(error, t("The connection to the assistant was lost.")));
+        fail(
+          "failed",
+          turnFailureDetail(error, t("The connection to the assistant was lost.")),
+          turnLimitOf(error),
+          error instanceof ApiRequestError && error.status === 429 ? (error.retryAfter ?? 5) : null,
+        );
         void refreshThread();
         return;
       }
@@ -280,13 +343,13 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
           if (state?.status === "refused") {
             void settle(null);
           } else if (state?.status === "error") {
-            void refreshThread();
+            void handOverIfSaved(state.startedAt);
           }
           return state;
         });
       }
     },
-    [fail, refreshThread, settle, t],
+    [fail, handOverIfSaved, refreshThread, settle, t],
   );
 
   /**
@@ -330,12 +393,28 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       return;
     }
     const active = await activeTurn();
+    // A compaction is not a reply: it is handed to whoever shows it, which
+    // follows it on its own stream.
+    if (active?.origin === "Compaction") {
+      conversationEventRef.current?.({
+        event: "compaction_started",
+        data: {
+          turnId: active.id,
+          threadId,
+          auto: false,
+          before: 0,
+          after: 0,
+          autoCompactOff: false,
+        },
+      });
+      return;
+    }
     // A question sent while the lookup was out owns the view now.
     if (active === null || following() || startingRef.current !== null) {
       return;
     }
     await followActive(active);
-  }, [activeTurn, followActive, following]);
+  }, [activeTurn, followActive, following, threadId]);
 
   const send = useCallback(
     async (
@@ -365,9 +444,26 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         // the agent answering a decision made elsewhere, most often — is
         // followed to its end first. Asking over it used to fail with "already
         // working on a reply" while nothing on screen said anything was.
+        //
+        // The question is on screen from the click, not from the end of that
+        // check, and the check is skipped when the live list the realtime
+        // connection keeps current already says the conversation is quiet.
         if (!following()) {
-          const running = await activeTurn();
-          if (running !== null && !following() && !pending.stopped) {
+          setTurn(initial);
+          const quiet = listSaysQuiet(
+            queryClient.getQueryState<AssistantLiveTurnList>(
+              queries.assistant.activeTurns().queryKey,
+            ),
+            threadId,
+            useRealtimeStore.getState().connectionState === "connected",
+          );
+          const running = quiet ? null : await activeTurn();
+          if (
+            running !== null &&
+            running.origin !== "Compaction" &&
+            !following() &&
+            !pending.stopped
+          ) {
             await followActive(running);
           }
         }
@@ -413,6 +509,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
                 const active = await activeTurn();
                 return active !== null &&
                   active.origin !== "DecisionFollowUp" &&
+                  active.origin !== "Compaction" &&
                   active.input === content
                   ? active.id
                   : null;

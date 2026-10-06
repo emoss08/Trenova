@@ -11,7 +11,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useUserDatePreferences } from "@trenova/shared/hooks/use-user-date-preferences";
 import { UTCDate } from "@date-fns/utc";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 import type { ComponentPropsWithoutRef } from "react";
 
 type HoverCardContentProps = ComponentPropsWithoutRef<typeof HoverCardContent>;
@@ -105,7 +105,7 @@ function Row({ value, label }: { value: string; label: string }) {
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="flex items-center gap-1 truncate font-mono">
         <span className="invisible group-hover:visible">
-          {!isCopied ? <CopyIcon className="size-3" /> : <CheckIcon className="size-3" />}
+          {!isCopied ? <Copy01Icon className="size-3" /> : <CheckIcon className="size-3" />}
         </span>
         {value}
       </dd>

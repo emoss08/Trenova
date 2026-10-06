@@ -13,7 +13,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { handleIftaReturnError, invalidateIftaReturn } from "./queries";
 
@@ -49,7 +49,7 @@ export function DeleteReturnDialog({ open, onOpenChange, ret, period }: DeleteRe
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-danger-subtle text-destructive">
-            <Trash2Icon />
+            <Trash01Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Delete the {0} draft?", quarterLabel(period))}</AlertDialogTitle>
           <AlertDialogDescription>

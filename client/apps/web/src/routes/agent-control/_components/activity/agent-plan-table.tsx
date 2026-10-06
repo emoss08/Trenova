@@ -11,7 +11,7 @@ import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getPlanColumns } from "./agent-plan-columns";
@@ -87,7 +87,7 @@ export default function AgentPlanTable() {
     {
       id: "reject",
       label: t("Reject all"),
-      icon: XIcon,
+      icon: XCloseIcon,
       variant: "destructive",
       onClick: (row) => decide(row, "Rejected"),
       hidden: (row) => !canDecide || row.original.status !== "Pending",

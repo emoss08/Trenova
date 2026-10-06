@@ -44,7 +44,7 @@ import {
   shiftTemplateFormSchema,
   type ShiftTemplateFormValues,
 } from "@trenova/shared/types/scheduling";
-import { CalendarDaysIcon, ClockIcon, RepeatIcon } from "lucide-react";
+import { CalendarDateIcon, ClockIcon, Repeat01Icon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -448,7 +448,7 @@ function ShiftPreview({
           <dd className="tabular-nums">{window ?? t("Set a start and a length")}</dd>
         </div>
         <div className="flex items-center gap-2">
-          <CalendarDaysIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <CalendarDateIcon className="text-muted-foreground size-3.5 shrink-0" />
           <dd className="tabular-nums">
             {t(
               "{0, plural, one {# day} other {# days}} · {1} a week",
@@ -458,7 +458,7 @@ function ShiftPreview({
           </dd>
         </div>
         <div className="flex items-center gap-2">
-          <RepeatIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <Repeat01Icon className="text-muted-foreground size-3.5 shrink-0" />
           <dd>{cycleWeeks > 1 ? t("{0}-week rotation", cycleWeeks) : t("Same every week")}</dd>
         </div>
       </dl>

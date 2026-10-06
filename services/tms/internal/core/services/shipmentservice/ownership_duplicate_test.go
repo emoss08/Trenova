@@ -81,7 +81,7 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		userRepo:     userRepo,
 		validator:    NewTestValidator(t),
 		auditService: audit,
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -158,7 +158,7 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 		permissions:  permissions,
 		validator:    NewTestValidator(t),
 		auditService: audit,
-		realtime:     realtime,
+		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -188,7 +188,7 @@ func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 		userRepo:     mocks.NewMockUserRepository(t),
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -210,6 +210,39 @@ func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 
 	require.Nil(t, entity)
 	require.Error(t, err)
+}
+
+func TestServiceTransferOwnership_RejectsAnAgentCarryingTheSystemUser(t *testing.T) {
+	t.Parallel()
+
+	svc := &service{
+		l:            zap.NewNop(),
+		repo:         mocks.NewMockShipmentRepository(t),
+		userRepo:     mocks.NewMockUserRepository(t),
+		validator:    NewTestValidator(t),
+		auditService: mocks.NewMockAuditService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		eventService: noopShipmentEventService{},
+		coordinator:  newStateCoordinator(),
+	}
+
+	entity, err := svc.TransferOwnership(t.Context(), &repositories.TransferOwnershipRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
+		ShipmentID: pulid.MustNew("shp_"),
+		OwnerID:    pulid.MustNew("usr_"),
+	}, &services.RequestActor{
+		PrincipalType:  services.PrincipalTypeAgent,
+		PrincipalID:    pulid.MustNew("agdef_"),
+		UserID:         pulid.MustNew("usr_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	})
+
+	require.Nil(t, entity)
+	require.Error(t, err, "the system account an agent carries does not own the transfer")
 }
 
 func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
@@ -255,7 +288,7 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:     mocks.NewMockRealtimeService(t),
+		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,6 +55,14 @@ type Params struct {
 	AgentEvents          services.AgentEventPublisher `optional:"true"`
 	// Watchtower puts an item that cannot be invoiced on the feed.
 	Watchtower services.WatchtowerProjector `optional:"true"`
+	// The review reads: issues and activity, the shipment's paperwork and
+	// detention evidence, the contract's accessorials, and the driver to ask
+	// for a missing signature.
+	ReviewRepo     repositories.BillingQueueReviewRepository  `optional:"true"`
+	DocumentRepo   repositories.DocumentRepository            `optional:"true"`
+	OccurrenceRepo repositories.DetentionOccurrenceRepository `optional:"true"`
+	AgreementRepo  repositories.RateAgreementRepository       `optional:"true"`
+	DriverNotifier *drivernotificationservice.Service         `optional:"true"`
 }
 
 type service struct {
@@ -78,6 +87,11 @@ type service struct {
 	detentionBilling     services.DetentionBillingService
 	agentEvents          services.AgentEventPublisher
 	watchtower           services.WatchtowerProjector
+	reviewRepo           repositories.BillingQueueReviewRepository
+	documentRepo         repositories.DocumentRepository
+	occurrenceRepo       repositories.DetentionOccurrenceRepository
+	agreementRepo        repositories.RateAgreementRepository
+	drivers              driverNotifier
 }
 
 //nolint:gocritic // dependency injection
@@ -104,7 +118,18 @@ func New(p Params) services.BillingQueueService {
 		detentionBilling:     p.DetentionBilling,
 		agentEvents:          p.AgentEvents,
 		watchtower:           p.Watchtower,
+		reviewRepo:           p.ReviewRepo,
+		documentRepo:         p.DocumentRepo,
+		occurrenceRepo:       p.OccurrenceRepo,
+		agreementRepo:        p.AgreementRepo,
+		drivers:              notifierOrNil(p.DriverNotifier),
 	}
+}
+
+// NewReview is the same service seen as the review a biller does from one
+// item; it shares every dependency with the queue it reviews.
+func NewReview(svc services.BillingQueueService) services.BillingQueueReviewService {
+	return svc.(*service) //nolint:errcheck,forcetypeassert // New always returns *service
 }
 
 func (s *service) List(
@@ -144,6 +169,7 @@ func (s *service) GetByID(
 		)
 	}
 	item.DetentionHolds = billingqueue.NewDetentionHolds(holds)
+	s.attachReview(ctx, item, req.TenantInfo)
 
 	return item, nil
 }
@@ -209,6 +235,7 @@ func (s *service) expandShipmentDetails(
 		TenantInfo: tenantInfo,
 		CustomerFilterOptions: repositories.CustomerFilterOptions{
 			IncludeBillingProfile: true,
+			IncludeEmailProfile:   true,
 		},
 	})
 	if err == nil {
@@ -226,6 +253,7 @@ func (s *service) expandShipmentDetails(
 			TenantInfo: tenantInfo,
 			CustomerFilterOptions: repositories.CustomerFilterOptions{
 				IncludeBillingProfile: true,
+				IncludeEmailProfile:   true,
 			},
 		})
 		if payerErr == nil {
@@ -403,6 +431,10 @@ func (s *service) TransferToBillingItems(
 			item = s.autoApprove(ctx, item, req.TenantInfo, actor)
 		}
 
+		s.recordEvent(systemEvents(ctx), item, billingqueue.EventTransferred,
+			"Queued when "+shipmentRef(shp)+" was transferred to billing", actor, nil)
+		s.syncReview(ctx, item.ID, req.TenantInfo)
+
 		s.logAction(
 			item,
 			auditActor,
@@ -558,7 +590,7 @@ func (s *service) autoAssignDefaultBiller(
 		zap.String("defaultBillerId", cust.BillingProfile.DefaultBillerID.String()),
 	)
 
-	if _, err = s.AssignBiller(ctx, &services.AssignBillerRequest{
+	if _, err = s.AssignBiller(systemEvents(ctx), &services.AssignBillerRequest{
 		ItemID:     item.ID,
 		BillerID:   *cust.BillingProfile.DefaultBillerID,
 		TenantInfo: tenantInfo,
@@ -597,13 +629,14 @@ func (s *service) AssignBiller(
 		return nil, err
 	}
 
-	if _, err = s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	biller, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
 		LookupUserID: req.BillerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
 			BuID:  req.TenantInfo.BuID,
 		},
-	}); err != nil {
+	})
+	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, errortypes.NewValidationError(
 				"billerId",
@@ -629,6 +662,9 @@ func (s *service) AssignBiller(
 		updated,
 		"Biller assigned to billing queue item",
 	)
+	s.recordEvent(ctx, updated, billingqueue.EventAssigned,
+		"Assigned "+userName(biller)+" as biller", actor,
+		map[string]any{"billerId": req.BillerID.String()})
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
 
 	return updated, nil
@@ -658,6 +694,10 @@ func (s *service) UpdateStatus(
 			return getErr
 		}
 
+		prev := *entity
+		previous = &prev
+
+		startReviewForApproval(entity, req, timeutils.NowUnix())
 		if transitionErr := checkStatusTransition(entity, req); transitionErr != nil {
 			return transitionErr
 		}
@@ -666,10 +706,10 @@ func (s *service) UpdateStatus(
 			if holdErr := s.guardDetentionHolds(txCtx, entity, req.TenantInfo); holdErr != nil {
 				return holdErr
 			}
+			if issueErr := s.guardOpenIssues(txCtx, entity, req.TenantInfo); issueErr != nil {
+				return issueErr
+			}
 		}
-
-		prev := *entity
-		previous = &prev
 		if planErr := PlanStatusChange(entity, req, actor, timeutils.NowUnix()); planErr != nil {
 			return planErr
 		}
@@ -735,6 +775,7 @@ func (s *service) UpdateStatus(
 		updated,
 		"Billing queue item status updated to "+string(req.NewStatus),
 	)
+	s.recordStatusEvent(ctx, previous, updated, createResult, actor)
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
 	s.publishStatusAgentEvent(ctx, updated)
 	s.projectToWatchtower(ctx, updated)
@@ -848,7 +889,16 @@ func (s *service) UpdateCharges(
 	req *services.UpdateChargesRequest,
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	plan, err := s.planChargeUpdate(ctx, req, actor, true)
+	return s.updateCharges(ctx, req, actor, false)
+}
+
+func (s *service) updateCharges(
+	ctx context.Context,
+	req *services.UpdateChargesRequest,
+	actor *services.RequestActor,
+	allowReady bool,
+) (*billingqueue.BillingQueueItem, error) {
+	plan, err := s.planChargeUpdateFrom(ctx, req, actor, true, allowReady)
 	if err != nil {
 		return nil, err
 	}
@@ -872,6 +922,12 @@ func (s *service) UpdateCharges(
 		chargesUpdatedComment(plan.ConvertedSplits),
 	)
 	s.publishInvalidation(ctx, item, auditActor, "updated", item)
+	// An edit made by settling a check is re-checked by the settlement once
+	// it has recorded itself; checking here would clear the very issue it is
+	// settling.
+	if !allowReady {
+		s.syncReview(ctx, req.ItemID, req.TenantInfo)
+	}
 
 	return s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,

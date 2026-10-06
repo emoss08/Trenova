@@ -26,7 +26,7 @@ import {
 } from "@trenova/shared/types/routing-guide";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { RoutingGuideForm } from "./routing-guide-form";
@@ -60,7 +60,7 @@ function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted
             aria-label={t("Delete routing guide")}
             disabled={deleteMutation.isPending}
           >
-            <Trash2Icon className="size-4" />
+            <Trash01Icon className="size-4" />
           </Button>
         }
       />

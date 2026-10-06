@@ -24,7 +24,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { Edit02Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { ProfilePanel, type ProfilePanelMode } from "./profile-panel";
@@ -93,7 +93,7 @@ function ProfileRow({
               aria-label={t("Edit {0}", profile.name)}
               onClick={() => onEdit(profile)}
             >
-              <PencilIcon className="size-3.5" />
+              <Edit02Icon className="size-3.5" />
             </Button>
           )}
           {canDelete && (
@@ -103,7 +103,7 @@ function ProfileRow({
               aria-label={t("Delete {0}", profile.name)}
               onClick={() => onDelete(profile)}
             >
-              <Trash2Icon className="size-3.5" />
+              <Trash01Icon className="size-3.5" />
             </Button>
           )}
         </div>
@@ -247,7 +247,7 @@ export function ProfilesPanel() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia className="bg-danger-subtle text-destructive">
-              <Trash2Icon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete {0}?", deleting?.name ?? "")}</AlertDialogTitle>
             <AlertDialogDescription>

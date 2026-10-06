@@ -21,7 +21,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { StatementGroup, StatementShipment } from "@trenova/shared/types/statement";
-import { BotIcon, ClockIcon, InfoIcon, RotateCcwIcon } from "lucide-react";
+import {
+  BotIcon,
+  ClockIcon,
+  InfoCircleIcon,
+  RefreshCcw01Icon,
+} from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -206,7 +211,7 @@ export function StatementDetail({
           <div className="flex flex-col gap-2 p-2">
             {standalone > 1 && (
               <Alert size="sm">
-                <InfoIcon />
+                <InfoCircleIcon />
                 <AlertDescription>
                   <p>
                     {t(
@@ -296,7 +301,7 @@ export function StatementDetail({
               className="h-7 text-xs"
               onClick={() => setHeldIds(new Set())}
             >
-              <RotateCcwIcon className="size-3" />
+              <RefreshCcw01Icon className="size-3" />
               {t("Put them back")}
             </Button>
           )}

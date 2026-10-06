@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 
 export function CopyIconButton({
   value,
@@ -25,7 +25,7 @@ export function CopyIconButton({
         {isCopied ? (
           <CheckIcon className="size-3.5 text-success-foreground" />
         ) : (
-          <CopyIcon className="size-3.5" />
+          <Copy01Icon className="size-3.5" />
         )}
       </TooltipTrigger>
       <TooltipContent>{isCopied ? t("Copied") : label}</TooltipContent>

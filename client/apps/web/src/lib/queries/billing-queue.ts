@@ -13,4 +13,20 @@ export const billingQueue = createQueryKeys("billingQueue", {
         expandShipmentDetails: "true",
       }),
   }),
+  neighbors: (itemId: string, params: Record<string, string> = {}) => ({
+    queryKey: ["neighbors", itemId, params],
+    queryFn: async () => apiService.billingQueueService.getNeighbors(itemId, params),
+  }),
+  activity: (itemId: string) => ({
+    queryKey: ["activity", itemId],
+    queryFn: async () => apiService.billingQueueService.getActivity(itemId),
+  }),
+  summaries: (itemIds: string[]) => ({
+    queryKey: ["summaries", itemIds],
+    queryFn: async () => apiService.billingQueueService.getSummaries(itemIds),
+  }),
+  approvalRun: (runId: string) => ({
+    queryKey: ["approvalRun", runId],
+    queryFn: async () => apiService.billingQueueService.getBulkApprove(runId),
+  }),
 });

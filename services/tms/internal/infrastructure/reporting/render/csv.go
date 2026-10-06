@@ -28,6 +28,12 @@ func NewCSV(p CSVParams) *CSVRenderer {
 	return &CSVRenderer{includeBOM: p.Config.GetReportingConfig().CSVIncludeBOM}
 }
 
+// NewCSVRenderer is a CSV renderer for a caller that streams a dataset itself
+// rather than through a run.
+func NewCSVRenderer(includeBOM bool) *CSVRenderer {
+	return &CSVRenderer{includeBOM: includeBOM}
+}
+
 func (r *CSVRenderer) Format() report.Format { return report.FormatCSV }
 
 func (r *CSVRenderer) Render(

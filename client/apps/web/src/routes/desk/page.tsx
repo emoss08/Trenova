@@ -2,6 +2,9 @@ import { queries } from "@/lib/queries";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useParams } from "react-router";
 import { DeskLayout } from "./_components/desk-layout";
+import "@/components/desk-chat/desk-chat.css";
+import "./_styles/desk-v2.css";
+import "./_styles/desk-agent.css";
 
 export const prefetch: RoutePrefetch = () => [
   queries.assistant.threads(),

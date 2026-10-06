@@ -1,6 +1,6 @@
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { type KeyboardEvent, useCallback, useRef, useState } from "react";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
@@ -101,7 +101,7 @@ function TagInputInner({
       <div
         className={cn(
           "border-input bg-muted flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-[border-color,box-shadow] duration-200 ease-in-out",
-"ui-container-focus-ring",
+          "ui-container-focus-ring",
           error && "border-destructive",
           disabled && "pointer-events-none opacity-50",
         )}
@@ -119,7 +119,7 @@ function TagInputInner({
                 }}
                 className="hover:bg-muted-foreground/20 rounded-full"
               >
-                <XIcon className="size-3" />
+                <XCloseIcon className="size-3" />
               </button>
             )}
           </Badge>

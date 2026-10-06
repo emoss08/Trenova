@@ -61,6 +61,13 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     ["assistant", "activeTurns"],
     ["assistant", "threads"],
   ],
+  // A schedule made, paused, resumed, deleted or run: its card's state and
+  // next run move.
+  conversation_schedules: [["assistant", "schedules"]],
+  // An agent looked back over a conversation and kept or offered what it
+  // learned: the card appears under the reply it learned from, and the
+  // person's memory list moves with it.
+  agent_memory: [["assistant", "messages"], "desk-memories"],
   // The feed and its counts live under one key root from the query factory
   // (createQueryKeys("watchtower")), so invalidating the root catches both the
   // list and every filtered variant of it.
@@ -92,6 +99,8 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   ],
   shipments: [
     "shipment-list",
+    "shipmentBoard",
+    "shipment-events",
     "dispatch-board",
     "dispatch-live-tender",
     "dispatch-shipment-tenders",
@@ -101,9 +110,11 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   customers: ["customer-list"],
   tractors: ["tractor-list"],
   trailers: ["trailer-list"],
-  workers: ["worker-list", "dispatch-board"],
+  workers: ["worker-list", "dispatch-board", "shipmentBoard"],
   "audit-logs": ["audit-entry-list"],
   billing_queue: ["billing-queue-list", "billingQueue"],
+  // A bulk approval's progress: the run and the items it is approving.
+  "billing-queue-approval-run": ["billingQueue", "billing-queue-list"],
   "billing-transfer-run": [
     "billing-transfer-run",
     "billing-transfer-active-run",

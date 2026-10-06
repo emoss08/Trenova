@@ -8,24 +8,25 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { ArtifactKind, ArtifactStatus } from "@/types/assistant";
 import {
-  CompassIcon,
-  FileTextIcon,
+  Compass03Icon,
+  File06Icon,
   GavelIcon,
   GitCompareArrowsIcon,
+  type IconComponent,
   IdCardIcon,
-  InboxIcon,
-  LayoutDashboardIcon,
+  Inbox01Icon,
+  LayoutAlt04Icon,
   ListChecksIcon,
-  MailIcon,
+  Mail01Icon,
   NewspaperIcon,
   PencilLineIcon,
-  PinIcon,
+  Pin01Icon,
   PinOffIcon,
   ReceiptTextIcon,
   ScrollTextIcon,
   TableIcon,
-  type LucideIcon,
-} from "lucide-react";
+  ScanTextIcon,
+} from "@trenova/shared/components/icons";
 import { useId, useState, type ReactNode } from "react";
 
 /**
@@ -37,27 +38,31 @@ import { useId, useState, type ReactNode } from "react";
  */
 export const ARTIFACT_KINDS: Record<
   ArtifactKind,
-  { label: string; icon: LucideIcon; source?: string }
+  { label: string; icon: IconComponent; source?: string }
 > = {
   report_preview: { label: "Preview", icon: TableIcon, source: "Report builder" },
-  report_run: { label: "Report", icon: FileTextIcon, source: "Report builder" },
-  email_draft: { label: "Draft", icon: MailIcon },
+  report_run: { label: "Report", icon: File06Icon, source: "Report builder" },
+  email_draft: { label: "Draft", icon: Mail01Icon },
   plan: { label: "Plan", icon: ListChecksIcon },
   entity_card: { label: "Record", icon: IdCardIcon, source: "Records" },
   table_view: { label: "Table", icon: TableIcon, source: "Search" },
   rate_explanation: { label: "Rate", icon: ReceiptTextIcon, source: "Rating" },
-  dashboard_ref: { label: "Dashboard", icon: LayoutDashboardIcon, source: "Dashboards" },
+  dashboard_ref: { label: "Dashboard", icon: LayoutAlt04Icon, source: "Dashboards" },
   briefing: { label: "Briefing", icon: NewspaperIcon },
-  inbound_message: { label: "Message", icon: InboxIcon, source: "Inbox" },
+  inbound_message: { label: "Message", icon: Inbox01Icon, source: "Inbox" },
   run_diff: { label: "Changes", icon: GitCompareArrowsIcon, source: "Report builder" },
   document: { label: "Document", icon: ScrollTextIcon },
-  navigation: { label: "Page", icon: CompassIcon },
+  navigation: { label: "Page", icon: Compass03Icon },
   draft_edit: { label: "Draft change", icon: PencilLineIcon },
   decision_request: { label: "Decision", icon: GavelIcon },
+  extraction: { label: "Extraction", icon: ScanTextIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */
-const STATUS_TONE: Record<ArtifactStatus, "neutral" | "info" | "success" | "danger"> = {
+export const ARTIFACT_STATUS_TONE: Record<
+  ArtifactStatus,
+  "neutral" | "info" | "success" | "danger"
+> = {
   Pending: "info",
   Ready: "neutral",
   Failed: "danger",
@@ -77,6 +82,29 @@ export function artifactStatusLabel(status: ArtifactStatus, t: (s: string) => st
   }
 }
 
+/** The status badge as every artifact surface draws it: only when the status is not Ready. */
+export function ArtifactStatusBadge({
+  status,
+  className,
+}: {
+  status: ArtifactStatus;
+  className?: string;
+}) {
+  const t = useT();
+  if (status === "Ready") {
+    return null;
+  }
+
+  return (
+    <Badge
+      variant={ARTIFACT_STATUS_TONE[status]}
+      className={cn("animate-rise h-4 shrink-0 px-1.5 text-2xs", className)}
+    >
+      {artifactStatusLabel(status, t)}
+    </Badge>
+  );
+}
+
 export function ArtifactKindIcon({ kind, className }: { kind: ArtifactKind; className?: string }) {
   const Icon = ARTIFACT_KINDS[kind].icon;
 
@@ -92,11 +120,14 @@ export function ArtifactKindIcon({ kind, className }: { kind: ArtifactKind; clas
 export function ArtifactProvenance({
   kind,
   createdAt,
+  note,
   className,
 }: {
   kind: ArtifactKind;
   /** Unix seconds; zero or absent leaves the time out. */
   createdAt?: number;
+  /** How it was made, when the kind alone does not say: "Read together from 11 calls". */
+  note?: string;
   className?: string;
 }) {
   const t = useT();
@@ -122,6 +153,14 @@ export function ArtifactProvenance({
           >
             {formatRelativeTime(Math.min(0, createdAt - now))}
           </time>
+        </>
+      )}
+      {note !== undefined && note !== "" && (
+        <>
+          <span aria-hidden className="shrink-0 px-1">
+            ·
+          </span>
+          <span className="truncate">{note}</span>
         </>
       )}
     </p>
@@ -199,14 +238,7 @@ export function ArtifactChrome({
           </h3>
           <ArtifactProvenance kind={kind} createdAt={createdAt} />
         </div>
-        {status !== "Ready" && (
-          <Badge
-            variant={STATUS_TONE[status]}
-            className="animate-rise h-4 shrink-0 px-1.5 text-2xs"
-          >
-            {artifactStatusLabel(status, t)}
-          </Badge>
-        )}
+        <ArtifactStatusBadge status={status} />
         {actions}
         {onPin && (
           <Tooltip>
@@ -232,7 +264,7 @@ export function ArtifactChrome({
                 key={pinned ? "pinned" : "loose"}
                 className={cn("flex", pinTouched && "animate-confirm")}
               >
-                {pinned ? <PinOffIcon className="size-3.5" /> : <PinIcon className="size-3.5" />}
+                {pinned ? <PinOffIcon className="size-3.5" /> : <Pin01Icon className="size-3.5" />}
               </span>
             </TooltipTrigger>
             <TooltipContent>{pinned ? t("Unpin") : t("Pin to the top")}</TooltipContent>

@@ -1,82 +1,46 @@
 import {
-  dockPositionClass,
   isLeftDock,
   nearestDock,
+  dockPositionClass,
   type AssistantDock,
 } from "@/lib/assistant-dock";
-import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { EyeOffIcon } from "lucide-react";
+import { EyeOffIcon } from "@trenova/shared/components/icons";
 import { m, useMotionValue, useReducedMotion, type PanInfo } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AssistantDockTargets } from "./assistant-dock-targets";
-import { AssistantMark } from "./assistant-mark";
+import { AssistantOrb } from "./assistant-orb";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
+import { cappedCount, launcherLabel, type BeaconState } from "./beacon-state";
 
 type AssistantLauncherProps = {
-  pendingCount: number;
-  /** Replies still being written with the panel closed, across every conversation. */
-  writingCount?: number;
+  beacon: BeaconState;
   dock?: AssistantDock;
   onClick: () => void;
-  /** Moves the launcher, and the panel it opens, to another corner. */
+  /** Moves the beacon, and the panel it opens, to another corner. */
   onMove?: (dock: AssistantDock) => void;
-  /** Tucks the launcher into a tab at the edge of the screen. */
+  /** Tucks the beacon into a tab at the edge of the screen. */
   onHide?: () => void;
 };
 
-/** The launcher's accessible name: everything the pill says, uncapped. */
-export function launcherLabel(t: TranslateFn, pendingCount: number, writingCount: number): string {
-  if (pendingCount > 0 && writingCount > 0) {
-    return t(
-      "Open the assistant, {0} changes await your decision, {1, plural, one {# reply is} other {# replies are}} being written",
-      pendingCount,
-      writingCount,
-    );
-  }
-  if (pendingCount > 0) {
-    return t("Open the assistant, {0} changes await your decision", pendingCount);
-  }
-  if (writingCount > 0) {
-    return t(
-      "Open the assistant, {0, plural, one {# reply is} other {# replies are}} being written",
-      writingCount,
-    );
-  }
-
-  return t("Open the assistant");
-}
-
-function capped(count: number): string {
-  return count > 99 ? "99+" : String(count);
-}
-
 /**
- * The corner mark. At rest it does nothing at all: it is on every page in the
- * product, so anything that moves would be movement a person cannot escape.
+ * The beacon in the corner: a pill holding an orb, the Desk's colours turning
+ * slowly round a point, with a label that slides out of it.
  *
- * When decisions are waiting it grows into a pill and says how many.
- *
- * It used to say the same thing with a beam travelling its border and a
- * numbered dot in the corner, and that was two devices for one fact, one of
- * them a loop running on every screen in the product for as long as anything
- * was pending. A shape that changes is a stronger signal than a shape that
- * moves, and it can carry a word: "3 waiting" is read at a glance, where a
- * beam has to be interpreted and a bare 3 could be anything.
- *
- * A reply still being written with the panel closed says so the same way,
- * and just as still: "Writing", or "2 writing" for several. It is not a claim
- * on anyone's time, so it stays in the launcher's own ink, and when decisions
- * are waiting too they lead, because only they need the person.
+ * At rest only the orb shows; on hover the label offers the agent last asked
+ * and ⌘J. While a reply is written the ring turns fast and the point goes
+ * out, and the label says what is being answered and for how long. A change
+ * waiting on the person turns the orb warm and says how many, with a way to
+ * review them; that leads, because only it needs the person. A reply that
+ * arrived while the panel was closed swells the point and names who replied
+ * until the panel is opened. With reduced motion nothing turns or breathes.
  *
  * It sits over whatever page is open, so it can be moved out of the way:
  * dragged to any corner, or tucked into a tab at the edge of the screen.
  */
 export function AssistantLauncher({
-  pendingCount,
-  writingCount = 0,
+  beacon,
   dock = "bottom-right",
   onClick,
   onMove,
@@ -84,15 +48,12 @@ export function AssistantLauncher({
 }: AssistantLauncherProps) {
   const t = useT();
   const reduceMotion = useReducedMotion();
-  const [hovered, setHovered] = useState(false);
   const dragged = useRef(false);
   const [dragTarget, setDragTarget] = useState<AssistantDock | null>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const hasPending = pendingCount > 0;
-  const isWriting = writingCount > 0;
-  const expanded = hasPending || isWriting;
   const movable = onMove !== undefined;
+  const side = isLeftDock(dock) ? "left" : "right";
 
   const pointerDock = (info: PanInfo): AssistantDock =>
     nearestDock(
@@ -131,122 +92,119 @@ export function AssistantLauncher({
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
-      className={cn(
-        "group fixed z-50",
-        dockPositionClass(dock, "launcher"),
-        movable && "cursor-grab active:cursor-grabbing",
-      )}
+      className={cn("as-beacon", dockPositionClass(dock, "launcher"))}
+      data-mode={beacon.mode}
+      data-side={side}
+      data-dragging={dragTarget !== null || undefined}
     >
       {dragTarget && <AssistantDockTargets active={dragTarget} />}
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <m.button
-              type="button"
-              onClick={() => {
-                // A drag ends with the pointer let go over the launcher, which
-                // the browser reports as a click. Moving it is not asking for it.
-                if (dragged.current) {
-                  dragged.current = false;
-                  return;
-                }
-                onClick();
-              }}
-              onHoverStart={() => setHovered(true)}
-              onHoverEnd={() => setHovered(false)}
-              layoutId={ASSISTANT_SURFACE_ID}
-              style={{ borderRadius: 12 }}
-              whileHover={reduceMotion ? undefined : { y: -2 }}
-              whileTap={reduceMotion ? undefined : { scale: 0.96 }}
-              transition={
-                reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 30 }
-              }
-              aria-label={launcherLabel(t, pendingCount, writingCount)}
-              data-writing={isWriting || undefined}
-              className={cn(
-                "ui-focus-ring bg-foreground text-background ring-foreground/10",
-                "flex h-10 items-center justify-center ring-1 outline-none",
-                movable && "cursor-[inherit]",
-                expanded ? "gap-2 pr-3 pl-2.5" : "w-10",
-              )}
-            />
+      <m.button
+        type="button"
+        layoutId={ASSISTANT_SURFACE_ID}
+        style={{ borderRadius: 19 }}
+        transition={
+          reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 30 }
+        }
+        onClick={() => {
+          // A drag ends with the pointer let go over the beacon, which the
+          // browser reports as a click. Moving it is not asking for it.
+          if (dragged.current) {
+            dragged.current = false;
+            return;
           }
-        >
-          <AssistantMark className="size-4.5 shrink-0" animated={hovered && !reduceMotion} />
-          {expanded && (
-            <span className="flex items-baseline gap-1 text-sm whitespace-nowrap">
-              {hasPending && (
-                <>
-                  {/* The count is the only warm thing on the mark, and it is
-                    warm because it is the only part that is a claim on
-                    someone's time. */}
-                  <span className="text-warning font-semibold tabular-nums">
-                    {capped(pendingCount)}
-                  </span>
-                  <span className="text-background/70">{t("waiting")}</span>
-                </>
-              )}
-              {hasPending && isWriting && (
-                <span aria-hidden className="text-background/40">
-                  ·
-                </span>
-              )}
-              {isWriting &&
-                (writingCount > 1 ? (
-                  <>
-                    <span className="text-background font-medium tabular-nums">
-                      {capped(writingCount)}
-                    </span>
-                    <span className="text-background/70">{t("writing")}</span>
-                  </>
-                ) : (
-                  <span className="text-background/70">
-                    {hasPending ? t("writing") : t("Writing")}
-                  </span>
-                ))}
+          onClick();
+        }}
+        aria-label={launcherLabel(t, beacon)}
+        aria-keyshortcuts="Meta+J"
+        data-writing={beacon.writingCount > 0 || undefined}
+        className={cn("as-beacon-b", movable && "cursor-grab")}
+      >
+        <AssistantOrb mode={beacon.mode} />
+        <span className="as-beacon-l" aria-hidden>
+          <div>
+            <span className="as-beacon-in">
+              <BeaconLabel beacon={beacon} dragging={dragTarget !== null} />
             </span>
-          )}
-        </TooltipTrigger>
-        <TooltipContent
-          side={isLeftDock(dock) ? "right" : "left"}
-          sideOffset={8}
-          className="flex flex-col items-start gap-1"
-        >
-          <span className="flex items-center gap-2">
-            {t("Assistant")}
-            <KbdGroup>
-              <Kbd>⌘</Kbd>
-              <Kbd>J</Kbd>
-            </KbdGroup>
-          </span>
-          {movable && <span className="text-muted-foreground">{t("Drag to move it")}</span>}
-        </TooltipContent>
-      </Tooltip>
+          </div>
+        </span>
+      </m.button>
       {onHide && (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <button
-                type="button"
-                aria-label={t("Hide the assistant button")}
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={onHide}
-                className={cn(
-                  "ui-focus-ring bg-popover text-muted-foreground hover:text-foreground ring-foreground/10",
-                  "absolute -top-2 flex size-5 items-center justify-center rounded-full ring-1 outline-none",
-                  "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100",
-                  isLeftDock(dock) ? "-right-2" : "-left-2",
-                )}
-              />
-            }
-          >
-            <EyeOffIcon className="size-3" />
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            {t("Hide the button. Open the assistant from the edge tab or with ⌘J.")}
-          </TooltipContent>
-        </Tooltip>
+        <button
+          type="button"
+          aria-label={t("Hide the assistant button")}
+          title={t("Hide the button. Open the assistant from the edge tab or with ⌘J.")}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={onHide}
+          className="as-beacon-hide ui-focus-ring"
+        >
+          <EyeOffIcon className="size-3" />
+        </button>
       )}
     </m.div>
   );
+}
+
+/** What the beacon's label says, for the mode it is in. */
+function BeaconLabel({ beacon, dragging }: { beacon: BeaconState; dragging: boolean }) {
+  const t = useT();
+
+  if (dragging) {
+    return <span>{t("Drop it in any corner")}</span>;
+  }
+  switch (beacon.mode) {
+    case "pending":
+      return (
+        <>
+          <span>
+            <b>
+              {beacon.pendingCount > 99
+                ? t("{0} changes", cappedCount(beacon.pendingCount))
+                : t("{0, plural, one {# change} other {# changes}}", beacon.pendingCount)}
+            </b>{" "}
+            {beacon.pendingCount === 1 ? t("needs your approval") : t("need your approval")}
+          </span>
+          <span className="as-beacon-review">{t("Review")}</span>
+        </>
+      );
+    case "writing":
+      return beacon.writing ? (
+        <>
+          <span className="as-beacon-t as-shim">{beacon.writing.title || t("Writing")}</span>
+          <Elapsed since={beacon.writing.startedAt} />
+        </>
+      ) : (
+        <span>
+          <b>{cappedCount(beacon.writingCount)}</b> {t("writing")}
+        </span>
+      );
+    case "replied":
+      return (
+        <span>
+          <b>{beacon.agentName}</b> {t("replied")}
+        </span>
+      );
+    default:
+      return (
+        <>
+          <span>{beacon.agentName ? t("Ask {0}", beacon.agentName) : t("Ask the assistant")}</span>
+          <span className="as-beacon-keys">
+            <span className="dk-kbd">⌘</span>
+            <span className="dk-kbd">J</span>
+          </span>
+        </>
+      );
+  }
+}
+
+const nowInSeconds = () => Math.floor(Date.now() / 1000);
+
+/** Seconds since a reply started, counting while it is written. */
+function Elapsed({ since }: { since: number }) {
+  const [now, setNow] = useState(nowInSeconds);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(nowInSeconds()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return <em>{`${Math.max(0, now - since)}s`}</em>;
 }

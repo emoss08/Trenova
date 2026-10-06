@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
-import { Paintbrush } from "lucide-react";
+import { Brush01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import {
   Controller,
@@ -131,10 +131,9 @@ function ColorFieldInput<T extends FieldValues>({
             type="button"
             className={cn(
               fieldTriggerClass,
-        "w-full items-center justify-start gap-2 px-1.5 text-left font-normal [&_svg]:size-3 [&_svg]:shrink-0",
+              "w-full items-center justify-start gap-2 px-1.5 text-left font-normal [&_svg]:size-3 [&_svg]:shrink-0",
               disabled && "cursor-not-allowed opacity-50",
-              fieldState.invalid &&
-fieldInvalidClass,
+              fieldState.invalid && fieldInvalidClass,
               !value && "text-muted-foreground",
               className,
             )}
@@ -146,7 +145,7 @@ fieldInvalidClass,
                   style={{ background: value }}
                 />
               ) : (
-                <Paintbrush className="size-4" />
+                <Brush01Icon className="size-4" />
               )}
               <div className="mt-0.5 flex-1 truncate text-left">
                 {value ? value : t("Pick a color")}

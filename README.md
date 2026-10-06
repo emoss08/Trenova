@@ -52,7 +52,7 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 | API | Go 1.26, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL |
 | Database | PostgreSQL via [pgx](https://github.com/jackc/pgx), SQL-first migrations |
 | Search and cache | Meilisearch, Redis (JSON and Streams) |
-| Change data capture | [GTC](./services/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis |
+| Change data capture | [GTC](https://github.com/emoss08/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis (runs as the `ghcr.io/emoss08/gtc` image; routing in `deploy/gtc/sinks.yaml`) |
 | Web client | React 19, TypeScript, Vite, GraphQL |
 | Documents | Gotenberg (PDF), MinIO / S3-compatible object storage |
 | Deployment | Docker images on GHCR, Caddy, Docker Compose |
@@ -61,7 +61,6 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 
 ```text
 services/tms          Core TMS API (Go)
-services/gtc          PostgreSQL change-data-capture connector (Go)
 services/samsara-sim  Samsara telematics simulator for local development
 services/edi-partner-sim  EDI trading-partner simulator
 shared/               Shared Go packages (money, geo, dispatch planner, PC*MILER, AS2, ...)
@@ -113,12 +112,24 @@ Run `task list` to see every available task. Agent-facing engineering guides liv
 
 ## Self-hosting
 
+Trenova runs on a single Linux host with Docker Compose. The production stack in [`deploy/selfhost`](./deploy/selfhost) runs the released images with everything they need (PostgreSQL, Redis, MinIO, Meilisearch, Temporal, Gotenberg, change data capture) and Caddy for automatic HTTPS:
+
+```bash
+git clone --depth 1 --branch v0.9.17 https://github.com/emoss08/trenova.git
+cd trenova/deploy/selfhost
+./scripts/init-env.sh trenova.example.com   # writes .env with generated secrets
+docker compose up -d
+```
+
+Read the **[self-hosting guide](./docs/self-hosting/README.md)** first: it covers requirements, DNS and TLS, the first sign-in, upgrades, backups and troubleshooting.
+
 Container images are published to GitHub Container Registry on every release:
 
-- `ghcr.io/emoss08/trenova/tms`
-- `ghcr.io/emoss08/trenova/client`
+- `ghcr.io/emoss08/trenova/tms` (API, worker and CLI)
+- `ghcr.io/emoss08/trenova/client` (web app and driver portal behind Caddy)
+- `ghcr.io/emoss08/trenova/postgres` (PostgreSQL with PostGIS, pg_cron and pgvector)
 
-Deployment files (Dockerfiles, Caddyfile, observability) are in [`deploy/`](./deploy). See [trenova.app/self-hosted](https://trenova.app/self-hosted/) for the self-hosting overview. Trenova Cloud production servers use a separate private deployment repository that pins released image tags.
+The Dockerfiles and the Caddyfile are in [`deploy/`](./deploy). The product overview is at [trenova.app/self-hosted](https://trenova.app/self-hosted/).
 
 ## Contributing
 

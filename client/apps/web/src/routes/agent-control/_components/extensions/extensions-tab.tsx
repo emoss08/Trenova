@@ -16,7 +16,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { GlobeIcon, PuzzleIcon, SearchIcon } from "lucide-react";
+import { Globe02Icon, PuzzlePiece01Icon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { ExtensionCard } from "./extension-card";
 import {
@@ -100,7 +100,7 @@ export default function ExtensionsTab() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("Search extensions")}
           className="h-8"
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           aria-label={t("Search extensions")}
         />
         <Select
@@ -163,7 +163,7 @@ export default function ExtensionsTab() {
       ) : items.length === 0 ? (
         <div className="flex justify-center py-6">
           <EmptyState
-            icons={[PuzzleIcon, GlobeIcon]}
+            icons={[PuzzlePiece01Icon, Globe02Icon]}
             title={t("No extensions available")}
             description={t("This installation does not offer any extensions yet.")}
           />

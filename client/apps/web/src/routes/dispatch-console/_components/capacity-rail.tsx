@@ -7,7 +7,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, pluralize } from "@trenova/shared/lib/utils";
-import { GripVerticalIcon, SearchIcon } from "lucide-react";
+import { GripVerticalIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef } from "react";
 import { CapacityRailRowsSkeleton } from "./console-skeletons";
 import {
@@ -236,7 +236,7 @@ export function CapacityRail({
           value={search}
           onChange={(event) => setDriverSearch(event.target.value)}
           placeholder={t("Search driver, tractor, fleet")}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           className="h-8 pl-7 text-xs"
           aria-label={t("Search drivers by name, tractor code, or fleet")}
         />
@@ -263,9 +263,7 @@ export function CapacityRail({
       </header>
 
       <div className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <span className="text-muted-foreground text-xs font-semibold">
-          {t("Capacity")}
-        </span>
+        <span className="text-muted-foreground text-xs font-semibold">{t("Capacity")}</span>
         <span className="text-muted-foreground text-2xs tabular-nums">
           {t("{0} of {1}", visible.length, drivers.length)}
         </span>

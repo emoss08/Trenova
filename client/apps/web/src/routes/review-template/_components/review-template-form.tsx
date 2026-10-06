@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { ReviewTemplateFormValues } from "@trenova/shared/types/performance-review";
-import { InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { InfoCircleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
@@ -123,7 +123,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
         }
       >
         <Alert variant="default">
-          <InfoIcon className="size-4" />
+          <InfoCircleIcon className="size-4" />
           <AlertTitle>{t("Items are copied when a review starts")}</AlertTitle>
           <AlertDescription>
             {t(
@@ -147,7 +147,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
                     aria-label={`Remove item ${index + 1}`}
                     onClick={() => items.remove(index)}
                   >
-                    <Trash2Icon className="size-3.5" />
+                    <Trash01Icon className="size-3.5" />
                   </Button>
                 ) : null}
               </div>

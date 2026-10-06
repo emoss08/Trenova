@@ -14,9 +14,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -39,8 +41,10 @@ type Params struct {
 	Encryption *encryptionservice.Service
 	// Usage records every attempt. Optional so a router built without a
 	// database still answers; without it nothing is counted.
-	Usage   repositories.AIUsageRepository `optional:"true"`
-	Metrics *metrics.Registry              `optional:"true"`
+	Usage    repositories.AIUsageRepository         `optional:"true"`
+	Metrics  *metrics.Registry                      `optional:"true"`
+	Breakers repositories.ProviderBreakerRepository `optional:"true"`
+	Quota    serviceports.QuotaGuard                `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +56,7 @@ type Service struct {
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
 	usage      repositories.AIUsageRepository
+	quota      serviceports.QuotaGuard
 	genAI      *metrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
@@ -76,15 +81,18 @@ func New(p Params) serviceports.CompletionService {
 }
 
 func newService(p Params) *Service {
+	logger := p.Logger.Named("service.completion-router")
+
 	return &Service{
-		logger:        p.Logger.Named("service.completion-router"),
+		logger:        logger,
 		ai:            p.Config.GetAIConfig(),
 		repo:          p.Repo,
 		encryption:    p.Encryption,
 		usage:         p.Usage,
+		quota:         quotaservice.OrUnlimited(p.Quota),
 		genAI:         p.Metrics.GenAI(),
 		adapters:      modeladapter.NewRegistry(),
-		health:        newProviderHealth(nil),
+		health:        newProviderHealth(nil).share(p.Breakers, logger),
 		pause:         pauseFor,
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
@@ -97,6 +105,10 @@ func (s *Service) CompleteStructured(
 ) (*serviceports.StructuredCompletionResult, error) {
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
+	}
+
+	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
+		return nil, err
 	}
 
 	outcome, err := s.run(ctx, structuredRun(req))
@@ -114,6 +126,18 @@ func (s *Service) CompleteStructured(
 		ProviderID:      outcome.ProviderID,
 		ProviderKind:    outcome.ProviderKind,
 	}, nil
+}
+
+func (s *Service) assertWithinSpend(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
+		return nil
+	}
+
+	return quotaservice.Preflight(ctx, s.quota, &serviceports.QuotaRequest{
+		TenantInfo: tenantInfo,
+		Meter:      platformcatalog.MeterAISpendCents,
+		Quantity:   1,
+	})
 }
 
 type runRequest struct {
@@ -141,6 +165,7 @@ type runOutcome struct {
 	CacheWriteTokens int
 	FinishReason     string
 	Truncated        bool
+	ThinkingDropped  int
 	ProviderID       pulid.ID
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64
@@ -163,7 +188,7 @@ func (s *Service) candidatesFor(
 		}
 	}
 
-	ready, err := s.awake(usable)
+	ready, err := s.awake(ctx, usable)
 	if err != nil {
 		return nil, err
 	}
@@ -225,8 +250,11 @@ func (s *Service) usableFor(
 // awake drops the providers resting after repeated failures. When every one
 // of them is resting the caller is told so, with when the first is due back,
 // rather than sent through a list that will fail at each step.
-func (s *Service) awake(usable []*aiprovider.Provider) ([]*aiprovider.Provider, error) {
-	ready, resting, until := s.health.rested(usable)
+func (s *Service) awake(
+	ctx context.Context,
+	usable []*aiprovider.Provider,
+) ([]*aiprovider.Provider, error) {
+	ready, resting, until := s.health.rested(ctx, usable)
 	for _, provider := range resting {
 		s.logger.Debug("skipping provider resting after repeated failures",
 			zap.String("provider", provider.Name),
@@ -396,6 +424,7 @@ func (s *Service) attempt(
 		CacheWriteTokens: resp.CacheWriteTokens,
 		FinishReason:     finishReason(resp),
 		Truncated:        resp.Truncated,
+		ThinkingDropped:  resp.ThinkingDropped,
 		ProviderID:       provider.ID,
 		ProviderKind:     provider.Kind,
 	}, nil
@@ -470,6 +499,11 @@ const (
 	busyWaitBudget = 20 * time.Second
 	maxRetryWait   = 15 * time.Second
 )
+
+// busyAttempts is how many times a busy provider is asked in all.
+func (s *Service) busyAttempts() int {
+	return max(max(1, s.ai.GetMaxRetries()), maxBusyAttempts)
+}
 
 // retryWait decides whether one more attempt on the same provider is worth
 // it after err, and how long to wait first.

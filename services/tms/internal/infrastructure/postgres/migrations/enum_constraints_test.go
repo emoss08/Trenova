@@ -1,9 +1,6 @@
 package migrations
 
 import (
-	"io/fs"
-	"regexp"
-	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -19,9 +16,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/internal/core/domain/subscription"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/stretchr/testify/require"
 )
 
@@ -65,6 +67,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_ai_retraining_cycles_skip_reason",
 			values: stringsOf(aitraining.AllRetrainingSkipReasons()),
+		},
+		{
+			name:   "ck_ai_providers_reasoning_effort",
+			values: stringsOf(aiprovider.AllReasoningEfforts()),
 		},
 		{
 			name:   "ck_ai_retraining_cycles_structured_output_mode",
@@ -239,6 +245,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(conversation.AllMessageKinds()),
 		},
 		{
+			name:   "ck_assistant_turns_origin",
+			values: stringsOf(conversation.AllAssistantTurnOrigins()),
+		},
+		{
 			name:   "ck_agent_eval_cases_source",
 			values: stringsOf(agentquality.AllCaseSources()),
 		},
@@ -267,6 +277,22 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agent.AllMemoryScopes()),
 		},
 		{
+			name:   "chk_agent_memory_preferences_saving_mode",
+			values: stringsOf(agent.AllMemorySavingModes()),
+		},
+		{
+			name:   "ck_agent_reflections_subject_type",
+			values: stringsOf(agent.AllReflectionSubjects()),
+		},
+		{
+			name:   "ck_agent_reflections_status",
+			values: stringsOf(agent.AllReflectionStatuses()),
+		},
+		{
+			name:   "ck_agent_reflections_skip_reason",
+			values: stringsOf(agent.AllReflectionSkips()),
+		},
+		{
 			name:   "chk_agent_proposals_egress_class",
 			values: stringsOf(agent.EgressClasses()),
 		},
@@ -289,6 +315,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_ai_providers_embedding_input_style",
 			values: stringsOf(aiprovider.AllEmbeddingInputStyles()),
+		},
+		{
+			name:   "ck_ai_providers_thinking_style",
+			values: stringsOf(aiprovider.AllThinkingStyles()),
 		},
 		{
 			name:   "ck_ai_index_entries_source_type",
@@ -422,37 +452,35 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			name:   "ck_capture_items_suggestion_source",
 			values: stringsOf(capture.AllSuggestionSources()),
 		},
+		{
+			name:   "ck_organization_subscriptions_status",
+			values: stringsOf(subscription.AllStatuses()),
+		},
+		{
+			name:   "ck_organization_onboarding_status",
+			values: stringsOf(onboarding.AllStatuses()),
+		},
+		{
+			name:   "ck_organization_onboarding_operation_type",
+			values: stringsOf(tenant.AllOperationTypes()),
+		},
+		{
+			name:   "ck_carrier_capacity_postings_rate_method",
+			values: stringsOf(carriercapacity.RateMethods()),
+		},
+		{
+			name:   "ck_carrier_capacity_postings_source",
+			values: stringsOf(carriercapacity.Sources()),
+		},
+		{
+			name:   "ck_shipment_suggestion_decisions_decision",
+			values: stringsOf(shipmentsuggestion.Decisions()),
+		},
 	}
 
-	files := embeddedMigrationFiles(t)
-	slices.SortFunc(files, func(a, b migrationFile) int {
-		if a.version < b.version {
-			return -1
-		}
-		if a.version > b.version {
-			return 1
-		}
-		return 0
-	})
-
 	for _, constraint := range constraints {
-		adds := regexp.MustCompile(
-			`(?s)ADD CONSTRAINT "` + constraint.name + `"(.*?);|CONSTRAINT "` +
-				constraint.name + `" CHECK(.*?)\)\s*,?\s*\n`,
-		)
-
-		var latest string
-		for _, file := range files {
-			if file.direction != "up" {
-				continue
-			}
-			body, err := fs.ReadFile(sqlMigrations, file.name)
-			require.NoError(t, err)
-			if match := adds.FindSubmatch(body); match != nil {
-				latest = string(match[0])
-			}
-		}
-		require.NotEmpty(t, latest, "no migration adds %s", constraint.name)
+		latest, err := LatestConstraintDefinition(constraint.name)
+		require.NoError(t, err)
 
 		for _, value := range constraint.values {
 			require.Contains(t, latest, "'"+value+"'",

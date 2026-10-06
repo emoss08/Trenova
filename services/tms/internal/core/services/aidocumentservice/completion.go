@@ -7,7 +7,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -71,6 +73,10 @@ func (s *Service) runStructured(
 	call *structuredCall,
 	out any,
 ) (*serviceports.StructuredCompletionResult, error) {
+	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
+		return nil, err
+	}
+
 	request := call.request()
 	request.MaxTokens = s.cfg.GetExtractionMaxTokens()
 
@@ -121,4 +127,16 @@ func failureOutcome(err error) string {
 
 func (s *Service) recordAIUsage(operation string, success bool, outcome string) {
 	s.metrics.Document.RecordAIOutcome(operation, success, outcome)
+}
+
+func (s *Service) requireDocumentIntelligence(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityDocumentIntelligence,
+	)
 }

@@ -39,15 +39,15 @@ import type { ResolvedModeProfile, Shipment } from "@trenova/shared/types/shipme
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   BiohazardIcon,
   BoxesIcon,
-  CaravanIcon,
-  PencilIcon,
+  Edit02Icon,
   PlusIcon,
-  TrashIcon,
-  TriangleAlertIcon,
-  TruckIcon,
-} from "lucide-react";
+  TrailerIcon,
+  Trash01Icon,
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
@@ -424,7 +424,7 @@ export default function CommoditiesSection() {
                         className="size-7"
                         onClick={() => handleEdit(index)}
                       >
-                        <PencilIcon className="text-muted-foreground size-3.5" />
+                        <Edit02Icon className="text-muted-foreground size-3.5" />
                       </Button>
                       <Button
                         type="button"
@@ -433,12 +433,12 @@ export default function CommoditiesSection() {
                         className="size-7"
                         onClick={() => remove(index)}
                       >
-                        <TrashIcon className="text-muted-foreground size-3.5" />
+                        <Trash01Icon className="text-muted-foreground size-3.5" />
                       </Button>
                       {hasErrors && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <TriangleAlertIcon className="text-destructive size-3.5 cursor-help" />
+                            <AlertTriangleIcon className="text-destructive size-3.5 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" sideOffset={10}>
                             <div className="space-y-1">
@@ -503,7 +503,7 @@ export default function CommoditiesSection() {
             className="border-bg-sidebar-border max-h-[200px] rounded-lg border p-4"
             title={t("No commodities")}
             description={t("Shipment has no associated commodities")}
-            icons={[CaravanIcon, BoxesIcon, TruckIcon]}
+            icons={[TrailerIcon, BoxesIcon, Truck01Icon]}
             action={{
               label: t("Add first commodity"),
               onClick: handleAdd,
@@ -513,7 +513,7 @@ export default function CommoditiesSection() {
         )}
         {duplicateCommodityIds.size > 0 && (
           <p className="text-warning flex items-center gap-1 text-xs">
-            <TriangleAlertIcon className="size-3.5" />
+            <AlertTriangleIcon className="size-3.5" />
             {t("Duplicate commodities detected in this shipment.")}
           </p>
         )}

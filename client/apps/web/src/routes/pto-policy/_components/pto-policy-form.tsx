@@ -17,7 +17,7 @@ import {
   type PTOTerminationAction,
   type PTOYearBasis,
 } from "@trenova/shared/types/pto-policy";
-import { InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { InfoCircleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const POLICY_STATUS_OPTIONS = [
@@ -209,7 +209,7 @@ export function PTOPolicyForm({
         }
       >
         <Alert variant="default">
-          <InfoIcon className="size-4" />
+          <InfoCircleIcon className="size-4" />
           <AlertTitle>{t("Rule changes apply going forward")}</AlertTitle>
           <AlertDescription>
             {t(
@@ -303,7 +303,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             aria-label={`Remove rule ${index + 1}`}
             onClick={onRemove}
           >
-            <Trash2Icon className="size-3.5" />
+            <Trash01Icon className="size-3.5" />
           </Button>
         ) : null}
       </div>
@@ -458,7 +458,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
                   aria-label={`Remove tier ${tierIndex + 1} from rule ${index + 1}`}
                   onClick={() => tiersArray.remove(tierIndex)}
                 >
-                  <Trash2Icon className="size-3.5" />
+                  <Trash01Icon className="size-3.5" />
                 </Button>
               </div>
             ))}

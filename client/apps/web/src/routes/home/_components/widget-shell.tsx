@@ -2,7 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, InboxIcon, type LucideIcon } from "lucide-react";
+import { ArrowRightIcon, type IconComponent, Inbox01Icon } from "@trenova/shared/components/icons";
 import { createContext, useContext, type ReactNode } from "react";
 import { Link } from "react-router";
 
@@ -21,7 +21,7 @@ export function useWidgetEditing(): boolean {
 
 export type WidgetShellProps = {
   title: string;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   /** Rendered beside the title as a count or a short status. */
   badge?: ReactNode;
   /** Controls that belong to the widget itself, left of the edit controls. */
@@ -126,10 +126,10 @@ export function WidgetCount({
  * information; "No data" is an apology.
  */
 export function WidgetEmpty({
-  icon: Icon = InboxIcon,
+  icon: Icon = Inbox01Icon,
   children,
 }: {
-  icon?: LucideIcon;
+  icon?: IconComponent;
   children: ReactNode;
 }) {
   return (

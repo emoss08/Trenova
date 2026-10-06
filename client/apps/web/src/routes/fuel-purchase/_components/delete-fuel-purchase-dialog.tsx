@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { Trash2Icon } from "lucide-react";
+import { Trash01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 
 type DeleteFuelPurchaseDialogProps = {
@@ -55,7 +55,7 @@ export function DeleteFuelPurchaseDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-danger-subtle text-destructive">
-            <Trash2Icon />
+            <Trash01Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>{t("Delete this fuel purchase?")}</AlertDialogTitle>
           <AlertDialogDescription>

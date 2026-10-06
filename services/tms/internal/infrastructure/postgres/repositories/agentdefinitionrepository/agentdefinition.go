@@ -453,6 +453,8 @@ func (r *repository) Update(
 			Set(cols.AutonomyCeiling.Set(), entity.AutonomyCeiling).
 			Set(cols.DataAccessCeiling.Set(), entity.DataAccessCeiling).
 			Set(cols.Enabled.Set(), entity.Enabled).
+			Set(cols.DisabledAt.Set(), entity.DisabledAt).
+			Set(cols.DisabledByID.Set(), entity.DisabledByID).
 			Set(cols.ShadowMode.Set(), entity.ShadowMode).
 			Set(cols.DecisionTimeoutSeconds.Set(), entity.DecisionTimeoutSeconds).
 			Set(cols.TriggerMode.Set(), entity.TriggerMode).
@@ -469,6 +471,7 @@ func (r *repository) Update(
 			Set(cols.ToolDailyLimits.Set(), entity.ToolDailyLimits).
 			Set(cols.SimulationMode.Set(), entity.SimulationMode).
 			Set(cols.MemoryTokenBudget.Set(), entity.MemoryTokenBudget).
+			Set(cols.LearningOff.Set(), entity.LearningOff).
 			Set(cols.Icon.Set(), stringutils.NilIfEmpty(entity.Icon)).
 			Set(cols.Accent.Set(), stringutils.NilIfEmpty(entity.Accent)).
 			Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).

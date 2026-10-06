@@ -9,19 +9,26 @@ import (
 	"go.uber.org/fx"
 )
 
+const (
+	reasonCommunityMode   = "community_mode"
+	reasonFeatureNotFound = "feature_not_found"
+)
+
 type LocalEntitlementProviderParams struct {
 	fx.In
 
-	Registry *platformcatalog.Registry
+	Catalog platformcatalog.FeatureCatalog `optional:"true"`
 }
 
 type LocalEntitlementProvider struct {
-	registry *platformcatalog.Registry
+	catalog platformcatalog.FeatureCatalog
 }
+
+var _ services.EntitlementProvider = (*LocalEntitlementProvider)(nil)
 
 func NewLocalEntitlementProvider(p LocalEntitlementProviderParams) *LocalEntitlementProvider {
 	return &LocalEntitlementProvider{
-		registry: p.Registry,
+		catalog: p.Catalog,
 	}
 }
 
@@ -34,19 +41,21 @@ func (p *LocalEntitlementProvider) CheckFeature(
 		checkedAt = time.Now().Unix()
 	}
 
-	if _, ok := p.registry.GetFeature(req.FeatureKey); !ok {
-		return &services.FeatureCheckResult{
-			FeatureKey: req.FeatureKey,
-			Allowed:    false,
-			Reason:     "feature_not_found",
-			CheckedAt:  checkedAt,
-		}, nil
+	if p.catalog != nil {
+		if _, ok := p.catalog.GetFeature(req.FeatureKey); !ok {
+			return &services.FeatureCheckResult{
+				FeatureKey: req.FeatureKey,
+				Allowed:    false,
+				Reason:     reasonFeatureNotFound,
+				CheckedAt:  checkedAt,
+			}, nil
+		}
 	}
 
 	return &services.FeatureCheckResult{
 		FeatureKey: req.FeatureKey,
 		Allowed:    true,
-		Reason:     "community_mode",
+		Reason:     reasonCommunityMode,
 		CheckedAt:  checkedAt,
 	}, nil
 }
@@ -60,14 +69,17 @@ func (p *LocalEntitlementProvider) ListEntitlements(
 		checkedAt = time.Now().Unix()
 	}
 
-	features := p.registry.ListFeatures()
+	var features []platformcatalog.Feature
+	if p.catalog != nil {
+		features = p.catalog.ListFeatures()
+	}
+
 	results := make([]services.FeatureCheckResult, 0, len(features))
 	for i := range features {
-		feature := features[i]
 		results = append(results, services.FeatureCheckResult{
-			FeatureKey: feature.Key,
+			FeatureKey: features[i].Key,
 			Allowed:    true,
-			Reason:     "community_mode",
+			Reason:     reasonCommunityMode,
 			CheckedAt:  checkedAt,
 		})
 	}

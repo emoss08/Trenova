@@ -9,14 +9,27 @@ import {
   type CompiledFormatRules,
 } from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
-import type { DataTableBodyProps, RowAction, Row, Table } from "@trenova/shared/types/data-table";
+import type {
+  DataTableBodyProps,
+  DataTableExpansion,
+  DataTableGrouping,
+  RowAction,
+  Row,
+  Table,
+} from "@trenova/shared/types/data-table";
 import type { ColumnPinningState, RowData, RowSelectionState } from "@tanstack/react-table";
 import { flexRender } from "@tanstack/react-table";
-import { PencilIcon } from "lucide-react";
-import { memo, useCallback, useRef } from "react";
+import { Edit02Icon } from "@trenova/shared/components/icons";
+import { Fragment, memo, useCallback, useRef } from "react";
+import { buildGroupedBody } from "@/lib/data-table-grouping";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { DataTableCellEditor } from "./data-table-cell-editor";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
+import { DataTableExpandedRow } from "./data-table-expanded-row";
+import { DataTableGroupHeader } from "./data-table-group-header";
+
+const ROW_STAGGER_MS = 18;
+const ROW_STAGGER_CAP = 14;
 
 const INTERACTIVE_SELECTOR =
   'button, a, input, select, textarea, [role="button"], [role="checkbox"], [role="switch"]';
@@ -34,6 +47,8 @@ type DataTableRowProps<TData extends RowData> = {
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
   editingColumnId: string | null;
+  isCursor: boolean;
+  isExpanded: boolean;
 };
 
 function DataTableRowInner<TData extends RowData>({
@@ -46,6 +61,8 @@ function DataTableRowInner<TData extends RowData>({
   contextMenuActions,
   onRowClick,
   editingColumnId,
+  isCursor,
+  isExpanded,
 }: DataTableRowProps<TData>) {
   const { openPanelEdit, hasPanel, canOpenPanel } = useDataTable<TData, unknown>();
 
@@ -85,9 +102,14 @@ function DataTableRowInner<TData extends RowData>({
       data-row-index={rowIndex}
       tabIndex={-1}
       data-state={selected && "selected"}
+      data-cursor={isCursor || undefined}
+      data-expanded={isExpanded || undefined}
+      aria-expanded={isExpanded ? true : undefined}
       onClick={isClickable ? handleRowClick : undefined}
+      style={{ animationDelay: `${Math.min(rowIndex, ROW_STAGGER_CAP) * ROW_STAGGER_MS}ms` }}
       className={cn(
-"ui-inset-focus-ring group/row outline-brand -outline-offset-2 transition-colors data-[state=selected]:outline",
+        "ui-inset-focus-ring group/row outline-brand animate-row-rise -outline-offset-2 transition-colors data-[state=selected]:outline",
+        "data-cursor:bg-surface-hover data-expanded:bg-surface-selected data-expanded:[&>td:first-child]:shadow-[inset_2px_0_0_var(--brand)]",
         isClickable && "cursor-pointer",
         formatClass,
         table.options.meta?.getRowClassName?.(row),
@@ -139,7 +161,7 @@ function DataTableRowInner<TData extends RowData>({
                     }}
                     className="absolute top-1/2 right-1 -translate-y-1/2 rounded-sm border border-border bg-background p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover/cell:opacity-100"
                   >
-                    <PencilIcon className="size-3" />
+                    <Edit02Icon className="size-3" />
                   </button>
                 )}
               </>
@@ -170,9 +192,19 @@ export function DataTableBody<TData extends Record<string, any>>({
   contextMenuActions,
   onRowClick,
   getFormatClass,
+  grouping,
+  expansion,
+  cursorRowId = null,
+  isFirstPage = true,
+  isLastPage = true,
 }: DataTableBodyProps<TData> & {
   isLoading?: boolean;
   getFormatClass?: CompiledFormatRules<TData> | null;
+  grouping?: DataTableGrouping<TData>;
+  expansion?: DataTableExpansion<TData>;
+  cursorRowId?: string | null;
+  isFirstPage?: boolean;
+  isLastPage?: boolean;
 }) {
   const t = useT();
 
@@ -269,6 +301,24 @@ export function DataTableBody<TData extends Record<string, any>>({
     [table, enableSelection],
   );
 
+  const expandedRowId = expansion?.expandedRowId ?? null;
+  const colSpan = table.getVisibleLeafColumns().length;
+  const onExpandedRowIdChange = expansion?.onExpandedRowIdChange;
+  const collapseExpanded = useCallback(
+    () => onExpandedRowIdChange?.(null),
+    [onExpandedRowIdChange],
+  );
+  const bodyItems = grouping
+    ? buildGroupedBody({
+        rows,
+        groups: grouping.groups,
+        getGroupKey: (row) => grouping.getGroupKey(row.original),
+        collapsedKeys: grouping.collapsedKeys,
+        isFirstPage,
+        isLastPage,
+      })
+    : rows.map((row, index) => ({ kind: "row" as const, row, index }));
+
   return (
     <TableBody
       ref={bodyRef}
@@ -281,24 +331,42 @@ export function DataTableBody<TData extends Record<string, any>>({
         scrollMarginTop: "calc(var(--top-bar-height) + 40px)",
       }}
     >
-      {rows.length ? (
-        rows.map((row, index) => (
-          <DataTableRow
-            key={row.id}
-            row={row}
-            rowIndex={index}
-            selected={row.getIsSelected()}
-            isLastRow={index === rows.length - 1}
-            columnVisibility={columnVisibility}
-            columnOrder={columnOrder}
-            columnPinning={columnPinning}
-            formatClass={getFormatClass?.(row)}
-            table={table}
-            contextMenuActions={contextMenuActions}
-            onRowClick={onRowClick}
-            editingColumnId={cellEditing?.rowId === row.id ? cellEditing.columnId : null}
-          />
-        ))
+      {rows.length || (grouping && grouping.collapsedKeys.length > 0 && !isLoading) ? (
+        bodyItems.map((item) =>
+          item.kind === "group" ? (
+            <DataTableGroupHeader
+              key={`group:${item.group.key}`}
+              group={item.group}
+              collapsed={item.collapsed}
+              colSpan={colSpan}
+              onToggle={grouping!.onToggleGroup}
+            />
+          ) : (
+            <Fragment key={item.row.id}>
+              <DataTableRow
+                row={item.row}
+                rowIndex={item.index}
+                selected={item.row.getIsSelected()}
+                isLastRow={item.index === rows.length - 1 && expandedRowId !== item.row.id}
+                columnVisibility={columnVisibility}
+                columnOrder={columnOrder}
+                columnPinning={columnPinning}
+                formatClass={getFormatClass?.(item.row)}
+                table={table}
+                contextMenuActions={contextMenuActions}
+                onRowClick={onRowClick}
+                editingColumnId={cellEditing?.rowId === item.row.id ? cellEditing.columnId : null}
+                isCursor={cursorRowId === item.row.id}
+                isExpanded={expandedRowId === item.row.id}
+              />
+              {expansion && expandedRowId === item.row.id ? (
+                <DataTableExpandedRow rowId={item.row.id} colSpan={colSpan}>
+                  {expansion.renderExpandedRow(item.row, { collapse: collapseExpanded })}
+                </DataTableExpandedRow>
+              ) : null}
+            </Fragment>
+          ),
+        )
       ) : isLoading ? (
         <TableRow>
           <TableCell colSpan={columns.length} className="h-24 rounded-b-md border-b text-center">

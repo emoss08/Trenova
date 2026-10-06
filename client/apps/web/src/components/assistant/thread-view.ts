@@ -19,8 +19,12 @@ export type ToolExchange = {
 export type ThreadEntry =
   | { kind: "user"; message: AssistantMessage }
   | { kind: "decision"; message: AssistantMessage }
+  | { kind: "handoff"; message: AssistantMessage }
   | { kind: "declined"; message: AssistantMessage }
   | { kind: "refusal"; message: AssistantMessage }
+  | { kind: "schedule"; message: AssistantMessage }
+  /** Where the conversation was compacted: everything before it is summarized for the agent. */
+  | { kind: "compaction"; message: AssistantMessage }
   | { kind: "assistant"; message: AssistantMessage; tools: ToolExchange[] };
 
 /**
@@ -74,6 +78,9 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
       case "decision":
         entries.push({ kind: "decision", message });
         break;
+      case "handoff":
+        entries.push({ kind: "handoff", message });
+        break;
       case "user":
         entries.push({ kind: "user", message });
         break;
@@ -82,6 +89,12 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
         break;
       case "refusal":
         entries.push({ kind: "refusal", message });
+        break;
+      case "schedule":
+        entries.push({ kind: "schedule", message });
+        break;
+      case "compaction":
+        entries.push({ kind: "compaction", message });
         break;
       case "assistant": {
         const tools: ToolExchange[] = [...orphans];

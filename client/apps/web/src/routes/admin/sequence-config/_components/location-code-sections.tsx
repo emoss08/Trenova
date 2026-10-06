@@ -17,7 +17,13 @@ import {
   type LocationCodeComponent,
   type SequenceConfigDocument,
 } from "@/types/sequence-config";
-import { Building2, MailIcon, MapIcon, TagIcon, type LucideIcon } from "lucide-react";
+import {
+  Building07Icon,
+  type IconComponent,
+  Mail01Icon,
+  Map01Icon,
+  Tag01Icon,
+} from "@trenova/shared/components/icons";
 import { Controller, useFormContext } from "react-hook-form";
 import { casingOptions, separatorOptions } from "./sequence-config-constants";
 
@@ -28,11 +34,11 @@ const componentLabels: Record<LocationCodeComponent, string> = {
   postal_code: "Postal Code",
 };
 
-const componentIcons: Record<LocationCodeComponent, LucideIcon> = {
-  name: TagIcon,
-  city: Building2,
-  state: MapIcon,
-  postal_code: MailIcon,
+const componentIcons: Record<LocationCodeComponent, IconComponent> = {
+  name: Tag01Icon,
+  city: Building07Icon,
+  state: Map01Icon,
+  postal_code: Mail01Icon,
 };
 
 const componentDescriptions: Record<LocationCodeComponent, string> = {

@@ -2,6 +2,7 @@ package migrator_test
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -46,13 +47,39 @@ func seedLegacyImportChats(ctx context.Context, t *testing.T, db *bun.DB) {
 	}
 }
 
+func selectAtVersion[T any](
+	ctx context.Context,
+	t *testing.T,
+	db *bun.DB,
+	dest any,
+) *bun.SelectQuery {
+	t.Helper()
+
+	table := db.Table(reflect.TypeFor[T]())
+	var present []string
+	require.NoError(t, db.NewRaw("SELECT name FROM pragma_table_info(?)", table.Name).
+		Scan(ctx, &present))
+
+	exists := make(map[string]struct{}, len(present))
+	for _, name := range present {
+		exists[name] = struct{}{}
+	}
+
+	missing := make([]string, 0)
+	for _, field := range table.Fields {
+		if _, ok := exists[field.Name]; !ok {
+			missing = append(missing, field.Name)
+		}
+	}
+
+	return db.NewSelect().Model(dest).ExcludeColumn(missing...)
+}
+
 func carriedMessages(ctx context.Context, t *testing.T, db *bun.DB) []conversation.Message {
 	t.Helper()
 
 	var messages []conversation.Message
-	require.NoError(t, db.NewSelect().
-		Model(&messages).
-		ExcludeColumn("tool_verdict").
+	require.NoError(t, selectAtVersion[conversation.Message](ctx, t, db, &messages).
 		Order("thread_id", "sequence").
 		Scan(ctx))
 
@@ -68,8 +95,7 @@ func TestSQLiteCarryImportConversationsMovesActiveTurnsPerPerson(t *testing.T) {
 	runMigrationUp(ctx, t, migrator, carryImportVersion)
 
 	var created agentdefinition.Definition
-	require.NoError(t, db.NewSelect().
-		Model(&created).
+	require.NoError(t, selectAtVersion[agentdefinition.Definition](ctx, t, db, &created).
 		Where("organization_id = ? AND system_key = ?", "org_A", agentdefinition.SystemKeyImportAssistant).
 		Scan(ctx))
 	expected, ok := agentdefinition.NewPageAgent(
@@ -94,7 +120,10 @@ func TestSQLiteCarryImportConversationsMovesActiveTurnsPerPerson(t *testing.T) {
 	assert.Contains(t, created.Instructions, "set_required_field")
 
 	var threads []conversation.Thread
-	require.NoError(t, db.NewSelect().Model(&threads).Order("id").Scan(ctx))
+	require.NoError(
+		t,
+		selectAtVersion[conversation.Thread](ctx, t, db, &threads).Order("id").Scan(ctx),
+	)
 	require.Len(t, threads, 3, "one thread per person in each active conversation")
 
 	byUser := make(map[string]conversation.Thread, len(threads))

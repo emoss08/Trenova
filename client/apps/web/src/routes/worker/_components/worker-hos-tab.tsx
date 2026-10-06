@@ -34,16 +34,16 @@ import { cn, metersToMiles, pluralize, toTitleCase } from "@trenova/shared/lib/u
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNowStrict, startOfDay, subDays } from "date-fns";
 import {
-  CableIcon,
+  AlertOctagonIcon,
   CalendarRangeIcon,
   ChevronDownIcon,
   ClipboardListIcon,
   ListXIcon,
-  OctagonAlertIcon,
-  ShieldCheckIcon,
-  TruckIcon,
-  UserRoundXIcon,
-} from "lucide-react";
+  PlugIcon,
+  ShieldTickIcon,
+  Truck01Icon,
+  UserX01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 
@@ -224,9 +224,7 @@ function HosClockCard({
         tone={clockTone(clamped, baseTone)}
         aria-label={`${label} time remaining`}
       >
-        <span className={KPI_VALUE_LG_CLASS}>
-          {formatClockDurationMs(clamped)}
-        </span>
+        <span className={KPI_VALUE_LG_CLASS}>{formatClockDurationMs(clamped)}</span>
       </RingGauge>
       <div className="text-center">
         <p className="text-sm font-medium">{label}</p>
@@ -263,7 +261,7 @@ function HosErrorState({ message, onRetry }: { message: string; onRetry: () => v
 
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
-      <OctagonAlertIcon className="text-destructive mx-auto size-5" />
+      <AlertOctagonIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{message}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
         {t("Try again")}
@@ -306,7 +304,7 @@ function ActiveViolationAlert({ state }: { state: WorkerHosState }) {
 
   return (
     <Alert variant="destructive">
-      <OctagonAlertIcon />
+      <AlertOctagonIcon />
       <AlertTitle>{t("Active HOS violation")}</AlertTitle>
       <AlertDescription>{parts.join(". ")}.</AlertDescription>
     </Alert>
@@ -363,7 +361,7 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
         />
       ) : violationsQuery.data.length === 0 ? (
         <HosEmptyState
-          icon={<ShieldCheckIcon className="mx-auto size-5 text-success-foreground" />}
+          icon={<ShieldTickIcon className="mx-auto size-5 text-success-foreground" />}
           title={t("No violations in the last 30 days")}
           description={t("This driver has a clean hours-of-service record for the past month.")}
         />
@@ -639,7 +637,9 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
   const certifiedBadge = dailyLog.isCertified ? (
     <Badge variant="success">{t("Certified")}</Badge>
   ) : (
-    <Badge variant="neutral" appearance="outline">{t("Uncertified")}</Badge>
+    <Badge variant="neutral" appearance="outline">
+      {t("Uncertified")}
+    </Badge>
   );
 
   return (
@@ -971,7 +971,7 @@ function HosLiveState({
         <Badge variant={statusMeta.variant}>{t(statusMeta.label)}</Badge>
         {state.currentVehicleId ? (
           <Badge variant="neutral" appearance="outline" className="gap-1">
-            <TruckIcon className="size-3" />
+            <Truck01Icon className="size-3" />
             <span className="font-mono">{state.currentVehicleId}</span>
           </Badge>
         ) : null}
@@ -1057,7 +1057,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
   if (!telematicsEnabled) {
     return (
       <HosEmptyState
-        icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
+        icon={<PlugIcon className="text-muted-foreground mx-auto size-6" />}
         title={t("Samsara telematics is not connected")}
         description={t(
           "Connect your Samsara account to stream live hours-of-service clocks, duty status, and violation history for this driver.",
@@ -1092,7 +1092,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
   if (!hosQuery.data) {
     return (
       <HosEmptyState
-        icon={<UserRoundXIcon className="text-muted-foreground mx-auto size-6" />}
+        icon={<UserX01Icon className="text-muted-foreground mx-auto size-6" />}
         title={t("Not linked to a Samsara driver")}
         description={t(
           "Hours-of-service data appears once this worker is matched to a Samsara driver. Run Worker Sync from the Samsara integration to link them.",

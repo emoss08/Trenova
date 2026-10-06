@@ -5,30 +5,30 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ArchiveXIcon,
-  CheckCheckIcon,
-  InboxIcon,
-  LayersIcon,
-  LoaderIcon,
-  MonitorIcon,
+  CheckDoubleIcon,
+  type IconComponent,
+  Inbox01Icon,
+  LayersThree01Icon,
+  Loading02Icon,
+  Monitor01Icon,
   PrinterIcon,
-  ScanLineIcon,
-  type LucideIcon,
-} from "lucide-react";
+  ScanIcon,
+} from "@trenova/shared/components/icons";
 import { useId } from "react";
 import { Link } from "react-router";
 import { INTAKE_VIEWS, viewLabel, type IntakeFilter, type IntakeView } from "./queue-filter";
 
-const VIEW_ICON: Record<IntakeView, LucideIcon> = {
-  waiting: InboxIcon,
-  working: LoaderIcon,
-  filed: CheckCheckIcon,
+const VIEW_ICON: Record<IntakeView, IconComponent> = {
+  waiting: Inbox01Icon,
+  working: Loading02Icon,
+  filed: CheckDoubleIcon,
   closed: ArchiveXIcon,
-  all: LayersIcon,
+  all: LayersThree01Icon,
 };
 
-const SOURCES: { value: CaptureSource | null; icon: LucideIcon }[] = [
-  { value: null, icon: LayersIcon },
-  { value: "Scan", icon: ScanLineIcon },
+const SOURCES: { value: CaptureSource | null; icon: IconComponent }[] = [
+  { value: null, icon: LayersThree01Icon },
+  { value: "Scan", icon: ScanIcon },
   { value: "Print", icon: PrinterIcon },
 ];
 
@@ -99,7 +99,7 @@ export function IntakeRail({
           to="/capture/devices"
           className="ui-focus-ring text-foreground-muted hover:bg-surface-hover hover:text-foreground flex h-8 items-center gap-2.5 rounded-md px-2 text-sm"
         >
-          <MonitorIcon className="size-4 shrink-0" aria-hidden />
+          <Monitor01Icon className="size-4 shrink-0" aria-hidden />
           {t("My scanners")}
         </Link>
       </div>

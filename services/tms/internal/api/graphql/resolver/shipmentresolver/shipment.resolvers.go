@@ -713,6 +713,8 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 			ActivityWindowEnd:       base.Int64Value(input.ActivityWindowEnd),
 			BillingTransferEligible: base.BoolValue(input.BillingTransferEligible),
 			IncludeCustomer:         base.BoolValue(input.IncludeCustomer),
+			QuickFilters:            base.QuickFilterSpecsFromGraphQL(input.QuickFilters),
+			Timezone:                base.StringValue(input.Timezone),
 		},
 	})
 	if err != nil {
@@ -1136,4 +1138,25 @@ func (r *ShipmentMoveJurisdictionMileResolver) FerryDistance(ctx context.Context
 
 func (r *ShipmentMoveJurisdictionMileResolver) Source(ctx context.Context, obj *shipmentdomain.ShipmentMoveJurisdictionMile) (string, error) {
 	return obj.Source.String(), nil
+}
+
+func (r *ShipmentResolver) Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error) {
+	if obj == nil || obj.ID == "" {
+		return nil, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("Shipment ETA loader is not configured")
+	}
+
+	eta, err := loadersForRequest.ShipmentEtaByID.Load(ctx, obj.ID)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return shipmentEtaToModel(eta), nil
 }

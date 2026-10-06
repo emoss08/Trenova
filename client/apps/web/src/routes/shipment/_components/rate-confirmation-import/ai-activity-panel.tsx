@@ -1,5 +1,5 @@
 import { PageAssistant } from "@/components/assistant/page-assistant";
-import type { PageBinding, PageRequest } from "@/components/assistant/message-thread";
+import type { PageBinding, PageRequest } from "@/components/assistant/use-thread-model";
 import { apiService } from "@/services/api";
 import type { PageDraftEdit } from "@/types/page-draft";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/collapsible";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ChevronRightIcon, HistoryIcon } from "lucide-react";
+import { ChevronRightIcon, ClockRewindIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -196,7 +196,7 @@ function EarlierConversationNotice({ conversation }: { conversation: EarlierConv
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="text-2xs text-muted-foreground hover:text-foreground ui-focus-ring flex items-center gap-1 rounded-sm">
         <ChevronRightIcon className={cn("size-3 transition-transform", open && "rotate-90")} />
-        <HistoryIcon className="size-3" />
+        <ClockRewindIcon className="size-3" />
         {conversation.reason === "superseded"
           ? t("Earlier conversation, ended by a re-extraction")
           : t("Earlier conversation, finished")}

@@ -1,46 +1,33 @@
-import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
-import { conversationPath } from "@/lib/conversation-path";
-import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useAttentionSummary } from "@/hooks/use-attention";
+import { usePermission } from "@/hooks/use-permission";
+import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
-import { useAssistantStore } from "@/stores/assistant-store";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { commandJ } from "./artifacts/desk-workspace-state";
+import { NO_PENDING_LOOKUPS, pendingLookupIds } from "./artifacts/pending-lookups";
 import { useDeskStore } from "@/stores/desk-store";
-import type { AssistantThread } from "@/types/assistant";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@trenova/shared/components/ui/alert-dialog";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+  LOOKUP_ARTIFACT_KINDS,
+  type AssistantArtifactEvent,
+  type AssistantThread,
+} from "@/types/assistant";
+import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  ChevronsUpDownIcon,
-  DownloadIcon,
-  PanelRightIcon,
-  PinIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
-import { ArtifactsPane } from "./artifacts/artifacts-pane";
-import { DeskDirectory } from "./desk-directory";
-import { DeskColumns, DeskShell } from "./desk-shell";
-import { DeskTitleField } from "./desk-title-field";
-import { DeskWorkspaceEmpty } from "./desk-workspace-empty";
+import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
+import { useStartConversation } from "@/components/assistant/use-start-conversation";
+import { DeskRail, type DeskPlace } from "./desk-rail";
+import { DeskSearchPalette } from "./desk-search";
+import { DeskSettingsDialog, deskSettingsClasses } from "./desk-settings";
+import { DeskTopBar } from "./desk-topbar";
 
 export type DeskContextValue = {
   threads: AssistantThread[];
@@ -56,18 +43,47 @@ export type DeskContextValue = {
   isLoading: boolean;
   isStarting: boolean;
   /** Opens a conversation, optionally with the question that prompted it. */
-  start: (agentId: string, question?: string) => void;
+  start: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
   remove: (thread: AssistantThread) => void;
   togglePin: (thread: AssistantThread) => void;
   /** Told while a turn is running, so the room can light up for it. */
   setWorking: (working: boolean) => void;
-  /** Told each artifact a streaming turn announces, so the workspace opens on it. */
-  noteLiveArtifact: (artifactId: string) => void;
+  working: boolean;
+  /** Told what a streaming turn has produced so far, so the workspace opens on the newest and follows the set. */
+  noteLiveArtifacts: (artifacts: readonly AssistantArtifactEvent[]) => void;
+  liveArtifacts: LiveArtifacts;
+  /**
+   * The lookups the running turn has saved, which the server drops unless the
+   * finished reply points to them. Left out of the workspace and its counts
+   * until the artifacts are read again after the turn, so none blinks in and
+   * out of the list while the reply is written.
+   */
+  pendingLookups: ReadonlySet<string>;
   /** Opens an artifact the transcript referred to. */
   openArtifact: (threadId: string, artifactId: string) => void;
+  /** Whether the workspace beside the open conversation is showing. */
+  workspaceOpen: boolean;
+  setWorkspaceOpen: (open: boolean) => void;
+  /** How many artifacts the open conversation holds, for the workspace button. */
+  setArtifactCount: (count: number) => void;
+  openSearch: () => void;
+  openSettings: () => void;
 };
 
 const DeskContext = createContext<DeskContextValue | null>(null);
+
+/** What a streaming turn has produced so far, and how many times that has changed. */
+export type LiveArtifacts = {
+  /** The artifacts the turn still holds, newest last. */
+  ids: readonly string[];
+  /** Bumped on every change to the set, so a reader re-reads it even when the newest id stays. */
+  revision: number;
+};
+
+const NO_LIVE_ARTIFACTS: LiveArtifacts = { ids: [], revision: 0 };
+
+/** How long a finished turn's lookups stay hidden if the artifacts are not read again. */
+const LOOKUP_SETTLE_MS = 15_000;
 
 export function useDesk(): DeskContextValue {
   const value = useContext(DeskContext);
@@ -78,33 +94,82 @@ export function useDesk(): DeskContextValue {
   return value;
 }
 
+function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
+  if (activeThreadId !== null) {
+    return "thread";
+  }
+  if (pathname.startsWith("/desk/decisions")) {
+    return "decisions";
+  }
+  if (pathname.startsWith("/desk/watchtower")) {
+    return "watchtower";
+  }
+  if (pathname.startsWith("/desk/memory")) {
+    return "memory";
+  }
+  if (agentPageId(pathname) !== null) {
+    return "agent";
+  }
+
+  return "today";
+}
+
+/** The agent whose capabilities page is open, from `/desk/agents/:agentId`. */
+function agentPageId(pathname: string): string | null {
+  const match = /^\/desk\/agents\/([^/]+)/u.exec(pathname);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 /**
- * The Desk itself: one room, the whole window, a conversation on the left
- * and what it produced on the right.
+ * The Desk itself: one room, the whole window — the rail down the left and
+ * the page beside it under one strip that says where you are.
  *
  * The frame owns everything that outlives a single page inside it — the
- * conversations, the agents, the delete confirmation, and the state of the
- * workspace — because all three pages of the Desk share them and none of
- * them should reload when you move between them.
- *
- * It also owns the header, which means the header can say what the open
- * conversation is without the conversation having to draw a title bar of
- * its own. There is one strip at the top of the room, not one per column.
+ * conversations, the agents, and the state of the workspace — because all
+ * the pages of the Desk share them and none of them should reload when you
+ * move between them.
  */
 export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }) {
   const t = useT();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
-  const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
+  const { pathname } = useLocation();
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
   const togglePane = useDeskStore((state) => state.togglePane);
   const setActiveArtifact = useDeskStore((state) => state.setActiveArtifact);
+  const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
+  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
+  const { data: attention } = useAttentionSummary();
+  const { data: watchtowerCounts } = useQuery({
+    ...queries.watchtower.counts(),
+    enabled: canWatch,
+  });
 
-  const [deleting, setDeleting] = useState<AssistantThread | null>(null);
   const [working, setWorking] = useState(false);
-  const [liveArtifactIds, setLiveArtifactIds] = useState<string[]>([]);
+  const [liveArtifacts, setLiveArtifacts] = useState<LiveArtifacts>(NO_LIVE_ARTIFACTS);
+  const [pendingLookups, setPendingLookups] = useState<ReadonlySet<string>>(NO_PENDING_LOOKUPS);
+  const [artifactCount, setArtifactCount] = useState(0);
+  const [newArtifact, setNewArtifact] = useState(false);
+  const [searching, setSearching] = useState(false);
+  // On a phone the rail slides over the page instead of sitting beside it,
+  // and folds away again once a place in it is chosen.
+  const [railOpen, setRailOpen] = useState(false);
+  const [railPath, setRailPath] = useState(pathname);
+  useEffect(() => {
+    if (!railOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRailOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [railOpen]);
+  if (railPath !== pathname) {
+    setRailPath(pathname);
+    setRailOpen(false);
+  }
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settings = useDeskSettingsStore((state) => state.settings);
 
   const threadsQuery = useQuery(queries.assistant.threads());
   const agentsQuery = useQuery(queries.assistant.myAgents());
@@ -132,21 +197,39 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const activeAgent = activeThread
     ? (agentsById.get(activeThread.agentDefinitionId) ?? null)
     : null;
-  const accent = activeAgent ? AGENT_ACCENTS[resolveAgentIdentity(activeAgent).accent] : undefined;
+  const place = placeFor(pathname, activeThreadId);
+  const pageAgentId = agentPageId(pathname);
+  const pageAgent = pageAgentId !== null ? (agentsById.get(pageAgentId) ?? null) : null;
 
-  // Leaving a conversation leaves its turn behind with it: a light still on
-  // for work that finished in a thread you are no longer looking at is a lie
-  // about the room. Adjusted during render rather than in an effect, so the
-  // first frame of a new conversation is already dark.
+  // Leaving a conversation leaves its turn behind with it. Adjusted during
+  // render rather than in an effect, so the first frame of a new conversation
+  // is already dark.
   const [seenThreadId, setSeenThreadId] = useState(activeThreadId);
   if (seenThreadId !== activeThreadId) {
     setSeenThreadId(activeThreadId);
     setWorking(false);
-    setLiveArtifactIds([]);
+    setLiveArtifacts(NO_LIVE_ARTIFACTS);
+    setPendingLookups(NO_PENDING_LOOKUPS);
+    setNewArtifact(false);
+    setArtifactCount(0);
   }
 
-  // An unlisted conversation is cached on its own, so a rename or a pin has
-  // to refresh that copy as well as the list.
+  // Coming into the Desk, someone who asked to pick up where they left off
+  // lands in their latest conversation. Only on the way in: the Today link
+  // still leads to Today afterwards.
+  const [entered, setEntered] = useState(activeThreadId !== null || pathname !== "/desk");
+  if (!entered && threadsQuery.isSuccess) {
+    setEntered(true);
+    const latest = threads.reduce<AssistantThread | null>(
+      (best, thread) =>
+        best === null || thread.lastMessageAt > best.lastMessageAt ? thread : best,
+      null,
+    );
+    if (settings.start === "last" && latest !== null) {
+      void navigate(conversationPath(latest.id), { replace: true });
+    }
+  }
+
   const refreshThreads = useCallback(
     () =>
       Promise.all([
@@ -156,33 +239,27 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     [queryClient],
   );
 
-  const startMutation = useApiMutation({
-    mutationFn: ({ agentId }: { agentId: string; question?: string }) =>
-      apiService.assistantService.startThread(agentId, { origin: "Desk" }),
-    onSuccess: async (thread, { agentId, question }) => {
-      setLastAgentId(agentId);
-      // Handed over rather than sent here: the conversation is the only
-      // place that knows the thread is empty and that history has loaded,
-      // which is what keeps a reload from asking the same question twice.
-      if (question !== undefined && question !== "") {
-        setOpeningQuestion({ threadId: thread.id, text: question });
-      }
-      await refreshThreads();
-      void navigate(conversationPath(thread.id));
-    },
-    resourceName: "Conversation",
+  const startConversation = useStartConversation({
+    origin: "Desk",
+    onStarted: (thread) => void navigate(conversationPath(thread.id)),
   });
 
   const deleteMutation = useApiMutation({
     mutationFn: (id: string) => apiService.assistantService.deleteThread(id),
     onSuccess: async (_result, id) => {
       toast.success(t("Conversation deleted"));
-      setDeleting(null);
       await refreshThreads();
       if (activeThreadId === id) {
         void navigate("/desk");
       }
     },
+    resourceName: "Conversation",
+  });
+
+  const renameMutation = useApiMutation({
+    mutationFn: ({ thread, title }: { thread: AssistantThread; title: string }) =>
+      apiService.assistantService.updateThread(thread.id, { title }),
+    onSuccess: refreshThreads,
     resourceName: "Conversation",
   });
 
@@ -193,30 +270,128 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     resourceName: "Conversation",
   });
 
-  const renameMutation = useApiMutation({
-    mutationFn: ({ id, title }: { id: string; title: string }) =>
-      apiService.assistantService.updateThread(id, { title }),
+  // Opening a conversation reads it, and so does a reply landing while it is
+  // open; the rail's dot for an unseen reply clears either way.
+  const readMutation = useApiMutation({
+    mutationFn: (id: string) => apiService.assistantService.markThreadRead(id),
     onSuccess: refreshThreads,
     resourceName: "Conversation",
   });
+  const unreadHere = place === "thread" && activeThread?.attention?.unread === true;
+  const readThreadId = unreadHere ? activeThread.id : null;
+  const { mutate: markRead, isPending: marking } = readMutation;
+  useEffect(() => {
+    if (readThreadId !== null && !marking) {
+      markRead(readThreadId);
+    }
+  }, [markRead, marking, readThreadId]);
 
   // A turn that produces something opens the workspace on it, even if it was
   // folded away: the person asked for the thing it holds.
-  const noteLiveArtifact = useCallback(
-    (artifactId: string) => {
-      setLiveArtifactIds((ids) => (ids.includes(artifactId) ? ids : [...ids, artifactId]));
-      setPane("open");
+  // Unless the person would rather open it themselves, in which case the
+  // top bar only marks that something arrived.
+  // A lookup's table or card is not among them: it is kept only if the
+  // reply points to it, and it opens from the reply where it is named.
+  const noteLiveArtifacts = useCallback(
+    (artifacts: readonly AssistantArtifactEvent[]) => {
+      setPendingLookups((current) => pendingLookupIds(artifacts, current));
+      // Nor is a move to another page: the app follows it, and the reply
+      // names the page as a link.
+      const made = artifacts.filter(
+        (artifact) => !LOOKUP_ARTIFACT_KINDS.has(artifact.kind) && artifact.kind !== "navigation",
+      );
+      setLiveArtifacts((live) => ({
+        ids: made.map((artifact) => artifact.id),
+        revision: live.revision + 1,
+      }));
+      if (made.length === 0) {
+        return;
+      }
+      const { autoOpen, artNotify } = useDeskSettingsStore.getState().settings;
+      if (autoOpen === "on") {
+        setPane("open");
+      }
+      setNewArtifact(artNotify === "on");
     },
     [setPane],
   );
+
+  // Once the turn is over the server has dropped the lookups the reply did
+  // not point to; the next read of the artifacts after that holds only the
+  // kept ones, and from then on they show like any other.
+  useEffect(() => {
+    if (working || pendingLookups.size === 0 || activeThreadId === null) {
+      return;
+    }
+    const cache = queryClient.getQueryCache();
+    const queryHash = hashKey(queries.assistant.artifacts(activeThreadId).queryKey);
+    const seen = cache.get(queryHash)?.state.dataUpdateCount ?? 0;
+    const settle = () => setPendingLookups(NO_PENDING_LOOKUPS);
+    const timer = window.setTimeout(settle, LOOKUP_SETTLE_MS);
+    const unsubscribe = cache.subscribe((event) => {
+      const { query } = event;
+      if (
+        query.queryHash === queryHash &&
+        query.state.dataUpdateCount > seen &&
+        query.state.fetchStatus === "idle" &&
+        !query.state.isInvalidated
+      ) {
+        settle();
+      }
+    });
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [activeThreadId, pendingLookups, queryClient, working]);
 
   const openArtifact = useCallback(
     (threadId: string, artifactId: string) => {
       setActiveArtifact(threadId, artifactId);
       setPane("open");
+      setNewArtifact(false);
     },
     [setActiveArtifact, setPane],
   );
+
+  const workspaceOpen = activeThread !== null && pane === "open";
+  const setWorkspaceOpen = useCallback(
+    (open: boolean) => {
+      setPane(open ? "open" : "closed");
+      if (open) {
+        setNewArtifact(false);
+      }
+    },
+    [setPane],
+  );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || !(event.metaKey || event.ctrlKey) || event.altKey) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === "k") {
+        event.preventDefault();
+        setSearching((open) => !open);
+      } else if (key === "n" && !event.shiftKey) {
+        event.preventDefault();
+        void navigate("/desk");
+      } else if (key === "\\" && activeThread !== null) {
+        event.preventDefault();
+        togglePane();
+      } else if (key === "j" && activeThread !== null) {
+        event.preventDefault();
+        const { pane: current, browsing, setBrowsing } = useDeskStore.getState();
+        const next = commandJ({ open: current === "open", browsing });
+        setBrowsing(next.browsing);
+        setPane(next.open ? "open" : "closed");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeThread, navigate, setPane, togglePane]);
 
   const value = useMemo<DeskContextValue>(
     () => ({
@@ -226,13 +401,21 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsById,
       agentsUnavailable: agentsQuery.isError,
       isLoading: threadsQuery.isLoading || agentsQuery.isLoading || unlistedQuery.isLoading,
-      isStarting: startMutation.isPending,
-      start: (agentId, question) => startMutation.mutate({ agentId, question }),
-      remove: setDeleting,
+      isStarting: startConversation.isStarting,
+      start: startConversation.start,
+      remove: (thread) => deleteMutation.mutate(thread.id),
       togglePin: (thread) => pinMutation.mutate(thread),
       setWorking,
-      noteLiveArtifact,
+      working,
+      noteLiveArtifacts,
+      liveArtifacts,
+      pendingLookups,
       openArtifact,
+      workspaceOpen,
+      setWorkspaceOpen,
+      setArtifactCount,
+      openSearch: () => setSearching(true),
+      openSettings: () => setSettingsOpen(true),
     }),
     [
       activeThread,
@@ -240,222 +423,94 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsById,
       agentsQuery.isError,
       agentsQuery.isLoading,
-      noteLiveArtifact,
+      deleteMutation,
+      liveArtifacts,
+      noteLiveArtifacts,
       openArtifact,
+      pendingLookups,
       pinMutation,
-      startMutation,
+      setWorkspaceOpen,
+      startConversation.isStarting,
+      startConversation.start,
       threads,
       threadsQuery.isLoading,
       unlistedQuery.isLoading,
+      working,
+      workspaceOpen,
     ],
   );
 
-  const workspaceOpen = activeThread !== null && pane === "open";
-
-  // The one shortcut the room has. A person reading a wide table wants the
-  // conversation out of the way and then wants it back a sentence later, and
-  // reaching for a button in the corner each time is the sort of friction
-  // that makes a workspace feel like a web page.
-  useEffect(() => {
-    if (activeThread === null) {
-      return;
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "\\" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        togglePane();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeThread, togglePane]);
+  const pendingHere = (activeThread?.attention?.pendingDecisions ?? 0) > 0;
 
   return (
     <DeskContext.Provider value={value}>
-      <DeskShell
-        accent={accent}
-        working={working}
-        lead={<AgentTile agent={activeAgent} size="md" />}
-        title={
-          activeThread ? (
-            <DeskTitleField
-              key={activeThread.id}
-              title={activeThread.title}
-              placeholder={
-                activeAgent
-                  ? t("Conversation with {0}", activeAgent.name)
-                  : t("Untitled conversation")
-              }
-              onCommit={(title) => renameMutation.mutate({ id: activeThread.id, title })}
-            />
-          ) : (
-            <span className="truncate px-2 text-sm font-medium">{t("Desk")}</span>
-          )
-        }
-        actions={
-          <>
-            <DeskSwitcher
-              threads={threads}
-              agents={agents}
-              activeThreadId={activeThreadId}
-              isLoading={threadsQuery.isLoading || agentsQuery.isLoading}
-              isStarting={startMutation.isPending}
-              onStart={(agentId) => startMutation.mutate({ agentId })}
-              onDelete={setDeleting}
-              onTogglePin={(thread) => pinMutation.mutate(thread)}
-            />
-
-            {activeThread && (
-              <>
-                <span aria-hidden className="bg-desk-hairline mx-1 h-5 w-px" />
-                <HeaderAction
-                  label={activeThread.pinned ? t("Unpin conversation") : t("Pin conversation")}
-                  pressed={activeThread.pinned}
-                  onClick={() => pinMutation.mutate(activeThread)}
-                >
-                  <PinIcon className="size-4" />
-                </HeaderAction>
-                <HeaderAction
-                  label={t("Download transcript")}
-                  onClick={() => downloadAssistantTranscript(activeThread.id)}
-                >
-                  <DownloadIcon className="size-4" />
-                </HeaderAction>
-                <HeaderAction
-                  label={t("Delete conversation")}
-                  destructive
-                  onClick={() => setDeleting(activeThread)}
-                >
-                  <Trash2Icon className="size-4" />
-                </HeaderAction>
-                <HeaderAction
-                  label={pane === "open" ? t("Hide the workspace") : t("Show the workspace")}
-                  pressed={pane === "open"}
-                  hint="⌘\"
-                  onClick={togglePane}
-                >
-                  <PanelRightIcon className="size-4" />
-                </HeaderAction>
-              </>
-            )}
-          </>
-        }
+      <div
+        className={cn("dsk", deskSettingsClasses(settings), railOpen && "dk-rail-open")}
+        data-searching={searching || undefined}
+        data-settings={settingsOpen || undefined}
       >
-        <DeskColumns
-          workspaceOpen={workspaceOpen}
-          conversation={<Outlet />}
-          workspace={
-            activeThread ? (
-              <ArtifactsPane
-                key={activeThread.id}
-                threadId={activeThread.id}
-                liveArtifactIds={liveArtifactIds}
-                onClose={() => setPane("closed")}
-                className="h-full"
-              />
-            ) : (
-              <DeskWorkspaceEmpty />
-            )
-          }
+        <DeskRail
+          place={place}
+          threads={threads}
+          agentsById={agentsById}
+          activeThreadId={activeThreadId}
+          canWatch={canWatch}
+          canDecide={canDecide}
+          watchtowerCount={watchtowerCounts?.unresolved ?? 0}
+          decisionsCount={attention?.agentDecisions ?? 0}
+          decisionsWaitHere={pendingHere}
+          onSearch={() => {
+            setRailOpen(false);
+            setSearching(true);
+          }}
+          onSettings={() => {
+            setRailOpen(false);
+            setSettingsOpen(true);
+          }}
+          onTogglePin={(thread) => pinMutation.mutate(thread)}
+          onDelete={(thread) => deleteMutation.mutate(thread.id)}
+          onRename={(thread, title) => renameMutation.mutate({ thread, title })}
         />
-      </DeskShell>
-
-      <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <Trash2Icon />
-            </AlertDialogMedia>
-            <AlertDialogTitle>{t("Delete this conversation?")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                "“{0}” and everything the assistant looked up in it will be removed. Proposals that were already approved are not undone.",
-                deleting?.title || t("Untitled conversation"),
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("Keep it")}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
-              disabled={deleteMutation.isPending}
-            >
-              {t("Delete conversation")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </DeskContext.Provider>
-  );
-}
-
-/** The directory, behind the one control that opens it. */
-function DeskSwitcher(props: Omit<Parameters<typeof DeskDirectory>[0], "onNavigate">) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground h-8 gap-1.5 px-2"
-          >
-            <span className="text-xs">{t("Conversations")}</span>
-            <ChevronsUpDownIcon className="size-3.5" />
-          </Button>
-        }
-      />
-      <PopoverContent align="end" sideOffset={8} className="ui-lift-float w-88 p-0">
-        <DeskDirectory {...props} onNavigate={() => setOpen(false)} />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function HeaderAction({
-  label,
-  hint,
-  pressed,
-  destructive = false,
-  onClick,
-  children,
-}: {
-  label: string;
-  /** The keystroke that does the same thing, shown in the tooltip. */
-  hint?: string;
-  pressed?: boolean;
-  destructive?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={label}
-            aria-pressed={pressed}
-            className={cn(
-              pressed ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-              destructive && "hover:text-destructive",
-            )}
-            onClick={onClick}
+        {railOpen && (
+          <button
+            type="button"
+            className="dk-rail-scrim"
+            aria-label={t("Close the menu")}
+            onClick={() => setRailOpen(false)}
           />
-        }
-      >
-        {children}
-      </TooltipTrigger>
-      <TooltipContent side="bottom" className="flex items-center gap-2">
-        {label}
-        {hint && <kbd className="text-2xs opacity-70">{hint}</kbd>}
-      </TooltipContent>
-    </Tooltip>
+        )}
+        <div className="dk-mainc">
+          <DeskTopBar
+            onOpenRail={() => setRailOpen(true)}
+            place={place}
+            thread={activeThread}
+            agent={place === "agent" ? pageAgent : activeAgent}
+            agents={agents}
+            onOpenAgent={() => {
+              if (activeThread && activeAgent) {
+                void navigate(
+                  `/desk/agents/${encodeURIComponent(activeAgent.id)}?from=${encodeURIComponent(activeThread.id)}`,
+                );
+              }
+            }}
+            workspaceOpen={workspaceOpen}
+            artifactCount={artifactCount}
+            newArtifact={newArtifact}
+            pending={pendingHere}
+            onToggleWorkspace={() => setWorkspaceOpen(!workspaceOpen)}
+            onTogglePin={() => activeThread && pinMutation.mutate(activeThread)}
+            onDownload={() => activeThread && downloadAssistantTranscript(activeThread.id)}
+          />
+          <Outlet />
+          {/* Over the main column only, as designed: the sidebar stays in view. */}
+          {searching && (
+            <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />
+          )}
+          {settingsOpen && (
+            <DeskSettingsDialog agents={agents} onClose={() => setSettingsOpen(false)} />
+          )}
+        </div>
+      </div>
+    </DeskContext.Provider>
   );
 }

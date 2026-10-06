@@ -452,3 +452,92 @@ func TestClampMaxTokens_KeepsAValueInTheSupportedRange(t *testing.T) {
 	assert.Equal(t, 2048, aiprovider.ClampMaxTokens(2048))
 	assert.Equal(t, 200000, aiprovider.ClampMaxTokens(400000))
 }
+
+// OpenAI's own platform takes request fields that an OpenAI-compatible server
+// may refuse, so it is told apart from them by the host it is reached at, not
+// by the protocol it speaks.
+func TestProvider_KnowsWhenItIsOpenAIsOwnPlatform(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		kind    aiprovider.Kind
+		baseURL string
+		host    string
+		openAI  bool
+	}{
+		{aiprovider.KindOpenAIResponses, "", "api.openai.com", true},
+		{aiprovider.KindOpenAIResponses, "https://api.openai.com/", "api.openai.com", true},
+		{aiprovider.KindOpenAIResponses, "https://bedrock-mantle.us-east-1.api.aws", "bedrock-mantle.us-east-1.api.aws", false},
+		{aiprovider.KindOpenAIChat, "https://api.openai.com", "api.openai.com", false},
+		{aiprovider.KindOpenAIChat, "http://10.0.0.5:8000/v1", "10.0.0.5", false},
+		{aiprovider.KindOpenAIResponses, "::not a url", "", false},
+	}
+	for _, tc := range cases {
+		provider := &aiprovider.Provider{Kind: tc.kind, BaseURL: tc.baseURL}
+		assert.Equal(t, tc.host, provider.Host(), tc.baseURL)
+		assert.Equal(t, tc.openAI, provider.OnOpenAIPlatform(), "%s %s", tc.kind, tc.baseURL)
+	}
+}
+
+func TestValidate_RejectsAnUnknownThinkingStyle(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	p.ThinkingStyle = "Telepathy"
+
+	assert.True(t, fieldErrors(t, p)["thinkingStyle"])
+}
+
+func TestValidate_DefaultsTheThinkingStyleToAuto(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	multiErr := errortypes.NewMultiError()
+	p.Validate(multiErr)
+
+	require.False(t, multiErr.HasErrors(), "expected no errors, got %v", multiErr.Errors)
+	assert.Equal(t, aiprovider.ThinkingStyleAuto, p.ThinkingStyle)
+}
+
+// Only the Anthropic protocol has two ways of asking for thinking; a style on
+// any other kind would be saved and silently ignored.
+func TestValidate_RejectsAThinkingStyleOnAnotherProtocol(t *testing.T) {
+	t.Parallel()
+
+	for _, style := range []aiprovider.ThinkingStyle{
+		aiprovider.ThinkingStyleEffort,
+		aiprovider.ThinkingStyleBudget,
+	} {
+		p := validProvider()
+		p.Kind = aiprovider.KindOpenAIResponses
+		p.Model = "gpt-6"
+		p.ThinkingStyle = style
+
+		assert.True(t, fieldErrors(t, p)["thinkingStyle"], style)
+	}
+
+	p := validProvider()
+	p.ThinkingStyle = aiprovider.ThinkingStyleEffort
+	assert.False(t, fieldErrors(t, p)["thinkingStyle"])
+}
+
+// A configured window is optional, but one too small to hold a turn's own
+// prompt, or one no model has, is a typo the form should catch.
+func TestValidate_ContextWindowMustBeOneAModelCouldHave(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	assert.False(t, fieldErrors(t, p)["contextWindow"], "left unset, the id is read")
+
+	tiny := 512
+	p.ContextWindowTokens = &tiny
+	assert.True(t, fieldErrors(t, p)["contextWindow"])
+
+	huge := 50_000_000
+	p.ContextWindowTokens = &huge
+	assert.True(t, fieldErrors(t, p)["contextWindow"])
+
+	served := 65_536
+	p.ContextWindowTokens = &served
+	assert.False(t, fieldErrors(t, p)["contextWindow"])
+}

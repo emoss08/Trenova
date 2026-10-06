@@ -6,7 +6,7 @@ import type { ReportRun } from "@/lib/graphql/reports";
 import { formatFileSize } from "@trenova/shared/lib/utils";
 import { REPORT_RUN_STATUS_LABELS, REPORT_RUN_TRIGGER_LABELS } from "@/types/report";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { CircleAlertIcon, ZapIcon } from "lucide-react";
+import { AlertCircleIcon, ZapIcon } from "@trenova/shared/components/icons";
 import { ReportFormatBadge, ReportRunStatusBadge } from "./report-badges";
 
 const runStatusChoices = Object.entries(REPORT_RUN_STATUS_LABELS).map(([value, label]) => ({
@@ -32,7 +32,7 @@ function StatusCell({ run }: { run: ReportRun }) {
       {run.error && (
         <Tooltip>
           <TooltipTrigger>
-            <CircleAlertIcon className="text-destructive size-4" />
+            <AlertCircleIcon className="text-destructive size-4" />
           </TooltipTrigger>
           <TooltipContent className="max-w-sm">
             <p className="font-medium">{run.error.code}</p>

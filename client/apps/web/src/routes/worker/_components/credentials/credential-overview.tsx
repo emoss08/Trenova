@@ -4,7 +4,7 @@ import { InfoPopover } from "@/components/info-popover";
 import type { WorkerCredentialSummary } from "@/lib/graphql/worker-credential";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type CredentialOverviewProps = {

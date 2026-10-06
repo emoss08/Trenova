@@ -10,7 +10,7 @@ import {
   type EDIDocumentSourceField,
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usePreviewEDIDocumentMutation } from "../hooks/use-edi-document-mutations";
@@ -73,7 +73,7 @@ export default function TemplatePreviewPanel() {
             isLoading={previewMutation.isPending}
             disabled={!canPreview}
           >
-            <RefreshCwIcon className="size-4" />
+            <RefreshCw02Icon className="size-4" />
             {t("Preview")}
           </Button>
         </div>

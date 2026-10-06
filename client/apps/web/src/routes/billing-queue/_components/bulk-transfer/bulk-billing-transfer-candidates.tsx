@@ -17,7 +17,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { SearchIcon } from "lucide-react";
+import { SearchLgIcon } from "@trenova/shared/components/icons";
 
 type StatusFilterValue = "all" | BillingTransferCandidateStatus;
 
@@ -77,7 +77,7 @@ export function BulkBillingTransferCandidates({
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder={t("Search PRO, BOL...")}
-          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+          leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
           value={filters.query}
           onChange={(event) => onFiltersChange({ ...filters, query: event.target.value })}
           className="h-8 text-xs"

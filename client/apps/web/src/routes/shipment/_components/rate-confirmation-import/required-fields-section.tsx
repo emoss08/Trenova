@@ -8,7 +8,7 @@ import {
 } from "@/components/autocomplete-fields";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { equipmentClassSchema } from "@/types/equipment-type";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import type { Control } from "react-hook-form";
 import type { RequiredFieldsForm } from "./types";
 

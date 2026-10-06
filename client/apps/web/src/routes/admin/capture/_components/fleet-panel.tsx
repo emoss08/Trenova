@@ -19,7 +19,7 @@ import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { SearchIcon, XIcon } from "lucide-react";
+import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -129,7 +129,7 @@ export function FleetPanel() {
             placeholder={t("Search computer, user or Windows account")}
             aria-label={t("Search computer, user or Windows account")}
             className="w-full sm:max-w-sm"
-            leftElement={<SearchIcon className="text-foreground-subtle size-3.5" />}
+            leftElement={<SearchLgIcon className="text-foreground-subtle size-3.5" />}
             rightElement={
               search === "" ? undefined : (
                 <Button
@@ -138,7 +138,7 @@ export function FleetPanel() {
                   aria-label={t("Clear the search")}
                   onClick={() => setSearch("")}
                 >
-                  <XIcon className="size-3.5" />
+                  <XCloseIcon className="size-3.5" />
                 </Button>
               )
             }

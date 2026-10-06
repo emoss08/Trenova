@@ -10,7 +10,12 @@ import {
 } from "@trenova/shared/lib/portal";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CameraIcon, IdCardIcon, PaperclipIcon, XIcon } from "lucide-react";
+import {
+  Camera01Icon,
+  IdCardIcon,
+  PaperclipIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
@@ -67,7 +72,7 @@ export function ProfileDocuments() {
             className="h-8"
             onClick={() => fileInputRef.current?.click()}
           >
-            <CameraIcon className="size-3.5" />
+            <Camera01Icon className="size-3.5" />
             {t("Add")}
           </Button>
         ) : null}
@@ -95,7 +100,7 @@ export function ProfileDocuments() {
                 setDocumentTypeId(null);
               }}
             >
-              <XIcon className="size-4" />
+              <XCloseIcon className="size-4" />
             </button>
           </div>
           <p className="text-xs text-muted-foreground">{formatFileSize(pendingFile.size)}</p>

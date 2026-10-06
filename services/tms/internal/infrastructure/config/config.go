@@ -434,10 +434,11 @@ const (
 )
 
 type EncryptionConfig struct {
-	Mode       string       `mapstructure:"mode"       validate:"omitempty,oneof=envelope disabled"`
-	KeyManager string       `mapstructure:"keyManager" validate:"omitempty,oneof=local gcp-autokey disabled"`
-	Key        string       `mapstructure:"key"        validate:"omitempty,min=32"`
-	GCPKMS     GCPKMSConfig `mapstructure:"gcpKms"`
+	Mode                             string       `mapstructure:"mode"                              validate:"omitempty,oneof=envelope disabled"`
+	KeyManager                       string       `mapstructure:"keyManager"                        validate:"omitempty,oneof=local gcp-autokey disabled"`
+	Key                              string       `mapstructure:"key"                               validate:"omitempty,min=32"`
+	AllowLocalKeyManagerInProduction bool         `mapstructure:"allowLocalKeyManagerInProduction"`
+	GCPKMS                           GCPKMSConfig `mapstructure:"gcpKms"`
 }
 
 type GCPKMSConfig struct {
@@ -1600,6 +1601,41 @@ func (c *RendererConfig) GetMaxPDFBytes() int64 {
 	return c.MaxPDFBytes
 }
 
+type PDFReaderConfig struct {
+	MaxInstances    int           `mapstructure:"maxInstances"    validate:"min=0,max=64"`
+	MemoryLimitMB   int           `mapstructure:"memoryLimitMb"   validate:"min=0,max=4096"`
+	AcquireTimeout  time.Duration `mapstructure:"acquireTimeout"`
+	MaxRenderPixels int           `mapstructure:"maxRenderPixels" validate:"min=0"`
+}
+
+func (c *PDFReaderConfig) GetMaxInstances() int {
+	if c.MaxInstances == 0 {
+		return 4
+	}
+	return c.MaxInstances
+}
+
+func (c *PDFReaderConfig) GetMemoryLimitMB() int {
+	if c.MemoryLimitMB == 0 {
+		return 1024
+	}
+	return c.MemoryLimitMB
+}
+
+func (c *PDFReaderConfig) GetAcquireTimeout() time.Duration {
+	if c.AcquireTimeout == 0 {
+		return time.Minute
+	}
+	return c.AcquireTimeout
+}
+
+func (c *PDFReaderConfig) GetMaxRenderPixels() int {
+	if c.MaxRenderPixels == 0 {
+		return 25_000_000
+	}
+	return c.MaxRenderPixels
+}
+
 type AppConfig struct {
 	Name               string `mapstructure:"name"               validate:"required,min=1,max=100"`
 	Env                string `mapstructure:"env"                validate:"required,oneof=development staging production test"`
@@ -1684,14 +1720,13 @@ func (c *UpdateConfig) GetGitHubRepo() string {
 }
 
 type PlatformConfig struct {
-	Mode                  PlatformMode               `mapstructure:"mode"                  validate:"omitempty,oneof=community self_hosted development cloud enterprise"`
-	InstanceID            string                     `mapstructure:"instanceId"`
-	ControlPlane          PlatformControlPlaneConfig `mapstructure:"controlPlane"`
-	ReferenceDataStewards []string                   `mapstructure:"referenceDataStewards"`
+	Mode                  PlatformMode `mapstructure:"mode"                  validate:"omitempty,oneof=community self_hosted development cloud enterprise"`
+	InstanceID            string       `mapstructure:"instanceId"`
+	ReferenceDataStewards []string     `mapstructure:"referenceDataStewards"`
 }
 
-func (c *PlatformConfig) IsCloudBacked() bool {
-	return c.ControlPlane.Enabled
+func (c *PlatformConfig) IsCloud() bool {
+	return c.GetMode() == PlatformModeCloud
 }
 
 func (c *PlatformConfig) GetMode() PlatformMode {
@@ -1710,98 +1745,8 @@ func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 	return c.GetMode() == PlatformModeDevelopment
 }
 
-const defaultControlPlaneMaxProvisioningBodyBytes int64 = 1 << 20
-
-type GraphQLAccessMode string
-
-const (
-	GraphQLAccessModeDisabled GraphQLAccessMode = "disabled"
-	GraphQLAccessModeObserve  GraphQLAccessMode = "observe"
-	GraphQLAccessModeEnforce  GraphQLAccessMode = "enforce"
-)
-
-type PlatformControlPlaneConfig struct {
-	Enabled                  bool              `mapstructure:"enabled"`
-	Endpoint                 string            `mapstructure:"endpoint"                 validate:"omitempty,url,no_trailing_slash"`
-	APIKey                   string            `mapstructure:"apiKey"`
-	Timeout                  time.Duration     `mapstructure:"timeout"`
-	HeartbeatInterval        time.Duration     `mapstructure:"heartbeatInterval"`
-	TenantSyncInterval       time.Duration     `mapstructure:"tenantSyncInterval"`
-	FailOpenOnError          bool              `mapstructure:"failOpenOnError"`
-	MaxProvisioningBodyBytes int64             `mapstructure:"maxProvisioningBodyBytes" validate:"omitempty,min=1024"`
-	GraphQLAccessMode        GraphQLAccessMode `mapstructure:"graphqlAccessMode"        validate:"omitempty,oneof=disabled observe enforce"`
-	DisableLegacyGrants      bool              `mapstructure:"disableLegacyGrants"`
-}
-
-func (c *PlatformControlPlaneConfig) HonorLegacyGrants() bool {
-	return !c.DisableLegacyGrants
-}
-
-func (c *PlatformControlPlaneConfig) GetGraphQLAccessMode() GraphQLAccessMode {
-	switch c.GraphQLAccessMode {
-	case GraphQLAccessModeDisabled, GraphQLAccessModeObserve, GraphQLAccessModeEnforce:
-		return c.GraphQLAccessMode
-	default:
-		return GraphQLAccessModeDisabled
-	}
-}
-
-func (c *PlatformControlPlaneConfig) GetMaxProvisioningBodyBytes() int64 {
-	if c.MaxProvisioningBodyBytes <= 0 {
-		return defaultControlPlaneMaxProvisioningBodyBytes
-	}
-
-	return c.MaxProvisioningBodyBytes
-}
-
-func (c *PlatformControlPlaneConfig) GetTimeout() time.Duration {
-	if c.Timeout <= 0 {
-		return 5 * time.Second
-	}
-
-	return c.Timeout
-}
-
-func (c *PlatformControlPlaneConfig) GetHeartbeatInterval() time.Duration {
-	if c.HeartbeatInterval <= 0 {
-		return 5 * time.Minute
-	}
-
-	return c.HeartbeatInterval
-}
-
-func (c *PlatformControlPlaneConfig) GetTenantSyncInterval() time.Duration {
-	if c.TenantSyncInterval <= 0 {
-		return time.Hour
-	}
-
-	return c.TenantSyncInterval
-}
-
 type SystemConfig struct {
-	SystemUserPassword string             `mapstructure:"systemUserPassword" validate:"required,min=1,max=100"`
-	NetworkPulse       NetworkPulseConfig `mapstructure:"networkPulse"`
-}
-
-// NetworkPulseConfig gates the instance-wide figures the sign-in screen shows beside
-// the credential receipt. It is disabled by default and must be turned on deliberately:
-// the endpoint answers before any session exists, so on an internet-facing deployment
-// anyone who can load the login page can read the shipment volume and service level of
-// every organization on the instance.
-type NetworkPulseConfig struct {
-	Enabled bool `mapstructure:"enabled"`
-	// CacheTTL bounds how often an anonymous caller can make the database aggregate.
-	// Zero falls back to DefaultNetworkPulseCacheTTL rather than to no caching.
-	CacheTTL time.Duration `mapstructure:"cacheTtl" validate:"omitempty,min=0"`
-}
-
-const DefaultNetworkPulseCacheTTL = time.Minute
-
-func (c NetworkPulseConfig) GetCacheTTL() time.Duration {
-	if c.CacheTTL <= 0 {
-		return DefaultNetworkPulseCacheTTL
-	}
-	return c.CacheTTL
+	SystemUserPassword string `mapstructure:"systemUserPassword" validate:"required,min=1,max=100"`
 }
 
 type Config struct {
@@ -1820,17 +1765,19 @@ type Config struct {
 	AI                  AIConfig                  `mapstructure:"ai"`
 	Audit               AuditConfig               `mapstructure:"audit"`
 	AIAudit             AIAuditConfig             `mapstructure:"aiAudit"`
-	AIRetraining        AIRetrainingConfig        `mapstructure:"aiRetraining"`
 	Update              UpdateConfig              `mapstructure:"update"`
 	Twilio              TwilioConfig              `mapstructure:"twilio"`
 	Platform            PlatformConfig            `mapstructure:"platform"`
 	Reporting           ReportingConfig           `mapstructure:"reporting"`
 	Renderer            RendererConfig            `mapstructure:"renderer"`
+	PDFReader           PDFReaderConfig           `mapstructure:"pdfReader"`
 	Portal              PortalConfig              `mapstructure:"portal"`
 	Push                PushConfig                `mapstructure:"push"`
 	Tendering           TenderingConfig           `mapstructure:"tendering"`
 	CarrierIntelligence CarrierIntelligenceConfig `mapstructure:"carrierIntelligence"`
 	Accounting          AccountingConfig          `mapstructure:"accounting"`
+
+	extensions map[string]any
 }
 
 type AccountingConfig struct {
@@ -1984,6 +1931,8 @@ func (c *Config) GetPlatformConfig() *PlatformConfig { return &c.Platform }
 func (c *Config) GetReportingConfig() *ReportingConfig { return &c.Reporting }
 
 func (c *Config) GetRendererConfig() *RendererConfig { return &c.Renderer }
+
+func (c *Config) GetPDFReaderConfig() *PDFReaderConfig { return &c.PDFReader }
 
 func (c *Config) GetDSN(password string) string {
 	if c.Database.GetDialect().IsSQLite() {

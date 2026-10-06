@@ -12,7 +12,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
-import { MinusIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
+import { MinusIcon, PlusIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { ExpressionDiff } from "@/components/formula-editor/expression-diff";
 
 type VersionCompareDialogProps = {
@@ -63,7 +63,7 @@ export function VersionCompareDialog({
             </div>
           ) : data?.changeCount === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <RefreshCwIcon className="text-muted-foreground mb-4 size-12" />
+              <RefreshCw02Icon className="text-muted-foreground mb-4 size-12" />
               <p className="text-muted-foreground">{t("No changes between versions")}</p>
             </div>
           ) : (
@@ -94,7 +94,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
       case "deleted":
         return <MinusIcon className="size-4 text-danger-foreground" />;
       case "updated":
-        return <RefreshCwIcon className="size-4 text-info-foreground" />;
+        return <RefreshCw02Icon className="size-4 text-info-foreground" />;
       default:
         return null;
     }

@@ -18,7 +18,7 @@ import {
   type ReportBandSpec,
   type ReportColumnSpec,
 } from "@/types/report";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
 type BandEditorProps = {
@@ -154,7 +154,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
                 onClick={() => removeEdge(position)}
                 aria-label={t("Remove range")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             </div>
           ))}

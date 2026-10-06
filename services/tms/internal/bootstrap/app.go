@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
@@ -16,19 +17,22 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
-	"github.com/emoss08/trenova/internal/core/services/aitrainingservice"
+	"github.com/emoss08/trenova/internal/core/services/aitraininghistoryservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/retrievalquery"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
@@ -41,10 +45,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aiauditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aicorrectionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/aitrainingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/briefingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/capturejobs"
@@ -52,6 +56,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/completionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/conversationschedulejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/dispatchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/distancemileagejobs"
@@ -74,6 +80,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/recurringshipmentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reflectionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/retrievaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
@@ -92,12 +99,9 @@ import (
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicorrectionrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aitrainingrepository"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
-	"github.com/emoss08/trenova/internal/infrastructure/retrainingalert"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
 	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
 	"go.uber.org/fx"
@@ -108,7 +112,13 @@ type App struct {
 }
 
 func Options() fx.Option {
+	return OptionsFor(edition.Current())
+}
+
+//nolint:funlen // the module list is the application graph
+func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
+		config.SectionsOption(e.ConfigSections...),
 		config.Module,
 		config.Hooks(),
 		infrastructure.ObservabilityModule,
@@ -118,6 +128,8 @@ func Options() fx.Option {
 		infrastructure.DatabaseModule,
 		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
+		planservice.Module,
+		quotaservice.Module,
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
 		fx.Provide(integrationservice.New),
@@ -141,6 +153,7 @@ func Options() fx.Option {
 		aiauditjobs.Module,
 		billingjobs.Module,
 		billingtransferjobs.Module,
+		billingqueuejobs.Module,
 		detentionjobs.Module,
 		ptojobs.Module,
 		distancemileagejobs.Module,
@@ -161,6 +174,7 @@ func Options() fx.Option {
 		telematicsjobs.Module,
 		shipmentjobs.Module,
 		agentjobs.Module,
+		reflectionjobs.Module,
 		agentqualityjobs.Module,
 		agentflow.Module,
 		assistantjobs.Module,
@@ -183,6 +197,8 @@ func Options() fx.Option {
 		assistantservice.Module,
 		assistantturnservice.Module,
 		assistantfollowupservice.Module,
+		conversationscheduleservice.Module,
+		conversationschedulejobs.Module,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,
@@ -197,11 +213,10 @@ func Options() fx.Option {
 		aicorrectionjobs.Module,
 		extractionevaljobs.Module,
 		extractionshadowjobs.Module,
-		aitrainingservice.Module,
-		aitrainingjobs.Module,
-		retrainingalert.Module,
+		fx.Provide(aitraininghistoryservice.NewEmpty),
 		fx.Provide(aidocumentservice.NewContract),
 		aifeedbackjobs.Module,
+		decisioncommitjobs.Module,
 		retrievaljobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
@@ -213,6 +228,7 @@ func Options() fx.Option {
 		reportingresultcache.Module,
 		fx.Provide(reportingexecutor.New),
 		analyticsservice.Module,
+		e.Option(),
 	)
 }
 
@@ -226,6 +242,10 @@ func NewApp(opts ...fx.Option) *App {
 }
 
 func APIOptions() fx.Option {
+	return APIOptionsFor(edition.Current())
+}
+
+func APIOptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
 		api.HelpersModule,
 		api.GraphQLModule,
@@ -243,39 +263,15 @@ func APIOptions() fx.Option {
 		modulesinfra.RealtimePublisherModule,
 		modulesinfra.RealtimeGatewayModule,
 		modulesinfra.MeilisearchClientModule,
-	)
-}
-
-func TrainingExportCommandOptions() fx.Option {
-	return fx.Options(
-		fx.NopLogger,
-		config.Module,
-		infrastructure.ObservabilityModule,
-		infrastructure.DatabaseModule,
-		modulesinfra.StorageModule,
-		fx.Provide(
-			temporaljobs.NewTemporalClient,
-			aitrainingrepository.NewExports,
-			aitrainingrepository.NewRecords,
-			aitrainingrepository.NewCycles,
-			aicorrectionrepository.New,
-			aitrainingjobs.NewExportStarter,
-			aitrainingjobs.AsExportStarter,
-			aitrainingservice.NewOperator,
-			aitrainingservice.AsOperator,
-			aitrainingservice.NewRenderer,
-			aitrainingservice.AsRenderer,
-			aitrainingservice.NewRetrainer,
-			aitrainingservice.AsRetrainer,
-			retrainingalert.New,
-			retrainingalert.AsAlerter,
-			aidocumentservice.NewContract,
-			completionrouter.NewPromptRenderer,
-		),
+		e.APIOption(),
 	)
 }
 
 func WorkerOptions() fx.Option {
+	return WorkerOptionsFor(edition.Current())
+}
+
+func WorkerOptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
 		modulesinfra.StorageModule,
 		modulesinfra.RealtimePublisherModule,
@@ -286,6 +282,8 @@ func WorkerOptions() fx.Option {
 		api.ServiceModule,
 		temporaljobs.WorkerModule,
 		agentjobs.WorkerModule,
+		conversationschedulejobs.WorkerModule,
 		agentqualityjobs.WorkerModule,
+		e.WorkerOption(),
 	)
 }

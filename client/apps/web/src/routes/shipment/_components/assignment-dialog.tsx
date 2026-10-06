@@ -54,7 +54,7 @@ import {
   emptyCarrierAssignmentPayload,
   isActiveCarrierAssignment,
 } from "@trenova/shared/types/shipment";
-import { Building2Icon, TriangleAlertIcon, UserIcon } from "lucide-react";
+import { AlertTriangleIcon, Building07Icon, User01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -269,11 +269,11 @@ export function AssignmentDialog({
               aria-label={t("Coverage type")}
             >
               <TabsTab value="driver">
-                <UserIcon className="size-4" />
+                <User01Icon className="size-4" />
                 {t("Driver")}
               </TabsTab>
               <TabsTab value="carrier">
-                <Building2Icon className="size-4" />
+                <Building07Icon className="size-4" />
                 {t("Carrier")}
               </TabsTab>
             </TabsList>
@@ -282,7 +282,7 @@ export function AssignmentDialog({
         {driverAssignmentBlocked ? (
           <>
             <Alert variant="default">
-              <TriangleAlertIcon />
+              <AlertTriangleIcon />
               <AlertTitle>{t("Driver assignment is not enabled")}</AlertTitle>
               <AlertDescription>
                 {t(
@@ -300,7 +300,7 @@ export function AssignmentDialog({
           isEditing ? (
             <>
               <Alert variant="default">
-                <TriangleAlertIcon />
+                <AlertTriangleIcon />
                 <AlertTitle>{t("Move is covered by a driver")}</AlertTitle>
                 <AlertDescription>
                   {t(
@@ -326,7 +326,7 @@ export function AssignmentDialog({
         ) : hasCarrierCoverage ? (
           <>
             <Alert variant="default">
-              <TriangleAlertIcon />
+              <AlertTriangleIcon />
               <AlertTitle>{t("Move is covered by a carrier")}</AlertTitle>
               <AlertDescription>
                 {t(
@@ -347,7 +347,7 @@ export function AssignmentDialog({
           <>
             {complianceViolations.length > 0 && (
               <Alert variant="destructive">
-                <TriangleAlertIcon />
+                <AlertTriangleIcon />
                 <AlertTitle>{t("Compliance violations")}</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc pl-4">
@@ -360,7 +360,7 @@ export function AssignmentDialog({
             )}
             {continuityError && (
               <Alert variant="default">
-                <TriangleAlertIcon />
+                <AlertTriangleIcon />
                 <AlertTitle>{t("Trailer location mismatch")}</AlertTitle>
                 <AlertDescription>{continuityError.message}</AlertDescription>
                 <AlertAction>

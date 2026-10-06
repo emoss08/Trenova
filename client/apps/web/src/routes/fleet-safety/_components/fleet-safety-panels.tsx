@@ -7,7 +7,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { safetyRatingLabel, safetyRatingTone } from "@trenova/shared/lib/csa";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
-import { AwardIcon, Building2Icon, ShieldAlertIcon } from "lucide-react";
+import { Award01Icon, Building07Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { workerRecordHref } from "@/lib/route-utils";
@@ -40,7 +40,7 @@ export function TerminalsPanel({
   return (
     <SectionPanel
       title={t("By terminal")}
-      icon={<Building2Icon />}
+      icon={<Building07Icon />}
       hint={`${totalWorkers} drivers`}
       help={t(
         "Drivers by terminal, the yard with the most at-risk drivers first. Choose one to narrow every section on the page to it.",
@@ -135,7 +135,7 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
   return (
     <SectionPanel
       title={title}
-      icon={kind === "worst" ? <ShieldAlertIcon /> : <AwardIcon />}
+      icon={kind === "worst" ? <ShieldAlertIcon /> : <Award01Icon />}
       help={
         kind === "worst"
           ? "The drivers carrying the most active points, worst first. Points roll off two years after the event."

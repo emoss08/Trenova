@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -71,6 +73,13 @@ var recordKinds = map[string]recordKind{
 		title:    buncolgen.CustomerColumns.Name.Expr("COALESCE({}, '')"),
 		subtitle: buncolgen.CustomerColumns.Code.Expr("COALESCE({}, '')"),
 	},
+	capture.ResourceAssistantThread: {
+		model:    func() any { return (*conversation.Thread)(nil) },
+		tenant:   ownThread,
+		id:       buncolgen.ThreadColumns.ID,
+		title:    buncolgen.ThreadColumns.Title.Expr("COALESCE({}, '')"),
+		subtitle: "''",
+	},
 	permission.ResourceCarrier.String(): {
 		model:    func() any { return (*carrier.Carrier)(nil) },
 		tenant:   buncolgen.CarrierApplyTenant,
@@ -78,6 +87,13 @@ var recordKinds = map[string]recordKind{
 		title:    buncolgen.CarrierColumns.Name.Expr("COALESCE({}, '')"),
 		subtitle: buncolgen.CarrierColumns.Code.Expr("COALESCE({}, '')"),
 	},
+}
+
+func ownThread(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.Apply(buncolgen.ThreadApplyTenant(ti)).
+			Where(buncolgen.ThreadColumns.UserID.Eq(), ti.UserID)
+	}
 }
 
 func lookupKind(resourceType string) (recordKind, error) {

@@ -18,7 +18,7 @@ import type {
   EDITemplateVersion,
   UpsertEDIPartnerDocumentProfileRequest,
 } from "@trenova/shared/types/edi";
-import { AlertTriangleIcon, CopyPlusIcon, SearchIcon } from "lucide-react";
+import { AlertTriangleIcon, Copy06Icon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import PreviewInspectorSheet from "../inspector/preview-inspector-sheet";
@@ -53,7 +53,7 @@ function ScriptPresetPicker({
             onClick={() => onApply(preset)}
             className="hover:bg-background flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <CopyPlusIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+            <Copy06Icon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
             <span className="min-w-0">
               <span className="block text-xs font-medium">{t(preset.label)}</span>
               <span className="text-muted-foreground block text-xs leading-snug">
@@ -107,7 +107,7 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
                 onClick={() => setInspectorOpen(true)}
                 className="border-background/10 bg-foreground text-background hover:bg-background/20 h-7 text-xs"
               >
-                <SearchIcon className="size-3.5" />
+                <SearchLgIcon className="size-3.5" />
                 {t("Inspect")}
               </Button>
             </div>

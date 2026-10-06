@@ -1,6 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { LayersIcon, LayoutGridIcon, TerminalSquareIcon } from "lucide-react";
+import {
+  Grid01Icon,
+  LayersThree01Icon,
+  TerminalSquareIcon,
+} from "@trenova/shared/components/icons";
 import { PALETTE_ENTITIES } from "./palette-entities";
 import type { PaletteIcon, PaletteScope } from "./palette-model";
 
@@ -23,9 +27,9 @@ export function nextScope(current: PaletteScope, step: 1 | -1): PaletteScope {
 function scopePresentation(scope: PaletteScope): { label: string; icon: PaletteIcon } {
   switch (scope) {
     case "all":
-      return { label: "All", icon: LayersIcon };
+      return { label: "All", icon: LayersThree01Icon };
     case "pages":
-      return { label: "Pages", icon: LayoutGridIcon };
+      return { label: "Pages", icon: Grid01Icon };
     case "commands":
       return { label: "Commands", icon: TerminalSquareIcon };
     default:

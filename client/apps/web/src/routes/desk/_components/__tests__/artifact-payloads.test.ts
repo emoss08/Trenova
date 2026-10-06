@@ -1,11 +1,13 @@
 import type { AssistantArtifact } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
+  emailDraftEdits,
   emailDraftFrom,
   entityCardFrom,
   planFrom,
   reportPreviewFrom,
   reportRunFrom,
+  savedEmailWording,
   sortTableRows,
   tableViewFrom,
 } from "../artifacts/artifact-payloads";
@@ -414,5 +416,67 @@ describe("sortTableRows", () => {
 
   it("leaves the rows as found without a sort", () => {
     expect(sortTableRows(rows, columns, null).map((row) => row.key)).toEqual(["0", "1", "2"]);
+  });
+});
+
+/**
+ * A person's rewording of a draft is kept on the proposal behind it, so it is
+ * still there after a reload. The draft opens with what was saved, and only
+ * what differs from the agent's wording is sent to be saved.
+ */
+describe("savedEmailWording", () => {
+  const draft = emailDraftFrom(
+    artifact("email_draft", { subject: "Missing POD", body: "Please send it." }),
+  );
+
+  it("opens with what the person saved", () => {
+    expect(savedEmailWording(draft, { subject: "PO needed" })).toEqual({
+      subject: "PO needed",
+      body: "Please send it.",
+    });
+  });
+
+  it("falls back to the agent's wording when nothing was saved", () => {
+    expect(savedEmailWording(draft, null)).toEqual({
+      subject: "Missing POD",
+      body: "Please send it.",
+    });
+    expect(savedEmailWording(draft, undefined)).toEqual({
+      subject: "Missing POD",
+      body: "Please send it.",
+    });
+  });
+
+  it("ignores a saved value that is not text", () => {
+    expect(savedEmailWording(draft, { body: 42 }).body).toBe("Please send it.");
+  });
+});
+
+describe("emailDraftEdits", () => {
+  const draft = emailDraftFrom(
+    artifact("email_draft", { subject: "Missing POD", body: "Please send it." }),
+  );
+  const both = { subject: true, body: true };
+
+  it("keeps only what differs from the agent's wording", () => {
+    expect(emailDraftEdits(draft, { subject: "PO needed", body: "Please send it." }, both)).toEqual(
+      { subject: "PO needed" },
+    );
+  });
+
+  it("is empty once the wording is put back, which clears the saved edit", () => {
+    expect(
+      emailDraftEdits(draft, { subject: "Missing POD", body: "Please send it." }, both),
+    ).toEqual({});
+  });
+
+  it("never sends a part the proposal does not carry", () => {
+    expect(
+      emailDraftEdits(
+        draft,
+        { subject: "PO needed", body: "Written by hand" },
+        { subject: true, body: false },
+      ),
+    ).toEqual({ subject: "PO needed" });
   });
 });

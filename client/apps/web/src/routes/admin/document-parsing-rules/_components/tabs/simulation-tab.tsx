@@ -33,14 +33,14 @@ import type {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
+  Beaker02Icon,
   CheckIcon,
   ChevronDownIcon,
   EraserIcon,
-  FlaskConicalIcon,
-  InfoIcon,
-  Loader2Icon,
+  InfoCircleIcon,
   PlayIcon,
-} from "lucide-react";
+  SpinnerIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { SimulationResultViewer } from "../simulation/simulation-result-viewer";
 
@@ -222,7 +222,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FlaskConicalIcon className="text-muted-foreground size-4" />
+            <Beaker02Icon className="text-muted-foreground size-4" />
             <CardTitle>{t("Rule simulation")}</CardTitle>
           </div>
           <CardDescription>
@@ -344,7 +344,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
             >
               {isPending ? (
                 <>
-                  <Loader2Icon className="size-4 animate-spin" />
+                  <SpinnerIcon className="size-4 animate-spin" />
                   {t("Running...")}
                 </>
               ) : (
@@ -379,7 +379,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                 {error instanceof Error ? error.message : t("An unexpected error occurred.")}
               </p>
               <div className="flex items-start gap-1.5 pt-1">
-                <InfoIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
+                <InfoCircleIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
                 <p className="text-2xs text-muted-foreground">
                   {t(
                     "Check that the selected version has valid rule configuration and the document text is not empty. If the issue persists, verify the rule version status on the Versions tab.",

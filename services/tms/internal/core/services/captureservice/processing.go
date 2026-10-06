@@ -2,7 +2,6 @@ package captureservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -151,6 +150,11 @@ func autoFileable(
 	ready := make([]pulid.ID, 0, len(items))
 	for _, item := range items {
 		suggestion := item.Suggestion()
+		if suggestion.IsAssistantThread() && suggestion.HasRecord() &&
+			item.SuggestionSource == capture.SuggestionRequest && batch.RequestID != nil {
+			ready = append(ready, item.ID)
+			continue
+		}
 		if !suggestion.HasRecord() || suggestion.DocumentTypeID == nil {
 			continue
 		}
@@ -266,10 +270,6 @@ func (s *Service) readPage(
 	}
 
 	inspection, err := s.inspector.Inspect(ctx, data)
-	if errors.Is(err, services.ErrPageInspectionUnavailable) {
-		page.Status = capture.PageProcessed
-		return
-	}
 	if err != nil {
 		fail("The page could not be rendered.", err)
 		return

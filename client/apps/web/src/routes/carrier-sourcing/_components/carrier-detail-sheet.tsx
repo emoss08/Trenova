@@ -40,7 +40,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { ArrowUpRightIcon, LayersIcon } from "lucide-react";
+import { ArrowUpRightIcon, LayersThree01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { candidateMetaLine } from "./sourcing-result-list";
@@ -247,7 +247,7 @@ function CarrierSheetBody({
                       />
                     }
                   >
-                    <LayersIcon className="size-3.5" aria-hidden />
+                    <LayersThree01Icon className="size-3.5" aria-hidden />
                     {fullCostLabel
                       ? t("Pull full profile · {0}", fullCostLabel)
                       : t("Pull full profile")}

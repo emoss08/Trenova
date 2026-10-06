@@ -17,7 +17,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { PTOFilter, PTOType, WorkerPTO } from "@trenova/shared/types/worker";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PTOFormDialog } from "../pto-form-dialog";
 import { ptoWorkerName } from "../pto-worker";
@@ -460,7 +460,7 @@ function LegendChip({
       title={hidden ? `Show ${entry.label}` : `Hide ${entry.label}`}
       onClick={onToggle}
       className={cn(
-"ui-focus-ring inline-flex h-5.5 items-center gap-1 rounded-md border px-1.5 text-xs font-medium transition-colors outline-none",
+        "ui-focus-ring inline-flex h-5.5 items-center gap-1 rounded-md border px-1.5 text-xs font-medium transition-colors outline-none",
         hidden
           ? "text-muted-foreground/60 border-transparent line-through decoration-1"
           : "bg-accent/40 border-border/60 hover:bg-accent",

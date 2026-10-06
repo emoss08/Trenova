@@ -8,11 +8,12 @@ import {
   ContextMenuItem,
   ContextMenuLabel,
   ContextMenuSeparator,
+  ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@trenova/shared/components/ui/context-menu";
 import { useDataTable } from "@/contexts/data-table-context";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
-import { EyeIcon, PencilIcon } from "lucide-react";
+import { Edit02Icon, EyeIcon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 
 interface DataTableContextMenuProps<TData extends RowData> {
@@ -64,7 +65,7 @@ export function DataTableContextMenu<TData extends RowData>({
     allActions.push({
       id: "edit",
       label: canUpdate ? "Edit" : "View",
-      icon: canUpdate ? PencilIcon : EyeIcon,
+      icon: canUpdate ? Edit02Icon : EyeIcon,
       onClick: openPanelEdit,
     });
   }
@@ -100,6 +101,7 @@ export function DataTableContextMenu<TData extends RowData>({
                 >
                   {Icon && <Icon className="size-4" />}
                   {t(action.label)}
+                  {action.shortcut ? <ContextMenuShortcut>{action.shortcut}</ContextMenuShortcut> : null}
                 </ContextMenuItem>
               );
             })}

@@ -56,10 +56,10 @@ func TestArtifactRecorder_KeepsAPublishedDocument(t *testing.T) {
 	assert.Equal(t, "document", shown.Kind)
 }
 
-// Revising a document replaces its text in place: the same artifact, with the
-// message and pin it already had, so the pane holds one brief rather than a
-// stack of drafts of it.
-func TestArtifactRecorder_RevisesADocumentInPlace(t *testing.T) {
+// Revising a document keeps the text it replaced: the revision is the next
+// version of the same lineage, with the link and pin it already had, so the
+// pane holds one brief whose earlier drafts can still be read and restored.
+func TestArtifactRecorder_RevisesADocumentAsItsNextVersion(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubArtifactRepo{}
@@ -71,6 +71,8 @@ func TestArtifactRecorder_RevisesADocumentInPlace(t *testing.T) {
 		Kind:             assistantartifact.KindDocument,
 		Title:            "Brief",
 		SourceToolCallID: "call_first",
+		Slug:             "brief",
+		LineageSeq:       1,
 		Pinned:           true,
 	}
 	repo.stored = map[pulid.ID]*assistantartifact.Artifact{existing.ID: existing}
@@ -80,12 +82,15 @@ func TestArtifactRecorder_RevisesADocumentInPlace(t *testing.T) {
 
 	require.Len(t, repo.upserts, 1)
 	kept := repo.upserts[0]
-	assert.Equal(t, existing.ID, kept.ID)
-	assert.Equal(t, existing.MessageID, kept.MessageID)
-	assert.Equal(t, "call_first", kept.SourceToolCallID)
+	assert.NotEqual(t, existing.ID, kept.ID, "the first draft stays as it was")
+	assert.Equal(t, existing.ID, kept.LineageID)
+	assert.Equal(t, 2, kept.LineageSeq)
+	assert.Equal(t, "brief", kept.Slug)
+	assert.Equal(t, "call_publish", kept.SourceToolCallID)
 	assert.True(t, kept.Pinned)
 	assert.Equal(t, "# Revised", kept.Payload["body"])
-	assert.Equal(t, existing.ID, shown.ID)
+	assert.Equal(t, "Revised", kept.Payload["versionNote"])
+	assert.Equal(t, kept.ID, shown.ID)
 }
 
 // A revision may only reach this conversation's own documents. An id from

@@ -19,7 +19,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, CheckCheckIcon, CheckIcon, ExternalLinkIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckDoubleIcon,
+  CheckIcon,
+  LinkExternal01Icon,
+} from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import type { EventPresentation } from "@/components/carrier-intelligence/use-event-presenter";
@@ -255,7 +260,7 @@ export function EventDetail({
               className="h-8 text-xs"
               onClick={() => onResolve(event)}
             >
-              <CheckCheckIcon className="size-3.5" />
+              <CheckDoubleIcon className="size-3.5" />
               {t("Resolve")}
             </Button>
           ) : null}
@@ -266,7 +271,7 @@ export function EventDetail({
               nativeButton={false}
               render={<Link to={carrierPanelPath(event.carrierId, "intelligence")} />}
             >
-              <ExternalLinkIcon className="size-3.5" />
+              <LinkExternal01Icon className="size-3.5" />
               {t("Open carrier")}
             </Button>
           ) : null}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"go.uber.org/fx"
@@ -23,6 +24,7 @@ type Params struct {
 	// service did before and what a test wants.
 	Verdicts repositories.ScopeVerdictCacheRepository `optional:"true"`
 	Config   *config.Config                           `optional:"true"`
+	Metrics  *metrics.Registry                        `optional:"true"`
 }
 
 /*
@@ -39,12 +41,19 @@ every other classifier failure, and for the same reason: the deterministic
 rules have run and passed, the system prompt still refuses off-domain work,
 and every tool call is authorized independently. An operator who wants the
 stricter posture sets RefuseWhenUnavailable.
+
+Three seconds, not eight. A classifier on a model that answers without
+reasoning returns a 256-token verdict well inside that; one that needs longer
+is a reasoning model left at its default effort, which the provider's None
+setting fixes, and every second past this one was a second of nothing on the
+screen.
 */
-const DefaultClassifierTimeout = 8 * time.Second
+const DefaultClassifierTimeout = 3 * time.Second
 
 type Service struct {
 	logger     *zap.Logger
 	completion serviceports.CompletionService
+	metrics    *metrics.Assistant
 
 	// ClassifierTimeout is how long the scope check may take before the
 	// request proceeds on the deterministic verdict alone.
@@ -72,6 +81,7 @@ func New(p Params) *Service {
 	return &Service{
 		logger:            logger,
 		completion:        p.Completion,
+		metrics:           metrics.AssistantFrom(p.Metrics),
 		verdicts:          newVerdictCache(p.Verdicts, ai.GetVerdictCacheTTL(), logger),
 		ClassifierTimeout: DefaultClassifierTimeout,
 	}
@@ -136,7 +146,17 @@ func (s *Service) classifierTimeout() time.Duration {
 	return s.ClassifierTimeout
 }
 
+// Evaluate is the decision described above, timed and filed by the stage that
+// made it, so a slow question says whether the rules or the classifier held it.
 func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
+	started := time.Now()
+	decision := s.evaluate(ctx, &req)
+	s.metrics.RecordGuard(string(decision.Stage), time.Since(started).Seconds())
+
+	return decision
+}
+
+func (s *Service) evaluate(ctx context.Context, req *EvaluateRequest) Decision {
 	if decision := EvaluateDeterministic(req.Input); !decision.Allowed {
 		s.logger.Info("request refused by deterministic scope rule",
 			zap.String("rule", decision.MatchedRule),
@@ -146,7 +166,7 @@ func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
 		return decision
 	}
 
-	result, err := s.classifyWithin(ctx, req)
+	result, err := s.classifyWithin(ctx, *req)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) && !s.RefuseWhenUnavailable {
 			// Named separately from the general failure because it is a

@@ -13,7 +13,12 @@ import {
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { Document } from "@trenova/shared/types/document";
-import { ChevronDownIcon, HistoryIcon, RotateCcwIcon, UploadIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ClockRewindIcon,
+  RefreshCcw01Icon,
+  Upload01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { formatFileSize } from "./document-upload-zone";
 import { RestoreVersionDialog } from "./restore-version-dialog";
@@ -198,7 +203,7 @@ export function DocumentVersionDialog({
         <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <HistoryIcon className="size-4" />
+              <ClockRewindIcon className="size-4" />
               {t("Version history")}
             </DialogTitle>
             <DialogDescription>
@@ -274,7 +279,7 @@ export function DocumentVersionDialog({
                               onClick={() => setRestoreTarget(version)}
                               disabled={isRestoring}
                             >
-                              <RotateCcwIcon className="mr-1.5 size-3.5" />
+                              <RefreshCcw01Icon className="mr-1.5 size-3.5" />
                               {t("Restore")}
                             </Button>
                           </div>
@@ -296,7 +301,7 @@ export function DocumentVersionDialog({
           <DialogFooter>
             {document && (
               <Button variant="outline" onClick={() => onUploadNewVersion(document)}>
-                <UploadIcon className="size-4" />
+                <Upload01Icon className="size-4" />
                 {t("Upload new version")}
               </Button>
             )}

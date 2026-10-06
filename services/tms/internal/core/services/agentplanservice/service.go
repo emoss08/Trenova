@@ -110,6 +110,9 @@ type Params struct {
 	// so an approval approves what was shown and nothing that moved on.
 	Previews services.ProposalPreviewService `optional:"true"`
 	Metrics  *metrics.Registry               `optional:"true"`
+	// Workflows holds an approval from a person's own conversation for its
+	// undo window. Without it an approval goes through at once.
+	Workflows services.WorkflowStarter `optional:"true"`
 }
 
 type Service struct {
@@ -128,6 +131,7 @@ type Service struct {
 	followUps  services.DecisionFollowUps
 	previews   services.ProposalPreviewService
 	metrics    *metrics.ProposalPreview
+	workflows  services.WorkflowStarter
 }
 
 func New(p Params) services.AgentPlanService {
@@ -144,6 +148,7 @@ func New(p Params) services.AgentPlanService {
 		watchtower: p.Watchtower,
 		followUps:  p.FollowUps,
 		previews:   p.Previews,
+		workflows:  p.Workflows,
 	}
 	if p.Metrics != nil {
 		svc.metrics = p.Metrics.ProposalPreview
@@ -211,6 +216,31 @@ func (s *Service) Decide(
 	req *services.DecideAgentPlanRequest,
 	actor *services.RequestActor,
 ) (*agent.AgentPlan, error) {
+	prepared, err := s.prepare(ctx, req, actor, agent.PlanStatusPending)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.claimAndRun(ctx, req, actor, prepared, agent.PlanStatusPending)
+}
+
+// preparedPlan is a plan checked for deciding: its steps and, for an
+// approval, the preview the decider approved.
+type preparedPlan struct {
+	plan  *agent.AgentPlan
+	steps []*agent.AgentProposal
+	shown *shownPlan
+}
+
+// prepare checks a plan can be decided as asked, by this actor, as the world
+// is now. from is the status the plan must be in: Pending for a decision,
+// Approving for an approval whose undo window has closed.
+func (s *Service) prepare(
+	ctx context.Context,
+	req *services.DecideAgentPlanRequest,
+	actor *services.RequestActor,
+	from agent.PlanStatus,
+) (*preparedPlan, error) {
 	if !actor.IsUser() {
 		return nil, errortypes.NewValidationError(
 			"actor",
@@ -241,8 +271,15 @@ func (s *Service) Decide(
 	if err != nil {
 		return nil, err
 	}
-	if err = decidable(plan); err != nil {
-		return nil, err
+	if from == agent.PlanStatusPending {
+		if err = decidable(plan); err != nil {
+			return nil, err
+		}
+	} else if plan.Status != from {
+		return nil, errortypes.NewConflictError(
+			"This plan is {0}, not waiting to go through",
+			strings.ToLower(string(plan.Status)),
+		)
 	}
 
 	verdict, err := s.shadow.ForRun(ctx, req.TenantInfo, plan.RunID)
@@ -269,16 +306,28 @@ func (s *Service) Decide(
 		return nil, err
 	}
 
+	return &preparedPlan{plan: plan, steps: steps, shown: shown}, nil
+}
+
+// claimAndRun moves the plan out of from, conditionally, so two people
+// deciding at once cannot both run it, and then rejects or runs its steps.
+func (s *Service) claimAndRun(
+	ctx context.Context,
+	req *services.DecideAgentPlanRequest,
+	actor *services.RequestActor,
+	prepared *preparedPlan,
+	from agent.PlanStatus,
+) (*agent.AgentPlan, error) {
 	now := timeutils.NowUnix()
 	claimed := agent.PlanStatusApproved
 	if req.Decision == agent.DecisionRejected {
 		claimed = agent.PlanStatusRejected
 	}
-	plan, err = s.plans.UpdateStatus(ctx, repositories.UpdateAgentPlanStatusRequest{
-		ID:              plan.ID,
+	plan, err := s.plans.UpdateStatus(ctx, repositories.UpdateAgentPlanStatusRequest{
+		ID:              prepared.plan.ID,
 		TenantInfo:      req.TenantInfo,
 		Status:          claimed,
-		FromStatus:      agent.PlanStatusPending,
+		FromStatus:      from,
 		DecidedByUserID: actor.UserID,
 		DecidedAt:       now,
 	})
@@ -289,9 +338,9 @@ func (s *Service) Decide(
 	s.clearFromWatchtower(ctx, plan, req.TenantInfo)
 
 	if req.Decision == agent.DecisionRejected {
-		s.rejectSteps(ctx, req, steps, actor)
+		s.rejectSteps(ctx, req, prepared.steps, actor)
 		s.logDecision(plan, actor, "Agent plan rejected")
-		s.announce(ctx, plan, actor)
+		s.announce(ctx, plan, actor, services.ActivityUpdated)
 		s.followUp(ctx, plan, req.TenantInfo)
 
 		return plan, nil
@@ -300,12 +349,16 @@ func (s *Service) Decide(
 	plan = s.runSteps(ctx, &stepRun{
 		req:     req,
 		plan:    plan,
-		steps:   steps,
+		steps:   prepared.steps,
 		actor:   actor,
-		preview: shown,
+		preview: prepared.shown,
 	})
 	s.logDecision(plan, actor, "Agent plan approved and executed")
-	s.announce(ctx, plan, actor)
+	action := services.ActivityUpdated
+	if from == agent.PlanStatusApproving {
+		action = services.ActivityCommitted
+	}
+	s.announce(ctx, plan, actor, action)
 	s.followUp(ctx, plan, req.TenantInfo)
 
 	return plan, nil
@@ -322,6 +375,12 @@ func (s *Service) DecideOwn(
 ) (*agent.AgentPlan, error) {
 	if err := s.AssertOwnPlan(ctx, req.PlanID, req.TenantInfo, actor); err != nil {
 		return nil, err
+	}
+
+	// An approval from the person's own conversation waits out the undo
+	// window; no step runs until the window closes.
+	if req.Decision == agent.DecisionAccepted && s.defers() {
+		return s.approveDeferred(ctx, req, actor)
 	}
 
 	return s.Decide(ctx, req, actor)
@@ -553,12 +612,13 @@ func (s *Service) announce(
 	ctx context.Context,
 	plan *agent.AgentPlan,
 	actor *services.RequestActor,
+	action string,
 ) {
 	if s.activity == nil || plan == nil {
 		return
 	}
 
-	s.activity.PlanChanged(ctx, plan, actor.AuditActorOrSystem(), services.ActivityUpdated)
+	s.activity.PlanChanged(ctx, plan, actor.AuditActorOrSystem(), action)
 }
 
 // stepRun is one approved plan being run: its steps, who approved them, and

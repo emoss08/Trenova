@@ -5,7 +5,7 @@ import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { RadarIcon, ShieldCheckIcon } from "lucide-react";
+import { RadarIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { FleetSafetySkeleton } from "./_components/fleet-safety-skeleton";
@@ -56,7 +56,7 @@ export function FleetSafetyPage() {
           <TabsList variant="underline">
             {canReadFleet ? (
               <TabsTab value="fleet">
-                <ShieldCheckIcon className="size-4" />
+                <ShieldTickIcon className="size-4" />
                 {t("Fleet")}
               </TabsTab>
             ) : null}

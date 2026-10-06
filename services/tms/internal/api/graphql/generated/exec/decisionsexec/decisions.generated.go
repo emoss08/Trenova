@@ -24,6 +24,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "PendingDecisionEdge", Implementors: []string{"PendingDecisionEdge"}},
 		{Name: "PendingDecisionSummary", Implementors: []string{"PendingDecisionSummary"}},
 		{Name: "PendingDecisionToolCount", Implementors: []string{"PendingDecisionToolCount"}},
+		{Name: "RecentDecision", Implementors: []string{"RecentDecision"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "AgentPlan", Fields: []*gqlexec.Field{
@@ -315,6 +316,103 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNPendingDecisionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionSummary),
 			},
+			{
+				Name:       "recentDecisions",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RecentDecision",
+				Args:       field_Query_recentDecisions_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RecentDecisions(ctx, fc.Args["since"].(int), fc.Args["first"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNRecentDecision2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecentDecisionᚄ),
+			},
+		}},
+		{Object: "RecentDecision", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "decision",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.Decision, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐDecisionType),
+			},
+			{
+				Name:     "reasonCode",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.ReasonCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "note",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.Note, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "decidedByUserId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.DecidedByUserID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "decidedByName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.DecidedByName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "decidedAt",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.DecidedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:      "proposal",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentProposal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RecentDecision)
+					return obj.Proposal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentProposal),
+			},
 		}},
 	},
 	Abstracts: []gqlexec.Abstract{
@@ -353,6 +451,7 @@ type resolverMutation interface {
 type resolverQuery interface {
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
+	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
 }
 
 var (
@@ -362,6 +461,7 @@ var (
 	errNoChild3 = errors.New("field of type Int does not have child fields")
 	errNoChild4 = errors.New("field of type PendingDecision does not have child fields")
 	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild6 = errors.New("field of type AgentDecisionType does not have child fields")
 )
 
 func marshalAbstractPendingDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
@@ -417,6 +517,27 @@ func field_Query_pendingDecisions_args(ctx context.Context, ec *gqlexec.Exec, ra
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_recentDecisions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "since",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNTimestamp2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["since"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
 	return args, nil
 }
 
@@ -559,6 +680,11 @@ func unmarshalNPendingDecisionsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOAgentProposalPreviewDigestInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalPreviewDigestInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.AgentProposalPreviewDigestInput, error) {
 	if v == nil {
 		return nil, nil
@@ -588,6 +714,22 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	}
 	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.DecisionType) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAgentProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentProposal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentProposal) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentProposal", v)
 }
 
 func marshalNAgentProposalDecisionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AgentProposalDecisionResult) graphql.Marshaler {
@@ -710,8 +852,32 @@ func marshalNPendingDecisionToolCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "PendingDecisionToolCount", v)
 }
 
+func marshalNRecentDecision2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecentDecisionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RecentDecision) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RecentDecision]{
+		Elem:        marshalNRecentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecentDecision,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRecentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecentDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RecentDecision) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RecentDecision", v)
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}

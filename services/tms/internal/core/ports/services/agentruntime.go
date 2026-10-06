@@ -245,6 +245,21 @@ type ShownArtifact struct {
 	ID    pulid.ID
 	Kind  string
 	Title string
+	// Rows is how many rows a table holds in all, and zero for anything
+	// that is not a table. It decides whether the reply repeats the rows or
+	// points to the table.
+	Rows int
+	// Actionable is a table the person works from, not just reads: its rows
+	// can be selected and acted on beside the conversation, so it is pointed
+	// to however short it is.
+	Actionable bool
+	// Opens is a composed view: it opens the live table rather than being
+	// worked from where it is drawn.
+	Opens bool
+	// Ranked is a table whose order is the answer, such as drivers ranked
+	// for a move: the person picks from it, so it is pointed to however
+	// short it is.
+	Ranked bool
 }
 
 // PublishedDocument is a write-up the model asked to keep beside the
@@ -253,6 +268,22 @@ type PublishedDocument struct {
 	Title      string
 	Body       string
 	ArtifactID pulid.ID
+	// DocType is what kind of write-up it is ("Brief", "Handover"), Basis
+	// what it was written from ("from 42 loads and 3 weather alerts"), and
+	// Sources what its citation marks point to.
+	DocType string
+	Basis   string
+	Sources []PublishedSource
+}
+
+// PublishedSource is one source a document cites as [^N]: the tool that
+// found it, what it is, and the artifact that shows it when there is one.
+type PublishedSource struct {
+	N          int      `json:"n"`
+	Tool       string   `json:"tool"`
+	Label      string   `json:"label"`
+	Detail     string   `json:"detail,omitempty"`
+	ArtifactID pulid.ID `json:"artifactId,omitempty"`
 }
 
 // ToolObserver is told about each tool call as it finishes, and answers with
@@ -270,6 +301,9 @@ type RunResult struct {
 	OutputRule    string
 	Model         string
 	ProviderID    pulid.ID
+	// ContextWindow is the window the answering provider is configured
+	// with, zero when it is read off Model.
+	ContextWindow int `json:",omitempty"`
 	ToolCallsUsed int
 	Exhausted     bool
 	// Truncated reports that the provider stopped partway through the reply.
@@ -284,6 +318,11 @@ type RunResult struct {
 	Taint       *agent.RunTaint    `json:",omitempty"`
 	Fingerprint *agent.Fingerprint `json:",omitempty"`
 	Usage       *RunUsage          `json:",omitempty"`
+	// UsedMemoryIDs are the memories the turn used: those its prompt
+	// carried, then those recall_memory read back. SavedMemories are what it
+	// kept or offered to keep. Both are kept on its reply.
+	UsedMemoryIDs []pulid.ID    `json:",omitempty"`
+	SavedMemories []SavedMemory `json:",omitempty"`
 }
 
 type RunUsage struct {
@@ -396,6 +435,9 @@ type RuntimeContextRequest struct {
 	// message that started this turn.
 	Attachments []agentdefinition.RuntimeAttachment
 	Mentions    []agentdefinition.RuntimeMention
+	// Facts are what the person pinned for the agents to keep in mind for
+	// the whole conversation.
+	Facts []string
 	// DelegatedBy names the agent that handed this turn its task, when it is
 	// working for another agent. Such a turn is offered no delegates.
 	DelegatedBy string

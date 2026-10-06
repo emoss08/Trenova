@@ -27,7 +27,13 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArchiveIcon, CopyIcon, DownloadIcon, GitForkIcon, NetworkIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  Copy01Icon,
+  Dataflow04Icon,
+  Download01Icon,
+  GitBranch02Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -171,28 +177,28 @@ export default function FormulaTemplatesDataTable() {
       {
         id: "fork",
         label: t("Fork template"),
-        icon: GitForkIcon,
+        icon: GitBranch02Icon,
         group: { id: "fork", label: t("Fork") },
         onClick: (row) => setForkDialogTemplate(row.original),
       },
       {
         id: "lineage",
         label: t("View lineage"),
-        icon: NetworkIcon,
+        icon: Dataflow04Icon,
         group: { id: "fork", label: t("Fork") },
         onClick: (row) => setLineageDialogTemplate(row.original),
       },
       {
         id: "duplicate",
         label: t("Duplicate"),
-        icon: CopyIcon,
+        icon: Copy01Icon,
         group: "actions",
         onClick: handleDuplicate,
       },
       {
         id: "export",
         label: t("Export"),
-        icon: DownloadIcon,
+        icon: Download01Icon,
         group: "actions",
         onClick: (row) => handleExportClick(row.original),
       },
@@ -264,13 +270,13 @@ export default function FormulaTemplatesDataTable() {
       {
         id: "duplicate",
         label: t("Duplicate"),
-        icon: CopyIcon,
+        icon: Copy01Icon,
         onClick: (rows) => handleBulkDuplicate(rows),
       },
       {
         id: "export",
         label: t("Export"),
-        icon: DownloadIcon,
+        icon: Download01Icon,
         onClick: (rows) => void handleBulkExport(rows),
       },
       {

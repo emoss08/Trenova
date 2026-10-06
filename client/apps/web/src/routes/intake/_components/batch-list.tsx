@@ -30,7 +30,7 @@ import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
-import { PrinterIcon, ScanLineIcon, SearchIcon, XIcon } from "lucide-react";
+import { PrinterIcon, ScanIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect, useRef, type ReactNode } from "react";
 import {
   INTAKE_RECEIVED,
@@ -66,7 +66,7 @@ function BatchRowItem({
   const t = useT();
   const attrs = captureBatchStatusAttrs(t)[batch.status];
   const retention = captureRetention(batch.retainUntil, now);
-  const SourceIcon = batch.source === "Print" ? PrinterIcon : ScanLineIcon;
+  const SourceIcon = batch.source === "Print" ? PrinterIcon : ScanIcon;
   const destination = batch.target
     ? batch.target.subtitle === ""
       ? batch.target.title
@@ -210,7 +210,7 @@ export function BatchList({
           placeholder={t("Search PRO, barcode, scanner, computer or person")}
           aria-label={t("Search PRO, barcode, scanner, computer or person")}
           className="w-full"
-          leftElement={<SearchIcon className="text-foreground-subtle size-3.5" />}
+          leftElement={<SearchLgIcon className="text-foreground-subtle size-3.5" />}
           rightElement={
             search === "" ? undefined : (
               <Button
@@ -219,7 +219,7 @@ export function BatchList({
                 aria-label={t("Clear the search")}
                 onClick={() => onSearchChange("")}
               >
-                <XIcon className="size-3.5" />
+                <XCloseIcon className="size-3.5" />
               </Button>
             )
           }

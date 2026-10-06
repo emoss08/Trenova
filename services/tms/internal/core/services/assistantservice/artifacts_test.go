@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -21,9 +22,13 @@ import (
 type stubArtifactRepo struct {
 	repositories.AssistantArtifactRepository
 
-	upserts []*assistantartifact.Artifact
-	listed  []*assistantartifact.Artifact
-	stored  map[pulid.ID]*assistantartifact.Artifact
+	upserts   []*assistantartifact.Artifact
+	listed    []*assistantartifact.Artifact
+	stored    map[pulid.ID]*assistantartifact.Artifact
+	inserted  []*assistantartifact.Artifact
+	paged     []repositories.ListArtifactsRequest
+	questions map[pulid.ID]string
+	arguments map[string]map[string]any
 }
 
 func (r *stubArtifactRepo) GetByID(
@@ -52,11 +57,112 @@ func (r *stubArtifactRepo) Upsert(
 	return artifact, nil
 }
 
-func (r *stubArtifactRepo) ListByThread(
+func (r *stubArtifactRepo) LatestInLineage(
 	_ context.Context,
-	_ repositories.ListArtifactsRequest,
+	req repositories.LatestInLineageRequest,
+) (*assistantartifact.Artifact, error) {
+	var latest *assistantartifact.Artifact
+	for _, artifact := range r.upserts {
+		if artifact.LineageKey == req.LineageKey && artifact.SourceToolCallID != req.ExceptToolCall {
+			latest = artifact
+		}
+	}
+
+	return latest, nil
+}
+
+func (r *stubArtifactRepo) ListPage(
+	_ context.Context,
+	req repositories.ListArtifactsRequest,
+) (*repositories.ArtifactPage, error) {
+	r.paged = append(r.paged, req)
+
+	return &repositories.ArtifactPage{Artifacts: r.listed, Total: len(r.listed)}, nil
+}
+
+func (r *stubArtifactRepo) TakenSlugs(
+	_ context.Context,
+	_ pulid.ID,
+	_ pagination.TenantInfo,
+	_ string,
+) (map[string]bool, error) {
+	taken := map[string]bool{}
+	for _, artifact := range r.upserts {
+		taken[artifact.Slug] = true
+	}
+
+	return taken, nil
+}
+
+// ListLineage reads a lineage from what was stored and what was written,
+// oldest first.
+func (r *stubArtifactRepo) ListLineage(
+	_ context.Context,
+	req repositories.LineageRequest,
 ) ([]*assistantartifact.Artifact, error) {
-	return r.listed, nil
+	all := make([]*assistantartifact.Artifact, 0, len(r.stored)+len(r.upserts)+len(r.inserted))
+	for _, artifact := range r.stored {
+		all = append(all, artifact)
+	}
+	all = append(all, r.upserts...)
+	all = append(all, r.inserted...)
+
+	root := pulid.Nil
+	for _, artifact := range all {
+		if artifact.ID == req.ID {
+			root = artifact.LineageID
+			if root.IsNil() {
+				root = artifact.ID
+			}
+		}
+	}
+	if root.IsNil() {
+		return nil, errortypes.NewNotFoundError("Artifact not found")
+	}
+	var lineage []*assistantartifact.Artifact
+	for _, artifact := range all {
+		if artifact.ID == root || artifact.LineageID == root {
+			lineage = append(lineage, artifact)
+		}
+	}
+	slices.SortFunc(lineage, func(a, b *assistantartifact.Artifact) int {
+		return a.LineageSeq - b.LineageSeq
+	})
+
+	return lineage, nil
+}
+
+func (r *stubArtifactRepo) InsertVersion(
+	_ context.Context,
+	artifact *assistantartifact.Artifact,
+) (*assistantartifact.Artifact, error) {
+	artifact.ID = pulid.MustNew("art_")
+	r.inserted = append(r.inserted, artifact)
+
+	return artifact, nil
+}
+
+func (r *stubArtifactRepo) TurnQuestions(
+	_ context.Context,
+	_ pulid.ID,
+	_ pagination.TenantInfo,
+	messageIDs []pulid.ID,
+) (map[pulid.ID]string, error) {
+	out := map[pulid.ID]string{}
+	for _, id := range messageIDs {
+		out[id] = r.questions[id]
+	}
+
+	return out, nil
+}
+
+func (r *stubArtifactRepo) ToolCallArguments(
+	_ context.Context,
+	_ pulid.ID,
+	_ pagination.TenantInfo,
+	callID string,
+) (map[string]any, error) {
+	return r.arguments[callID], nil
 }
 
 func observation(name string, data any) serviceports.ToolObservation {
@@ -323,6 +429,10 @@ func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
 	card, ok := events[1].Data.(serviceports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Empty(t, card.Path)
+	// The move is announced and not kept: only the card was saved.
+	require.Len(t, repo.upserts, 1)
+	assert.Equal(t, assistantartifact.KindEntityCard, repo.upserts[0].Kind)
+	require.Len(t, recorder.artifacts(), 1)
 }
 
 // A nil recorder is a turn without a pane: every call is a no-op and the
@@ -386,11 +496,13 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 		}},
 	}
 
-	listed, err := svc.ListThreadArtifacts(
+	page, err := svc.ListThreadArtifacts(
 		t.Context(),
 		repositories.GetThreadRequest{ID: thread.ID},
+		serviceports.ListArtifactsOptions{},
 	)
 	require.NoError(t, err)
+	listed := page.Results
 	require.Len(t, listed, 3)
 	assert.Equal(t, assistantartifact.StatusSent, listed[0].Status)
 	assert.Equal(t, assistantartifact.StatusFailed, listed[1].Status)
@@ -521,22 +633,65 @@ permissions, and wrong by the time anybody reads them.
 The rate is a ledger, because a price read aloud is a wall of figures nobody
 can check against an invoice.
 */
-func TestArtifactFromObservation_ADescribedViewOpensTheTable(t *testing.T) {
+func TestArtifactFromObservation_ADescribedViewIsAViewToOpen(t *testing.T) {
 	t.Parallel()
 
+	// A view opens a page. The card beside the conversation says what it was
+	// narrowed to, how many rows it holds, the first few, and what was left
+	// out, so the reply can point to it rather than reprint it.
+	unresolved := []any{map[string]any{"phrase": "near Dallas", "reason": "no location filter"}}
 	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
 		"entity":      "shipments",
 		"path":        "/shipments?fieldFilters=%5B%5D",
 		"explanation": "shipments where status equals InTransit",
 		"terms":       []any{"status equals InTransit"},
 		"filterCount": float64(1),
+		"unresolved":  unresolved,
+		"count":       float64(100),
+		"countCapped": true,
+		"columns":     []any{"proNumber", "customer", "status"},
+		"items": []any{
+			map[string]any{"id": "shp_1", "proNumber": "P1", "customer": "Acme", "status": "InTransit"},
+			map[string]any{"id": "shp_2", "proNumber": "P2", "customer": "Globex", "status": "InTransit"},
+		},
 	}))
 
 	require.NotNil(t, artifact)
 	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
-	assert.Equal(t, "Shipments", artifact.Title)
+	assert.Equal(t, assistantartifact.StatusReady, artifact.Status)
+	assert.Equal(t, "Shipments where status equals InTransit", artifact.Title)
 	assert.Equal(t, "/shipments?fieldFilters=%5B%5D", artifact.Payload["path"])
 	assert.Equal(t, []string{"status equals InTransit"}, artifact.Payload["terms"])
+	assert.Equal(t, float64(1), artifact.Payload["filterCount"])
+	assert.Equal(t, unresolved, artifact.Payload["unresolved"])
+	assert.Equal(t, float64(100), artifact.Payload["rowCount"])
+	assert.Equal(t, true, artifact.Payload["countCapped"])
+	assert.Equal(t, "shipment", artifact.Payload["recordEntity"])
+	columns, ok := artifact.Payload["columns"].([]assistantartifact.DisplayColumn)
+	require.True(t, ok)
+	assert.Equal(t, "proNumber", columns[0].Key)
+	assert.Len(t, artifact.Payload["rows"], 2)
+
+	// The rows are a preview of the live table, never the answer to reprint.
+	assert.True(t, actionableTable(artifact))
+}
+
+// A view composed for a table with no list to run it through still opens;
+// it just has no count or preview to show.
+func TestArtifactFromObservation_AnUncountedViewStillOpens(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
+		"entity":      "shipments",
+		"path":        "/shipments?fieldFilters=%5B%5D",
+		"explanation": "shipments where status equals InTransit",
+		"filterCount": float64(1),
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, "/shipments?fieldFilters=%5B%5D", artifact.Payload["path"])
+	assert.NotContains(t, artifact.Payload, "rowCount")
+	assert.NotContains(t, artifact.Payload, "rows")
 }
 
 // A view with no link is not a view, whatever else the result carries.
@@ -546,6 +701,105 @@ func TestArtifactFromObservation_ADescribedViewWithNoLinkIsNotOne(t *testing.T) 
 	assert.Nil(t, artifactFromObservation(observation("compose_table_view", map[string]any{
 		"entity":      "shipments",
 		"explanation": "shipments where status equals InTransit",
+	})))
+}
+
+/*
+Drivers ranked for a move are a table the dispatcher picks from.
+
+Asked to rank drivers for a load, the Desk read the ranking, found nothing
+beside the conversation to point to, and wrote its own markdown table of the
+five candidates: the order survived, the findings and the driver links did
+not. The ranking is now a table of its own, in the order it was ranked, each
+row opening its driver, and the model is told to point to it however short
+it is.
+*/
+func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("rank_move_candidates", map[string]any{
+		"moveId": "smv_1",
+		"count":  float64(2),
+		"candidates": []any{
+			map[string]any{
+				"workerId":            "wrk_01JEMILY0000000000000000",
+				"workerName":          "Emily Chen",
+				"tractorId":           "trc_01JTRACTOR00000000000000",
+				"score":               float64(92),
+				"verdict":             "Feasible",
+				"blocked":             false,
+				"deadheadMiles":       float64(14.2),
+				"projectedArrival":    float64(1790187600),
+				"minutesOfSlack":      float64(240),
+				"driveRemainingHours": 9.333333,
+				"findings": []any{
+					map[string]any{"code": "home_time", "severity": "Info", "message": "Home Friday"},
+				},
+			},
+			map[string]any{
+				"workerId":            "wrk_01JMARCUS000000000000000",
+				"workerName":          "Marcus Webb",
+				"score":               float64(61),
+				"verdict":             "Tight",
+				"projectedArrival":    "unknown",
+				"minutesOfSlack":      float64(45),
+				"driveRemainingHours": float64(3),
+				"findings": []any{
+					map[string]any{"code": "slack", "severity": "Warn", "message": "45 minutes of slack"},
+				},
+			},
+		},
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
+	assert.Equal(t, "Drivers ranked for the move", artifact.Title)
+	assert.Equal(t, "rank_move_candidates", artifact.Payload["tool"])
+	assert.Equal(t, "worker", artifact.Payload["recordEntity"])
+	assert.Equal(t, true, artifact.Payload[payloadRanked])
+
+	columns, ok := artifact.Payload["columns"].([]assistantartifact.DisplayColumn)
+	require.True(t, ok)
+	keys := make([]string, 0, len(columns))
+	for _, column := range columns {
+		keys = append(keys, column.Key)
+	}
+	// The rank leads, because the order is the answer; the tractor is an id a
+	// person cannot read, and stays in the model's copy for assign_move.
+	assert.Equal(t, "rank", keys[0])
+	assert.Equal(t, "driver", keys[1])
+	assert.NotContains(t, keys, "tractorId")
+
+	rows, ok := artifact.Payload["rows"].([]any)
+	require.True(t, ok)
+	require.Len(t, rows, 2)
+	first, _ := rows[0].(map[string]any)
+	second, _ := rows[1].(map[string]any)
+	assert.Equal(t, "Emily Chen", first["driver"])
+	assert.Equal(t, "wrk_01JEMILY0000000000000000", first[recordIDKey])
+	assert.Equal(t, 9.3, first["driveRemainingHours"])
+	// A note that changes nothing is not the finding a dispatcher reads first.
+	assert.NotContains(t, first, "finding")
+	assert.Equal(t, "45 minutes of slack", second["finding"])
+	// An unknown arrival is left blank rather than written into a column of
+	// times.
+	assert.NotContains(t, second, "projectedArrival")
+
+	shown := shownArtifact(artifact)
+	assert.True(t, shown.Ranked)
+	assert.False(t, shown.Actionable, "it is picked from, not selected and approved in bulk")
+}
+
+// No driver can cover the move: that is the tool's sentence to say, not an
+// empty table.
+func TestArtifactFromObservation_NoCandidatesLeavesThePaneAlone(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, artifactFromObservation(observation("rank_move_candidates", map[string]any{
+		"moveId":     "smv_1",
+		"count":      float64(0),
+		"candidates": []any{},
+		"note":       "No driver can cover this move as things stand.",
 	})))
 }
 
@@ -620,4 +874,62 @@ func TestArtifactFromObservation_NavigationStaysInsideTheApp(t *testing.T) {
 			"name": "Somewhere",
 		})), path)
 	}
+}
+
+// The same list read again later in the conversation is the next version of
+// the table read before, so the pane offers one table with its history.
+func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubArtifactRepo{}
+	svc := &Service{logger: zap.NewNop(), artifacts: repo}
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	recorder := svc.newArtifactRecorder(
+		t.Context(),
+		&conversation.Thread{ID: pulid.MustNew("athr_")},
+		tenant,
+		testActor(),
+		nil,
+	)
+	rows := map[string]any{
+		"items":   []any{map[string]any{"id": "bqi_1", "number": "BQ-1", "status": "ReadyForReview"}},
+		"columns": []any{"number", "status"},
+		"count":   1,
+	}
+	// The second read finds the item moved on: the same source read again
+	// over changed data is a new version. Over unchanged data it is the same
+	// view, and the reply points to the one already kept.
+	moved := map[string]any{
+		"items":   []any{map[string]any{"id": "bqi_1", "number": "BQ-1", "status": "InReview"}},
+		"columns": []any{"number", "status"},
+		"count":   1,
+	}
+	read := func(callID string, status string, data map[string]any) serviceports.ToolObservation {
+		return serviceports.ToolObservation{
+			Call: serviceports.ToolCall{
+				ID:        callID,
+				Name:      "list_billing_queue_items",
+				Arguments: map[string]any{"status": status},
+			},
+			Data: data,
+		}
+	}
+
+	_, err := recorder.observe(read("call_1", "Ready", rows))
+	require.NoError(t, err)
+	_, err = recorder.observe(read("call_2", "Ready", moved))
+	require.NoError(t, err)
+	_, err = recorder.observe(read("call_3", "Posted", rows))
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 3)
+	first, second, third := repo.upserts[0], repo.upserts[1], repo.upserts[2]
+	assert.NotEmpty(t, first.LineageKey)
+	assert.True(t, first.LineageID.IsNil())
+	assert.Equal(t, first.ID, second.LineageID)
+	assert.Equal(t, 2, second.LineageSeq)
+	// Read again with another filter, it is still the billing queue: the
+	// next version of the same table, not a second one.
+	assert.Equal(t, first.ID, third.LineageID)
+	assert.Equal(t, 3, third.LineageSeq)
 }

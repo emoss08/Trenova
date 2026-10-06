@@ -15,7 +15,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ChevronDownIcon, ClipboardCheckIcon, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ClipboardCheckIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ReviewCard, type ReviewPermissions } from "./reviews/review-card";

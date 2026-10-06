@@ -614,7 +614,7 @@ func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
 			TenantInfo:       tenantOf(proposal),
 			SimulatedAt:      now,
 			Simulation:       preview,
-			ExecutedByUserID: executorOf(actor),
+			ExecutedByUserID: actor.ExecutorUserID(),
 		},
 	); err != nil {
 		s.l.Error("failed to record proposal simulation",
@@ -864,7 +864,7 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 			ExecutionResult:       success.result,
 			EgressClass:           proposal.EgressClass,
 			TenantInfo:            tenantOf(proposal),
-			ExecutedByUserID:      executorOf(success.actor),
+			ExecutedByUserID:      success.actor.ExecutorUserID(),
 			ExecutedTargetVersion: success.targetVersion,
 		},
 	); err != nil {
@@ -925,7 +925,7 @@ func (s *Service) recordFailureAs(
 			ExecutionError:   cause.Error(),
 			EgressClass:      egress,
 			TenantInfo:       tenantOf(proposal),
-			ExecutedByUserID: executorOf(actor),
+			ExecutedByUserID: actor.ExecutorUserID(),
 		},
 	); err != nil {
 		s.l.Error("failed to record proposal execution failure",

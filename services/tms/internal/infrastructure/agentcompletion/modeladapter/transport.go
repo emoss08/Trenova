@@ -54,6 +54,11 @@ func (e *StreamInterrupted) Error() string { return e.Err.Error() }
 func (e *StreamInterrupted) Unwrap() error { return e.Err }
 
 // interrupted wraps a stream failure with the served model when one is known.
+// errStreamCut is a stream that closed before the provider said the reply
+// was over: no finish reason and no closing marker. The connection dropped,
+// and what arrived is the start of a reply, not the whole of one.
+var errStreamCut = fmt.Errorf("the stream ended before the reply finished: %w", io.ErrUnexpectedEOF)
+
 func interrupted(err error, model string) error {
 	if err == nil || model == "" {
 		return err
@@ -94,7 +99,7 @@ func postJSON(
 	body any,
 	out any,
 ) error {
-	encoded, err := sonic.Marshal(body)
+	encoded, err := requestJSON.Marshal(body)
 	if err != nil {
 		return fmt.Errorf("encode provider request: %w", err)
 	}

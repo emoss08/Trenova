@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -890,78 +889,4 @@ func (t *carrierIntelEventTool) Execute(
 
 func (t *carrierIntelEventTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
 	return targetOf(params, "eventId", permission.ResourceCarrierIntelligence)
-}
-
-// ------------------------------------------------------- the repeat guard
-
-// recentUpdateWindow is how long an update to a customer about one shipment
-// stands for. The customer update desk is woken by every arrival and every
-// departure, so a shipment moving through a yard can raise several runs
-// within a few minutes; without this the customer hears about each.
-const recentUpdateWindow = int64(3600)
-
-// recentAgentCommentPageSize bounds the read. The guard only needs to know
-// whether anything was said, and the newest few comments answer that.
-const recentAgentCommentPageSize = 25
-
-/*
-alreadyToldCustomer reports whether an agent already emailed this customer
-about this shipment inside the window.
-
-The instruction to not repeat an action "the shipment's comments show was
-taken in the last hour" was prompt text, which means it held exactly as well
-as the model's attention. The comment the send writes is the record; reading
-it back before sending is what makes the rule a rule.
-*/
-func alreadyToldCustomer(
-	ctx context.Context,
-	comments serviceports.ShipmentCommentService,
-	tenant pagination.TenantInfo,
-	shipmentID pulid.ID,
-	now int64,
-) (bool, error) {
-	if comments == nil {
-		return false, nil
-	}
-
-	page, err := comments.ListByShipmentID(ctx, &repositories.ListShipmentCommentsRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: tenant,
-			Pagination: pagination.Info{Limit: recentAgentCommentPageSize},
-		},
-		Cursor:     pagination.CursorInfo{Limit: recentAgentCommentPageSize},
-		ShipmentID: shipmentID,
-		Filters: repositories.ShipmentCommentListFilters{
-			Types: []shipment.CommentType{shipment.CommentTypeCustomerUpdate},
-		},
-	})
-	if err != nil {
-		return false, err
-	}
-
-	for _, comment := range page.Items {
-		if comment == nil || comment.CreatedAt < now-recentUpdateWindow {
-			continue
-		}
-		if wroteByAgentEmail(comment) {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-// wroteByAgentEmail reads the stamp the send leaves, rather than the comment
-// body: a dispatcher who typed an update by hand has not sent the customer
-// an email, and must not silence one.
-func wroteByAgentEmail(comment *shipment.ShipmentComment) bool {
-	if comment.Metadata == nil {
-		return false
-	}
-	if comment.Origin() != shipment.CommentOriginAgent {
-		return false
-	}
-	tool, _ := comment.Metadata["tool"].(string)
-
-	return tool == "email_customer"
 }

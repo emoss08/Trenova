@@ -1,0 +1,251 @@
+# Trenova runtime configuration for the self-hosted stack (compose.yml).
+#
+# Mounted into tms-migrate, tms-api and tms-worker at /app/config/config.yaml,
+# which they read with APP_ENV=production. Decoding is strict: a key Trenova
+# does not know fails startup, so keep this file to the keys the release you
+# run understands. services/tms/config/config.example.yaml documents every key.
+#
+# Secrets and anything derived from DOMAIN are NOT kept here. compose.yml sets
+# them from .env as TRENOVA_<SECTION>_<KEY> environment variables, which
+# override the values below (for example TRENOVA_DATABASE_PASSWORD overrides
+# database.password). A value marked "from .env" is only a placeholder that
+# lets the variable take effect; a placeholder that reached production would
+# be refused at startup.
+
+app:
+  name: trenova
+  debug: false
+  version: 0.0.0 # from .env (TRENOVA_VERSION)
+  webBaseUrl: https://localhost # from .env (https://DOMAIN)
+  problemTypeBaseUri: https://localhost/problems/ # from .env (https://DOMAIN/problems/)
+
+platform:
+  # Every organization on this instance belongs to its operator: no public
+  # signup, no billing, no control plane.
+  mode: self_hosted
+  referenceDataStewards: []
+  instanceId: ""
+  controlPlane:
+    enabled: false
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  mode: release
+  readTimeout: 30s
+  readHeaderTimeout: 5s
+  writeTimeout: 75s
+  idleTimeout: 120s
+  shutdownTimeout: 10s
+  requestTimeout: 55s
+  # Caddy reaches the API over the Docker network, a private range the default
+  # server.trustedProxies already trusts, so the client IP it forwards is used
+  # for rate limiting and audit records. The API publishes no port of its own.
+  trustedPlatform: ""
+  cors:
+    enabled: true
+    allowedOrigins:
+      - https://localhost # from .env (https://DOMAIN)
+    allowedMethods: [GET, POST, PUT, DELETE, PATCH, OPTIONS]
+    allowedHeaders:
+      - Authorization
+      - Content-Type
+      - Accept
+      - X-CSRF-Token
+      - Last-Event-ID
+      - Idempotency-Key
+    exposeHeaders:
+      - X-Request-Id
+      - Idempotent-Replayed
+    credentials: true
+    maxAge: 86400
+
+database:
+  driver: postgres
+  host: postgres
+  port: 5432
+  name: trenova # from .env
+  user: trenova # from .env
+  password: change-me # from .env
+  sslMode: require
+  maxIdleConns: 20
+  maxOpenConns: 60
+  statementTimeout: 10s
+  lockTimeout: 5s
+  idleInTransactionSessionTimeout: 30s
+  # PostgreSQL row-level security is off in this stack: the application
+  # connects as the database owner. Moving to enforced tenant isolation takes
+  # separate application, system and migrator roles; see "Hardening" in
+  # docs/self-hosting/README.md and docs/engineering/row-level-security.md.
+  rls:
+    mode: "off"
+
+cache:
+  host: redis
+  port: 6379
+  password: change-me # from .env
+  db: 0
+  poolSize: 50
+  minIdleConns: 10
+
+search:
+  enabled: true
+  defaultLimit: 8
+  meilisearch:
+    url: http://meilisearch:7700
+    apiKey: change-me # from .env
+    timeout: 3s
+    indexes:
+      shipments: shipments
+      customers: customers
+      workers: workers
+      documents: documents
+
+storage:
+  provider: minio
+  endpoint: minio:9000
+  publicEndpoint: https://storage.localhost # from .env (https://STORAGE_DOMAIN)
+  accessKey: change-me # from .env
+  secretKey: change-me # from .env
+  bucket: trenova # from .env
+  region: us-east-1
+  useSSL: false
+  autoCreateBucket: true # the API creates the bucket on first start
+  maxFileSize: 52428800
+  maxFilesPerUpload: 10
+
+ai:
+  # Nothing reaches a model vendor until an administrator adds a provider
+  # under AI Control. Set enabled: false to turn every AI feature off.
+  enabled: true
+  # Organizations here belong to the operator, so a provider may point at a
+  # model served on your own network (Ollama, vLLM and the like).
+  privateNetworkProviders: true
+  documentExtraction: false
+  ocrCommand: tesseract
+  ocrLanguage: eng
+  ocrTimeout: 45s
+  maxOcrPages: 25
+  maxConcurrentActivities: 2
+
+security:
+  session:
+    secret: change-me-session-secret-min-32-characters # from .env
+    name: __Host-trenova_session
+    maxAge: 24h
+    httpOnly: true
+    secure: true
+    sameSite: strict
+    path: /
+    domain: ""
+    refreshWindow: 1h
+  rateLimit:
+    enabled: true
+    store: redis
+    failureMode: local
+    requestsPerMinute: 60
+    burstSize: 20
+    anonymous: { requestsPerMinute: 60, burstSize: 20 }
+    user: { requestsPerMinute: 600, burstSize: 60 }
+    apiKey: { requestsPerMinute: 300, burstSize: 30 }
+    tenant: { requestsPerMinute: 6000, burstSize: 600 }
+    publicToken: { requestsPerMinute: 10, burstSize: 5 }
+  passwordReset:
+    baseUrl: https://localhost # from .env (https://DOMAIN)
+    tokenTtl: 30m
+    maxRequestsPerHour: 5
+  graphql:
+    maxRequestBodyBytes: 1048576
+    costBudget:
+      enabled: true
+      pointsPerMinute: 6000000
+      burst: 3000000
+  csrf:
+    trustedOrigins:
+      - https://localhost # from .env (https://DOMAIN)
+    browserGuard:
+      mode: enforce
+  encryption:
+    # Envelope encryption with a key kept in .env. Back that key up apart from
+    # the database: encrypted data cannot be recovered without it.
+    mode: envelope
+    keyManager: local
+    allowLocalKeyManagerInProduction: true
+    key: change-me-encryption-key-min-32-characters # from .env
+
+monitoring:
+  metrics:
+    enabled: false
+    host: 127.0.0.1
+    port: 9090
+    path: /internal/metricsz
+  health:
+    path: /health
+    readinessPath: /ready
+    livenessPath: /live
+  tracing:
+    enabled: false
+    provider: otlp
+    endpoint: localhost:4318
+    serviceName: trenova
+    samplingRate: 1.0
+  graphql:
+    resolverMetrics: false
+    slowOperationAfter: 1s
+    maxTrackedOperations: 2000
+
+logging:
+  level: info
+  format: json
+  output: stdout
+
+temporal:
+  hostPort: temporal:7233
+  namespace: default
+  identity: trenova-tms
+  security:
+    enableEncryption: false
+    encryptionKeyID: unused
+    enableCompression: false
+    compressionThreshold: 0
+
+audit:
+  bufferFlushInterval: 1m
+  batchSize: 500
+  maxEntriesPerFlush: 5000
+  dlqRetryInterval: 5m
+  dlqMaxRetries: 5
+
+# The AI audit trail is signed with keys kept outside the database. compose.yml
+# passes TRENOVA_AI_AUDIT_CHAIN_KEYS and TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID
+# from .env; leave both empty in .env to run without the trail.
+aiAudit:
+  chain:
+    activeKeyId: ""
+
+renderer:
+  # Internal network only: Gotenberg renders organization-authored HTML.
+  gotenbergUrl: http://gotenberg:3000
+
+portal:
+  baseUrl: https://localhost/dash # from .env (https://DOMAIN/dash)
+
+reporting:
+  deliveryLinkBaseUrl: https://localhost # from .env (https://DOMAIN)
+
+system:
+  systemUserPassword: change-me # from .env
+  networkPulse:
+    enabled: false
+    cacheTtl: 60s
+
+twilio:
+  enabled: false
+
+update:
+  # Shows administrators when a newer Trenova release is published on GitHub.
+  enabled: true
+  checkInterval: 6h
+  githubOwner: emoss08
+  githubRepo: trenova
+  allowPrerelease: false

@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { CircleAlert } from "lucide-react";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import type { ReactNode } from "react";
 
@@ -80,7 +80,9 @@ export function ActionDockIndicator({
 }) {
   return (
     <div className="flex items-center gap-x-3">
-      {icon ?? <CircleAlert className="rounded-full bg-warning-subtle text-warning-foreground" />}
+      {icon ?? (
+        <AlertCircleIcon className="rounded-full bg-warning-subtle text-warning-foreground" />
+      )}
       <div className="flex flex-col">
         <span className="text-background text-sm font-medium">{title}</span>
         <span className="text-2xs text-background/80">{description}</span>

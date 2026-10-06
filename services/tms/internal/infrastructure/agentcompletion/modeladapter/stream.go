@@ -47,7 +47,7 @@ func postStream(
 	headers map[string]string,
 	body any,
 ) (io.ReadCloser, error) {
-	encoded, err := sonic.Marshal(body)
+	encoded, err := requestJSON.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("encode provider request: %w", err)
 	}

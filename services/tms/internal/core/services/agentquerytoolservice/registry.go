@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -69,7 +70,29 @@ func NewRegistry(p RegistryParams) serviceports.AgentQueryToolRegistry {
 		}
 	}
 
+	linkViewsToLists(ordered)
+
 	return &registry{byName: byName, ordered: ordered}
+}
+
+// linkViewsToLists gives the view composer each table's list tool, so a view
+// it composes is counted and previewed through the same fetch that listing
+// the table uses. It is wired here because both are tools the registry
+// collects; neither can be handed the other when it is built.
+func linkViewsToLists(tools []serviceports.AgentQueryTool) {
+	lists := make(map[permission.Resource]*listTool)
+	for _, tool := range tools {
+		if list, ok := tool.(*listTool); ok {
+			if _, taken := lists[list.spec.resource]; !taken {
+				lists[list.spec.resource] = list
+			}
+		}
+	}
+	for _, tool := range tools {
+		if composer, ok := tool.(*composeTableViewTool); ok {
+			composer.lists = lists
+		}
+	}
 }
 
 func (r *registry) Get(name string) (serviceports.AgentQueryTool, bool) {

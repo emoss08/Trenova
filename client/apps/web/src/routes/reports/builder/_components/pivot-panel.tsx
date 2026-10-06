@@ -5,7 +5,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { REPORT_AGGREGATION_LABELS, type ReportIR, type ReportPivotSpec } from "@/types/report";
-import { XIcon } from "lucide-react";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import {
@@ -114,7 +114,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             onClick={() => onChange(null)}
             aria-label={t("Remove pivot")}
           >
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
           </Button>
         )}
       </div>

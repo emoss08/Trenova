@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -93,7 +94,8 @@ func (r *repository) ListByProposals(
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
-					Where(cols.ProposalID.In(), bun.In(req.ProposalIDs))
+					Where(cols.ProposalID.In(), bun.In(req.ProposalIDs)).
+					Where(cols.UndoneAt.IsNull())
 			}).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
 			Scan(ctx); err != nil {
@@ -103,5 +105,92 @@ func (r *repository) ListByProposals(
 		}
 
 		return rows, nil
+	})
+}
+
+func (r *repository) ListByCommitWorkflow(
+	ctx context.Context,
+	req repositories.ListAgentDecisionsByCommitWorkflowRequest,
+) ([]*agent.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
+		if req.WorkflowID == "" {
+			return []*agent.AgentDecision{}, nil
+		}
+
+		cols := buncolgen.AgentDecisionColumns
+		rows := make([]*agent.AgentDecision, 0, 1)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&rows).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
+					Where(cols.CommitWorkflowID.Eq(), req.WorkflowID)
+			}).
+			OrderExpr(cols.CreatedAt.OrderAsc()).
+			OrderExpr(cols.ID.OrderAsc()).
+			Scan(ctx); err != nil {
+			r.l.Error("failed to list decisions by commit workflow", zap.Error(err))
+
+			return nil, fmt.Errorf("list decisions by commit workflow: %w", err)
+		}
+
+		return rows, nil
+	})
+}
+
+func (r *repository) MarkCommitted(
+	ctx context.Context,
+	req repositories.SettleAgentDecisionsRequest,
+) ([]pulid.ID, error) {
+	return r.settle(ctx, req, false)
+}
+
+func (r *repository) MarkUndone(
+	ctx context.Context,
+	req repositories.SettleAgentDecisionsRequest,
+) ([]pulid.ID, error) {
+	return r.settle(ctx, req, true)
+}
+
+// settle closes the window on the decisions still in it, in one statement:
+// a commit and an undo racing each other each take all of a batch or none.
+func (r *repository) settle(
+	ctx context.Context,
+	req repositories.SettleAgentDecisionsRequest,
+	undo bool,
+) ([]pulid.ID, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		if len(req.IDs) == 0 {
+			return []pulid.ID{}, nil
+		}
+
+		cols := buncolgen.AgentDecisionColumns
+		query := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*agent.AgentDecision)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.AgentDecisionScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.In(), bun.In(req.IDs)).
+					Where(cols.CommitsAt.IsNotNull()).
+					Where(cols.CommittedAt.IsNull()).
+					Where(cols.UndoneAt.IsNull())
+			}).
+			Set(cols.UpdatedAt.Set(), req.At)
+		if undo {
+			query = query.
+				Set(cols.UndoneAt.Set(), req.At).
+				Set(cols.UndoneByUserID.Set(), req.UndoneByUserID)
+		} else {
+			query = query.Set(cols.CommittedAt.Set(), req.At)
+		}
+
+		settled := make([]pulid.ID, 0, len(req.IDs))
+		if _, err := query.Returning(cols.ID.Bare()).Exec(ctx, &settled); err != nil {
+			r.l.Error("failed to settle agent decisions", zap.Bool("undo", undo), zap.Error(err))
+
+			return nil, fmt.Errorf("settle agent decisions: %w", err)
+		}
+
+		return settled, nil
 	})
 }

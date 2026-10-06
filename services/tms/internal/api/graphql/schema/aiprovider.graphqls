@@ -13,13 +13,29 @@ enum AIStructuredOutputMode {
 
 """
 How hard a model is asked to think before it answers. Off sends no reasoning
-parameter, which models without reasoning reject outright.
+parameter, which models without reasoning reject outright; a model that reasons
+by default then reasons at its own default. None tells such a model not to
+reason, and Minimal asks for the least reasoning it allows.
 """
 enum AIReasoningEffort {
   Off
+  None
+  Minimal
   Low
   Medium
   High
+}
+
+"""
+How a Claude model is asked to think. Auto reads the model id; Effort asks by
+effort, as Claude models from Opus 4.6 and Sonnet 4.6 on require; Budget asks
+with a token budget, as older ones require. Only Anthropic Messages providers
+take anything but Auto.
+"""
+enum AIThinkingStyle {
+  Auto
+  Effort
+  Budget
 }
 
 """
@@ -79,6 +95,8 @@ type AIProvider {
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   reasoningEffort: AIReasoningEffort!
+  "How a Claude model behind an id the system cannot read takes thinking."
+  thinkingStyle: AIThinkingStyle!
   """
   Vendor request fields this endpoint takes that the protocol does not
   define, merged under the fields this system sets. Null when the endpoint

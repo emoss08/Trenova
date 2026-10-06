@@ -10,6 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -24,6 +25,28 @@ type fakeMemories struct {
 	stored     map[pulid.ID]*agent.Memory
 	existing   *agent.Memory
 	guard      writeGuard
+	mode       agent.MemorySavingMode
+	roleIDs    []pulid.ID
+}
+
+func (f *fakeMemories) SavingMode(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+) (agent.MemorySavingMode, error) {
+	if f.mode == "" {
+		return agent.MemorySavingAutomatic, nil
+	}
+
+	return f.mode, nil
+}
+
+func (f *fakeMemories) Reader(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	userID pulid.ID,
+) (agent.MemoryReader, error) {
+	return agent.MemoryReader{UserID: userID, RoleIDs: f.roleIDs}, nil
 }
 
 func (f *fakeMemories) Remember(
@@ -146,14 +169,14 @@ func TestRemember_RefusesACorrectionAndHalfASubject(t *testing.T) {
 		memoryParams(map[string]any{"content": "x", "kind": "Correction"}),
 	)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "Instruction or Fact")
+	assert.Contains(t, err.Error(), "kind must be one of Instruction, Fact, Procedure")
 
 	err = tool.Execute(
 		t.Context(),
-		memoryParams(map[string]any{"content": "x", "subjectType": "Customer"}),
+		memoryParams(map[string]any{"content": "x", "subjectId": "cus_01M3Q2Y3HYKRA6P275AT81N7TF"}),
 	)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "both or neither")
+	assert.Contains(t, err.Error(), "subjectId needs subjectType")
 
 	err = tool.Execute(
 		t.Context(),
@@ -161,6 +184,28 @@ func TestRemember_RefusesACorrectionAndHalfASubject(t *testing.T) {
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "YYYY-MM-DD")
+}
+
+// A model that fills every field sends a subject type for a memory about no
+// record. Refusing it kept "remember to show me the queue item" from ever
+// being saved, so a type with no id is read as no subject.
+func TestRemember_ReadsATypeWithNoIDAsNoSubject(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{}
+	tool := newRememberTool(memories)
+
+	err := tool.Execute(t.Context(), memoryParams(map[string]any{
+		"content":     "Show the billing queue item, not the invoice, unless the invoice is asked for.",
+		"kind":        "Instruction",
+		"subjectType": "Customer",
+		"subjectId":   "",
+	}))
+
+	require.NoError(t, err)
+	require.NotNil(t, memories.remembered)
+	assert.Empty(t, memories.remembered.SubjectType)
+	assert.True(t, memories.remembered.SubjectID.IsNil())
 }
 
 func TestForgetMemory_RetiresRatherThanDeletes(t *testing.T) {
@@ -178,4 +223,84 @@ func TestForgetMemory_RetiresRatherThanDeletes(t *testing.T) {
 	assert.Equal(t, memoryID, memories.status.ID)
 	assert.Equal(t, agent.MemoryStatusRetired, memories.status.Status)
 	assert.True(t, tool.Policy().Reversible)
+}
+
+// With a person in the conversation a memory is theirs alone unless the agent
+// says otherwise, and that kind runs without asking them: it is their own
+// record. Wider ones go through the tiers like any write.
+func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
+	t.Parallel()
+
+	roleID := pulid.MustNew("rol_")
+	memories := &fakeMemories{roleIDs: []pulid.ID{roleID}}
+	tool := newRememberTool(memories)
+
+	params := memoryParams(map[string]any{"content": "Group AR by facility."})
+	memory, err := tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryScopeUser, memory.Scope)
+	require.NotNil(t, memory.OwnerUserID)
+	assert.Equal(t, params.Actor.UserID, *memory.OwnerUserID)
+	assert.Equal(t, agent.MemoryStatusActive, memory.Status)
+	assert.Equal(t, agent.EgressPersonal, tool.Policy().Classified(params).Egress)
+
+	team := memoryParams(map[string]any{"content": "Columbus loads need a lumper receipt.", "visibleTo": "team"})
+	memory, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), team)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryScopeRole, memory.Scope)
+	require.NotNil(t, memory.RoleID)
+	assert.Equal(t, roleID, *memory.RoleID)
+	assert.Equal(t, agent.EgressInternal, tool.Policy().Classified(team).Egress)
+
+	org := memoryParams(map[string]any{"content": "Use the DOE weekly average.", "visibleTo": "organization"})
+	memory, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), org)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryScopeOrganization, memory.Scope)
+	assert.Nil(t, memory.OwnerUserID)
+}
+
+// Nobody in the conversation means nobody to keep it for: it is the
+// organization's, as it always was.
+func TestRemember_WithNobodyInTheConversationKeepsItForTheOrganization(t *testing.T) {
+	t.Parallel()
+
+	tool := newRememberTool(&fakeMemories{})
+	params := memoryParams(map[string]any{"content": "Docks close at four."})
+	params.Actor = &serviceports.RequestActor{
+		PrincipalType:  serviceports.PrincipalTypeAgent,
+		PrincipalID:    pulid.MustNew("agt_"),
+		OrganizationID: params.OrganizationID,
+		BusinessUnitID: params.BusinessUnitID,
+	}
+
+	memory, err := tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryScopeOrganization, memory.Scope)
+
+	params.Params["visibleTo"] = "me"
+	_, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	require.Error(t, err)
+}
+
+// A person who asked to be asked first is offered the memory: it is kept as a
+// suggestion nothing reads until they accept it. One they already approved as
+// a proposal was asked about, and is kept.
+func TestRemember_AskFirstOffersInsteadOfKeeping(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{mode: agent.MemorySavingAskFirst}
+	tool := newRememberTool(memories)
+
+	params := memoryParams(map[string]any{"content": "Avery approves invoices after 4 PM."})
+	memory, err := tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusSuggested, memory.Status)
+	require.NotNil(t, memory.CreatedByUserID)
+	assert.Equal(t, params.Actor.UserID, *memory.CreatedByUserID, "offered to the person who asked")
+
+	approved := memoryParams(map[string]any{"content": "Avery approves invoices after 4 PM."})
+	approved.ProposalID = pulid.MustNew("aprop_")
+	memory, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), approved)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusActive, memory.Status)
 }

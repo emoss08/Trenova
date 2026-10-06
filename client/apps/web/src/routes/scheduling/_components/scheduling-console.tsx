@@ -38,12 +38,11 @@ import {
   ChevronRightIcon,
   ClockIcon,
   PlusIcon,
-  RepeatIcon,
-  Rows3Icon,
-  Rows4Icon,
-  SearchIcon,
-  UsersIcon,
-} from "lucide-react";
+  Repeat01Icon,
+  Rows03Icon,
+  SearchLgIcon,
+  Users01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { openSwapsQuery, rotaQuery, shiftTemplatesQuery } from "./queries";
@@ -66,9 +65,9 @@ const WEEK_ITEMS = [
 ] satisfies { value: WeeksValue; label: string }[];
 
 const DENSITY_ITEMS = [
-  { value: "comfortable", label: "Comfortable", icon: Rows3Icon },
-  { value: "compact", label: "Compact", icon: Rows4Icon },
-] satisfies { value: RotaDensity; label: string; icon: typeof Rows3Icon }[];
+  { value: "comfortable", label: "Comfortable", icon: Rows03Icon },
+  { value: "compact", label: "Compact", icon: Rows03Icon },
+] satisfies { value: RotaDensity; label: string; icon: typeof Rows03Icon }[];
 
 const LEGEND_STATES = ["Scheduled", "Assigned", "TimeOff", "Leave", "Unavailable", "Off"] as const;
 const EMPTY_TEMPLATES: ShiftTemplateRow[] = [];
@@ -162,7 +161,7 @@ export default function SchedulingConsole() {
           ) : null}
           {canReadSwaps ? (
             <TabsTrigger value="swaps">
-              <RepeatIcon className="size-3.5" />
+              <Repeat01Icon className="size-3.5" />
               {t("Swaps")}
               {awaitingOffice > 0 ? (
                 <Badge variant="warning" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
@@ -215,7 +214,7 @@ export default function SchedulingConsole() {
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={t("Find a name, shift or terminal")}
                   aria-label={t("Find on the board")}
-                  leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+                  leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
                   inputContainerClassName="min-w-48 flex-1"
                 />
               </div>
@@ -255,7 +254,7 @@ export default function SchedulingConsole() {
                       />
                     }
                   >
-                    <UsersIcon className="size-3.5" />
+                    <Users01Icon className="size-3.5" />
                     {t("My team")}
                   </TooltipTrigger>
                   <TooltipContent>{t("Only the people you answer for")}</TooltipContent>

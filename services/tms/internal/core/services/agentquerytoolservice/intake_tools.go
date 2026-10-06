@@ -97,6 +97,9 @@ type draftField struct {
 	Confidence     float64 `json:"confidence"`
 	ReviewRequired bool    `json:"reviewRequired,omitempty"`
 	Conflict       bool    `json:"conflict,omitempty"`
+	// PageNumber is the page the value was read from, which the Desk uses to
+	// point at it; zero when the reading does not say.
+	PageNumber int `json:"pageNumber,omitempty"`
 }
 
 type draftStop struct {
@@ -113,6 +116,7 @@ type draftStop struct {
 	AppointmentRequired bool    `json:"appointmentRequired,omitempty"`
 	Confidence          float64 `json:"confidence"`
 	ReviewRequired      bool    `json:"reviewRequired,omitempty"`
+	PageNumber          int     `json:"pageNumber,omitempty"`
 }
 
 type draftConflict struct {

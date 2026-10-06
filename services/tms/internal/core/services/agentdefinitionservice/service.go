@@ -8,12 +8,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/fx"
@@ -38,6 +41,7 @@ type Params struct {
 	// Access sets who may use an agent in the transaction that saves it.
 	Access      services.AgentAccessService
 	Permissions services.PermissionEngine `optional:"true"`
+	Plans       services.PlanService      `optional:"true"`
 }
 
 type Service struct {
@@ -51,6 +55,7 @@ type Service struct {
 	extensions  services.AgentExtensionGate
 	access      services.AgentAccessService
 	permissions services.PermissionEngine
+	plans       services.PlanService
 }
 
 func New(p Params) services.AgentDefinitionService {
@@ -65,6 +70,7 @@ func New(p Params) services.AgentDefinitionService {
 		extensions:  p.Extensions,
 		access:      p.Access,
 		permissions: p.Permissions,
+		plans:       p.Plans,
 	}
 }
 
@@ -106,11 +112,17 @@ func (s *Service) Create(
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
 	apply(definition, req)
+	if by := actorUser(actor); by.IsNotNil() {
+		definition.CreatedByID = &by
+	}
 
 	if err := s.validate(ctx, definition, nil); err != nil {
 		return nil, err
 	}
 	if err := s.checkDataAccess(ctx, definition, nil, actor); err != nil {
+		return nil, err
+	}
+	if err := s.requireAutomation(ctx, req.TenantInfo, definition, nil); err != nil {
 		return nil, err
 	}
 	if err := s.schedule(definition); err != nil {
@@ -150,11 +162,15 @@ func (s *Service) Update(
 	updated := *existing
 	updated.Version = req.Version
 	apply(&updated, req)
+	updated.NoteEnabledChange(previous.Enabled, actorUser(actor), timeutils.NowUnix())
 
 	if err = s.validate(ctx, &updated, &previous); err != nil {
 		return nil, err
 	}
 	if err = s.checkDataAccess(ctx, &updated, &previous, actor); err != nil {
+		return nil, err
+	}
+	if err = s.requireAutomation(ctx, req.TenantInfo, &updated, &previous); err != nil {
 		return nil, err
 	}
 	if scheduleChanged(&previous, &updated) {
@@ -387,6 +403,31 @@ func (s *Service) schedule(definition *agentdefinition.Definition) error {
 	return nil
 }
 
+func automated(definition *agentdefinition.Definition) bool {
+	return definition != nil && definition.Enabled &&
+		definition.TriggerMode != "" && definition.TriggerMode != agentdefinition.TriggerChat
+}
+
+func (s *Service) requireAutomation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	updated, previous *agentdefinition.Definition,
+) error {
+	if !automated(updated) {
+		return nil
+	}
+	if automated(previous) && previous.TriggerMode == updated.TriggerMode {
+		return nil
+	}
+
+	return planservice.RequireCapability(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityAgentAutomation,
+	)
+}
+
 func scheduleChanged(previous, updated *agentdefinition.Definition) bool {
 	return previous.TriggerMode != updated.TriggerMode ||
 		previous.CronExpression != updated.CronExpression ||
@@ -425,6 +466,9 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	definition.ToolDailyLimits = copyLimits(req.ToolDailyLimits)
 	definition.SimulationMode = req.SimulationMode
 	definition.MemoryTokenBudget = req.MemoryTokenBudget
+	if req.LearningOff != nil {
+		definition.LearningOff = *req.LearningOff
+	}
 	definition.Icon = strings.TrimSpace(req.Icon)
 	definition.Accent = strings.TrimSpace(req.Accent)
 	definition.ContextProviders = req.ContextProviders
@@ -433,6 +477,10 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	if req.DelegateIDs != nil {
 		definition.DelegateIDs = slices.Clone(*req.DelegateIDs)
 	}
+	// A form that picks a switched-off tool again, or drops a delegate, has
+	// the last word over what the capabilities page remembered about them.
+	definition.ForgetReheldTools()
+	definition.PruneDelegateTopics()
 	definition.ApplyDefaults()
 
 	if definition.TriggerMode != agentdefinition.TriggerScheduled {
@@ -519,4 +567,13 @@ func (s *Service) logAudit(
 	}, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log agent definition audit", zap.Error(err))
 	}
+}
+
+// actorUser is the person behind a request, nil for a key or the system.
+func actorUser(actor *services.RequestActor) pulid.ID {
+	if actor == nil {
+		return pulid.Nil
+	}
+
+	return actor.UserID
 }

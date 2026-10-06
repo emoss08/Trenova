@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -22,6 +23,10 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentAccessPreview", Implementors: []string{"AgentAccessPreview"}},
 		{Name: "AgentAudienceRole", Implementors: []string{"AgentAudienceRole"}},
 		{Name: "AgentAudienceSuggestion", Implementors: []string{"AgentAudienceSuggestion"}},
+		{Name: "AgentCapabilities", Implementors: []string{"AgentCapabilities"}},
+		{Name: "AgentCapabilityHandoff", Implementors: []string{"AgentCapabilityHandoff"}},
+		{Name: "AgentCapabilityLimits", Implementors: []string{"AgentCapabilityLimits"}},
+		{Name: "AgentCapabilityTool", Implementors: []string{"AgentCapabilityTool"}},
 		{Name: "AgentDefinition", Implementors: []string{"AgentDefinition"}},
 		{Name: "AgentDefinitionConnection", Implementors: []string{"AgentDefinitionConnection"}},
 		{Name: "AgentDefinitionEdge", Implementors: []string{"AgentDefinitionEdge"}},
@@ -150,6 +155,426 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
 		}},
+		{Object: "AgentCapabilities", Fields: []*gqlexec.Field{
+			{
+				Name:     "agentId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.AgentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "template",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Template, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "icon",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Icon, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accent",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Accent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "systemKey",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.SystemKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "model",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Model, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "setUpBy",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.SetUpBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "enabled",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Enabled, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "canEdit",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.CanEdit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Version, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:      "readTools",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentCapabilityTool",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.ReadTools, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilityTool2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityToolᚄ),
+			},
+			{
+				Name:      "writeTools",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentCapabilityTool",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.WriteTools, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilityTool2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityToolᚄ),
+			},
+			{
+				Name:      "handoffs",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentCapabilityHandoff",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Handoffs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilityHandoff2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityHandoffᚄ),
+			},
+			{
+				Name:      "limits",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentCapabilityLimits",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilities)
+					return obj.Limits, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilityLimits2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityLimits),
+			},
+		}},
+		{Object: "AgentCapabilityHandoff", Fields: []*gqlexec.Field{
+			{
+				Name:     "agentId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityHandoff)
+					return obj.AgentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityHandoff)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityHandoff)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "icon",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityHandoff)
+					return obj.Icon, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accent",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityHandoff)
+					return obj.Accent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "template",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityHandoff)
+					return obj.Template, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "topic",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityHandoff)
+					return obj.Topic, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "AgentCapabilityLimits", Fields: []*gqlexec.Field{
+			{
+				Name:     "requestsToday",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.RequestsToday, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "dailyRequestLimit",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.DailyRequestLimit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "dayResetsAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.DayResetsAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "monthlySpentUsd",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.MonthlySpentUSD, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "monthlyBudgetUsd",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.MonthlyBudgetUSD, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "monthStart",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.MonthStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "monthResetsAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.MonthResetsAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "maxChangeItems",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.MaxChangeItems, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "businessHoursOnly",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.BusinessHoursOnly, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "businessHoursStart",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.BusinessHoursStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "businessHoursEnd",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.BusinessHoursEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "businessHoursTimezone",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityLimits)
+					return obj.BusinessHoursTimezone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "AgentCapabilityTool", Fields: []*gqlexec.Field{
+			{
+				Name:     "key",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityTool)
+					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityTool)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "write",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityTool)
+					return obj.Write, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "mode",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityTool)
+					return obj.Mode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilityMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityMode),
+			},
+			{
+				Name:     "allowedModes",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityTool)
+					return obj.AllowedModes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilityMode2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityModeᚄ),
+			},
+			{
+				Name:     "lockReason",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentCapabilityTool)
+					return obj.LockReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+		}},
 		{Object: "AgentDefinition", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -205,7 +630,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "template",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").Template(ctx, obj)
@@ -247,7 +672,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").ToolTiers(ctx, obj)
@@ -257,7 +682,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autonomyCeiling",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.AutonomyCeiling, nil
@@ -267,7 +692,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dataAccessCeiling",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.DataAccessCeiling, nil
@@ -297,7 +722,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decisionTimeoutSeconds",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.DecisionTimeoutSeconds, nil
@@ -307,7 +732,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "triggerMode",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.TriggerMode, nil
@@ -349,7 +774,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "intervalSeconds",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.IntervalSeconds, nil
@@ -358,7 +783,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "endsAt",
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.EndsAt, nil
@@ -368,7 +793,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "maxConcurrentRuns",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.MaxConcurrentRuns, nil
@@ -378,7 +803,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runTimeoutSeconds",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.RunTimeoutSeconds, nil
@@ -388,7 +813,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "maxToolCalls",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.MaxToolCalls, nil
@@ -399,7 +824,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "monthlyBudgetUsd",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild12,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").MonthlyBudgetUsd(ctx, obj)
@@ -409,7 +834,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dailyRunLimit",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.DailyRunLimit, nil
@@ -421,7 +846,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").ToolDailyLimits(ctx, obj)
@@ -440,7 +865,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "memoryTokenBudget",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.MemoryTokenBudget, nil
@@ -448,9 +873,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
+				Name:     "learningOff",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.Definition)
+					return obj.LearningOff, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "contextProviders",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.ContextProviders, nil
@@ -460,7 +895,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outputMode",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.OutputMode, nil
@@ -567,7 +1002,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastRunAt",
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.LastRunAt, nil
@@ -576,7 +1011,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "nextRunAt",
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.NextRunAt, nil
@@ -588,7 +1023,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild9,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").PendingProposals(ctx, obj)
@@ -600,7 +1035,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild9,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return gqlexec.Resolver[resolverAgentDefinition](ec, "AgentDefinition").OpenRuns(ctx, obj)
@@ -610,7 +1045,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.Version, nil
@@ -620,7 +1055,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.CreatedAt, nil
@@ -630,7 +1065,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return obj.UpdatedAt, nil
@@ -663,7 +1098,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentDefinitionConnection)
 					return obj.TotalCount, nil
@@ -743,6 +1178,19 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNRole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋpermissionᚐRole),
 			},
+			{
+				Name:       "updateAgentCapabilities",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AgentCapabilities",
+				Args:       field_Mutation_updateAgentCapabilities_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentCapabilities(ctx, fc.Args["agentId"].(string), fc.Args["input"].(gqlmodel.UpdateAgentCapabilitiesInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilities2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilities),
+			},
 		}},
 		{Object: "MyAgent", Fields: []*gqlexec.Field{
 			{
@@ -779,7 +1227,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "template",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
 					return gqlexec.Resolver[resolverMyAgent](ec, "MyAgent").Template(ctx, obj)
@@ -877,7 +1325,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.MyAgentConnection)
 					return obj.TotalCount, nil
@@ -978,12 +1426,29 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentAccessPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAccessPreview),
 			},
+			{
+				Name:       "agentCapabilities",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentCapabilities",
+				Args:       field_Query_agentCapabilities_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentCapabilities(ctx, fc.Args["agentId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentCapabilities2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilities),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "AgentAccessPreviewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentAccessPreviewInput)},
+		{Name: "AgentCapabilityToolInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentCapabilityToolInput)},
+		{Name: "AgentDelegateTopicInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentDelegateTopicInput)},
 		{Name: "MyAgentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentsInput)},
 		{Name: "SetAgentAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetAgentAccessInput)},
+		{Name: "UpdateAgentCapabilitiesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateAgentCapabilitiesInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "AgentDefinition", Check: func(r any) bool { _, ok := r.(resolverAgentDefinition); return ok }},
@@ -1008,6 +1473,7 @@ type resolverAgentDefinition interface {
 type resolverMutation interface {
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
+	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
 }
 
 type resolverMyAgent interface {
@@ -1021,6 +1487,7 @@ type resolverQuery interface {
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
+	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
 }
 
 var (
@@ -1029,16 +1496,17 @@ var (
 	errNoChild2  = errors.New("field of type AgentAudienceCoverage does not have child fields")
 	errNoChild3  = errors.New("field of type Boolean does not have child fields")
 	errNoChild4  = errors.New("field of type ID does not have child fields")
-	errNoChild5  = errors.New("field of type AgentTemplate does not have child fields")
-	errNoChild6  = errors.New("field of type JSON does not have child fields")
-	errNoChild7  = errors.New("field of type AgentAutonomyTier does not have child fields")
-	errNoChild8  = errors.New("field of type AgentDataAccessCeiling does not have child fields")
-	errNoChild9  = errors.New("field of type Int does not have child fields")
-	errNoChild10 = errors.New("field of type AgentTriggerMode does not have child fields")
-	errNoChild11 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild12 = errors.New("field of type Decimal does not have child fields")
-	errNoChild13 = errors.New("field of type AgentContextProvider does not have child fields")
-	errNoChild14 = errors.New("field of type AgentOutputMode does not have child fields")
+	errNoChild5  = errors.New("field of type Int does not have child fields")
+	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild7  = errors.New("field of type Decimal does not have child fields")
+	errNoChild8  = errors.New("field of type AgentCapabilityMode does not have child fields")
+	errNoChild9  = errors.New("field of type AgentTemplate does not have child fields")
+	errNoChild10 = errors.New("field of type JSON does not have child fields")
+	errNoChild11 = errors.New("field of type AgentAutonomyTier does not have child fields")
+	errNoChild12 = errors.New("field of type AgentDataAccessCeiling does not have child fields")
+	errNoChild13 = errors.New("field of type AgentTriggerMode does not have child fields")
+	errNoChild14 = errors.New("field of type AgentContextProvider does not have child fields")
+	errNoChild15 = errors.New("field of type AgentOutputMode does not have child fields")
 )
 
 func field_Mutation_setAgentAccess_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1080,6 +1548,27 @@ func field_Mutation_setRoleAgentAccess_args(ctx context.Context, ec *gqlexec.Exe
 		return nil, err
 	}
 	args["agentIds"] = arg1
+	return args, nil
+}
+
+func field_Mutation_updateAgentCapabilities_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateAgentCapabilitiesInput, error) {
+			return unmarshalNUpdateAgentCapabilitiesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateAgentCapabilitiesInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -1148,6 +1637,19 @@ func field_Query_agentAccessPreview_args(ctx context.Context, ec *gqlexec.Exec, 
 	return args, nil
 }
 
+func field_Query_agentCapabilities_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agentId"] = arg0
+	return args, nil
+}
+
 func unmarshalInputAgentAccessPreviewInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentAccessPreviewInput, error) {
 	var it gqlmodel.AgentAccessPreviewInput
 	if obj == nil {
@@ -1187,6 +1689,80 @@ func unmarshalInputAgentAccessPreviewInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.AccessMode = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputAgentCapabilityToolInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentCapabilityToolInput, error) {
+	var it gqlmodel.AgentCapabilityToolInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"key", "mode"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "mode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
+			data, err := unmarshalNAgentCapabilityMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityMode(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mode = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputAgentDelegateTopicInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentDelegateTopicInput, error) {
+	var it gqlmodel.AgentDelegateTopicInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"agentId", "topic"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "agentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agentId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AgentID = data
+		case "topic":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topic"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Topic = data
 		}
 	}
 	return it, nil
@@ -1300,6 +1876,113 @@ func unmarshalInputSetAgentAccessInput(ctx context.Context, ec *gqlexec.Exec, ob
 	return it, nil
 }
 
+func unmarshalInputUpdateAgentCapabilitiesInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateAgentCapabilitiesInput, error) {
+	var it gqlmodel.UpdateAgentCapabilitiesInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"version", "enabled", "tools", "dailyRequestLimit", "monthlyBudgetUsd", "clearMonthlyBudget", "maxChangeItems", "businessHoursOnly", "businessHoursStart", "businessHoursEnd", "businessHoursTimezone", "delegateTopics"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "tools":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tools"))
+			data, err := unmarshalOAgentCapabilityToolInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentCapabilityToolInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Tools = data
+		case "dailyRequestLimit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dailyRequestLimit"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DailyRequestLimit = data
+		case "monthlyBudgetUsd":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("monthlyBudgetUsd"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MonthlyBudgetUsd = data
+		case "clearMonthlyBudget":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearMonthlyBudget"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearMonthlyBudget = data
+		case "maxChangeItems":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxChangeItems"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxChangeItems = data
+		case "businessHoursOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessHoursOnly"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BusinessHoursOnly = data
+		case "businessHoursStart":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessHoursStart"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BusinessHoursStart = data
+		case "businessHoursEnd":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessHoursEnd"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BusinessHoursEnd = data
+		case "businessHoursTimezone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessHoursTimezone"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BusinessHoursTimezone = data
+		case "delegateTopics":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("delegateTopics"))
+			data, err := unmarshalOAgentDelegateTopicInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentDelegateTopicInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DelegateTopics = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -1315,6 +1998,22 @@ func unmarshalNAgentAccessPreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNAgentCapabilityMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityMode(ctx context.Context, ec *gqlexec.Exec, v any) (services.AgentCapabilityMode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := services.AgentCapabilityMode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNAgentCapabilityToolInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentCapabilityToolInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.AgentCapabilityToolInput, error) {
+	res, err := unmarshalInputAgentCapabilityToolInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNAgentDelegateTopicInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentDelegateTopicInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.AgentDelegateTopicInput, error) {
+	res, err := unmarshalInputAgentDelegateTopicInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1327,6 +2026,11 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 
 func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNMyAgentsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.MyAgentsInput, error) {
@@ -1346,6 +2050,41 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 
 func unmarshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalNUpdateAgentCapabilitiesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateAgentCapabilitiesInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateAgentCapabilitiesInput, error) {
+	res, err := unmarshalInputUpdateAgentCapabilitiesInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOAgentCapabilityToolInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentCapabilityToolInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.AgentCapabilityToolInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAgentCapabilityToolInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentCapabilityToolInput)
+}
+
+func unmarshalOAgentDelegateTopicInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentDelegateTopicInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.AgentDelegateTopicInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAgentDelegateTopicInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentDelegateTopicInput)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
@@ -1444,6 +2183,58 @@ func marshalNAgentAutonomyTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
+func marshalNAgentCapabilities2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilities(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentCapabilities) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentCapabilities", v)
+}
+
+func marshalNAgentCapabilityHandoff2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityHandoff(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AgentCapabilityHandoff) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentCapabilityHandoff", &v)
+}
+
+func marshalNAgentCapabilityHandoff2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityHandoffᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.AgentCapabilityHandoff) graphql.Marshaler {
+	return gqlexec.List[services.AgentCapabilityHandoff]{
+		Elem:        marshalNAgentCapabilityHandoff2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityHandoff,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentCapabilityLimits2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityLimits(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AgentCapabilityLimits) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentCapabilityLimits", &v)
+}
+
+func marshalNAgentCapabilityMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AgentCapabilityMode) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAgentCapabilityMode2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityModeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.AgentCapabilityMode) graphql.Marshaler {
+	return gqlexec.List[services.AgentCapabilityMode]{
+		Elem:        marshalNAgentCapabilityMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityMode,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentCapabilityTool2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityTool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AgentCapabilityTool) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentCapabilityTool", &v)
+}
+
+func marshalNAgentCapabilityTool2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityToolᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.AgentCapabilityTool) graphql.Marshaler {
+	return gqlexec.List[services.AgentCapabilityTool]{
+		Elem:        marshalNAgentCapabilityTool2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentCapabilityTool,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNAgentContextProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐContextProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.ContextProvider) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -1538,6 +2329,14 @@ func marshalNAgentTriggerMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -1714,6 +2513,11 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 		return graphql.Null
 	}
 	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
 	return res
 }
 

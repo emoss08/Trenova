@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -80,13 +81,15 @@ func (s *Service) resolveAttachments(
 		)
 	}
 
-	stored := make([]conversation.MessageAttachment, 0, len(ids))
-	runtime := make([]agentdefinition.RuntimeAttachment, 0, len(ids))
+	// Each file is read on its own, side by side: the files are independent,
+	// and one after the other they were two round trips each. What comes back
+	// is put in the order the files were attached, and so are the refusals.
+	slots := make([]attachmentSlot, len(ids))
 	seen := make(map[pulid.ID]struct{}, len(ids))
+	var wg sync.WaitGroup
 	for i, id := range ids {
-		field := "attachmentDocumentIds[" + strconv.Itoa(i) + "]"
 		if id.IsNil() {
-			multiErr.Add(field, errortypes.ErrInvalid, "Attachment identifier is invalid")
+			slots[i].problem = "Attachment identifier is invalid"
 			continue
 		}
 		if _, dup := seen[id]; dup {
@@ -94,41 +97,79 @@ func (s *Service) resolveAttachments(
 		}
 		seen[id] = struct{}{}
 
-		doc, err := s.documents.GetByID(ctx, repositories.GetDocumentByIDRequest{
-			ID:         id,
-			TenantInfo: tenant,
+		slot := &slots[i]
+		wg.Go(func() {
+			*slot = s.readAttachment(ctx, thread, id, actor, tenant)
 		})
-		if err != nil {
-			multiErr.Add(field, errortypes.ErrInvalid, "Attachment was not found")
-			continue
-		}
-		if doc.UploadedByID != actor.UserID ||
-			doc.ResourceType != AttachmentResourceType ||
-			doc.ResourceID != thread.ID.String() {
+	}
+	wg.Wait()
+
+	stored := make([]conversation.MessageAttachment, 0, len(ids))
+	runtime := make([]agentdefinition.RuntimeAttachment, 0, len(ids))
+	for i := range slots {
+		slot := &slots[i]
+		if slot.problem != "" {
 			multiErr.Add(
-				field,
+				"attachmentDocumentIds["+strconv.Itoa(i)+"]",
 				errortypes.ErrInvalid,
-				"Attachment does not belong to this conversation",
+				slot.problem,
 			)
 			continue
 		}
-
-		stored = append(stored, conversation.MessageAttachment{
-			DocumentID:  doc.ID,
-			FileName:    doc.OriginalName,
-			ContentType: doc.FileType,
-			FileSize:    doc.FileSize,
-		})
-		runtime = append(
-			runtime,
-			s.describeAttachment(ctx, doc.ID, doc.OriginalName, doc.FileType, tenant),
-		)
+		if slot.stored == nil {
+			continue
+		}
+		stored = append(stored, *slot.stored)
+		runtime = append(runtime, slot.runtime)
 	}
 	if multiErr.HasErrors() {
 		return nil, nil, multiErr
 	}
 
 	return stored, runtime, nil
+}
+
+// attachmentSlot is one attached file as it was read: what is kept on the
+// message and shown to the model, or why it was refused. A duplicate leaves
+// its slot empty.
+type attachmentSlot struct {
+	stored  *conversation.MessageAttachment
+	runtime agentdefinition.RuntimeAttachment
+	problem string
+}
+
+func (s *Service) readAttachment(
+	ctx context.Context,
+	thread *conversation.Thread,
+	id pulid.ID,
+	actor *services.RequestActor,
+	tenant pagination.TenantInfo,
+) attachmentSlot {
+	doc, err := s.documents.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		ID:         id,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return attachmentSlot{problem: "Attachment was not found"}
+	}
+	if doc.UploadedByID != actor.UserID ||
+		doc.ResourceType != AttachmentResourceType ||
+		doc.ResourceID != thread.ID.String() {
+		return attachmentSlot{problem: "Attachment does not belong to this conversation"}
+	}
+
+	runtime := s.describeAttachment(ctx, doc.ID, doc.OriginalName, doc.FileType, tenant)
+
+	return attachmentSlot{
+		stored: &conversation.MessageAttachment{
+			DocumentID:  doc.ID,
+			FileName:    doc.OriginalName,
+			ContentType: doc.FileType,
+			FileSize:    doc.FileSize,
+			PoorlyRead:  runtime.PoorlyRead,
+		},
+		runtime: runtime,
+	}
 }
 
 // describeAttachment reads what document intelligence has made of a file so
@@ -165,6 +206,7 @@ func (s *Service) describeAttachment(
 	attachment.Status = string(content.Status)
 	attachment.PageCount = content.PageCount
 	attachment.Kind = content.DetectedDocumentKind
+	attachment.PoorlyRead = content.PoorlyRead()
 	if text := strings.TrimSpace(content.ContentText); text != "" {
 		attachment.Excerpt = text
 	}

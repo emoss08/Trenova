@@ -24,7 +24,12 @@ import {
   checklistTriggerSchema,
   type ChecklistTemplateFormValues,
 } from "@trenova/shared/types/worker-checklist";
-import { GripVerticalIcon, InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import {
+  GripVerticalIcon,
+  InfoCircleIcon,
+  PlusIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const KIND_OPTIONS = checklistKindSchema.options.map((value) => ({
@@ -189,7 +194,7 @@ export function ChecklistTemplateForm({
         }
       >
         <Alert variant="default">
-          <InfoIcon className="size-4" />
+          <InfoCircleIcon className="size-4" />
           <AlertTitle>{t("Items are copied when a checklist starts")}</AlertTitle>
           <AlertDescription>
             {t(
@@ -268,7 +273,7 @@ function ItemRow({
               aria-label={`Remove item ${index + 1}`}
               onClick={onRemove}
             >
-              <Trash2Icon className="size-3.5" />
+              <Trash01Icon className="size-3.5" />
             </Button>
           ) : null}
         </div>

@@ -56,7 +56,7 @@ func TestRenderTranscript_NestsADelegatesStepsUnderItsCall(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "The tile is ready.", CreatedAt: 1_790_000_007},
 	}
 
-	body := renderTranscript(transcriptInput{
+	body := renderTranscript(&transcriptInput{
 		Thread:     transcriptThread(),
 		AgentName:  "Homepage Widget Builder",
 		Delegates:  map[pulid.ID]string{delegate: "Report Builder"},
@@ -84,7 +84,7 @@ func TestRenderTranscript_NestsADelegatesStepsUnderItsCall(t *testing.T) {
 func TestRenderTranscript_NamesADeletedDelegatePlainly(t *testing.T) {
 	t.Parallel()
 
-	body := renderTranscript(transcriptInput{
+	body := renderTranscript(&transcriptInput{
 		Thread:    transcriptThread(),
 		AgentName: "Homepage Widget Builder",
 		Messages: []conversation.Message{{

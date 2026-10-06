@@ -42,8 +42,9 @@ type chatRequest struct {
 	Tools          []chatTool          `json:"tools,omitempty"`
 	Stream         bool                `json:"stream"`
 	StreamOptions  *chatStreamOptions  `json:"stream_options,omitempty"`
-	// ReasoningEffort is sent only when the provider is configured to reason;
-	// a model without reasoning rejects the parameter with a 400.
+	// ReasoningEffort is sent only when the provider is configured to reason,
+	// or told explicitly not to; a model without reasoning rejects the
+	// parameter with a 400.
 	ReasoningEffort string   `json:"reasoning_effort,omitempty"`
 	Temperature     *float64 `json:"temperature,omitempty"`
 	TopP            *float64 `json:"top_p,omitempty"`
@@ -282,6 +283,8 @@ func (a openAIChatAdapter) Stream(
 		usage     chatUsage
 		refused   bool
 		truncated bool
+		// finished is set by a finish reason or the closing [DONE] marker.
+		finished bool
 		// Buffers are keyed by index, which is the protocol's own key for a
 		// call's fragments — but a fragment carrying a different id at an
 		// index already in use is a new call, not a continuation. Some
@@ -294,6 +297,7 @@ func (a openAIChatAdapter) Stream(
 
 	err = readSSE(stream, func(_, data string) error {
 		if data == "[DONE]" {
+			finished = true
 			return nil
 		}
 
@@ -309,6 +313,9 @@ func (a openAIChatAdapter) Stream(
 
 		for idx := range chunk.Choices {
 			choice := &chunk.Choices[idx]
+			if choice.FinishReason != "" {
+				finished = true
+			}
 			switch choice.FinishReason {
 			case "content_filter":
 				refused = true
@@ -344,6 +351,9 @@ func (a openAIChatAdapter) Stream(
 
 		return nil
 	})
+	if err == nil && !finished {
+		err = errStreamCut
+	}
 	if err != nil {
 		return nil, interrupted(err, model)
 	}
@@ -446,7 +456,7 @@ func toChatToolCalls(calls []ToolCall, providerID pulid.ID, model string) []chat
 
 	out := make([]chatToolCall, 0, len(calls))
 	for _, call := range calls {
-		encoded, err := sonic.Marshal(call.Arguments)
+		encoded, err := requestJSON.Marshal(call.Arguments)
 		if err != nil {
 			encoded = []byte("{}")
 		}

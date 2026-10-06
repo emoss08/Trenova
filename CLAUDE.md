@@ -224,10 +224,11 @@ names the token to use instead.
 - Status maps declare a lifecycle **phase** (`draft`/`queued`/`active`/`awaiting`/`attention`/
   `complete`/`closed`/`failed`) and the tone follows, so a new status cannot pick a colour.
 - The product is drawn in ink: the primary button is `--ink` (the foreground colour), never
-  a hue. Every grey carries `--hue-neutral` (cool slate, 260). The brand is cobalt at 262
-  and is spent only on links, focus, selection and the active nav row or tab. The blue arc
-  is pinned apart — info 222 → sky 232 → brand 262 → indigo 283 — and so is the warm one —
-  danger 25 → warning 78 → amber 98.
+  a hue. The palette is Vercel's Geist: every grey is a true neutral (chroma 0), the canvas
+  is #fafafa under white panels, and the ink is #171717. The brand is Geist blue at 258 and
+  is spent only on links, focus and selection; the active nav row is a neutral fill and the
+  active tab is underlined in ink. The blue arc is pinned apart — info 222 → sky 232 →
+  brand 258 → indigo 283 — and so is the warm one — danger 25 → warning 76 → amber 98.
 - Labels are sentence case; no `uppercase tracking-wider` on section labels, column heads
   or badges. Form controls spend `ui-field`, filled controls `ui-press`, skeletons
   `ui-shimmer`. Motion answers an action — nothing loops on a working screen.
@@ -241,9 +242,10 @@ names the token to use instead.
 - Everything that floats from a trigger (menus, selects, popovers, hover cards, tooltips) is
   inverted — dark in light mode. The primitives set `dark` on the positioner; never write it
   by hand, and build popover content from tokens only. Dialogs and sheets follow the theme.
-- Form controls are filled: `--field` never matches the canvas or the card. Every control
-  spends `ui-field` (rest, hover, open and disabled in one place); a `Button`-built trigger
-  takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
+- Form controls are filled: `--field` never matches the canvas. It is Vercel's panel fill in
+  both themes (white in light, #0a0a0a in dark), and the `--input` hairline carries it on a
+  panel. Every control spends `ui-field` (rest, hover, open and disabled in
+  one place); a `Button`-built trigger takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
   `@trenova/shared/lib/variants/field`. Never hand-write `border-input bg-muted` or a
   `data-pressed:ring-*` on a field.
 - Pages: always `PageLayout` with `pageHeaderProps` (never mount `PageHeader` by hand, never
@@ -252,8 +254,13 @@ names the token to use instead.
   Figures are `KpiStrip`/`KpiStripItem`, titled blocks are `SectionPanel`, read-only
   label/value is `DescriptionList`, inline callouts are `<Alert size="sm">`, and dialogs take
   `size` rather than an arbitrary max-width. See "Page anatomy" in the design-system doc.
+- Icons come from `@trenova/shared/components/icons`: every Untitled UI icon as `<Name>Icon`
+  (`Truck01Icon`, `SearchLgIcon`) plus Trenova's custom set drawn on the same grid, typed
+  `IconComponent`. Never import `lucide-react` or `@untitledui/icons` directly; lint refuses both.
+  A missing icon is drawn into the custom set, not borrowed from another library. See "Icons" in the
+  design-system doc.
 - Machine suggestions are marked with `AssistMark` from `@trenova/shared/components/ui/assist-mark`
-  (a real `LucideIcon`). Never import `Sparkles`, `WandSparkles` or `Wand2`.
+  (a real `IconComponent`). The sparkle and magic-wand glyphs are not exported; never draw one.
 - Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
   The whole `rounded-*` scale points at them; a badge is `rounded-full`.
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no
@@ -305,7 +312,6 @@ otherwise. Record links are built from one registry, `client/apps/web/src/config
 - Connection repositories only run their `COUNT` when `req.Cursor.IncludeTotalCount` is set; the GraphQL layer clears it when `totalCount` is not selected. New `ListConnection` methods must follow that gate.
 - Patch inputs (`*PatchInput`) mark fields `@goField(omittable: true)`: absent leaves the value alone, explicit `null` clears it (or fails validation for fields the entity requires). Generated mappers come from `resolver/mappergen`.
 - Clients send persisted operations by hash only; outside production the server re-reads `persisted-documents.json` on an unknown hash (`security.graphql.persistedDocumentsPath`), so run `pnpm --filter @trenova/graphql codegen` (or `pnpm dev`, which watches) after editing an operation. `/graphql` enforces a body-size limit and a per-user operation-cost budget (`security.graphql.*`).
-- Run GraphQL package tests with `go test -tags nofitz ./internal/api/graphql/...` on machines without `libmupdf`.
 
 ## Agent Runtime
 
@@ -321,6 +327,9 @@ Extensions (web search and anything like it) add agent-only tools that an organi
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in
 [docs/engineering/agent-extensions.md](docs/engineering/agent-extensions.md).
+How an agent looks back over a quiet conversation or a settled run and keeps what the work
+taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
+"Learning from the work" in agent-runtime.md.
 An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).
@@ -401,8 +410,8 @@ Operators export consenting organizations' AI corrections for fine-tuning with
 written, consent is read at export time and again before an organization's files are kept,
 and every example is recorded so a withdrawal can be honoured later. **Read
 [docs/engineering/ai-training-export.md](docs/engineering/ai-training-export.md) before
-changing `domain/aitraining`, `aitrainingservice`, `aitrainingjobs`, or what a correction
-stores.** Datasets are rendered from an export with the production prompt builder and scored
+changing `domain/aitraining`, the Cloud edition's `internal/cloud/aitraining` packages
+(`aitrainingservice`, `aitrainingjobs`), or what a correction stores.** Datasets are rendered from an export with the production prompt builder and scored
 with the production reply reader; `ml/extraction-finetune` (Python) owns the training recipe — how a
 confirmed answer becomes a target, which examples become preference pairs — and the training
 itself. **Read [docs/engineering/extraction-fine-tuning.md](docs/engineering/extraction-fine-tuning.md)
@@ -420,6 +429,24 @@ records; nothing else may write it. **Read
 change is a `hash_version` change), or any agent source table the projector reads.** A
 retention sweep that deletes agent rows must stay behind `SourcePruneHorizon`. Never remove a
 chain key while rows signed with it are retained.
+
+## Editions (self-hosted and Trenova Cloud)
+
+This repository builds the self-hosted product. Trenova Cloud code lives in a private repository
+and is overlaid at build time into `services/tms/internal/cloud/` plus one registration file,
+`services/tms/cmd/cli/edition_cloud.go`, which calls `edition.Register(cloud.Edition())`. The
+build must pass with and without that overlay, so **public code never imports
+`internal/cloud`**. The seam is `internal/bootstrap/edition`: an `Edition` adds fx options to
+every process (`Options`), the API (`APIOptions`) or the worker (`WorkerOptions`), Cobra
+commands, Postgres migration sets (run after the public ones) and configuration sections the
+loader decodes strictly on the edition's behalf. The public graph always provides the
+self-hosted implementation of every platform port (`PlanService`, `QuotaGuard`,
+`EntitlementProvider`, `BillingProvider`, `UsageProvider`, `EditionInfo`,
+`AITrainingHistoryService`); an edition swaps them with root-level `fx.Decorate`. Routes and
+middleware join through the `internal/api/routegroup` value groups, GraphQL extensions through
+`edition_graphql_extensions`, and `GET /system/public-config` fields through
+`public_config_contributors`. Decide behaviour from an injected port (`PlanService.EnforcesPlans`,
+`EditionInfo.SharedTenancy`, an onboarding row existing), never from `platform.mode`.
 
 ## Bun ORM
 

@@ -29,7 +29,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
@@ -81,13 +80,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/networkpulsehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
-	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateagreementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
@@ -135,6 +134,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	iamhandler.New,
 	userhandler.New,
 	authhandler.New,
+	publicconfighandler.New,
+	onboardinghandler.New,
 	driverportalhandler.New,
 	pushhandler.New,
 	formulatemplatehandler.New,
@@ -149,7 +150,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	invoicesharehandler.New,
 	workerhandler.New,
 	permissionhandler.New,
-	platformcataloghandler.New,
 	realtimehandler.New,
 	rolehandler.New,
 	roleassignmenthandler.New,
@@ -180,9 +180,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	bankreceiptbatchhandler.New,
 	bankreceipthandler.New,
 	bankreceiptworkitemhandler.New,
-	networkpulsehandler.New,
 	versionhandler.New,
-	controlplaneprovisioninghandler.New,
 	servicetypehandler.New,
 	orderhandler.New,
 	servicefailurereasoncodehandler.New,

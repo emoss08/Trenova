@@ -32,12 +32,12 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowDownIcon,
-  ArrowUpDownIcon,
   ArrowUpIcon,
   GripVerticalIcon,
   PlusIcon,
-  TrashIcon,
-} from "lucide-react";
+  SwitchVertical01Icon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 
 type SortableColumn = {
@@ -50,12 +50,14 @@ type DataTableSortBuilderProps<TData extends RowData> = {
   columns: ColumnDef<TData>[];
   sort: SortField[];
   onSortChange: (sort: SortField[]) => void;
+  labelClassName?: string;
 };
 
 export default function DataTableSortBuilder<TData extends RowData>({
   columns,
   sort,
   onSortChange,
+  labelClassName,
 }: DataTableSortBuilderProps<TData>) {
   const t = useT();
 
@@ -158,8 +160,8 @@ export default function DataTableSortBuilder<TData extends RowData>({
       <PopoverTrigger
         render={
           <Button variant="outline" size="sm">
-            <ArrowUpDownIcon className="size-3.5" />
-            {t("Sort")}
+            <SwitchVertical01Icon className="size-3.5" />
+            <span className={labelClassName}>{t("Sort")}</span>
             {sortCount > 0 && (
               <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
                 {sortCount}
@@ -356,7 +358,7 @@ function SortableSortRow({
         className="text-muted-foreground hover:text-destructive size-7"
         onClick={() => onRemove(sortField.field)}
       >
-        <TrashIcon className="size-4" />
+        <Trash01Icon className="size-4" />
       </Button>
 
       <Button

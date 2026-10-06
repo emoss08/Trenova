@@ -1,28 +1,34 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
-import { CircleDollarSign, FileCheck2, Layers, Wallet, X } from "lucide-react";
+import {
+  CurrencyDollarCircleIcon,
+  FileCheck03Icon,
+  LayersThree01Icon,
+  Wallet02Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 const STORAGE_KEY = "trenova.payroll.flow-explainer-dismissed";
 
 const steps = [
   {
-    icon: Wallet,
+    icon: Wallet02Icon,
     title: "1. Pay accrues",
     body: "As drivers complete their moves (or the shipment reaches your pay trigger), each assigned driver earns a pay event computed from their pay profile plus any driver-specific overrides.",
   },
   {
-    icon: Layers,
+    icon: LayersThree01Icon,
     title: "2. Settlements build",
     body: "At period close a batch rolls accrued events into draft settlements with deductions, advances, escrow, and guarantees — and with auto-attach on, new pay flows into open drafts as it's earned.",
   },
   {
-    icon: FileCheck2,
+    icon: FileCheck03Icon,
     title: "3. Review exceptions",
     body: "Clean settlements can auto-approve; anything flagged (negative net, unusual variance, manual adjustments) waits for a reviewer.",
   },
   {
-    icon: CircleDollarSign,
+    icon: CurrencyDollarCircleIcon,
     title: "4. Post & pay",
     body: "Approval locks the numbers and applies side effects, posting writes the journal entry, and marking paid records how the driver was disbursed.",
   },
@@ -47,7 +53,7 @@ export function PayFlowExplainer() {
           setDismissed(true);
         }}
       >
-        <X className="size-3.5" />
+        <XCloseIcon className="size-3.5" />
       </Button>
       <div className="grid gap-4 sm:grid-cols-4">
         {steps.map((step) => (

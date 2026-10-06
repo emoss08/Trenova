@@ -14,7 +14,7 @@ import {
   type ReportFilterGroup,
   type ReportIR,
 } from "@/types/report";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { measureColumns, refLabel, type CatalogIndex } from "./builder-state";
 
 const HAVING_OPERATORS = [
@@ -142,7 +142,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
             onClick={() => updateFilters(filters.filter((_, i) => i !== filterIndex))}
             aria-label={t("Remove measure filter")}
           >
-            <XIcon className="size-3.5" />
+            <XCloseIcon className="size-3.5" />
           </Button>
         </div>
       ))}

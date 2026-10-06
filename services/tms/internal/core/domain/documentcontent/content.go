@@ -136,3 +136,32 @@ const (
 	maxDetectedKindLength = 100
 	maxFailureCodeLength  = 100
 )
+
+// poorReadingConfidence is the average OCR confidence under which a scan is
+// taken to be mostly unreadable: blurred, faint or photographed at an angle.
+const poorReadingConfidence = 0.5
+
+// PoorlyRead reports whether reading finished but made out little of the
+// file: the pages read by OCR were read with low confidence on average, as a
+// blurred or skewed photo is. Text a file carried natively is always legible,
+// and a reading that failed says nothing about the file itself.
+func (c *Content) PoorlyRead() bool {
+	if c == nil {
+		return false
+	}
+	if c.Status != StatusExtracted && c.Status != StatusIndexed {
+		return false
+	}
+
+	var total float64
+	var scanned int
+	for _, page := range c.Pages {
+		if page == nil || page.SourceKind != SourceKindOCR {
+			continue
+		}
+		total += page.OCRConfidence
+		scanned++
+	}
+
+	return scanned > 0 && total/float64(scanned) < poorReadingConfidence
+}

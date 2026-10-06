@@ -1,0 +1,89 @@
+enum CarrierCapacityRateMethod {
+  Flat
+  PerMile
+}
+
+enum CarrierCapacitySource {
+  Manual
+  Email
+  EDI
+}
+
+"Trucks a carrier says it has available: where, when, with what equipment and at what rate."
+type CarrierCapacityPosting {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  originLocationId: ID
+  originStateId: ID
+  "How far from the origin location the carrier will pick up."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int!
+  rateMethod: CarrierCapacityRateMethod!
+  "Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote."
+  rate: Decimal
+  source: CarrierCapacitySource!
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  carrier: Carrier
+  originLocation: Location
+  originState: UsState
+  destinationState: UsState
+  equipmentType: EquipmentType
+}
+
+type CarrierCapacityPostingEdge {
+  node: CarrierCapacityPosting!
+  cursor: String!
+}
+
+type CarrierCapacityPostingConnection {
+  edges: [CarrierCapacityPostingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input CarrierCapacityPostingInput {
+  carrierId: ID!
+  "Give an origin location, an origin state, or both."
+  originLocationId: ID
+  originStateId: ID
+  "Only with an origin location."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int = 1
+  rateMethod: CarrierCapacityRateMethod = PerMile
+  rate: Decimal
+  source: CarrierCapacitySource = Manual
+  notes: String
+}
+
+extend type Query {
+  carrierCapacityPostings(
+    input: DataTableConnectionInput!
+    carrierId: ID
+    "Only postings whose window has not closed."
+    openOnly: Boolean = false
+  ): CarrierCapacityPostingConnection!
+  carrierCapacityPosting(id: ID!): CarrierCapacityPosting
+}
+
+extend type Mutation {
+  createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
+  updateCarrierCapacityPosting(
+    id: ID!
+    version: Int!
+    input: CarrierCapacityPostingInput!
+  ): CarrierCapacityPosting!
+  deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
+}

@@ -9,7 +9,12 @@ import { apiService } from "@/services/api";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArchiveIcon, CheckCircle2Icon, ClipboardIcon, ShieldCheckIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  CheckCircleIcon,
+  ClipboardIcon,
+  ShieldTickIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./service-failure-columns";
@@ -87,7 +92,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     {
       id: "review",
       label: t("Review"),
-      icon: ShieldCheckIcon,
+      icon: ShieldTickIcon,
       onClick: (row) => void handleLifecycle(row, "review"),
       hidden: (row) => !canApprove.allowed || row.original.status !== "Open",
       disabled: (row) => !row.original.reasonCodeId,
@@ -95,7 +100,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     {
       id: "resolve",
       label: t("Resolve"),
-      icon: CheckCircle2Icon,
+      icon: CheckCircleIcon,
       onClick: (row) => void handleLifecycle(row, "resolve"),
       hidden: (row) =>
         !canUpdate.allowed ||

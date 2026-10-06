@@ -39,17 +39,17 @@ import {
 import { formatDistanceToNowStrict } from "date-fns";
 import {
   CalendarClockIcon,
-  CopyIcon,
-  GlobeIcon,
-  LockIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
+  Copy01Icon,
+  DotsHorizontalIcon,
+  Edit02Icon,
+  Globe02Icon,
+  Lock01Icon,
   PlayIcon,
   PlusIcon,
-  RotateCcwIcon,
+  RefreshCcw01Icon,
   TableIcon,
-  Trash2Icon,
-} from "lucide-react";
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -135,7 +135,7 @@ function DefinitionCard({
                   className="size-6 opacity-0 transition-opacity group-hover:opacity-100 data-popup-open:opacity-100"
                   aria-label={t("Report actions")}
                 >
-                  <MoreHorizontalIcon className="size-3.5" />
+                  <DotsHorizontalIcon className="size-3.5" />
                 </Button>
               }
             />
@@ -147,13 +147,13 @@ function DefinitionCard({
               />
               <DropdownMenuItem
                 title={t("Edit in builder")}
-                startContent={<PencilIcon className="size-3.5" />}
+                startContent={<Edit02Icon className="size-3.5" />}
                 onClick={() => void navigate(`/reports/builder/${definition.id}`)}
               />
               {canCreate && (
                 <DropdownMenuItem
                   title={t("Duplicate")}
-                  startContent={<CopyIcon className="size-3.5" />}
+                  startContent={<Copy01Icon className="size-3.5" />}
                   onClick={onDuplicate}
                 />
               )}
@@ -167,7 +167,7 @@ function DefinitionCard({
               {definition.kind === "canned_fork" && canUpdate && (
                 <DropdownMenuItem
                   title={t("Reset to default")}
-                  startContent={<RotateCcwIcon className="size-3.5" />}
+                  startContent={<RefreshCcw01Icon className="size-3.5" />}
                   onClick={() =>
                     resetFork.mutate(definition.id, {
                       onSuccess: () => toast.success(t("Report reset to its canned default")),
@@ -181,7 +181,7 @@ function DefinitionCard({
               <DropdownMenuItem
                 title={t("Delete")}
                 color="danger"
-                startContent={<Trash2Icon className="size-3.5" />}
+                startContent={<Trash01Icon className="size-3.5" />}
                 onClick={onDelete}
               />
             </DropdownMenuContent>
@@ -193,11 +193,11 @@ function DefinitionCard({
         <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {definition.visibility === "shared" ? (
             <span className="flex items-center gap-1">
-              <GlobeIcon className="size-3" /> {t("Shared")}
+              <Globe02Icon className="size-3" /> {t("Shared")}
             </span>
           ) : (
             <span className="flex items-center gap-1">
-              <LockIcon className="size-3" /> {t("Private")}
+              <Lock01Icon className="size-3" /> {t("Private")}
             </span>
           )}
           <span className="text-border">•</span>

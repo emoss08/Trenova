@@ -47,6 +47,10 @@ type BillingQueueItem struct {
 	CanceledByID              *pulid.ID            `json:"canceledById"              bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	CanceledAt                *int64               `json:"canceledAt"                bun:"canceled_at,type:BIGINT,nullzero"`
 	CancelReason              string               `json:"cancelReason"              bun:"cancel_reason,type:VARCHAR(100),nullzero"`
+	HoldReasonCode            *HoldReasonCode      `json:"holdReasonCode"            bun:"hold_reason_code,type:VARCHAR(30),nullzero"`
+	HeldAt                    *int64               `json:"heldAt"                    bun:"held_at,type:BIGINT,nullzero"`
+	HeldByID                  *pulid.ID            `json:"heldById"                  bun:"held_by_id,type:VARCHAR(100),nullzero"`
+	StatusBeforeHold          *Status              `json:"statusBeforeHold"          bun:"status_before_hold,type:billing_queue_status,nullzero"`
 	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        bun:"is_adjustment_origin,type:BOOLEAN,notnull"`
 	InvoiceID                 pulid.ID             `json:"invoiceId"                 bun:"invoice_id,type:VARCHAR(100),nullzero"`
 	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"           bun:"source_invoice_id,type:VARCHAR(100),nullzero"`
@@ -74,6 +78,14 @@ type BillingQueueItem struct {
 	// on an approver, filled when the item is read with its shipment details.
 	// While any is listed the item cannot be approved.
 	DetentionHolds []*DetentionHold `json:"detentionHolds,omitempty" bun:"-"`
+
+	// PONumber is the customer's purchase order, from the item's order. It is
+	// read with the item rather than stored on it.
+	PONumber string `json:"poNumber,omitempty" bun:"po_number,scanonly"`
+
+	// Review is everything a biller reads to decide the item, filled when the
+	// item is read with its shipment details.
+	Review *Review `json:"review,omitempty" bun:"-"`
 }
 
 func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {

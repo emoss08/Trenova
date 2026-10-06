@@ -1,6 +1,7 @@
 import { withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
+import { reportPlanLimit } from "@trenova/shared/lib/plan-limit";
 import { isRecord } from "@trenova/shared/lib/utils";
 import type {
   GraphQLExecutableDocument,
@@ -470,6 +471,14 @@ function isAuthenticationExpiry(graphQLErrors: NormalizedGraphQLError[], status:
   return graphQLErrors.some((error) => parseProblemType(error.type) === "authentication-error");
 }
 
+// failedGraphQLRequest hands a plan-limit refusal (QUOTA_EXCEEDED, PLAN_RESTRICTED in the
+// error extensions) to the app's dialog before the error reaches its caller, so every
+// operation gets the same explanation without each call site recognising the code.
+function failedGraphQLRequest(error: GraphQLRequestError): GraphQLRequestError {
+  reportPlanLimit(error);
+  return error;
+}
+
 // graphQLErrorMessage extracts the server's field-level or top-level error detail for
 // inline mutation toasts, falling back to a caller-provided message.
 export function graphQLErrorMessage(error: unknown, fallback: string): string {
@@ -534,12 +543,14 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
   // resolver failure. Any errors the body did carry stay attached — a 422 from query
   // validation still has its field detail, it is just classified as transport.
   if (!response.ok) {
-    throw new GraphQLRequestError({
-      graphQLErrors,
-      kind: "transport",
-      message: graphQLErrors[0]?.message ?? `GraphQL request failed with HTTP ${response.status}`,
-      status: response.status,
-    });
+    throw failedGraphQLRequest(
+      new GraphQLRequestError({
+        graphQLErrors,
+        kind: "transport",
+        message: graphQLErrors[0]?.message ?? `GraphQL request failed with HTTP ${response.status}`,
+        status: response.status,
+      }),
+    );
   }
 
   // Null-propagation means a resolver failure can still leave a usable document. For a
@@ -560,22 +571,26 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
       return { data: payload.data, errors: graphQLErrors };
     }
 
-    throw new GraphQLRequestError({
-      graphQLErrors,
-      kind: "graphql",
-      message: graphQLErrors[0].message,
-      status: response.status,
-    });
+    throw failedGraphQLRequest(
+      new GraphQLRequestError({
+        graphQLErrors,
+        kind: "graphql",
+        message: graphQLErrors[0].message,
+        status: response.status,
+      }),
+    );
   }
 
   const firstError = graphQLErrors[0];
   if (firstError) {
-    throw new GraphQLRequestError({
-      graphQLErrors,
-      kind: "graphql",
-      message: firstError.message,
-      status: response.status,
-    });
+    throw failedGraphQLRequest(
+      new GraphQLRequestError({
+        graphQLErrors,
+        kind: "graphql",
+        message: firstError.message,
+        status: response.status,
+      }),
+    );
   }
 
   throw new Error("GraphQL response did not include data");

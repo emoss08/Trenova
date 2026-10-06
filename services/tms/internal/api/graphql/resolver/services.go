@@ -14,12 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
@@ -109,6 +111,19 @@ type Params struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	CarrierCapacityService       *carriercapacityservice.Service
+	CustomerUpdateService        *customerupdateservice.Service
+	BoardCapacity                services.ShipmentCapacityReader
+	BoardCoverage                services.ShipmentCoverageSuggester
+	BoardTenderer                services.ShipmentTenderer
+	BoardSuggestions             services.ShipmentSuggestionReader
+	BoardSuggestionDecider       services.ShipmentSuggestionDecider
+	BoardBriefing                services.ShipmentBriefingReader
+	BoardWatchlist               services.ShipmentWatchlistReader
+	BoardFacetCounts             services.ShipmentFacetCounter
+	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
+	BoardStageSummaries          services.ShipmentStageSummaryReader
+	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant      services.ShipmentImportAssistantService `optional:"true"`
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EDIService                   *ediservice.Service
@@ -207,18 +222,21 @@ type Params struct {
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
 	ServiceFailureSvc            services.ServiceFailureService
 	BillingQueueService          services.BillingQueueService
+	BillingQueueReviewService    services.BillingQueueReviewService
 	InvoiceService               services.InvoiceService
 	InvoiceAdjustmentService     services.InvoiceAdjustmentService
 	InvoiceDisputeService        services.InvoiceDisputeService
 	LateChargeService            services.LateChargeService
 	AgentRunService              services.AgentRunService
 	AgentDefinitionService       services.AgentDefinitionService
+	AgentCapabilityService       services.AgentCapabilityService
 	AIProviderService            services.AIProviderService
 	AIUsageService               services.AIUsageService
 	AIRetrievalStatusService     services.AIRetrievalStatusService
 	AgentProposalService         services.AgentProposalService
 	AgentPlanService             services.AgentPlanService
 	AgentMemoryService           services.AgentMemoryService
+	AgentReflectionService       services.AgentReflectionService
 	AIFeedbackService            services.AIFeedbackService
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentEvalCaseService         services.AgentEvalCaseService
@@ -230,6 +248,7 @@ type Params struct {
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
+	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
 	WatchtowerService            services.WatchtowerService
@@ -285,6 +304,19 @@ type Services struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	CarrierCapacityService       *carriercapacityservice.Service
+	CustomerUpdateService        *customerupdateservice.Service
+	BoardCapacity                services.ShipmentCapacityReader
+	BoardCoverage                services.ShipmentCoverageSuggester
+	BoardTenderer                services.ShipmentTenderer
+	BoardSuggestions             services.ShipmentSuggestionReader
+	BoardSuggestionDecider       services.ShipmentSuggestionDecider
+	BoardBriefing                services.ShipmentBriefingReader
+	BoardWatchlist               services.ShipmentWatchlistReader
+	BoardFacetCounts             services.ShipmentFacetCounter
+	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
+	BoardStageSummaries          services.ShipmentStageSummaryReader
+	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant      services.ShipmentImportAssistantService
 	EdiService                   *ediservice.Service
 	EdiInboundService            *ediinboundservice.Service
@@ -381,18 +413,21 @@ type Services struct {
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
 	ServiceFailureSvc            services.ServiceFailureService
 	BillingQueueService          services.BillingQueueService
+	BillingQueueReviewService    services.BillingQueueReviewService
 	InvoiceService               services.InvoiceService
 	InvoiceAdjustmentService     services.InvoiceAdjustmentService
 	InvoiceDisputeService        services.InvoiceDisputeService
 	LateChargeService            services.LateChargeService
 	AgentRunService              services.AgentRunService
 	AgentDefinitionService       services.AgentDefinitionService
+	AgentCapabilityService       services.AgentCapabilityService
 	AiProviderService            services.AIProviderService
 	AiUsageService               services.AIUsageService
 	AiRetrievalStatusService     services.AIRetrievalStatusService
 	AgentProposalService         services.AgentProposalService
 	AgentPlanService             services.AgentPlanService
 	AgentMemoryService           services.AgentMemoryService
+	AgentReflectionService       services.AgentReflectionService
 	AiFeedbackService            services.AIFeedbackService
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentEvalCaseService         services.AgentEvalCaseService
@@ -404,6 +439,7 @@ type Services struct {
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
+	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
 	WatchtowerService            services.WatchtowerService
@@ -465,6 +501,19 @@ func newServices(p *Params) *Services {
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
 		ShipmentEventService:         p.ShipmentEventService,
+		CarrierCapacityService:       p.CarrierCapacityService,
+		CustomerUpdateService:        p.CustomerUpdateService,
+		BoardCapacity:                p.BoardCapacity,
+		BoardCoverage:                p.BoardCoverage,
+		BoardTenderer:                p.BoardTenderer,
+		BoardSuggestions:             p.BoardSuggestions,
+		BoardSuggestionDecider:       p.BoardSuggestionDecider,
+		BoardBriefing:                p.BoardBriefing,
+		BoardWatchlist:               p.BoardWatchlist,
+		BoardFacetCounts:             p.BoardFacetCounts,
+		BoardQuickFilterCounts:       p.BoardQuickFilterCounts,
+		BoardStageSummaries:          p.BoardStageSummaries,
+		BoardCapabilities:            p.BoardCapabilities,
 		ShipmentImportAssistant:      p.ShipmentImportAssistant,
 		EdiService:                   p.EDIService,
 		EdiInboundService:            p.EDIInboundService,
@@ -561,18 +610,21 @@ func newServices(p *Params) *Services {
 		ServiceFailureReasonCodeSvc:  p.ServiceFailureReasonCodeSvc,
 		ServiceFailureSvc:            p.ServiceFailureSvc,
 		BillingQueueService:          p.BillingQueueService,
+		BillingQueueReviewService:    p.BillingQueueReviewService,
 		InvoiceService:               p.InvoiceService,
 		InvoiceAdjustmentService:     p.InvoiceAdjustmentService,
 		InvoiceDisputeService:        p.InvoiceDisputeService,
 		LateChargeService:            p.LateChargeService,
 		AgentRunService:              p.AgentRunService,
 		AgentDefinitionService:       p.AgentDefinitionService,
+		AgentCapabilityService:       p.AgentCapabilityService,
 		AiProviderService:            p.AIProviderService,
 		AiUsageService:               p.AIUsageService,
 		AiRetrievalStatusService:     p.AIRetrievalStatusService,
 		AgentProposalService:         p.AgentProposalService,
 		AgentPlanService:             p.AgentPlanService,
 		AgentMemoryService:           p.AgentMemoryService,
+		AgentReflectionService:       p.AgentReflectionService,
 		AiFeedbackService:            p.AIFeedbackService,
 		AgentEvaluationService:       p.AgentEvaluationService,
 		AgentEvalCaseService:         p.AgentEvalCaseService,
@@ -584,6 +636,7 @@ func newServices(p *Params) *Services {
 		AgentExceptionService:        p.AgentExceptionService,
 		AgentDecisionService:         p.AgentDecisionService,
 		AgentDecisionQueueService:    p.AgentDecisionQueueService,
+		ApprovalCommitter:            p.ApprovalCommitter,
 		AgentAccessService:           p.AgentAccessService,
 		AgentSafetyService:           p.AgentSafetyService,
 		WatchtowerService:            p.WatchtowerService,

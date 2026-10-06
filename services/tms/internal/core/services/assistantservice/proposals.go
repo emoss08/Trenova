@@ -30,6 +30,10 @@ type chatProposalStore interface {
 		ctx context.Context,
 		req repositories.ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
+	ListByRun(
+		ctx context.Context,
+		req repositories.ListAgentProposalsByRunRequest,
+	) ([]*agent.AgentProposal, error)
 }
 
 // Evidence on a chat proposal points at the conversation, because that is where
@@ -711,6 +715,7 @@ func toAssistantProposal(
 		Confidence:      proposal.Confidence.InexactFloat64(),
 		ExecutedAt:      proposal.ExecutedAt,
 		ExecutionError:  proposal.ExecutionError,
+		ExecutionResult: proposal.ExecutionResult,
 		ExpiresAt:       proposal.ExpiresAt,
 		Hold:            hold,
 		PlanStep:        proposal.PlanStep,
@@ -720,6 +725,9 @@ func toAssistantProposal(
 	}
 	if proposal.PlanID != nil {
 		out.PlanID = *proposal.PlanID
+	}
+	if proposal.Status == agent.ProposalStatusPending && len(proposal.PendingModifications) > 0 {
+		out.PendingModifications = proposal.PendingModifications
 	}
 
 	return out

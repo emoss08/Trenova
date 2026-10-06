@@ -18,8 +18,9 @@
    the title bar: no page padding, no outer box, only row hairlines. The page body
    decides this on its own — it bleeds when its only child is a data table — and
    `bleed:` lets the table's chrome answer without any page having to say so. A
-   table that shares the page with anything else keeps its frame. */
-@custom-variant bleed (&:where([data-slot="page-body"]:has(> [data-slot="data-table"]:only-child) *));
+   table that shares the page with anything else keeps its frame, unless the page
+   says it is a workspace that bleeds (PageLayout's `bleed`). */
+@custom-variant bleed (&:where([data-slot="page-body"]:has(> [data-slot="data-table"]:only-child) *, [data-slot="page-body"][data-bleed] *));
 
 @layer base {
   * {
@@ -44,7 +45,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Selection is cobalt, the same colour that marks a selected row: both say
+  /* Selection is the brand blue, the same colour that marks a selected row: both say
      "this is what you have hold of". The ink stays the ink, so selected text
      reads at the contrast it had. */
   ::selection {
@@ -79,7 +80,7 @@
   }
 }
 
-/* The keyframes behind --animate-rise, --animate-confirm and --animate-shimmer.
+/* The keyframes behind the --animate-* tokens.
    They live here rather than in the theme block so they are always emitted. */
 @keyframes rise {
   from {
@@ -100,6 +101,89 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes leave {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.7);
+  }
+}
+
+@keyframes success {
+  from {
+    transform: scale(0.97);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes word-in {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@keyframes live-ping {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: scale(2.2);
   }
 }
 

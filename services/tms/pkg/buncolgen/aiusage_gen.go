@@ -83,6 +83,7 @@ var AIUsageRecordColumns = struct {
 	Failover               Column // "failover" → qualified: "aiu.failover"
 	CacheReadTokens        Column // "cache_read_tokens" → qualified: "aiu.cache_read_tokens"
 	CacheWriteTokens       Column // "cache_write_tokens" → qualified: "aiu.cache_write_tokens"
+	FirstTokenMs           Column // "first_token_ms" → qualified: "aiu.first_token_ms"
 	CreatedAt              Column // "created_at" → qualified: "aiu.created_at"
 }{
 	ID:                     NewColumn("id", "aiu"),
@@ -119,6 +120,7 @@ var AIUsageRecordColumns = struct {
 	Failover:               NewColumn("failover", "aiu"),
 	CacheReadTokens:        NewColumn("cache_read_tokens", "aiu"),
 	CacheWriteTokens:       NewColumn("cache_write_tokens", "aiu"),
+	FirstTokenMs:           NewColumn("first_token_ms", "aiu"),
 	CreatedAt:              NewColumn("created_at", "aiu"),
 }
 
@@ -161,6 +163,7 @@ var AIUsageRecordFieldMap = map[string]string{
 	"failover":               "failover",
 	"cacheReadTokens":        "cache_read_tokens",
 	"cacheWriteTokens":       "cache_write_tokens",
+	"firstTokenMs":           "first_token_ms",
 	"createdAt":              "created_at",
 }
 
@@ -201,6 +204,7 @@ var AIUsageRecordInsertableColumns = []string{
 	"failover",
 	"cache_read_tokens",
 	"cache_write_tokens",
+	"first_token_ms",
 	"created_at",
 }
 
@@ -288,6 +292,7 @@ var AIUsageRecordFilter = struct {
 	Failover               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failover" → DB: "failover"
 	CacheReadTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadTokens" → DB: "cache_read_tokens"
 	CacheWriteTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteTokens" → DB: "cache_write_tokens"
+	FirstTokenMs           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "firstTokenMs" → DB: "first_token_ms"
 	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
@@ -391,6 +396,9 @@ var AIUsageRecordFilter = struct {
 	},
 	CacheWriteTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("cacheWriteTokens", op, value)
+	},
+	FirstTokenMs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("firstTokenMs", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

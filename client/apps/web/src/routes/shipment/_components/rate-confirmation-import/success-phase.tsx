@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { m } from "motion/react";
-import { CheckIcon, ExternalLinkIcon } from "lucide-react";
+import { CheckIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 type SuccessPhaseProps = {
@@ -44,7 +44,7 @@ export function SuccessPhase({ shipmentId, attachError, onDone }: SuccessPhasePr
 
         <div className="flex gap-2">
           <Button variant="outline" size="sm" render={<Link to="/shipment-management/shipments" />}>
-            <ExternalLinkIcon className="size-3" />
+            <LinkExternal01Icon className="size-3" />
             {t("Open shipments")}
           </Button>
           <Button size="sm" onClick={onDone}>

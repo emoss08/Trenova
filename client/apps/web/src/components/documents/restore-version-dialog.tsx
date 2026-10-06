@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import type { Document } from "@trenova/shared/types/document";
-import { Loader2Icon, RotateCcwIcon } from "lucide-react";
+import { RefreshCcw01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatFileSize } from "./document-upload-zone";
 
@@ -41,7 +41,7 @@ export function RestoreVersionDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia>
-            <RotateCcwIcon />
+            <RefreshCcw01Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>
             {t("Restore version {0}", versionToRestore.versionNumber)}
@@ -91,7 +91,7 @@ export function RestoreVersionDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={isRestoring}>
-            {isRestoring && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+            {isRestoring && <SpinnerIcon className="mr-2 size-4 animate-spin" />}
             {t("Restore")}
           </AlertDialogAction>
         </AlertDialogFooter>

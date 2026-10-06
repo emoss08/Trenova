@@ -1,48 +1,66 @@
-<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:600px">
-  <p style="margin:0 0 16px">{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}</p>
-
-  <p style="margin:0 0 16px">
-    {{ if .PartLabel }}{{ t "Invoice {0} is attached ({1})." .InvoiceNumber .PartLabel }}{{ else }}{{ t "Invoice {0} is attached." .InvoiceNumber }}{{ end }}
-  </p>
-
-  <table style="border-collapse:collapse;margin:0 0 16px;font-size:14px">
-    <tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Invoice" }}</td>
-      <td style="padding:3px 0;font-weight:600">{{ .InvoiceNumber }}</td>
-    </tr>
-    {{ if .InvoiceDate }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Issued" }}</td>
-      <td style="padding:3px 0">{{ .InvoiceDate }}</td>
-    </tr>{{ end }}
-    {{ if .DueDate }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Due" }}</td>
-      <td style="padding:3px 0">{{ .DueDate }}</td>
-    </tr>{{ end }}
-    {{ if .PaymentTerm }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Terms" }}</td>
-      <td style="padding:3px 0">{{ .PaymentTerm }}</td>
-    </tr>{{ end }}
-    {{ if .Total }}<tr>
-      <td style="padding:3px 16px 3px 0;color:#6b7280">{{ t "Total" }}</td>
-      <td style="padding:3px 0;font-weight:700">{{ .Total }}</td>
-    </tr>{{ end }}
-  </table>
-
-  {{ if .ShipmentProNumber }}
-  <p style="margin:0 0 16px;color:#4b5563;font-size:13px">
-    {{ if .ShipmentBOL }}{{ t "Shipment {0} &middot; BOL {1}" .ShipmentProNumber .ShipmentBOL }}{{ else }}{{ t "Shipment {0}" .ShipmentProNumber }}{{ end }}{{ if and .ShipmentOrigin .ShipmentDestination }}<br>{{ t "{0} to {1}" .ShipmentOrigin .ShipmentDestination }}{{ end }}{{ if .ShipmentServiceDate }} {{ t "&middot; delivered {0}" .ShipmentServiceDate }}{{ end }}
-  </p>
-  {{ end }}
-
-  {{ if .Memo }}<p style="margin:0 0 16px">{{ nl2br .Memo }}</p>{{ end }}
-
-  {{ if .RemittanceInstructions }}
-  <p style="margin:0 0 16px;padding:12px;background:#f9fafb;border-left:3px solid #d1d5db;color:#374151;font-size:13px">
-    {{ nl2br .RemittanceInstructions }}
-  </p>
-  {{ end }}
-
-  <p style="margin:0;color:#6b7280;font-size:13px">
-    {{ t "Reply to this message if any detail needs review." }}<br>{{ .CompanyName }}
-  </p>
-</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0;padding:0;background-color:#f7f6f2">
+  <tr>
+    <td align="center" style="margin:0;padding:32px 12px 40px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;margin:0 auto">
+        <tr>
+          <td style="margin:0;padding:0 4px 20px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.2;font-weight:600;letter-spacing:-0.4px;color:#121210">{{ .CompanyName }}</td>
+        </tr>
+        <tr>
+          <td style="margin:0;padding:0;background-color:#ffffff;border:1px solid #121210">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%">
+              <tr>
+                <td style="margin:0;padding:36px 36px 16px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#121210">
+                  <p style="margin:0 0 18px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{ t "Invoice" }} ]</p>
+                  <h1 style="margin:0 0 24px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.12;font-weight:600;letter-spacing:-0.9px;color:#141413">{{ if .PartLabel }}{{ t "Invoice {0} is attached ({1})." .InvoiceNumber .PartLabel }}{{ else }}{{ t "Invoice {0} is attached." .InvoiceNumber }}{{ end }}</h1>
+                  <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#121210">{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}</p>
+                  {{ if .Memo }}<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#121210">{{ nl2br .Memo }}</p>{{ end }}
+                </td>
+              </tr>
+              <tr>
+                <td style="margin:0;padding:0 36px 32px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+                  <p style="margin:0 0 10px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{ t "Details" }} ]</p>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;border-top:1px solid #121210">
+                    <tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Invoice" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .InvoiceNumber }}</td>
+                    </tr>
+                    {{ if .InvoiceDate }}<tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Issued" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .InvoiceDate }}</td>
+                    </tr>{{ end }}
+                    {{ if .DueDate }}<tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Due" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .DueDate }}</td>
+                    </tr>{{ end }}
+                    {{ if .PaymentTerm }}<tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Terms" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top">{{ .PaymentTerm }}</td>
+                    </tr>{{ end }}
+                    {{ if .Total }}<tr>
+                      <td style="margin:0;padding:11px 16px 11px 0;width:38%;border-bottom:1px solid #dddbd3;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:22px;letter-spacing:0.5px;text-transform:uppercase;color:#55544e;vertical-align:top">{{ t "Total" }}</td>
+                      <td style="margin:0;padding:11px 0;border-bottom:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;font-weight:500;color:#121210;vertical-align:top;font-weight:700">{{ .Total }}</td>
+                    </tr>{{ end }}
+                  </table>
+                  {{ if .ShipmentProNumber }}<p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#55544e">{{ if .ShipmentBOL }}{{ t "Shipment {0} · BOL {1}" .ShipmentProNumber .ShipmentBOL }}{{ else }}{{ t "Shipment {0}" .ShipmentProNumber }}{{ end }}{{ if and .ShipmentOrigin .ShipmentDestination }}<br>{{ t "{0} to {1}" .ShipmentOrigin .ShipmentDestination }}{{ end }}{{ if .ShipmentServiceDate }} {{ t "· delivered {0}" .ShipmentServiceDate }}{{ end }}</p>{{ end }}
+                </td>
+              </tr>
+              {{ if .RemittanceInstructions }}
+              <tr>
+                <td style="margin:0;padding:24px 36px;background-color:#f7f6f2;border-top:1px solid #121210;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#121210">
+                  <p style="margin:0 0 10px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{ t "Remittance" }} ]</p>
+                  <p style="margin:0">{{ nl2br .RemittanceInstructions }}</p>
+                </td>
+              </tr>
+              {{ end }}
+              <tr>
+                <td style="margin:0;padding:20px 36px 28px;border-top:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#55544e">
+                  <p style="margin:0">{{ t "Reply to this message if any detail needs review." }}<br>{{ .CompanyName }}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

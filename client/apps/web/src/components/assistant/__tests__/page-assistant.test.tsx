@@ -19,8 +19,8 @@ vi.mock("@/services/api", () => ({
   apiService: { assistantService: { getThread: mocks.getThread, listArtifacts: vi.fn() } },
 }));
 
-vi.mock("../message-thread", () => ({
-  MessageThread: ({ thread }: { thread: { id: string } }) => (
+vi.mock("@/components/desk-chat/desk-thread", () => ({
+  DeskThread: ({ thread }: { thread: { id: string } }) => (
     <div data-testid="thread">{thread.id}</div>
   ),
 }));

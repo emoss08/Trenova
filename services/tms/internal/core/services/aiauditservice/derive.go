@@ -823,7 +823,7 @@ func (d *deriver) proposalExecution(
 
 	event.WindowEnd = at
 	event.WindowStart = at - executionWindowSeconds
-	if proposal.ExecutedByUserID.IsNil() && proposal.AutonomyTier == agent.TierAutoExecute {
+	if ranInRun(o, proposal) {
 		event.WindowStart = proposal.CreatedAt - executionWindowSeconds
 		if run, ok := o.startedAt(); ok {
 			event.WindowStart = run
@@ -831,6 +831,14 @@ func (d *deriver) proposalExecution(
 	}
 
 	return event, true
+}
+
+func ranInRun(o *owner, proposal *agent.AgentProposal) bool {
+	if proposal.AutonomyTier != agent.TierAutoExecute {
+		return false
+	}
+
+	return proposal.ExecutedByUserID.IsNil() || o.unattended()
 }
 
 func (d *deriver) decisionEvent(

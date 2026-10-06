@@ -31,6 +31,19 @@ func (s *service) planChargeUpdate(
 	actor *services.RequestActor,
 	rerate bool,
 ) (*services.ChargeUpdatePreview, error) {
+	return s.planChargeUpdateFrom(ctx, req, actor, rerate, false)
+}
+
+// planChargeUpdateFrom is planChargeUpdate for a caller that may also edit an
+// item still waiting for review. Settling a check from the item edits its
+// charges before anyone has started the review, and that edit is the review.
+func (s *service) planChargeUpdateFrom(
+	ctx context.Context,
+	req *services.UpdateChargesRequest,
+	actor *services.RequestActor,
+	rerate bool,
+	allowReady bool,
+) (*services.ChargeUpdatePreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -55,7 +68,9 @@ func (s *service) planChargeUpdate(
 		return nil, err
 	}
 
-	if item.Status != billingqueue.StatusInReview {
+	editable := item.Status == billingqueue.StatusInReview ||
+		(allowReady && item.Status == billingqueue.StatusReadyForReview)
+	if !editable {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,

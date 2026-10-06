@@ -35,7 +35,7 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { Stepper } from "@trenova/shared/components/ui/stepper";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MilestoneIcon, Trash2Icon } from "lucide-react";
+import { MilestoneIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { OshaCaseSheet } from "./osha-case-sheet";
@@ -240,7 +240,7 @@ export default function OshaLogConsole() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <Trash2Icon />
+              <Trash01Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>
               {t("Delete case {0}?", deleting ? caseLabel(deleting) : "")}

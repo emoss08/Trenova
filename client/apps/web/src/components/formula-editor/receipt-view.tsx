@@ -7,7 +7,7 @@ import type {
   FormulaValueSource,
   LookupMatch,
 } from "@trenova/shared/types/formula-template";
-import { Braces, TableIcon } from "lucide-react";
+import { BracketsIcon, TableIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 const SOURCE_LABELS: Record<FormulaValueSource, { label: string; className: string }> = {
@@ -143,7 +143,7 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
             aria-expanded={showVariables}
             className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium"
           >
-            <Braces className="size-3" />
+            <BracketsIcon className="size-3" />
             {t("Variables ({0})", receipt.variables.length)}
           </button>
           {onUseValues && (

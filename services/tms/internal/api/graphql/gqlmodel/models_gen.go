@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -87,6 +88,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -372,6 +374,11 @@ type AgentAudienceSuggestion struct {
 	SensitiveTools []string `json:"sensitiveTools"`
 }
 
+type AgentCapabilityToolInput struct {
+	Key  string                       `json:"key"`
+	Mode services.AgentCapabilityMode `json:"mode"`
+}
+
 type AgentControlInput struct {
 	ShadowMode bool `json:"shadowMode"`
 	// Absent leaves the organization's earned autonomy switch as it is.
@@ -379,7 +386,11 @@ type AgentControlInput struct {
 	// Absent leaves the promotion threshold as it is; 1 to 1000 approvals.
 	PromotionThreshold *int `json:"promotionThreshold,omitempty"`
 	// Absent leaves training consent as it is. Only a signed-in person can change it.
-	AiTrainingConsent      *bool `json:"aiTrainingConsent,omitempty"`
+	AiTrainingConsent *bool `json:"aiTrainingConsent,omitempty"`
+	// Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
+	PersonMonthlyMessages *int `json:"personMonthlyMessages,omitempty"`
+	// Absent leaves whether agents learn from their work as it is.
+	LearningOff            *bool `json:"learningOff,omitempty"`
 	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
 	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }
@@ -393,6 +404,12 @@ type AgentDefinitionConnection struct {
 type AgentDefinitionEdge struct {
 	Node   *agentdefinition.Definition `json:"node"`
 	Cursor string                      `json:"cursor"`
+}
+
+type AgentDelegateTopicInput struct {
+	AgentID string `json:"agentId"`
+	// Empty clears the topic.
+	Topic string `json:"topic"`
 }
 
 // A case as it was created, or the case that already asked the same thing.
@@ -585,6 +602,17 @@ type AgentReach struct {
 	// The roles granted the agent. Empty for a reader who may not read roles.
 	Roles    []*permission.Role            `json:"roles"`
 	Warnings []*services.AgentReachWarning `json:"warnings"`
+}
+
+type AgentReflectionConnection struct {
+	Edges      []*AgentReflectionEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type AgentReflectionEdge struct {
+	Node   *agent.Reflection `json:"node"`
+	Cursor string            `json:"cursor"`
 }
 
 type AgentRunConnection struct {
@@ -1028,12 +1056,23 @@ type BillingQueueItem struct {
 	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
 }
 
+// The invoice an item posted as, and where it went.
+type BillingQueuePostResult struct {
+	Item          *BillingQueueItem `json:"item"`
+	InvoiceID     string            `json:"invoiceId"`
+	InvoiceNumber string            `json:"invoiceNumber"`
+	// The address the invoice is emailed to, when posting sends it.
+	SentTo     *string  `json:"sentTo,omitempty"`
+	Recipients []string `json:"recipients"`
+}
+
 type BillingQueueUpdateStatusInput struct {
 	Status              billingqueue.Status               `json:"status"`
 	ExceptionReasonCode *billingqueue.ExceptionReasonCode `json:"exceptionReasonCode,omitempty"`
 	ExceptionNotes      *string                           `json:"exceptionNotes,omitempty"`
 	ReviewNotes         *string                           `json:"reviewNotes,omitempty"`
 	CancelReason        *string                           `json:"cancelReason,omitempty"`
+	HoldReasonCode      *billingqueue.HoldReasonCode      `json:"holdReasonCode,omitempty"`
 }
 
 // One bulk transfer of shipments into the billing queue, run in the background.
@@ -1184,6 +1223,47 @@ type CannedReport struct {
 	Definition    map[string]any `json:"definition"`
 }
 
+type CapacityMatch struct {
+	ShipmentID      string   `json:"shipmentId"`
+	MoveID          string   `json:"moveId"`
+	ProNumber       *string  `json:"proNumber,omitempty"`
+	OriginCity      string   `json:"originCity"`
+	DestinationCity string   `json:"destinationCity"`
+	PickupAt        *int     `json:"pickupAt,omitempty"`
+	Revenue         string   `json:"revenue"`
+	DeadheadMiles   *float64 `json:"deadheadMiles,omitempty"`
+	Quote           *string  `json:"quote,omitempty"`
+	MarginPercent   *float64 `json:"marginPercent,omitempty"`
+	FitPercent      *float64 `json:"fitPercent,omitempty"`
+}
+
+// The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier.
+type CapacityRing struct {
+	Value float64 `json:"value"`
+	Max   float64 `json:"max"`
+	Low   bool    `json:"low"`
+}
+
+type CapacityUnit struct {
+	ID       string           `json:"id"`
+	Kind     CapacityUnitKind `json:"kind"`
+	Name     string           `json:"name"`
+	Initials string           `json:"initials"`
+	Group    CapacityGroup    `json:"group"`
+	// When a driver comes free; null when free now.
+	FreeAt *int    `json:"freeAt,omitempty"`
+	City   *string `json:"city,omitempty"`
+	// Tractor code for a driver, MC number for a carrier.
+	UnitLabel *string       `json:"unitLabel,omitempty"`
+	Ring      *CapacityRing `json:"ring,omitempty"`
+	// Trucks a carrier has posted.
+	BadgeCount        *int     `json:"badgeCount,omitempty"`
+	RatePerMile       *string  `json:"ratePerMile,omitempty"`
+	AcceptancePercent *float64 `json:"acceptancePercent,omitempty"`
+	DriveRemainingMs  *int     `json:"driveRemainingMs,omitempty"`
+	TractorID         *string  `json:"tractorId,omitempty"`
+}
+
 type CaptureBatchConnection struct {
 	Edges      []*CaptureBatchEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
@@ -1267,6 +1347,42 @@ type CaptureProfileInput struct {
 	FixedPageCount      int                         `json:"fixedPageCount"`
 }
 
+type CarrierCapacityPostingConnection struct {
+	Edges      []*CarrierCapacityPostingEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount *int                          `json:"totalCount,omitempty"`
+}
+
+type CarrierCapacityPostingEdge struct {
+	Node   *carriercapacity.Posting `json:"node"`
+	Cursor string                   `json:"cursor"`
+}
+
+type CarrierCapacityPostingInput struct {
+	CarrierID string `json:"carrierId"`
+	// Give an origin location, an origin state, or both.
+	OriginLocationID *string `json:"originLocationId,omitempty"`
+	OriginStateID    *string `json:"originStateId,omitempty"`
+	// Only with an origin location.
+	OriginRadiusMiles  *int                        `json:"originRadiusMiles,omitempty"`
+	DestinationStateID *string                     `json:"destinationStateId,omitempty"`
+	EquipmentTypeID    *string                     `json:"equipmentTypeId,omitempty"`
+	AvailableFrom      int                         `json:"availableFrom"`
+	AvailableTo        int                         `json:"availableTo"`
+	TruckCount         *int                        `json:"truckCount,omitempty"`
+	RateMethod         *carriercapacity.RateMethod `json:"rateMethod,omitempty"`
+	Rate               *string                     `json:"rate,omitempty"`
+	Source             *carriercapacity.Source     `json:"source,omitempty"`
+	Notes              *string                     `json:"notes,omitempty"`
+}
+
+type CarrierCapacitySummary struct {
+	Posting            int     `json:"posting"`
+	Untendered         int     `json:"untendered"`
+	AwaitingAcceptance int     `json:"awaitingAcceptance"`
+	AvgRatePerMile     *string `json:"avgRatePerMile,omitempty"`
+}
+
 type CarrierConnection struct {
 	Edges      []*CarrierEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -1282,6 +1398,19 @@ type CarrierCostEventConnection struct {
 type CarrierCostEventEdge struct {
 	Node   *carriersettlement.CostEvent `json:"node"`
 	Cursor string                       `json:"cursor"`
+}
+
+type CarrierCoverageSuggestion struct {
+	CarrierID         string   `json:"carrierId"`
+	MoveID            string   `json:"moveId"`
+	Name              string   `json:"name"`
+	Initials          string   `json:"initials"`
+	McNumber          *string  `json:"mcNumber,omitempty"`
+	Quote             string   `json:"quote"`
+	RatePerMile       string   `json:"ratePerMile"`
+	AcceptancePercent *float64 `json:"acceptancePercent,omitempty"`
+	// Whether the carrier has a posting that covers this lane.
+	Posted bool `json:"posted"`
 }
 
 type CarrierEdge struct {
@@ -1616,6 +1745,14 @@ type ConfirmAccountingMappingInput struct {
 	ExternalID string `json:"externalId"`
 }
 
+type ConfirmDeskMemoryInput struct {
+	// The memory as the person edited it.
+	Content string            `json:"content"`
+	Scope   agent.MemoryScope `json:"scope"`
+	RoleID  *string           `json:"roleId,omitempty"`
+	Version int               `json:"version"`
+}
+
 type CostCategory struct {
 	ID                   string                       `json:"id"`
 	Category             CostCategoryType             `json:"category"`
@@ -1720,6 +1857,13 @@ type CreateCarrierInvoiceMatchInput struct {
 	ProNumber *string `json:"proNumber,omitempty"`
 	// Document AI sources only: the shipment used to locate the assignment.
 	ShipmentID *string `json:"shipmentId,omitempty"`
+}
+
+type CreateDeskMemoryInput struct {
+	Content string `json:"content"`
+	// User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.
+	Scope  agent.MemoryScope `json:"scope"`
+	RoleID *string           `json:"roleId,omitempty"`
 }
 
 type CreateDocumentTemplateVersionInput struct {
@@ -1980,6 +2124,11 @@ type DecideProfileChangeInput struct {
 	Note *string `json:"note,omitempty"`
 }
 
+type DecideShipmentSuggestionInput struct {
+	Key      string                     `json:"key"`
+	Decision ShipmentSuggestionDecision `json:"decision"`
+}
+
 type DelegateApprovalInput struct {
 	// Whose approvals are being handed over. Left empty it is the signed-in user;
 	// naming somebody else needs the manage grant.
@@ -1996,9 +2145,118 @@ type DeleteTimeEntryInput struct {
 	Reason string `json:"reason"`
 }
 
+type DeliveryHourBucket struct {
+	Hour      int `json:"hour"`
+	Delivered int `json:"delivered"`
+	Scheduled int `json:"scheduled"`
+	Late      int `json:"late"`
+}
+
+type DeskMemoriesInput struct {
+	// Page size; 50 when left out, at most 100.
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	// Only this scope; every scope when left out.
+	Scope *agent.MemoryScope `json:"scope,omitempty"`
+	// With scope Role, only this role.
+	RoleID *string `json:"roleId,omitempty"`
+	// Words the memory says.
+	Query *string `json:"query,omitempty"`
+}
+
+// A memory as a person keeps it on the Desk: one of their own, their role's, or
+// the organization's. Agent-scoped memories are administered in AI Control; the
+// only ones a person sees here are those an agent learned in their own
+// conversations.
+type DeskMemory struct {
+	ID      string `json:"id"`
+	Content string `json:"content"`
+	// Instruction, Fact, Correction or Procedure.
+	Kind agent.MemoryKind `json:"kind"`
+	// User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent.
+	Scope agent.MemoryScope `json:"scope"`
+	// The role a Role memory is kept for.
+	RoleID   *string `json:"roleId,omitempty"`
+	RoleName string  `json:"roleName"`
+	// Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits.
+	Status agent.MemoryStatus `json:"status"`
+	Source agent.MemorySource `json:"source"`
+	// The conversation the memory was saved from; empty for one a person wrote down.
+	SourceTitle string `json:"sourceTitle"`
+	// How many prompts and recalls have used it.
+	UseCount   int  `json:"useCount"`
+	LastUsedAt *int `json:"lastUsedAt,omitempty"`
+	CreatedAt  int  `json:"createdAt"`
+	Version    int  `json:"version"`
+	// The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
+	Editable bool `json:"editable"`
+	// Why it was kept, in the words of the agent that kept it; empty for one a person wrote down.
+	Reason string `json:"reason"`
+	// What was said in the work that the memory rests on.
+	Quotes []string `json:"quotes"`
+	// The memory this one replaced, when the person can see it.
+	Replaces *DeskMemoryLink `json:"replaces,omitempty"`
+	// The newest memory that replaced this one, when the person can see it.
+	ReplacedBy *DeskMemoryLink `json:"replacedBy,omitempty"`
+}
+
+// How many memories the person keeps in one scope; Role is counted per role.
+type DeskMemoryCount struct {
+	Scope  agent.MemoryScope `json:"scope"`
+	RoleID *string           `json:"roleId,omitempty"`
+	Count  int               `json:"count"`
+}
+
+// Another memory a Desk memory points to, read as it is now.
+type DeskMemoryLink struct {
+	ID      string             `json:"id"`
+	Content string             `json:"content"`
+	Status  agent.MemoryStatus `json:"status"`
+}
+
+type DeskMemoryPage struct {
+	// Newest first.
+	Items []*DeskMemory `json:"items"`
+	// The cursor of the next page; null on the last.
+	Next *string `json:"next,omitempty"`
+	// Every memory the search matches, in every scope.
+	All int `json:"all"`
+	// What the search matches in each scope, for the filter chips.
+	Counts []*DeskMemoryCount `json:"counts"`
+}
+
+// A role the person holds, offered as a team to keep a memory for.
+type DeskMemoryRole struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// The person may keep memories for the role: it needs permission to create agent memories.
+	Writable bool `json:"writable"`
+}
+
+type DeskMemorySettings struct {
+	SavingMode agent.MemorySavingMode `json:"savingMode"`
+	// The person's roles by name.
+	Roles []*DeskMemoryRole `json:"roles"`
+	// The person may keep memories for the whole organization.
+	CanShareWithOrganization bool `json:"canShareWithOrganization"`
+}
+
 type DetachPayEventInput struct {
 	SettlementID string `json:"settlementId"`
 	PayEventID   string `json:"payEventId"`
+}
+
+type DetentionAccrual struct {
+	ShipmentID string `json:"shipmentId"`
+	StopID     string `json:"stopId"`
+	// Present when the detention policy engine tracks the stop, so it can be approved for billing.
+	OccurrenceID *string `json:"occurrenceId,omitempty"`
+	FacilityName string  `json:"facilityName"`
+	CoverageName *string `json:"coverageName,omitempty"`
+	// When billable time started; the client accrues from here.
+	BillableSince int    `json:"billableSince"`
+	RatePerHour   string `json:"ratePerHour"`
+	Amount        string `json:"amount"`
 }
 
 type DetentionBacktestBucket struct {
@@ -2956,6 +3214,25 @@ type DocumentTypeConnection struct {
 type DocumentTypeEdge struct {
 	Node   *documenttype.DocumentType `json:"node"`
 	Cursor string                     `json:"cursor"`
+}
+
+type DriverCapacitySummary struct {
+	Ready          int `json:"ready"`
+	WithinTwoHours int `json:"withinTwoHours"`
+	Short          int `json:"short"`
+	Uncovered      int `json:"uncovered"`
+}
+
+type DriverCoverageSuggestion struct {
+	WorkerID         string   `json:"workerId"`
+	TractorID        *string  `json:"tractorId,omitempty"`
+	MoveID           string   `json:"moveId"`
+	Name             string   `json:"name"`
+	Initials         string   `json:"initials"`
+	UnitLabel        *string  `json:"unitLabel,omitempty"`
+	DistanceMiles    *float64 `json:"distanceMiles,omitempty"`
+	DriveRemainingMs *int     `json:"driveRemainingMs,omitempty"`
+	FitPercent       *float64 `json:"fitPercent,omitempty"`
 }
 
 type DriverExpenseConnection struct {
@@ -4387,6 +4664,14 @@ type LateChargeAssessmentInput struct {
 	AsOfDate *int `json:"asOfDate,omitempty"`
 }
 
+type LateDelivery struct {
+	ShipmentID   string  `json:"shipmentId"`
+	ProNumber    *string `json:"proNumber,omitempty"`
+	DeltaMinutes int     `json:"deltaMinutes"`
+	City         string  `json:"city"`
+	CustomerName string  `json:"customerName"`
+}
+
 type LinkInboundMessageInput struct {
 	ShipmentID *string `json:"shipmentId,omitempty"`
 	CustomerID *string `json:"customerId,omitempty"`
@@ -4528,6 +4813,13 @@ type MySettlementList struct {
 	Total int                            `json:"total"`
 }
 
+type NextUncoveredPickup struct {
+	ShipmentID      string `json:"shipmentId"`
+	PickupAt        int    `json:"pickupAt"`
+	OriginCity      string `json:"originCity"`
+	DestinationCity string `json:"destinationCity"`
+}
+
 type NotificationConnection struct {
 	Edges      []*NotificationEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
@@ -4542,6 +4834,11 @@ type NotificationEdge struct {
 type NotificationFilterInput struct {
 	State      *NotificationState `json:"state,omitempty"`
 	UnreadOnly *bool              `json:"unreadOnly,omitempty"`
+}
+
+type NotifyShipmentDelayInput struct {
+	ShipmentID string `json:"shipmentId"`
+	Message    string `json:"message"`
 }
 
 type OpenEscrowAccountInput struct {
@@ -5120,6 +5417,27 @@ type RateZoneConnection struct {
 type RateZoneEdge struct {
 	Node   *RateZone `json:"node"`
 	Cursor string    `json:"cursor"`
+}
+
+type ReadyToBillCustomer struct {
+	CustomerID string `json:"customerId"`
+	Name       string `json:"name"`
+	Count      int    `json:"count"`
+	Total      string `json:"total"`
+}
+
+// A decision on a proposal, with the proposal and the person who made it.
+type RecentDecision struct {
+	ID         string             `json:"id"`
+	Decision   agent.DecisionType `json:"decision"`
+	ReasonCode string             `json:"reasonCode"`
+	// What the decider told the agent; empty when they said nothing.
+	Note            string `json:"note"`
+	DecidedByUserID string `json:"decidedByUserId"`
+	// The decider as the app names them.
+	DecidedByName string               `json:"decidedByName"`
+	DecidedAt     int                  `json:"decidedAt"`
+	Proposal      *agent.AgentProposal `json:"proposal"`
 }
 
 type RecordClearinghouseQueryInput struct {
@@ -5926,6 +6244,14 @@ type ReviewRatingInput struct {
 	Comment *string `json:"comment,omitempty"`
 }
 
+// Changes what a memory says, who it is kept for, or both; what is left out stays.
+type ReviseDeskMemoryInput struct {
+	Content *string            `json:"content,omitempty"`
+	Scope   *agent.MemoryScope `json:"scope,omitempty"`
+	RoleID  *string            `json:"roleId,omitempty"`
+	Version int                `json:"version"`
+}
+
 type RoleConnection struct {
 	Edges      []*RoleEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
@@ -6263,13 +6589,16 @@ type ShiftTemplateInput struct {
 }
 
 type Shipment struct {
-	ID               string  `json:"id"`
-	BusinessUnitID   string  `json:"businessUnitId"`
-	OrganizationID   string  `json:"organizationId"`
-	SourceDocumentID *string `json:"sourceDocumentId,omitempty"`
-	ServiceTypeID    string  `json:"serviceTypeId"`
-	ShipmentTypeID   string  `json:"shipmentTypeId"`
-	CustomerID       string  `json:"customerId"`
+	ID    string         `json:"id"`
+	Stage shipment.Stage `json:"stage"`
+	// Projected arrival at the final delivery, read from the latest position and the remaining stops.
+	Eta              *ShipmentEta `json:"eta,omitempty"`
+	BusinessUnitID   string       `json:"businessUnitId"`
+	OrganizationID   string       `json:"organizationId"`
+	SourceDocumentID *string      `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID    string       `json:"serviceTypeId"`
+	ShipmentTypeID   string       `json:"shipmentTypeId"`
+	CustomerID       string       `json:"customerId"`
 	// The customer billed by default. Null means the shipment's customer pays.
 	BillToCustomerID      *string                        `json:"billToCustomerId,omitempty"`
 	FreightTerms          shipment.FreightTerms          `json:"freightTerms"`
@@ -6409,7 +6738,6 @@ type ShipmentAdditionalChargeInput struct {
 
 type ShipmentAnalytics struct {
 	Page               string                          `json:"page"`
-	SavedViewCounts    *ShipmentSavedViewCounts        `json:"savedViewCounts,omitempty"`
 	ActiveShipments    *ShipmentActiveShipments        `json:"activeShipments,omitempty"`
 	OnTimePercent      *ShipmentOnTime                 `json:"onTimePercent,omitempty"`
 	RevenueToday       *ShipmentRevenueToday           `json:"revenueToday,omitempty"`
@@ -6641,6 +6969,45 @@ type ShipmentBillingWarningContext struct {
 	UnresolvedCount         *int     `json:"unresolvedCount,omitempty"`
 }
 
+type ShipmentBillingWatch struct {
+	Count         int                    `json:"count"`
+	Total         string                 `json:"total"`
+	Customers     []*ReadyToBillCustomer `json:"customers"`
+	MoreCustomers int                    `json:"moreCustomers"`
+}
+
+type ShipmentBoardCapabilities struct {
+	// An AI provider is configured for briefings and operational insights.
+	Ai            bool                 `json:"ai"`
+	OperationType tenant.OperationType `json:"operationType"`
+	// An ELD or telematics integration supplies hours of service.
+	Hos bool `json:"hos"`
+	// Google Maps is configured for this workspace.
+	Maps bool `json:"maps"`
+}
+
+type ShipmentBoardScopeInput struct {
+	Query        *string                     `json:"query,omitempty"`
+	FieldFilters []*FieldFilterInput         `json:"fieldFilters,omitempty"`
+	FilterGroups []*FilterGroupInput         `json:"filterGroups,omitempty"`
+	QuickFilters []*ShipmentQuickFilterInput `json:"quickFilters,omitempty"`
+	// IANA time zone the day and hour predicates are evaluated in.
+	Timezone string `json:"timezone"`
+}
+
+type ShipmentBriefing struct {
+	Segments []*ShipmentBriefingSegment `json:"segments"`
+	// The model wrote the wording; false means the deterministic sentence.
+	Narrated    bool `json:"narrated"`
+	GeneratedAt int  `json:"generatedAt"`
+}
+
+type ShipmentBriefingSegment struct {
+	Text string `json:"text"`
+	// The quick filter the segment links to, when it names a set of shipments.
+	Filter *shipment.QuickFilter `json:"filter,omitempty"`
+}
+
 type ShipmentBulkTransferToBillingInput struct {
 	ShipmentIds []string               `json:"shipmentIds"`
 	BillType    *billingqueue.BillType `json:"billType,omitempty"`
@@ -6675,6 +7042,13 @@ type ShipmentBulkTransferToBillingResult struct {
 
 type ShipmentCancelInput struct {
 	CancelReason *string `json:"cancelReason,omitempty"`
+}
+
+type ShipmentCapacity struct {
+	Kind     CapacityUnitKind        `json:"kind"`
+	Units    []*CapacityUnit         `json:"units"`
+	Drivers  *DriverCapacitySummary  `json:"drivers,omitempty"`
+	Carriers *CarrierCapacitySummary `json:"carriers,omitempty"`
 }
 
 // External carrier coverage on a move: CarrierAssigned and CarrierUnassigned.
@@ -6990,6 +7364,11 @@ type ShipmentContractRateAccessorial struct {
 	Unit                int                      `json:"unit"`
 }
 
+type ShipmentCoverageSuggestions struct {
+	Drivers  []*DriverCoverageSuggestion  `json:"drivers"`
+	Carriers []*CarrierCoverageSuggestion `json:"carriers"`
+}
+
 type ShipmentCustomer struct {
 	ID                     string             `json:"id"`
 	BusinessUnitID         string             `json:"businessUnitId"`
@@ -7030,6 +7409,22 @@ type ShipmentCustomerMixEntry struct {
 	Share      float64 `json:"share"`
 	Loads      int     `json:"loads"`
 	Trend      float64 `json:"trend"`
+}
+
+type ShipmentDeliveryWatch struct {
+	OnTime    int                   `json:"onTime"`
+	Total     int                   `json:"total"`
+	LateCount int                   `json:"lateCount"`
+	Buckets   []*DeliveryHourBucket `json:"buckets"`
+	WorstLate []*LateDelivery       `json:"worstLate"`
+}
+
+type ShipmentDetentionWatch struct {
+	StopCount   int                 `json:"stopCount"`
+	Amount      string              `json:"amount"`
+	RatePerHour string              `json:"ratePerHour"`
+	SnapshotAt  int                 `json:"snapshotAt"`
+	Top         []*DetentionAccrual `json:"top"`
 }
 
 type ShipmentDetentionWatchlist struct {
@@ -7095,6 +7490,15 @@ type ShipmentEmptyMile struct {
 	DeltaPp    float64 `json:"deltaPp"`
 }
 
+type ShipmentEta struct {
+	EstimatedArrival *int `json:"estimatedArrival,omitempty"`
+	// Minutes between the projected arrival and the end of the delivery window; negative when it will be missed.
+	SlackMinutes *int                     `json:"slackMinutes,omitempty"`
+	Verdict      shipmenttracking.Verdict `json:"verdict"`
+	// Why the load is behind, when the tracking snapshot can say.
+	Reason *string `json:"reason,omitempty"`
+}
+
 type ShipmentEventShipmentReference struct {
 	ID        *string `json:"id,omitempty"`
 	ProNumber *string `json:"proNumber,omitempty"`
@@ -7106,6 +7510,19 @@ type ShipmentEventsInput struct {
 	Limit      *int                `json:"limit,omitempty"`
 	// Only events recorded before this instant; pass the oldest occurredAt seen to page backwards.
 	Before *int `json:"before,omitempty"`
+}
+
+type ShipmentFacetCounts struct {
+	Facet repositories.ShipmentFacet `json:"facet"`
+	// The field filter the values apply to.
+	Field  string                `json:"field"`
+	Values []*ShipmentFacetValue `json:"values"`
+}
+
+type ShipmentFacetValue struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+	Count int    `json:"count"`
 }
 
 type ShipmentFormulaTemplate struct {
@@ -7613,6 +8030,21 @@ type ShipmentProfitabilityEstimate struct {
 	MissingDistance     bool    `json:"missingDistance"`
 }
 
+type ShipmentQuickFilterCount struct {
+	Filter shipment.QuickFilter `json:"filter"`
+	Count  int                  `json:"count"`
+}
+
+type ShipmentQuickFilterInput struct {
+	Filter shipment.QuickFilter `json:"filter"`
+	// Local hour of day (0-23) for DeliveryHour.
+	Hour *int `json:"hour,omitempty"`
+	// Minutes from now where a PickupWindow starts.
+	WindowStartMinutes *int `json:"windowStartMinutes,omitempty"`
+	// Minutes from now where a PickupWindow ends; omit for an open-ended window.
+	WindowEndMinutes *int `json:"windowEndMinutes,omitempty"`
+}
+
 // One line of the arithmetic that produced the rate, in the order it was applied.
 type ShipmentRatingBreakdownItem struct {
 	Name   string  `json:"name"`
@@ -7672,14 +8104,6 @@ type ShipmentRevenueToday struct {
 	Rpm       float64                   `json:"rpm"`
 }
 
-type ShipmentSavedViewCounts struct {
-	All             *int `json:"all,omitempty"`
-	Transit         *int `json:"transit,omitempty"`
-	AtRisk          *int `json:"atRisk,omitempty"`
-	Unassigned      *int `json:"unassigned,omitempty"`
-	DeliveringToday *int `json:"deliveringToday,omitempty"`
-}
-
 type ShipmentServiceFailureBillingContext struct {
 	HasUnresolved     bool     `json:"hasUnresolved"`
 	UnresolvedCount   int      `json:"unresolvedCount"`
@@ -7689,6 +8113,14 @@ type ShipmentServiceFailureBillingContext struct {
 type ShipmentSparklinePoint struct {
 	Hour  string  `json:"hour"`
 	Value float64 `json:"value"`
+}
+
+type ShipmentStageSummary struct {
+	Stage shipment.Stage `json:"stage"`
+	// Sort position of the stage on the board.
+	Rank    int    `json:"rank"`
+	Count   int    `json:"count"`
+	Revenue string `json:"revenue"`
 }
 
 type ShipmentStop struct {
@@ -7740,6 +8172,41 @@ type ShipmentStopInput struct {
 	CountDetentionOverride *bool             `json:"countDetentionOverride,omitempty"`
 	AddressLine            *string           `json:"addressLine,omitempty"`
 	Version                *int              `json:"version,omitempty"`
+}
+
+type ShipmentSuggestion struct {
+	Key        string                    `json:"key"`
+	Kind       ShipmentSuggestionKind    `json:"kind"`
+	Tone       ShipmentSuggestionTone    `json:"tone"`
+	ShipmentID *string                   `json:"shipmentId,omitempty"`
+	ProNumber  *string                   `json:"proNumber,omitempty"`
+	Title      string                    `json:"title"`
+	Reason     string                    `json:"reason"`
+	Impact     []string                  `json:"impact"`
+	Primary    *ShipmentSuggestionAction `json:"primary"`
+	// Label of the manual action shown when the suggestion is reviewed by hand.
+	ManualLabel string `json:"manualLabel"`
+	DueAt       *int   `json:"dueAt,omitempty"`
+	// Postponed with Later; sorts to the back of the queue.
+	Deferred bool `json:"deferred"`
+}
+
+type ShipmentSuggestionAction struct {
+	Type                  ShipmentSuggestionActionType `json:"type"`
+	Label                 string                       `json:"label"`
+	MoveID                *string                      `json:"moveId,omitempty"`
+	WorkerID              *string                      `json:"workerId,omitempty"`
+	TractorID             *string                      `json:"tractorId,omitempty"`
+	CarrierID             *string                      `json:"carrierId,omitempty"`
+	DetentionOccurrenceID *string                      `json:"detentionOccurrenceId,omitempty"`
+	// Drafted customer message for NotifyCustomer.
+	Message *string `json:"message,omitempty"`
+}
+
+type ShipmentSuggestionQueue struct {
+	Items            []*ShipmentSuggestion `json:"items"`
+	HandledThisShift int                   `json:"handledThisShift"`
+	Narrated         bool                  `json:"narrated"`
 }
 
 // Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
@@ -7880,8 +8347,22 @@ type ShipmentUnassignedAnalytics struct {
 	RevenueWaiting float64 `json:"revenueWaiting"`
 }
 
+type ShipmentUncoveredWatch struct {
+	Count   int                       `json:"count"`
+	Revenue string                    `json:"revenue"`
+	Windows []*UncoveredWindowSummary `json:"windows"`
+	Next    *NextUncoveredPickup      `json:"next,omitempty"`
+}
+
 type ShipmentValidationResponse struct {
 	Valid bool `json:"valid"`
+}
+
+type ShipmentWatchlist struct {
+	Deliveries *ShipmentDeliveryWatch  `json:"deliveries"`
+	Uncovered  *ShipmentUncoveredWatch `json:"uncovered"`
+	Detention  *ShipmentDetentionWatch `json:"detention"`
+	Billing    *ShipmentBillingWatch   `json:"billing"`
 }
 
 type ShipmentsInput struct {
@@ -7898,7 +8379,10 @@ type ShipmentsInput struct {
 	// Only Completed or Ready to Invoice shipments that are not in the billing queue.
 	BillingTransferEligible *bool `json:"billingTransferEligible,omitempty"`
 	// Load each shipment's customer without expanding the rest of its details.
-	IncludeCustomer *bool `json:"includeCustomer,omitempty"`
+	IncludeCustomer *bool                       `json:"includeCustomer,omitempty"`
+	QuickFilters    []*ShipmentQuickFilterInput `json:"quickFilters,omitempty"`
+	// IANA time zone for day and hour quick filters.
+	Timezone *string `json:"timezone,omitempty"`
 }
 
 type SidebarActivityPreference struct {
@@ -8158,6 +8642,33 @@ type TelematicsStatus struct {
 	MappedWorkers     int     `json:"mappedWorkers"`
 }
 
+type TenderShipmentFailure struct {
+	ShipmentID string `json:"shipmentId"`
+	Message    string `json:"message"`
+}
+
+type TenderShipmentItemInput struct {
+	ShipmentID string `json:"shipmentId"`
+	// Tender to this carrier; omit to use the routing guide or the best match.
+	CarrierID *string `json:"carrierId,omitempty"`
+}
+
+type TenderShipmentSuccess struct {
+	ShipmentID  string  `json:"shipmentId"`
+	TenderID    string  `json:"tenderId"`
+	CarrierID   *string `json:"carrierId,omitempty"`
+	CarrierName *string `json:"carrierName,omitempty"`
+}
+
+type TenderShipmentsInput struct {
+	Items []*TenderShipmentItemInput `json:"items"`
+}
+
+type TenderShipmentsResult struct {
+	Tendered []*TenderShipmentSuccess `json:"tendered"`
+	Failed   []*TenderShipmentFailure `json:"failed"`
+}
+
 type TimesheetFilterInput struct {
 	WorkerID *string                  `json:"workerId,omitempty"`
 	Statuses []worker.TimesheetStatus `json:"statuses,omitempty"`
@@ -8388,6 +8899,15 @@ type UnassignDocumentTemplateInput struct {
 	CustomerID string `json:"customerId"`
 }
 
+type UncoveredWindowSummary struct {
+	Window       shipment.PickupWindow `json:"window"`
+	StartMinutes int                   `json:"startMinutes"`
+	// Null for the open-ended window.
+	EndMinutes *int   `json:"endMinutes,omitempty"`
+	Count      int    `json:"count"`
+	Revenue    string `json:"revenue"`
+}
+
 type UpcomingWorkerPTOInput struct {
 	First       *int              `json:"first,omitempty"`
 	After       *string           `json:"after,omitempty"`
@@ -8408,6 +8928,23 @@ type UpdateAccountingSyncSettingsInput struct {
 	DriverSettlements bool `json:"driverSettlements"`
 	// What happens to payments recorded in the accounting system. Left out, it stays as it is.
 	InboundPayments *accountingsync.InboundPaymentPolicy `json:"inboundPayments,omitempty"`
+}
+
+// Changes to an agent's capabilities. Absent fields are left as they are.
+type UpdateAgentCapabilitiesInput struct {
+	// The version the page was read at.
+	Version               int                         `json:"version"`
+	Enabled               *bool                       `json:"enabled,omitempty"`
+	Tools                 []*AgentCapabilityToolInput `json:"tools,omitempty"`
+	DailyRequestLimit     *int                        `json:"dailyRequestLimit,omitempty"`
+	MonthlyBudgetUsd      *string                     `json:"monthlyBudgetUsd,omitempty"`
+	ClearMonthlyBudget    *bool                       `json:"clearMonthlyBudget,omitempty"`
+	MaxChangeItems        *int                        `json:"maxChangeItems,omitempty"`
+	BusinessHoursOnly     *bool                       `json:"businessHoursOnly,omitempty"`
+	BusinessHoursStart    *int                        `json:"businessHoursStart,omitempty"`
+	BusinessHoursEnd      *int                        `json:"businessHoursEnd,omitempty"`
+	BusinessHoursTimezone *string                     `json:"businessHoursTimezone,omitempty"`
+	DelegateTopics        []*AgentDelegateTopicInput  `json:"delegateTopics,omitempty"`
 }
 
 type UpdateAgentEvalCaseInput struct {
@@ -9423,6 +9960,120 @@ func (e *AssignmentStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e AssignmentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CapacityGroup string
+
+const (
+	CapacityGroupReadyNow       CapacityGroup = "ReadyNow"
+	CapacityGroupWithinTwoHours CapacityGroup = "WithinTwoHours"
+	CapacityGroupTrucksPosted   CapacityGroup = "TrucksPosted"
+	CapacityGroupUsuallyAccept  CapacityGroup = "UsuallyAccept"
+)
+
+var AllCapacityGroup = []CapacityGroup{
+	CapacityGroupReadyNow,
+	CapacityGroupWithinTwoHours,
+	CapacityGroupTrucksPosted,
+	CapacityGroupUsuallyAccept,
+}
+
+func (e CapacityGroup) IsValid() bool {
+	switch e {
+	case CapacityGroupReadyNow, CapacityGroupWithinTwoHours, CapacityGroupTrucksPosted, CapacityGroupUsuallyAccept:
+		return true
+	}
+	return false
+}
+
+func (e CapacityGroup) String() string {
+	return string(e)
+}
+
+func (e *CapacityGroup) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CapacityGroup(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CapacityGroup", str)
+	}
+	return nil
+}
+
+func (e CapacityGroup) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CapacityGroup) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CapacityGroup) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CapacityUnitKind string
+
+const (
+	CapacityUnitKindDriver  CapacityUnitKind = "Driver"
+	CapacityUnitKindCarrier CapacityUnitKind = "Carrier"
+)
+
+var AllCapacityUnitKind = []CapacityUnitKind{
+	CapacityUnitKindDriver,
+	CapacityUnitKindCarrier,
+}
+
+func (e CapacityUnitKind) IsValid() bool {
+	switch e {
+	case CapacityUnitKindDriver, CapacityUnitKindCarrier:
+		return true
+	}
+	return false
+}
+
+func (e CapacityUnitKind) String() string {
+	return string(e)
+}
+
+func (e *CapacityUnitKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CapacityUnitKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CapacityUnitKind", str)
+	}
+	return nil
+}
+
+func (e CapacityUnitKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CapacityUnitKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CapacityUnitKind) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -11578,6 +12229,244 @@ func (e *ShipmentStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e ShipmentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentSuggestionActionType string
+
+const (
+	ShipmentSuggestionActionTypeAssignDriver     ShipmentSuggestionActionType = "AssignDriver"
+	ShipmentSuggestionActionTypeTenderCarrier    ShipmentSuggestionActionType = "TenderCarrier"
+	ShipmentSuggestionActionTypeNotifyCustomer   ShipmentSuggestionActionType = "NotifyCustomer"
+	ShipmentSuggestionActionTypeApproveDetention ShipmentSuggestionActionType = "ApproveDetention"
+	ShipmentSuggestionActionTypeReview           ShipmentSuggestionActionType = "Review"
+)
+
+var AllShipmentSuggestionActionType = []ShipmentSuggestionActionType{
+	ShipmentSuggestionActionTypeAssignDriver,
+	ShipmentSuggestionActionTypeTenderCarrier,
+	ShipmentSuggestionActionTypeNotifyCustomer,
+	ShipmentSuggestionActionTypeApproveDetention,
+	ShipmentSuggestionActionTypeReview,
+}
+
+func (e ShipmentSuggestionActionType) IsValid() bool {
+	switch e {
+	case ShipmentSuggestionActionTypeAssignDriver, ShipmentSuggestionActionTypeTenderCarrier, ShipmentSuggestionActionTypeNotifyCustomer, ShipmentSuggestionActionTypeApproveDetention, ShipmentSuggestionActionTypeReview:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentSuggestionActionType) String() string {
+	return string(e)
+}
+
+func (e *ShipmentSuggestionActionType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentSuggestionActionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentSuggestionActionType", str)
+	}
+	return nil
+}
+
+func (e ShipmentSuggestionActionType) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentSuggestionActionType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentSuggestionActionType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentSuggestionDecision string
+
+const (
+	ShipmentSuggestionDecisionDone  ShipmentSuggestionDecision = "Done"
+	ShipmentSuggestionDecisionLater ShipmentSuggestionDecision = "Later"
+)
+
+var AllShipmentSuggestionDecision = []ShipmentSuggestionDecision{
+	ShipmentSuggestionDecisionDone,
+	ShipmentSuggestionDecisionLater,
+}
+
+func (e ShipmentSuggestionDecision) IsValid() bool {
+	switch e {
+	case ShipmentSuggestionDecisionDone, ShipmentSuggestionDecisionLater:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentSuggestionDecision) String() string {
+	return string(e)
+}
+
+func (e *ShipmentSuggestionDecision) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentSuggestionDecision(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentSuggestionDecision", str)
+	}
+	return nil
+}
+
+func (e ShipmentSuggestionDecision) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentSuggestionDecision) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentSuggestionDecision) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentSuggestionKind string
+
+const (
+	ShipmentSuggestionKindCoverage       ShipmentSuggestionKind = "Coverage"
+	ShipmentSuggestionKindTender         ShipmentSuggestionKind = "Tender"
+	ShipmentSuggestionKindDelayNotice    ShipmentSuggestionKind = "DelayNotice"
+	ShipmentSuggestionKindHoursOfService ShipmentSuggestionKind = "HoursOfService"
+	ShipmentSuggestionKindDetention      ShipmentSuggestionKind = "Detention"
+	ShipmentSuggestionKindRetender       ShipmentSuggestionKind = "Retender"
+)
+
+var AllShipmentSuggestionKind = []ShipmentSuggestionKind{
+	ShipmentSuggestionKindCoverage,
+	ShipmentSuggestionKindTender,
+	ShipmentSuggestionKindDelayNotice,
+	ShipmentSuggestionKindHoursOfService,
+	ShipmentSuggestionKindDetention,
+	ShipmentSuggestionKindRetender,
+}
+
+func (e ShipmentSuggestionKind) IsValid() bool {
+	switch e {
+	case ShipmentSuggestionKindCoverage, ShipmentSuggestionKindTender, ShipmentSuggestionKindDelayNotice, ShipmentSuggestionKindHoursOfService, ShipmentSuggestionKindDetention, ShipmentSuggestionKindRetender:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentSuggestionKind) String() string {
+	return string(e)
+}
+
+func (e *ShipmentSuggestionKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentSuggestionKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentSuggestionKind", str)
+	}
+	return nil
+}
+
+func (e ShipmentSuggestionKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentSuggestionKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentSuggestionKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentSuggestionTone string
+
+const (
+	ShipmentSuggestionToneDanger  ShipmentSuggestionTone = "Danger"
+	ShipmentSuggestionToneWarning ShipmentSuggestionTone = "Warning"
+	ShipmentSuggestionToneAccent  ShipmentSuggestionTone = "Accent"
+	ShipmentSuggestionToneBrand   ShipmentSuggestionTone = "Brand"
+)
+
+var AllShipmentSuggestionTone = []ShipmentSuggestionTone{
+	ShipmentSuggestionToneDanger,
+	ShipmentSuggestionToneWarning,
+	ShipmentSuggestionToneAccent,
+	ShipmentSuggestionToneBrand,
+}
+
+func (e ShipmentSuggestionTone) IsValid() bool {
+	switch e {
+	case ShipmentSuggestionToneDanger, ShipmentSuggestionToneWarning, ShipmentSuggestionToneAccent, ShipmentSuggestionToneBrand:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentSuggestionTone) String() string {
+	return string(e)
+}
+
+func (e *ShipmentSuggestionTone) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentSuggestionTone(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentSuggestionTone", str)
+	}
+	return nil
+}
+
+func (e ShipmentSuggestionTone) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentSuggestionTone) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentSuggestionTone) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

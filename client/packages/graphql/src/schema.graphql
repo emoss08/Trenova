@@ -536,6 +536,8 @@ type AIProvider {
   reasoningEffort: AIReasoningEffort!
   structuredOutputMode: AIStructuredOutputMode!
   tasks: [AITask!]!
+  """How a Claude model behind an id the system cannot read takes thinking."""
+  thinkingStyle: AIThinkingStyle!
   trusted: Boolean!
   updatedAt: Timestamp!
   version: Int!
@@ -572,12 +574,16 @@ type AIProviderTestOutcome {
 
 """
 How hard a model is asked to think before it answers. Off sends no reasoning
-parameter, which models without reasoning reject outright.
+parameter, which models without reasoning reject outright; a model that reasons
+by default then reasons at its own default. None tells such a model not to
+reason, and Minimal asks for the least reasoning it allows.
 """
 enum AIReasoningEffort {
   High
   Low
   Medium
+  Minimal
+  None
   Off
 }
 
@@ -814,6 +820,18 @@ enum AITask {
   OperationalInsights
   QueryCompose
   ScopeClassification
+}
+
+"""
+How a Claude model is asked to think. Auto reads the model id; Effort asks by
+effort, as Claude models from Opus 4.6 and Sonnet 4.6 on require; Budget asks
+with a token budget, as older ones require. Only Anthropic Messages providers
+take anything but Auto.
+"""
+enum AIThinkingStyle {
+  Auto
+  Budget
+  Effort
 }
 
 """
@@ -2461,6 +2479,101 @@ enum AgentAutonomyTier {
   Propose
 }
 
+"""
+What an agent can do, for anyone who may use it: what it looks up and changes
+and how far each change may go on its own, who it hands work to, and its
+limits. canEdit says whether the reader may change it.
+"""
+type AgentCapabilities {
+  accent: String!
+  agentId: ID!
+  canEdit: Boolean!
+  description: String!
+  enabled: Boolean!
+  handoffs: [AgentCapabilityHandoff!]!
+  icon: String!
+  limits: AgentCapabilityLimits!
+  """The model it answers with, by the name an administrator gave it."""
+  model: String!
+  name: String!
+  readTools: [AgentCapabilityTool!]!
+  """Who set the agent up; empty when unknown."""
+  setUpBy: String!
+  systemKey: String!
+  template: String!
+  version: Int!
+  writeTools: [AgentCapabilityTool!]!
+}
+
+"""An agent this one hands work to, and which work."""
+type AgentCapabilityHandoff {
+  accent: String!
+  agentId: ID!
+  description: String!
+  icon: String!
+  name: String!
+  template: String!
+  """What goes to it; its description when no topic was set."""
+  topic: String!
+}
+
+"""An agent's caps and where it stands against them."""
+type AgentCapabilityLimits {
+  """Minutes after midnight, exclusive."""
+  businessHoursEnd: Int!
+  businessHoursOnly: Boolean!
+  """Minutes after midnight."""
+  businessHoursStart: Int!
+  """The zone the window is read in: the agent's own or the organization's."""
+  businessHoursTimezone: String!
+  """0 for no daily cap."""
+  dailyRequestLimit: Int!
+  dayResetsAt: Timestamp!
+  """
+  The most records one change may touch; a bigger batch is split and approved separately.
+  """
+  maxChangeItems: Int!
+  monthResetsAt: Timestamp!
+  monthStart: Timestamp!
+  """Absent when there is no monthly budget."""
+  monthlyBudgetUsd: Decimal
+  monthlySpentUsd: Decimal!
+  requestsToday: Int!
+}
+
+"""
+How an agent may use one tool, as its capabilities page says it: Allowed runs
+on its own, AskFirst waits for a person, Off is a tool the agent does not hold.
+"""
+enum AgentCapabilityMode {
+  Allowed
+  AskFirst
+  Off
+}
+
+"""One tool on an agent's capabilities page."""
+type AgentCapabilityTool {
+  """
+  The modes the tool may be given on this agent. A read is never AskFirst.
+  """
+  allowedModes: [AgentCapabilityMode!]!
+  """The tool's name, as the agent calls it."""
+  key: String!
+  label: String!
+  """
+  Why a mode is missing from allowedModes, such as "Always asks · this can't be undone".
+  """
+  lockReason: String
+  mode: AgentCapabilityMode!
+  """Whether the tool changes things rather than reading them."""
+  write: Boolean!
+}
+
+input AgentCapabilityToolInput {
+  key: String!
+  mode: AgentCapabilityMode!
+}
+
 enum AgentContextProvider {
   Clock
   Memory
@@ -2488,7 +2601,15 @@ type AgentControl {
   """
   earnedAutonomy: Boolean!
   id: ID!
+  """
+  Agents no longer look back over their work to keep what they learned as memory.
+  """
+  learningOff: Boolean!
   organizationId: ID!
+  """
+  Questions one person may ask the agents each calendar month (UTC); 0 is unlimited.
+  """
+  personMonthlyMessages: Int!
   """
   Consecutive approvals without a change needed before a tool moves up a tier.
   """
@@ -2507,6 +2628,12 @@ input AgentControlInput {
   decisionTimeoutSeconds: Int @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   """Absent leaves the organization's earned autonomy switch as it is."""
   earnedAutonomy: Boolean
+  """Absent leaves whether agents learn from their work as it is."""
+  learningOff: Boolean
+  """
+  Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
+  """
+  personMonthlyMessages: Int
   """Absent leaves the promotion threshold as it is; 1 to 1000 approvals."""
   promotionThreshold: Int
   shadowMode: Boolean!
@@ -2526,6 +2653,14 @@ enum AgentDataAccessCeiling {
 
 type AgentDecision {
   businessUnitId: ID!
+  """
+  When an approval made from the decider's own conversation goes through,
+  unless it is undone first. Absent for a decision that took effect when it
+  was made.
+  """
+  commitsAt: Timestamp
+  """When the approval went through at the close of its undo window."""
+  committedAt: Timestamp
   createdAt: Timestamp!
   decidedByUserId: ID!
   decision: AgentDecisionType!
@@ -2560,6 +2695,8 @@ type AgentDecision {
   The decision's trace in the tracing backend, when one is configured and the decision has a trace.
   """
   traceUrl: String
+  """When the approval was undone in its undo window."""
+  undoneAt: Timestamp
   updatedAt: Timestamp!
   version: Int!
 }
@@ -2624,6 +2761,10 @@ type AgentDefinition {
   instructions: String!
   intervalSeconds: Int!
   lastRunAt: Timestamp
+  """
+  The agent no longer looks back over its work to keep what it learned, whatever its organization chose.
+  """
+  learningOff: Boolean!
   maxConcurrentRuns: Int!
   maxToolCalls: Int!
   """
@@ -2683,6 +2824,12 @@ type AgentDefinitionConnection {
 type AgentDefinitionEdge {
   cursor: String!
   node: AgentDefinition!
+}
+
+input AgentDelegateTopicInput {
+  agentId: ID!
+  """Empty clears the topic."""
+  topic: String!
 }
 
 """Where a tool's work can be seen or felt."""
@@ -3038,20 +3185,38 @@ type AgentMemory {
   kind: AgentMemoryKind!
   lastUsedAt: Timestamp
   organizationId: ID!
+  ownerUserId: ID
+  """
+  The look back that kept or offered the memory, for one whose source is Reflection.
+  """
+  reflectionId: ID
+  """
+  The newest memory that replaced this one and took effect; empty while nothing has.
+  """
+  replacedBy: AgentMemory
   retiredAt: Timestamp
   retiredByUserId: ID
+  roleId: ID
   """
-  Organization reaches every agent; Agent reaches only agentDefinitionId.
+  Organization reaches every agent; Agent reaches only agentDefinitionId; User only ownerUserId's conversations; Role only those of roleId's holders.
   """
   scope: AgentMemoryScope!
   source: AgentMemorySource!
   sourceProposalId: ID
   sourceRunId: ID
+  """The conversation the memory came from."""
+  sourceThreadId: ID
   status: AgentMemoryStatus!
   subjectId: ID
   """The subject's name at the time it was recorded."""
   subjectLabel: String!
   subjectType: AgentMemorySubjectType
+  """The memory this one replaces, as it reads now."""
+  supersedes: AgentMemory
+  """
+  The memory this one replaces; once this one is active the other is retired.
+  """
+  supersedesId: ID
   """The run whose outside content the memory carries."""
   taintRunId: ID
   """
@@ -3092,6 +3257,10 @@ type AgentMemoryEvidence {
   quotes: [String!]!
   ratingCount: Int!
   reason: String!
+  """
+  For a memory an agent kept from looking back, what in the work made it worth a look.
+  """
+  signals: [String!]!
 }
 
 input AgentMemoryInput {
@@ -3110,14 +3279,38 @@ enum AgentMemoryKind {
   Correction
   Fact
   Instruction
+  """
+  The steps that worked for a task here, dictated by a person or learned by doing it.
+  """
+  Procedure
 }
 
 """
-Who reads a memory: every agent in the organization, or only the agent it was kept for.
+How a person wants memories an agent picks up in their conversations kept.
+"""
+enum AgentMemorySavingMode {
+  """
+  Offered in the conversation; nothing is kept until the person accepts it.
+  """
+  AskFirst
+  """Saved as the agent picks them up, and said so in the conversation."""
+  Automatic
+}
+
+"""
+Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role.
 """
 enum AgentMemoryScope {
   Agent
   Organization
+  """
+  Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team.
+  """
+  Role
+  """
+  Kept for one person, read only in their conversations; the Desk calls it Just you.
+  """
+  User
 }
 
 enum AgentMemorySource {
@@ -3125,6 +3318,10 @@ enum AgentMemorySource {
   Decision
   """Drawn from ratings people gave an agent's output."""
   Feedback
+  """
+  Kept by an agent looking back over its own work once a conversation went quiet or a run settled.
+  """
+  Reflection
   User
 }
 
@@ -3134,9 +3331,13 @@ enum AgentMemoryStatus {
   A suggestion an administrator refused; the same pattern is not suggested again for 30 days.
   """
   Dismissed
+  """
+  Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed.
+  """
+  Paused
   Retired
   """
-  Drawn from feedback and waiting for an administrator; never read by an agent.
+  Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent.
   """
   Suggested
 }
@@ -3170,6 +3371,10 @@ enum AgentOutputMode {
 """Several proposals from one run, decided once and run in order."""
 type AgentPlan {
   businessUnitId: ID!
+  """
+  When an approval in its undo window starts to run, unless it is undone first.
+  """
+  commitsAt: Timestamp
   completedSteps: Int!
   createdAt: Timestamp!
   decidedAt: Timestamp
@@ -3189,6 +3394,8 @@ type AgentPlan {
   stepCount: Int!
   summary: String!
   title: String!
+  """When the approval was undone in its undo window; absent if it was not."""
+  undoneAt: Timestamp
   updatedAt: Timestamp!
   version: Int!
 }
@@ -3237,6 +3444,10 @@ type AgentPlanPreview {
 
 enum AgentPlanStatus {
   Approved
+  """
+  Approved from the decider's own conversation and waiting out its undo window; no step has run yet.
+  """
+  Approving
   Completed
   Expired
   Failed
@@ -3462,6 +3673,10 @@ type AgentProposal {
   egressClass: AgentEgressClass
   evidence: [AgentEvidenceRef!]!
   """
+  Why the approved write failed, written for the person; empty unless status is ExecutionFailed.
+  """
+  executionError: String!
+  """
   What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption.
   """
   heldBy: [String!]!
@@ -3652,6 +3867,10 @@ input AgentProposalPreviewDigestInput {
 
 enum AgentProposalStatus {
   Accepted
+  """
+  Approved from the decider's own conversation and waiting out its undo window; nothing has run yet.
+  """
+  Approving
   Executed
   ExecutionFailed
   Expired
@@ -3824,6 +4043,121 @@ enum AgentReachWarningKind {
   Everyone who may use the assistant may use the agent, and it holds tools that reach restricted data or leave the organization.
   """
   OpenWithSensitiveTools
+}
+
+"""
+One time an agent looked back over a stretch of a conversation or a settled
+background run and decided what, if anything, to keep as memory.
+"""
+type AgentReflection {
+  agentDefinitionId: ID!
+  businessUnitId: ID!
+  changes: [AgentReflectionChange!]!
+  createdAt: Timestamp!
+  errorMessage: String!
+  finishedAt: Timestamp
+  fromSequence: Int!
+  id: ID!
+  inputTokens: Int!
+  model: String!
+  """The model's one-sentence account of what it looked at and kept."""
+  notes: String!
+  organizationId: ID!
+  outputTokens: Int!
+  runId: ID
+  signals: [AgentReflectionSignal!]!
+  skipReason: AgentReflectionSkip
+  status: AgentReflectionStatus!
+  subjectType: AgentReflectionSubject!
+  """
+  The work had read content from outside the organization, so everything kept waits for a person.
+  """
+  tainted: Boolean!
+  threadId: ID
+  throughSequence: Int!
+  updatedAt: Timestamp!
+  """The person whose conversation was read."""
+  userId: ID
+  version: Int!
+}
+
+enum AgentReflectionAction {
+  """Already kept; counted as used instead of saved again."""
+  Refreshed
+  """Not kept, with the reason."""
+  Refused
+  Saved
+  """
+  Offered to a person to accept: they asked to be asked first, it is shared beyond them, or the work read outside content.
+  """
+  Suggested
+}
+
+type AgentReflectionChange {
+  action: AgentReflectionAction!
+  content: String!
+  kind: AgentMemoryKind!
+  memoryId: ID
+  reason: String!
+  scope: AgentMemoryScope
+  supersedesId: ID
+}
+
+type AgentReflectionConnection {
+  edges: [AgentReflectionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentReflectionEdge {
+  cursor: String!
+  node: AgentReflection!
+}
+
+type AgentReflectionSignal {
+  count: Int!
+  """The tools or proposals the signal is about, when it names any."""
+  detail: String!
+  kind: AgentReflectionSignalKind!
+}
+
+enum AgentReflectionSignalKind {
+  LongTask
+  NegativeFeedback
+  PersonCorrected
+  ProposalModified
+  ProposalRejected
+  StandingRequest
+  ToolFailed
+  ToolRecovered
+}
+
+enum AgentReflectionSkip {
+  AgentUnavailable
+  LearningOff
+  NoSignal
+  NothingToRead
+  OverBudget
+}
+
+enum AgentReflectionStatus {
+  Completed
+  """
+  The look back could not finish; the stretch is read again with the next one.
+  """
+  Failed
+  Running
+  """
+  Nothing in the work called for a look, or learning was off; the stretch is not read again.
+  """
+  Skipped
+}
+
+enum AgentReflectionSubject {
+  """One background run, read once every proposal it raised was decided."""
+  Run
+  """A stretch of a conversation, read once it went quiet."""
+  Thread
 }
 
 enum AgentResolutionState {
@@ -5016,6 +5350,13 @@ enum BillingQueueExceptionReasonCode {
   WeightDiscrepancy
 }
 
+"""Why a biller set an item aside."""
+enum BillingQueueHoldReasonCode {
+  CustomerDispute
+  RateQuestion
+  WaitingOnPaperwork
+}
+
 type BillingQueueItem {
   """
   Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
@@ -5059,6 +5400,16 @@ type BillingQueueItem {
   version: Int!
 }
 
+"""The invoice an item posted as, and where it went."""
+type BillingQueuePostResult {
+  invoiceId: ID!
+  invoiceNumber: String!
+  item: BillingQueueItem!
+  recipients: [String!]!
+  """The address the invoice is emailed to, when posting sends it."""
+  sentTo: String
+}
+
 enum BillingQueueStatus {
   Approved
   Canceled
@@ -5074,6 +5425,7 @@ input BillingQueueUpdateStatusInput {
   cancelReason: String
   exceptionNotes: String
   exceptionReasonCode: BillingQueueExceptionReasonCode
+  holdReasonCode: BillingQueueHoldReasonCode
   reviewNotes: String
   status: BillingQueueStatus!
 }
@@ -5447,6 +5799,61 @@ type CannedReport {
   name: String!
   tags: [String!]!
   version: String!
+}
+
+enum CapacityGroup {
+  ReadyNow
+  TrucksPosted
+  UsuallyAccept
+  WithinTwoHours
+}
+
+type CapacityMatch {
+  deadheadMiles: Float
+  destinationCity: String!
+  fitPercent: Float
+  marginPercent: Float
+  moveId: ID!
+  originCity: String!
+  pickupAt: Timestamp
+  proNumber: String
+  quote: Decimal
+  revenue: Decimal!
+  shipmentId: ID!
+}
+
+"""
+The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier.
+"""
+type CapacityRing {
+  low: Boolean!
+  max: Float!
+  value: Float!
+}
+
+type CapacityUnit {
+  acceptancePercent: Float
+  """Trucks a carrier has posted."""
+  badgeCount: Int
+  city: String
+  driveRemainingMs: Int
+  """When a driver comes free; null when free now."""
+  freeAt: Timestamp
+  group: CapacityGroup!
+  id: ID!
+  initials: String!
+  kind: CapacityUnitKind!
+  name: String!
+  ratePerMile: Decimal
+  ring: CapacityRing
+  tractorId: ID
+  """Tractor code for a driver, MC number for a carrier."""
+  unitLabel: String
+}
+
+enum CapacityUnitKind {
+  Carrier
+  Driver
 }
 
 """Whether the caller can scan or print into Trenova."""
@@ -6112,6 +6519,87 @@ enum CarrierAssignmentStatus {
   Pending
 }
 
+"""
+Trucks a carrier says it has available: where, when, with what equipment and at what rate.
+"""
+type CarrierCapacityPosting {
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  createdAt: Timestamp!
+  destinationState: UsState
+  destinationStateId: ID
+  equipmentType: EquipmentType
+  equipmentTypeId: ID
+  id: ID!
+  notes: String
+  organizationId: ID!
+  originLocation: Location
+  originLocationId: ID
+  """How far from the origin location the carrier will pick up."""
+  originRadiusMiles: Int
+  originState: UsState
+  originStateId: ID
+  """
+  Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote.
+  """
+  rate: Decimal
+  rateMethod: CarrierCapacityRateMethod!
+  source: CarrierCapacitySource!
+  truckCount: Int!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type CarrierCapacityPostingConnection {
+  edges: [CarrierCapacityPostingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierCapacityPostingEdge {
+  cursor: String!
+  node: CarrierCapacityPosting!
+}
+
+input CarrierCapacityPostingInput {
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  carrierId: ID!
+  destinationStateId: ID
+  equipmentTypeId: ID
+  notes: String
+  """Give an origin location, an origin state, or both."""
+  originLocationId: ID
+  """Only with an origin location."""
+  originRadiusMiles: Int
+  originStateId: ID
+  rate: Decimal
+  rateMethod: CarrierCapacityRateMethod = PerMile
+  source: CarrierCapacitySource = Manual
+  truckCount: Int = 1
+}
+
+enum CarrierCapacityRateMethod {
+  Flat
+  PerMile
+}
+
+enum CarrierCapacitySource {
+  EDI
+  Email
+  Manual
+}
+
+type CarrierCapacitySummary {
+  avgRatePerMile: Decimal
+  awaitingAcceptance: Int!
+  posting: Int!
+  untendered: Int!
+}
+
 enum CarrierComplianceStatus {
   Disqualified
   Expired
@@ -6195,6 +6683,19 @@ enum CarrierCostEventType {
   Adjustment
   FuelSurcharge
   LinehaulCost
+}
+
+type CarrierCoverageSuggestion {
+  acceptancePercent: Float
+  carrierId: ID!
+  initials: String!
+  mcNumber: String
+  moveId: ID!
+  name: String!
+  """Whether the carrier has a posting that covers this lane."""
+  posted: Boolean!
+  quote: Decimal!
+  ratePerMile: Decimal!
 }
 
 type CarrierEdge {
@@ -7704,6 +8205,14 @@ input ConfirmAccountingMappingInput {
   id: ID!
 }
 
+input ConfirmDeskMemoryInput {
+  """The memory as the person edited it."""
+  content: String!
+  roleId: ID
+  scope: AgentMemoryScope!
+  version: Int!
+}
+
 enum CostBehavior {
   Fixed
   Variable
@@ -7852,6 +8361,15 @@ input CreateCarrierInvoiceMatchInput {
   proNumber: String
   """Document AI sources only: the shipment used to locate the assignment."""
   shipmentId: ID
+}
+
+input CreateDeskMemoryInput {
+  content: String!
+  roleId: ID
+  """
+  User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.
+  """
+  scope: AgentMemoryScope!
 }
 
 input CreateDocumentTemplateVersionInput {
@@ -8802,6 +9320,11 @@ input DecideProfileChangeInput {
   note: String
 }
 
+input DecideShipmentSuggestionInput {
+  decision: ShipmentSuggestionDecision!
+  key: String!
+}
+
 """
 An arbitrary-precision decimal number serialized as a JSON string, with a dot
 as the decimal point and no thousands separators (for example "123.4500").
@@ -8837,9 +9360,136 @@ input DeleteTimeEntryInput {
   reason: String!
 }
 
+type DeliveryHourBucket {
+  delivered: Int!
+  hour: Int!
+  late: Int!
+  scheduled: Int!
+}
+
+input DeskMemoriesInput {
+  after: String
+  """Page size; 50 when left out, at most 100."""
+  first: Int
+  """Words the memory says."""
+  query: String
+  """With scope Role, only this role."""
+  roleId: ID
+  """Only this scope; every scope when left out."""
+  scope: AgentMemoryScope
+}
+
+"""
+A memory as a person keeps it on the Desk: one of their own, their role's, or
+the organization's. Agent-scoped memories are administered in AI Control; the
+only ones a person sees here are those an agent learned in their own
+conversations.
+"""
+type DeskMemory {
+  content: String!
+  createdAt: Timestamp!
+  """
+  The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
+  """
+  editable: Boolean!
+  id: ID!
+  """Instruction, Fact, Correction or Procedure."""
+  kind: AgentMemoryKind!
+  lastUsedAt: Timestamp
+  """What was said in the work that the memory rests on."""
+  quotes: [String!]!
+  """
+  Why it was kept, in the words of the agent that kept it; empty for one a person wrote down.
+  """
+  reason: String!
+  """The newest memory that replaced this one, when the person can see it."""
+  replacedBy: DeskMemoryLink
+  """The memory this one replaced, when the person can see it."""
+  replaces: DeskMemoryLink
+  """The role a Role memory is kept for."""
+  roleId: ID
+  roleName: String!
+  """
+  User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent.
+  """
+  scope: AgentMemoryScope!
+  source: AgentMemorySource!
+  """
+  The conversation the memory was saved from; empty for one a person wrote down.
+  """
+  sourceTitle: String!
+  """
+  Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits.
+  """
+  status: AgentMemoryStatus!
+  """How many prompts and recalls have used it."""
+  useCount: Int!
+  version: Int!
+}
+
+"""
+How many memories the person keeps in one scope; Role is counted per role.
+"""
+type DeskMemoryCount {
+  count: Int!
+  roleId: ID
+  scope: AgentMemoryScope!
+}
+
+"""Another memory a Desk memory points to, read as it is now."""
+type DeskMemoryLink {
+  content: String!
+  id: ID!
+  status: AgentMemoryStatus!
+}
+
+type DeskMemoryPage {
+  """Every memory the search matches, in every scope."""
+  all: Int!
+  """What the search matches in each scope, for the filter chips."""
+  counts: [DeskMemoryCount!]!
+  """Newest first."""
+  items: [DeskMemory!]!
+  """The cursor of the next page; null on the last."""
+  next: String
+}
+
+"""A role the person holds, offered as a team to keep a memory for."""
+type DeskMemoryRole {
+  id: ID!
+  name: String!
+  """
+  The person may keep memories for the role: it needs permission to create agent memories.
+  """
+  writable: Boolean!
+}
+
+type DeskMemorySettings {
+  """The person may keep memories for the whole organization."""
+  canShareWithOrganization: Boolean!
+  """The person's roles by name."""
+  roles: [DeskMemoryRole!]!
+  savingMode: AgentMemorySavingMode!
+}
+
 input DetachPayEventInput {
   payEventId: ID!
   settlementId: ID!
+}
+
+type DetentionAccrual {
+  amount: Decimal!
+  """When billable time started; the client accrues from here."""
+  billableSince: Timestamp!
+  coverageName: String
+  facilityName: String!
+  """
+  Present when the detention policy engine tracks the stop, so it can be approved for billing.
+  """
+  occurrenceId: ID
+  ratePerHour: Decimal!
+  shipmentId: ID!
+  stopId: ID!
 }
 
 type DetentionBacktestBucket {
@@ -10263,6 +10913,25 @@ type DocumentTypeEdge {
   node: DocumentType!
 }
 
+type DriverCapacitySummary {
+  ready: Int!
+  short: Int!
+  uncovered: Int!
+  withinTwoHours: Int!
+}
+
+type DriverCoverageSuggestion {
+  distanceMiles: Float
+  driveRemainingMs: Int
+  fitPercent: Float
+  initials: String!
+  moveId: ID!
+  name: String!
+  tractorId: ID
+  unitLabel: String
+  workerId: ID!
+}
+
 """
 How a driver hears about what they owe. Immediate is the default so no carrier
 silently loses notices they already rely on.
@@ -11429,6 +12098,13 @@ enum EscrowTransactionType {
   Contribution
   InterestAccrual
   Refund
+}
+
+enum EtaVerdict {
+  AtRisk
+  Late
+  OnTime
+  Unknown
 }
 
 """
@@ -14006,6 +14682,10 @@ type InboundMailbox {
   businessUnitId: ID!
   createdAt: Timestamp!
   """
+  Whether an API key is set for reading message content. Resend posts only a message's metadata, so a Resend mailbox without one cannot read bodies or attachments. The key itself is never returned.
+  """
+  hasApiKey: Boolean!
+  """
   Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned.
   """
   hasSigningSecret: Boolean!
@@ -15258,6 +15938,14 @@ type LateChargeLine {
   ratePercent: Decimal!
 }
 
+type LateDelivery {
+  city: String!
+  customerName: String!
+  deltaMinutes: Int!
+  proNumber: String
+  shipmentId: ID!
+}
+
 enum LeaveCaseStatus {
   Approved
   Closed
@@ -15747,6 +16435,12 @@ type Mutation {
   """
   commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
   """
+  Ends the undo window on the caller's approval of a proposal or a plan, so
+  it goes through now. One that already went through is left as it is; one
+  that was undone is a conflict.
+  """
+  commitMyDecisionNow(planId: ID, proposalId: ID): Boolean!
+  """
   Finishes connecting with what the provider returned. Only the person who started it can finish it.
   """
   completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection! @deprecated(reason: "Use finishAccountingAuthorization, which can offer a choice of companies")
@@ -15761,6 +16455,8 @@ type Mutation {
   Confirms Trenova's proposals as they were shown. A proposal that changed since is refused. At most 200 at a time.
   """
   confirmAccountingMappings(input: [ConfirmAccountingMappingInput!]!): [AccountingMapping!]!
+  """Accepts a memory an agent offered in the person's conversation."""
+  confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
   """
   Creates an item, customer or vendor in the accounting system for the mapping and confirms it.
   """
@@ -15775,7 +16471,9 @@ type Mutation {
   Asks one of the caller's companions to scan, or to catch the next print, into a record.
   """
   createCaptureRequest(input: CreateCaptureRequestInput!): CaptureRequest!
+  createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
   createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
+  createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
   createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
@@ -15790,7 +16488,7 @@ type Mutation {
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
   """Creates a mailbox and returns its webhook token, once."""
-  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
+  createInboundMailbox(apiKey: String, input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
   createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
   """
   Bills the given shipments. offCycleReason is required only when the customer
@@ -15874,8 +16572,10 @@ type Mutation {
   """
   decideMyProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
+  decideShipmentSuggestion(input: DecideShipmentSuggestionInput!): Boolean!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
   deleteCaptureProfile(id: ID!): Boolean!
+  deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
   deleteDetentionPolicy(id: ID!): Boolean!
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
@@ -15931,6 +16631,8 @@ type Mutation {
   Refuses a suggested memory; its pattern is not suggested again for 30 days.
   """
   dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
+  """Turns down a memory an agent offered; nothing is kept."""
+  dismissDeskMemory(id: ID!): DeskMemory!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
   """Takes an item off the feed without touching the record behind it."""
@@ -16029,6 +16731,7 @@ type Mutation {
   """
   markWatchtowerSeen(seenAt: Timestamp): WatchtowerCounts!
   markWorkerChecklistItemNotApplicable(input: WorkerChecklistItemActionInput!): WorkerChecklist!
+  notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
   openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
   """
   Opens a dispute on a posted invoice; the invoice reads Disputed until it closes.
@@ -16053,6 +16756,8 @@ type Mutation {
   payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
   pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
+  """Posts an approved item's invoice, which sends it to the customer."""
+  postBillingQueueItem(id: ID!): BillingQueuePostResult!
   postCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """
@@ -16128,6 +16833,8 @@ type Mutation {
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Lets records waiting for approval be sent."""
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
+  """Takes an item off hold and back to the status the hold found it in."""
+  releaseBillingQueueItem(id: ID!): BillingQueueItem!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
   """
@@ -16167,6 +16874,8 @@ type Mutation {
   """
   resolveAccountingDrift(input: ResolveAccountingDriftInput!): AccountingDriftFinding!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
+  """Settles one of an item's checks with one of its options."""
+  resolveBillingQueueIssue(id: ID!, issueId: ID!, optionKey: String!): BillingQueueItem!
   resolveCarrierIntelEvent(input: ResolveCarrierIntelEventInput!): CarrierIntelEvent!
   """
   Reads the rows an import is still holding and works them out again against the
@@ -16213,6 +16922,7 @@ type Mutation {
   """Records a person's decision about a message and takes it off the feed."""
   reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
   """Revokes anybody's companion."""
   revokeCaptureDevice(id: ID!, reason: String): CaptureDevice!
@@ -16262,9 +16972,18 @@ type Mutation {
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   """
+  Active resumes or brings back a forgotten memory, Paused sets it aside, Retired forgets it.
+  """
+  setDeskMemoryStatus(id: ID!, status: AgentMemoryStatus!): DeskMemory!
+  """
+  Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key.
+  """
+  setInboundMailboxApiKey(apiKey: String!, id: ID!): InboundMailbox!
+  """
   Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password.
   """
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
+  setMemorySavingMode(mode: AgentMemorySavingMode!): DeskMemorySettings!
   """
   Rates something an AI wrote for the caller, replacing their earlier rating of it.
   """
@@ -16313,6 +17032,7 @@ type Mutation {
   resolve are posted; the rest stay in the run's batch for review.
   """
   syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
+  tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem! @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
   """Queues the shipment for billing, one item per payer."""
@@ -16324,11 +17044,25 @@ type Mutation {
   unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
   uncancelShipment(id: ID!): Shipment!
   uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
+  """
+  Takes back how a check was settled, and puts back any charge it changed.
+  """
+  undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
+  """
+  Takes back the caller's approval of a proposal (with every proposal
+  approved with it in one batch) or of a plan, while it is in its undo window;
+  it waits on them again. Name one of the two. Once the approval has gone
+  through it is a conflict.
+  """
+  undoMyDecision(planId: ID, proposalId: ID): Boolean!
+  undoShipmentSuggestionDecision(key: String!): Boolean!
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
   """Change how documents are sent once setup is complete."""
   updateAccountingSyncSettings(input: UpdateAccountingSyncSettingsInput!): AccountingConnection!
+  """Changes what an agent can do. Needs permission to update agents."""
+  updateAgentCapabilities(agentId: ID!, input: UpdateAgentCapabilitiesInput!): AgentCapabilities!
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
@@ -16339,6 +17073,7 @@ type Mutation {
   Changes a profile. Stacks already captured keep the settings they were captured with.
   """
   updateCaptureProfile(id: ID!, input: CaptureProfileInput!, version: Int!): CaptureProfile!
+  updateCarrierCapacityPosting(id: ID!, input: CarrierCapacityPostingInput!, version: Int!): CarrierCapacityPosting!
   updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
   updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput!): CarrierSettlementControl!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
@@ -16373,7 +17108,7 @@ type Mutation {
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
   updateIftaMileageEntry(id: ID!, input: IFTAMileageEntryInput!, version: Int!): IFTAJurisdictionMileageEntry!
   """
-  Changes a mailbox's settings. Changing its provider clears the signing secret.
+  Changes a mailbox's settings. Changing its provider clears the signing secret and the API key.
   """
   updateInboundMailbox(id: ID!, input: InboundMailboxInput!, version: Int!): InboundMailbox!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
@@ -16548,6 +17283,13 @@ enum MyShiftSwapResponse {
   Withdrawn
 }
 
+type NextUncoveredPickup {
+  destinationCity: String!
+  originCity: String!
+  pickupAt: Timestamp!
+  shipmentId: ID!
+}
+
 type Notification {
   actions: JSON
   businessUnitId: ID
@@ -16614,6 +17356,11 @@ enum NotificationPriority {
 enum NotificationState {
   archived
   inbox
+}
+
+input NotifyShipmentDelayInput {
+  message: String!
+  shipmentId: ID!
 }
 
 """
@@ -16747,6 +17494,15 @@ input OpeningPTOBalanceInput {
   """Opening balance, in days."""
   days: Decimal!
   ptoType: PTOType!
+}
+
+"""
+How an organization moves freight: with its own drivers, through carriers, or both.
+"""
+enum OperationType {
+  asset
+  both
+  brokerage
 }
 
 type Order {
@@ -18215,6 +18971,8 @@ type Query {
   and changes nothing.
   """
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+  """What an agent can do. Anyone who may use the agent may read it."""
+  agentCapabilities(agentId: ID!): AgentCapabilities!
   agentControl: AgentControl!
   agentDefinition(id: ID!): AgentDefinition
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
@@ -18260,6 +19018,8 @@ type Query {
   agentQualityControl: AgentQualityControl!
   """The organization's AI quality over the last window days."""
   agentQualityOverview(window: Int = 30): AgentQualityOverview!
+  """Each time an agent looked back over its work, newest first."""
+  agentReflections(input: DataTableConnectionInput!): AgentReflectionConnection!
   agentRun(id: ID!): AgentRun
   agentRunEvents(input: DataTableConnectionInput!): AgentRunEventConnection!
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
@@ -18387,6 +19147,7 @@ type Query {
   """Recent mornings, newest day first."""
   briefings(input: ListBriefingsInput!): [Briefing!]!
   cannedReports: [CannedReport!]!
+  capacityUnitMatches(kind: CapacityUnitKind!, limit: Int = 2, unitId: ID!): [CapacityMatch!]!
   """
   The current Trenova Capture release, for the download button; null when none is published.
   """
@@ -18407,6 +19168,13 @@ type Query {
   """
   captureRequestsForTarget(limit: Int, targetId: ID!, targetType: String!): [CaptureRequest!]!
   carrier(id: ID!): Carrier
+  carrierCapacityPosting(id: ID!): CarrierCapacityPosting
+  carrierCapacityPostings(
+    carrierId: ID
+    input: DataTableConnectionInput!
+    """Only postings whose window has not closed."""
+    openOnly: Boolean = false
+  ): CarrierCapacityPostingConnection!
   carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
   carrierEquipmentVerifications(carrierAssignmentId: ID!): [CarrierEquipmentVerification!]!
   carrierIntelControl: CarrierIntelControl!
@@ -18464,6 +19232,15 @@ type Query {
   """
   defaultSafetyPoints(inspectionResult: InspectionResult, kind: SafetyEventKind!, preventable: Boolean, severity: SafetySeverity!): Int!
   defaultTableConfiguration(resource: String!): TableConfiguration
+  """
+  The memories the person keeps, newest first, with how many each scope holds.
+  """
+  deskMemories(input: DeskMemoriesInput!): DeskMemoryPage!
+  """
+  Memories a conversation names, as many of them as the person may see, in the order asked.
+  """
+  deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
+  deskMemorySettings: DeskMemorySettings!
   detentionCustomerStats(input: DetentionStatsInput!): [CustomerDetentionStat!]!
   detentionDesk: [DetentionDeskEntry!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
@@ -18828,6 +19605,10 @@ type Query {
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
+  """
+  What was decided since a moment, newest first: proposals that stood on their own.
+  """
+  recentDecisions(first: Int = 25, since: Timestamp!): [RecentDecision!]!
   recurringDeduction(id: ID!): RecurringDeduction
   recurringDeductions(input: DataTableConnectionInput!): RecurringDeductionConnection!
   recurringEarning(id: ID!): RecurringEarning
@@ -18883,18 +19664,27 @@ type Query {
   shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
   shipmentBillingTransferCandidateIds(input: ShipmentBillingTransferCandidateIdsInput!): ShipmentBillingTransferCandidateIds!
+  shipmentBoardCapabilities: ShipmentBoardCapabilities!
+  shipmentBriefing(timezone: String!): ShipmentBriefing!
+  shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentCommentReplies(after: String, commentId: ID!, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentComments(after: String, filter: ShipmentCommentsFilterInput, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
+  shipmentCoverageSuggestions(shipmentId: ID!): ShipmentCoverageSuggestions!
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
+  shipmentFacetCounts(facets: [ShipmentFacet!]!, input: ShipmentBoardScopeInput!): [ShipmentFacetCounts!]!
   shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
   shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
+  shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
+  shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
+  shipmentSuggestions(timezone: String!): ShipmentSuggestionQueue!
   shipmentType(id: ID!): ShipmentType
   shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentUIPolicy: ShipmentUIPolicy!
+  shipmentWatchlist(timezone: String!): ShipmentWatchlist!
   shipments(input: ShipmentsInput!): ShipmentConnection!
   sidebarCustomizationOptions: SidebarCustomizationOptions!
   sidebarPreferences: SidebarPreferences!
@@ -19249,6 +20039,29 @@ type RateZoneConnection {
 type RateZoneEdge {
   cursor: String!
   node: RateZone!
+}
+
+type ReadyToBillCustomer {
+  count: Int!
+  customerId: ID!
+  name: String!
+  total: Decimal!
+}
+
+"""
+A decision on a proposal, with the proposal and the person who made it.
+"""
+type RecentDecision {
+  decidedAt: Timestamp!
+  """The decider as the app names them."""
+  decidedByName: String!
+  decidedByUserId: ID!
+  decision: AgentDecisionType!
+  id: ID!
+  """What the decider told the agent; empty when they said nothing."""
+  note: String!
+  proposal: AgentProposal!
+  reasonCode: String!
 }
 
 enum RecognitionKind {
@@ -20257,6 +21070,16 @@ input ReviewRatingInput {
   score: Int
 }
 
+"""
+Changes what a memory says, who it is kept for, or both; what is left out stays.
+"""
+input ReviseDeskMemoryInput {
+  content: String
+  roleId: ID
+  scope: AgentMemoryScope
+  version: Int!
+}
+
 type Role {
   """
   The agents restricted to roles that this role is granted. Empty for a reader
@@ -21243,6 +22066,10 @@ type Shipment {
   enteredById: ID
   entryMethod: ShipmentEntryMethod
   """
+  Projected arrival at the final delivery, read from the latest position and the remaining stops.
+  """
+  eta: ShipmentEta
+  """
   The customer's own identifier for the load, such as an EDI 204 shipment ID or an order number; unique per customer among live shipments.
   """
   externalReference: String
@@ -21280,6 +22107,7 @@ type Shipment {
   serviceTypeId: ID!
   shipmentTypeId: ID!
   sourceDocumentId: String
+  stage: ShipmentStage!
   status: ShipmentStatus!
   temperatureMax: Int
   temperatureMin: Int
@@ -21372,7 +22200,6 @@ type ShipmentAnalytics {
   profitability: ShipmentProfitabilityAnalytics
   readyToDispatch: ShipmentReadyToDispatch
   revenueToday: ShipmentRevenueToday
-  savedViewCounts: ShipmentSavedViewCounts
   tomorrowsPickups: ShipmentTomorrowsPickups
   unassigned: ShipmentUnassignedAnalytics
 }
@@ -21606,6 +22433,47 @@ type ShipmentBillingWarningContext {
   unresolvedCount: Int
 }
 
+type ShipmentBillingWatch {
+  count: Int!
+  customers: [ReadyToBillCustomer!]!
+  moreCustomers: Int!
+  total: Decimal!
+}
+
+type ShipmentBoardCapabilities {
+  """An AI provider is configured for briefings and operational insights."""
+  ai: Boolean!
+  """An ELD or telematics integration supplies hours of service."""
+  hos: Boolean!
+  """Google Maps is configured for this workspace."""
+  maps: Boolean!
+  operationType: OperationType!
+}
+
+input ShipmentBoardScopeInput {
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  query: String
+  quickFilters: [ShipmentQuickFilterInput!]
+  """IANA time zone the day and hour predicates are evaluated in."""
+  timezone: String!
+}
+
+type ShipmentBriefing {
+  generatedAt: Timestamp!
+  """The model wrote the wording; false means the deterministic sentence."""
+  narrated: Boolean!
+  segments: [ShipmentBriefingSegment!]!
+}
+
+type ShipmentBriefingSegment {
+  """
+  The quick filter the segment links to, when it names a set of shipments.
+  """
+  filter: ShipmentQuickFilter
+  text: String!
+}
+
 input ShipmentBulkTransferToBillingInput {
   billType: BillType = Invoice
   """
@@ -21648,6 +22516,13 @@ type ShipmentBulkTransferToBillingResult {
 
 input ShipmentCancelInput {
   cancelReason: String
+}
+
+type ShipmentCapacity {
+  carriers: CarrierCapacitySummary
+  drivers: DriverCapacitySummary
+  kind: CapacityUnitKind!
+  units: [CapacityUnit!]!
 }
 
 """
@@ -21980,6 +22855,11 @@ type ShipmentContractRateAccessorial {
   unit: Int!
 }
 
+type ShipmentCoverageSuggestions {
+  carriers: [CarrierCoverageSuggestion!]!
+  drivers: [DriverCoverageSuggestion!]!
+}
+
 type ShipmentCustomer {
   addressLine1: String!
   addressLine2: String!
@@ -22022,6 +22902,22 @@ type ShipmentCustomerMixEntry {
   revenue: Float!
   share: Float!
   trend: Float!
+}
+
+type ShipmentDeliveryWatch {
+  buckets: [DeliveryHourBucket!]!
+  lateCount: Int!
+  onTime: Int!
+  total: Int!
+  worstLate: [LateDelivery!]!
+}
+
+type ShipmentDetentionWatch {
+  amount: Decimal!
+  ratePerHour: Decimal!
+  snapshotAt: Timestamp!
+  stopCount: Int!
+  top: [DetentionAccrual!]!
 }
 
 type ShipmentDetentionWatchlist {
@@ -22090,6 +22986,17 @@ type ShipmentEmptyMile {
 enum ShipmentEntryMethod {
   EDI
   Manual
+}
+
+type ShipmentEta {
+  estimatedArrival: Timestamp
+  """Why the load is behind, when the tracking snapshot can say."""
+  reason: String
+  """
+  Minutes between the projected arrival and the end of the delivery window; negative when it will be missed.
+  """
+  slackMinutes: Int
+  verdict: EtaVerdict!
 }
 
 """
@@ -22179,6 +23086,26 @@ input ShipmentEventsInput {
   limit: Int
   shipmentId: ID
   types: [ShipmentEventType!]
+}
+
+enum ShipmentFacet {
+  Customer
+  Equipment
+  Status
+  TenderStatus
+}
+
+type ShipmentFacetCounts {
+  facet: ShipmentFacet!
+  """The field filter the values apply to."""
+  field: String!
+  values: [ShipmentFacetValue!]!
+}
+
+type ShipmentFacetValue {
+  count: Int!
+  label: String!
+  value: String!
 }
 
 type ShipmentFormulaTemplate {
@@ -22650,6 +23577,39 @@ type ShipmentProfitabilityEstimate {
 }
 
 """
+A named predicate over shipments. The server owns every definition; clients only name them.
+"""
+enum ShipmentQuickFilter {
+  DeliveringToday
+  DeliveryHour
+  Detention
+  Late
+  LowMargin
+  Moving
+  PickupWindow
+  ReadyToBill
+  Reefer
+  Uncovered
+}
+
+type ShipmentQuickFilterCount {
+  count: Int!
+  filter: ShipmentQuickFilter!
+}
+
+input ShipmentQuickFilterInput {
+  filter: ShipmentQuickFilter!
+  """Local hour of day (0-23) for DeliveryHour."""
+  hour: Int
+  """
+  Minutes from now where a PickupWindow ends; omit for an open-ended window.
+  """
+  windowEndMinutes: Int
+  """Minutes from now where a PickupWindow starts."""
+  windowStartMinutes: Int
+}
+
+"""
 One line of the arithmetic that produced the rate, in the order it was applied.
 """
 type ShipmentRatingBreakdownItem {
@@ -22720,14 +23680,6 @@ type ShipmentRevenueToday {
   total: Float!
 }
 
-type ShipmentSavedViewCounts {
-  all: Int
-  atRisk: Int
-  deliveringToday: Int
-  transit: Int
-  unassigned: Int
-}
-
 type ShipmentServiceFailureBillingContext {
   hasUnresolved: Boolean!
   serviceFailureIds: [String!]!
@@ -22737,6 +23689,26 @@ type ShipmentServiceFailureBillingContext {
 type ShipmentSparklinePoint {
   hour: String!
   value: Float!
+}
+
+"""
+Where a shipment sits on the board. Derived from its status alone, so it sorts, filters and groups as a column.
+"""
+enum ShipmentStage {
+  Canceled
+  Delivered
+  Late
+  Moving
+  NeedsCoverage
+  Scheduled
+}
+
+type ShipmentStageSummary {
+  count: Int!
+  """Sort position of the stage on the board."""
+  rank: Int!
+  revenue: Decimal!
+  stage: ShipmentStage!
 }
 
 enum ShipmentStatus {
@@ -22801,6 +23773,72 @@ input ShipmentStopInput {
   type: StopType = Pickup
   version: Int
   weight: Int
+}
+
+type ShipmentSuggestion {
+  """Postponed with Later; sorts to the back of the queue."""
+  deferred: Boolean!
+  dueAt: Timestamp
+  impact: [String!]!
+  key: String!
+  kind: ShipmentSuggestionKind!
+  """
+  Label of the manual action shown when the suggestion is reviewed by hand.
+  """
+  manualLabel: String!
+  primary: ShipmentSuggestionAction!
+  proNumber: String
+  reason: String!
+  shipmentId: ID
+  title: String!
+  tone: ShipmentSuggestionTone!
+}
+
+type ShipmentSuggestionAction {
+  carrierId: ID
+  detentionOccurrenceId: ID
+  label: String!
+  """Drafted customer message for NotifyCustomer."""
+  message: String
+  moveId: ID
+  tractorId: ID
+  type: ShipmentSuggestionActionType!
+  workerId: ID
+}
+
+enum ShipmentSuggestionActionType {
+  ApproveDetention
+  AssignDriver
+  NotifyCustomer
+  Review
+  TenderCarrier
+}
+
+enum ShipmentSuggestionDecision {
+  Done
+  Later
+}
+
+enum ShipmentSuggestionKind {
+  Coverage
+  DelayNotice
+  Detention
+  HoursOfService
+  Retender
+  Tender
+}
+
+type ShipmentSuggestionQueue {
+  handledThisShift: Int!
+  items: [ShipmentSuggestion!]!
+  narrated: Boolean!
+}
+
+enum ShipmentSuggestionTone {
+  Accent
+  Brand
+  Danger
+  Warning
 }
 
 """
@@ -22948,8 +23986,22 @@ type ShipmentUnassignedAnalytics {
   revenueWaiting: Float!
 }
 
+type ShipmentUncoveredWatch {
+  count: Int!
+  next: NextUncoveredPickup
+  revenue: Decimal!
+  windows: [UncoveredWindowSummary!]!
+}
+
 type ShipmentValidationResponse {
   valid: Boolean!
+}
+
+type ShipmentWatchlist {
+  billing: ShipmentBillingWatch!
+  deliveries: ShipmentDeliveryWatch!
+  detention: ShipmentDetentionWatch!
+  uncovered: ShipmentUncoveredWatch!
 }
 
 input ShipmentsInput {
@@ -22969,8 +24021,11 @@ input ShipmentsInput {
   """
   includeCustomer: Boolean = false
   query: String
+  quickFilters: [ShipmentQuickFilterInput!]
   sort: [SortFieldInput!]
   status: String
+  """IANA time zone for day and hour quick filters."""
+  timezone: String
 }
 
 type SidebarActivityPreference {
@@ -23420,6 +24475,35 @@ enum TenderResponseSource {
   EDI
   Email
   Manual
+}
+
+type TenderShipmentFailure {
+  message: String!
+  shipmentId: ID!
+}
+
+input TenderShipmentItemInput {
+  """
+  Tender to this carrier; omit to use the routing guide or the best match.
+  """
+  carrierId: ID
+  shipmentId: ID!
+}
+
+type TenderShipmentSuccess {
+  carrierId: ID
+  carrierName: String
+  shipmentId: ID!
+  tenderId: ID!
+}
+
+input TenderShipmentsInput {
+  items: [TenderShipmentItemInput!]!
+}
+
+type TenderShipmentsResult {
+  failed: [TenderShipmentFailure!]!
+  tendered: [TenderShipmentSuccess!]!
 }
 
 enum TenderStatus {
@@ -23912,6 +24996,22 @@ input UnassignDocumentTemplateInput {
   kind: String!
 }
 
+enum UncoveredPickupWindow {
+  LaterToday
+  TomorrowOrLater
+  TwoToSixHours
+  UnderTwoHours
+}
+
+type UncoveredWindowSummary {
+  count: Int!
+  """Null for the open-ended window."""
+  endMinutes: Int
+  revenue: Decimal!
+  startMinutes: Int!
+  window: UncoveredPickupWindow!
+}
+
 """
 A driver holding accrued, unsettled pay for the current period — one row per
 driver in the unsettled pool. Drivers without a settlement for the period can
@@ -23959,6 +25059,25 @@ input UpdateAccountingSyncSettingsInput {
   """
   inboundPayments: AccountingInboundPaymentPolicy
   integrationType: AccountingSystem!
+}
+
+"""
+Changes to an agent's capabilities. Absent fields are left as they are.
+"""
+input UpdateAgentCapabilitiesInput {
+  businessHoursEnd: Int
+  businessHoursOnly: Boolean
+  businessHoursStart: Int
+  businessHoursTimezone: String
+  clearMonthlyBudget: Boolean
+  dailyRequestLimit: Int
+  delegateTopics: [AgentDelegateTopicInput!]
+  enabled: Boolean
+  maxChangeItems: Int
+  monthlyBudgetUsd: Decimal
+  tools: [AgentCapabilityToolInput!]
+  """The version the page was read at."""
+  version: Int!
 }
 
 input UpdateAgentEvalCaseInput {

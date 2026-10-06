@@ -23,7 +23,7 @@ import {
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
-import { BookOpenIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { BookOpen01Icon, PlusIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 
 type StudioReferencePaneProps = {
@@ -181,7 +181,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
     <div className="flex h-full flex-col">
       <div className="space-y-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
-          <BookOpenIcon className="text-muted-foreground size-4" />
+          <BookOpen01Icon className="text-muted-foreground size-4" />
           <span className="text-sm font-semibold">{t("Reference")}</span>
           <span className="text-muted-foreground text-2xs ml-auto">{t("Click to insert")}</span>
         </div>
@@ -206,7 +206,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
           </Alert>
         )}
         <div className="relative">
-          <SearchIcon className="text-muted-foreground absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
+          <SearchLgIcon className="text-muted-foreground absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
           <Input
             id="formula-reference-search"
             value={search}

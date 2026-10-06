@@ -17,7 +17,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@trenova/shared/lib/utils";
-import { CalendarClockIcon, InboxIcon, MoonIcon } from "lucide-react";
+import { CalendarClockIcon, Inbox01Icon, Moon01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { availabilityMeta, workerInitials, type UrgencyBucket } from "./dispatch-vocabulary";
 import {
@@ -336,7 +336,7 @@ function DriverLaneRow({
               className="absolute inset-y-0 flex items-center justify-center bg-accent-violet/15"
               style={{ left: geometry.left, width: geometry.width }}
             >
-              <MoonIcon className="size-3 text-accent-violet-on-subtle/70" aria-hidden />
+              <Moon01Icon className="size-3 text-accent-violet-on-subtle/70" aria-hidden />
             </div>
           );
         })}
@@ -381,7 +381,7 @@ function UnassignedLaneRow({
         style={{ width: RAIL_WIDTH_PX }}
       >
         <span className="bg-warning-subtle text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
-          <InboxIcon className="size-3.5" />
+          <Inbox01Icon className="size-3.5" />
         </span>
         <div className="flex min-w-0 flex-col">
           <span className="text-warning truncate text-xs font-medium">{t("Uncovered")}</span>

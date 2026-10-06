@@ -101,3 +101,35 @@ func TestDayBoundariesFollowTheZone(t *testing.T) {
 	assert.Equal(t, time.Date(2026, time.February, 28, 0, 0, 0, 0, chicago).Unix(),
 		PreviousDayStart(time.Date(2026, time.March, 1, 9, 0, 0, 0, chicago).Unix(), chicago))
 }
+
+func TestMonthStartInZone(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	lateUTC := time.Date(2026, time.October, 1, 3, 0, 0, 0, time.UTC).Unix()
+
+	assert.Equal(
+		t,
+		time.Date(2026, time.September, 1, 0, 0, 0, 0, chicago).Unix(),
+		MonthStart(lateUTC, chicago),
+	)
+	assert.Equal(
+		t,
+		time.Date(2026, time.October, 1, 0, 0, 0, 0, chicago).Unix(),
+		NextMonthStart(lateUTC, chicago),
+	)
+	assert.Equal(
+		t,
+		time.Date(2026, time.October, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		MonthStart(lateUTC, nil),
+	)
+
+	december := time.Date(2026, time.December, 15, 12, 0, 0, 0, time.UTC).Unix()
+	assert.Equal(
+		t,
+		time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		NextMonthStart(december, time.UTC),
+	)
+}

@@ -36,6 +36,20 @@ var prepareOptions = workflow.ActivityOptions{
 	},
 }
 
+// prepareLocalOptions run preparing a turn on the worker that runs the
+// workflow, as a local activity. The question is read, checked and turned into
+// a prompt before anything can be streamed, so a dispatch through the task
+// queue and a second workflow task in front of the model call were time the
+// person spent watching nothing. A local activity carries no priority or
+// fairness key; it runs on the chat worker's own slots, which is where the
+// activity ran anyway.
+var prepareLocalOptions = workflow.LocalActivityOptions{
+	ScheduleToCloseTimeout: prepareTimeout,
+	StartToCloseTimeout:    time.Minute,
+	Summary:                "Read the question",
+	RetryPolicy:            prepareOptions.RetryPolicy,
+}
+
 // finishOptions retry for longer than anything else in the turn. By the time
 // the turn is saved, a model has been paid for and a tool may have written
 // something, and the conversation is the only place a person can see that.
@@ -80,10 +94,38 @@ var notifyOptions = workflow.ActivityOptions{
 // every attempt. Executions that began before it replay without the step.
 const changeCloseUnsavedTurn = "assistant-turn-close-unsaved"
 
+// changePrepareLocally prepares a turn as a local activity. Executions that
+// began before it replay preparing as a regular activity.
+const changePrepareLocally = "assistant-turn-prepare-local"
+
+// changeAutoCompact compacts a conversation a turn left nearly full.
+// Executions that began before it replay without the step.
+const changeAutoCompact = "assistant-turn-auto-compact"
+
 // changeNotifyUnseenTurn tells the person who asked when their reply ended
 // with nobody reading it. Executions that began before it replay without the
 // step.
 const changeNotifyUnseenTurn = "assistant-turn-notify-unseen"
+
+// prepare reads the question and makes it ready to answer.
+func prepare(
+	ctx workflow.Context,
+	payload *AssistantTurnPayload,
+	plan *assistantservice.TurnPlan,
+) error {
+	var a *Activities
+	if workflow.GetVersion(ctx, changePrepareLocally, workflow.DefaultVersion, 1) == 1 {
+		return workflow.ExecuteLocalActivity(
+			workflow.WithLocalActivityOptions(ctx, prepareLocalOptions),
+			a.PrepareTurnActivity, payload,
+		).Get(ctx, plan)
+	}
+
+	return workflow.ExecuteActivity(
+		workflow.WithActivityOptions(ctx, withPriority(prepareOptions, payload)),
+		a.PrepareTurnActivity, payload,
+	).Get(ctx, plan)
+}
 
 // Workflows are the assistant's workflows. They hold the agent runtime
 // because the agent loop runs in workflow code, and the loop is the runtime's.
@@ -131,6 +173,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 		w.closeRecord(keep, payload, err)
 	}
 
+	w.compactIfFull(keep, stream, payload, &ending)
 	stream.Publish(keep, ending.Event)
 	stream.Close(keep)
 	w.notifyUnseen(keep, stream, finish, &ending)
@@ -156,15 +199,11 @@ func (w *Workflows) answer(
 ) *FinishTurnInput {
 	finish := &FinishTurnInput{Payload: payload}
 
-	var a *Activities
 	var plan assistantservice.TurnPlan
-	err := workflow.ExecuteActivity(
-		workflow.WithActivityOptions(ctx, withPriority(prepareOptions, payload)),
-		a.PrepareTurnActivity, payload,
-	).Get(ctx, &plan)
-	if err != nil {
+	if err := prepare(ctx, payload, &plan); err != nil {
 		finish.Failure = modelcall.FailureOf(err)
 		finish.Rejection = rejectionOf(err)
+		finish.RejectionParams = rejectionDetails(err)
 
 		return finish
 	}
@@ -210,6 +249,20 @@ func rejectionOf(err error) string {
 	}
 
 	return ""
+}
+
+// rejectionDetails are the figures a refusal carried, nil when it carried none.
+func rejectionDetails(err error) map[string]string {
+	var appErr *temporal.ApplicationError
+	if !errors.As(err, &appErr) || appErr.Type() != errTypeRejected || !appErr.HasDetails() {
+		return nil
+	}
+	var params map[string]string
+	if appErr.Details(&params) != nil || len(params) == 0 {
+		return nil
+	}
+
+	return params
 }
 
 func withPriority(
@@ -288,4 +341,55 @@ func (w *Workflows) closeRecord(
 			"error", err.Error(),
 		)
 	}
+}
+
+// compactIfFull starts the conversation compacting itself when the turn left
+// it nearly full, and tells the reader which turn is doing it, so the composer
+// can show the compaction and follow it to its end.
+//
+// It starts once the turn's record is closed, since the compaction takes the
+// conversation's one live slot. If something else took the slot first, a
+// decision's follow-up most often, nothing starts: that turn's own ending
+// cues the compaction again.
+func (w *Workflows) compactIfFull(
+	ctx workflow.Context,
+	stream *agentflow.Stream,
+	payload *AssistantTurnPayload,
+	ending *TurnEnding,
+) {
+	if ending.Compact == nil {
+		return
+	}
+	if workflow.GetVersion(ctx, changeAutoCompact, workflow.DefaultVersion, 1) != 1 {
+		return
+	}
+
+	var a *Activities
+	var started StartedCompaction
+	err := workflow.ExecuteActivity(
+		workflow.WithActivityOptions(ctx, startCompactionOptions),
+		a.StartAutoCompactionActivity, payload,
+	).Get(ctx, &started)
+	if err != nil {
+		workflow.GetLogger(ctx).Warn("could not start compacting a full conversation",
+			"turnId", payload.TurnID.String(),
+			"error", err.Error(),
+		)
+		return
+	}
+	if started.TurnID.IsNil() {
+		return
+	}
+
+	stream.Publish(ctx, temporaltype.StreamItem{
+		Event: serviceports.AssistantEventCompactionStarted,
+		Data: serviceports.AssistantCompactionEvent{
+			TurnID:   started.TurnID,
+			ThreadID: payload.ThreadID,
+			Auto:     true,
+			Before:   ending.Compact.Before,
+			After:    ending.Compact.After,
+		},
+		At: workflow.Now(ctx).Unix(),
+	})
 }

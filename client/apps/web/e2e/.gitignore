@@ -1,0 +1,6 @@
+# Signed-in session, results and reports from a run
+.auth/
+.results/
+.report/
+# A failure switch for the mock, written by hand while debugging
+mockllm/fail.json

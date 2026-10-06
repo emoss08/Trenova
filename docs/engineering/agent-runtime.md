@@ -116,6 +116,33 @@ cookbook's retry-from-HTTP-response recipe:
   Resting providers are asked again after their rest.
 - Everything else is retried on the policy's own backoff.
 
+### A rested provider is rested on every worker
+
+The completion router (`completionrouter/health.go`) rests a provider after
+three unavailability failures in a row (a 429, a 5xx, a timeout, an unreachable
+host) for a one-minute cooldown, so a turn stops paying for attempts on a
+provider that is down. The count of failures is per process; the rest is
+shared. When a worker opens the breaker it also writes `ai:breaker:{providerID}`
+to Redis with a TTL equal to the cooldown, through the
+`repositories.ProviderBreakerRepository` port
+(`redis/repositories/providerbreaker.go`, provided in `RedisRepositoriesModule`
+and injected `optional:"true"`). The key is the provider row's id, so a
+tenant-owned provider is its own breaker, and the value is a marker: nothing
+about the provider or its credentials is stored.
+
+Each call reads memory first, then asks the store once, in one pipelined
+`PTTL` round trip, about the providers memory does not already hold resting,
+and keeps what it finds in memory until that rest ends, so a provider rested
+elsewhere is not read again on this worker. The remaining TTL, not a
+timestamp, is what is read, so the workers' clocks need not agree. The store is
+best-effort: a read or write is bounded to 250 ms, a write outlives a caller
+that has gone, and a failure (other than the caller's own cancellation) is
+logged once as a warning, after which the worker carries on from memory alone
+and leaves the store for 30 seconds before asking it again; it logs at info
+when the store answers again. A completion is never failed or held up by the
+store. Without Redis (tests, a CLI) the router is built without the port and
+the breaker is exactly the in-memory one.
+
 The kind of failure travels in the error's details (`modelcall.Failure`), so
 whoever reads it afterwards — the saved turn, a request waiting on a one-shot
 call — still knows whether the provider refused, was unreachable, timed out, or
@@ -133,7 +160,7 @@ keep a small ceiling from ending every turn partway through a tool call:
 
 - **Room to answer.** The OpenAI Chat and Responses adapters send at least
   `reasoningAnswerFloor` (the thinking floor plus `thinkingAnswerRoom`, the room Anthropic's
-  adapter keeps after its thinking budget) when the provider is set to reason, or when the
+  adapter keeps after its thinking budget on a model that still takes one) when the provider is set to reason, or when the
   conversation carries this protocol's reasoning, which is how a model that thinks without
   being asked shows itself. A call that does not reason keeps the configured ceiling. Every
   adapter reports the limit it sent as `ChatCompletionResult.OutputLimit`.
@@ -150,6 +177,56 @@ keep a small ceiling from ending every turn partway through a tool call:
 
 The retry is one more model activity, so it is behind the `agent-loop-cut-off-call-retry`
 gate, asked only of a completion that meets the condition.
+
+### Thinking on Claude
+
+Claude models differ in how they are asked to think, and the Anthropic adapter reads which
+kind it is talking to from the configured model id (`anthropicTraits` in
+`modeladapter/anthropicmodels.go`). The id may be the Claude API's plain one, Bedrock's
+`anthropic.`-prefixed one (with an inference profile's region in front, and its `-v1:0`
+version), Vertex's `@date` one, or a dated snapshot. An id it cannot read, such as a
+gateway's alias, keeps the budget behaviour every model took before, and a version newer
+than any it names takes the newest known constraints.
+
+- **Effort or budget.** Opus and Sonnet 4.6 and later, and every Fable and Mythos, think by
+  effort: `thinking: {type: "adaptive", display: "summarized"}` with `output_config.effort`
+  low, medium or high (Minimal asks for low, the least they have). `budget_tokens` is a 400
+  on most of them. Display is asked for because these models leave the readable summary out
+  by default and the thinking panel would show nothing. Older models keep the token budget
+  and its raised `max_tokens`; adaptive thinking raises `max_tokens` to
+  `reasoningAnswerFloor`.
+- **Thinking style.** An Anthropic provider's thinking style (`aiprovider.ThinkingStyle`,
+  "Thinking style" on the provider form) overrides the id for a model the adapter cannot
+  read. Auto, the default, reads the id. Effort asks by effort whatever the id reads, and
+  Budget asks with a token budget. Behind an alias the adapter cannot tell which effort
+  model it is, so under a declared Effort None asks for adaptive thinking at low effort, the
+  least every such model accepts. Only an Anthropic provider may hold anything but Auto:
+  validation refuses it, and so does `ck_ai_providers_thinking_style_kind`.
+- **None and Off.** None is the least thinking the model allows. Opus 5.5, Fable and Mythos
+  cannot stop thinking and Sonnet 5.5 refuses `disabled`, so they get adaptive at low
+  effort; Opus 5 gets `disabled`; Opus and Sonnet 4.6 to 4.8 get nothing, which is no
+  thinking there. Off sends nothing and the model's own default applies, so a model that
+  always thinks still does.
+- **Only this turn's thinking goes back.** A thinking block is bound to the conversation
+  before it, and that changes every turn: the system prompt carries the turn's page,
+  memories and date, and older tool results are shortened in replay. So
+  `toAnthropicMessages` replays thinking only for the assistant messages after the last
+  user message, the current tool loop, which a tool result needs. Earlier turns' thinking
+  is dropped on every model; removing a leading run of blocks is an edit the API accepts,
+  and most models ignore earlier turns' thinking anyway.
+- **A changed block is dropped, not refused.** Fable 5.1, Opus 5.5 and Sonnet 5.5 check a
+  replayed block's prefix (system, tools and earlier messages), and for accounts created on
+  or after 2026-08-31 a mismatch is a 400. Within a turn a tool found mid-turn still
+  changes the tool list, and a failover changes the model, so those requests send
+  `thinking.block_binding.prefix_mismatch_behavior: "drop_block"` with the
+  `anthropic-beta: thinking-binding-controls-2026-08-01` header. The header goes only to
+  those models, since a gateway in front of an older one may refuse an unknown beta, and
+  Off sends `{type: "adaptive"}` there so the binding has a thinking object to ride on.
+- **Drops are counted.** The API lists each dropped block in `input_transformations`
+  (`message_start` when streaming). The adapter counts the `thinking_dropped` entries into
+  `Response.ThinkingDropped`, and the attempt span carries it as
+  `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
+  conversation it should hold still.
 
 OpenAI-compatible servers that do not parse a model's tool-call template return it as text.
 The chat adapter lifts it (`modeladapter.liftInlineToolCalls`): a whole GLM call
@@ -334,6 +411,7 @@ What is kept:
 | `agent_proposals` | `tainted` (the run had read outside content when the write was decided), `taint`, `egress_class`, `held_by` |
 | `assistant_threads` | `taint`, `tainted_at` |
 | `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it |
+| `agent_reflections` | `tainted`, for a look back over a window that read outside content (or whose taint is unknown); every lesson it keeps is a suggestion and carries the window's taint |
 | `shipment_comments` | `metadata.tainted`, for a note `add_shipment_comment` wrote on its own after outside content |
 
 The proposal executor refuses a tainted proposal whose class leaves the
@@ -377,8 +455,10 @@ The records a turn is about come first; the ones they name follow in the order
 a person reads the record. The links are batched reads
 (`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
 to 500 active, unexpired candidates are then read, subject rows first, and
-ordered by `services.MemoryRanker` — recency and use count until retrieval can
-rank by meaning.
+ordered by `services.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
+recency and use count (`agentmemoryservice.RankByRecencyAndUse`) with the
+memories nearest the turn's query vector, and falls back to recency and use
+alone when the organization is not indexed or the search fails.
 
 **What the prompt carries.** `OpenTurn` fits the candidates to the agent's
 `memory_token_budget` (6,000 tokens by default, 1,000–16,000; estimated with
@@ -387,11 +467,14 @@ what is left:
 
 1. memories about a record the turn is about;
 2. memories about a record it names;
-3. organization-wide Instructions;
+3. organization-wide Instructions and Procedures (`MemoryKind.Followed`);
 4. memories about a tool loaded this turn (every held tool when the turn
    disclosed none);
 5. everything else — Facts, and Corrections to tools not loaded — in the
    ranker's order.
+
+Within the first four tiers an Instruction comes before a Correction, a
+Correction before a Procedure and a Procedure before a Fact (`MemoryKind.Rank`).
 
 A memory over 1,200 characters is shown cut short with its id, and the prompt
 tells the model to read the rest with `recall_memory`. Only what fits is counted
@@ -428,6 +511,103 @@ is what every later turn is told, an Instruction a person recorded among it, so
 a person retires one in AI Control rather than an agent dropping it on its own
 judgement. An organization adds the tool to an agent it builds.
 
+**Replacing.** `remember` takes `replacesMemoryId` (an id from `recall_memory`),
+and so does a lesson a look back keeps. The new memory inherits the old one's
+readers, subject and tool, and records `supersedes_id`. When it is saved active,
+the repository retires the old memory in the same transaction (only an Active or
+Paused one) and writes an `audit_entries` row naming its replacement. An agent
+replaces freely only the person's own memory or its own Agent memory
+(`agentmemoryservice.ReplacedFreely`); any other replacement is held as a
+suggestion, and approving it retires the old memory then. A retried write that
+finds its replacement already kept returns it. `AgentMemory.supersedes` and
+`AgentMemory.replacedBy` read both ends of a replacement through per-request
+loaders (`AgentMemoryByID`, `AgentMemoryReplacement`, backed by `ListByIDs` and
+`ListReplacements`); `replacedBy` is the newest replacement that took effect,
+never a suggestion still waiting. The Desk carries the same links, with the
+reason and quotes, on `DeskMemory` and on each reply's memory notes, naming the
+other memory only when the person may see it.
+
+### Learning from the work
+
+When a conversation goes quiet or a background run settles, its agent looks back
+over what it just did and keeps what the work taught: how to do a task here (a
+Procedure), a Fact it had to work out, or what a person asked for from now on
+(an Instruction, never from a run with nobody in it). Corrections stay with
+`remember` and `RecordCorrection`. `remember` stays the tool
+for what a person says; the prompt tells the agent to save only that, because
+what it worked out for itself is kept for it by the look back. Both write
+through `AgentMemoryService.Remember`, so dedupe, replacement, taint and the
+saving mode apply to both alike. Nothing here changes `RecordCorrection` or the
+nightly feedback job.
+
+**When.** `FinishTurnActivity` cues the conversation's look back
+(`AgentReflectionScheduler.AfterTurn`) once a turn is saved, and
+`CompleteRunActivity` cues a run's (`AfterRun`). Both cues are activity code, so
+no `GetVersion` gate. A conversation has one `AgentThreadReflectionWorkflow`
+(id `agent-reflection:thread:<threadId>`), started or signalled with
+`turn-finished` by signal-with-start. It waits until no turn has finished for
+`QuietPeriod` (10 minutes), but never longer than `LongestWait` (an hour) from
+the first turn it heard, then looks back once over the messages after the last
+look back's `through_sequence`. A turn that finished while it looked starts
+another round; after `RoundsPerRun` (20) rounds it continues as new. A run has
+one `AgentRunReflectionWorkflow` (id `agent-reflection:run:<runId>`), started
+with `ALLOW_DUPLICATE_FAILED_ONLY`. Both run on the agent background queue at
+`PriorityBackground`, fair by organization, registered in the `agentjobs`
+background registry.
+
+**Whether.** `PrepareThread`/`PrepareRun` claim an `agent_reflections` row
+(unique per conversation window and per run, so a retried start reads the same
+row; a Failed row is claimed again) and skip without calling a model when:
+
+| Skip reason | When |
+|---|---|
+| `LearningOff` | the organization's agent control or the agent's definition has `learning_off`, or the control is in shadow mode |
+| `AgentUnavailable` | the agent's definition is missing or disabled |
+| `NothingToRead` | the window holds no new messages (a run that has not settled is not claimed at all) |
+| `NoSignal` | `ReadSignals` finds nothing worth a look |
+| `OverBudget` | the organization's AI budget refuses the call |
+
+`ReadSignals` is cheap and reads only the window: a tool that failed, or failed
+then worked (refusals — `denied`, `duplicate`, `over_budget` — are not lessons);
+a person correcting the agent after it answered; a person saying how they want
+it done from now on; a proposal modified or rejected; a reply rated unhelpful;
+and a task of six or more successful tool calls. A run with nobody in it reads
+no person signals.
+
+**What it asks.** A ready plan carries one structured completion
+(`FeatureAgentReflection`, at most 2,500 output tokens, strict JSON schema of at
+most five lessons of at most 1,200 characters each): the transcript (cut to the
+last 60,000 characters), the decisions and feedback, the signals, and the
+memories the agent already holds for those records, so it refreshes or replaces
+rather than repeats. The model call is its own activity
+(`ReflectionModelActivity`, `modelcall.RetryPolicy`); a failure marks the row
+Failed with its message.
+
+**What it keeps.** `Finish` reads the reply and saves each lesson through
+`Remember` with source `Reflection`, `reflection_id`, the signals as evidence,
+and the agent as its actor:
+
+- a lesson is refused, with the reason on the row, when it names a record or
+  a tool the work did not touch, replaces a memory the look back was not shown,
+  or is an Instruction from a run with nobody in it;
+- a conversation's lesson is kept for the person (`User`), the agent
+  (`Agent`), or offered to the team or organization; a person without
+  agent-memory create permission has shared lessons kept for themselves alone;
+- team and organization lessons are always suggestions, and a run with nobody
+  in it keeps its lessons at `Agent` scope and suggests organization ones;
+- a window that read outside content (or whose taint is unknown) only ever
+  suggests;
+- otherwise the person's saving mode decides: Automatic keeps, Ask first
+  suggests.
+
+The row records each change (Saved, Suggested, Refreshed, Refused), the
+model's notes and token use. A conversation's kept lessons are attached to the
+reply they followed (`ConversationRepository.AddSavedMemories`) and announced on
+the realtime resource `agent_memory`, so the Desk shows "learned" notes the
+person can keep or undo. AI Control's Memory tab lists the look backs
+(`agentReflections`) and queues the Agent and Organization suggestions for an
+administrator.
+
 ### Taint is data
 
 No `GetVersion` gate. Taint enters workflow code only from activity results
@@ -455,9 +635,18 @@ returns the turn to watch. `POST /threads/:id/messages/` starts the same
 workflow and waits for its result; `POST /ask/` opens the hidden thread and
 starts a turn on it.
 
-1. **Prepare** reads the thread, history, files and mentions, checks budget and
-   room, and runs the scope guard. A refusal the person can act on is
-   non-retryable and its message reaches the reader as written.
+1. **Prepare** runs as a local activity on the worker running the workflow
+   (`assistant-turn-prepare-local`), so the turn's first workflow task prepares
+   it and schedules the model call without a task-queue dispatch or a second
+   workflow task in between. It reads the thread, history, files and mentions,
+   checks budget and room, and runs the scope guard. After the thread, every check and read runs
+   side by side (`checkTurn`); none writes, and a question failing several is
+   told about the first in the old order (files, agent, page, budget, room,
+   history), never about a cancellation. The guard's classifier runs beside the
+   context build (memories, retrieval embedding), which writes nothing, so a
+   refusal discards it; the classifier fails open after 3s. A refusal the
+   person can act on is non-retryable and its message reaches the reader as
+   written.
 2. **The loop** runs in workflow code, as above.
 3. **Finish** saves the turn, its proposals and artifacts, closes the turn's
    record and writes the trajectory. It claims one ledger key per attempt, after
@@ -491,8 +680,13 @@ the turn as Failed.
 A run's events go to a **Workflow Stream** its own workflow hosts
 (`agentflow.HostStream`, on `go.temporal.io/sdk/contrib/workflowstreams`). The
 model activity publishes the reply as it streams, batched every 100 ms; the
-workflow publishes every other event. The stream exists as soon as the workflow
-does, so a reader can never attach ahead of it.
+workflow publishes every other event. The first piece of each model call's
+reply (text or thinking) is flushed at once rather than waiting for the batch
+ticker, which starts with it (`agentflow.firstWords`). The reader rests 5 ms,
+not the library's 100 ms, after each delivered batch
+(`turnstream.pollCooldown`); its poll waits on the workflow until there is
+something to return, so that costs no extra polls. The stream exists as soon as
+the workflow does, so a reader can never attach ahead of it.
 
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
@@ -616,7 +810,10 @@ of that tool (`DispatchCall.Earlier`, carried to the observer as
 `ToolObservation.Earlier`). A first call still makes its card; a later one
 folds the turn's earlier cards of that tool into one `table_view` artifact
 keyed by the turn's first call of the tool (`payload.bunched`, with the calls
-it covers), adds its own row, and removes the cards it replaced. When the turn
+it covers), adds its own row, and removes the cards it replaced. The cards a
+table replaced are deleted and withdrawn from the reader with `artifact_removed`, which the
+client's reducer drops from the live turn, so eleven reads leave one table beside the
+conversation and not eleven cards next to it. When the turn
 is saved, a card a table covers is not tied back to its message. A `get_*`
 result that is already rows and columns (`get_invoices`) is a table from the
 start. `Earlier` is activity input, not a workflow decision, so the recorded
@@ -638,6 +835,18 @@ still drifts, or one written after the tool budget was spent, ends with a note
 to check the card. Each is a `reply_regrounded` event in the run's trajectory.
 The LLM judge that scores the same thing stays in the evaluations.
 
+### History replay
+
+A turn replays the newest 120 messages, and their tool results are most of it.
+`replayHistory` (`agentruntime/messages.go`) keeps a result whole only while it
+is in the last three turns (a decision note is not a turn) and, newest first,
+within 48,000 characters; the rest are shortened to their first 320 characters
+inside a fence of their own, closed, with a note after it naming the tool to
+call again and saying not to quote what was left out. A result a proposal
+answered is replaced by its current outcome and never shortened. The figures of
+every shortened result travel with the turn (`TurnState.Evidence`), so the
+grounding guard above still counts them as read.
+
 ### The clock
 
 The system prompt names today's date only, so its cached prefix is the same all
@@ -647,6 +856,30 @@ unknown, for an agent that reads the clock. `ask_user` option labels that carry 
 date read "Tue Oct 6 (in 7 days)", counted from the turn's own clock
 (`TurnEffects.Now`) in that zone; a past date on a scheduling question adds a note
 telling the model so.
+
+### What a provider can cache
+
+A provider reuses the start of a prompt only while it is the same bytes, so a
+request is laid out stable first:
+
+- **Bytes.** Every request body, the tools and the replayed tool-call arguments
+  included, is encoded with sorted keys (`modeladapter.requestJSON`); a map in
+  Go's random order made every request different.
+- **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
+  shares first (rules, instructions, the tools when all are offered, delegates,
+  artifacts, the guide, how to answer) and the turn's own part after it (runtime
+  context, memories, a disclosed tool list, proposals waiting on a decision).
+  The turn carries the shared part's length (`TurnState.SystemStable`) to the
+  adapter. `agentdefinition.PromptVersion` names this shape (v3) on runs,
+  evaluation cases and fingerprints.
+- **Anthropic** gets three of its four marks: the last tool, the end of the
+  shared system part, and the last block of the conversation, which lets each
+  call of a tool loop read the exchange before it back from the cache.
+- **OpenAI** gets `prompt_cache_key`, a hash of organization, agent and version,
+  only when the provider is reached at `api.openai.com`; a server speaking the
+  same protocol elsewhere may refuse the field. Everything else (vLLM, Ollama,
+  Gemini, DeepSeek and the rest) caches prefixes on its own and needs only the
+  layout.
 
 ## Agent runs
 
@@ -698,14 +931,33 @@ A run nobody is in has two identities, kept apart on purpose.
   `UserID`, so a record the run creates or changes names that account in its
   created-by and updated-by columns instead of nobody, and a service that
   refused a write it had no user to attribute to (a shipment comment, a hold)
-  takes one the agent table allows. The audit log still
-  records the agent as the principal, and `executed_by_user_id` on a proposal
-  still names only the person who executed it: the AI audit trail reads a
-  proposal with an executor as a person's write.
+  takes one the agent table allows.
+- **The agent is named alongside.** The actor's `PrincipalID` is the agent
+  definition's id rather than the generic `agent`. The audit log row an
+  unattended write leaves is principal `agent` with that id, `user_id` the
+  system user, and a description that ends "(Ran by Dispatch Agent)":
+  `auditservice` reads the definition's name in the row's tenant (cached for ten
+  minutes) and appends it, or "Ran by an agent" when the name cannot be read.
+  `chk_audit_entries_principal_consistency` lets an agent row carry a user, never
+  an API key, and never the user as its own principal (migration
+  `20261231007250_audit_agent_system_user`).
+- **The system user executes the run's automatic writes.**
+  `RequestActor.ExecutorUserID` is the person for a user principal and the
+  carried system user for an agent, so `executed_by_user_id` on an automatic
+  write of an unattended run names the system user, in the recorder and in the
+  executor alike. The AI audit trail derives that execution as a `User`
+  principal write by the system account, with the agent on `agent_definition_id`
+  and `agent_name`, and looks for its audit log rows from the start of the run.
 
-The system user is resolved once per run, when the run is opened (and when an
-evaluation replays a background run or case). If it cannot be read, the attempt
-fails with a retryable error rather than running unattributed.
+A run with a person in it is unchanged: its actor is the person, so its writes,
+its audit log rows and its executions are theirs.
+
+The system user is resolved once per run, when the run is opened, again when its
+proposals are filed (only when it raised any), and when an evaluation replays a
+background run or case. If it cannot be read, the attempt fails with a retryable
+error rather than running unattributed. A scheduled run's start is recorded as
+the agent, by its definition, with no user: the scheduler, not the agent, opened
+it.
 
 ### Starting runs
 
@@ -904,10 +1156,30 @@ updating a run never carry it, and it is hidden from the run's JSON so a
 realtime invalidation never ships it. Read it through `AgentRun.transcript`,
 which checks the run read permission itself and loads through a per-request
 dataloader; AI Control's run panel shows it behind a Transcript disclosure, with
-the conversation's own tool rows. The transcript lives on the run row and goes
-with it: no sweep prunes runs or their events today, and the row is deleted
-only with its organization, by the existing cascade, so nothing has to keep the
-transcript and the event log in step.
+the conversation's own tool rows.
+
+The disclosure's **Download** saves it as a file:
+`GET /api/v1/agent-runs/:runID/transcript/`, gated on reading an agent run and
+read under the caller's tenant (another organization's run is not found). It is
+served by `assistantservice.Service.RunTranscript` through the narrow
+`AgentRunTranscriptService` port, as `text/markdown` with a server-chosen file
+name and `no-store`, exactly as a conversation's download is. Both documents
+come from one renderer in `assistantservice/transcript.go`
+(`renderTranscriptDocument`), which takes a message list, a heading and the
+proposals: a conversation passes its thread's messages, a run converts its
+stored entries back with `conversation.MessageOfTranscript` and passes the
+proposals it raised (`ListByRun`). The run's heading names its agent, trigger,
+status, start and finish and model; a message kept without its body says it was
+too long to keep; and the left-out middle is stated twice, in the heading's
+message count ("40 kept, 12 left out") and as a line where it fell, and a
+delegated task's steps on either side of that line are never joined across it. A golden file
+(`testdata/conversation_transcript.golden.md`) holds the conversation's
+download byte for byte, so a change to the shared renderer that moves it fails.
+
+The transcript lives on the run row and goes with it: no sweep prunes runs or
+their events today, and the row is deleted only with its organization, by the
+existing cascade, so nothing has to keep the transcript and the event log in
+step.
 
 An event's `occurred_at` is the instant the workflow emitted it
 (`StreamItem.At`, stamped with `workflow.Now`), not when the filing activity
@@ -943,6 +1215,11 @@ design — the run carries on — so this is the only place they show up.
 
 `gen_ai.client.token.usage` and `gen_ai.client.operation.duration` are recorded
 per provider attempt, with the GenAI semantic-convention buckets.
+`trenova.gen_ai.client.time_to_first_token` (and `first_token_ms` on the usage
+row) is how long an attempt took to stream its first text or thinking. Before it,
+`assistant_prepare_seconds{outcome}`, `assistant_guard_seconds{stage}` and
+`assistant_model_call_wait_seconds` time preparing the turn, the scope check and
+a model call's wait for a worker.
 
 Every run, turn, delegate's task and evaluation is one trace, named by its id and
 rooted in an `invoke_agent` span its finishing activity emits; model calls, each
@@ -955,6 +1232,15 @@ adding a span, a trace attribute or a link column.**
 - **Server.** Workflow Streams uses Updates and Signals, on by default from
   server 1.29. Fairness needs `matching.enableFairness=true`. The local dev
   server (`temporalio/temporal`) sets it.
+- **Update limit.** Every poll a turn's reader makes is an Update on the turn's
+  workflow, about ten a second while a reply streams and one more per reader
+  tab. The server caps a workflow at `history.maxTotalUpdates` (default 2000),
+  which one reader reaches after a little over three minutes of streaming;
+  past it every poll is refused and the person is told the connection was lost
+  while the turn goes on finishing on the server. Set it to `20000` on
+  the namespace the workers use, as the local dev server does.
+  `history.maxInFlightUpdates` (default 10) bounds readers following one turn
+  at once and can stay.
 - **Workers.** Run the chat queue on workers of its own if the queue split is to
   mean anything. A worker that polls no heavy queue leaves heavy tools waiting;
   after fifteen minutes the model is told the tool could not be run.
@@ -979,6 +1265,7 @@ before the change:
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
+| `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
@@ -1058,7 +1345,10 @@ decisions, posting and sending), their tiers, and why approving, canceling, post
 sending always stop at a proposal a person approves, are described in
 [agent-billing-tools.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-billing-tools.md). An agent principal may move a billing
 queue item into review, onto hold, into exception or back to operations; the queue refuses
-it every other status.
+it every other status. The steps over a set of items (`assign_billing_queue_billers`,
+`transition_items_to_in_review`, `approve_billing_queue_items`, `post_invoices`,
+`send_invoices`) are one call and one card each, and a biller nobody named is the person
+asking; see [proposal-previews.md](proposal-previews.md#bulk-twins-of-single-record-tools).
 
 Three chat templates that act as the person hold the money tools: the billing assistant (up
 to an invoice in the customer's hands, and its corrections), the receivables assistant (what
@@ -1091,8 +1381,6 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 - **Search attributes are not set.** Organization, feature, thread and
   definition are carried in workflow ids, summaries and fairness keys; typed
   search attributes need registering on the server first.
-- **The provider circuit breaker is per worker.** Temporal's retries cover what
-  it compensated for; sharing it across workers is a separate change.
 - **A run's trace root is emitted when the run is filed.** A run parked in a
   decision wait shows its root once it is filed, not when the last proposal is
   decided, and a workflow evicted from the cache may never export its

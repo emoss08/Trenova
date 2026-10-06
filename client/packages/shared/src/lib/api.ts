@@ -9,6 +9,7 @@ import {
   parseProblemType,
 } from "@trenova/shared/types/errors";
 import { API_BASE_URL } from "./constants";
+import { reportPlanLimit } from "./plan-limit";
 
 const CSRF_HEADER_NAME =
   (import.meta.env.VITE_CSRF_HEADER_NAME as string | undefined) ?? "X-CSRF-Token";
@@ -20,15 +21,32 @@ let csrfToken: string | null = null;
 let csrfHeaderName = CSRF_HEADER_NAME;
 let csrfTokenRequest: Promise<string | null> | null = null;
 
+/** The wait a response asked for, in whole seconds; null when it asked for none. */
+function retryAfterOf(response: Response): number | null {
+  const raw = response.headers.get("Retry-After");
+  if (raw === null || raw.trim() === "") {
+    return null;
+  }
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) {
+    return Math.max(0, Math.ceil(seconds));
+  }
+  const at = Date.parse(raw);
+  return Number.isNaN(at) ? null : Math.max(0, Math.ceil((at - Date.now()) / 1000));
+}
+
 export class ApiRequestError extends Error {
   status: number;
   data: ApiErrorResponse;
+  /** Seconds the server asked the caller to wait before trying again, from Retry-After. */
+  retryAfter: number | null;
 
-  constructor(status: number, data: ApiErrorResponse) {
+  constructor(status: number, data: ApiErrorResponse, retryAfter: number | null = null) {
     super(data.detail || data.title);
     this.name = "ApiRequestError";
     this.status = status;
     this.data = data;
+    this.retryAfter = retryAfter;
   }
 
   normalize(): NormalizedApiError {
@@ -101,6 +119,15 @@ export class ApiRequestError extends Error {
   getParams(): Record<string, string> {
     return this.data.params ?? {};
   }
+}
+
+/**
+ * Every failed response becomes its error here, so this is where a plan-limit refusal
+ * is handed to the app's dialog — once, whichever request helper made the call.
+ */
+function failedRequest(error: ApiRequestError): ApiRequestError {
+  reportPlanLimit(error);
+  return error;
 }
 
 function isUnsafeMethod(method: string | undefined): boolean {
@@ -238,7 +265,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     }));
     const parsed = apiErrorResponseSchema.safeParse(errorData);
     const validatedData = parsed.success ? parsed.data : errorData;
-    throw new ApiRequestError(response.status, validatedData);
+    throw failedRequest(
+      new ApiRequestError(response.status, validatedData, retryAfterOf(response)),
+    );
   }
 
   if (response.status === 204) {
@@ -273,7 +302,9 @@ async function uploadRequest<T>(
     }));
     const parsed = apiErrorResponseSchema.safeParse(errorData);
     const validatedData = parsed.success ? parsed.data : errorData;
-    throw new ApiRequestError(response.status, validatedData);
+    throw failedRequest(
+      new ApiRequestError(response.status, validatedData, retryAfterOf(response)),
+    );
   }
 
   if (response.status === 204) {
@@ -335,7 +366,7 @@ async function uploadWithProgress<T>(
         }
         const parsed = apiErrorResponseSchema.safeParse(errorData);
         const validatedData = parsed.success ? parsed.data : errorData;
-        reject(new ApiRequestError(xhr.status, validatedData));
+        reject(failedRequest(new ApiRequestError(xhr.status, validatedData)));
       }
     });
 
@@ -357,6 +388,20 @@ async function uploadWithProgress<T>(
     });
     xhr.send(formData);
   });
+}
+
+/**
+ * Where an upload part is sent. The server hands back API-relative paths
+ * ("/api/v1/documents/uploads/..."); when the API lives on another origin than
+ * the client, as on Trenova Cloud, they must resolve against the API, not the page.
+ * Absolute URLs (presigned storage targets) pass through unchanged.
+ */
+function resolveUploadURL(url: string): string {
+  if (url.startsWith("/") && API_BASE_URL.startsWith("http")) {
+    return new URL(url, API_BASE_URL).toString();
+  }
+
+  return url;
 }
 
 async function putFileWithProgress(
@@ -418,7 +463,7 @@ async function putFileWithProgress(
       );
     });
 
-    xhr.open("PUT", url);
+    xhr.open("PUT", resolveUploadURL(url));
     xhr.withCredentials = Boolean(endpoint);
     uploadHeaders.forEach((value, key) => {
       xhr.setRequestHeader(key, value);

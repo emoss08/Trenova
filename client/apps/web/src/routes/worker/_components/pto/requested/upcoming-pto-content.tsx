@@ -1,7 +1,7 @@
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatRange } from "@trenova/shared/lib/date";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
-import { CalendarRange } from "lucide-react";
+import { CalendarRangeIcon } from "@trenova/shared/components/icons";
 import { PTOActionsMenu } from "../pto-actions-menu";
 import { usePTOTypeMeta } from "./meta";
 
@@ -50,7 +50,7 @@ function PTODateRange({ pto }: { pto: WorkerPTO }) {
 
   return (
     <PTODateRangeInner>
-      <CalendarRange className="size-3.5" aria-hidden />
+      <CalendarRangeIcon className="size-3.5" aria-hidden />
       <span className="tabular-nums">{range}</span>
     </PTODateRangeInner>
   );

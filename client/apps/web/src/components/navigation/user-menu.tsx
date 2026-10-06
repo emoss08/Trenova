@@ -20,7 +20,13 @@ import {
 import { useSignOut } from "@/hooks/use-sign-out";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { ChevronsUpDown, LogOut, Palette, Settings, User } from "lucide-react";
+import {
+  ChevronSelectorVerticalIcon,
+  LogOut01Icon,
+  PaletteIcon,
+  Settings01Icon,
+  User01Icon,
+} from "@trenova/shared/components/icons";
 import { useNavigate } from "react-router";
 
 /**
@@ -81,7 +87,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               <span className="truncate text-sm font-medium">{displayName}</span>
               <span className="text-2xs text-muted-foreground truncate">{user?.emailAddress}</span>
             </span>
-            <ChevronsUpDown className="text-muted-foreground size-3.5 shrink-0" />
+            <ChevronSelectorVerticalIcon className="text-muted-foreground size-3.5 shrink-0" />
           </DropdownMenuTrigger>
         )}
         <DropdownMenuContent
@@ -112,19 +118,19 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               title={t("Profile")}
-              startContent={<User className="size-4" />}
+              startContent={<User01Icon className="size-4" />}
               onClick={() => void navigate("/profile")}
             />
             <DropdownMenuItem
               title={t("Settings")}
-              startContent={<Settings className="size-4" />}
+              startContent={<Settings01Icon className="size-4" />}
               onClick={() => openDialog("settings")}
             />
             <SidebarLayoutSubmenu />
             <LanguageSubmenu />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <Palette className="mr-2 size-4" />
+                <PaletteIcon className="mr-2 size-4" />
                 <span>{t("Switch theme")}</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
@@ -156,7 +162,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               title={t("Log out")}
-              startContent={<LogOut className="size-4" />}
+              startContent={<LogOut01Icon className="size-4" />}
               onClick={() => void signOut()}
             />
           </DropdownMenuGroup>

@@ -1,4 +1,4 @@
-//go:build integration && !nofitz
+//go:build integration
 
 package invoiceservice
 
@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/gotenberg"
+	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/emoss08/trenova/pkg/templateengine"
-	fitz "github.com/gen2brain/go-fitz"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -115,7 +115,7 @@ func TestLiveInvoicePDFRendersThroughTheSidecar(t *testing.T) {
 
 	// Bytes that parse as a PDF are not the claim. The claim is that a customer
 	// can read what they owe, so this asserts against the text a reader sees.
-	text := livePDFText(t, pdf)
+	text := pdftest.Text(t, pdf)
 	require.Contains(t, text, "INV-1001", "the invoice number is missing from the page")
 	require.Contains(t, text, "Total USD 2950.00", "the amount billed is missing from the page")
 	require.Contains(t, text, "Detention Fee", "an accessorial line is missing from the page")
@@ -124,23 +124,4 @@ func TestLiveInvoicePDFRendersThroughTheSidecar(t *testing.T) {
 	require.Contains(t, text, "Balance Due USD 2950.00")
 	require.Contains(t, text, "Thank you for your business.")
 	require.NotContains(t, text, "ZgotmplZ")
-}
-
-// livePDFText extracts what the reader actually sees. Note that the stylesheet
-// uppercases table headings, so assert on rendered text rather than source text.
-func livePDFText(t *testing.T, pdf []byte) string {
-	t.Helper()
-
-	doc, err := fitz.NewFromMemory(pdf)
-	require.NoError(t, err)
-	defer func() { _ = doc.Close() }()
-
-	var out strings.Builder
-	for page := range doc.NumPage() {
-		content, pErr := doc.Text(page)
-		require.NoError(t, pErr)
-		out.WriteString(content)
-	}
-
-	return out.String()
 }

@@ -2,11 +2,12 @@ import tailwindcss from "@tailwindcss/vite";
 import { createRequire } from "node:module";
 import path from "path";
 // import { visualizer } from "rollup-plugin-visualizer";
-import { cloudflare } from "@cloudflare/vite-plugin";
 import react from "@vitejs/plugin-react";
 import { defineConfig, normalizePath } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import { editionAlias } from "../../packages/edition/node/resolve-entry.ts";
+import { singletonPackages } from "../../singleton-packages.ts";
 
 const require = createRequire(import.meta.url);
 
@@ -47,17 +48,17 @@ export default defineConfig({
         },
       ],
     }),
-    cloudflare(),
   ],
   resolve: {
     alias: {
       "@": path.resolve(dirname, "./src"),
       "@trenova/shared": path.resolve(dirname, "../../packages/shared/src"),
+      ...editionAlias(),
     },
-    // Shared components call router hooks. A second copy of react-router resolved from
-    // packages/shared carries its own context, and every hook in it then reports that it
-    // is outside a router.
-    dedupe: ["react-router"],
+    // Shared components import these from packages/shared. A second copy resolved there
+    // carries its own React context: router hooks report they are outside a router, a
+    // shared DialogTitle throws Base UI error #27. See singleton-packages.ts.
+    dedupe: [...singletonPackages],
   },
   server: {
     port: 5173,
@@ -180,7 +181,7 @@ export default defineConfig({
             { name: "zod", test: /zod/ },
             { name: "lodash", test: /lodash/ },
             { name: "toast", test: /sonner/ },
-            { name: "icons", test: /lucide-react/ },
+            { name: "icons", test: /@untitledui[\\/]icons/ },
             { name: "pdfjs", test: /pdfjs-dist/ },
             // Must precede phone-utils: `react-phone-number-input/flags` is
             // the barrel over the flag components and is imported lazily, so it

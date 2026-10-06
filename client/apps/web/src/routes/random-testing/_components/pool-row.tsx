@@ -11,7 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { randomPeriodLabel } from "@trenova/shared/lib/drug-alcohol";
 import { cn } from "@trenova/shared/lib/utils";
-import { DicesIcon, ListFilterIcon, PencilIcon } from "lucide-react";
+import { Dice5Icon, Edit02Icon, FilterLinesIcon } from "@trenova/shared/components/icons";
 
 const SLOT_CLASS: Record<SlotState, string> = {
   final: "border-brand bg-brand/15 font-medium",
@@ -152,7 +152,7 @@ export function PoolRow({
           aria-label={selected ? "Show every pool's rounds" : `Show rounds for ${pool.code}`}
           onClick={() => onSelect(selected ? null : pool.id)}
         >
-          <ListFilterIcon className="size-3" />
+          <FilterLinesIcon className="size-3" />
           {t("Rounds")}
         </Button>
         {canEdit ? (
@@ -162,7 +162,7 @@ export function PoolRow({
             aria-label={`Edit ${pool.code}`}
             onClick={() => onEdit(pool)}
           >
-            <PencilIcon className="size-3" />
+            <Edit02Icon className="size-3" />
             {t("Edit")}
           </Button>
         ) : null}
@@ -173,7 +173,7 @@ export function PoolRow({
             isLoading={drawing}
             onClick={() => onDraw(pool.id)}
           >
-            <DicesIcon className="size-3" />
+            <Dice5Icon className="size-3" />
             {owed ? t("Draw {0}", owed.label) : t("Run draw")}
           </Button>
         ) : null}

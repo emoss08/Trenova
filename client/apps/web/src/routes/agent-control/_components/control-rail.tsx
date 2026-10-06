@@ -5,26 +5,26 @@ import {
   BotIcon,
   BrainIcon,
   FileClockIcon,
-  LayoutDashboardIcon,
-  PlugZapIcon,
-  PuzzleIcon,
+  LayoutAlt04Icon,
+  PlugIcon,
+  PuzzlePiece01Icon,
   ScanSearchIcon,
-  ShieldCheckIcon,
-  TargetIcon,
-} from "lucide-react";
+  ShieldTickIcon,
+  Target05Icon,
+} from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { AIControlTab } from "../ai-control-tabs";
 import type { RailItem, RailView } from "./rail-items";
 
 const ICONS: Record<AIControlTab, typeof BotIcon> = {
-  overview: LayoutDashboardIcon,
+  overview: LayoutAlt04Icon,
   agents: BotIcon,
-  providers: PlugZapIcon,
-  extensions: PuzzleIcon,
+  providers: PlugIcon,
+  extensions: PuzzlePiece01Icon,
   memory: BrainIcon,
   retrieval: ScanSearchIcon,
-  safety: ShieldCheckIcon,
-  quality: TargetIcon,
+  safety: ShieldTickIcon,
+  quality: Target05Icon,
   activity: ActivityIcon,
   audit: FileClockIcon,
 };

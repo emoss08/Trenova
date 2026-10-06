@@ -56,6 +56,8 @@ var AgentProposalSpec TypeSpec
 
 var AgentQualityControlSpec TypeSpec
 
+var AgentReflectionSpec TypeSpec
+
 var AgentRunSpec TypeSpec
 
 var AgentRunEventSpec TypeSpec
@@ -101,6 +103,8 @@ var CarrierSpec TypeSpec
 var CarrierAssignmentSpec TypeSpec
 
 var CarrierAssignmentAccessorialSpec TypeSpec
+
+var CarrierCapacityPostingSpec TypeSpec
 
 var CarrierContactSpec TypeSpec
 
@@ -1325,6 +1329,10 @@ func init() {
 				FieldMapKey: "reasoningEffort",
 			},
 			{
+				Name:        "thinkingStyle",
+				FieldMapKey: "thinkingStyle",
+			},
+			{
 				Name:        "extraBody",
 				FieldMapKey: "extraBody",
 			},
@@ -2488,6 +2496,14 @@ func init() {
 				FieldMapKey: "aiTrainingConsentChangedById",
 			},
 			{
+				Name:        "personMonthlyMessages",
+				FieldMapKey: "personMonthlyMessages",
+			},
+			{
+				Name:        "learningOff",
+				FieldMapKey: "learningOff",
+			},
+			{
 				Name:    "billingAgentEnabled",
 				Special: "billingAgentEnabled",
 			},
@@ -2565,6 +2581,18 @@ func init() {
 			{
 				Name:    "traceUrl",
 				Special: "traceUrl",
+			},
+			{
+				Name:        "commitsAt",
+				FieldMapKey: "commitsAt",
+			},
+			{
+				Name:        "committedAt",
+				FieldMapKey: "committedAt",
+			},
+			{
+				Name:        "undoneAt",
+				FieldMapKey: "undoneAt",
 			},
 			{
 				Name:        "version",
@@ -2716,6 +2744,10 @@ func init() {
 			{
 				Name:        "memoryTokenBudget",
 				FieldMapKey: "memoryTokenBudget",
+			},
+			{
+				Name:        "learningOff",
+				FieldMapKey: "learningOff",
 			},
 			{
 				Name:        "contextProviders",
@@ -3160,6 +3192,7 @@ func init() {
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
+			"supersedes_id",
 		},
 		Fields: []FieldSpec{
 			{
@@ -3215,6 +3248,14 @@ func init() {
 				FieldMapKey: "scope",
 			},
 			{
+				Name:        "ownerUserId",
+				FieldMapKey: "ownerUserId",
+			},
+			{
+				Name:        "roleId",
+				FieldMapKey: "roleId",
+			},
+			{
 				Name:        "tainted",
 				FieldMapKey: "tainted",
 			},
@@ -3229,6 +3270,26 @@ func init() {
 			{
 				Name:        "sourceProposalId",
 				FieldMapKey: "sourceProposalId",
+			},
+			{
+				Name:        "sourceThreadId",
+				FieldMapKey: "sourceThreadId",
+			},
+			{
+				Name:        "reflectionId",
+				FieldMapKey: "reflectionId",
+			},
+			{
+				Name:        "supersedesId",
+				FieldMapKey: "supersedesId",
+			},
+			{
+				Name:    "supersedes",
+				Special: "supersedes",
+			},
+			{
+				Name:    "replacedBy",
+				Special: "replacedBy",
 			},
 			{
 				Name:        "createdByUserId",
@@ -3338,6 +3399,14 @@ func init() {
 				FieldMapKey: "expiresAt",
 			},
 			{
+				Name:        "commitsAt",
+				FieldMapKey: "commitsAt",
+			},
+			{
+				Name:        "undoneAt",
+				FieldMapKey: "undoneAt",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -3407,6 +3476,10 @@ func init() {
 			{
 				Name:        "status",
 				FieldMapKey: "status",
+			},
+			{
+				Name:        "executionError",
+				FieldMapKey: "executionError",
 			},
 			{
 				Name:        "planId",
@@ -3534,6 +3607,113 @@ func init() {
 			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentReflectionSpec = TypeSpec{
+		TypeName: "AgentReflection",
+		FieldMap: buncolgen.ReflectionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "threadId",
+				FieldMapKey: "threadId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "fromSequence",
+				FieldMapKey: "fromSequence",
+			},
+			{
+				Name:        "throughSequence",
+				FieldMapKey: "throughSequence",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "skipReason",
+				FieldMapKey: "skipReason",
+			},
+			{
+				Name:        "signals",
+				FieldMapKey: "signals",
+			},
+			{
+				Name:        "changes",
+				FieldMapKey: "changes",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "tainted",
+				FieldMapKey: "tainted",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:        "inputTokens",
+				FieldMapKey: "inputTokens",
+			},
+			{
+				Name:        "outputTokens",
+				FieldMapKey: "outputTokens",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "finishedAt",
+				FieldMapKey: "finishedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
 			},
 			{
 				Name:        "updatedAt",
@@ -5824,6 +6004,128 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CarrierCapacityPostingSpec = TypeSpec{
+		TypeName: "CarrierCapacityPosting",
+		FieldMap: buncolgen.PostingFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "originLocationId",
+				FieldMapKey: "originLocationId",
+			},
+			{
+				Name:        "originStateId",
+				FieldMapKey: "originStateId",
+			},
+			{
+				Name:        "originRadiusMiles",
+				FieldMapKey: "originRadiusMiles",
+			},
+			{
+				Name:        "destinationStateId",
+				FieldMapKey: "destinationStateId",
+			},
+			{
+				Name:        "equipmentTypeId",
+				FieldMapKey: "equipmentTypeId",
+			},
+			{
+				Name:        "availableFrom",
+				FieldMapKey: "availableFrom",
+			},
+			{
+				Name:        "availableTo",
+				FieldMapKey: "availableTo",
+			},
+			{
+				Name:        "truckCount",
+				FieldMapKey: "truckCount",
+			},
+			{
+				Name:        "rateMethod",
+				FieldMapKey: "rateMethod",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "carrier",
+				FieldMapKey: "carrierId",
+				Relation: &RelationSpec{
+					Target: &CarrierSpec,
+				},
+			},
+			{
+				Name:        "originLocation",
+				FieldMapKey: "originLocationId",
+				Relation: &RelationSpec{
+					Target: &LocationSpec,
+				},
+			},
+			{
+				Name:        "originState",
+				FieldMapKey: "originStateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name:        "destinationState",
+				FieldMapKey: "destinationStateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name:        "equipmentType",
+				FieldMapKey: "equipmentTypeId",
+				Relation: &RelationSpec{
+					Target: &EquipmentTypeSpec,
+				},
 			},
 		},
 	}
@@ -15091,6 +15393,10 @@ func init() {
 				Special: "hasSigningSecret",
 			},
 			{
+				Name:    "hasApiKey",
+				Special: "hasApiKey",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -20667,6 +20973,14 @@ func init() {
 			{
 				Name:        "id",
 				FieldMapKey: "id",
+			},
+			{
+				Name:        "stage",
+				FieldMapKey: "status",
+			},
+			{
+				Name:    "eta",
+				Special: "eta",
 			},
 			{
 				Name:        "businessUnitId",

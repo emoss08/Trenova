@@ -1,8 +1,11 @@
 import type { ActiveTurn, StartedTurn } from "@/services/assistant";
 import type { AssistantStreamEvent } from "@/types/assistant";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { AssistantMessage, SendMessageResult } from "@/types/assistant";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { queries } from "@/lib/queries";
+import { useRealtimeStore } from "@/stores/realtime-store";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useAssistantTurn } from "../use-assistant-turn";
 
@@ -52,8 +55,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-function renderTurn() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderTurn(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
@@ -62,6 +64,7 @@ function renderTurn() {
 
 afterEach(() => {
   cleanup();
+  useRealtimeStore.getState().setConnectionState("disconnected");
   activeTurn.mockReset();
   startTurn.mockReset();
   attachTurn.mockReset();
@@ -114,6 +117,173 @@ describe("useAssistantTurn sending", () => {
     });
 
     await waitFor(() => expect(startTurn).toHaveBeenCalledTimes(2));
+  });
+});
+
+/**
+ * Before asking, the view checks whether the conversation is already producing
+ * a reply. That check is a round trip, and the person's own question used to
+ * stay off screen until it returned.
+ */
+describe("useAssistantTurn showing the question", () => {
+  it("shows the question while the conversation is still being checked", async () => {
+    const lookup = deferred<ActiveTurn | null>();
+    activeTurn.mockReturnValue(lookup.promise);
+    startTurn.mockReturnValue(new Promise(() => undefined));
+
+    const { result } = renderTurn();
+
+    act(() => {
+      void result.current.send("Where is S1?");
+    });
+
+    expect(result.current.turn?.userContent).toBe("Where is S1?");
+    expect(result.current.turn?.status).toBe("guarding");
+
+    await act(async () => {
+      lookup.resolve(null);
+    });
+    await waitFor(() => expect(startTurn).toHaveBeenCalledTimes(1));
+  });
+
+  /**
+   * The live-turn list is kept current by the realtime connection. While it
+   * is connected and the list it last delivered names no reply on this
+   * conversation, asking the server again only delays the question.
+   */
+  it("skips the check when the live list, kept current, says the conversation is quiet", async () => {
+    startTurn.mockReturnValue(new Promise(() => undefined));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(queries.assistant.activeTurns().queryKey, {
+      items: [
+        {
+          turnId: "atrn_9",
+          threadId: "athr_other",
+          threadTitle: "",
+          origin: "Person",
+          startedAt: 1,
+        },
+      ],
+    });
+    useRealtimeStore.getState().setConnectionState("connected");
+
+    const { result } = renderTurn(client);
+
+    act(() => {
+      void result.current.send("Where is S1?");
+    });
+
+    await waitFor(() => expect(startTurn).toHaveBeenCalledTimes(1));
+    expect(activeTurn).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the realtime connection is down", "disconnected", false, "athr_other"],
+    ["the list is being refreshed", "connected", true, "athr_other"],
+    ["the list names this conversation", "connected", false, "athr_1"],
+  ] as const)("still checks when %s", async (_case, connection, invalidated, liveThread) => {
+    activeTurn.mockResolvedValue(null);
+    startTurn.mockReturnValue(new Promise(() => undefined));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(queries.assistant.activeTurns().queryKey, {
+      items: [
+        { turnId: "atrn_9", threadId: liveThread, threadTitle: "", origin: "Person", startedAt: 1 },
+      ],
+    });
+    if (invalidated) {
+      await client.invalidateQueries({
+        queryKey: queries.assistant.activeTurns().queryKey,
+        refetchType: "none",
+      });
+    }
+    useRealtimeStore.getState().setConnectionState(connection);
+
+    const { result } = renderTurn(client);
+
+    act(() => {
+      void result.current.send("Where is S1?");
+    });
+
+    await waitFor(() => expect(startTurn).toHaveBeenCalledTimes(1));
+    expect(activeTurn).toHaveBeenCalledTimes(1);
+  });
+});
+
+function savedMessage(sequence: number): AssistantMessage {
+  return {
+    id: `amsg_${sequence}`,
+    threadId: "athr_1",
+    kind: "Message",
+    sequence,
+    role: sequence % 2 === 0 ? "User" : "Assistant",
+    content: `m${sequence}`,
+    toolCalls: null,
+    toolCallId: "",
+    toolName: "",
+    toolFailed: false,
+    scopeStage: "",
+    scopeCategory: "",
+    scopeReason: "",
+    refused: false,
+    model: "",
+    inputTokens: 0,
+    outputTokens: 0,
+    createdAt: 0,
+  } as AssistantMessage;
+}
+
+/**
+ * A finished turn writes its saved rows into the cached history, so the reply
+ * is already in the thread when the stream ends. The streaming copy used to
+ * stay up until five unrelated lists had refetched as well — the reply shown
+ * twice, and the composer held, for as long as the slowest of them took.
+ */
+describe("useAssistantTurn handing over to the saved thread", () => {
+  it("clears the streaming turn once the saved rows are in, without waiting on refetches", async () => {
+    activeTurn.mockResolvedValue(null);
+    startTurn.mockResolvedValue(started);
+    const result: SendMessageResult = {
+      thread: {} as SendMessageResult["thread"],
+      messages: [savedMessage(2), savedMessage(3)],
+      reply: "m3",
+      refused: false,
+      proposals: null,
+      proposalsUnrecorded: false,
+      artifacts: null,
+    };
+    attachTurn.mockImplementation(async (_turnId, onEvent) => {
+      onEvent({ event: "done", data: result } as AssistantStreamEvent, "1");
+    });
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(queries.assistant.messages("athr_1").queryKey, {
+      pages: [
+        { results: [savedMessage(0), savedMessage(1)], hasMore: false, total: 2, limit: 400 },
+      ],
+      pageParams: [undefined],
+    });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const hung = () => new Promise<never>(() => undefined);
+    const { result: hook } = renderHook(
+      () => {
+        useQuery({ queryKey: queries.assistant.activeTurns().queryKey, queryFn: hung });
+        useQuery({ queryKey: queries.assistant.threads().queryKey, queryFn: hung });
+        return useAssistantTurn("athr_1", () => null);
+      },
+      { wrapper },
+    );
+
+    await act(async () => {
+      void hook.current.send("m2");
+    });
+
+    await waitFor(() => expect(hook.current.turn).toBeNull());
+    const history = client.getQueryData<{ pages: { results: AssistantMessage[] }[] }>(
+      queries.assistant.messages("athr_1").queryKey,
+    );
+    expect(history?.pages[0]?.results.map((message) => message.sequence)).toEqual([0, 1, 2, 3]);
   });
 });
 

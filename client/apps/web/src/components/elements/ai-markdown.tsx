@@ -1,10 +1,36 @@
 import { isAppPath } from "@/lib/app-path";
+import { artifactRefId } from "@/lib/artifact-ref";
+import { splitMarkdownBlocks } from "@/lib/markdown-blocks";
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { cn } from "@trenova/shared/lib/utils";
-import { Children, createContext, memo, use, type ComponentProps, type ReactNode } from "react";
-import ReactMarkdown, { type Components } from "react-markdown";
+import {
+  Children,
+  createContext,
+  Fragment,
+  memo,
+  use,
+  useMemo,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
+import ReactMarkdown, {
+  defaultUrlTransform,
+  type Components,
+  type Options as MarkdownOptions,
+} from "react-markdown";
 import { Link, useInRouterContext } from "react-router";
+import { prepareMarkdown } from "@/lib/markdown-prepare";
+import "katex/dist/katex.min.css";
+import rehypeKatex from "rehype-katex";
+import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import { rehypeNumericColumns } from "./rehype-numeric-columns";
+import { remarkDeskSubset } from "./remark-desk-subset";
+import { rehypeStreamWords } from "./rehype-stream-words";
+
+type PluggableList = NonNullable<MarkdownOptions["rehypePlugins"]>;
 
 const HIGHLIGHTED_LANGS = new Set(["json", "javascript", "graphql", "plsql"]);
 
@@ -35,18 +61,74 @@ function textOf(children: ReactNode): string {
     .join("");
 }
 
+/** The language a fence was labelled with, as written: "sql", "json". */
+function fenceLabel(className: string | undefined): string {
+  return /language-([\w+#.-]+)/iu.exec(className ?? "")?.[1] ?? "text";
+}
+
+/** The fence a still-open math block is shown in, as its raw text, until it closes. */
+export const RAW_MATH_FENCE = "dk-math-raw";
+
+function CopyCode({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className={cn("md-code-copy", copied && "md-ok")}
+      onClick={() => {
+        void navigator.clipboard?.writeText(code).then(() => {
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1400);
+        });
+      }}
+    >
+      {copied && (
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M5 12.5l4.5 4.5L19 7" />
+        </svg>
+      )}
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
+}
+
+/**
+ * A fenced block: its language as a label, a way to copy it, and the code,
+ * highlighted where the language is one the app highlights. A block still
+ * arriving shows what has come so far.
+ */
 function CodeBlock({ className, children }: ComponentProps<"code">) {
   const code = textOf(children).replace(/\n$/u, "");
   const lang = resolveLang(className);
-
-  if (lang) {
-    return <ShikiCodeBlock code={code} lang={lang} className="my-2 text-xs" />;
+  const label = fenceLabel(className);
+  if (label === RAW_MATH_FENCE) {
+    return <pre className="md-math-raw">{code}</pre>;
   }
 
   return (
-    <pre className="bg-muted my-2 overflow-x-auto rounded-md p-3 font-mono text-xs leading-relaxed">
-      <code>{code}</code>
-    </pre>
+    <div className="md-code bg-sunken rounded-surface my-2.5 overflow-hidden">
+      <div className="md-code-h">
+        <span>{label}</span>
+        <CopyCode code={code} />
+      </div>
+      {lang ? (
+        <ShikiCodeBlock code={code} lang={lang} className="text-xs" />
+      ) : (
+        <pre className="scrollbar-overlay overflow-x-auto p-3 font-mono text-xs leading-relaxed">
+          <code>{code}</code>
+        </pre>
+      )}
+    </div>
   );
 }
 
@@ -67,9 +149,24 @@ export type MarkdownLinkRenderer = (href: string, children: ReactNode) => ReactN
 
 export const MarkdownLinkContext = createContext<MarkdownLinkRenderer | null>(null);
 
-function MarkdownLink({ href, children }: ComponentProps<"a">) {
+/**
+ * Draws an artifact a reply names in its sentence, or returns null when the
+ * surface does not know that artifact, which leaves the link its words.
+ */
+export type ArtifactLinkRenderer = (id: string, children: ReactNode) => ReactNode | null;
+
+export const ArtifactLinkContext = createContext<ArtifactLinkRenderer | null>(null);
+
+export function MarkdownLink({ href, children }: ComponentProps<"a">) {
   const inRouter = useInRouterContext();
   const renderLink = use(MarkdownLinkContext);
+  const renderArtifact = use(ArtifactLinkContext);
+  const artifactId = artifactRefId(href);
+  if (artifactId !== null || href?.startsWith("artifact:")) {
+    const drawn =
+      artifactId !== null && renderArtifact ? renderArtifact(artifactId, children) : null;
+    return drawn ?? <span className="font-medium">{children}</span>;
+  }
   if (inRouter && isAppPath(href)) {
     return (
       <Link to={href} className={LINK_CLASS}>
@@ -106,40 +203,97 @@ function MarkdownImage({ src, alt }: ComponentProps<"img">) {
   return <MarkdownLink href={src}>{label}</MarkdownLink>;
 }
 
+/**
+ * The type a reply is set in. Headings carry the heading weight and keep the
+ * case they were written in; a table takes the house row rhythm and
+ * hairlines, so a reply's figures read like a table anywhere else in the
+ * product; a list breathes a little between its items.
+ */
 const components: Components = {
-  p: ({ children }) => <p className="my-1.5 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
+  p: ({ children }) => <p className="my-2 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
-    <h3 className="mt-3 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
+    <h3 className="md-h md-h1 mt-4 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
   ),
   h2: ({ children }) => (
-    <h3 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
+    <h3 className="md-h md-h2 mt-3.5 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
   ),
-  h3: ({ children }) => <h4 className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</h4>,
-  h4: ({ children }) => <h5 className="mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h5>,
-  ul: ({ children }) => <ul className="my-1.5 list-disc space-y-0.5 pl-5">{children}</ul>,
-  ol: ({ children }) => <ol className="my-1.5 list-decimal space-y-0.5 pl-5">{children}</ol>,
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  h3: ({ children }) => (
+    <h4 className="md-h md-h3 mt-3 mb-1 text-sm font-semibold first:mt-0">{children}</h4>
+  ),
+  h4: ({ children }) => (
+    <h5 className="md-h md-h4 mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h5>
+  ),
+  h5: ({ children }) => (
+    <h6 className="md-h md-h5 mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h6>
+  ),
+  h6: ({ children }) => (
+    <h6 className="md-h md-h6 text-muted-foreground mt-2 mb-1 text-xs font-medium first:mt-0">
+      {children}
+    </h6>
+  ),
+  ul: ({ children }) => (
+    <ul className="marker:text-foreground-subtle my-2 list-disc space-y-1 pl-5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="marker:text-foreground-subtle my-2 list-decimal space-y-1 pl-5 marker:tabular-nums">
+      {children}
+    </ol>
+  ),
+  li: ({ children, className }) => (
+    <li
+      className={cn("pl-0.5 leading-relaxed", className?.includes("task-list-item") && "md-task")}
+    >
+      {children}
+    </li>
+  ),
+  // A checklist's box: drawn, never editable, since the reply is a record.
+  input: ({ type, checked }) =>
+    type === "checkbox" ? (
+      <span
+        className={cn("md-check", checked && "md-checked")}
+        role="img"
+        aria-label={checked ? "Done" : "Not done"}
+      />
+    ) : null,
+  del: ({ children }) => <del className="text-muted-foreground">{children}</del>,
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em>{children}</em>,
   a: ({ href, children }) => <MarkdownLink href={href}>{children}</MarkdownLink>,
   img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
   blockquote: ({ children }) => (
-    <blockquote className="border-border text-muted-foreground my-2 border-l-2 pl-3">
+    <blockquote className="border-border text-muted-foreground my-2.5 border-l-2 pl-3">
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="border-border my-3" />,
+  hr: () => <hr className="border-border-subtle my-4" />,
   table: ({ children }) => (
-    <div className="my-2 overflow-x-auto rounded-md border">
+    <div className="md-table border-border scrollbar-overlay rounded-surface my-2.5 overflow-x-auto border">
       <table className="w-full border-collapse text-xs">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-muted/60">{children}</thead>,
-  th: ({ children }) => (
-    <th className="border-border border-b px-2 py-1.5 text-left font-medium">{children}</th>
+  thead: ({ children }) => <thead className="bg-sunken">{children}</thead>,
+  th: ({ children, className, style }) => (
+    <th
+      className={cn(
+        "border-border-subtle text-foreground-muted h-(--row-head-h) border-b px-(--cell-px) text-left align-middle font-medium whitespace-nowrap",
+        className,
+      )}
+      style={style}
+    >
+      {children}
+    </th>
   ),
-  td: ({ children }) => (
-    <td className="border-border border-b px-2 py-1.5 align-top last:border-b-0">{children}</td>
+  tr: ({ children }) => <tr className="last:[&>td]:border-b-0">{children}</tr>,
+  td: ({ children, className, style }) => (
+    <td
+      className={cn(
+        "border-border-subtle h-(--row-h-compact) border-b px-(--cell-px) py-1 align-top tabular-nums",
+        className,
+      )}
+      style={style}
+    >
+      {children}
+    </td>
   ),
   code: ({ className, children, ...props }) => {
     const isBlock = typeof className === "string" && className.includes("language-");
@@ -150,7 +304,7 @@ const components: Components = {
 
     return (
       <code
-        className="bg-muted rounded-md px-1 py-0.5 font-mono text-[0.85em]"
+        className="md-icode bg-sunken rounded-control px-1 py-0.5 font-mono text-[0.85em]"
         {...(props as ComponentProps<"code">)}
       >
         {children}
@@ -171,15 +325,153 @@ const components: Components = {
 export const AiMarkdown = memo(function AiMarkdown({
   content,
   className,
+  overrides,
+  deskSubset = false,
 }: {
   content: string;
   className?: string;
+  /** Elements a surface draws its own way, such as a link it reads as something else. */
+  overrides?: Components;
+  /** Keeps to the Desk's markdown set; see DESK_REMARK_PLUGINS. */
+  deskSubset?: boolean;
 }) {
+  const merged = useMemo(
+    () => (overrides ? { ...components, ...overrides } : components),
+    [overrides],
+  );
+  const prepared = useMemo(() => prepareMarkdown(content), [content]);
+
   return (
     <div className={cn("text-sm wrap-break-word", className)}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-        {content}
+      <ReactMarkdown
+        remarkPlugins={deskSubset ? DESK_REMARK_PLUGINS : REMARK_PLUGINS}
+        rehypePlugins={REHYPE_PLUGINS}
+        components={merged}
+        urlTransform={urlTransform}
+      >
+        {prepared}
       </ReactMarkdown>
+    </div>
+  );
+});
+
+const REMARK_PLUGINS = [remarkGfm, remarkMath, remarkBreaks];
+
+/**
+ * The Desk's reply set: the same, less what its design leaves out (bare
+ * addresses as links, footnotes, images, indented code). Other surfaces keep
+ * the broader set they were built for.
+ */
+const DESK_REMARK_PLUGINS = [...REMARK_PLUGINS, remarkDeskSubset];
+
+/** A reference definition line, "[id]: url", wherever it sits in a reply. */
+const DEFINITION = /^ {0,3}\[[^\]\n]+\]:[ \t]*\S.*$/gmu;
+
+/** What every reply's markup goes through: math typeset, figures aligned. */
+const REHYPE_PLUGINS: PluggableList = [
+  rehypeKatex,
+  [rehypeNumericColumns, { className: "md-num" }],
+];
+
+/**
+ * react-markdown empties any address with a scheme it does not know, which
+ * would turn a link to an artifact into an empty one. That scheme is kept;
+ * it never reaches the browser as an address, only as a badge or as words.
+ */
+function urlTransform(url: string): string {
+  return artifactRefId(url) !== null ? url : defaultUrlTransform(url);
+}
+
+/** One top-level block, parsed again only when its own text changes. */
+const MarkdownBlock = memo(function MarkdownBlock({
+  content,
+  merged,
+  rehypePlugins,
+  deskSubset,
+}: {
+  content: string;
+  merged: Components;
+  rehypePlugins?: PluggableList;
+  deskSubset: boolean;
+}) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={deskSubset ? DESK_REMARK_PLUGINS : REMARK_PLUGINS}
+      rehypePlugins={rehypePlugins ?? REHYPE_PLUGINS}
+      components={merged}
+      urlTransform={urlTransform}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+});
+
+/**
+ * AiMarkdown for a reply still arriving. Parsing the whole reply on every
+ * token costs the square of its length; cut into its top-level blocks, every
+ * block but the last is final and parsed once. The blocks are siblings in one
+ * container, joined by the line break one parse puts between them, so what is
+ * drawn is what one parse would draw.
+ */
+export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
+  content,
+  className,
+  overrides,
+  wordClassName,
+  caretClassName,
+  deskSubset = false,
+}: {
+  content: string;
+  className?: string;
+  overrides?: Components;
+  deskSubset?: boolean;
+  /** Wraps each word in a span of this class, so a surface can bring words in as they land. */
+  wordClassName?: string;
+  /** Ends the reply in a caret of this class, after its last word. */
+  caretClassName?: string;
+}) {
+  const prepared = useMemo(() => prepareMarkdown(content, { streaming: true }), [content]);
+  const blocks = useMemo(() => splitMarkdownBlocks(prepared), [prepared]);
+  // Each block is parsed on its own, so a reference link in one block would
+  // not find its definition in another. Every block carries the reply's
+  // definitions; they draw nothing themselves.
+  const definitions = useMemo(() => (prepared.match(DEFINITION) ?? []).join("\n"), [prepared]);
+  const merged = useMemo(
+    () => (overrides ? { ...components, ...overrides } : components),
+    [overrides],
+  );
+  const wordPlugins = useMemo<PluggableList | undefined>(
+    () =>
+      wordClassName
+        ? [...REHYPE_PLUGINS, [rehypeStreamWords, { className: wordClassName }]]
+        : undefined,
+    [wordClassName],
+  );
+  const lastPlugins = useMemo<PluggableList | undefined>(
+    () =>
+      wordClassName || caretClassName
+        ? [
+            ...REHYPE_PLUGINS,
+            [rehypeStreamWords, { className: wordClassName ?? "", caret: caretClassName }],
+          ]
+        : undefined,
+    [caretClassName, wordClassName],
+  );
+
+  return (
+    <div className={cn("text-sm wrap-break-word", className)}>
+      {blocks.map((block, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- blocks only ever grow at the end
+        <Fragment key={index}>
+          {index > 0 && "\n"}
+          <MarkdownBlock
+            content={definitions === "" ? block : `${block}\n\n${definitions}`}
+            merged={merged}
+            rehypePlugins={index === blocks.length - 1 ? lastPlugins : wordPlugins}
+            deskSubset={deskSubset}
+          />
+        </Fragment>
+      ))}
     </div>
   );
 });

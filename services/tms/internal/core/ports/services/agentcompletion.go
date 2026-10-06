@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/shopspring/decimal"
 	"time"
@@ -72,9 +73,13 @@ type StructuredCompletionResult struct {
 type ChatCompletionRequest struct {
 	TenantInfo pagination.TenantInfo
 	System     string
-	Messages   []Message
-	Tools      []ToolSpec
-	MaxTokens  int
+	// SystemStable is how many leading bytes of System are the same on every
+	// turn, which a provider that caches by explicit mark can cache apart from
+	// the turn's own part. Zero treats the whole prompt as one.
+	SystemStable int
+	Messages     []Message
+	Tools        []ToolSpec
+	MaxTokens    int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.
@@ -109,6 +114,9 @@ type ChatRetryNotice struct {
 	Kind RetryKind
 	// WaitSeconds is how long the router is waiting before a busy retry.
 	WaitSeconds int
+	// MaxAttempts is how many times the provider is asked in all before the
+	// router gives up on it, so the reader can be told "attempt 2 of 4".
+	MaxAttempts int
 }
 
 // RetryKind names why a turn is being retried.
@@ -148,6 +156,48 @@ type ChatCompletionResult struct {
 	CostUSD     *decimal.Decimal
 	OutputLimit int
 	CutOffCall  *CutOffToolCall
+	// ContextWindow is the window the answering provider is configured with,
+	// zero when it is left to be read off the model id.
+	ContextWindow int
+	// FallbackFrom is the provider asked first when another one answered:
+	// the reader is told which model replied and which one didn't.
+	FallbackFrom *ChatProviderFailure
+}
+
+// ChatProviderFailure is one provider that was asked and didn't answer.
+type ChatProviderFailure struct {
+	ProviderID pulid.ID `json:"providerId"`
+	Name       string   `json:"name"`
+	Model      string   `json:"model"`
+	// Vendor is the company behind the model, for its mark.
+	Vendor string `json:"vendor"`
+	// Status is a short word for what went wrong: Overloaded, Timed out,
+	// Unavailable, Failed, or Not set up for a model the organization has
+	// but has not given the task.
+	Status string `json:"status"`
+	// Detail says what happened in a line a person can read: "Anthropic
+	// returned 529 twice", "No response after 30s".
+	Detail string `json:"detail"`
+	// HTTPStatus is the provider's status code, when it answered at all, and
+	// Attempts how many times it was asked.
+	HTTPStatus int `json:"httpStatus,omitempty"`
+	Attempts   int `json:"attempts,omitempty"`
+}
+
+// ChatProvidersFailedError is returned when every provider in the order was
+// asked and none answered. It names each, so the reader is told more than
+// that something failed.
+type ChatProvidersFailedError struct {
+	Failures []ChatProviderFailure
+	Err      error
+}
+
+func (e *ChatProvidersFailedError) Error() string {
+	return fmt.Sprintf("every configured chat provider failed: %v", e.Err)
+}
+
+func (e *ChatProvidersFailedError) Unwrap() error {
+	return e.Err
 }
 
 type CutOffToolCall struct {

@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
@@ -41,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceoverrideexec"
@@ -101,6 +103,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailurereasoncodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sidebarpreferenceexec"
@@ -146,6 +149,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -259,6 +263,7 @@ type ResolverRoot interface {
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
+	AgentMemory() AgentMemoryResolver
 	AgentPlan() AgentPlanResolver
 	AgentPreviewFieldChange() AgentPreviewFieldChangeResolver
 	AgentPreviewMessage() AgentPreviewMessageResolver
@@ -271,6 +276,7 @@ type ResolverRoot interface {
 	AgentProposalField() AgentProposalFieldResolver
 	AgentQualityAgent() AgentQualityAgentResolver
 	AgentQualityControl() AgentQualityControlResolver
+	AgentReflection() AgentReflectionResolver
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
 	AgentSafety() AgentSafetyResolver
@@ -291,6 +297,7 @@ type ResolverRoot interface {
 	Carrier() CarrierResolver
 	CarrierAssignment() CarrierAssignmentResolver
 	CarrierAssignmentAccessorial() CarrierAssignmentAccessorialResolver
+	CarrierCapacityPosting() CarrierCapacityPostingResolver
 	CarrierEquipmentVerification() CarrierEquipmentVerificationResolver
 	CarrierInsurancePolicy() CarrierInsurancePolicyResolver
 	CarrierIntelControl() CarrierIntelControlResolver
@@ -622,6 +629,11 @@ type AgentEvaluationResolver interface {
 	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 }
 
+type AgentMemoryResolver interface {
+	Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+	ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+}
+
 type AgentPlanResolver interface {
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
 }
@@ -681,6 +693,10 @@ type AgentQualityControlResolver interface {
 	ID(ctx context.Context, obj *agentquality.Control) (*string, error)
 	NightlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
 	MonthlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
+}
+
+type AgentReflectionResolver interface {
+	Signals(ctx context.Context, obj *agent.Reflection) ([]*agent.ReflectionSignal, error)
 }
 
 type AgentRunResolver interface {
@@ -803,6 +819,10 @@ type CarrierAssignmentResolver interface {
 
 type CarrierAssignmentAccessorialResolver interface {
 	Amount(ctx context.Context, obj *shipment.CarrierAssignmentAccessorial) (string, error)
+}
+
+type CarrierCapacityPostingResolver interface {
+	Rate(ctx context.Context, obj *carriercapacity.Posting) (*string, error)
 }
 
 type CarrierEquipmentVerificationResolver interface {
@@ -1260,6 +1280,7 @@ type InboundAttachmentResolver interface {
 
 type InboundMailboxResolver interface {
 	HasSigningSecret(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
+	HasAPIKey(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
 }
 
 type InboundMailboxCredentialsResolver interface {
@@ -1434,6 +1455,8 @@ type MutationResolver interface {
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
 	DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
+	UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
+	CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
 	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
 	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
@@ -1444,6 +1467,7 @@ type MutationResolver interface {
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
+	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
@@ -1463,6 +1487,10 @@ type MutationResolver interface {
 	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*driverpay.WorkerBenefitEnrollment, error)
 	UpdateBillingQueueStatus(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateStatusInput) (*gqlmodel.BillingQueueItem, error)
 	AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error)
+	PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error)
+	ReleaseBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueueItem, error)
+	ResolveBillingQueueIssue(ctx context.Context, id string, issueID string, optionKey string) (*gqlmodel.BillingQueueItem, error)
+	UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error)
 	StartBillingTransferRun(ctx context.Context, input gqlmodel.StartBillingTransferRunInput) (*gqlmodel.BillingTransferRun, error)
 	CancelBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	RetryBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
@@ -1483,6 +1511,9 @@ type MutationResolver interface {
 	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
 	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
 	DeleteCaptureProfile(ctx context.Context, id string) (bool, error)
+	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
+	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
+	DeleteCarrierCapacityPosting(ctx context.Context, id string, version int) (bool, error)
 	UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintel.CarrierIntelControl, error)
 	SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintel.CarrierIntelControl, error)
 	ResumeCarrierIntelMonitoring(ctx context.Context) (bool, error)
@@ -1522,6 +1553,12 @@ type MutationResolver interface {
 	ApplyCreditMemo(ctx context.Context, input gqlmodel.ApplyCreditMemoInput) ([]*customerpayment.CreditMemoApplication, error)
 	UnapplyCreditMemoApplication(ctx context.Context, input gqlmodel.UnapplyCreditMemoApplicationInput) (*customerpayment.CreditMemoApplication, error)
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
+	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
+	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
+	SetDeskMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*gqlmodel.DeskMemory, error)
+	ConfirmDeskMemory(ctx context.Context, id string, input gqlmodel.ConfirmDeskMemoryInput) (*gqlmodel.DeskMemory, error)
+	DismissDeskMemory(ctx context.Context, id string) (*gqlmodel.DeskMemory, error)
+	SetMemorySavingMode(ctx context.Context, mode agent.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
 	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
@@ -1668,10 +1705,11 @@ type MutationResolver interface {
 	BackfillJurisdictionMiles(ctx context.Context, input gqlmodel.BackfillJurisdictionMilesInput) (*gqlmodel.JurisdictionMilesBackfillResult, error)
 	ReviewInboundMessage(ctx context.Context, id string, input gqlmodel.ReviewInboundMessageInput) (*inboundmessage.InboundMessage, error)
 	LinkInboundMessage(ctx context.Context, id string, input gqlmodel.LinkInboundMessageInput) (*inboundmessage.InboundMessage, error)
-	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string) (*inboundmessageservice.MailboxCredentials, error)
+	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmessageservice.MailboxCredentials, error)
 	UpdateInboundMailbox(ctx context.Context, id string, version int, input gqlmodel.InboundMailboxInput) (*inboundmessage.Mailbox, error)
 	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
+	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
 	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*services.CreateInvoicesResult, error)
@@ -1781,6 +1819,10 @@ type MutationResolver interface {
 	ResolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
 	UnresolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
 	AcknowledgeShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
+	TenderShipments(ctx context.Context, input gqlmodel.TenderShipmentsInput) (*gqlmodel.TenderShipmentsResult, error)
+	DecideShipmentSuggestion(ctx context.Context, input gqlmodel.DecideShipmentSuggestionInput) (bool, error)
+	UndoShipmentSuggestionDecision(ctx context.Context, key string) (bool, error)
+	NotifyShipmentDelay(ctx context.Context, input gqlmodel.NotifyShipmentDelayInput) (bool, error)
 	UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error)
 	CreateTableConfiguration(ctx context.Context, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
@@ -2070,6 +2112,7 @@ type QueryResolver interface {
 	AgentEvaluations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvaluationConnection, error)
 	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
 	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
+	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
 	AgentMemoryUsage(ctx context.Context) (*services.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
@@ -2079,6 +2122,7 @@ type QueryResolver interface {
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
+	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
 	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
@@ -2152,6 +2196,8 @@ type QueryResolver interface {
 	CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error)
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
+	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)
+	CarrierCapacityPosting(ctx context.Context, id string) (*carriercapacity.Posting, error)
 	CarrierIntelControl(ctx context.Context) (*carrierintel.CarrierIntelControl, error)
 	CarrierIntelProvider(ctx context.Context) (*gqlmodel.CarrierIntelProviderInfo, error)
 	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintel.RuleDefinition, error)
@@ -2198,6 +2244,10 @@ type QueryResolver interface {
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
+	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
+	DeskMemories(ctx context.Context, input gqlmodel.DeskMemoriesInput) (*gqlmodel.DeskMemoryPage, error)
+	DeskMemoriesByIds(ctx context.Context, ids []string) ([]*gqlmodel.DeskMemory, error)
+	DeskMemorySettings(ctx context.Context) (*gqlmodel.DeskMemorySettings, error)
 	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
 	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
 	DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error)
@@ -2485,6 +2535,16 @@ type QueryResolver interface {
 	ShipmentEvents(ctx context.Context, input gqlmodel.ShipmentEventsInput) ([]gqlmodel.ShipmentEvent, error)
 	ShipmentAnalytics(ctx context.Context, input gqlmodel.ShipmentAnalyticsInput) (*gqlmodel.ShipmentAnalytics, error)
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
+	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
+	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
+	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
+	ShipmentFacetCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, facets []repositories.ShipmentFacet) ([]*gqlmodel.ShipmentFacetCounts, error)
+	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
+	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
+	CapacityUnitMatches(ctx context.Context, kind gqlmodel.CapacityUnitKind, unitID string, limit *int) ([]*gqlmodel.CapacityMatch, error)
+	ShipmentCoverageSuggestions(ctx context.Context, shipmentID string) (*gqlmodel.ShipmentCoverageSuggestions, error)
+	ShipmentSuggestions(ctx context.Context, timezone string) (*gqlmodel.ShipmentSuggestionQueue, error)
+	ShipmentWatchlist(ctx context.Context, timezone string) (*gqlmodel.ShipmentWatchlist, error)
 	ShipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ShipmentTypeConnection, error)
 	ShipmentType(ctx context.Context, id string) (*shipmenttype.ShipmentType, error)
 	SidebarPreferences(ctx context.Context) (*gqlmodel.SidebarPreferences, error)
@@ -2633,6 +2693,7 @@ type ShiftTemplateResolver interface {
 }
 
 type ShipmentResolver interface {
+	Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentEta, error)
 	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
 	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
 	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
@@ -2961,6 +3022,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		briefingexec.Shard,
 		captureexec.Shard,
 		carrierexec.Shard,
+		carriercapacityexec.Shard,
 		carrierintelligenceexec.Shard,
 		carriersettlementexec.Shard,
 		commodityexec.Shard,
@@ -2969,6 +3031,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customerpaymentexec.Shard,
 		customfielddefinitionexec.Shard,
 		decisionsexec.Shard,
+		deskmemoryexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,
 		distanceoverrideexec.Shard,
@@ -3030,6 +3093,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		servicetypeexec.Shard,
 		sharedexec.Shard,
 		shipmentexec.Shard,
+		shipmentboardexec.Shard,
 		shipmenttypeexec.Shard,
 		sidebarpreferenceexec.Shard,
 		storedmileageexec.Shard,
@@ -3090,6 +3154,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
 			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
 			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
+			"AgentMemory":                        func() any { return r.AgentMemory() },
 			"AgentPlan":                          func() any { return r.AgentPlan() },
 			"AgentPreviewFieldChange":            func() any { return r.AgentPreviewFieldChange() },
 			"AgentPreviewMessage":                func() any { return r.AgentPreviewMessage() },
@@ -3102,6 +3167,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentProposalField":                 func() any { return r.AgentProposalField() },
 			"AgentQualityAgent":                  func() any { return r.AgentQualityAgent() },
 			"AgentQualityControl":                func() any { return r.AgentQualityControl() },
+			"AgentReflection":                    func() any { return r.AgentReflection() },
 			"AgentRun":                           func() any { return r.AgentRun() },
 			"AgentRunEvent":                      func() any { return r.AgentRunEvent() },
 			"AgentSafety":                        func() any { return r.AgentSafety() },
@@ -3122,6 +3188,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Carrier":                            func() any { return r.Carrier() },
 			"CarrierAssignment":                  func() any { return r.CarrierAssignment() },
 			"CarrierAssignmentAccessorial":       func() any { return r.CarrierAssignmentAccessorial() },
+			"CarrierCapacityPosting":             func() any { return r.CarrierCapacityPosting() },
 			"CarrierEquipmentVerification":       func() any { return r.CarrierEquipmentVerification() },
 			"CarrierInsurancePolicy":             func() any { return r.CarrierInsurancePolicy() },
 			"CarrierIntelControl":                func() any { return r.CarrierIntelControl() },
@@ -4949,6 +5016,8 @@ enum AgentRunStatus {
 
 enum AgentProposalStatus {
   Pending
+  "Approved from the decider's own conversation and waiting out its undo window; nothing has run yet."
+  Approving
   Accepted
   Modified
   Rejected
@@ -4963,6 +5032,8 @@ enum AgentProposalStatus {
 
 enum AgentPlanStatus {
   Pending
+  "Approved from the decider's own conversation and waiting out its undo window; no step has run yet."
+  Approving
   Approved
   Completed
   Failed
@@ -5146,6 +5217,8 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "Why the approved write failed, written for the person; empty unless status is ExecutionFailed."
+  executionError: String!
   "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
   planId: ID
   "Position in the plan, from one; zero outside a plan."
@@ -5233,6 +5306,10 @@ type AgentPlan {
   decidedByUserId: ID
   decidedAt: Timestamp
   expiresAt: Timestamp
+  "When an approval in its undo window starts to run, unless it is undone first."
+  commitsAt: Timestamp
+  "When the approval was undone in its undo window; absent if it was not."
+  undoneAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -5274,6 +5351,16 @@ type AgentDecision {
   traceId: String!
   "The decision's trace in the tracing backend, when one is configured and the decision has a trace."
   traceUrl: String
+  """
+  When an approval made from the decider's own conversation goes through,
+  unless it is undone first. Absent for a decision that took effect when it
+  was made.
+  """
+  commitsAt: Timestamp
+  "When the approval went through at the close of its undo window."
+  committedAt: Timestamp
+  "When the approval was undone in its undo window."
+  undoneAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -5294,6 +5381,10 @@ type AgentControl {
   aiTrainingConsentChangedAt: Timestamp
   "Who last turned training consent on or off."
   aiTrainingConsentChangedById: ID
+  "Questions one person may ask the agents each calendar month (UTC); 0 is unlimited."
+  personMonthlyMessages: Int!
+  "Agents no longer look back over their work to keep what they learned as memory."
+  learningOff: Boolean!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -5340,6 +5431,8 @@ enum AgentMemoryKind {
   Instruction
   Fact
   Correction
+  "The steps that worked for a task here, dictated by a person or learned by doing it."
+  Procedure
 }
 
 enum AgentMemorySource {
@@ -5348,12 +5441,16 @@ enum AgentMemorySource {
   Decision
   "Drawn from ratings people gave an agent's output."
   Feedback
+  "Kept by an agent looking back over its own work once a conversation went quiet or a run settled."
+  Reflection
 }
 
 enum AgentMemoryStatus {
   Active
+  "Set aside by a person without forgetting it; kept and listed, never read by an agent until resumed."
+  Paused
   Retired
-  "Drawn from feedback and waiting for an administrator; never read by an agent."
+  "Waiting to be accepted, drawn from feedback for an administrator or offered by an agent to a person who asked to be asked first; never read by an agent."
   Suggested
   "A suggestion an administrator refused; the same pattern is not suggested again for 30 days."
   Dismissed
@@ -5370,12 +5467,18 @@ type AgentMemoryEvidence {
   quotes: [String!]!
   firstRatedAt: Timestamp!
   lastRatedAt: Timestamp!
+  "For a memory an agent kept from looking back, what in the work made it worth a look."
+  signals: [String!]!
 }
 
-"Who reads a memory: every agent in the organization, or only the agent it was kept for."
+"Who reads a memory: every agent in the organization, only the agent it was kept for, one person's conversations, or the conversations of everyone holding a role."
 enum AgentMemoryScope {
   Organization
   Agent
+  "Kept for one person, read only in their conversations; the Desk calls it Just you."
+  User
+  "Kept for a role, read in the conversations of everyone holding it; the Desk calls it the person's team."
+  Role
 }
 
 enum AgentMemorySubjectType {
@@ -5406,14 +5509,26 @@ type AgentMemory {
   toolName: String!
   content: String!
   agentDefinitionId: ID
-  "Organization reaches every agent; Agent reaches only agentDefinitionId."
+  "Organization reaches every agent; Agent reaches only agentDefinitionId; User only ownerUserId's conversations; Role only those of roleId's holders."
   scope: AgentMemoryScope!
+  ownerUserId: ID
+  roleId: ID
   "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
   tainted: Boolean!
   "The run whose outside content the memory carries."
   taintRunId: ID
   sourceRunId: ID
   sourceProposalId: ID
+  "The conversation the memory came from."
+  sourceThreadId: ID
+  "The look back that kept or offered the memory, for one whose source is Reflection."
+  reflectionId: ID
+  "The memory this one replaces; once this one is active the other is retired."
+  supersedesId: ID
+  "The memory this one replaces, as it reads now."
+  supersedes: AgentMemory
+  "The newest memory that replaced this one and took effect; empty while nothing has."
+  replacedBy: AgentMemory
   createdByUserId: ID
   retiredByUserId: ID
   retiredAt: Timestamp
@@ -5436,6 +5551,113 @@ type AgentMemoryUsage {
   activeSoftCap: Int!
   "The count at which AI Control warns that the cap is near."
   warnAt: Int!
+}
+
+enum AgentReflectionSubject {
+  "A stretch of a conversation, read once it went quiet."
+  Thread
+  "One background run, read once every proposal it raised was decided."
+  Run
+}
+
+enum AgentReflectionStatus {
+  Running
+  "Nothing in the work called for a look, or learning was off; the stretch is not read again."
+  Skipped
+  Completed
+  "The look back could not finish; the stretch is read again with the next one."
+  Failed
+}
+
+enum AgentReflectionSkip {
+  NoSignal
+  NothingToRead
+  LearningOff
+  AgentUnavailable
+  OverBudget
+}
+
+enum AgentReflectionSignalKind {
+  ToolRecovered
+  ToolFailed
+  PersonCorrected
+  StandingRequest
+  ProposalModified
+  ProposalRejected
+  NegativeFeedback
+  LongTask
+}
+
+enum AgentReflectionAction {
+  Saved
+  "Offered to a person to accept: they asked to be asked first, it is shared beyond them, or the work read outside content."
+  Suggested
+  "Already kept; counted as used instead of saved again."
+  Refreshed
+  "Not kept, with the reason."
+  Refused
+}
+
+type AgentReflectionSignal {
+  kind: AgentReflectionSignalKind!
+  count: Int!
+  "The tools or proposals the signal is about, when it names any."
+  detail: String!
+}
+
+type AgentReflectionChange {
+  action: AgentReflectionAction!
+  memoryId: ID
+  supersedesId: ID
+  kind: AgentMemoryKind!
+  scope: AgentMemoryScope
+  content: String!
+  reason: String!
+}
+
+"""
+One time an agent looked back over a stretch of a conversation or a settled
+background run and decided what, if anything, to keep as memory.
+"""
+type AgentReflection {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentDefinitionId: ID!
+  subjectType: AgentReflectionSubject!
+  threadId: ID
+  runId: ID
+  "The person whose conversation was read."
+  userId: ID
+  fromSequence: Int!
+  throughSequence: Int!
+  status: AgentReflectionStatus!
+  skipReason: AgentReflectionSkip
+  signals: [AgentReflectionSignal!]!
+  changes: [AgentReflectionChange!]!
+  "The model's one-sentence account of what it looked at and kept."
+  notes: String!
+  "The work had read content from outside the organization, so everything kept waits for a person."
+  tainted: Boolean!
+  model: String!
+  inputTokens: Int!
+  outputTokens: Int!
+  errorMessage: String!
+  finishedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentReflectionEdge {
+  node: AgentReflection!
+  cursor: String!
+}
+
+type AgentReflectionConnection {
+  edges: [AgentReflectionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
 }
 
 type AgentMemoryEdge {
@@ -5588,6 +5810,10 @@ input AgentControlInput {
   promotionThreshold: Int
   "Absent leaves training consent as it is. Only a signed-in person can change it."
   aiTrainingConsent: Boolean
+  "Absent leaves the per-person monthly allowance as it is; 0 is unlimited."
+  personMonthlyMessages: Int
+  "Absent leaves whether agents learn from their work as it is."
+  learningOff: Boolean
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int
@@ -5605,6 +5831,8 @@ extend type Query {
   agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentEvaluation(id: ID!): AgentEvaluation
   agentMemory(id: ID!): AgentMemory
+  "Each time an agent looked back over its work, newest first."
+  agentReflections(input: DataTableConnectionInput!): AgentReflectionConnection!
   "How many active memories the organization keeps, against its soft cap."
   agentMemoryUsage: AgentMemoryUsage!
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
@@ -5636,6 +5864,19 @@ extend type Mutation {
   each reports its outcome; otherwise the first that fails stops the rest.
   """
   decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  """
+  Takes back the caller's approval of a proposal (with every proposal
+  approved with it in one batch) or of a plan, while it is in its undo window;
+  it waits on them again. Name one of the two. Once the approval has gone
+  through it is a conflict.
+  """
+  undoMyDecision(proposalId: ID, planId: ID): Boolean!
+  """
+  Ends the undo window on the caller's approval of a proposal or a plan, so
+  it goes through now. One that already went through is left as it is; one
+  that was undone is a conflict.
+  """
+  commitMyDecisionNow(proposalId: ID, planId: ID): Boolean!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
@@ -5787,6 +6028,8 @@ type AgentDefinition {
   1000 to 16000. Absent uses the default of 6000.
   """
   memoryTokenBudget: Int
+  "The agent no longer looks back over its work to keep what it learned, whatever its organization chose."
+  learningOff: Boolean!
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
   "Chosen icon name; empty falls back to the icon the starter template implies."
@@ -5977,6 +6220,131 @@ extend type Mutation {
   setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
   "Replaces the agents a role is granted."
   setRoleAgentAccess(roleId: ID!, agentIds: [ID!]!): Role!
+}
+
+"""
+How an agent may use one tool, as its capabilities page says it: Allowed runs
+on its own, AskFirst waits for a person, Off is a tool the agent does not hold.
+"""
+enum AgentCapabilityMode {
+  Allowed
+  AskFirst
+  Off
+}
+
+"One tool on an agent's capabilities page."
+type AgentCapabilityTool {
+  "The tool's name, as the agent calls it."
+  key: String!
+  label: String!
+  "Whether the tool changes things rather than reading them."
+  write: Boolean!
+  mode: AgentCapabilityMode!
+  "The modes the tool may be given on this agent. A read is never AskFirst."
+  allowedModes: [AgentCapabilityMode!]!
+  "Why a mode is missing from allowedModes, such as \"Always asks · this can't be undone\"."
+  lockReason: String
+}
+
+"An agent this one hands work to, and which work."
+type AgentCapabilityHandoff {
+  agentId: ID!
+  name: String!
+  description: String!
+  icon: String!
+  accent: String!
+  template: String!
+  "What goes to it; its description when no topic was set."
+  topic: String!
+}
+
+"An agent's caps and where it stands against them."
+type AgentCapabilityLimits {
+  requestsToday: Int!
+  "0 for no daily cap."
+  dailyRequestLimit: Int!
+  dayResetsAt: Timestamp!
+  monthlySpentUsd: Decimal!
+  "Absent when there is no monthly budget."
+  monthlyBudgetUsd: Decimal
+  monthStart: Timestamp!
+  monthResetsAt: Timestamp!
+  "The most records one change may touch; a bigger batch is split and approved separately."
+  maxChangeItems: Int!
+  businessHoursOnly: Boolean!
+  "Minutes after midnight."
+  businessHoursStart: Int!
+  "Minutes after midnight, exclusive."
+  businessHoursEnd: Int!
+  "The zone the window is read in: the agent's own or the organization's."
+  businessHoursTimezone: String!
+}
+
+"""
+What an agent can do, for anyone who may use it: what it looks up and changes
+and how far each change may go on its own, who it hands work to, and its
+limits. canEdit says whether the reader may change it.
+"""
+type AgentCapabilities {
+  agentId: ID!
+  name: String!
+  description: String!
+  template: String!
+  icon: String!
+  accent: String!
+  systemKey: String!
+  "The model it answers with, by the name an administrator gave it."
+  model: String!
+  "Who set the agent up; empty when unknown."
+  setUpBy: String!
+  enabled: Boolean!
+  canEdit: Boolean!
+  version: Int!
+  readTools: [AgentCapabilityTool!]!
+  writeTools: [AgentCapabilityTool!]!
+  handoffs: [AgentCapabilityHandoff!]!
+  limits: AgentCapabilityLimits!
+}
+
+input AgentCapabilityToolInput {
+  key: String!
+  mode: AgentCapabilityMode!
+}
+
+input AgentDelegateTopicInput {
+  agentId: ID!
+  "Empty clears the topic."
+  topic: String!
+}
+
+"Changes to an agent's capabilities. Absent fields are left as they are."
+input UpdateAgentCapabilitiesInput {
+  "The version the page was read at."
+  version: Int!
+  enabled: Boolean
+  tools: [AgentCapabilityToolInput!]
+  dailyRequestLimit: Int
+  monthlyBudgetUsd: Decimal
+  clearMonthlyBudget: Boolean
+  maxChangeItems: Int
+  businessHoursOnly: Boolean
+  businessHoursStart: Int
+  businessHoursEnd: Int
+  businessHoursTimezone: String
+  delegateTopics: [AgentDelegateTopicInput!]
+}
+
+extend type Query {
+  "What an agent can do. Anyone who may use the agent may read it."
+  agentCapabilities(agentId: ID!): AgentCapabilities!
+}
+
+extend type Mutation {
+  "Changes what an agent can do. Needs permission to update agents."
+  updateAgentCapabilities(
+    agentId: ID!
+    input: UpdateAgentCapabilitiesInput!
+  ): AgentCapabilities!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."
@@ -7688,13 +8056,29 @@ enum AIStructuredOutputMode {
 
 """
 How hard a model is asked to think before it answers. Off sends no reasoning
-parameter, which models without reasoning reject outright.
+parameter, which models without reasoning reject outright; a model that reasons
+by default then reasons at its own default. None tells such a model not to
+reason, and Minimal asks for the least reasoning it allows.
 """
 enum AIReasoningEffort {
   Off
+  None
+  Minimal
   Low
   Medium
   High
+}
+
+"""
+How a Claude model is asked to think. Auto reads the model id; Effort asks by
+effort, as Claude models from Opus 4.6 and Sonnet 4.6 on require; Budget asks
+with a token budget, as older ones require. Only Anthropic Messages providers
+take anything but Auto.
+"""
+enum AIThinkingStyle {
+  Auto
+  Effort
+  Budget
 }
 
 """
@@ -7754,6 +8138,8 @@ type AIProvider {
   allowPrivateNetwork: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   reasoningEffort: AIReasoningEffort!
+  "How a Claude model behind an id the system cannot read takes thinking."
+  thinkingStyle: AIThinkingStyle!
   """
   Vendor request fields this endpoint takes that the protocol does not
   define, merged under the fields this system sets. Null when the endpoint
@@ -8438,6 +8824,24 @@ extend type Mutation {
   exceptionNotes: String
   reviewNotes: String
   cancelReason: String
+  holdReasonCode: BillingQueueHoldReasonCode
+}
+
+"""Why a biller set an item aside."""
+enum BillingQueueHoldReasonCode {
+  WaitingOnPaperwork
+  CustomerDispute
+  RateQuestion
+}
+
+"""The invoice an item posted as, and where it went."""
+type BillingQueuePostResult {
+  item: BillingQueueItem!
+  invoiceId: ID!
+  invoiceNumber: String!
+  """The address the invoice is emailed to, when posting sends it."""
+  sentTo: String
+  recipients: [String!]!
 }
 
 input BillingQueueAssignInput {
@@ -8447,6 +8851,14 @@ input BillingQueueAssignInput {
 extend type Mutation {
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+  """Posts an approved item's invoice, which sends it to the customer."""
+  postBillingQueueItem(id: ID!): BillingQueuePostResult!
+  """Takes an item off hold and back to the status the hold found it in."""
+  releaseBillingQueueItem(id: ID!): BillingQueueItem!
+  """Settles one of an item's checks with one of its options."""
+  resolveBillingQueueIssue(id: ID!, issueId: ID!, optionKey: String!): BillingQueueItem!
+  """Takes back how a check was settled, and puts back any charge it changed."""
+  undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
 }
 `, BuiltIn: false},
 	{Name: "../schema/billing_transfer.graphqls", Input: `"One bulk transfer of shipments into the billing queue, run in the background."
@@ -9460,6 +9872,96 @@ type CarrierConnection {
 extend type Query {
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   carrier(id: ID!): Carrier
+}
+`, BuiltIn: false},
+	{Name: "../schema/carrier_capacity.graphqls", Input: `enum CarrierCapacityRateMethod {
+  Flat
+  PerMile
+}
+
+enum CarrierCapacitySource {
+  Manual
+  Email
+  EDI
+}
+
+"Trucks a carrier says it has available: where, when, with what equipment and at what rate."
+type CarrierCapacityPosting {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  originLocationId: ID
+  originStateId: ID
+  "How far from the origin location the carrier will pick up."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int!
+  rateMethod: CarrierCapacityRateMethod!
+  "Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote."
+  rate: Decimal
+  source: CarrierCapacitySource!
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  carrier: Carrier
+  originLocation: Location
+  originState: UsState
+  destinationState: UsState
+  equipmentType: EquipmentType
+}
+
+type CarrierCapacityPostingEdge {
+  node: CarrierCapacityPosting!
+  cursor: String!
+}
+
+type CarrierCapacityPostingConnection {
+  edges: [CarrierCapacityPostingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input CarrierCapacityPostingInput {
+  carrierId: ID!
+  "Give an origin location, an origin state, or both."
+  originLocationId: ID
+  originStateId: ID
+  "Only with an origin location."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int = 1
+  rateMethod: CarrierCapacityRateMethod = PerMile
+  rate: Decimal
+  source: CarrierCapacitySource = Manual
+  notes: String
+}
+
+extend type Query {
+  carrierCapacityPostings(
+    input: DataTableConnectionInput!
+    carrierId: ID
+    "Only postings whose window has not closed."
+    openOnly: Boolean = false
+  ): CarrierCapacityPostingConnection!
+  carrierCapacityPosting(id: ID!): CarrierCapacityPosting
+}
+
+extend type Mutation {
+  createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
+  updateCarrierCapacityPosting(
+    id: ID!
+    version: Int!
+    input: CarrierCapacityPostingInput!
+  ): CarrierCapacityPosting!
+  deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/carrier_intelligence.graphqls", Input: `enum CarrierIntelSection {
@@ -11857,6 +12359,20 @@ type AgentProposalDecisionResult {
   executed: Boolean!
 }
 
+"A decision on a proposal, with the proposal and the person who made it."
+type RecentDecision {
+  id: ID!
+  decision: AgentDecisionType!
+  reasonCode: String!
+  "What the decider told the agent; empty when they said nothing."
+  note: String!
+  decidedByUserId: ID!
+  "The decider as the app names them."
+  decidedByName: String!
+  decidedAt: Timestamp!
+  proposal: AgentProposal!
+}
+
 extend type AgentProposal {
   "The run that raised this proposal, for the agent behind it."
   run: AgentRun
@@ -11878,6 +12394,8 @@ extend type Query {
   "What is waiting on a person, newest first: proposals on their own and plans as one unit."
   pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
   pendingDecisionSummary: PendingDecisionSummary!
+  "What was decided since a moment, newest first: proposals that stood on their own."
+  recentDecisions(since: Timestamp!, first: Int = 25): [RecentDecision!]!
 }
 
 extend type Mutation {
@@ -11888,6 +12406,148 @@ extend type Mutation {
   outcome is reported.
   """
   decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
+}
+`, BuiltIn: false},
+	{Name: "../schema/desk_memory.graphqls", Input: `"How a person wants memories an agent picks up in their conversations kept."
+enum AgentMemorySavingMode {
+  "Saved as the agent picks them up, and said so in the conversation."
+  Automatic
+  "Offered in the conversation; nothing is kept until the person accepts it."
+  AskFirst
+}
+
+"""
+A memory as a person keeps it on the Desk: one of their own, their role's, or
+the organization's. Agent-scoped memories are administered in AI Control; the
+only ones a person sees here are those an agent learned in their own
+conversations.
+"""
+type DeskMemory {
+  id: ID!
+  content: String!
+  "Instruction, Fact, Correction or Procedure."
+  kind: AgentMemoryKind!
+  "User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent."
+  scope: AgentMemoryScope!
+  "The role a Role memory is kept for."
+  roleId: ID
+  roleName: String!
+  "Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits."
+  status: AgentMemoryStatus!
+  source: AgentMemorySource!
+  "The conversation the memory was saved from; empty for one a person wrote down."
+  sourceTitle: String!
+  "How many prompts and recalls have used it."
+  useCount: Int!
+  lastUsedAt: Timestamp
+  createdAt: Timestamp!
+  version: Int!
+  "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
+  editable: Boolean!
+  "Why it was kept, in the words of the agent that kept it; empty for one a person wrote down."
+  reason: String!
+  "What was said in the work that the memory rests on."
+  quotes: [String!]!
+  "The memory this one replaced, when the person can see it."
+  replaces: DeskMemoryLink
+  "The newest memory that replaced this one, when the person can see it."
+  replacedBy: DeskMemoryLink
+}
+
+"Another memory a Desk memory points to, read as it is now."
+type DeskMemoryLink {
+  id: ID!
+  content: String!
+  status: AgentMemoryStatus!
+}
+
+"How many memories the person keeps in one scope; Role is counted per role."
+type DeskMemoryCount {
+  scope: AgentMemoryScope!
+  roleId: ID
+  count: Int!
+}
+
+type DeskMemoryPage {
+  "Newest first."
+  items: [DeskMemory!]!
+  "The cursor of the next page; null on the last."
+  next: String
+  "Every memory the search matches, in every scope."
+  all: Int!
+  "What the search matches in each scope, for the filter chips."
+  counts: [DeskMemoryCount!]!
+}
+
+"A role the person holds, offered as a team to keep a memory for."
+type DeskMemoryRole {
+  id: ID!
+  name: String!
+  "The person may keep memories for the role: it needs permission to create agent memories."
+  writable: Boolean!
+}
+
+type DeskMemorySettings {
+  savingMode: AgentMemorySavingMode!
+  "The person's roles by name."
+  roles: [DeskMemoryRole!]!
+  "The person may keep memories for the whole organization."
+  canShareWithOrganization: Boolean!
+}
+
+input DeskMemoriesInput {
+  "Page size; 50 when left out, at most 100."
+  first: Int
+  after: String
+  "Only this scope; every scope when left out."
+  scope: AgentMemoryScope
+  "With scope Role, only this role."
+  roleId: ID
+  "Words the memory says."
+  query: String
+}
+
+input CreateDeskMemoryInput {
+  content: String!
+  "User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds."
+  scope: AgentMemoryScope!
+  roleId: ID
+}
+
+"Changes what a memory says, who it is kept for, or both; what is left out stays."
+input ReviseDeskMemoryInput {
+  content: String
+  scope: AgentMemoryScope
+  roleId: ID
+  version: Int!
+}
+
+input ConfirmDeskMemoryInput {
+  "The memory as the person edited it."
+  content: String!
+  scope: AgentMemoryScope!
+  roleId: ID
+  version: Int!
+}
+
+extend type Query {
+  "The memories the person keeps, newest first, with how many each scope holds."
+  deskMemories(input: DeskMemoriesInput!): DeskMemoryPage!
+  "Memories a conversation names, as many of them as the person may see, in the order asked."
+  deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
+  deskMemorySettings: DeskMemorySettings!
+}
+
+extend type Mutation {
+  createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
+  reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
+  "Active resumes or brings back a forgotten memory, Paused sets it aside, Retired forgets it."
+  setDeskMemoryStatus(id: ID!, status: AgentMemoryStatus!): DeskMemory!
+  "Accepts a memory an agent offered in the person's conversation."
+  confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
+  "Turns down a memory an agent offered; nothing is kept."
+  dismissDeskMemory(id: ID!): DeskMemory!
+  setMemorySavingMode(mode: AgentMemorySavingMode!): DeskMemorySettings!
 }
 `, BuiltIn: false},
 	{Name: "../schema/detention.graphqls", Input: `enum DetentionPolicyStatus {
@@ -19207,6 +19867,8 @@ type InboundMailbox {
   status: InboundMailboxStatus!
   "Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned."
   hasSigningSecret: Boolean!
+  "Whether an API key is set for reading message content. Resend posts only a message's metadata, so a Resend mailbox without one cannot read bodies or attachments. The key itself is never returned."
+  hasApiKey: Boolean!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -19404,13 +20066,15 @@ extend type Mutation {
   "Says what a message is about, by hand, when the reading did not work it out."
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   "Creates a mailbox and returns its webhook token, once."
-  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
-  "Changes a mailbox's settings. Changing its provider clears the signing secret."
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String, apiKey: String): InboundMailboxCredentials!
+  "Changes a mailbox's settings. Changing its provider clears the signing secret and the API key."
   updateInboundMailbox(id: ID!, version: Int!, input: InboundMailboxInput!): InboundMailbox!
   "Replaces the webhook token. The old URL stops working at once."
   rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
   "Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password."
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
+  "Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key."
+  setInboundMailboxApiKey(id: ID!, apiKey: String!): InboundMailbox!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
@@ -23681,6 +24345,9 @@ type ShipmentBillingSplitSummary {
 
 type Shipment {
   id: ID!
+  stage: ShipmentStage!
+  "Projected arrival at the final delivery, read from the latest position and the remaining stops."
+  eta: ShipmentEta
   businessUnitId: ID!
   organizationId: ID!
   sourceDocumentId: String
@@ -24507,17 +25174,8 @@ type ShipmentComment {
   attachments: [ShipmentCommentAttachment!]
 }
 
-type ShipmentSavedViewCounts {
-  all: Int
-  transit: Int
-  atRisk: Int
-  unassigned: Int
-  deliveringToday: Int
-}
-
 type ShipmentAnalytics {
   page: String!
-  savedViewCounts: ShipmentSavedViewCounts
   activeShipments: ShipmentActiveShipments
   onTimePercent: ShipmentOnTime
   revenueToday: ShipmentRevenueToday
@@ -25345,6 +26003,9 @@ input ShipmentsInput {
   billingTransferEligible: Boolean = false
   "Load each shipment's customer without expanding the rest of its details."
   includeCustomer: Boolean = false
+  quickFilters: [ShipmentQuickFilterInput!]
+  "IANA time zone for day and hour quick filters."
+  timezone: String
 }
 
 input ShipmentEventsInput {
@@ -25417,6 +26078,448 @@ extend type Mutation {
   resolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
   unresolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
   acknowledgeShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+}
+`, BuiltIn: false},
+	{Name: "../schema/shipment_board.graphqls", Input: `"Where a shipment sits on the board. Derived from its status alone, so it sorts, filters and groups as a column."
+enum ShipmentStage {
+  Late
+  NeedsCoverage
+  Moving
+  Scheduled
+  Delivered
+  Canceled
+}
+
+enum EtaVerdict {
+  OnTime
+  AtRisk
+  Late
+  Unknown
+}
+
+type ShipmentEta {
+  estimatedArrival: Timestamp
+  "Minutes between the projected arrival and the end of the delivery window; negative when it will be missed."
+  slackMinutes: Int
+  verdict: EtaVerdict!
+  "Why the load is behind, when the tracking snapshot can say."
+  reason: String
+}
+
+"How an organization moves freight: with its own drivers, through carriers, or both."
+enum OperationType {
+  asset
+  brokerage
+  both
+}
+
+"A named predicate over shipments. The server owns every definition; clients only name them."
+enum ShipmentQuickFilter {
+  Late
+  Uncovered
+  Moving
+  DeliveringToday
+  Reefer
+  LowMargin
+  DeliveryHour
+  PickupWindow
+  Detention
+  ReadyToBill
+}
+
+input ShipmentQuickFilterInput {
+  filter: ShipmentQuickFilter!
+  "Local hour of day (0-23) for DeliveryHour."
+  hour: Int
+  "Minutes from now where a PickupWindow starts."
+  windowStartMinutes: Int
+  "Minutes from now where a PickupWindow ends; omit for an open-ended window."
+  windowEndMinutes: Int
+}
+
+input ShipmentBoardScopeInput {
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  quickFilters: [ShipmentQuickFilterInput!]
+  "IANA time zone the day and hour predicates are evaluated in."
+  timezone: String!
+}
+
+type ShipmentBoardCapabilities {
+  "An AI provider is configured for briefings and operational insights."
+  ai: Boolean!
+  operationType: OperationType!
+  "An ELD or telematics integration supplies hours of service."
+  hos: Boolean!
+  "Google Maps is configured for this workspace."
+  maps: Boolean!
+}
+
+type ShipmentStageSummary {
+  stage: ShipmentStage!
+  "Sort position of the stage on the board."
+  rank: Int!
+  count: Int!
+  revenue: Decimal!
+}
+
+type ShipmentQuickFilterCount {
+  filter: ShipmentQuickFilter!
+  count: Int!
+}
+
+enum ShipmentFacet {
+  Status
+  Equipment
+  TenderStatus
+  Customer
+}
+
+type ShipmentFacetValue {
+  value: String!
+  label: String!
+  count: Int!
+}
+
+type ShipmentFacetCounts {
+  facet: ShipmentFacet!
+  "The field filter the values apply to."
+  field: String!
+  values: [ShipmentFacetValue!]!
+}
+
+type ShipmentBriefingSegment {
+  text: String!
+  "The quick filter the segment links to, when it names a set of shipments."
+  filter: ShipmentQuickFilter
+}
+
+type ShipmentBriefing {
+  segments: [ShipmentBriefingSegment!]!
+  "The model wrote the wording; false means the deterministic sentence."
+  narrated: Boolean!
+  generatedAt: Timestamp!
+}
+
+enum CapacityUnitKind {
+  Driver
+  Carrier
+}
+
+enum CapacityGroup {
+  ReadyNow
+  WithinTwoHours
+  TrucksPosted
+  UsuallyAccept
+}
+
+"The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier."
+type CapacityRing {
+  value: Float!
+  max: Float!
+  low: Boolean!
+}
+
+type CapacityUnit {
+  id: ID!
+  kind: CapacityUnitKind!
+  name: String!
+  initials: String!
+  group: CapacityGroup!
+  "When a driver comes free; null when free now."
+  freeAt: Timestamp
+  city: String
+  "Tractor code for a driver, MC number for a carrier."
+  unitLabel: String
+  ring: CapacityRing
+  "Trucks a carrier has posted."
+  badgeCount: Int
+  ratePerMile: Decimal
+  acceptancePercent: Float
+  driveRemainingMs: Int
+  tractorId: ID
+}
+
+type DriverCapacitySummary {
+  ready: Int!
+  withinTwoHours: Int!
+  short: Int!
+  uncovered: Int!
+}
+
+type CarrierCapacitySummary {
+  posting: Int!
+  untendered: Int!
+  awaitingAcceptance: Int!
+  avgRatePerMile: Decimal
+}
+
+type ShipmentCapacity {
+  kind: CapacityUnitKind!
+  units: [CapacityUnit!]!
+  drivers: DriverCapacitySummary
+  carriers: CarrierCapacitySummary
+}
+
+type CapacityMatch {
+  shipmentId: ID!
+  moveId: ID!
+  proNumber: String
+  originCity: String!
+  destinationCity: String!
+  pickupAt: Timestamp
+  revenue: Decimal!
+  deadheadMiles: Float
+  quote: Decimal
+  marginPercent: Float
+  fitPercent: Float
+}
+
+type DriverCoverageSuggestion {
+  workerId: ID!
+  tractorId: ID
+  moveId: ID!
+  name: String!
+  initials: String!
+  unitLabel: String
+  distanceMiles: Float
+  driveRemainingMs: Int
+  fitPercent: Float
+}
+
+type CarrierCoverageSuggestion {
+  carrierId: ID!
+  moveId: ID!
+  name: String!
+  initials: String!
+  mcNumber: String
+  quote: Decimal!
+  ratePerMile: Decimal!
+  acceptancePercent: Float
+  "Whether the carrier has a posting that covers this lane."
+  posted: Boolean!
+}
+
+type ShipmentCoverageSuggestions {
+  drivers: [DriverCoverageSuggestion!]!
+  carriers: [CarrierCoverageSuggestion!]!
+}
+
+input TenderShipmentItemInput {
+  shipmentId: ID!
+  "Tender to this carrier; omit to use the routing guide or the best match."
+  carrierId: ID
+}
+
+input TenderShipmentsInput {
+  items: [TenderShipmentItemInput!]!
+}
+
+type TenderShipmentSuccess {
+  shipmentId: ID!
+  tenderId: ID!
+  carrierId: ID
+  carrierName: String
+}
+
+type TenderShipmentFailure {
+  shipmentId: ID!
+  message: String!
+}
+
+type TenderShipmentsResult {
+  tendered: [TenderShipmentSuccess!]!
+  failed: [TenderShipmentFailure!]!
+}
+
+enum ShipmentSuggestionKind {
+  Coverage
+  Tender
+  DelayNotice
+  HoursOfService
+  Detention
+  Retender
+}
+
+enum ShipmentSuggestionTone {
+  Danger
+  Warning
+  Accent
+  Brand
+}
+
+enum ShipmentSuggestionActionType {
+  AssignDriver
+  TenderCarrier
+  NotifyCustomer
+  ApproveDetention
+  Review
+}
+
+type ShipmentSuggestionAction {
+  type: ShipmentSuggestionActionType!
+  label: String!
+  moveId: ID
+  workerId: ID
+  tractorId: ID
+  carrierId: ID
+  detentionOccurrenceId: ID
+  "Drafted customer message for NotifyCustomer."
+  message: String
+}
+
+type ShipmentSuggestion {
+  key: String!
+  kind: ShipmentSuggestionKind!
+  tone: ShipmentSuggestionTone!
+  shipmentId: ID
+  proNumber: String
+  title: String!
+  reason: String!
+  impact: [String!]!
+  primary: ShipmentSuggestionAction!
+  "Label of the manual action shown when the suggestion is reviewed by hand."
+  manualLabel: String!
+  dueAt: Timestamp
+  "Postponed with Later; sorts to the back of the queue."
+  deferred: Boolean!
+}
+
+type ShipmentSuggestionQueue {
+  items: [ShipmentSuggestion!]!
+  handledThisShift: Int!
+  narrated: Boolean!
+}
+
+enum ShipmentSuggestionDecision {
+  Done
+  Later
+}
+
+input DecideShipmentSuggestionInput {
+  key: String!
+  decision: ShipmentSuggestionDecision!
+}
+
+input NotifyShipmentDelayInput {
+  shipmentId: ID!
+  message: String!
+}
+
+type DeliveryHourBucket {
+  hour: Int!
+  delivered: Int!
+  scheduled: Int!
+  late: Int!
+}
+
+type LateDelivery {
+  shipmentId: ID!
+  proNumber: String
+  deltaMinutes: Int!
+  city: String!
+  customerName: String!
+}
+
+type ShipmentDeliveryWatch {
+  onTime: Int!
+  total: Int!
+  lateCount: Int!
+  buckets: [DeliveryHourBucket!]!
+  worstLate: [LateDelivery!]!
+}
+
+enum UncoveredPickupWindow {
+  UnderTwoHours
+  TwoToSixHours
+  LaterToday
+  TomorrowOrLater
+}
+
+type UncoveredWindowSummary {
+  window: UncoveredPickupWindow!
+  startMinutes: Int!
+  "Null for the open-ended window."
+  endMinutes: Int
+  count: Int!
+  revenue: Decimal!
+}
+
+type NextUncoveredPickup {
+  shipmentId: ID!
+  pickupAt: Timestamp!
+  originCity: String!
+  destinationCity: String!
+}
+
+type ShipmentUncoveredWatch {
+  count: Int!
+  revenue: Decimal!
+  windows: [UncoveredWindowSummary!]!
+  next: NextUncoveredPickup
+}
+
+type DetentionAccrual {
+  shipmentId: ID!
+  stopId: ID!
+  "Present when the detention policy engine tracks the stop, so it can be approved for billing."
+  occurrenceId: ID
+  facilityName: String!
+  coverageName: String
+  "When billable time started; the client accrues from here."
+  billableSince: Timestamp!
+  ratePerHour: Decimal!
+  amount: Decimal!
+}
+
+type ShipmentDetentionWatch {
+  stopCount: Int!
+  amount: Decimal!
+  ratePerHour: Decimal!
+  snapshotAt: Timestamp!
+  top: [DetentionAccrual!]!
+}
+
+type ReadyToBillCustomer {
+  customerId: ID!
+  name: String!
+  count: Int!
+  total: Decimal!
+}
+
+type ShipmentBillingWatch {
+  count: Int!
+  total: Decimal!
+  customers: [ReadyToBillCustomer!]!
+  moreCustomers: Int!
+}
+
+type ShipmentWatchlist {
+  deliveries: ShipmentDeliveryWatch!
+  uncovered: ShipmentUncoveredWatch!
+  detention: ShipmentDetentionWatch!
+  billing: ShipmentBillingWatch!
+}
+
+extend type Query {
+  shipmentBoardCapabilities: ShipmentBoardCapabilities!
+  shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
+  shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
+  shipmentFacetCounts(input: ShipmentBoardScopeInput!, facets: [ShipmentFacet!]!): [ShipmentFacetCounts!]!
+  shipmentBriefing(timezone: String!): ShipmentBriefing!
+  shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
+  capacityUnitMatches(kind: CapacityUnitKind!, unitId: ID!, limit: Int = 2): [CapacityMatch!]!
+  shipmentCoverageSuggestions(shipmentId: ID!): ShipmentCoverageSuggestions!
+  shipmentSuggestions(timezone: String!): ShipmentSuggestionQueue!
+  shipmentWatchlist(timezone: String!): ShipmentWatchlist!
+}
+
+extend type Mutation {
+  tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
+  decideShipmentSuggestion(input: DecideShipmentSuggestionInput!): Boolean!
+  undoShipmentSuggestionDecision(key: String!): Boolean!
+  notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/shipment_type.graphqls", Input: `type ShipmentType {

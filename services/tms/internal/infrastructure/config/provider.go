@@ -21,9 +21,18 @@ var Module = fx.Module("config",
 	),
 )
 
-func ProvideConfig() (*Config, error) {
+const sectionsGroup = `group:"config_sections"`
+
+type ProvideConfigParams struct {
+	fx.In
+
+	Sections []Section `group:"config_sections"`
+}
+
+func ProvideConfig(p ProvideConfigParams) (*Config, error) {
 	loader := NewLoader(
 		WithConfigPath("config"),
+		WithSections(p.Sections...),
 	)
 
 	config, err := loader.Load()
@@ -32,6 +41,18 @@ func ProvideConfig() (*Config, error) {
 	}
 
 	return config, nil
+}
+
+func SectionsOption(sections ...Section) fx.Option {
+	options := make([]fx.Option, 0, len(sections))
+	for _, section := range sections {
+		options = append(options, fx.Provide(fx.Annotate(
+			func() Section { return section },
+			fx.ResultTags(sectionsGroup),
+		)))
+	}
+
+	return fx.Options(options...)
 }
 
 // LogSink owns whatever the logger writes to, so the application can release

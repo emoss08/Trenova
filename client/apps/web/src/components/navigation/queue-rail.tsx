@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 
 /*
@@ -40,7 +40,7 @@ export function RailItem({
   active,
   onClick,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   label: string;
   hint?: string;
   count?: number;

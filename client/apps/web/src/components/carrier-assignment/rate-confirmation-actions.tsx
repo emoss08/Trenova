@@ -20,7 +20,13 @@ import {
   type RateConfirmation,
 } from "@trenova/shared/types/rate-confirmation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileCheck2Icon, FileTextIcon, MailIcon, RefreshCcwIcon, XIcon } from "lucide-react";
+import {
+  File06Icon,
+  FileCheck03Icon,
+  Mail01Icon,
+  RefreshCcw02Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -90,9 +96,7 @@ export function RateConfirmationActions({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-muted-foreground font-medium">
-          {t("Rate con")}
-        </span>
+        <span className="text-xs text-muted-foreground font-medium">{t("Rate con")}</span>
         {latest ? (
           <>
             <RateConfirmationStatusBadge status={latest.status} />
@@ -101,7 +105,8 @@ export function RateConfirmationActions({
             </span>
             {latest.generatedVia === "TenderAcceptance" && (
               <Badge
-                variant="neutral" appearance="outline"
+                variant="neutral"
+                appearance="outline"
                 className="max-h-5 text-2xs"
                 title={t("Generated automatically when the carrier accepted the tender")}
               >
@@ -110,7 +115,8 @@ export function RateConfirmationActions({
             )}
             {latest.status === "Confirmed" && latest.confirmedVia && (
               <Badge
-                variant="neutral" appearance="outline"
+                variant="neutral"
+                appearance="outline"
                 className="max-h-5 text-2xs"
                 title={t("How the carrier's confirmation was captured")}
               >
@@ -148,7 +154,7 @@ export function RateConfirmationActions({
               : "Generate the rate confirmation PDF from the current buy rate"
           }
         >
-          <RefreshCcwIcon className="size-3" aria-hidden />
+          <RefreshCcw02Icon className="size-3" aria-hidden />
           {latest && latest.status !== "Voided" ? t("Regenerate") : t("Generate")}
         </Button>
         {latest && (latest.status === "Generated" || latest.status === "Sent") && (
@@ -162,7 +168,7 @@ export function RateConfirmationActions({
               onClick={() => sendMutation.mutate(latest.id)}
               title={t("Email the rate confirmation to the carrier's rate confirmation contacts")}
             >
-              <MailIcon className="size-3" aria-hidden />
+              <Mail01Icon className="size-3" aria-hidden />
               {latest.status === "Sent" ? t("Resend") : t("Send")}
             </Button>
             <Button
@@ -173,7 +179,7 @@ export function RateConfirmationActions({
               onClick={() => setConfirmOpen(true)}
               title={t("Record that the carrier confirmed this rate")}
             >
-              <FileCheck2Icon className="size-3" aria-hidden />
+              <FileCheck03Icon className="size-3" aria-hidden />
               {t("Mark confirmed")}
             </Button>
           </>
@@ -186,7 +192,7 @@ export function RateConfirmationActions({
             className="h-6 px-2 text-2xs text-danger-foreground hover:text-danger-foreground"
             onClick={() => setVoidOpen(true)}
           >
-            <XIcon className="size-3" aria-hidden />
+            <XCloseIcon className="size-3" aria-hidden />
             {t("Void")}
           </Button>
         )}
@@ -198,7 +204,7 @@ export function RateConfirmationActions({
             className="hover:bg-muted inline-flex h-6 items-center gap-1 rounded-md border px-2 text-2xs font-medium"
             title={t("Open the filed rate confirmation document")}
           >
-            <FileTextIcon className="size-3" aria-hidden />
+            <File06Icon className="size-3" aria-hidden />
             {t("View PDF")}
           </a>
         )}

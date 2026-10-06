@@ -35,7 +35,13 @@ import {
   type ShareInvoiceFormValues,
   type ShareInvoiceResult,
 } from "@trenova/shared/types/invoice-share";
-import { CheckIcon, CopyIcon, LinkIcon, Share2Icon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  Copy01Icon,
+  Link01Icon,
+  Share07Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useId, useState } from "react";
 import { FormProvider, useController, useForm, type Control, type Resolver } from "react-hook-form";
@@ -56,7 +62,7 @@ export function InvoiceShareDialog({ invoice }: { invoice: Invoice }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        <Share2Icon className="size-3.5" />
+        <Share07Icon className="size-3.5" />
         {t("Share")}
       </Button>
       {open ? <InvoiceShareDialogContent invoice={invoice} /> : null}
@@ -95,7 +101,7 @@ function InvoiceShareDialogContent({ invoice }: { invoice: Invoice }) {
             onFocus={(event) => event.currentTarget.select()}
             inputContainerClassName="w-full"
             className={cn(FIELD, "pr-20 pl-9 truncate")}
-            leftElement={<LinkIcon className="text-muted-foreground size-4" />}
+            leftElement={<Link01Icon className="text-muted-foreground size-4" />}
             rightElement={
               <button
                 type="button"
@@ -118,7 +124,7 @@ function InvoiceShareDialogContent({ invoice }: { invoice: Invoice }) {
       </div>
       <DialogFooter className="sm:justify-between">
         <Button type="button" variant="ghost" onClick={copyLink}>
-          {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
+          {isCopied ? <CheckIcon className="size-4" /> : <Copy01Icon className="size-4" />}
           {isCopied ? t("Copied") : t("Copy link")}
         </Button>
         <DialogClose render={<Button type="button">{t("Done")}</Button>} />
@@ -319,7 +325,7 @@ function TeammateSearch({
               aria-label={t("Clear teammate")}
               className="text-muted-foreground hover:text-foreground mr-1 flex size-7 items-center justify-center rounded-md"
             >
-              <XIcon className="size-3.5" />
+              <XCloseIcon className="size-3.5" />
             </button>
           ) : undefined
         }

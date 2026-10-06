@@ -18,11 +18,11 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import type { Invoice, InvoiceLine, InvoiceLineType } from "@trenova/shared/types/invoice";
 import {
+  ChevronCollapseVerticalIcon,
   ChevronRightIcon,
-  ChevronsDownUpIcon,
-  ChevronsUpDownIcon,
-  ExternalLinkIcon,
-} from "lucide-react";
+  ChevronSelectorVerticalIcon,
+  LinkExternal01Icon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
@@ -132,9 +132,9 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
         {isGrouped ? (
           <Button size="xs" variant="ghost" className="ml-auto" onClick={toggleAll}>
             {anyCollapsed ? (
-              <ChevronsUpDownIcon className="size-3.5" />
+              <ChevronSelectorVerticalIcon className="size-3.5" />
             ) : (
-              <ChevronsDownUpIcon className="size-3.5" />
+              <ChevronCollapseVerticalIcon className="size-3.5" />
             )}
             {anyCollapsed ? t("Expand all") : t("Collapse all")}
           </Button>
@@ -223,7 +223,7 @@ function ChargeSection({
                 />
               }
             >
-              <ExternalLinkIcon className="size-3" />
+              <LinkExternal01Icon className="size-3" />
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>
               {t("Open shipment")}

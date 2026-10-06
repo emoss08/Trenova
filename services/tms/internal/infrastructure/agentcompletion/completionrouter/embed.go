@@ -231,7 +231,7 @@ func (s *Service) embeddingCandidates(
 		).WithInternal(serviceports.ErrNoProviderConfigured)
 	}
 
-	ready, err := s.awake(sameModel)
+	ready, err := s.awake(ctx, sameModel)
 	if err != nil {
 		return nil, "", err
 	}

@@ -372,6 +372,46 @@ func (h *Handler) startWorkflow(
 		})
 }
 
+// compactThread starts summarizing the older part of a conversation, and
+// returns the turn doing it, to follow and to stop like a reply.
+//
+// A conversation whose last measure says there is too little behind its
+// latest turns is refused here, before its live slot is taken, rather than by
+// a worker a moment later.
+func (h *Handler) compactThread(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	thread, err := h.service.GetThread(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if thread.ContextUsage != nil && !thread.ContextUsage.WorthCompacting() {
+		h.eh.HandleError(c, errortypes.NewBusinessError(
+			"There is nothing to compact yet. Compacting summarizes the turns before the latest two.",
+		))
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	turn, err := assistantjobs.StartCompaction(c.Request.Context(), h.turns, h.workflows,
+		assistantjobs.StartCompactionRequest{
+			ThreadID:   thread.ID,
+			TenantInfo: req.TenantInfo,
+			Actor:      requestActorFromAuthContext(authCtx),
+		})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusAccepted, turnStarted(turn))
+}
+
 // stopTurn ends a reply nobody is waiting for any more.
 func (h *Handler) stopTurn(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)

@@ -15,7 +15,12 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps, DockAction } from "@trenova/shared/types/data-table";
 import type { EDIPartner } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CircleCheckIcon, CircleXIcon, RefreshCwIcon, RotateCcwIcon } from "lucide-react";
+import {
+  CheckCircleIcon,
+  RefreshCcw01Icon,
+  RefreshCw02Icon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { notifyEDIBulkOutcome } from "./edi-bulk-actions";
@@ -201,7 +206,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         id: "bulk-approve-transfers",
         label: t("Approve"),
         loadingLabel: t("Approving..."),
-        icon: CircleCheckIcon,
+        icon: CheckCircleIcon,
         onClick: handleBulkApprove,
         clearSelectionOnSuccess: true,
       },
@@ -209,7 +214,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         id: "bulk-reject-transfers",
         label: t("Reject"),
         loadingLabel: t("Rejecting..."),
-        icon: CircleXIcon,
+        icon: XCircleIcon,
         variant: "destructive",
         onClick: handleBulkRejectRequest,
       },
@@ -294,7 +299,7 @@ function MessagesWorkspace() {
         id: "bulk-retry-delivery",
         label: t("Retry delivery"),
         loadingLabel: t("Queueing retries..."),
-        icon: RotateCcwIcon,
+        icon: RefreshCcw01Icon,
         onClick: handleBulkRetry,
         clearSelectionOnSuccess: true,
       },
@@ -356,7 +361,7 @@ function InboundFilesWorkspace() {
         id: "bulk-reprocess-files",
         label: t("Reprocess"),
         loadingLabel: t("Reprocessing..."),
-        icon: RefreshCwIcon,
+        icon: RefreshCw02Icon,
         onClick: handleBulkReprocess,
         clearSelectionOnSuccess: true,
       },

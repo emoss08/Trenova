@@ -32,6 +32,7 @@ import {
   formatCurrentUserTime,
   formatDurationFromSeconds,
   formatSecondsAgo,
+  formatCompactAge,
   inclusiveDays,
   formatRange,
   getStartOfDay,
@@ -589,5 +590,21 @@ describe("formatISODateMedium", () => {
     expect(formatISODateMedium("")).toBe("");
     expect(formatISODateMedium("2023-02-30", "No date")).toBe("No date");
     expect(formatISODateMedium("2023-10-02T00:00:00Z", "No date")).toBe("No date");
+  });
+});
+
+describe("formatCompactAge", () => {
+  it("reads under a minute as now", () => {
+    expect(formatCompactAge(0)).toBe("now");
+    expect(formatCompactAge(59)).toBe("now");
+    expect(formatCompactAge(Number.NaN)).toBe("now");
+  });
+
+  it("counts whole minutes, hours and days", () => {
+    expect(formatCompactAge(60)).toBe("1m");
+    expect(formatCompactAge(3599)).toBe("59m");
+    expect(formatCompactAge(3600)).toBe("1h");
+    expect(formatCompactAge(86399)).toBe("23h");
+    expect(formatCompactAge(86400 * 2)).toBe("2d");
   });
 });

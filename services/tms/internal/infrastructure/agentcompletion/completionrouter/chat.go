@@ -5,16 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -55,6 +58,9 @@ func (s *Service) runChat(
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
+	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
 
 	usable, err := s.usableFor(ctx, aiprovider.TaskAssistantChat, req.TenantInfo)
 	if err != nil {
@@ -68,12 +74,13 @@ func (s *Service) runChat(
 	// A pinned provider that is resting is not tried anyway: the person
 	// chose it, but a choice of a provider that is down is a wait, not a
 	// reply, and the error names the wait.
-	usable, err = s.awake(usable)
+	usable, err = s.awake(ctx, usable)
 	if err != nil {
 		return nil, err
 	}
 
 	var lastErr error
+	var failures []serviceports.ChatProviderFailure
 	queue := append(make([]*aiprovider.Provider, 0, len(usable)+maxMidReplyRetries), usable...)
 	midReplyRetries := 0
 	for idx := 0; idx < len(queue); idx++ {
@@ -96,7 +103,9 @@ func (s *Service) runChat(
 			attribution: req.Attribution,
 		})
 		started := time.Now()
+		attemptStart := time.Now()
 		result, streamed, attemptErr := s.attemptChat(attemptCtx, provider, req, sink)
+		elapsed := time.Since(attemptStart)
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
@@ -107,6 +116,7 @@ func (s *Service) runChat(
 			attribution: req.Attribution,
 			tenant:      req.TenantInfo,
 			latency:     latency,
+			firstToken:  streamed.firstToken(started),
 			streamed:    sink != nil,
 			outcome:     chatOutcome(provider, result, streamed, attemptErr),
 			err:         attemptErr,
@@ -116,6 +126,9 @@ func (s *Service) runChat(
 		})
 		if attemptErr == nil {
 			result.LatencyMs = latency.Milliseconds()
+			if first := firstOtherThan(failures, provider.ID); first != nil {
+				result.FallbackFrom = first
+			}
 			result.CostUSD = provider.CostFor(result.InputTokens, result.OutputTokens)
 
 			return result, nil
@@ -153,13 +166,15 @@ func (s *Service) runChat(
 					)
 					if req.RetrySink != nil {
 						req.RetrySink(serviceports.ChatRetryNotice{
-							Attempt:  midReplyRetries,
-							Provider: queue[idx+1].Name,
-							Reason:   attemptErr.Error(),
-							Kind:     serviceports.RetryKindRestart,
+							Attempt:     midReplyRetries,
+							Provider:    queue[idx+1].Name,
+							Reason:      attemptErr.Error(),
+							Kind:        serviceports.RetryKindRestart,
+							MaxAttempts: maxMidReplyRetries + 1,
 						})
 					}
 					lastErr = attemptErr
+					failures = append(failures, providerFailure(provider, attemptErr, elapsed, streamed.retries+1))
 
 					continue
 				}
@@ -180,13 +195,212 @@ func (s *Service) runChat(
 		}
 
 		lastErr = attemptErr
+		failures = append(failures, providerFailure(provider, attemptErr, elapsed, streamed.retries+1))
 		s.logger.Warn("chat provider attempt failed, falling through",
 			zap.String("provider", provider.Name),
 			zap.Error(attemptErr),
 		)
 	}
 
-	return nil, fmt.Errorf("every configured chat provider failed: %w", lastErr)
+	return nil, &serviceports.ChatProvidersFailedError{
+		Failures: append(distinctFailures(failures), s.notSetUp(ctx, req, usable)...),
+		Err:      lastErr,
+	}
+}
+
+// providerFailure names what went wrong with one provider in words a reader
+// can act on: a provider that is busy is worth asking again later, one that
+// timed out may be slow today, and anything else is a fault to look at. The
+// provider's own message is for the administrator and stays in the logs and
+// the usage record; the reader is told who answered with what.
+func providerFailure(
+	provider *aiprovider.Provider,
+	err error,
+	elapsed time.Duration,
+	asked int,
+) serviceports.ChatProviderFailure {
+	code := 0
+	var answered serviceports.ProviderFailure
+	if errors.As(err, &answered) {
+		code = answered.ProviderStatus()
+	}
+	// Overloaded is what a provider says when it is busy: a rate limit, a
+	// 503 or Anthropic's 529. Any other fault on its side, or a connection
+	// that never reached it, is Unavailable.
+	status := "Failed"
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		status = "Timed out"
+	case code == 429 || code == 503 || code == 529:
+		status = "Overloaded"
+	case code >= 500 || unavailability(err) || modeladapter.IsRetryable(err):
+		status = "Unavailable"
+	}
+
+	return serviceports.ChatProviderFailure{
+		ProviderID: provider.ID,
+		Name:       provider.Name,
+		Model:      provider.Model,
+		Vendor:     provider.Vendor(),
+		Status:     status,
+		HTTPStatus: code,
+		Attempts:   asked,
+		Detail:     failureDetail(provider, status, code, asked, elapsed),
+	}
+}
+
+// failureDetail is the right-hand line of a failed model's row.
+func failureDetail(
+	provider *aiprovider.Provider,
+	status string,
+	code, attempts int,
+	elapsed time.Duration,
+) string {
+	who := vendorName(provider)
+	switch {
+	case status == "Timed out":
+		return fmt.Sprintf("No response after %ds", max(1, int(elapsed.Round(time.Second).Seconds())))
+	case code > 0:
+		return who + " returned " + strconv.Itoa(code) + times(attempts)
+	case status == "Overloaded" || status == "Unavailable":
+		return who + " could not be reached" + times(attempts)
+	default:
+		return who + " could not answer" + times(attempts)
+	}
+}
+
+func times(n int) string {
+	switch {
+	case n <= 1:
+		return ""
+	case n == 2:
+		return " twice"
+	default:
+		return " " + strconv.Itoa(n) + " times"
+	}
+}
+
+// vendorNames is what a vendor is called where a person reads it.
+var vendorNames = map[string]string{
+	"anthropic":   "Anthropic",
+	"openai":      "OpenAI",
+	"gemini":      "Google",
+	"groq":        "Groq",
+	"mistral":     "Mistral",
+	"openrouter":  "OpenRouter",
+	"together":    "Together",
+	"fireworks":   "Fireworks",
+	"deepseek":    "DeepSeek",
+	"bedrock":     "AWS Bedrock",
+	"huggingface": "Hugging Face",
+	"ollama":      "Ollama",
+}
+
+func vendorName(provider *aiprovider.Provider) string {
+	if name, ok := vendorNames[provider.Vendor()]; ok {
+		return name
+	}
+
+	return provider.Name
+}
+
+// notSetUp are the organization's other enabled models, which were never
+// asked because they have not been given the task. A reader told that every
+// model failed is told about these too, since giving one the task is the fix.
+func (s *Service) notSetUp(
+	ctx context.Context,
+	req *serviceports.ChatCompletionRequest,
+	asked []*aiprovider.Provider,
+) []serviceports.ChatProviderFailure {
+	all, err := s.repo.List(ctx, &repositories.ListAIProviderRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: req.TenantInfo,
+			Pagination: pagination.Info{Limit: maxNotSetUp * 4},
+		},
+	})
+	if err != nil || all == nil {
+		return nil
+	}
+	seen := make(map[pulid.ID]bool, len(asked))
+	for _, provider := range asked {
+		seen[provider.ID] = true
+	}
+
+	out := make([]serviceports.ChatProviderFailure, 0, maxNotSetUp)
+	for _, provider := range all.Items {
+		if len(out) == maxNotSetUp {
+			break
+		}
+		if seen[provider.ID] || !provider.Enabled {
+			continue
+		}
+		out = append(out, serviceports.ChatProviderFailure{
+			ProviderID: provider.ID,
+			Name:       provider.Name,
+			Model:      provider.Model,
+			Vendor:     provider.Vendor(),
+			Status:     "Not set up",
+			Detail:     "Not given the assistant task",
+		})
+	}
+
+	return out
+}
+
+// maxNotSetUp keeps the list of unasked models to what fits under a card.
+const maxNotSetUp = 3
+
+// retold is a failure's line again once it is known how often it happened.
+func retold(failure serviceports.ChatProviderFailure) string {
+	who := vendorNames[failure.Vendor]
+	if who == "" {
+		who = failure.Name
+	}
+	switch {
+	case failure.HTTPStatus > 0:
+		return who + " returned " + strconv.Itoa(failure.HTTPStatus) + times(failure.Attempts)
+	case failure.Status == "Overloaded" || failure.Status == "Unavailable":
+		return who + " could not be reached" + times(failure.Attempts)
+	default:
+		return who + " could not answer" + times(failure.Attempts)
+	}
+}
+
+// distinctFailures keeps the last word from each provider: one asked twice
+// is listed once, as it ended, and says how many times it was asked.
+func distinctFailures(failures []serviceports.ChatProviderFailure) []serviceports.ChatProviderFailure {
+	out := make([]serviceports.ChatProviderFailure, 0, len(failures))
+	seen := make(map[pulid.ID]int, len(failures))
+	for _, failure := range failures {
+		if at, ok := seen[failure.ProviderID]; ok {
+			failure.Attempts += out[at].Attempts
+			if failure.Status != "Timed out" {
+				failure.Detail = retold(failure)
+			}
+			out[at] = failure
+			continue
+		}
+		seen[failure.ProviderID] = len(out)
+		out = append(out, failure)
+	}
+
+	return out
+}
+
+// firstOtherThan is the first provider that failed before the one that
+// answered, which is the one the reader expected to hear from.
+func firstOtherThan(
+	failures []serviceports.ChatProviderFailure,
+	answered pulid.ID,
+) *serviceports.ChatProviderFailure {
+	for idx := range failures {
+		if failures[idx].ProviderID != answered {
+			failure := failures[idx]
+			return &failure
+		}
+	}
+
+	return nil
 }
 
 // chatStream is what one attempt put in front of the reader before it ended.
@@ -195,11 +409,33 @@ func (s *Service) runChat(
 type chatStream struct {
 	// text is the reply that reached the sink.
 	text string
+	// retries is how many times a busy provider was asked again.
+	retries int
 	// reasoningRunes is how much thinking the provider streamed.
 	reasoningRunes   int
 	cacheReadTokens  int
 	cacheWriteTokens int
 	finishReason     string
+	thinkingDropped  int
+	// firstAt is when the first text or thinking reached the reader: how
+	// long a person watched nothing. Zero when none did.
+	firstAt time.Time
+}
+
+func (c *chatStream) markFirst() {
+	if c.firstAt.IsZero() {
+		c.firstAt = time.Now()
+	}
+}
+
+// firstToken is how long after started the first text or thinking arrived,
+// or zero when none did.
+func (c *chatStream) firstToken(started time.Time) time.Duration {
+	if c.firstAt.IsZero() {
+		return 0
+	}
+
+	return c.firstAt.Sub(started)
 }
 
 // attemptChat runs the turn on one provider. The returned stream says what
@@ -234,10 +470,12 @@ func (s *Service) attemptChat(
 		StreamClient: s.streamClientFor(provider),
 		StreamIdle:   s.ai.GetStreamIdleTimeout(),
 		Request: &modeladapter.Request{
-			System:    req.System,
-			Messages:  req.Messages,
-			Tools:     req.Tools,
-			MaxTokens: maxTokens,
+			System:       req.System,
+			SystemStable: req.SystemStable,
+			CacheKey:     promptCacheKey(req),
+			Messages:     req.Messages,
+			Tools:        req.Tools,
+			MaxTokens:    maxTokens,
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
 			// with JSON that parses, and invention there is only ever a bug.
@@ -249,6 +487,7 @@ func (s *Service) attemptChat(
 	// cut off before its usage frame reports no tokens, and thinking is
 	// billed as output all the same.
 	call.Reasoning = func(delta string) {
+		streamed.markFirst()
 		streamed.reasoningRunes += utf8.RuneCountInString(delta)
 		if req.ReasoningSink != nil {
 			req.ReasoningSink(delta)
@@ -259,6 +498,7 @@ func (s *Service) attemptChat(
 	// A busy provider being asked again is told to the reader, who is
 	// otherwise watching nothing happen for the length of the wait.
 	busy := func(attempt int, wait time.Duration, cause error) {
+		streamed.retries++
 		if req.RetrySink == nil {
 			return
 		}
@@ -268,11 +508,16 @@ func (s *Service) attemptChat(
 			Reason:      cause.Error(),
 			Kind:        serviceports.RetryKindBusy,
 			WaitSeconds: int(wait.Round(time.Second).Seconds()),
+			MaxAttempts: s.busyAttempts(),
 		})
 	}
 
 	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
-		resp, streamed.text, err = s.executeStreamWithRetry(ctx, streamer, call, sink, busy)
+		first := func(delta string) {
+			streamed.markFirst()
+			sink(delta)
+		}
+		resp, streamed.text, err = s.executeStreamWithRetry(ctx, streamer, call, first, busy)
 	} else {
 		resp, err = s.executeWithRetryNoticed(ctx, adapter, call, busy)
 		if err == nil && sink != nil && resp.Text != "" {
@@ -297,6 +542,7 @@ func (s *Service) attemptChat(
 	streamed.cacheReadTokens = resp.CacheReadTokens
 	streamed.cacheWriteTokens = resp.CacheWriteTokens
 	streamed.finishReason = finishReason(resp)
+	streamed.thinkingDropped = resp.ThinkingDropped
 
 	return &serviceports.ChatCompletionResult{
 		Text:            resp.Text,
@@ -311,6 +557,7 @@ func (s *Service) attemptChat(
 		ReasoningTokens: resp.ReasoningTokens,
 		OutputLimit:     cmp.Or(resp.OutputLimit, maxTokens),
 		CutOffCall:      resp.CutOffCall,
+		ContextWindow:   provider.ConfiguredContextWindow(),
 	}, streamed, nil
 }
 
@@ -332,6 +579,7 @@ func partialReply(
 		ProviderID:      provider.ID,
 		ProviderKind:    provider.Kind,
 		Truncated:       true,
+		ContextWindow:   provider.ConfiguredContextWindow(),
 	}
 }
 
@@ -510,5 +758,6 @@ func chatOutcome(
 		CacheWriteTokens: streamed.cacheWriteTokens,
 		FinishReason:     streamed.finishReason,
 		Truncated:        result.Truncated,
+		ThinkingDropped:  streamed.thinkingDropped,
 	}
 }

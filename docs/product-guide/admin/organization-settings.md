@@ -1,6 +1,6 @@
 ---
 path: /admin/organization-settings
-aliases: [company settings, company profile, organization profile, SSO, single sign-on, SCIM, logo, DOT number, SCAC, subscription, plan usage]
+aliases: [company settings, company profile, organization profile, SSO, single sign-on, SCIM, logo, DOT number, SCAC]
 related:
   - /admin/users
   - /admin/roles
@@ -10,8 +10,7 @@ related:
 ---
 
 ## What it's for
-Organization settings holds the organization's profile, sign-in security and subscription details,
-in three tabs:
+Organization settings holds the organization's profile and sign-in security, in two tabs:
 - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and
   tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT
   number and tax ID) and the **Registered address**.
@@ -19,7 +18,6 @@ in three tabs:
   **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds
   priority-ordered access policies, and **Activity** shows authentication events, risk decisions,
   external identities and MFA authenticators.
-- **Billing & usage**: the access state, plan, enabled features and metered usage for the period.
 
 Administrators use it to keep the company's details current and to set up single sign-on and user
 provisioning.
@@ -69,13 +67,6 @@ Keywords: SCIM token, directory sync, group mapping, user provisioning
    token**. Copy the token straight away; it is only shown once.
 4. Under **Group role mappings**, select **Add mapping** and map an **External group ID** to a
    **Role**, then select **Save**.
-
-### Check plan and usage
-Keywords: subscription, billing plan, usage limits, features
-1. Open [Organization settings](/admin/organization-settings) and select the **Billing & usage**
-   tab.
-2. Review the **Access state**, **Plan**, **Usage this period** and **Enabled features**. Select
-   **Refresh** to reload usage.
 
 ## Notes
 Opening the page needs read access to the organization; saving the **General** tab needs update

@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import type { FuelSurchargeChange } from "@/hooks/use-shipment-totals-preview";
-import { FuelIcon } from "lucide-react";
+import { FuelIcon } from "@trenova/shared/components/icons";
 
 function money(value: number) {
   return `$${value.toFixed(2)}`;

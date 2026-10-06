@@ -34,6 +34,7 @@ func ShipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		FormulaTemplateID:      entity.FormulaTemplateID.String(),
 		ConsolidationGroupID:   IDPtr(entity.ConsolidationGroupID),
 		OrderID:                IDPtr(entity.OrderID),
+		Stage:                  entity.Stage(),
 		Status:                 gqlmodel.ShipmentStatus(entity.Status),
 		TenderStatus:           tenderStatusToModel(entity.TenderStatus),
 		EntryMethod:            entryMethodToModel(entity.EntryMethod),

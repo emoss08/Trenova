@@ -8,7 +8,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { TableConfig, TableConfiguration, TableViewSource } from "@/types/table-configuration";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { BookmarkIcon, PlusIcon, UsersIcon } from "lucide-react";
+import { BookmarkIcon, PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -119,7 +119,7 @@ export default function DataTableConfigManager({
                 )}
               >
                 <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium">
-                  <UsersIcon className="size-3" />
+                  <Users01Icon className="size-3" />
                   {t("Team views")}
                 </h3>
                 {teamViews.map((config) => renderItem(config, false))}

@@ -142,7 +142,28 @@
         "react/no-string-refs": "error",
         "react/no-unescaped-entities": "error",
         "react/no-unknown-property": "error",
-        "react/require-render-return": "error"
+        "react/require-render-return": "error",
+        "no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "lucide-react",
+                        "message": "Trenova draws its icons from Untitled UI. Import them from @trenova/shared/components/icons."
+                    },
+                    {
+                        "name": "@untitledui/icons",
+                        "message": "Import icons from @trenova/shared/components/icons, which names them with an Icon suffix and holds the custom set."
+                    }
+                ],
+                "patterns": [
+                    {
+                        "group": ["@untitledui/icons/*", "@hugeicons/*"],
+                        "message": "Import icons from @trenova/shared/components/icons."
+                    }
+                ]
+            }
+        ]
     },
     "jsPlugins": [
         "@tanstack/eslint-plugin-query",
@@ -187,7 +208,16 @@
         },
         {
             "files": [
-                "scripts/**"
+                "**/components/icon-set/**"
+            ],
+            "rules": {
+                "no-restricted-imports": "off"
+            }
+        },
+        {
+            "files": [
+                "scripts/**",
+                "**/e2e/mock-api/**"
             ],
             "env": {
                 "node": true

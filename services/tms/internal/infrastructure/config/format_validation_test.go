@@ -26,7 +26,7 @@ func TestFormatValidationError_WithValidationErrors(t *testing.T) {
 	err := l.validator.Struct(testStruct{})
 	require.Error(t, err)
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	require.Error(t, result)
 	assert.Contains(t, result.Error(), "validation errors:")
 	assert.Contains(t, result.Error(), "is required")
@@ -35,10 +35,9 @@ func TestFormatValidationError_WithValidationErrors(t *testing.T) {
 func TestFormatValidationError_WithNonValidationError(t *testing.T) {
 	t.Parallel()
 
-	l := NewLoader()
 	nonValidationErr := errors.New("some other error")
 
-	result := l.formatValidationError(nonValidationErr)
+	result := formatValidationError(nonValidationErr)
 	require.Error(t, result)
 	assert.Equal(t, nonValidationErr, result)
 }
@@ -58,7 +57,7 @@ func TestFormatValidationError_RequiredTag(t *testing.T) {
 	var validationErrs validator.ValidationErrors
 	require.True(t, errors.As(err, &validationErrs))
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	assert.Contains(t, result.Error(), "is required")
 }
 
@@ -74,7 +73,7 @@ func TestFormatValidationError_MinTag(t *testing.T) {
 	err := l.validator.Struct(testStruct{Port: 0})
 	require.Error(t, err)
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	assert.Contains(t, result.Error(), "validation errors:")
 }
 
@@ -90,7 +89,7 @@ func TestFormatValidationError_MaxTag(t *testing.T) {
 	err := l.validator.Struct(testStruct{Port: 200})
 	require.Error(t, err)
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	assert.Contains(t, result.Error(), "validation errors:")
 }
 
@@ -106,7 +105,7 @@ func TestFormatValidationError_OneofTag(t *testing.T) {
 	err := l.validator.Struct(testStruct{Mode: "invalid"})
 	require.Error(t, err)
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	assert.Contains(t, result.Error(), "validation errors:")
 }
 
@@ -122,7 +121,7 @@ func TestFormatValidationError_NoTrailingSlashTag(t *testing.T) {
 	err := l.validator.Struct(testStruct{Path: "/api/"})
 	require.Error(t, err)
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	assert.Contains(t, result.Error(), "validation errors:")
 }
 
@@ -139,7 +138,7 @@ func TestFormatValidationError_RequiredIfTag(t *testing.T) {
 	err := l.validator.Struct(testStruct{Enabled: true, Path: ""})
 	require.Error(t, err)
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	assert.Contains(t, result.Error(), "validation errors:")
 }
 
@@ -155,7 +154,7 @@ func TestFormatValidationError_DefaultTag(t *testing.T) {
 	err := l.validator.Struct(testStruct{Email: "not-an-email"})
 	require.Error(t, err)
 
-	result := l.formatValidationError(err)
+	result := formatValidationError(err)
 	assert.Contains(t, result.Error(), "validation errors:")
 }
 
@@ -224,26 +223,6 @@ func TestLoad_ProductionWithValidConfig(t *testing.T) {
 	assert.False(t, cfg.App.Debug)
 	assert.Equal(t, "release", cfg.Server.Mode)
 	assert.True(t, cfg.Security.Session.Secure)
-}
-
-func TestLoad_CloudPlatformModeRequiresControlPlaneConfig(t *testing.T) {
-	tmpDir := t.TempDir()
-	configContent := validConfigYAML() + `
-platform:
-  mode: cloud
-  controlPlane:
-    enabled: true
-    endpoint: ""
-    apiKey: ""
-`
-	err := os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(configContent), 0o600)
-	require.NoError(t, err)
-
-	l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("test"))
-
-	cfg, err := l.Load()
-	require.Nil(t, cfg)
-	require.ErrorContains(t, err, "platform.controlplane.endpoint is required")
 }
 
 func TestLoad_StagingWithEnvSpecificConfig(t *testing.T) {

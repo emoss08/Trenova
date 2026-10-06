@@ -1,310 +1,232 @@
-import { AgentTile } from "@/components/agent-identity/agent-tile";
-import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
+import type { AssistantLayout } from "@/lib/assistant-dock";
 import type { AssistantThread } from "@/types/assistant";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Kbd } from "@trenova/shared/components/ui/kbd";
-import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { Expand01Icon, Minimize01Icon } from "@trenova/shared/components/icons";
 import {
-  CheckIcon,
-  ChevronDownIcon,
-  DownloadIcon,
-  HistoryIcon,
-  LayoutPanelLeftIcon,
-  Maximize2Icon,
-  Minimize2Icon,
-  PlusIcon,
-  XIcon,
-} from "lucide-react";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { useMemo, useState } from "react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import type { ReactNode } from "react";
 import { AssistantPlacementMenu } from "./assistant-placement-menu";
-import { groupThreadsByRecency } from "./thread-grouping";
-import { ThreadList } from "./thread-sidebar";
 
-type AssistantHeaderProps = {
-  agents: AgentChoice[];
-  activeAgent: AgentChoice | null;
-  activeThread: AssistantThread | null;
-  threads: AssistantThread[];
-  /** Conversations with a reply still being written. */
-  liveThreadIds?: ReadonlySet<string>;
-  expanded: boolean;
-  isStarting: boolean;
-  onStart: (agentId: string) => void;
-  onSelectThread: (id: string) => void;
-  onDeleteThread: (thread: AssistantThread) => void;
-  /** Saves the open conversation as a file. Offered only while one is open. */
+/** What the panel is showing under its header. */
+export type AssistantView = "home" | "thread" | "history";
+
+export type AssistantThreadActions = {
+  onDelete: (thread: AssistantThread) => void;
   onDownloadTranscript: (thread: AssistantThread) => void;
-  /** Continues the open conversation at the Desk, with room for what it produced. */
-  onOpenInDesk?: (thread: AssistantThread) => void;
-  onToggleExpanded: () => void;
+  /** Continues the conversation at the Desk, with room for what it produced. */
+  onOpenInDesk: (thread: AssistantThread) => void;
+};
+
+/** One of the header's icon buttons, its name said aloud and on hover. */
+function HeaderButton({
+  label,
+  onClick,
+  pressed,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  pressed?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className={cn("dk-ib", pressed && "as-on")}
+      title={label}
+      aria-label={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Icon({ name, size = 15 }: { name: DeskIconName; size?: number }) {
+  return <DeskIcon name={name} size={size} />;
+}
+
+/** The open conversation's own actions, behind ⋯ beside its title. */
+function ThreadMenu({
+  thread,
+  actions,
+}: {
+  thread: AssistantThread;
+  actions: AssistantThreadActions;
+}) {
+  const t = useT();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            className="dk-ib"
+            title={t("Conversation actions")}
+            aria-label={t("Conversation actions")}
+          />
+        }
+      >
+        <Icon name="more" size={14} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-52">
+        <DropdownMenuItem title={t("Open in Desk")} onClick={() => actions.onOpenInDesk(thread)} />
+        <DropdownMenuItem
+          title={t("Download transcript")}
+          onClick={() => actions.onDownloadTranscript(thread)}
+        />
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          title={t("Delete conversation")}
+          color="danger"
+          onClick={() => actions.onDelete(thread)}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export type AssistantHeaderProps = {
+  layout: Exclude<AssistantLayout, "full">;
+  view: AssistantView;
+  thread: AssistantThread | null;
+  actions: AssistantThreadActions;
+  onBack: () => void;
+  onToggleHistory: () => void;
+  onNew: () => void;
+  onLayout: (layout: AssistantLayout) => void;
   onClose: () => void;
 };
 
-const nowInSeconds = () => Math.floor(Date.now() / 1000);
-
 /**
- * One slim bar: who is being talked to on the left, the panel's controls on
- * the right.
- *
- * The conversation's title used to sit here too. It is the first question
- * asked, which is already the first line of the thread below, and a long one
- * pushed the controls off the edge. The history list and the sidebar are
- * where titles belong.
+ * The compact and side header: back out of a conversation or the history, the
+ * conversation's title with its actions behind ⋯, then the panel's controls —
+ * the conversations, a new one, docking to the side or floating, full screen
+ * and close.
  */
 export function AssistantHeader({
-  agents,
-  activeAgent,
-  activeThread,
-  threads,
-  liveThreadIds,
-  expanded,
-  isStarting,
-  onStart,
-  onSelectThread,
-  onDeleteThread,
-  onDownloadTranscript,
-  onOpenInDesk,
-  onToggleExpanded,
+  layout,
+  view,
+  thread,
+  actions,
+  onBack,
+  onToggleHistory,
+  onNew,
+  onLayout,
   onClose,
 }: AssistantHeaderProps) {
   const t = useT();
-  const reduceMotion = useReducedMotion();
-  const [agentMenuOpen, setAgentMenuOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [now] = useState(nowInSeconds);
-
-  const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
-  const groups = useMemo(() => groupThreadsByRecency(threads, now), [now, threads]);
+  const title =
+    view === "thread" && thread
+      ? thread.title || t("Untitled conversation")
+      : view === "history"
+        ? t("Conversations")
+        : t("Assistant");
 
   return (
-    <div className="border-border flex h-11 shrink-0 items-center justify-between gap-2 border-b pr-1.5 pl-2">
-      <Popover open={agentMenuOpen} onOpenChange={setAgentMenuOpen}>
-        <PopoverTrigger
-          render={
-            <button
-              type="button"
-              className="hover:bg-surface-hover ui-focus-ring flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-1.5 text-left transition-colors"
-              aria-label={t("Choose an agent")}
-              disabled={agents.length === 0}
-            />
-          }
-        >
-          {/* The tile crossfades when the agent changes: the one thing in the
-              bar that answers a choice. */}
-          <AnimatePresence mode="popLayout" initial={false}>
-            <m.span
-              key={activeAgent?.id ?? "none"}
-              initial={reduceMotion ? false : { opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ duration: 0.14 }}
-              className="flex shrink-0"
-            >
-              <AgentTile agent={activeAgent} size="md" />
-            </m.span>
-          </AnimatePresence>
-          <span className="truncate text-sm font-semibold">
-            {activeAgent?.name ?? t("Assistant")}
+    <div className="as-h">
+      <div className="as-h-t">
+        {view !== "home" && (
+          <span className="as-back">
+            <HeaderButton label={t("Back")} onClick={onBack}>
+              <Icon name="chevL" />
+            </HeaderButton>
           </span>
-          {agents.length > 1 && (
-            <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
-          )}
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-80 p-1.5">
-          <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-            {t("Start a conversation with")}
-          </p>
-          <ScrollArea viewportClassName="max-h-72">
-            <div className="flex flex-col gap-0.5">
-              {agents.map((agent) => (
-                <button
-                  key={agent.id}
-                  type="button"
-                  disabled={isStarting}
-                  onClick={() => {
-                    setAgentMenuOpen(false);
-                    onStart(agent.id);
-                  }}
-                  className="hover:bg-surface-hover ui-focus-ring flex items-start gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:opacity-60"
-                >
-                  <AgentTile agent={agent} size="md" className="mt-0.5" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="flex items-center gap-1.5 text-sm font-medium">
-                      <span className="truncate">{agent.name}</span>
-                      <Badge variant="neutral" className="h-4 px-1 text-2xs">
-                        {agent.toolNames.length === 0
-                          ? t("No task tools")
-                          : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
-                      </Badge>
-                    </span>
-                    {agent.description && (
-                      <span className="text-muted-foreground line-clamp-2 text-xs">
-                        {agent.description}
-                      </span>
-                    )}
-                  </span>
-                  {activeAgent?.id === agent.id && (
-                    <CheckIcon className="text-foreground mt-1 size-4 shrink-0" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
-        </PopoverContent>
-      </Popover>
-
-      <div className="flex shrink-0 items-center gap-0.5">
-        {!expanded && (
-          <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <PopoverTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={t("Conversations")}
-                        className="text-muted-foreground hover:text-foreground"
-                      />
-                    }
-                  />
-                }
-              >
-                <HistoryIcon className="size-4" />
-              </TooltipTrigger>
-              <TooltipContent>{t("Conversations")}</TooltipContent>
-            </Tooltip>
-            <PopoverContent align="end" className="w-80 p-0">
-              <ScrollArea viewportClassName="max-h-80">
-                <ThreadList
-                  groups={groups}
-                  agentsById={agentsById}
-                  activeThreadId={activeThread?.id ?? null}
-                  liveThreadIds={liveThreadIds}
-                  now={now}
-                  emptyText={t("No conversations yet.")}
-                  onSelect={(id) => {
-                    setHistoryOpen(false);
-                    onSelectThread(id);
-                  }}
-                  onDelete={(thread) => {
-                    setHistoryOpen(false);
-                    onDeleteThread(thread);
-                  }}
-                />
-              </ScrollArea>
-            </PopoverContent>
-          </Popover>
         )}
-
-        {activeThread && onOpenInDesk && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("Open in Desk")}
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={() => onOpenInDesk(activeThread)}
-                />
-              }
-            >
-              <LayoutPanelLeftIcon className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent>{t("Open in Desk")}</TooltipContent>
-          </Tooltip>
-        )}
-
-        {activeThread && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("Download transcript")}
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={() => onDownloadTranscript(activeThread)}
-                />
-              }
-            >
-              <DownloadIcon className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent>{t("Download transcript")}</TooltipContent>
-          </Tooltip>
-        )}
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t("New conversation")}
-                className="text-muted-foreground hover:text-foreground"
-                disabled={agents.length === 0 || isStarting}
-                onClick={() => {
-                  if (activeAgent) {
-                    onStart(activeAgent.id);
-                  } else if (agents.length === 1) {
-                    onStart(agents[0].id);
-                  } else {
-                    setAgentMenuOpen(true);
-                  }
-                }}
-              />
-            }
-          >
-            <PlusIcon className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent>{t("New conversation")}</TooltipContent>
-        </Tooltip>
-
-        {!expanded && <AssistantPlacementMenu />}
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={expanded ? t("Collapse") : t("Expand")}
-                className="text-muted-foreground hover:text-foreground"
-                onClick={onToggleExpanded}
-              />
-            }
-          >
-            {expanded ? <Minimize2Icon className="size-4" /> : <Maximize2Icon className="size-4" />}
-          </TooltipTrigger>
-          <TooltipContent>{expanded ? t("Collapse") : t("Expand")}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t("Close")}
-                className="text-muted-foreground hover:text-foreground"
-                onClick={onClose}
-              />
-            }
-          >
-            <XIcon className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent className="flex items-center gap-2">
-            {t("Close")} <Kbd>Esc</Kbd>
-          </TooltipContent>
-        </Tooltip>
+        <b key={title}>{title}</b>
+        {view === "thread" && thread && <ThreadMenu thread={thread} actions={actions} />}
       </div>
+      <HeaderButton
+        label={t("Conversations")}
+        pressed={view === "history"}
+        onClick={onToggleHistory}
+      >
+        <Icon name="clock" />
+      </HeaderButton>
+      <HeaderButton label={t("New conversation")} onClick={onNew}>
+        <Icon name="plus" />
+      </HeaderButton>
+      <HeaderButton
+        label={layout === "side" ? t("Float") : t("Dock to side")}
+        pressed={layout === "side"}
+        onClick={() => onLayout(layout === "side" ? "compact" : "side")}
+      >
+        <Icon name="panel" />
+      </HeaderButton>
+      <AssistantPlacementMenu />
+      <HeaderButton label={t("Full screen")} onClick={() => onLayout("full")}>
+        <Expand01Icon className="size-3.5" />
+      </HeaderButton>
+      <HeaderButton label={t("Close · Esc")} onClick={onClose}>
+        <Icon name="x" />
+      </HeaderButton>
+    </div>
+  );
+}
+
+export type AssistantFullHeaderProps = {
+  sidebarOpen: boolean;
+  thread: AssistantThread | null;
+  actions: AssistantThreadActions;
+  onToggleSidebar: () => void;
+  onNew: () => void;
+  onShrink: () => void;
+  onClose: () => void;
+};
+
+/**
+ * The full-screen layout's bar over the conversation: the sidebar toggle (and
+ * a new conversation while the sidebar is folded away), the title in the
+ * middle, then shrink and close.
+ */
+export function AssistantFullHeader({
+  sidebarOpen,
+  thread,
+  actions,
+  onToggleSidebar,
+  onNew,
+  onShrink,
+  onClose,
+}: AssistantFullHeaderProps) {
+  const t = useT();
+
+  return (
+    <div className="as-fh">
+      <HeaderButton
+        label={sidebarOpen ? t("Hide conversations · ⌘\\") : t("Show conversations · ⌘\\")}
+        pressed={!sidebarOpen}
+        onClick={onToggleSidebar}
+      >
+        <Icon name="rail" />
+      </HeaderButton>
+      {!sidebarOpen && (
+        <HeaderButton label={t("New conversation")} onClick={onNew}>
+          <Icon name="plus" />
+        </HeaderButton>
+      )}
+      <div className="as-fh-t">
+        {thread && (
+          <>
+            <b key={thread.id}>{thread.title || t("Untitled conversation")}</b>
+            <ThreadMenu thread={thread} actions={actions} />
+          </>
+        )}
+      </div>
+      <HeaderButton label={t("Shrink")} onClick={onShrink}>
+        <Minimize01Icon className="size-3.5" />
+      </HeaderButton>
+      <HeaderButton label={t("Close · Esc")} onClick={onClose}>
+        <Icon name="x" />
+      </HeaderButton>
     </div>
   );
 }

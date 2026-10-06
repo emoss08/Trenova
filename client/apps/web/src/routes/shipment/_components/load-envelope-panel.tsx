@@ -39,10 +39,7 @@ import type {
 } from "@trenova/shared/types/permit";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
-import {
-  RulerIcon,
-  ShieldQuestionIcon,
-} from "lucide-react";
+import { RulerIcon, ShieldQuestionIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { PermitRecordDialog, PermitWaiveDialog } from "./permit-dialogs";

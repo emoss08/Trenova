@@ -67,11 +67,25 @@ func (e *Memory) GetStaticFieldMap() map[string]string {
 	return buncolgen.MemoryFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [MemoryPreference].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.MemoryPreferenceFieldMap] instead of parsing struct tags via reflection.
+func (e *MemoryPreference) GetStaticFieldMap() map[string]string {
+	return buncolgen.MemoryPreferenceFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ProposalBaseline].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ProposalBaselineFieldMap] instead of parsing struct tags via reflection.
 func (e *ProposalBaseline) GetStaticFieldMap() map[string]string {
 	return buncolgen.ProposalBaselineFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Reflection].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ReflectionFieldMap] instead of parsing struct tags via reflection.
+func (e *Reflection) GetStaticFieldMap() map[string]string {
+	return buncolgen.ReflectionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ToolTrust].

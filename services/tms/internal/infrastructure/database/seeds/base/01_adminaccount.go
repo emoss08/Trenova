@@ -3,18 +3,13 @@ package base
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
-	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -23,11 +18,7 @@ type AdminAccountSeed struct {
 	seedhelpers.BaseSeed
 }
 
-const (
-	coreAdminUsername           = "admin"
-	logisticsAdminUsername      = "admin-logistics"
-	transportationAdminUsername = "admin-transport"
-)
+const coreAdminUsername = "admin"
 
 // NewAdminAccountSeed creates a new AdminAccount seed
 func NewAdminAccountSeed() *AdminAccountSeed {
@@ -37,7 +28,7 @@ func NewAdminAccountSeed() *AdminAccountSeed {
 		"1.0.0",
 		"Creates AdminAccount data",
 		[]common.Environment{
-			common.EnvProduction, common.EnvStaging, common.EnvDevelopment, common.EnvTest,
+			common.EnvDevelopment, common.EnvTest,
 		},
 	)
 
@@ -52,9 +43,13 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
+			if err := requireDevelopmentFixtures(sc); err != nil {
+				return err
+			}
+
 			// An existing core admin means this seed already owns the tenant
 			// below it. Re-running would duplicate the second organization, its
-			// users, memberships, sequences, and control files.
+			// memberships, sequences, and control files.
 			seeded, err := tx.NewSelect().
 				Model((*tenant.User)(nil)).
 				Where("username = ?", coreAdminUsername).
@@ -140,13 +135,7 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 
 			orgs := []*tenant.Organization{org, org2}
 			for _, seedOrg := range orgs {
-				err = s.createOrganizationControls(ctx, organizationControlSeedParams{
-					tx:  tx,
-					sc:  sc,
-					org: seedOrg,
-					now: now,
-				})
-				if err != nil {
+				if err = tenantbootstrap.CreateControls(ctx, tx, s.scopeFor(sc, seedOrg, now)); err != nil {
 					return fmt.Errorf("create control files for org %s: %w", seedOrg.Name, err)
 				}
 			}
@@ -196,215 +185,9 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			orgAdminUsers := []organizationAdminUserSeedParams{
-				{
-					org:         org,
-					grantedByID: adminUser.ID,
-					name:        "Trenova Logistics Administrator",
-					username:    logisticsAdminUsername,
-					email:       "admin.logistics@trenova.app",
-				},
-				{
-					org:         org2,
-					grantedByID: adminUser.ID,
-					name:        "Trenova Transportation Administrator",
-					username:    transportationAdminUsername,
-					email:       "admin.transport@trenova.app",
-				},
-			}
-			for _, params := range orgAdminUsers {
-				if err := s.createOrganizationAdminUser(ctx, tx, sc, params); err != nil {
-					return err
-				}
-			}
-
-			year := int16(time.Unix(now, 0).Year())
-			month := int16(time.Unix(now, 0).Month())
-
-			sequences := []*tenant.Sequence{
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeProNumber,
-					OrganizationID:  org.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeConsolidation,
-					OrganizationID:  org.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeInvoice,
-					OrganizationID:  org.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeWorkOrder,
-					OrganizationID:  org.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeJournalBatch,
-					OrganizationID:  org.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeJournalEntry,
-					OrganizationID:  org.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeManualJournalRequest,
-					OrganizationID:  org.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeProNumber,
-					OrganizationID:  org2.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeConsolidation,
-					OrganizationID:  org2.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeInvoice,
-					OrganizationID:  org2.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeWorkOrder,
-					OrganizationID:  org2.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeJournalBatch,
-					OrganizationID:  org2.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeJournalEntry,
-					OrganizationID:  org2.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-				{
-					ID:              pulid.MustNew("seq_"),
-					SequenceType:    tenant.SequenceTypeManualJournalRequest,
-					OrganizationID:  org2.ID,
-					BusinessUnitID:  bu.ID,
-					Year:            year,
-					Month:           month,
-					CurrentSequence: 0,
-					Version:         0,
-					CreatedAt:       now,
-					UpdatedAt:       now,
-				},
-			}
-
-			for _, sequence := range sequences {
-				result, insertErr := tx.NewInsert().
-					Model(sequence).
-					On("CONFLICT (sequence_type, organization_id, business_unit_id, year, month) DO NOTHING").
-					Exec(ctx)
-				if insertErr != nil {
-					return fmt.Errorf("create sequence seed: %w", insertErr)
-				}
-
-				if rows, _ := result.RowsAffected(); rows > 0 {
-					if err := sc.TrackCreated(ctx, "sequences", sequence.ID, s.Name()); err != nil {
-						return err
-					}
+			for _, seedOrg := range orgs {
+				if err = tenantbootstrap.CreateSequences(ctx, tx, s.scopeFor(sc, seedOrg, now)); err != nil {
+					return fmt.Errorf("create sequences for org %s: %w", seedOrg.Name, err)
 				}
 			}
 
@@ -429,212 +212,15 @@ func (s *AdminAccountSeed) CanRollback() bool {
 	return true
 }
 
-type organizationControlSeedParams struct {
-	tx  bun.Tx
-	sc  *seedhelpers.SeedContext
-	org *tenant.Organization
-	now int64
-}
-
-type organizationAdminUserSeedParams struct {
-	org         *tenant.Organization
-	grantedByID pulid.ID
-	name        string
-	username    string
-	email       string
-}
-
-func (s *AdminAccountSeed) createOrganizationControls(
-	ctx context.Context,
-	params organizationControlSeedParams,
-) error {
-	accountingControl := &tenant.AccountingControl{
-		ID:                              pulid.MustNew("ac_"),
-		OrganizationID:                  params.org.ID,
-		BusinessUnitID:                  params.org.BusinessUnitID,
-		RequireManualJEApproval:         true,
-		RequirePeriodCloseApproval:      true,
-		NotifyOnReconciliationException: true,
-		CreatedAt:                       params.now,
-		UpdatedAt:                       params.now,
-	}
-	if _, err := params.tx.NewInsert().Model(accountingControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create accounting control: %w", err)
-	}
-	if err := params.sc.TrackCreated(ctx, "accounting_controls", accountingControl.ID, s.Name()); err != nil {
-		return err
-	}
-
-	billingControl := &tenant.BillingControl{
-		ID:                           pulid.MustNew("bc_"),
-		OrganizationID:               params.org.ID,
-		BusinessUnitID:               params.org.BusinessUnitID,
-		BillingQueueTransferSchedule: tenant.TransferScheduleContinuous,
-		ShowDueDateOnInvoice:         true,
-		ShowBalanceDueOnInvoice:      true,
-		NotifyOnBillingExceptions:    true,
-		RequireRateOverrideReason:    true,
-		CreatedAt:                    params.now,
-		UpdatedAt:                    params.now,
-	}
-	if _, err := params.tx.NewInsert().Model(billingControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create billing control: %w", err)
-	}
-	if err := params.sc.TrackCreated(ctx, "billing_controls", billingControl.ID, s.Name()); err != nil {
-		return err
-	}
-
-	invoiceAdjustmentControl := &tenant.InvoiceAdjustmentControl{
-		ID:                                  pulid.MustNew("iac_"),
-		OrganizationID:                      params.org.ID,
-		BusinessUnitID:                      params.org.BusinessUnitID,
-		StandardAdjustmentApprovalThreshold: decimal.NewFromFloat(0.01),
-		WriteOffApprovalThreshold:           decimal.NewFromFloat(0.01),
-		CreatedAt:                           params.now,
-		UpdatedAt:                           params.now,
-	}
-	if _, err := params.tx.NewInsert().Model(invoiceAdjustmentControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create invoice adjustment control: %w", err)
-	}
-	if err := params.sc.TrackCreated(
-		ctx,
-		"invoice_adjustment_controls",
-		invoiceAdjustmentControl.ID,
-		s.Name(),
-	); err != nil {
-		return err
-	}
-
-	dispatchControl := &dispatchcontrol.DispatchControl{
-		ID:             pulid.MustNew("dc_"),
-		OrganizationID: params.org.ID,
-		BusinessUnitID: params.org.BusinessUnitID,
-		CreatedAt:      params.now,
-		UpdatedAt:      params.now,
-	}
-	if _, err := params.tx.NewInsert().Model(dispatchControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create dispatch control: %w", err)
-	}
-	if err := params.sc.TrackCreated(ctx, "dispatch_controls", dispatchControl.ID, s.Name()); err != nil {
-		return err
-	}
-
-	shipmentControl := &tenant.ShipmentControl{
-		ID:                     pulid.MustNew("sc_"),
-		OrganizationID:         params.org.ID,
-		BusinessUnitID:         params.org.BusinessUnitID,
-		CheckForDuplicateBOLs:  true,
-		CheckHazmatSegregation: true,
-		CreatedAt:              params.now,
-		UpdatedAt:              params.now,
-	}
-	if _, err := params.tx.NewInsert().Model(shipmentControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create shipment control: %w", err)
-	}
-	if err := params.sc.TrackCreated(ctx, "shipment_controls", shipmentControl.ID, s.Name()); err != nil {
-		return err
-	}
-
-	costingControl := &costingcontrol.CostingControl{
-		ID:                   pulid.MustNew("cstc_"),
-		OrganizationID:       params.org.ID,
-		BusinessUnitID:       params.org.BusinessUnitID,
-		UseLiveFuelPrice:     false,
-		MilesPerGallon:       costingcontrol.DefaultMilesPerGallon(),
-		IncludeDeadheadMiles: true,
-		GLRollingMonths:      3,
-		CreatedAt:            params.now,
-		UpdatedAt:            params.now,
-	}
-	if _, err := params.tx.NewInsert().Model(costingControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create costing control: %w", err)
-	}
-	if err := params.sc.TrackCreated(ctx, "costing_controls", costingControl.ID, s.Name()); err != nil {
-		return err
-	}
-
-	costCategories := costingcontrol.DefaultCategories()
-	for _, category := range costCategories {
-		category.ID = pulid.MustNew("ccat_")
-		category.OrganizationID = params.org.ID
-		category.BusinessUnitID = params.org.BusinessUnitID
-		category.CostingControlID = costingControl.ID
-		category.CreatedAt = params.now
-		category.UpdatedAt = params.now
-	}
-	if _, err := params.tx.NewInsert().Model(&costCategories).Exec(ctx); err != nil {
-		return fmt.Errorf("create cost categories: %w", err)
-	}
-	for _, category := range costCategories {
-		if err := params.sc.TrackCreated(ctx, "cost_categories", category.ID, s.Name()); err != nil {
-			return err
-		}
-	}
-
-	documentControl := tenant.NewDefaultDocumentControl(params.org.ID, params.org.BusinessUnitID)
-	if _, err := params.tx.NewInsert().Model(documentControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create document control: %w", err)
-	}
-	if err := params.sc.TrackCreated(ctx, "document_controls", documentControl.ID, s.Name()); err != nil {
-		return err
-	}
-
-	dataEntryControl := &dataentrycontrol.DataEntryControl{
-		ID:             pulid.MustNew("dec_"),
-		OrganizationID: params.org.ID,
-		BusinessUnitID: params.org.BusinessUnitID,
-		CreatedAt:      params.now,
-		UpdatedAt:      params.now,
-		CodeCase:       dataentrycontrol.CaseFormatUpper,
-		NameCase:       dataentrycontrol.CaseFormatTitleCase,
-		EmailCase:      dataentrycontrol.CaseFormatLower,
-		CityCase:       dataentrycontrol.CaseFormatTitleCase,
-	}
-	if _, err := params.tx.NewInsert().Model(dataEntryControl).Exec(ctx); err != nil {
-		return fmt.Errorf("create data entry control: %w", err)
-	}
-	if err := params.sc.TrackCreated(ctx, "data_entry_controls", dataEntryControl.ID, s.Name()); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *AdminAccountSeed) createOrganizationAdminUser(
-	ctx context.Context,
-	tx bun.Tx,
+func (s *AdminAccountSeed) scopeFor(
 	sc *seedhelpers.SeedContext,
-	params organizationAdminUserSeedParams,
-) error {
-	adminUser, err := sc.CreateUser(ctx, tx, &seedhelpers.UserOptions{
-		OrganizationID:     params.org.ID,
-		BusinessUnitID:     params.org.BusinessUnitID,
-		Name:               params.name,
-		Username:           params.username,
-		Email:              params.email,
-		Password:           "admin123!",
-		Status:             domaintypes.StatusActive,
-		Timezone:           "America/Los_Angeles",
-		MustChangePassword: false,
-	}, s.Name())
-	if err != nil {
-		return fmt.Errorf("create organization admin user %s: %w", params.username, err)
+	org *tenant.Organization,
+	now int64,
+) tenantbootstrap.Scope {
+	return tenantbootstrap.Scope{
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		Now:            now,
+		Record:         seedRecorder(sc, s.Name()),
 	}
-
-	membership := &tenant.OrganizationMembership{
-		BusinessUnitID: params.org.BusinessUnitID,
-		UserID:         adminUser.ID,
-		JoinedAt:       timeutils.NowUnix(),
-		OrganizationID: params.org.ID,
-		GrantedByID:    params.grantedByID,
-		IsDefault:      true,
-	}
-	if _, err = tx.NewInsert().Model(membership).Exec(ctx); err != nil {
-		return fmt.Errorf("create organization admin membership %s: %w", params.username, err)
-	}
-	if err := sc.TrackCreated(ctx, "organization_memberships", membership.ID, s.Name()); err != nil {
-		return err
-	}
-
-	return nil
 }

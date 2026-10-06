@@ -9,7 +9,7 @@ import type { OrderRow } from "@/lib/graphql/order-table";
 import { orderSchema } from "@trenova/shared/types/order";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { HistoryIcon } from "lucide-react";
+import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { lazy } from "react";
 import { useForm } from "react-hook-form";
 import { OrderForm } from "./order-form";
@@ -81,7 +81,7 @@ export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
           {
             value: "history",
             label: t("History"),
-            icon: HistoryIcon,
+            icon: ClockRewindIcon,
             hideFooter: true,
             content: AuditTab,
             contentProps: { resourceId: row?.id },

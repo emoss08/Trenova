@@ -23,27 +23,27 @@ import type { Worker } from "@trenova/shared/types/worker";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  BriefcaseIcon,
+  ActivityHeartIcon,
+  Beaker02Icon,
+  Briefcase01Icon,
   CalendarClockIcon,
   CalendarRangeIcon,
-  Clock4Icon,
-  FileTextIcon,
-  SmartphoneIcon,
-  WalletIcon,
-  ShieldCheckIcon,
-  UserIcon,
-  XIcon,
-  IdCardIcon,
-  HistoryIcon,
-  ClipboardListIcon,
-  GraduationCapIcon,
-  FlaskConicalIcon,
-  FolderCheckIcon,
-  ShieldAlertIcon,
   ClipboardCheckIcon,
-  GaugeIcon,
-  HeartPulseIcon,
-} from "lucide-react";
+  ClipboardListIcon,
+  ClockIcon,
+  ClockRewindIcon,
+  File06Icon,
+  FolderCheckIcon,
+  GraduationHat01Icon,
+  IdCardIcon,
+  Phone01Icon,
+  ShieldAlertIcon,
+  ShieldTickIcon,
+  Speedometer03Icon,
+  User01Icon,
+  Wallet02Icon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
@@ -119,8 +119,8 @@ const WorkerReviewsTab = lazy(() => import("./worker-reviews-tab"));
 
 const EMPLOYMENT_VIEWS = [
   { value: "details", label: "Details" },
-  { value: "history", label: "History", icon: HistoryIcon },
-] satisfies { value: EmploymentView; label: string; icon?: typeof HistoryIcon }[];
+  { value: "history", label: "History", icon: ClockRewindIcon },
+] satisfies { value: EmploymentView; label: string; icon?: typeof ClockRewindIcon }[];
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
@@ -283,7 +283,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                 />
               }
             >
-              <XIcon className="size-4" />
+              <XCloseIcon className="size-4" />
               <span className="sr-only">{t("Close panel")}</span>
             </Dialog.Close>
           </div>
@@ -310,40 +310,40 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         {
                           value: "overview",
                           label: t("Overview"),
-                          icon: GaugeIcon,
+                          icon: Speedometer03Icon,
                         },
                         {
                           value: "general",
                           label: t("General information"),
-                          icon: UserIcon,
+                          icon: User01Icon,
                           className: cn(hasGeneralErrors && "text-destructive"),
                         },
                         {
                           value: "employment",
                           label: t("Employment information"),
-                          icon: BriefcaseIcon,
+                          icon: Briefcase01Icon,
                           className: cn(hasEmploymentErrors && "text-destructive"),
                         },
                         {
                           value: "compliance",
                           label: t("Compliance status"),
-                          icon: ShieldCheckIcon,
+                          icon: ShieldTickIcon,
                           className: cn(hasComplianceErrors && "text-destructive"),
                         },
                         { value: "credentials", label: t("Credentials"), icon: IdCardIcon },
                         { value: "checklist", label: t("Checklist"), icon: ClipboardListIcon },
-                        { value: "training", label: t("Training"), icon: GraduationCapIcon },
+                        { value: "training", label: t("Training"), icon: GraduationHat01Icon },
                         { value: "safety", label: t("Safety"), icon: ShieldAlertIcon },
-                        { value: "testing", label: t("Testing"), icon: FlaskConicalIcon },
+                        { value: "testing", label: t("Testing"), icon: Beaker02Icon },
                         { value: "dqf", label: t("DQ file"), icon: FolderCheckIcon },
                         { value: "reviews", label: t("Reviews"), icon: ClipboardCheckIcon },
-                        { value: "hos", label: t("HOS"), icon: Clock4Icon },
-                        { value: "pay", label: t("Pay"), icon: WalletIcon },
+                        { value: "hos", label: t("HOS"), icon: ClockIcon },
+                        { value: "pay", label: t("Pay"), icon: Wallet02Icon },
                         { value: "pto", label: t("Time off"), icon: CalendarRangeIcon },
                         { value: "schedule", label: t("Schedule"), icon: CalendarClockIcon },
-                        { value: "leave", label: t("Leave"), icon: HeartPulseIcon },
-                        { value: "documents", label: t("Documents"), icon: FileTextIcon },
-                        { value: "portal", label: t("Portal"), icon: SmartphoneIcon },
+                        { value: "leave", label: t("Leave"), icon: ActivityHeartIcon },
+                        { value: "documents", label: t("Documents"), icon: File06Icon },
+                        { value: "portal", label: t("Portal"), icon: Phone01Icon },
                       ]}
                       activeValue={resolvedTab}
                       onSelect={(value) => void setActiveTab(value)}

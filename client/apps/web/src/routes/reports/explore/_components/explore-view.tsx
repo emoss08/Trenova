@@ -13,13 +13,13 @@ import { cn } from "@trenova/shared/lib/utils";
 import { irToInput } from "../../builder/_components/builder-state";
 import { parseReportIR, type ReportIR, type ReportParameterDef } from "@/types/report";
 import {
+  AlertCircleIcon,
   ArrowLeftIcon,
-  CircleAlertIcon,
-  Columns3Icon,
-  DownloadIcon,
-  PencilIcon,
-  SearchIcon,
-} from "lucide-react";
+  Columns03Icon,
+  Download01Icon,
+  Edit02Icon,
+  SearchLgIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { DrillThroughSheet, type DrillTarget } from "../../_components/drill-through-sheet";
@@ -105,7 +105,7 @@ export function ExploreView({
   if (!ir) {
     return (
       <ExploreEmpty>
-        <CircleAlertIcon className="text-destructive size-5" />
+        <AlertCircleIcon className="text-destructive size-5" />
         <p className="text-sm">{t("This report's definition could not be read.")}</p>
       </ExploreEmpty>
     );
@@ -132,12 +132,12 @@ export function ExploreView({
         <div className="flex-1" />
         {editHref && (
           <Button variant="outline" size="sm" className="h-7" render={<Link to={editHref} />}>
-            <PencilIcon className="size-3.5" />
+            <Edit02Icon className="size-3.5" />
             {t("Edit")}
           </Button>
         )}
         <Button size="sm" className="h-7" onClick={() => setRunOpen(true)}>
-          <DownloadIcon className="size-3.5" />
+          <Download01Icon className="size-3.5" />
           {t("Export")}
         </Button>
       </header>
@@ -196,7 +196,7 @@ export function ExploreView({
             <Input
               className="h-7 w-56 text-xs"
               placeholder={t("Filter these rows...")}
-              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
               value={quickFilter}
               onChange={(event) => setQuickFilter(event.target.value)}
             />
@@ -204,7 +204,7 @@ export function ExploreView({
               <PopoverTrigger
                 render={
                   <Button variant="outline" size="sm" className="h-7">
-                    <Columns3Icon className="size-3.5" />
+                    <Columns03Icon className="size-3.5" />
                     {t("Columns")}
                   </Button>
                 }
@@ -240,7 +240,7 @@ export function ExploreView({
           </ExploreEmpty>
         ) : preview.isError ? (
           <ExploreEmpty>
-            <CircleAlertIcon className="text-destructive size-5" />
+            <AlertCircleIcon className="text-destructive size-5" />
             <p className="text-muted-foreground max-w-lg text-xs whitespace-pre-wrap">
               {graphQLErrorMessage(preview.error, "This report could not be run")}
             </p>

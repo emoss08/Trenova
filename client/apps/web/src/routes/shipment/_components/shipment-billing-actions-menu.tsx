@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { ChevronDownIcon, ReceiptTextIcon } from "lucide-react";
+import { ChevronDownIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
 
 export function ShipmentBillingActionsMenu({ shipment }: { shipment: Shipment }) {
   const t = useT();

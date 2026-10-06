@@ -11,7 +11,13 @@ import {
 } from "@trenova/shared/lib/push";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BellRingIcon, LogOutIcon, MoonIcon, SunIcon, MonitorIcon } from "lucide-react";
+import {
+  BellRinging01Icon,
+  LogOut01Icon,
+  Monitor01Icon,
+  Moon01Icon,
+  SunIcon,
+} from "@trenova/shared/components/icons";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ComplianceCard } from "../_components/compliance-card";
@@ -31,8 +37,8 @@ import { cn } from "@trenova/shared/lib/utils";
 
 const themeOptions = [
   { value: "light", label: "Light", icon: SunIcon },
-  { value: "dark", label: "Dark", icon: MoonIcon },
-  { value: "system", label: "Auto", icon: MonitorIcon },
+  { value: "dark", label: "Dark", icon: Moon01Icon },
+  { value: "system", label: "Auto", icon: Monitor01Icon },
 ] as const;
 
 export function DashProfilePage() {
@@ -121,7 +127,7 @@ export function DashProfilePage() {
       </div>
 
       <Button variant="outline" className="h-11" onClick={handleLogout}>
-        <LogOutIcon className="size-4" />
+        <LogOut01Icon className="size-4" />
         {t("Sign out")}
       </Button>
 
@@ -184,7 +190,7 @@ function PushNotificationsCard() {
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <BellRingIcon className="size-4 shrink-0 text-muted-foreground" />
+          <BellRinging01Icon className="size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
             <p className="text-sm font-semibold">{t("Push notifications")}</p>
             <p className="text-xs text-muted-foreground">

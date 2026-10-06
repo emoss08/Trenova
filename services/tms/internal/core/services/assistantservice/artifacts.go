@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
 	"strings"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -31,16 +33,18 @@ import (
 // mapper reads each result in its JSON form, exactly as the model does, so
 // it depends on the tool's contract rather than on its Go types.
 const (
-	toolPreviewReport = "preview_report"
-	toolRunReport     = "run_report"
-	toolGetReportRun  = "get_report_run"
-	getToolPrefix     = "get_"
-	listToolPrefix    = "list_"
-	searchToolPrefix  = "search_"
-	toolComposeView   = "compose_table_view"
-	toolExplainRate   = "explain_rate"
-	toolCompareRuns   = "compare_report_runs"
-	toolOpenPage      = "open_page"
+	toolPreviewReport    = "preview_report"
+	toolRunReport        = "run_report"
+	toolGetReportRun     = "get_report_run"
+	getToolPrefix        = "get_"
+	listToolPrefix       = "list_"
+	searchToolPrefix     = "search_"
+	toolComposeView      = "compose_table_view"
+	toolExplainRate      = "explain_rate"
+	toolCompareRuns      = "compare_report_runs"
+	toolOpenPage         = "open_page"
+	toolGetShipmentDraft = "get_shipment_draft"
+	toolRankCandidates   = "rank_move_candidates"
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
@@ -50,6 +54,13 @@ const (
 	payloadPlanID      = "planId"
 	payloadToolName    = "toolName"
 	payloadRationale   = "rationale"
+
+	// billingQueueRecordEntity is the record a billing queue table's rows are.
+	billingQueueRecordEntity = "billing_queue_item"
+
+	// payloadRanked marks a table whose order is the answer: drivers ranked
+	// for a move, best first.
+	payloadRanked = "ranked"
 )
 
 // draftSpec names how an outbound message proposal reads as a draft: which
@@ -92,6 +103,9 @@ type artifactRecorder struct {
 	actor     services.AuditActor
 	emit      services.AssistantStreamEmitter
 	recorded  []*assistantartifact.Artifact
+	// svc reads what an artifact needs beyond the tool's result: the agent
+	// a document is credited to, the pages an extraction was read from.
+	svc *Service
 }
 
 // newArtifactRecorder returns nil when there is nowhere to keep artifacts,
@@ -121,6 +135,7 @@ func (s *Service) newArtifactRecorder(
 		tenant:    tenant,
 		actor:     actor.AuditActorOrSystem(),
 		emit:      emit,
+		svc:       s,
 	}
 }
 
@@ -143,11 +158,30 @@ func (r *artifactRecorder) observe(
 	if request, ok := observation.Data.(services.DecisionRequest); ok {
 		return r.requestDecision(observation.Call.ID, request)
 	}
+	if observation.Call.Name == toolGetShipmentDraft && !observation.Failed {
+		if extraction := r.extraction(observation); extraction != nil {
+			saved, err := r.save(extraction)
+			if err != nil {
+				return nil, nil
+			}
+
+			return shownArtifact(saved), nil
+		}
+	}
 
 	artifact := artifactFromObservation(observation)
 	if artifact == nil {
 		return nil, nil
 	}
+	if artifact.Kind == assistantartifact.KindNavigation {
+		r.announceNavigation(artifact)
+		return nil, nil
+	}
+	artifact.LineageKey = assistantartifact.LineageKeyFor(
+		artifact.Kind,
+		observation.Call.Name,
+		observation.Call.Arguments,
+	)
 	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
 		return r.bunch(&observation, artifact)
 	}
@@ -160,14 +194,31 @@ func (r *artifactRecorder) observe(
 	return shownArtifact(saved), nil
 }
 
-// publish keeps a document the model wrote. A revision replaces the text of a
-// document this conversation already holds, in place, so the pane keeps one
-// brief rather than a stack of drafts of it.
+// announceNavigation tells the app to move to the page the agent opened. It
+// is a move, not something to keep: the reply names the page as a link, and
+// nothing is added beside the conversation.
+func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifact) {
+	r.emit(services.StreamEvent{
+		Event: services.AssistantEventArtifact,
+		Data: services.AssistantArtifactEvent{
+			ID:               pulid.MustNew("art_"),
+			Kind:             artifact.Kind,
+			Status:           artifact.Status,
+			Title:            artifact.Title,
+			SourceToolCallID: artifact.SourceToolCallID,
+			Path:             navigationPath(artifact),
+		},
+	})
+}
+
+// publish keeps a document the model wrote. A revision is the next version
+// of a document this conversation already holds: the pane keeps one brief
+// with its versions, and the text it replaced can be read and restored.
 func (r *artifactRecorder) publish(
 	callID string,
 	document services.PublishedDocument,
 ) (*services.ShownArtifact, error) {
-	artifact := documentArtifact(callID, document)
+	artifact := documentArtifact(callID, document, r.author())
 
 	if !document.ArtifactID.IsNil() {
 		existing, err := r.repo.GetByID(r.ctx, repositories.GetArtifactRequest{
@@ -178,10 +229,11 @@ func (r *artifactRecorder) publish(
 			existing.Kind != assistantartifact.KindDocument {
 			return nil, errUnknownDocument
 		}
-		artifact.ID = existing.ID
-		artifact.MessageID = existing.MessageID
-		artifact.SourceToolCallID = existing.SourceToolCallID
-		artifact.Pinned = existing.Pinned
+		latest := r.latestVersion(existing)
+		artifact.FollowLineage(latest)
+		artifact.Slug = latest.Slug
+		artifact.Pinned = latest.Pinned
+		artifact.Payload[assistantartifact.DocumentVersionNote] = "Revised"
 	}
 
 	saved, err := r.save(artifact)
@@ -190,6 +242,42 @@ func (r *artifactRecorder) publish(
 	}
 
 	return shownArtifact(saved), nil
+}
+
+// latestVersion is the newest version of the lineage an artifact belongs to,
+// or the artifact itself when its lineage cannot be read.
+func (r *artifactRecorder) latestVersion(
+	artifact *assistantartifact.Artifact,
+) *assistantartifact.Artifact {
+	versions, err := r.repo.ListLineage(r.ctx, repositories.LineageRequest{
+		ThreadID:   r.thread.ID,
+		TenantInfo: r.tenant,
+		ID:         artifact.ID,
+	})
+	if err != nil || len(versions) == 0 {
+		return artifact
+	}
+
+	latest := versions[0]
+	for _, version := range versions[1:] {
+		if version.LineageSeq > latest.LineageSeq {
+			latest = version
+		}
+	}
+
+	return latest
+}
+
+// author is the name a document is credited to: the conversation's agent.
+func (r *artifactRecorder) author() string {
+	if r.svc == nil {
+		return ""
+	}
+
+	return r.svc.agentName(r.ctx, repositories.GetThreadRequest{
+		ID:         r.thread.ID,
+		TenantInfo: r.tenant,
+	}, r.thread)
 }
 
 // adopt takes on artifacts kept earlier in the turn, where the tools that made
@@ -252,6 +340,56 @@ func (r *artifactRecorder) attachMessages(index map[string]pulid.ID) {
 	}
 }
 
+// keepLinked drops the views of lookups the reply did not point to. A lookup
+// is how the agent finds things out; its result is worth a place beside the
+// conversation only when the reply uses it to answer. Documents, drafts,
+// plans and decision requests were made on purpose and always stay.
+func (r *artifactRecorder) keepLinked(linked map[string]bool) {
+	if r == nil {
+		return
+	}
+
+	var unused []pulid.ID
+	for _, artifact := range r.recorded {
+		if !assistantartifact.IsLookup(artifact.Kind) || linked[artifact.ID.String()] {
+			continue
+		}
+		unused = append(unused, artifact.ID)
+	}
+	if len(unused) == 0 {
+		return
+	}
+	if err := r.repo.Delete(r.ctx, &repositories.DeleteArtifactsRequest{
+		ThreadID:   r.thread.ID,
+		TenantInfo: r.tenant,
+		IDs:        unused,
+	}); err != nil {
+		r.logger.Warn("could not drop the artifacts the reply did not use", zap.Error(err))
+		return
+	}
+	for _, id := range unused {
+		r.forget(id)
+	}
+}
+
+// linkedArtifacts is every artifact the turn's replies point to. Only the
+// conversation's own agent answers the person: an agent it handed a task to
+// reports back to that agent, and the records it cited while doing so are its
+// working, not the answer. They stay only if the reply itself uses them.
+func linkedArtifacts(messages []conversation.Message) map[string]bool {
+	linked := map[string]bool{}
+	for idx := range messages {
+		if messages[idx].Role != conversation.RoleAssistant || messages[idx].DelegateCallID != "" {
+			continue
+		}
+		for _, id := range agentruntime.ArtifactRefIDs(messages[idx].Content) {
+			linked[id] = true
+		}
+	}
+
+	return linked
+}
+
 // artifacts is what the turn produced, for the turn's result.
 func (r *artifactRecorder) artifacts() []services.AssistantArtifact {
 	if r == nil || len(r.recorded) == 0 {
@@ -264,6 +402,49 @@ func (r *artifactRecorder) artifacts() []services.AssistantArtifact {
 	}
 
 	return out
+}
+
+// followLineage makes an artifact the next version of the one the same
+// lookup made before, and returns that earlier one when there is one.
+func (r *artifactRecorder) followLineage(
+	artifact *assistantartifact.Artifact,
+) *assistantartifact.Artifact {
+	if artifact.LineageKey == "" {
+		return nil
+	}
+	previous, err := r.repo.LatestInLineage(r.ctx, repositories.LatestInLineageRequest{
+		ThreadID:       r.thread.ID,
+		TenantInfo:     r.tenant,
+		LineageKey:     artifact.LineageKey,
+		ExceptToolCall: artifact.SourceToolCallID,
+	})
+	if err != nil {
+		r.logger.Warn("artifact lineage could not be read", zap.Error(err))
+		return nil
+	}
+	artifact.FollowLineage(previous)
+
+	return previous
+}
+
+// sameView says a new version would show exactly what the last one shows:
+// the same title over the same data, so there is nothing new to keep.
+func sameView(previous, next *assistantartifact.Artifact) bool {
+	if previous == nil || previous.Kind != next.Kind || previous.Title != next.Title {
+		return false
+	}
+	// ConfigStd sorts map keys; the fast path writes them in whatever order
+	// it meets them, and two identical views would read as different.
+	before, err := sonic.ConfigStd.Marshal(previous.Payload)
+	if err != nil {
+		return false
+	}
+	after, err := sonic.ConfigStd.Marshal(next.Payload)
+	if err != nil {
+		return false
+	}
+
+	return string(before) == string(after)
 }
 
 func (r *artifactRecorder) save(
@@ -283,6 +464,14 @@ func (r *artifactRecorder) save(
 
 		return nil, multiErr
 	}
+
+	// The same lookup run again over data that has not changed shows what the
+	// last version shows; the reply points to that one instead of a copy.
+	previous := r.followLineage(artifact)
+	if sameView(previous, artifact) {
+		return previous, nil
+	}
+	r.assignSlug(artifact, previous)
 
 	saved, err := r.repo.Upsert(r.ctx, artifact)
 	if err != nil {
@@ -328,13 +517,60 @@ func (r *artifactRecorder) remember(saved *assistantartifact.Artifact) {
 	r.recorded = append(r.recorded, saved)
 }
 
+// forget drops an artifact from what the turn produced, once a table has
+// taken its place: the turn reports the table, and the message the card
+// came from is tied to nothing that no longer exists.
+func (r *artifactRecorder) forget(id pulid.ID) {
+	r.recorded = slices.DeleteFunc(r.recorded, func(recorded *assistantartifact.Artifact) bool {
+		return recorded.ID == id
+	})
+}
+
 // shownArtifact is how the model is told what the person now sees.
 func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact {
 	return &services.ShownArtifact{
-		ID:    artifact.ID,
-		Kind:  string(artifact.Kind),
-		Title: artifact.Title,
+		ID:         artifact.ID,
+		Kind:       string(artifact.Kind),
+		Title:      artifact.Title,
+		Rows:       int(numberOf(artifact.Payload, "rowCount")),
+		Actionable: actionableTable(artifact),
+		Opens:      opensView(artifact),
+		Ranked:     rankedTable(artifact),
 	}
+}
+
+// rankedTable is a table whose order is what the person decides from: the
+// drivers ranked for a move. Five rows are few enough to reprint, and the
+// Desk did, as a markdown table that kept the order and lost the findings
+// behind it and the link to each driver.
+func rankedTable(artifact *assistantartifact.Artifact) bool {
+	ranked, _ := artifact.Payload[payloadRanked].(bool)
+
+	return artifact.Kind == assistantartifact.KindTableView && ranked
+}
+
+// opensView is a composed view: a table that opens the live page.
+func opensView(artifact *assistantartifact.Artifact) bool {
+	_, opens := artifact.Payload["path"]
+
+	return artifact.Kind == assistantartifact.KindTableView && opens
+}
+
+// actionableTable is a table whose rows the person acts on where it opens:
+// the billing queue, where items are selected, reviewed and approved. The
+// design draws it with a checkbox column and a bulk bar, which a markdown
+// table in the reply could never offer.
+func actionableTable(artifact *assistantartifact.Artifact) bool {
+	if artifact.Kind != assistantartifact.KindTableView {
+		return false
+	}
+	// A composed view opens the live table; its rows are a preview of that,
+	// never the answer to reprint.
+	if _, opens := artifact.Payload["path"]; opens {
+		return true
+	}
+
+	return typeutils.StringOfTrimmed(artifact.Payload["recordEntity"]) == billingQueueRecordEntity
 }
 
 func (r *artifactRecorder) requestDecision(
@@ -536,18 +772,50 @@ var (
 	errDocumentNotKept = errors.New("it could not be saved")
 )
 
-// documentArtifact is a write-up the model published, kept as markdown.
+// documentArtifact is a write-up the model published, kept as markdown with
+// what the Desk sets around it: its type, who wrote it and from what, and the
+// sources its citation marks point to.
 func documentArtifact(
 	callID string,
 	document services.PublishedDocument,
+	author string,
 ) *assistantartifact.Artifact {
+	sources := make([]assistantartifact.DocumentSource, 0, len(document.Sources))
+	for _, source := range document.Sources {
+		shown := assistantartifact.DocumentSource{
+			N:      source.N,
+			Tool:   source.Tool,
+			Label:  source.Label,
+			Detail: source.Detail,
+		}
+		if !source.ArtifactID.IsNil() {
+			shown.ArtifactID = source.ArtifactID.String()
+		}
+		sources = append(sources, shown)
+	}
+	slices.SortFunc(sources, func(a, b assistantartifact.DocumentSource) int {
+		return cmp.Compare(a.N, b.N)
+	})
+	docType := strings.TrimSpace(document.DocType)
+	if docType == "" {
+		docType = "Document"
+	}
+
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindDocument,
 		Status: assistantartifact.StatusReady,
 		Title:  artifactTitle(document.Title),
 		Payload: map[string]any{
-			"format": "markdown",
-			"body":   document.Body,
+			assistantartifact.DocumentFormat:      "markdown",
+			assistantartifact.DocumentBody:        document.Body,
+			assistantartifact.DocumentType:        docType,
+			assistantartifact.DocumentAuthor:      author,
+			assistantartifact.DocumentBasis:       strings.TrimSpace(document.Basis),
+			assistantartifact.DocumentSources:     sources,
+			assistantartifact.DocumentCitations:   assistantartifact.CitedNumbers(document.Body),
+			assistantartifact.DocumentEditedBy:    assistantartifact.DocumentEditedByAgent,
+			assistantartifact.DocumentEditor:      author,
+			assistantartifact.DocumentVersionNote: "First draft",
 		},
 		SourceToolCallID: callID,
 	}
@@ -569,21 +837,23 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 	name := observation.Call.Name
 	switch {
 	case name == toolPreviewReport:
-		return previewArtifact(observation.Call.ID, result)
+		return previewArtifact(observation.Call.ID, result, observation.Call.Arguments)
+	case name == toolRankCandidates:
+		return candidateRankingArtifact(observation.Call.ID, result)
 	case name == toolRunReport || name == toolGetReportRun:
 		return runArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, getToolPrefix) && isRowSet(result):
 		return tableArtifact(observation.Call.ID, name, result)
 	case strings.HasPrefix(name, getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, document)
-	case name == toolComposeView:
-		return composedViewArtifact(observation.Call.ID, result)
 	case name == toolExplainRate:
 		return rateArtifact(observation.Call.ID, result)
 	case name == toolCompareRuns:
 		return runDiffArtifact(observation.Call.ID, result)
 	case name == toolOpenPage:
 		return navigationArtifact(observation.Call.ID, result)
+	case name == toolComposeView:
+		return composedViewArtifact(observation.Call.ID, result)
 	case pagedraft.IsEditTool(name):
 		return draftEditArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
@@ -659,20 +929,123 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 	}
 }
 
+// candidateColumns are a ranked driver as a dispatcher weighs one: where it
+// stands, who it is, the console's verdict and score, and the figures the
+// score was made from. The tractor and trailer are ids only, which a person
+// cannot read, so they stay in the model's copy for assign_move.
+var candidateColumns = []string{
+	"rank",
+	"driver",
+	"fit",
+	"score",
+	"deadheadMiles",
+	"minutesOfSlack",
+	"driveRemainingHours",
+	"projectedArrival",
+	"finding",
+}
+
+// candidateRankingArtifact is a move's ranked drivers as a table, best
+// first.
+//
+// It used to be nothing at all. Asked to rank drivers for a load, the Desk
+// read the ranking and wrote it out again as a markdown table: the order
+// survived, the findings behind each verdict and the link to each driver did
+// not, and the dispatcher had nothing beside the conversation to pick from.
+// The rank is a column of its own because the order is the answer, and a
+// table re-sorted by deadhead would otherwise lose it.
+func candidateRankingArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	candidates, ok := result["candidates"].([]any)
+	if !ok || len(candidates) == 0 {
+		return nil
+	}
+
+	rows := make([]any, 0, len(candidates))
+	for _, raw := range candidates {
+		candidate, isRecord := raw.(map[string]any)
+		if !isRecord {
+			continue
+		}
+		row := map[string]any{
+			recordIDKey:           candidate["workerId"],
+			"rank":                float64(len(rows) + 1),
+			"driver":              candidate["workerName"],
+			"fit":                 candidate["verdict"],
+			"score":               candidate["score"],
+			"deadheadMiles":       candidate["deadheadMiles"],
+			"minutesOfSlack":      candidate["minutesOfSlack"],
+			"driveRemainingHours": math.Round(numberOf(candidate, "driveRemainingHours")*10) / 10,
+			"finding":             leadingFinding(candidate),
+		}
+		// An unknown arrival is a phrase in the model's copy; in a column of
+		// times it would be the one cell that is not one.
+		if arrival := numberOf(candidate, "projectedArrival"); arrival > 0 {
+			row["projectedArrival"] = arrival
+		}
+		rows = append(rows, row)
+	}
+
+	projection := projectTable("workers", candidateColumns, rows)
+	if len(projection.columns) == 0 {
+		return nil
+	}
+
+	payload := map[string]any{
+		"display":     assistantartifact.DisplayVersion,
+		"tool":        toolRankCandidates,
+		"entity":      "workers",
+		"columns":     projection.columns,
+		"rows":        projection.rows,
+		"rowCount":    float64(len(projection.rows)),
+		"searchedFor": []string{},
+		payloadRanked: true,
+	}
+	if projection.recordEntity != "" {
+		payload["recordEntity"] = projection.recordEntity
+	}
+	fitRows(payload, "rows")
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindTableView,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle("Drivers ranked for the move"),
+		Payload:          payload,
+		SourceToolCallID: callID,
+	}
+}
+
+// leadingFinding is the one finding a dispatcher reads first: what rules the
+// driver out, or failing that what to watch. A note that changes nothing is
+// left in the model's copy.
+func leadingFinding(candidate map[string]any) string {
+	findings := listOf(candidate["findings"])
+	for _, severity := range []string{"Block", "Warn"} {
+		for _, finding := range findings {
+			if textOf(finding, "severity") == severity {
+				return textOf(finding, "message")
+			}
+		}
+	}
+
+	return ""
+}
+
 // composedViewArtifact is a described view as something to open.
 //
-// The pane shows what it was narrowed to and what could not be, with the link
-// to the live table. It is a table_view like a list result, because to the
-// reader it is the same thing arrived at a different way — except that this
-// one opens rather than being a snapshot.
+// The pane shows what it was narrowed to and what could not be, how many rows
+// it holds and the first few, with the link to the live table. It is a
+// table_view like a list result, because to the reader it is the same thing
+// arrived at a different way — except that this one opens rather than being a
+// snapshot, which its path says.
 func composedViewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
 	path := typeutils.StringOfTrimmed(result["path"])
-	if path == "" {
+	if !assistantartifact.IsAppPath(path) {
 		return nil
 	}
 
 	entity := typeutils.StringOfTrimmed(result["entity"])
 	payload := map[string]any{
+		"display":     assistantartifact.DisplayVersion,
 		"entity":      entity,
 		"path":        path,
 		"explanation": typeutils.StringOfTrimmed(result["explanation"]),
@@ -680,13 +1053,31 @@ func composedViewArtifact(callID string, result map[string]any) *assistantartifa
 		"filterCount": result["filterCount"],
 		"unresolved":  result["unresolved"],
 	}
+	if count, counted := result["count"]; counted {
+		payload["rowCount"] = count
+		payload["countCapped"] = typeutils.BoolOf(result["countCapped"])
+	}
+	if rows, ok := result["items"].([]any); ok && len(rows) > 0 {
+		projection := projectTable(entity, stringsOf(result["columns"]), rows)
+		if len(projection.columns) > 0 {
+			payload["columns"] = projection.columns
+			payload["rows"] = projection.rows
+			if projection.recordEntity != "" {
+				payload["recordEntity"] = projection.recordEntity
+			}
+			fitRows(payload, "rows")
+		}
+	}
+
+	title := typeutils.StringOfTrimmed(result["explanation"])
+	if title == "" {
+		title = stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity))
+	}
 
 	return &assistantartifact.Artifact{
-		Kind:   assistantartifact.KindTableView,
-		Status: assistantartifact.StatusReady,
-		Title: artifactTitle(
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)),
-		),
+		Kind:             assistantartifact.KindTableView,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(stringutils.CapitalizeFirst(title)),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -699,8 +1090,10 @@ func composedViewArtifact(callID string, result map[string]any) *assistantartifa
 // total, the limits that bit, what it was priced under — it is the thing a
 // person puts next to the invoice line they are disputing.
 func rateArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
-	// Nothing to explain is a sentence, not a ledger of zeroes.
-	if typeutils.StringOfTrimmed(result["note"]) != "" {
+	// Nothing to explain is a sentence, not a ledger of zeroes. A shipment
+	// priced from its formula template has a note too, and a ledger.
+	pricedBy := objectOf(result["pricedBy"])
+	if typeutils.StringOfTrimmed(result["note"]) != "" && pricedBy == nil {
 		return nil
 	}
 	components, _ := result["components"].([]any)
@@ -719,6 +1112,9 @@ func rateArtifact(callID string, result map[string]any) *assistantartifact.Artif
 		"guardrails": result["guardrails"],
 		"totals":     result["totals"],
 		"warnings":   stringsOf(result["warnings"]),
+	}
+	if pricedBy != nil {
+		payload["pricedBy"] = pricedBy
 	}
 	fitRows(payload, "components")
 
@@ -885,7 +1281,11 @@ func stringsOf(value any) []string {
 	return out
 }
 
-func previewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+func previewArtifact(
+	callID string,
+	result map[string]any,
+	arguments map[string]any,
+) *assistantartifact.Artifact {
 	rows, _ := result["rows"].([]any)
 	payload := map[string]any{
 		"name":      typeutils.StringOfTrimmed(result["name"]),
@@ -895,6 +1295,15 @@ func previewArtifact(callID string, result map[string]any) *assistantartifact.Ar
 		"rows":      rows,
 		"totals":    result["totals"],
 		"truncated": typeutils.BoolOf(result["truncated"]),
+		"tool":      toolPreviewReport,
+	}
+	// A saved or built-in report can be opened whole where reports live; an
+	// inline definition has nowhere but its own page.
+	if id := typeutils.StringOfTrimmed(arguments["definitionId"]); id != "" {
+		payload["definitionId"] = id
+	}
+	if key := typeutils.StringOfTrimmed(arguments["reportKey"]); key != "" {
+		payload["reportKey"] = key
 	}
 	fitRows(payload, "rows")
 
@@ -996,20 +1405,48 @@ func entityCardArtifact(
 	if path, ok := productguide.RecordPath(entity, typeutils.StringOfTrimmed(result["id"])); ok {
 		payload["path"] = path
 	}
+	if view := recordView(entity, result); view != nil {
+		payload[payloadView] = view
+	}
 	if payloadSize(payload) > assistantartifact.MaxPayloadBytes {
 		return nil
 	}
 
 	return &assistantartifact.Artifact{
-		Kind:   assistantartifact.KindEntityCard,
-		Status: assistantartifact.StatusReady,
-		Title: artifactTitle(strings.TrimSpace(
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) +
-				" " + assistantartifact.RecordLabel(result),
-		)),
+		Kind:             assistantartifact.KindEntityCard,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(entityCardTitle(entity, result)),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+// entityCardTitle names a record card. A billing queue item is named as a
+// biller knows it, by its number and who it bills, as the design titles it;
+// any other record by its kind and label.
+func entityCardTitle(entity string, result map[string]any) string {
+	// A billing queue item and an invoice carry the shipment's pro number
+	// too, and a title led by it named the invoice for a load rather than by
+	// its own number.
+	switch entity {
+	case viewBillingQueueItem, viewInvoice:
+		number := typeutils.StringOfTrimmed(result["number"])
+		billTo := typeutils.StringOfTrimmed(result["billTo"])
+		if billTo == "" {
+			billTo = typeutils.StringOfTrimmed(result["billToName"])
+		}
+		if number != "" && billTo != "" {
+			return number + " · " + billTo
+		}
+		if number != "" {
+			return number
+		}
+	}
+
+	return strings.TrimSpace(
+		stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) +
+			" " + assistantartifact.RecordLabel(result),
+	)
 }
 
 // draftArtifact views an outbound message proposal as a draft. Only the
@@ -1231,41 +1668,12 @@ func toAssistantArtifact(artifact *assistantartifact.Artifact) services.Assistan
 		Payload:          artifact.Payload,
 		SourceToolCallID: artifact.SourceToolCallID,
 		Pinned:           artifact.Pinned,
+		LineageID:        artifact.LineageID,
+		LineageSeq:       max(artifact.LineageSeq, 1),
+		Slug:             artifact.Slug,
 		CreatedAt:        artifact.CreatedAt,
 		UpdatedAt:        artifact.UpdatedAt,
 	}
-}
-
-// ListThreadArtifacts reads a thread's artifacts with each draft's and
-// plan's status read from the proposal or plan it views, so the pane shows
-// a draft as sent the moment the decision ran, without a second write.
-func (s *Service) ListThreadArtifacts(
-	ctx context.Context,
-	req repositories.GetThreadRequest,
-) ([]services.AssistantArtifact, error) {
-	if _, err := s.conversations.GetThread(ctx, req); err != nil {
-		return nil, err
-	}
-	if s.artifacts == nil {
-		return []services.AssistantArtifact{}, nil
-	}
-
-	artifacts, err := s.artifacts.ListByThread(ctx, repositories.ListArtifactsRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	s.followDecisions(ctx, req, artifacts)
-
-	out := make([]services.AssistantArtifact, 0, len(artifacts))
-	for _, artifact := range artifacts {
-		out = append(out, toAssistantArtifact(artifact))
-	}
-
-	return out, nil
 }
 
 // followDecisions overlays each draft's and plan's status from the record

@@ -23,7 +23,7 @@ import {
   Rectangle,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { Circle as CircleIcon, PenTool, PlusIcon, Square } from "lucide-react";
+import { CircleIcon, PenTool01Icon, PlusIcon, SquareIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -34,8 +34,8 @@ const LOCATION_ZOOM = 18;
 const GEOFENCE_TYPE_ICONS: Record<LocationGeofenceType, typeof CircleIcon> = {
   auto: AssistMark,
   circle: CircleIcon,
-  rectangle: Square,
-  draw: PenTool,
+  rectangle: SquareIcon,
+  draw: PenTool01Icon,
 };
 const SHAPE_COLORS = {
   stroke: "#2563eb",

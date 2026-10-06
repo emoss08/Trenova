@@ -3,7 +3,7 @@ import { apiService } from "@/services/api";
 import type { AssistantEntityRef } from "@/types/assistant";
 import type { UploadState } from "@/types/upload";
 import { useCallback, useMemo, useState } from "react";
-import type { ComposerAttachment, MentionCandidate } from "./composer";
+import type { ComposerAttachment, MentionCandidate } from "./composer-types";
 
 /** The resource an attachment is uploaded against; the server checks it. */
 export const ATTACHMENT_RESOURCE_TYPE = "assistant_thread";
@@ -32,6 +32,7 @@ function toComposerAttachment(
     documentId: document?.id,
     contentType: document?.contentType ?? upload.file.type,
     error: upload.error,
+    file: upload.file,
   };
 }
 
@@ -47,19 +48,20 @@ export function useComposerContext(threadId: string) {
   );
   const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);
 
-  const { uploads, uploadFiles, cancelUpload, removeUpload, clearAll } = useDocumentUpload({
-    resourceId: threadId,
-    resourceType: ATTACHMENT_RESOURCE_TYPE,
-    processingProfile: "assistant_attachment",
-    invalidateQueryKey: ["assistant", "attachments", threadId],
-    onSuccess: (document, upload) => {
-      setDocuments((current) => {
-        const next = new Map(current);
-        next.set(upload.id, { id: document.id, contentType: document.fileType });
-        return next;
-      });
-    },
-  });
+  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearAll } =
+    useDocumentUpload({
+      resourceId: threadId,
+      resourceType: ATTACHMENT_RESOURCE_TYPE,
+      processingProfile: "assistant_attachment",
+      invalidateQueryKey: ["assistant", "attachments", threadId],
+      onSuccess: (document, upload) => {
+        setDocuments((current) => {
+          const next = new Map(current);
+          next.set(upload.id, { id: document.id, contentType: document.fileType });
+          return next;
+        });
+      },
+    });
 
   const attachments = useMemo(
     () => uploads.map((upload) => toComposerAttachment(upload, documents)),
@@ -110,6 +112,7 @@ export function useComposerContext(threadId: string) {
     attachments,
     attachFiles,
     removeAttachment,
+    retryAttachment: retryUpload,
     mentions,
     setMentions,
     searchMentions,

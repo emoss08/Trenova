@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingtransferresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/captureresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
@@ -38,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customfielddefinitionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionsresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/distanceoverrideresolver"
@@ -95,6 +97,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentboardresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/sidebarpreferenceresolver"
@@ -147,6 +150,7 @@ type Resolver struct {
 	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
 	agentEvalCase                      *agentqualityresolver.AgentEvalCaseResolver
 	agentEvaluation                    *agentresolver.AgentEvaluationResolver
+	agentMemory                        *agentresolver.AgentMemoryResolver
 	agentPlan                          *decisionsresolver.AgentPlanResolver
 	agentPreviewFieldChange            *agentpreviewresolver.AgentPreviewFieldChangeResolver
 	agentPreviewMessage                *agentpreviewresolver.AgentPreviewMessageResolver
@@ -159,6 +163,7 @@ type Resolver struct {
 	agentProposalField                 *agentresolver.AgentProposalFieldResolver
 	agentQualityAgent                  *agentqualityresolver.AgentQualityAgentResolver
 	agentQualityControl                *agentqualityresolver.AgentQualityControlResolver
+	agentReflection                    *agentresolver.AgentReflectionResolver
 	agentRun                           *agentRunResolver
 	agentRunEvent                      *agentruneventresolver.AgentRunEventResolver
 	agentSafety                        *agentsafetyresolver.AgentSafetyResolver
@@ -179,6 +184,7 @@ type Resolver struct {
 	carrier                            *carrierintelligenceresolver.CarrierResolver
 	carrierAssignment                  *shipmentresolver.CarrierAssignmentResolver
 	carrierAssignmentAccessorial       *shipmentresolver.CarrierAssignmentAccessorialResolver
+	carrierCapacityPosting             *carriercapacityresolver.CarrierCapacityPostingResolver
 	carrierEquipmentVerification       *carrierintelligenceresolver.CarrierEquipmentVerificationResolver
 	carrierInsurancePolicy             *carrierresolver.CarrierInsurancePolicyResolver
 	carrierIntelControl                *carrierintelligenceresolver.CarrierIntelControlResolver
@@ -377,16 +383,19 @@ func FromServices(s *Services) *Resolver {
 		AgentProposalService:      s.AgentProposalService,
 		AgentPlanService:          s.AgentPlanService,
 		AgentMemoryService:        s.AgentMemoryService,
+		AgentReflectionService:    s.AgentReflectionService,
 		AgentEvaluationService:    s.AgentEvaluationService,
 		AgentExceptionService:     s.AgentExceptionService,
 		AgentDecisionService:      s.AgentDecisionService,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
+		ApprovalCommitter:         s.ApprovalCommitter,
 		AgentTools:                s.AgentTools,
 		AgentControlService:       s.AgentControlService,
 	}
 	agentdefinitionDeps := &agentdefinitionresolver.Deps{
 		Core:                   s.Core,
 		AgentDefinitionService: s.AgentDefinitionService,
+		AgentCapabilityService: s.AgentCapabilityService,
 		AgentAccessService:     s.AgentAccessService,
 	}
 	agentpreviewDeps := &agentpreviewresolver.Deps{
@@ -461,8 +470,9 @@ func FromServices(s *Services) *Resolver {
 		DriverPortalService:     s.DriverPortalService,
 	}
 	billingqueueDeps := &billingqueueresolver.Deps{
-		Core:                s.Core,
-		BillingQueueService: s.BillingQueueService,
+		Core:                      s.Core,
+		BillingQueueService:       s.BillingQueueService,
+		BillingQueueReviewService: s.BillingQueueReviewService,
 	}
 	billingtransferDeps := &billingtransferresolver.Deps{
 		Core:                   s.Core,
@@ -480,6 +490,10 @@ func FromServices(s *Services) *Resolver {
 	carrierDeps := &carrierresolver.Deps{
 		Core:           s.Core,
 		CarrierService: s.CarrierService,
+	}
+	carriercapacityDeps := &carriercapacityresolver.Deps{
+		Core:                   s.Core,
+		CarrierCapacityService: s.CarrierCapacityService,
 	}
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
 		Core:                s.Core,
@@ -518,6 +532,10 @@ func FromServices(s *Services) *Resolver {
 	decisionsDeps := &decisionsresolver.Deps{
 		Core:                      s.Core,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
+	}
+	deskmemoryDeps := &deskmemoryresolver.Deps{
+		Core:               s.Core,
+		AgentMemoryService: s.AgentMemoryService,
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   s.Core,
@@ -835,6 +853,21 @@ func FromServices(s *Services) *Resolver {
 		ShipmentEventService:    s.ShipmentEventService,
 		ShipmentImportAssistant: s.ShipmentImportAssistant,
 	}
+	shipmentboardDeps := &shipmentboardresolver.Deps{
+		Core:                   s.Core,
+		CustomerUpdateService:  s.CustomerUpdateService,
+		BoardCapacity:          s.BoardCapacity,
+		BoardCoverage:          s.BoardCoverage,
+		BoardTenderer:          s.BoardTenderer,
+		BoardSuggestions:       s.BoardSuggestions,
+		BoardSuggestionDecider: s.BoardSuggestionDecider,
+		BoardBriefing:          s.BoardBriefing,
+		BoardWatchlist:         s.BoardWatchlist,
+		BoardFacetCounts:       s.BoardFacetCounts,
+		BoardQuickFilterCounts: s.BoardQuickFilterCounts,
+		BoardStageSummaries:    s.BoardStageSummaries,
+		BoardCapabilities:      s.BoardCapabilities,
+	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                s.Core,
 		ShipmentTypeService: s.ShipmentTypeService,
@@ -964,6 +997,7 @@ func FromServices(s *Services) *Resolver {
 		agentDefinition:          &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
 		agentEvalCase:            &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
 		agentEvaluation:          &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
+		agentMemory:              &agentresolver.AgentMemoryResolver{Deps: agentDeps},
 		agentPlan:                &decisionsresolver.AgentPlanResolver{Deps: decisionsDeps},
 		agentPreviewFieldChange:  &agentpreviewresolver.AgentPreviewFieldChangeResolver{Deps: agentpreviewDeps},
 		agentPreviewMessage:      &agentpreviewresolver.AgentPreviewMessageResolver{Deps: agentpreviewDeps},
@@ -979,6 +1013,7 @@ func FromServices(s *Services) *Resolver {
 		agentProposalField:  &agentresolver.AgentProposalFieldResolver{Deps: agentDeps},
 		agentQualityAgent:   &agentqualityresolver.AgentQualityAgentResolver{Deps: agentqualityDeps},
 		agentQualityControl: &agentqualityresolver.AgentQualityControlResolver{Deps: agentqualityDeps},
+		agentReflection:     &agentresolver.AgentReflectionResolver{Deps: agentDeps},
 		agentRun: &agentRunResolver{
 			agentAgentRun:     &agentAgentRun{Deps: agentDeps},
 			decisionsAgentRun: &decisionsAgentRun{Deps: decisionsDeps},
@@ -1002,6 +1037,7 @@ func FromServices(s *Services) *Resolver {
 		carrier:                      &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps},
 		carrierAssignment:            &shipmentresolver.CarrierAssignmentResolver{Deps: shipmentDeps},
 		carrierAssignmentAccessorial: &shipmentresolver.CarrierAssignmentAccessorialResolver{Deps: shipmentDeps},
+		carrierCapacityPosting:       &carriercapacityresolver.CarrierCapacityPostingResolver{Deps: carriercapacityDeps},
 		carrierEquipmentVerification: &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps},
 		carrierInsurancePolicy:       &carrierresolver.CarrierInsurancePolicyResolver{Deps: carrierDeps},
 		carrierIntelControl:          &carrierintelligenceresolver.CarrierIntelControlResolver{Deps: carrierintelligenceDeps},
@@ -1108,11 +1144,13 @@ func FromServices(s *Services) *Resolver {
 			billingtransferMutation:       &billingtransferMutation{Deps: billingtransferDeps},
 			briefingMutation:              &briefingMutation{Deps: briefingDeps},
 			captureMutation:               &captureMutation{Deps: captureDeps},
+			carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
 			carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 			carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
 			costingMutation:               &costingMutation{Deps: costingDeps},
 			customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
 			decisionsMutation:             &decisionsMutation{Deps: decisionsDeps},
+			deskmemoryMutation:            &deskmemoryMutation{Deps: deskmemoryDeps},
 			detentionMutation:             &detentionMutation{Deps: detentionDeps},
 			dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 			documenttemplateMutation:      &documenttemplateMutation{Deps: documenttemplateDeps},
@@ -1144,6 +1182,7 @@ func FromServices(s *Services) *Resolver {
 			schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
 			selfserviceMutation:           &selfserviceMutation{Deps: selfserviceDeps},
 			shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
+			shipmentboardMutation:         &shipmentboardMutation{Deps: shipmentboardDeps},
 			sidebarpreferenceMutation:     &sidebarpreferenceMutation{Deps: sidebarpreferenceDeps},
 			tableconfigurationMutation:    &tableconfigurationMutation{Deps: tableconfigurationDeps},
 			telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
@@ -1211,6 +1250,7 @@ func FromServices(s *Services) *Resolver {
 			briefingQuery:                 &briefingQuery{Deps: briefingDeps},
 			captureQuery:                  &captureQuery{Deps: captureDeps},
 			carrierQuery:                  &carrierQuery{Deps: carrierDeps},
+			carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
 			carrierintelligenceQuery:      &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
 			carriersettlementQuery:        &carriersettlementQuery{Deps: carriersettlementDeps},
 			commodityQuery:                &commodityQuery{Deps: commodityDeps},
@@ -1219,6 +1259,7 @@ func FromServices(s *Services) *Resolver {
 			customerpaymentQuery:          &customerpaymentQuery{Deps: customerpaymentDeps},
 			customfielddefinitionQuery:    &customfielddefinitionQuery{Deps: customfielddefinitionDeps},
 			decisionsQuery:                &decisionsQuery{Deps: decisionsDeps},
+			deskmemoryQuery:               &deskmemoryQuery{Deps: deskmemoryDeps},
 			detentionQuery:                &detentionQuery{Deps: detentionDeps},
 			dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 			distanceoverrideQuery:         &distanceoverrideQuery{Deps: distanceoverrideDeps},
@@ -1276,6 +1317,7 @@ func FromServices(s *Services) *Resolver {
 			servicefailurereasoncodeQuery: &servicefailurereasoncodeQuery{Deps: servicefailurereasoncodeDeps},
 			servicetypeQuery:              &servicetypeQuery{Deps: servicetypeDeps},
 			shipmentQuery:                 &shipmentQuery{Deps: shipmentDeps},
+			shipmentboardQuery:            &shipmentboardQuery{Deps: shipmentboardDeps},
 			shipmenttypeQuery:             &shipmenttypeQuery{Deps: shipmenttypeDeps},
 			sidebarpreferenceQuery:        &sidebarpreferenceQuery{Deps: sidebarpreferenceDeps},
 			storedmileageQuery:            &storedmileageQuery{Deps: storedmileageDeps},
@@ -1453,6 +1495,10 @@ func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
 	return r.agentEvaluation
 }
 
+func (r *Resolver) AgentMemory() generated.AgentMemoryResolver {
+	return r.agentMemory
+}
+
 func (r *Resolver) AgentPlan() generated.AgentPlanResolver {
 	return r.agentPlan
 }
@@ -1504,6 +1550,10 @@ func (r *Resolver) AgentQualityAgent() generated.AgentQualityAgentResolver {
 
 func (r *Resolver) AgentQualityControl() generated.AgentQualityControlResolver {
 	return r.agentQualityControl
+}
+
+func (r *Resolver) AgentReflection() generated.AgentReflectionResolver {
+	return r.agentReflection
 }
 
 func (r *Resolver) AgentRun() generated.AgentRunResolver {
@@ -1589,6 +1639,10 @@ func (r *Resolver) CarrierAssignment() generated.CarrierAssignmentResolver {
 
 func (r *Resolver) CarrierAssignmentAccessorial() generated.CarrierAssignmentAccessorialResolver {
 	return r.carrierAssignmentAccessorial
+}
+
+func (r *Resolver) CarrierCapacityPosting() generated.CarrierCapacityPostingResolver {
+	return r.carrierCapacityPosting
 }
 
 func (r *Resolver) CarrierEquipmentVerification() generated.CarrierEquipmentVerificationResolver {
@@ -1970,11 +2024,13 @@ type mutationResolver struct {
 	*billingtransferMutation
 	*briefingMutation
 	*captureMutation
+	*carriercapacityMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
 	*costingMutation
 	*customerpaymentMutation
 	*decisionsMutation
+	*deskmemoryMutation
 	*detentionMutation
 	*dispatchconsoleMutation
 	*documenttemplateMutation
@@ -2006,6 +2062,7 @@ type mutationResolver struct {
 	*schedulingMutation
 	*selfserviceMutation
 	*shipmentMutation
+	*shipmentboardMutation
 	*sidebarpreferenceMutation
 	*tableconfigurationMutation
 	*telematicsMutation
@@ -2144,6 +2201,7 @@ type queryResolver struct {
 	*briefingQuery
 	*captureQuery
 	*carrierQuery
+	*carriercapacityQuery
 	*carrierintelligenceQuery
 	*carriersettlementQuery
 	*commodityQuery
@@ -2152,6 +2210,7 @@ type queryResolver struct {
 	*customerpaymentQuery
 	*customfielddefinitionQuery
 	*decisionsQuery
+	*deskmemoryQuery
 	*detentionQuery
 	*dispatchconsoleQuery
 	*distanceoverrideQuery
@@ -2209,6 +2268,7 @@ type queryResolver struct {
 	*servicefailurereasoncodeQuery
 	*servicetypeQuery
 	*shipmentQuery
+	*shipmentboardQuery
 	*shipmenttypeQuery
 	*sidebarpreferenceQuery
 	*storedmileageQuery
@@ -2465,11 +2525,13 @@ type (
 	billingtransferMutation       = billingtransferresolver.MutationResolver
 	briefingMutation              = briefingresolver.MutationResolver
 	captureMutation               = captureresolver.MutationResolver
+	carriercapacityMutation       = carriercapacityresolver.MutationResolver
 	carrierintelligenceMutation   = carrierintelligenceresolver.MutationResolver
 	carriersettlementMutation     = carriersettlementresolver.MutationResolver
 	costingMutation               = costingresolver.MutationResolver
 	customerpaymentMutation       = customerpaymentresolver.MutationResolver
 	decisionsMutation             = decisionsresolver.MutationResolver
+	deskmemoryMutation            = deskmemoryresolver.MutationResolver
 	detentionMutation             = detentionresolver.MutationResolver
 	dispatchconsoleMutation       = dispatchconsoleresolver.MutationResolver
 	documenttemplateMutation      = documenttemplateresolver.MutationResolver
@@ -2501,6 +2563,7 @@ type (
 	schedulingMutation            = schedulingresolver.MutationResolver
 	selfserviceMutation           = selfserviceresolver.MutationResolver
 	shipmentMutation              = shipmentresolver.MutationResolver
+	shipmentboardMutation         = shipmentboardresolver.MutationResolver
 	sidebarpreferenceMutation     = sidebarpreferenceresolver.MutationResolver
 	tableconfigurationMutation    = tableconfigurationresolver.MutationResolver
 	telematicsMutation            = telematicsresolver.MutationResolver
@@ -2544,6 +2607,7 @@ type (
 	briefingQuery                 = briefingresolver.QueryResolver
 	captureQuery                  = captureresolver.QueryResolver
 	carrierQuery                  = carrierresolver.QueryResolver
+	carriercapacityQuery          = carriercapacityresolver.QueryResolver
 	carrierintelligenceQuery      = carrierintelligenceresolver.QueryResolver
 	carriersettlementQuery        = carriersettlementresolver.QueryResolver
 	commodityQuery                = commodityresolver.QueryResolver
@@ -2552,6 +2616,7 @@ type (
 	customerpaymentQuery          = customerpaymentresolver.QueryResolver
 	customfielddefinitionQuery    = customfielddefinitionresolver.QueryResolver
 	decisionsQuery                = decisionsresolver.QueryResolver
+	deskmemoryQuery               = deskmemoryresolver.QueryResolver
 	detentionQuery                = detentionresolver.QueryResolver
 	dispatchconsoleQuery          = dispatchconsoleresolver.QueryResolver
 	distanceoverrideQuery         = distanceoverrideresolver.QueryResolver
@@ -2609,6 +2674,7 @@ type (
 	servicefailurereasoncodeQuery = servicefailurereasoncoderesolver.QueryResolver
 	servicetypeQuery              = servicetyperesolver.QueryResolver
 	shipmentQuery                 = shipmentresolver.QueryResolver
+	shipmentboardQuery            = shipmentboardresolver.QueryResolver
 	shipmenttypeQuery             = shipmenttyperesolver.QueryResolver
 	sidebarpreferenceQuery        = sidebarpreferenceresolver.QueryResolver
 	storedmileageQuery            = storedmileageresolver.QueryResolver

@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DetentionHold } from "@trenova/shared/types/billing-queue";
 import type { BillingHoldReason } from "@trenova/shared/types/detention";
-import { TimerIcon } from "lucide-react";
+import { ClockStopwatchIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 function holdReasonLabel(t: TranslateFn, reason: BillingHoldReason): string {
@@ -33,7 +33,7 @@ export function BillingQueueDetentionHolds({ holds }: { holds: DetentionHold[] }
   return (
     <div className="shrink-0 px-4 pt-2">
       <Alert size="sm" variant="warning" data-testid="billing-queue-detention-holds">
-        <TimerIcon />
+        <ClockStopwatchIcon />
         <AlertTitle>
           {t(
             "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}}",

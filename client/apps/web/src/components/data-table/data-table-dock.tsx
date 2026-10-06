@@ -6,7 +6,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDataTable } from "@/contexts/data-table-context";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DockAction, Table } from "@trenova/shared/types/data-table";
-import { ChevronDownIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useState } from "react";
 import {
@@ -126,7 +126,7 @@ export function DataTableDock<TData extends RowData>({
                     <span className="text-background text-sm font-medium tabular-nums">
                       {t("{0} selected", selectedCount)}
                     </span>{" "}
-                    <XIcon className="text-background size-3" />
+                    <XCloseIcon className="text-background size-3" />
                   </Button>
                 }
               />

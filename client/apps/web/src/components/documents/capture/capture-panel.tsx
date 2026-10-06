@@ -31,7 +31,13 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
-import { ChevronDownIcon, InboxIcon, PrinterIcon, QrCodeIcon, ScanLineIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  Inbox01Icon,
+  PrinterIcon,
+  QrCode01Icon,
+  ScanIcon,
+} from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { CaptureRequestDialog } from "./capture-request-dialog";
@@ -88,7 +94,7 @@ export function CaptureButton({
           disabled={disabled}
           onClick={() => setRequestMode("Scan")}
         >
-          <ScanLineIcon className="size-4" />
+          <ScanIcon className="size-4" />
           {t("Scan")}
         </Button>
         <DropdownMenu>
@@ -117,7 +123,7 @@ export function CaptureButton({
               title={t("Print cover sheets")}
               description={t("A sheet that routes a scanned stack here, from any scanner")}
               descriptionClassProps="whitespace-normal"
-              startContent={<QrCodeIcon className="size-3.5" />}
+              startContent={<QrCode01Icon className="size-3.5" />}
               onClick={() => setCoverSheetsOpen(true)}
             />
           </DropdownMenuContent>
@@ -176,7 +182,7 @@ function RequestRow({
     <li className="flex flex-col gap-2 px-3 py-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         {request.mode === "Scan" ? (
-          <ScanLineIcon className="text-foreground-subtle size-4" aria-hidden />
+          <ScanIcon className="text-foreground-subtle size-4" aria-hidden />
         ) : (
           <PrinterIcon className="text-foreground-subtle size-4" aria-hidden />
         )}
@@ -287,7 +293,7 @@ export function CaptureRequestsPanel({
   return (
     <SectionPanel
       title={t("Scans and prints")}
-      icon={<ScanLineIcon aria-hidden />}
+      icon={<ScanIcon aria-hidden />}
       count={shown.length}
     >
       <ul className="divide-border-subtle divide-y">
@@ -328,7 +334,7 @@ export function CaptureStacksPanel({
   return (
     <SectionPanel
       title={t("Stacks in Intake")}
-      icon={<InboxIcon aria-hidden />}
+      icon={<Inbox01Icon aria-hidden />}
       hint={page.hasNextPage ? t("The {0} most recent", RECORD_STACKS_SHOWN) : undefined}
     >
       <ul className="divide-border-subtle divide-y">

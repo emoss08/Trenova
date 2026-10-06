@@ -82,6 +82,9 @@ var noMessage = map[string]struct{}{
 	"NewConcurrentAccessError":        {},
 	"NewContinueAsNewError":           {},
 	"NewCanceledError":                {},
+	"NewQuotaExceededError":           {},
+	"NewPlanRestrictionError":         {},
+	"NewPlanRefusalError":             {},
 }
 
 func isErrortypesConstructor(name string) bool {
@@ -388,7 +391,7 @@ func main() {
 		unknown:  map[string][]string{},
 	}
 
-	for _, dir := range []string{"services/tms", "services/gtc", "shared"} {
+	for _, dir := range []string{"services/tms", "shared"} {
 		target := filepath.Join(absRoot, dir)
 		if _, statErr := os.Stat(target); statErr != nil {
 			continue

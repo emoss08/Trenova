@@ -7,12 +7,12 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { TableDensity } from "@/types/table-configuration";
 import type { Table } from "@trenova/shared/types/data-table";
 import {
+  Brush01Icon,
   ChevronRightIcon,
-  PaintbrushIcon,
-  Rows2Icon,
-  Rows4Icon,
-  SlidersHorizontalIcon,
-} from "lucide-react";
+  Rows02Icon,
+  Rows03Icon,
+  Sliders01Icon,
+} from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type DataTableDisplayMenuProps = {
@@ -23,9 +23,9 @@ type DataTableDisplayMenuProps = {
   onEditFormatRules?: () => void;
 };
 
-const DENSITY_OPTIONS: { value: TableDensity; label: string; icon: typeof Rows2Icon }[] = [
-  { value: "comfortable", label: "Comfortable", icon: Rows2Icon },
-  { value: "compact", label: "Compact", icon: Rows4Icon },
+const DENSITY_OPTIONS: { value: TableDensity; label: string; icon: typeof Rows02Icon }[] = [
+  { value: "comfortable", label: "Comfortable", icon: Rows02Icon },
+  { value: "compact", label: "Compact", icon: Rows03Icon },
 ];
 
 export default function DataTableDisplayMenu({
@@ -53,7 +53,7 @@ export default function DataTableDisplayMenu({
       <PopoverTrigger
         render={
           <Button variant="outline" size="sm">
-            <SlidersHorizontalIcon className="size-3.5" />
+            <Sliders01Icon className="size-3.5" />
             <span className="hidden lg:inline">{t("Display")}</span>
           </Button>
         }
@@ -141,7 +141,7 @@ export default function DataTableDisplayMenu({
               onEditFormatRules();
             }}
           >
-            <PaintbrushIcon className="text-muted-foreground size-3.5" />
+            <Brush01Icon className="text-muted-foreground size-3.5" />
             {t("Conditional formatting")}
             <span className="text-muted-foreground ml-auto flex items-center gap-1">
               {formatRuleCount > 0 && (

@@ -16,7 +16,7 @@ import { StatusScreen } from "./errors/status-screen";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { HouseIcon } from "lucide-react";
+import { Home02Icon } from "@trenova/shared/components/icons";
 
 type ErrorStateBoundaryProps = {
   children: ReactNode;
@@ -158,7 +158,7 @@ export function RouteErrorBoundary({ homePath = "/", embedded = false }: RouteEr
 
   const homeAction = (
     <Button variant="outline" size={embedded ? "sm" : "default"} onClick={goHome}>
-      <HouseIcon />
+      <Home02Icon />
       {t("Go to dashboard")}
     </Button>
   );

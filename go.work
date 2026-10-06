@@ -2,7 +2,6 @@ go 1.26.0
 
 use (
 	./services/edi-partner-sim
-	./services/gtc
 	./services/samsara-sim
 	./services/tms
 	./shared

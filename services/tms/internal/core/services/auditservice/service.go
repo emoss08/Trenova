@@ -35,6 +35,7 @@ type Params struct {
 	Logger                *zap.Logger
 	Config                *config.Config
 	Metrics               *metrics.Registry
+	AgentDefinitions      repositories.AgentDefinitionRepository `optional:"true"`
 }
 
 type service struct {
@@ -45,6 +46,7 @@ type service struct {
 	config     *config.Config
 	sdm        *SensitiveDataManager
 	metrics    *metrics.Registry
+	agents     *agentCredits
 }
 
 var clientBitToOperation = map[int64]permission.Operation{
@@ -72,14 +74,21 @@ var clientBitToOperation = map[int64]permission.Operation{
 
 //nolint:gocritic // this is dependency injection
 func New(p Params) services.AuditService {
+	var definitions agentDefinitionReader
+	if p.AgentDefinitions != nil {
+		definitions = p.AgentDefinitions
+	}
+
+	logger := p.Logger.Named("service.audit")
 	srv := &service{
 		repo:       p.AuditRepository,
 		bufferRepo: p.AuditBufferRepository,
 		realtime:   p.Realtime,
-		logger:     p.Logger.Named("service.audit"),
+		logger:     logger,
 		config:     p.Config,
 		sdm:        NewSensitiveDataManager(p.Config.Security.Encryption),
 		metrics:    p.Metrics,
+		agents:     newAgentCredits(definitions, logger),
 	}
 
 	srv.configureSensitiveDataManager(p.Config.App.Env)
@@ -127,6 +136,7 @@ func (s *service) LogAction(params *services.LogActionParams, opts ...services.L
 		s.logger.Error("invalid audit entry", zap.Error(err))
 		return fmt.Errorf("invalid audit entry: %w", err)
 	}
+	s.agents.credit(entry)
 
 	if err := s.sdm.SanitizeEntry(entry); err != nil {
 		s.logger.Error("failed to sanitize sensitive data", zap.Error(err))
@@ -246,6 +256,7 @@ func (s *service) buildBulkAuditEntries(
 			)
 			continue
 		}
+		s.agents.credit(entry)
 
 		if err := s.sdm.SanitizeEntry(entry); err != nil {
 			s.logger.Warn("failed to sanitize audit entry, skipping",

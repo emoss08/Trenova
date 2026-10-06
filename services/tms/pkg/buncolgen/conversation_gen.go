@@ -310,7 +310,10 @@ var MessageColumns = struct {
 	AgentDefinitionID Column // "agent_definition_id" → qualified: "amsg.agent_definition_id"
 	DelegateCallID    Column // "delegate_call_id" → qualified: "amsg.delegate_call_id"
 	DelegateReport    Column // "delegate_report" → qualified: "amsg.delegate_report"
+	ScheduleID        Column // "schedule_id" → qualified: "amsg.schedule_id"
+	Handoff           Column // "handoff" → qualified: "amsg.handoff"
 	Content           Column // "content" → qualified: "amsg.content"
+	Compaction        Column // "compaction" → qualified: "amsg.compaction"
 	ToolCalls         Column // "tool_calls" → qualified: "amsg.tool_calls"
 	ToolCallID        Column // "tool_call_id" → qualified: "amsg.tool_call_id"
 	ToolName          Column // "tool_name" → qualified: "amsg.tool_name"
@@ -327,11 +330,16 @@ var MessageColumns = struct {
 	Mentions          Column // "mentions" → qualified: "amsg.mentions"
 	Reasoning         Column // "reasoning" → qualified: "amsg.reasoning"
 	Model             Column // "model" → qualified: "amsg.model"
+	Truncated         Column // "truncated" → qualified: "amsg.truncated"
+	FallbackFrom      Column // "fallback_from" → qualified: "amsg.fallback_from"
+	Failure           Column // "failure" → qualified: "amsg.failure"
 	ProviderID        Column // "provider_id" → qualified: "amsg.provider_id"
 	InputTokens       Column // "input_tokens" → qualified: "amsg.input_tokens"
 	OutputTokens      Column // "output_tokens" → qualified: "amsg.output_tokens"
 	LatencyMs         Column // "latency_ms" → qualified: "amsg.latency_ms"
 	CostUSD           Column // "cost_usd" → qualified: "amsg.cost_usd"
+	UsedMemoryIDs     Column // "used_memory_ids" → qualified: "amsg.used_memory_ids"
+	SavedMemories     Column // "saved_memories" → qualified: "amsg.saved_memories"
 	CreatedAt         Column // "created_at" → qualified: "amsg.created_at"
 }{
 	ID:                NewColumn("id", "amsg"),
@@ -344,7 +352,10 @@ var MessageColumns = struct {
 	AgentDefinitionID: NewColumn("agent_definition_id", "amsg"),
 	DelegateCallID:    NewColumn("delegate_call_id", "amsg"),
 	DelegateReport:    NewColumn("delegate_report", "amsg"),
+	ScheduleID:        NewColumn("schedule_id", "amsg"),
+	Handoff:           NewColumn("handoff", "amsg"),
 	Content:           NewColumn("content", "amsg"),
+	Compaction:        NewColumn("compaction", "amsg"),
 	ToolCalls:         NewColumn("tool_calls", "amsg"),
 	ToolCallID:        NewColumn("tool_call_id", "amsg"),
 	ToolName:          NewColumn("tool_name", "amsg"),
@@ -361,11 +372,16 @@ var MessageColumns = struct {
 	Mentions:          NewColumn("mentions", "amsg"),
 	Reasoning:         NewColumn("reasoning", "amsg"),
 	Model:             NewColumn("model", "amsg"),
+	Truncated:         NewColumn("truncated", "amsg"),
+	FallbackFrom:      NewColumn("fallback_from", "amsg"),
+	Failure:           NewColumn("failure", "amsg"),
 	ProviderID:        NewColumn("provider_id", "amsg"),
 	InputTokens:       NewColumn("input_tokens", "amsg"),
 	OutputTokens:      NewColumn("output_tokens", "amsg"),
 	LatencyMs:         NewColumn("latency_ms", "amsg"),
 	CostUSD:           NewColumn("cost_usd", "amsg"),
+	UsedMemoryIDs:     NewColumn("used_memory_ids", "amsg"),
+	SavedMemories:     NewColumn("saved_memories", "amsg"),
 	CreatedAt:         NewColumn("created_at", "amsg"),
 }
 
@@ -384,7 +400,10 @@ var MessageFieldMap = map[string]string{
 	"agentId":        "agent_definition_id",
 	"delegateCallId": "delegate_call_id",
 	"delegateReport": "delegate_report",
+	"scheduleId":     "schedule_id",
+	"handoff":        "handoff",
 	"content":        "content",
+	"compaction":     "compaction",
 	"toolCalls":      "tool_calls",
 	"toolCallId":     "tool_call_id",
 	"toolName":       "tool_name",
@@ -401,11 +420,16 @@ var MessageFieldMap = map[string]string{
 	"mentions":       "mentions",
 	"reasoning":      "reasoning",
 	"model":          "model",
+	"truncated":      "truncated",
+	"fallbackFrom":   "fallback_from",
+	"failure":        "failure",
 	"providerId":     "provider_id",
 	"inputTokens":    "input_tokens",
 	"outputTokens":   "output_tokens",
 	"latencyMs":      "latency_ms",
 	"costUsd":        "cost_usd",
+	"usedMemoryIds":  "used_memory_ids",
+	"savedMemories":  "saved_memories",
 	"createdAt":      "created_at",
 }
 
@@ -422,7 +446,10 @@ var MessageInsertableColumns = []string{
 	"agent_definition_id",
 	"delegate_call_id",
 	"delegate_report",
+	"schedule_id",
+	"handoff",
 	"content",
+	"compaction",
 	"tool_calls",
 	"tool_call_id",
 	"tool_name",
@@ -439,11 +466,16 @@ var MessageInsertableColumns = []string{
 	"mentions",
 	"reasoning",
 	"model",
+	"truncated",
+	"fallback_from",
+	"failure",
 	"provider_id",
 	"input_tokens",
 	"output_tokens",
 	"latency_ms",
 	"cost_usd",
+	"used_memory_ids",
+	"saved_memories",
 	"created_at",
 }
 
@@ -518,7 +550,10 @@ var MessageFilter = struct {
 	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentId" → DB: "agent_definition_id"
 	DelegateCallID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
 	DelegateReport    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateReport" → DB: "delegate_report"
+	ScheduleID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scheduleId" → DB: "schedule_id"
+	Handoff           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "handoff" → DB: "handoff"
 	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
+	Compaction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "compaction" → DB: "compaction"
 	ToolCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
 	ToolCallID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallId" → DB: "tool_call_id"
 	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
@@ -535,11 +570,16 @@ var MessageFilter = struct {
 	Mentions          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mentions" → DB: "mentions"
 	Reasoning         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoning" → DB: "reasoning"
 	Model             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	Truncated         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "truncated" → DB: "truncated"
+	FallbackFrom      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fallbackFrom" → DB: "fallback_from"
+	Failure           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failure" → DB: "failure"
 	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
 	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
 	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
 	LatencyMs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
 	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	UsedMemoryIDs     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedMemoryIds" → DB: "used_memory_ids"
+	SavedMemories     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "savedMemories" → DB: "saved_memories"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
@@ -572,8 +612,17 @@ var MessageFilter = struct {
 	DelegateReport: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("delegateReport", op, value)
 	},
+	ScheduleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("scheduleId", op, value)
+	},
+	Handoff: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("handoff", op, value)
+	},
 	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("content", op, value)
+	},
+	Compaction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("compaction", op, value)
 	},
 	ToolCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("toolCalls", op, value)
@@ -623,6 +672,15 @@ var MessageFilter = struct {
 	Model: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("model", op, value)
 	},
+	Truncated: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("truncated", op, value)
+	},
+	FallbackFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fallbackFrom", op, value)
+	},
+	Failure: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failure", op, value)
+	},
 	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("providerId", op, value)
 	},
@@ -637,6 +695,12 @@ var MessageFilter = struct {
 	},
 	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("costUsd", op, value)
+	},
+	UsedMemoryIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usedMemoryIds", op, value)
+	},
+	SavedMemories: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("savedMemories", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)
@@ -677,11 +741,16 @@ var ThreadColumns = struct {
 	Title               Column // "title" → qualified: "athr.title"
 	Status              Column // "status" → qualified: "athr.status"
 	LastMessageAt       Column // "last_message_at" → qualified: "athr.last_message_at"
+	LastReadAt          Column // "last_read_at" → qualified: "athr.last_read_at"
 	PreferredProviderID Column // "preferred_provider_id" → qualified: "athr.preferred_provider_id"
 	Origin              Column // "origin" → qualified: "athr.origin"
 	Pinned              Column // "pinned" → qualified: "athr.pinned"
 	SubjectType         Column // "subject_type" → qualified: "athr.subject_type"
 	SubjectID           Column // "subject_id" → qualified: "athr.subject_id"
+	PinnedFacts         Column // "pinned_facts" → qualified: "athr.pinned_facts"
+	ContextUsage        Column // "context_usage" → qualified: "athr.context_usage"
+	AutoCompactOff      Column // "auto_compact_off" → qualified: "athr.auto_compact_off"
+	HandedFromThreadID  Column // "handed_from_thread_id" → qualified: "athr.handed_from_thread_id"
 	Taint               Column // "taint" → qualified: "athr.taint"
 	TaintedAt           Column // "tainted_at" → qualified: "athr.tainted_at"
 	Version             Column // "version" → qualified: "athr.version"
@@ -696,11 +765,16 @@ var ThreadColumns = struct {
 	Title:               NewColumn("title", "athr"),
 	Status:              NewColumn("status", "athr"),
 	LastMessageAt:       NewColumn("last_message_at", "athr"),
+	LastReadAt:          NewColumn("last_read_at", "athr"),
 	PreferredProviderID: NewColumn("preferred_provider_id", "athr"),
 	Origin:              NewColumn("origin", "athr"),
 	Pinned:              NewColumn("pinned", "athr"),
 	SubjectType:         NewColumn("subject_type", "athr"),
 	SubjectID:           NewColumn("subject_id", "athr"),
+	PinnedFacts:         NewColumn("pinned_facts", "athr"),
+	ContextUsage:        NewColumn("context_usage", "athr"),
+	AutoCompactOff:      NewColumn("auto_compact_off", "athr"),
+	HandedFromThreadID:  NewColumn("handed_from_thread_id", "athr"),
 	Taint:               NewColumn("taint", "athr"),
 	TaintedAt:           NewColumn("tainted_at", "athr"),
 	Version:             NewColumn("version", "athr"),
@@ -721,11 +795,16 @@ var ThreadFieldMap = map[string]string{
 	"title":               "title",
 	"status":              "status",
 	"lastMessageAt":       "last_message_at",
+	"lastReadAt":          "last_read_at",
 	"preferredProviderId": "preferred_provider_id",
 	"origin":              "origin",
 	"pinned":              "pinned",
 	"subjectType":         "subject_type",
 	"subjectId":           "subject_id",
+	"pinnedFacts":         "pinned_facts",
+	"contextUsage":        "context_usage",
+	"autoCompactOff":      "auto_compact_off",
+	"handedFromThreadId":  "handed_from_thread_id",
 	"taint":               "taint",
 	"taintedAt":           "tainted_at",
 	"version":             "version",
@@ -744,11 +823,16 @@ var ThreadInsertableColumns = []string{
 	"title",
 	"status",
 	"last_message_at",
+	"last_read_at",
 	"preferred_provider_id",
 	"origin",
 	"pinned",
 	"subject_type",
 	"subject_id",
+	"pinned_facts",
+	"context_usage",
+	"auto_compact_off",
+	"handed_from_thread_id",
 	"taint",
 	"tainted_at",
 	"version",
@@ -829,11 +913,16 @@ var ThreadFilter = struct {
 	Title               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
 	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	LastMessageAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastMessageAt" → DB: "last_message_at"
+	LastReadAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastReadAt" → DB: "last_read_at"
 	PreferredProviderID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
 	Origin              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "origin" → DB: "origin"
 	Pinned              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinned" → DB: "pinned"
 	SubjectType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
 	SubjectID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	PinnedFacts         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinnedFacts" → DB: "pinned_facts"
+	ContextUsage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextUsage" → DB: "context_usage"
+	AutoCompactOff      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCompactOff" → DB: "auto_compact_off"
+	HandedFromThreadID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "handedFromThreadId" → DB: "handed_from_thread_id"
 	Taint               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
 	TaintedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintedAt" → DB: "tainted_at"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -864,6 +953,9 @@ var ThreadFilter = struct {
 	LastMessageAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lastMessageAt", op, value)
 	},
+	LastReadAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastReadAt", op, value)
+	},
 	PreferredProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("preferredProviderId", op, value)
 	},
@@ -878,6 +970,18 @@ var ThreadFilter = struct {
 	},
 	SubjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("subjectId", op, value)
+	},
+	PinnedFacts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pinnedFacts", op, value)
+	},
+	ContextUsage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("contextUsage", op, value)
+	},
+	AutoCompactOff: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoCompactOff", op, value)
+	},
+	HandedFromThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("handedFromThreadId", op, value)
 	},
 	Taint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("taint", op, value)

@@ -3,6 +3,8 @@ package modules
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
+
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
@@ -173,6 +175,7 @@ var ValidatorModule = fx.Module(
 		manualjournalservice.NewValidator,
 		billingcontrolservice.NewValidator,
 		costingservice.NewValidator,
+		carriercapacityservice.NewValidator,
 		dataentrycontrolservice.NewValidator,
 		dispatchcontrolservice.NewValidator,
 		distanceoverrideservice.NewValidator,

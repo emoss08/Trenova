@@ -19,7 +19,7 @@ import type {
   CarrierAssignmentPayloadInput,
   CarrierEligibility,
 } from "@trenova/shared/types/shipment";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useFieldArray, type Control, type UseFormReturn } from "react-hook-form";
 import {
@@ -278,7 +278,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                 className="h-6 px-2 text-2xs"
                 onClick={() => remove(index)}
               >
-                <TrashIcon className="size-3" />
+                <Trash01Icon className="size-3" />
                 {t("Remove")}
               </Button>
             </div>

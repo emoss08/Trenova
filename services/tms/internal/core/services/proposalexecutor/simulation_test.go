@@ -56,6 +56,14 @@ func (f *fakeBudgets) Status(
 	return nil, nil
 }
 
+func (f *fakeBudgets) WithinBusinessHours(context.Context, *agentdefinition.Definition) bool {
+	return true
+}
+
+func (f *fakeBudgets) Timezone(context.Context, *agentdefinition.Definition) string {
+	return ""
+}
+
 func approver(proposal *agent.AgentProposal) *services.RequestActor {
 	return &services.RequestActor{
 		PrincipalType:  services.PrincipalTypeUser,

@@ -1,0 +1,64 @@
+fragment AgentCapabilityToolFields on AgentCapabilityTool {
+  key
+  label
+  write
+  mode
+  allowedModes
+  lockReason
+}
+
+fragment AgentCapabilitiesFields on AgentCapabilities {
+  agentId
+  name
+  description
+  template
+  icon
+  accent
+  systemKey
+  model
+  setUpBy
+  enabled
+  canEdit
+  version
+  readTools {
+    ...AgentCapabilityToolFields
+  }
+  writeTools {
+    ...AgentCapabilityToolFields
+  }
+  handoffs {
+    agentId
+    name
+    description
+    icon
+    accent
+    template
+    topic
+  }
+  limits {
+    requestsToday
+    dailyRequestLimit
+    dayResetsAt
+    monthlySpentUsd
+    monthlyBudgetUsd
+    monthStart
+    monthResetsAt
+    maxChangeItems
+    businessHoursOnly
+    businessHoursStart
+    businessHoursEnd
+    businessHoursTimezone
+  }
+}
+
+query AgentCapabilities($agentId: ID!) {
+  agentCapabilities(agentId: $agentId) {
+    ...AgentCapabilitiesFields
+  }
+}
+
+mutation UpdateAgentCapabilities($agentId: ID!, $input: UpdateAgentCapabilitiesInput!) {
+  updateAgentCapabilities(agentId: $agentId, input: $input) {
+    ...AgentCapabilitiesFields
+  }
+}

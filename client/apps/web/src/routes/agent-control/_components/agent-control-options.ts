@@ -1,3 +1,36 @@
+import type { AgentControl } from "@/lib/graphql/agent-control";
+import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
+
+export type ControlPatch = Partial<
+  Pick<
+    AgentControlInput,
+    | "shadowMode"
+    | "earnedAutonomy"
+    | "promotionThreshold"
+    | "aiTrainingConsent"
+    | "personMonthlyMessages"
+    | "learningOff"
+  >
+>;
+
+/**
+ * The input the mutation sends: the current switches with one of them changed.
+ * Training consent is sent only when it is the switch being changed, so saving
+ * any other switch never re-records who consented.
+ */
+export function controlInput(current: AgentControl, patch: ControlPatch): AgentControlInput {
+  return {
+    shadowMode: patch.shadowMode ?? current.shadowMode,
+    earnedAutonomy: patch.earnedAutonomy ?? current.earnedAutonomy,
+    promotionThreshold: patch.promotionThreshold ?? current.promotionThreshold,
+    personMonthlyMessages: patch.personMonthlyMessages ?? current.personMonthlyMessages,
+    learningOff: patch.learningOff ?? current.learningOff,
+    ...(patch.aiTrainingConsent === undefined
+      ? {}
+      : { aiTrainingConsent: patch.aiTrainingConsent }),
+  };
+}
+
 /**
  * How many clean approvals in a row earn a tool its next tier. A short list
  * keeps the choice legible; a value set some other way still shows up as the
@@ -14,4 +47,19 @@ export function promotionThresholdOptions(current: number): ThresholdOption[] {
   }
 
   return [...values].sort((a, b) => a - b).map((value) => ({ value, label: String(value) }));
+}
+
+/**
+ * How many questions one person may ask the agents in a month. Nought is
+ * unlimited and comes first, since it is where every organization starts.
+ */
+export const PERSON_ALLOWANCE_PRESETS = [0, 100, 250, 500, 1000] as const;
+
+export function personAllowanceOptions(current: number): number[] {
+  const values = new Set<number>(PERSON_ALLOWANCE_PRESETS);
+  if (Number.isInteger(current) && current >= 0) {
+    values.add(current);
+  }
+
+  return [...values].sort((a, b) => a - b);
 }

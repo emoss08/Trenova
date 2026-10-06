@@ -13,10 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentscoring"
+	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
@@ -35,7 +37,7 @@ import (
 
 const (
 	maxSummaryChars = 2000
-	promptVersion   = "agent-definition/v2"
+	promptVersion   = agentdefinition.PromptVersion
 )
 
 type ActivitiesParams struct {
@@ -69,8 +71,10 @@ type ActivitiesParams struct {
 	Conversations repositories.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
-	Watchtower serviceports.WatchtowerProjector `optional:"true"`
-	Schedules  *DefinitionSchedules
+	Watchtower    serviceports.WatchtowerProjector      `optional:"true"`
+	Reflections   serviceports.AgentReflectionScheduler `optional:"true"`
+	Schedules     *DefinitionSchedules
+	PlatformPlans serviceports.PlanService `optional:"true"`
 }
 
 type Activities struct {
@@ -98,7 +102,9 @@ type Activities struct {
 	subjects      serviceports.AgentSubjectDescriber
 	activity      serviceports.AgentActivityPublisher
 	watchtower    serviceports.WatchtowerProjector
+	reflections   serviceports.AgentReflectionScheduler
 	schedules     *DefinitionSchedules
+	platformPlans serviceports.PlanService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -132,7 +138,9 @@ func NewActivities(p ActivitiesParams) *Activities {
 		subjects:      p.Subjects,
 		activity:      p.Activity,
 		watchtower:    p.Watchtower,
+		reflections:   p.Reflections,
 		schedules:     p.Schedules,
+		platformPlans: p.PlatformPlans,
 	}
 }
 
@@ -217,7 +225,7 @@ func (a *Activities) runRequest(
 	subject *agentdefinition.RuntimeSubject,
 ) (*serviceports.RunRequest, error) {
 	tenant := payload.tenantInfo()
-	actor, err := a.unattendedActor(ctx, tenant)
+	actor, err := a.unattendedActor(ctx, tenant, definition)
 	if err != nil {
 		return nil, err
 	}
@@ -478,7 +486,6 @@ func (a *Activities) settleRun(
 	// otherwise have its proposals recorded a second time, and the person
 	// would be asked to approve the same change on two cards.
 	recorded, err := a.recordProposals(ctx, recordProposalsParams{
-		Actor:      agentActor(tenant),
 		Definition: p.Definition,
 		Run:        run,
 		Actions:    p.Outcome.Actions,
@@ -529,6 +536,12 @@ func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRun
 	}
 
 	a.projectFailedRun(ctx, input.TenantInfo, completed)
+	if a.reflections != nil {
+		a.reflections.AfterRun(ctx, &serviceports.ReflectOnRunRequest{
+			TenantInfo: input.TenantInfo,
+			RunID:      input.RunID,
+		})
+	}
 
 	return nil
 }
@@ -612,6 +625,19 @@ func (a *Activities) StartScheduledRunActivity(
 	tenant := pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID}
 	now := timeutils.NowUnix()
 
+	allowed, err := planservice.Allows(
+		ctx,
+		a.platformPlans,
+		tenant,
+		platformplan.CapabilityAgentAutomation,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("resolve the organization's plan: %w", err)
+	}
+	if !allowed {
+		return &StartScheduledRunResult{Skipped: "plan_restricted"}, nil
+	}
+
 	definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
 		ID:         payload.DefinitionID,
 		TenantInfo: tenant,
@@ -661,10 +687,13 @@ func (a *Activities) StartScheduledRunActivity(
 		Trigger:      definition.TriggerMode.RunTrigger(),
 		Slot:         payload.Slot,
 		TenantInfo:   tenant,
-	}, agentActor(tenant))
+	}, agentActorFor(tenant, definition))
 	if err != nil {
 		if errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
 			return &StartScheduledRunResult{Skipped: "slot_already_started"}, nil
+		}
+		if errortypes.IsPlanRestrictionError(err) {
+			return &StartScheduledRunResult{Skipped: "plan_restricted"}, nil
 		}
 		if errortypes.IsBusinessError(err) {
 			return &StartScheduledRunResult{Skipped: err.Error()}, nil
@@ -721,6 +750,7 @@ func (a *Activities) announceRun(ctx context.Context, run *agent.AgentRun) {
 func (a *Activities) unattendedActor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
+	definition *agentdefinition.Definition,
 ) (*serviceports.RequestActor, error) {
 	system, err := a.users.GetSystemUser(ctx, "id")
 	if err != nil {
@@ -728,10 +758,22 @@ func (a *Activities) unattendedActor(
 			ToTemporalError()
 	}
 
-	actor := agentActor(tenant)
+	actor := agentActorFor(tenant, definition)
 	actor.UserID = system.ID
 
 	return actor, nil
+}
+
+func agentActorFor(
+	tenant pagination.TenantInfo,
+	definition *agentdefinition.Definition,
+) *serviceports.RequestActor {
+	actor := agentActor(tenant)
+	if definition != nil && definition.ID.IsNotNil() {
+		actor.PrincipalID = definition.ID
+	}
+
+	return actor
 }
 
 func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {
@@ -936,7 +978,6 @@ func (a *Activities) RemindPendingProposalsActivity(
 
 // recordProposalsParams groups what filing a run's proposed writes needs.
 type recordProposalsParams struct {
-	Actor      *serviceports.RequestActor
 	Definition *agentdefinition.Definition
 	Run        *agent.AgentRun
 	Actions    []serviceports.PendingAction
@@ -971,8 +1012,15 @@ func (a *Activities) recordProposals(
 		return &proposalrecorder.RecordResult{Run: p.Run, Proposals: existing}, nil
 	}
 
+	actor := agentActorFor(p.TenantInfo, p.Definition)
+	if len(p.Actions) > 0 {
+		if actor, err = a.unattendedActor(ctx, p.TenantInfo, p.Definition); err != nil {
+			return nil, err
+		}
+	}
+
 	recorded, err := a.recorder.Record(ctx, &proposalrecorder.RecordRequest{
-		Actor:      p.Actor,
+		Actor:      actor,
 		Definition: p.Definition,
 		Run:        p.Run,
 		Actions:    p.Actions,

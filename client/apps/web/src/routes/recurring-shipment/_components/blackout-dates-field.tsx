@@ -18,7 +18,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { FieldWrapper } from "@/components/fields/field-components";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import { format } from "date-fns";
-import { CalendarPlusIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { CalendarPlus01Icon, ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { useController, useFormContext } from "react-hook-form";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -86,7 +86,7 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
         onClick={() => onRemove(date)}
         className="text-muted-foreground hover:text-foreground ml-auto size-5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100"
       >
-        <XIcon className="size-3.5" />
+        <XCloseIcon className="size-3.5" />
       </Button>
     </li>
   );
@@ -182,7 +182,7 @@ export function BlackoutDatesField() {
             <PopoverTrigger
               render={
                 <Button type="button" variant="outline" size="sm" className="h-7">
-                  <CalendarPlusIcon className="size-3.5" />
+                  <CalendarPlus01Icon className="size-3.5" />
                   {t("Select days")}
                 </Button>
               }

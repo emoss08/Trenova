@@ -6,7 +6,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { parseDashboardLayout } from "@/types/report";
-import { CircleAlertIcon, LayoutDashboardIcon, PlusIcon } from "lucide-react";
+import { AlertCircleIcon, LayoutAlt04Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -60,7 +60,7 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
     return (
       <div className="grid p-4">
         <ReportGridEmptyState
-          icon={CircleAlertIcon}
+          icon={AlertCircleIcon}
           title={t("Dashboards could not be loaded")}
           description={graphQLErrorMessage(dashboards.error, "Please try again")}
         />
@@ -113,7 +113,7 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
                   </div>
                 </div>
                 <div className="border-border/60 text-2xs text-muted-foreground mt-3 flex items-center gap-2 border-t pt-3">
-                  <LayoutDashboardIcon className="size-3.5" />
+                  <LayoutAlt04Icon className="size-3.5" />
                   <span className="tabular-nums">
                     {t("{0, plural, one {# tile} other {# tiles}}", layout.tiles.length)}
                   </span>

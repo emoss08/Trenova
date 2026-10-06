@@ -32,14 +32,52 @@ func PlanTransition(
 	actor *services.RequestActor,
 	now int64,
 ) error {
+	startReviewForApproval(entity, req, now)
 	if err := checkStatusTransition(entity, req); err != nil {
 		return err
 	}
+	if err := checkHoldReason(req); err != nil {
+		return err
+	}
 
+	from := entity.Status
 	entity.Status = req.NewStatus
-	applyStatusFields(entity, req, actor, now)
+	applyStatusFields(entity, from, req, actor, now)
 
 	return nil
+}
+
+// startReviewForApproval opens the review an approval implies. An item a
+// biller can see and approve has been reviewed whether or not anyone pressed
+// Start review, so approving it from ReadyForReview starts the review on the
+// way through rather than refusing.
+func startReviewForApproval(
+	entity *billingqueue.BillingQueueItem,
+	req *services.UpdateBillingQueueStatusRequest,
+	now int64,
+) {
+	if req.NewStatus != billingqueue.StatusApproved ||
+		entity.Status != billingqueue.StatusReadyForReview {
+		return
+	}
+
+	entity.Status = billingqueue.StatusInReview
+	if entity.ReviewStartedAt == nil {
+		entity.ReviewStartedAt = &now
+	}
+}
+
+func checkHoldReason(req *services.UpdateBillingQueueStatusRequest) error {
+	if req.NewStatus != billingqueue.StatusOnHold || req.HoldReasonCode == nil ||
+		req.HoldReasonCode.IsValid() {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"holdReasonCode",
+		errortypes.ErrInvalid,
+		"Hold reason must be waiting on paperwork, customer dispute or rate question",
+	)
 }
 
 // AgentMayMoveTo reports whether an agent principal may move an item to a
@@ -119,10 +157,18 @@ func errAgentCannotTransition() error {
 
 func applyStatusFields(
 	entity *billingqueue.BillingQueueItem,
+	from billingqueue.Status,
 	req *services.UpdateBillingQueueStatusRequest,
 	actor *services.RequestActor,
 	now int64,
 ) {
+	if req.NewStatus != billingqueue.StatusOnHold && from == billingqueue.StatusOnHold {
+		entity.HoldReasonCode = nil
+		entity.HeldAt = nil
+		entity.HeldByID = nil
+		entity.StatusBeforeHold = nil
+	}
+
 	switch req.NewStatus {
 	case billingqueue.StatusInReview:
 		if entity.ReviewStartedAt == nil {
@@ -150,6 +196,16 @@ func applyStatusFields(
 	case billingqueue.StatusOnHold:
 		if req.ReviewNotes != "" {
 			entity.ReviewNotes = req.ReviewNotes
+		}
+		entity.HoldReasonCode = req.HoldReasonCode
+		entity.HeldAt = &now
+		if userID := actor.UserIDOrNil(); userID.IsNotNil() {
+			entity.HeldByID = &userID
+		}
+		// The status the hold interrupted, so a release can return to it.
+		if from != billingqueue.StatusOnHold {
+			before := from
+			entity.StatusBeforeHold = &before
 		}
 	}
 }
