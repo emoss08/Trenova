@@ -92,7 +92,10 @@ func (h *Handler) complete(c *gin.Context) {
 	}
 
 	if authCtx == nil || authCtx.UserID.IsNil() {
-		h.eh.HandleError(c, errortypes.NewAuthorizationError("Onboarding must be completed by a person"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewAuthorizationError("Onboarding must be completed by a person"),
+		)
 		return
 	}
 

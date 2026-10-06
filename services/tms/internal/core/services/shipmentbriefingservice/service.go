@@ -68,6 +68,7 @@ type Service struct {
 
 var _ services.ShipmentBriefingReader = (*Service)(nil)
 
+//nolint:gocritic // dependency injection
 func New(p Params) services.ShipmentBriefingReader {
 	return NewWithDependencies(&Dependencies{
 		Board:         p.Board,
@@ -103,7 +104,7 @@ func (s *Service) Briefing(
 		ctx,
 		s.cache,
 		s.l,
-		shipmentboardcache.Request{
+		&shipmentboardcache.Request{
 			Section:    repositories.ShipmentBoardSectionBriefing,
 			TenantInfo: tenantInfo,
 			Timezone:   timezone,

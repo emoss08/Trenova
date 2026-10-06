@@ -80,7 +80,9 @@ func TestAcceptNarration(t *testing.T) {
 	require.True(t, ok)
 	assert.Len(t, accepted, 2)
 
-	invented := []services.ShipmentBriefingSegment{{Text: "Around 400 loads are late", Filter: &late}}
+	invented := []services.ShipmentBriefingSegment{
+		{Text: "Around 400 loads are late", Filter: &late},
+	}
 	_, ok = AcceptNarration(invented, facts, allowed)
 	assert.False(t, ok)
 
@@ -108,7 +110,11 @@ func (stubBasis) Resolve(
 	return &repositories.ShipmentQuickFilterBasis{Now: time.Unix(0, 0), Location: time.UTC}, nil
 }
 
-func (stubBasis) Prepare(context.Context, pagination.TenantInfo, *repositories.ShipmentOptions) error {
+func (stubBasis) Prepare(
+	context.Context,
+	pagination.TenantInfo,
+	*repositories.ShipmentOptions,
+) error {
 	return nil
 }
 
@@ -220,4 +226,37 @@ func TestBriefingUsesGuardedNarration(t *testing.T) {
 	briefing, err = lying.Briefing(t.Context(), pagination.TenantInfo{}, "UTC")
 	require.NoError(t, err)
 	assert.False(t, briefing.Narrated)
+}
+
+func TestOutputSchemaAsksForSegmentsLinkedToAllowedFilters(t *testing.T) {
+	t.Parallel()
+
+	schema := outputSchema([]shipment.QuickFilter{shipment.QuickFilterLate, shipment.QuickFilterMoving})
+
+	assert.Equal(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"segments": map[string]any{
+				"type": "array",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"text": map[string]any{
+							"type":        "string",
+							"description": "A run of the sentence, with its own spacing and punctuation",
+						},
+						"filter": map[string]any{
+							"type":        "string",
+							"enum":        []string{"", "Late", "Moving"},
+							"description": "The filter for the loads this run names, or empty",
+						},
+					},
+					"required":             []string{"text", "filter"},
+					"additionalProperties": false,
+				},
+			},
+		},
+		"required":             []string{"segments"},
+		"additionalProperties": false,
+	}, schema)
 }

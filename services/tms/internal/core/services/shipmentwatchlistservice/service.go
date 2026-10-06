@@ -72,6 +72,7 @@ type Service struct {
 
 var _ services.ShipmentWatchlistReader = (*Service)(nil)
 
+//nolint:gocritic // dependency injection
 func New(p Params) services.ShipmentWatchlistReader {
 	return NewWithDependencies(&Dependencies{
 		Board:        p.Board,
@@ -109,7 +110,7 @@ func (s *Service) Watchlist(
 		ctx,
 		s.cache,
 		s.l,
-		shipmentboardcache.Request{
+		&shipmentboardcache.Request{
 			Section:    repositories.ShipmentBoardSectionWatchlist,
 			TenantInfo: tenantInfo,
 			Timezone:   timezone,
@@ -150,7 +151,10 @@ func (s *Service) compute(
 		return nil, err
 	}
 
-	control, err := s.controls.Get(ctx, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo})
+	control, err := s.controls.Get(
+		ctx,
+		repositories.GetShipmentControlRequest{TenantInfo: tenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -168,13 +172,16 @@ func (s *Service) compute(
 
 	g, gctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
-		totals, tErr := s.board.QuickFilterTotals(gctx, &repositories.CountShipmentQuickFiltersRequest{
-			Scope: &repositories.ShipmentBoardScope{
-				Filter:  &pagination.QueryOptions{TenantInfo: tenantInfo},
-				Options: repositories.ShipmentOptions{QuickFilterBasis: basis},
+		totals, tErr := s.board.QuickFilterTotals(
+			gctx,
+			&repositories.CountShipmentQuickFiltersRequest{
+				Scope: &repositories.ShipmentBoardScope{
+					Filter:  &pagination.QueryOptions{TenantInfo: tenantInfo},
+					Options: repositories.ShipmentOptions{QuickFilterBasis: basis},
+				},
+				Filters: totalSpecs(in.windows),
 			},
-			Filters: totalSpecs(in.windows),
-		})
+		)
 		in.totals = totals
 		return tErr
 	})

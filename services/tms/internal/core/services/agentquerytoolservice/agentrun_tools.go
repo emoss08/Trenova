@@ -35,7 +35,6 @@ const (
 	agentRunFieldSubjectID   = "subjectId"
 	agentRunFieldStatus      = "status"
 	agentRunFieldTrigger     = "trigger"
-	agentRunFieldCreatedAt   = "createdAt"
 
 	personThreadRunsNote = "Runs on a conversation are listed only to the person whose " +
 		"conversation it is."
@@ -180,7 +179,7 @@ func agentRunListSpec() listSpec {
 				Kind: filterText,
 				Note: "the agent's id, from a run or the page you are on",
 			},
-			{Name: agentRunFieldCreatedAt, Kind: filterDate, Sortable: true},
+			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 	}
 }

@@ -104,6 +104,8 @@ var CarrierAssignmentSpec TypeSpec
 
 var CarrierAssignmentAccessorialSpec TypeSpec
 
+var CarrierCapacityPostingSpec TypeSpec
+
 var CarrierContactSpec TypeSpec
 
 var CarrierCostEventSpec TypeSpec
@@ -6002,6 +6004,128 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CarrierCapacityPostingSpec = TypeSpec{
+		TypeName: "CarrierCapacityPosting",
+		FieldMap: buncolgen.PostingFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "originLocationId",
+				FieldMapKey: "originLocationId",
+			},
+			{
+				Name:        "originStateId",
+				FieldMapKey: "originStateId",
+			},
+			{
+				Name:        "originRadiusMiles",
+				FieldMapKey: "originRadiusMiles",
+			},
+			{
+				Name:        "destinationStateId",
+				FieldMapKey: "destinationStateId",
+			},
+			{
+				Name:        "equipmentTypeId",
+				FieldMapKey: "equipmentTypeId",
+			},
+			{
+				Name:        "availableFrom",
+				FieldMapKey: "availableFrom",
+			},
+			{
+				Name:        "availableTo",
+				FieldMapKey: "availableTo",
+			},
+			{
+				Name:        "truckCount",
+				FieldMapKey: "truckCount",
+			},
+			{
+				Name:        "rateMethod",
+				FieldMapKey: "rateMethod",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "carrier",
+				FieldMapKey: "carrierId",
+				Relation: &RelationSpec{
+					Target: &CarrierSpec,
+				},
+			},
+			{
+				Name:        "originLocation",
+				FieldMapKey: "originLocationId",
+				Relation: &RelationSpec{
+					Target: &LocationSpec,
+				},
+			},
+			{
+				Name:        "originState",
+				FieldMapKey: "originStateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name:        "destinationState",
+				FieldMapKey: "destinationStateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name:        "equipmentType",
+				FieldMapKey: "equipmentTypeId",
+				Relation: &RelationSpec{
+					Target: &EquipmentTypeSpec,
+				},
 			},
 		},
 	}

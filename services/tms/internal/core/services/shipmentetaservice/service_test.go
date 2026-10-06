@@ -59,7 +59,9 @@ func (s *stubTelematics) ListWorkerHOSStates(
 	return nil, nil
 }
 
-type stubFailures struct{ failures []*servicefailure.ServiceFailure }
+type stubFailures struct {
+	failures []*servicefailure.ServiceFailure
+}
 
 func (s *stubFailures) ListUnresolvedByShipmentIDs(
 	context.Context,
@@ -156,7 +158,9 @@ func TestEtaOf(t *testing.T) {
 	now := time.Date(2026, 10, 6, 12, 0, 0, 0, time.UTC).Unix()
 
 	entity, _, _ := trackingFixture(now, now-1800)
-	snapshot := shipmenttracking.Build(shipmenttracking.Input{Shipment: entity, Now: now, Timezone: "UTC"})
+	snapshot := shipmenttracking.Build(
+		shipmenttracking.Input{Shipment: entity, Now: now, Timezone: "UTC"},
+	)
 	eta := EtaOf(entity, snapshot, "")
 	require.NotNil(t, eta)
 	assert.Equal(t, shipmenttracking.VerdictLate, eta.Verdict)
@@ -164,7 +168,9 @@ func TestEtaOf(t *testing.T) {
 	assert.NotEmpty(t, eta.Reason)
 
 	onTime, _, _ := trackingFixture(now, now+86400)
-	snapshot = shipmenttracking.Build(shipmenttracking.Input{Shipment: onTime, Now: now, Timezone: "UTC"})
+	snapshot = shipmenttracking.Build(
+		shipmenttracking.Input{Shipment: onTime, Now: now, Timezone: "UTC"},
+	)
 	eta = EtaOf(onTime, snapshot, "Weather")
 	require.NotNil(t, eta)
 	assert.Equal(t, shipmenttracking.VerdictUnknown, eta.Verdict)

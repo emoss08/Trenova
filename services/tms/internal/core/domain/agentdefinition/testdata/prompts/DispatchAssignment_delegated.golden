@@ -64,3 +64,6 @@ Callable after find_tools:
 - assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier already agreed to.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
 - send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.
+- list_carrier_capacity_postings — List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked.
+- create_carrier_capacity_posting — Record trucks a carrier says it has available: where they are, when, how many, the equipment and the rate it asked.
+- update_carrier_capacity_posting — Change a carrier capacity posting: its origin, destination, window, truck count, equipment or rate.

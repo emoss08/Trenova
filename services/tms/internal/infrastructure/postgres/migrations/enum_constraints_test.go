@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/cloudsignup"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
@@ -469,6 +470,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_cloud_signups_status",
 			values: stringsOf(cloudsignup.AllStatuses()),
+		},
+		{
+			name:   "ck_carrier_capacity_postings_rate_method",
+			values: stringsOf(carriercapacity.RateMethods()),
+		},
+		{
+			name:   "ck_carrier_capacity_postings_source",
+			values: stringsOf(carriercapacity.Sources()),
 		},
 	}
 

@@ -107,10 +107,13 @@ func (s *Service) EtasByShipmentIDs(
 		return out, nil
 	}
 
-	entities, err := s.shipments.ListTrackingShipments(ctx, &repositories.ListTrackingShipmentsRequest{
-		TenantInfo:  tenantInfo,
-		ShipmentIDs: shipmentIDs,
-	})
+	entities, err := s.shipments.ListTrackingShipments(
+		ctx,
+		&repositories.ListTrackingShipmentsRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: shipmentIDs,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -238,11 +241,14 @@ func (s *Service) collectTelematics(
 	}
 
 	if len(tractorIDs) > 0 {
-		positions, err := s.telem.ListVehiclePositions(ctx, &repositories.ListVehiclePositionsRequest{
-			TenantInfo:    tenantInfo,
-			TractorIDs:    tractorIDs,
-			MaxAgeSeconds: positionLookbackSeconds,
-		})
+		positions, err := s.telem.ListVehiclePositions(
+			ctx,
+			&repositories.ListVehiclePositionsRequest{
+				TenantInfo:    tenantInfo,
+				TractorIDs:    tractorIDs,
+				MaxAgeSeconds: positionLookbackSeconds,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -320,7 +326,8 @@ func EtaOf(
 		eta.Verdict = shipmenttracking.VerdictLate
 	}
 
-	if eta.Verdict == shipmenttracking.VerdictLate || eta.Verdict == shipmenttracking.VerdictAtRisk {
+	if eta.Verdict == shipmenttracking.VerdictLate ||
+		eta.Verdict == shipmenttracking.VerdictAtRisk {
 		eta.Reason = failureReason
 		if eta.Reason == "" && len(snapshot.Flags) > 0 {
 			eta.Reason = snapshot.Flags[0]

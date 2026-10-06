@@ -677,13 +677,6 @@ query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
 query ShipmentPageAnalytics($input: ShipmentAnalyticsInput!) {
   shipmentAnalytics(input: $input) {
     page
-    savedViewCounts {
-      all
-      transit
-      atRisk
-      unassigned
-      deliveringToday
-    }
     activeShipments {
       count
       changeFromYesterday

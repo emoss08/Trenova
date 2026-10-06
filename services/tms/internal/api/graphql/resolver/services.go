@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
@@ -109,6 +110,7 @@ type Params struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	CarrierCapacityService       *carriercapacityservice.Service
 	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardFacetCounts             services.ShipmentFacetCounter
@@ -295,6 +297,7 @@ type Services struct {
 	ShipmentService              services.ShipmentService
 	ShipmentCommentService       services.ShipmentCommentService
 	ShipmentEventService         services.ShipmentEventService
+	CarrierCapacityService       *carriercapacityservice.Service
 	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardFacetCounts             services.ShipmentFacetCounter
@@ -485,6 +488,7 @@ func newServices(p *Params) *Services {
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
 		ShipmentEventService:         p.ShipmentEventService,
+		CarrierCapacityService:       p.CarrierCapacityService,
 		BoardBriefing:                p.BoardBriefing,
 		BoardWatchlist:               p.BoardWatchlist,
 		BoardFacetCounts:             p.BoardFacetCounts,

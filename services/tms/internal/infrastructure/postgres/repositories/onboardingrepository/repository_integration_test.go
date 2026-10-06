@@ -45,5 +45,9 @@ func TestOnboardingRepository_CompletesOnce(t *testing.T) {
 	assert.Equal(t, read.Version+1, completed.Version)
 
 	_, err = repo.Complete(ctx, completed)
-	require.True(t, errortypes.IsVersionMismatchError(err), "a completed wizard cannot complete again")
+	require.True(
+		t,
+		errortypes.IsVersionMismatchError(err),
+		"a completed wizard cannot complete again",
+	)
 }

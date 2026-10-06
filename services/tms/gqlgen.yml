@@ -3636,6 +3636,18 @@ models:
   UncoveredPickupWindow:
     model:
       - github.com/emoss08/trenova/internal/core/domain/shipment.PickupWindow
+  CarrierCapacityRateMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.RateMethod
+  CarrierCapacitySource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.Source
+  CarrierCapacityPosting:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriercapacity.Posting
+    fields:
+      rate:
+        resolver: true
   ShipmentFacet:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentFacet

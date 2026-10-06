@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/jsonschemautils"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 )
@@ -72,30 +74,17 @@ func outputSchema(allowed []shipment.QuickFilter) map[string]any {
 		filters = append(filters, filter.String())
 	}
 
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"segments": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"text": map[string]any{
-							"type":        "string",
-							"description": "A run of the sentence, with its own spacing and punctuation",
-						},
-						"filter": map[string]any{
-							"type":        "string",
-							"enum":        filters,
-							"description": "The filter for the loads this run names, or empty",
-						},
-					},
-					"required":             []string{"text", "filter"},
-					"additionalProperties": false,
-				},
-			},
-		},
-		"required":             []string{"segments"},
-		"additionalProperties": false,
-	}
+	segment := jsonschemautils.Object(map[string]any{
+		"text": jsonschemautils.Text(
+			"A run of the sentence, with its own spacing and punctuation",
+		),
+		"filter": jsonschemautils.Enum(
+			"The filter for the loads this run names, or empty",
+			filters...,
+		),
+	}, "text", "filter")
+
+	return jsonschemautils.Object(map[string]any{
+		"segments": jsonschemautils.Array(segment, 0),
+	}, "segments")
 }

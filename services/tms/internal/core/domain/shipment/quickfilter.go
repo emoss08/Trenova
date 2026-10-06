@@ -135,7 +135,14 @@ func (s *QuickFilterSpec) Validate(multiErr *errortypes.MultiError) {
 				"Window end must be after the window start",
 			)
 		}
-	default:
+	case QuickFilterLate,
+		QuickFilterUncovered,
+		QuickFilterMoving,
+		QuickFilterDeliveringToday,
+		QuickFilterReefer,
+		QuickFilterLowMargin,
+		QuickFilterDetention,
+		QuickFilterReadyToBill:
 		if s.Hour != nil || s.WindowStartMinutes != nil || s.WindowEndMinutes != nil {
 			multiErr.Add("filter", errortypes.ErrInvalid, "This quick filter takes no parameters")
 		}

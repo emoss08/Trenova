@@ -6519,6 +6519,80 @@ enum CarrierAssignmentStatus {
   Pending
 }
 
+"""
+Trucks a carrier says it has available: where, when, with what equipment and at what rate.
+"""
+type CarrierCapacityPosting {
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  createdAt: Timestamp!
+  destinationState: UsState
+  destinationStateId: ID
+  equipmentType: EquipmentType
+  equipmentTypeId: ID
+  id: ID!
+  notes: String
+  organizationId: ID!
+  originLocation: Location
+  originLocationId: ID
+  """How far from the origin location the carrier will pick up."""
+  originRadiusMiles: Int
+  originState: UsState
+  originStateId: ID
+  """
+  Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote.
+  """
+  rate: Decimal
+  rateMethod: CarrierCapacityRateMethod!
+  source: CarrierCapacitySource!
+  truckCount: Int!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type CarrierCapacityPostingConnection {
+  edges: [CarrierCapacityPostingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierCapacityPostingEdge {
+  cursor: String!
+  node: CarrierCapacityPosting!
+}
+
+input CarrierCapacityPostingInput {
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  carrierId: ID!
+  destinationStateId: ID
+  equipmentTypeId: ID
+  notes: String
+  """Give an origin location, an origin state, or both."""
+  originLocationId: ID
+  """Only with an origin location."""
+  originRadiusMiles: Int
+  originStateId: ID
+  rate: Decimal
+  rateMethod: CarrierCapacityRateMethod = PerMile
+  source: CarrierCapacitySource = Manual
+  truckCount: Int = 1
+}
+
+enum CarrierCapacityRateMethod {
+  Flat
+  PerMile
+}
+
+enum CarrierCapacitySource {
+  EDI
+  Email
+  Manual
+}
+
 type CarrierCapacitySummary {
   avgRatePerMile: Decimal
   awaitingAcceptance: Int!
@@ -16393,6 +16467,7 @@ type Mutation {
   Asks one of the caller's companions to scan, or to catch the next print, into a record.
   """
   createCaptureRequest(input: CreateCaptureRequestInput!): CaptureRequest!
+  createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
   createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
   createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
@@ -16496,6 +16571,7 @@ type Mutation {
   decideShipmentSuggestion(input: DecideShipmentSuggestionInput!): Boolean!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
   deleteCaptureProfile(id: ID!): Boolean!
+  deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
   deleteDetentionPolicy(id: ID!): Boolean!
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
@@ -16989,6 +17065,7 @@ type Mutation {
   Changes a profile. Stacks already captured keep the settings they were captured with.
   """
   updateCaptureProfile(id: ID!, input: CaptureProfileInput!, version: Int!): CaptureProfile!
+  updateCarrierCapacityPosting(id: ID!, input: CarrierCapacityPostingInput!, version: Int!): CarrierCapacityPosting!
   updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
   updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput!): CarrierSettlementControl!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
@@ -19083,6 +19160,13 @@ type Query {
   """
   captureRequestsForTarget(limit: Int, targetId: ID!, targetType: String!): [CaptureRequest!]!
   carrier(id: ID!): Carrier
+  carrierCapacityPosting(id: ID!): CarrierCapacityPosting
+  carrierCapacityPostings(
+    carrierId: ID
+    input: DataTableConnectionInput!
+    """Only postings whose window has not closed."""
+    openOnly: Boolean = false
+  ): CarrierCapacityPostingConnection!
   carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
   carrierEquipmentVerifications(carrierAssignmentId: ID!): [CarrierEquipmentVerification!]!
   carrierIntelControl: CarrierIntelControl!
@@ -22108,7 +22192,6 @@ type ShipmentAnalytics {
   profitability: ShipmentProfitabilityAnalytics
   readyToDispatch: ShipmentReadyToDispatch
   revenueToday: ShipmentRevenueToday
-  savedViewCounts: ShipmentSavedViewCounts
   tomorrowsPickups: ShipmentTomorrowsPickups
   unassigned: ShipmentUnassignedAnalytics
 }
@@ -23587,14 +23670,6 @@ type ShipmentRevenueToday {
   rpm: Float!
   sparkline: [ShipmentSparklinePoint!]!
   total: Float!
-}
-
-type ShipmentSavedViewCounts {
-  all: Int
-  atRisk: Int
-  deliveringToday: Int
-  transit: Int
-  unassigned: Int
 }
 
 type ShipmentServiceFailureBillingContext {

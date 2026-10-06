@@ -208,7 +208,7 @@ func TestApplyAggregateScope_AndsEveryQuickFilter(t *testing.T) {
 				BuID:  pulid.MustNew("bu_"),
 			},
 		},
-		repositories.ShipmentOptions{
+		&repositories.ShipmentOptions{
 			IncludeCustomer: true,
 			QuickFilters: []shipment.QuickFilterSpec{
 				shipment.Quick(shipment.QuickFilterLate),
@@ -225,7 +225,7 @@ func TestApplyAggregateScope_AndsEveryQuickFilter(t *testing.T) {
 	assert.NotContains(t, sql, `"customers"`)
 	assert.Contains(t, sql, "sp.organization_id = ")
 
-	_, err = ApplyAggregateScope(dba.NewSelect(), dba, nil, repositories.ShipmentOptions{})
+	_, err = ApplyAggregateScope(dba.NewSelect(), dba, nil, &repositories.ShipmentOptions{})
 	require.ErrorIs(t, err, ErrShipmentScopeFilterMissing)
 }
 

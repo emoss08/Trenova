@@ -94,7 +94,10 @@ func TestResolveLoadsOnlyWhatIsNeeded(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.True(t, basis.Margin.CostPerMile.Equal(decimal.RequireFromString("2.10")))
-	assert.True(t, basis.Margin.TargetMarginPercent.Equal(costingcontrol.DefaultTargetMarginPercent))
+	assert.True(
+		t,
+		basis.Margin.TargetMarginPercent.Equal(costingcontrol.DefaultTargetMarginPercent),
+	)
 	assert.Equal(t, int64(45), basis.Detention.ThresholdMinutes)
 	assert.True(t, basis.Detention.UsePolicyEngine)
 }

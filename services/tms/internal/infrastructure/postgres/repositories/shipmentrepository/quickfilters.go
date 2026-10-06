@@ -114,9 +114,9 @@ func LocalHourStart(now time.Time, loc *time.Location, hour int) int64 {
 
 func QuickFilterConditions(
 	dba bun.IDB,
-	opts repositories.ShipmentOptions,
+	opts *repositories.ShipmentOptions,
 ) ([]schema.QueryAppender, error) {
-	if !opts.HasQuickFilters() {
+	if opts == nil || !opts.HasQuickFilters() {
 		return nil, nil
 	}
 
@@ -348,7 +348,7 @@ func ApplyAggregateScope(
 	q *bun.SelectQuery,
 	dba bun.IDB,
 	filter *pagination.QueryOptions,
-	opts repositories.ShipmentOptions,
+	opts *repositories.ShipmentOptions,
 ) (*bun.SelectQuery, error) {
 	if filter == nil {
 		return nil, ErrShipmentScopeFilterMissing
@@ -366,5 +366,5 @@ func ApplyAggregateScope(
 		(*shipment.Shipment)(nil),
 	)
 
-	return applyShipmentOptionFilters(q, dba, opts).Apply(whereAll(quick)), nil
+	return applyShipmentOptionFilters(q, dba, *opts).Apply(whereAll(quick)), nil
 }

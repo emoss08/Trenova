@@ -79,7 +79,7 @@ func (r *repository) List(
 		func(ctx context.Context) (*pagination.CursorListResult[*shipment.Shipment], error) {
 			dba := r.db.DBForContext(ctx)
 
-			quick, err := QuickFilterConditions(dba, req.ShipmentOptions)
+			quick, err := QuickFilterConditions(dba, &req.ShipmentOptions)
 			if err != nil {
 				return nil, err
 			}
@@ -586,7 +586,11 @@ func (r *repository) Update(
 				return err
 			}
 
-			if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment",
+				entity.ID.String(),
+			); err != nil {
 				return err
 			}
 
@@ -648,7 +652,11 @@ func (r *repository) UpdateOperationalLifecycle(
 				return err
 			}
 
-			if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment",
+				entity.ID.String(),
+			); err != nil {
 				return err
 			}
 
@@ -750,7 +758,11 @@ func (r *repository) UpdateDerivedState(
 				return err
 			}
 
-			if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment",
+				entity.ID.String(),
+			); err != nil {
 				return err
 			}
 
@@ -794,7 +806,11 @@ func (r *repository) UpdateStatus(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "Shipment", req.ShipmentID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Shipment",
+			req.ShipmentID.String(),
+		); err != nil {
 			return nil, err
 		}
 

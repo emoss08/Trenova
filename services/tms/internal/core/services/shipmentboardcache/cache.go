@@ -19,7 +19,7 @@ func GetOrCompute[T any](
 	ctx context.Context,
 	cache repositories.ShipmentBoardCache,
 	logger *zap.Logger,
-	req Request,
+	req *Request,
 	compute func(ctx context.Context) (*T, error),
 ) (*T, error) {
 	if cache == nil {

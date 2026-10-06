@@ -122,7 +122,10 @@ func (s *Service) Resolve(
 		if cErr != nil {
 			return nil, cErr
 		}
-		basis.Detention = DetentionBasisOf(control.UseDetentionPolicyEngine, control.DetentionThreshold)
+		basis.Detention = DetentionBasisOf(
+			control.UseDetentionPolicyEngine,
+			control.DetentionThreshold,
+		)
 	}
 
 	return basis, nil

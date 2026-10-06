@@ -85,6 +85,7 @@ func coreToolProviders() []any {
 		newListServiceTypesTool,
 		newListShipmentTypesTool,
 		newListCommoditiesTool,
+		newListCarrierCapacityPostingsTool,
 		newListHazardousMaterialsTool,
 		newListAccessorialChargesTool,
 		newListDocumentTypesTool,

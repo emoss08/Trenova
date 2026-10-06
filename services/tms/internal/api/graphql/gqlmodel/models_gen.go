@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -1344,6 +1345,35 @@ type CaptureProfileInput struct {
 	ShowDriverUI        bool                        `json:"showDriverUi"`
 	SeparatorStrategies []capture.SeparatorStrategy `json:"separatorStrategies"`
 	FixedPageCount      int                         `json:"fixedPageCount"`
+}
+
+type CarrierCapacityPostingConnection struct {
+	Edges      []*CarrierCapacityPostingEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount *int                          `json:"totalCount,omitempty"`
+}
+
+type CarrierCapacityPostingEdge struct {
+	Node   *carriercapacity.Posting `json:"node"`
+	Cursor string                   `json:"cursor"`
+}
+
+type CarrierCapacityPostingInput struct {
+	CarrierID string `json:"carrierId"`
+	// Give an origin location, an origin state, or both.
+	OriginLocationID *string `json:"originLocationId,omitempty"`
+	OriginStateID    *string `json:"originStateId,omitempty"`
+	// Only with an origin location.
+	OriginRadiusMiles  *int                        `json:"originRadiusMiles,omitempty"`
+	DestinationStateID *string                     `json:"destinationStateId,omitempty"`
+	EquipmentTypeID    *string                     `json:"equipmentTypeId,omitempty"`
+	AvailableFrom      int                         `json:"availableFrom"`
+	AvailableTo        int                         `json:"availableTo"`
+	TruckCount         *int                        `json:"truckCount,omitempty"`
+	RateMethod         *carriercapacity.RateMethod `json:"rateMethod,omitempty"`
+	Rate               *string                     `json:"rate,omitempty"`
+	Source             *carriercapacity.Source     `json:"source,omitempty"`
+	Notes              *string                     `json:"notes,omitempty"`
 }
 
 type CarrierCapacitySummary struct {

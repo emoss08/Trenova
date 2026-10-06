@@ -35,7 +35,11 @@ func (m *memoryCache) Get(
 	return true, sonic.Unmarshal(raw, dest)
 }
 
-func (m *memoryCache) Set(_ context.Context, key *repositories.ShipmentBoardCacheKey, value any) error {
+func (m *memoryCache) Set(
+	_ context.Context,
+	key *repositories.ShipmentBoardCacheKey,
+	value any,
+) error {
 	raw, err := sonic.Marshal(value)
 	if err != nil {
 		return err
@@ -57,7 +61,7 @@ func TestGetOrComputeCachesPerEpoch(t *testing.T) {
 		calls++
 		return &payload{Value: calls}, nil
 	}
-	req := Request{Section: repositories.ShipmentBoardSectionWatchlist, Timezone: "UTC"}
+	req := &Request{Section: repositories.ShipmentBoardSectionWatchlist, Timezone: "UTC"}
 
 	first, err := GetOrCompute(t.Context(), cache, zap.NewNop(), req, compute)
 	require.NoError(t, err)
@@ -76,16 +80,16 @@ func TestGetOrComputeFallsBackWithoutCache(t *testing.T) {
 	t.Parallel()
 
 	compute := func(context.Context) (*payload, error) { return &payload{Value: 7}, nil }
-	value, err := GetOrCompute(t.Context(), nil, zap.NewNop(), Request{}, compute)
+	value, err := GetOrCompute(t.Context(), nil, zap.NewNop(), &Request{}, compute)
 	require.NoError(t, err)
 	assert.Equal(t, 7, value.Value)
 
 	broken := &memoryCache{epochErr: errors.New("down")}
-	value, err = GetOrCompute(t.Context(), broken, zap.NewNop(), Request{}, compute)
+	value, err = GetOrCompute(t.Context(), broken, zap.NewNop(), &Request{}, compute)
 	require.NoError(t, err)
 	assert.Equal(t, 7, value.Value)
 
 	failing := func(context.Context) (*payload, error) { return nil, errors.New("boom") }
-	_, err = GetOrCompute(t.Context(), nil, zap.NewNop(), Request{}, failing)
+	_, err = GetOrCompute(t.Context(), nil, zap.NewNop(), &Request{}, failing)
 	require.Error(t, err)
 }

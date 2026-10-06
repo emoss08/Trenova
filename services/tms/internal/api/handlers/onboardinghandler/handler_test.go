@@ -69,10 +69,12 @@ func newHarness(t *testing.T, ops ...permission.Operation) *harness {
 	handler := New(Params{
 		Service:      h.svc,
 		ErrorHandler: eh,
-		PermissionMiddleware: middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-			PermissionEngine: engine,
-			ErrorHandler:     eh,
-		}),
+		PermissionMiddleware: middleware.NewPermissionMiddleware(
+			middleware.PermissionMiddlewareParams{
+				PermissionEngine: engine,
+				ErrorHandler:     eh,
+			},
+		),
 	})
 
 	h.router = gin.New()
@@ -193,7 +195,8 @@ func TestCompleteOnboardingReturnsNestedFieldErrors(t *testing.T) {
 
 	h := newHarness(t, permission.OpRead, permission.OpUpdate)
 	multiErr := errortypes.NewMultiError()
-	multiErr.WithPrefix("organization").Add("dotNumber", errortypes.ErrInvalid, "DOT number must be numeric")
+	multiErr.WithPrefix("organization").
+		Add("dotNumber", errortypes.ErrInvalid, "DOT number must be numeric")
 	h.svc.EXPECT().Complete(mock.Anything, mock.Anything).Return(nil, multiErr)
 
 	w := h.do(http.MethodPost, "/onboarding/complete/", map[string]any{"operationType": "asset"})

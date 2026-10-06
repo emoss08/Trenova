@@ -87,7 +87,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 75 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 29 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 47 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 70 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
@@ -97,25 +97,25 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-989 writes: 512 GraphQL mutations and 477 REST writes, after merging 72 REST routes into the mutation they duplicate.
+996 writes: 519 GraphQL mutations and 477 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 380 |
-| Exempt | 606 |
+| Covered by a tool | 383 |
+| Exempt | 608 |
 | — Security | 75 |
 | — Configuration | 260 |
-| — User preference | 27 |
+| — User preference | 29 |
 | — Infrastructure | 47 |
 | — Agent administration | 70 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
-| **Pending** | **3** |
-| Total | 989 |
+| **Pending** | **5** |
+| Total | 996 |
 
-Of the 383 writes an agent should be able to make, 380 have a tool (99%).
+Of the 388 writes an agent should be able to make, 383 have a tool (98%).
 
 ## Pending
 
@@ -126,6 +126,8 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
 | billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
 | billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
+| shipmentboard | `mutation notifyShipmentDelay` | Email the shipment's customer a delay notice and record it on the shipment's timeline. |
+| shipmentboard | `mutation tenderShipments` | Tender uncovered shipments to a named carrier, the routing guide or the best-matched carrier, per shipment. |
 
 ## By domain
 
@@ -159,6 +161,7 @@ The writes no tool performs yet, and what the tool would do.
 | briefing | 2 | 0 | 2 | 0 |
 | capture | 25 | 4 | 21 | 0 |
 | carrier | 4 | 4 | 0 | 0 |
+| carriercapacity | 3 | 3 | 0 | 0 |
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
 | cloudsignup | 3 | 0 | 3 | 0 |
@@ -262,6 +265,7 @@ The writes no tool performs yet, and what the tool would do.
 | servicefailurereasoncode | 6 | 0 | 6 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
 | shipment | 33 | 21 | 12 | 0 |
+| shipmentboard | 4 | 0 | 2 | 2 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
 | shipmentmove | 4 | 4 | 0 | 0 |
 | shipmenttype | 4 | 0 | 4 | 0 |
@@ -621,6 +625,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/carriers/`<br>carrierhandler.create | Tool: `create_carrier` |
 | `POST /api/v1/carriers/bulk-update-status/`<br>carrierhandler.bulkUpdateStatus | Tool: `update_carrier_status` |
 | `PUT /api/v1/carriers/:carrierID/`<br>carrierhandler.update | Tool: `update_carrier` |
+
+### carriercapacity
+
+| Write | Decision |
+| --- | --- |
+| `mutation createCarrierCapacityPosting` | Tool: `create_carrier_capacity_posting` |
+| `mutation deleteCarrierCapacityPosting` | Tool: `delete_carrier_capacity_posting` |
+| `mutation updateCarrierCapacityPosting` | Tool: `update_carrier_capacity_posting` |
 
 ### carrierintelligence
 
@@ -1799,6 +1811,15 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; evaluate_service_failures records a late stop for one shipment. |
 | `POST /api/v1/shipments/previous-rates/`<br>shipmenthandler.getPreviousRates | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `update_shipment_hold` |
+
+### shipmentboard
+
+| Write | Decision |
+| --- | --- |
+| `mutation decideShipmentSuggestion` | Exempt, user-preference: A person marking an item in their own suggestion queue done or for later; it changes no record, only what that person's queue shows. |
+| `mutation notifyShipmentDelay` | Pending: Email the shipment's customer a delay notice and record it on the shipment's timeline. |
+| `mutation tenderShipments` | Pending: Tender uncovered shipments to a named carrier, the routing guide or the best-matched carrier, per shipment. |
+| `mutation undoShipmentSuggestionDecision` | Exempt, user-preference: Takes back a person's own done or later mark on a suggestion; it changes no record, only what that person's queue shows. |
 
 ### shipmentcontrol
 

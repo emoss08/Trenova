@@ -269,6 +269,29 @@ var Bindings = []Binding{
 	},
 	{Tool: "generate_ifta_return", Input: "IFTAPeriodInput"},
 	{
+		Tool:  "create_carrier_capacity_posting",
+		Input: "CarrierCapacityPostingInput",
+		Extra: map[string]string{
+			"originState":      stateCode("originStateId"),
+			"destinationState": stateCode("destinationStateId"),
+		},
+	},
+	{
+		Tool:  "update_carrier_capacity_posting",
+		Input: "CarrierCapacityPostingInput",
+		Defaulted: map[string]string{
+			"carrierId":     patchLeavesIt,
+			"availableFrom": patchLeavesIt,
+			"availableTo":   patchLeavesIt,
+		},
+		Extra: map[string]string{
+			"carrierCapacityPostingId": "the mutation takes the posting as its id argument, " +
+				"beside the input",
+			"originState":      stateCode("originStateId"),
+			"destinationState": stateCode("destinationStateId"),
+		},
+	},
+	{
 		Tool:  "create_tractor",
 		Input: "TractorInput",
 		Extra: map[string]string{"state": stateCode("stateId")},

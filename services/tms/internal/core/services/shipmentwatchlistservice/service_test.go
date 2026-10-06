@@ -30,12 +30,38 @@ func TestBuildDeliveryWatch(t *testing.T) {
 	now := day + 14*3600
 
 	rows := []*repositories.ShipmentDeliveryRow{
-		{ShipmentID: pulid.MustNew("shp_"), DeliveryAt: day + 8*3600, ActualArrival: ptr(day + 8*3600), Cutoff: day + 9*3600},
-		{ShipmentID: pulid.MustNew("shp_"), ProNumber: "P2", DeliveryAt: day + 9*3600, ActualArrival: ptr(day + 10*3600), Cutoff: day + 9*3600},
-		{ShipmentID: pulid.MustNew("shp_"), ProNumber: "P3", DeliveryAt: day + 11*3600, Cutoff: day + 11*3600},
+		{
+			ShipmentID:    pulid.MustNew("shp_"),
+			DeliveryAt:    day + 8*3600,
+			ActualArrival: ptr(day + 8*3600),
+			Cutoff:        day + 9*3600,
+		},
+		{
+			ShipmentID:    pulid.MustNew("shp_"),
+			ProNumber:     "P2",
+			DeliveryAt:    day + 9*3600,
+			ActualArrival: ptr(day + 10*3600),
+			Cutoff:        day + 9*3600,
+		},
+		{
+			ShipmentID: pulid.MustNew("shp_"),
+			ProNumber:  "P3",
+			DeliveryAt: day + 11*3600,
+			Cutoff:     day + 11*3600,
+		},
 		{ShipmentID: pulid.MustNew("shp_"), DeliveryAt: day + 16*3600, Cutoff: day + 16*3600},
-		{ShipmentID: pulid.MustNew("shp_"), DeliveryAt: day + 17*3600, Cutoff: day + 17*3600, StageRank: shipment.StageLate.Rank()},
-		{ShipmentID: pulid.MustNew("shp_"), DeliveryAt: day + 2*3600, ActualArrival: ptr(day + 2*3600), Cutoff: day + 3*3600},
+		{
+			ShipmentID: pulid.MustNew("shp_"),
+			DeliveryAt: day + 17*3600,
+			Cutoff:     day + 17*3600,
+			StageRank:  shipment.StageLate.Rank(),
+		},
+		{
+			ShipmentID:    pulid.MustNew("shp_"),
+			DeliveryAt:    day + 2*3600,
+			ActualArrival: ptr(day + 2*3600),
+			Cutoff:        day + 3*3600,
+		},
 	}
 
 	watch := BuildDeliveryWatch(rows, now, loc)
@@ -91,7 +117,11 @@ func (s stubBasis) Resolve(
 	return &repositories.ShipmentQuickFilterBasis{Now: s.now, Location: time.UTC}, nil
 }
 
-func (stubBasis) Prepare(context.Context, pagination.TenantInfo, *repositories.ShipmentOptions) error {
+func (stubBasis) Prepare(
+	context.Context,
+	pagination.TenantInfo,
+	*repositories.ShipmentOptions,
+) error {
 	return nil
 }
 
@@ -107,7 +137,10 @@ func (s *stubBoard) QuickFilterTotals(
 	s.filters = req.Filters
 	totals := make([]repositories.ShipmentQuickFilterTotal, len(req.Filters))
 	for i := range totals {
-		totals[i] = repositories.ShipmentQuickFilterTotal{Count: i + 1, Revenue: decimal.NewFromInt(int64(100 * (i + 1)))}
+		totals[i] = repositories.ShipmentQuickFilterTotal{
+			Count:   i + 1,
+			Revenue: decimal.NewFromInt(int64(100 * (i + 1))),
+		}
 	}
 	return totals, nil
 }
@@ -187,7 +220,10 @@ func (stubMoves) ListBoardMoves(
 
 type stubDesk struct{ entries []*detentionservice.DeskEntry }
 
-func (s stubDesk) ListDesk(context.Context, pagination.TenantInfo) ([]*detentionservice.DeskEntry, error) {
+func (s stubDesk) ListDesk(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*detentionservice.DeskEntry, error) {
 	return s.entries, nil
 }
 

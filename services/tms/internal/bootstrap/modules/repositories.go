@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/briefingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/capturerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierassignmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriercapacityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierintelrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierinvoicematchrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierledgerrepository"
@@ -421,6 +422,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	seqgen.NewGenerator,
 	shipmentrepository.New,
 	shipmentboardrepository.New,
+	carriercapacityrepository.New,
 	shipmentboardrepository.NewBoardRepository,
 	shipmentboardrepository.NewWatchlistRepository,
 	shipmentboardrepository.NewBriefingRepository,

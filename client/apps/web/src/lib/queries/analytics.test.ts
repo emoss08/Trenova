@@ -24,7 +24,6 @@ describe("analytics query keys", () => {
   it("uses GraphQL for shipment-management analytics with the existing query key", async () => {
     getShipmentPageAnalyticsGraphQLMock.mockResolvedValueOnce({
       page: "shipment-management",
-      savedViewCounts: null,
       laneHeatmap: {
         cells: [{ count: 18, destination: "South", origin: "Midwest" }],
         total: 18,
@@ -38,7 +37,6 @@ describe("analytics query keys", () => {
     expect(query.queryKey).toEqual(["analytics", "shipment-management"]);
     expect(response).toEqual({
       page: "shipment-management",
-      savedViewCounts: null,
       laneHeatmap: {
         cells: [{ count: 18, destination: "South", origin: "Midwest" }],
         total: 18,

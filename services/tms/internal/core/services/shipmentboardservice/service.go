@@ -55,6 +55,7 @@ type Dependencies struct {
 	Maps          MapsReadiness
 }
 
+//nolint:gocritic // dependency injection
 func New(p Params) *Service {
 	return NewWithDependencies(&Dependencies{
 		Repo:          p.Repo,

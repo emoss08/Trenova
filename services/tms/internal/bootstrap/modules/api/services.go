@@ -71,6 +71,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
@@ -621,6 +622,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	costingservice.New,
 	shipmentquickfilterservice.New,
 	shipmentboardservice.New,
+	carriercapacityservice.New,
 	shipmentetaservice.New,
 	shipmentwatchlistservice.New,
 	shipmentbriefingservice.New,

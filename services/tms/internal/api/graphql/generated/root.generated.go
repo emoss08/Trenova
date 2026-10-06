@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
@@ -148,6 +149,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -295,6 +297,7 @@ type ResolverRoot interface {
 	Carrier() CarrierResolver
 	CarrierAssignment() CarrierAssignmentResolver
 	CarrierAssignmentAccessorial() CarrierAssignmentAccessorialResolver
+	CarrierCapacityPosting() CarrierCapacityPostingResolver
 	CarrierEquipmentVerification() CarrierEquipmentVerificationResolver
 	CarrierInsurancePolicy() CarrierInsurancePolicyResolver
 	CarrierIntelControl() CarrierIntelControlResolver
@@ -816,6 +819,10 @@ type CarrierAssignmentResolver interface {
 
 type CarrierAssignmentAccessorialResolver interface {
 	Amount(ctx context.Context, obj *shipment.CarrierAssignmentAccessorial) (string, error)
+}
+
+type CarrierCapacityPostingResolver interface {
+	Rate(ctx context.Context, obj *carriercapacity.Posting) (*string, error)
 }
 
 type CarrierEquipmentVerificationResolver interface {
@@ -1503,6 +1510,9 @@ type MutationResolver interface {
 	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
 	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
 	DeleteCaptureProfile(ctx context.Context, id string) (bool, error)
+	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
+	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
+	DeleteCarrierCapacityPosting(ctx context.Context, id string, version int) (bool, error)
 	UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintel.CarrierIntelControl, error)
 	SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintel.CarrierIntelControl, error)
 	ResumeCarrierIntelMonitoring(ctx context.Context) (bool, error)
@@ -2184,6 +2194,8 @@ type QueryResolver interface {
 	CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error)
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
+	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)
+	CarrierCapacityPosting(ctx context.Context, id string) (*carriercapacity.Posting, error)
 	CarrierIntelControl(ctx context.Context) (*carrierintel.CarrierIntelControl, error)
 	CarrierIntelProvider(ctx context.Context) (*gqlmodel.CarrierIntelProviderInfo, error)
 	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintel.RuleDefinition, error)
@@ -3008,6 +3020,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		briefingexec.Shard,
 		captureexec.Shard,
 		carrierexec.Shard,
+		carriercapacityexec.Shard,
 		carrierintelligenceexec.Shard,
 		carriersettlementexec.Shard,
 		commodityexec.Shard,
@@ -3173,6 +3186,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Carrier":                            func() any { return r.Carrier() },
 			"CarrierAssignment":                  func() any { return r.CarrierAssignment() },
 			"CarrierAssignmentAccessorial":       func() any { return r.CarrierAssignmentAccessorial() },
+			"CarrierCapacityPosting":             func() any { return r.CarrierCapacityPosting() },
 			"CarrierEquipmentVerification":       func() any { return r.CarrierEquipmentVerification() },
 			"CarrierInsurancePolicy":             func() any { return r.CarrierInsurancePolicy() },
 			"CarrierIntelControl":                func() any { return r.CarrierIntelControl() },
@@ -9856,6 +9870,96 @@ type CarrierConnection {
 extend type Query {
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   carrier(id: ID!): Carrier
+}
+`, BuiltIn: false},
+	{Name: "../schema/carrier_capacity.graphqls", Input: `enum CarrierCapacityRateMethod {
+  Flat
+  PerMile
+}
+
+enum CarrierCapacitySource {
+  Manual
+  Email
+  EDI
+}
+
+"Trucks a carrier says it has available: where, when, with what equipment and at what rate."
+type CarrierCapacityPosting {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  originLocationId: ID
+  originStateId: ID
+  "How far from the origin location the carrier will pick up."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int!
+  rateMethod: CarrierCapacityRateMethod!
+  "Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote."
+  rate: Decimal
+  source: CarrierCapacitySource!
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  carrier: Carrier
+  originLocation: Location
+  originState: UsState
+  destinationState: UsState
+  equipmentType: EquipmentType
+}
+
+type CarrierCapacityPostingEdge {
+  node: CarrierCapacityPosting!
+  cursor: String!
+}
+
+type CarrierCapacityPostingConnection {
+  edges: [CarrierCapacityPostingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input CarrierCapacityPostingInput {
+  carrierId: ID!
+  "Give an origin location, an origin state, or both."
+  originLocationId: ID
+  originStateId: ID
+  "Only with an origin location."
+  originRadiusMiles: Int
+  destinationStateId: ID
+  equipmentTypeId: ID
+  availableFrom: Timestamp!
+  availableTo: Timestamp!
+  truckCount: Int = 1
+  rateMethod: CarrierCapacityRateMethod = PerMile
+  rate: Decimal
+  source: CarrierCapacitySource = Manual
+  notes: String
+}
+
+extend type Query {
+  carrierCapacityPostings(
+    input: DataTableConnectionInput!
+    carrierId: ID
+    "Only postings whose window has not closed."
+    openOnly: Boolean = false
+  ): CarrierCapacityPostingConnection!
+  carrierCapacityPosting(id: ID!): CarrierCapacityPosting
+}
+
+extend type Mutation {
+  createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
+  updateCarrierCapacityPosting(
+    id: ID!
+    version: Int!
+    input: CarrierCapacityPostingInput!
+  ): CarrierCapacityPosting!
+  deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/carrier_intelligence.graphqls", Input: `enum CarrierIntelSection {

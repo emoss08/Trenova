@@ -151,7 +151,7 @@ func (r *Repository) NextUncoveredPickup(
 			Scan(ctx, row)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil //nolint:nilnil // no upcoming uncovered pickup
+				return nil, nil
 			}
 			r.l.Error("failed to read next uncovered pickup", zap.Error(err))
 			return nil, err

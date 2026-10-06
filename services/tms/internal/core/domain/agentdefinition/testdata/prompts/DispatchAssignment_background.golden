@@ -53,16 +53,17 @@ Loaded now:
 - flag_for_manual_review
 - get_shipment
 - get_worker
-- get_dispatch_board
 - rank_move_candidates
 - plan_dispatch
 - assign_move
 - assign_move_to_carrier
 - generate_rate_confirmation
+- create_carrier_capacity_posting
 
 Callable after find_tools:
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - search_worker — List workers (drivers), optionally narrowed by a name or code.
+- get_dispatch_board — The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
 - tender_move_to_routing_guide — Offer an uncovered move to carriers down its routing guide, in the guide's order at the guide's rates.
@@ -70,3 +71,5 @@ Callable after find_tools:
 - list_shipment_tenders — List a shipment's tenders, newest first, with every offer in rank order.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
 - send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.
+- list_carrier_capacity_postings — List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked.
+- update_carrier_capacity_posting — Change a carrier capacity posting: its origin, destination, window, truck count, equipment or rate.

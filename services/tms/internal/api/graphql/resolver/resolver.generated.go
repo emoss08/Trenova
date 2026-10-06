@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingtransferresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/captureresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
@@ -183,6 +184,7 @@ type Resolver struct {
 	carrier                            *carrierintelligenceresolver.CarrierResolver
 	carrierAssignment                  *shipmentresolver.CarrierAssignmentResolver
 	carrierAssignmentAccessorial       *shipmentresolver.CarrierAssignmentAccessorialResolver
+	carrierCapacityPosting             *carriercapacityresolver.CarrierCapacityPostingResolver
 	carrierEquipmentVerification       *carrierintelligenceresolver.CarrierEquipmentVerificationResolver
 	carrierInsurancePolicy             *carrierresolver.CarrierInsurancePolicyResolver
 	carrierIntelControl                *carrierintelligenceresolver.CarrierIntelControlResolver
@@ -488,6 +490,10 @@ func FromServices(s *Services) *Resolver {
 	carrierDeps := &carrierresolver.Deps{
 		Core:           s.Core,
 		CarrierService: s.CarrierService,
+	}
+	carriercapacityDeps := &carriercapacityresolver.Deps{
+		Core:                   s.Core,
+		CarrierCapacityService: s.CarrierCapacityService,
 	}
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
 		Core:                s.Core,
@@ -1025,6 +1031,7 @@ func FromServices(s *Services) *Resolver {
 		carrier:                      &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps},
 		carrierAssignment:            &shipmentresolver.CarrierAssignmentResolver{Deps: shipmentDeps},
 		carrierAssignmentAccessorial: &shipmentresolver.CarrierAssignmentAccessorialResolver{Deps: shipmentDeps},
+		carrierCapacityPosting:       &carriercapacityresolver.CarrierCapacityPostingResolver{Deps: carriercapacityDeps},
 		carrierEquipmentVerification: &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps},
 		carrierInsurancePolicy:       &carrierresolver.CarrierInsurancePolicyResolver{Deps: carrierDeps},
 		carrierIntelControl:          &carrierintelligenceresolver.CarrierIntelControlResolver{Deps: carrierintelligenceDeps},
@@ -1131,6 +1138,7 @@ func FromServices(s *Services) *Resolver {
 			billingtransferMutation:       &billingtransferMutation{Deps: billingtransferDeps},
 			briefingMutation:              &briefingMutation{Deps: briefingDeps},
 			captureMutation:               &captureMutation{Deps: captureDeps},
+			carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
 			carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 			carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
 			costingMutation:               &costingMutation{Deps: costingDeps},
@@ -1236,6 +1244,7 @@ func FromServices(s *Services) *Resolver {
 			briefingQuery:                 &briefingQuery{Deps: briefingDeps},
 			captureQuery:                  &captureQuery{Deps: captureDeps},
 			carrierQuery:                  &carrierQuery{Deps: carrierDeps},
+			carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
 			carrierintelligenceQuery:      &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
 			carriersettlementQuery:        &carriersettlementQuery{Deps: carriersettlementDeps},
 			commodityQuery:                &commodityQuery{Deps: commodityDeps},
@@ -1626,6 +1635,10 @@ func (r *Resolver) CarrierAssignmentAccessorial() generated.CarrierAssignmentAcc
 	return r.carrierAssignmentAccessorial
 }
 
+func (r *Resolver) CarrierCapacityPosting() generated.CarrierCapacityPostingResolver {
+	return r.carrierCapacityPosting
+}
+
 func (r *Resolver) CarrierEquipmentVerification() generated.CarrierEquipmentVerificationResolver {
 	return r.carrierEquipmentVerification
 }
@@ -2005,6 +2018,7 @@ type mutationResolver struct {
 	*billingtransferMutation
 	*briefingMutation
 	*captureMutation
+	*carriercapacityMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
 	*costingMutation
@@ -2181,6 +2195,7 @@ type queryResolver struct {
 	*briefingQuery
 	*captureQuery
 	*carrierQuery
+	*carriercapacityQuery
 	*carrierintelligenceQuery
 	*carriersettlementQuery
 	*commodityQuery
@@ -2504,6 +2519,7 @@ type (
 	billingtransferMutation       = billingtransferresolver.MutationResolver
 	briefingMutation              = briefingresolver.MutationResolver
 	captureMutation               = captureresolver.MutationResolver
+	carriercapacityMutation       = carriercapacityresolver.MutationResolver
 	carrierintelligenceMutation   = carrierintelligenceresolver.MutationResolver
 	carriersettlementMutation     = carriersettlementresolver.MutationResolver
 	costingMutation               = costingresolver.MutationResolver
@@ -2585,6 +2601,7 @@ type (
 	briefingQuery                 = briefingresolver.QueryResolver
 	captureQuery                  = captureresolver.QueryResolver
 	carrierQuery                  = carrierresolver.QueryResolver
+	carriercapacityQuery          = carriercapacityresolver.QueryResolver
 	carrierintelligenceQuery      = carrierintelligenceresolver.QueryResolver
 	carriersettlementQuery        = carriersettlementresolver.QueryResolver
 	commodityQuery                = commodityresolver.QueryResolver

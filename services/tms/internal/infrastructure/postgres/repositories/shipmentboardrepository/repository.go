@@ -68,7 +68,7 @@ func (r *Repository) scoped(
 		dba.NewSelect().Model((*shipment.Shipment)(nil)),
 		dba,
 		scope.Filter,
-		scope.Options,
+		&scope.Options,
 	)
 }
 

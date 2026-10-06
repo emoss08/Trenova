@@ -361,7 +361,12 @@ func TestCompleteTwiceIsAConflict(t *testing.T) {
 	d := setup(t)
 	d.plans.EXPECT().IsCloud().Return(true)
 	entity := pending(d.tenant)
-	entity.Complete(onboarding.CompleteParams{UserID: d.tenant.UserID, OperationType: tenant.OperationTypeAsset})
+	entity.Complete(
+		onboarding.CompleteParams{
+			UserID:        d.tenant.UserID,
+			OperationType: tenant.OperationTypeAsset,
+		},
+	)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(entity, nil)
 
 	_, err := d.svc.Complete(t.Context(), validRequest(d.tenant))

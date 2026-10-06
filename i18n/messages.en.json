@@ -167216,6 +167216,24 @@
       "go/other"
     ]
   },
+  "Send a date and time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Send a decimal that is zero or more, such as 2.35": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Send a decimal that is zero or more, such as 42.5": {
     "sites": 1,
     "scope": [

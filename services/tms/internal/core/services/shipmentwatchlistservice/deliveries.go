@@ -25,7 +25,10 @@ const (
 	deliveryLate
 )
 
-func classifyDelivery(row *repositories.ShipmentDeliveryRow, now int64) (deliveryState, int) {
+func classifyDelivery(
+	row *repositories.ShipmentDeliveryRow,
+	now int64,
+) (state deliveryState, lateMinutes int) {
 	if row.ActualArrival != nil {
 		if *row.ActualArrival > row.Cutoff {
 			return deliveryLate, int((*row.ActualArrival - row.Cutoff) / secondsPerMinute)

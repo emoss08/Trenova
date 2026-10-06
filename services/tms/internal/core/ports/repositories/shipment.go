@@ -25,7 +25,7 @@ type ShipmentOptions struct {
 	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`
 }
 
-func (o ShipmentOptions) HasQuickFilters() bool {
+func (o *ShipmentOptions) HasQuickFilters() bool {
 	return len(o.QuickFilters) > 0
 }
 
