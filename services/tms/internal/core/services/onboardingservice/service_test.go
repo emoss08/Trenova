@@ -145,7 +145,7 @@ func validRequest(info pagination.TenantInfo) *services.CompleteOnboardingReques
 			PostalCode:   "75201",
 			ScacCode:     "acme",
 		},
-		OperationType:  onboarding.OperationTypeBrokerage,
+		OperationType:  tenant.OperationTypeBrokerage,
 		LoadSampleData: true,
 	}
 }
@@ -206,7 +206,7 @@ func TestGetCompletedShowsTheProfile(t *testing.T) {
 	entity := pending(d.tenant)
 	entity.Complete(onboarding.CompleteParams{
 		UserID:        d.tenant.UserID,
-		OperationType: onboarding.OperationTypeAsset,
+		OperationType: tenant.OperationTypeAsset,
 	})
 	d.plans.EXPECT().IsCloud().Return(true)
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(entity, nil)
@@ -214,7 +214,7 @@ func TestGetCompletedShowsTheProfile(t *testing.T) {
 	state, err := d.svc.Get(t.Context(), d.tenant)
 	require.NoError(t, err)
 	assert.False(t, state.Required)
-	assert.Equal(t, onboarding.OperationTypeAsset, state.OperationType)
+	assert.Equal(t, tenant.OperationTypeAsset, state.OperationType)
 	assert.Equal(t, "ACME", state.Organization.ScacCode)
 	assert.Empty(t, state.Organization.DOTNumber)
 	assert.Equal(t, "Dallas", state.Organization.City)
@@ -230,7 +230,7 @@ func TestCompleteUpdatesTheOrganizationAndLoadsSamples(t *testing.T) {
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(entity, nil)
 	d.repo.EXPECT().Complete(mock.Anything, mock.MatchedBy(func(o *onboarding.Onboarding) bool {
 		return o.Status == onboarding.StatusCompleted &&
-			o.OperationType == onboarding.OperationTypeBrokerage &&
+			o.OperationType == tenant.OperationTypeBrokerage &&
 			o.SampleDataLoaded && o.CompletedByID == d.tenant.UserID && o.Version == 1
 	})).RunAndReturn(func(_ context.Context, o *onboarding.Onboarding) (*onboarding.Onboarding, error) {
 		return o, nil
@@ -277,7 +277,7 @@ func TestCompleteWithoutSampleData(t *testing.T) {
 
 	req := validRequest(d.tenant)
 	req.LoadSampleData = false
-	req.OperationType = onboarding.OperationTypeBoth
+	req.OperationType = tenant.OperationTypeBoth
 	req.Organization.DOTNumber = "1234567"
 
 	state, err := d.svc.Complete(t.Context(), req)
@@ -361,7 +361,7 @@ func TestCompleteTwiceIsAConflict(t *testing.T) {
 	d := setup(t)
 	d.plans.EXPECT().IsCloud().Return(true)
 	entity := pending(d.tenant)
-	entity.Complete(onboarding.CompleteParams{UserID: d.tenant.UserID, OperationType: onboarding.OperationTypeAsset})
+	entity.Complete(onboarding.CompleteParams{UserID: d.tenant.UserID, OperationType: tenant.OperationTypeAsset})
 	d.repo.EXPECT().Get(mock.Anything, mock.Anything).Return(entity, nil)
 
 	_, err := d.svc.Complete(t.Context(), validRequest(d.tenant))

@@ -34,13 +34,13 @@ func TestOnboardingRepository_CompletesOnce(t *testing.T) {
 
 	read.Complete(onboarding.CompleteParams{
 		UserID:           data.User.ID,
-		OperationType:    onboarding.OperationTypeAsset,
+		OperationType:    tenant.OperationTypeAsset,
 		SampleDataLoaded: true,
 	})
 	completed, err := repo.Complete(ctx, read)
 	require.NoError(t, err)
 	assert.Equal(t, onboarding.StatusCompleted, completed.Status)
-	assert.Equal(t, onboarding.OperationTypeAsset, completed.OperationType)
+	assert.Equal(t, tenant.OperationTypeAsset, completed.OperationType)
 	assert.True(t, completed.SampleDataLoaded)
 	assert.Equal(t, read.Version+1, completed.Version)
 

@@ -96,6 +96,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentboardresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/sidebarpreferenceresolver"
@@ -846,6 +847,9 @@ func FromServices(s *Services) *Resolver {
 		ShipmentEventService:    s.ShipmentEventService,
 		ShipmentImportAssistant: s.ShipmentImportAssistant,
 	}
+	shipmentboardDeps := &shipmentboardresolver.Deps{
+		Core: s.Core,
+	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                s.Core,
 		ShipmentTypeService: s.ShipmentTypeService,
@@ -1158,6 +1162,7 @@ func FromServices(s *Services) *Resolver {
 			schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
 			selfserviceMutation:           &selfserviceMutation{Deps: selfserviceDeps},
 			shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
+			shipmentboardMutation:         &shipmentboardMutation{Deps: shipmentboardDeps},
 			sidebarpreferenceMutation:     &sidebarpreferenceMutation{Deps: sidebarpreferenceDeps},
 			tableconfigurationMutation:    &tableconfigurationMutation{Deps: tableconfigurationDeps},
 			telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
@@ -1291,6 +1296,7 @@ func FromServices(s *Services) *Resolver {
 			servicefailurereasoncodeQuery: &servicefailurereasoncodeQuery{Deps: servicefailurereasoncodeDeps},
 			servicetypeQuery:              &servicetypeQuery{Deps: servicetypeDeps},
 			shipmentQuery:                 &shipmentQuery{Deps: shipmentDeps},
+			shipmentboardQuery:            &shipmentboardQuery{Deps: shipmentboardDeps},
 			shipmenttypeQuery:             &shipmenttypeQuery{Deps: shipmenttypeDeps},
 			sidebarpreferenceQuery:        &sidebarpreferenceQuery{Deps: sidebarpreferenceDeps},
 			storedmileageQuery:            &storedmileageQuery{Deps: storedmileageDeps},
@@ -2030,6 +2036,7 @@ type mutationResolver struct {
 	*schedulingMutation
 	*selfserviceMutation
 	*shipmentMutation
+	*shipmentboardMutation
 	*sidebarpreferenceMutation
 	*tableconfigurationMutation
 	*telematicsMutation
@@ -2234,6 +2241,7 @@ type queryResolver struct {
 	*servicefailurereasoncodeQuery
 	*servicetypeQuery
 	*shipmentQuery
+	*shipmentboardQuery
 	*shipmenttypeQuery
 	*sidebarpreferenceQuery
 	*storedmileageQuery
@@ -2527,6 +2535,7 @@ type (
 	schedulingMutation            = schedulingresolver.MutationResolver
 	selfserviceMutation           = selfserviceresolver.MutationResolver
 	shipmentMutation              = shipmentresolver.MutationResolver
+	shipmentboardMutation         = shipmentboardresolver.MutationResolver
 	sidebarpreferenceMutation     = sidebarpreferenceresolver.MutationResolver
 	tableconfigurationMutation    = tableconfigurationresolver.MutationResolver
 	telematicsMutation            = telematicsresolver.MutationResolver
@@ -2636,6 +2645,7 @@ type (
 	servicefailurereasoncodeQuery = servicefailurereasoncoderesolver.QueryResolver
 	servicetypeQuery              = servicetyperesolver.QueryResolver
 	shipmentQuery                 = shipmentresolver.QueryResolver
+	shipmentboardQuery            = shipmentboardresolver.QueryResolver
 	shipmenttypeQuery             = shipmenttyperesolver.QueryResolver
 	sidebarpreferenceQuery        = sidebarpreferenceresolver.QueryResolver
 	storedmileageQuery            = storedmileageresolver.QueryResolver

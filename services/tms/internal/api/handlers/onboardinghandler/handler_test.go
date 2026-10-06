@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -145,11 +146,11 @@ func TestCompleteOnboarding(t *testing.T) {
 			assert.Equal(t, stateID, req.Organization.StateID)
 			assert.Equal(t, "ACME", req.Organization.ScacCode)
 			assert.Empty(t, req.Organization.DOTNumber)
-			assert.Equal(t, onboarding.OperationTypeBoth, req.OperationType)
+			assert.Equal(t, tenant.OperationTypeBoth, req.OperationType)
 			assert.True(t, req.LoadSampleData)
 			return &services.OnboardingState{
 				Status:           onboarding.StatusCompleted,
-				OperationType:    onboarding.OperationTypeBoth,
+				OperationType:    tenant.OperationTypeBoth,
 				SampleDataLoaded: true,
 				CompletedAt:      &completedAt,
 			}, nil

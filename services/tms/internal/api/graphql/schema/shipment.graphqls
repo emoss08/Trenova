@@ -197,6 +197,7 @@ type ShipmentBillingSplitSummary {
 
 type Shipment {
   id: ID!
+  stage: ShipmentStage!
   businessUnitId: ID!
   organizationId: ID!
   sourceDocumentId: String
@@ -1861,6 +1862,9 @@ input ShipmentsInput {
   billingTransferEligible: Boolean = false
   "Load each shipment's customer without expanding the rest of its details."
   includeCustomer: Boolean = false
+  quickFilters: [ShipmentQuickFilterInput!]
+  "IANA time zone for day and hour quick filters."
+  timezone: String
 }
 
 input ShipmentEventsInput {

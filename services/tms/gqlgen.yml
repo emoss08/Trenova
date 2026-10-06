@@ -3619,6 +3619,12 @@ models:
     fields:
       amount:
         resolver: true
+  ShipmentStage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.Stage
+  OperationType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.OperationType
   TenderMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tender.Mode

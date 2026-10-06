@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
 	"github.com/emoss08/trenova/internal/core/domain/subscription"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/stretchr/testify/require"
 )
 
@@ -463,7 +464,7 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_organization_onboarding_operation_type",
-			values: stringsOf(onboarding.AllOperationTypes()),
+			values: stringsOf(tenant.AllOperationTypes()),
 		},
 		{
 			name:   "ck_cloud_signups_status",

@@ -3,6 +3,7 @@ package onboarding
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,22 +20,22 @@ var (
 type Onboarding struct {
 	bun.BaseModel `bun:"table:organization_onboarding,alias:oonb" json:"-"`
 
-	ID               pulid.ID      `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID      `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID      `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Status           Status        `json:"status"                  bun:"status,type:VARCHAR(20),notnull"`
-	OperationType    OperationType `json:"operationType,omitempty" bun:"operation_type,type:VARCHAR(20),nullzero"`
-	SampleDataLoaded bool          `json:"sampleDataLoaded"        bun:"sample_data_loaded,type:BOOLEAN,notnull"`
-	CompletedAt      *int64        `json:"completedAt"             bun:"completed_at,type:BIGINT,nullzero"`
-	CompletedByID    pulid.ID      `json:"completedById,omitempty" bun:"completed_by_id,type:VARCHAR(100),nullzero"`
-	Version          int64         `json:"version"                 bun:"version,type:BIGINT,notnull"`
-	CreatedAt        int64         `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64         `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID             `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID   pulid.ID             `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID   pulid.ID             `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	Status           Status               `json:"status"                  bun:"status,type:VARCHAR(20),notnull"`
+	OperationType    tenant.OperationType `json:"operationType,omitempty" bun:"operation_type,type:VARCHAR(20),nullzero"`
+	SampleDataLoaded bool                 `json:"sampleDataLoaded"        bun:"sample_data_loaded,type:BOOLEAN,notnull"`
+	CompletedAt      *int64               `json:"completedAt"             bun:"completed_at,type:BIGINT,nullzero"`
+	CompletedByID    pulid.ID             `json:"completedById,omitempty" bun:"completed_by_id,type:VARCHAR(100),nullzero"`
+	Version          int64                `json:"version"                 bun:"version,type:BIGINT,notnull"`
+	CreatedAt        int64                `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt        int64                `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 type CompleteParams struct {
 	UserID           pulid.ID
-	OperationType    OperationType
+	OperationType    tenant.OperationType
 	SampleDataLoaded bool
 	CompletedAt      int64
 }
