@@ -1,6 +1,8 @@
 package cloud
 
 import (
+	"io/fs"
+
 	"github.com/emoss08/trenova/internal/api/graphql"
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/routegroup"
@@ -29,6 +31,13 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/signup/cloudsignuphandler"
 	"github.com/emoss08/trenova/internal/cloud/signup/cloudsignuprepository"
 	"github.com/emoss08/trenova/internal/cloud/signup/cloudsignupservice"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/migrations"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessgraphql"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccesshandler"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessmiddleware"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessrepository"
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessservice"
 	"github.com/emoss08/trenova/internal/cloud/turnstile"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -39,11 +48,12 @@ import (
 
 func Edition() edition.Edition {
 	return edition.Edition{
-		Name:           EditionName,
-		Options:        []fx.Option{Options()},
-		APIOptions:     []fx.Option{APIOptions()},
-		Commands:       []*cobra.Command{aicli.AICmd, cloudcli.CloudCmd},
-		ConfigSections: []config.Section{cloudconfig.Section()},
+		Name:               EditionName,
+		Options:            []fx.Option{Options()},
+		APIOptions:         []fx.Option{APIOptions()},
+		Commands:           []*cobra.Command{aicli.AICmd, cloudcli.CloudCmd},
+		PostgresMigrations: []fs.FS{migrations.FS()},
+		ConfigSections:     []config.Section{cloudconfig.Section()},
 	}
 }
 
@@ -57,7 +67,9 @@ func Options() fx.Option {
 		lifecycleOptions(),
 		networkPulseOptions(),
 		aitraining.Module,
+		supportaccess.PermissionOptions(),
 		fx.Provide(
+			supportaccessrepository.New,
 			platformemailservice.New,
 			planbilling.NewLocalPlanBillingProvider,
 			planbilling.NewLocalPlanUsageProvider,
@@ -81,12 +93,32 @@ func APIOptions() fx.Option {
 			accessmiddleware.NewControlPlaneAccessMiddleware,
 			featureaccess.NewFeatureAccessExtension,
 		),
+		supportAccessAPIOptions(),
 		apiRegistrations(),
+	)
+}
+
+func supportAccessAPIOptions() fx.Option {
+	return fx.Options(
+		fx.Provide(
+			fx.Annotate(
+				supportaccessservice.NewRedisStartLimiter,
+				fx.As(new(supportaccessservice.StartLimiter)),
+			),
+			supportaccessservice.New,
+			supportaccessmiddleware.New,
+			supportaccesshandler.New,
+			supportaccessgraphql.New,
+		),
+		fx.Decorate(supportaccessservice.DecorateAuthService),
 	)
 }
 
 func apiRegistrations() fx.Option {
 	return fx.Provide(
+		routegroup.AsProtectedMiddleware(identity[*supportaccessmiddleware.Middleware]),
+		routegroup.AsProtectedRoutes(identity[*supportaccesshandler.Handler]),
+		graphql.AsExtension(identity[*supportaccessgraphql.Extension]),
 		routegroup.AsPublicRoutes(identity[*cloudsignuphandler.Handler]),
 		publicconfighandler.AsContributor(identity[*cloudsignuphandler.Handler]),
 		routegroup.AsPublicRoutes(identity[*networkpulsehandler.Handler]),

@@ -25,6 +25,7 @@ func TestEditionDescribesTheCloudBuild(t *testing.T) {
 	require.Len(t, e.Commands, 2)
 	assert.Equal(t, "ai", e.Commands[0].Name())
 	assert.Equal(t, "cloud", e.Commands[1].Name())
+	require.Len(t, e.PostgresMigrations, 1)
 	assert.NotEmpty(t, e.Options)
 	assert.NotEmpty(t, e.APIOptions)
 }

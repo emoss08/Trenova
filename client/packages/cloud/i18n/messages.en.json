@@ -8,6 +8,24 @@
       "routes/admin"
     ]
   },
+  "Access expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "Access revoked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
   "After that the workspace becomes read-only.": {
     "sites": 1,
     "scope": [
@@ -17,6 +35,52 @@
       "packages/cloud/components"
     ]
   },
+  "Allow Trenova support access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Allow Trenova support into this organization for a limited time. Every support session and every change it makes is recorded in the audit log.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Allow access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Allowed since": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Allowed until": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/support-console"
+    ]
+  },
   "Already have one?": {
     "sites": 1,
     "scope": [
@@ -24,6 +88,15 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "Any support session in progress ends immediately.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "At least 12 characters": {
@@ -44,6 +117,42 @@
       "packages/cloud/components"
     ]
   },
+  "Change Trenova support access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Change access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Changes you make are recorded in the organization's audit log under your name. Write access ends after {0} minutes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
+  "Changing access ends any support session in progress.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Complete the security check before creating your account.": {
     "sites": 1,
     "scope": [
@@ -60,6 +169,24 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "Correct the duplicated invoice the customer reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
+  "Could not return to read-only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
     ]
   },
   "Create account": {
@@ -125,6 +252,42 @@
       "routes/admin"
     ]
   },
+  "Elevate to write": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
+  "Ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Exit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
+  "Expires in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
   "Finish creating your Trenova account": {
     "sites": 1,
     "scope": [
@@ -132,6 +295,15 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "For": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Free demo": {
@@ -188,6 +360,15 @@
       "routes/signup"
     ]
   },
+  "Investigate the missing invoice the customer reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
   "Jordan Rivera": {
     "sites": 1,
     "scope": [
@@ -206,7 +387,34 @@
       "packages/cloud/components"
     ]
   },
+  "No longer Trenova staff": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "No organization currently allows Trenova support access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
   "No plan limits on this installation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Not available on this installation": {
     "sites": 1,
     "scope": [
       "ts"
@@ -231,6 +439,69 @@
     ],
     "areas": [
       "packages/cloud/types"
+    ]
+  },
+  "Note for Trenova support": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Only Trenova platform staff can open support sessions.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Only administrators who can change organization settings can allow support access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Open support session": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Opening another session ends it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Organizations allowing support access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Organizations that allowed Trenova support access. Sessions start read-only and every action is recorded in the organization's audit log.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
     ]
   },
   "Password must not be your email address": {
@@ -271,6 +542,33 @@
       "routes/admin"
     ]
   },
+  "Read-write": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "Refresh the page to try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Replaced by a newer session": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
   "Resend in {0}": {
     "sites": 2,
     "scope": [
@@ -289,6 +587,24 @@
       "routes/signup"
     ]
   },
+  "Return to read-only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
+  "Revoke Trenova support access?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Rivera Freight LLC": {
     "sites": 1,
     "scope": [
@@ -296,6 +612,16 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "SUP-1234": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components",
+      "routes/support-console"
     ]
   },
   "Send a new link": {
@@ -316,6 +642,15 @@
       "routes/signup"
     ]
   },
+  "Set up an authenticator app in your settings, then sign out and sign in again with a code before opening a support session.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
   "Setting up your workspace": {
     "sites": 1,
     "scope": [
@@ -323,6 +658,24 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "Sign in again with your authenticator code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Sign in again with your password and authenticator code to continue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
     ]
   },
   "Sign in instead": {
@@ -334,6 +687,33 @@
       "routes/signup"
     ]
   },
+  "Staff member": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Staff member exited": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "Staff member signed out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
   "Start a free Trenova Cloud demo": {
     "sites": 1,
     "scope": [
@@ -343,13 +723,60 @@
       "routes/signup"
     ]
   },
-  "Start over": {
+  "Support access": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/index.ts",
+      "routes/admin"
+    ]
+  },
+  "Support access applies only on Trenova Cloud.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/signup"
+      "routes/admin"
+    ]
+  },
+  "Support can look but not change anything": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Support console": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components",
+      "routes/support-console"
+    ]
+  },
+  "Support may make changes after signing in again, 30 minutes at a time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Support sessions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The email could not be sent. Try again.": {
@@ -386,6 +813,15 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "The organizations could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
     ]
   },
   "The plan and usage summary could not be loaded. Try refreshing.": {
@@ -505,6 +941,80 @@
       "routes/admin"
     ]
   },
+  "This sign-in did not use two-factor authentication. Sign out and sign in again to open support sessions.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Ticket": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components",
+      "routes/admin",
+      "routes/support-console"
+    ]
+  },
+  "Time limit reached": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "Trenova staff": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
+  "Trenova staff only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Trenova support can access this organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova support has not opened a session here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova support session": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
   "Trial": {
     "sites": 1,
     "scope": [
@@ -515,6 +1025,33 @@
     ]
   },
   "Trial ends": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Two-factor authentication is required": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "Two-factor sign-in lapsed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "Unable to load support access": {
     "sites": 1,
     "scope": [
       "ts"
@@ -604,6 +1141,24 @@
       "routes/signup"
     ]
   },
+  "What should support look at?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "What will you change?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
   "Work email": {
     "sites": 1,
     "scope": [
@@ -613,6 +1168,24 @@
       "routes/signup"
     ]
   },
+  "Write access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Write access ends in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/components"
+    ]
+  },
   "Wrong address? Start over.": {
     "sites": 1,
     "scope": [
@@ -620,6 +1193,24 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "You have an open support session": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "You will see {0} read-only. The organization's administrators are told the session started, and why.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
     ]
   },
   "You're on the free demo. Paid plans are coming soon.": {
@@ -638,6 +1229,15 @@
     ],
     "areas": [
       "routes/signup"
+    ]
+  },
+  "Your Trenova support session has ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
     ]
   },
   "Your email is verified, but the free demo is full right now. We open new workspaces as space frees up and will email you when yours is ready — there's nothing else you need to do.": {
@@ -730,6 +1330,24 @@
       "routes/signup"
     ]
   },
+  "under a minute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "{0, plural, one {Elevated # time} other {Elevated # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {day left.} other {days left.}}": {
     "sites": 1,
     "scope": [
@@ -758,6 +1376,24 @@
     ]
   },
   "{0} is for trying Trenova and leaves this out. Paid plans that include it are coming soon.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/cloud/lib"
+    ]
+  },
+  "{0}, until {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/support-console"
+    ]
+  },
+  "{0}d {1}h": {
     "sites": 1,
     "scope": [
       "ts"

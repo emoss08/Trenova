@@ -99,6 +99,27 @@ func (section) SetDefaults(v *viper.Viper, envPrefix string) {
 	)
 	v.SetDefault("platform.cloud.trial.lifetime", DefaultCloudTrialLifetime.String())
 	v.SetDefault("platform.cloud.trial.readOnlyGrace", DefaultCloudTrialReadOnlyGrace.String())
+	v.SetDefault(
+		"platform.cloud.supportAccess.maxGrantDuration",
+		DefaultSupportAccessMaxGrantDuration.String(),
+	)
+	v.SetDefault(
+		"platform.cloud.supportAccess.maxSessionDuration",
+		DefaultSupportAccessMaxSessionDuration.String(),
+	)
+	v.SetDefault(
+		"platform.cloud.supportAccess.elevationDuration",
+		DefaultSupportAccessElevationDuration.String(),
+	)
+	v.SetDefault(
+		"platform.cloud.supportAccess.sessionStartsPerHour",
+		DefaultSupportAccessSessionStartsPerHour,
+	)
+	v.SetDefault("platform.cloud.supportAccess.cookieName", DefaultSupportAccessCookieName)
+	v.SetDefault(
+		"platform.cloud.supportAccess.principalEmailDomain",
+		DefaultSupportAccessPrincipalEmailDomain,
+	)
 	v.SetDefault("aiRetraining.alerts.webhookUrl", "")
 	v.SetDefault("aiRetraining.alerts.secret", "")
 
@@ -140,6 +161,7 @@ func (section) Validate(cfg *config.Config, env string) error {
 		validateCloudConfig,
 		validateControlPlaneConfig,
 		validateAIRetrainingConfig,
+		validateSupportAccessConfig,
 	}
 	for _, validate := range validators {
 		if err := validate(cfg, settings); err != nil {

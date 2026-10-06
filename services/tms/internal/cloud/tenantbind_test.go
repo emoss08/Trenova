@@ -8,7 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var tenantBindAllowed = map[string]string{}
+var tenantBindAllowed = map[string]string{
+	"github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccesshandler.Handler.startSession:ShouldBindJSON:*github.com/emoss08/trenova/internal/cloud/supportaccess/supportaccessservice.StartSessionRequest": "organizationId names the organization a platform staff member asks to enter; the service only opens a session where that organization's own administrators granted access, looked up under that organization's signed scope",
+}
 
 func TestCloudHandlersNeverBindATenantFieldFromTheRequest(t *testing.T) {
 	t.Parallel()

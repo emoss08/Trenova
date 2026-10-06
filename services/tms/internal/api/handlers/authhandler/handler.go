@@ -54,6 +54,7 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/auth/")
 	api.POST("login", h.login)
+	api.POST("mfa/verify", h.verifyMFA)
 	api.POST("logout", h.logout)
 	api.POST("validate-session", h.validateSession)
 	api.POST("forgot-password", h.forgotPassword)
@@ -131,6 +132,32 @@ func (h *Handler) login(c *gin.Context) {
 		return
 	}
 
+	if resp.MFARequired {
+		c.Header("Cache-Control", "no-store")
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+
+	h.completeLogin(c, resp)
+}
+
+func (h *Handler) verifyMFA(c *gin.Context) {
+	var req services.VerifyMFAChallengeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	resp, err := h.service.VerifyMFAChallenge(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	h.completeLogin(c, resp)
+}
+
+func (h *Handler) completeLogin(c *gin.Context, resp *services.LoginResponse) {
 	authctx.SetAuthContext(
 		c,
 		resp.User.ID,

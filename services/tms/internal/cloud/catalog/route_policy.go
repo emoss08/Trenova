@@ -15,6 +15,24 @@ var accountShellRoutes = mergeRouteRefs(
 	graphQLTransportShellRoutes,
 	pushSubscriptionShellRoutes,
 	onboardingShellRoutes,
+	supportAccessShellRoutes,
+)
+
+var supportAccessShellRoutes = mergeRouteRefs(
+	routeRefsFor("GET",
+		"/api/v1/support-access/",
+		"/api/v1/support/profile/",
+		"/api/v1/support/organizations/",
+		"/api/v1/support/sessions/current/",
+	),
+	routeRefsFor("POST",
+		"/api/v1/support-access/grant/",
+		"/api/v1/support-access/grant/revoke/",
+		"/api/v1/support/sessions/",
+		"/api/v1/support/sessions/current/elevate/",
+		"/api/v1/support/sessions/current/drop-elevation/",
+		"/api/v1/support/sessions/current/end/",
+	),
 )
 
 var onboardingShellRoutes = mergeRouteRefs(
@@ -52,11 +70,16 @@ var currentUserShellRoutes = mergeRouteRefs(
 		"/api/v1/users/me",
 		"/api/v1/users/me/",
 		"/api/v1/users/me/organizations/",
+		"/api/v1/users/me/mfa/",
 	),
 	routeRefsFor("POST",
 		"/api/v1/users/me/switch-organization/",
 		"/api/v1/users/me/profile-picture/",
 		"/api/v1/users/me/change-password/",
+		"/api/v1/users/me/mfa/totp/enroll/",
+		"/api/v1/users/me/mfa/totp/confirm/",
+		"/api/v1/users/me/mfa/totp/disable/",
+		"/api/v1/users/me/mfa/recovery-codes/",
 	),
 	routeRefsFor("PATCH",
 		"/api/v1/users/me/settings/",

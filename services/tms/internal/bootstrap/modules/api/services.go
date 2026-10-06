@@ -157,6 +157,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/mfaservice"
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/onboardingservice"
@@ -249,6 +250,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	iamservice.New,
 	userservice.New,
 	authservice.New,
+	mfaservice.New,
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
 	sidebarpreferenceservice.New,

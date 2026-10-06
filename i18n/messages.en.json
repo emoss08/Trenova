@@ -7109,6 +7109,15 @@
       "go/other"
     ]
   },
+  "A ticket reference is required to change customer data": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A tier cannot start after an open-ended tier": {
     "sites": 1,
     "scope": [
@@ -9062,6 +9071,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Access mode is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Access must be Everyone or Roles": {
@@ -12734,6 +12752,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Added by must be at most 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Added by you": {
@@ -21731,6 +21758,15 @@
       "routes/agent-control"
     ]
   },
+  "Ask for a code from an authenticator app when you sign in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask for access, allowance, budget or daily requests": {
     "sites": 1,
     "scope": [
@@ -24208,6 +24244,16 @@
       "domain/permission"
     ]
   },
+  "Authentication code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
+    ]
+  },
   "Authentication events could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -24253,6 +24299,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Authenticator app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Authenticator assurance level is required": {
@@ -30159,7 +30214,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 130,
+    "sites": 133,
     "scope": [
       "go"
     ],
@@ -30223,6 +30278,7 @@
       "domain/watchtower",
       "domain/weatheralert",
       "domain/worker",
+      "go/other",
       "service/distanceprofileservice",
       "service/ediservice"
     ]
@@ -31064,7 +31120,7 @@
     ]
   },
   "Cancel": {
-    "sites": 277,
+    "sites": 281,
     "scope": [
       "ts"
     ],
@@ -36648,6 +36704,15 @@
       "routes/customer"
     ]
   },
+  "Choose how long support access lasts, up to {0} days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose how the dispute was resolved": {
     "sites": 1,
     "scope": [
@@ -39546,8 +39611,17 @@
       "routes/capture"
     ]
   },
+  "Code from the app": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Code is required": {
-    "sites": 50,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -39576,7 +39650,8 @@
       "domain/tenant",
       "domain/worker",
       "packages/shared/types",
-      "service/locationservice"
+      "service/locationservice",
+      "service/mfaservice"
     ]
   },
   "Code must be 32 characters or less": {
@@ -42325,6 +42400,15 @@
       "routes/bank-receipt-queue"
     ]
   },
+  "Confirm it is you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Confirm monitoring cost": {
     "sites": 1,
     "scope": [
@@ -42462,6 +42546,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Confirm two-factor reset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Confirm what each record is sent as": {
@@ -43829,7 +43922,7 @@
     ]
   },
   "Continue": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -44776,7 +44869,7 @@
     ]
   },
   "Copy": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -45879,6 +45972,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Could not copy the recovery codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Could not copy. Select the text above instead.": {
@@ -47421,6 +47523,15 @@
       "domain/permission"
     ]
   },
+  "Create codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Create communication profile": {
     "sites": 1,
     "scope": [
@@ -48245,7 +48356,7 @@
     ]
   },
   "Creating...": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -49297,7 +49408,7 @@
     ]
   },
   "Current password": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -60680,7 +60791,7 @@
     ]
   },
   "Done": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -60747,7 +60858,7 @@
     ]
   },
   "Download": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -64112,6 +64223,15 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Each code signs you in once if you lose your authenticator. They are shown only this time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Each component computes pay per completed move; team splits apply on top.": {
@@ -67736,6 +67856,15 @@
       "routes/admin"
     ]
   },
+  "Enter one of the recovery codes you saved when you set up two-factor authentication.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Enter organization name": {
     "sites": 1,
     "scope": [
@@ -67844,6 +67973,24 @@
       "service/accountingconnectionservice"
     ]
   },
+  "Enter the code from your authenticator app": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Enter the code from your authenticator app.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/login.tsx"
+    ]
+  },
   "Enter the day the miles were run": {
     "sites": 1,
     "scope": [
@@ -67909,6 +68056,15 @@
       "apps/web/lib"
     ]
   },
+  "Enter the six-digit code": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Enter the unit number": {
     "sites": 1,
     "scope": [
@@ -67954,6 +68110,15 @@
       "packages/shared/types"
     ]
   },
+  "Enter your code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Enter your company name": {
     "sites": 1,
     "scope": [
@@ -67961,6 +68126,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Enter your email and password.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/login.tsx"
     ]
   },
   "Enter your full name": {
@@ -67979,6 +68153,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Enter your password": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Enter your work email": {
@@ -72319,7 +72502,7 @@
     ]
   },
   "Expiry is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -82679,6 +82862,15 @@
       "domain/permission"
     ]
   },
+  "Grant is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Grant override": {
     "sites": 5,
     "scope": [
@@ -82705,6 +82897,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Granting user is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "GraphQL explorer": {
@@ -110920,6 +111121,15 @@
       "apps/web/components"
     ]
   },
+  "New recovery codes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "New reply": {
     "sites": 1,
     "scope": [
@@ -116423,6 +116633,15 @@
       "apps/web/components"
     ]
   },
+  "No user has the address {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.": {
     "sites": 1,
     "scope": [
@@ -118266,6 +118485,15 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Note must be at most 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Note must be {0} characters or fewer": {
@@ -120579,11 +120807,12 @@
     ]
   },
   "Off": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
@@ -121124,11 +121353,12 @@
     ]
   },
   "On": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-invoice-matching",
@@ -121308,6 +121538,15 @@
     "areas": [
       "routes/desk",
       "routes/worker"
+    ]
+  },
+  "On since {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "On the 300 log": {
@@ -122149,6 +122388,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Only Trenova platform staff can open support sessions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Only a Billed order can be closed; this order is {0}": {
@@ -125397,6 +125645,15 @@
       "routes/osha"
     ]
   },
+  "Open your authenticator app and enter the six-digit code for Trenova.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Open {0}": {
     "sites": 9,
     "scope": [
@@ -127177,7 +127434,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 129,
+    "sites": 132,
     "scope": [
       "go"
     ],
@@ -127241,6 +127498,7 @@
       "domain/watchtower",
       "domain/weatheralert",
       "domain/worker",
+      "go/other",
       "service/distanceprofileservice",
       "service/ediservice"
     ]
@@ -131156,12 +131414,15 @@
     ]
   },
   "Password is required": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/components",
+      "go/other",
+      "service/mfaservice"
     ]
   },
   "Password is required. Please provide a valid password.": {
@@ -137986,11 +138247,12 @@
     ]
   },
   "Preparing...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue"
     ]
   },
@@ -141785,6 +142047,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "QR code for your authenticator app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Qty": {
@@ -148369,6 +148640,34 @@
       "routes/admin"
     ]
   },
+  "Recovery code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
+    ]
+  },
+  "Recovery codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Recovery codes copied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Rectangle": {
     "sites": 1,
     "scope": [
@@ -150935,6 +151234,15 @@
     ],
     "areas": [
       "service/formula"
+    ]
+  },
+  "Removes this user's authenticator app and recovery codes, for someone who lost their device. They can set it up again from their settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Removing somebody's hours needs a reason": {
@@ -153743,6 +154051,15 @@
       "routes/desk"
     ]
   },
+  "Reset two-factor authentication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Reset your password": {
     "sites": 1,
     "scope": [
@@ -153786,6 +154103,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Resetting...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Resize the assistant. Use the arrow keys, or double-click to reset.": {
@@ -157095,7 +157421,7 @@
     ]
   },
   "Role is required": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -157103,7 +157429,8 @@
       "domain/briefing",
       "domain/conversation",
       "domain/iam",
-      "domain/permission"
+      "domain/permission",
+      "go/other"
     ]
   },
   "Role not found": {
@@ -160890,6 +161217,15 @@
       "routes/formula-template"
     ]
   },
+  "Save these recovery codes now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Save tile": {
     "sites": 1,
     "scope": [
@@ -161753,6 +162089,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Scan the code with your authenticator app, or enter this key by hand:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Scan with": {
@@ -168922,6 +169267,15 @@
       "api/handlers"
     ]
   },
+  "Session secret is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Set": {
     "sites": 2,
     "scope": [
@@ -169141,11 +169495,12 @@
     ]
   },
   "Set up": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control",
       "routes/fuel-purchase"
     ]
@@ -169166,6 +169521,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Set up two-factor authentication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Set up your Trenova organization": {
@@ -173220,6 +173584,15 @@
       "packages/shared/components"
     ]
   },
+  "Sign in again to continue": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sign in to Trenova": {
     "sites": 1,
     "scope": [
@@ -173255,6 +173628,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Sign in with two-factor authentication before opening a support session": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Sign link expires {0}": {
@@ -173300,6 +173682,42 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Sign-in asks for a code from your authenticator app.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Sign-in challenge not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sign-in will ask for a code from an authenticator app as well as your password.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Sign-in will ask only for your password. Your recovery codes stop working.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Signals": {
@@ -175903,6 +176321,24 @@
       "routes/org-structure"
     ]
   },
+  "Staff member is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Staff session is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stage a Comdata, EFS or WEX statement for review": {
     "sites": 1,
     "scope": [
@@ -176436,6 +176872,16 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Start over": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
     ]
   },
   "Start review": {
@@ -179706,6 +180152,42 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Support access can only be changed by the organization's own administrators": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Support principal is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Support session not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Support sessions need a signed-in staff member": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Supporting document": {
@@ -183026,6 +183508,15 @@
       "go/other"
     ]
   },
+  "That code didn't work. Check it and try again, or sign in again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/login.tsx"
+    ]
+  },
   "That code is not valid or has expired": {
     "sites": 1,
     "scope": [
@@ -185408,6 +185899,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "The code is incorrect or has already been used": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
     ]
   },
   "The code of the account type": {
@@ -190000,6 +190500,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The password is incorrect": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
+    ]
+  },
   "The password must be at least {0} characters": {
     "sites": 1,
     "scope": [
@@ -191054,6 +191563,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "The recovery code is incorrect or has already been used": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
     ]
   },
   "The recurring series created this shipment for you — you can discard this manual entry.": {
@@ -192870,6 +193388,15 @@
       "routes/agent-control"
     ]
   },
+  "The support session has ended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The sweep emails the customer the moment the notice window opens, using their configured recipients.": {
     "sites": 1,
     "scope": [
@@ -194154,6 +194681,15 @@
       "service/assistantservice"
     ]
   },
+  "There is no enrollment waiting for a code. Start the enrollment again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
+    ]
+  },
   "There is no extension named {0}": {
     "sites": 1,
     "scope": [
@@ -194552,6 +195088,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This Trenova support session is read-only. Elevate to write to make changes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This Trenova user is already linked to a different {0} account": {
@@ -195908,6 +196453,15 @@
       "routes/worker"
     ]
   },
+  "This enrollment is no longer pending. Start the enrollment again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This entry type must add days": {
     "sites": 1,
     "scope": [
@@ -197076,6 +197630,15 @@
       "routes/order"
     ]
   },
+  "This organization allowed read-only support access, so the session cannot be elevated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This organization does not run its own drivers, so an existing driver assignment cannot be changed here. Unassign the driver to release the move, then cover it with a carrier.": {
     "sites": 1,
     "scope": [
@@ -197092,6 +197655,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This organization has not allowed Trenova support access, or its access has ended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This organization has reached the limit of its plan": {
@@ -198373,6 +198945,15 @@
       "service/invoiceshareservice"
     ]
   },
+  "This user signs in with their password alone until they set it up again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This usually takes a few seconds": {
     "sites": 1,
     "scope": [
@@ -198978,6 +199559,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Ticket reference must be at most 100 characters": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Tie this card to the tractor it lives in, the driver who carries it, or both. Leaving both empty puts it back in the unassigned list.": {
@@ -200512,6 +201102,15 @@
       "domain/agent"
     ]
   },
+  "Too many incorrect codes. Sign in again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
+    ]
+  },
   "Too many live connections are open for this account. Close a tab and try again.": {
     "sites": 1,
     "scope": [
@@ -200602,6 +201201,15 @@
     ],
     "areas": [
       "domain/pagedraft"
+    ]
+  },
+  "Too many support sessions were opened in the last hour. Try again later.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Too many variable values": {
@@ -203344,6 +203952,42 @@
       "routes/agent-control"
     ]
   },
+  "Trenova support access is not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trenova support access is not currently allowed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trenova support opened a session": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trenova support sessions cannot do this, even with write access.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Trenova's boundary comes first and cannot be overridden. Your instructions follow and are authoritative for everything else.": {
     "sites": 1,
     "scope": [
@@ -204017,6 +204661,15 @@
       "api/handlers"
     ]
   },
+  "Turn off": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turn off for a company-policy test that is not made under 49 CFR 382.": {
     "sites": 1,
     "scope": [
@@ -204033,6 +204686,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turn off two-factor authentication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Turn on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan": {
@@ -204136,6 +204807,15 @@
       "packages/shared/types"
     ]
   },
+  "Turning off...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turning on {0} for {1}": {
     "sites": 1,
     "scope": [
@@ -204179,6 +204859,70 @@
     ],
     "areas": [
       "domain/ratematrix"
+    ]
+  },
+  "Two-factor authentication": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/auth"
+    ]
+  },
+  "Two-factor authentication is already turned on. Turn it off before enrolling a new authenticator.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Two-factor authentication is not turned on for this account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/mfaservice"
+    ]
+  },
+  "Two-factor authentication is off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Two-factor authentication is on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Two-factor authentication reset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Two-factor settings could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Tx age": {
@@ -207814,6 +208558,16 @@
       "routes/formula-template"
     ]
   },
+  "Use a recovery code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
+    ]
+  },
   "Use a three-letter currency code": {
     "sites": 2,
     "scope": [
@@ -208193,6 +208947,16 @@
       "routes/admin"
     ]
   },
+  "Use your authenticator app": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth",
+      "routes/login.tsx"
+    ]
+  },
   "Use your own app": {
     "sites": 1,
     "scope": [
@@ -208456,7 +209220,7 @@
     ]
   },
   "User is required": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "go"
     ],
@@ -208475,7 +209239,9 @@
       "domain/shipment",
       "domain/shipmentimportchat",
       "domain/sidebarpreference",
-      "domain/tenant"
+      "domain/tenant",
+      "go/other",
+      "service/mfaservice"
     ]
   },
   "User message is required": {
@@ -209575,13 +210341,15 @@
     ]
   },
   "Verify": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/jurisdiction-rule"
+      "routes/auth",
+      "routes/jurisdiction-rule",
+      "routes/login.tsx"
     ]
   },
   "Verify a VIN, plate or unit number": {
@@ -209639,6 +210407,15 @@
       "go/other"
     ]
   },
+  "Verifying code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Verifying credentials": {
     "sites": 1,
     "scope": [
@@ -209649,12 +210426,13 @@
     ]
   },
   "Verifying...": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/login.tsx"
     ]
   },
   "Verifying…": {
@@ -212922,6 +213700,15 @@
     ],
     "areas": [
       "routes/hos.tsx"
+    ]
+  },
+  "We couldn't sign you in. Check your email and password and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/login.tsx"
     ]
   },
   "We do not run oversize at night in this state": {
@@ -216820,6 +217607,15 @@
       "routes/agent-control"
     ]
   },
+  "Who added the staff member is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Who and when": {
     "sites": 1,
     "scope": [
@@ -216980,6 +217776,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Who removed the staff member is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Who sees it": {
@@ -219753,6 +220558,15 @@
       "apps/web/hooks"
     ]
   },
+  "You are running out of recovery codes. Create new ones and store them safely.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "You are up to date.": {
     "sites": 1,
     "scope": [
@@ -220580,6 +221394,24 @@
       "routes/onboarding"
     ]
   },
+  "Your Trenova support session has ended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your Trenova support session has ended. Return to the support console to start another.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Your access is limited to your own team, which cannot be checked right now": {
     "sites": 2,
     "scope": [
@@ -220849,6 +221681,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Your current recovery codes stop working as soon as the new ones are made.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your details, sessions and security": {
@@ -221346,6 +222187,15 @@
     ],
     "areas": [
       "routes/pay.tsx"
+    ]
+  },
+  "Your sign-in has expired. Sign in again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
     ]
   },
   "Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.": {
@@ -228711,6 +229561,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "{0, plural, one {# recovery code left.} other {# recovery codes left.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# required document} other {# required documents}} missing": {

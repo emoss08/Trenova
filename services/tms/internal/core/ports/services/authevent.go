@@ -9,6 +9,7 @@ import (
 
 const (
 	AuthEventProviderPassword             = "password"
+	AuthEventProviderMFA                  = "mfa"
 	AuthEventProviderLogout               = "session.logout"
 	AuthEventProviderPasswordResetRequest = "password_reset.request"
 	AuthEventProviderPasswordResetConfirm = "password_reset.confirm"

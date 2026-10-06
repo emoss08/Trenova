@@ -136,8 +136,10 @@ function AcceptForm({ token, preview }: { token: string; preview: InvitationPrev
         password,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      await login({ emailAddress: result.emailAddress, password });
-      void navigate("/dash", { replace: true });
+      const outcome = await login({ emailAddress: result.emailAddress, password });
+      void navigate(outcome.status === "mfa_required" ? "/dash/login" : "/dash", {
+        replace: true,
+      });
     } catch (err) {
       if (err instanceof ApiRequestError) {
         setError(err.message);

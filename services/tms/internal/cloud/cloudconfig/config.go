@@ -74,11 +74,12 @@ const (
 )
 
 type PlatformCloudConfig struct {
-	Signup      CloudSignupConfig      `mapstructure:"signup"`
-	Turnstile   CloudTurnstileConfig   `mapstructure:"turnstile"`
-	SystemEmail CloudSystemEmailConfig `mapstructure:"systemEmail"`
-	Trial       CloudTrialConfig       `mapstructure:"trial"`
-	FreePlan    CloudFreePlanConfig    `mapstructure:"freePlan"`
+	Signup        CloudSignupConfig        `mapstructure:"signup"`
+	Turnstile     CloudTurnstileConfig     `mapstructure:"turnstile"`
+	SystemEmail   CloudSystemEmailConfig   `mapstructure:"systemEmail"`
+	Trial         CloudTrialConfig         `mapstructure:"trial"`
+	FreePlan      CloudFreePlanConfig      `mapstructure:"freePlan"`
+	SupportAccess CloudSupportAccessConfig `mapstructure:"supportAccess"`
 }
 
 type CloudSignupConfig struct {
