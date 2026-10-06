@@ -1,5 +1,5 @@
 {
-  "version": "sha256:304fbb9b047648f35a9642aec7fafc7ddae6a8e935aad6b5e1571acf90f137b5",
+  "version": "sha256:5aa4f27be36767feefd7ce0524504d606dbd9b2a2c0f2561210976de805e8961",
   "modules": [
     {
       "id": "home",
@@ -1685,7 +1685,7 @@
         "Sync ledger"
       ],
       "description": "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
-      "summary": "The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online or Xero) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.\n\nWhen a QuickBooks Online connection sends journal entries instead of documents, the ledger lists one record for each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a day whose entries net to nothing removes its summary from QuickBooks.",
+      "summary": "The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online, Xero or Business Central) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.\n\nWhen a QuickBooks Online connection sends journal entries instead of documents, the ledger lists one record for each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a day whose entries net to nothing removes its summary from QuickBooks.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1712,7 +1712,10 @@
         "opening balances entry",
         "Xero sync",
         "invoice not in Xero",
-        "Xero not updating"
+        "Xero not updating",
+        "Business Central sync",
+        "invoice not in Business Central",
+        "Business Central not posting"
       ],
       "tasks": [
         {
@@ -1769,7 +1772,7 @@
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and open the record held for a closed period.",
-            "Select **Send on first open day**. The document goes out dated on the day after the closing date in the books (the lock date in Xero), and its note there keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in the accounting system, then select **Retry now**."
+            "Select **Send on first open day**. The document goes out dated on the day after the closing date in the books (the lock date in Xero, the start of the allowed posting dates in Business Central), and its note there keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in the accounting system, then select **Retry now**."
           ]
         },
         {
@@ -1857,8 +1860,8 @@
         "Accounting sync",
         "Drift findings"
       ],
-      "description": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online or Xero) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides.",
-      "summary": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online or Xero) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, when the document was changed in the books and, for QuickBooks Online, who changed it, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when the accounting system reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to the books is left out until that change is sent.\n\nWhen a QuickBooks Online connection sends journal entries, the check also compares each QuickBooks account's balance with the Trenova accounts mapped to it. A **Different account balance** finding lists those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks keep different home currencies.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
+      "description": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online, Xero or Business Central) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides.",
+      "summary": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online, Xero or Business Central) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, when the document was changed in the books and, for QuickBooks Online, who changed it, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when the accounting system reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to the books is left out until that change is sent.\n\nWhen a QuickBooks Online connection sends journal entries, the check also compares each QuickBooks account's balance with the Trenova accounts mapped to it. A **Different account balance** finding lists those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks keep different home currencies.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1882,7 +1885,10 @@
         "Xero drift",
         "invoice changed in Xero",
         "invoice voided in Xero",
-        "Xero does not match"
+        "Xero does not match",
+        "Business Central drift",
+        "invoice paid in Business Central",
+        "Business Central does not match"
       ],
       "tasks": [
         {
@@ -1961,7 +1967,7 @@
         "Payments from the books"
       ],
       "description": "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.",
-      "summary": "Payments from the books lists the payments someone recorded in the accounting system (QuickBooks Online or Xero) against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that pay carrier or owner-operator settlements. Trenova reads them every few minutes, and as soon as QuickBooks Online tells it something changed. Each one says what it pays and whether it was brought into Trenova, so the invoice or settlement shows as paid here too.\n\nPayments Trenova sent itself are never read back. A payment waits for a person when it does not match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays a settlement only in part, or falls in a period that is not open; its reason says which. What happens to the rest follows the choice for payments recorded in the books in the integration's sync settings.\n\nThe strip at the top counts payments **Waiting for you**, **Just read**, and those **Applied** or **Ignored** in the last seven days; selecting a figure filters the table to it.",
+      "summary": "Payments from the books lists the payments someone recorded in the accounting system (QuickBooks Online or Xero) against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that pay carrier or owner-operator settlements. Trenova reads them every few minutes, and as soon as QuickBooks Online tells it something changed. Each one says what it pays and whether it was brought into Trenova, so the invoice or settlement shows as paid here too. Business Central is the exception: its API does not say which invoices a payment paid, so payments recorded there are not brought in; an invoice paid in Business Central shows as a balance difference on [Drift findings](/accounting/sync/drift) instead.\n\nPayments Trenova sent itself are never read back. A payment waits for a person when it does not match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays a settlement only in part, or falls in a period that is not open; its reason says which. What happens to the rest follows the choice for payments recorded in the books in the integration's sync settings.\n\nThe strip at the top counts payments **Waiting for you**, **Just read**, and those **Applied** or **Ignored** in the last seven days; selecting a figure filters the table to it.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1983,7 +1989,9 @@
         "Xero payments",
         "payment entered in Xero",
         "customer paid in Xero",
-        "bill paid in Xero"
+        "bill paid in Xero",
+        "Business Central payments",
+        "payment entered in Business Central"
       ],
       "tasks": [
         {
@@ -2048,7 +2056,7 @@
         "Mappings"
       ],
       "description": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.",
-      "summary": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods. Xero invoice lines carry an account, so for Xero, line types, accessorial charges and the write-off are mapped to accounts; Xero has no payment terms or payment methods to map, and only the deposit account and the freight line's account are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that carries posted entries needs a QuickBooks account before its entries are sent; an account without its own mapping falls back to the account role it plays.\n\nTrenova reads the connected company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
+      "summary": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods. Xero invoice lines carry an account, so for Xero, line types, accessorial charges and the write-off are mapped to accounts; Xero has no payment terms or payment methods to map, and only the deposit account and the freight line's account are required. Business Central invoice lines are items, as in QuickBooks Online; it has no payment methods to map, and the deposit account and the freight line's item are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that carries posted entries needs a QuickBooks account before its entries are sent; an account without its own mapping falls back to the account role it plays.\n\nTrenova reads the connected company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
       "requires": [
         {
           "resource": "accounting_integration",
@@ -2067,7 +2075,10 @@
         "accounting sync setup",
         "Xero mappings",
         "Xero account codes",
-        "map customers to Xero contacts"
+        "map customers to Xero contacts",
+        "Business Central mappings",
+        "Business Central items",
+        "map customers to Business Central"
       ],
       "tasks": [
         {
@@ -4839,7 +4850,7 @@
         "Integrations"
       ],
       "description": "Connect the outside services Trenova works with: mileage, telematics, email, fuel prices and carrier data.",
-      "summary": "Integrations is where administrators connect the outside services Trenova works with. Each service is a card grouped by category (such as Email, Telematics, Mapping & Routing, Weather, Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its description, links to its docs, a button to open its settings and a switch showing whether it is connected. Services include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online and Xero (accounting). Some cards describe planned providers that cannot be configured yet. An organization keeps its books in one accounting system at a time.",
+      "summary": "Integrations is where administrators connect the outside services Trenova works with. Each service is a card grouped by category (such as Email, Telematics, Mapping & Routing, Weather, Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its description, links to its docs, a button to open its settings and a switch showing whether it is connected. Services include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), QuickBooks Online, Xero and Business Central (accounting). Some cards describe planned providers that cannot be configured yet. An organization keeps its books in one accounting system at a time.",
       "requires": [
         {
           "resource": "integration",
@@ -4871,7 +4882,13 @@
         "Xero organisation",
         "Xero app",
         "Xero webhook key",
-        "choose organisation"
+        "choose organisation",
+        "Business Central",
+        "Dynamics 365 Business Central",
+        "Microsoft Entra app",
+        "Business Central environment",
+        "Business Central company",
+        "webhook subscriptions"
       ],
       "tasks": [
         {
@@ -5061,6 +5078,65 @@
           ]
         },
         {
+          "title": "Connect Business Central",
+          "keywords": [
+            "Business Central setup",
+            "connect Business Central",
+            "Dynamics 365 Business Central",
+            "Microsoft sign in",
+            "choose company",
+            "Business Central environment",
+            "sandbox"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the Business Central card. When another accounting system is still connected, disconnect it first: an organization sends to one accounting system at a time.",
+            "Select the connect button. Trenova sends you to Microsoft's sign-in page; sign in with a work account that can use Business Central and allow access. Trenova never sees the password.",
+            "Microsoft sends you back to Trenova. Trenova lists every company in every Business Central environment the account can open, each named with its environment and marked (Sandbox) when it is a sandbox. When there is more than one, select the company whose books this Trenova organization keeps, then connect it. The choice has to be made within a few minutes; after that, start the connection again.",
+            "Trenova shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through** (the day before Business Central's allowed posting dates begin, or the end of the last closed accounting period). Check it is the right one, then select **Continue**.",
+            "On **What is sent**, keep **Send documents**. Business Central cannot receive Trenova's journal entries, because its journal lines cannot post to a customer or vendor or apply to an invoice, so the journal entry option is shown as unavailable with that reason. Select **Continue**.",
+            "On **Match records**, Trenova reads the company's accounts, items, customers, vendors and payment terms and proposes a match for each Trenova record. Invoice lines are items, so each charge type is matched to a Business Central item; the freight line's item and the deposit account are required. Business Central has no payment methods on payments to match.",
+            "Select **Finish setup**, choose the **Start date**, then select **Start sending**, as for QuickBooks Online. Trenova posts every invoice, credit memo, bill and payment it sends. Payments go through a payment journal Trenova creates for each deposit or bank account, named with TRN and a short code.",
+            "Payments recorded in Business Central are not brought into Trenova: its API does not say which invoices a payment paid. An invoice paid in Business Central shows as a balance difference on the drift page, where it can be settled in Trenova. The sync settings say this in place of the payment setting."
+          ]
+        },
+        {
+          "title": "Use your own Microsoft Entra app",
+          "keywords": [
+            "Business Central app keys",
+            "Entra app registration",
+            "Azure app registration",
+            "client ID",
+            "client secret",
+            "redirect URI",
+            "self-hosted Business Central"
+          ],
+          "steps": [
+            "In Microsoft Entra, register a multitenant web app. Under API permissions, add the delegated Dynamics 365 Business Central permission Financials.ReadWrite.All.",
+            "Open [Integrations](/admin/integrations) and open the Business Central card. When this server has no Entra app of its own the keys form is already open; otherwise select **Use your own app**.",
+            "Under the app's **Authentication**, add a web platform with the **Redirect URI** Trenova shows, exactly as written.",
+            "Enter the **Client ID** (the application ID) and a **Client secret** from Certificates & secrets, then select **Save keys**. Trenova checks the keys with Microsoft before saving them. Business Central has no webhook key: once a company is connected, Trenova subscribes to its changes itself and renews the subscriptions every few days.",
+            "To go back to the server's app select **Remove**. While a company is connected, only the client secret can change. Entra client secrets expire; enter the new one here before the old one does."
+          ]
+        },
+        {
+          "title": "Check or disconnect Business Central",
+          "keywords": [
+            "Business Central not syncing",
+            "Business Central connection failing",
+            "reconnect Business Central",
+            "disconnect Business Central",
+            "change subscriptions",
+            "webhook renewal"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the Business Central card to see the connection's status, when it was **Last checked**, its **Last successful call**, how many **Change subscriptions** are active and when the **Next renewal due** is.",
+            "When the server has no public https address, the card says so and Trenova reads changes every five minutes instead of being told about them. When a subscription cannot be kept, the card shows why; Trenova retries within the hour.",
+            "Select **Check now** to test the connection immediately.",
+            "When Business Central no longer accepts Trenova's access, select **Reconnect** and approve the same company. Microsoft keeps the sign-in alive as long as Trenova uses it at least every 90 days, which it does while connected.",
+            "To stop, select **Disconnect** and confirm. Trenova deletes its sign-in and its change subscriptions; nothing already in Business Central is changed. Microsoft gives no way to withdraw the consent from Trenova's side, so to remove it an administrator removes the app from Enterprise applications in Microsoft Entra."
+          ]
+        },
+        {
           "title": "Check or disconnect QuickBooks Online",
           "keywords": [
             "QuickBooks not syncing",
@@ -5076,7 +5152,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent, choosing the start date and changing the sync settings. Seeing, connecting and disconnecting Xero need the same access as QuickBooks Online. A QuickBooks company or Xero organisation can be connected to only one Trenova organization at a time, and a Trenova organization sends to only one accounting system at a time: disconnect one before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
+      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent, choosing the start date and changing the sync settings. Seeing, connecting and disconnecting Xero or Business Central need the same access as QuickBooks Online. A QuickBooks company, Xero organisation or Business Central company can be connected to only one Trenova organization at a time, and a Trenova organization sends to only one accounting system at a time: disconnect one before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
       "related": [
         "/accounting/sync",
         "/admin/inbound-mailboxes",
@@ -5088,7 +5164,8 @@
       ],
       "covers": [
         "/admin/integrations/quickbooks/callback",
-        "/admin/integrations/xero/callback"
+        "/admin/integrations/xero/callback",
+        "/admin/integrations/business-central/callback"
       ],
       "createAction": null,
       "inNavigation": true

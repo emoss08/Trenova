@@ -27181,6 +27181,15 @@
       "routes/pay-code"
     ]
   },
+  "Being created": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Being embedded now": {
     "sites": 1,
     "scope": [
@@ -30017,6 +30026,24 @@
     ],
     "areas": [
       "routes/dash-control"
+    ]
+  },
+  "Business Central journal lines cannot post to a customer or vendor or apply to an invoice, so Trenova's journals cannot be sent to Business Central as they are. Send documents instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
+  "Business Central's API does not let Trenova read posted payments or which invoices they paid, so payments recorded in Business Central are not brought in. An invoice paid there shows as a balance difference on the drift page.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
     ]
   },
   "Business Rule Violation": {
@@ -34650,6 +34677,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Change subscriptions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Change sync settings and mappings": {
@@ -42852,6 +42888,15 @@
       "routes/admin"
     ]
   },
+  "Connect your Microsoft Dynamics 365 Business Central company so Trenova can send and post the invoices, credit memos, payments and bills it records. Trenova keeps Business Central's webhook subscriptions renewed and raises a Watchtower item when the connection needs attention.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Connect your QuickBooks Online company so Trenova can keep your books in step with what it posts. Trenova checks the connection and raises a Watchtower item when it needs attention.": {
     "sites": 1,
     "scope": [
@@ -43016,6 +43061,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Connecting Business Central": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Connecting QuickBooks Online": {
@@ -44987,6 +45041,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Copy the application (client) ID, add a client secret under Certificates & secrets, and enter both in this form.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Copy the client ID and client secret for the same environment into this form.": {
@@ -47955,6 +48018,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Create, renew and remove the webhook subscriptions accounting systems require": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Created": {
@@ -105114,6 +105186,15 @@
       "routes/admin"
     ]
   },
+  "Microsoft Entra app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
   "Microsoft logo": {
     "sites": 1,
     "scope": [
@@ -110955,6 +111036,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Next renewal due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Next review": {
@@ -132291,6 +132381,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Payments recorded in {0} are not brought in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Payments recorded in {0} are not read. Record them in Trenova by hand so invoices and settlements show as paid.": {
     "sites": 1,
     "scope": [
@@ -148799,6 +148898,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Register a multitenant web app in Microsoft Entra and add the delegated Dynamics 365 Business Central permission Financials.ReadWrite.All.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Registered DOT": {
@@ -192210,7 +192318,7 @@
     ]
   },
   "The short pay write-off item is not mapped": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -193445,7 +193553,7 @@
     ]
   },
   "The webhook body could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -197870,6 +197978,15 @@
     ],
     "areas": [
       "service/aiproviderservice"
+    ]
+  },
+  "This server has no public https address for {0} to send change notices to, so Trenova reads changes every five minutes instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This server has no {0} of its own, so nobody can connect {1} until keys are entered again.": {
@@ -203007,6 +203124,24 @@
       "apps/web/components"
     ]
   },
+  "Trenova deletes its sign-in to {0}, removes its webhook subscriptions and stops reading from and writing to it. {1} offers no way for Trenova to withdraw the consent itself: to remove it, an administrator removes the {2} from Enterprise applications in Microsoft Entra. Nothing already in {1} is changed or deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova finishes the connection Microsoft just approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova finishes the connection QuickBooks Online just approved.": {
     "sites": 1,
     "scope": [
@@ -203095,6 +203230,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Trenova retries within the hour and reads changes every five minutes meanwhile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Trenova revokes its access to {0} and stops reading from and writing to it. Nothing already in {1} is changed or deleted. You can connect again later.": {
@@ -205105,6 +205249,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Under Authentication, add a Web platform with the redirect URI below exactly as written. Entra accepts http://localhost while developing; anything else needs https.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Under Configuration, add the redirect URI below exactly as written. Xero accepts http://localhost while developing; anything else needs https.": {
@@ -211592,13 +211745,15 @@
     ]
   },
   "Void": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/hooks",
+      "go/other",
       "routes/carrier-settlement",
       "routes/driver-settlement",
       "routes/invoice-register",
@@ -216769,6 +216924,15 @@
     ]
   },
   "While {0} is connected, only the client secret and {1} can change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "While {0} is connected, only the client secret can change.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -229881,6 +230045,15 @@
       "apps/web/components"
     ]
   },
+  "{0} Trenova retries within the hour and reads changes every five minutes meanwhile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} accepted": {
     "sites": 1,
     "scope": [
@@ -229954,6 +230127,15 @@
     ]
   },
   "{0} action": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} active": {
     "sites": 1,
     "scope": [
       "ts"
@@ -231511,6 +231693,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} has no webhook setting to fill in: Trenova subscribes to its changes itself once a company is connected, and renews the subscriptions every few days.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} has not been connected yet": {
@@ -233284,6 +233475,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} of Trenova's change subscriptions at {1} could not be kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} of charges on shipment {1}. A payer who gains a share gets a queue item; a payer left with nothing has theirs canceled.": {
