@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
@@ -27,26 +28,26 @@ func parsePayload(
 	}
 }
 
+// resendPayload is Resend's email.received event. It carries a message's
+// metadata only: the body, the headers and the attachments' bytes are read
+// from Resend's API afterwards with the mailbox's key, so none of them is
+// looked for here.
 type resendPayload struct {
 	Type string `json:"type"`
 	Data struct {
-		ID        string   `json:"email_id"`
-		MessageID string   `json:"message_id"`
-		From      string   `json:"from"`
-		To        []string `json:"to"`
-		Cc        []string `json:"cc"`
-		Subject   string   `json:"subject"`
-		Text      string   `json:"text"`
-		HTML      string   `json:"html"`
-		CreatedAt string   `json:"created_at"`
-		Headers   []struct {
-			Name  string `json:"name"`
-			Value string `json:"value"`
-		} `json:"headers"`
+		ID          string   `json:"email_id"`
+		MessageID   string   `json:"message_id"`
+		From        string   `json:"from"`
+		To          []string `json:"to"`
+		Cc          []string `json:"cc"`
+		Bcc         []string `json:"bcc"`
+		ReceivedFor []string `json:"received_for"`
+		Subject     string   `json:"subject"`
+		CreatedAt   string   `json:"created_at"`
 		Attachments []struct {
+			ID          string `json:"id"`
 			Filename    string `json:"filename"`
 			ContentType string `json:"content_type"`
-			Content     string `json:"content"`
 		} `json:"attachments"`
 	} `json:"data"`
 }
@@ -69,54 +70,39 @@ func parseResend(body []byte) (*providerMessage, error) {
 
 	message := &providerMessage{
 		ProviderMessageID: payload.Data.ID,
-		MessageID:         payload.Data.MessageID,
+		MessageID:         strings.TrimSpace(payload.Data.MessageID),
 		Subject:           payload.Data.Subject,
-		TextBody:          payload.Data.Text,
-		HTMLBody:          payload.Data.HTML,
-		ReceivedAt:        timeutils.NowUnix(),
+		ReceivedAt:        receivedAt(payload.Data.CreatedAt),
+		ToAddresses:       normalizeAddresses(payload.Data.To),
+		CcAddresses:       normalizeAddresses(payload.Data.Cc),
 	}
-
 	message.FromName, message.FromAddress = splitMailbox(payload.Data.From)
-	for _, to := range payload.Data.To {
-		if address := normalizeAddress(to); address != "" {
-			message.ToAddresses = append(message.ToAddresses, address)
-		}
-	}
-	for _, cc := range payload.Data.Cc {
-		if address := normalizeAddress(cc); address != "" {
-			message.CcAddresses = append(message.CcAddresses, address)
-		}
-	}
-
-	for _, header := range payload.Data.Headers {
-		switch strings.ToLower(header.Name) {
-		case "in-reply-to":
-			message.InReplyTo = strings.TrimSpace(header.Value)
-		case "references":
-			message.References = strings.Fields(header.Value)
-		case "message-id":
-			if message.MessageID == "" {
-				message.MessageID = strings.TrimSpace(header.Value)
-			}
-		}
-	}
+	message.Recipients = recipientsOf(
+		message.ToAddresses,
+		message.CcAddresses,
+		normalizeAddresses(payload.Data.Bcc),
+		normalizeAddresses(payload.Data.ReceivedFor),
+	)
 
 	for _, attachment := range payload.Data.Attachments {
-		content, err := base64.StdEncoding.DecodeString(attachment.Content)
-		if err != nil {
-			// One unreadable attachment does not discard the message. The
-			// message is still what the sender believes was received, and the
-			// file is recorded as failed rather than silently dropped.
-			content = nil
-		}
 		message.Attachments = append(message.Attachments, providerAttachment{
+			ProviderID:  attachment.ID,
 			FileName:    attachment.Filename,
 			ContentType: attachment.ContentType,
-			Content:     content,
 		})
 	}
 
 	return message, nil
+}
+
+// receivedAt reads the provider's own receipt time, falling back to now when
+// it is absent or unreadable: the time is for ordering an inbox, not a gate.
+func receivedAt(raw string) int64 {
+	if t, err := time.Parse(time.RFC3339Nano, strings.TrimSpace(raw)); err == nil {
+		return t.Unix()
+	}
+
+	return timeutils.NowUnix()
 }
 
 const resendInboundEvent = "email.received"

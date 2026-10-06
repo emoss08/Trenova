@@ -14480,6 +14480,10 @@ type InboundMailbox {
   businessUnitId: ID!
   createdAt: Timestamp!
   """
+  Whether an API key is set for reading message content. Resend posts only a message's metadata, so a Resend mailbox without one cannot read bodies or attachments. The key itself is never returned.
+  """
+  hasApiKey: Boolean!
+  """
   Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned.
   """
   hasSigningSecret: Boolean!
@@ -16273,7 +16277,7 @@ type Mutation {
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
   """Creates a mailbox and returns its webhook token, once."""
-  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
+  createInboundMailbox(apiKey: String, input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
   createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
   """
   Bills the given shipments. offCycleReason is required only when the customer
@@ -16758,6 +16762,10 @@ type Mutation {
   """
   setDeskMemoryStatus(id: ID!, status: AgentMemoryStatus!): DeskMemory!
   """
+  Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key.
+  """
+  setInboundMailboxApiKey(apiKey: String!, id: ID!): InboundMailbox!
+  """
   Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password.
   """
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
@@ -16883,7 +16891,7 @@ type Mutation {
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
   updateIftaMileageEntry(id: ID!, input: IFTAMileageEntryInput!, version: Int!): IFTAJurisdictionMileageEntry!
   """
-  Changes a mailbox's settings. Changing its provider clears the signing secret.
+  Changes a mailbox's settings. Changing its provider clears the signing secret and the API key.
   """
   updateInboundMailbox(id: ID!, input: InboundMailboxInput!, version: Int!): InboundMailbox!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!

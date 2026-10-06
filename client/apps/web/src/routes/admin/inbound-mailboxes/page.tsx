@@ -23,6 +23,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { ApiKeyDialog } from "./_components/api-key-dialog";
 import { CredentialsDialog } from "./_components/credentials-dialog";
 import { MailboxCard } from "./_components/mailbox-card";
 import { MailboxFormDialog, type MailboxCreated } from "./_components/mailbox-form-dialog";
@@ -36,6 +37,8 @@ export const prefetch: RoutePrefetch = () => [queries.inbox.mailboxes()];
  * Setting one up is three things — the address, where the provider posts,
  * and the secret that proves a delivery came from the provider — and this
  * page does them in that order, showing the URL the one time it can be shown.
+ * A Resend mailbox takes a fourth, the API key its message content is read
+ * with, because Resend's webhook carries only the metadata.
  */
 export function InboundMailboxesPage() {
   const t = useT();
@@ -46,6 +49,7 @@ export function InboundMailboxesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<InboundMailbox | null>(null);
   const [secretFor, setSecretFor] = useState<InboundMailbox | null>(null);
+  const [apiKeyFor, setApiKeyFor] = useState<InboundMailbox | null>(null);
   const [rotating, setRotating] = useState<InboundMailbox | null>(null);
   const [shown, setShown] = useState<MailboxCreated | null>(null);
 
@@ -127,6 +131,7 @@ export function InboundMailboxesPage() {
               }}
               onRotate={() => setRotating(mailbox)}
               onSecret={() => setSecretFor(mailbox)}
+              onApiKey={() => setApiKeyFor(mailbox)}
             />
           ))}
         </div>
@@ -143,6 +148,7 @@ export function InboundMailboxesPage() {
         onSaved={refresh}
       />
       <SecretDialog mailbox={secretFor} onClose={() => setSecretFor(null)} onSaved={refresh} />
+      <ApiKeyDialog mailbox={apiKeyFor} onClose={() => setApiKeyFor(null)} onSaved={refresh} />
       <CredentialsDialog
         credentials={shown?.credentials ?? null}
         postmark={shown?.postmark}

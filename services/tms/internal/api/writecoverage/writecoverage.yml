@@ -1732,6 +1732,9 @@ writes:
   "mutation rotateInboundMailboxToken":
     exempt: security
     reason: "Replaces the secret that authenticates mail forwarded into the mailbox."
+  "mutation setInboundMailboxApiKey":
+    exempt: security
+    reason: "Sets the provider credential the mailbox reads forwarded mail's content with."
   "mutation setInboundMailboxSigningSecret":
     exempt: security
     reason: "Sets the secret that authenticates mail forwarded into the mailbox."

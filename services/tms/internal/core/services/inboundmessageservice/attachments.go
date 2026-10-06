@@ -32,10 +32,12 @@ type AttachmentRef struct {
 
 // stageAttachments puts the bytes somewhere before the webhook returns.
 //
-// This is the one moment the file exists: it arrived base64-encoded inside the
-// delivery body and the provider will not send it again. So the upload happens
-// on the request path, not in the workflow that reads it — an activity started
-// later would have nothing left to upload.
+// For a provider that posts the whole message this is the one moment the file
+// exists: it arrived base64-encoded inside the delivery body and the provider
+// will not send it again. So the upload happens on the request path, not in the
+// workflow that reads it — an activity started later would have nothing left
+// to upload. A provider whose webhook carries only metadata has its files
+// staged by FetchContent instead.
 //
 // A file the document validator refuses is recorded as refused on its own row.
 // The alternative is dropping it, which leaves a message whose attachment count
@@ -58,29 +60,41 @@ func (s *Service) stageAttachments(
 		if i >= len(parsed.Attachments) {
 			break
 		}
-		content := parsed.Attachments[i].Content
-		if len(content) == 0 {
-			s.recordAttachmentFailure(ctx, row, "The file arrived empty or could not be decoded.")
+		s.stageAttachment(ctx, tenantInfo, message, row, parsed.Attachments[i].Content)
+	}
+}
 
-			continue
-		}
+// stageAttachment uploads one file's bytes and records the session on its row,
+// or records why there is nothing to upload. A failure is written to the row
+// rather than returned: one unreadable file never costs the rest of a message.
+func (s *Service) stageAttachment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	message *inboundmessage.InboundMessage,
+	row *inboundmessage.InboundAttachment,
+	content []byte,
+) {
+	if len(content) == 0 {
+		s.recordAttachmentFailure(ctx, row, "The file arrived empty or could not be decoded.")
 
-		sessionID, err := s.uploadAttachment(ctx, tenantInfo, message, row, content)
-		if err != nil {
-			s.l.Warn("could not stage an inbound attachment",
-				zap.String("messageId", message.ID.String()),
-				zap.String("fileName", row.FileName),
-				zap.Error(err))
-			s.recordAttachmentFailure(ctx, row, refusalText(err))
+		return
+	}
 
-			continue
-		}
+	sessionID, err := s.uploadAttachment(ctx, tenantInfo, message, row, content)
+	if err != nil {
+		s.l.Warn("could not stage an inbound attachment",
+			zap.String("messageId", message.ID.String()),
+			zap.String("fileName", row.FileName),
+			zap.Error(err))
+		s.recordAttachmentFailure(ctx, row, refusalText(err))
 
-		row.UploadSessionID = sessionID
-		if err = s.updateAttachment(ctx, row); err != nil {
-			s.l.Error("staged an inbound attachment but could not record its session",
-				zap.String("attachmentId", row.ID.String()), zap.Error(err))
-		}
+		return
+	}
+
+	row.UploadSessionID = sessionID
+	if err = s.updateAttachment(ctx, row); err != nil {
+		s.l.Error("staged an inbound attachment but could not record its session",
+			zap.String("attachmentId", row.ID.String()), zap.Error(err))
 	}
 }
 

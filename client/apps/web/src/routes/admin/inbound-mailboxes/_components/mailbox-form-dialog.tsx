@@ -58,9 +58,9 @@ export type MailboxCreated = {
 
 /**
  * Creates or edits a mailbox. Creating one is the whole setup: a Resend
- * mailbox can take its signing secret here, and a Postmark one is given
- * generated credentials and saved with them, so the next screen's URL is
- * everything the provider needs.
+ * mailbox can take its signing secret and the API key it reads message
+ * content with here, and a Postmark one is given generated credentials and
+ * saved with them, so the next screen's URL is everything the provider needs.
  */
 export function MailboxFormDialog({
   open,
@@ -78,6 +78,7 @@ export function MailboxFormDialog({
   const t = useT();
   const editing = mailbox !== null;
   const [resendSecret, setResendSecret] = useState("");
+  const [resendApiKey, setResendApiKey] = useState("");
 
   const form = useForm<MailboxFormValues>({
     resolver: zodResolver(mailboxFormSchema),
@@ -90,10 +91,15 @@ export function MailboxFormDialog({
     }
   }, [open, mailbox, form]);
 
-  // The secret is typed into a plain input, not the form, so it is cleared
-  // here on every way out rather than left for the next mailbox to inherit.
-  const close = () => {
+  // The secret and the key are typed into plain inputs, not the form, so they
+  // are cleared here on every way out rather than left for the next mailbox to
+  // inherit.
+  const clearCredentials = () => {
     setResendSecret("");
+    setResendApiKey("");
+  };
+  const close = () => {
+    clearCredentials();
     onClose();
   };
 
@@ -103,9 +109,11 @@ export function MailboxFormDialog({
   const createMutation = useApiMutation({
     mutationFn: async (values: MailboxFormValues): Promise<MailboxCreated> => {
       const secret = values.provider === "Resend" ? resendSecret.trim() : "";
+      const apiKey = values.provider === "Resend" ? resendApiKey.trim() : "";
       const credentials = await createInboundMailbox(
         mailboxInput(values),
         secret === "" ? null : secret,
+        apiKey === "" ? null : apiKey,
       );
       if (values.provider !== "Postmark") {
         return { credentials };
@@ -123,7 +131,7 @@ export function MailboxFormDialog({
     },
     onSuccess: async (created) => {
       toast.success(t("Mailbox created"));
-      setResendSecret("");
+      clearCredentials();
       onCreated(created);
       await onSaved();
     },
@@ -141,7 +149,9 @@ export function MailboxFormDialog({
     onSuccess: async (updated) => {
       toast.success(
         mailbox !== null && updated.provider !== mailbox.provider
-          ? t("Saved. Set the new provider's signing secret before mail will be accepted.")
+          ? t(
+              "Saved. Set the new provider's signing secret, and for Resend its API key, before mail is read.",
+            )
           : t("Mailbox saved"),
       );
       close();
@@ -186,6 +196,13 @@ export function MailboxFormDialog({
                 label={t("Address")}
                 placeholder="tenders@yourcompany.com"
                 rules={{ required: true }}
+                description={
+                  provider === "Resend"
+                    ? t(
+                        "Resend forwards everything its account receives, so only mail addressed here lands in this mailbox.",
+                      )
+                    : undefined
+                }
               />
             </FormControl>
             <FormControl>
@@ -197,7 +214,7 @@ export function MailboxFormDialog({
                 description={
                   editing
                     ? t(
-                        "Changing the provider clears the signing secret, which belongs to the old one.",
+                        "Changing the provider clears the signing secret and the API key, which belong to the old one.",
                       )
                     : undefined
                 }
@@ -261,6 +278,26 @@ export function MailboxFormDialog({
                   <p className="text-foreground-subtle text-xs">
                     {t(
                       "From the Resend webhook. You can add it later; until then the mailbox refuses deliveries.",
+                    )}
+                  </p>
+                </div>
+              </FormControl>
+            )}
+            {!editing && provider === "Resend" && (
+              <FormControl cols="full">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="new-mailbox-api-key">{t("API key (optional)")}</Label>
+                  <Input
+                    id="new-mailbox-api-key"
+                    type="password"
+                    autoComplete="off"
+                    value={resendApiKey}
+                    onChange={(event) => setResendApiKey(event.target.value)}
+                    placeholder="re_…"
+                  />
+                  <p className="text-foreground-subtle text-xs">
+                    {t(
+                      "A full access key from Resend. Resend sends only the sender and subject to the webhook, so the body and attachments are read with this key.",
                     )}
                   </p>
                 </div>

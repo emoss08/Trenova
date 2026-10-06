@@ -60,17 +60,28 @@ export function CredentialsDialog({
           />
 
           {provider === "Resend" ? (
-            <Alert size="sm" variant="info">
-              <AlertDescription>
-                {credentials.mailbox.hasSigningSecret
-                  ? t(
-                      "In Resend, set this as the inbound webhook. The signing secret is already saved, so deliveries are verified from the first one.",
-                    )
-                  : t(
-                      "In Resend, set this as the inbound webhook, then copy the webhook's signing secret (it starts with whsec_) into Set signing secret. Until then the mailbox refuses every delivery.",
+            <>
+              <Alert size="sm" variant="info">
+                <AlertDescription>
+                  {credentials.mailbox.hasSigningSecret
+                    ? t(
+                        "In Resend, add this as a webhook for the email.received event. The signing secret is already saved, so deliveries are verified from the first one.",
+                      )
+                    : t(
+                        "In Resend, add this as a webhook for the email.received event, then copy the webhook's signing secret (it starts with whsec_) into Set signing secret. Until then the mailbox refuses every delivery.",
+                      )}
+                </AlertDescription>
+              </Alert>
+              {!credentials.mailbox.hasApiKey && (
+                <Alert size="sm" variant="warning">
+                  <AlertDescription>
+                    {t(
+                      "Resend's webhook carries only the sender and subject. Set a full access API key with Set API key so each message's body and attachments are read.",
                     )}
-              </AlertDescription>
-            </Alert>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           ) : (
             <Alert size="sm" variant="info">
               <AlertDescription>

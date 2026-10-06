@@ -27,6 +27,13 @@ type PollInboundAttachmentPayload = inboundmessageservice.PollInboundAttachmentP
 
 type AttachmentExtractionState = inboundmessageservice.AttachmentExtractionState
 
+// FetchInboundContentResult says whether the message can go on to be read.
+// Readable is false when its content could not be fetched and it has already
+// been sent to review saying why.
+type FetchInboundContentResult struct {
+	Readable bool `json:"readable"`
+}
+
 // InboundMessageRetentionResult is what one retention run removed, and which
 // tenants it could not finish, so a failure is visible without failing the rest.
 type InboundMessageRetentionResult struct {

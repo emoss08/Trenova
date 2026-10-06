@@ -8,6 +8,7 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import {
   Edit02Icon,
   Key01Icon,
+  LockKeyholeCircleIcon,
   Mail01Icon,
   RefreshCw02Icon,
 } from "@trenova/shared/components/icons";
@@ -17,7 +18,8 @@ import { reviewPolicyLabel } from "./mailbox-form-dialog";
 /**
  * One address and what it is trusted with. A mailbox that cannot verify its
  * deliveries says so first, because until it can, every message sent to it
- * is refused and nothing else about it matters.
+ * is refused and nothing else about it matters. A Resend mailbox without an
+ * API key says so next: its mail lands, but without a body or attachments.
  */
 export function MailboxCard({
   mailbox,
@@ -25,15 +27,18 @@ export function MailboxCard({
   onEdit,
   onRotate,
   onSecret,
+  onApiKey,
 }: {
   mailbox: InboundMailbox;
   canEdit: boolean;
   onEdit: () => void;
   onRotate: () => void;
   onSecret: () => void;
+  onApiKey: () => void;
 }) {
   const t = useT();
   const listening = mailbox.status === "Active";
+  const readsContent = mailbox.provider === "Resend";
 
   return (
     <article className="bg-card border-border flex flex-col gap-3 rounded-lg border p-4">
@@ -61,6 +66,16 @@ export function MailboxCard({
         <Alert size="sm" variant="warning">
           <AlertDescription>
             {t("No signing secret is set, so every delivery to this mailbox is refused.")}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {readsContent && !mailbox.hasApiKey && listening && (
+        <Alert size="sm" variant="warning">
+          <AlertDescription>
+            {t(
+              "No API key is set, so mail arrives without its body or attachments and waits for a person.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -95,6 +110,12 @@ export function MailboxCard({
               <Key01Icon className="size-3.5" />
               {mailbox.hasSigningSecret ? t("Replace secret") : t("Set signing secret")}
             </Button>
+            {readsContent && (
+              <Button size="sm" variant="outline" onClick={onApiKey}>
+                <LockKeyholeCircleIcon className="size-3.5" />
+                {mailbox.hasApiKey ? t("Replace API key") : t("Set API key")}
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={onRotate}>
               <RefreshCw02Icon className="size-3.5" />
               {t("Rotate URL")}

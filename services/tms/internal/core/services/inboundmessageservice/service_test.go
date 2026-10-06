@@ -14,12 +14,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
@@ -142,23 +144,30 @@ func signed(t *testing.T, body []byte, at time.Time) *ReceiveWebhookRequest {
 	}
 }
 
+// resendBody is Resend's email.received event as Resend sends it: metadata
+// only. The body, headers and attachment bytes are fetched afterwards.
 func resendBody() []byte {
 	return []byte(`{
 		"type": "email.received",
+		"created_at": "2026-07-15T16:00:01.126Z",
 		"data": {
 			"email_id": "e_9f2b",
+			"created_at": "2026-07-15T16:00:00.894Z",
 			"from": "Dispatch <dispatch@bigshipper.com>",
-			"to": ["tenders@acme-logistics.com"],
+			"to": ["Tenders <Tenders@Acme-Logistics.com>"],
 			"cc": ["billing@acme-logistics.com"],
+			"bcc": [],
+			"received_for": ["tenders@acme-logistics.com"],
+			"message_id": "<abc@bigshipper.com>",
 			"subject": "Load 88213 tender",
-			"text": "Please confirm pickup Thursday.",
-			"html": "<p>Please confirm pickup Thursday.</p>",
-			"headers": [
-				{"name": "Message-ID", "value": "<abc@bigshipper.com>"},
-				{"name": "In-Reply-To", "value": "<prev@bigshipper.com>"}
-			],
 			"attachments": [
-				{"filename": "tender.pdf", "content_type": "application/pdf", "content": "SGVsbG8="}
+				{
+					"id": "att_1",
+					"filename": "tender.pdf",
+					"content_type": "application/pdf",
+					"content_disposition": "attachment",
+					"content_id": null
+				}
 			]
 		}
 	}`)
@@ -179,6 +188,24 @@ func (plainSecrets) DecryptString(value string) (string, error) {
 	return strings.TrimPrefix(value, sealedPrefix), nil
 }
 
+// stubWorkflows is a worker that is there, so a staged message is handed to
+// the workflow rather than read on the request path.
+type stubWorkflows struct {
+	services.WorkflowStarter
+
+	started []client.StartWorkflowOptions
+}
+
+func (w *stubWorkflows) Enabled() bool { return true }
+
+func (w *stubWorkflows) StartWorkflow(
+	_ context.Context, options client.StartWorkflowOptions, _ any, _ ...any,
+) (client.WorkflowRun, error) {
+	w.started = append(w.started, options)
+
+	return nil, nil
+}
+
 func newService(
 	mailboxes *stubMailboxRepo,
 	messages *stubMessageRepo,
@@ -190,6 +217,7 @@ func newService(
 		messageRepo: messages,
 		storage:     store,
 		encryption:  plainSecrets{},
+		workflows:   &stubWorkflows{},
 	}
 }
 
@@ -208,14 +236,74 @@ func TestReceiveWebhook_StagesAVerifiedDelivery(t *testing.T) {
 
 	require.NotNil(t, messages.created)
 	assert.Equal(t, "e_9f2b", messages.created.ProviderMessageID)
+	assert.Equal(t, "<abc@bigshipper.com>", messages.created.MessageID)
 	assert.Equal(t, "dispatch@bigshipper.com", messages.created.FromAddress)
 	assert.Equal(t, "Dispatch", messages.created.FromName)
+	assert.Equal(t, []string{"tenders@acme-logistics.com"}, messages.created.ToAddresses)
+	assert.Equal(t, []string{"billing@acme-logistics.com"}, messages.created.CcAddresses)
 	assert.Equal(t, "Load 88213 tender", messages.created.Subject)
-	assert.Equal(t, "<prev@bigshipper.com>", messages.created.InReplyTo)
+	assert.Equal(t, int64(1784131200), messages.created.ReceivedAt)
+	assert.Empty(t, messages.created.TextBody, "Resend's webhook carries no body")
 	assert.Equal(t, inboundmessage.StatusReceived, messages.created.Status)
 	require.Len(t, messages.attached, 1)
 	assert.Equal(t, "tender.pdf", messages.attached[0].FileName)
-	assert.Equal(t, int64(5), messages.attached[0].ByteSize)
+	assert.Equal(t, "att_1", messages.attached[0].ProviderAttachmentID)
+	assert.Zero(t, messages.attached[0].ByteSize)
+	assert.Empty(t, messages.attached[0].FailureText,
+		"a file whose bytes are still to be fetched is not refused as empty")
+	assert.Empty(t, store.uploaded)
+}
+
+/*
+Resend posts every message its account receives to each webhook. A mailbox
+that staged all of them would fill one organization's inbox with mail meant
+for another address — or, with two mailboxes on one account, stage every
+message twice. Only mail naming the mailbox's address lands.
+*/
+func TestReceiveWebhook_IgnoresResendMailForAnotherAddress(t *testing.T) {
+	t.Parallel()
+
+	mailbox := testMailbox()
+	mailbox.Address = "pods@acme-logistics.com"
+	messages := &stubMessageRepo{}
+	svc := newService(&stubMailboxRepo{mailbox: mailbox}, messages, &stubStorage{})
+
+	result, err := svc.ReceiveWebhook(t.Context(), signed(t, resendBody(), time.Unix(1784131200, 0)))
+	require.NoError(t, err)
+
+	assert.True(t, result.Ignored)
+	assert.Zero(t, messages.writes)
+}
+
+// Bcc'd mail and mail forwarded to the provider's address name the mailbox
+// only in bcc or received_for, and both still belong to it.
+func TestReceiveWebhook_AcceptsResendMailAddressedByBccOrReceivedFor(t *testing.T) {
+	t.Parallel()
+
+	for name, address := range map[string]string{
+		"bcc":          "ops@acme-logistics.com",
+		"received for": "intake@inbound.acme-logistics.com",
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			body := []byte(`{"type":"email.received","data":{
+				"email_id":"e_1","from":"dispatch@bigshipper.com",
+				"to":["someone@elsewhere.com"],
+				"bcc":["ops@acme-logistics.com"],
+				"received_for":["intake@inbound.acme-logistics.com"],
+				"subject":"Tender"}}`)
+			mailbox := testMailbox()
+			mailbox.Address = address
+			messages := &stubMessageRepo{}
+			svc := newService(&stubMailboxRepo{mailbox: mailbox}, messages, &stubStorage{})
+
+			result, err := svc.ReceiveWebhook(t.Context(), signed(t, body, time.Unix(1784131200, 0)))
+			require.NoError(t, err)
+			assert.False(t, result.Ignored)
+			assert.Equal(t, 1, messages.writes)
+		})
+	}
 }
 
 // The token is hashed before it is used, so the plain value never reaches a
@@ -386,9 +474,19 @@ func TestReceiveWebhook_StillStagesWhenTheBodyCannotBeStored(t *testing.T) {
 
 	messages := &stubMessageRepo{}
 	store := &stubStorage{err: errors.New("bucket unreachable")}
-	svc := newService(&stubMailboxRepo{mailbox: testMailbox()}, messages, store)
+	svc := newService(&stubMailboxRepo{mailbox: postmarkMailbox()}, messages, store)
 
-	_, err := svc.ReceiveWebhook(t.Context(), signed(t, resendBody(), time.Unix(1784131200, 0)))
+	req := postmarkDelivery(testPostmarkCredentials)
+	req.Body = []byte(`{
+		"MessageID": "pm-7c1d",
+		"From": "dispatch@bigshipper.com",
+		"To": "tenders@acme-logistics.com",
+		"Subject": "Load 88213 tender",
+		"TextBody": "Please confirm pickup Thursday.",
+		"HtmlBody": "<p>Please confirm pickup Thursday.</p>"
+	}`)
+
+	_, err := svc.ReceiveWebhook(t.Context(), req)
 	require.NoError(t, err)
 
 	require.NotNil(t, messages.created)

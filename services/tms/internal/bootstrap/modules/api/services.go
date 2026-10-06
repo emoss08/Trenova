@@ -241,6 +241,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/controlplane"
+	"github.com/emoss08/trenova/internal/infrastructure/inboundmail"
 	"github.com/emoss08/trenova/internal/infrastructure/turnstile"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -478,6 +479,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	ediservice.New,
 	ediinboundservice.New,
 	inboundmessageservice.New,
+	inboundmail.New,
 	captureservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },
 	fx.Annotate(
