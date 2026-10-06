@@ -1972,24 +1972,6 @@ export const routes: RouteObject[] = [
                 },
               },
               {
-                path: "database-sessions",
-                loader: createPermissionLoader(Resource.DatabaseSession, Operation.Read),
-                async lazy() {
-                  const { DatabaseSessionsPage } =
-                    await import("@/routes/admin/database-sessions/page");
-                  return { Component: DatabaseSessionsPage };
-                },
-              },
-              {
-                path: "graphql-explorer",
-                loader: createPermissionLoader(Resource.Organization, Operation.Read),
-                async lazy() {
-                  const { GraphQLExplorerPage } =
-                    await import("@/routes/admin/graphql-explorer/page");
-                  return { Component: GraphQLExplorerPage };
-                },
-              },
-              {
                 path: "integrations",
                 loader: combineLoaders(
                   createPlanCapabilityLoader(PlanCapability.Integrations),

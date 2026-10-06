@@ -1772,20 +1772,6 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
-    href: "/admin/database-sessions",
-    title: "DB sessions",
-    group: "Data & Integrations",
-    resource: Resource.DatabaseSession,
-    requiredOperation: Operation.Read,
-  },
-  {
-    href: "/admin/graphql-explorer",
-    title: "GraphQL explorer",
-    group: "Data & Integrations",
-    resource: Resource.Organization,
-    requiredOperation: Operation.Read,
-  },
-  {
     href: "/organization/ai-logs/",
     title: "AI logs",
     group: "Data & Integrations",

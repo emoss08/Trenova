@@ -22,7 +22,6 @@ import { CarrierService } from "./carrier";
 import { CarrierAssignmentService } from "./carrier-assignment";
 import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
-import { DatabaseSessionService } from "./database-session";
 import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } from "./detention";
 import {
   RateAgreementService,
@@ -119,7 +118,6 @@ class APIService {
   public tenderService: TenderService;
   public rateConfirmationService: RateConfirmationService;
   public customerService: CustomerService;
-  public databaseSessionService: DatabaseSessionService;
   public googleMapsService: GoogleMapsService;
   public globalSearchService: GlobalSearchService;
   public accountingControlService: AccountingControlService;
@@ -213,7 +211,6 @@ class APIService {
     this.tenderService = new TenderService();
     this.rateConfirmationService = new RateConfirmationService();
     this.customerService = new CustomerService();
-    this.databaseSessionService = new DatabaseSessionService();
     this.googleMapsService = new GoogleMapsService();
     this.globalSearchService = new GlobalSearchService();
     this.accountingControlService = new AccountingControlService();

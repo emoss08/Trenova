@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 79 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 78 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-992 writes: 513 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
+991 writes: 513 GraphQL mutations and 478 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 380 |
-| Exempt | 609 |
-| — Security | 79 |
+| Exempt | 608 |
+| — Security | 78 |
 | — Configuration | 260 |
 | — User preference | 27 |
 | — Infrastructure | 46 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 44 |
 | — Duplicate | 3 |
 | **Pending** | **3** |
-| Total | 992 |
+| Total | 991 |
 
 Of the 383 writes an agent should be able to make, 380 have a tool (99%).
 
@@ -166,7 +166,6 @@ The writes no tool performs yet, and what the tool would do.
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
-| databasesession | 1 | 0 | 1 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
 | decisions | 1 | 0 | 1 | 0 |
@@ -705,12 +704,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PATCH /api/v1/custom-fields/definitions/:definitionID/`<br>customfieldhandler.patch | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
 | `POST /api/v1/custom-fields/definitions/`<br>customfieldhandler.create | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
 | `PUT /api/v1/custom-fields/definitions/:definitionID/`<br>customfieldhandler.update | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
-
-### databasesession
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/admin/database-sessions/:pid/terminate/`<br>databasesessionhandler.terminate | Exempt, security: Terminating database sessions is a platform administrator's emergency control. |
 
 ### dataentrycontrol
 

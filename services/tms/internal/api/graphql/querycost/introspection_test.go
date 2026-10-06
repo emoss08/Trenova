@@ -33,8 +33,7 @@ func TestIntrospectionQueryIsNotBlockedByTheLimits(t *testing.T) {
 		t.Logf("introspection %q depth=%d cost=%d", op.Name, depth, cost)
 
 		assert.LessOrEqual(t, depth, MaxOperationDepth,
-			"the playground and admin explorer introspect with this query; "+
-				"blocking it breaks schema tooling")
+			"schema tooling introspects with this query; blocking it breaks it")
 		assert.LessOrEqual(t, cost, MaxOperationCost,
 			"introspection must stay under the cost budget")
 	}

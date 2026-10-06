@@ -157,7 +157,7 @@ self-hosted default, so a build without `internal/cloud` behaves exactly as befo
 
 | Seam | Where | Self-hosted default | Cloud uses it for |
 |---|---|---|---|
-| `services.DelegatedPermissionSource` | `internal/core/ports/services/permission.go`, read by `permission/engine.go` (`optional:"true"`) | not provided; the engine computes permissions from role assignments only | the Trenova support principal's permissions inside a support session (read on every resource when read-only; every operation except identity, role, API key, SSO/SCIM, access policy, two-factor and database-session resources when elevated) |
+| `services.DelegatedPermissionSource` | `internal/core/ports/services/permission.go`, read by `permission/engine.go` (`optional:"true"`) | not provided; the engine computes permissions from role assignments only | the Trenova support principal's permissions inside a support session (read on every resource when read-only; every operation except identity, role, API key, SSO/SCIM, access policy and two-factor resources when elevated) |
 | `routegroup.AsProtectedMiddleware` / `AsProtectedRoutes` | `internal/api/routegroup` | empty groups | the support session middleware (resolves the support cookie, refuses denied routes and every write in a read-only session, rebinds the request to the target organization's RLS scope as the principal) and the `/support-access/` and `/support/` routes |
 | GraphQL `AsExtension` (`OperationContextMutator`) | `internal/api/graphql` | none | refusing mutations and denied fields in a support session with `SUPPORT_SESSION_READ_ONLY` / `SUPPORT_SESSION_DENIED` |
 | Root `fx.Decorate` of `services.AuthService` | edition `APIOptions` | undecorated | ending a staff member's support sessions when they sign out |

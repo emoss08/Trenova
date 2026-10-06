@@ -23,7 +23,6 @@ export const Resource = {
   APIKey: "api_key",
   DataEntryControl: "data_entry_control",
   PlatformCatalog: "platform_catalog",
-  DatabaseSession: "database_session",
   DocumentOperation: "document_operation",
   IdentityProvider: "identity_provider",
   SCIMDirectory: "scim_directory",

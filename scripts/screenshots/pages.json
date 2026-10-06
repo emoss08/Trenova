@@ -85,7 +85,6 @@
   { "name": "admin-roles", "path": "/admin/roles", "wait": 4000 },
   { "name": "admin-users", "path": "/admin/users", "wait": 4000 },
   { "name": "audit-logs", "path": "/admin/audit-logs", "wait": 4000 },
-  { "name": "graphql-explorer", "path": "/admin/graphql-explorer", "wait": 6000 },
   { "name": "api-keys", "path": "/admin/api-keys", "wait": 4000 },
   { "name": "integrations", "path": "/admin/integrations", "wait": 4000 },
   { "name": "custom-fields", "path": "/admin/custom-fields", "wait": 4000 },

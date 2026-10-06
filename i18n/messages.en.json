@@ -14874,7 +14874,7 @@
     ]
   },
   "All": {
-    "sites": 21,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -15070,15 +15070,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "All database sessions are running clean": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "All directions": {
@@ -28929,15 +28920,6 @@
       "routes/recurring-shipment"
     ]
   },
-  "Blocked query": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Blockers": {
     "sites": 1,
     "scope": [
@@ -28956,15 +28938,6 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/dispatch-console"
-    ]
-  },
-  "Blocking query": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Blocking severity requires at least one gating rule to be enabled (dispatch, delivery, or billing)": {
@@ -29708,15 +29681,6 @@
     "areas": [
       "apps/web/components",
       "domain/sidebarpreference"
-    ]
-  },
-  "Browse, search, and run every persisted GraphQL operation in the client": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Bucket": {
@@ -30969,7 +30933,7 @@
     ]
   },
   "Cancel": {
-    "sites": 282,
+    "sites": 281,
     "scope": [
       "ts"
     ],
@@ -38149,7 +38113,7 @@
     ]
   },
   "Clear": {
-    "sites": 24,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -44695,15 +44659,6 @@
       "routes/edi"
     ]
   },
-  "Copy definition": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Copy details": {
     "sites": 1,
     "scope": [
@@ -44732,12 +44687,11 @@
     ]
   },
   "Copy hash": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -44764,13 +44718,12 @@
     ]
   },
   "Copy name": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Copy number": {
@@ -44834,15 +44787,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Copy response": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Copy row ID": {
@@ -50255,15 +50199,6 @@
       "routes/osha"
     ]
   },
-  "DB sessions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "DBA name": {
     "sites": 3,
     "scope": [
@@ -51064,42 +50999,6 @@
     ],
     "areas": [
       "api/helpers"
-    ]
-  },
-  "Database session belongs to a different database.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Database session diagnostics and termination": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/permission"
-    ]
-  },
-  "Database session was not found.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Database sessions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Date": {
@@ -54089,15 +53988,6 @@
     ],
     "areas": [
       "routes/invoice-adjustment-control"
-    ]
-  },
-  "Definition": {
-    "sites": 4,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Definition is required": {
@@ -68234,7 +68124,7 @@
     ]
   },
   "Error": {
-    "sites": 13,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -68245,7 +68135,6 @@
       "apps/web/lib",
       "domain/fuelpurchase",
       "packages/shared/components",
-      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -71003,15 +70892,6 @@
     ],
     "areas": [
       "domain/agent"
-    ]
-  },
-  "Executing…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Execution failed": {
@@ -79231,24 +79111,6 @@
       "routes/commodity"
     ]
   },
-  "Fragments": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Fragments ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Free API key powers weekly DOE diesel price ingestion.": {
     "sites": 1,
     "scope": [
@@ -82308,16 +82170,6 @@
       "apps/web/components"
     ]
   },
-  "GraphQL explorer": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config",
-      "routes/admin"
-    ]
-  },
   "GraphQL request failed": {
     "sites": 1,
     "scope": [
@@ -84294,13 +84146,12 @@
     ]
   },
   "History": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/carrier",
       "routes/carrier-settlement",
       "routes/driver-settlement",
@@ -88799,24 +88650,6 @@
       "domain/conversation"
     ]
   },
-  "Input types": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Input types ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Input values": {
     "sites": 1,
     "scope": [
@@ -88951,15 +88784,6 @@
     ]
   },
   "Inspect document lifecycle state and trigger recovery actions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Inspect lock contention and manually terminate blocking database sessions": {
     "sites": 1,
     "scope": [
       "ts"
@@ -98374,7 +98198,7 @@
     ]
   },
   "Live": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -107938,24 +107762,6 @@
       "routes/shipment"
     ]
   },
-  "Mutation — executes against live data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Mutations": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Mute · 1h": {
     "sites": 1,
     "scope": [
@@ -109342,15 +109148,6 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
-    ]
-  },
-  "Nested fragments": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Net": {
@@ -111780,15 +111577,6 @@
       "apps/web/components"
     ]
   },
-  "No blocked sessions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No blockers found for this pairing.": {
     "sites": 1,
     "scope": [
@@ -113805,15 +113593,6 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "No matches{0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No matching actions": {
     "sites": 1,
     "scope": [
@@ -114674,15 +114453,6 @@
       "routes/shipment"
     ]
   },
-  "No query text": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No rate": {
     "sites": 2,
     "scope": [
@@ -114843,15 +114613,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "No references found": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No remit-to address on file — set it on the carrier record.": {
@@ -115158,15 +114919,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "No runs yet for this operation.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No safety events in this window.": {
@@ -119817,12 +119569,11 @@
     ]
   },
   "OK": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/ifta-tax-rate"
     ]
   },
@@ -125393,15 +125144,6 @@
       "service/apikeyservice"
     ]
   },
-  "Operation catalog unavailable": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Operation is required": {
     "sites": 1,
     "scope": [
@@ -125523,7 +125265,7 @@
     ]
   },
   "Operations": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -128815,33 +128557,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "PID must be greater than zero.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "PID {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "PID {0} blocked by PID {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "PM": {
@@ -141477,15 +141192,6 @@
       "domain/permission"
     ]
   },
-  "Queries": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Query": {
     "sites": 1,
     "scope": [
@@ -141493,15 +141199,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Query age": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Query is invalid": {
@@ -148355,12 +148052,11 @@
     ]
   },
   "Refresh": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/carrier-settlement-workspace",
       "routes/detention-intelligence",
       "routes/fleet-safety",
@@ -148532,15 +148228,6 @@
       "routes/agent-control",
       "routes/desk",
       "routes/inbox"
-    ]
-  },
-  "Refusing to terminate the current database session.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Regenerate": {
@@ -153110,13 +152797,12 @@
     ]
   },
   "Reset": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/edi",
       "routes/home",
@@ -153958,15 +153644,6 @@
       "apps/web/lib"
     ]
   },
-  "Response": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Response action is invalid": {
     "sites": 2,
     "scope": [
@@ -154738,15 +154415,6 @@
       "routes/ifta-return",
       "routes/rate-confirmation-public",
       "routes/tender-offer-public"
-    ]
-  },
-  "Retrying…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Return URL is not allowed for this environment": {
@@ -156779,15 +156447,6 @@
       "routes/home"
     ]
   },
-  "Root fields": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Root invoice": {
     "sites": 1,
     "scope": [
@@ -157909,13 +157568,12 @@
     ]
   },
   "Run": {
-    "sites": 19,
+    "sites": 17,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/edi",
       "routes/fuel-feed-run",
@@ -158140,13 +157798,12 @@
     ]
   },
   "Run history": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "routes/admin",
       "routes/reports"
     ]
   },
@@ -158367,15 +158024,6 @@
       "routes/agent-control"
     ]
   },
-  "Run the operation to see the response": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Run the plan": {
     "sites": 1,
     "scope": [
@@ -158553,12 +158201,11 @@
     ]
   },
   "Running…": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/detention-policy"
     ]
   },
@@ -162354,15 +162001,6 @@
       "apps/web/components"
     ]
   },
-  "Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Search by unit number": {
     "sites": 2,
     "scope": [
@@ -162919,15 +162557,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Search operations…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Search or jump to…": {
@@ -164528,15 +164157,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Select an operation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Select an owner": {
@@ -182033,42 +181653,6 @@
       "routes/org-structure"
     ]
   },
-  "Terminate": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Terminate PID {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Terminate database session?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Terminate database sessions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/permission"
-    ]
-  },
   "Termination date": {
     "sites": 1,
     "scope": [
@@ -195179,15 +194763,6 @@
       "routes/desk"
     ]
   },
-  "This document is not referenced by any TypeScript source in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "This document is past its expiration date. Upload a current version instead.": {
     "sites": 1,
     "scope": [
@@ -196471,15 +196046,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "This operation has no persisted hash and cannot be executed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "This order has no shipments attached yet": {
@@ -197994,15 +197560,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "This will terminate backend PID {0} to release blocked PID {1}. The in-flight transaction on the blocker will be cancelled.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "This work item has been {0}. No further actions available.": {
@@ -203104,7 +202661,7 @@
     ]
   },
   "Try again": {
-    "sites": 50,
+    "sites": 49,
     "scope": [
       "ts"
     ],
@@ -203603,15 +203160,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Tx age": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Type": {
@@ -205023,7 +204571,7 @@
     ]
   },
   "Unknown": {
-    "sites": 18,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -205032,22 +204580,12 @@
       "apps/web/components",
       "apps/web/lib",
       "packages/shared/lib",
-      "routes/admin",
       "routes/agent-control",
       "routes/carrier-sourcing",
       "routes/dispatch-console",
       "routes/invoice-approval",
       "routes/shipment",
       "routes/worker"
-    ]
-  },
-  "Unknown app": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Unknown attention metric: {0}": {
@@ -205387,13 +204925,12 @@
     ]
   },
   "Unknown user": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accounting-sync",
-      "routes/admin",
       "routes/invoice"
     ]
   },
@@ -207147,15 +206684,6 @@
       "routes/organization"
     ]
   },
-  "Usages ({0})": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Use": {
     "sites": 4,
     "scope": [
@@ -207671,15 +207199,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Used by ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Used by fileNameContains match rules. Provide the original document file name to test file-name-based matching.": {
@@ -208608,15 +208127,6 @@
     ],
     "areas": [
       "domain/pagedraft"
-    ]
-  },
-  "Variables": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Variables ({0})": {
@@ -209814,15 +209324,6 @@
     ]
   },
   "View dashboards": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/permission"
-    ]
-  },
-  "View database sessions": {
     "sites": 1,
     "scope": [
       "go"
@@ -224033,15 +223534,6 @@
       "routes/ifta-jurisdiction-mileage"
     ]
   },
-  "for “{0}”": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "free time": {
     "sites": 1,
     "scope": [
@@ -224914,13 +224406,12 @@
     ]
   },
   "on {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "onTermination must be Forfeit or PayOut": {
@@ -225654,15 +225145,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "src/": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...": {
@@ -227434,15 +226916,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# file} other {# files}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0, plural, one {# filter} other {# filters}}": {
@@ -229585,15 +229058,6 @@
     ],
     "areas": [
       "routes/recurring-shipment"
-    ]
-  },
-  "{0} blocked {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} blocking {1}": {
@@ -232909,15 +232373,6 @@
     ],
     "areas": [
       "service/performancereviewservice"
-    ]
-  },
-  "{0} operations · {1} fragments": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} or later, 64-bit": {

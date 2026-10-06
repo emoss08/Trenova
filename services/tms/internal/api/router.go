@@ -35,7 +35,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
@@ -187,7 +186,6 @@ type RouterParams struct {
 	SearchHandler                   *searchhandler.Handler
 	UsStateHandler                  *usstatehandler.Handler
 	CustomFieldHandler              *customfieldhandler.Handler
-	DatabaseSessionHandler          *databasesessionhandler.Handler
 	DocumentHandler                 *documenthandler.Handler
 	ReportHandler                   *reporthandler.Handler
 	DocumentOperationsHandler       *documentoperationshandler.Handler
@@ -337,7 +335,6 @@ type Router struct {
 	searchHandler                   *searchhandler.Handler
 	usStateHandler                  *usstatehandler.Handler
 	customFieldHandler              *customfieldhandler.Handler
-	databaseSessionHandler          *databasesessionhandler.Handler
 	documentHandler                 *documenthandler.Handler
 	reportHandler                   *reporthandler.Handler
 	documentOperationsHandler       *documentoperationshandler.Handler
@@ -478,7 +475,6 @@ func NewRouter(p RouterParams) *Router {
 		searchHandler:                   p.SearchHandler,
 		usStateHandler:                  p.UsStateHandler,
 		customFieldHandler:              p.CustomFieldHandler,
-		databaseSessionHandler:          p.DatabaseSessionHandler,
 		documentHandler:                 p.DocumentHandler,
 		reportHandler:                   p.ReportHandler,
 		documentOperationsHandler:       p.DocumentOperationsHandler,
@@ -621,8 +617,6 @@ func (r *Router) setupRoutes() {
 }
 
 func (r *Router) setupGraphQLRoutes(rg *gin.RouterGroup) {
-	r.graphQLHandler.RegisterPlaygroundRoutes(r.publicGroup(rg))
-
 	protected := r.protectedGroup(rg)
 	r.graphQLHandler.RegisterRoutes(protected)
 }
@@ -676,7 +670,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.searchHandler.RegisterRoutes(protected)
 	r.usStateHandler.RegisterRoutes(protected)
 	r.customFieldHandler.RegisterRoutes(protected)
-	r.databaseSessionHandler.RegisterRoutes(protected)
 	r.documentHandler.RegisterRoutes(protected)
 	r.reportHandler.RegisterRoutes(protected)
 	r.documentOperationsHandler.RegisterRoutes(protected)
