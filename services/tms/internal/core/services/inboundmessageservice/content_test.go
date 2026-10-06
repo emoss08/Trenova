@@ -3,7 +3,9 @@ package inboundmessageservice
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -17,6 +19,8 @@ import (
 
 type contentRepo struct {
 	repositories.InboundMessageRepository
+
+	mu sync.Mutex
 
 	message            *inboundmessage.InboundMessage
 	saved              *inboundmessage.InboundMessage
@@ -35,6 +39,8 @@ func (r *contentRepo) GetByID(
 func (r *contentRepo) Update(
 	_ context.Context, entity *inboundmessage.InboundMessage,
 ) (*inboundmessage.InboundMessage, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.writes++
 	copied := *entity
 	copied.Attachments = nil
@@ -42,6 +48,13 @@ func (r *contentRepo) Update(
 	r.saved = &copied
 
 	return &copied, nil
+}
+
+func (r *contentRepo) snapshot() (int, *inboundmessage.InboundMessage) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return r.writes, r.saved
 }
 
 func (r *contentRepo) ListAttachments(
@@ -359,4 +372,59 @@ func TestFetchContentInline_RecordsAFailureOnTheMessage(t *testing.T) {
 	require.NotNil(t, repo.saved)
 	assert.Equal(t, ContentUnavailableCode, repo.saved.FailureCode)
 	assert.Contains(t, repo.saved.FailureText, "no Resend API key")
+}
+
+type blockingFetcher struct {
+	release chan struct{}
+	asked   chan struct{}
+}
+
+func (f *blockingFetcher) Fetch(
+	ctx context.Context, _ *services.InboundContentRequest,
+) (*services.InboundContent, error) {
+	close(f.asked)
+	select {
+	case <-f.release:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
+	return &services.InboundContent{Text: "Read after the provider was answered."}, nil
+}
+
+/*
+Without a worker the fetch still happens, but off the request path: downloading
+a message's attachments while the provider waits would time the webhook out
+and make the provider redeliver mail that already landed. The fetch outlives
+the request, so it must not inherit the request's cancellation.
+*/
+func TestReadContentDetached_AnswersFirstAndOutlivesTheRequest(t *testing.T) {
+	t.Parallel()
+
+	message := resendMessage()
+	message.Attachments = nil
+	repo := &contentRepo{message: message}
+	fetcher := &blockingFetcher{release: make(chan struct{}), asked: make(chan struct{})}
+	svc := contentService(repo, nil, &stubStorage{}, nil)
+	svc.fetcher = fetcher
+
+	requestCtx, cancelRequest := context.WithCancel(t.Context())
+	svc.readContentDetached(requestCtx, message)
+	cancelRequest()
+
+	select {
+	case <-fetcher.asked:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the detached fetch never ran")
+	}
+	writes, _ := repo.snapshot()
+	assert.Zero(t, writes, "nothing is written before the provider answers")
+
+	close(fetcher.release)
+	require.Eventually(t, func() bool {
+		writes, _ := repo.snapshot()
+		return writes == 1
+	}, 5*time.Second, 10*time.Millisecond)
+	_, saved := repo.snapshot()
+	assert.Equal(t, "Read after the provider was answered.", saved.TextBody)
 }

@@ -289,6 +289,13 @@ func (f *Fetcher) downloadAttachment(
 	if resp.StatusCode != http.StatusOK {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxErrorBytes))
 
+		if downloadRefused(resp.StatusCode) {
+			attachment.FailureText = fmt.Sprintf(
+				"Resend refused to hand over the file (%d).", resp.StatusCode)
+
+			return attachment, nil
+		}
+
 		return attachment, fmt.Errorf("%w: downloading %q answered %d",
 			services.ErrInboundContentUnavailable, file.Filename, resp.StatusCode)
 	}
@@ -307,6 +314,16 @@ func (f *Fetcher) downloadAttachment(
 	attachment.Content = body
 
 	return attachment, nil
+}
+
+// downloadRefused is a download answer another attempt will not change. The
+// address was listed moments before, so a client error on it is the file being
+// gone or withheld, not an expired link; recording it on the file keeps the
+// message's body and its other files rather than failing them all. A timeout or
+// a rate limit is still retried.
+func downloadRefused(status int) bool {
+	return status >= 400 && status < 500 &&
+		status != http.StatusRequestTimeout && status != http.StatusTooManyRequests
 }
 
 func tooLargeText() string {

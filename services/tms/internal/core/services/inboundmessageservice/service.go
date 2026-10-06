@@ -442,7 +442,7 @@ func (s *Service) storeRawBody(
 // correctly would be the worse outcome.
 func (s *Service) startProcessing(ctx context.Context, message *inboundmessage.InboundMessage) {
 	if s.workflows == nil || !s.workflows.Enabled() {
-		s.fetchContentInline(ctx, message)
+		s.readContentDetached(ctx, message)
 
 		return
 	}

@@ -200,10 +200,16 @@ func TestFetchResendClassifiesFailures(t *testing.T) {
 			contains: "502",
 		},
 		{
-			name:     "expired download",
-			mutate:   func(s *resendStub) { s.fileStatus = http.StatusForbidden },
+			name:     "download server error",
+			mutate:   func(s *resendStub) { s.fileStatus = http.StatusServiceUnavailable },
 			sentinel: services.ErrInboundContentUnavailable,
 			contains: "tender.pdf",
+		},
+		{
+			name:     "download rate limited",
+			mutate:   func(s *resendStub) { s.fileStatus = http.StatusTooManyRequests },
+			sentinel: services.ErrInboundContentUnavailable,
+			contains: "429",
 		},
 		{
 			name: "unsupported provider",
@@ -261,4 +267,39 @@ func TestLimitRedirects(t *testing.T) {
 	require.NoError(t, limitRedirects(httpsReq, nil))
 	require.Error(t, limitRedirects(httpReq, nil))
 	require.Error(t, limitRedirects(httpsReq, make([]*http.Request, maxRedirects)))
+}
+
+// A file the CDN refuses is recorded on that file. Failing the whole fetch
+// would cost the message its body and its other files, every retry, for a
+// file that will never come.
+func TestFetchResendRecordsARefusedDownloadOnItsFile(t *testing.T) {
+	t.Parallel()
+
+	stub := newResendStub(t)
+	stub.fileStatus = http.StatusForbidden
+
+	content, err := stub.fetcher().Fetch(t.Context(), request())
+	require.NoError(t, err)
+
+	assert.Equal(t, "<p>Please confirm pickup Thursday.</p>", content.HTML)
+	require.Len(t, content.Attachments, 2)
+	assert.Nil(t, content.Attachments[0].Content)
+	assert.Equal(t, "Resend refused to hand over the file (403).",
+		content.Attachments[0].FailureText)
+}
+
+func TestDownloadRefused(t *testing.T) {
+	t.Parallel()
+
+	for status, refused := range map[int]bool{
+		http.StatusForbidden:           true,
+		http.StatusNotFound:            true,
+		http.StatusGone:                true,
+		http.StatusRequestTimeout:      false,
+		http.StatusTooManyRequests:     false,
+		http.StatusInternalServerError: false,
+		http.StatusBadGateway:          false,
+	} {
+		assert.Equal(t, refused, downloadRefused(status), "status %d", status)
+	}
 }

@@ -12,7 +12,7 @@ import {
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 /**
@@ -32,6 +32,12 @@ export function ApiKeyDialog({
 }) {
   const t = useT();
   const [apiKey, setApiKey] = useState("");
+  // A save can finish after its dialog was dismissed and another mailbox's
+  // opened; only the dialog for the mailbox that was saved closes on success.
+  const shownId = useRef<string | null>(null);
+  useEffect(() => {
+    shownId.current = mailbox?.id ?? null;
+  }, [mailbox]);
 
   const saveMutation = useApiMutation({
     mutationFn: ({ id, value }: { id: string; value: string }) =>
@@ -68,7 +74,16 @@ export function ApiKeyDialog({
           className="flex flex-col gap-2 py-2"
           onSubmit={(event) => {
             event.preventDefault();
-            saveMutation.mutate({ id: mailbox.id, value: apiKey.trim() }, { onSuccess: close });
+            saveMutation.mutate(
+              { id: mailbox.id, value: apiKey.trim() },
+              {
+                onSuccess: (_saved, variables) => {
+                  if (shownId.current === variables.id) {
+                    close();
+                  }
+                },
+              },
+            );
           }}
         >
           <Label htmlFor="mailbox-api-key">{t("API key")}</Label>

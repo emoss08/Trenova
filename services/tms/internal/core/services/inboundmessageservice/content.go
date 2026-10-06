@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -251,9 +252,32 @@ func ContentFailureText(cause error) string {
 	return text
 }
 
-// fetchContentInline reads a message's content on the request path. It is the
-// fallback for an installation with no worker, where nothing else would ever
-// read it; a failure is written onto the message rather than returned, because
+// inlineFetchTimeout bounds a fetch that runs without a worker: long enough to
+// download a message's attachments, short enough that a provider that never
+// answers does not hold a goroutine indefinitely.
+const inlineFetchTimeout = 10 * time.Minute
+
+// readContentDetached runs the inline fetch off the request path. The delivery
+// has already been written down, so the provider is answered at once rather
+// than waiting on attachment downloads and timing out into a redelivery. The
+// context keeps the request's tenant scope but not its cancellation.
+func (s *Service) readContentDetached(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+) {
+	if message.Mailbox == nil || !message.Mailbox.Provider.FetchesContent() {
+		return
+	}
+
+	detached, cancel := context.WithTimeout(context.WithoutCancel(ctx), inlineFetchTimeout)
+	go func() {
+		defer cancel()
+		s.fetchContentInline(detached, message)
+	}()
+}
+
+// fetchContentInline reads a message's content on an installation with no
+// worker, where nothing else would ever read it. A failure is written onto the message rather than returned, because
 // the delivery itself succeeded.
 func (s *Service) fetchContentInline(ctx context.Context, message *inboundmessage.InboundMessage) {
 	if message.Mailbox == nil || !message.Mailbox.Provider.FetchesContent() {
