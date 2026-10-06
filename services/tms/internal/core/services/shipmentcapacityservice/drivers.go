@@ -126,6 +126,8 @@ func groupOrder(group services.CapacityGroup) int {
 	switch group {
 	case services.CapacityGroupReadyNow, services.CapacityGroupTrucksPosted:
 		return 0
+	case services.CapacityGroupWithinTwoHours, services.CapacityGroupUsuallyAccept:
+		return 1
 	default:
 		return 1
 	}

@@ -69,7 +69,7 @@ func (r *Repository) offerTotals(
 	q := dba.NewSelect().
 		Model((*tender.TenderOffer)(nil)).
 		ColumnExpr(cols.CarrierID.As("carrier_id")).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.Status.In()+") AS answered", bun.In(answered)).
+		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.Status.In()+") AS answered", bun.List(answered)).
 		ColumnExpr(
 			"COUNT(*) FILTER (WHERE "+cols.Status.Eq()+") AS accepted",
 			tender.OfferStatusAccepted,
@@ -79,7 +79,7 @@ func (r *Repository) offerTotals(
 		Where(cols.SentAt.Gte(), req.Since).
 		GroupExpr(cols.CarrierID.Qualified())
 	if len(req.CarrierIDs) > 0 {
-		q = q.Where(cols.CarrierID.In(), bun.In(req.CarrierIDs))
+		q = q.Where(cols.CarrierID.In(), bun.List(req.CarrierIDs))
 	}
 	if err := q.Scan(ctx, &rows); err != nil {
 		return nil, fmt.Errorf("count carrier tender answers: %w", err)
@@ -108,7 +108,7 @@ func (r *Repository) perMileRates(
 		Where(cols.CreatedAt.Gte(), req.Since).
 		GroupExpr(cols.CarrierID.Qualified())
 	if len(req.CarrierIDs) > 0 {
-		q = q.Where(cols.CarrierID.In(), bun.In(req.CarrierIDs))
+		q = q.Where(cols.CarrierID.In(), bun.List(req.CarrierIDs))
 	}
 	if err := q.Scan(ctx, &rows); err != nil {
 		return nil, fmt.Errorf("average carrier rates: %w", err)

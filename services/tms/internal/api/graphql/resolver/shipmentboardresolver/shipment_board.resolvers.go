@@ -30,7 +30,11 @@ func (r *MutationResolver) TenderShipments(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = r.RequirePermission(ctx, permission.ResourceTender, permission.OpCreate); err != nil {
+	if _, err = r.RequirePermission(
+		ctx,
+		permission.ResourceTender,
+		permission.OpCreate,
+	); err != nil {
 		return nil, err
 	}
 
@@ -52,7 +56,10 @@ func (r *MutationResolver) TenderShipments(
 				"Carrier is invalid",
 			)
 		}
-		items = append(items, services.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID})
+		items = append(
+			items,
+			services.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID},
+		)
 	}
 
 	result, err := r.BoardTenderer.TenderShipments(ctx, &services.TenderShipmentsRequest{
@@ -285,7 +292,11 @@ func (r *QueryResolver) CapacityUnitMatches(
 	}
 	id, err := pulid.Parse(unitID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("unitId", errortypes.ErrInvalid, "Unit is invalid")
+		return nil, errortypes.NewValidationError(
+			"unitId",
+			errortypes.ErrInvalid,
+			"Unit is invalid",
+		)
 	}
 
 	request := &services.CapacityMatchesRequest{

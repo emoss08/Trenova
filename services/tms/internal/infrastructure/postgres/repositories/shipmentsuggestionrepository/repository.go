@@ -134,7 +134,7 @@ func (r *repository) Delete(
 				return nil, fmt.Errorf("delete suggestion decision: %w", err)
 			}
 			if len(removed) == 0 {
-				return nil, nil //nolint:nilnil // nothing was decided for this key
+				return nil, nil
 			}
 
 			return removed[0], nil

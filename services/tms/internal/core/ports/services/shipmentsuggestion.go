@@ -31,11 +31,11 @@ const (
 type SuggestionActionType string
 
 const (
-	SuggestionActionAssignDriver    = SuggestionActionType("AssignDriver")
-	SuggestionActionTenderCarrier   = SuggestionActionType("TenderCarrier")
-	SuggestionActionNotifyCustomer  = SuggestionActionType("NotifyCustomer")
+	SuggestionActionAssignDriver     = SuggestionActionType("AssignDriver")
+	SuggestionActionTenderCarrier    = SuggestionActionType("TenderCarrier")
+	SuggestionActionNotifyCustomer   = SuggestionActionType("NotifyCustomer")
 	SuggestionActionApproveDetention = SuggestionActionType("ApproveDetention")
-	SuggestionActionReview          = SuggestionActionType("Review")
+	SuggestionActionReview           = SuggestionActionType("Review")
 )
 
 type SuggestionAction struct {

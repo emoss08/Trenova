@@ -30,6 +30,7 @@ const (
 	hosWarnMs          = int64(2 * time.Hour / time.Millisecond)
 	coverageCandidates = 3
 	clockLayout        = "15:04"
+	reviewLabel        = "Review"
 	minutesPerHour     = 60
 )
 
@@ -117,6 +118,8 @@ func toneRank(tone services.SuggestionTone) int {
 		return 1
 	case services.SuggestionToneAccent:
 		return 2
+	case services.SuggestionToneBrand:
+		return 3
 	default:
 		return 3
 	}
@@ -362,7 +365,7 @@ func uncoverableSuggestion(
 		Impact: compactImpact(money(move.Revenue)),
 		Primary: services.SuggestionAction{
 			Type:   services.SuggestionActionReview,
-			Label:  "Review",
+			Label:  reviewLabel,
 			MoveID: move.MoveID,
 		},
 		ManualLabel: "Find a driver",
@@ -477,7 +480,7 @@ func (hoursRule) collect(
 			Impact: compactImpact(hoursClock(driver.DriveRemainingMs) + " HOS"),
 			Primary: services.SuggestionAction{
 				Type:     services.SuggestionActionReview,
-				Label:    "Review",
+				Label:    reviewLabel,
 				MoveID:   move.MoveID,
 				WorkerID: driver.WorkerID,
 			},
@@ -578,7 +581,7 @@ func (retenderRule) collect(
 			Impact: compactImpact(money(move.Revenue)),
 			Primary: services.SuggestionAction{
 				Type:   services.SuggestionActionReview,
-				Label:  "Review",
+				Label:  reviewLabel,
 				MoveID: move.MoveID,
 			},
 			ManualLabel: "Review the tender",

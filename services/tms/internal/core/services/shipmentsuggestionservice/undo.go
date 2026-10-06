@@ -30,6 +30,11 @@ func (s *Service) revert(
 	switch key.Kind {
 	case shipmentsuggestion.KindCoverage, shipmentsuggestion.KindTender:
 		return s.revertCoverage(ctx, tenantInfo, key.RecordID, decidedAt)
+	case shipmentsuggestion.KindDelayNotice,
+		shipmentsuggestion.KindHoursOfService,
+		shipmentsuggestion.KindDetention,
+		shipmentsuggestion.KindRetender:
+		return nil
 	default:
 		return nil
 	}
