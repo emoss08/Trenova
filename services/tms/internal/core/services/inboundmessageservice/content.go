@@ -257,6 +257,12 @@ func ContentFailureText(cause error) string {
 // answers does not hold a goroutine indefinitely.
 const inlineFetchTimeout = 10 * time.Minute
 
+// failurePersistTimeout bounds writing down a failed inline fetch. It runs on
+// its own context because the fetch's may be the thing that ran out: a fetch
+// that timed out would otherwise leave the message at Received with nothing
+// else ever coming to read it.
+const failurePersistTimeout = 30 * time.Second
+
 // readContentDetached runs the inline fetch off the request path. The delivery
 // has already been written down, so the provider is answered at once rather
 // than waiting on attachment downloads and timing out into a redelivery. The
@@ -293,8 +299,11 @@ func (s *Service) fetchContentInline(ctx context.Context, message *inboundmessag
 
 	s.l.Warn("could not read an inbound message's content",
 		zap.String("messageId", message.ID.String()), zap.Error(err))
+
+	persistCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), failurePersistTimeout)
+	defer cancel()
 	if markErr := s.MarkContentUnavailable(
-		ctx, message.ID, tenantInfo, ContentFailureText(err),
+		persistCtx, message.ID, tenantInfo, ContentFailureText(err),
 	); markErr != nil {
 		s.l.Error("could not record that an inbound message's content is unavailable",
 			zap.String("messageId", message.ID.String()), zap.Error(markErr))

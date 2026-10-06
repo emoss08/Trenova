@@ -32,12 +32,14 @@ export function ApiKeyDialog({
 }) {
   const t = useT();
   const [apiKey, setApiKey] = useState("");
-  // A save can finish after its dialog was dismissed and another mailbox's
-  // opened; only the dialog for the mailbox that was saved closes on success.
-  const shownId = useRef<string | null>(null);
+  // A save can finish after its dialog was dismissed and the dialog reopened,
+  // for another mailbox or the same one. Each opening is its own session, and
+  // only the session a save was made from closes when it succeeds.
+  const session = useRef(0);
+  const mailboxId = mailbox?.id ?? null;
   useEffect(() => {
-    shownId.current = mailbox?.id ?? null;
-  }, [mailbox]);
+    session.current += 1;
+  }, [mailboxId]);
 
   const saveMutation = useApiMutation({
     mutationFn: ({ id, value }: { id: string; value: string }) =>
@@ -54,6 +56,7 @@ export function ApiKeyDialog({
   }
 
   const close = () => {
+    session.current += 1;
     setApiKey("");
     onClose();
   };
@@ -74,11 +77,12 @@ export function ApiKeyDialog({
           className="flex flex-col gap-2 py-2"
           onSubmit={(event) => {
             event.preventDefault();
+            const submittedIn = session.current;
             saveMutation.mutate(
               { id: mailbox.id, value: apiKey.trim() },
               {
-                onSuccess: (_saved, variables) => {
-                  if (shownId.current === variables.id) {
+                onSuccess: () => {
+                  if (session.current === submittedIn) {
                     close();
                   }
                 },

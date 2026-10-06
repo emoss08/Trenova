@@ -103,4 +103,35 @@ describe("ApiKeyDialog", () => {
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByLabelText("API key")).toHaveValue("re_key_b");
   });
+
+  it("leaves the same mailbox's reopened dialog open when the earlier save finishes", async () => {
+    const pending = deferred<unknown>();
+    mocks.setInboundMailboxApiKey.mockReturnValueOnce(pending.promise);
+    const onClose = vi.fn();
+    const client = new QueryClient();
+    const tenders = mailbox("imbx_a", "Tenders");
+
+    const { rerender } = render(
+      withClient(client, <ApiKeyDialog mailbox={tenders} onClose={onClose} onSaved={vi.fn()} />),
+    );
+
+    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "re_first" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save API key" }));
+
+    rerender(
+      withClient(client, <ApiKeyDialog mailbox={null} onClose={onClose} onSaved={vi.fn()} />),
+    );
+    rerender(
+      withClient(client, <ApiKeyDialog mailbox={tenders} onClose={onClose} onSaved={vi.fn()} />),
+    );
+    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "re_second" } });
+
+    await act(async () => {
+      pending.resolve(tenders);
+      await pending.promise;
+    });
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("API key")).toHaveValue("re_second");
+  });
 });

@@ -37,8 +37,11 @@ func (r *contentRepo) GetByID(
 }
 
 func (r *contentRepo) Update(
-	_ context.Context, entity *inboundmessage.InboundMessage,
+	ctx context.Context, entity *inboundmessage.InboundMessage,
 ) (*inboundmessage.InboundMessage, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.writes++
@@ -58,8 +61,11 @@ func (r *contentRepo) snapshot() (int, *inboundmessage.InboundMessage) {
 }
 
 func (r *contentRepo) ListAttachments(
-	_ context.Context, _ pulid.ID, _ pagination.TenantInfo,
+	ctx context.Context, _ pulid.ID, _ pagination.TenantInfo,
 ) ([]*inboundmessage.InboundAttachment, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	return r.message.Attachments, nil
 }
 
@@ -427,4 +433,26 @@ func TestReadContentDetached_AnswersFirstAndOutlivesTheRequest(t *testing.T) {
 	}, 5*time.Second, 10*time.Millisecond)
 	_, saved := repo.snapshot()
 	assert.Equal(t, "Read after the provider was answered.", saved.TextBody)
+}
+
+// A fetch that ran out of time has a dead context. Writing the failure down on
+// that same context would fail too, leaving the message at Received with no
+// worker ever coming back to it, so the failure is written on its own.
+func TestFetchContentInline_RecordsATimedOutFetchOnAFreshContext(t *testing.T) {
+	t.Parallel()
+
+	message := resendMessage()
+	repo := &contentRepo{message: message}
+	cause := fmt.Errorf("%w: Resend could not be reached: %w",
+		services.ErrInboundContentUnavailable, context.DeadlineExceeded)
+	svc := contentService(repo, &stubFetcher{err: cause}, &stubStorage{}, nil)
+
+	expired, cancel := context.WithCancel(t.Context())
+	cancel()
+	svc.fetchContentInline(expired, message)
+
+	_, saved := repo.snapshot()
+	require.NotNil(t, saved, "the failure is written even though the fetch's context is gone")
+	assert.Equal(t, ContentUnavailableCode, saved.FailureCode)
+	assert.Equal(t, inboundmessage.StatusInReview, saved.Status)
 }
