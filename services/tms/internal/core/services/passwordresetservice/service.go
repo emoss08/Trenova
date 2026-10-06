@@ -389,11 +389,6 @@ func (s *Service) sendResetEmail(
 ) {
 	log := s.l.With(zap.String("userId", user.ID.String()))
 
-	if s.templates == nil || s.emailService == nil {
-		log.Error("password reset email cannot be sent: templating or email is not configured")
-		return
-	}
-
 	tenantInfo := pagination.TenantInfo{
 		UserID: user.ID,
 		OrgID:  user.CurrentOrganizationID,
@@ -406,8 +401,31 @@ func (s *Service) sendResetEmail(
 		return
 	}
 
-	platformSender := s.usesPlatformSender(ctx, tenantInfo)
 	ttl := s.cfg.Security.PasswordReset.GetTokenTTL()
+	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
+
+	if s.usesPlatformSender(ctx, tenantInfo) {
+		if err = s.platform.SendPasswordReset(ctx, &serviceports.PasswordResetEmail{
+			To:               user.EmailAddress,
+			Name:             user.Name,
+			CompanyName:      s.companyName(ctx, user),
+			ResetURL:         resetURL,
+			ExpiresInMinutes: int(ttl.Minutes()),
+			ExpiresAt:        expiresAt,
+			Timezone:         user.Timezone,
+			IdempotencyKey:   idempotencyKey,
+		}); err != nil {
+			log.Error("failed to send the password reset email through the platform sender",
+				zap.Error(err))
+		}
+		return
+	}
+
+	if s.templates == nil || s.emailService == nil {
+		log.Error("password reset email cannot be sent: templating or email is not configured")
+		return
+	}
+
 	rendered, renderErr := s.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindPasswordResetEmail,
@@ -424,27 +442,9 @@ func (s *Service) sendResetEmail(
 		ReferenceID:       user.ID,
 		Locale:            i18n.Locale(user.Locale),
 		FallbackToBuiltIn: true,
-		BuiltInOnly:       platformSender,
 	})
 	if renderErr != nil {
 		log.Error("failed to render the password reset email", zap.Error(renderErr))
-		return
-	}
-
-	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
-
-	if platformSender {
-		if err = s.platform.SendRendered(ctx, &serviceports.PlatformEmailMessage{
-			Kind:           "password_reset",
-			To:             user.EmailAddress,
-			Subject:        rendered.Subject,
-			HTML:           rendered.HTML,
-			Text:           rendered.Text,
-			IdempotencyKey: idempotencyKey,
-		}); err != nil {
-			log.Error("failed to send the password reset email through the platform sender",
-				zap.Error(err))
-		}
 		return
 	}
 

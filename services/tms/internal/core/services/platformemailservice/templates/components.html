@@ -1,0 +1,26 @@
+{{define "eyebrow"}}<p style="margin:0 0 20px;padding:0;font-family:'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{.}} ]</p>{{end}}
+
+{{define "mark"}}<span style="background-color:#ffa31a;color:#141413;padding:0 6px;-webkit-box-decoration-break:clone;box-decoration-break:clone">{{.}}</span>{{end}}
+
+{{define "paragraph"}}<p style="margin:0 0 16px;padding:0;font-size:16px;line-height:1.6;color:#121210">{{.}}</p>{{end}}
+
+{{define "button"}}<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:8px 0 24px;padding:0"><tbody><tr><td style="margin:0;padding:0;background-color:#121210;border:1px solid #121210"><a href="{{.URL}}" rel="noopener noreferrer nofollow" style="display:inline-block;padding:14px 22px;font-family:Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:15px;line-height:1;font-weight:600;letter-spacing:-0.2px;color:#ffffff;text-decoration:none" target="_blank">{{.Label}} &rarr;</a></td></tr></tbody></table>{{end}}
+
+{{define "linkFallback"}}<p style="margin:0 0 8px;padding:0;font-family:'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ If the button does not work ]</p>
+<p style="margin:0 0 16px;padding:12px 14px;background-color:#f7f6f2;border:1px solid #dddbd3;font-family:'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;line-height:1.6;color:#121210;word-break:break-all"><a href="{{.}}" rel="noopener noreferrer nofollow" style="color:#121210;text-decoration:underline;text-underline-offset:3px" target="_blank">{{.}}</a></p>{{end}}
+
+{{define "steps"}}<tr style="margin:0;padding:0"><td class="px" style="margin:0;padding:0 40px 32px;font-family:Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<p style="margin:0 0 10px;padding:0;font-family:'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{.Label}} ]</p>
+{{if .Intro}}<p style="margin:0 0 16px;padding:0;font-size:16px;line-height:1.6;color:#121210">{{.Intro}}</p>{{end}}
+<table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0;padding:0;border-top:1px solid #121210"><tbody>
+{{range .Items}}<tr style="margin:0;padding:0"><td style="margin:0;padding:12px 0;width:44px;min-width:44px;white-space:nowrap;border-bottom:1px solid {{if .Last}}#121210{{else}}#dddbd3{{end}};font-family:'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;line-height:26px;color:#55544e"><p style="margin:0;padding:0">{{.Number}}</p></td><td style="margin:0;padding:12px 0;border-bottom:1px solid {{if .Last}}#121210{{else}}#dddbd3{{end}};font-size:16px;line-height:26px;font-weight:500;color:#121210"><p style="margin:0;padding:0">{{.Label}}</p></td></tr>
+{{end}}</tbody></table>
+</td></tr>{{end}}
+
+{{define "callout"}}<tr style="margin:0;padding:0"><td class="px" style="margin:0;padding:32px 40px;background-color:#ffa31a;border-top:1px solid #121210;border-bottom:1px solid #121210;font-family:Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<p style="margin:0 0 12px;padding:0;font-family:'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#1a1203">[ {{.Label}} ]</p>
+<p class="big" style="margin:0;padding:0;font-size:30px;line-height:1.1;font-weight:600;letter-spacing:-1px;color:#141413">{{range $i, $line := .Lines}}{{if $i}}<br/>{{end}}{{$line}}{{end}}</p>
+{{if .Note}}<p style="margin:14px 0 0;padding:0;font-size:15px;line-height:1.6;color:#1a1203">{{.Note}}</p>{{end}}
+</td></tr>{{end}}
+
+{{define "note"}}<tr style="margin:0;padding:0"><td class="px" style="margin:0;padding:24px 40px 32px;font-family:Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:14px;line-height:1.6;color:#55544e"><p style="margin:0;padding:0">{{.}}</p></td></tr>{{end}}

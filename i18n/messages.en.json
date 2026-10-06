@@ -152,15 +152,6 @@
       "routes/fuel-management"
     ]
   },
-  "&middot; delivered {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/invoice.email"
-    ]
-  },
   "(Select all)": {
     "sites": 1,
     "scope": [
@@ -25558,12 +25549,14 @@
     ]
   },
   "Awaiting decision": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "template/agent.proposal_reminder.email"
     ]
   },
   "Awaiting file": {
@@ -36289,7 +36282,7 @@
     ]
   },
   "Choose a new password": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -56506,8 +56499,9 @@
     ]
   },
   "Details": {
-    "sites": 12,
+    "sites": 15,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -56518,7 +56512,10 @@
       "routes/edi",
       "routes/hold-reason",
       "routes/service-failure-reason-code",
-      "routes/worker"
+      "routes/worker",
+      "template/detention.notice.email",
+      "template/invoice.email",
+      "template/tender.offer.email"
     ]
   },
   "Details about which rule version matched and how.": {
@@ -56665,11 +56662,12 @@
     ]
   },
   "Detention Notice": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/detention.notice.email",
       "template/detention.notice.pdf"
     ]
   },
@@ -61881,12 +61879,14 @@
     ]
   },
   "Driver portal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "template/driverportal.invitation.email"
     ]
   },
   "Driver portal (Dash) access management and invitations": {
@@ -91456,7 +91456,7 @@
     ]
   },
   "Invoice": {
-    "sites": 24,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -91474,7 +91474,8 @@
       "routes/invoice-adjustment-batch",
       "routes/late-charges",
       "template/invoice.email",
-      "template/invoice.pdf"
+      "template/invoice.pdf",
+      "template/invoice.share.email"
     ]
   },
   "Invoice #": {
@@ -99209,12 +99210,14 @@
     ]
   },
   "Load offer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/tender-offer-public"
+      "routes/tender-offer-public",
+      "template/tender.offer.email"
     ]
   },
   "Load offer for {0}": {
@@ -106469,13 +106472,15 @@
     ]
   },
   "Missing documents": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "template/agent.request_missing_docs.email"
     ]
   },
   "Missing documents:": {
@@ -143304,15 +143309,17 @@
     ]
   },
   "Rate confirmation": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/agent-control",
       "routes/inbox",
-      "routes/rate-confirmation-public"
+      "routes/rate-confirmation-public",
+      "template/rateconfirmation.email"
     ]
   },
   "Rate confirmation PDF is filed but has not been sent to the carrier.": {
@@ -150243,13 +150250,15 @@
     ]
   },
   "Remittance": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/carrier",
-      "routes/carrier-settlement"
+      "routes/carrier-settlement",
+      "template/invoice.email"
     ]
   },
   "Remittance CSV downloaded": {
@@ -152014,7 +152023,7 @@
     ]
   },
   "Report": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -152027,7 +152036,8 @@
       "routes/desk",
       "routes/home",
       "routes/reports",
-      "service/agentsubjectservice"
+      "service/agentsubjectservice",
+      "template/report.delivery.email"
     ]
   },
   "Report actions": {
@@ -153865,12 +153875,14 @@
     ]
   },
   "Reset password": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/auth"
+      "routes/auth",
+      "template/account.password_reset.email"
     ]
   },
   "Reset planned arrival and departure times on the duplicated shipment stops.": {
@@ -156260,7 +156272,7 @@
       "routes/shipment"
     ]
   },
-  "Review &amp; sign": {
+  "Review & sign": {
     "sites": 1,
     "scope": [
       "go"
@@ -172056,7 +172068,7 @@
     ]
   },
   "Shipment {0}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go"
     ],
@@ -172064,15 +172076,7 @@
       "template/agent.customer_update.email",
       "template/agent.inbound_reply.email",
       "template/agent.request_missing_docs.email",
-      "template/invoice.email"
-    ]
-  },
-  "Shipment {0} &middot; BOL {1}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
+      "template/detention.notice.email",
       "template/invoice.email"
     ]
   },
@@ -172128,6 +172132,15 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "Shipment {0} · BOL {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
     ]
   },
   "Shipment, trailer, tractor, or worker": {
@@ -178514,8 +178527,9 @@
     ]
   },
   "Stops": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -178523,7 +178537,8 @@
       "routes/admin",
       "routes/agent-control",
       "routes/distance-override",
-      "routes/shipment"
+      "routes/shipment",
+      "template/rateconfirmation.email"
     ]
   },
   "Stops ({0})": {
@@ -214004,6 +214019,15 @@
       "routes/onboarding"
     ]
   },
+  "Welcome to Dash": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
   "Welcome{0} 👋": {
     "sites": 1,
     "scope": [
@@ -236847,6 +236871,15 @@
     ],
     "areas": [
       "routes/settlement-dispute"
+    ]
+  },
+  "· delivered {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
     ]
   },
   "· detention risk": {

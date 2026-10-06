@@ -20,6 +20,7 @@ const (
 	KindWelcome               Kind = "welcome"
 	KindTrialEnded            Kind = "trial_ended"
 	KindAccountPurged         Kind = "account_purged"
+	KindPasswordReset         Kind = "password_reset"
 )
 
 func AllKinds() []Kind {
@@ -29,11 +30,16 @@ func AllKinds() []Kind {
 		KindWelcome,
 		KindTrialEnded,
 		KindAccountPurged,
+		KindPasswordReset,
 	}
 }
 
 type templateData struct {
 	ProductName       string
+	Eyebrow           string
+	LogoURL           string
+	HomeURL           string
+	HomeLabel         string
 	Subject           string
 	FirstName         string
 	CompanyName       string
@@ -45,11 +51,31 @@ type templateData struct {
 	TrialEndsAt       string
 	ReadOnlyUntil     string
 	SignupURL         string
+	ResetURL          string
+	ExpiresIn         string
 }
 
 type buttonData struct {
 	URL   string
 	Label string
+}
+
+type stepItem struct {
+	Number string
+	Label  string
+	Last   bool
+}
+
+type stepsData struct {
+	Label string
+	Intro string
+	Items []stepItem
+}
+
+type calloutData struct {
+	Label string
+	Note  string
+	Lines []string
 }
 
 type renderedEmail struct {
@@ -70,7 +96,10 @@ type renderer struct {
 
 func newRenderer() (*renderer, error) {
 	funcs := htmltemplate.FuncMap{
-		"button": func(url, label string) buttonData { return buttonData{URL: url, Label: label} },
+		"button":   func(url, label string) buttonData { return buttonData{URL: url, Label: label} },
+		"steps":    newSteps,
+		"callout":  newCallout,
+		"greeting": greeting,
 	}
 
 	kinds := make(map[Kind]kindTemplates, len(AllKinds()))
@@ -95,7 +124,7 @@ func newRenderer() (*renderer, error) {
 			ParseFS(
 				templateFS,
 				"templates/layout.html",
-				"templates/button.html",
+				"templates/components.html",
 				"templates/"+string(kind)+".html",
 			)
 		if err != nil {
@@ -133,4 +162,29 @@ func (r *renderer) render(kind Kind, data *templateData) (*renderedEmail, error)
 	}
 
 	return &renderedEmail{Subject: subject, HTML: buf.String(), Text: text}, nil
+}
+
+func newSteps(label, intro string, labels ...string) stepsData {
+	items := make([]stepItem, len(labels))
+	for i, itemLabel := range labels {
+		items[i] = stepItem{
+			Number: fmt.Sprintf("%02d", i+1),
+			Label:  itemLabel,
+			Last:   i == len(labels)-1,
+		}
+	}
+
+	return stepsData{Label: label, Intro: intro, Items: items}
+}
+
+func newCallout(label, note string, lines ...string) calloutData {
+	return calloutData{Label: label, Note: note, Lines: lines}
+}
+
+func greeting(salutation, firstName string) string {
+	if firstName == "" {
+		return salutation + ","
+	}
+
+	return salutation + " " + firstName + ","
 }

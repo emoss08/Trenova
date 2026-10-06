@@ -104,16 +104,16 @@ func (_c *MockPlatformEmailService_SendAccountPurged_Call) RunAndReturn(run func
 	return _c
 }
 
-// SendRendered provides a mock function for the type MockPlatformEmailService
-func (_mock *MockPlatformEmailService) SendRendered(ctx context.Context, msg *services.PlatformEmailMessage) error {
+// SendPasswordReset provides a mock function for the type MockPlatformEmailService
+func (_mock *MockPlatformEmailService) SendPasswordReset(ctx context.Context, msg *services.PasswordResetEmail) error {
 	ret := _mock.Called(ctx, msg)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SendRendered")
+		panic("no return value specified for SendPasswordReset")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.PlatformEmailMessage) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.PasswordResetEmail) error); ok {
 		r0 = returnFunc(ctx, msg)
 	} else {
 		r0 = ret.Error(0)
@@ -121,27 +121,27 @@ func (_mock *MockPlatformEmailService) SendRendered(ctx context.Context, msg *se
 	return r0
 }
 
-// MockPlatformEmailService_SendRendered_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendRendered'
-type MockPlatformEmailService_SendRendered_Call struct {
+// MockPlatformEmailService_SendPasswordReset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendPasswordReset'
+type MockPlatformEmailService_SendPasswordReset_Call struct {
 	*mock.Call
 }
 
-// SendRendered is a helper method to define mock.On call
+// SendPasswordReset is a helper method to define mock.On call
 //   - ctx context.Context
-//   - msg *services.PlatformEmailMessage
-func (_e *MockPlatformEmailService_Expecter) SendRendered(ctx any, msg any) *MockPlatformEmailService_SendRendered_Call {
-	return &MockPlatformEmailService_SendRendered_Call{Call: _e.mock.On("SendRendered", ctx, msg)}
+//   - msg *services.PasswordResetEmail
+func (_e *MockPlatformEmailService_Expecter) SendPasswordReset(ctx any, msg any) *MockPlatformEmailService_SendPasswordReset_Call {
+	return &MockPlatformEmailService_SendPasswordReset_Call{Call: _e.mock.On("SendPasswordReset", ctx, msg)}
 }
 
-func (_c *MockPlatformEmailService_SendRendered_Call) Run(run func(ctx context.Context, msg *services.PlatformEmailMessage)) *MockPlatformEmailService_SendRendered_Call {
+func (_c *MockPlatformEmailService_SendPasswordReset_Call) Run(run func(ctx context.Context, msg *services.PasswordResetEmail)) *MockPlatformEmailService_SendPasswordReset_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *services.PlatformEmailMessage
+		var arg1 *services.PasswordResetEmail
 		if args[1] != nil {
-			arg1 = args[1].(*services.PlatformEmailMessage)
+			arg1 = args[1].(*services.PasswordResetEmail)
 		}
 		run(
 			arg0,
@@ -151,12 +151,12 @@ func (_c *MockPlatformEmailService_SendRendered_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockPlatformEmailService_SendRendered_Call) Return(err error) *MockPlatformEmailService_SendRendered_Call {
+func (_c *MockPlatformEmailService_SendPasswordReset_Call) Return(err error) *MockPlatformEmailService_SendPasswordReset_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockPlatformEmailService_SendRendered_Call) RunAndReturn(run func(ctx context.Context, msg *services.PlatformEmailMessage) error) *MockPlatformEmailService_SendRendered_Call {
+func (_c *MockPlatformEmailService_SendPasswordReset_Call) RunAndReturn(run func(ctx context.Context, msg *services.PasswordResetEmail) error) *MockPlatformEmailService_SendPasswordReset_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1,6 +1,12 @@
-{{define "content"}}<p style="margin:0 0 16px 0;">Hi {{.FirstName}},</p>
-<p style="margin:0 0 16px 0;">Confirm your email address to create the {{.CompanyName}} workspace on {{.ProductName}}. Nothing is set up until you do.</p>
+{{define "preheader"}}Confirm your email to create the {{.CompanyName}} workspace. The link works once.{{end}}
+
+{{define "headline"}}Confirm your email to {{template "mark" "create your workspace."}}{{end}}
+
+{{define "content"}}{{template "paragraph" (printf "Hi %s," .FirstName)}}
+{{template "paragraph" (printf "Confirm your email address to create the %s workspace on %s. Nothing is set up until you do." .CompanyName .ProductName)}}
 {{template "button" (button .VerifyURL "Confirm email and create workspace")}}
-<p style="margin:0 0 16px 0;">This link works once and expires {{.ExpiresAt}}. If the button does not work, paste this address into your browser:</p>
-<p style="margin:0 0 16px 0;word-break:break-all;"><a href="{{.VerifyURL}}" style="color:#0068d6;">{{.VerifyURL}}</a></p>
-<p style="margin:0;color:#666666;">If you did not sign up, ignore this email and no account will be created.</p>{{end}}
+{{template "linkFallback" .VerifyURL}}{{end}}
+
+{{define "details"}}{{template "callout" (callout "This link expires" "It works once. If it runs out, sign up again for a new one." .ExpiresAt)}}{{end}}
+
+{{define "closing"}}{{template "note" "If you did not sign up, ignore this email and no account will be created."}}{{end}}

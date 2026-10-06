@@ -1764,6 +1764,7 @@ const (
 	DefaultCloudSystemEmailFromAddress     = "noreply@trenova.app"
 	DefaultCloudSystemEmailFromName        = "Trenova"
 	DefaultCloudSystemEmailTimeout         = 10 * time.Second
+	DefaultCloudSystemEmailLogoURL         = "https://resend-attachments.s3.amazonaws.com/sbPdtgzM5E0bkTlFiV_v0T/b5343258-fb56-4112-926a-eb0ff08ae01e"
 	DefaultCloudTrialLifetime              = 7 * 24 * time.Hour
 	DefaultCloudTrialReadOnlyGrace         = 336 * time.Hour
 )
@@ -1886,6 +1887,7 @@ type CloudSystemEmailConfig struct {
 	FromName    string        `mapstructure:"fromName"    validate:"omitempty,max=100"`
 	ReplyTo     string        `mapstructure:"replyTo"     validate:"omitempty,email"`
 	Timeout     time.Duration `mapstructure:"timeout"     validate:"omitempty,min=1s,max=60s"`
+	LogoURL     string        `mapstructure:"logoUrl"     validate:"omitempty,url,startswith=https://"`
 }
 
 func (c *CloudSystemEmailConfig) GetProvider() string {
@@ -1922,6 +1924,14 @@ func (c *CloudSystemEmailConfig) GetTimeout() time.Duration {
 	}
 
 	return c.Timeout
+}
+
+func (c *CloudSystemEmailConfig) GetLogoURL() string {
+	if trimmed := strings.TrimSpace(c.LogoURL); trimmed != "" {
+		return trimmed
+	}
+
+	return DefaultCloudSystemEmailLogoURL
 }
 
 func (c *CloudSystemEmailConfig) HasAPIKey() bool {

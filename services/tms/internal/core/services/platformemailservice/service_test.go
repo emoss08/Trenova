@@ -81,11 +81,13 @@ func TestEveryKindRenders(t *testing.T) {
 			TrialEndsAt:       "2026-11-03 14:00 UTC",
 			ReadOnlyUntil:     "2026-11-17 14:00 UTC",
 			SignupURL:         "https://app.trenova.test/signup",
+			ResetURL:          "https://app.trenova.test/auth/reset?token=abc",
+			ExpiresIn:         "This link works once and expires in 30 minutes.",
 		})
 		require.NoError(t, renderErr, kind)
 		assert.NotEmpty(t, rendered.Subject, kind)
 		assert.NotContains(t, rendered.Subject, "\n", kind)
-		assert.Contains(t, rendered.HTML, "<!doctype html>", kind)
+		assert.Contains(t, rendered.HTML, "<!DOCTYPE html", kind)
 		assert.Contains(t, rendered.HTML, rendered.Subject, kind)
 		assert.NotEmpty(t, strings.TrimSpace(rendered.Text), kind)
 	}
@@ -177,7 +179,7 @@ func TestSendRequiresRecipient(t *testing.T) {
 
 	svc := newTestService(t, config.CloudSystemEmailConfig{APIKey: "k"}, true, &recordingSender{}, nil)
 
-	err := svc.SendRendered(t.Context(), &services.PlatformEmailMessage{Subject: "x"})
+	err := svc.SendWelcome(t.Context(), &services.WelcomeEmail{To: "  "})
 	require.ErrorIs(t, err, ErrRecipientRequired)
 }
 
@@ -216,4 +218,107 @@ func TestTrialEndedUsesTimezoneAndLinks(t *testing.T) {
 	assert.Contains(t, sender.requests[0].Message.Text, "CDT")
 	assert.Contains(t, sender.requests[1].Message.Text, "https://app.trenova.test/login")
 	assert.Contains(t, sender.requests[1].Message.Text, "Hi,")
+}
+
+func TestEveryKindCarriesTheTrenovaCloudLayout(t *testing.T) {
+	t.Parallel()
+
+	sender := &recordingSender{}
+	svc := newTestService(t, config.CloudSystemEmailConfig{
+		APIKey:  "k",
+		LogoURL: "https://cdn.trenova.test/mark.png",
+	}, true, sender, nil)
+
+	ctx := t.Context()
+	require.NoError(t, svc.SendSignupVerification(ctx, &services.SignupVerificationEmail{
+		To: "dana@example.com", Name: "Dana", CompanyName: "Acme", Token: "tok", ExpiresAt: 1_790_000_000,
+	}))
+	require.NoError(t, svc.SendSignupExistingAccount(ctx, &services.SignupExistingAccountEmail{
+		To: "dana@example.com",
+	}))
+	require.NoError(t, svc.SendWelcome(ctx, &services.WelcomeEmail{
+		To: "dana@example.com", Name: "Dana", CompanyName: "Acme", TrialEndsAt: 1_790_000_000,
+	}))
+	require.NoError(t, svc.SendTrialEnded(ctx, &services.TrialEndedEmail{
+		To: "dana@example.com", Name: "Dana", CompanyName: "Acme", ReadOnlyUntil: 1_790_000_000,
+	}))
+	require.NoError(t, svc.SendAccountPurged(ctx, &services.AccountPurgedEmail{
+		To: "dana@example.com", CompanyName: "Acme",
+	}))
+	require.NoError(t, svc.SendPasswordReset(ctx, &services.PasswordResetEmail{
+		To: "dana@example.com", Name: "Dana", CompanyName: "Acme",
+		ResetURL: "https://app.trenova.test/auth/reset?token=x", ExpiresInMinutes: 30,
+		ExpiresAt: 1_790_000_000,
+	}))
+
+	require.Len(t, sender.requests, len(AllKinds()))
+	for _, req := range sender.requests {
+		html := req.Message.HTML
+		assert.Contains(t, html, `src="https://cdn.trenova.test/mark.png"`, req.Message.Subject)
+		assert.Contains(t, html, "[ Trenova Cloud ]", req.Message.Subject)
+		assert.Contains(t, html, "background-color:#ffa31a", req.Message.Subject)
+		assert.Contains(t, html, "border:1px solid #121210", req.Message.Subject)
+		assert.Contains(t, html, `href="https://app.trenova.test/"`, req.Message.Subject)
+		assert.Contains(t, html, ">app.trenova.test</a>", req.Message.Subject)
+		assert.Contains(t, html, "color-scheme: light only", req.Message.Subject)
+	}
+}
+
+func TestLogoFallsBackToTheDefaultMark(t *testing.T) {
+	t.Parallel()
+
+	sender := &recordingSender{}
+	svc := newTestService(t, config.CloudSystemEmailConfig{APIKey: "k"}, true, sender, nil)
+
+	require.NoError(t, svc.SendWelcome(t.Context(), &services.WelcomeEmail{To: "dana@example.com"}))
+	require.Len(t, sender.requests, 1)
+	assert.Contains(t, sender.requests[0].Message.HTML, config.DefaultCloudSystemEmailLogoURL)
+}
+
+func TestPasswordResetRendersTheLinkAndExpiry(t *testing.T) {
+	t.Parallel()
+
+	sender := &recordingSender{}
+	svc := newTestService(t, config.CloudSystemEmailConfig{APIKey: "k"}, true, sender, nil)
+
+	require.NoError(t, svc.SendPasswordReset(t.Context(), &services.PasswordResetEmail{
+		To:               "dana@example.com",
+		Name:             "Dana Whitfield",
+		CompanyName:      "Acme Freight",
+		ResetURL:         "https://app.trenova.test/auth/reset?token=tok_1",
+		ExpiresInMinutes: 30,
+		ExpiresAt:        1_790_000_000,
+		Timezone:         "America/Chicago",
+		IdempotencyKey:   "password-reset-abc",
+	}))
+
+	require.Len(t, sender.requests, 1)
+	msg := sender.requests[0].Message
+	assert.Equal(t, "Reset your Trenova password", msg.Subject)
+	assert.Equal(t, "platform-password-reset-abc", msg.IdempotencyKey)
+	assert.Contains(t, msg.HTML, `href="https://app.trenova.test/auth/reset?token=tok_1"`)
+	assert.Contains(t, msg.HTML, "expires in 30 minutes")
+	assert.Contains(t, msg.HTML, "CDT")
+	assert.Contains(t, msg.Text, "Hi Dana,")
+	assert.Contains(t, msg.Text, "https://app.trenova.test/auth/reset?token=tok_1")
+	assert.Contains(t, msg.Text, "Acme Freight")
+}
+
+func TestExpiresInSentence(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "This link works once.", expiresInSentence(0))
+	assert.Equal(t, "This link works once and expires in 1 minute.", expiresInSentence(1))
+	assert.Equal(t, "This link works once and expires in 45 minutes.", expiresInSentence(45))
+}
+
+func TestStepsNumberAndMarkTheLastRow(t *testing.T) {
+	t.Parallel()
+
+	steps := newSteps("Where to start", "", "One", "Two", "Three")
+	require.Len(t, steps.Items, 3)
+	assert.Equal(t, "01", steps.Items[0].Number)
+	assert.Equal(t, "03", steps.Items[2].Number)
+	assert.False(t, steps.Items[1].Last)
+	assert.True(t, steps.Items[2].Last)
 }

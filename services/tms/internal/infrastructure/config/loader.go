@@ -416,6 +416,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("platform.cloud.systemEmail.fromName", DefaultCloudSystemEmailFromName)
 	l.viper.SetDefault("platform.cloud.systemEmail.replyTo", "")
 	l.viper.SetDefault("platform.cloud.systemEmail.timeout", DefaultCloudSystemEmailTimeout.String())
+	l.viper.SetDefault("platform.cloud.systemEmail.logoUrl", DefaultCloudSystemEmailLogoURL)
 	l.viper.SetDefault("platform.cloud.trial.lifetime", DefaultCloudTrialLifetime.String())
 	l.viper.SetDefault("platform.cloud.trial.readOnlyGrace", DefaultCloudTrialReadOnlyGrace.String())
 	l.viper.SetDefault("security.encryption.allowLocalKeyManagerInProduction", false)

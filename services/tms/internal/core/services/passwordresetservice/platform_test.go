@@ -45,7 +45,7 @@ func newPlatformHarness(t *testing.T) *platformHarness {
 		Subject: "Reset your password",
 		HTML:    "<p>reset</p>",
 		Text:    "reset",
-	}, nil)
+	}, nil).Maybe()
 	orgs := mocks.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.Organization{Name: "Acme"}, nil).Maybe()
 
@@ -73,14 +73,18 @@ func TestResetEmailForAManagedOrganizationUsesThePlatformSender(t *testing.T) {
 			ReadOnlyUntil:  now + 7_200,
 		}, now), nil,
 	)
-	h.platform.EXPECT().SendRendered(mock.Anything, mock.MatchedBy(func(msg *services.PlatformEmailMessage) bool {
-		return msg.To == h.user.EmailAddress && msg.Subject == "Reset your password" &&
+	h.platform.EXPECT().SendPasswordReset(mock.Anything, mock.MatchedBy(func(msg *services.PasswordResetEmail) bool {
+		return msg.To == h.user.EmailAddress &&
+			msg.Name == h.user.Name &&
+			msg.CompanyName == "Acme" &&
+			strings.Contains(msg.ResetURL, "/auth/reset?token=") &&
+			msg.ExpiresInMinutes > 0 &&
+			msg.ExpiresAt > now &&
 			strings.HasPrefix(msg.IdempotencyKey, "password-reset-")
 	})).Return(nil)
 
 	require.NoError(t, h.svc.RequestReset(t.Context(), h.user.EmailAddress))
-	require.Len(t, h.rendered, 1)
-	assert.True(t, h.rendered[0].BuiltInOnly, "a platform-sent email must never carry tenant-authored content")
+	assert.Empty(t, h.rendered, "a platform-sent email must never render tenant-authored content")
 }
 
 func TestResetEmailForAnUnmanagedOrganizationUsesTheTenantSender(t *testing.T) {
@@ -102,7 +106,6 @@ func TestResetEmailForAnUnmanagedOrganizationUsesTheTenantSender(t *testing.T) {
 	require.NoError(t, h.svc.RequestReset(t.Context(), h.user.EmailAddress))
 	assert.Empty(t, h.platform.Calls)
 	require.Len(t, h.rendered, 1)
-	assert.False(t, h.rendered[0].BuiltInOnly)
 }
 
 func TestResetEmailOutsideCloudUsesTheTenantSender(t *testing.T) {

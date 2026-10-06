@@ -53,11 +53,22 @@ type AccountPurgedEmail struct {
 	CompanyName string
 }
 
+type PasswordResetEmail struct {
+	To               string
+	Name             string
+	CompanyName      string
+	ResetURL         string
+	ExpiresInMinutes int
+	ExpiresAt        int64
+	Timezone         string
+	IdempotencyKey   string
+}
+
 type PlatformEmailService interface {
 	SendSignupVerification(ctx context.Context, msg *SignupVerificationEmail) error
 	SendSignupExistingAccount(ctx context.Context, msg *SignupExistingAccountEmail) error
 	SendWelcome(ctx context.Context, msg *WelcomeEmail) error
 	SendTrialEnded(ctx context.Context, msg *TrialEndedEmail) error
 	SendAccountPurged(ctx context.Context, msg *AccountPurgedEmail) error
-	SendRendered(ctx context.Context, msg *PlatformEmailMessage) error
+	SendPasswordReset(ctx context.Context, msg *PasswordResetEmail) error
 }
