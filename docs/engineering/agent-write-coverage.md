@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 78 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 79 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-991 writes: 512 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
+992 writes: 513 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 380 |
-| Exempt | 608 |
-| — Security | 78 |
+| Exempt | 609 |
+| — Security | 79 |
 | — Configuration | 260 |
 | — User preference | 27 |
 | — Infrastructure | 46 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 44 |
 | — Duplicate | 3 |
 | **Pending** | **3** |
-| Total | 991 |
+| Total | 992 |
 
 Of the 383 writes an agent should be able to make, 380 have a tool (99%).
 
@@ -212,7 +212,7 @@ The writes no tool performs yet, and what the tool would do.
 | iam | 14 | 0 | 14 | 0 |
 | ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
-| inboundmessage | 6 | 2 | 4 | 0 |
+| inboundmessage | 7 | 2 | 5 | 0 |
 | insight | 2 | 2 | 0 | 0 |
 | integration | 5 | 0 | 5 | 0 |
 | invoice | 12 | 11 | 1 | 0 |
@@ -1292,6 +1292,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation linkInboundMessage` | Tool: `link_inbound_message` |
 | `mutation reviewInboundMessage` | Tool: `mark_inbound_message` |
 | `mutation rotateInboundMailboxToken` | Exempt, security: Replaces the secret that authenticates mail forwarded into the mailbox. |
+| `mutation setInboundMailboxApiKey` | Exempt, security: Sets the provider credential the mailbox reads forwarded mail's content with. |
 | `mutation setInboundMailboxSigningSecret` | Exempt, security: Sets the secret that authenticates mail forwarded into the mailbox. |
 | `mutation updateInboundMailbox` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 

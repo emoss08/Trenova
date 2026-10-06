@@ -1272,6 +1272,7 @@ type InboundAttachmentResolver interface {
 
 type InboundMailboxResolver interface {
 	HasSigningSecret(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
+	HasAPIKey(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
 }
 
 type InboundMailboxCredentialsResolver interface {
@@ -1693,10 +1694,11 @@ type MutationResolver interface {
 	BackfillJurisdictionMiles(ctx context.Context, input gqlmodel.BackfillJurisdictionMilesInput) (*gqlmodel.JurisdictionMilesBackfillResult, error)
 	ReviewInboundMessage(ctx context.Context, id string, input gqlmodel.ReviewInboundMessageInput) (*inboundmessage.InboundMessage, error)
 	LinkInboundMessage(ctx context.Context, id string, input gqlmodel.LinkInboundMessageInput) (*inboundmessage.InboundMessage, error)
-	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string) (*inboundmessageservice.MailboxCredentials, error)
+	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmessageservice.MailboxCredentials, error)
 	UpdateInboundMailbox(ctx context.Context, id string, version int, input gqlmodel.InboundMailboxInput) (*inboundmessage.Mailbox, error)
 	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
+	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
 	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*services.CreateInvoicesResult, error)
@@ -19744,6 +19746,8 @@ type InboundMailbox {
   status: InboundMailboxStatus!
   "Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned."
   hasSigningSecret: Boolean!
+  "Whether an API key is set for reading message content. Resend posts only a message's metadata, so a Resend mailbox without one cannot read bodies or attachments. The key itself is never returned."
+  hasApiKey: Boolean!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -19941,13 +19945,15 @@ extend type Mutation {
   "Says what a message is about, by hand, when the reading did not work it out."
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   "Creates a mailbox and returns its webhook token, once."
-  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
-  "Changes a mailbox's settings. Changing its provider clears the signing secret."
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String, apiKey: String): InboundMailboxCredentials!
+  "Changes a mailbox's settings. Changing its provider clears the signing secret and the API key."
   updateInboundMailbox(id: ID!, version: Int!, input: InboundMailboxInput!): InboundMailbox!
   "Replaces the webhook token. The old URL stops working at once."
   rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
   "Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password."
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
+  "Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key."
+  setInboundMailboxApiKey(id: ID!, apiKey: String!): InboundMailbox!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {

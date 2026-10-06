@@ -12088,7 +12088,7 @@ export type InboundAttachmentFieldsFragment = { id: string, fileName: string, co
 
 export type InboundShipmentRefFieldsFragment = { id: string, proNumber: string, bol: string, poNumber: string, originCity: string, originState: string, destinationCity: string, destinationState: string } & { ' $fragmentName'?: 'InboundShipmentRefFieldsFragment' };
 
-export type InboundMailboxFieldsFragment = { id: string, name: string, address: string, provider: InboundProvider, purpose: string, reviewPolicy: InboundReviewPolicy, minConfidence: number, status: InboundMailboxStatus, hasSigningSecret: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'InboundMailboxFieldsFragment' };
+export type InboundMailboxFieldsFragment = { id: string, name: string, address: string, provider: InboundProvider, purpose: string, reviewPolicy: InboundReviewPolicy, minConfidence: number, status: InboundMailboxStatus, hasSigningSecret: boolean, hasApiKey: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'InboundMailboxFieldsFragment' };
 
 export type InboundMailboxCredentialsFieldsFragment = { token: string, webhookPath: string, mailbox: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } } & { ' $fragmentName'?: 'InboundMailboxCredentialsFieldsFragment' };
 
@@ -12142,6 +12142,7 @@ export type LinkInboundMessageMutation = { linkInboundMessage: { ' $fragmentRefs
 export type CreateInboundMailboxMutationVariables = Exact<{
   input: InboundMailboxInput;
   signingSecret?: string | null | undefined;
+  apiKey?: string | null | undefined;
 }>;
 
 
@@ -12170,6 +12171,14 @@ export type SetInboundMailboxSigningSecretMutationVariables = Exact<{
 
 
 export type SetInboundMailboxSigningSecretMutation = { setInboundMailboxSigningSecret: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } };
+
+export type SetInboundMailboxApiKeyMutationVariables = Exact<{
+  id: string | number;
+  apiKey: string;
+}>;
+
+
+export type SetInboundMailboxApiKeyMutation = { setInboundMailboxApiKey: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } };
 
 export type InvoiceApprovalQueueItemFieldsFragment = { adjustmentId: string, originalInvoiceId: string, originalInvoiceNumber: string, originalInvoiceStatus: string, customerName: string, kind: InvoiceAdjustmentKind, reason: string, policyReason: string, policySource: string, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, wouldCreateUnappliedCredit: boolean, requiresReconciliationException: boolean, requiresReplacementInvoiceReview: boolean, submittedByName: string, submittedAt: number | null, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, rebillQueueItemId: string | null, batchId: string | null } & { ' $fragmentName'?: 'InvoiceApprovalQueueItemFieldsFragment' };
 
@@ -20853,6 +20862,7 @@ export const InboundMailboxFieldsFragmentDoc = new TypedDocumentString(`
   minConfidence
   status
   hasSigningSecret
+  hasApiKey
   version
   createdAt
   updatedAt
@@ -20876,6 +20886,7 @@ export const InboundMailboxCredentialsFieldsFragmentDoc = new TypedDocumentStrin
   minConfidence
   status
   hasSigningSecret
+  hasApiKey
   version
   createdAt
   updatedAt
@@ -20994,6 +21005,7 @@ fragment InboundMailboxFields on InboundMailbox {
   minConfidence
   status
   hasSigningSecret
+  hasApiKey
   version
   createdAt
   updatedAt
@@ -25184,15 +25196,16 @@ export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"Ifta
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
 export const InboundMessagesDocument = {"__meta__":{"kind":"query","name":"InboundMessages","hash":"sha256:f7683dd61b03d3635e618ae7dc12b17ce1aa52d3cf345b63b894169d986e9070"}} as unknown as TypedDocumentString<InboundMessagesQuery, InboundMessagesQueryVariables>;
-export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:b5012ee112f0132470558f1dacf951d5d083a241db79ffd8cb68bc3fae3ab6bf"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
+export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:52e99ea8e8401eb17750af9ecb45f3757ec34b1ed369393b857575b10e9c5bf6"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
 export const InboundMessageCountsDocument = {"__meta__":{"kind":"query","name":"InboundMessageCounts","hash":"sha256:0186e33cceac728a75529ebc6acbce0f61c96012f25f0b3cf1326efab11c6418"}} as unknown as TypedDocumentString<InboundMessageCountsQuery, InboundMessageCountsQueryVariables>;
-export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:03bfa034f29f0ebe88e72a98dfb768bc2505f65c525103be990c360ed8d1d412"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
-export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:2aad04e7ef8dc6ea1dc385f560163fc5b5d751fbee53ce11186e630df537b0b3"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
-export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:194611e396570a43e4758f83c5046369cfaa0e04211a053fa5d9e843014a8580"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
-export const CreateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundMailbox","hash":"sha256:53605eac20152c64ffab6905b3a4cb9fea3f2e394f3c4028cbfae8d27e8a49ae"}} as unknown as TypedDocumentString<CreateInboundMailboxMutation, CreateInboundMailboxMutationVariables>;
-export const UpdateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"UpdateInboundMailbox","hash":"sha256:5de0a2a6e6aacd88d47682fca2a21fcf13464dc6c69e43b4e7b3d10ddd3c73fa"}} as unknown as TypedDocumentString<UpdateInboundMailboxMutation, UpdateInboundMailboxMutationVariables>;
-export const RotateInboundMailboxTokenDocument = {"__meta__":{"kind":"mutation","name":"RotateInboundMailboxToken","hash":"sha256:946e0d596649a249dcfe2ca2e5907df9779e48c1458801e26738a1fc6a2c8d51"}} as unknown as TypedDocumentString<RotateInboundMailboxTokenMutation, RotateInboundMailboxTokenMutationVariables>;
-export const SetInboundMailboxSigningSecretDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxSigningSecret","hash":"sha256:b19baacab4c0b1a7eeceffae35e61a76c60e30919c63202ef12b6c7112010e75"}} as unknown as TypedDocumentString<SetInboundMailboxSigningSecretMutation, SetInboundMailboxSigningSecretMutationVariables>;
+export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:f22b9b487f648767351231e30f3e2bae37b0efd215fac150db14ee4de447253f"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
+export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:86fb1437a2cfb82f25357a4c7c564c4c35f48a0355c0d9241b2a14919c418a11"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
+export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:97dae53cf391479bc0c7d92d9e72620b50ed0cc92d44b445799096ede3960b75"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
+export const CreateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundMailbox","hash":"sha256:e59756e9c0630027ba9a4de428789b4ce0e1be7d2335d5ef174085423be19d85"}} as unknown as TypedDocumentString<CreateInboundMailboxMutation, CreateInboundMailboxMutationVariables>;
+export const UpdateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"UpdateInboundMailbox","hash":"sha256:8af2c7cf19e13659909e9d90e2924497177d9bedd65b71819d432175d0bb86c7"}} as unknown as TypedDocumentString<UpdateInboundMailboxMutation, UpdateInboundMailboxMutationVariables>;
+export const RotateInboundMailboxTokenDocument = {"__meta__":{"kind":"mutation","name":"RotateInboundMailboxToken","hash":"sha256:fc75bed906a1b0701c4bf19c5bd2b5ef538910793a17fa3d81ad4949d04642b8"}} as unknown as TypedDocumentString<RotateInboundMailboxTokenMutation, RotateInboundMailboxTokenMutationVariables>;
+export const SetInboundMailboxSigningSecretDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxSigningSecret","hash":"sha256:691872fd0420b45cca9d6d4e74693fe60eefa63ed4996452d34f3404b1b05689"}} as unknown as TypedDocumentString<SetInboundMailboxSigningSecretMutation, SetInboundMailboxSigningSecretMutationVariables>;
+export const SetInboundMailboxApiKeyDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxApiKey","hash":"sha256:d7a705d50c81f9c93ebdab0d1943cff882e20232b53451d5d6b9f6077ef65593"}} as unknown as TypedDocumentString<SetInboundMailboxApiKeyMutation, SetInboundMailboxApiKeyMutationVariables>;
 export const InvoiceAdjustmentApprovalsDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovals","hash":"sha256:051cda2df75986990c40b1ec9cbcaa20d4a398519581fbf58098f79859a2b0f8"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalsQuery, InvoiceAdjustmentApprovalsQueryVariables>;
 export const InvoiceAdjustmentApprovalDetailDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovalDetail","hash":"sha256:3faee37cd372092eca2df737c1d885af871a825933f88250bc9c91dc0cb6e59b"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalDetailQuery, InvoiceAdjustmentApprovalDetailQueryVariables>;
 export const InvoiceAdjustmentOperationsSummaryDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentOperationsSummary","hash":"sha256:441d3f879bd0cfc9f9aa4483469fc03a694dbdf70ec8831621691b0c8121b5e3"}} as unknown as TypedDocumentString<InvoiceAdjustmentOperationsSummaryQuery, InvoiceAdjustmentOperationsSummaryQueryVariables>;

@@ -13,6 +13,7 @@ import {
   LinkInboundMessageDocument,
   ReviewInboundMessageDocument,
   RotateInboundMailboxTokenDocument,
+  SetInboundMailboxApiKeyDocument,
   SetInboundMailboxSigningSecretDocument,
   UpdateInboundMailboxDocument,
   type InboundMailboxCredentialsFieldsFragment,
@@ -196,11 +197,12 @@ function mailbox(masked: FragmentType<typeof InboundMailboxFieldsFragmentDoc>): 
 export async function createInboundMailbox(
   input: InboundMailboxInput,
   signingSecret: string | null,
+  apiKey: string | null,
 ): Promise<InboundMailboxCredentials> {
   const data = await requestGraphQL({
     document: CreateInboundMailboxDocument,
     operationName: "CreateInboundMailbox",
-    variables: { input, signingSecret },
+    variables: { input, signingSecret, apiKey },
   });
 
   return credentials(data.createInboundMailbox);
@@ -241,4 +243,14 @@ export async function setInboundMailboxSigningSecret(
   });
 
   return mailbox(data.setInboundMailboxSigningSecret);
+}
+
+export async function setInboundMailboxApiKey(id: string, apiKey: string): Promise<InboundMailbox> {
+  const data = await requestGraphQL({
+    document: SetInboundMailboxApiKeyDocument,
+    operationName: "SetInboundMailboxApiKey",
+    variables: { id, apiKey },
+  });
+
+  return mailbox(data.setInboundMailboxApiKey);
 }

@@ -49,35 +49,37 @@ var InboundAttachmentTable = TableInfo{
 //	q.Where(InboundAttachmentColumns.ID.Eq(), id)           // WHERE imsga.id = ?
 //	q.Order(InboundAttachmentColumns.CreatedAt.OrderDesc())  // ORDER BY imsga.created_at DESC
 var InboundAttachmentColumns = struct {
-	ID              Column // "id" → qualified: "imsga.id"
-	BusinessUnitID  Column // "business_unit_id" → qualified: "imsga.business_unit_id"
-	OrganizationID  Column // "organization_id" → qualified: "imsga.organization_id"
-	MessageID       Column // "message_id" → qualified: "imsga.message_id"
-	FileName        Column // "file_name" → qualified: "imsga.file_name"
-	ContentType     Column // "content_type" → qualified: "imsga.content_type"
-	ByteSize        Column // "byte_size" → qualified: "imsga.byte_size"
-	Kind            Column // "kind" → qualified: "imsga.kind"
-	UploadSessionID Column // "upload_session_id" → qualified: "imsga.upload_session_id"
-	DocumentID      Column // "document_id" → qualified: "imsga.document_id"
-	DraftID         Column // "draft_id" → qualified: "imsga.draft_id"
-	FailureText     Column // "failure_text" → qualified: "imsga.failure_text"
-	CreatedAt       Column // "created_at" → qualified: "imsga.created_at"
-	UpdatedAt       Column // "updated_at" → qualified: "imsga.updated_at"
+	ID                   Column // "id" → qualified: "imsga.id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "imsga.business_unit_id"
+	OrganizationID       Column // "organization_id" → qualified: "imsga.organization_id"
+	MessageID            Column // "message_id" → qualified: "imsga.message_id"
+	FileName             Column // "file_name" → qualified: "imsga.file_name"
+	ContentType          Column // "content_type" → qualified: "imsga.content_type"
+	ByteSize             Column // "byte_size" → qualified: "imsga.byte_size"
+	Kind                 Column // "kind" → qualified: "imsga.kind"
+	ProviderAttachmentID Column // "provider_attachment_id" → qualified: "imsga.provider_attachment_id"
+	UploadSessionID      Column // "upload_session_id" → qualified: "imsga.upload_session_id"
+	DocumentID           Column // "document_id" → qualified: "imsga.document_id"
+	DraftID              Column // "draft_id" → qualified: "imsga.draft_id"
+	FailureText          Column // "failure_text" → qualified: "imsga.failure_text"
+	CreatedAt            Column // "created_at" → qualified: "imsga.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "imsga.updated_at"
 }{
-	ID:              NewColumn("id", "imsga"),
-	BusinessUnitID:  NewColumn("business_unit_id", "imsga"),
-	OrganizationID:  NewColumn("organization_id", "imsga"),
-	MessageID:       NewColumn("message_id", "imsga"),
-	FileName:        NewColumn("file_name", "imsga"),
-	ContentType:     NewColumn("content_type", "imsga"),
-	ByteSize:        NewColumn("byte_size", "imsga"),
-	Kind:            NewColumn("kind", "imsga"),
-	UploadSessionID: NewColumn("upload_session_id", "imsga"),
-	DocumentID:      NewColumn("document_id", "imsga"),
-	DraftID:         NewColumn("draft_id", "imsga"),
-	FailureText:     NewColumn("failure_text", "imsga"),
-	CreatedAt:       NewColumn("created_at", "imsga"),
-	UpdatedAt:       NewColumn("updated_at", "imsga"),
+	ID:                   NewColumn("id", "imsga"),
+	BusinessUnitID:       NewColumn("business_unit_id", "imsga"),
+	OrganizationID:       NewColumn("organization_id", "imsga"),
+	MessageID:            NewColumn("message_id", "imsga"),
+	FileName:             NewColumn("file_name", "imsga"),
+	ContentType:          NewColumn("content_type", "imsga"),
+	ByteSize:             NewColumn("byte_size", "imsga"),
+	Kind:                 NewColumn("kind", "imsga"),
+	ProviderAttachmentID: NewColumn("provider_attachment_id", "imsga"),
+	UploadSessionID:      NewColumn("upload_session_id", "imsga"),
+	DocumentID:           NewColumn("document_id", "imsga"),
+	DraftID:              NewColumn("draft_id", "imsga"),
+	FailureText:          NewColumn("failure_text", "imsga"),
+	CreatedAt:            NewColumn("created_at", "imsga"),
+	UpdatedAt:            NewColumn("updated_at", "imsga"),
 }
 
 // InboundAttachmentFieldMap maps JSON API field names to database column names.
@@ -85,20 +87,21 @@ var InboundAttachmentColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by InboundAttachment.GetStaticFieldMap().
 var InboundAttachmentFieldMap = map[string]string{
-	"id":              "id",
-	"businessUnitId":  "business_unit_id",
-	"organizationId":  "organization_id",
-	"messageId":       "message_id",
-	"fileName":        "file_name",
-	"contentType":     "content_type",
-	"byteSize":        "byte_size",
-	"kind":            "kind",
-	"uploadSessionId": "upload_session_id",
-	"documentId":      "document_id",
-	"draftId":         "draft_id",
-	"failureText":     "failure_text",
-	"createdAt":       "created_at",
-	"updatedAt":       "updated_at",
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"organizationId":       "organization_id",
+	"messageId":            "message_id",
+	"fileName":             "file_name",
+	"contentType":          "content_type",
+	"byteSize":             "byte_size",
+	"kind":                 "kind",
+	"providerAttachmentId": "provider_attachment_id",
+	"uploadSessionId":      "upload_session_id",
+	"documentId":           "document_id",
+	"draftId":              "draft_id",
+	"failureText":          "failure_text",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
 }
 
 // InboundAttachmentInsertableColumns lists column names suitable for INSERT statements on the "inbound_message_attachments" table.
@@ -112,6 +115,7 @@ var InboundAttachmentInsertableColumns = []string{
 	"content_type",
 	"byte_size",
 	"kind",
+	"provider_attachment_id",
 	"upload_session_id",
 	"document_id",
 	"draft_id",
@@ -170,20 +174,21 @@ func InboundAttachmentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuer
 //	InboundAttachmentFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var InboundAttachmentFilter = struct {
-	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	MessageID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "messageId" → DB: "message_id"
-	FileName        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
-	ContentType     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentType" → DB: "content_type"
-	ByteSize        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "byteSize" → DB: "byte_size"
-	Kind            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
-	UploadSessionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "uploadSessionId" → DB: "upload_session_id"
-	DocumentID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
-	DraftID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "draftId" → DB: "draft_id"
-	FailureText     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureText" → DB: "failure_text"
-	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	MessageID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "messageId" → DB: "message_id"
+	FileName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
+	ContentType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentType" → DB: "content_type"
+	ByteSize             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "byteSize" → DB: "byte_size"
+	Kind                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	ProviderAttachmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerAttachmentId" → DB: "provider_attachment_id"
+	UploadSessionID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "uploadSessionId" → DB: "upload_session_id"
+	DocumentID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	DraftID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "draftId" → DB: "draft_id"
+	FailureText          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureText" → DB: "failure_text"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -208,6 +213,9 @@ var InboundAttachmentFilter = struct {
 	},
 	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("kind", op, value)
+	},
+	ProviderAttachmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerAttachmentId", op, value)
 	},
 	UploadSessionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("uploadSessionId", op, value)
@@ -640,6 +648,7 @@ var MailboxColumns = struct {
 	Provider       Column // "provider" → qualified: "imbx.provider"
 	TokenHash      Column // "token_hash" → qualified: "imbx.token_hash"
 	SigningSecret  Column // "signing_secret" → qualified: "imbx.signing_secret"
+	ProviderAPIKey Column // "provider_api_key" → qualified: "imbx.provider_api_key"
 	Purpose        Column // "purpose" → qualified: "imbx.purpose"
 	ReviewPolicy   Column // "review_policy" → qualified: "imbx.review_policy"
 	MinConfidence  Column // "min_confidence" → qualified: "imbx.min_confidence"
@@ -656,6 +665,7 @@ var MailboxColumns = struct {
 	Provider:       NewColumn("provider", "imbx"),
 	TokenHash:      NewColumn("token_hash", "imbx"),
 	SigningSecret:  NewColumn("signing_secret", "imbx"),
+	ProviderAPIKey: NewColumn("provider_api_key", "imbx"),
 	Purpose:        NewColumn("purpose", "imbx"),
 	ReviewPolicy:   NewColumn("review_policy", "imbx"),
 	MinConfidence:  NewColumn("min_confidence", "imbx"),
@@ -696,6 +706,7 @@ var MailboxInsertableColumns = []string{
 	"provider",
 	"token_hash",
 	"signing_secret",
+	"provider_api_key",
 	"purpose",
 	"review_policy",
 	"min_confidence",
