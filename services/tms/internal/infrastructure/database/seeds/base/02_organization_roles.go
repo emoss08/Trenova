@@ -69,66 +69,16 @@ func (s *OrganizationRolesSeed) Run(ctx context.Context, tx bun.Tx) error {
 			return fmt.Errorf("create admin role for org %s: %w", org.Name, err)
 		}
 
-		adminUsers, err := s.getAdminUsersForOrganization(ctx, tx, org, adminUser)
-		if err != nil {
-			return fmt.Errorf("get admin users for org %s: %w", org.Name, err)
-		}
-
-		for _, user := range adminUsers {
-			if err = tenantbootstrap.AssignRole(ctx, tx, tenantbootstrap.RoleAssignmentParams{
-				UserID:         user.ID,
-				OrganizationID: org.ID,
-				RoleID:         adminRole.ID,
-				AssignedBy:     adminUser.ID,
-				AssignedAt:     now,
-			}); err != nil {
-				return fmt.Errorf(
-					"assign admin role for user %s in org %s: %w",
-					user.Username,
-					org.Name,
-					err,
-				)
-			}
+		if err = tenantbootstrap.AssignRole(ctx, tx, tenantbootstrap.RoleAssignmentParams{
+			UserID:         adminUser.ID,
+			OrganizationID: org.ID,
+			RoleID:         adminRole.ID,
+			AssignedBy:     adminUser.ID,
+			AssignedAt:     now,
+		}); err != nil {
+			return fmt.Errorf("assign admin role in org %s: %w", org.Name, err)
 		}
 	}
 
 	return nil
-}
-
-func (s *OrganizationRolesSeed) getAdminUsersForOrganization(
-	ctx context.Context,
-	tx bun.Tx,
-	org tenant.Organization,
-	coreAdmin tenant.User,
-) ([]tenant.User, error) {
-	adminUsers := []tenant.User{coreAdmin}
-
-	orgAdminUsername := organizationAdminUsername(org.ScacCode)
-	if orgAdminUsername == "" {
-		return adminUsers, nil
-	}
-
-	var orgAdmin tenant.User
-	if err := tx.NewSelect().
-		Model(&orgAdmin).
-		Where("username = ?", orgAdminUsername).
-		Where("current_organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("get organization admin user %s: %w", orgAdminUsername, err)
-	}
-
-	adminUsers = append(adminUsers, orgAdmin)
-	return adminUsers, nil
-}
-
-func organizationAdminUsername(scacCode string) string {
-	switch scacCode {
-	case "TRNV":
-		return logisticsAdminUsername
-	case "TTNV":
-		return transportationAdminUsername
-	default:
-		return ""
-	}
 }

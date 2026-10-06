@@ -38,7 +38,6 @@ func TestSeedsWithKnownCredentialsNeverRunOutsideDevelopment(t *testing.T) {
 			seedhelpers.SeedAdminAccount.String(),
 			seedhelpers.SeedOrganizationRoles.String(),
 			seedhelpers.SeedTestOrganizations.String(),
-			seedhelpers.SeedNormalAccount.String(),
 		} {
 			assert.NotContains(t, names, excluded, "%s must not run in %s", excluded, env)
 		}

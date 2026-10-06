@@ -36,7 +36,6 @@ const (
 	SeedLocation SeedID = "Location" // from 05_location.go
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
 	SeedLookupMatrix SeedID = "LookupMatrix" // from 09_lookup_matrix.go
-	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
 	SeedOrgHoliday SeedID = "OrgHoliday" // from 21_org_holiday.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
@@ -86,7 +85,6 @@ var AllSeedIDs = []SeedID{
 	SeedLocation,
 	SeedLocationCategory,
 	SeedLookupMatrix,
-	SeedNormalAccount,
 	SeedOrgHoliday,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
@@ -146,7 +144,6 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedLocation,
 	SeedLocationCategory,
 	SeedLookupMatrix,
-	SeedNormalAccount,
 	SeedOrgHoliday,
 	SeedPTOPolicy,
 	SeedRateAgreement,

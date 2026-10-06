@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
@@ -19,11 +18,7 @@ type AdminAccountSeed struct {
 	seedhelpers.BaseSeed
 }
 
-const (
-	coreAdminUsername           = "admin"
-	logisticsAdminUsername      = "admin-logistics"
-	transportationAdminUsername = "admin-transport"
-)
+const coreAdminUsername = "admin"
 
 // NewAdminAccountSeed creates a new AdminAccount seed
 func NewAdminAccountSeed() *AdminAccountSeed {
@@ -54,7 +49,7 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 
 			// An existing core admin means this seed already owns the tenant
 			// below it. Re-running would duplicate the second organization, its
-			// users, memberships, sequences, and control files.
+			// memberships, sequences, and control files.
 			seeded, err := tx.NewSelect().
 				Model((*tenant.User)(nil)).
 				Where("username = ?", coreAdminUsername).
@@ -190,28 +185,6 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			orgAdminUsers := []organizationAdminUserSeedParams{
-				{
-					org:         org,
-					grantedByID: adminUser.ID,
-					name:        "Trenova Logistics Administrator",
-					username:    logisticsAdminUsername,
-					email:       "admin.logistics@trenova.app",
-				},
-				{
-					org:         org2,
-					grantedByID: adminUser.ID,
-					name:        "Trenova Transportation Administrator",
-					username:    transportationAdminUsername,
-					email:       "admin.transport@trenova.app",
-				},
-			}
-			for _, params := range orgAdminUsers {
-				if err := s.createOrganizationAdminUser(ctx, tx, sc, params); err != nil {
-					return err
-				}
-			}
-
 			for _, seedOrg := range orgs {
 				if err = tenantbootstrap.CreateSequences(ctx, tx, s.scopeFor(sc, seedOrg, now)); err != nil {
 					return fmt.Errorf("create sequences for org %s: %w", seedOrg.Name, err)
@@ -239,14 +212,6 @@ func (s *AdminAccountSeed) CanRollback() bool {
 	return true
 }
 
-type organizationAdminUserSeedParams struct {
-	org         *tenant.Organization
-	grantedByID pulid.ID
-	name        string
-	username    string
-	email       string
-}
-
 func (s *AdminAccountSeed) scopeFor(
 	sc *seedhelpers.SeedContext,
 	org *tenant.Organization,
@@ -258,43 +223,4 @@ func (s *AdminAccountSeed) scopeFor(
 		Now:            now,
 		Record:         seedRecorder(sc, s.Name()),
 	}
-}
-
-func (s *AdminAccountSeed) createOrganizationAdminUser(
-	ctx context.Context,
-	tx bun.Tx,
-	sc *seedhelpers.SeedContext,
-	params organizationAdminUserSeedParams,
-) error {
-	adminUser, err := sc.CreateUser(ctx, tx, &seedhelpers.UserOptions{
-		OrganizationID:     params.org.ID,
-		BusinessUnitID:     params.org.BusinessUnitID,
-		Name:               params.name,
-		Username:           params.username,
-		Email:              params.email,
-		Password:           "admin123!",
-		Status:             domaintypes.StatusActive,
-		Timezone:           "America/Los_Angeles",
-		MustChangePassword: false,
-	}, s.Name())
-	if err != nil {
-		return fmt.Errorf("create organization admin user %s: %w", params.username, err)
-	}
-
-	membership := &tenant.OrganizationMembership{
-		BusinessUnitID: params.org.BusinessUnitID,
-		UserID:         adminUser.ID,
-		JoinedAt:       timeutils.NowUnix(),
-		OrganizationID: params.org.ID,
-		GrantedByID:    params.grantedByID,
-		IsDefault:      true,
-	}
-	if _, err = tx.NewInsert().Model(membership).Exec(ctx); err != nil {
-		return fmt.Errorf("create organization admin membership %s: %w", params.username, err)
-	}
-	if err := sc.TrackCreated(ctx, "organization_memberships", membership.ID, s.Name()); err != nil {
-		return err
-	}
-
-	return nil
 }
