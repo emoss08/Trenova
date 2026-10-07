@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   payProfileTableGraphQLConfig,
   updatePayProfile,
@@ -14,6 +14,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns, payProfileStatusInput } from "./pay-profile-columns";
 import { PayProfilePanel } from "./pay-profile-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function PayProfilesTable() {
   const t = useT();
@@ -28,10 +29,48 @@ export default function PayProfilesTable() {
         toast.info(t("Every selected pay profile already has that status."));
         return;
       }
-      await runBulkAction(
-        eligible,
-        (row) => updatePayProfile(payProfileStatusInput(row, status as "Active" | "Inactive")),
-        { noun: "pay profile", verb: status === "Active" ? "activated" : "deactivated" },
+      const outcome = await settleAll(eligible, (row) =>
+        updatePayProfile(payProfileStatusInput(row, status as "Active" | "Inactive")),
+      );
+      notifyBulkOutcome(
+        outcome,
+        status === "Active"
+          ? {
+              succeeded: (count) =>
+                translate(
+                  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}",
+                  count,
+                ),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected pay profile failed} other {All # selected pay profiles failed}}",
+                  failed,
+                ),
+            }
+          : {
+              succeeded: (count) =>
+                translate(
+                  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}",
+                  count,
+                ),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected pay profile failed} other {All # selected pay profiles failed}}",
+                  failed,
+                ),
+            },
       );
       await queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
     },

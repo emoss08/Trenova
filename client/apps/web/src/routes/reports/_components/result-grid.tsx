@@ -44,6 +44,7 @@ const TONE_CLASS: Record<Exclude<ReportDisplayTone, "">, string> = {
 };
 
 function toneClass(tone: ReportDisplayTone): string | undefined {
+  // i18n-ignore: CSS class names
   return tone === "" ? undefined : `${TONE_CLASS[tone]} font-medium`;
 }
 

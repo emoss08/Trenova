@@ -385,7 +385,7 @@ function MappingRow({
         checked={mapping.enabled}
         disabled={toggling}
         onCheckedChange={onToggle}
-        aria-label={`Toggle ${mapping.name}`}
+        aria-label={t("Toggle {0}", mapping.name)}
       />
       <Button type="button" variant="outline" size="xs" onClick={onEdit}>
         {t("Edit")}
@@ -396,7 +396,7 @@ function MappingRow({
         size="xs"
         className="text-muted-foreground hover:text-destructive size-7 p-0"
         onClick={onDelete}
-        aria-label={`Delete ${mapping.name}`}
+        aria-label={t("Delete {0}", mapping.name)}
       >
         <Trash01Icon className="size-3.5" />
       </Button>

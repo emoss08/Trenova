@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@trenova/shared/components/ui/sheet";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
@@ -26,6 +27,7 @@ function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean
 }
 
 export function NotificationSheet() {
+  const t = useT();
   const open = useAppDialogOpen("notifications");
   const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
   const [mounted, setMounted] = useState(false);
@@ -50,7 +52,9 @@ export function NotificationSheet() {
             type="button"
             variant="ghost"
             size="xs"
-            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+            aria-label={
+              unreadCount > 0 ? t("Notifications ({0} unread)", unreadCount) : t("Notifications")
+            }
             onPointerEnter={() => void import("./notification-panel")}
           />
         }

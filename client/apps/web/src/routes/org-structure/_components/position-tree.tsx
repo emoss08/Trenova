@@ -369,7 +369,7 @@ function TreeRow({
             ref={setDragRef}
             {...dragAttributes}
             {...dragListeners}
-            aria-label={`Drag ${position.title}`}
+            aria-label={t("Drag {0}", position.title)}
             disabled={busy}
             className="text-muted-foreground/50 hover:text-foreground grid size-5 shrink-0 cursor-grab place-items-center rounded-md opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing disabled:cursor-default"
           >
@@ -402,7 +402,7 @@ function TreeRow({
           type="button"
           onClick={onOpenHolders}
           className="hover:bg-accent rounded-md px-1.5 py-0.5 text-right text-xs tabular-nums transition-colors"
-          aria-label={`${position.title} headcount`}
+          aria-label={t("{0} headcount", position.title)}
           title={t("Who holds it")}
         >
           <span

@@ -256,8 +256,8 @@ export default function RandomTestingConsole() {
         )}
         hint={
           rounds.length === draws.length
-            ? `${draws.length} round${draws.length === 1 ? "" : "s"}`
-            : `${rounds.length} of ${draws.length}`
+            ? t("{0, plural, one {# round} other {# rounds}}", draws.length)
+            : t("{0} of {1}", rounds.length, draws.length)
         }
         action={
           <>

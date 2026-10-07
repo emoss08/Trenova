@@ -153,8 +153,10 @@ export function AdjustBalanceDialog({
                   rules={{ required: true }}
                   description={
                     current
-                      ? `Current ${current.balanceDays}${preview ? ` → ${preview}` : ""}`
-                      : "Days to add, or remove with a minus sign."
+                      ? preview
+                        ? t("Current {0} → {1}", current.balanceDays, preview)
+                        : t("Current {0}", current.balanceDays)
+                      : t("Days to add, or remove with a minus sign.")
                   }
                 />
               </FormControl>

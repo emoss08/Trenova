@@ -5,7 +5,7 @@ import {
   startSettlementDisputeReview,
   type SettlementDisputeRow,
 } from "@trenova/shared/lib/graphql/driver-portal";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./dispute-columns";
 import { DisputePanel } from "./dispute-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function DisputesTable() {
   const t = useT();
@@ -28,9 +29,23 @@ export default function DisputesTable() {
         toast.info(t("Only open disputes can be moved to review."));
         return;
       }
-      await runBulkAction(eligible, (row) => startSettlementDisputeReview(row.id), {
-        noun: "dispute",
-        verb: "moved to review",
+      notifyBulkOutcome(await settleAll(eligible, (row) => startSettlementDisputeReview(row.id)), {
+        succeeded: (count) =>
+          translate(
+            "{0, plural, one {# dispute moved to review} other {# disputes moved to review}}",
+            count,
+          ),
+        partial: (succeeded, failed) =>
+          translate(
+            "{0, plural, one {# dispute moved to review} other {# disputes moved to review}}, {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          translate(
+            "{0, plural, one {The selected dispute failed} other {All # selected disputes failed}}",
+            failed,
+          ),
       });
       await queryClient.invalidateQueries({ queryKey: ["settlement-dispute-list"] });
     },

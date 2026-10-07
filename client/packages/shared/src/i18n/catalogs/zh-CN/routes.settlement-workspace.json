@@ -58,6 +58,7 @@
   "Pay events deliberately deferred — they skip generation until released.": "刻意延后的薪酬事件 — 在解除前不会纳入生成作业。",
   "Pay now": "立即付款",
   "Pay this driver immediately — approve, post, and mark paid in one pass": "立即支付此司机 — 一次完成批准、过账与标记已付款",
+  "Pay {0}": "支付{0}",
   "Paying...": "支付中...",
   "Payment reference": "付款参考号",
   "Period net pay": "期间净薪酬",
@@ -92,5 +93,6 @@
   "{0} events · {1} drivers": "{0} 个事件 · {1} 位司机",
   "{0} held (": "{0} 项暂扣 (",
   "{0} held events": "{0} 项暂扣事件",
+  "{0} paid": "{0} 已付",
   "· paused": "· 已暂停"
 }

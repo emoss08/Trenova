@@ -274,6 +274,7 @@ export function iftaReturnCsvRows(ret: Pick<IftaReturnView, "lines">): IftaRetur
         lineTotal: line.lineTotal,
       });
     }
+    // i18n-ignore: CSV export rows, whose headers and totals stay in English
     rows.push(totalsRow("subtotal", fuelLabel, `${fuelLabel} subtotal`, group.subtotal));
   }
   rows.push(totalsRow("total", "", "Total", sumLines(ret.lines)));

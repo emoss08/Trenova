@@ -18,6 +18,7 @@ import type { SelectOption } from "@trenova/shared/types/fields";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { columnHeaderLabel } from "@/lib/data-table";
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
@@ -152,7 +153,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
           onBlur={() => {
             if (!isPending) cell.stopEditing();
           }}
-          aria-label={`Edit ${cell.column.id}`}
+          aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
         />
         {isPending && <Spinner className="size-3.5" />}
       </span>
@@ -174,7 +175,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
           <SelectTrigger
             size="sm"
             className="h-7 w-full min-w-0 text-xs"
-            aria-label={`Edit ${cell.column.id}`}
+            aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
           >
             <SelectValue placeholder={t("Select a value")} />
           </SelectTrigger>
@@ -204,7 +205,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
         onKeyDown={handleInputKeyDown}
         onBlur={handleInputBlur}
         className={cn("h-7 w-full min-w-0 px-2 text-xs")}
-        aria-label={`Edit ${cell.column.id}`}
+        aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
       />
       {isPending && <Spinner className="size-3.5 shrink-0" />}
     </span>

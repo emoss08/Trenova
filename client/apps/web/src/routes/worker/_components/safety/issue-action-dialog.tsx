@@ -49,6 +49,23 @@ export type IssueActionDialogProps = {
   safetyEventId?: string | null;
 };
 
+function issuedMessage(level: DisciplinaryLevel): string {
+  switch (level) {
+    case "Coaching":
+      return translate("Coaching issued");
+    case "VerbalWarning":
+      return translate("Verbal warning issued");
+    case "WrittenWarning":
+      return translate("Written warning issued");
+    case "FinalWarning":
+      return translate("Final warning issued");
+    case "Suspension":
+      return translate("Suspension issued");
+    case "Termination":
+      return translate("Termination issued");
+  }
+}
+
 export function IssueActionDialog({
   open,
   onOpenChange,
@@ -118,7 +135,7 @@ export function IssueActionDialog({
         recordEmploymentEvent: movesEmployment && values.recordEmploymentEvent,
       }),
     onSuccess: (result) => {
-      toast.success(`${meta.label} issued`, {
+      toast.success(issuedMessage(level), {
         description: result.employmentEvent
           ? translate("The timeline was updated and the driver has been notified.")
           : translate("The driver has been notified and can acknowledge it in Dash."),

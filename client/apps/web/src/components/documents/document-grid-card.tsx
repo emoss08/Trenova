@@ -194,7 +194,7 @@ export function DocumentGridCard({
             checked={isSelected}
             onCheckedChange={handleCheckboxChange}
             className="bg-background/80 size-5 border-2 backdrop-blur-sm"
-            aria-label={`Select ${document.originalName}`}
+            aria-label={t("Select {0}", document.originalName)}
           />
         </div>
       )}

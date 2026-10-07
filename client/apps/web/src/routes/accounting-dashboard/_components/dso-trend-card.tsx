@@ -77,7 +77,7 @@ export function DsoTrendCard() {
                 strokeDasharray="4 4"
                 strokeOpacity={0.5}
                 label={{
-                  value: `target ${AR_DSO_TARGET_DAYS}d`,
+                  value: t("target {0}d", AR_DSO_TARGET_DAYS),
                   position: "insideTopRight",
                   fontSize: 10,
                   fill: "var(--muted-foreground)",

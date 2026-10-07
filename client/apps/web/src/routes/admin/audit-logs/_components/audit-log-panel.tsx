@@ -74,7 +74,9 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
 
   const isArray = Array.isArray(value);
   const count = isArray ? value.length : Object.keys(value).length;
-  const summary = isArray ? `Array (${count} items)` : `Object (${count} fields)`;
+  const summary = isArray
+    ? t("{0, plural, one {Array (# item)} other {Array (# items)}}", count)
+    : t("{0, plural, one {Object (# field)} other {Object (# fields)}}", count);
 
   return (
     <div className="space-y-2">

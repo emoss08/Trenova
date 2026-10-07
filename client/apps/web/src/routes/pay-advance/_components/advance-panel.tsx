@@ -57,12 +57,13 @@ export function AdvancePanel({
   mode,
   row,
 }: DataTablePanelProps<PayAdvanceRow>) {
+  const t = useT();
   if (mode === "edit" && row) {
     return (
       <DataTablePanelContainer
         open={open}
         onOpenChange={onOpenChange}
-        title={`Advance ${row.reference || ""}`.trim()}
+        title={row.reference ? t("Advance {0}", row.reference) : t("Advance")}
         size="md"
       >
         <AdvanceDetail row={row} onClose={() => onOpenChange(false)} />

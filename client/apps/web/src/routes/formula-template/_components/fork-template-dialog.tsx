@@ -29,6 +29,7 @@ export type ForkableTemplate = Pick<FormulaTemplate, "id" | "name" | "currentVer
 /** Form defaults for forking a template; recomputed whenever the target changes. */
 export function forkDefaultsFor(template: ForkableTemplate | null): ForkRequest {
   return {
+    // i18n-ignore: default name saved on the forked template record
     newName: template ? `${template.name} (Fork)` : "",
     sourceVersion: template?.currentVersionNumber,
     changeMessage: "",
@@ -84,7 +85,7 @@ export function ForkTemplateDialog({
       .fork(template.id, values)
       .then((forkedTemplate) => {
         toast.success(t("Template forked successfully"), {
-          description: `Created "${forkedTemplate.name}"`,
+          description: t('Created "{0}"', forkedTemplate.name),
         });
 
         void invalidateFormulaTemplate(queryClient);

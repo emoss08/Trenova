@@ -105,9 +105,11 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
   const waived = cost?.waived ?? 0;
   const detail = [
     plan.carrier,
-    plan.policyNumber ? `Policy ${plan.policyNumber}` : null,
-    plan.payCode ? `Pay code ${plan.payCode.code}` : null,
-    plan.waitingPeriodDays > 0 ? `${plan.waitingPeriodDays}-day wait` : "No waiting period",
+    plan.policyNumber ? t("Policy {0}", plan.policyNumber) : null,
+    plan.payCode ? t("Pay code {0}", plan.payCode.code) : null,
+    plan.waitingPeriodDays > 0
+      ? t("{0, plural, one {#-day wait} other {#-day wait}}", plan.waitingPeriodDays)
+      : t("No waiting period"),
   ].filter(Boolean);
 
   return (
@@ -169,7 +171,7 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
               size="icon-xs"
               variant="ghost"
               onClick={onEdit}
-              aria-label={`Edit ${plan.name}`}
+              aria-label={t("Edit {0}", plan.name)}
             >
               <PencilLineIcon className="size-3.5" />
             </Button>

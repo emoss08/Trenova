@@ -91,21 +91,26 @@ export function AssertionsEditor() {
       0,
     );
     if (ruleCount > 0) {
-      parts.push(`${ruleCount} field assertion${ruleCount !== 1 ? "s" : ""}`);
+      parts.push(t("{0, plural, one {# field assertion} other {# field assertions}}", ruleCount));
     }
     const legacyFieldCount = Object.keys(expectedFields ?? {}).length;
     if (legacyFieldCount > 0) {
-      parts.push(`${legacyFieldCount} legacy exact match${legacyFieldCount !== 1 ? "es" : ""}`);
+      parts.push(
+        t(
+          "{0, plural, one {# legacy exact match} other {# legacy exact matches}}",
+          legacyFieldCount,
+        ),
+      );
     }
     const roleCount = (requiredStopRoles ?? []).length;
     if (roleCount > 0) {
-      parts.push(`${roleCount} required role${roleCount !== 1 ? "s" : ""}`);
+      parts.push(t("{0, plural, one {# required role} other {# required roles}}", roleCount));
     }
     if (minimumStopCount && minimumStopCount > 0) {
-      parts.push(`min ${minimumStopCount} stop${minimumStopCount !== 1 ? "s" : ""}`);
+      parts.push(t("{0, plural, one {min # stop} other {min # stops}}", minimumStopCount));
     }
     return parts;
-  }, [expectedFields, fieldAssertions, requiredStopRoles, minimumStopCount]);
+  }, [expectedFields, fieldAssertions, requiredStopRoles, minimumStopCount, t]);
 
   return (
     <FormSection

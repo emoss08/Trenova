@@ -46,6 +46,7 @@
   "Match created": "Coincidencia creada",
   "Match created with a variance — resolve it from the Matches tab": "Coincidencia creada con una variación — resuélvala desde la pestaña Coincidencias",
   "Match rejected": "Coincidencia rechazada",
+  "Matches ({0})": "Coincidencias ({0})",
   "Negotiated buy rate": "Tarifa de compra negociada",
   "No carrier in the master matches this invoice's SCAC or DOT number.": "Ningún transportista del maestro coincide con el SCAC o el número DOT de esta factura.",
   "No carrier invoice fits that search. Clear it to see the list again.": "Ninguna factura de transportista coincide con esa búsqueda. Bórrela para volver a ver la lista.",

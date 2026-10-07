@@ -15,9 +15,9 @@ import { translate } from "@trenova/shared/i18n/runtime";
 export const forcedChangePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, { error: () => translate("Enter your current password") }),
-    newPassword: z
-      .string()
-      .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
+    newPassword: z.string().min(MIN_PASSWORD_LENGTH, {
+      error: () => translate("Password must be at least {0} characters", MIN_PASSWORD_LENGTH),
+    }),
     confirmPassword: z.string().min(1, { error: () => translate("Confirm your new password") }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

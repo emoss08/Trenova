@@ -82,7 +82,7 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
         type="button"
         variant="ghost"
         size="icon"
-        aria-label={`Remove ${label}`}
+        aria-label={t("Remove {0}", label)}
         onClick={() => onRemove(date)}
         className="text-muted-foreground hover:text-foreground ml-auto size-5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100"
       >

@@ -294,11 +294,14 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
   }, [open, isSubmitting, handleSubmit, defaultAction]);
 
   const lastUpdatedDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(
-        row.updatedAt as unknown as number,
-        { timeFormat: user?.timeFormat || "24-hour" },
-        user?.timezone,
-      )}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(
+          row.updatedAt as unknown as number,
+          { timeFormat: user?.timeFormat || "24-hour" },
+          user?.timezone,
+        ),
+      )
     : undefined;
 
   return (

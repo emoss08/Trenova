@@ -268,26 +268,34 @@ export function formatErrorReport(
   const lines = [
     context.title,
     "",
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     `Kind: ${description.kind}`,
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     `Occurred: ${context.occurredAt.toISOString()}`,
   ];
 
   if (description.traceId) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Reference: ${description.traceId}`);
   }
   if (description.status) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Status: ${description.status}`);
   }
   if (description.problemType) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Problem: ${description.problemType}`);
   }
   if (description.code) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Code: ${description.code}`);
   }
   if (context.location) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Page: ${context.location}`);
   }
   if (typeof navigator !== "undefined") {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Browser: ${navigator.userAgent}`);
   }
 

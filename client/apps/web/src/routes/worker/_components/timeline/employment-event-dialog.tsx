@@ -132,6 +132,32 @@ export function describeCascade(cascade: EmploymentCascade): string {
   return parts.length > 0 ? parts.join(" · ") : translate("The timeline has been updated.");
 }
 
+function currentDriverType(driverType: string): string {
+  switch (driverType) {
+    case "Local":
+      return translate("Currently Local.");
+    case "Regional":
+      return translate("Currently Regional.");
+    case "OTR":
+      return translate("Currently OTR.");
+    case "Team":
+      return translate("Currently Team.");
+    default:
+      return translate("Currently {0}.", driverType);
+  }
+}
+
+function currentWorkerType(workerType: string): string {
+  switch (workerType) {
+    case "Employee":
+      return translate("Currently Employee.");
+    case "Contractor":
+      return translate("Currently Contractor.");
+    default:
+      return translate("Currently {0}.", workerType);
+  }
+}
+
 export function EmploymentEventSheet(props: EmploymentEventSheetProps) {
   return props.mode === "amend" && props.event ? (
     <AmendSheet {...props} event={props.event} />
@@ -337,7 +363,7 @@ function RecordSheet({
                       options={driverTypeChoices}
                       isClearable
                       placeholder={t("Select a driver type")}
-                      description={`Currently ${worker.driverType}.`}
+                      description={currentDriverType(worker.driverType)}
                     />
                   </FormControl>
                   <FormControl>
@@ -348,7 +374,7 @@ function RecordSheet({
                       options={workerTypeChoices}
                       isClearable
                       placeholder={t("Select a worker type")}
-                      description={`Currently ${worker.type}.`}
+                      description={currentWorkerType(worker.type)}
                     />
                   </FormControl>
                 </>

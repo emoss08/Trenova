@@ -224,8 +224,8 @@ export function BulkAssignTrainingDialog({
  * separately from failures, because "already enrolled" is not a problem.
  */
 export function describeBulkAssign(result: BulkAssignTrainingResult): string {
-  const parts = [`${result.assignedCount} assigned`];
-  if (result.skippedCount > 0) parts.push(`${result.skippedCount} already open`);
-  if (result.failedCount > 0) parts.push(`${result.failedCount} failed`);
+  const parts = [translate("{0} assigned", result.assignedCount)];
+  if (result.skippedCount > 0) parts.push(translate("{0} already open", result.skippedCount));
+  if (result.failedCount > 0) parts.push(translate("{0} failed", result.failedCount));
   return parts.join(", ");
 }

@@ -26,7 +26,6 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
-import { pluralize } from "@trenova/shared/lib/utils";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { CheckCircleIcon, RouteIcon, Settings01Icon } from "@trenova/shared/components/icons";
@@ -77,7 +76,7 @@ function CountFigure({
     <div className="bg-muted/30 rounded-lg border p-3" title={hint}>
       <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <p className="mt-1 text-sm font-semibold tabular-nums">
-        {count} {pluralize("move", count)}
+        {t("{0, plural, one {# move} other {# moves}}", count)}
       </p>
       <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
         {t("{0} miles", formatIftaMeasure(miles, IFTA_MILES_DISPLAY_SCALE))}
@@ -289,7 +288,7 @@ function BackfillSession({
         ) : (
           <div className="flex flex-col gap-1">
             <span className="font-semibold tabular-nums">
-              {dryRun.unattributedMoves} {pluralize("move", dryRun.unattributedMoves)}
+              {t("{0, plural, one {# move} other {# moves}}", dryRun.unattributedMoves)}
             </span>
             <span className="text-muted-foreground text-xs tabular-nums">
               {t(

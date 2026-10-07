@@ -64,7 +64,7 @@ export function CredentialSlotRow({
   if (!credential && permissions.canCreate) {
     actions.push({
       id: "add",
-      label: `Add ${type.name}`,
+      label: t("Add {0}", type.name),
       icon: PlusIcon,
       onSelect: () => onAdd(type.id),
     });
@@ -73,7 +73,7 @@ export function CredentialSlotRow({
     if (!verified && permissions.canVerify) {
       actions.push({
         id: "verify",
-        label: `Verify ${type.name}`,
+        label: t("Verify {0}", type.name),
         icon: ShieldTickIcon,
         disabled: verifying,
         onSelect: () => onVerify(item),
@@ -82,7 +82,7 @@ export function CredentialSlotRow({
     if (permissions.canUpdate) {
       actions.push({
         id: "edit",
-        label: `Edit ${type.name}`,
+        label: t("Edit {0}", type.name),
         icon: Edit02Icon,
         onSelect: () => onEdit(item),
       });
@@ -90,7 +90,7 @@ export function CredentialSlotRow({
     if (permissions.canCreate) {
       actions.push({
         id: "renew",
-        label: `Renew ${type.name}`,
+        label: t("Renew {0}", type.name),
         icon: RefreshCw02Icon,
         onSelect: () => onRenew(item),
       });
@@ -98,7 +98,7 @@ export function CredentialSlotRow({
     if (permissions.canArchive) {
       actions.push({
         id: "archive",
-        label: `Archive ${type.name}`,
+        label: t("Archive {0}", type.name),
         icon: ArchiveIcon,
         destructive: true,
         onSelect: () => onArchive(item),

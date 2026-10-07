@@ -181,7 +181,7 @@ export function DashSettlementPage() {
                 {features.allowSettlementDisputes ? (
                   <button
                     type="button"
-                    aria-label={`Dispute ${line.description}`}
+                    aria-label={t("Dispute {0}", line.description)}
                     onClick={() => openDispute(line)}
                     className="-mr-1 p-1 text-muted-foreground hover:text-foreground"
                   >

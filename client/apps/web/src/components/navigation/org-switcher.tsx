@@ -33,6 +33,7 @@ function OrgLogo({
   initials: string;
   isSwitching: boolean;
 }) {
+  const t = useT();
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const hasLogo = Boolean(logoURL) && !imageLoadFailed;
 
@@ -48,7 +49,7 @@ function OrgLogo({
     return (
       <LazyImage
         src={logoURL}
-        alt={`${orgName ?? "Organization"} logo`}
+        alt={orgName ? t("{0} logo", orgName) : t("Organization logo")}
         className="size-7 shrink-0 rounded-md object-cover"
         onError={() => setImageLoadFailed(true)}
       />

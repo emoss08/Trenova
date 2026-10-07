@@ -27,6 +27,7 @@
   "awaiting application": "pendiente de aplicación",
   "not yet due": "aún no vencido",
   "target < {0}d · vs 4 weeks ago": "objetivo < {0} d · frente a hace 4 semanas",
+  "target {0}d": "objetivo {0}d",
   "total open": "total abierto",
   "trailing 91 days": "últimos 91 días",
   "weekly, collected vs due": "semanal, cobrado frente a vencido",

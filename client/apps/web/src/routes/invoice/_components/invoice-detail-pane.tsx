@@ -689,7 +689,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
                 {part.links.map((link) => (
                   <DeliveryPackageDocument
                     key={link.documentId}
-                    label={link.reason ? `Link - ${link.reason}` : "Link"}
+                    label={link.reason ? t("Link - {0}", link.reason) : t("Link")}
                     fileName={link.fileName}
                     sizeBytes={link.sizeBytes}
                   />

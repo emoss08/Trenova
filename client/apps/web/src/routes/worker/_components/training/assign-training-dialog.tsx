@@ -99,11 +99,16 @@ export function AssignTrainingDialog({
         notes: values.notes ?? undefined,
       }),
     onSuccess: (record) => {
-      toast.success(`${record.course?.name ?? "Course"} assigned`, {
-        description: record.dueAt
-          ? translate("The driver will see it in Dash with the due date.")
-          : translate("The driver will see it in Dash."),
-      });
+      toast.success(
+        record.course?.name
+          ? translate("{0} assigned", record.course.name)
+          : translate("Course assigned"),
+        {
+          description: record.dueAt
+            ? translate("The driver will see it in Dash with the due date.")
+            : translate("The driver will see it in Dash."),
+        },
+      );
       void invalidate();
       onOpenChange(false);
     },

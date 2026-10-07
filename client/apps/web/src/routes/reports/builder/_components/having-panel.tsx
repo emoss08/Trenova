@@ -50,14 +50,15 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
     );
   }
 
-  const measureChoices = measures.map((column) => ({
-    value: measureKey({ ref: column.ref, operator: "", agg: column.agg }),
-    label: `${column.agg ? `${REPORT_AGGREGATION_LABELS[column.agg]} of ` : ""}${refLabel(
-      index,
-      ir.entity,
-      column.ref,
-    )}`,
-  }));
+  const measureChoices = measures.map((column) => {
+    const fieldLabel = refLabel(index, ir.entity, column.ref);
+    return {
+      value: measureKey({ ref: column.ref, operator: "", agg: column.agg }),
+      label: column.agg
+        ? t("{0} of {1}", REPORT_AGGREGATION_LABELS[column.agg], fieldLabel)
+        : fieldLabel,
+    };
+  });
 
   const updateFilters = (next: ReportFieldFilter[]) => {
     onChange(next.length > 0 ? { op: "and", filters: next } : undefined);

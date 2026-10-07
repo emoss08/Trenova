@@ -201,7 +201,7 @@ export function SourceDrillDownPage() {
             <SourceDrillDownLink
               sourceType={type!}
               sourceId={sourceId!}
-              label={`Open ${sourceLabel}`}
+              label={t("Open {0}", sourceLabel)}
             />
             <Button variant="outline" size="sm" onClick={() => void navigate(-1)}>
               <ArrowLeftIcon className="size-3.5" />

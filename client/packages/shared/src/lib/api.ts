@@ -260,6 +260,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     const errorData = await response.json().catch(() => ({
       type: "internal-error",
       title: translate("Request failed"),
+      // i18n-ignore: HTTP status code, the same in every language
       detail: `HTTP ${response.status}`,
       status: response.status,
     }));
@@ -297,6 +298,7 @@ async function uploadRequest<T>(
     const errorData = await response.json().catch(() => ({
       type: "internal-error",
       title: translate("Upload failed"),
+      // i18n-ignore: HTTP status code, the same in every language
       detail: `HTTP ${response.status}`,
       status: response.status,
     }));
@@ -360,6 +362,7 @@ async function uploadWithProgress<T>(
           errorData = {
             type: "internal-error",
             title: translate("Upload failed"),
+            // i18n-ignore: HTTP status code, the same in every language
             detail: `HTTP ${xhr.status}`,
             status: xhr.status,
           };

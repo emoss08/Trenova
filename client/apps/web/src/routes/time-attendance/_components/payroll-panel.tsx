@@ -254,7 +254,12 @@ export function PayrollPanel() {
                   <CompositionBar
                     size="sm"
                     showLegend={false}
-                    aria-label={`${sheet.worker ? `${sheet.worker.firstName} ${sheet.worker.lastName}` : sheet.workerId}'s hours`}
+                    aria-label={t(
+                      "{0}'s hours",
+                      sheet.worker
+                        ? `${sheet.worker.firstName} ${sheet.worker.lastName}`
+                        : sheet.workerId,
+                    )}
                     formatValue={formatHours}
                     segments={hourSegments(sheet)}
                   />

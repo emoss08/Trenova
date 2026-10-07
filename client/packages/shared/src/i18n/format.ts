@@ -99,9 +99,16 @@ const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ];
 
-export function formatRelativeTime(deltaSeconds: number): string {
+/**
+ * formatRelativeTime writes a signed offset in seconds as the reader's language does: "3 days
+ * ago", "in 2 hours". `narrow` is the compact form a dense row uses ("3d ago", "hace 3 días").
+ */
+export function formatRelativeTime(
+  deltaSeconds: number,
+  style: Intl.RelativeTimeFormatStyle = "long",
+): string {
   const locale = intlLocale();
-  const options: Intl.RelativeTimeFormatOptions = { numeric: "auto" };
+  const options: Intl.RelativeTimeFormatOptions = { numeric: "auto", style };
   const formatter = cachedFormatter(
     relativeTimeFormatters,
     locale,

@@ -9,6 +9,7 @@ export type EDIScriptPreset = {
   recommendedFunctionName?: string;
 };
 
+// i18n-ignore: Starlark source inserted into the script editor
 const shipmentReferenceValueCode = `
 def shipment_reference_value(ctx):
     shipment = ctx["shipment"]
@@ -24,6 +25,7 @@ def shipment_reference_value(ctx):
     return coalesce(shipment.get("bol"), shipment.get("shipmentId"))
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const shipmentReferenceQualifierCode = `
 def shipment_reference_qualifier(ctx):
     shipment = ctx["shipment"]
@@ -35,6 +37,7 @@ def shipment_reference_qualifier(ctx):
     return default(shipment.get("referenceQualifier"), "BM")
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const contactPhoneNormalizationCode = `
 def normalized_contact_phone(ctx):
     partner = ctx["partner"]
@@ -48,6 +51,7 @@ def normalized_contact_phone(ctx):
     )
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const stopReasonCodeCode = `
 def stop_reason_code(ctx, item):
     stop_type = item.get("type")
@@ -58,6 +62,7 @@ def stop_reason_code(ctx, item):
     return default(stop_type, "LD")
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const locationCodeFallbackCode = `
 def location_code(ctx, item):
     return coalesce(
@@ -68,6 +73,7 @@ def location_code(ctx, item):
     )
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const commodityDescriptionFallbackCode = `
 def commodity_description(ctx, item):
     return default(
@@ -80,6 +86,7 @@ def commodity_description(ctx, item):
     )
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const accessorialCodeFallbackCode = `
 def accessorial_code(ctx, item):
     return default(
@@ -92,23 +99,27 @@ def accessorial_code(ctx, item):
     )
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const bolExistsInlineConditionCode = `
 starlark:def include(ctx):
     return exists(ctx["shipment"].get("bol"))
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const pickupStopInlineConditionCode = `
 starlark:def include(ctx, item):
     stop_type = item.get("type")
     return stop_type == "LD" or stop_type == "Pickup"
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const deliveryStopInlineConditionCode = `
 starlark:def include(ctx, item):
     stop_type = item.get("type")
     return stop_type == "UL" or stop_type == "Delivery"
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const conditionLibraryCode = `
 def include_bol_exists(ctx):
     return exists(ctx["shipment"].get("bol"))
@@ -122,6 +133,7 @@ def include_delivery_stop(ctx, item):
     return stop_type == "UL" or stop_type == "Delivery"
 `;
 
+// i18n-ignore: Starlark source inserted into the script editor
 const valueLibraryCode = `
 def first_shipment_reference_value(ctx):
     shipment = ctx["shipment"]

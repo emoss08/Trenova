@@ -89,6 +89,23 @@ export type AttentionReason = {
   severity: AttentionSeverity;
 };
 
+function trainingAttentionLabel(health: string): string {
+  switch (health) {
+    case "Failed":
+      return translate("Training failed");
+    case "Expired":
+      return translate("Training expired");
+    case "Overdue":
+      return translate("Training overdue");
+    case "DueSoon":
+      return translate("Training due soon");
+    case "ExpiringSoon":
+      return translate("Training expiring soon");
+    default:
+      return translate("Training missing");
+  }
+}
+
 /**
  * Everything about a person a manager might have to act on, worst first. A
  * critical reason stops them working or should; a watch reason is the thing
@@ -107,13 +124,13 @@ export function attentionReasons(member: TeamMemberRow): AttentionReason[] {
   if (training.blocks) {
     reasons.push({
       key: "training",
-      label: `Training ${training.label.toLowerCase()}`,
+      label: trainingAttentionLabel(member.trainingHealth),
       severity: "critical",
     });
   } else if (member.trainingHealth === "DueSoon" || member.trainingHealth === "ExpiringSoon") {
     reasons.push({
       key: "training",
-      label: `Training ${training.label.toLowerCase()}`,
+      label: trainingAttentionLabel(member.trainingHealth),
       severity: "watch",
     });
   }

@@ -465,14 +465,14 @@ export const saveAgentDefinitionRequestSchema = z.object({
   memoryTokenBudget: z
     .number()
     .int({ error: () => translate("Use a whole number of tokens") })
-    .min(
-      MEMORY_TOKEN_BUDGET.min,
-      `Memory in the prompt must be at least ${MEMORY_TOKEN_BUDGET.min} tokens`,
-    )
-    .max(
-      MEMORY_TOKEN_BUDGET.max,
-      `Memory in the prompt can be at most ${MEMORY_TOKEN_BUDGET.max} tokens`,
-    )
+    .min(MEMORY_TOKEN_BUDGET.min, {
+      error: () =>
+        translate("Memory in the prompt must be at least {0} tokens", MEMORY_TOKEN_BUDGET.min),
+    })
+    .max(MEMORY_TOKEN_BUDGET.max, {
+      error: () =>
+        translate("Memory in the prompt can be at most {0} tokens", MEMORY_TOKEN_BUDGET.max),
+    })
     .nullable()
     .default(null),
   /** The agent no longer looks back over its work to keep what it learned. */

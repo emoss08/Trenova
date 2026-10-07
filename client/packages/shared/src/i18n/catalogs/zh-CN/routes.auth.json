@@ -35,6 +35,7 @@
   "Open your authenticator app and enter the six-digit code for Trenova.": "请打开验证器应用并输入 Trenova 的六位数代码。",
   "Opening workspace": "正在打开工作区",
   "Organizations": "组织",
+  "Password must be at least {0} characters": "密码至少需 {0} 个字符",
   "Passwords do not match": "两次输入的密码不一致",
   "Remembered it? Go back.": "想起来了吗？返回上一页。",
   "Request a new link": "申请新的链接",

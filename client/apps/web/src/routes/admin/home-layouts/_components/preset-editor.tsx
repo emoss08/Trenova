@@ -136,10 +136,10 @@ export function PresetEditor({ preset }: PresetEditorProps) {
     try {
       if (preset) {
         await updatePreset.mutateAsync({ ...payload, id: preset.id, version: preset.version });
-        toast.success(`Saved ${payload.name}`);
+        toast.success(t("Saved {0}", payload.name));
       } else {
         const created = await createPreset.mutateAsync(payload);
-        toast.success(`Created ${created.name}`);
+        toast.success(t("Created {0}", created.name));
         void navigate(`/admin/home-layouts/${created.id}`, { replace: true });
       }
     } catch (error) {

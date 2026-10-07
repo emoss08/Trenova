@@ -256,7 +256,7 @@ export function AutocompleteCommandContent<TOption>({
     <Command shouldFilter={false} className="overflow-hidden">
       <CommandInput
         className="h-7 truncate bg-transparent"
-        placeholder={label ? `Search ${label.toLowerCase()}...` : "Search..."}
+        placeholder={label ? t("Search {0}...", label.toLowerCase()) : t("Search...")}
         value={searchTerm}
         onValueChange={setSearchTerm}
       />

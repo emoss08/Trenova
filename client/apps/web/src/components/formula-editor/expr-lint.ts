@@ -165,7 +165,7 @@ function lintBrackets(expression: string, diagnostics: ExprDiagnostic[]) {
           from: index,
           to: index + 1,
           severity: "error",
-          message: `Unmatched '${char}'`,
+          message: translate("Unmatched '{0}'", char),
         });
       }
     }
@@ -178,7 +178,7 @@ function lintBrackets(expression: string, diagnostics: ExprDiagnostic[]) {
       from: unclosed.index,
       to: unclosed.index + 1,
       severity: "error",
-      message: `Unclosed '${unclosed.char}'`,
+      message: translate("Unclosed '{0}'", unclosed.char),
     });
   }
 }

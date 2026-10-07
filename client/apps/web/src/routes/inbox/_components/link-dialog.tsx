@@ -34,7 +34,9 @@ export const linkMessageSchema = z
       .string()
       .trim()
       .min(1, { error: () => translate("Say why this is the right record") })
-      .max(MAX_REASON_LENGTH, { error: `At most ${MAX_REASON_LENGTH} characters` }),
+      .max(MAX_REASON_LENGTH, {
+        error: () => translate("At most {0} characters", MAX_REASON_LENGTH),
+      }),
   })
   .refine((value) => Boolean(value.shipmentId) || Boolean(value.customerId), {
     error: () => translate("Choose a shipment, a customer, or both"),

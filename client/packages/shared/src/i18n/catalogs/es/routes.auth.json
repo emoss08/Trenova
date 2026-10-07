@@ -35,6 +35,7 @@
   "Open your authenticator app and enter the six-digit code for Trenova.": "Abra su aplicación de autenticación e introduzca el código de seis dígitos de Trenova.",
   "Opening workspace": "Abriendo el espacio de trabajo",
   "Organizations": "Organizaciones",
+  "Password must be at least {0} characters": "La contraseña debe tener al menos {0} caracteres",
   "Passwords do not match": "Las contraseñas no coinciden",
   "Remembered it? Go back.": "¿Ya la recordó? Vuelva atrás.",
   "Request a new link": "Solicitar un enlace nuevo",

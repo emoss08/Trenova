@@ -87,7 +87,6 @@
   "People at this carrier your team communicates with for dispatch and billing.": "Personas de este transportista con las que su equipo se comunica para despacho y facturación.",
   "Policy number as issued by the insurance provider.": "Número de póliza emitido por la aseguradora.",
   "Policy type": "Tipo de póliza",
-  "Policy {0}": "Póliza {0}",
   "Primary business address and contact details for this carrier.": "Domicilio comercial principal y datos de contacto de este transportista.",
   "Primary email address used for tenders and rate confirmations.": "Dirección de correo electrónico principal para las ofertas de carga y las confirmaciones de tarifa.",
   "Pulls the carrier's profile from {0}, re-evaluates every rule and records what changed.": "Consulta el perfil del transportista en {0}, vuelve a evaluar todas las reglas y registra lo que cambió.",

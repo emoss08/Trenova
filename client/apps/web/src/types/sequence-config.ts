@@ -153,12 +153,10 @@ export const sequenceConfigSchema = z
 export const sequenceConfigDocumentSchema = z.object({
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
-  configs: z
-    .array(sequenceConfigSchema)
-    .length(
-      sequenceTypes.length,
-      `Exactly ${sequenceTypes.length} sequence configurations are required`,
-    ),
+  configs: z.array(sequenceConfigSchema).length(sequenceTypes.length, {
+    error: () =>
+      translate("Exactly {0} sequence configurations are required", sequenceTypes.length),
+  }),
 });
 
 export type SequenceType = z.infer<typeof sequenceTypeSchema>;

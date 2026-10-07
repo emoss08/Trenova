@@ -82,12 +82,16 @@ function componentSummary(row: PayProfileRow): string {
         return `${kind} ${Number(component.rate)}%`;
       }
       if (component.bands && component.bands.length > 0) {
-        return `${kind} (${component.bands.length} bands)`;
+        return translate(
+          "{0} ({1, plural, one {# band} other {# bands}})",
+          kind,
+          component.bands.length,
+        );
       }
       return `${kind} $${Number(component.rate).toFixed(2)} ${method.toLowerCase()}`;
     })
     .join(" · ")
-    .concat(components.length > 3 ? ` +${components.length - 3} more` : "");
+    .concat(components.length > 3 ? ` ${translate("+{0} more", components.length - 3)}` : "");
 }
 
 export function getColumns(t: TranslateFn): ColumnDef<PayProfileRow>[] {

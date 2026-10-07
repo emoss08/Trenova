@@ -30,6 +30,7 @@
   "Edit figures": "Editar cifras",
   "Electronically submitted": "Presentado electrónicamente",
   "Establishment information": "Información del establecimiento",
+  "Every case is closed": "Todos los casos están cerrados",
   "Form 300": "Formulario 300",
   "Form 300. One case recorded; case numbers restart each January. A case is recorded from the worker's safety tab.": "Formulario 300. Un caso registrado; la numeración de casos se reinicia cada enero. Los casos se registran desde la pestaña de seguridad del trabajador.",
   "Form 300. {0} cases recorded; case numbers restart each January. A case is recorded from the worker's safety tab.": "Formulario 300. {0} casos registrados; la numeración de casos se reinicia cada enero. Los casos se registran desde la pestaña de seguridad del trabajador.",
@@ -54,6 +55,7 @@
   "Not yet submitted electronically": "Todavía no se ha presentado electrónicamente",
   "Nothing in the log fits that search and filter together.": "Nada en el registro se ajusta a esa búsqueda y ese filtro a la vez.",
   "Nothing recorded for {0}": "Nada registrado para {0}",
+  "Nothing recorded this year": "Nada registrado este año",
   "Number of cases": "Número de casos",
   "Number of days": "Número de días",
   "Occurred {0}{1}": "Ocurrió {0}{1}",
@@ -106,5 +108,7 @@
   "e.g. Mar 2": "p. ej., 2 de marzo",
   "e.g. Vice President of Operations": "p. ej., Vicepresidente de Operaciones",
   "will sign": "firmará",
-  "{0} away from work, {1} restricted or transferred": "{0} de ausencia del trabajo, {1} con restricción o traslado"
+  "{0} away from work, {1} restricted or transferred": "{0} de ausencia del trabajo, {1} con restricción o traslado",
+  "{0} kept off the log": "{0} fuera del registro",
+  "{0} still accruing days": "{0} aún acumulan días"
 }

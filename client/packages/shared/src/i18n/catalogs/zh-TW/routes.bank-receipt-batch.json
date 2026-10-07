@@ -24,6 +24,7 @@
   "Reference #": "參考編號",
   "Reference is required": "參照為必填",
   "Source is required": "來源為必填",
+  "Source: {0}": "來源：{0}",
   "The bank or institution this batch originates from.": "此批次的來源銀行或機構。",
   "The file imported with nothing in it, or every line was rejected. Import it again once it has rows.": "匯入的檔案內容為空，或所有明細皆被拒絕。請待其有資料列後再重新匯入。",
   "Total amount": "總金額",

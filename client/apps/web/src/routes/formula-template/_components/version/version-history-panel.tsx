@@ -163,6 +163,7 @@ export function VersionHistoryPanel({
     await apiService.formulaTemplateService
       .rollback(template.id, {
         targetVersion: pendingRollbackVersion.versionNumber,
+        // i18n-ignore: change message stored on the template version record
         changeMessage: `Rolled back to version ${pendingRollbackVersion.versionNumber}`,
       })
       .then((updatedTemplate) => {

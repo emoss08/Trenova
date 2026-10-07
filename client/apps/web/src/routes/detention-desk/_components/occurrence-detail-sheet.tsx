@@ -112,14 +112,16 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
       <KpiStripItem
         label={t("Billable")}
         value={formatCurrency(occurrence.billableAmount, occurrence.currency)}
-        sub={`${formatDetentionMinutes(occurrence.roundedMinutes)} of ${formatDetentionMinutes(
-          occurrence.rawDwellMinutes,
-        )}`}
+        sub={t(
+          "{0} of {1}",
+          formatDetentionMinutes(occurrence.roundedMinutes),
+          formatDetentionMinutes(occurrence.rawDwellMinutes),
+        )}
       />
       <KpiStripItem
         label={t("Driver pay")}
         value={formatCurrency(occurrence.driverPayAmount, occurrence.currency)}
-        sub={`${formatDetentionMinutes(occurrence.driverPayMinutes)} payable`}
+        sub={t("{0} payable", formatDetentionMinutes(occurrence.driverPayMinutes))}
       />
       <KpiStripItem
         label={t("Net margin")}

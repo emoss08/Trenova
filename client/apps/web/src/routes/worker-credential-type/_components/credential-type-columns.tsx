@@ -102,7 +102,8 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerCredentialTypeRow>[]
     {
       accessorKey: "renewalWindowDays",
       header: t("Alert window"),
-      cell: ({ row }) => `${row.original.renewalWindowDays} days`,
+      cell: ({ row }) =>
+        t("{0, plural, one {# day} other {# days}}", row.original.renewalWindowDays),
       size: 110,
       meta: { apiField: "renewalWindowDays", sortable: true },
     },
@@ -111,7 +112,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerCredentialTypeRow>[]
       header: t("Validity"),
       cell: ({ row }) =>
         row.original.validityMonths ? (
-          `${row.original.validityMonths} mo`
+          t("{0} mo", row.original.validityMonths)
         ) : (
           <span className="text-muted-foreground">—</span>
         ),

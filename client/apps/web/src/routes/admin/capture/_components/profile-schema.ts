@@ -71,7 +71,7 @@ export const profileFormSchema = z
       !value.separatorStrategies.includes("FixedPageCount") ||
       (value.fixedPageCount >= 1 && value.fixedPageCount <= MAX_FIXED_PAGE_COUNT),
     {
-      error: `Pages per document must be between 1 and ${MAX_FIXED_PAGE_COUNT}`,
+      error: () => translate("Pages per document must be between 1 and {0}", MAX_FIXED_PAGE_COUNT),
       path: ["fixedPageCount"],
     },
   );

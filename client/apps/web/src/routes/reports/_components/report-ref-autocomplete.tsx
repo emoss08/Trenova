@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -126,6 +127,42 @@ export const REPORT_REF_ENTITIES: Record<string, RefEntityConfig> = {
   },
 };
 
+const REF_SELECT_PLACEHOLDERS: Record<string, string> = defineLabels({
+  customer: "Select customer",
+  worker: "Select worker",
+  tractor: "Select tractor",
+  trailer: "Select trailer",
+  location: "Select location",
+  location_category: "Select location category",
+  equipment_type: "Select equipment type",
+  equipment_manufacturer: "Select equipment manufacturer",
+  fleet_code: "Select fleet code",
+  shipment_type: "Select shipment type",
+  service_type: "Select service type",
+  commodity: "Select commodity",
+  hazardous_material: "Select hazardous material",
+  order: "Select order",
+  shipment: "Select shipment",
+});
+
+const REF_ADD_PLACEHOLDERS: Record<string, string> = defineLabels({
+  customer: "Add customer...",
+  worker: "Add worker...",
+  tractor: "Add tractor...",
+  trailer: "Add trailer...",
+  location: "Add location...",
+  location_category: "Add location category...",
+  equipment_type: "Add equipment type...",
+  equipment_manufacturer: "Add equipment manufacturer...",
+  fleet_code: "Add fleet code...",
+  shipment_type: "Add shipment type...",
+  service_type: "Add service type...",
+  commodity: "Add commodity...",
+  hazardous_material: "Add hazardous material...",
+  order: "Add order...",
+  shipment: "Add shipment...",
+});
+
 export const REPORT_REF_ENTITY_CHOICES: { value: string; label: string }[] = Object.entries(
   REPORT_REF_ENTITIES,
 ).map(([value, config]) => ({ value, label: config.label }));
@@ -145,12 +182,13 @@ export function ReportRefAutocomplete({
   placeholder,
   clearable = true,
 }: ReportRefAutocompleteProps) {
+  const t = useT();
   const config = REPORT_REF_ENTITIES[entityKey];
   if (!config) {
     return (
       <Input
         value={value}
-        placeholder={placeholder ?? "Enter an ID"}
+        placeholder={placeholder ?? t("Enter an ID")}
         onChange={(event) => onChange(event.target.value)}
       />
     );
@@ -165,7 +203,7 @@ export function ReportRefAutocomplete({
       renderOption={(option) => config.display(option)}
       getOptionValue={(option) => optionString(option, "id")}
       getDisplayValue={(option) => config.display(option)}
-      placeholder={placeholder ?? `Select ${config.label.toLowerCase()}`}
+      placeholder={placeholder ?? REF_SELECT_PLACEHOLDERS[entityKey]}
       clearable={clearable}
     />
   );
@@ -208,7 +246,7 @@ export function ReportRefMultiAutocomplete({
         renderOption={(option) => config?.display(option) ?? optionString(option, "id")}
         getOptionValue={(option) => optionString(option, "id")}
         getDisplayValue={(option) => config?.display(option) ?? optionString(option, "id")}
-        placeholder={`Add ${config?.label.toLowerCase() ?? "value"}...`}
+        placeholder={config ? REF_ADD_PLACEHOLDERS[entityKey] : t("Add value...")}
         clearable={false}
       />
       {values.length > 0 && (

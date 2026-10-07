@@ -49,7 +49,7 @@ export function AgingSummaryHeader({
         <KpiStripItem
           label={t("Current DSO")}
           value={kpis ? `${kpis.currentDsoDays.toFixed(1)}d` : "—"}
-          sub={`target < ${AR_DSO_TARGET_DAYS}d`}
+          sub={t("target < {0}d", AR_DSO_TARGET_DAYS)}
         />
         <KpiStripItem
           label={t("CEI")}

@@ -125,8 +125,12 @@ function CertificateSummaryLine({
   const summary = inspection.data;
   const expiresOn = formatUnixDate(summary.notAfter);
   const expiryText = summary.expired
-    ? `Expired on ${expiresOn}`
-    : `Expires in ${summary.expiresInDays} day(s) (${expiresOn})`;
+    ? t("Expired on {0}", expiresOn)
+    : t(
+        "{0, plural, one {Expires in # day} other {Expires in # days}} ({1})",
+        summary.expiresInDays,
+        expiresOn,
+      );
   const expiryTone = summary.expired
     ? "text-danger-foreground"
     : summary.expiresInDays <= CERTIFICATE_EXPIRY_WARNING_DAYS
@@ -141,7 +145,7 @@ function CertificateSummaryLine({
       <p className={cn("font-medium", expiryTone)}>{expiryText}</p>
       <p
         className="text-2xs text-muted-foreground truncate font-mono"
-        title={`SHA-256 ${summary.sha256Fingerprint}`}
+        title={t("SHA-256 {0}", summary.sha256Fingerprint)}
       >
         {t("SHA-256 {0}", summary.sha256Fingerprint)}
       </p>

@@ -25,6 +25,7 @@
   "Over-applied": "Sobreaplicado",
   "Payment amount": "Importe del pago",
   "Payment date": "Fecha del pago",
+  "Payment {0}": "Pago {0}",
   "Post a customer payment and apply it across open invoices in one step.": "Contabilice un pago de cliente y aplíquelo a las facturas abiertas en un solo paso.",
   "Post payment": "Contabilizar el pago",
   "Posted today": "Contabilizado hoy",
@@ -51,5 +52,7 @@
   "Unapplied · {0}": "Sin aplicar · {0}",
   "exceeds open amount": "supera el importe abierto",
   "{0, plural, one {# payment} other {# payments}} with remainder": "{0, plural, one {# pago} other {# pagos}} con remanente",
+  "{0} payment": "Pago de {0}",
+  "{0} payment from {1}": "Pago de {0} de {1}",
   "{0} received — {1} applied, {2} unapplied.": "{0} recibido: {1} aplicado, {2} sin aplicar."
 }

@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   driverPayEventTableGraphQLConfig,
   holdDriverPayEvent,
@@ -25,6 +25,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns, invalidatePayEventQueries } from "./pay-event-columns";
 import { PayEventPanel } from "./pay-event-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function PayEventsTable() {
   const t = useT();
@@ -42,9 +43,20 @@ export default function PayEventsTable() {
         toast.info(t("None of the selected pay events are on hold."));
         return;
       }
-      await runBulkAction(held, (row) => releaseDriverPayEvent(row.id), {
-        noun: "hold",
-        verb: "released",
+      notifyBulkOutcome(await settleAll(held, (row) => releaseDriverPayEvent(row.id)), {
+        succeeded: (count) =>
+          translate("{0, plural, one {# hold released} other {# holds released}}", count),
+        partial: (succeeded, failed) =>
+          translate(
+            "{0, plural, one {# hold released} other {# holds released}}, {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          translate(
+            "{0, plural, one {The selected hold failed} other {All # selected holds failed}}",
+            failed,
+          ),
       });
       invalidatePayEventQueries(queryClient);
     },
@@ -67,10 +79,25 @@ export default function PayEventsTable() {
   const confirmBulkHold = useCallback(async () => {
     setHoldPending(true);
     try {
-      await runBulkAction(
-        holdRows,
-        (row) => holdDriverPayEvent({ payEventId: row.id, reason: holdReason.trim() }),
-        { noun: "pay event", verb: "held" },
+      notifyBulkOutcome(
+        await settleAll(holdRows, (row) =>
+          holdDriverPayEvent({ payEventId: row.id, reason: holdReason.trim() }),
+        ),
+        {
+          succeeded: (count) =>
+            translate("{0, plural, one {# pay event held} other {# pay events held}}", count),
+          partial: (succeeded, failed) =>
+            translate(
+              "{0, plural, one {# pay event held} other {# pay events held}}, {1} failed",
+              succeeded,
+              failed,
+            ),
+          allFailed: (failed) =>
+            translate(
+              "{0, plural, one {The selected pay event failed} other {All # selected pay events failed}}",
+              failed,
+            ),
+        },
       );
       invalidatePayEventQueries(queryClient);
       setHoldRows([]);

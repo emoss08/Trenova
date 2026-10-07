@@ -48,10 +48,10 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
   );
 
   const context = [
-    occurrence.customerName || "Unknown customer",
-    occurrence.shipmentProNumber ? `PRO ${occurrence.shipmentProNumber}` : null,
+    occurrence.customerName || t("Unknown customer"),
+    occurrence.shipmentProNumber ? t("PRO {0}", occurrence.shipmentProNumber) : null,
     occurrence.stopType,
-    occurrence.arrivedLate ? `late ${formatDetentionMinutes(occurrence.lateByMinutes)}` : null,
+    occurrence.arrivedLate ? t("late {0}", formatDetentionMinutes(occurrence.lateByMinutes)) : null,
   ]
     .filter(Boolean)
     .join(" · ");

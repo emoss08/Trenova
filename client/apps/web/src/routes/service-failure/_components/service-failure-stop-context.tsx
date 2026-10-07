@@ -130,10 +130,10 @@ export function ServiceFailureStopContext({
 
 function formatStopTitle(summary: ServiceFailureStopSummary) {
   const stopLabel = summary.stopSequence
-    ? `Stop ${summary.stopSequence}`
+    ? translate("Stop {0}", summary.stopSequence)
     : summary.stopId
-      ? "Stop"
-      : "Shipment";
+      ? translate("Stop")
+      : translate("Shipment");
   const typeLabel = summary.stopType
     ? (findChoice(stopTypeChoices, summary.stopType)?.label ?? summary.stopType)
     : "";

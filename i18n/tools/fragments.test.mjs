@@ -85,12 +85,11 @@ describe("findFragments", () => {
     );
   });
 
-  it("leaves keys, classes, paths, single words and ignored literals alone", async () => {
+  it("leaves keys, classes, paths and ignored literals alone", async () => {
     const found = await scan(`
       const a = { label: \`\${field}.value\` };
       const B = () => <div className={\`flex items-center gap-2 \${x}\`} title={\`\${count}\`} />;
       const c = { description: \`/api/shipments/\${id}\` };
-      const d = { label: \`Step \${n}\` };
       // i18n-ignore: a code the carrier's system matches exactly
       const e = { message: \`TENDER ACCEPT \${ref}\` };
       const f = fetch(\`Sent to \${email} for review\`);
@@ -179,6 +178,45 @@ toast.success({ submit: "Submitted", post: t("Posted") }[action] ?? "Updated");
       "Submitted",
       "Updated",
     ]);
+  });
+
+  it("reports English a template builds anywhere, not only where it is shown", async () => {
+    const found = await scan(`
+function editLabel(col) { return \`Edit \${col}\`; }
+const ago = (m) => \`\${m}m ago\`;
+const distance = (n) => \`\${n} mi\`;
+const header = \`Last updated on \${date}\`;
+const step = { label: \`Step \${n}\` };
+`);
+    assert.ok(found.every((f) => f.kind === "english-template"));
+    assert.deepEqual(found.map((f) => f.detail).sort(), [
+      "Edit {…}",
+      "Last updated on {…}",
+      "Step {…}",
+      "{…} mi",
+      "{…}m ago",
+    ]);
+  });
+
+  it("leaves CSS, keys, paths, logs, errors, translated and ignored templates alone", async () => {
+    const found = await scan(`
+const style = { transform: \`translateY(\${y}px)\`, width: \`\${w}px\` };
+const grid = \`repeat(\${n}, minmax(0, 1fr))\`;
+const size = \`calc(50% + \${x}px)\`;
+const key = \`row-\${id}\`;
+const queryKey = ["shipment", \`\${id}\`];
+const href = \`/shipments/\${id}?tab=stops\`;
+const cls = cn(\`text-\${tone}-foreground font-medium\`);
+console.warn(\`Failed to load \${id}\`);
+throw new Error(\`Unknown action \${action}\`);
+const label = t("Edit {0}", \`\${a} \${b}\`);
+const same = kind === \`\${a} item\`;
+const query = gql\`query Shipment { shipment { id } }\`;
+// i18n-ignore: an X12 segment sent to the trading partner
+const segment = \`ST*204*\${control} sent\`;
+const El = () => <div className={\`flex gap-\${n} items-center\`} data-state={\`open \${s}\`} />;
+`);
+    assert.deepEqual(found, []);
   });
 
   it("finds none in the app", async () => {

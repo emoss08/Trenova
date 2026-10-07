@@ -78,9 +78,11 @@ function buildHandlingNotes(p: LoadingOptimizationResult["placements"][0]): stri
   const notes: string[] = [];
   if (p.isHazmat)
     notes.push(
+      // i18n-ignore: print HTML markup; visible phrases go through L()
       `<span style="color:#b45309;font-weight:700">\u2623 ${L("HAZMAT ({0})", p.hazmatClass ?? "")}</span>`,
     );
   if (p.fragile)
+    // i18n-ignore: print HTML markup; visible phrases go through L()
     notes.push(`<span style="color:#dc2626;font-weight:600">\u26a0 ${L("FRAGILE")}</span>`);
   if (p.stackable) notes.push(L("Stackable"));
   if (p.minTemp != null && p.maxTemp != null)
@@ -109,6 +111,7 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
   const commodityRows = placements
     .map((p, i) => {
       const rowBg = i % 2 === 0 ? "" : 'style="background:#f9fafb"';
+      // i18n-ignore: print HTML markup; visible phrases go through L()
       return `<tr ${rowBg}>
         <td style="text-align:center;font-weight:700;color:#6b7280">${i + 1}</td>
         <td style="font-weight:600">${esc(p.commodityName)}</td>
@@ -123,6 +126,7 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
 
   const axleRows = axles
     .map(
+      // i18n-ignore: print HTML markup; visible phrases go through L()
       (a) => `<tr>
         <td style="text-transform:capitalize;font-weight:500">${L("{0} axle", a.axle)}</td>
         <td style="text-align:right;font-variant-numeric:tabular-nums;${!a.compliant ? "color:#dc2626;font-weight:700" : ""}">${a.weight.toLocaleString()}</td>
@@ -136,12 +140,14 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     .map((warn) => {
       const color = warn.severity === "error" ? "var(--danger)" : "var(--warning)";
       const icon = warn.severity === "error" ? "\u26d4" : "\u26a0";
+      // i18n-ignore: print HTML markup; visible phrases go through L()
       return `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px"><span style="color:${color}">${icon}</span><span style="font-size:11px">${esc(warn.message)}</span></div>`;
     })
     .join("");
 
   const hasOriginDest = meta.originName || meta.destinationName;
 
+  // i18n-ignore: print HTML markup; visible phrases go through L()
   return `<!DOCTYPE html>
 <html lang="${getLocale()}">
 <head>
@@ -211,25 +217,27 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
 
   ${
     hasOriginDest
-      ? `
+      ? // i18n-ignore: print HTML markup; visible phrases go through L()
+        `
   <div class="route-bar">
     <div class="route-point">
       <div class="label">${L("Origin")}</div>
       <div class="name">${esc(meta.originName)}</div>
-      ${meta.originAddress ? `<div class="addr">${esc(meta.originAddress)}</div>` : ""}
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.originAddress ? `<div class="addr">${esc(meta.originAddress)}</div>` : ""}
     </div>
     <div class="route-arrow">\u2192</div>
     <div class="route-point">
       <div class="label">${L("Destination")}</div>
       <div class="name">${esc(meta.destinationName)}</div>
-      ${meta.destinationAddress ? `<div class="addr">${esc(meta.destinationAddress)}</div>` : ""}
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.destinationAddress ? `<div class="addr">${esc(meta.destinationAddress)}</div>` : ""}
     </div>
     ${
       meta.trailerCode || meta.driverName
-        ? `
+        ? // i18n-ignore: print HTML markup; visible phrases go through L()
+          `
     <div class="route-info">
-      ${meta.trailerCode ? `<div><strong>${L("Trailer:")}</strong> ${esc(meta.trailerCode)}</div>` : ""}
-      ${meta.driverName ? `<div><strong>${L("Driver:")}</strong> ${esc(meta.driverName)}</div>` : ""}
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.trailerCode ? `<div><strong>${L("Trailer:")}</strong> ${esc(meta.trailerCode)}</div>` : ""}
+      ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ meta.driverName ? `<div><strong>${L("Driver:")}</strong> ${esc(meta.driverName)}</div>` : ""}
     </div>`
         : ""
     }
@@ -239,7 +247,7 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
 
   <div class="metrics">
     <div class="metric${data.linearFeetUtil > 100 ? " alert" : ""}">
-      <div class="value">${data.totalLinearFeet.toFixed(1)}ft</div>
+      <div class="value">${L("{0}ft", data.totalLinearFeet.toFixed(1))}</div>
       <div class="label">${L("of {0}ft ({1}%)", data.trailerLengthFeet, data.linearFeetUtil.toFixed(0))}</div>
     </div>
     <div class="metric${data.weightUtil > 100 ? " alert" : ""}">
@@ -276,7 +284,8 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
 
   ${
     recs.length > 0
-      ? `
+      ? // i18n-ignore: print HTML markup; visible phrases go through L()
+        `
   <div class="section">
     <div class="section-title">${L("Recommendations")}</div>
     ${recs
@@ -293,12 +302,13 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
             : r.priority === "suggested"
               ? "color:#92400e;background:#fef3c7;border:1px solid #fde68a"
               : "color:#1e40af;background:#dbeafe;border:1px solid #bfdbfe";
+        // i18n-ignore: print HTML markup; visible phrases go through L()
         return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;padding:6px 10px;border-radius:4px;${priorityStyle}">
         <span style="font-size:9px;font-weight:700;white-space:nowrap;margin-top:1px">${priorityLabel}</span>
         <div style="font-size:11px">
           <strong>${esc(r.title)}</strong>
           <div style="margin-top:1px;opacity:0.8">${esc(r.description)}</div>
-          ${r.impact ? `<div style="margin-top:2px;font-weight:600;font-size:10px">${esc(r.impact)}</div>` : ""}
+          ${/* i18n-ignore: print HTML markup; visible phrases go through L() */ r.impact ? `<div style="margin-top:2px;font-weight:600;font-size:10px">${esc(r.impact)}</div>` : ""}
         </div>
       </div>`;
       })
@@ -311,11 +321,13 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     <div class="section">
       ${
         warningItems
-          ? `
+          ? // i18n-ignore: print HTML markup; visible phrases go through L()
+            `
       <div class="section-title">${L("Compliance Alerts")}</div>
       <div class="warnings-box">${warningItems}</div>
       `
-          : `
+          : // i18n-ignore: print HTML markup; visible phrases go through L()
+            `
       <div style="display:flex;align-items:center;gap:6px;color:#166534;font-size:11px;margin-top:4px">
         <span style="font-size:14px">\u2705</span> ${L("No compliance issues detected")}
       </div>
@@ -335,7 +347,8 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
 
   ${
     placements.some((p) => p.estimatedLength)
-      ? `
+      ? // i18n-ignore: print HTML markup; visible phrases go through L()
+        `
   <div style="font-size:9px;color:#9ca3af;margin-top:8px">${L("* Length estimated from weight \u2014 configure linear feet per unit in commodity settings for accuracy.")}</div>
   `
       : ""

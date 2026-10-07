@@ -1,5 +1,7 @@
 {
+  "Advance": "預支",
   "Advance written off": "預支款已沖銷",
+  "Advance {0}": "預支款 {0}",
   "Cash and money-code advances that are automatically recovered from the driver's next settlement.": "現金與金流代碼預支款，會自駕駛員的下一次結算中自動回收。",
   "Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair.": "供審查人員參考的背景 — 此預支款的用途，例如裝卸工費或故障維修。",
   "Forgives each advance's remaining balance — nothing more is recovered from settlements. This cannot be undone, and the reason is recorded on every advance.": "豁免各筆預支款的剩餘餘額 — 不再自結算中回收。此操作無法復原，且原因會記錄於每筆預支款上。",
@@ -22,5 +24,8 @@
   "Write off {0, plural, one {# advance} other {# advances}}": "沖銷 {0, plural, other {# 筆預支款}}",
   "Write-off failed": "沖銷失敗",
   "Write-off reason: {0}": "沖銷原因：{0}",
-  "e.g. Driver terminated — balance uncollectible": "例如：駕駛員已離職 — 餘額無法收回"
+  "e.g. Driver terminated — balance uncollectible": "例如：駕駛員已離職 — 餘額無法收回",
+  "{0, plural, one {# advance written off} other {# advances written off}}": "{0, plural, other {已沖銷 # 筆預支款}}",
+  "{0, plural, one {# advance written off} other {# advances written off}}, {1} failed": "{0, plural, other {已沖銷 # 筆預支款}}，{1} 筆失敗",
+  "{0, plural, one {The selected advance failed} other {All # selected advances failed}}": "{0, plural, other {所選的 # 筆預支款皆失敗}}"
 }

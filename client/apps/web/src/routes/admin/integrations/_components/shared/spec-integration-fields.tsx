@@ -83,9 +83,10 @@ export function SpecIntegrationField({
   multiline?: boolean;
   renderOptionLabel?: (field: ConfigFieldSpec, option: string) => string;
 }) {
+  const t = useT();
   const name = `configuration.${field.key}` as const;
   const label =
-    field.sensitive && hasStoredValue ? `${field.label} (leave blank to keep)` : field.label;
+    field.sensitive && hasStoredValue ? t("{0} (leave blank to keep)", field.label) : field.label;
   const placeholder = field.sensitive && hasStoredValue ? "********" : field.placeholder;
 
   if (field.sensitive) {

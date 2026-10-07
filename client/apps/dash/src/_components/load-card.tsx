@@ -29,17 +29,17 @@ import { translate } from "@trenova/shared/i18n/runtime";
 
 export function stopTimeLabel(stop: PortalStop): string {
   if (stop.actualDeparture) {
-    return `Departed ${formatRange(stop.actualDeparture, stop.actualDeparture)}`;
+    return translate("Departed {0}", formatRange(stop.actualDeparture, stop.actualDeparture));
   }
   if (stop.actualArrival) {
-    return `Arrived ${formatRange(stop.actualArrival, stop.actualArrival)}`;
+    return translate("Arrived {0}", formatRange(stop.actualArrival, stop.actualArrival));
   }
   if (stop.scheduledWindowStart) {
     const day = formatRange(stop.scheduledWindowStart, stop.scheduledWindowStart);
     const time = formatUnixTime(stop.scheduledWindowStart);
     return `${day}, ${time}`;
   }
-  return "Not scheduled";
+  return translate("Not scheduled");
 }
 
 export const stopTypeLabels: Record<string, string> = defineLabels({
@@ -77,8 +77,8 @@ export function LoadCard({ load }: { load: PortalLoad }) {
     formatMiles(load.distanceMiles),
     formatWeight(load.weight),
     formatPieces(load.pieces),
-    load.tractorCode ? `Truck ${load.tractorCode}` : null,
-    load.isPrimary ? null : "Co-driver",
+    load.tractorCode ? t("Truck {0}", load.tractorCode) : null,
+    load.isPrimary ? null : t("Co-driver"),
   ].filter(Boolean);
 
   return (

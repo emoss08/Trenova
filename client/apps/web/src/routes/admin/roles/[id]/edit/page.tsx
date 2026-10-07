@@ -140,7 +140,7 @@ export function RoleEditPage() {
     <FormProvider {...form}>
       <Form onSubmit={onSubmit}>
         <RolePageLayout
-          title={`Edit ${role.name}`}
+          title={t("Edit {0}", role.name)}
           description={t("Configure resource access and operations")}
           isSubmitting={isSubmitting}
           submitLabel={t("Save changes")}

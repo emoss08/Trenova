@@ -36,7 +36,6 @@
   "The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.": "按各人所属场站列出团队，人数最多者优先。未分配场站者会如实列出，而非略去。",
   "Through a terminal": "通过场站",
   "Until called back": "直到另行通知",
-  "Until {0}": "直到 {0}",
   "Work anniversaries and recent starters inside the window. Only whole years count, and only for people still here.": "期间内的工作周年与近期新入职人员。仅计算整年，且仅限仍在职者。",
   "Worth a look soon:": "建议尽快查看：",
   "Your team could not be loaded. {0}": "无法加载您的团队。{0}",

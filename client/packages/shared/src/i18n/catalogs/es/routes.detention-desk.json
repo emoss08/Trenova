@@ -3,6 +3,7 @@
   "Bounced": "Rebotado",
   "Charge approved": "Cargo aprobado",
   "Collectable now": "Cobrable ahora",
+  "Connecting": "Conectando",
   "Context the next person reviewing this waiver will need.": "Contexto que necesitará la siguiente persona que revise esta exención.",
   "Customer claims the driver arrived 40 minutes later than our records show": "El cliente afirma que el conductor llegó 40 minutos más tarde de lo que indican nuestros registros",
   "Defensibility": "Defendibilidad",
@@ -28,6 +29,7 @@
   "No notices could be sent": "No se pudo enviar ningún aviso",
   "No notices have been sent for this stop.": "No se ha enviado ningún aviso para esta parada.",
   "No stops match this view": "Ninguna parada coincide con esta vista",
+  "Not refreshing": "Sin actualizar",
   "Nothing on a dock": "Nada en un muelle",
   "Nothing on the floor matches the lane and search you are in. Clearing them brings the whole desk back.": "Nada en el área coincide con el carril y la búsqueda en los que se encuentra. Al borrarlos vuelve todo el escritorio.",
   "Notice window": "Ventana del aviso",
@@ -46,6 +48,7 @@
   "Send the customer notice before this deadline or the charge stops being collectable": "Envíe el aviso al cliente antes de este plazo o el cargo dejará de ser cobrable",
   "Started notice": "Aviso de inicio",
   "Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.": "Las paradas aparecen aquí en cuanto se registra una llegada, con el reloj del tiempo libre y el plazo del aviso ya en marcha.",
+  "Syncing": "Sincronizando",
   "The charge was forgiven and the reason recorded as evidence.": "Se condonó el cargo y el motivo quedó registrado como evidencia.",
   "The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now.": "Los relojes siguen corriendo en el servidor y no se ha perdido nada; simplemente esta pantalla no puede leerlos ahora mismo.",
   "The coded reason waiver leakage is reported against.": "El motivo codificado sobre el que se informa la fuga por exenciones.",
@@ -69,6 +72,7 @@
   "What is the customer disputing?": "¿Qué está disputando el cliente?",
   "engine {0}": "motor {0}",
   "free time": "tiempo libre de cargo",
+  "late {0}": "retraso {0}",
   "{0, plural, one {# could not be sent and is still in the queue.} other {# could not be sent and are still in the queue.}}": "{0, plural, one {# no se pudo enviar y sigue en la cola.} other {# no se pudieron enviar y siguen en la cola.}}",
   "{0, plural, one {# notice sent} other {# notices sent}}": "{0, plural, one {# aviso enviado} other {# avisos enviados}}",
   "{0, plural, one {# stop} other {# stops}} past the notice deadline": "{0, plural, one {# parada} other {# paradas}} pasada la fecha límite de aviso",
@@ -80,5 +84,6 @@
   "{0} of {1, plural, one {# stop} other {# stops}}": "{0} de {1, plural, one {# parada} other {# paradas}}",
   "{0} on site · free time ended {1}": "{0} en el sitio · el tiempo libre venció {1}",
   "{0} on site · free time ends {1}": "{0} en el sitio · el tiempo libre vence {1}",
+  "{0} payable": "{0} por pagar",
   "{0} · in window": "{0} · dentro del intervalo"
 }

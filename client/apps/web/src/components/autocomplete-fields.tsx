@@ -2592,11 +2592,11 @@ export function trainingCourseOptionSummary(option: GraphQLSelectOption) {
   const delivery = selectOptionMetaString(option, "delivery") as TrainingDelivery;
   const parts = [TRAINING_DELIVERY_LABELS[delivery] ?? delivery];
   const minutes = selectOptionMetaNumber(option, "durationMinutes");
-  if (minutes) parts.push(`${minutes} min`);
+  if (minutes) parts.push(translate("{0} min", minutes));
   const passingScore = selectOptionMetaString(option, "passingScore");
-  if (passingScore) parts.push(`pass ≥ ${Number(passingScore).toFixed(0)}%`);
+  if (passingScore) parts.push(translate("pass ≥ {0}%", Number(passingScore).toFixed(0)));
   const validityMonths = selectOptionMetaNumber(option, "validityMonths");
-  if (validityMonths) parts.push(`valid ${validityMonths} mo`);
+  if (validityMonths) parts.push(translate("valid {0} mo", validityMonths));
 
   return parts.filter(Boolean).join(" · ");
 }

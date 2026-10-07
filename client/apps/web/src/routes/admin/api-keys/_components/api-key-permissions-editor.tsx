@@ -22,7 +22,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { dataScopeChoices } from "@/lib/choices";
 import type { ResourceCategory, ResourceDefinition } from "@/lib/role-api";
-import { cn, pluralize } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { ApiKeyPermissionInput } from "@/types/api-key";
 import type { DataScope } from "@trenova/shared/types/role";
@@ -269,12 +269,16 @@ export function APIKeyPermissionsEditor() {
         </Button>
         <div className="text-muted-foreground ml-auto flex flex-wrap items-center gap-2 text-xs">
           <Badge variant="neutral">
-            {selectionSummary.selectedResources}{" "}
-            {pluralize("resource", selectionSummary.selectedResources)}
+            {t(
+              "{0, plural, one {# resource} other {# resources}}",
+              selectionSummary.selectedResources,
+            )}
           </Badge>
           <Badge variant="neutral">
-            {selectionSummary.selectedOperations}{" "}
-            {pluralize("operation", selectionSummary.selectedOperations)}
+            {t(
+              "{0, plural, one {# operation} other {# operations}}",
+              selectionSummary.selectedOperations,
+            )}
           </Badge>
           <Badge variant="neutral" appearance="outline">
             {selectionSummary.modeLabel}

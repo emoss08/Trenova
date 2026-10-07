@@ -102,7 +102,7 @@ export function DocumentCard({
             checked={isSelected}
             onCheckedChange={handleCheckboxChange}
             className="size-5"
-            aria-label={`Select ${document.originalName}`}
+            aria-label={t("Select {0}", document.originalName)}
           />
         </div>
       )}

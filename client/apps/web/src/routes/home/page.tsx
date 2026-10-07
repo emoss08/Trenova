@@ -125,7 +125,7 @@ export function Home() {
       setEditing(false);
       toast.success(
         layout.presetName
-          ? `Restored ${layout.presetName}`
+          ? t("Restored {0}", layout.presetName)
           : translate("Restored the default home screen"),
       );
     } catch (error) {

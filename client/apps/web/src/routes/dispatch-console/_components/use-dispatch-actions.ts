@@ -44,15 +44,24 @@ type UndoStep =
 
 const MAX_UNDO_DEPTH = 25;
 
-function describeResult(result: DispatchBulkAssignResult, verb: string): void {
+function describeResult(result: DispatchBulkAssignResult, action: "assigned" | "unassigned"): void {
   if (result.failed === 0) {
-    toast.success(`${verb} ${result.succeeded} move${result.succeeded === 1 ? "" : "s"}`);
+    toast.success(
+      action === "assigned"
+        ? translate("{0, plural, one {Assigned # move} other {Assigned # moves}}", result.succeeded)
+        : translate(
+            "{0, plural, one {Unassigned # move} other {Unassigned # moves}}",
+            result.succeeded,
+          ),
+    );
     return;
   }
 
   const firstFailure = result.results.find((item) => !item.success);
   toast.warning(
-    `${verb} ${result.succeeded}, ${result.failed} failed`,
+    action === "assigned"
+      ? translate("Assigned {0}, {1} failed", result.succeeded, result.failed)
+      : translate("Unassigned {0}, {1} failed", result.succeeded, result.failed),
     firstFailure?.error ? { description: firstFailure.error } : undefined,
   );
 }
@@ -105,7 +114,7 @@ export function useDispatchActions() {
   const assignMutation = useMutation({
     mutationFn: (input: DispatchAssignMoveInput[]) => assignDispatchMovesGraphQL(input),
     onSuccess: (result) => {
-      describeResult(result, "Assigned");
+      describeResult(result, "assigned");
 
       // Only successful moves are undoable; queueing a failed one would make undo
       // unassign work that was never assigned here.
@@ -122,7 +131,7 @@ export function useDispatchActions() {
     mutationFn: (params: { moveIds: string[]; restore?: DispatchAssignMoveInput[] }) =>
       unassignDispatchMovesGraphQL(params.moveIds),
     onSuccess: (result, params) => {
-      describeResult(result, "Unassigned");
+      describeResult(result, "unassigned");
 
       if (params.restore && params.restore.length > 0) {
         const succeeded = new Set(

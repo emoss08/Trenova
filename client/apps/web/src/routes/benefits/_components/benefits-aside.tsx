@@ -121,7 +121,7 @@ export function BenefitsAside({ openEnrollments, declined, now }: BenefitsAsideP
           <EntryList
             entries={ending}
             detail={(entry) =>
-              entry.effectiveTo ? `Until ${formatUnixDate(entry.effectiveTo)}` : "Ending"
+              entry.effectiveTo ? t("Until {0}", formatUnixDate(entry.effectiveTo)) : t("Ending")
             }
           />
         )}

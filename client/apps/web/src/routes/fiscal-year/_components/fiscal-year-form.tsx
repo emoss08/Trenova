@@ -37,6 +37,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
     if (isEdit || !year) return;
 
     if (!getFieldState("name").isDirty) {
+      // i18n-ignore: default name stored on the fiscal year record
       setValue("name", `FY ${year}`);
     }
 

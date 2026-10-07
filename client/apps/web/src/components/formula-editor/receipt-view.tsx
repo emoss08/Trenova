@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -31,15 +32,23 @@ const SOURCE_LABELS: Record<FormulaValueSource, { label: string; className: stri
 
 /** Words for which entry answered a lookup, for the receipt and dispute letters alike. */
 export function describeLookupMatch(match: LookupMatch | null | undefined): string {
-  if (!match) return "no match";
-  const moved = match.adjusted ? " (key moved into band)" : "";
-  if (match.matchedKey) return `key ${match.matchedKey}${moved}`;
-  if (match.bandMin != null) {
-    const band =
-      match.bandMax != null ? `band ${match.bandMin}–${match.bandMax}` : `band ${match.bandMin}+`;
-    return `${band}${moved}`;
+  if (!match) return translate("no match");
+  if (match.matchedKey) {
+    return match.adjusted
+      ? translate("key {0} (key moved into band)", match.matchedKey)
+      : translate("key {0}", match.matchedKey);
   }
-  return "no match";
+  if (match.bandMin != null) {
+    if (match.bandMax != null) {
+      return match.adjusted
+        ? translate("band {0}–{1} (key moved into band)", match.bandMin, match.bandMax)
+        : translate("band {0}–{1}", match.bandMin, match.bandMax);
+    }
+    return match.adjusted
+      ? translate("band {0}+ (key moved into band)", match.bandMin)
+      : translate("band {0}+", match.bandMin);
+  }
+  return translate("no match");
 }
 
 function formatValue(value: unknown): string {

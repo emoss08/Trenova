@@ -164,7 +164,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrainingCourseRow>[] {
       header: t("Due after"),
       cell: ({ row }) =>
         row.original.dueDaysAfterAssignment > 0 ? (
-          `${row.original.dueDaysAfterAssignment} days`
+          t("{0, plural, one {# day} other {# days}}", row.original.dueDaysAfterAssignment)
         ) : (
           <span className="text-muted-foreground">—</span>
         ),

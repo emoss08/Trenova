@@ -274,7 +274,8 @@ it. See [product-guide.md](product-guide.md).
   Tags hold text and placeholders but no other tag, a plural cannot span a tag, and an
   argument is never read as markup.
   Outside a component, `translateRich` (same module) takes the same arguments.
-- Never build English in a template literal where a person reads it
+- Never build English in a template literal a person will read, wherever it is built — a
+  return value, a variable, a helper's result as much as a toast or a prop
   (`` toast.success(`${name} saved`) ``, `` label={`${kind} Postal Code`} ``,
   `` title: `Journal Entry ${n}` ``): the extractor only collects string literals passed to
   `t`, `translate`, `rt` and `translateRich`, so the sentence never reaches a catalog and
@@ -300,9 +301,9 @@ it. See [product-guide.md](product-guide.md).
   is shown exactly as written, so every literal it receives — including `error.message ||
   "…"` fallbacks and `toast.promise` options — goes through `t()` or `translate()`.
 - `task i18n-check` fails on all of these shapes (`i18n/tools/fragments.mjs`: split
-  sentences, English arguments, templates where a person reads them — toasts, JSX children
-  and attributes, `label`/`title`/`description` keys — module-level label maps, literal
-  validation messages and literal toast text), and
+  sentences, English arguments, templates that write words anywhere outside CSS, keys,
+  paths, logs and thrown errors — module-level label maps, literal validation messages and
+  literal toast text), and
   `i18n.mjs merge` refuses a translation whose placeholders, plurals or tags differ from
   its source (`i18n/tools/validate.mjs`).
 - `i18n/locales.json` is the only place a language is added; `task i18n` regenerates the

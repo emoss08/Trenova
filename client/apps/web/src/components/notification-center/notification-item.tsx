@@ -89,7 +89,7 @@ export function NotificationItem({
     <div
       role="button"
       tabIndex={0}
-      aria-label={isUnread ? `Unread: ${notification.title}` : notification.title}
+      aria-label={isUnread ? t("Unread: {0}", notification.title) : notification.title}
       className={cn(
         "group relative flex w-full gap-3 px-4 py-3 text-left transition-colors duration-150 outline-none",
         "hover:bg-muted/40 focus-visible:bg-muted/40",

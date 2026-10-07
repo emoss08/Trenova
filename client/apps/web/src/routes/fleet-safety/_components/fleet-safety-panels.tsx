@@ -41,7 +41,7 @@ export function TerminalsPanel({
     <SectionPanel
       title={t("By terminal")}
       icon={<Building07Icon />}
-      hint={`${totalWorkers} drivers`}
+      hint={t("{0, plural, one {# driver} other {# drivers}}", totalWorkers)}
       help={t(
         "Drivers by terminal, the yard with the most at-risk drivers first. Choose one to narrow every section on the page to it.",
       )}
@@ -153,10 +153,18 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
       icon={kind === "worst" ? <ShieldAlertIcon /> : <Award01Icon />}
       help={
         kind === "worst"
-          ? "The drivers carrying the most active points, worst first. Points roll off two years after the event."
-          : "The cleanest records on the fleet. The two lists read the same ranking from opposite ends, so nobody appears on both."
+          ? t(
+              "The drivers carrying the most active points, worst first. Points roll off two years after the event.",
+            )
+          : t(
+              "The cleanest records on the fleet. The two lists read the same ranking from opposite ends, so nobody appears on both.",
+            )
       }
-      hint={rows.length > 0 ? `${rows.length} drivers` : undefined}
+      hint={
+        rows.length > 0
+          ? t("{0, plural, one {# driver} other {# drivers}}", rows.length)
+          : undefined
+      }
     >
       {rows.length === 0 ? (
         <SectionPanelQuiet>{empty}</SectionPanelQuiet>

@@ -156,7 +156,7 @@ function TemplateListItem({
                 variant="ghost"
                 size="icon-xs"
                 className="mt-2 mr-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                aria-label={`Edit ${template.name}`}
+                aria-label={t("Edit {0}", template.name)}
                 onClick={() => setIsEditDialogOpen(true)}
               >
                 <Edit02Icon className="size-3.5" />

@@ -27,15 +27,16 @@ const NOTICE_PREVIEW_LIMIT = 5;
  * ticking as if the data were live.
  */
 export function DeskLivePulse({ desk }: { desk: DetentionDeskState }) {
+  const t = useT();
   const { isError, isLoading, isFetching, updatedSecondsAgo } = desk;
 
   const label = isError
-    ? "Not refreshing"
+    ? t("Not refreshing")
     : isLoading
-      ? "Connecting"
+      ? t("Connecting")
       : isFetching
-        ? "Syncing"
-        : `Updated ${formatSecondsAgo(updatedSecondsAgo ?? 0)}`;
+        ? t("Syncing")
+        : t("Updated {0}", formatSecondsAgo(updatedSecondsAgo ?? 0));
 
   return (
     <span

@@ -24,5 +24,10 @@
   "Your carrier's catalog of earning and deduction codes — behavior flags and GL account mappings drive how each code settles and posts.": "貴承運業者的薪酬與扣款代碼目錄 — 行為旗標與總帳科目對應決定各代碼的結算與過帳方式。",
   "e.g. CHAINPAY": "例如：CHAINPAY",
   "e.g. Chain-Up Pay": "例如：加裝雪鏈津貼",
+  "{0, plural, one {# pay code activated} other {# pay codes activated}}": "{0, plural, other {已啟用 # 個薪酬代碼}}",
+  "{0, plural, one {# pay code activated} other {# pay codes activated}}, {1} failed": "{0, plural, other {已啟用 # 個薪酬代碼}}，{1} 筆失敗",
+  "{0, plural, one {# pay code deactivated} other {# pay codes deactivated}}": "{0, plural, other {已停用 # 個薪酬代碼}}",
+  "{0, plural, one {# pay code deactivated} other {# pay codes deactivated}}, {1} failed": "{0, plural, other {已停用 # 個薪酬代碼}}，{1} 筆失敗",
+  "{0, plural, one {The selected pay code failed} other {All # selected pay codes failed}}": "{0, plural, other {所選的 # 個薪酬代碼皆失敗}}",
   "· excl. guarantee": "· 不含保證額"
 }

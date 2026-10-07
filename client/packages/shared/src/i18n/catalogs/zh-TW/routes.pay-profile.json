@@ -40,5 +40,11 @@
   "What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.": "給付的項目 — 幹線運費、停靠費、滯留費、危險品加給等。",
   "When to use this pay package": "何時使用此薪酬組合",
   "Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.": "百分比所適用的收入範圍：僅幹線運費、幹線運費加燃油附加費，或總額。",
-  "e.g. OTR Company Driver - Standard": "例如：長途自有駕駛員 - 標準"
+  "e.g. OTR Company Driver - Standard": "例如：長途自有駕駛員 - 標準",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}": "{0, plural, other {已啟用 # 個薪酬設定檔}}",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}, {1} failed": "{0, plural, other {已啟用 # 個薪酬設定檔}}，{1} 筆失敗",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}": "{0, plural, other {已停用 # 個薪酬設定檔}}",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}, {1} failed": "{0, plural, other {已停用 # 個薪酬設定檔}}，{1} 筆失敗",
+  "{0, plural, one {The selected pay profile failed} other {All # selected pay profiles failed}}": "{0, plural, other {所選的 # 個薪酬設定檔皆失敗}}",
+  "{0} ({1, plural, one {# band} other {# bands}})": "{0}（{1, plural, other {# 個級距}}）"
 }

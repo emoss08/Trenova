@@ -32,6 +32,7 @@ function attachmentDownloadUrl(attachment: ShipmentCommentAttachment): string {
 }
 
 export function CommentAttachments({ attachments }: { attachments: ShipmentCommentAttachment[] }) {
+  const t = useT();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const images = useMemo(() => attachments.filter(isImageAttachment), [attachments]);
@@ -52,7 +53,7 @@ export function CommentAttachments({ attachments }: { attachments: ShipmentComme
               type="button"
               className="group/attachment border-border bg-muted relative size-24 overflow-hidden rounded-lg border transition-shadow"
               onClick={() => setLightboxIndex(index)}
-              aria-label={`Open ${image.originalName ?? image.fileName}`}
+              aria-label={t("Open {0}", image.originalName ?? image.fileName)}
             >
               <img
                 src={attachmentViewUrl(image)}

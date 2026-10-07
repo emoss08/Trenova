@@ -148,10 +148,14 @@ function JurisdictionRuleEditPanel({
   });
 
   const verificationLabel = row?.verifiedAt
-    ? `${row.verificationState} on ${formatToUserTimezone(row.verifiedAt, {
-        showTime: false,
-        showTimeZone: false,
-      })}`
+    ? t(
+        "{0} on {1}",
+        row.verificationState,
+        formatToUserTimezone(row.verifiedAt, {
+          showTime: false,
+          showTimeZone: false,
+        }),
+      )
     : (row?.verificationState ?? "Unverified");
 
   return (

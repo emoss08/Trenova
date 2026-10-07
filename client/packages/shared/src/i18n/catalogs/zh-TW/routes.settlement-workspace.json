@@ -58,6 +58,7 @@
   "Pay events deliberately deferred — they skip generation until released.": "刻意延後的薪酬事件 — 在解除前不會納入產生作業。",
   "Pay now": "立即付款",
   "Pay this driver immediately — approve, post, and mark paid in one pass": "立即支付此駕駛員 — 一次完成核准、過帳與標示已付款",
+  "Pay {0}": "支付 {0}",
   "Paying...": "支付中...",
   "Payment reference": "付款參考號",
   "Period net pay": "期間淨薪酬",
@@ -92,5 +93,6 @@
   "{0} events · {1} drivers": "{0} 個事件 · {1} 位駕駛員",
   "{0} held (": "{0} 項暫扣 (",
   "{0} held events": "{0} 項暫扣事件",
+  "{0} paid": "{0} 已付款",
   "· paused": "· 已暫停"
 }

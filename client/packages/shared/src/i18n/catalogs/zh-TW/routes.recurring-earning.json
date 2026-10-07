@@ -16,5 +16,10 @@
   "The driver whose settlements this earning is added to.": "此薪酬所加計的對象駕駛員。",
   "The earning begins applying to settlements whose period ends after this date.": "此薪酬自期間結束日晚於此日期的結算開始套用。",
   "This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.": "此代碼為免稅 — 金額以核銷方式計入結算，不納入保障下限檢核，並過帳至該代碼的總帳科目（或駕駛員核銷科目），而非薪資費用科目。",
-  "e.g. OTR per diem — IRS substantiated M&IE": "例如：長途每日津貼 — 符合 IRS 佐證的 M&IE"
+  "e.g. OTR per diem — IRS substantiated M&IE": "例如：長途每日津貼 — 符合 IRS 佐證的 M&IE",
+  "{0, plural, one {# earning paused} other {# earnings paused}}": "{0, plural, other {已暫停 # 筆收入}}",
+  "{0, plural, one {# earning paused} other {# earnings paused}}, {1} failed": "{0, plural, other {已暫停 # 筆收入}}，{1} 筆失敗",
+  "{0, plural, one {# earning resumed} other {# earnings resumed}}": "{0, plural, other {已恢復 # 筆收入}}",
+  "{0, plural, one {# earning resumed} other {# earnings resumed}}, {1} failed": "{0, plural, other {已恢復 # 筆收入}}，{1} 筆失敗",
+  "{0, plural, one {The selected earning failed} other {All # selected earnings failed}}": "{0, plural, other {所選的 # 筆收入皆失敗}}"
 }

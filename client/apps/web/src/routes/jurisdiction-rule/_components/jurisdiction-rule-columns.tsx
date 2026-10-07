@@ -100,7 +100,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
       header: t("Lead time"),
       cell: ({ row }) => {
         const days = row.original.permitLeadTimeDays;
-        return `${days} day${days === 1 ? "" : "s"}`;
+        return t("{0, plural, one {# day} other {# days}}", days);
       },
       size: 110,
       meta: { label: t("Lead time"), apiField: "permitLeadTimeDays", sortable: true },

@@ -87,7 +87,6 @@
   "People at this carrier your team communicates with for dispatch and billing.": "您的團隊在調度與帳務上會聯繫的此承運業者人員。",
   "Policy number as issued by the insurance provider.": "保險公司核發的保單號碼。",
   "Policy type": "保單類型",
-  "Policy {0}": "保單 {0}",
   "Primary business address and contact details for this carrier.": "此承運業者的主要營業地址與聯絡資料。",
   "Primary email address used for tenders and rate confirmations.": "用於派車要約與費率確認書的主要電子郵件地址。",
   "Pulls the carrier's profile from {0}, re-evaluates every rule and records what changed.": "從 {0} 拉取承運業者的檔案，重新評估所有規則，並記錄變更內容。",

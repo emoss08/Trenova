@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -139,13 +140,13 @@ export function OshaOverview({ log }: OshaOverviewProps) {
 }
 
 function describeCases(recorded: number, openCases: number, offTheLog: number): string {
-  if (recorded === 0) return "Nothing recorded this year";
+  if (recorded === 0) return translate("Nothing recorded this year");
   const parts: string[] = [];
   if (openCases > 0) {
-    parts.push(`${openCases} still accruing days`);
+    parts.push(translate("{0} still accruing days", openCases));
   }
   if (offTheLog > 0) {
-    parts.push(`${offTheLog} kept off the log`);
+    parts.push(translate("{0} kept off the log", offTheLog));
   }
-  return parts.length > 0 ? parts.join(", ") : "Every case is closed";
+  return parts.length > 0 ? parts.join(", ") : translate("Every case is closed");
 }

@@ -157,7 +157,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
   const start = useMutation({
     mutationFn: (id: string) => startWorkerChecklist({ workerId, templateId: id }),
     onSuccess: (checklist) => {
-      toast.success(`${checklist.name} started`);
+      toast.success(t("{0} started", checklist.name));
       setTemplateId("");
       void invalidate();
     },

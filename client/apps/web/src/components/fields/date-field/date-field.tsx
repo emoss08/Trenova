@@ -27,6 +27,7 @@ export type BaseDateFieldProps = {
 export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps & FormControlProps<T>;
 
 const styles = {
+  // i18n-ignore: Tailwind class list
   base: `${fieldTriggerClass} w-full h-7 text-sm justify-start text-left font-normal`,
   invalid: fieldInvalidClass,
   open: "text-sm",

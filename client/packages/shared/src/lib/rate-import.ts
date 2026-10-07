@@ -140,27 +140,37 @@ export function commitWarnings(batch: RateImportBatch | undefined): string[] {
 
   if (batch.errorCount > 0) {
     warnings.push(
-      `${batch.errorCount} of ${batch.rowCount} rows could not be read and will not be imported. ` +
-        `No lane is shown as stopping until they are fixed, because a row that would not read ` +
-        `named no lane.`,
+      translate(
+        "{0} of {1, plural, one {# row} other {# rows}} could not be read and will not be imported. No lane is shown as stopping until they are fixed, because a row that would not read named no lane.",
+        batch.errorCount,
+        batch.rowCount,
+      ),
     );
   }
 
   const unmapped = batch.unmappedHeaders ?? [];
   if (unmapped.length > 0) {
-    warnings.push(`Nothing was read from these columns: ${unmapped.join(", ")}.`);
+    warnings.push(translate("Nothing was read from these columns: {0}.", unmapped.join(", ")));
   }
 
   const duplicates = batch.summary?.duplicate ?? 0;
   if (duplicates > 0) {
     warnings.push(
-      `${duplicates} lanes are listed more than once. Only the first of each will be imported.`,
+      translate(
+        "{0, plural, one {# lane is listed more than once. Only the first will be imported.} other {# lanes are listed more than once. Only the first of each will be imported.}}",
+        duplicates,
+      ),
     );
   }
 
   const removed = batch.summary?.removed ?? 0;
   if (removed > 0) {
-    warnings.push(`${removed} lanes in the agreement are not in this sheet and will stop pricing.`);
+    warnings.push(
+      translate(
+        "{0, plural, one {# lane in the agreement is not in this sheet and will stop pricing.} other {# lanes in the agreement are not in this sheet and will stop pricing.}}",
+        removed,
+      ),
+    );
   }
 
   return warnings;

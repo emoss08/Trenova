@@ -87,12 +87,12 @@ export function formatDelta(value: number | null | undefined): { text: string; t
 
   const points = Math.round(value * 100);
   if (points === 0) {
-    return { text: "±0 pts", tone: "muted" };
+    return { text: translate("±0 pts"), tone: "muted" };
   }
 
   return points > 0
-    ? { text: `+${points} pts`, tone: "success" }
-    : { text: `${points} pts`, tone: "danger" };
+    ? { text: translate("{0, plural, one {+# pt} other {+# pts}}", points), tone: "success" }
+    : { text: translate("{0, plural, one {# pt} other {# pts}}", points), tone: "danger" };
 }
 
 /** A decimal dollar amount as the Decimal scalar carries it, shown with its cents. */
