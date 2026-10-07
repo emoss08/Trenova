@@ -4239,6 +4239,34 @@ models:
   AIUsageSummary:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AIUsageSummary
+  AIControlTab:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicontrolsummary.Tab
+  AIControlSegment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicontrolsummary.Segment
+    fields:
+      target:
+        resolver: true
+      providerId:
+        resolver: true
+      tone:
+        resolver: true
+  AIControlAgentCounts:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicontrolsummary.AgentCounts
+  AIProviderFailure:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicontrolsummary.ProviderFailure
+  AIControlFacts:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicontrolsummary.Facts
+  AIControlSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicontrolsummary.Summary
+    fields:
+      visibleFailures:
+        resolver: true
   AIUsageDay:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AIUsageDay

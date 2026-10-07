@@ -8044,13 +8044,15 @@
     ]
   },
   "AI control": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "routes/agent-control"
+      "routes/agent-control",
+      "service/aicontrolsummaryservice"
     ]
   },
   "AI correction retention": {
@@ -122124,6 +122126,15 @@
       "service/assistanthandoffservice"
     ]
   },
+  "Only a person can put a notice away": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aicontrolsummaryservice"
+    ]
+  },
   "Only a person can rate what an AI wrote": {
     "sites": 1,
     "scope": [
@@ -205997,6 +206008,15 @@
     ],
     "areas": [
       "service/captureservice"
+    ]
+  },
+  "Unknown tab": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aicontrolsummaryservice"
     ]
   },
   "Unknown table resource": {

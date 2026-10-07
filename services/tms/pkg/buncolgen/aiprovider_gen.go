@@ -24,6 +24,156 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// FailureDismissal — table "ai_provider_failure_dismissals", alias "aipfd"
+// ---------------------------------------------------------------------------
+
+// FailureDismissalTable holds the table name, alias, and primary key columns
+// for the "ai_provider_failure_dismissals" table. The alias "aipfd" is used in all generated
+// SQL fragments (e.g. "aipfd.id = ?").
+var FailureDismissalTable = TableInfo{
+	Name:       "ai_provider_failure_dismissals",
+	Alias:      "aipfd",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// FailureDismissalColumns provides type-safe column references for the "ai_provider_failure_dismissals" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(FailureDismissalColumns.ID.String())
+//	// SELECT aipfd.id FROM ai_provider_failure_dismissals AS aipfd
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(FailureDismissalColumns.ID.Eq(), id)           // WHERE aipfd.id = ?
+//	q.Order(FailureDismissalColumns.CreatedAt.OrderDesc())  // ORDER BY aipfd.created_at DESC
+var FailureDismissalColumns = struct {
+	ID             Column // "id" → qualified: "aipfd.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "aipfd.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "aipfd.organization_id"
+	UserID         Column // "user_id" → qualified: "aipfd.user_id"
+	ProviderID     Column // "provider_id" → qualified: "aipfd.provider_id"
+	FailureAt      Column // "failure_at" → qualified: "aipfd.failure_at"
+	CreatedAt      Column // "created_at" → qualified: "aipfd.created_at"
+}{
+	ID:             NewColumn("id", "aipfd"),
+	BusinessUnitID: NewColumn("business_unit_id", "aipfd"),
+	OrganizationID: NewColumn("organization_id", "aipfd"),
+	UserID:         NewColumn("user_id", "aipfd"),
+	ProviderID:     NewColumn("provider_id", "aipfd"),
+	FailureAt:      NewColumn("failure_at", "aipfd"),
+	CreatedAt:      NewColumn("created_at", "aipfd"),
+}
+
+// FailureDismissalFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by FailureDismissal.GetStaticFieldMap().
+var FailureDismissalFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"userId":         "user_id",
+	"providerId":     "provider_id",
+	"failureAt":      "failure_at",
+	"createdAt":      "created_at",
+}
+
+// FailureDismissalInsertableColumns lists column names suitable for INSERT statements on the "ai_provider_failure_dismissals" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var FailureDismissalInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"user_id",
+	"provider_id",
+	"failure_at",
+	"created_at",
+}
+
+// FailureDismissalScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE aipfd.organization_id = ? AND aipfd.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.FailureDismissalScopeTenant(sq, ti).
+//		Where(buncolgen.FailureDismissalColumns.ID.Eq(), id)
+func FailureDismissalScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, FailureDismissalColumns.OrganizationID, FailureDismissalColumns.BusinessUnitID, ti)
+}
+
+// FailureDismissalScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.FailureDismissalScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.FailureDismissalColumns.ID.In(), bun.List(ids))
+//	})
+func FailureDismissalScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, FailureDismissalColumns.OrganizationID, FailureDismissalColumns.BusinessUnitID, ti)
+}
+
+// FailureDismissalScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.FailureDismissalScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.FailureDismissalColumns.ID.Eq(), id)
+//	})
+func FailureDismissalScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, FailureDismissalColumns.OrganizationID, FailureDismissalColumns.BusinessUnitID, ti)
+}
+
+// FailureDismissalApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.FailureDismissalApplyTenant(tenantInfo))
+func FailureDismissalApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(FailureDismissalColumns.OrganizationID, FailureDismissalColumns.BusinessUnitID, ti)
+}
+
+// FailureDismissalFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "ai_provider_failure_dismissals" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	FailureDismissalFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var FailureDismissalFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	ProviderID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	FailureAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureAt" → DB: "failure_at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerId", op, value)
+	},
+	FailureAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Provider — table "ai_providers", alias "aiprv"
 // ---------------------------------------------------------------------------
 

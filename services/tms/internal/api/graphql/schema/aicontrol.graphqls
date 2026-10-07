@@ -1,0 +1,82 @@
+"A tab of AI control that opens with a sentence."
+enum AIControlTab {
+  Overview
+  Agents
+  Providers
+}
+
+"""
+One run of a sentence. A target makes it a link: watchtower, providers, routing,
+agents:shadow, agents:waiting, or provider (with providerId). Tone colours a
+link: warn or danger.
+"""
+type AIControlSegment {
+  text: String!
+  strong: Boolean!
+  target: String
+  providerId: ID
+  tone: String
+}
+
+"The organization's agents and what they are doing."
+type AIControlAgentCounts {
+  total: Int!
+  on: Int!
+  working: Int!
+  "Proposals waiting on a person."
+  waiting: Int!
+  "Agents on and in shadow."
+  shadow: Int!
+  "Proposals shadow agents recorded over the last 30 days."
+  shadowRecorded: Int!
+}
+
+"An enabled provider whose last call failed and has not succeeded since."
+type AIProviderFailure {
+  providerId: ID!
+  name: String!
+  "Failed calls over the last day."
+  failedCalls: Int!
+  lastFailureAt: Timestamp!
+}
+
+"What a tab's sentence may say."
+type AIControlFacts {
+  agents: AIControlAgentCounts!
+  providersOn: Int!
+  failing: [AIProviderFailure!]!
+  "Tasks no enabled provider can take."
+  uncovered: Int!
+  "Every agent is paused and runs in shadow."
+  paused: Boolean!
+}
+
+"""
+The sentence that heads a tab. It is worked out from the records on every
+read; a model rewords it only when they say something new, and what it wrote is
+kept until they move again.
+"""
+type AIControlSummary {
+  tab: AIControlTab!
+  segments: [AIControlSegment!]!
+  "A model wrote it; false is the sentence the facts say on their own."
+  narrated: Boolean!
+  "A model is rewording it; read again in a few seconds."
+  pending: Boolean!
+  factsHash: String!
+  generatedAt: Timestamp!
+  facts: AIControlFacts!
+  "The failing providers the reader has not put away since they last failed."
+  visibleFailures: [AIProviderFailure!]!
+}
+
+extend type Query {
+  aiControlSummary(tab: AIControlTab!): AIControlSummary!
+}
+
+extend type Mutation {
+  "Puts away, for the caller, the notice that a provider is failing, up to the failure they saw."
+  dismissAIProviderFailure(providerId: ID!, lastFailureAt: Timestamp!): Boolean!
+  "Brings a put-away failure notice back."
+  restoreAIProviderFailure(providerId: ID!): Boolean!
+}

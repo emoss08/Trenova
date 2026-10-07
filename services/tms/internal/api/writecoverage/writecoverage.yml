@@ -182,6 +182,12 @@ writes:
   "POST /api/v1/agent-definitions/dry-run/":
     exempt: read-only
     reason: "Tries a draft agent once with every write simulated; it saves and changes nothing."
+  "mutation dismissAIProviderFailure":
+    exempt: user-preference
+    reason: "Puts away a notice on one person's own overview; it changes nothing anyone else sees."
+  "mutation restoreAIProviderFailure":
+    exempt: user-preference
+    reason: "Brings back a notice one person put away on their own overview."
   "mutation keepAgentTestPrompt":
     exempt: agent-administration
     reason: "Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself."

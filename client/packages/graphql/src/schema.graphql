@@ -286,6 +286,71 @@ enum AIAuditVerificationStatus {
   Verified
 }
 
+"""The organization's agents and what they are doing."""
+type AIControlAgentCounts {
+  on: Int!
+  """Agents on and in shadow."""
+  shadow: Int!
+  """Proposals shadow agents recorded over the last 30 days."""
+  shadowRecorded: Int!
+  total: Int!
+  """Proposals waiting on a person."""
+  waiting: Int!
+  working: Int!
+}
+
+"""What a tab's sentence may say."""
+type AIControlFacts {
+  agents: AIControlAgentCounts!
+  failing: [AIProviderFailure!]!
+  """Every agent is paused and runs in shadow."""
+  paused: Boolean!
+  providersOn: Int!
+  """Tasks no enabled provider can take."""
+  uncovered: Int!
+}
+
+"""
+One run of a sentence. A target makes it a link: watchtower, providers, routing,
+agents:shadow, agents:waiting, or provider (with providerId). Tone colours a
+link: warn or danger.
+"""
+type AIControlSegment {
+  providerId: ID
+  strong: Boolean!
+  target: String
+  text: String!
+  tone: String
+}
+
+"""
+The sentence that heads a tab. It is worked out from the records on every
+read; a model rewords it only when they say something new, and what it wrote is
+kept until they move again.
+"""
+type AIControlSummary {
+  facts: AIControlFacts!
+  factsHash: String!
+  generatedAt: Timestamp!
+  """A model wrote it; false is the sentence the facts say on their own."""
+  narrated: Boolean!
+  """A model is rewording it; read again in a few seconds."""
+  pending: Boolean!
+  segments: [AIControlSegment!]!
+  tab: AIControlTab!
+  """
+  The failing providers the reader has not put away since they last failed.
+  """
+  visibleFailures: [AIProviderFailure!]!
+}
+
+"""A tab of AI control that opens with a sentence."""
+enum AIControlTab {
+  Agents
+  Overview
+  Providers
+}
+
 """
 What an extraction predicted beside what a person confirmed when they created a record from it.
 """
@@ -552,6 +617,17 @@ type AIProviderConnection {
 type AIProviderEdge {
   cursor: String!
   node: AIProvider!
+}
+
+"""
+An enabled provider whose last call failed and has not succeeded since.
+"""
+type AIProviderFailure {
+  """Failed calls over the last day."""
+  failedCalls: Int!
+  lastFailureAt: Timestamp!
+  name: String!
+  providerId: ID!
 }
 
 enum AIProviderKind {
@@ -16767,6 +16843,10 @@ type Mutation {
   discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
   """Disconnects the accounting system and revokes Trenova's access to it."""
   disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
+  """
+  Puts away, for the caller, the notice that a provider is failing, up to the failure they saw.
+  """
+  dismissAIProviderFailure(lastFailureAt: Timestamp!, providerId: ID!): Boolean!
   """Keeps both sides as they are, with a reason."""
   dismissAccountingDrift(input: DismissAccountingDriftInput!): AccountingDriftFinding!
   """
@@ -17044,6 +17124,8 @@ type Mutation {
   respondToMyAssignment(input: RespondToMyAssignmentInput!): Boolean!
   """The signed-in driver answering a swap, or withdrawing one they made."""
   respondToMyShiftSwap(input: RespondToMyShiftSwapInput!): ShiftSwapRequest!
+  """Brings a put-away failure notice back."""
+  restoreAIProviderFailure(providerId: ID!): Boolean!
   restoreMyNotifications(ids: [ID!]!): Boolean!
   restoreNotifications(ids: [ID!]!): Boolean!
   restorePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
@@ -19239,6 +19321,7 @@ type Query {
   aiAuditEvents(input: DataTableConnectionInput!): AIAuditEventConnection!
   aiAuditExport(id: ID!): AIAuditExport
   aiAuditExports(input: DataTableConnectionInput!): AIAuditExportConnection!
+  aiControlSummary(tab: AIControlTab!): AIControlSummary!
   aiCorrection(id: ID!): AICorrection
   aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
   """Everyone's ratings, for administrators."""

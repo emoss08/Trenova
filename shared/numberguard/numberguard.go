@@ -230,3 +230,23 @@ func FormatForPrompt(value decimal.Decimal) string {
 
 	return rounded.String()
 }
+
+// OnlyCounts reports whether every number in prose is exactly one of the
+// counts. It is the strict form of CheckNumbers for prose made of counts,
+// where no number is conversational: "9 proposals" for four is a lie however
+// small nine is.
+func OnlyCounts(prose string, counts []int) bool {
+	allowed := make(map[int64]struct{}, len(counts))
+	for _, count := range counts {
+		allowed[int64(count)] = struct{}{}
+	}
+	for _, citation := range extractNumbers(prose) {
+		if !citation.value.IsInteger() {
+			return false
+		}
+		if _, ok := allowed[citation.value.IntPart()]; !ok {
+			return false
+		}
+	}
+	return true
+}

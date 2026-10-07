@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentsafetyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentscorecardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiauditexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aicontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aifeedbackexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiproviderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/airetrievalexec"
@@ -141,6 +142,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -245,6 +247,8 @@ type ResolverRoot interface {
 	AIAuditChainStatus() AIAuditChainStatusResolver
 	AIAuditEvent() AIAuditEventResolver
 	AIAuditExport() AIAuditExportResolver
+	AIControlSegment() AIControlSegmentResolver
+	AIControlSummary() AIControlSummaryResolver
 	AICorrection() AICorrectionResolver
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
@@ -494,6 +498,16 @@ type AIAuditExportResolver interface {
 	RequestedBy(ctx context.Context, obj *aiaudit.AIAuditExport) (*tenant.User, error)
 	Filters(ctx context.Context, obj *aiaudit.AIAuditExport) (map[string]any, error)
 	Downloadable(ctx context.Context, obj *aiaudit.AIAuditExport) (bool, error)
+}
+
+type AIControlSegmentResolver interface {
+	Target(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
+	ProviderID(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
+	Tone(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
+}
+
+type AIControlSummaryResolver interface {
+	VisibleFailures(ctx context.Context, obj *aicontrolsummary.Summary) ([]*aicontrolsummary.ProviderFailure, error)
 }
 
 type AICorrectionResolver interface {
@@ -1492,6 +1506,8 @@ type MutationResolver interface {
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
 	AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error)
 	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
+	DismissAIProviderFailure(ctx context.Context, providerID string, lastFailureAt int) (bool, error)
+	RestoreAIProviderFailure(ctx context.Context, providerID string) (bool, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*services.AIRetrievalStatus, error)
@@ -2174,6 +2190,7 @@ type QueryResolver interface {
 	AiAuditChainStatus(ctx context.Context) (*services.AIAuditChainStatus, error)
 	AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error)
 	AiAuditExport(ctx context.Context, id string) (*aiaudit.AIAuditExport, error)
+	AiControlSummary(ctx context.Context, tab aicontrolsummary.Tab) (*aicontrolsummary.Summary, error)
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
 	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
@@ -3030,6 +3047,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		agentsafetyexec.Shard,
 		agentscorecardexec.Shard,
 		aiauditexec.Shard,
+		aicontrolexec.Shard,
 		aifeedbackexec.Shard,
 		aiproviderexec.Shard,
 		airetrievalexec.Shard,
@@ -3156,6 +3174,8 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AIAuditChainStatus":                 func() any { return r.AIAuditChainStatus() },
 			"AIAuditEvent":                       func() any { return r.AIAuditEvent() },
 			"AIAuditExport":                      func() any { return r.AIAuditExport() },
+			"AIControlSegment":                   func() any { return r.AIControlSegment() },
+			"AIControlSummary":                   func() any { return r.AIControlSummary() },
 			"AICorrection":                       func() any { return r.AICorrection() },
 			"AIFeedback":                         func() any { return r.AIFeedback() },
 			"AIProvider":                         func() any { return r.AIProvider() },
@@ -7979,6 +7999,89 @@ extend type Mutation {
   requestAIAuditExport(input: RequestAIAuditExportInput!): AIAuditExport!
   aiAuditExportDownload(id: ID!): AIAuditDownload!
   verifyAIAuditChain: AIAuditChainStatus!
+}
+`, BuiltIn: false},
+	{Name: "../schema/aicontrol.graphqls", Input: `"A tab of AI control that opens with a sentence."
+enum AIControlTab {
+  Overview
+  Agents
+  Providers
+}
+
+"""
+One run of a sentence. A target makes it a link: watchtower, providers, routing,
+agents:shadow, agents:waiting, or provider (with providerId). Tone colours a
+link: warn or danger.
+"""
+type AIControlSegment {
+  text: String!
+  strong: Boolean!
+  target: String
+  providerId: ID
+  tone: String
+}
+
+"The organization's agents and what they are doing."
+type AIControlAgentCounts {
+  total: Int!
+  on: Int!
+  working: Int!
+  "Proposals waiting on a person."
+  waiting: Int!
+  "Agents on and in shadow."
+  shadow: Int!
+  "Proposals shadow agents recorded over the last 30 days."
+  shadowRecorded: Int!
+}
+
+"An enabled provider whose last call failed and has not succeeded since."
+type AIProviderFailure {
+  providerId: ID!
+  name: String!
+  "Failed calls over the last day."
+  failedCalls: Int!
+  lastFailureAt: Timestamp!
+}
+
+"What a tab's sentence may say."
+type AIControlFacts {
+  agents: AIControlAgentCounts!
+  providersOn: Int!
+  failing: [AIProviderFailure!]!
+  "Tasks no enabled provider can take."
+  uncovered: Int!
+  "Every agent is paused and runs in shadow."
+  paused: Boolean!
+}
+
+"""
+The sentence that heads a tab. It is worked out from the records on every
+read; a model rewords it only when they say something new, and what it wrote is
+kept until they move again.
+"""
+type AIControlSummary {
+  tab: AIControlTab!
+  segments: [AIControlSegment!]!
+  "A model wrote it; false is the sentence the facts say on their own."
+  narrated: Boolean!
+  "A model is rewording it; read again in a few seconds."
+  pending: Boolean!
+  factsHash: String!
+  generatedAt: Timestamp!
+  facts: AIControlFacts!
+  "The failing providers the reader has not put away since they last failed."
+  visibleFailures: [AIProviderFailure!]!
+}
+
+extend type Query {
+  aiControlSummary(tab: AIControlTab!): AIControlSummary!
+}
+
+extend type Mutation {
+  "Puts away, for the caller, the notice that a provider is failing, up to the failure they saw."
+  dismissAIProviderFailure(providerId: ID!, lastFailureAt: Timestamp!): Boolean!
+  "Brings a put-away failure notice back."
+  restoreAIProviderFailure(providerId: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/aifeedback.graphqls", Input: `"The kind of AI output a rating is about."

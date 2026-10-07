@@ -31,6 +31,7 @@ var RedisRepositoriesModule = fx.Module("redis-repositories",
 		repositories.NewLoginThrottleStore,
 		repositories.NewShipmentBoardCache,
 		repositories.NewShipmentBoardEpochBumper,
+		repositories.NewAIControlSummaryCache,
 	),
 )
 

@@ -207,3 +207,22 @@ func TestSupportedFromText_EmptyInputSupportsNothing(t *testing.T) {
 	assert.Empty(t, numberguard.SupportedFromText())
 	assert.Empty(t, numberguard.SupportedFromText("", "no figures here"))
 }
+
+func TestOnlyCountsHoldsEveryNumberToTheCounts(t *testing.T) {
+	t.Parallel()
+
+	counts := []int{2, 4, 14}
+
+	if !numberguard.OnlyCounts("14 agents are on and 4 proposals wait.", counts) {
+		t.Fatal("counts that are all known were refused")
+	}
+	if numberguard.OnlyCounts("9 proposals wait.", counts) {
+		t.Fatal("a small number that is not a count was accepted")
+	}
+	if numberguard.OnlyCounts("2.5 agents are on.", counts) {
+		t.Fatal("a fraction was accepted as a count")
+	}
+	if !numberguard.OnlyCounts("Every agent is paused.", counts) {
+		t.Fatal("prose with no numbers was refused")
+	}
+}

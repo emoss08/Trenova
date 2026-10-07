@@ -73,9 +73,6 @@ User, Page, Tools, Memory).
 
 ## SQLite migrations
 
-- The SQLite migration set lags the PostgreSQL one on `master` (it ends at
-  `20261231007270`). Regenerating the whole set would rewrite hundreds of files unrelated to
-  this work, so only the new migrations were converted and added.
-- The converter writes every SQLite down migration as `SELECT 1;`
-  (`scripts/dialect-convert/convert.py`). The new ones follow it rather than being edited by
-  hand, so a later regeneration does not churn them.
+The spec asks for SQLite migrations alongside the PostgreSQL ones. Trenova is not using
+SQLite going forward, so this work adds none, and the ones added earlier in it were
+removed.

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentsafetyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentscorecardresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aiauditresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/aicontrolresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aifeedbackresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aiproviderresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/airetrievalresolver"
@@ -130,6 +131,8 @@ type Resolver struct {
 	aIAuditChainStatus                 *aiauditresolver.AIAuditChainStatusResolver
 	aIAuditEvent                       *aiauditresolver.AIAuditEventResolver
 	aIAuditExport                      *aiauditresolver.AIAuditExportResolver
+	aIControlSegment                   *aicontrolresolver.AIControlSegmentResolver
+	aIControlSummary                   *aicontrolresolver.AIControlSummaryResolver
 	aICorrection                       *extractionevalresolver.AICorrectionResolver
 	aIFeedback                         *aifeedbackresolver.AIFeedbackResolver
 	aIProvider                         *aiproviderresolver.AIProviderResolver
@@ -430,6 +433,10 @@ func FromServices(s *Services) *Resolver {
 	aiauditDeps := &aiauditresolver.Deps{
 		Core:           s.Core,
 		AiAuditService: s.AiAuditService,
+	}
+	aicontrolDeps := &aicontrolresolver.Deps{
+		Core:                    s.Core,
+		AiControlSummaryService: s.AiControlSummaryService,
 	}
 	aifeedbackDeps := &aifeedbackresolver.Deps{
 		Core:              s.Core,
@@ -978,6 +985,8 @@ func FromServices(s *Services) *Resolver {
 		aIAuditChainStatus:           &aiauditresolver.AIAuditChainStatusResolver{Deps: aiauditDeps},
 		aIAuditEvent:                 &aiauditresolver.AIAuditEventResolver{Deps: aiauditDeps},
 		aIAuditExport:                &aiauditresolver.AIAuditExportResolver{Deps: aiauditDeps},
+		aIControlSegment:             &aicontrolresolver.AIControlSegmentResolver{Deps: aicontrolDeps},
+		aIControlSummary:             &aicontrolresolver.AIControlSummaryResolver{Deps: aicontrolDeps},
 		aICorrection:                 &extractionevalresolver.AICorrectionResolver{Deps: extractionevalDeps},
 		aIFeedback:                   &aifeedbackresolver.AIFeedbackResolver{Deps: aifeedbackDeps},
 		aIProvider:                   &aiproviderresolver.AIProviderResolver{Deps: aiproviderDeps},
@@ -1143,6 +1152,7 @@ func FromServices(s *Services) *Resolver {
 			agentdefinitionMutation:       &agentdefinitionMutation{Deps: agentdefinitionDeps},
 			agentqualityMutation:          &agentqualityMutation{Deps: agentqualityDeps},
 			aiauditMutation:               &aiauditMutation{Deps: aiauditDeps},
+			aicontrolMutation:             &aicontrolMutation{Deps: aicontrolDeps},
 			aifeedbackMutation:            &aifeedbackMutation{Deps: aifeedbackDeps},
 			airetrievalMutation:           &airetrievalMutation{Deps: airetrievalDeps},
 			benefitsMutation:              &benefitsMutation{Deps: benefitsDeps},
@@ -1243,6 +1253,7 @@ func FromServices(s *Services) *Resolver {
 			agentsafetyQuery:              &agentsafetyQuery{Deps: agentsafetyDeps},
 			agentscorecardQuery:           &agentscorecardQuery{Deps: agentscorecardDeps},
 			aiauditQuery:                  &aiauditQuery{Deps: aiauditDeps},
+			aicontrolQuery:                &aicontrolQuery{Deps: aicontrolDeps},
 			aifeedbackQuery:               &aifeedbackQuery{Deps: aifeedbackDeps},
 			aiproviderQuery:               &aiproviderQuery{Deps: aiproviderDeps},
 			airetrievalQuery:              &airetrievalQuery{Deps: airetrievalDeps},
@@ -1414,6 +1425,14 @@ func (r *Resolver) AIAuditEvent() generated.AIAuditEventResolver {
 
 func (r *Resolver) AIAuditExport() generated.AIAuditExportResolver {
 	return r.aIAuditExport
+}
+
+func (r *Resolver) AIControlSegment() generated.AIControlSegmentResolver {
+	return r.aIControlSegment
+}
+
+func (r *Resolver) AIControlSummary() generated.AIControlSummaryResolver {
+	return r.aIControlSummary
 }
 
 func (r *Resolver) AICorrection() generated.AICorrectionResolver {
@@ -2031,6 +2050,7 @@ type mutationResolver struct {
 	*agentdefinitionMutation
 	*agentqualityMutation
 	*aiauditMutation
+	*aicontrolMutation
 	*aifeedbackMutation
 	*airetrievalMutation
 	*benefitsMutation
@@ -2202,6 +2222,7 @@ type queryResolver struct {
 	*agentsafetyQuery
 	*agentscorecardQuery
 	*aiauditQuery
+	*aicontrolQuery
 	*aifeedbackQuery
 	*aiproviderQuery
 	*airetrievalQuery
@@ -2532,6 +2553,7 @@ type (
 	agentdefinitionMutation       = agentdefinitionresolver.MutationResolver
 	agentqualityMutation          = agentqualityresolver.MutationResolver
 	aiauditMutation               = aiauditresolver.MutationResolver
+	aicontrolMutation             = aicontrolresolver.MutationResolver
 	aifeedbackMutation            = aifeedbackresolver.MutationResolver
 	airetrievalMutation           = airetrievalresolver.MutationResolver
 	benefitsMutation              = benefitsresolver.MutationResolver
@@ -2608,6 +2630,7 @@ type (
 	agentsafetyQuery              = agentsafetyresolver.QueryResolver
 	agentscorecardQuery           = agentscorecardresolver.QueryResolver
 	aiauditQuery                  = aiauditresolver.QueryResolver
+	aicontrolQuery                = aicontrolresolver.QueryResolver
 	aifeedbackQuery               = aifeedbackresolver.QueryResolver
 	aiproviderQuery               = aiproviderresolver.QueryResolver
 	airetrievalQuery              = airetrievalresolver.QueryResolver
