@@ -232,7 +232,34 @@ type AgentProposalNotifier interface {
 // concerned; a long enough streak of clean approvals moves the tool up one
 // tier on the agent when the organization allows it, and a setback takes an
 // earned tier back.
+// ToolPromotion is a tool whose clean streak has earned its agent's next
+// tier: where it stands and where it goes.
+type ToolPromotion struct {
+	AgentDefinitionID pulid.ID           `json:"agentDefinitionId"`
+	AgentName         string             `json:"agentName"`
+	ToolName          string             `json:"toolName"`
+	Streak            int                `json:"streak"`
+	From              agent.AutonomyTier `json:"from"`
+	To                agent.AutonomyTier `json:"to"`
+}
+
+type PromoteReadyRequest struct {
+	TenantInfo pagination.TenantInfo
+	// Threshold is the streak a tool must have reached.
+	Threshold int
+	// DecidedBy is who turned earned autonomy on, or lowered its threshold.
+	DecidedBy pulid.ID
+}
+
 type AgentTrustService interface {
+	// PromotionCandidates are the tools that would move up a tier with
+	// earned autonomy on at the threshold. It changes nothing.
+	PromotionCandidates(ctx context.Context, req *PromoteReadyRequest) ([]ToolPromotion, error)
+	// PromoteReady moves up every tool whose streak has already reached the
+	// threshold, for when earned autonomy is turned on or the threshold is
+	// lowered: they earned it before there was a clean approval to promote
+	// them on.
+	PromoteReady(ctx context.Context, req *PromoteReadyRequest) ([]ToolPromotion, error)
 	RecordDecision(
 		ctx context.Context,
 		proposal *agent.AgentProposal,

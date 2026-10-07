@@ -2148,6 +2148,7 @@ type QueryResolver interface {
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
+	AgentPromotionPreview(ctx context.Context, threshold int) ([]*services.ToolPromotion, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
@@ -2201,6 +2202,7 @@ type QueryResolver interface {
 	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
+	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
 	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
 	AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
@@ -5888,6 +5890,23 @@ extend type Query {
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
+  """
+  The tools that would move up a tier with earned autonomy on at the threshold:
+  their clean streak has already reached it, and their agent's ceiling and the
+  tool's policy leave room above. Saving earned autonomy on, or a lower
+  threshold, promotes them. Changes nothing.
+  """
+  agentPromotionPreview(threshold: Int!): [AgentToolPromotion!]!
+}
+
+"A tool whose clean streak has earned its agent's next tier."
+type AgentToolPromotion {
+  agentDefinitionId: ID!
+  agentName: String!
+  toolName: String!
+  streak: Int!
+  from: AgentAutonomyTier!
+  to: AgentAutonomyTier!
 }
 
 extend type Mutation {
@@ -8776,7 +8795,24 @@ type AIUsageDay {
   latencyP95Ms: Int!
 }
 
+type AIUsageFeatureEdge {
+  node: AIUsageFeatureSlice!
+  cursor: String!
+}
+
+"""
+Model usage by feature as a table: searchable by feature, filterable and
+sortable on feature, calls, failed, tokens, costUsd and latencyP50Ms.
+"""
+type AIUsageFeatureConnection {
+  edges: [AIUsageFeatureEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 extend type Query {
+  "Model usage by feature over the last days (default 7, at most 366), as a table."
+  aiUsageFeatures(input: DataTableConnectionInput!, days: Int): AIUsageFeatureConnection!
   "Model usage since the given instant, defaulting to the last seven days."
   aiUsageSummary(since: Timestamp): AIUsageSummary!
   """

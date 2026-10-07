@@ -1002,6 +1002,21 @@ enum AIUsageFeature {
   TableQuery
 }
 
+"""
+Model usage by feature as a table: searchable by feature, filterable and
+sortable on feature, calls, failed, tokens, costUsd and latencyP50Ms.
+"""
+type AIUsageFeatureConnection {
+  edges: [AIUsageFeatureEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AIUsageFeatureEdge {
+  cursor: String!
+  node: AIUsageFeatureSlice!
+}
+
 """One feature's share of a usage window."""
 type AIUsageFeatureSlice {
   calls: Int!
@@ -5050,6 +5065,16 @@ input AgentToolPolicyConnectionInput {
 type AgentToolPolicyEdge {
   cursor: String!
   node: AgentToolPolicy!
+}
+
+"""A tool whose clean streak has earned its agent's next tier."""
+type AgentToolPromotion {
+  agentDefinitionId: ID!
+  agentName: String!
+  from: AgentAutonomyTier!
+  streak: Int!
+  to: AgentAutonomyTier!
+  toolName: String!
 }
 
 """
@@ -19234,6 +19259,13 @@ type Query {
   """What every pending step of a plan would do, in order."""
   agentPlanPreview(id: ID!): AgentPlanPreview!
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
+  """
+  The tools that would move up a tier with earned autonomy on at the threshold:
+  their clean streak has already reached it, and their agent's ceiling and the
+  tool's policy leave room above. Saving earned autonomy on, or a lower
+  threshold, promotes them. Changes nothing.
+  """
+  agentPromotionPreview(threshold: Int!): [AgentToolPromotion!]!
   agentProposal(id: ID!): AgentProposal
   """
   What a proposal's write would do, with the changes an approver has in mind
@@ -19355,6 +19387,10 @@ type Query {
   in the IANA timezone given, UTC when absent.
   """
   aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
+  """
+  Model usage by feature over the last days (default 7, at most 366), as a table.
+  """
+  aiUsageFeatures(days: Int, input: DataTableConnectionInput!): AIUsageFeatureConnection!
   """
   Model usage since the given instant, defaulting to the last seven days.
   """

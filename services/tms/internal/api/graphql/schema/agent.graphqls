@@ -876,6 +876,23 @@ extend type Query {
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
+  """
+  The tools that would move up a tier with earned autonomy on at the threshold:
+  their clean streak has already reached it, and their agent's ceiling and the
+  tool's policy leave room above. Saving earned autonomy on, or a lower
+  threshold, promotes them. Changes nothing.
+  """
+  agentPromotionPreview(threshold: Int!): [AgentToolPromotion!]!
+}
+
+"A tool whose clean streak has earned its agent's next tier."
+type AgentToolPromotion {
+  agentDefinitionId: ID!
+  agentName: String!
+  toolName: String!
+  streak: Int!
+  from: AgentAutonomyTier!
+  to: AgentAutonomyTier!
 }
 
 extend type Mutation {

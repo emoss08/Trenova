@@ -231,6 +231,7 @@ type Params struct {
 	AgentDefinitionService       services.AgentDefinitionService
 	AgentCapabilityService       services.AgentCapabilityService
 	AgentShadowService           services.AgentShadowService
+	AgentTrustService            services.AgentTrustService
 	AgentTestPromptService       services.AgentTestPromptService
 	AIControlSummaryService      services.AIControlSummaryService
 	AIProviderService            services.AIProviderService
@@ -425,6 +426,7 @@ type Services struct {
 	AgentDefinitionService       services.AgentDefinitionService
 	AgentCapabilityService       services.AgentCapabilityService
 	AgentShadowService           services.AgentShadowService
+	AgentTrustService            services.AgentTrustService
 	AgentTestPromptService       services.AgentTestPromptService
 	AiControlSummaryService      services.AIControlSummaryService
 	AiProviderService            services.AIProviderService
@@ -625,6 +627,7 @@ func newServices(p *Params) *Services {
 		AgentDefinitionService:       p.AgentDefinitionService,
 		AgentCapabilityService:       p.AgentCapabilityService,
 		AgentShadowService:           p.AgentShadowService,
+		AgentTrustService:            p.AgentTrustService,
 		AgentTestPromptService:       p.AgentTestPromptService,
 		AiControlSummaryService:      p.AIControlSummaryService,
 		AiProviderService:            p.AIProviderService,

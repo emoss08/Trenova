@@ -839,3 +839,24 @@ func (r *AgentMemoryResolver) Supersedes(ctx context.Context, obj *agent.Memory)
 func (r *AgentMemoryResolver) ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error) {
 	return replacingMemory(ctx, obj)
 }
+
+func (r *QueryResolver) AgentPromotionPreview(ctx context.Context, threshold int) ([]*services.ToolPromotion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	candidates, err := r.AgentTrustService.PromotionCandidates(ctx, &services.PromoteReadyRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Threshold:  threshold,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*services.ToolPromotion, len(candidates))
+	for idx := range candidates {
+		out[idx] = &candidates[idx]
+	}
+	return out, nil
+}

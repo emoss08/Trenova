@@ -2144,6 +2144,9 @@ models:
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier
+  AgentToolPromotion:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ToolPromotion
   AgentRunEvent:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentRunEvent

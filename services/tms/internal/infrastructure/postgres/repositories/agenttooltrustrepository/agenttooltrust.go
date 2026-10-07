@@ -231,3 +231,26 @@ func (r *repository) MarkTierChange(
 		return entity, nil
 	})
 }
+
+func (r *repository) ListReady(
+	ctx context.Context,
+	req repositories.ListReadyToolTrustRequest,
+) ([]*agent.ToolTrust, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
+		cols := buncolgen.ToolTrustColumns
+		rows := make([]*agent.ToolTrust, 0, req.Limit)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&rows).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ToolTrustScopeTenant(sq, req.TenantInfo).
+					Where(cols.Streak.Gte(), max(req.MinStreak, 1))
+			}).
+			OrderExpr(cols.Streak.OrderDesc()).
+			Limit(req.Limit).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list tools ready for promotion: %w", err)
+		}
+		return rows, nil
+	})
+}

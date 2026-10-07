@@ -56,6 +56,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentRunTranscriptToolCall", Implementors: []string{"AgentRunTranscriptToolCall"}},
 		{Name: "AgentTaintMark", Implementors: []string{"AgentTaintMark"}},
 		{Name: "AgentTaintRef", Implementors: []string{"AgentTaintRef"}},
+		{Name: "AgentToolPromotion", Implementors: []string{"AgentToolPromotion"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "AgentControl", Fields: []*gqlexec.Field{
@@ -3318,6 +3319,68 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "AgentToolPromotion", Fields: []*gqlexec.Field{
+			{
+				Name:     "agentDefinitionId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.ToolPromotion)
+					return obj.AgentDefinitionID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "agentName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.ToolPromotion)
+					return obj.AgentName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "toolName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.ToolPromotion)
+					return obj.ToolName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "streak",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.ToolPromotion)
+					return obj.Streak, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "from",
+				NonNull:  true,
+				ChildErr: errNoChild20,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.ToolPromotion)
+					return obj.From, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentAutonomyTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier),
+			},
+			{
+				Name:     "to",
+				NonNull:  true,
+				ChildErr: errNoChild20,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.ToolPromotion)
+					return obj.To, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentAutonomyTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier),
+			},
+		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
 				Name:       "decideAgentProposal",
@@ -3714,6 +3777,20 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐAgentControl),
 			},
+			{
+				Name:       "agentPromotionPreview",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentToolPromotion",
+				Args:       field_Query_agentPromotionPreview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPromotionPreview(ctx, fc.Args["threshold"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentToolPromotion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐToolPromotionᚄ),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -3813,6 +3890,7 @@ type resolverQuery interface {
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
+	AgentPromotionPreview(ctx context.Context, threshold int) ([]*services.ToolPromotion, error)
 }
 
 var (
@@ -4308,6 +4386,19 @@ func field_Query_agentException_args(ctx context.Context, ec *gqlexec.Exec, rawA
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_agentPromotionPreview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "threshold",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["threshold"] = arg0
 	return args, nil
 }
 
@@ -5415,6 +5506,22 @@ func marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNAgentToolPromotion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐToolPromotionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.ToolPromotion) graphql.Marshaler {
+	return gqlexec.List[*services.ToolPromotion]{
+		Elem:        marshalNAgentToolPromotion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐToolPromotion,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentToolPromotion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐToolPromotion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ToolPromotion) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentToolPromotion", v)
 }
 
 func marshalNAgentType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.Type) graphql.Marshaler {

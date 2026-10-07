@@ -46,7 +46,16 @@ type MarkToolTierChangeRequest struct {
 	At         int64
 }
 
+// ListReadyToolTrustRequest reads the ledger rows whose clean streak has
+// reached a threshold, across the organization's agents.
+type ListReadyToolTrustRequest struct {
+	TenantInfo pagination.TenantInfo
+	MinStreak  int
+	Limit      int
+}
+
 type AgentToolTrustRepository interface {
+	ListReady(ctx context.Context, req ListReadyToolTrustRequest) ([]*agent.ToolTrust, error)
 	Record(ctx context.Context, req RecordToolTrustRequest) (*agent.ToolTrust, error)
 	ListByDefinition(ctx context.Context, req ListToolTrustRequest) ([]*agent.ToolTrust, error)
 	ListByDefinitionIDs(

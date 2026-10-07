@@ -8,6 +8,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,6 +20,8 @@ var Shard = &gqlexec.Shard{
 	Objects: []*gqlexec.Object{
 		{Name: "AIUsageDay", Implementors: []string{"AIUsageDay"}},
 		{Name: "AIUsageFailure", Implementors: []string{"AIUsageFailure"}},
+		{Name: "AIUsageFeatureConnection", Implementors: []string{"AIUsageFeatureConnection"}},
+		{Name: "AIUsageFeatureEdge", Implementors: []string{"AIUsageFeatureEdge"}},
 		{Name: "AIUsageFeatureSlice", Implementors: []string{"AIUsageFeatureSlice"}},
 		{Name: "AIUsageProviderSlice", Implementors: []string{"AIUsageProviderSlice"}},
 		{Name: "AIUsageSummary", Implementors: []string{"AIUsageSummary"}},
@@ -186,6 +189,62 @@ var Shard = &gqlexec.Shard{
 					return obj.At, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "AIUsageFeatureConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AIUsageFeatureEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIUsageFeatureConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIUsageFeatureEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIUsageFeatureConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIUsageFeatureConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+		}},
+		{Object: "AIUsageFeatureEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AIUsageFeatureSlice",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIUsageFeatureEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIUsageFeatureEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "AIUsageFeatureSlice", Fields: []*gqlexec.Field{
@@ -548,6 +607,20 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
+				Name:       "aiUsageFeatures",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AIUsageFeatureConnection",
+				Args:       field_Query_aiUsageFeatures_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageFeatures(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["days"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIUsageFeatureConnection),
+			},
+			{
 				Name:       "aiUsageSummary",
 				NonNull:    true,
 				IsResolver: true,
@@ -583,6 +656,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverQuery interface {
+	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
 	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
 	AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error)
 }
@@ -595,6 +669,27 @@ var (
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild5 = errors.New("field of type AIUsageFeature does not have child fields")
 )
+
+func field_Query_aiUsageFeatures_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "days",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["days"] = arg1
+	return args, nil
+}
 
 func field_Query_aiUsageSummary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -628,6 +723,15 @@ func field_Query_aiUsageDaily_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	}
 	args["timezone"] = arg1
 	return args, nil
+}
+
+func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
+	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
+	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
@@ -682,6 +786,30 @@ func marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalNAIUsageFeatureConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIUsageFeatureConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIUsageFeatureConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIUsageFeatureConnection", v)
+}
+
+func marshalNAIUsageFeatureEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIUsageFeatureEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AIUsageFeatureEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.AIUsageFeatureEdge]{
+		Elem:        marshalNAIUsageFeatureEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIUsageFeatureEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAIUsageFeatureEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIUsageFeatureEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIUsageFeatureEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIUsageFeatureEdge", v)
+}
+
 func marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AIUsageFeatureSlice) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIUsageFeatureSlice", &v)
 }
@@ -692,6 +820,14 @@ func marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIUsageFeatureSlice) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIUsageFeatureSlice", v)
 }
 
 func marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AIUsageProviderSlice) graphql.Marshaler {
@@ -746,6 +882,14 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageInfo", v)
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -767,5 +911,13 @@ func marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 		return graphql.Null
 	}
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }

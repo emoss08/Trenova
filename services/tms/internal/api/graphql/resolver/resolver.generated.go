@@ -385,6 +385,7 @@ func FromServices(s *Services) *Resolver {
 	agentDeps := &agentresolver.Deps{
 		Core:                      s.Core,
 		AgentRunService:           s.AgentRunService,
+		AgentTrustService:         s.AgentTrustService,
 		AgentProposalService:      s.AgentProposalService,
 		AgentPlanService:          s.AgentPlanService,
 		AgentMemoryService:        s.AgentMemoryService,

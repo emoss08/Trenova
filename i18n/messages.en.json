@@ -90292,6 +90292,15 @@
       "api/graphql"
     ]
   },
+  "Invalid cursor": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Invalid customer": {
     "sites": 3,
     "scope": [
@@ -198215,6 +198224,24 @@
       "routes/accounting-sync"
     ]
   },
+  "This table cannot be filtered by {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "This table cannot be sorted by {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "This table could not be authorized": {
     "sites": 1,
     "scope": [
@@ -198222,6 +198249,15 @@
     ],
     "areas": [
       "service/assistantservice"
+    ]
+  },
+  "This table does not filter with {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "This target has no parts to rate": {

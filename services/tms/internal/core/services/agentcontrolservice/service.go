@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -33,6 +34,9 @@ type Params struct {
 	Versions     repositories.SettingVersionRepository
 	Definitions  repositories.AgentDefinitionRepository
 	AuditService services.AuditService
+	// Trust promotes the tools that had already earned it when earned
+	// autonomy is turned on or its threshold lowered.
+	Trust services.AgentTrustService `optional:"true"`
 }
 
 type Service struct {
@@ -42,6 +46,7 @@ type Service struct {
 	versions    repositories.SettingVersionRepository
 	definitions repositories.AgentDefinitionRepository
 	audit       services.AuditService
+	trust       services.AgentTrustService
 	now         func() int64
 }
 
@@ -53,6 +58,7 @@ func New(p Params) services.AgentControlService {
 		versions:    p.Versions,
 		definitions: p.Definitions,
 		audit:       p.AuditService,
+		trust:       p.Trust,
 		now:         timeutils.NowUnix,
 	}
 }
@@ -140,7 +146,39 @@ func (s *Service) Update(
 		s.l.Error("failed to log agent control audit", zap.Error(err))
 	}
 
+	s.promoteEarned(ctx, &previous, updated, auditActor.UserID)
+
 	return updated, nil
+}
+
+// promoteEarned moves up the tools whose streak already met the threshold,
+// when this save is what made it count: earned autonomy just turned on, or
+// its threshold just lowered. A tool that earned its tier before there was a
+// clean approval to promote it on would otherwise wait for one.
+func (s *Service) promoteEarned(
+	ctx context.Context,
+	previous, updated *tenant.AgentControl,
+	decidedBy pulid.ID,
+) {
+	if s.trust == nil || !updated.EarnedAutonomy {
+		return
+	}
+	if previous.EarnedAutonomy && updated.PromotionThreshold >= previous.PromotionThreshold {
+		return
+	}
+
+	promoted, err := s.trust.PromoteReady(ctx, &services.PromoteReadyRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+		Threshold:  updated.PromotionThreshold,
+		DecidedBy:  decidedBy,
+	})
+	if err != nil {
+		s.l.Warn("could not promote the tools that had earned it", zap.Error(err))
+		return
+	}
+	if len(promoted) > 0 {
+		s.l.Info("tools promoted as earned autonomy took effect", zap.Int("tools", len(promoted)))
+	}
 }
 
 // save writes the controls and the version they become together.

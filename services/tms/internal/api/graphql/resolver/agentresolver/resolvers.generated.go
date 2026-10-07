@@ -10,6 +10,7 @@ import (
 type Deps struct {
 	*base.Core
 	AgentRunService           services.AgentRunService
+	AgentTrustService         services.AgentTrustService
 	AgentProposalService      services.AgentProposalService
 	AgentPlanService          services.AgentPlanService
 	AgentMemoryService        services.AgentMemoryService

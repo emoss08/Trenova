@@ -8,6 +8,9 @@ package aiusageresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/timeutils"
+
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -48,4 +51,24 @@ func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *s
 		out[idx] = &usage[idx]
 	}
 	return out, nil
+}
+
+func (r *QueryResolver) AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	window := base.DerefInt(days)
+	if window <= 0 {
+		window = 7
+	}
+	since := timeutils.NowUnix() - int64(window)*24*60*60
+
+	summary, err := r.AiUsageService.Summary(ctx, base.TenantInfo(authCtx), since)
+	if err != nil {
+		return nil, err
+	}
+
+	return featureConnection(&input, summary.ByFeature)
 }

@@ -217,6 +217,19 @@ type AIRetrievalSettingsPatchInput struct {
 	Paused                   graphql.Omittable[*bool]   `json:"paused,omitempty"`
 }
 
+// Model usage by feature as a table: searchable by feature, filterable and
+// sortable on feature, calls, failed, tokens, costUsd and latencyP50Ms.
+type AIUsageFeatureConnection struct {
+	Edges      []*AIUsageFeatureEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+type AIUsageFeatureEdge struct {
+	Node   *services.AIUsageFeatureSlice `json:"node"`
+	Cursor string                        `json:"cursor"`
+}
+
 type AccessorialChargeConnection struct {
 	Edges      []*AccessorialChargeEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
