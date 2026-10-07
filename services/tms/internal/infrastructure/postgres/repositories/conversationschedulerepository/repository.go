@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,51 +56,52 @@ func (r *repository) Create(
 		schedule := req.Schedule
 		message := req.Message
 
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			if _, err := tx.NewInsert().Model(schedule).Returning("*").Exec(txCtx); err != nil {
-				return fmt.Errorf("insert schedule: %w", err)
-			}
+		err := r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				if _, err := tx.NewInsert().Model(schedule).Returning("*").Exec(txCtx); err != nil {
+					return fmt.Errorf("insert schedule: %w", err)
+				}
 
-			cols := buncolgen.MessageColumns
-			var maxSequence int
-			err := tx.NewSelect().
-				Model((*conversation.Message)(nil)).
-				ColumnExpr("COALESCE(MAX(?), -1)", bun.Ident(cols.Sequence.Bare())).
-				Where(cols.ThreadID.Eq(), schedule.ThreadID).
-				Where(cols.OrganizationID.Eq(), schedule.OrganizationID).
-				Where(cols.BusinessUnitID.Eq(), schedule.BusinessUnitID).
-				Scan(txCtx, &maxSequence)
-			if err != nil {
-				return fmt.Errorf("read current sequence: %w", err)
-			}
+				cols := buncolgen.MessageColumns
+				var maxSequence int
+				err := tx.NewSelect().
+					Model((*conversation.Message)(nil)).
+					ColumnExpr("COALESCE(MAX(?), -1)", bun.Ident(cols.Sequence.Bare())).
+					Where(cols.ThreadID.Eq(), schedule.ThreadID).
+					Where(cols.OrganizationID.Eq(), schedule.OrganizationID).
+					Where(cols.BusinessUnitID.Eq(), schedule.BusinessUnitID).
+					Scan(txCtx, &maxSequence)
+				if err != nil {
+					return fmt.Errorf("read current sequence: %w", err)
+				}
 
-			now := timeutils.NowUnix()
-			message.ThreadID = schedule.ThreadID
-			message.OrganizationID = schedule.OrganizationID
-			message.BusinessUnitID = schedule.BusinessUnitID
-			message.ScheduleID = schedule.ID
-			message.Sequence = maxSequence + 1
-			if message.CreatedAt == 0 {
-				message.CreatedAt = now
-			}
-			if _, err = tx.NewInsert().Model(&message).Returning("*").Exec(txCtx); err != nil {
-				return fmt.Errorf("insert schedule message: %w", err)
-			}
+				now := timeutils.NowUnix()
+				message.ThreadID = schedule.ThreadID
+				message.OrganizationID = schedule.OrganizationID
+				message.BusinessUnitID = schedule.BusinessUnitID
+				message.ScheduleID = schedule.ID
+				message.Sequence = maxSequence + 1
+				if message.CreatedAt == 0 {
+					message.CreatedAt = now
+				}
+				if _, err = tx.NewInsert().Model(&message).Returning("*").Exec(txCtx); err != nil {
+					return fmt.Errorf("insert schedule message: %w", err)
+				}
 
-			threadCols := buncolgen.ThreadColumns
-			if _, err = tx.NewUpdate().
-				Model((*conversation.Thread)(nil)).
-				Where(threadCols.ID.Eq(), schedule.ThreadID).
-				Where(threadCols.OrganizationID.Eq(), schedule.OrganizationID).
-				Where(threadCols.BusinessUnitID.Eq(), schedule.BusinessUnitID).
-				Set(threadCols.LastMessageAt.Set(), now).
-				Set(threadCols.UpdatedAt.Set(), now).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("touch thread: %w", err)
-			}
+				threadCols := buncolgen.ThreadColumns
+				if _, err = tx.NewUpdate().
+					Model((*conversation.Thread)(nil)).
+					Where(threadCols.ID.Eq(), schedule.ThreadID).
+					Where(threadCols.OrganizationID.Eq(), schedule.OrganizationID).
+					Where(threadCols.BusinessUnitID.Eq(), schedule.BusinessUnitID).
+					Set(threadCols.LastMessageAt.Set(), now).
+					Set(threadCols.UpdatedAt.Set(), now).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("touch thread: %w", err)
+				}
 
-			return nil
-		})
+				return nil
+			})
 		if err != nil {
 			r.l.Error("failed to create conversation schedule", zap.Error(err))
 			return nil, nil, err
@@ -211,29 +213,38 @@ func (r *repository) ListAcrossTenants(
 	ctx context.Context,
 	req repositories.ListConversationSchedulesAcrossTenantsRequest,
 ) ([]*conversationschedule.Schedule, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversationschedule.Schedule, error) {
-		cols := buncolgen.ScheduleColumns
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list conversation schedules across every organization to reconile them",
+	)
 
-		limit := req.Limit
-		if limit <= 0 || limit > maxAcrossLimit {
-			limit = maxAcrossLimit
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationschedule.Schedule, error) {
+			cols := buncolgen.ScheduleColumns
 
-		entities := make([]*conversationschedule.Schedule, 0, limit)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Order(cols.ID.OrderAsc()).
-			Limit(limit)
-		if req.AfterID.IsNotNil() {
-			query = query.Where(cols.ID.Gt(), req.AfterID)
-		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list conversation schedules: %w", err)
-		}
+			limit := req.Limit
+			if limit <= 0 || limit > maxAcrossLimit {
+				limit = maxAcrossLimit
+			}
 
-		return entities, nil
-	})
+			entities := make([]*conversationschedule.Schedule, 0, limit)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Order(cols.ID.OrderAsc()).
+				Limit(limit)
+			if req.AfterID.IsNotNil() {
+				query = query.Where(cols.ID.Gt(), req.AfterID)
+			}
+			if err := query.Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list conversation schedules: %w", err)
+			}
+
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) UpdateState(
