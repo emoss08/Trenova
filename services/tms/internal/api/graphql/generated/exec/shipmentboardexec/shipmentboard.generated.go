@@ -1135,6 +1135,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
+			{
+				Name:     "generation",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBriefing)
+					return obj.Generation, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
 		}},
 		{Object: "ShipmentBriefingSegment", Fields: []*gqlexec.Field{
 			{

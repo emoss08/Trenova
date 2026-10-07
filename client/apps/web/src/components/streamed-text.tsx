@@ -1,3 +1,8 @@
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@trenova/shared/components/ui/hover-card";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -11,7 +16,12 @@ export type StreamedSegment = {
   /** Renders the segment as a link-like action instead of plain text. */
   onActivate?: () => void;
   label?: string;
+  /** Shown in a hover card on an actionable segment; mounted only while open. */
+  preview?: ReactNode;
 };
+
+const SEGMENT_ACTION_CLASS =
+  "ui-focus-ring decoration-border-strong hover:bg-brand/20 rounded-sm underline decoration-1 underline-offset-4 transition-colors";
 
 type Word = { text: string; start: number };
 
@@ -25,20 +35,46 @@ function splitWords(text: string, offset: number): Word[] {
   return words;
 }
 
+function SegmentAction({ segment, children }: { segment: StreamedSegment; children: ReactNode }) {
+  const button = (
+    <button
+      type="button"
+      aria-label={segment.label}
+      onClick={segment.onActivate}
+      className={SEGMENT_ACTION_CLASS}
+    >
+      {children}
+    </button>
+  );
+  if (!segment.preview) return button;
+
+  return (
+    <HoverCard>
+      <HoverCardTrigger delay={250} render={button} />
+      <HoverCardContent align="start" className="w-80 p-0">
+        {segment.preview}
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 /**
  * A sentence that arrives a few characters at a time, each word resolving
  * from a blur, with a caret until it is whole. Segments with an action read
- * as underlined links. Reduced motion shows the sentence whole at once.
+ * as underlined links, and one with a preview opens it on hover. A prefix is
+ * shown whole from the start. Reduced motion shows the sentence whole at once.
  */
 export function StreamedText({
   segments,
   className,
   streamKey,
+  prefix,
 }: {
   segments: StreamedSegment[];
   className?: string;
   /** Restarts the stream when it changes; the same sentence never streams twice. */
   streamKey: string;
+  prefix?: ReactNode;
 }) {
   const reduceMotion = useReducedMotion() ?? false;
   const layout = useMemo(() => {
@@ -75,6 +111,7 @@ export function StreamedText({
 
   return (
     <p className={cn(className, !done && "ui-stream-caret")} aria-live="polite" aria-busy={!done}>
+      {prefix}
       {layout.map(({ segment, words }, index) => {
         const visible: ReactNode[] = words
           .filter((word) => word.start < revealed)
@@ -86,15 +123,9 @@ export function StreamedText({
         if (visible.length === 0) return null;
         if (!segment.onActivate) return <Fragment key={index}>{visible}</Fragment>;
         return (
-          <button
-            key={index}
-            type="button"
-            aria-label={segment.label}
-            onClick={segment.onActivate}
-            className="ui-focus-ring decoration-border-strong hover:bg-brand/20 rounded-sm underline decoration-1 underline-offset-4 transition-colors"
-          >
+          <SegmentAction key={index} segment={segment}>
             {visible}
-          </button>
+          </SegmentAction>
         );
       })}
     </p>

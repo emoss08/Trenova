@@ -1,5 +1,5 @@
 {
-  "version": "sha256:1e4aae839f9c2ab8db64717f152e46bef4221943533f1d0dedeb72ec77247108",
+  "version": "sha256:8f13433ed921f714c019262b752ce2665eac72cea8c13abc73f57567f45b8fe5",
   "modules": [
     {
       "id": "home",
@@ -15521,7 +15521,7 @@
         "Shipments"
       ],
       "description": "Every load on the board, what needs a hand, and who can take it.",
-      "summary": "Shipments is the dispatcher's board. The table comes first, grouped by stage, from loads that need attention or coverage down to delivered ones. Above it is a one-sentence briefing of the day (when an AI provider is connected) and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.\n\nSelecting a row expands it in place, showing the route, the money, the documents, the next step and quick actions. Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.",
+      "summary": "Shipments is the dispatcher's board. The table comes first, grouped by stage, from loads that need attention or coverage down to delivered ones. Above it is a short briefing of the day that greets you by name (when an AI provider is connected); it is written once for the organization's day before work starts and again when every issue it named has been cleared, and hovering a linked phrase such as late loads lists the first few of them and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.\n\nSelecting a row expands it in place, showing the route, the money, the documents, the next step and quick actions. Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.",
       "requires": [
         {
           "resource": "shipment",
@@ -15589,6 +15589,21 @@
             "Open [Shipments](/shipment-management/shipments). The strip under the briefing shows **Drivers** or **Carriers** (both tabs when the organization does both).",
             "Select a driver or carrier to see the best loads for them, then select **Assign** or **Tender** on the one you want.",
             "To clear the backlog at once, use the action under the summary, such as tendering the loads your drivers can't cover to their best-matched carriers."
+          ]
+        },
+        {
+          "title": "Read the day's briefing",
+          "keywords": [
+            "morning briefing",
+            "daily summary",
+            "late loads",
+            "uncovered loads",
+            "what needs attention today"
+          ],
+          "steps": [
+            "Open [Shipments](/shipment-management/shipments). The briefing above the capacity strip says how many loads deliver today, are moving, are late, still need coverage, are accruing detention or are ready to bill, with the time it was written.",
+            "Hover a linked phrase to see the first few of those loads, then select a load to open it, or select **Show all** to filter the board to them.",
+            "Select the phrase itself to filter the board to those loads."
           ]
         },
         {

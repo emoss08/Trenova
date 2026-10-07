@@ -9,7 +9,14 @@ import {
   getShipmentSuggestionsGraphQL,
   getShipmentWatchlistGraphQL,
 } from "@/lib/graphql/shipment-board";
-import type { CapacityUnitKind, ShipmentBoardScopeInput } from "@trenova/graphql/generated/graphql";
+import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
+import { shipmentBoardTableGraphQLConfig } from "@/lib/graphql/shipment";
+import type {
+  CapacityUnitKind,
+  ShipmentBoardScopeInput,
+  ShipmentQuickFilter,
+} from "@trenova/graphql/generated/graphql";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const shipmentBoard = createQueryKeys("shipmentBoard", {
@@ -28,6 +35,16 @@ export const shipmentBoard = createQueryKeys("shipmentBoard", {
   briefing: (timezone: string) => ({
     queryKey: ["briefing", timezone],
     queryFn: ({ signal }) => getShipmentBriefingGraphQL(timezone, { signal }),
+  }),
+  briefingLoads: (filter: ShipmentQuickFilter, timezone: string, limit: number) => ({
+    queryKey: ["briefing-loads", filter, timezone, limit],
+    queryFn: ({ signal }) =>
+      fetchGraphQLData<Shipment>(
+        limit,
+        shipmentBoardTableGraphQLConfig({ quickFilters: [{ filter }], timezone }),
+        undefined,
+        { signal },
+      ),
   }),
   capacity: (kind: CapacityUnitKind) => ({
     queryKey: ["capacity", kind],

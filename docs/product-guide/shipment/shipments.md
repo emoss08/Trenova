@@ -11,7 +11,7 @@ related:
 ---
 
 ## What it's for
-Shipments is the dispatcher's board. The table comes first, grouped by stage, from loads that need attention or coverage down to delivered ones. Above it is a one-sentence briefing of the day (when an AI provider is connected) and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.
+Shipments is the dispatcher's board. The table comes first, grouped by stage, from loads that need attention or coverage down to delivered ones. Above it is a short briefing of the day that greets you by name (when an AI provider is connected); it is written once for the organization's day before work starts and again when every issue it named has been cleared, and hovering a linked phrase such as late loads lists the first few of them and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.
 
 Selecting a row expands it in place, showing the route, the money, the documents, the next step and quick actions. Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.
 
@@ -38,6 +38,12 @@ Keywords: available drivers, ready drivers, carrier capacity, posted trucks, bes
 1. Open [Shipments](/shipment-management/shipments). The strip under the briefing shows **Drivers** or **Carriers** (both tabs when the organization does both).
 2. Select a driver or carrier to see the best loads for them, then select **Assign** or **Tender** on the one you want.
 3. To clear the backlog at once, use the action under the summary, such as tendering the loads your drivers can't cover to their best-matched carriers.
+
+### Read the day's briefing
+Keywords: morning briefing, daily summary, late loads, uncovered loads, what needs attention today
+1. Open [Shipments](/shipment-management/shipments). The briefing above the capacity strip says how many loads deliver today, are moving, are late, still need coverage, are accruing detention or are ready to bill, with the time it was written.
+2. Hover a linked phrase to see the first few of those loads, then select a load to open it, or select **Show all** to filter the board to them.
+3. Select the phrase itself to filter the board to those loads.
 
 ### Work the suggested actions
 Keywords: brief, action queue, exceptions, approve suggestion, notify customer of delay

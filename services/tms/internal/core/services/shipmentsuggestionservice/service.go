@@ -6,10 +6,12 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentboardbrief"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardcache"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,7 +23,7 @@ import (
 const (
 	shiftWindow       = 12 * time.Hour
 	decisionRetention = 7 * 24 * time.Hour
-	maxQueueItems     = 12
+	maxQueueItems     = 20
 )
 
 type detentionDesk interface {
@@ -44,8 +46,9 @@ type Params struct {
 	Tenders         repositories.TenderRepository
 	TenderGuard     services.TenderGuard
 	Assignments     services.AssignmentService
-	Completion      services.CompletionService      `optional:"true"`
 	Cache           repositories.ShipmentBoardCache `optional:"true"`
+	Briefs          repositories.ShipmentBriefRepository
+	Organizations   repositories.OrganizationCacheRepository
 	Logger          *zap.Logger
 }
 
@@ -60,8 +63,9 @@ type Dependencies struct {
 	Tenders         repositories.TenderRepository
 	TenderGuard     services.TenderGuard
 	Assignments     services.AssignmentService
-	Completion      services.CompletionService
 	Cache           repositories.ShipmentBoardCache
+	Briefs          repositories.ShipmentBriefRepository
+	Organizations   repositories.OrganizationCacheRepository
 	Logger          *zap.Logger
 	Now             func() time.Time
 }
@@ -77,16 +81,18 @@ type Service struct {
 	tenders         repositories.TenderRepository
 	tenderGuard     services.TenderGuard
 	assignments     services.AssignmentService
-	completion      services.CompletionService
 	cache           repositories.ShipmentBoardCache
+	briefs          repositories.ShipmentBriefRepository
+	organizations   repositories.OrganizationCacheRepository
 	rules           []rule
 	l               *zap.Logger
 	now             func() time.Time
 }
 
 var (
-	_ services.ShipmentSuggestionReader  = (*Service)(nil)
-	_ services.ShipmentSuggestionDecider = (*Service)(nil)
+	_ services.ShipmentSuggestionReader     = (*Service)(nil)
+	_ services.ShipmentSuggestionDecider    = (*Service)(nil)
+	_ services.ShipmentSuggestionCandidates = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -102,8 +108,9 @@ func New(p Params) *Service {
 		Tenders:         p.Tenders,
 		TenderGuard:     p.TenderGuard,
 		Assignments:     p.Assignments,
-		Completion:      p.Completion,
 		Cache:           p.Cache,
+		Briefs:          p.Briefs,
+		Organizations:   p.Organizations,
 		Logger:          p.Logger,
 	})
 }
@@ -129,8 +136,9 @@ func NewWithDependencies(d *Dependencies) *Service {
 		tenders:         d.Tenders,
 		tenderGuard:     d.TenderGuard,
 		assignments:     d.Assignments,
-		completion:      d.Completion,
 		cache:           d.Cache,
+		briefs:          d.Briefs,
+		organizations:   d.Organizations,
 		rules:           defaultRules(),
 		l:               logger.Named("service.shipment-suggestions"),
 		now:             now,
@@ -141,40 +149,22 @@ func NewReader(s *Service) services.ShipmentSuggestionReader { return s }
 
 func NewDecider(s *Service) services.ShipmentSuggestionDecider { return s }
 
+func NewCandidates(s *Service) services.ShipmentSuggestionCandidates { return s }
+
 type queue struct {
-	Items    []*services.ShipmentSuggestion `json:"items"`
-	Narrated bool                           `json:"narrated"`
+	Items []*services.ShipmentSuggestion `json:"items"`
 }
 
 func (s *Service) Suggestions(
 	ctx context.Context,
 	req *services.SuggestionRequest,
 ) (*services.ShipmentSuggestionQueue, error) {
-	if !timeutils.IsValidLocation(req.Timezone) {
-		return nil, errortypes.NewValidationError(
-			"timezone",
-			errortypes.ErrInvalid,
-			"A valid IANA time zone is required",
-		)
-	}
-	loc := timeutils.LoadLocation(req.Timezone)
-
-	base, err := shipmentboardcache.GetOrCompute(
-		ctx,
-		s.cache,
-		s.l,
-		&shipmentboardcache.Request{
-			Section:    repositories.ShipmentBoardSectionSuggestions,
-			TenantInfo: req.TenantInfo,
-			Timezone:   req.Timezone,
-		},
-		func(ctx context.Context) (*queue, error) {
-			return s.compute(ctx, req.TenantInfo, req.Timezone, loc)
-		},
-	)
+	base, err := s.queue(ctx, req.TenantInfo, req.Timezone)
 	if err != nil {
 		return nil, err
 	}
+
+	items, narrated := s.applyBriefWording(ctx, req.TenantInfo, req.Timezone, base.Items)
 
 	now := s.now()
 	decided, err := s.decisions.ListSince(ctx, &repositories.ListSuggestionDecisionsRequest{
@@ -186,11 +176,112 @@ func (s *Service) Suggestions(
 		return nil, err
 	}
 
-	return applyDecisions(base, decided), nil
+	out := applyDecisions(items, decided)
+	out.Narrated = narrated
+
+	return out, nil
+}
+
+func (s *Service) Candidates(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	timezone string,
+) ([]*services.ShipmentSuggestion, error) {
+	base, err := s.queue(ctx, tenantInfo, timezone)
+	if err != nil {
+		return nil, err
+	}
+
+	return copyItems(base.Items), nil
+}
+
+func (s *Service) queue(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	timezone string,
+) (*queue, error) {
+	if !timeutils.IsValidLocation(timezone) {
+		return nil, errortypes.NewValidationError(
+			"timezone",
+			errortypes.ErrInvalid,
+			"A valid IANA time zone is required",
+		)
+	}
+	loc := timeutils.LoadLocation(timezone)
+
+	return shipmentboardcache.GetOrCompute(
+		ctx,
+		s.cache,
+		s.l,
+		&shipmentboardcache.Request{
+			Section:    repositories.ShipmentBoardSectionSuggestions,
+			TenantInfo: tenantInfo,
+			Timezone:   timezone,
+		},
+		func(ctx context.Context) (*queue, error) {
+			return s.compute(ctx, tenantInfo, timezone, loc)
+		},
+	)
+}
+
+func (s *Service) applyBriefWording(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	timezone string,
+	items []*services.ShipmentSuggestion,
+) ([]*services.ShipmentSuggestion, bool) {
+	copied := copyItems(items)
+	if s.briefs == nil || s.organizations == nil || len(copied) == 0 {
+		return copied, false
+	}
+
+	day, err := shipmentboardbrief.Today(ctx, s.organizations, tenantInfo)
+	if err != nil {
+		s.l.Warn("could not resolve the brief's day", zap.Error(err))
+		return copied, false
+	}
+	brief, err := shipmentboardbrief.Latest(ctx, s.briefs, tenantInfo, day)
+	if err != nil {
+		s.l.Warn("could not read the shipment brief", zap.Error(err))
+		return copied, false
+	}
+	if brief == nil || brief.Facts.Timezone != timezone {
+		return copied, false
+	}
+
+	return copied, ApplyWording(copied, brief.Wording)
+}
+
+func ApplyWording(
+	items []*services.ShipmentSuggestion,
+	wording map[string]shipmentbrief.Wording,
+) bool {
+	applied := false
+	for _, item := range items {
+		worded, ok := wording[item.Key]
+		if !ok || !worded.Fits(item.Title, item.Reason, item.Impact) {
+			continue
+		}
+		item.Title = worded.Title
+		item.Reason = worded.Reason
+		applied = true
+	}
+
+	return applied
+}
+
+func copyItems(items []*services.ShipmentSuggestion) []*services.ShipmentSuggestion {
+	out := make([]*services.ShipmentSuggestion, 0, len(items))
+	for _, item := range items {
+		copied := *item
+		out = append(out, &copied)
+	}
+
+	return out
 }
 
 func applyDecisions(
-	base *queue,
+	items []*services.ShipmentSuggestion,
 	decided []*shipmentsuggestion.DecisionRecord,
 ) *services.ShipmentSuggestionQueue {
 	byKey := make(map[string]shipmentsuggestion.Decision, len(decided))
@@ -202,24 +293,22 @@ func applyDecisions(
 		}
 	}
 
-	items := make([]*services.ShipmentSuggestion, 0, len(base.Items))
-	for _, item := range base.Items {
+	open := make([]*services.ShipmentSuggestion, 0, len(items))
+	for _, item := range items {
 		decision, ok := byKey[item.Key]
 		if ok && decision == shipmentsuggestion.DecisionDone {
 			continue
 		}
-		copied := *item
-		copied.Deferred = ok && decision == shipmentsuggestion.DecisionLater
-		items = append(items, &copied)
+		item.Deferred = ok && decision == shipmentsuggestion.DecisionLater
+		open = append(open, item)
 	}
-	slices.SortStableFunc(items, func(a, b *services.ShipmentSuggestion) int {
+	slices.SortStableFunc(open, func(a, b *services.ShipmentSuggestion) int {
 		return cmp.Compare(boolRank(a.Deferred), boolRank(b.Deferred))
 	})
 
 	return &services.ShipmentSuggestionQueue{
-		Items:            items,
+		Items:            open,
 		HandledThisShift: handled,
-		Narrated:         base.Narrated,
 	}
 }
 

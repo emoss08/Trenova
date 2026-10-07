@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/core/domain/subscription"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -475,6 +476,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_shipment_suggestion_decisions_decision",
 			values: stringsOf(shipmentsuggestion.Decisions()),
+		},
+		{
+			name:   "ck_shipment_board_briefs_trigger",
+			values: stringsOf(shipmentbrief.Triggers()),
 		},
 	}
 

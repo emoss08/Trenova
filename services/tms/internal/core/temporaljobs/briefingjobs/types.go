@@ -34,7 +34,13 @@ type DailyBriefingResult struct {
 
 // BriefingRetentionResult reports what the retention sweep removed.
 type BriefingRetentionResult struct {
-	Deleted int `json:"deleted"`
+	Deleted            int `json:"deleted"`
+	DeletedBoardBriefs int `json:"deletedBoardBriefs"`
+}
+
+type ShipmentBriefResult struct {
+	Generation int  `json:"generation"`
+	Narrated   bool `json:"narrated"`
 }
 
 // DueOrganizationsInput asks which organizations' briefing hour has come as

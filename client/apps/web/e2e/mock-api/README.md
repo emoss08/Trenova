@@ -47,6 +47,10 @@ curl -X POST localhost:8080/__mock/scenario \
 Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`, `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`,
 `MOCK_MAPS=1`, `MOCK_LIST_ROWS`.
 
+The board briefing is stored the way the server stores it: written on the first read of a
+scenario, read unchanged after that, and written again (its `generation` going up) only once
+everything it flagged is cleared, so it does not move with every write.
+
 Writes are stateful within a scenario: assigning, tendering, deciding or undoing a
 suggestion, notifying a customer, approving detention and transferring to billing all change
 what the next query returns, so counts move the way they would against the real API.

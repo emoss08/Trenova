@@ -72,5 +72,6 @@ func briefingToModel(b *services.ShipmentBriefing) *gqlmodel.ShipmentBriefing {
 		Segments:    segments,
 		Narrated:    b.Narrated,
 		GeneratedAt: int(b.GeneratedAt),
+		Generation:  b.Generation,
 	}
 }

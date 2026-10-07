@@ -11,12 +11,17 @@ import (
 	"go.uber.org/zap"
 )
 
+type Narration[T any] struct {
+	Draft T
+	Model string
+}
+
 func Narrate[T any](
 	ctx context.Context,
 	completion services.CompletionService,
 	logger *zap.Logger,
 	req *services.StructuredCompletionRequest,
-) (*T, bool) {
+) (*Narration[T], bool) {
 	if completion == nil {
 		return nil, false
 	}
@@ -35,8 +40,8 @@ func Narrate[T any](
 		return nil, false
 	}
 
-	draft := new(T)
-	if err = sonic.UnmarshalString(result.Text, draft); err != nil {
+	out := &Narration[T]{Model: result.ModelIdentifier}
+	if err = sonic.UnmarshalString(result.Text, &out.Draft); err != nil {
 		logger.Warn("narration could not be parsed; using computed wording",
 			zap.String("schema", req.SchemaName),
 			zap.String("model", result.ModelIdentifier),
@@ -45,7 +50,7 @@ func Narrate[T any](
 		return nil, false
 	}
 
-	return draft, true
+	return out, true
 }
 
 func Supported(prose string, supported []decimal.Decimal) bool {

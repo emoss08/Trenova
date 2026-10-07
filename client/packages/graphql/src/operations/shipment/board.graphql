@@ -31,6 +31,7 @@ query ShipmentBriefing($timezone: String!) {
     }
     narrated
     generatedAt
+    generation
   }
 }
 
