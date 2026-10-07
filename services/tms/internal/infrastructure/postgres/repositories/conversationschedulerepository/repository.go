@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -211,6 +212,10 @@ func (r *repository) ListAcrossTenants(
 	ctx context.Context,
 	req repositories.ListConversationSchedulesAcrossTenantsRequest,
 ) ([]*conversationschedule.Schedule, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list conversation schedules across every organization to reconcile them",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversationschedule.Schedule, error) {
 		cols := buncolgen.ScheduleColumns
 
