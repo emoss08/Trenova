@@ -185,6 +185,8 @@ type AgentDefinitionService interface {
 		ctx context.Context,
 		req *repositories.GetAgentDefinitionVersionRequest,
 	) (*agentdefinition.Definition, error)
+	// Draft builds and checks the agent a save would store, without saving.
+	Draft(ctx context.Context, req *SaveAgentDefinitionRequest) (*agentdefinition.Definition, error)
 	LintInstructions(
 		ctx context.Context,
 		req *LintAgentInstructionsRequest,

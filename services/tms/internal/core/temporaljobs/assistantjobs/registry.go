@@ -51,6 +51,10 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 			Fn:          p.Workflows.AssistantTurnWorkflow,
 			Description: "Answer one question in a conversation, publishing the reply as it is written",
 		}, {
+			Name:        AgentDryRunWorkflowName,
+			Fn:          p.Workflows.AgentDryRunWorkflow,
+			Description: "Try a draft agent once against live data with every write simulated, writing nothing",
+		}, {
 			Name:        CompactionWorkflowName,
 			Fn:          p.Workflows.ConversationCompactionWorkflow,
 			Description: "Summarize the older part of a conversation so it fits its model's window",

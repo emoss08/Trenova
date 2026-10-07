@@ -23,6 +23,7 @@ Temporal returns succeeds.
 | Table compose | `StructuredCompletionWorkflow` | `agent-chat-queue` |
 | Briefing regenerate | `WriteBriefingWorkflow` | `agent-chat-queue` |
 | AI provider test | `TestAIProviderWorkflow` | `agent-chat-queue` |
+| Agent builder dry run | `AgentDryRunWorkflow`, one per try | `agent-chat-queue` |
 | Event-driven and scheduled agent runs | `AgentRunWorkflow` | `agent-background-queue` |
 | An agent's schedule firing | `AgentScheduledRunWorkflow` | `agent-background-queue` |
 | Agent evaluations (replays) | `AgentEvaluationWorkflow` | `agent-heavy-queue` |
@@ -990,6 +991,25 @@ with simulation forced on, through the same loop, on the heavy queue. It runs th
 loop itself rather than as a child `AgentRunWorkflow`: a replay files nothing,
 waits on no decision and must never touch the live run's record, which is
 everything a run workflow exists to do.
+
+### Dry runs
+
+`AgentDryRunWorkflow` is the agent builder's "Try it": a draft agent, unsaved,
+answers one message against live data with simulation forced on. The draft
+travels whole in the payload, because there is nothing stored to read it back
+from; `AgentDefinitionService.Draft` builds and checks it exactly as a save
+would, without saving. It runs on the chat queue because a person is watching
+it, hosts a Workflow Stream like a chat turn, and is read on the same request
+that started it (`POST /agent-definitions/dry-run/`), so only the person who
+asked can read it; a reader who leaves cancels it.
+
+It leaves nothing behind but what it cost. Its run ID carries the evaluation
+prefix, so usage is counted as an evaluation and no proposal baseline is kept;
+it has no thread, no step ledger and no publishing, and no finish step files
+its proposals. Before `done` it publishes `dry_run_steps`: each of the draft's
+own tool calls with what it would have come to (`agentdryrun.Classify`: Runs,
+AskFirst, Propose, Recorded for a shadow agent, Simulated, NotHeld, Failed).
+A memory the prompt reads still has its use counted.
 
 ## One-shot calls
 

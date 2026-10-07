@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Params struct {
@@ -25,25 +26,34 @@ type Params struct {
 	Service              serviceports.AgentDefinitionService
 	Trust                serviceports.AgentTrustService
 	Budgets              serviceports.AgentBudgetService
+	Workflows            serviceports.WorkflowStarter
+	Streams              serviceports.TurnStreamReader
+	Logger               *zap.Logger
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service serviceports.AgentDefinitionService
-	trust   serviceports.AgentTrustService
-	budgets serviceports.AgentBudgetService
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service   serviceports.AgentDefinitionService
+	trust     serviceports.AgentTrustService
+	budgets   serviceports.AgentBudgetService
+	workflows serviceports.WorkflowStarter
+	streams   serviceports.TurnStreamReader
+	logger    *zap.Logger
+	eh        *helpers.ErrorHandler
+	pm        *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		trust:   p.Trust,
-		budgets: p.Budgets,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:   p.Service,
+		trust:     p.Trust,
+		budgets:   p.Budgets,
+		workflows: p.Workflows,
+		streams:   p.Streams,
+		logger:    p.Logger.Named("handler.agentdefinition"),
+		eh:        p.ErrorHandler,
+		pm:        p.PermissionMiddleware,
 	}
 }
 
@@ -60,6 +70,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.previewPrompt,
 	)
+	api.POST("/dry-run/", h.pm.RequirePermission(resource, permission.OpUpdate), h.dryRun)
 	api.GET(
 		"/system/:systemKey/",
 		h.pm.RequirePermission(resource, permission.OpRead),

@@ -179,6 +179,9 @@ writes:
   "PUT /api/v1/agent-definitions/:agentID/":
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "POST /api/v1/agent-definitions/dry-run/":
+    exempt: read-only
+    reason: "Tries a draft agent once with every write simulated; it saves and changes nothing."
   "mutation keepAgentTestPrompt":
     exempt: agent-administration
     reason: "Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself."

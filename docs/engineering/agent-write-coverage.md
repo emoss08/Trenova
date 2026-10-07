@@ -91,29 +91,29 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 72 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
 
-1000 writes: 522 GraphQL mutations and 478 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1001 writes: 522 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 386 |
-| Exempt | 611 |
+| Exempt | 612 |
 | — Security | 78 |
 | — Configuration | 260 |
 | — User preference | 28 |
 | — Infrastructure | 46 |
 | — Agent administration | 72 |
 | — Counterparty | 33 |
-| — Read-only | 47 |
+| — Read-only | 48 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
 | **Pending** | **3** |
-| Total | 1000 |
+| Total | 1001 |
 
 Of the 389 writes an agent should be able to make, 386 have a tool (99%).
 
@@ -137,7 +137,7 @@ The writes no tool performs yet, and what the tool would do.
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 15 | 2 | 13 | 0 |
-| agentdefinition | 9 | 0 | 9 | 0 |
+| agentdefinition | 10 | 0 | 10 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
@@ -403,6 +403,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateAgentCapabilities` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `DELETE /api/v1/agent-definitions/:agentID/`<br>agentdefinitionhandler.remove | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `POST /api/v1/agent-definitions/`<br>agentdefinitionhandler.create | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
+| `POST /api/v1/agent-definitions/dry-run/`<br>agentdefinitionhandler.dryRun | Exempt, read-only: Tries a draft agent once with every write simulated; it saves and changes nothing. |
 | `POST /api/v1/agent-definitions/preview-prompt/`<br>agentdefinitionhandler.previewPrompt | Exempt, read-only: Renders an agent prompt for review and saves nothing. |
 | `PUT /api/v1/agent-definitions/:agentID/`<br>agentdefinitionhandler.update | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 
