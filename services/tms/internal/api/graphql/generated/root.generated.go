@@ -26174,11 +26174,18 @@ type ShipmentBriefingSegment {
   filter: ShipmentQuickFilter
 }
 
+"""
+The day's brief for the board. It is written once for the organization's
+working day, before it starts, and again when every open issue it named has
+been cleared; reading it never asks the model anything.
+"""
 type ShipmentBriefing {
   segments: [ShipmentBriefingSegment!]!
   "The model wrote the wording; false means the deterministic sentence."
   narrated: Boolean!
   generatedAt: Timestamp!
+  "Which of the day's briefs this is, starting at 1."
+  generation: Int!
 }
 
 enum CapacityUnitKind {
@@ -26485,6 +26492,10 @@ extend type Query {
   shipmentBoardCapabilities: ShipmentBoardCapabilities!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
+  """
+  The day's board brief. It is written for the organization's own day and
+  time zone, so the timezone argument no longer changes it.
+  """
   shipmentBriefing(timezone: String!): ShipmentBriefing!
   shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
   capacityUnitMatches(kind: CapacityUnitKind!, unitId: ID!, limit: Int = 2): [CapacityMatch!]!

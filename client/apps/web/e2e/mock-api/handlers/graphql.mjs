@@ -201,30 +201,75 @@ function plural(count, word) {
   return `${count} ${count === 1 ? word : `${word}s`}`;
 }
 
-function briefing(state) {
-  const now = state.now();
-  const today = state.shipments.filter((s) => startOfDay(projectedArrival(s)) === startOfDay(now) || startOfDay(s.board.pickupAt) === startOfDay(now));
-  const moving = state.shipments.filter((s) => stageOf(s) === "Moving").length;
+function boardFacts(state) {
+  const count = (filter) => state.shipments.filter((s) => quickFilterMatches(state, s, { filter })).length;
   const late = state.shipments.filter((s) => stageOf(s) === "Late");
-  const uncovered = state.shipments.filter(isUncovered).length;
-  const reason = late.find((s) => s.board.risk)?.board.risk;
-  const segments = [{ text: `${plural(today.length, "load")} today. `, filter: null }];
-  segments.push({ text: `${moving} ${moving === 1 ? "is" : "are"} moving on schedule`, filter: "Moving" });
-  if (late.length) {
-    segments.push({ text: ", ", filter: null });
-    segments.push({ text: `${late.length} ${late.length === 1 ? "is" : "are"} running late`, filter: "Late" });
-    if (reason) segments.push({ text: state.scenario.ai ? ` behind the ${reason.toLowerCase().replace("weather on", "storm over")}` : ` (${reason.toLowerCase()})`, filter: null });
+  const openSuggestions = suggestionItems(state).filter((item) => state.decisions.get(item.key) !== "Done").length;
+  return {
+    deliveringToday: count("DeliveringToday"),
+    moving: count("Moving"),
+    late: late.length,
+    uncovered: count("Uncovered"),
+    detention: count("Detention"),
+    readyToBill: count("ReadyToBill"),
+    lateReason: late.find((s) => s.board.risk)?.board.risk ?? "",
+    openSuggestions,
+  };
+}
+
+function openIssues(facts) {
+  return facts.late + facts.uncovered + facts.openSuggestions;
+}
+
+function joinClauses(clauses) {
+  const segments = [];
+  clauses.forEach((clause, index) => {
+    if (index > 0) segments.push({ text: index === clauses.length - 1 ? " and " : ", ", filter: null });
+    segments.push(...clause);
+  });
+  if (clauses.length) segments.push({ text: ". ", filter: null });
+  return segments;
+}
+
+function briefSegments(state, facts) {
+  const loads = (count) => plural(count, "load");
+  const verb = (count, one, many) => (count === 1 ? one : many);
+  const board = [];
+  if (facts.deliveringToday) board.push([{ text: `${loads(facts.deliveringToday)} ${verb(facts.deliveringToday, "delivers", "deliver")} today`, filter: "DeliveringToday" }]);
+  if (facts.moving) board.push([{ text: `${loads(facts.moving)} ${verb(facts.moving, "is", "are")} moving on schedule`, filter: "Moving" }]);
+  if (facts.late) {
+    const clause = [{ text: `${loads(facts.late)} ${verb(facts.late, "is", "are")} late`, filter: "Late" }];
+    if (facts.lateReason) clause.push({ text: `, mostly ${facts.lateReason.toLowerCase()}`, filter: null });
+    board.push(clause);
   }
-  if (uncovered) {
-    segments.push({ text: late.length ? ", and " : " and ", filter: null });
-    const noun = coverageNoun(state.scenario.operationType, 1);
-    segments.push({ text: `${uncovered} still need${uncovered === 1 ? "s" : ""} ${noun}`, filter: "Uncovered" });
+  const followUp = [];
+  if (facts.uncovered) followUp.push([{ text: `${loads(facts.uncovered)} still ${verb(facts.uncovered, "needs", "need")} ${coverageNoun(state.scenario.operationType, facts.uncovered)}`, filter: "Uncovered" }]);
+  if (facts.detention) followUp.push([{ text: `${loads(facts.detention)} ${verb(facts.detention, "is", "are")} accruing detention`, filter: "Detention" }]);
+  if (facts.readyToBill) followUp.push([{ text: `${loads(facts.readyToBill)} ${verb(facts.readyToBill, "is", "are")} ready to bill`, filter: "ReadyToBill" }]);
+  const segments = [...joinClauses(board), ...joinClauses(followUp)];
+  if (!segments.length) return [{ text: "Nothing on the board needs you right now.", filter: null }];
+  segments[segments.length - 1] = { text: ".", filter: null };
+  return segments;
+}
+
+/**
+ * The day's brief is stored like the server stores it: written once, read
+ * after that, and written again only when everything it flagged is cleared.
+ */
+function briefing(state) {
+  const facts = boardFacts(state);
+  const stored = state.brief;
+  if (!stored || (stored.openIssues > 0 && openIssues(facts) === 0 && stored.generation < 6)) {
+    state.brief = {
+      segments: briefSegments(state, facts),
+      narrated: state.scenario.ai,
+      generatedAt: state.now(),
+      generation: (stored?.generation ?? 0) + 1,
+      openIssues: openIssues(facts),
+    };
   }
-  segments.push({ text: ".", filter: null });
-  if (state.scenario.ai && (late.length || uncovered)) {
-    segments.push({ text: " I've drafted fixes in the brief.", filter: null });
-  }
-  return { segments, narrated: state.scenario.ai, generatedAt: now };
+  const { openIssues: _open, ...brief } = state.brief;
+  return brief;
 }
 
 function driverUnits(state) {

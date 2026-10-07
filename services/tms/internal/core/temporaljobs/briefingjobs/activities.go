@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -37,6 +38,8 @@ type ActivitiesParams struct {
 	Logger    *zap.Logger
 	Briefings services.BriefingService
 	Repo      repositories.BriefingRepository
+	Board     services.ShipmentBriefWriter
+	BoardRepo repositories.ShipmentBriefRepository
 	Controls  repositories.AgentControlRepository
 	Tenants   repositories.TenantSyncRepository
 	Cache     repositories.OrganizationCacheRepository
@@ -47,6 +50,8 @@ type Activities struct {
 	l         *zap.Logger
 	briefings services.BriefingService
 	repo      repositories.BriefingRepository
+	board     services.ShipmentBriefWriter
+	boardRepo repositories.ShipmentBriefRepository
 	controls  repositories.AgentControlRepository
 	tenants   repositories.TenantSyncRepository
 	cache     repositories.OrganizationCacheRepository
@@ -58,6 +63,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 		l:         p.Logger.Named("job.daily-briefing"),
 		briefings: p.Briefings,
 		repo:      p.Repo,
+		board:     p.Board,
+		boardRepo: p.BoardRepo,
 		controls:  p.Controls,
 		tenants:   p.Tenants,
 		cache:     p.Cache,
@@ -190,6 +197,24 @@ func (a *Activities) WriteOrganizationBriefingActivity(
 	return &OrganizationBriefingResult{Written: written.Written, Narrated: written.Narrated}, nil
 }
 
+func (a *Activities) WriteShipmentBriefActivity(
+	ctx context.Context,
+	input *OrganizationBriefingInput,
+) (*ShipmentBriefResult, error) {
+	stop := modelcall.Heartbeat(ctx)
+	defer stop()
+
+	brief, err := a.board.WriteBrief(ctx, &services.WriteShipmentBriefRequest{
+		TenantInfo: input.TenantInfo(),
+		Trigger:    shipmentbrief.TriggerScheduled,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("write the shipment board brief: %w", err)
+	}
+
+	return &ShipmentBriefResult{Generation: brief.Generation, Narrated: brief.Narrated}, nil
+}
+
 // BriefingRetentionActivity removes briefings older than the window a reader can
 // page back through.
 func (a *Activities) BriefingRetentionActivity(
@@ -217,7 +242,29 @@ func (a *Activities) BriefingRetentionActivity(
 		}
 	}
 
-	a.l.Info("briefing retention sweep complete", zap.Int("deleted", result.Deleted))
+	for pass := range retentionPasses {
+		activity.RecordHeartbeat(ctx, pass)
+
+		deleted, err := a.boardRepo.DeleteBefore(
+			ctx,
+			&repositories.DeleteShipmentBriefsBeforeRequest{
+				BeforeDate: cutoff,
+				Limit:      retentionBatch,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("delete shipment board briefs: %w", err)
+		}
+		result.DeletedBoardBriefs += deleted
+		if deleted < retentionBatch {
+			break
+		}
+	}
+
+	a.l.Info("briefing retention sweep complete",
+		zap.Int("deleted", result.Deleted),
+		zap.Int("deletedBoardBriefs", result.DeletedBoardBriefs),
+	)
 
 	return result, nil
 }

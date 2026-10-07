@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -205,6 +206,7 @@ type harness struct {
 	guard     *guard
 	assigner  *assigner
 	reads     *assignmentReads
+	briefs    *briefStore
 }
 
 func newHarness(operation tenant.OperationType) *harness {
@@ -219,6 +221,7 @@ func newHarness(operation tenant.OperationType) *harness {
 		guard:     &guard{},
 		assigner:  &assigner{},
 		reads:     &assignmentReads{},
+		briefs:    &briefStore{},
 	}
 	h.service = NewWithDependencies(&Dependencies{
 		Console:         h.console,
@@ -231,6 +234,8 @@ func newHarness(operation tenant.OperationType) *harness {
 		TenderGuard:     h.guard,
 		Assignments:     h.assigner,
 		AssignmentReads: h.reads,
+		Briefs:          h.briefs,
+		Organizations:   orgCache{timezone: "America/Chicago"},
 		Now:             func() time.Time { return fixedNow },
 	})
 
@@ -540,24 +545,84 @@ func TestUndo_LeavesAloneWorkItDidNotDo(t *testing.T) {
 	assert.NotContains(t, later.decisions.records, key)
 }
 
-func TestNarration_KeepsOnlyRewordingsThatInventNothing(t *testing.T) {
+type briefStore struct {
+	brief *shipmentbrief.Brief
+}
+
+func (b *briefStore) Latest(
+	context.Context,
+	*repositories.GetLatestShipmentBriefRequest,
+) (*shipmentbrief.Brief, error) {
+	return b.brief, nil
+}
+
+func (b *briefStore) Insert(context.Context, *shipmentbrief.Brief) (*shipmentbrief.Brief, error) {
+	return b.brief, nil
+}
+
+func (b *briefStore) DeleteBefore(
+	context.Context,
+	*repositories.DeleteShipmentBriefsBeforeRequest,
+) (int, error) {
+	return 0, nil
+}
+
+type orgCache struct{ timezone string }
+
+func (o orgCache) GetByID(context.Context, pulid.ID) (*tenant.Organization, error) {
+	return &tenant.Organization{Timezone: o.timezone}, nil
+}
+
+func TestSuggestions_UseTheDaysStoredWording(t *testing.T) {
 	t.Parallel()
 
-	honest := &services.ShipmentSuggestion{
-		Key: "a", Title: "Assign Gwen Grant to San Antonio → Dallas",
-		Reason: "5 mi out. Pickup closes at 13:30.", Impact: []string{"$3590"},
+	h := newHarness(tenant.OperationTypeBrokerage)
+	move := uncovered("WORDED", time.Hour)
+	h.console.board.Moves = []*dispatchconsoleservice.BoardMove{move}
+	computed := h.queue(t).Items[0]
+	assert.False(t, h.queue(t).Narrated, "without a brief the computed wording stands")
+
+	h.briefs.brief = &shipmentbrief.Brief{
+		Facts: shipmentbrief.Facts{Timezone: "America/Chicago"},
+		Wording: map[string]shipmentbrief.Wording{computed.Key: {
+			Title:  "Send WORDED out to tender",
+			Reason: "It picks up within the hour.",
+			Basis:  shipmentbrief.WordingBasis(computed.Title, computed.Reason, computed.Impact),
+		}},
 	}
-	invented := &services.ShipmentSuggestion{
-		Key: "b", Title: "Tender San Antonio → Dallas", Reason: "Pickup closes at 13:30.",
+	got := h.queue(t)
+	assert.True(t, got.Narrated)
+	assert.Equal(t, "Send WORDED out to tender", got.Items[0].Title)
+
+	again := h.queue(t)
+	assert.Equal(t, "Send WORDED out to tender", again.Items[0].Title,
+		"applying wording leaves the cached queue as it was computed")
+
+	other := *h.briefs.brief
+	other.Facts.Timezone = "UTC"
+	h.briefs.brief = &other
+	assert.Equal(t, computed.Title, h.queue(t).Items[0].Title,
+		"wording written for another time zone's clock times is not applied")
+}
+
+func TestApplyWording_SkipsWordingTheItemHasOutgrown(t *testing.T) {
+	t.Parallel()
+
+	item := &services.ShipmentSuggestion{
+		Key: "a", Title: "Tender San Antonio → Dallas", Reason: "Pickup closes at 13:30.",
 		Impact: []string{"$3590"},
 	}
+	stale := shipmentbrief.Wording{
+		Title:  "Tender this one",
+		Reason: "It closes at 12:30.",
+		Basis:  shipmentbrief.WordingBasis(item.Title, "Pickup closes at 12:30.", item.Impact),
+	}
 
-	applied := applyNarration([]*services.ShipmentSuggestion{honest, invented}, []narratedItem{
-		{Key: "a", Title: "Put Gwen on the San Antonio run", Reason: "She is 5 miles out and the $3590 load closes at 13:30."},
-		{Key: "b", Title: "Tender this one", Reason: "It pays $4200 and closes at 13:30."},
-	})
+	applied := ApplyWording(
+		[]*services.ShipmentSuggestion{item},
+		map[string]shipmentbrief.Wording{"a": stale},
+	)
 
-	assert.True(t, applied)
-	assert.Equal(t, "Put Gwen on the San Antonio run", honest.Title)
-	assert.Equal(t, "Tender San Antonio → Dallas", invented.Title, "a made-up figure keeps the computed wording")
+	assert.False(t, applied)
+	assert.Equal(t, "Tender San Antonio → Dallas", item.Title)
 }

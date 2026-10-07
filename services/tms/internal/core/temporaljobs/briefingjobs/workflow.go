@@ -27,6 +27,8 @@ const perOrganizationChange = "daily-briefing-per-organization"
 // what keeps the hour's sweep off the database the product runs on.
 const organizationConcurrency = 4
 
+const shipmentBriefChange = "daily-briefing-shipment-brief"
+
 // briefingActivityOptions serve only sweeps started before the sweep fanned
 // out: one activity walking every tenant, generous and heartbeating.
 var briefingActivityOptions = workflow.ActivityOptions{
@@ -152,6 +154,20 @@ func WriteOrganizationBriefingWorkflow(
 	if err := workflow.ExecuteActivity(ctx, a.WriteOrganizationBriefingActivity, input).
 		Get(ctx, &result); err != nil {
 		return nil, err
+	}
+
+	if workflow.GetVersion(ctx, shipmentBriefChange, workflow.DefaultVersion, 1) ==
+		workflow.DefaultVersion {
+		return &result, nil
+	}
+
+	var brief ShipmentBriefResult
+	if err := workflow.ExecuteActivity(ctx, a.WriteShipmentBriefActivity, input).
+		Get(ctx, &brief); err != nil {
+		workflow.GetLogger(ctx).Warn(
+			"Shipment board brief failed; the board writes one when it is first opened",
+			"error", err,
+		)
 	}
 
 	return &result, nil

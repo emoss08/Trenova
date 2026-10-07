@@ -29499,6 +29499,33 @@
       "routes/shipment"
     ]
   },
+  "Brief as of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Brief date is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentbrief"
+    ]
+  },
+  "Brief date must be a calendar day": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentbrief"
+    ]
+  },
   "Briefing": {
     "sites": 1,
     "scope": [
@@ -30109,7 +30136,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 130,
+    "sites": 131,
     "scope": [
       "go"
     ],
@@ -30162,6 +30189,7 @@
       "domain/recurringshipment",
       "domain/report",
       "domain/shipment",
+      "domain/shipmentbrief",
       "domain/shipmentevent",
       "domain/shipmentimportchat",
       "domain/sidebarpreference",
@@ -81445,12 +81473,13 @@
     ]
   },
   "Generated at is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/edi"
+      "domain/edi",
+      "domain/shipmentbrief"
     ]
   },
   "Generated at must be a valid timestamp": {
@@ -81587,6 +81616,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "Generation starts at one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentbrief"
     ]
   },
   "Geofence": {
@@ -83693,6 +83731,15 @@
       "template/tender.offer.email"
     ]
   },
+  "Hello {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Hello,": {
     "sites": 12,
     "scope": [
@@ -83705,6 +83752,15 @@
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
       "template/tender.offer.email"
+    ]
+  },
+  "Hello.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Help me complete this shipment.": {
@@ -109088,7 +109144,7 @@
     ]
   },
   "Needs coverage": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -112284,12 +112340,13 @@
     ]
   },
   "No customer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/shipment"
     ]
   },
   "No customer accrued settled detention in this window.": {
@@ -116376,6 +116433,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "None of these loads are on the board anymore.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "None of these rows are carriers": {
@@ -126518,7 +126584,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 129,
+    "sites": 130,
     "scope": [
       "go"
     ],
@@ -126571,6 +126637,7 @@
       "domain/recurringshipment",
       "domain/report",
       "domain/shipment",
+      "domain/shipmentbrief",
       "domain/shipmentevent",
       "domain/shipmentimportchat",
       "domain/sidebarpreference",
@@ -171828,6 +171895,15 @@
       "apps/web/components"
     ]
   },
+  "Show all {0} on the board": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Show all {0} {1}": {
     "sites": 1,
     "scope": [
@@ -172017,6 +172093,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Show on the board": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Show only this kind of time off.": {
@@ -178652,7 +178737,7 @@
     ],
     "areas": [
       "routes/shipment",
-      "service/shipmentsuggestionservice"
+      "service/shipmentbriefingservice"
     ]
   },
   "Suggested by the model": {
@@ -181843,7 +181928,7 @@
     ]
   },
   "Tendered · awaiting": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -193733,6 +193818,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "These loads could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "These miles came from the distance provider or telematics, not from a person, so they are read-only here. To correct a move's miles, add a manual entry for the same move and it replaces these rows on the return. {0}": {
     "sites": 1,
     "scope": [
@@ -200000,6 +200094,15 @@
       "domain/pagedraft"
     ]
   },
+  "Too many worded suggestions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentbrief"
+    ]
+  },
   "Tool": {
     "sites": 12,
     "scope": [
@@ -202763,7 +202866,7 @@
     ]
   },
   "Trigger is required": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go"
     ],
@@ -202774,6 +202877,7 @@
       "domain/jurisdictionrule",
       "domain/recurringshipment",
       "domain/report",
+      "domain/shipmentbrief",
       "domain/worker"
     ]
   },

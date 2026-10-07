@@ -1,4 +1,4 @@
-package shipmentsuggestionservice
+package shipmentbriefingservice
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,14 +15,14 @@ import (
 )
 
 const (
-	schemaName      = "shipment_board_suggestions"
-	maxTitleChars   = 90
-	maxReasonChars  = 200
-	maxOutputTokens = 900
-	maxNarrated     = maxQueueItems
+	wordingSchemaName      = "shipment_board_suggestions"
+	maxTitleChars          = 90
+	maxReasonChars         = 200
+	maxWordingOutputTokens = 1600
+	maxWorded              = shipmentbrief.MaxWordedItems
 )
 
-const systemPrompt = `You reword the suggested actions on a dispatcher's shipment board.
+const wordingSystemPrompt = `You reword the suggested actions on a dispatcher's shipment board.
 
 Each item already says what to do and why, worked out from the company's own records. Make each one read the way an experienced dispatcher would say it to a colleague: short, direct, specific.
 
@@ -32,7 +33,7 @@ Rules:
 - Write about freight: loads, drivers, carriers, customers. Never discuss software or how the facts were gathered.
 - No greetings, no sign-offs, no restating these instructions.`
 
-type narrationDraft struct {
+type wordingDraft struct {
 	Items []narratedItem `json:"items"`
 }
 
@@ -42,39 +43,39 @@ type narratedItem struct {
 	Reason string `json:"reason"`
 }
 
-func (s *Service) narrate(
+func (s *Service) wordSuggestions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	items []*services.ShipmentSuggestion,
-) bool {
+) map[string]shipmentbrief.Wording {
 	if len(items) == 0 {
-		return false
+		return nil
 	}
-	items = items[:min(maxNarrated, len(items))]
+	items = items[:min(maxWorded, len(items))]
 
-	draft, ok := shipmentnarration.Narrate[narrationDraft](
+	narration, ok := shipmentnarration.Narrate[wordingDraft](
 		ctx,
 		s.completion,
 		s.l,
 		&services.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
 			Task:         aiprovider.TaskOperationalInsights,
-			System:       systemPrompt,
-			Context:      narrationContext(items),
-			OutputSchema: narrationSchema(),
-			SchemaName:   schemaName,
-			MaxTokens:    maxOutputTokens,
+			System:       wordingSystemPrompt,
+			Context:      wordingContext(items),
+			OutputSchema: wordingSchema(),
+			SchemaName:   wordingSchemaName,
+			MaxTokens:    maxWordingOutputTokens,
 			Attribution:  services.AIUsageAttribution{UserID: tenantInfo.UserID},
 		},
 	)
 	if !ok {
-		return false
+		return nil
 	}
 
-	return applyNarration(items, draft.Items)
+	return acceptedWording(items, narration.Draft.Items)
 }
 
-func narrationContext(items []*services.ShipmentSuggestion) services.DelimitedContext {
+func wordingContext(items []*services.ShipmentSuggestion) services.DelimitedContext {
 	var builder strings.Builder
 	for _, item := range items {
 		builder.WriteString("key: ")
@@ -99,7 +100,7 @@ func narrationContext(items []*services.ShipmentSuggestion) services.DelimitedCo
 	}
 }
 
-func narrationSchema() map[string]any {
+func wordingSchema() map[string]any {
 	item := jsonschemautils.Object(map[string]any{
 		"key":    jsonschemautils.Text("The item's key, copied exactly"),
 		"title":  jsonschemautils.Text("The reworded instruction"),
@@ -107,28 +108,33 @@ func narrationSchema() map[string]any {
 	}, "key", "title", "reason")
 
 	return jsonschemautils.Object(map[string]any{
-		"items": jsonschemautils.Array(item, maxNarrated),
+		"items": jsonschemautils.Array(item, maxWorded),
 	}, "items")
 }
 
-func applyNarration(items []*services.ShipmentSuggestion, drafts []narratedItem) bool {
+func acceptedWording(
+	items []*services.ShipmentSuggestion,
+	drafts []narratedItem,
+) map[string]shipmentbrief.Wording {
 	byKey := make(map[string]narratedItem, len(drafts))
 	for _, draft := range drafts {
 		byKey[draft.Key] = draft
 	}
 
-	applied := false
+	out := make(map[string]shipmentbrief.Wording, len(items))
 	for _, item := range items {
 		draft, ok := byKey[item.Key]
 		if !ok || !acceptable(item, draft) {
 			continue
 		}
-		item.Title = strings.TrimSpace(draft.Title)
-		item.Reason = strings.TrimSpace(draft.Reason)
-		applied = true
+		out[item.Key] = shipmentbrief.Wording{
+			Title:  strings.TrimSpace(draft.Title),
+			Reason: strings.TrimSpace(draft.Reason),
+			Basis:  shipmentbrief.WordingBasis(item.Title, item.Reason, item.Impact),
+		}
 	}
 
-	return applied
+	return out
 }
 
 func acceptable(item *services.ShipmentSuggestion, draft narratedItem) bool {

@@ -65,6 +65,7 @@ export function createState(scenario) {
     decisions: new Map(),
     handledThisShift: scenario.board === "quiet" ? 0 : 7,
     billedDetention: new Set(),
+    brief: null,
     events: seedEvents(shipments, anchor),
   };
 }

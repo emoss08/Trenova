@@ -6995,11 +6995,16 @@ type ShipmentBoardScopeInput struct {
 	Timezone string `json:"timezone"`
 }
 
+// The day's brief for the board. It is written once for the organization's
+// working day, before it starts, and again when every open issue it named has
+// been cleared; reading it never asks the model anything.
 type ShipmentBriefing struct {
 	Segments []*ShipmentBriefingSegment `json:"segments"`
 	// The model wrote the wording; false means the deterministic sentence.
 	Narrated    bool `json:"narrated"`
 	GeneratedAt int  `json:"generatedAt"`
+	// Which of the day's briefs this is, starting at 1.
+	Generation int `json:"generation"`
 }
 
 type ShipmentBriefingSegment struct {

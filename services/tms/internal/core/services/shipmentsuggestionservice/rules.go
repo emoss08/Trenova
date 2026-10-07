@@ -24,9 +24,9 @@ import (
 
 const (
 	coverageHorizon    = 24 * time.Hour
-	maxCoverageItems   = 3
-	maxDelayItems      = 3
-	maxDetentionItems  = 3
+	maxCoverageItems   = 5
+	maxDelayItems      = 5
+	maxDetentionItems  = 5
 	hosWarnMs          = int64(2 * time.Hour / time.Millisecond)
 	coverageCandidates = 3
 	clockLayout        = "15:04"
@@ -102,12 +102,7 @@ func (s *Service) compute(
 		items = items[:maxQueueItems]
 	}
 
-	out := &queue{Items: items}
-	if caps.AI {
-		out.Narrated = s.narrate(ctx, tenantInfo, items)
-	}
-
-	return out, nil
+	return &queue{Items: items}, nil
 }
 
 func toneRank(tone services.SuggestionTone) int {
