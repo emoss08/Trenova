@@ -138,6 +138,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
@@ -2118,6 +2119,7 @@ type QueryResolver interface {
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
+	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
 	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
@@ -6223,8 +6225,32 @@ type AgentDefinitionVersion {
   createdAt: Timestamp!
 }
 
+"""
+How an agent in shadow compares with the people doing the same work. Each
+write it recorded instead of offering is set beside what a person did to the
+same record in the three days after.
+"""
+type AgentShadowReport {
+  "The period read, in days."
+  days: Int!
+  "Every write the agent recorded in the period."
+  recorded: Int!
+  "Writes a person then made too: the same record, and the fields the write named."
+  matched: Int!
+  "Of the writes people answered, the share that matched what they did, 0 to 1. Absent until people answer one."
+  matchRate: Float
+  "Writes whose record a person changed some other way."
+  wouldReject: Int!
+  "Writes that failed when they were simulated."
+  wouldFail: Int!
+  "Writes whose record nobody touched afterwards."
+  unanswered: Int!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  "An agent's shadow period over the last days (default 30, at most 90)."
+  agentShadowReport(agentId: ID!, days: Int): AgentShadowReport!
   agentDefinition(id: ID!): AgentDefinition
   "An agent's saves, newest first. At most 50."
   agentDefinitionVersions(agentId: ID!, limit: Int): [AgentDefinitionVersion!]!

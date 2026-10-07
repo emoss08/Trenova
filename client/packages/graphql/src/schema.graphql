@@ -4516,6 +4516,32 @@ enum AgentSeverity {
 }
 
 """
+How an agent in shadow compares with the people doing the same work. Each
+write it recorded instead of offering is set beside what a person did to the
+same record in the three days after.
+"""
+type AgentShadowReport {
+  """The period read, in days."""
+  days: Int!
+  """
+  Of the writes people answered, the share that matched what they did, 0 to 1. Absent until people answer one.
+  """
+  matchRate: Float
+  """
+  Writes a person then made too: the same record, and the fields the write named.
+  """
+  matched: Int!
+  """Every write the agent recorded in the period."""
+  recorded: Int!
+  """Writes whose record nobody touched afterwards."""
+  unanswered: Int!
+  """Writes that failed when they were simulated."""
+  wouldFail: Int!
+  """Writes whose record a person changed some other way."""
+  wouldReject: Int!
+}
+
+"""
 An opening question that shows what an agent is for. Each one is answerable
 with the tools the agent holds.
 """
@@ -19065,6 +19091,8 @@ type Query {
   agentSafetySummary: AgentSafetySummary!
   """How one agent has been doing."""
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
+  """An agent's shadow period over the last days (default 30, at most 90)."""
+  agentShadowReport(agentId: ID!, days: Int): AgentShadowReport!
   agentSuiteRun(id: ID!): AgentSuiteRun
   """
   A suite run's cases a page at a time, in the order they were asked unless sorted.

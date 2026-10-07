@@ -396,6 +396,7 @@ func FromServices(s *Services) *Resolver {
 		Core:                   s.Core,
 		AgentDefinitionService: s.AgentDefinitionService,
 		AgentCapabilityService: s.AgentCapabilityService,
+		AgentShadowService:     s.AgentShadowService,
 		AgentAccessService:     s.AgentAccessService,
 	}
 	agentpreviewDeps := &agentpreviewresolver.Deps{

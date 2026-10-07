@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -32,6 +33,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentDefinitionConnection", Implementors: []string{"AgentDefinitionConnection"}},
 		{Name: "AgentDefinitionEdge", Implementors: []string{"AgentDefinitionEdge"}},
 		{Name: "AgentDefinitionVersion", Implementors: []string{"AgentDefinitionVersion"}},
+		{Name: "AgentShadowReport", Implementors: []string{"AgentShadowReport"}},
 		{Name: "AgentStarter", Implementors: []string{"AgentStarter"}},
 		{Name: "MyAgent", Implementors: []string{"MyAgent"}},
 		{Name: "MyAgentConnection", Implementors: []string{"MyAgentConnection"}},
@@ -1183,6 +1185,78 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "AgentShadowReport", Fields: []*gqlexec.Field{
+			{
+				Name:     "days",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentshadow.Report)
+					return obj.Days, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "recorded",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentshadow.Report)
+					return obj.Recorded, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "matched",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentshadow.Report)
+					return obj.Matched, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "matchRate",
+				IsMethod: true,
+				ChildErr: errNoChild16,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentshadow.Report)
+					return obj.MatchRate(), nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "wouldReject",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentshadow.Report)
+					return obj.WouldReject, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "wouldFail",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentshadow.Report)
+					return obj.WouldFail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "unanswered",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentshadow.Report)
+					return obj.Unanswered, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "AgentStarter", Fields: []*gqlexec.Field{
 			{
 				Name:     "label",
@@ -1426,6 +1500,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentDefinitionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentDefinitionConnection),
 			},
 			{
+				Name:       "agentShadowReport",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentShadowReport",
+				Args:       field_Query_agentShadowReport_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentShadowReport(ctx, fc.Args["agentId"].(string), fc.Args["days"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentshadowᚐReport),
+			},
+			{
 				Name:       "agentDefinition",
 				IsResolver: true,
 				Concurrent: true,
@@ -1565,6 +1653,7 @@ type resolverMyAgent interface {
 
 type resolverQuery interface {
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
+	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
 	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
@@ -1591,6 +1680,7 @@ var (
 	errNoChild13 = errors.New("field of type AgentTriggerMode does not have child fields")
 	errNoChild14 = errors.New("field of type AgentContextProvider does not have child fields")
 	errNoChild15 = errors.New("field of type AgentOutputMode does not have child fields")
+	errNoChild16 = errors.New("field of type Float does not have child fields")
 )
 
 func field_Mutation_setAgentAccess_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1666,6 +1756,27 @@ func field_Query_agentDefinitions_args(ctx context.Context, ec *gqlexec.Exec, ra
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_agentShadowReport_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "days",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["days"] = arg1
 	return args, nil
 }
 
@@ -2449,6 +2560,14 @@ func marshalNAgentOutputMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
+func marshalNAgentShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentshadowᚐReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentshadow.Report) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentShadowReport", v)
+}
+
 func marshalNAgentStarter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐStarter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.Starter) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentStarter", &v)
 }
@@ -2648,6 +2767,14 @@ func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Se
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -367,4 +368,26 @@ func (r *QueryResolver) AgentDefinitionVersionDraft(ctx context.Context, agentID
 		AgentDefinitionID: definitionID,
 		Version:           int64(version),
 	})
+}
+
+func (r *QueryResolver) AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &services.AgentShadowReportRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		AgentID:    definitionID,
+	}
+	if days != nil {
+		req.Days = *days
+	}
+
+	return r.AgentShadowService.Report(ctx, req)
 }

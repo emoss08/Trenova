@@ -2351,6 +2351,9 @@ models:
   AgentDefinitionVersion:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.DefinitionVersion
+  AgentShadowReport:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentshadow.Report
   AgentCapabilityMode:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityMode

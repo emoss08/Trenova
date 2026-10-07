@@ -1,5 +1,6 @@
--- Hand-written: the converter does not carry this DROP TABLE across, so the
--- reverse of the up migration is written out here.
+-- Code generated from the PostgreSQL migrations by
+-- scripts/dialect-convert/convert.py. Hand-edits are preserved only if you
+-- stop regenerating this file; see docs/databases.md.
 -- Source: 20261231008440_agent_definition_versions.tx.down.sql
 
-DROP TABLE IF EXISTS "agent_definition_versions";
+SELECT 1;

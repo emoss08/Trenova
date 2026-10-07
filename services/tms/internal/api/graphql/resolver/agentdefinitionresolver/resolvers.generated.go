@@ -11,6 +11,7 @@ type Deps struct {
 	*base.Core
 	AgentDefinitionService services.AgentDefinitionService
 	AgentCapabilityService services.AgentCapabilityService
+	AgentShadowService     services.AgentShadowService
 	AgentAccessService     services.AgentAccessService
 }
 
