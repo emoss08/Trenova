@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingfacts"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingwriter"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,7 +43,7 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Repo         repositories.BriefingRepository
-	Organization repositories.OrganizationCacheRepository
+	Organization repositories.OrganizationRepository
 	Writer       *briefingwriter.Service
 	Permissions  services.PermissionEngine
 	Realtime     services.RealtimeService `optional:"true"`
@@ -55,7 +56,7 @@ type Params struct {
 type Service struct {
 	l            *zap.Logger
 	repo         repositories.BriefingRepository
-	organization repositories.OrganizationCacheRepository
+	organization repositories.OrganizationRepository
 	facts        *briefingfacts.Builder
 	writer       *briefingwriter.Service
 	permissions  services.PermissionEngine
@@ -94,12 +95,14 @@ func (s *Service) WriteForDay(
 	ctx context.Context,
 	req services.WriteBriefingRequest,
 ) (*services.WriteBriefingResult, error) {
-	organization, err := s.organization.GetByID(ctx, req.TenantInfo.OrgID)
+	organization, err := s.organization.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: req.TenantInfo,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("load organization: %w", err)
 	}
 
-	timezone := timeutils.NormalizeTimezone(organization.Timezone)
+	timezone := timeutils.LoadLocation(organization.Timezone).String()
 	now := req.Now
 	if now <= 0 {
 		now = s.now()
@@ -236,14 +239,13 @@ func (s *Service) Today(
 		return nil, err
 	}
 
-	organization, err := s.organization.GetByID(ctx, req.TenantInfo.OrgID)
-	if err != nil {
-		return nil, fmt.Errorf("load organization: %w", err)
-	}
-
 	day := req.BriefingDate
 	if day == "" {
-		day = timeutils.CurrentDateInTimezone(timeutils.NormalizeTimezone(organization.Timezone))
+		location, err := orgzone.Location(ctx, s.organization, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		day = timeutils.CurrentDateInTimezone(location.String())
 	}
 
 	return s.repo.GetForDay(ctx, repositories.GetBriefingForDayRequest{

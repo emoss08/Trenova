@@ -57,14 +57,18 @@ func (s *stubPriceRepo) GetLatestOnOrBefore(
 	return s.prices, s.err
 }
 
-type stubOrgCacheRepo struct {
-	repositories.OrganizationCacheRepository
+type stubOrgRepo struct {
+	repositories.OrganizationRepository
 	org *tenant.Organization
+	err error
 }
 
-func (s *stubOrgCacheRepo) GetByID(context.Context, pulid.ID) (*tenant.Organization, error) {
-	if s.org == nil {
-		return nil, errors.New("not found")
+func (s *stubOrgRepo) GetByID(
+	context.Context,
+	repositories.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	if s.err != nil {
+		return nil, s.err
 	}
 	return s.org, nil
 }
@@ -123,8 +127,8 @@ func newResolverFixture(t *testing.T) *resolverFixture {
 			price("2026-07-13", "3.70"),
 			price("2026-07-06", "3.60"),
 		}},
-		orgCacheRepo: &stubOrgCacheRepo{},
-		now:          func() int64 { return date("2026-07-16").Unix() },
+		organizations: &stubOrgRepo{org: &tenant.Organization{}},
+		now:           func() int64 { return date("2026-07-16").Unix() },
 	}
 
 	return &resolverFixture{
@@ -176,6 +180,18 @@ func TestResolveShipmentCharge_NoProgramAssigned(t *testing.T) {
 	f.service.customerRepo = &stubCustomerRepo{
 		profile: &customer.CustomerBillingProfile{},
 	}
+
+	resolved, err := f.resolve(t.Context())
+
+	require.NoError(t, err)
+	assert.Nil(t, resolved)
+}
+
+func TestResolveShipmentCharge_OrganizationReadErrorAppliesNoCharge(t *testing.T) {
+	t.Parallel()
+
+	f := newResolverFixture(t)
+	f.service.organizations = &stubOrgRepo{err: errors.New("database unavailable")}
 
 	resolved, err := f.resolve(t.Context())
 

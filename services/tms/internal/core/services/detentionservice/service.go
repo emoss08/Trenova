@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -31,7 +33,7 @@ type Params struct {
 	AgreementRepo     repositories.RateAgreementRepository
 	PayAssignmentRepo repositories.WorkerPayAssignmentRepository
 	PayProfileRepo    repositories.PayProfileRepository
-	OrgCacheRepo      repositories.OrganizationCacheRepository
+	Organizations     repositories.OrganizationRepository
 	NoticeRepo        repositories.DetentionNoticeRepository
 	AnalyticsRepo     repositories.DetentionAnalyticsRepository
 	CustomerRepo      repositories.CustomerRepository
@@ -65,7 +67,7 @@ type Service struct {
 	agreementRepo     repositories.RateAgreementRepository
 	payAssignmentRepo repositories.WorkerPayAssignmentRepository
 	payProfileRepo    repositories.PayProfileRepository
-	orgCacheRepo      repositories.OrganizationCacheRepository
+	organizations     repositories.OrganizationRepository
 	noticeRepo        repositories.DetentionNoticeRepository
 	analyticsRepo     repositories.DetentionAnalyticsRepository
 	customerRepo      repositories.CustomerRepository
@@ -96,7 +98,7 @@ func New(p Params) *Service {
 		agreementRepo:     p.AgreementRepo,
 		payAssignmentRepo: p.PayAssignmentRepo,
 		payProfileRepo:    p.PayProfileRepo,
-		orgCacheRepo:      p.OrgCacheRepo,
+		organizations:     p.Organizations,
 		noticeRepo:        p.NoticeRepo,
 		analyticsRepo:     p.AnalyticsRepo,
 		customerRepo:      p.CustomerRepo,
@@ -137,11 +139,14 @@ func (s *Service) SyncShipment(
 		return &SyncShipmentResult{TotalAmount: decimal.Zero}, nil
 	}
 
-	location := s.tenantLocation(ctx, entity.OrganizationID)
-
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
+	}
+
+	location, err := s.tenantLocation(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
 	}
 
 	log := s.l.With(
@@ -548,22 +553,11 @@ func shipmentCommodityIDs(entity *shipment.Shipment) []pulid.ID {
 
 // tenantLocation resolves the organization's timezone so calendar-day caps
 // break at the carrier's local midnight rather than UTC's.
-func (s *Service) tenantLocation(ctx context.Context, orgID pulid.ID) *time.Location {
-	if s.orgCacheRepo == nil {
-		return time.UTC
-	}
-
-	org, err := s.orgCacheRepo.GetByID(ctx, orgID)
-	if err != nil || org == nil {
-		return time.UTC
-	}
-
-	loc, err := time.LoadLocation(timeutils.NormalizeTimezone(org.Timezone))
-	if err != nil {
-		return time.UTC
-	}
-
-	return loc
+func (s *Service) tenantLocation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*time.Location, error) {
+	return orgzone.Location(ctx, s.organizations, tenantInfo)
 }
 
 // projectToWatchtower puts a running detention clock on the feed and takes

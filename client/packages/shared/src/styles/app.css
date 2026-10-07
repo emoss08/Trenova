@@ -45,12 +45,10 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Selection is the brand blue, the same colour that marks a selected row: both say
-     "this is what you have hold of". The ink stays the ink, so selected text
-     reads at the contrast it had. */
+  /* Selected text is a solid amber with dark ink on it, in both themes. */
   ::selection {
-    color: inherit;
-    background: color-mix(in oklch, var(--brand) 24%, transparent);
+    color: var(--selection-foreground);
+    background: var(--selection);
   }
 
   /* A link is the one piece of running text that carries the brand colour. */

@@ -459,9 +459,15 @@ func newHarness(t *testing.T) *harness {
 		}, nil).
 		Maybe()
 
-	orgs := mocks.NewMockOrganizationCacheRepository(t)
+	orgs := mocks.NewMockOrganizationRepository(t)
 	orgs.EXPECT().
-		GetByID(mock.Anything, h.tenant.OrgID).
+		GetByID(
+			mock.Anything,
+			mock.MatchedBy(func(req repositories.GetOrganizationByIDRequest) bool {
+				return req.TenantInfo.OrgID == h.tenant.OrgID &&
+					req.TenantInfo.BuID == h.tenant.BuID
+			}),
+		).
 		Return(&tenant.Organization{ID: h.tenant.OrgID, Timezone: "America/Chicago"}, nil).
 		Maybe()
 
@@ -477,7 +483,7 @@ func newHarness(t *testing.T) *harness {
 		Repo:          h.repo,
 		Fuel:          h.fuel,
 		TractorRepo:   tractors,
-		OrgCacheRepo:  orgs,
+		Organizations: orgs,
 		AuditService:  audit,
 		ReferenceData: selfHostedReferenceGuard(t),
 		Now:           func() int64 { return h.now },

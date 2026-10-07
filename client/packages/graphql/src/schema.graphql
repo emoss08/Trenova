@@ -19666,6 +19666,10 @@ type Query {
   shipmentBillingTransferCandidateIds(input: ShipmentBillingTransferCandidateIdsInput!): ShipmentBillingTransferCandidateIds!
   shipmentBoardCapabilities: ShipmentBoardCapabilities!
   """
+  Group headers and totals for the board grouped by something other than stage, in board order.
+  """
+  shipmentBoardGroups(groupBy: ShipmentBoardGrouping!, input: ShipmentBoardScopeInput!): [ShipmentBoardGroup!]!
+  """
   The day's board brief. It is written for the organization's own day and
   time zone, so the timezone argument no longer changes it.
   """
@@ -22451,6 +22455,31 @@ type ShipmentBoardCapabilities {
   """Google Maps is configured for this workspace."""
   maps: Boolean!
   operationType: OperationType!
+}
+
+type ShipmentBoardGroup {
+  count: Int!
+  """
+  The value rows are grouped on: a YYYY-MM-DD day, a customer id or a user id.
+  Empty for shipments with no date or no owner.
+  """
+  key: String!
+  """
+  The customer's or owner's name. Empty for days, which the client formats.
+  """
+  label: String!
+  revenue: Decimal!
+}
+
+"""
+A way to group the board other than by stage. Dates are the local day, in the
+board's time zone, of the first pickup or the last delivery.
+"""
+enum ShipmentBoardGrouping {
+  Customer
+  DeliveryDate
+  Owner
+  ShipDate
 }
 
 input ShipmentBoardScopeInput {

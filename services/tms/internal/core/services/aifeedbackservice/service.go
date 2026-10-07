@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
@@ -15,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -119,10 +120,6 @@ type retentionReader interface {
 	Get(ctx context.Context, req repositories.GetDataRetentionRequest) (*tenant.DataRetention, error)
 }
 
-type organizationReader interface {
-	GetByID(ctx context.Context, orgID pulid.ID) (*tenant.Organization, error)
-}
-
 type permissionChecker interface {
 	Check(
 		ctx context.Context,
@@ -146,7 +143,7 @@ type Params struct {
 	Definitions   repositories.AgentDefinitionRepository
 	Memories      repositories.AgentMemoryRepository
 	Retention     repositories.DataRetentionRepository
-	Organizations repositories.OrganizationCacheRepository
+	Organizations repositories.OrganizationRepository
 	Permissions   services.PermissionEngine
 	Tools         services.AgentToolRegistry      `optional:"true"`
 	QueryTools    services.AgentQueryToolRegistry `optional:"true"`
@@ -166,7 +163,7 @@ type Service struct {
 	definitions   definitionReader
 	memories      memoryStore
 	retention     retentionReader
-	organizations organizationReader
+	organizations orgzone.OrganizationReader
 	permissions   permissionChecker
 	redactor      *redactor
 	now           func() int64

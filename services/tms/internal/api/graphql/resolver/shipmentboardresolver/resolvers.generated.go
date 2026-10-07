@@ -20,6 +20,7 @@ type Deps struct {
 	BoardWatchlist         services.ShipmentWatchlistReader
 	BoardQuickFilterCounts services.ShipmentQuickFilterCounter
 	BoardStageSummaries    services.ShipmentStageSummaryReader
+	BoardGroups            services.ShipmentBoardGroupSummarizer
 	BoardCapabilities      services.ShipmentBoardCapabilitiesReader
 }
 

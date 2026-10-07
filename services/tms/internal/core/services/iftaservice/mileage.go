@@ -76,7 +76,11 @@ func (s *Service) prepareMileageEntry(
 
 	entity.Normalize()
 	if entity.TraveledAt > 0 {
-		entity.AssignPeriod(s.tenantLocation(ctx, entity.OrganizationID))
+		loc, err := s.tenantLocation(ctx, tenantInfo)
+		if err != nil {
+			return err
+		}
+		entity.AssignPeriod(loc)
 	}
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {

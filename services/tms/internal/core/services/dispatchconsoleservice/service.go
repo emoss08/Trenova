@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
@@ -29,7 +31,7 @@ type Params struct {
 
 	ConsoleRepo         repositories.DispatchConsoleRepository
 	DispatchControlRepo repositories.DispatchControlRepository
-	OrgCacheRepo        repositories.OrganizationCacheRepository
+	Organizations       repositories.OrganizationRepository
 	TenderRepo          repositories.TenderRepository
 	CandidateService    *dispatchcandidateservice.Service
 	Logger              *zap.Logger
@@ -38,7 +40,7 @@ type Params struct {
 type Service struct {
 	consoleRepo         repositories.DispatchConsoleRepository
 	dispatchControlRepo repositories.DispatchControlRepository
-	orgCacheRepo        repositories.OrganizationCacheRepository
+	organizations       repositories.OrganizationRepository
 	tenderRepo          repositories.TenderRepository
 	candidates          *dispatchcandidateservice.Service
 	l                   *zap.Logger
@@ -48,7 +50,7 @@ func New(p Params) *Service {
 	return &Service{
 		consoleRepo:         p.ConsoleRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
-		orgCacheRepo:        p.OrgCacheRepo,
+		organizations:       p.Organizations,
 		tenderRepo:          p.TenderRepo,
 		candidates:          p.CandidateService,
 		l:                   p.Logger.Named("service.dispatch-console"),
@@ -107,19 +109,17 @@ func (s *Service) attachLiveTenders(
 	return nil
 }
 
-func (s *Service) tenantDayStart(ctx context.Context, orgID pulid.ID, now int64) int64 {
-	timezone := ""
-	if s.orgCacheRepo != nil {
-		if org, err := s.orgCacheRepo.GetByID(ctx, orgID); err == nil && org != nil {
-			timezone = org.Timezone
-		}
+func (s *Service) tenantDayStart(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	now int64,
+) (int64, error) {
+	location, err := orgzone.Location(ctx, s.organizations, tenantInfo)
+	if err != nil {
+		return 0, err
 	}
 
-	dayStart, err := timeutils.DayStartUnix(now, timezone)
-	if err != nil {
-		return 0
-	}
-	return dayStart
+	return timeutils.DayStartUnix(now, location.String())
 }
 
 func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, error) {
@@ -140,11 +140,16 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		now,
 	)
 
+	dayStart, err := s.tenantDayStart(ctx, req.TenantInfo, now)
+	if err != nil {
+		return nil, err
+	}
+
 	filter := &repositories.DispatchBoardFilter{
 		TenantInfo:     req.TenantInfo,
 		WindowStart:    windowStart,
 		WindowEnd:      windowEnd,
-		DayStartUnix:   s.tenantDayStart(ctx, req.TenantInfo.OrgID, now),
+		DayStartUnix:   dayStart,
 		FleetCodeIDs:   req.FleetCodeIDs,
 		CustomerIDs:    req.CustomerIDs,
 		ServiceTypeIDs: req.ServiceTypeIDs,

@@ -52,7 +52,7 @@ type Params struct {
 	Usage         repositories.AIUsageRepository
 	Feedback      repositories.AIFeedbackRepository
 	Providers     repositories.AIProviderRepository
-	Organizations repositories.OrganizationCacheRepository
+	Organizations repositories.OrganizationRepository
 	Runtime       *agentruntime.Service
 	Audit         services.AuditService
 	Completion    services.CompletionService     `optional:"true"`
@@ -73,7 +73,7 @@ type Service struct {
 	usage         repositories.AIUsageRepository
 	feedback      repositories.AIFeedbackRepository
 	providers     repositories.AIProviderRepository
-	organizations repositories.OrganizationCacheRepository
+	organizations repositories.OrganizationRepository
 	runtime       fingerprinter
 	audit         services.AuditService
 	completion    services.CompletionService
@@ -204,7 +204,9 @@ func (s *Service) timezoneOf(
 ) string {
 	organizationTimezone := ""
 	if s.organizations != nil {
-		organization, err := s.organizations.GetByID(ctx, tenant.OrgID)
+		organization, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+			TenantInfo: tenant,
+		})
 		if err != nil {
 			s.l.Warn("could not read the organization's timezone; reading windows in UTC",
 				zap.String("organization", tenant.OrgID.String()),

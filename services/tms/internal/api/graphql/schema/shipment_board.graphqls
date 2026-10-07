@@ -82,6 +82,29 @@ type ShipmentStageSummary {
   revenue: Decimal!
 }
 
+"""
+A way to group the board other than by stage. Dates are the local day, in the
+board's time zone, of the first pickup or the last delivery.
+"""
+enum ShipmentBoardGrouping {
+  ShipDate
+  DeliveryDate
+  Customer
+  Owner
+}
+
+type ShipmentBoardGroup {
+  """
+  The value rows are grouped on: a YYYY-MM-DD day, a customer id or a user id.
+  Empty for shipments with no date or no owner.
+  """
+  key: String!
+  "The customer's or owner's name. Empty for days, which the client formats."
+  label: String!
+  count: Int!
+  revenue: Decimal!
+}
+
 type ShipmentQuickFilterCount {
   filter: ShipmentQuickFilter!
   count: Int!
@@ -410,6 +433,11 @@ type ShipmentWatchlist {
 extend type Query {
   shipmentBoardCapabilities: ShipmentBoardCapabilities!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
+  "Group headers and totals for the board grouped by something other than stage, in board order."
+  shipmentBoardGroups(
+    input: ShipmentBoardScopeInput!
+    groupBy: ShipmentBoardGrouping!
+  ): [ShipmentBoardGroup!]!
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
   """
   The day's board brief. It is written for the organization's own day and

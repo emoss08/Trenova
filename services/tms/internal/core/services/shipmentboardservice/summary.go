@@ -63,6 +63,45 @@ func (s *Service) StageSummary(
 	return ZeroFilledStageSummary(rows), nil
 }
 
+func (s *Service) GroupSummary(
+	ctx context.Context,
+	req *services.SummarizeShipmentBoardGroupsRequest,
+) ([]*services.ShipmentBoardGroup, error) {
+	if req == nil || !req.GroupBy.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"groupBy",
+			errortypes.ErrInvalid,
+			"The board cannot be grouped that way",
+		)
+	}
+
+	scope, err := s.scope(ctx, req.Scope, false)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.repo.GroupSummary(ctx, &repositories.SummarizeShipmentBoardGroupsRequest{
+		Scope:    scope,
+		GroupBy:  req.GroupBy,
+		Timezone: req.Scope.Timezone,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*services.ShipmentBoardGroup, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, &services.ShipmentBoardGroup{
+			Key:     row.Key,
+			Label:   row.Label,
+			Count:   row.Count,
+			Revenue: row.Revenue,
+		})
+	}
+
+	return out, nil
+}
+
 func ZeroFilledStageSummary(
 	rows []*repositories.ShipmentStageSummaryRow,
 ) []*services.ShipmentStageSummary {

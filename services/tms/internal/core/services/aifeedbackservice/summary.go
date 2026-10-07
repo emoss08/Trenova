@@ -3,12 +3,13 @@ package aifeedbackservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const secondsPerDay = int64(24 * 60 * 60)
@@ -43,7 +44,7 @@ func (s *Service) AgentSummary(
 		worstLimit = services.DefaultAgentFeedbackWorstLimit
 	}
 
-	organization, err := s.organizations.GetByID(ctx, req.TenantInfo.OrgID)
+	location, err := orgzone.Location(ctx, s.organizations, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (s *Service) AgentSummary(
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             since,
-		Timezone:          timeutils.NormalizeTimezone(organization.Timezone),
+		Timezone:          location.String(),
 		Limit:             worstLimit,
 	}
 

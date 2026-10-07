@@ -6986,6 +6986,16 @@ type ShipmentBoardCapabilities struct {
 	Maps bool `json:"maps"`
 }
 
+type ShipmentBoardGroup struct {
+	// The value rows are grouped on: a YYYY-MM-DD day, a customer id or a user id.
+	// Empty for shipments with no date or no owner.
+	Key string `json:"key"`
+	// The customer's or owner's name. Empty for days, which the client formats.
+	Label   string `json:"label"`
+	Count   int    `json:"count"`
+	Revenue string `json:"revenue"`
+}
+
 type ShipmentBoardScopeInput struct {
 	Query        *string                     `json:"query,omitempty"`
 	FieldFilters []*FieldFilterInput         `json:"fieldFilters,omitempty"`

@@ -20,6 +20,19 @@ type ShipmentStageSummaryRow struct {
 	Revenue   decimal.Decimal `bun:"revenue"`
 }
 
+type ShipmentBoardGroupRow struct {
+	Key     string          `bun:"group_key"`
+	Label   string          `bun:"group_label"`
+	Count   int             `bun:"count"`
+	Revenue decimal.Decimal `bun:"revenue"`
+}
+
+type SummarizeShipmentBoardGroupsRequest struct {
+	Scope    *ShipmentBoardScope
+	GroupBy  shipment.BoardGrouping
+	Timezone string
+}
+
 type ShipmentQuickFilterTotal struct {
 	Count   int
 	Revenue decimal.Decimal
@@ -32,6 +45,10 @@ type CountShipmentQuickFiltersRequest struct {
 
 type ShipmentBoardRepository interface {
 	StageSummary(ctx context.Context, scope *ShipmentBoardScope) ([]*ShipmentStageSummaryRow, error)
+	GroupSummary(
+		ctx context.Context,
+		req *SummarizeShipmentBoardGroupsRequest,
+	) ([]*ShipmentBoardGroupRow, error)
 	QuickFilterTotals(
 		ctx context.Context,
 		req *CountShipmentQuickFiltersRequest,

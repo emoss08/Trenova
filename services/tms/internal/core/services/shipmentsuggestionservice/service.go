@@ -48,7 +48,7 @@ type Params struct {
 	Assignments     services.AssignmentService
 	Cache           repositories.ShipmentBoardCache `optional:"true"`
 	Briefs          repositories.ShipmentBriefRepository
-	Organizations   repositories.OrganizationCacheRepository
+	Organizations   repositories.OrganizationRepository
 	Logger          *zap.Logger
 }
 
@@ -65,7 +65,7 @@ type Dependencies struct {
 	Assignments     services.AssignmentService
 	Cache           repositories.ShipmentBoardCache
 	Briefs          repositories.ShipmentBriefRepository
-	Organizations   repositories.OrganizationCacheRepository
+	Organizations   repositories.OrganizationRepository
 	Logger          *zap.Logger
 	Now             func() time.Time
 }
@@ -83,7 +83,7 @@ type Service struct {
 	assignments     services.AssignmentService
 	cache           repositories.ShipmentBoardCache
 	briefs          repositories.ShipmentBriefRepository
-	organizations   repositories.OrganizationCacheRepository
+	organizations   repositories.OrganizationRepository
 	rules           []rule
 	l               *zap.Logger
 	now             func() time.Time

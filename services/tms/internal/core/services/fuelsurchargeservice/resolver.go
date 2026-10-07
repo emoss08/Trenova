@@ -5,13 +5,14 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -54,7 +55,13 @@ func (s *Service) ResolveShipmentCharge(
 
 	program = applyOverrideTerms(program, req.Override)
 
-	basisDate := s.resolveBasisDate(ctx, entity, program)
+	loc, err := orgzone.Location(ctx, s.organizations, tenantInfo)
+	if err != nil {
+		log.Warn("failed to load organization timezone", zap.Error(err))
+		return nil, nil
+	}
+
+	basisDate := s.resolveBasisDate(entity, program, loc)
 
 	if !programApplies(program, entity, basisDate) {
 		return nil, nil
@@ -194,12 +201,10 @@ func applyOverrideTerms(
 }
 
 func (s *Service) resolveBasisDate(
-	ctx context.Context,
 	entity *shipment.Shipment,
 	program *fuelsurcharge.FuelSurchargeProgram,
+	loc *time.Location,
 ) time.Time {
-	loc := s.tenantLocation(ctx, entity.OrganizationID)
-
 	var basis int64
 	switch program.DateBasis {
 	case fuelsurcharge.DateBasisPickupDate:
@@ -216,20 +221,6 @@ func (s *Service) resolveBasisDate(
 
 	t := time.Unix(basis, 0).In(loc)
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-}
-
-func (s *Service) tenantLocation(ctx context.Context, orgID pulid.ID) *time.Location {
-	org, err := s.orgCacheRepo.GetByID(ctx, orgID)
-	if err != nil || org == nil {
-		return time.UTC
-	}
-
-	loc, err := time.LoadLocation(timeutils.NormalizeTimezone(org.Timezone))
-	if err != nil {
-		return time.UTC
-	}
-
-	return loc
 }
 
 func pickupTimestamp(entity *shipment.Shipment) int64 {

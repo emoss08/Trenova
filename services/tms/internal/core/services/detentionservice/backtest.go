@@ -132,7 +132,10 @@ func (s *Service) Backtest(
 
 	req.Policy.SpecificityScore = req.Policy.ComputeSpecificity()
 	payRate := parsePayRate(req.DriverPayRate)
-	location := s.tenantLocation(ctx, tenantInfo.OrgID)
+	location, err := s.tenantLocation(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
 
 	baseline, err := s.baselineByStop(ctx, tenantInfo, req.From, req.To)
 	if err != nil {

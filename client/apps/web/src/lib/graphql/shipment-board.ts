@@ -3,6 +3,7 @@ import {
   DecideShipmentSuggestionDocument,
   NotifyShipmentDelayDocument,
   ShipmentBoardCapabilitiesDocument,
+  ShipmentBoardGroupsDocument,
   ShipmentBriefingDocument,
   ShipmentCapacityDocument,
   ShipmentCoverageSuggestionsDocument,
@@ -17,6 +18,8 @@ import {
   type DecideShipmentSuggestionInput,
   type NotifyShipmentDelayInput,
   type ShipmentBoardCapabilitiesQuery,
+  type ShipmentBoardGrouping,
+  type ShipmentBoardGroupsQuery,
   type ShipmentBoardScopeInput,
   type ShipmentBriefingQuery,
   type ShipmentCapacityQuery,
@@ -34,6 +37,7 @@ type RequestOptions = { signal?: AbortSignal };
 
 export type ShipmentBoardCapabilities = ShipmentBoardCapabilitiesQuery["shipmentBoardCapabilities"];
 export type ShipmentStageSummary = ShipmentStageSummaryQuery["shipmentStageSummary"][number];
+export type ShipmentBoardGroup = ShipmentBoardGroupsQuery["shipmentBoardGroups"][number];
 export type ShipmentQuickFilterCount =
   ShipmentQuickFilterCountsQuery["shipmentQuickFilterCounts"][number];
 export type ShipmentBriefing = ShipmentBriefingQuery["shipmentBriefing"];
@@ -71,6 +75,20 @@ export async function getShipmentStageSummaryGraphQL(
   return data.shipmentStageSummary;
 }
 
+export async function getShipmentBoardGroupsGraphQL(
+  input: ShipmentBoardScopeInput,
+  groupBy: ShipmentBoardGrouping,
+  options?: RequestOptions,
+) {
+  const data = await requestGraphQL({
+    document: ShipmentBoardGroupsDocument,
+    operationName: "ShipmentBoardGroups",
+    variables: { input, groupBy },
+    signal: options?.signal,
+  });
+  return data.shipmentBoardGroups;
+}
+
 export async function getShipmentQuickFilterCountsGraphQL(
   input: ShipmentBoardScopeInput,
   options?: RequestOptions,
@@ -94,10 +112,7 @@ export async function getShipmentBriefingGraphQL(timezone: string, options?: Req
   return data.shipmentBriefing;
 }
 
-export async function getShipmentCapacityGraphQL(
-  kind: CapacityUnitKind,
-  options?: RequestOptions,
-) {
+export async function getShipmentCapacityGraphQL(kind: CapacityUnitKind, options?: RequestOptions) {
   const data = await requestGraphQL({
     document: ShipmentCapacityDocument,
     operationName: "ShipmentCapacity",

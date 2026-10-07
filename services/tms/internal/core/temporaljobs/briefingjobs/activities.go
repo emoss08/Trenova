@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
@@ -42,7 +43,7 @@ type ActivitiesParams struct {
 	BoardRepo repositories.ShipmentBriefRepository
 	Controls  repositories.AgentControlRepository
 	Tenants   repositories.TenantSyncRepository
-	Cache     repositories.OrganizationCacheRepository
+	Orgs      repositories.OrganizationRepository
 	Plans     services.PlanService `optional:"true"`
 }
 
@@ -54,7 +55,7 @@ type Activities struct {
 	boardRepo repositories.ShipmentBriefRepository
 	controls  repositories.AgentControlRepository
 	tenants   repositories.TenantSyncRepository
-	cache     repositories.OrganizationCacheRepository
+	orgs      repositories.OrganizationRepository
 	plans     services.PlanService
 }
 
@@ -67,7 +68,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		boardRepo: p.BoardRepo,
 		controls:  p.Controls,
 		tenants:   p.Tenants,
-		cache:     p.Cache,
+		orgs:      p.Orgs,
 		plans:     p.Plans,
 	}
 }
@@ -296,14 +297,9 @@ func (a *Activities) isDue(
 		return false, nil
 	}
 
-	organization, err := a.cache.GetByID(ctx, tenantInfo.OrgID)
+	location, err := orgzone.Location(ctx, a.orgs, tenantInfo)
 	if err != nil {
 		return false, err
-	}
-
-	location, err := time.LoadLocation(timeutils.NormalizeTimezone(organization.Timezone))
-	if err != nil {
-		return false, fmt.Errorf("load timezone %q: %w", organization.Timezone, err)
 	}
 
 	return time.Unix(now, 0).In(location).Hour() == briefingHour(control), nil

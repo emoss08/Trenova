@@ -16,6 +16,15 @@ query ShipmentStageSummary($input: ShipmentBoardScopeInput!) {
   }
 }
 
+query ShipmentBoardGroups($input: ShipmentBoardScopeInput!, $groupBy: ShipmentBoardGrouping!) {
+  shipmentBoardGroups(input: $input, groupBy: $groupBy) {
+    key
+    label
+    count
+    revenue
+  }
+}
+
 query ShipmentQuickFilterCounts($input: ShipmentBoardScopeInput!) {
   shipmentQuickFilterCounts(input: $input) {
     filter

@@ -628,6 +628,38 @@ func (s *Shipment) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				},
 			},
 			{
+				Field:        ShipperStopRelationship,
+				Type:         dbtype.RelationshipTypeCustom,
+				TargetEntity: (*Stop)(nil),
+				TargetTable:  "stops",
+				Alias:        ShipperStopAlias,
+				Queryable:    true,
+				CustomJoinPath: []domaintypes.JoinStep{
+					{
+						Table:     "stops",
+						Alias:     ShipperStopAlias,
+						Condition: ShipperStopAlias + ".id = " + ShipperStopIDSQL("sp"),
+						JoinType:  dbtype.JoinTypeLeft,
+					},
+				},
+			},
+			{
+				Field:        ConsigneeStopRelationship,
+				Type:         dbtype.RelationshipTypeCustom,
+				TargetEntity: (*Stop)(nil),
+				TargetTable:  "stops",
+				Alias:        ConsigneeStopAlias,
+				Queryable:    true,
+				CustomJoinPath: []domaintypes.JoinStep{
+					{
+						Table:     "stops",
+						Alias:     ConsigneeStopAlias,
+						Condition: ConsigneeStopAlias + ".id = " + ConsigneeStopIDSQL("sp"),
+						JoinType:  dbtype.JoinTypeLeft,
+					},
+				},
+			},
+			{
 				Field:        "owner",
 				Type:         dbtype.RelationshipTypeBelongsTo,
 				TargetEntity: (*tenant.User)(nil),

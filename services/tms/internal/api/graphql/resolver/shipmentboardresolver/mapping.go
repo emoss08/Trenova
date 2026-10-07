@@ -49,6 +49,19 @@ func stageSummariesToModel(
 	return out
 }
 
+func boardGroupsToModel(rows []*services.ShipmentBoardGroup) []*gqlmodel.ShipmentBoardGroup {
+	out := make([]*gqlmodel.ShipmentBoardGroup, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, &gqlmodel.ShipmentBoardGroup{
+			Key:     row.Key,
+			Label:   row.Label,
+			Count:   row.Count,
+			Revenue: base.DecimalString(row.Revenue),
+		})
+	}
+	return out
+}
+
 func quickFilterCountsToModel(
 	rows []*services.ShipmentQuickFilterCount,
 ) []*gqlmodel.ShipmentQuickFilterCount {

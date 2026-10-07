@@ -49606,7 +49606,7 @@
     ]
   },
   "Customer": {
-    "sites": 46,
+    "sites": 47,
     "scope": [
       "go",
       "ts"
@@ -55081,11 +55081,12 @@
     ]
   },
   "Delivery date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/carrier-invoice-matching"
     ]
   },
@@ -78948,6 +78949,15 @@
       "routes/reports"
     ]
   },
+  "Former user": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Forms & dialogs": {
     "sites": 1,
     "scope": [
@@ -82479,13 +82489,14 @@
     ]
   },
   "Group by": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-monitoring",
-      "routes/reports"
+      "routes/reports",
+      "routes/shipment"
     ]
   },
   "Group control number": {
@@ -112481,6 +112492,15 @@
       "routes/tractor"
     ]
   },
+  "No delivery date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "No delivery package parts.": {
     "sites": 1,
     "scope": [
@@ -113258,6 +113278,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No grouping": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "No hire dates on record": {
@@ -114154,6 +114183,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "No owner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "No owner assigned": {
@@ -115232,6 +115270,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "No ship date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "No shipment documents available": {
@@ -128307,11 +128354,12 @@
     ]
   },
   "Owner": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/order",
       "routes/worker-checklist-template"
     ]
@@ -169923,6 +169971,15 @@
       "routes/scheduling"
     ]
   },
+  "Ship date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Shipment": {
     "sites": 20,
     "scope": [
@@ -176663,13 +176720,14 @@
     ]
   },
   "Status": {
-    "sites": 266,
+    "sites": 267,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "domain/documenttemplate",
       "packages/shared/components",
       "routes/accessorial-charge",
@@ -184092,6 +184150,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The board cannot be grouped that way": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentboardservice"
     ]
   },
   "The board, the lanes, and the carriers that run them": {
@@ -199530,12 +199597,13 @@
     ]
   },
   "Today · {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/desk"
     ]
   },
@@ -199845,11 +199913,12 @@
     ]
   },
   "Tomorrow · {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
     ]
   },
@@ -205651,6 +205720,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Unnamed customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Unnamed shift": {
@@ -219105,6 +219183,15 @@
       "routes/carrier-monitoring",
       "routes/desk",
       "routes/inbox"
+    ]
+  },
+  "Yesterday · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "You": {

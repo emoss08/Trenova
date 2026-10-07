@@ -130,7 +130,10 @@ func (s *Service) CurrentPeriod(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (ifta.Period, error) {
-	loc := s.tenantLocation(ctx, tenantInfo.OrgID)
+	loc, err := s.tenantLocation(ctx, tenantInfo)
+	if err != nil {
+		return ifta.Period{}, err
+	}
 	return ifta.PeriodOf(s.now(), loc).Previous(), nil
 }
 
@@ -147,7 +150,10 @@ func (s *Service) PeriodInfo(
 			err.Error(),
 		)
 	}
-	loc := s.tenantLocation(ctx, tenantInfo.OrgID)
+	loc, err := s.tenantLocation(ctx, tenantInfo)
+	if err != nil {
+		return PeriodInfo{}, err
+	}
 	start, end := period.Bounds(loc)
 	return PeriodInfo{
 		Period:   period,
@@ -178,13 +184,16 @@ func (s *Service) loadReturn(
 	return ret, nil
 }
 
-func (s *Service) returnLocation(ctx context.Context, ret *ifta.Return) *time.Location {
+func (s *Service) returnLocation(
+	ctx context.Context,
+	ret *ifta.Return,
+) (*time.Location, error) {
 	if ret.Timezone != "" {
 		if loc, err := time.LoadLocation(ret.Timezone); err == nil {
-			return loc
+			return loc, nil
 		}
 	}
-	return s.tenantLocation(ctx, ret.OrganizationID)
+	return s.tenantLocation(ctx, returnTenant(ret))
 }
 
 func (s *Service) tractorProfiles(
@@ -231,7 +240,10 @@ func (s *idSet) add(id pulid.ID) {
 
 func (s *Service) compute(ctx context.Context, ret *ifta.Return) (*ComputeResult, error) {
 	tenantInfo := returnTenant(ret)
-	loc := s.returnLocation(ctx, ret)
+	loc, err := s.returnLocation(ctx, ret)
+	if err != nil {
+		return nil, err
+	}
 
 	miles, err := s.repo.AccumulateMiles(ctx, &repositories.AccumulateMilesRequest{
 		TenantInfo: tenantInfo,
@@ -365,7 +377,10 @@ func (s *Service) newDraft(
 		)
 	}
 
-	loc := s.tenantLocation(ctx, tenantInfo.OrgID)
+	loc, err := s.tenantLocation(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	start, end := period.Bounds(loc)
 	return &ifta.Return{
 		OrganizationID: tenantInfo.OrgID,

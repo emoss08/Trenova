@@ -35,7 +35,7 @@
    The product is drawn in ink. The primary action is the foreground colour,
    not a hue, so colour on screen is left to mean something: a tone is a
    severity, an accent is a category, and Geist blue marks what you can follow
-   and what you have hold of — links, focus, selection.
+   and what you have hold of — links and focus.
 
    Blue sits in the blue arc, where three other things live, so that arc is
    pinned apart the way the warm one is:
@@ -171,7 +171,7 @@
   --ink-foreground: oklch(1 0 0);
 
   /* Brand ----------------------------------------------------------------
-     Geist blue, and spent sparingly: links, focus, selection, the first chart
+     Geist blue, and spent sparingly: links, focus, the first chart
      series. It marks affordance, never severity, never the primary button and
      never the active nav row, which is a neutral fill as it is on Vercel.
 
@@ -183,6 +183,11 @@
   --brand-subtle: oklch(0.966 0.016 var(--hue-brand));
   --brand-subtle-foreground: oklch(0.517 0.188 var(--hue-brand));
   --brand-border: oklch(0.914 0.042 var(--hue-brand));
+
+  /* Selected text is a solid amber (#ffab2e) in both themes, and the ink on it
+     stays dark in both, because near-white text on amber reads at under 2:1. */
+  --selection: oklch(0.805 0.161 71);
+  --selection-foreground: oklch(0.205 0 0);
 
   /* Tones ----------------------------------------------------------------
      Five rungs each, and the reason the raw palette was reached for before:
@@ -553,6 +558,9 @@
   --brand-subtle: oklch(0.255 0.055 var(--hue-brand));
   --brand-subtle-foreground: oklch(0.8 0.101 var(--hue-brand));
   --brand-border: oklch(0.36 0.1 var(--hue-brand));
+
+  --selection: oklch(0.805 0.161 71);
+  --selection-foreground: oklch(0.205 0 0);
 
   --danger: oklch(0.626 0.193 23);
   --danger-hover: oklch(0.67 0.19 23);

@@ -130,6 +130,7 @@ function lastQueryOptions() {
   return calls[calls.length - 1][3] as {
     sort: { field: string; direction: string }[];
     fieldFilters: { field: string; operator: string; value: unknown }[];
+    filterGroups: { filters: { field: string; operator: string; value: unknown }[] }[];
   };
 }
 
@@ -188,6 +189,41 @@ describe("DataTable grouping", () => {
     expect(collapsed?.getAttribute("data-collapsed")).toBe("true");
   });
 
+  it("sends a grouping's own collapse filters and tie-breakers with the person's filters", () => {
+    renderDataTable({
+      grouping: grouping({
+        collapsedKeys: [2],
+        tieBreakers: [{ field: "id", direction: "asc" }],
+        collapsedScope: (keys) => ({
+          fieldFilters: [],
+          filterGroups: [
+            {
+              filters: keys.flatMap((key) => [
+                { field: "stage", operator: "lt" as const, value: key },
+                { field: "stage", operator: "gt" as const, value: key },
+              ]),
+            },
+          ],
+        }),
+      }),
+    });
+
+    const options = lastQueryOptions();
+    expect(options.sort.slice(0, 2)).toEqual([
+      { field: "stage", direction: "asc" },
+      { field: "id", direction: "asc" },
+    ]);
+    expect(options.fieldFilters).not.toContainEqual(expect.objectContaining({ operator: "notin" }));
+    expect(options.filterGroups).toEqual([
+      {
+        filters: [
+          { field: "stage", operator: "lt", value: 2 },
+          { field: "stage", operator: "gt", value: 2 },
+        ],
+      },
+    ]);
+  });
+
   it("keeps a just-opened group's header in place while its rows load", () => {
     const { rerender } = renderDataTable({ grouping: grouping({ collapsedKeys: [2] }) });
     useDataTableQueryMock.mockImplementation(() => ({
@@ -223,6 +259,57 @@ describe("DataTable grouping", () => {
     expect(opened?.getAttribute("data-collapsed")).toBeNull();
     expect(screen.getByText("Cara")).toBeTruthy();
     useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("does not lay the old page out under a new grouping's headers while it loads", () => {
+    const { rerender } = renderDataTable({ grouping: grouping() });
+    expect(document.querySelectorAll("tr[data-group-key]")).toHaveLength(2);
+
+    useDataTableQueryMock.mockImplementation(() => ({
+      ...defaultQueryResult,
+      isPlaceholderData: true,
+    }));
+    const byName = grouping({
+      field: "name",
+      groups: [
+        { key: "Alice", label: "Alice" },
+        { key: "Bob", label: "Bob" },
+        { key: "Cara", label: "Cara" },
+      ],
+      getGroupKey: (row) => (row.stage === 1 ? "A" : "B") + row.id,
+    });
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={byName}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    expect(document.querySelectorAll("tr[data-group-key]")).toHaveLength(0);
+    expect(screen.queryByText("Alice")).toBeNull();
+
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={byName}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText("Alice")).toBeTruthy();
   });
 
   it("folds a group's rows away the moment it collapses", () => {
