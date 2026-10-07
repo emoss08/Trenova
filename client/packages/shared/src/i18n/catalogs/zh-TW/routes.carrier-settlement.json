@@ -1,5 +1,4 @@
 {
-  "Adjustments": "調整",
   "Adjustments minor": "調整（最小幣值單位）",
   "Appears as the line item on the carrier's statement — say what and when.": "會以明細項目顯示於承運業者的對帳單上 — 請說明項目與時間。",
   "Batch CSV": "批次 CSV",
@@ -24,6 +23,7 @@
   "Records the disbursement to the carrier and posts the cash journal (debit accounts payable, credit cash) plus the ledger payment entry.": "記錄支付給承運業者的款項，並過帳現金日記帳（借記應付帳款、貸記現金）及帳冊付款分錄。",
   "Remit to": "匯款至",
   "Settlement marked paid — cash journal and ledger payment recorded": "結算已標示為已付款 — 現金日記帳與帳冊付款均已記錄",
+  "Settlement recalculated from current cost events": "已依目前成本事件重新計算結算",
   "The check number or ACH trace so the payment reconciles against the bank.": "支票號碼或 ACH 追蹤碼，以便款項與銀行核對。",
   "Traced back to the accrued cost event": "可回溯至已計提的成本事件",
   "Voiding releases cost events back to the accrual pool and reverses any GL postings.": "作廢會將成本事件釋回累計池，並沖銷任何總帳分錄。",

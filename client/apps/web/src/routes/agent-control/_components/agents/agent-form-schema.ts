@@ -58,7 +58,7 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
         ctx.addIssue({
           code: "custom",
           path: ["delegateIds", index],
-          message: "This agent is already on the list",
+          message: translate("This agent is already on the list"),
         });
       }
       seen.add(id);
@@ -68,21 +68,21 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
       ctx.addIssue({
         code: "custom",
         path: ["cronExpression"],
-        message: "A schedule is required for a scheduled agent",
+        message: translate("A schedule is required for a scheduled agent"),
       });
     }
     if (values.triggerMode === "Event" && values.eventKinds.length === 0) {
       ctx.addIssue({
         code: "custom",
         path: ["eventKinds"],
-        message: "Choose at least one event that starts this agent",
+        message: translate("Choose at least one event that starts this agent"),
       });
     }
     if (values.triggerMode === "Continuous" && values.intervalSeconds < 60) {
       ctx.addIssue({
         code: "custom",
         path: ["intervalSeconds"],
-        message: "A continuous agent runs at most once a minute",
+        message: translate("A continuous agent runs at most once a minute"),
       });
     }
 

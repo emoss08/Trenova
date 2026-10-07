@@ -6,6 +6,7 @@ import type {
   ResolvedModeProfile,
   ShipmentUIPolicy,
 } from "../types/shipment";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const RULE_KEYS = {
   hazmatSegregation: "hazmat.segregation",
@@ -163,12 +164,12 @@ export function getBooleanParameter(
   return typeof value === "boolean" ? value : null;
 }
 
-const ENFORCEMENT_LABELS: Record<EnforcementLevel, string> = {
+const ENFORCEMENT_LABELS: Record<EnforcementLevel, string> = defineLabels({
   Ignore: "Not enforced",
   Warn: "Warns and records",
   RequireReview: "Requires review",
   Block: "Blocks saving",
-};
+});
 
 export function enforcementLabel(level: EnforcementLevel): string {
   return ENFORCEMENT_LABELS[level];

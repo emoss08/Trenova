@@ -3,5 +3,8 @@
   "Detailed explanation of the accessorial service provided, including any special conditions or requirements for FMCSA compliance": "所提供附加服务的详细说明，包含 FMCSA 合规所需的任何特殊条件或要求",
   "Manage and configure accessorial charges for your organization": "管理并配置您组织的附加费",
   "Standard industry or company-specific code identifying this accessorial service (e.g., LUM for lumper fee)": "标识此附加服务的业界标准或公司自定义代码（例如装卸工费为 LUM）",
+  "The fixed dollar amount charged": "收取的固定金额",
+  "The percentage applied to the linehaul rate": "应用于干线运费的百分比",
+  "The rate per unit (e.g., per hour, per mile)": "单位费率（例如每小时、每英里）",
   "Unit of measure for this charge (mile, hour, day, stop)": "此费用的计量单位（英里、小时、天、停靠点）"
 }

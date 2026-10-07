@@ -17,15 +17,16 @@ import {
   type TrainingCourseFormValues,
 } from "@trenova/shared/types/worker-training";
 import { useFormContext, useWatch } from "react-hook-form";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const CATEGORY_OPTIONS = trainingCategorySchema.options.map((value) => ({
   value,
-  label: TRAINING_CATEGORY_LABELS[value],
+  label: sourceLabels(TRAINING_CATEGORY_LABELS)[value],
 }));
 
 const DELIVERY_OPTIONS = trainingDeliverySchema.options.map((value) => ({
   value,
-  label: TRAINING_DELIVERY_LABELS[value],
+  label: sourceLabels(TRAINING_DELIVERY_LABELS)[value],
 }));
 
 type TrainingCourseFormProps = {

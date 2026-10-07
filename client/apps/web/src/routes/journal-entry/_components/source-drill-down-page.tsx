@@ -17,8 +17,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
+import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
-const SOURCE_TYPE_LABELS: Record<string, string> = {
+const SOURCE_TYPE_LABELS: Record<string, string> = defineLabels({
   CustomerPayment: "Customer Payment",
   customer_payment: "Customer Payment",
   invoice: "Invoice",
@@ -26,7 +27,7 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   manual_journal: "Manual Journal",
   journal_reversal: "Journal Reversal",
   shipment: "Shipment",
-};
+});
 
 type SourceKind = "customerPayment" | "invoice" | "manualJournal" | "journalReversal" | "shipment";
 
@@ -114,10 +115,12 @@ const POSTING_COLUMNS = [
 function humanizeSourceType(type: string): string {
   const known = SOURCE_TYPE_LABELS[type];
   if (known) return known;
-  return type
-    .replace(/_/g, " ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  return translateLabel(
+    type
+      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/\b\w/g, (char) => char.toUpperCase()),
+  );
 }
 
 type AccountNet = {

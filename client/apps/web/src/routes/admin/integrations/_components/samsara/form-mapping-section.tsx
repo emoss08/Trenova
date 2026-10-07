@@ -29,6 +29,7 @@ import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const TARGET_KIND = {
   shipmentField: "ShipmentField",
@@ -245,7 +246,9 @@ function MappingEditor({
     mutationFn: (values: MappingFormValues) =>
       saveTelematicsFormMappingGraphQL(toSaveInput(values)),
     onSuccess: async () => {
-      toast.success(initial.id ? "Form mapping updated" : "Form mapping created");
+      toast.success(
+        initial.id ? translate("Form mapping updated") : translate("Form mapping created"),
+      );
       await queryClient.invalidateQueries({
         queryKey: queries.telematics.formMappings().queryKey,
       });
@@ -422,7 +425,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
         toSaveInput({ ...toFormValues(mapping), enabled: !mapping.enabled }),
       ),
     onSuccess: async (_data, mapping) => {
-      toast.success(mapping.enabled ? "Mapping disabled" : "Mapping enabled");
+      toast.success(mapping.enabled ? translate("Mapping disabled") : translate("Mapping enabled"));
       await invalidate();
     },
     onError: (error) => {

@@ -41,6 +41,7 @@ import { ForkLineageDialog } from "./fork-lineage-dialog";
 import { ForkTemplateDialog } from "./fork-template-dialog";
 import { getColumns } from "./formula-template-columns";
 import { ImportTemplateDialog } from "./studio/import-template-dialog";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function FormulaTemplatesDataTable() {
   const t = useT();
@@ -119,9 +120,9 @@ export default function FormulaTemplatesDataTable() {
           templateIds: [id],
         }),
         {
-          loading: "Duplicating template...",
-          success: "Template duplicated successfully",
-          error: "Failed to duplicate template",
+          loading: translate("Duplicating template..."),
+          success: translate("Template duplicated successfully"),
+          error: translate("Failed to duplicate template"),
           finally: async () => {
             await invalidateFormulaTemplate(queryClient);
           },
@@ -158,15 +159,17 @@ export default function FormulaTemplatesDataTable() {
       })
       .then(() => {
         toast.success(
-          ids.length === 1 ? "Formula template archived" : "Formula templates archived",
+          ids.length === 1
+            ? translate("Formula template archived")
+            : translate("Formula templates archived"),
         );
         setPendingArchiveRows([]);
       })
       .catch(() => {
         toast.error(
           ids.length === 1
-            ? "Failed to archive formula template"
-            : "Failed to archive formula templates",
+            ? translate("Failed to archive formula template")
+            : translate("Failed to archive formula templates"),
         );
       })
       .finally(async () => {

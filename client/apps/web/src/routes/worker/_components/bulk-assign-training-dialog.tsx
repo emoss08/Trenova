@@ -30,9 +30,10 @@ import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const formSchema = z.object({
-  courseIds: z.array(z.string()).min(1, "Choose at least one course"),
+  courseIds: z.array(z.string()).min(1, { error: () => translate("Choose at least one course") }),
   dueAt: z.number().int().nullable(),
   notes: z.string().nullable(),
 });

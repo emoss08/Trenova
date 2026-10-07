@@ -16,6 +16,8 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { compareDecimalStrings, isDecimalString } from "@trenova/shared/types/decimal";
 import type { CarrierIntelProfile } from "@/lib/graphql/carrier-intelligence";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 export type CarrierIntelFindingLike = {
   code: string;
@@ -298,11 +300,13 @@ export function createOverrideFormSchema(now: number) {
       reason: z
         .string()
         .trim()
-        .min(1, "A reason is required to override a finding")
-        .max(CARRIER_INTEL_NOTE_MAX_LENGTH, "Reason cannot exceed 2000 characters"),
+        .min(1, { error: () => translate("A reason is required to override a finding") })
+        .max(CARRIER_INTEL_NOTE_MAX_LENGTH, {
+          error: () => translate("Reason cannot exceed 2000 characters"),
+        }),
       expiresAt: z
-        .number({ error: "Choose when the override expires" })
-        .int("Choose when the override expires")
+        .number({ error: () => translate("Choose when the override expires") })
+        .int({ error: () => translate("Choose when the override expires") })
         .nullable(),
     })
     .superRefine((values, ctx) => {
@@ -310,7 +314,7 @@ export function createOverrideFormSchema(now: number) {
         ctx.addIssue({
           code: "custom",
           path: ["expiresAt"],
-          message: "Choose when the override expires",
+          message: translate("Choose when the override expires"),
         });
         return;
       }
@@ -318,7 +322,7 @@ export function createOverrideFormSchema(now: number) {
         ctx.addIssue({
           code: "custom",
           path: ["expiresAt"],
-          message: "An override must expire in the future",
+          message: translate("An override must expire in the future"),
         });
         return;
       }
@@ -326,7 +330,7 @@ export function createOverrideFormSchema(now: number) {
         ctx.addIssue({
           code: "custom",
           path: ["expiresAt"],
-          message: "An override cannot last longer than 90 days",
+          message: translate("An override cannot last longer than 90 days"),
         });
       }
     });
@@ -338,8 +342,10 @@ export const revokeOverrideFormSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(1, "A reason is required to revoke an override")
-    .max(CARRIER_INTEL_NOTE_MAX_LENGTH, "Reason cannot exceed 2000 characters"),
+    .min(1, { error: () => translate("A reason is required to revoke an override") })
+    .max(CARRIER_INTEL_NOTE_MAX_LENGTH, {
+      error: () => translate("Reason cannot exceed 2000 characters"),
+    }),
 });
 
 export type RevokeOverrideFormValues = z.infer<typeof revokeOverrideFormSchema>;
@@ -348,8 +354,10 @@ export const reviewNoteFormSchema = z.object({
   note: z
     .string()
     .trim()
-    .min(1, "A note is required to mark the carrier reviewed")
-    .max(CARRIER_INTEL_NOTE_MAX_LENGTH, "Note cannot exceed 2000 characters"),
+    .min(1, { error: () => translate("A note is required to mark the carrier reviewed") })
+    .max(CARRIER_INTEL_NOTE_MAX_LENGTH, {
+      error: () => translate("Note cannot exceed 2000 characters"),
+    }),
 });
 
 export type ReviewNoteFormValues = z.infer<typeof reviewNoteFormSchema>;
@@ -357,19 +365,21 @@ export type ReviewNoteFormValues = z.infer<typeof reviewNoteFormSchema>;
 export const resolveEventFormSchema = z
   .object({
     resolution: z.enum(CARRIER_INTEL_EVENT_RESOLUTIONS, {
-      error: "Choose how the event was resolved",
+      error: () => translate("Choose how the event was resolved"),
     }),
     note: z
       .string()
       .trim()
-      .max(CARRIER_INTEL_NOTE_MAX_LENGTH, "Note cannot exceed 2000 characters"),
+      .max(CARRIER_INTEL_NOTE_MAX_LENGTH, {
+        error: () => translate("Note cannot exceed 2000 characters"),
+      }),
   })
   .superRefine((values, ctx) => {
     if (values.resolution === "FalsePositive" && values.note === "") {
       ctx.addIssue({
         code: "custom",
         path: ["note"],
-        message: "Explain why this event is a false positive",
+        message: translate("Explain why this event is a false positive"),
       });
     }
   });
@@ -518,11 +528,11 @@ export type IntelValueLabels = {
 
 export const INTEL_EMPTY_VALUE = "—";
 
-const DEFAULT_INTEL_VALUE_LABELS: IntelValueLabels = {
+const DEFAULT_INTEL_VALUE_LABELS: IntelValueLabels = defineLabels({
   yes: "Yes",
   no: "No",
   empty: INTEL_EMPTY_VALUE,
-};
+});
 
 const INTEL_MONEY_PATH = /^insurance\.(bipd|cargo|bond)(OnFile|Required)$/;
 const INTEL_ENUM_PATH = /^(safety\.(rating|riskScore)|authority\.[A-Za-z]+\.status)$/;
@@ -539,12 +549,14 @@ function unquoteIntelValue(text: string): string {
 
 function humanizeIntelEnum(value: string): string {
   const words = value.replace(/([a-z0-9])([A-Z])/g, "$1 $2").split(" ");
-  return words.map((word, index) => (index === 0 ? word : word.toLowerCase())).join(" ");
+  return translateLabel(
+    words.map((word, index) => (index === 0 ? word : word.toLowerCase())).join(" "),
+  );
 }
 
 function sentenceCase(text: string): string {
   const spaced = text.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+  return translateLabel(spaced.charAt(0).toUpperCase() + spaced.slice(1));
 }
 
 export function humanizeIntelFieldPath(fieldPath: string): string {

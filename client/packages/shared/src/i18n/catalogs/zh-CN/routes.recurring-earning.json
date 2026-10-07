@@ -1,6 +1,7 @@
 {
   "Added automatically to each qualifying settlement until its end date or cap.": "自动加入每笔符合条件的结算，直到其结束日期或达到上限为止。",
   "Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.": "将此薪酬分类的薪酬代码；若该代码已映射总账科目，则导向该科目。",
+  "Earning paused": "收入已暂停",
   "Earning stops automatically once this lifetime total is reached.": "累计达到此总额后，该薪酬会自动停止。",
   "Every settlement pays each cycle; monthly pays only on the first settlement of each month.": "“每次结算”在每个周期皆支付；“每月”则仅于每月第一笔结算支付。",
   "Future settlements include the earning again.": "后续结算将恢复纳入此薪酬。",

@@ -20,6 +20,7 @@ import { CalendarClockIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { BlackoutDatesField } from "./blackout-dates-field";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function timezoneLabel(timezone: string | undefined): string {
   if (!timezone) return "the series timezone";
@@ -136,7 +137,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="sourceShipmentId"
               label={t("Source shipment")}
               placeholder={t("Search by Pro # or BOL...")}
-              rules={{ required: "Source shipment is required" }}
+              rules={{ required: translate("Source shipment is required") }}
               description={t(
                 "Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.",
               )}

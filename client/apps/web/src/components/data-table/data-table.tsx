@@ -84,6 +84,7 @@ import { DataTableRefreshPill } from "./data-table-refresh-pill";
 import { DataTableSelectionBanner } from "./data-table-selection-banner";
 import { createSelectionColumn } from "./data-table-selection-column";
 import { DataTableToolbar } from "./data-table-toolbar";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const BULK_SELECT_MAX = 1000;
 const COLUMN_DRAG_MODIFIERS = [restrictToHorizontalAxis];
@@ -557,7 +558,8 @@ export function DataTable<TData extends Record<string, any>>({
       setRowSelection(selection);
     } catch (error) {
       toast.error(t("Selection failed"), {
-        description: error instanceof Error ? error.message : "Could not load all matching rows.",
+        description:
+          error instanceof Error ? error.message : translate("Could not load all matching rows."),
       });
     } finally {
       setIsSelectingAll(false);

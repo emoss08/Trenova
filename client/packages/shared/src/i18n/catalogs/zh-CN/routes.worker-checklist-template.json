@@ -1,6 +1,9 @@
 {
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": "以下项目的更改仅影响您保存后才开始的检查清单。已在进行中的检查清单会保留开始时的项目。",
   "Checklist template": "检查表模板",
+  "Completes itself from Dash access — granted for onboarding, revoked for offboarding.": "根据 Dash 访问权限自动完成——入职时授予，离职时撤销。",
+  "Completes itself when a worker document of this type is on file.": "当此类型的员工文件已存档时自动完成。",
+  "Completes itself when the worker holds a valid credential of this type.": "当员工持有此类型的有效证照时自动完成。",
   "Days after the checklist starts before this item counts as overdue.": "检查清单开始后经过几天，此项目才算逾期。",
   "Default for this trigger": "此触发条件的默认值",
   "Each line has an owner and a due date counted from the day the checklist starts.": "每一行都有负责人与到期日，自检查清单开始日起算。",
@@ -25,6 +28,8 @@
   "The item completes itself once a worker document of this type is on file.": "档案中一旦有此类型的司机文档，此项目即自动完成。",
   "The item completes itself once the worker holds a valid credential of this type.": "司机一旦持有此类型的有效证照，此项目即自动完成。",
   "The team responsible for getting this item done.": "负责完成此项目的团队。",
+  "Ticked off by the owner when done.": "完成后由负责人勾选。",
+  "Ticked off by the owner when issued or returned.": "发放或归还后由负责人勾选。",
   "What done looks like for this item": "此项目的完成标准",
   "Which credential completes this item": "哪一项证照可完成此项目",
   "Which document completes this item": "哪一份文档可完成此项目",

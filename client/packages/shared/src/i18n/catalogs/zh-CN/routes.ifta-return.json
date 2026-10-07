@@ -13,6 +13,7 @@
   "Between 10 and 500 characters, kept with the amendment as the record of why it exists.": "介于 10 至 500 个字符，会随修正案一并保存，作为其存在原因的记录。",
   "Between 10 and 500 characters, kept with the return as the record of why it was unlocked.": "介于 10 至 500 个字符，会随申报表一并保存，作为其解除锁定原因的记录。",
   "Between the day the return was finalized and today.": "介于申报表定案当日与今日之间。",
+  "Blocks filing": "阻止申报",
   "Choose the date the return was filed.": "请选择申报表的申报日期。",
   "Completed moves with routed distance but no jurisdiction breakdown. They are on no line, so the return is understated by these miles.": "已完成且有线路距离、但无辖区明细的运程。这些运程不在任何一行上，因此申报表会少报这些英里数。",
   "Computed {0}": "已计算 {0}",

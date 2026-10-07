@@ -10,6 +10,7 @@
   "Carrier code": "Código de transportista",
   "Carriers based in Texas": "Transportistas con sede en Texas",
   "Change provider": "Cambiar proveedor",
+  "Code cannot exceed 10 characters": "El código no puede superar los 10 caracteres",
   "Connect CarrierOk to search the carrier market, or the free FMCSA QCMobile service to look carriers up by USDOT number.": "Conecte CarrierOk para buscar en el mercado de transportistas, o el servicio gratuito FMCSA QCMobile para buscar transportistas por número USDOT.",
   "Connect a carrier data provider": "Conecte un proveedor de datos de transportistas",
   "Couldn't pull USDOT {0}": "No se pudo obtener el USDOT {0}",

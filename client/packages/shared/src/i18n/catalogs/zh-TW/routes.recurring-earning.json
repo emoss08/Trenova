@@ -1,6 +1,7 @@
 {
   "Added automatically to each qualifying settlement until its end date or cap.": "自動加入每筆符合條件的結算，直到其結束日期或達到上限為止。",
   "Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.": "將此薪酬分類的薪酬代碼；若該代碼已對應總帳科目，則導向該科目。",
+  "Earning paused": "薪酬已暫停",
   "Earning stops automatically once this lifetime total is reached.": "累計達到此總額後，該薪酬會自動停止。",
   "Every settlement pays each cycle; monthly pays only on the first settlement of each month.": "「每次結算」在每個週期皆給付；「每月」則僅於每月第一筆結算給付。",
   "Future settlements include the earning again.": "後續結算將恢復納入此薪酬。",

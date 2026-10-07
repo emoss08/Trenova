@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const csaBasicSchema = z.enum([
   "UnsafeDriving",
@@ -19,12 +20,15 @@ export type CSABasicValue = z.infer<typeof csaBasicSchema>;
 export const safetyViolationFormSchema = z.object({
   basic: csaBasicSchema,
   code: z.string().max(20).nullable(),
-  description: z.string().min(1, "Describe the violation").max(255),
+  description: z
+    .string()
+    .min(1, { error: () => translate("Describe the violation") })
+    .max(255),
   severityWeight: z
     .number()
     .int()
-    .min(1, "Severity weight is 1 to 10")
-    .max(10, "Severity weight is 1 to 10"),
+    .min(1, { error: () => translate("Severity weight is 1 to 10") })
+    .max(10, { error: () => translate("Severity weight is 1 to 10") }),
   outOfService: z.boolean(),
 });
 export type SafetyViolationFormValues = z.infer<typeof safetyViolationFormSchema>;

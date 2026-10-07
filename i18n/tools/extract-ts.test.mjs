@@ -24,6 +24,17 @@ before(async () => {
 }
 `,
   );
+  await writeFile(
+    join(dir, "labels.ts"),
+    `export const DELIVERY_LABELS = defineLabels({
+  Online: "Online",
+  OnTheJob: "On the job",
+  Units: "minutes",
+} as const satisfies Record<string, string>);
+
+export const WIRE_VALUES = { Online: "ONLINE_DELIVERY", OnTheJob: "on_the_job" };
+`,
+  );
 });
 
 after(async () => {
@@ -40,5 +51,13 @@ describe("extractTypeScript", () => {
     const rich = entries.find((e) => e.message.startsWith("You've used"));
     assert.equal(rich.kind, "t-call");
     assert.equal(rich.area, "routes/desk");
+  });
+
+  it("records every caption a label map declares, a lone lowercase word included", async () => {
+    const { entries } = await extractTypeScript(root, ["client/apps/web/src"]);
+    const labels = entries.filter((e) => e.kind === "label-map").map((e) => e.message);
+
+    assert.deepEqual(labels.sort(), ["On the job", "Online", "minutes"]);
+    assert.ok(!entries.some((e) => e.message === "ONLINE_DELIVERY" || e.message === "on_the_job"));
   });
 });

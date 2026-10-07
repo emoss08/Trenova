@@ -8,6 +8,7 @@ import { dqfSectionProgress, dqfSectionTab, type DQFSectionValue } from "@trenov
 import { cn } from "@trenova/shared/lib/utils";
 import { PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type DQFFileHeaderProps = {
   file: DQFFile;
@@ -16,12 +17,12 @@ type DQFFileHeaderProps = {
   onOpenTab: (tab: string) => void;
 };
 
-const SPINE_LABELS: Record<DQFSectionValue, string> = {
+const SPINE_LABELS: Record<DQFSectionValue, string> = defineLabels({
   Credentials: "Licences & reviews",
   Documents: "Documents",
   SafetyHistory: "Employers",
   DrugAlcohol: "Drug & alcohol",
-};
+});
 
 /**
  * The verdict, then the spine of the file: one block per section with how

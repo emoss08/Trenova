@@ -5,6 +5,7 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const equipmentClassSchema = z.enum(["Tractor", "Trailer", "Container", "Other"]);
 
@@ -24,7 +25,7 @@ export type DeckType = z.infer<typeof deckTypeSchema>;
 export const equipmentTypeSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
-  code: z.string().min(1, { error: "Code is required" }),
+  code: z.string().min(1, { error: () => translate("Code is required") }),
   description: optionalStringSchema,
   class: equipmentClassSchema,
   color: optionalStringSchema,

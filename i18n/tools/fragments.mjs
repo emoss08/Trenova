@@ -13,6 +13,18 @@
 //     toast.success(`${n} notices sent`), title={`Remove ${name}`}, { label: `Line ${i}` }.
 //     It never reaches the catalog at all. Use t("{0, plural, …}", n) / t("Remove {0}", name).
 //
+//   - a literal handed to a toast: toast.promise(p, { success: "Saved" }). The toast shows it
+//     as written. Use t("Saved") in a component, translate("Saved") in a handler.
+//
+//   - a validation message written as a literal: z.string().min(1, "Name is required"),
+//     .refine(fn, { message: "…" }). The form shows it exactly as written. Write
+//     { error: () => translate("Name is required") }, which zod reads when it validates.
+//     The same holds for a react-hook-form `rules={{ required: "…" }}` message.
+//
+//   - a module-level label map: const STATUS_LABELS = { InReview: "In review" }. Its values
+//     never reach the catalog, and translate() there would freeze the language active at
+//     import. Declare it with defineLabels({ ... }) from @trenova/shared/i18n/labels.
+//
 // Only shapes that are wrong wherever they appear are reported, so a finding is always a
 // defect: an argument that is a variable may well hold translated text, and is left alone.
 // A literal in a reported position that really is not prose for a person — a key, a code,
@@ -20,7 +32,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parse } from "@babel/parser";
-import { SOURCE_ROOTS } from "./extract-ts.mjs";
+import { LABEL_MAP_CALLEE, SOURCE_ROOTS, unwrapExpression } from "./extract-ts.mjs";
+import { TEXT_PROPS } from "./filter.mjs";
 
 const SKIP_DIR = new Set(["node_modules", "generated", "__tests__", "__snapshots__", "dist"]);
 const SKIP_FILE = /\.(test|spec|stories)\.[jt]sx?$/;
@@ -205,6 +218,194 @@ function readPosition(chain) {
   return null;
 }
 
+// A caption: starts with a capital, has lowercase letters, and is either several words or
+// one plain word, its first word made of letters ("EDI partners", "Speeding, reckless …"),
+// with a lowercase letter somewhere. "In review" and "Coaching" are captions;
+// "InReview", "ON_HOLD", "#fff", "size-4", "CON" and an SVG path are keys, codes and data.
+const CAPTION = /^\p{Lu}[\p{L}'’&.-]*[,:;]?(\s+\S+)+$|^\p{Lu}\p{Ll}+$/u;
+
+/**
+ * labelMap reports a module-level object literal of string values that reads as captions:
+ * at least two of them, and at least half of its values. When most of its keys are ones the
+ * extractor already treats as text (`label`, `title`) it is a record of text fields instead,
+ * collected as it is.
+ */
+function labelMap(init) {
+  const object = unwrapExpression(init);
+  if (object?.type !== "ObjectExpression" || object.properties.length < 2) return null;
+  const values = [];
+  let textKeys = 0;
+  for (const prop of object.properties) {
+    if (prop.type !== "ObjectProperty") return null;
+    if (TEXT_PROPS.has(keyName(prop.key))) textKeys += 1;
+    const value = unwrapExpression(prop.value);
+    if (value.type !== "StringLiteral") return null;
+    values.push(value.value);
+  }
+  // Mostly `label`/`title`/`description` keys: one record's text fields, which the
+  // extractor collects as they are. A field-label map merely has a `description` field.
+  if (textKeys * 2 >= values.length) return null;
+  const captions = values.filter((value) => CAPTION.test(value.trim()) && /\p{Ll}/u.test(value));
+  if (captions.length < 2 || captions.length * 2 < values.length) return null;
+  return captions;
+}
+
+/**
+ * wireValues says a declaration's type names its values as something other than text —
+ * `Record<Action, PTOStatus>` maps one wire value to another — so captions-shaped values
+ * ("Approved") are enum members, not labels.
+ */
+function wireValues(declarator) {
+  const annotation = declarator.id.typeAnnotation?.typeAnnotation;
+  if (annotation?.type !== "TSTypeReference") return false;
+  const name = annotation.typeName.type === "Identifier" ? annotation.typeName.name : null;
+  const params = annotation.typeParameters?.params ?? [];
+  if (name !== "Record" && name !== "Readonly" && name !== "Partial") return false;
+  const value = name === "Record" ? params[1] : null;
+  if (value === null || value === undefined) return false;
+  return value.type !== "TSStringKeyword";
+}
+
+function moduleDeclarations(program) {
+  const declarators = [];
+  for (const statement of program.body) {
+    const declaration =
+      statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
+    if (declaration?.type !== "VariableDeclaration") continue;
+    for (const declarator of declaration.declarations) {
+      if (declarator.id.type === "Identifier" && declarator.init) {
+        declarators.push({ statement, declarator });
+      }
+    }
+  }
+  return declarators;
+}
+
+/** frozenObject unwraps Object.freeze({ ... }), which freezes a map but translates nothing. */
+function frozenObject(init) {
+  const node = unwrapExpression(init);
+  if (
+    node?.type === "CallExpression" &&
+    node.callee.type === "MemberExpression" &&
+    node.callee.object.type === "Identifier" &&
+    node.callee.object.name === "Object" &&
+    node.callee.property.name === "freeze"
+  ) {
+    return node.arguments[0];
+  }
+  return node;
+}
+
+// zod checks whose first argument is a bound (min(1, …)) and whose message comes second, and
+// checks whose message is the only argument (email("…")).
+const ZOD_VALUE_FIRST = new Set([
+  "min", "max", "length", "gt", "gte", "lt", "lte", "multipleOf", "regex", "startsWith",
+  "endsWith", "includes", "refine", "size",
+]);
+const ZOD_MESSAGE_FIRST = new Set([
+  "email", "url", "uuid", "nonempty", "int", "positive", "nonnegative", "negative",
+  "nonpositive", "finite", "datetime", "date", "time", "base64", "jwt", "e164", "hostname",
+  "lowercase", "uppercase", "nonoptional", "hex",
+]);
+
+function memberChainRoot(node) {
+  let current = node;
+  while (
+    current.type === "MemberExpression" ||
+    current.type === "CallExpression" ||
+    current.type === "TSAsExpression" ||
+    current.type === "TSNonNullExpression"
+  ) {
+    current =
+      current.type === "MemberExpression"
+        ? current.object
+        : current.type === "CallExpression"
+          ? current.callee
+          : current.expression;
+  }
+  return current;
+}
+
+/**
+ * schemaMessages returns the literal messages a zod call carries: an `error` or `message`
+ * option, or a message passed in its place. Only a chain that starts at `z` or at a schema
+ * (`…Schema`, `…Shape`) is a zod call; `ctx.addIssue({ message })` is one wherever it is.
+ */
+function schemaMessages(call) {
+  if (call.callee.type !== "MemberExpression" || call.callee.computed) return [];
+  const method = call.callee.property.name;
+  const options = (arg) =>
+    arg.type !== "ObjectExpression"
+      ? []
+      : arg.properties.filter(
+          (prop) =>
+            prop.type === "ObjectProperty" &&
+            ["error", "message"].includes(keyName(prop.key)) &&
+            prop.value.type === "StringLiteral",
+        ).map((prop) => prop.value);
+  if (method === "addIssue") return call.arguments.flatMap(options);
+  const root = memberChainRoot(call.callee);
+  if (root.type !== "Identifier" || !(root.name === "z" || /(schema|Schema|Shape)$/.test(root.name))) {
+    return [];
+  }
+  const messageIndex = ZOD_VALUE_FIRST.has(method) ? 1 : ZOD_MESSAGE_FIRST.has(method) ? 0 : -1;
+  return call.arguments.flatMap((arg, index) =>
+    arg.type === "StringLiteral" ? (index === messageIndex ? [arg] : []) : options(arg),
+  );
+}
+
+/**
+ * ruleMessages returns the literal messages a react-hook-form `rules` object carries
+ * (`rules={{ required: "…" }}`, `rules: { minLength: { value: 2, message: "…" } }`).
+ */
+function ruleMessages(node) {
+  let rules = null;
+  if (node.type === "JSXAttribute" && node.name.name === "rules") {
+    rules = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
+  } else if (node.type === "ObjectProperty" && keyName(node.key) === "rules") {
+    rules = node.value;
+  }
+  if (rules?.type !== "ObjectExpression") return [];
+  return rules.properties.flatMap((prop) => {
+    if (prop.type !== "ObjectProperty") return [];
+    if (prop.value.type === "StringLiteral") return [prop.value];
+    if (prop.value.type !== "ObjectExpression") return [];
+    return prop.value.properties.filter(
+      (inner) =>
+        inner.type === "ObjectProperty" &&
+        keyName(inner.key) === "message" &&
+        inner.value.type === "StringLiteral",
+    ).map((inner) => inner.value);
+  });
+}
+
+/** toastLiterals returns the string literals a toast call shows as written. */
+function toastLiterals(call) {
+  const callee = call.callee;
+  const toast =
+    (callee.type === "Identifier" && callee.name === "toast") ||
+    (callee.type === "MemberExpression" &&
+      callee.object.type === "Identifier" &&
+      callee.object.name === "toast");
+  if (!toast) return [];
+  // `error.message || "Failed"` and `ok ? "Saved" : "Failed"` show their literals too.
+  const literals = (node) => {
+    if (node.type === "StringLiteral") return [node];
+    if (node.type === "LogicalExpression") return [...literals(node.left), ...literals(node.right)];
+    if (node.type === "ConditionalExpression") {
+      return [...literals(node.consequent), ...literals(node.alternate)];
+    }
+    if (node.type === "MemberExpression" && node.object.type === "ObjectExpression") {
+      return literals(node.object);
+    }
+    if (node.type !== "ObjectExpression") return [];
+    return node.properties
+      .filter((prop) => prop.type === "ObjectProperty")
+      .flatMap((prop) => literals(prop.value));
+  };
+  return call.arguments.flatMap(literals);
+}
+
 function ignored(node, lines) {
   const line = node.loc.start.line;
   return IGNORE.test(lines[line - 1] ?? "") || IGNORE.test(lines[line - 2] ?? "");
@@ -227,6 +428,19 @@ export async function findFragments(repoRoot, roots = SOURCE_ROOTS) {
       }
       const rel = relative(repoRoot, file);
       const lines = source.split("\n");
+      for (const { statement, declarator } of moduleDeclarations(ast.program)) {
+        const init = unwrapExpression(declarator.init);
+        if (init.type === "CallExpression" && init.callee.name === LABEL_MAP_CALLEE) continue;
+        if (wireValues(declarator)) continue;
+        const captions = labelMap(frozenObject(init));
+        if (captions === null || ignored(statement, lines) || ignored(declarator, lines)) continue;
+        findings.push({
+          file: rel,
+          line: declarator.loc.start.line,
+          kind: "untranslated-label-map",
+          detail: `${declarator.id.name} (${captions.slice(0, 2).map((c) => JSON.stringify(c)).join(", ")}…)`,
+        });
+      }
       visitWithParents(ast.program, [], (node, chain) => {
         if (node.type !== "TemplateLiteral") return;
         const text = prose(node);
@@ -239,6 +453,20 @@ export async function findFragments(repoRoot, roots = SOURCE_ROOTS) {
         if (node.type === "JSXElement" && splitSentence(node)) {
           findings.push({ file: rel, line: node.loc.start.line, kind: "split-sentence", detail: elementName(node) });
           return;
+        }
+        for (const literal of ruleMessages(node)) {
+          if (ignored(literal, lines)) continue;
+          findings.push({ file: rel, line: literal.loc.start.line, kind: "untranslated-schema-message", detail: literal.value });
+        }
+        if (node.type === "CallExpression") {
+          for (const literal of toastLiterals(node)) {
+            if (!hasWords(literal.value) || ignored(literal, lines)) continue;
+            findings.push({ file: rel, line: literal.loc.start.line, kind: "untranslated-toast", detail: literal.value });
+          }
+          for (const literal of schemaMessages(node)) {
+            if (ignored(literal, lines)) continue;
+            findings.push({ file: rel, line: literal.loc.start.line, kind: "untranslated-schema-message", detail: literal.value });
+          }
         }
         const name = translatorName(node);
         if (!TRANSLATORS.has(name)) return;
@@ -259,6 +487,12 @@ export function formatFinding({ file, line, kind, detail }) {
   switch (kind) {
     case "split-sentence":
       return `${file}:${line}  a sentence is split by <${detail}>; write it whole with rt()`;
+    case "untranslated-toast":
+      return `${file}:${line}  ${JSON.stringify(detail)} is shown by a toast as written; use t() or translate()`;
+    case "untranslated-schema-message":
+      return `${file}:${line}  ${JSON.stringify(detail)} is a validation message the form shows as written; use { error: () => translate(…) }`;
+    case "untranslated-label-map":
+      return `${file}:${line}  ${detail} is a label map the catalog never sees; declare it with defineLabels()`;
     case "untranslated-template":
       return `${file}:${line}  ${detail} builds English outside the catalog; use t()/translate() with placeholders`;
     default:

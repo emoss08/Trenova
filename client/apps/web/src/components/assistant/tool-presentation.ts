@@ -11,6 +11,7 @@ import {
   recordLabel,
   type DisplayType,
 } from "./readable-values";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export { humanizeKey, recordLabel };
 
@@ -27,7 +28,7 @@ export function isWebTool(name: string): boolean {
  * humanized name, so a new tool is never shown as an identifier, just less
  * warmly than a known one.
  */
-const TOOL_TITLES: Record<string, string> = {
+const TOOL_TITLES: Record<string, string> = defineLabels({
   recall_memory: "Recall what was recorded",
   get_my_home_layout: "Read your home page",
   list_home_widgets: "List home page widgets",
@@ -159,7 +160,7 @@ const TOOL_TITLES: Record<string, string> = {
   pause_accounting_sync: "Pause accounting sync",
   resume_accounting_sync: "Resume accounting sync",
   request_accounting_backfill: "Request accounting backfill",
-};
+});
 
 /** Argument keys that name the record a tool was about, most specific first. */
 const SUBJECT_KEYS = [

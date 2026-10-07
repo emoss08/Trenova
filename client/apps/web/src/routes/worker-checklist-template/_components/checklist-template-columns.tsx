@@ -13,14 +13,15 @@ import {
   type ChecklistKind,
   type ChecklistTrigger,
 } from "@trenova/shared/types/worker-checklist";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const KIND_CHOICES = checklistKindSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_KIND_LABELS[value],
+  label: sourceLabels(CHECKLIST_KIND_LABELS)[value],
 }));
 const TRIGGER_CHOICES = checklistTriggerSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_TRIGGER_LABELS[value],
+  label: sourceLabels(CHECKLIST_TRIGGER_LABELS)[value],
 }));
 
 export function getColumns(t: TranslateFn): ColumnDef<WorkerChecklistTemplateRow>[] {

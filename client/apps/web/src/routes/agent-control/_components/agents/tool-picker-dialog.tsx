@@ -310,7 +310,7 @@ function ToolRow({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {t(TIER_LABEL[option])}
+                {TIER_LABEL[option]}
               </button>
             );
           })}

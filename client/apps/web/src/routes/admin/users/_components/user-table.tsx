@@ -15,6 +15,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./user-columns";
 import { UserPanel } from "./user-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function UserTable() {
   const t = useT();
@@ -34,9 +35,9 @@ export default function UserTable() {
           status: status as User["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["user-list"],

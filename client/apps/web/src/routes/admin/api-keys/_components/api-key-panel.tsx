@@ -48,9 +48,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { APIKeyForm } from "./api-key-form";
 import { APIKeyPermissionsEditor } from "./api-key-permissions-editor";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const apiKeyPanelSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name is required") }),
   description: z.string(),
   expiresAtInput: z.string(),
   permissions: z
@@ -61,7 +65,7 @@ const apiKeyPanelSchema = z.object({
         dataScope: z.string(),
       }),
     )
-    .min(1, "At least one permission is required"),
+    .min(1, { error: () => translate("At least one permission is required") }),
 });
 
 export type ApiKeyPanelFormValues = z.infer<typeof apiKeyPanelSchema>;

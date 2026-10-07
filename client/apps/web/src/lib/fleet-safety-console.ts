@@ -1,5 +1,6 @@
 import { csaBasicTone, type CSATone } from "@trenova/shared/lib/csa";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 // Structural shapes rather than the generated types, so the same maths serves
 // the page and a fixture written from the schema by hand.
@@ -44,12 +45,12 @@ export const SAFETY_RATING_ORDER = ["Excellent", "Good", "Watch", "AtRisk"] as c
 
 export type RatingSegment = { rating: string; label: string; workers: number };
 
-const RATING_LABELS: Record<string, string> = {
+const RATING_LABELS: Record<string, string> = defineLabels({
   Excellent: "Excellent",
   Good: "Good",
   Watch: "Watch",
   AtRisk: "At risk",
-};
+});
 
 /**
  * The roster split by rating, always all four in scale order. A rating with

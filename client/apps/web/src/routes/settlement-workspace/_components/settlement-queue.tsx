@@ -321,7 +321,7 @@ function BulkActionBar({
       }
       onComplete();
     },
-    onError: (error: Error) => toast.error(error.message || "Bulk action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Bulk action failed")),
   });
 
   const actionButton = (

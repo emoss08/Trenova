@@ -283,9 +283,26 @@ it. See [product-guide.md](product-guide.md).
   translation is text like any other. A template that genuinely is not interface text (a
   value stored on a record, a log line for engineers) carries a
   `// i18n-ignore: <reason>` comment on or above it.
-- `task i18n-check` fails on all three shapes (`i18n/tools/fragments.mjs`; the template rule
-  looks at toasts, JSX children and attributes, and object keys such as `label`, `title`
-  and `description`), and
+- A module-level label map (`STATUS_LABELS = { InReview: "In review" }`) never reaches a
+  catalog, and a module-level `translate()` would freeze the language active at import.
+  Declare it with `defineLabels({ … })` from `@trenova/shared/i18n/labels`: the extractor
+  collects its values and every read (`STATUS_LABELS[status]`, `Object.entries(…)`) returns
+  the current language, so a render needs no `t()`. Data built once at import — a select's
+  options array — takes `sourceLabels(MAP)[key]`, the English source, and its renderer
+  translates it, the same contract as a `label: "…"` literal. A record of copy with other
+  fields beside the text (an icon, a flag) nests a `defineLabels` for its text, or uses
+  getters that call `translate()`. A caption computed at runtime from a key or an enum value
+  (`humanizeKey`) goes through `translateLabel()`, which reads the catalog and leaves an
+  unknown caption in English.
+- Validation messages are read when the form validates, not when the module loads: a zod
+  check takes `{ error: () => translate("Name is required") }`, `ctx.addIssue` takes
+  `message: translate(…)`, and a react-hook-form rule takes `required: translate(…)`. A toast
+  is shown exactly as written, so every literal it receives — including `error.message ||
+  "…"` fallbacks and `toast.promise` options — goes through `t()` or `translate()`.
+- `task i18n-check` fails on all of these shapes (`i18n/tools/fragments.mjs`: split
+  sentences, English arguments, templates where a person reads them — toasts, JSX children
+  and attributes, `label`/`title`/`description` keys — module-level label maps, literal
+  validation messages and literal toast text), and
   `i18n.mjs merge` refuses a translation whose placeholders, plurals or tags differ from
   its source (`i18n/tools/validate.mjs`).
 - `i18n/locales.json` is the only place a language is added; `task i18n` regenerates the

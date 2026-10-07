@@ -1,6 +1,7 @@
 {
   "Added automatically to each qualifying settlement until its end date or cap.": "Se agrega automáticamente a cada liquidación que califique hasta su fecha de fin o su tope.",
   "Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.": "Código de percepción que clasifica el pago y lo dirige a la cuenta del libro mayor del código cuando hay una asignada.",
+  "Earning paused": "Percepción en pausa",
   "Earning stops automatically once this lifetime total is reached.": "La percepción se detiene automáticamente cuando se alcanza este total acumulado.",
   "Every settlement pays each cycle; monthly pays only on the first settlement of each month.": "Cada liquidación paga en cada ciclo; la opción mensual paga solo en la primera liquidación de cada mes.",
   "Future settlements include the earning again.": "Las liquidaciones futuras vuelven a incluir la percepción.",

@@ -29,6 +29,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function rateConfirmationQueryKey(moveId: string) {
   return ["move-rate-confirmations", moveId] as const;
@@ -257,7 +258,7 @@ function MarkConfirmedDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to confirm"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to confirm")),
   });
 
   return (
@@ -316,7 +317,7 @@ function VoidRateConfirmationDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to void"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to void")),
   });
 
   return (

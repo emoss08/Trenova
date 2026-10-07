@@ -1,3 +1,4 @@
+import { formatOrdinal } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type { OpenStatement } from "@trenova/shared/types/statement";
@@ -9,6 +10,7 @@ import type {
   InvoiceSplitKey,
 } from "@trenova/shared/types/customer";
 import { weekdayName } from "@/lib/cron";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type BillingSchedule = {
   invoiceDelivery: InvoiceDelivery;
@@ -20,7 +22,7 @@ export type BillingSchedule = {
   maxShipmentsPerInvoice: number;
 };
 
-const CADENCE_LABELS: Record<BillingCycle, string> = {
+const CADENCE_LABELS: Record<BillingCycle, string> = defineLabels({
   Immediate: "Per shipment",
   Daily: "Daily",
   Weekly: "Weekly",
@@ -28,14 +30,14 @@ const CADENCE_LABELS: Record<BillingCycle, string> = {
   SemiMonthly: "Semi-monthly",
   Monthly: "Monthly",
   Quarterly: "Quarterly",
-};
+});
 
 /** The cadence as a chip label — two words at most, for a card or a badge. */
 export function cadenceLabel(cycle: BillingCycle): string {
   return CADENCE_LABELS[cycle] ?? "Per shipment";
 }
 
-const SPLIT_LABELS: Record<InvoiceSplitKey, string> = {
+const SPLIT_LABELS: Record<InvoiceSplitKey, string> = defineLabels({
   Customer: "One invoice",
   CustomerAndPONumber: "One per PO",
   CustomerAndShipmentBOL: "One per BOL",
@@ -43,20 +45,11 @@ const SPLIT_LABELS: Record<InvoiceSplitKey, string> = {
   CustomerAndOrigin: "One per pickup",
   CustomerAndDestination: "One per delivery",
   CustomerAndServiceType: "One per service type",
-};
+});
 
 /** How the period splits, short enough to sit next to a number. */
 export function splitLabel(splitBy: InvoiceSplitKey): string {
   return SPLIT_LABELS[splitBy] ?? SPLIT_LABELS.Customer;
-}
-
-const ORDINAL_SUFFIXES = ["th", "st", "nd", "rd"];
-
-function ordinal(day: number): string {
-  const remainder = day % 100;
-  const suffix =
-    ORDINAL_SUFFIXES[(remainder - 20) % 10] ?? ORDINAL_SUFFIXES[remainder] ?? ORDINAL_SUFFIXES[0];
-  return `${day}${suffix}`;
 }
 
 function anchorWeekday(anchorDay: number): string {
@@ -74,33 +67,44 @@ function cadenceClause(cycle: BillingCycle, anchorDay: number): string {
     case "BiWeekly":
       return translate("Bills every other week on {0}.", anchorWeekday(anchorDay));
     case "SemiMonthly":
-      return translate("Bills twice a month, on the 1st and the {0}.", ordinal(anchorDay));
+      return translate("Bills twice a month, on the 1st and the {0}.", formatOrdinal(anchorDay));
     case "Monthly":
-      return translate("Bills every month on the {0}.", ordinal(anchorDay));
+      return translate("Bills every month on the {0}.", formatOrdinal(anchorDay));
     case "Quarterly":
-      return translate("Bills every quarter on the {0}.", ordinal(anchorDay));
+      return translate("Bills every quarter on the {0}.", formatOrdinal(anchorDay));
     default:
       return translate("Bills as soon as a shipment is approved.");
   }
 }
 
-const SPLIT_CLAUSES: Record<InvoiceSplitKey, string> = {
-  Customer: "are combined into a single invoice",
-  CustomerAndPONumber: "are combined into one invoice per PO number",
-  CustomerAndShipmentBOL: "are combined into one invoice per BOL",
+const SPLIT_SENTENCES: Record<InvoiceSplitKey, string> = defineLabels({
+  Customer:
+    "All of this customer's delivered shipments in the period are combined into a single invoice.",
+  CustomerAndPONumber:
+    "All of this customer's delivered shipments in the period are combined into one invoice per PO number.",
+  CustomerAndShipmentBOL:
+    "All of this customer's delivered shipments in the period are combined into one invoice per BOL.",
   CustomerAndOrder:
-    "are combined into one invoice per order (a shipment booked without an order is invoiced on its own)",
-  CustomerAndOrigin: "are combined into one invoice per pickup location",
-  CustomerAndDestination: "are combined into one invoice per delivery location",
-  CustomerAndServiceType: "are combined into one invoice per service type",
-};
+    "All of this customer's delivered shipments in the period are combined into one invoice per order (a shipment booked without an order is invoiced on its own).",
+  CustomerAndOrigin:
+    "All of this customer's delivered shipments in the period are combined into one invoice per pickup location.",
+  CustomerAndDestination:
+    "All of this customer's delivered shipments in the period are combined into one invoice per delivery location.",
+  CustomerAndServiceType:
+    "All of this customer's delivered shipments in the period are combined into one invoice per service type.",
+});
 
-const SECTION_CLAUSES: Record<InvoiceSectionKey, string> = {
-  Shipment: "grouped by shipment",
-  PONumber: "grouped by PO number",
-  Origin: "grouped by pickup location",
-  Destination: "grouped by delivery location",
-};
+const SECTION_SENTENCES: Record<InvoiceSectionKey, string> = defineLabels({
+  Shipment: "Lines are grouped by shipment.",
+  PONumber: "Lines are grouped by PO number.",
+  Origin: "Lines are grouped by pickup location.",
+  Destination: "Lines are grouped by delivery location.",
+});
+
+const DETAIL_SENTENCES: Record<InvoiceDetail, string> = defineLabels({
+  Summary: "Each invoice shows one line per shipment.",
+  Detailed: "Each invoice itemises every shipment's charges.",
+});
 
 /**
  * Renders a billing schedule as the sentence an operator would say out loud.
@@ -111,25 +115,23 @@ const SECTION_CLAUSES: Record<InvoiceSectionKey, string> = {
  */
 export function describeBillingSchedule(schedule: BillingSchedule): string {
   if (schedule.invoiceDelivery === "PerShipment") {
-    return "Bills each shipment on its own invoice as soon as it is approved in the billing queue.";
+    return translate(
+      "Bills each shipment on its own invoice as soon as it is approved in the billing queue.",
+    );
   }
 
   if (schedule.invoiceDelivery === "PerOrder") {
-    return "Bills each order on one invoice covering every billable leg, as soon as the order is approved.";
+    return translate(
+      "Bills each order on one invoice covering every billable leg, as soon as the order is approved.",
+    );
   }
 
-  const parts = [cadenceClause(schedule.billingCycle, schedule.billingCycleAnchorDay)];
-
-  const detail =
-    schedule.invoiceDetail === "Summary"
-      ? "one line per shipment"
-      : "each shipment's charges itemised";
-
-  parts.push(
-    `All of this customer's delivered shipments in the period ` +
-      `${SPLIT_CLAUSES[schedule.splitBy]}, with lines ` +
-      `${SECTION_CLAUSES[schedule.sectionBy]} and ${detail}.`,
-  );
+  const parts = [
+    cadenceClause(schedule.billingCycle, schedule.billingCycleAnchorDay),
+    SPLIT_SENTENCES[schedule.splitBy],
+    SECTION_SENTENCES[schedule.sectionBy],
+    DETAIL_SENTENCES[schedule.invoiceDetail],
+  ];
 
   if (schedule.maxShipmentsPerInvoice > 0) {
     parts.push(

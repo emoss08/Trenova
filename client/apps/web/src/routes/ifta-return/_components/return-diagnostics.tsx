@@ -34,6 +34,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { useRichT } from "@trenova/shared/i18n/rich";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const DISTANCE_CONTROLS_PATH = "/admin/distance-controls";
 
@@ -43,11 +44,11 @@ const TONE_BADGE: Record<IftaProblemTone, BadgeVariant> = {
   info: "neutral",
 };
 
-const TONE_LABEL: Record<IftaProblemTone, string> = {
+const TONE_LABEL: Record<IftaProblemTone, string> = defineLabels({
   danger: "Blocks filing",
   warn: "Check",
   info: "Note",
-};
+});
 
 function ProblemDetail({ jurisdictionCode, fuelType, amount }: IftaReturnView["problems"][number]) {
   const parts: string[] = [];

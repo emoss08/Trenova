@@ -77,6 +77,8 @@
   "Marked ready to invoice": "Marcado como Listo para facturar",
   "Missing billing requirements": "Faltan requisitos de facturación",
   "Missing documents:": "Documentos faltantes:",
+  "Must be at least 1": "Debe ser al menos 1",
+  "Must be positive": "Debe ser positivo",
   "No accessorial charges for this payer": "No hay cargos accesorios para este pagador",
   "No approved, uninvoiced shipment for {0} was delivered in {1}. Approving one in the Shipments view puts it here straight away.": "Ningún envío aprobado y sin facturar de {0} se entregó en {1}. Al aprobar uno en la vista de Envíos, aparece aquí de inmediato.",
   "No documents yet": "Todavía no hay documentos",

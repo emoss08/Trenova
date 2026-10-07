@@ -4,6 +4,7 @@ import {
   timestampSchema,
   versionSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 // Mirrors versionutils.Parse: MAJOR.MINOR.PATCH, an optional leading "v", no
 // leading zeros and no pre-release suffix. The column holds 20 characters.
@@ -34,9 +35,9 @@ export const documentControlSchema = z.object({
   captureMinAgentVersion: z
     .string()
     .trim()
-    .max(20, { error: "Use a version like 1.4.0" })
+    .max(20, { error: () => translate("Use a version like 1.4.0") })
     .refine((value) => value === "" || CAPTURE_AGENT_VERSION.test(value), {
-      error: "Use a version like 1.4.0",
+      error: () => translate("Use a version like 1.4.0"),
     })
     .optional(),
   captureAllowAutoUpdate: z.boolean(),

@@ -31,6 +31,7 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { useOrderInvalidation } from "./use-order-invalidation";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type AddChargeDialogProps = {
   open: boolean;
@@ -125,16 +126,19 @@ export function AddChargeDialog({
     },
     onSuccess: () => {
       invalidateOrders();
-      toast.success(isEditing ? "Charge updated" : "Charge added");
+      toast.success(isEditing ? translate("Charge updated") : translate("Charge added"));
       onOpenChange(false);
     },
     onError: (error) =>
-      toast.error(isEditing ? "Failed to update charge" : "Failed to add charge", {
-        description: graphQLErrorMessage(
-          error,
-          isEditing ? "The charge could not be updated." : "The charge could not be added.",
-        ),
-      }),
+      toast.error(
+        isEditing ? translate("Failed to update charge") : translate("Failed to add charge"),
+        {
+          description: graphQLErrorMessage(
+            error,
+            isEditing ? "The charge could not be updated." : "The charge could not be added.",
+          ),
+        },
+      ),
   });
 
   const handleSubmit = form.handleSubmit((values) => mutate(values));

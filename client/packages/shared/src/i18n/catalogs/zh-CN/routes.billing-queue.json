@@ -77,6 +77,8 @@
   "Marked ready to invoice": "已标记为可开具发票",
   "Missing billing requirements": "未满足计费条件",
   "Missing documents:": "缺少的文档：",
+  "Must be at least 1": "至少为 1",
+  "Must be positive": "必须为正数",
   "No accessorial charges for this payer": "此付款方没有附加费",
   "No approved, uninvoiced shipment for {0} was delivered in {1}. Approving one in the Shipments view puts it here straight away.": "{1} 内没有为 {0} 交付的已批准且未开票的运单。在“运单”视图中批准一个运单后，它会立即显示在此处。",
   "No documents yet": "尚无文档",

@@ -86,7 +86,9 @@ type ModeCopy = {
 
 const MODE_COPY: Record<PTOReasonDialogMode, ModeCopy> = {
   reject: {
-    title: "Reject PTO",
+    get title() {
+      return translate("Reject PTO");
+    },
     description: (count) =>
       count === 1
         ? translate("Reject this PTO request and let the worker know why.")
@@ -94,13 +96,21 @@ const MODE_COPY: Record<PTOReasonDialogMode, ModeCopy> = {
             "Reject {0, plural, one {# PTO request} other {# PTO requests}} and let the workers know why.",
             count,
           ),
-    confirm: "Confirm Rejection",
-    loading: "Rejecting PTO...",
+    get confirm() {
+      return translate("Confirm Rejection");
+    },
+    get loading() {
+      return translate("Rejecting PTO...");
+    },
     presets: REJECTION_PRESETS,
-    reasonDescription: "The worker sees this reason in Dash and by SMS.",
+    get reasonDescription() {
+      return translate("The worker sees this reason in Dash and by SMS.");
+    },
   },
   cancel: {
-    title: "Cancel PTO",
+    get title() {
+      return translate("Cancel PTO");
+    },
     description: (count) =>
       count === 1
         ? translate(
@@ -110,10 +120,16 @@ const MODE_COPY: Record<PTOReasonDialogMode, ModeCopy> = {
             "Withdraw {0, plural, one {# PTO request} other {# PTO requests}}. Approved time off is released back to the schedule.",
             count,
           ),
-    confirm: "Confirm Cancellation",
-    loading: "Cancelling PTO...",
+    get confirm() {
+      return translate("Confirm Cancellation");
+    },
+    get loading() {
+      return translate("Cancelling PTO...");
+    },
     presets: CANCELLATION_PRESETS,
-    reasonDescription: "Optional. The worker sees this reason in Dash and by SMS.",
+    get reasonDescription() {
+      return translate("Optional. The worker sees this reason in Dash and by SMS.");
+    },
   },
 };
 
@@ -246,7 +262,7 @@ export function PTOReasonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t(copy.title)}</DialogTitle>
+          <DialogTitle>{copy.title}</DialogTitle>
           <DialogDescription>
             {copy.description(ptoIds.length)}
             {skipped > 0
@@ -271,7 +287,7 @@ export function PTOReasonDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. No coverage for those dates")}
-                  description={t(copy.reasonDescription)}
+                  description={copy.reasonDescription}
                   presets={copy.presets}
                   maxLength={255}
                 />
@@ -286,9 +302,9 @@ export function PTOReasonDialog({
                 onClick={() => void handleSubmit(onSubmit)()}
                 variant="destructive"
                 isLoading={isSubmitting}
-                loadingText={t(copy.loading)}
+                loadingText={copy.loading}
               >
-                {t(copy.confirm)}
+                {copy.confirm}
               </Button>
             </DialogFooter>
           </Form>

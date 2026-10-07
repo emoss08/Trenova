@@ -11,6 +11,8 @@
   "Inactive codes stay on historical records but disappear from new-entry dropdowns.": "已停用的代码会保留在历史记录上，但不再出现于新增项目的下拉菜单中。",
   "Optional internal note explaining when and how the code should be used.": "选填的内部备注，说明此代码的使用时机与方式。",
   "Optional note about when this code applies": "关于此代码适用时机的选填备注",
+  "Pay code activated — it appears in dropdowns again": "薪酬代码已启用——将重新出现在下拉列表中",
+  "Pay code deactivated — it stays on historical records only": "薪酬代码已停用——仅保留在历史记录中",
   "Prefills the amount when creating recurring earnings or deductions with this code.": "以此代码创建周期性薪酬或扣款时，会预先填入此金额。",
   "Reimbursement": "报销款",
   "Select GL account": "选择总账科目",

@@ -50,14 +50,15 @@ import { useLivePreview } from "./use-live-preview";
 import { useLiveScenarios } from "./use-live-scenarios";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const REFERENCE_SEARCH_ID = "formula-reference-search";
 
-const TAB_LABELS = {
+const TAB_LABELS = defineLabels({
   preview: "Live Preview",
   scenarios: "Scenarios",
   reference: "Reference",
-} as const;
+} as const);
 
 type FormulaStudioProps = {
   mode: "create" | "edit";

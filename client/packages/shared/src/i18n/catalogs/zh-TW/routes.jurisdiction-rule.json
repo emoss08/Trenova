@@ -1,4 +1,5 @@
 {
+  "A limit changed, so this rule is unverified again and needs re-checking.": "限制已變更，因此此規則恢復為未驗證，需要重新檢查。",
   "A load exceeding any of these needs a permit in this state": "超過其中任一數值的貨載，在此州須申請許可",
   "Above these a load needs superload review rather than an ordinary permit. Leave blank if unknown.": "超過這些數值時，貨載須經超重超限審查，而非一般許可。不確定時請留空。",
   "At least 10 characters. The next person reading this row follows your note.": "至少 10 個字元。下一位閱讀此列的人會依您的備註行事。",
@@ -10,6 +11,7 @@
   "How long a permit takes to obtain and how long it lasts": "許可的取得所需時間與有效期限",
   "Inactive and draft rules are not used by the permit engine.": "許可引擎不會使用已停用與草稿狀態的規則。",
   "Jurisdiction rule": "管轄區規則",
+  "Jurisdiction rule updated successfully": "已成功更新轄區規則",
   "Leave blank if unknown": "不確定時請留空",
   "Legal limits": "法定限制",
   "Loading jurisdiction rule...": "正在載入管轄區規則...",

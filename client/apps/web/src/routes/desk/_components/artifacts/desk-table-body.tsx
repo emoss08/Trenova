@@ -27,6 +27,7 @@ import {
   useBillingSummaries,
   useOpenBillingItem,
 } from "./desk-billing-table";
+import { translateLabel } from "@trenova/shared/i18n/labels";
 
 /** A table the workspace draws: columns, rows by key, and where each row opens. */
 type GridRow = { key: string; values: Record<string, unknown>; path: string; recordId?: string };
@@ -336,7 +337,7 @@ export function DeskReportBars({ artifact, bars }: { artifact: AssistantArtifact
 /** A dataset's key as a reader names it: "shipment_stops" as "Shipment stops". */
 function humanizeDataset(dataset: string): string {
   const words = dataset.replace(/[_.-]+/gu, " ").trim();
-  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "";
+  return words ? translateLabel(words.charAt(0).toUpperCase() + words.slice(1)) : "";
 }
 
 type Sort = { key: string; direction: 1 | -1 };

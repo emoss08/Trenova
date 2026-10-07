@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { nullableStringSchema } from "./helpers";
 import { createLimitOffsetResponse } from "./server";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const INVOICE_DETAIL_TABS = [
   "overview",
@@ -78,12 +79,15 @@ export type ShareInvoiceResult = z.infer<typeof shareInvoiceResultSchema>;
 export const shareInvoiceFormSchema = z.object({
   userIds: z
     .array(z.string().min(1))
-    .min(1, "Choose at least one teammate to share with")
-    .max(
-      MAX_INVOICE_SHARE_RECIPIENTS,
-      "An invoice can be shared with at most 25 teammates at a time",
-    ),
-  note: z.string().max(MAX_INVOICE_SHARE_NOTE_LENGTH, "Note must be 1000 characters or fewer"),
+    .min(1, { error: () => translate("Choose at least one teammate to share with") })
+    .max(MAX_INVOICE_SHARE_RECIPIENTS, {
+      error: () => translate("An invoice can be shared with at most 25 teammates at a time"),
+    }),
+  note: z
+    .string()
+    .max(MAX_INVOICE_SHARE_NOTE_LENGTH, {
+      error: () => translate("Note must be 1000 characters or fewer"),
+    }),
 });
 export type ShareInvoiceFormValues = z.infer<typeof shareInvoiceFormSchema>;
 

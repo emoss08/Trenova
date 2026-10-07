@@ -46,12 +46,13 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { useReviewInvalidation } from "./use-review-invalidation";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const YEAR = 365 * 86_400;
 
 const GOAL_STATUS_OPTIONS = reviewGoalStatusSchema.options.map((value) => ({
   value,
-  label: REVIEW_GOAL_STATUS_LABELS[value],
+  label: sourceLabels(REVIEW_GOAL_STATUS_LABELS)[value],
 }));
 
 export type ReviewEditorDialogProps = {

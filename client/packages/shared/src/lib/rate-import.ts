@@ -5,6 +5,7 @@ import type {
   RateImportChangeKind,
   RateImportSummary,
 } from "../types/rate";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Reading a staged rate import.
@@ -19,13 +20,13 @@ export function canCommit(batch: RateImportBatch | undefined): boolean {
   return batch?.status === "Parsed";
 }
 
-const KIND_LABEL: Record<RateImportChangeKind, string> = {
+const KIND_LABEL: Record<RateImportChangeKind, string> = defineLabels({
   Removed: "Stops pricing",
   Added: "New lane",
   Changed: "Rate changes",
   Duplicate: "Listed twice",
   Unchanged: "No change",
-};
+});
 
 export function changeKindLabel(kind: RateImportChangeKind): string {
   return KIND_LABEL[kind] ?? kind;

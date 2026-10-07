@@ -13,6 +13,7 @@ import { equipmentTableGraphQLConfigs, type TrailerRow } from "@/lib/graphql/equ
 import { LocateTrailerDialog } from "./locate-trailer-dialog";
 import { getColumns } from "./trailer-columns";
 import { TrailerPanel } from "./trailer-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function Table() {
   const t = useT();
@@ -30,9 +31,9 @@ export default function Table() {
           status: status as Trailer["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["trailer-list"],

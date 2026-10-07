@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const PLATFORM_MODES = [
   "self_hosted",
@@ -15,7 +16,7 @@ const platformModeSchema = z.enum(PLATFORM_MODES).catch("self_hosted");
 const limitValueSchema = z.union([z.number(), z.string()]).transform((value, ctx) => {
   const parsed = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(parsed)) {
-    ctx.addIssue({ code: "custom", message: "Limit must be a number" });
+    ctx.addIssue({ code: "custom", message: translate("Limit must be a number") });
     return z.NEVER;
   }
   return parsed;

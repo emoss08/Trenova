@@ -20,6 +20,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { useController, type Control, type FieldPath, type FieldValues } from "react-hook-form";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type CadenceTab = CronFrequency | "custom";
 
@@ -151,7 +152,7 @@ export function CronCadenceField<T extends FieldValues>({
   const { field } = useController({
     control,
     name,
-    rules: { required: "A schedule is required" },
+    rules: { required: translate("A schedule is required") },
   });
 
   const [parts, setParts] = useState<CronParts>(() => parseCron(field.value) ?? DEFAULT_CRON_PARTS);
@@ -252,7 +253,7 @@ export function CronCadenceField<T extends FieldValues>({
           name={name}
           placeholder="0 8 * * 1"
           description={t("Five fields: minute, hour, day-of-month, month, day-of-week.")}
-          rules={{ required: "A schedule is required" }}
+          rules={{ required: translate("A schedule is required") }}
         />
       )}
     </div>

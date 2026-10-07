@@ -1,6 +1,9 @@
 {
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": "Los cambios en los elementos siguientes solo afectan a las listas de comprobación iniciadas después de guardar. Las que ya están en curso conservan los elementos con los que se iniciaron.",
   "Checklist template": "Plantilla de lista de verificación",
+  "Completes itself from Dash access — granted for onboarding, revoked for offboarding.": "Se completa solo a partir del acceso a Dash — se concede en la incorporación y se revoca en la baja.",
+  "Completes itself when a worker document of this type is on file.": "Se completa solo cuando hay en archivo un documento del trabajador de este tipo.",
+  "Completes itself when the worker holds a valid credential of this type.": "Se completa solo cuando el trabajador tiene una credencial válida de este tipo.",
   "Days after the checklist starts before this item counts as overdue.": "Días desde el inicio de la lista de comprobación antes de que este elemento se considere atrasado.",
   "Default for this trigger": "Predeterminado para este activador",
   "Each line has an owner and a due date counted from the day the checklist starts.": "Cada línea tiene un responsable y una fecha de vencimiento contada desde el día en que se inicia la lista de comprobación.",
@@ -25,6 +28,8 @@
   "The item completes itself once a worker document of this type is on file.": "El elemento se completa solo cuando consta un documento del trabajador de este tipo.",
   "The item completes itself once the worker holds a valid credential of this type.": "El elemento se completa solo cuando el trabajador tiene una credencial válida de este tipo.",
   "The team responsible for getting this item done.": "El equipo responsable de completar este elemento.",
+  "Ticked off by the owner when done.": "El responsable lo marca como hecho al terminar.",
+  "Ticked off by the owner when issued or returned.": "El responsable lo marca como hecho al entregarlo o devolverlo.",
   "What done looks like for this item": "Qué significa completado para este elemento",
   "Which credential completes this item": "Qué credencial completa este elemento",
   "Which document completes this item": "Qué documento completa este elemento",

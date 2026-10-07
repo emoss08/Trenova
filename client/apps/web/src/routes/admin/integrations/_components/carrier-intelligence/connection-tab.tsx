@@ -27,11 +27,12 @@ import {
   CARRIER_INTEL_ROLE_KEY,
   type CarrierIntelVendor,
 } from "./carrier-intelligence-vendors";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const roleOptionLabels: Record<string, string> = {
+const roleOptionLabels: Record<string, string> = defineLabels({
   primary: "Primary provider",
   fallback: "Fallback only",
-};
+});
 
 export type CarrierIntelProviderRole = "primary" | "fallback" | "unused";
 
@@ -108,12 +109,12 @@ export function CarrierIntelConnectionTab({
     canManage && Boolean(response?.enabled) && role !== "primary" && !wantsFallback;
 
   const renderOptionLabel = (field: ConfigFieldSpec, option: string) =>
-    field.key === CARRIER_INTEL_ROLE_KEY ? t(roleOptionLabels[option] ?? option) : option;
+    field.key === CARRIER_INTEL_ROLE_KEY ? (roleOptionLabels[option] ?? option) : option;
 
   return (
     <div className="space-y-4">
       {vendor.prerequisite ? (
-        <SpecIntegrationPrerequisite>{t(vendor.prerequisite)}</SpecIntegrationPrerequisite>
+        <SpecIntegrationPrerequisite>{vendor.prerequisite}</SpecIntegrationPrerequisite>
       ) : null}
       {canRead ? (
         <ProviderStatusCard
@@ -212,7 +213,9 @@ function ProviderStatusCard({
           ) : role === "fallback" ? (
             <Badge variant="info">{t("Fallback provider")}</Badge>
           ) : (
-            <Badge variant="neutral" appearance="outline">{t("Not in use")}</Badge>
+            <Badge variant="neutral" appearance="outline">
+              {t("Not in use")}
+            </Badge>
           )}
           {isActivePrimary && provider && !provider.configured ? (
             <Badge variant="warning">{t("Needs setup")}</Badge>
@@ -240,8 +243,8 @@ function ProviderStatusCard({
         <div className="space-y-2">
           <BadgeList
             label={t("Capabilities")}
-            values={provider.capabilities.map((capability) =>
-              t(capabilityLabels[capability] ?? capability),
+            values={provider.capabilities.map(
+              (capability) => capabilityLabels[capability] ?? capability,
             )}
             emptyText={t("No capabilities reported")}
           />

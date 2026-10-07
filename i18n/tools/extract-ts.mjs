@@ -21,6 +21,27 @@ const SKIP_FILE = /\.(test|spec|stories)\.[jt]sx?$/;
 
 const TRANSLATE_CALLEES = new Set(["t", "translate", "rt", "translateRich"]);
 
+export const LABEL_MAP_CALLEE = "defineLabels";
+
+// Keys beyond TEXT_PROPS whose literal values are headings: a column header, the group a
+// navigation entry is listed under.
+const CAPTION_KEYS = new Set(["header", "group"]);
+
+/** unwrapExpression strips `as`, `satisfies` and `!`, which change a value's type, not its text. */
+export function unwrapExpression(node) {
+  let current = node;
+  while (
+    current &&
+    (current.type === "TSAsExpression" ||
+      current.type === "TSSatisfiesExpression" ||
+      current.type === "TSTypeAssertion" ||
+      current.type === "TSNonNullExpression")
+  ) {
+    current = current.expression;
+  }
+  return current;
+}
+
 const PARSER_PLUGINS = ["typescript", "jsx", "decorators-legacy", "explicitResourceManagement"];
 
 async function* walkFiles(dir) {
@@ -118,9 +139,9 @@ export async function extractTypeScript(repoRoot, roots = SOURCE_ROOTS) {
       // JSXText nodes already folded into a whole-element message.
       const consumed = new Set();
 
-      const record = (value, node, kind, prop = null) => {
+      const record = (value, node, kind, prop = null, positional = false) => {
         const line = node.loc ? node.loc.start.line : 0;
-        const reason = reject(value, { prop });
+        const reason = reject(value, { prop, positional });
         if (reason !== null) {
           rejected.push({ value, file: relPath, line, kind, prop, reason });
           return;
@@ -175,13 +196,28 @@ export async function extractTypeScript(repoRoot, roots = SOURCE_ROOTS) {
             // English text stays in the data as the key, and the component that renders it
             // translates at render.
             if (node.key.type !== "Identifier" || node.value.type !== "StringLiteral") return;
-            if (!TEXT_PROPS.has(node.key.name) && node.key.name !== "header") return;
+            // `group` names the section a navigation entry is listed under, read as its heading.
+            if (!TEXT_PROPS.has(node.key.name) && !CAPTION_KEYS.has(node.key.name)) return;
             record(node.value.value, node.value, "object-label", node.key.name);
             return;
           }
 
           case "CallExpression": {
             const callee = node.callee;
+
+            // defineLabels({ OnTheJob: "On the job" }): every value is a caption by
+            // construction, so a lone lowercase word ("minutes") is kept like any other.
+            if (callee.type === "Identifier" && callee.name === LABEL_MAP_CALLEE) {
+              const map = unwrapExpression(node.arguments[0]);
+              if (map?.type !== "ObjectExpression") return;
+              for (const prop of map.properties) {
+                const value = prop.type === "ObjectProperty" ? unwrapExpression(prop.value) : null;
+                if (value?.type === "StringLiteral") {
+                  record(value.value, value, "label-map", null, true);
+                }
+              }
+              return;
+            }
 
             // toast.success("Saved") / toast.error("...", { description: "..." })
             if (

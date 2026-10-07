@@ -15,6 +15,7 @@ import {
   presetDisplayName,
   presetHint,
 } from "./preset-options";
+import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
 
 type PresetPickerProps = {
   control: Control<ProviderFormValues>;
@@ -23,10 +24,10 @@ type PresetPickerProps = {
   onSelect: (preset: AIProviderPreset | null) => void;
 };
 
-const GROUP_LABEL: Record<string, string> = {
+const GROUP_LABEL: Record<string, string> = defineLabels({
   hosted: "Hosted endpoints",
   selfHosted: "Run it yourself",
-};
+});
 
 /**
  * One field rather than a wall of tiles. Picking a deployment fills in the
@@ -61,7 +62,7 @@ export function PresetPicker({ control, presets, isLoading = false, onSelect }: 
     return [
       custom,
       ...groupPresets(presets).map((group) => ({
-        label: GROUP_LABEL[group.key] ?? "",
+        label: sourceLabels(GROUP_LABEL)[group.key] ?? "",
         options: group.presets.map((preset) => ({
           value: preset.key,
           label: presetDisplayName(preset),

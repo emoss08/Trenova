@@ -42,18 +42,19 @@ import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useFormState, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const KIND_OPTIONS = safetyEventKindSchema.options.map((value) => ({
   value,
-  label: SAFETY_EVENT_KIND_LABELS[value],
+  label: sourceLabels(SAFETY_EVENT_KIND_LABELS)[value],
 }));
 const SEVERITY_OPTIONS = safetySeveritySchema.options.map((value) => ({
   value,
-  label: SAFETY_SEVERITY_LABELS[value],
+  label: sourceLabels(SAFETY_SEVERITY_LABELS)[value],
 }));
 const RESULT_OPTIONS = inspectionResultSchema.options.map((value) => ({
   value,
-  label: INSPECTION_RESULT_LABELS[value],
+  label: sourceLabels(INSPECTION_RESULT_LABELS)[value],
 }));
 const LEVEL_OPTIONS = [1, 2, 3, 4, 5, 6].map((level) => ({
   value: String(level),

@@ -123,7 +123,9 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
       completeWorkerChecklistItem({ id: item.id, version: item.version }),
     onSuccess: (checklist) => {
       toast.success(
-        checklist.status === "Completed" ? "Checklist complete" : "Item completed",
+        checklist.status === "Completed"
+          ? translate("Checklist complete")
+          : translate("Item completed"),
         checklist.status === "Completed"
           ? { description: t("Every required item is settled.") }
           : undefined,

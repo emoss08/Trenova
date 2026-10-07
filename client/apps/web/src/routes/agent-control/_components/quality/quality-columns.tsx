@@ -514,7 +514,7 @@ export function getWorstRatedColumns(t: TranslateFn): ColumnDef<AgentWorstRatedR
     {
       accessorKey: "targetType",
       header: t("Answer type"),
-      cell: ({ row }) => t(TARGET_TYPE_LABEL[row.original.targetType]),
+      cell: ({ row }) => TARGET_TYPE_LABEL[row.original.targetType],
       size: 170,
       meta: {
         label: t("Answer type"),

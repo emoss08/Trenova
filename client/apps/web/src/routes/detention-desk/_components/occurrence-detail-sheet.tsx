@@ -53,6 +53,7 @@ import { z } from "zod";
 import { CalculationReceipt } from "./calculation-receipt";
 import { useInvalidateDetention, useSendDetentionNotice } from "./use-detention-actions";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const METER_TRANSITION = { type: "spring", stiffness: 160, damping: 28, mass: 0.7 } as const;
 
@@ -61,12 +62,12 @@ const WEAK_SCORE = 65;
 
 const waiveFormSchema = z.object({
   reason: waiverReasonSchema,
-  note: z.string().min(1, { error: "Explain why this charge is being forgiven" }),
+  note: z.string().min(1, { error: () => translate("Explain why this charge is being forgiven") }),
 });
 type WaiveFormValues = z.infer<typeof waiveFormSchema>;
 
 const disputeFormSchema = z.object({
-  note: z.string().min(1, { error: "Record what the customer is disputing" }),
+  note: z.string().min(1, { error: () => translate("Record what the customer is disputing") }),
 });
 type DisputeFormValues = z.infer<typeof disputeFormSchema>;
 

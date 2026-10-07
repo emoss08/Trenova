@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const OnboardingStatus = z.enum(["pending", "completed"]);
 export type OnboardingStatus = z.infer<typeof OnboardingStatus>;
@@ -52,36 +53,36 @@ export const onboardingFormSchema = z.object({
     name: z
       .string()
       .trim()
-      .min(1, { error: "Enter your company name" })
-      .max(100, { error: "Company name must be 100 characters or fewer" }),
-    timezone: z.string().min(1, { error: "Select a timezone" }),
+      .min(1, { error: () => translate("Enter your company name") })
+      .max(100, { error: () => translate("Company name must be 100 characters or fewer") }),
+    timezone: z.string().min(1, { error: () => translate("Select a timezone") }),
     addressLine1: z
       .string()
       .trim()
-      .min(1, { error: "Enter a street address" })
-      .max(150, { error: "Address must be 150 characters or fewer" }),
+      .min(1, { error: () => translate("Enter a street address") })
+      .max(150, { error: () => translate("Address must be 150 characters or fewer") }),
     city: z
       .string()
       .trim()
-      .min(1, { error: "Enter a city" })
-      .max(100, { error: "City must be 100 characters or fewer" }),
-    stateId: z.string().min(1, { error: "Select a state" }),
+      .min(1, { error: () => translate("Enter a city") })
+      .max(100, { error: () => translate("City must be 100 characters or fewer") }),
+    stateId: z.string().min(1, { error: () => translate("Select a state") }),
     postalCode: z
       .string()
       .trim()
-      .regex(/^\d{5}(-\d{4})?$/, { error: "Enter a 5-digit ZIP code" }),
+      .regex(/^\d{5}(-\d{4})?$/, { error: () => translate("Enter a 5-digit ZIP code") }),
     scacCode: z
       .string()
       .trim()
       .transform((value) => value.toUpperCase())
       .refine((value) => value === "" || SCAC_PATTERN.test(value), {
-        error: "A SCAC is 2 to 4 letters",
+        error: () => translate("A SCAC is 2 to 4 letters"),
       }),
     dotNumber: z
       .string()
       .trim()
       .refine((value) => value === "" || DOT_PATTERN.test(value), {
-        error: "A DOT number is up to 8 digits",
+        error: () => translate("A DOT number is up to 8 digits"),
       }),
   }),
   operationType: OperationType,

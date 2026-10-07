@@ -46,7 +46,7 @@ export function EvalCasesTable() {
   const move = useApiMutation<unknown, StatusMove>({
     mutationFn: ({ id, status }) => setAgentEvalCaseStatus(id, status),
     onSuccess: async (_data, { status }) => {
-      toast.success(t(CASE_STATUS_MOVED[status]));
+      toast.success(CASE_STATUS_MOVED[status]);
       await queryClient.invalidateQueries({ queryKey: [AGENT_EVAL_CASE_LIST_KEY] });
     },
     resourceName: t("Evaluation case"),

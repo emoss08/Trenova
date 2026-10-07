@@ -61,7 +61,6 @@
   "Whether the schedule books freight on its own or waits for a dispatcher": "排程是自行建立貨載，或等待調度員操作",
   "day has": "天有",
   "days have": "天有",
-  "in {0}": "於 {0}",
   "{0, plural, one {Adds # day} other {Adds # days}}": "{0, plural, other {增加 # 天}}",
   "{0} blocked": "{0} 項受阻",
   "{0} {1} already passed and no longer affect the schedule.": "{0} {1} 已過去，不再影響排程。",

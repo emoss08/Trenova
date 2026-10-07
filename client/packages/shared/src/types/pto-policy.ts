@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { ptoTypeSchema } from "./worker";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const ptoPolicyStatusSchema = z.enum(["Active", "Inactive", "Draft"]);
 export type PTOPolicyStatus = z.infer<typeof ptoPolicyStatusSchema>;
@@ -51,7 +52,10 @@ const optionalDecimalString = (message: string) =>
 
 export const ptoAccrualTierFormSchema = z
   .object({
-    minMonths: z.number().int().min(1, { message: "Tiers start after at least one month" }),
+    minMonths: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("Tiers start after at least one month") }),
     accrualAmountDays: decimalString("Enter days with up to two decimals"),
     maxBalanceDays: optionalDecimalString("Enter days with up to two decimals"),
   })
@@ -81,7 +85,10 @@ export const ptoPolicyRuleFormSchema = z
     accrualAmountDays: decimalString("Enter days with up to two decimals"),
     maxBalanceDays: optionalDecimalString("Enter days with up to two decimals"),
     carryoverCapDays: optionalDecimalString("Enter days with up to two decimals"),
-    carryoverExpiryDays: z.number().int().min(0, { message: "Cannot be negative" }),
+    carryoverExpiryDays: z
+      .number()
+      .int()
+      .min(0, { error: () => translate("Cannot be negative") }),
     tiers: z.array(ptoAccrualTierFormSchema),
     onTermination: ptoTerminationActionSchema,
   })
@@ -138,19 +145,32 @@ export type PTOPolicyRuleFormValues = z.infer<typeof ptoPolicyRuleFormSchema>;
 
 export const ptoPolicyFormSchema = z
   .object({
-    name: z.string().trim().min(1, { message: "Name is required" }).max(100),
-    code: z.string().trim().min(1, { message: "Code is required" }).max(50),
+    name: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Name is required") })
+      .max(100),
+    code: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Code is required") })
+      .max(50),
     description: z.string().trim().max(1000).nullable(),
     status: ptoPolicyStatusSchema,
     isDefault: z.boolean(),
     yearBasis: ptoYearBasisSchema,
     countWeekends: z.boolean(),
-    waitingPeriodDays: z.number().int().min(0, { message: "Cannot be negative" }),
+    waitingPeriodDays: z
+      .number()
+      .int()
+      .min(0, { error: () => translate("Cannot be negative") }),
     requiresApproval: z.boolean(),
     enforceBalance: z.boolean(),
     allowNegative: z.boolean(),
     negativeFloorDays: optionalDecimalString("Enter days with up to two decimals"),
-    rules: z.array(ptoPolicyRuleFormSchema).min(1, { message: "Add at least one PTO type" }),
+    rules: z
+      .array(ptoPolicyRuleFormSchema)
+      .min(1, { error: () => translate("Add at least one PTO type") }),
   })
   .superRefine((policy, ctx) => {
     const floor = policy.negativeFloorDays === null ? 0 : Number(policy.negativeFloorDays);
@@ -191,8 +211,11 @@ export const ptoPolicyFormSchema = z
 export type PTOPolicyFormValues = z.infer<typeof ptoPolicyFormSchema>;
 
 export const assignPtoPolicyFormSchema = z.object({
-  ptoPolicyId: z.string().min(1, { message: "Policy is required" }),
-  effectiveFrom: z.number().int().positive({ message: "Effective date is required" }),
+  ptoPolicyId: z.string().min(1, { error: () => translate("Policy is required") }),
+  effectiveFrom: z
+    .number()
+    .int()
+    .positive({ error: () => translate("Effective date is required") }),
   note: z.string().trim().max(255).nullable(),
   openingBalances: z.array(
     z.object({
@@ -200,7 +223,7 @@ export const assignPtoPolicyFormSchema = z.object({
       days: z
         .string()
         .trim()
-        .regex(/^\d+(\.\d{1,2})?$/, { message: "Enter days" }),
+        .regex(/^\d+(\.\d{1,2})?$/, { error: () => translate("Enter days") }),
     }),
   ),
 });
@@ -212,36 +235,39 @@ export const adjustPtoBalanceFormSchema = z.object({
   amountDays: z
     .string()
     .trim()
-    .regex(DECIMAL_PATTERN, { message: "Enter days with up to two decimals" })
-    .refine((value) => Number(value) !== 0, { message: "Amount cannot be zero" }),
-  effectiveAt: z.number().int().positive({ message: "Effective date is required" }),
+    .regex(DECIMAL_PATTERN, { error: () => translate("Enter days with up to two decimals") })
+    .refine((value) => Number(value) !== 0, { error: () => translate("Amount cannot be zero") }),
+  effectiveAt: z
+    .number()
+    .int()
+    .positive({ error: () => translate("Effective date is required") }),
   note: z
     .string()
     .trim()
-    .min(3, { message: "Explain the adjustment" })
-    .max(255, { message: "Note must be 255 characters or fewer" }),
+    .min(3, { error: () => translate("Explain the adjustment") })
+    .max(255, { error: () => translate("Note must be 255 characters or fewer") }),
 });
 
 export type AdjustPTOBalanceFormValues = z.infer<typeof adjustPtoBalanceFormSchema>;
 
-export const PTO_ACCRUAL_METHOD_LABELS: Record<PTOAccrualMethod, string> = {
+export const PTO_ACCRUAL_METHOD_LABELS: Record<PTOAccrualMethod, string> = defineLabels({
   None: "No accrual",
   FixedAnnualGrant: "Annual grant",
   Monthly: "Monthly",
   PerPayPeriod: "Per pay period",
-};
+});
 
-export const PTO_TERMINATION_ACTION_LABELS: Record<PTOTerminationAction, string> = {
+export const PTO_TERMINATION_ACTION_LABELS: Record<PTOTerminationAction, string> = defineLabels({
   Forfeit: "Forfeit balance",
   PayOut: "Pay out balance",
-};
+});
 
-export const PTO_YEAR_BASIS_LABELS: Record<PTOYearBasis, string> = {
+export const PTO_YEAR_BASIS_LABELS: Record<PTOYearBasis, string> = defineLabels({
   CalendarYear: "Calendar year",
   HireAnniversary: "Hire anniversary",
-};
+});
 
-export const PTO_LEDGER_ENTRY_LABELS: Record<PTOLedgerEntryType, string> = {
+export const PTO_LEDGER_ENTRY_LABELS: Record<PTOLedgerEntryType, string> = defineLabels({
   OpeningBalance: "Opening balance",
   Accrual: "Accrual",
   Usage: "Time off taken",
@@ -251,4 +277,4 @@ export const PTO_LEDGER_ENTRY_LABELS: Record<PTOLedgerEntryType, string> = {
   Expiry: "Expiry",
   Payout: "Paid out",
   Forfeiture: "Forfeited",
-};
+});

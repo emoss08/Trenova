@@ -66,6 +66,7 @@ import {
   type CrossFilterState,
 } from "./cross-filter";
 import { TileFilterPopover, useTileFilterFields } from "./tile-filter-popover";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const EMPTY_VALUES: Record<string, unknown> = {};
 
@@ -345,7 +346,9 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
       });
       downloadBlob(blob, fileName);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The dashboard could not be exported");
+      toast.error(
+        error instanceof Error ? error.message : translate("The dashboard could not be exported"),
+      );
     } finally {
       setExporting(false);
     }

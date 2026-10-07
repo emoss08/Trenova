@@ -335,7 +335,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not build the file");
+      toast.error(error instanceof Error ? error.message : translate("Could not build the file"));
     } finally {
       setDownloading(false);
     }

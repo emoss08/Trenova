@@ -6,7 +6,10 @@
   "Batch failures": "批次失敗",
   "Charge detail": "費用明細",
   "Context": "情境",
+  "Credit & Rebill": "沖銷並重新開單",
+  "Credit Only": "僅沖銷",
   "Financial impact": "財務影響",
+  "Full Reversal": "全額沖銷",
   "Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.": "請自清單中選擇一筆調整，以了解其需要核准的原因與變更內容，並進行核准或拒絕。",
   "Policy-controlled": "由政策控管",
   "Policy: {0}": "政策：{0}",
@@ -17,5 +20,6 @@
   "The approval queue could not be read. Check your connection and reload the page.": "無法讀取審核佇列。請檢查網路連線並重新載入頁面。",
   "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": "無法讀取此調整。它可能已由其他人處理；請重新整理佇列查看仍在等待的項目。",
   "Unapplied credit": "未沖抵貸項",
-  "Why is this adjustment being rejected?": "為何拒絕這筆調整？"
+  "Why is this adjustment being rejected?": "為何拒絕這筆調整？",
+  "Write-Off": "沖銷"
 }

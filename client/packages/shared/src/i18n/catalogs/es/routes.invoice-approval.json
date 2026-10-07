@@ -6,7 +6,10 @@
   "Batch failures": "Fallos del lote",
   "Charge detail": "Detalle del cargo",
   "Context": "Contexto",
+  "Credit & Rebill": "Abono y refacturación",
+  "Credit Only": "Solo abono",
   "Financial impact": "Impacto financiero",
+  "Full Reversal": "Reversión total",
   "Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.": "Elija un ajuste de la lista para ver por qué requiere aprobación, qué modifica, y aprobarlo o rechazarlo.",
   "Policy-controlled": "Controlado por política",
   "Policy: {0}": "Política: {0}",
@@ -17,5 +20,6 @@
   "The approval queue could not be read. Check your connection and reload the page.": "No se pudo leer la cola de aprobaciones. Revise su conexión y vuelva a cargar la página.",
   "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": "No se pudo leer este ajuste. Es posible que otra persona ya lo haya resuelto; actualice la cola para ver lo que sigue pendiente.",
   "Unapplied credit": "Crédito no aplicado",
-  "Why is this adjustment being rejected?": "¿Por qué se rechaza este ajuste?"
+  "Why is this adjustment being rejected?": "¿Por qué se rechaza este ajuste?",
+  "Write-Off": "Cancelación de deuda"
 }

@@ -55,6 +55,7 @@ import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const emptyOrganizationDefaults: OrganizationSettings = {
   id: "",
@@ -262,7 +263,9 @@ function LogoForm({
       } catch (error) {
         toast.error(t("Unsupported logo file"), {
           description:
-            error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
+            error instanceof Error
+              ? error.message
+              : translate("Please choose a JPG, PNG, or WEBP file."),
         });
       }
     },

@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { driverTypeSchema, workerLeaveTypeSchema, workerTypeSchema } from "./worker";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const employmentEventKindSchema = z.enum([
   "Hired",
@@ -17,7 +18,7 @@ export const employmentEventKindSchema = z.enum([
 ]);
 export type EmploymentEventKind = z.infer<typeof employmentEventKindSchema>;
 
-export const EMPLOYMENT_EVENT_LABELS: Record<EmploymentEventKind, string> = {
+export const EMPLOYMENT_EVENT_LABELS: Record<EmploymentEventKind, string> = defineLabels({
   Hired: "Hired",
   ProbationEnded: "Probation ended",
   Promoted: "Promoted",
@@ -29,7 +30,7 @@ export const EMPLOYMENT_EVENT_LABELS: Record<EmploymentEventKind, string> = {
   Terminated: "Terminated",
   Rehired: "Rehired",
   RateChanged: "Rate changed",
-};
+});
 
 /**
  * employmentEventLabel names an event kind in the reader's language. The label map above
@@ -71,7 +72,7 @@ export const EMPLOYMENT_EVENT_REQUIRES_REASON: ReadonlySet<EmploymentEventKind> 
 ]);
 
 /** Human labels for the stable keys carried in fromValues / toValues. */
-export const EMPLOYMENT_VALUE_LABELS: Record<string, string> = {
+export const EMPLOYMENT_VALUE_LABELS: Record<string, string> = defineLabels({
   hireDate: "Hire date",
   terminationDate: "Termination date",
   status: "Status",
@@ -85,7 +86,7 @@ export const EMPLOYMENT_VALUE_LABELS: Record<string, string> = {
   rateUnit: "Unit",
   leaveType: "Leave type",
   canBeAssigned: "Dispatchable",
-};
+});
 
 /** Keys whose value is an id and should not be shown when a labelled twin exists. */
 export const EMPLOYMENT_VALUE_HIDDEN_KEYS: ReadonlySet<string> = new Set([
@@ -107,7 +108,10 @@ const optionalTrimmed = (max: number, message: string) =>
 export const employmentEventFormSchema = z
   .object({
     kind: employmentEventKindSchema,
-    effectiveAt: z.number().int().positive({ message: "Choose the effective date" }),
+    effectiveAt: z
+      .number()
+      .int()
+      .positive({ error: () => translate("Choose the effective date") }),
     reason: optionalTrimmed(255, "Reason cannot exceed 255 characters"),
     notes: optionalTrimmed(4000, "Notes cannot exceed 4000 characters"),
     fleetCodeId: z.string().nullable().optional(),
@@ -161,13 +165,16 @@ export const employmentEventFormSchema = z
 export type EmploymentEventFormValues = z.infer<typeof employmentEventFormSchema>;
 
 export const employmentEventAmendSchema = z.object({
-  effectiveAt: z.number().int().positive({ message: "Choose the effective date" }),
+  effectiveAt: z
+    .number()
+    .int()
+    .positive({ error: () => translate("Choose the effective date") }),
   reason: optionalTrimmed(255, "Reason cannot exceed 255 characters"),
   notes: optionalTrimmed(4000, "Notes cannot exceed 4000 characters"),
   amendmentNote: z
     .string()
     .trim()
-    .min(1, { message: "Say why the event is being amended" })
-    .max(255, { message: "Amendment note cannot exceed 255 characters" }),
+    .min(1, { error: () => translate("Say why the event is being amended") })
+    .max(255, { error: () => translate("Amendment note cannot exceed 255 characters") }),
 });
 export type EmploymentEventAmendValues = z.infer<typeof employmentEventAmendSchema>;

@@ -34,6 +34,7 @@ import {
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const TIER_OPTIONS = COVERAGE_TIER_ORDER.map((value) => ({
   value,
@@ -95,10 +96,10 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
         notes: values.notes ?? undefined,
       }),
     onSuccess: (_, values) => {
-      toast.success(values.waive ? "Declination recorded" : "Enrolled", {
+      toast.success(values.waive ? translate("Declination recorded") : translate("Enrolled"), {
         description: values.waive
-          ? "No deduction is created — a waiver takes nothing."
-          : "A settlement deduction now collects their contribution.",
+          ? translate("No deduction is created — a waiver takes nothing.")
+          : translate("A settlement deduction now collects their contribution."),
       });
       void queryClient.invalidateQueries({ queryKey: [BENEFIT_ENROLLMENTS_KEY, workerId] });
       void queryClient.invalidateQueries({ queryKey: [TOTAL_COMPENSATION_KEY, workerId] });

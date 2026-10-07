@@ -20,6 +20,7 @@
   "Write off advance": "Cancelar el anticipo",
   "Write off remaining balance": "Cancelar el saldo restante",
   "Write off {0, plural, one {# advance} other {# advances}}": "Cancelar {0, plural, one {# anticipo} other {# anticipos}}",
+  "Write-off failed": "La cancelación de deuda falló",
   "Write-off reason: {0}": "Motivo de la cancelación: {0}",
   "e.g. Driver terminated — balance uncollectible": "p. ej., Conductor dado de baja: saldo incobrable"
 }

@@ -4,6 +4,7 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const hazardousClassSchema = z.enum([
   "HazardClass1",
@@ -39,7 +40,7 @@ export const hazardousMaterialSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
   code: optionalStringSchema,
-  name: z.string().min(1, { error: "Name is required" }),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
   description: optionalStringSchema,
   class: hazardousClassSchema,
   packingGroup: packingGroupSchema.optional(),

@@ -40,6 +40,7 @@
   "The GL date for this application. It must fall within an open fiscal period.": "此沖抵的總帳日期。必須落在開放的財務期間內。",
   "The GL date. It must fall within an open fiscal period.": "總帳日期。必須落在開放的財務期間內。",
   "The applied total exceeds the payment amount.": "沖抵總額超過付款金額。",
+  "The applied total exceeds the unapplied cash on this payment.": "沖抵總額超過此筆付款的未沖抵款項。",
   "The cash receipt and invoice applications were backed out.": "已回沖此筆收款與發票沖抵記錄。",
   "The date the funds were received.": "收到款項的日期。",
   "This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.": "此操作會回沖 {0} 的款項、重新開啟已沖抵的發票，並過帳一筆沖銷分錄。此動作無法復原。",

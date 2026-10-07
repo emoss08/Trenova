@@ -8,6 +8,7 @@ import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function payProfileStatusInput(row: PayProfileRow, status: "Active" | "Inactive") {
   return {
@@ -55,8 +56,10 @@ function StatusCell({ row }: { row: PayProfileRow }) {
         await queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
         toast.success(
           status === "Active"
-            ? "Pay profile activated"
-            : "Pay profile deactivated — existing assignments keep paying until reassigned",
+            ? translate("Pay profile activated")
+            : translate(
+                "Pay profile deactivated — existing assignments keep paying until reassigned",
+              ),
         );
       }}
     />

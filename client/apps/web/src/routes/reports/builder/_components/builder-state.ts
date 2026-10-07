@@ -232,6 +232,7 @@ function prefixed(prefix: string, base: string): string {
   return base.toLowerCase().startsWith(prefix.toLowerCase()) ? base : `${prefix} ${base}`;
 }
 
+// i18n-ignore: mirrors the column header the report server writes, which is English
 const BUCKET_SUFFIXES: Record<NonNullable<ReportColumnSpec["bucket"]>, string> = {
   day: "Day",
   week: "Week",

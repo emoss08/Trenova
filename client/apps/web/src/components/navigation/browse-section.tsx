@@ -102,7 +102,7 @@ function AdminLinkGroups({
       {Array.from(grouped.entries()).map(([groupName, groupLinks]) => (
         <div key={groupName} className="flex flex-col gap-0.5">
           <span className="text-xs text-foreground/50 px-2 pt-1 font-semibold select-none">
-            {groupName}
+            {t(groupName)}
           </span>
           {groupLinks.map((link) => (
             <SidebarNavLink

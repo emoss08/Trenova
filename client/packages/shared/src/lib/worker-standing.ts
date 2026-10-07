@@ -3,6 +3,7 @@ import {
   type ConcernSeverity,
   type WorkerStanding,
 } from "../types/worker-overview";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 export type StandingMeta = {
   label: string;
@@ -17,7 +18,7 @@ export type StandingMeta = {
 
 const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   Good: {
-    label: WORKER_STANDING_LABELS.Good,
+    label: sourceLabels(WORKER_STANDING_LABELS).Good,
     badgeVariant: "success",
     textClass: "text-success-foreground",
     ringTone: "success",
@@ -25,7 +26,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
     rank: 0,
   },
   Watch: {
-    label: WORKER_STANDING_LABELS.Watch,
+    label: sourceLabels(WORKER_STANDING_LABELS).Watch,
     badgeVariant: "warning",
     textClass: "text-warning-foreground",
     ringTone: "warning",
@@ -33,7 +34,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
     rank: 1,
   },
   AtRisk: {
-    label: WORKER_STANDING_LABELS.AtRisk,
+    label: sourceLabels(WORKER_STANDING_LABELS).AtRisk,
     badgeVariant: "danger",
     textClass: "text-danger-foreground",
     ringTone: "critical",
@@ -41,7 +42,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
     rank: 2,
   },
   Blocked: {
-    label: WORKER_STANDING_LABELS.Blocked,
+    label: sourceLabels(WORKER_STANDING_LABELS).Blocked,
     badgeVariant: "danger",
     textClass: "text-danger-foreground",
     ringTone: "critical",

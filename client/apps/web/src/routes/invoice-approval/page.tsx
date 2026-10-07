@@ -49,6 +49,7 @@ import {
   invoiceApprovalSearchParamsParser,
 } from "./use-invoice-approval-state";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const adjustmentKindChoices: Array<{ label: string; value: InvoiceAdjustmentKind }> = [
   { label: "Credit only", value: "CreditOnly" },
@@ -57,12 +58,12 @@ const adjustmentKindChoices: Array<{ label: string; value: InvoiceAdjustmentKind
   { label: "Write-off", value: "WriteOff" },
 ];
 
-const KIND_LABELS: Record<InvoiceAdjustmentKind, string> = {
+const KIND_LABELS: Record<InvoiceAdjustmentKind, string> = defineLabels({
   CreditOnly: "Credit Only",
   CreditAndRebill: "Credit & Rebill",
   FullReversal: "Full Reversal",
   WriteOff: "Write-Off",
-};
+});
 
 export function InvoiceApprovalPage() {
   const t = useT();

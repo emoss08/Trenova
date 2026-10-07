@@ -1,5 +1,4 @@
 {
-  "Adjustments": "Ajustes",
   "Adjustments minor": "Ajustes en unidades menores",
   "Appears as the line item on the carrier's statement — say what and when.": "Aparece como la partida en el estado de cuenta del transportista: indique qué y cuándo.",
   "Batch CSV": "CSV del lote",
@@ -24,6 +23,7 @@
   "Records the disbursement to the carrier and posts the cash journal (debit accounts payable, credit cash) plus the ledger payment entry.": "Registra el desembolso al transportista y contabiliza el diario de caja (carga a cuentas por pagar, abono a caja) junto con el asiento de pago en el libro mayor.",
   "Remit to": "Enviar pago a",
   "Settlement marked paid — cash journal and ledger payment recorded": "Liquidación marcada como pagada: se registraron el diario de caja y el pago en el libro mayor",
+  "Settlement recalculated from current cost events": "Liquidación recalculada a partir de los eventos de costo actuales",
   "The check number or ACH trace so the payment reconciles against the bank.": "El número de cheque o el rastreo ACH para que el pago concilie con el banco.",
   "Traced back to the accrued cost event": "Rastreado hasta el evento de costo devengado",
   "Voiding releases cost events back to the accrual pool and reverses any GL postings.": "Anular devuelve los eventos de costo al fondo de devengo y revierte cualquier asiento contable.",

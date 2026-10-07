@@ -48,6 +48,7 @@ import { CalendarDateIcon, ClockIcon, Repeat01Icon } from "@trenova/shared/compo
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const STATUS_OPTIONS = [
   { value: "Active", label: "Active" },
@@ -139,7 +140,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
       return template ? updateShiftTemplate(template.id, input) : createShiftTemplate(input);
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Shift updated" : "Shift added");
+      toast.success(isEdit ? translate("Shift updated") : translate("Shift added"));
       void queryClient.invalidateQueries({ queryKey: [SHIFT_TEMPLATES_KEY] });
       void queryClient.invalidateQueries({ queryKey: [ROTA_KEY] });
       onOpenChange(false);

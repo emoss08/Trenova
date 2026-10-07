@@ -19,6 +19,7 @@ import {
 } from "@trenova/shared/types/pto-policy";
 import { InfoCircleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const POLICY_STATUS_OPTIONS = [
   { value: "Active", label: "Active", color: "var(--success)" },
@@ -28,16 +29,16 @@ const POLICY_STATUS_OPTIONS = [
 
 const YEAR_BASIS_OPTIONS = (Object.keys(PTO_YEAR_BASIS_LABELS) as PTOYearBasis[]).map((value) => ({
   value,
-  label: PTO_YEAR_BASIS_LABELS[value],
+  label: sourceLabels(PTO_YEAR_BASIS_LABELS)[value],
 }));
 
 const ACCRUAL_METHOD_OPTIONS = (Object.keys(PTO_ACCRUAL_METHOD_LABELS) as PTOAccrualMethod[]).map(
-  (value) => ({ value, label: PTO_ACCRUAL_METHOD_LABELS[value] }),
+  (value) => ({ value, label: sourceLabels(PTO_ACCRUAL_METHOD_LABELS)[value] }),
 );
 
 const TERMINATION_OPTIONS = (
   Object.keys(PTO_TERMINATION_ACTION_LABELS) as PTOTerminationAction[]
-).map((value) => ({ value, label: PTO_TERMINATION_ACTION_LABELS[value] }));
+).map((value) => ({ value, label: sourceLabels(PTO_TERMINATION_ACTION_LABELS)[value] }));
 
 function amountLabel(method: PTOAccrualMethod): string {
   switch (method) {

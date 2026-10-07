@@ -5,6 +5,7 @@ import type {
   RuleCoverage,
   RuleOutcome,
 } from "../types/rate";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Reading a simulation.
@@ -72,11 +73,11 @@ export function runProgress(simulation: RateSimulation | undefined): number | nu
   return Math.min(1, done / summary.shipmentCount);
 }
 
-const OUTCOME_LABEL: Record<RuleOutcome, string> = {
+const OUTCOME_LABEL: Record<RuleOutcome, string> = defineLabels({
   Won: "Priced shipments",
   Lost: "Always outranked",
   NeverFired: "Never matched",
-};
+});
 
 export function ruleOutcomeLabel(outcome: RuleOutcome): string {
   return OUTCOME_LABEL[outcome] ?? outcome;

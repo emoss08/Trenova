@@ -10,6 +10,7 @@
   "Carrier code": "承運業者代碼",
   "Carriers based in Texas": "總部位於德州的承運業者",
   "Change provider": "變更服務供應商",
+  "Code cannot exceed 10 characters": "代碼不得超過 10 個字元",
   "Connect CarrierOk to search the carrier market, or the free FMCSA QCMobile service to look carriers up by USDOT number.": "連接 CarrierOk 以搜尋承運業者市場，或使用免費的 FMCSA QCMobile 服務依 USDOT 編號查詢承運業者。",
   "Connect a carrier data provider": "連接承運業者資料供應商",
   "Couldn't pull USDOT {0}": "無法取得 USDOT {0}",

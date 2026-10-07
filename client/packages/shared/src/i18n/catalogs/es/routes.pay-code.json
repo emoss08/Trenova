@@ -11,6 +11,8 @@
   "Inactive codes stay on historical records but disappear from new-entry dropdowns.": "Los códigos inactivos permanecen en los registros históricos pero desaparecen de los desplegables de nuevas entradas.",
   "Optional internal note explaining when and how the code should be used.": "Nota interna opcional que explique cuándo y cómo debe usarse el código.",
   "Optional note about when this code applies": "Nota opcional sobre cuándo se aplica este código",
+  "Pay code activated — it appears in dropdowns again": "Código de pago activado — vuelve a aparecer en las listas desplegables",
+  "Pay code deactivated — it stays on historical records only": "Código de pago desactivado — solo permanece en los registros históricos",
   "Prefills the amount when creating recurring earnings or deductions with this code.": "Rellena previamente el importe al crear percepciones o deducciones recurrentes con este código.",
   "Reimbursement": "Reembolso",
   "Select GL account": "Seleccione la cuenta del libro mayor",

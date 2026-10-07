@@ -3,6 +3,7 @@
   "Contribute to escrow account": "Aportar a la cuenta de depósito en garantía",
   "Deducted / cap": "Deducido / tope",
   "Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.": "Código de deducción que clasifica la retención y la dirige a la cuenta del libro mayor del código cuando hay una asignada.",
+  "Deduction paused": "Deducción en pausa",
   "Deduction stops automatically once this lifetime total is reached.": "La deducción se detiene automáticamente cuando se alcanza este total acumulado.",
   "Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.": "Cada liquidación retiene en cada ciclo; la opción mensual retiene solo en la primera liquidación de cada mes.",
   "Future settlements skip the deduction; history is kept.": "Las liquidaciones futuras omiten la deducción; se conserva el historial.",

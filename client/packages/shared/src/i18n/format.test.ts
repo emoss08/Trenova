@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { setLocale } from "@trenova/shared/i18n/runtime";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   dateTimeFormatter,
   formatList,
   formatNumber,
+  formatOrdinal,
   formatRelativeTime,
   numberFormatter,
 } from "./format";
@@ -87,5 +89,36 @@ describe("cached Intl formatters", () => {
     expect(formatRelativeTime(-7200)).toBe(
       new Intl.RelativeTimeFormat("en-US", { numeric: "auto" }).format(-2, "hour"),
     );
+  });
+});
+
+describe("formatOrdinal", () => {
+  afterEach(async () => {
+    await setLocale("en");
+  });
+
+  it("gives English its suffix, the awkward teens included", () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map(formatOrdinal)).toEqual([
+      "1st",
+      "2nd",
+      "3rd",
+      "4th",
+      "11th",
+      "12th",
+      "13th",
+      "21st",
+      "22nd",
+      "23rd",
+      "101st",
+      "111th",
+    ]);
+  });
+
+  it("leaves the number plain where the sentence carries the marker", async () => {
+    await setLocale("es");
+    expect(formatOrdinal(15)).toBe("15");
+
+    await setLocale("zh-CN");
+    expect(formatOrdinal(3)).toBe("3");
   });
 });

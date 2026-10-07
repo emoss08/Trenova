@@ -15,7 +15,6 @@
   "Any currently active fiscal year will be automatically deactivated.": "目前生效的会计年度会自动停用。",
   "Block every posting, including manual journal entries": "禁止所有过账，包括手工分录",
   "Block subledger postings such as billing, receivables, and payables": "禁止开票、应收、应付等明细账过账",
-  "Calendar year": "历年",
   "Changes through the fiscal year actions": "通过会计年度操作变更",
   "Close check unavailable": "无法进行结账检查",
   "Close fiscal period": "结束会计期间",

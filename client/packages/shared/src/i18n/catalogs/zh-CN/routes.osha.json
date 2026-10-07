@@ -16,7 +16,6 @@
   "Cases that met the OSHA recording criteria this year, by the log column they landed in. A case kept on file but judged not recordable is counted below, not here.": "本年度符合 OSHA 登记标准的案件，按其所属的记录列分类。留存在案但经判定无需登记的案件计入下方，而非此处。",
   "Cases with days away, restricted duty or job transfer, on the same 200,000-hour basis. It is the rate most workers' compensation carriers price on.": "含缺勤日、限制工作或调岗的案件，同样以 200,000 工时为基准。这是多数工伤保险公司用于定价的比率。",
   "Cases with days away, restriction or transfer, per 100 full-time workers": "每 100 名全职员工中含缺勤、限制工作或调岗的案件数",
-  "Certification": "认证",
   "Certified {0}{1}": "已认证 {0}{1}",
   "Certifying executive": "认证主管",
   "Certifying is a separate step, and it is refused while cases are still accruing days — certifying a log that has not finished moving is certifying a number that is about to change.": "认证是独立的步骤，且在案件仍持续累计天数时会被拒绝 — 为尚未定案的记录背书，等于为一个即将变动的数字背书。",

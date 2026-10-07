@@ -1,3 +1,4 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   AssessedJurisdiction,
@@ -7,21 +8,22 @@ import type {
   PermitRequirement,
   RestrictionKind,
 } from "../types/permit";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-export const ESCORT_ROLE_LABELS: Record<EscortRole, string> = {
+export const ESCORT_ROLE_LABELS: Record<EscortRole, string> = defineLabels({
   Front: "Front escort",
   Rear: "Rear escort",
   Police: "Police escort",
   RouteSurvey: "Route survey",
-};
+});
 
-export const RESTRICTION_LABELS: Record<RestrictionKind, string> = {
+export const RESTRICTION_LABELS: Record<RestrictionKind, string> = defineLabels({
   DaylightOnly: "Daylight movement only",
   RushHour: "Rush hour restriction",
   Weekend: "Weekend restriction",
   Holiday: "Holiday restriction",
   NightOnly: "Night movement only",
-};
+});
 
 /**
  * Renders a decimal foot measurement the way an operator says it out loud.
@@ -43,7 +45,7 @@ export function formatFeetInches(value: number): string {
 
 export function formatPounds(value: number): string {
   if (!Number.isFinite(value)) return "—";
-  return `${Math.round(value).toLocaleString()} lbs`;
+  return translate("{0} lbs", formatNumber(Math.round(value)));
 }
 
 export type CargoDimensions = {
@@ -204,12 +206,18 @@ export function requirementStateCode(requirement: PermitRequirement): string {
  * in the unit that dimension is measured in.
  */
 export function describeExceedance(exceedance: Exceedance): string {
-  const over =
-    exceedance.trigger === "Weight"
-      ? formatPounds(exceedance.overBy)
-      : formatFeetInches(exceedance.overBy);
-
-  return `${exceedance.trigger.toLowerCase()} ${over} over`;
+  switch (exceedance.trigger) {
+    case "Weight":
+      return translate("weight {0} over", formatPounds(exceedance.overBy));
+    case "Width":
+      return translate("width {0} over", formatFeetInches(exceedance.overBy));
+    case "Height":
+      return translate("height {0} over", formatFeetInches(exceedance.overBy));
+    case "Length":
+      return translate("length {0} over", formatFeetInches(exceedance.overBy));
+    default:
+      return translate("superload {0} over", formatFeetInches(exceedance.overBy));
+  }
 }
 
 /**

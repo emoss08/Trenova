@@ -44,6 +44,7 @@ import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form"
 import { toast } from "sonner";
 import { employmentEventMeta, employmentSnapshot, recordableKinds } from "./employment-event-meta";
 import { useEmploymentInvalidation } from "./use-employment-invalidation";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 export type EmploymentSheetWorker = {
   fleetCodeId?: string | null;
@@ -69,7 +70,7 @@ export type EmploymentEventSheetProps = {
 const EMPTY_HISTORY: readonly Pick<WorkerEmploymentEventRow, "kind">[] = [];
 
 const LEAVE_TYPE_OPTIONS = (Object.keys(WORKER_LEAVE_TYPE_LABELS) as WorkerLeaveType[]).map(
-  (value) => ({ value, label: WORKER_LEAVE_TYPE_LABELS[value] }),
+  (value) => ({ value, label: sourceLabels(WORKER_LEAVE_TYPE_LABELS)[value] }),
 );
 
 function ptoDays(value: string): string {

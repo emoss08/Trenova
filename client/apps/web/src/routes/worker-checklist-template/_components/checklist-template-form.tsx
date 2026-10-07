@@ -31,32 +31,33 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
 
 const KIND_OPTIONS = checklistKindSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_KIND_LABELS[value],
+  label: sourceLabels(CHECKLIST_KIND_LABELS)[value],
 }));
 const TRIGGER_OPTIONS = checklistTriggerSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_TRIGGER_LABELS[value],
+  label: sourceLabels(CHECKLIST_TRIGGER_LABELS)[value],
 }));
 const ITEM_KIND_OPTIONS = checklistItemKindSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_ITEM_KIND_LABELS[value],
+  label: sourceLabels(CHECKLIST_ITEM_KIND_LABELS)[value],
 }));
 const OWNER_OPTIONS = checklistOwnerSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_OWNER_LABELS[value],
+  label: sourceLabels(CHECKLIST_OWNER_LABELS)[value],
 }));
 
-const ITEM_KIND_HINT: Record<string, string> = {
+const ITEM_KIND_HINT: Record<string, string> = defineLabels({
   Document: "Completes itself when a worker document of this type is on file.",
   Credential: "Completes itself when the worker holds a valid credential of this type.",
   Task: "Ticked off by the owner when done.",
   Equipment: "Ticked off by the owner when issued or returned.",
   PortalAccess:
     "Completes itself from Dash access — granted for onboarding, revoked for offboarding.",
-};
+});
 
 export function ChecklistTemplateForm({
   isEdit,

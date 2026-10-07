@@ -33,6 +33,7 @@ function formatDate(unix?: number | null): string {
 
 import { WorkerBenefitsSection } from "./benefits/worker-benefits-section";
 import { useRichT } from "@trenova/shared/i18n/rich";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function WorkerPayTab({ workerId }: { workerId: string }) {
   const t = useT();
@@ -327,7 +328,7 @@ function EndAssignmentDialog({
       onOpenChange(false);
       onEnded();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to end assignment"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to end assignment")),
   });
 
   return (

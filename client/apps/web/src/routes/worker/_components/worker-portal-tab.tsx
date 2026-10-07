@@ -28,6 +28,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { PolicyAcknowledgements } from "./portal/policy-acknowledgements";
 import { ProfileChangeRequests } from "./portal/profile-change-requests";
 import { useRichT } from "@trenova/shared/i18n/rich";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -81,7 +82,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
       setInviteUrl(null);
       await invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to revoke access"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to revoke access")),
   });
 
   const copyInviteUrl = async () => {

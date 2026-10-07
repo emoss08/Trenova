@@ -26,6 +26,7 @@ import { ZapIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const paymentMethods = ["ACH", "Check", "InstantPay", "Cash", "Other"];
 
@@ -130,7 +131,7 @@ export function InstantPayDialog({
       onPaid();
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error(error.message || "Instant payout failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Instant payout failed")),
   });
 
   const canPay = workerId.length > 0 && selectedEvents.length > 0 && !payMutation.isPending;

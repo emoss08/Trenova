@@ -98,6 +98,89 @@ describe("findFragments", () => {
     assert.deepEqual(found, []);
   });
 
+  it("reports a module-level label map the catalog never sees", async () => {
+    const found = await scan(`
+export const STATUS_LABELS: Record<Status, string> = { InReview: "In review", Closed: "Closed" };
+const DELIVERY = Object.freeze({ Online: "Online", OnTheJob: "On the job" } as const);
+const FIELD_LABELS: Record<string, string> = { code: "Code", description: "Description", partyType: "Party type" };
+`);
+    assert.deepEqual(
+      found.map((f) => [f.kind, f.detail.split(" ")[0]]),
+      [
+        ["untranslated-label-map", "STATUS_LABELS"],
+        ["untranslated-label-map", "DELIVERY"],
+        ["untranslated-label-map", "FIELD_LABELS"],
+      ],
+    );
+  });
+
+  it("leaves declared label maps, wire values, styles, records of text fields and ignored maps alone", async () => {
+    const found = await scan(`
+export const STATUS_LABELS = defineLabels({ InReview: "In review", Closed: "Closed" });
+const WIRE = { open: "OPEN_ITEM", closed: "ClosedItem", other: "CON" };
+const TARGET: Record<PTOBulkAction, PTOStatus> = { Approve: "Approved", Reject: "Rejected" };
+const TONES = { info: "bg-info text-info", danger: "#ff0000" };
+const PATHS = { a: "M17.3 3.5h-3.6 L0 20.4", b: "M22.2 9.8a5.9 5.9 0 0 0" };
+const EMPTY = { label: "Nothing here", description: "Add one to get started" };
+// i18n-ignore: brand names, the same in every language
+const VENDORS = { anthropic: "Anthropic", google: "Google" };
+function local() {
+  const labels = { a: "First choice", b: "Second choice" };
+  return labels;
+}
+`);
+    assert.deepEqual(found, []);
+  });
+
+  it("reports a validation message written as a literal", async () => {
+    const found = await scan(`
+const nameSchema = z.string().min(1, "Name is required");
+const userSchema = z.object({ email: z.string().email({ error: "Enter an email" }) })
+  .refine((v) => v.email !== "", { message: "Email is required", path: ["email"] })
+  .superRefine((v, ctx) => ctx.addIssue({ code: "custom", message: "Not allowed" }));
+const field = () => <Controller rules={{ required: "Pick a date", minLength: { value: 2, message: "Too short" } }} />;
+const opts = { rules: { required: translate("Kept") } };
+`);
+    assert.ok(found.every((f) => f.kind === "untranslated-schema-message"));
+    assert.deepEqual(found.map((f) => f.detail).sort(), [
+      "Email is required",
+      "Enter an email",
+      "Name is required",
+      "Not allowed",
+      "Pick a date",
+      "Too short",
+    ]);
+  });
+
+  it("leaves translated messages, bounds and calls that are not zod alone", async () => {
+    const found = await scan(`
+const nameSchema = z.string().min(1, { error: () => translate("Name is required") }).startsWith("PRO");
+const known = ["a", "b"].includes("a");
+params.set("filter", { message: "kept" });
+const ok = Math.max(1, 2);
+`);
+    assert.deepEqual(found, []);
+  });
+
+  it("reports a literal a toast shows as written, and leaves translated ones alone", async () => {
+    const found = await scan(`
+toast.promise(save(), { loading: "Saving…", success: t("Saved"), error: "Could not save" });
+toast.success("Saved");
+toast.error(translate("Failed"), { description: t("Try again") });
+toast.error(error.message || "Action failed");
+toast.success({ submit: "Submitted", post: t("Posted") }[action] ?? "Updated");
+`);
+    assert.ok(found.every((f) => f.kind === "untranslated-toast"));
+    assert.deepEqual(found.map((f) => f.detail).sort(), [
+      "Action failed",
+      "Could not save",
+      "Saved",
+      "Saving…",
+      "Submitted",
+      "Updated",
+    ]);
+  });
+
   it("finds none in the app", async () => {
     const found = await findFragments(repoRoot);
     assert.deepEqual(found.map((f) => `${f.file}:${f.line} ${f.detail}`), []);

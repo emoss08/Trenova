@@ -9,10 +9,11 @@ import {
   CREDENTIAL_CATEGORY_LABELS,
   credentialCategorySchema,
 } from "@trenova/shared/types/worker-credential";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const CATEGORY_CHOICES = credentialCategorySchema.options.map((value) => ({
   value,
-  label: CREDENTIAL_CATEGORY_LABELS[value],
+  label: sourceLabels(CREDENTIAL_CATEGORY_LABELS)[value],
 }));
 
 function requiredSummary(row: WorkerCredentialTypeRow): string {
