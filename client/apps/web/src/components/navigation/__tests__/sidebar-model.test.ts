@@ -8,6 +8,8 @@ import {
   collectNavPaths,
   findModuleForPath,
   groupModulesByDomain,
+  isDirectLinkModule,
+  isModuleActive,
   moduleAttention,
   moduleDisplayLabel,
   moduleSidebarView,
@@ -51,6 +53,41 @@ describe("findModuleForPath", () => {
 
   it("returns null for a path no module claims", () => {
     expect(findModuleForPath(modules, "/profile")).toBeNull();
+  });
+});
+
+describe("isDirectLinkModule", () => {
+  it("draws a module with no pages of its own as a link", () => {
+    for (const id of ["home", "desk", "inbox", "intake"]) {
+      expect(isDirectLinkModule(moduleById(id))).toBe(true);
+    }
+  });
+
+  it("keeps a module with pages as a menu", () => {
+    expect(isDirectLinkModule(moduleById("shipment"))).toBe(false);
+    expect(isDirectLinkModule(moduleById("hr"))).toBe(false);
+  });
+
+  it("keeps settings as a menu, because its pages come from the admin links", () => {
+    expect(isDirectLinkModule(moduleById("admin"))).toBe(false);
+  });
+});
+
+describe("isModuleActive", () => {
+  it("marks home active only on the root path", () => {
+    expect(isModuleActive(moduleById("home"), "/")).toBe(true);
+    expect(isModuleActive(moduleById("home"), "/desk")).toBe(false);
+  });
+
+  it("marks a module active on its base path and anything beneath it", () => {
+    expect(isModuleActive(moduleById("inbox"), "/inbox")).toBe(true);
+    expect(isModuleActive(moduleById("inbox"), "/inbox/msg_01")).toBe(true);
+    expect(isModuleActive(moduleById("desk"), "/desk/")).toBe(true);
+  });
+
+  it("does not match a sibling that merely shares a leading string", () => {
+    expect(isModuleActive(moduleById("intake"), "/intakes")).toBe(false);
+    expect(isModuleActive(moduleById("desk"), "/inbox")).toBe(false);
   });
 });
 

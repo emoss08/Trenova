@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { BetaTag } from "@/components/beta-tag";
 import { NavItemBadge } from "@/components/navigation/nav-item-badge";
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
+import { isDirectLinkModule, isModuleActive } from "@/components/navigation/sidebar-model";
 import {
   Collapsible,
   CollapsibleContent,
@@ -215,13 +216,13 @@ export function BrowseSection() {
     <div className="flex flex-col gap-0.5">
       <SidebarSectionLabel>{t("Browse")}</SidebarSectionLabel>
       {modules.map((module) => {
-        if (module.id === "home") {
+        if (isDirectLinkModule(module)) {
           const Icon = module.icon;
           return (
             <SidebarNavLink
               key={module.id}
               to={module.basePath}
-              active={pathname === "/"}
+              active={isModuleActive(module, pathname)}
               className="h-7"
             >
               <Icon className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
