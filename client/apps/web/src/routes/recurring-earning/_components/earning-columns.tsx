@@ -7,6 +7,7 @@ import type { RecurringEarningStatus } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function earningStatusInput(row: RecurringEarningRow, status: RecurringEarningStatus) {
   return {
@@ -43,7 +44,9 @@ function StatusCell({ row }: { row: RecurringEarningRow }) {
       onStatusChange={async (status) => {
         await updateRecurringEarning(earningStatusInput(row, status));
         await queryClient.invalidateQueries({ queryKey: ["recurring-earning-list"] });
-        toast.success(status === "Paused" ? "Earning paused" : "Earning resumed");
+        toast.success(
+          status === "Paused" ? translate("Earning paused") : translate("Earning resumed"),
+        );
       }}
     />
   );

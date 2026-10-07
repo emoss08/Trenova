@@ -4,6 +4,7 @@ import type {
   AgentMemorySubjectType,
 } from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * The most characters one memory may hold. The single client copy of the
@@ -41,7 +42,7 @@ export const memoryFormSchema = z
     content: z
       .string()
       .trim()
-      .min(1, "Say what the agents should know")
+      .min(1, { error: () => translate("Say what the agents should know") })
       .max(MEMORY_CONTENT_LIMIT, `Keep it to ${MEMORY_CONTENT_LIMIT} characters`),
     subjectType: z.preprocess(
       (value) => (value === "" || value === undefined ? null : value),
@@ -62,14 +63,14 @@ export const memoryFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["subjectId"],
-        message: "Pick the record this is about",
+        message: translate("Pick the record this is about"),
       });
     }
     if (values.subjectId && !values.subjectType) {
       ctx.addIssue({
         code: "custom",
         path: ["subjectType"],
-        message: "Say what kind of record this is about",
+        message: translate("Say what kind of record this is about"),
       });
     }
   });

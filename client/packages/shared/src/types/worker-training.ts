@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { driverTypeSchema } from "./worker";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 // Re-exported so callers keep importing training health from here; the
 // definition lives in a leaf module to keep this file and worker.ts from
 // importing each other.
@@ -34,21 +35,21 @@ export const workerTrainingStatusSchema = z.enum([
 ]);
 export type WorkerTrainingStatus = z.infer<typeof workerTrainingStatusSchema>;
 
-export const TRAINING_CATEGORY_LABELS: Record<TrainingCategory, string> = {
+export const TRAINING_CATEGORY_LABELS: Record<TrainingCategory, string> = defineLabels({
   Safety: "Safety",
   Compliance: "Compliance",
   Equipment: "Equipment",
   Orientation: "Orientation",
   HazardousMaterials: "Hazardous materials",
   Other: "Other",
-};
+});
 
-export const TRAINING_DELIVERY_LABELS: Record<TrainingDelivery, string> = {
+export const TRAINING_DELIVERY_LABELS: Record<TrainingDelivery, string> = defineLabels({
   Online: "Online",
   Classroom: "Classroom",
   OnTheJob: "On the job",
   Document: "Read & acknowledge",
-};
+});
 
 /** Whether a driver can finish the course from the portal without a score. */
 export const TRAINING_DELIVERY_SELF_SERVE: ReadonlySet<TrainingDelivery> = new Set([
@@ -56,12 +57,12 @@ export const TRAINING_DELIVERY_SELF_SERVE: ReadonlySet<TrainingDelivery> = new S
   "Document",
 ]);
 
-export const TRAINING_DELIVERY_HINTS: Record<TrainingDelivery, string> = {
+export const TRAINING_DELIVERY_HINTS: Record<TrainingDelivery, string> = defineLabels({
   Online: "The driver opens a link from Dash and confirms when they are done.",
   Classroom: "Taken in person; the office records attendance and the score.",
   OnTheJob: "Coached on the job; a supervisor records the result.",
   Document: "The driver reads a document from Dash and acknowledges it.",
-};
+});
 
 const optionalTrimmed = (max: number, message: string) =>
   z
@@ -87,8 +88,10 @@ const optionalPercent = z
   .pipe(
     z
       .string()
-      .regex(PERCENT_PATTERN, { message: "Enter a percentage with up to two decimals" })
-      .refine((value) => Number(value) <= 100, { message: "Cannot exceed 100" })
+      .regex(PERCENT_PATTERN, {
+        error: () => translate("Enter a percentage with up to two decimals"),
+      })
+      .refine((value) => Number(value) <= 100, { error: () => translate("Cannot exceed 100") })
       .nullable(),
   );
 
@@ -97,34 +100,43 @@ export const trainingCourseFormSchema = z
     code: z
       .string()
       .trim()
-      .min(1, { message: "Code is required" })
-      .max(50, { message: "Code cannot exceed 50 characters" })
-      .regex(/^[A-Za-z0-9_-]+$/, { message: "Letters, digits, dashes and underscores only" }),
+      .min(1, { error: () => translate("Code is required") })
+      .max(50, { error: () => translate("Code cannot exceed 50 characters") })
+      .regex(/^[A-Za-z0-9_-]+$/, {
+        error: () => translate("Letters, digits, dashes and underscores only"),
+      }),
     name: z
       .string()
       .trim()
-      .min(1, { message: "Name is required" })
-      .max(100, { message: "Name cannot exceed 100 characters" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(100, { error: () => translate("Name cannot exceed 100 characters") }),
     description: optionalTrimmed(1000, "Description cannot exceed 1000 characters"),
     category: trainingCategorySchema,
     status: z.enum(["Active", "Inactive"]),
     delivery: trainingDeliverySchema,
     contentUrl: optionalTrimmed(500, "Link cannot exceed 500 characters"),
-    durationMinutes: z.number().int().min(0, { message: "Cannot be negative" }),
+    durationMinutes: z
+      .number()
+      .int()
+      .min(0, { error: () => translate("Cannot be negative") }),
     passingScore: optionalPercent,
-    validityMonths: z.number().int().min(1, { message: "Must be at least one month" }).nullable(),
+    validityMonths: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("Must be at least one month") })
+      .nullable(),
     renewalWindowDays: z
       .number()
       .int()
-      .min(0, { message: "Cannot be negative" })
-      .max(365, { message: "Cannot exceed 365 days" }),
+      .min(0, { error: () => translate("Cannot be negative") })
+      .max(365, { error: () => translate("Cannot exceed 365 days") }),
     isRequired: z.boolean(),
     requiredForDriverTypes: z.array(driverTypeSchema),
     dueDaysAfterAssignment: z
       .number()
       .int()
-      .min(0, { message: "Cannot be negative" })
-      .max(730, { message: "Cannot exceed two years" }),
+      .min(0, { error: () => translate("Cannot be negative") })
+      .max(730, { error: () => translate("Cannot exceed two years") }),
     requiresAcknowledgement: z.boolean(),
   })
   .superRefine((values, ctx) => {
@@ -146,7 +158,7 @@ export const trainingCourseFormSchema = z
 export type TrainingCourseFormValues = z.infer<typeof trainingCourseFormSchema>;
 
 export const assignTrainingFormSchema = z.object({
-  courseId: z.string().min(1, { message: "Choose a course" }),
+  courseId: z.string().min(1, { error: () => translate("Choose a course") }),
   dueAt: z.number().int().positive().nullable(),
   notes: optionalTrimmed(1000, "Notes cannot exceed 1000 characters"),
 });
@@ -154,8 +166,11 @@ export type AssignTrainingFormValues = z.infer<typeof assignTrainingFormSchema>;
 
 export const completeTrainingFormSchema = z
   .object({
-    courseId: z.string().min(1, { message: "Choose a course" }),
-    completedAt: z.number().int().positive({ message: "Choose the completion date" }),
+    courseId: z.string().min(1, { error: () => translate("Choose a course") }),
+    completedAt: z
+      .number()
+      .int()
+      .positive({ error: () => translate("Choose the completion date") }),
     score: optionalPercent,
     notes: optionalTrimmed(1000, "Notes cannot exceed 1000 characters"),
     requiresScore: z.boolean(),
@@ -175,7 +190,7 @@ export const waiveTrainingFormSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(3, { message: "Say why the course is waived" })
-    .max(255, { message: "Reason cannot exceed 255 characters" }),
+    .min(3, { error: () => translate("Say why the course is waived") })
+    .max(255, { error: () => translate("Reason cannot exceed 255 characters") }),
 });
 export type WaiveTrainingFormValues = z.infer<typeof waiveTrainingFormSchema>;

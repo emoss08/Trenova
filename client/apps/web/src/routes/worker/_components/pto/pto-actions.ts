@@ -5,6 +5,7 @@ import type {
   PTOStatus,
   WorkerPTO,
 } from "@trenova/shared/types/worker";
+import { defineLabels, type LabelMap } from "@trenova/shared/i18n/labels";
 
 export const PTO_ACTION_TARGET: Record<PTOBulkAction, PTOStatus> = {
   Approve: "Approved",
@@ -50,26 +51,26 @@ export function splitPTOByAction<T extends Pick<WorkerPTO, "status">>(
 
 export const PTO_ACTION_LABELS: Record<
   PTOBulkAction,
-  { label: string; loadingLabel: string; verbPast: string; noneEligible: string }
+  LabelMap<{ label: string; loadingLabel: string; verbPast: string; noneEligible: string }>
 > = {
-  Approve: {
+  Approve: defineLabels({
     label: "Approve",
     loadingLabel: "Approving...",
     verbPast: "Approved",
     noneEligible: "Only requested PTO can be approved.",
-  },
-  Reject: {
+  }),
+  Reject: defineLabels({
     label: "Reject",
     loadingLabel: "Rejecting...",
     verbPast: "Rejected",
     noneEligible: "Only requested PTO can be rejected.",
-  },
-  Cancel: {
+  }),
+  Cancel: defineLabels({
     label: "Cancel",
     loadingLabel: "Cancelling...",
     verbPast: "Cancelled",
     noneEligible: "Only requested or approved PTO can be cancelled.",
-  },
+  }),
 };
 
 export function ptoIds(rows: readonly Pick<WorkerPTO, "id">[]): string[] {

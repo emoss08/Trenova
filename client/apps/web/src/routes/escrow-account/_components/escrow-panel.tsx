@@ -36,14 +36,16 @@ import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
-const transactionTypeLabels: Record<string, string> = {
+const transactionTypeLabels: Record<string, string> = defineLabels({
   Contribution: "Contribution",
   InterestAccrual: "Interest",
   Application: "Applied",
   Refund: "Refund",
   Adjustment: "Adjustment",
-};
+});
 
 function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -190,7 +192,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       setAdjustDescription("");
       invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Adjustment failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Adjustment failed")),
   });
 
   const closeMutation = useMutation({
@@ -201,7 +203,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       invalidate();
       onClose();
     },
-    onError: (error: Error) => toast.error(error.message || "Close failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Close failed")),
   });
 
   if (isLoading || !account) {

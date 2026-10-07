@@ -22,6 +22,7 @@
   "Posted on {0}.": "Registrado el {0}.",
   "Posted on {0}. {1} stays on the account as unapplied cash.": "Registrado el {0}. {1} queda en la cuenta como efectivo sin aplicar.",
   "Read by Trenova": "Leído por Trenova",
+  "Say why this payment stays out of Trenova": "Indique por qué este pago queda fuera de Trenova",
   "This payment could not be loaded.": "No se pudo cargar este pago.",
   "Trenova could not read the latest changes from {0}": "Trenova no pudo leer los cambios más recientes de {0}",
   "Trenova reads payments from {0} once setup is finished and syncing is on.": "Trenova lee los pagos de {0} una vez terminada la configuración y activada la sincronización.",

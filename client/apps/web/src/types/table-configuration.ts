@@ -5,6 +5,7 @@ import {
   sortFieldSchema,
 } from "@trenova/shared/types/data-table";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const configurationVisibilitySchema = z.enum(["Private", "Public", "Shared"]);
 
@@ -108,9 +109,12 @@ export type ActiveTableView = TableViewSource & {
 };
 
 export const tableConfigurationFormSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(255),
   description: z.string().default(""),
-  resource: z.string().min(1, "Resource is required"),
+  resource: z.string().min(1, { error: () => translate("Resource is required") }),
   tableConfig: tableConfigSchema,
   visibility: configurationVisibilitySchema.default("Private"),
   isDefault: z.boolean().default(false),

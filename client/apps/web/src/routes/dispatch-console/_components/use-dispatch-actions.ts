@@ -31,6 +31,7 @@ import type {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * An undoable step. Assignment is reversible in the domain, so the console treats
@@ -240,7 +241,9 @@ export function useDispatchActions() {
       apiService.tenderService.recordResponse(params.offerId, params.payload),
     onSuccess: (_data, params) => {
       toast.success(
-        params.payload.action === "Accept" ? "Acceptance recorded" : "Decline recorded",
+        params.payload.action === "Accept"
+          ? translate("Acceptance recorded")
+          : translate("Decline recorded"),
       );
       invalidateTenders();
     },

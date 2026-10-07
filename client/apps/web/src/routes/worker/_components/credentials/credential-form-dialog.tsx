@@ -40,6 +40,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useCredentialInvalidation } from "./use-credential-invalidation";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type CredentialFormMode = "create" | "renew" | "edit";
 
@@ -244,15 +245,15 @@ export function CredentialFormDialog({
     onSuccess: (saved) => {
       toast.success(
         mode === "edit"
-          ? "Credential updated"
+          ? translate("Credential updated")
           : mode === "renew"
-            ? "Credential renewed"
-            : "Credential added",
+            ? translate("Credential renewed")
+            : translate("Credential added"),
         {
           description:
             mode === "renew"
-              ? "The previous credential was archived into the worker's history."
-              : "The worker's qualification file has been updated.",
+              ? translate("The previous credential was archived into the worker's history.")
+              : translate("The worker's qualification file has been updated."),
         },
       );
       void invalidate();

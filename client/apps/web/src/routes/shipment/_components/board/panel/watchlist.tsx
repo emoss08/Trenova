@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { useBoardActions } from "../use-board-actions";
 import { useShipmentBoardUrl } from "../url-state";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const WATCHLIST_STALE_MS = 30_000;
 const TICK_MS = 1_000;
@@ -168,12 +169,12 @@ function Deliveries({ data }: { data: ShipmentWatchlist["deliveries"] }) {
   );
 }
 
-const WINDOW_LABEL: Record<UncoveredPickupWindow, string> = {
+const WINDOW_LABEL: Record<UncoveredPickupWindow, string> = defineLabels({
   UnderTwoHours: "< 2h",
   TwoToSixHours: "2–6h",
   LaterToday: "Later today",
   TomorrowOrLater: "Tomorrow+",
-};
+});
 
 function Countdown({ until }: { until: number }) {
   const now = useNow();
@@ -221,7 +222,7 @@ function Uncovered({ data }: { data: ShipmentWatchlist["uncovered"] }) {
                 "border-danger-border bg-danger-subtle",
             )}
           >
-            <span className="text-muted-foreground text-2xs">{t(WINDOW_LABEL[window.window])}</span>
+            <span className="text-muted-foreground text-2xs">{WINDOW_LABEL[window.window]}</span>
             <span className="font-mono text-base font-semibold tabular-nums">{window.count}</span>
             <span className="text-muted-foreground font-mono text-2xs tabular-nums">
               {formatCompactCurrency(Number(window.revenue))}

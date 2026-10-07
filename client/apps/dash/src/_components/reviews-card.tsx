@@ -20,6 +20,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardCheckIcon, Edit03Icon, Target05Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const DASH_REVIEWS_KEY = "dash-reviews";
 
@@ -80,7 +81,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
       await queryClient.invalidateQueries({ queryKey: [DASH_REVIEWS_KEY] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Could not sign off. Try again.");
+      toast.error(error.message || translate("Could not sign off. Try again."));
     },
   });
 

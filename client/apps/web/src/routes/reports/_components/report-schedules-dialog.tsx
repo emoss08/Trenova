@@ -60,6 +60,7 @@ import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useController, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type ScheduleFormValues = {
   cronExpression: string;
@@ -439,7 +440,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
   const { field } = useController({
     control,
     name: "cronExpression",
-    rules: { required: "A cron expression is required" },
+    rules: { required: translate("A cron expression is required") },
   });
 
   const [parts, setParts] = useState<CronParts>(() => parseCron(field.value) ?? DEFAULT_CRON_PARTS);
@@ -549,7 +550,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
             name="cronExpression"
             placeholder="0 8 * * 1"
             description={t("Five fields: minute, hour, day-of-month, month, day-of-week.")}
-            rules={{ required: "A cron expression is required" }}
+            rules={{ required: translate("A cron expression is required") }}
           />
         </m.div>
       )}
@@ -936,7 +937,8 @@ export function ReportSchedulesDialog({
     updateSchedule.mutate(
       { ...scheduleToInput(schedule), enabled, id: schedule.id, version: schedule.version },
       {
-        onSuccess: () => toast.success(enabled ? "Schedule enabled" : "Schedule disabled"),
+        onSuccess: () =>
+          toast.success(enabled ? translate("Schedule enabled") : translate("Schedule disabled")),
         onError: (error) =>
           toast.error(graphQLErrorMessage(error, "Failed to update the schedule")),
         onSettled: () => setTogglingId(null),

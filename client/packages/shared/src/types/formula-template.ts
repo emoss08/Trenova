@@ -15,7 +15,7 @@ export const VariableValueType = z.enum([
 export type VariableValueType = z.infer<typeof VariableValueType>;
 
 export const variableDefinitionSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
   type: VariableValueType,
   description: z.string().default(""),
   required: z.boolean().default(false),
@@ -28,13 +28,13 @@ export type VariableDefinitionInput = z.input<typeof variableDefinitionSchema>;
 export const breakdownDefinitionSchema = z.object({
   name: z
     .string()
-    .min(1, "Name is required")
-    .regex(
-      /^[a-zA-Z][a-zA-Z0-9_]*$/,
-      "Must start with a letter and contain only letters, numbers, and underscores",
-    ),
-  label: z.string().min(1, "Label is required"),
-  expression: z.string().min(1, "Expression is required"),
+    .min(1, { error: () => translate("Name is required") })
+    .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, {
+      error: () =>
+        translate("Must start with a letter and contain only letters, numbers, and underscores"),
+    }),
+  label: z.string().min(1, { error: () => translate("Label is required") }),
+  expression: z.string().min(1, { error: () => translate("Expression is required") }),
 });
 export type BreakdownDefinition = z.output<typeof breakdownDefinitionSchema>;
 export type BreakdownDefinitionInput = z.input<typeof breakdownDefinitionSchema>;
@@ -64,8 +64,8 @@ export const MAX_ROUNDING_PRECISION = 4;
 
 const roundingPrecisionSchema = z
   .number()
-  .int("Rounding precision must be a whole number")
-  .min(0, "Rounding precision cannot be negative")
+  .int({ error: () => translate("Rounding precision must be a whole number") })
+  .min(0, { error: () => translate("Rounding precision cannot be negative") })
   .max(MAX_ROUNDING_PRECISION, `Rounding precision cannot exceed ${MAX_ROUNDING_PRECISION}`);
 
 export const formulaTemplateSchema = z
@@ -73,10 +73,13 @@ export const formulaTemplateSchema = z
     id: z.string().optional(),
     organizationId: z.string().optional(),
     businessUnitId: z.string().optional(),
-    name: z.string().min(1, "Name is required").max(100),
+    name: z
+      .string()
+      .min(1, { error: () => translate("Name is required") })
+      .max(100),
     description: z.string().default(""),
     type: formulaTemplateTypeSchema,
-    expression: z.string().min(1, "Expression is required"),
+    expression: z.string().min(1, { error: () => translate("Expression is required") }),
     status: formulaTemplateStatusSchema.default("Draft"),
     schemaId: z.string().default("shipment"),
     variableDefinitions: z.array(variableDefinitionSchema).default([]),
@@ -798,7 +801,7 @@ export const bulkUpdateStatusRequestSchema = z.object({
 export type BulkUpdateStatusRequest = z.infer<typeof bulkUpdateStatusRequestSchema>;
 
 export const bulkDuplicateFormulaTemplateRequestSchema = z.object({
-  templateIds: z.array(z.string()).min(1, { error: "Template Ids are required" }),
+  templateIds: z.array(z.string()).min(1, { error: () => translate("Template Ids are required") }),
 });
 
 export type BulkDuplicateFormulaTemplateRequest = z.infer<
@@ -817,7 +820,7 @@ export const rollbackRequestSchema = z.object({
 export type RollbackRequest = z.infer<typeof rollbackRequestSchema>;
 
 export const forkRequestSchema = z.object({
-  newName: z.string().min(1, "Name is required"),
+  newName: z.string().min(1, { error: () => translate("Name is required") }),
   sourceVersion: z.number().optional(),
   changeMessage: z.string().optional(),
 });
@@ -893,11 +896,19 @@ export const formulaTestCaseSchema = z.object({
 export type FormulaTestCase = z.output<typeof formulaTestCaseSchema>;
 
 export const formulaTestCaseInputSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: z.string().default(""),
   variables: z.record(z.string(), z.any()).default({}),
-  expectedAmount: z.coerce.number().min(0, "Expected amount cannot be negative"),
-  tolerance: z.coerce.number().min(0, "Tolerance cannot be negative").default(0.01),
+  expectedAmount: z.coerce
+    .number()
+    .min(0, { error: () => translate("Expected amount cannot be negative") }),
+  tolerance: z.coerce
+    .number()
+    .min(0, { error: () => translate("Tolerance cannot be negative") })
+    .default(0.01),
 });
 export type FormulaTestCaseInput = z.input<typeof formulaTestCaseInputSchema>;
 export type FormulaTestCaseValues = z.output<typeof formulaTestCaseInputSchema>;

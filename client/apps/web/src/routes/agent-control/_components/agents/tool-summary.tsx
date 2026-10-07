@@ -90,7 +90,7 @@ export function ToolSummary({
                 <span className="truncate">{toolTitle(tool)}</span>
                 {tool.kind === "action" && (
                   <Badge variant="neutral" appearance="outline" className="h-4 px-1 text-2xs">
-                    {t(TIER_LABEL[tier])}
+                    {TIER_LABEL[tier]}
                   </Badge>
                 )}
                 <button

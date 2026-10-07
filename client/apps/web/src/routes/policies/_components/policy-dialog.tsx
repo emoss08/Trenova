@@ -44,6 +44,7 @@ import {
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type Source = "text" | "document";
 
@@ -169,7 +170,8 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
       setAttachedName(file.name);
       toast.success(t("Document attached"));
     },
-    onError: (error: Error) => toast.error(error.message || "Could not attach the document"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Could not attach the document")),
   });
 
   const { mutateAsync, isPending } = useApiMutation<
@@ -196,7 +198,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
       return policy ? updateWorkerPolicy(policy.id, input) : createWorkerPolicy(input);
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Policy updated" : "Policy published");
+      toast.success(isEdit ? translate("Policy updated") : translate("Policy published"));
       void queryClient.invalidateQueries({ queryKey: [WORKER_POLICIES_KEY] });
       close();
     },

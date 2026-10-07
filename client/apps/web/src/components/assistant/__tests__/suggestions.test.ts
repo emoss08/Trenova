@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { agentSuggestions, suggestionsFor } from "../suggestions";
 
 /**
@@ -33,8 +34,8 @@ describe("suggestionsFor with a page", () => {
       title: "Shipments",
     });
 
-    expect(suggestions[0].label).toBe("Why is this shipment flagged?");
-    expect(suggestions[1].label).toBe("Summarize this shipment");
+    expect(suggestions[0].label).toBe("Why is this record flagged?");
+    expect(suggestions[1].label).toBe("Summarize this record");
   });
 
   it("asks about the figures when the page shows some", () => {
@@ -115,11 +116,38 @@ describe("agentSuggestions", () => {
       { path: "/shipments", entityType: "shipment", entityId: "shp_1", title: "S1" },
     );
 
-    expect(suggestions[0].label).toBe("Why is this shipment flagged?");
+    expect(suggestions[0].label).toBe("Why is this record flagged?");
     expect(suggestions.at(-1)?.label).toBe("Own");
   });
 
   it("offers only the page's questions when there is no agent", () => {
     expect(agentSuggestions(null)).toEqual([]);
+  });
+});
+
+/**
+ * A suggestion is shown as a chip and sent as the person's own message, so a person reading
+ * Spanish is offered, and sends, a Spanish question.
+ */
+describe("suggestions in another language", () => {
+  beforeAll(async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "What can you do?": "¿Qué puede hacer?",
+        "What can you look up or change for me?": "¿Qué puede consultar o cambiar por mí?",
+      }),
+    });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("offers and sends the question in the language on screen", () => {
+    const [first] = suggestionsFor(null, null);
+
+    expect(first.label).toBe("¿Qué puede hacer?");
+    expect(first.prompt).toBe("¿Qué puede consultar o cambiar por mí?");
   });
 });

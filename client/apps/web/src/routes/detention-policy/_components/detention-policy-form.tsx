@@ -30,22 +30,23 @@ import type { DetentionPolicy } from "@trenova/shared/types/detention";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
 import { DetentionTierEditor } from "./detention-tier-editor";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const CLOCK_START_HELP: Record<string, string> = {
+const CLOCK_START_HELP: Record<string, string> = defineLabels({
   LaterOfArrivalOrAppointment:
     "The most common contract term: an early driver does not begin accruing until the appointment.",
   Arrival: "The clock starts the moment the driver arrives, even if early.",
   Appointment: "An early driver accrues free time while waiting for the appointment.",
   EarlierOfArrivalOrAppointment: "Favors the carrier when a facility accepts early delivery.",
-};
+});
 
-const LATE_ARRIVAL_HELP: Record<string, string> = {
+const LATE_ARRIVAL_HELP: Record<string, string> = defineLabels({
   NoEffect: "Lateness is recorded but the carrier keeps full entitlement.",
   Forfeit:
     "A late arrival voids detention entirely. Common in shipper-favorable rate confirmations — verify before selecting.",
   ClockFromAppointment: "Entitlement survives, but lateness burns the carrier's own free time.",
   ReduceFreeTime: "The minutes of lateness are subtracted from the allowance.",
-};
+});
 
 /**
  * The policy builder.

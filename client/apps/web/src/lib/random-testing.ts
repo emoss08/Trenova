@@ -1,4 +1,5 @@
 import { roundsPerYear } from "@trenova/shared/lib/drug-alcohol";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Pure readings of the random testing programme: which rounds a year owes,
@@ -152,13 +153,13 @@ export type CalendarSlot = PeriodSlot & {
   voided: number;
 };
 
-export const SLOT_STATE_LABELS: Record<SlotState, string> = {
+export const SLOT_STATE_LABELS: Record<SlotState, string> = defineLabels({
   final: "Final",
   draft: "Drawn, not final",
   missed: "Never drawn",
   due: "Owed now",
   upcoming: "Not yet",
-};
+});
 
 /**
  * A pool's year as the auditor will read it: one slot per round the period

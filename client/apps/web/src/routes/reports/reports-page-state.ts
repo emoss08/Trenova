@@ -1,5 +1,6 @@
 import { REPORT_CATEGORY_CHOICES, REPORT_DEFINITION_STATUS_LABELS } from "@/types/report";
 import { parseAsString, parseAsStringLiteral } from "nuqs";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 export const reportTabs = ["library", "gallery", "dashboards"] as const;
 export type ReportTab = (typeof reportTabs)[number];
@@ -46,7 +47,7 @@ export const REPORT_STATUS_FILTER_CHOICES: { value: string; label: string }[] = 
     .filter((status) => status !== "all")
     .map((status) => ({
       value: status,
-      label: REPORT_DEFINITION_STATUS_LABELS[status] ?? status,
+      label: sourceLabels(REPORT_DEFINITION_STATUS_LABELS)[status] ?? status,
     })),
 ];
 

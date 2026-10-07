@@ -1,12 +1,13 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { RateAgreementVersion } from "@trenova/shared/types/rate";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Labels for the header terms a version can record, in the words the form uses.
  * A path missing from this map falls back to its raw key, so a newly versioned
  * field degrades to legible-but-plain rather than to nothing.
  */
-const HEADER_FIELD_LABELS: Record<string, string> = {
+const HEADER_FIELD_LABELS: Record<string, string> = defineLabels({
   partyType: "Party type",
   customerId: "Customer",
   carrierId: "Carrier",
@@ -29,23 +30,23 @@ const HEADER_FIELD_LABELS: Record<string, string> = {
   roundingPrecision: "Rounding precision",
   marginFloorPercent: "Margin floor",
   maxPayPercentOfSell: "Max pay percent of sell",
-};
+});
 
-const ACCESSORIAL_FIELD_LABELS: Record<string, string> = {
-  method: "method",
-  rateUnit: "rate unit",
-  amount: "amount",
-  waived: "waiver",
-  autoApply: "auto-apply",
-  applyCondition: "condition",
-  freeUnits: "free units",
-  maxAmount: "cap",
-  formulaTemplateId: "rating method",
-  serviceTypeIds: "applicability",
-  shipmentTypeIds: "applicability",
-  appliesFrom: "window",
-  appliesTo: "window",
-};
+const ACCESSORIAL_FIELD_LABELS: Record<string, string> = defineLabels({
+  method: "Method",
+  rateUnit: "Rate unit",
+  amount: "Amount",
+  waived: "Waiver",
+  autoApply: "Auto-apply",
+  applyCondition: "Condition",
+  freeUnits: "Free units",
+  maxAmount: "Cap",
+  formulaTemplateId: "Rating method",
+  serviceTypeIds: "Applicability",
+  shipmentTypeIds: "Applicability",
+  appliesFrom: "Window",
+  appliesTo: "Window",
+});
 
 const ACCESSORIAL_PREFIX = "accessorialTerms.";
 
@@ -72,7 +73,7 @@ function accessorialPhrase(
   }
 
   const fieldLabel = ACCESSORIAL_FIELD_LABELS[field] ?? field;
-  return name ? `${name} ${fieldLabel}` : `Accessorial ${fieldLabel}`;
+  return name ? translate("{0}: {1}", name, fieldLabel) : translate("Accessorial: {0}", fieldLabel);
 }
 
 /**
@@ -92,7 +93,7 @@ export function describeVersion(version: RateAgreementVersion): string {
     if (path.startsWith(ACCESSORIAL_PREFIX)) {
       phrase = accessorialPhrase(path, change as FieldChange, names);
     } else if (path === "fuelTerms" || path.startsWith("fuelTerms.")) {
-      phrase = "Fuel terms";
+      phrase = translate("Fuel terms");
     } else {
       phrase = HEADER_FIELD_LABELS[path] ?? path;
     }

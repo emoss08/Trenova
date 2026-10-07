@@ -30,6 +30,7 @@ import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useTrainingInvalidation } from "./use-training-invalidation";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type CompleteTrainingDialogProps = {
   open: boolean;
@@ -122,9 +123,9 @@ export function CompleteTrainingDialog({
         {
           description: passed
             ? saved.expiresAt
-              ? "The certification is on file with its expiry date."
-              : "The course is on file."
-            : "Assign the course again when the worker is ready to retake it.",
+              ? translate("The certification is on file with its expiry date.")
+              : translate("The course is on file.")
+            : translate("Assign the course again when the worker is ready to retake it."),
         },
       );
       void invalidate();

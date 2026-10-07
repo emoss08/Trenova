@@ -50,8 +50,8 @@ export const carrierContactSchema = z
     carrierId: z.string().optional(),
     name: z
       .string()
-      .min(1, { error: "Name is required" })
-      .max(255, { error: "Name must be 255 characters or less" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(255, { error: () => translate("Name must be 255 characters or less") }),
     title: nullableStringSchema,
     email: nullableStringSchema,
     phone: nullableStringSchema,
@@ -77,19 +77,25 @@ export const carrierInsurancePolicySchema = z
     policyType: carrierInsurancePolicyTypeSchema,
     policyNumber: z
       .string()
-      .min(1, { error: "Policy number is required" })
-      .max(100, { error: "Policy number must be 100 characters or less" }),
+      .min(1, { error: () => translate("Policy number is required") })
+      .max(100, { error: () => translate("Policy number must be 100 characters or less") }),
     providerName: z
       .string()
-      .min(1, { error: "Provider name is required" })
-      .max(255, { error: "Provider name must be 255 characters or less" }),
+      .min(1, { error: () => translate("Provider name is required") })
+      .max(255, { error: () => translate("Provider name must be 255 characters or less") }),
     coverageAmount: decimalStringSchema,
-    effectiveDate: z.number().int().positive({
-      message: "Effective date is required",
-    }),
-    expirationDate: z.number().int().positive({
-      message: "Expiration date is required",
-    }),
+    effectiveDate: z
+      .number()
+      .int()
+      .positive({
+        error: () => translate("Effective date is required"),
+      }),
+    expirationDate: z
+      .number()
+      .int()
+      .positive({
+        error: () => translate("Expiration date is required"),
+      }),
     isVerified: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
@@ -119,23 +125,23 @@ export const carrierSchema = z
     status: carrierStatusSchema,
     code: z
       .string()
-      .min(1, { error: "Code is required" })
-      .max(10, { error: "Code must be 10 characters or less" }),
+      .min(1, { error: () => translate("Code is required") })
+      .max(10, { error: () => translate("Code must be 10 characters or less") }),
     name: z
       .string()
-      .min(1, { error: "Name is required" })
-      .max(255, { error: "Name must be 255 characters or less" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(255, { error: () => translate("Name must be 255 characters or less") }),
     dbaName: nullableStringSchema,
     carrierType: carrierTypeSchema,
     dotNumber: nullableStringSchema.refine(
       (value) => value == null || /^[0-9]{1,12}$/.test(value),
-      { error: "DOT number must contain only digits (12 max)" },
+      { error: () => translate("DOT number must contain only digits (12 max)") },
     ),
     mcNumber: nullableStringSchema.refine((value) => value == null || /^[0-9]{1,12}$/.test(value), {
-      error: "MC number must contain only digits (12 max)",
+      error: () => translate("MC number must contain only digits (12 max)"),
     }),
     scac: nullableStringSchema.refine((value) => value == null || /^[A-Z]{2,4}$/.test(value), {
-      error: "SCAC must be 2-4 uppercase letters",
+      error: () => translate("SCAC must be 2-4 uppercase letters"),
     }),
     complianceStatus: carrierComplianceStatusSchema,
     safetyRating: carrierSafetyRatingSchema,
@@ -149,8 +155,8 @@ export const carrierSchema = z
     paymentTermDays: z
       .number()
       .int()
-      .min(0, { error: "Payment term days cannot be negative" })
-      .max(365, { error: "Payment term days cannot exceed 365" })
+      .min(0, { error: () => translate("Payment term days cannot be negative") })
+      .max(365, { error: () => translate("Payment term days cannot exceed 365") })
       .default(30),
     remitToName: nullableStringSchema,
     remitAddressLine1: nullableStringSchema,
@@ -164,7 +170,7 @@ export const carrierSchema = z
     phone: nullableStringSchema,
     email: nullableStringSchema.refine(
       (value) => value == null || z.email().safeParse(value).success,
-      { error: "Email must be a valid email address" },
+      { error: () => translate("Email must be a valid email address") },
     ),
     externalId: nullableStringSchema,
     notes: nullableStringSchema,

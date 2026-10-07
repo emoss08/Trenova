@@ -10,10 +10,17 @@ export { formatMessage } from "@trenova/shared/i18n/format-message";
 export {
   formatList,
   formatNumber,
+  formatOrdinal,
   formatRelativeTime,
   intlLocale,
 } from "@trenova/shared/i18n/format";
 export { I18nProvider } from "@trenova/shared/i18n/provider";
+export {
+  defineLabels,
+  type LabelMap,
+  sourceLabels,
+  translateLabel,
+} from "@trenova/shared/i18n/labels";
 export {
   afterCatalogs,
   getLocale,

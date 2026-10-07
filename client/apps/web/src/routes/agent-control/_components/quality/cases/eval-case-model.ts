@@ -6,6 +6,8 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import type { AgentEvalCaseDetail } from "@/lib/graphql/agent-eval-cases";
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const toleranceKinds = [
   "exact",
@@ -56,7 +58,7 @@ export type Expected = {
   mustNotMention: string[];
 };
 
-export const TOLERANCE_LABEL: Record<ToleranceKind, string> = {
+export const TOLERANCE_LABEL: Record<ToleranceKind, string> = defineLabels({
   exact: "Exactly",
   ci: "Same text, any case",
   numeric: "Number within",
@@ -65,9 +67,9 @@ export const TOLERANCE_LABEL: Record<ToleranceKind, string> = {
   present: "Present",
   ignore: "Ignore",
   setEq: "Same set",
-};
+});
 
-export const TOLERANCE_HELP: Record<ToleranceKind, string> = {
+export const TOLERANCE_HELP: Record<ToleranceKind, string> = defineLabels({
   exact: "The argument must be this value.",
   ci: "The same words, ignoring case and surrounding spaces.",
   numeric: "A number within an absolute amount or a share of the value.",
@@ -76,13 +78,13 @@ export const TOLERANCE_HELP: Record<ToleranceKind, string> = {
   present: "Any non-empty value.",
   ignore: "Not checked.",
   setEq: "The same members in any order.",
-};
+});
 
-export const TOOL_MODE_LABEL: Record<ToolMatchMode, string> = {
+export const TOOL_MODE_LABEL: Record<ToolMatchMode, string> = defineLabels({
   AnyOrder: "Every tool, any order",
   Ordered: "Every tool, in this order",
   Subset: "Only these tools",
-};
+});
 
 const CASE_TRANSITIONS: Record<AgentEvalCaseStatus, readonly AgentEvalCaseStatus[]> = {
   Candidate: ["Active", "Retired"],
@@ -218,7 +220,10 @@ function parseList(text: string): unknown[] {
 const numberText = z.string().trim();
 
 const ruleShape = z.object({
-  key: z.string().trim().min(1, "Name the argument"),
+  key: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name the argument") }),
   value: z.string(),
   kind: z.enum(toleranceKinds),
   abs: numberText,
@@ -235,22 +240,30 @@ function checkRule(rule: RuleShape, ctx: z.RefinementCtx, requireValue: boolean)
     if (text === "") return null;
     const parsed = Number(text);
     if (!Number.isFinite(parsed)) {
-      ctx.addIssue({ code: "custom", path: [path], message: "Enter a number" });
+      ctx.addIssue({ code: "custom", path: [path], message: translate("Enter a number") });
       return null;
     }
     return parsed;
   };
   if (requireValue && needsValue(rule.kind) && rule.value.trim() === "") {
-    ctx.addIssue({ code: "custom", path: ["value"], message: "Give the expected value" });
+    ctx.addIssue({
+      code: "custom",
+      path: ["value"],
+      message: translate("Give the expected value"),
+    });
   }
   if (rule.kind === "numeric") {
     const abs = numberAt("abs");
     const rel = numberAt("rel");
     if (abs !== null && abs < 0) {
-      ctx.addIssue({ code: "custom", path: ["abs"], message: "Cannot be negative" });
+      ctx.addIssue({ code: "custom", path: ["abs"], message: translate("Cannot be negative") });
     }
     if (rel !== null && (rel < 0 || rel > 1)) {
-      ctx.addIssue({ code: "custom", path: ["rel"], message: "A share between 0 and 1" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["rel"],
+        message: translate("A share between 0 and 1"),
+      });
     }
   }
   if (rule.kind === "dateWindow") {
@@ -259,12 +272,16 @@ function checkRule(rule: RuleShape, ctx: z.RefinementCtx, requireValue: boolean)
       ctx.addIssue({
         code: "custom",
         path: ["windowHours"],
-        message: "A window longer than zero hours",
+        message: translate("A window longer than zero hours"),
       });
     }
   }
   if (rule.kind === "oneOf" && rule.values.length === 0) {
-    ctx.addIssue({ code: "custom", path: ["values"], message: "List at least one value" });
+    ctx.addIssue({
+      code: "custom",
+      path: ["values"],
+      message: translate("List at least one value"),
+    });
   }
 }
 
@@ -275,12 +292,18 @@ const proposalRuleSchema = ruleShape.superRefine((rule, ctx) => checkRule(rule, 
 export type ArgumentRuleValues = z.infer<typeof argumentRuleSchema>;
 
 const expectedToolSchema = z.object({
-  name: z.string().trim().min(1, "Name the tool"),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name the tool") }),
   args: z.array(argumentRuleSchema),
 });
 
 const expectedProposalSchema = z.object({
-  toolName: z.string().trim().min(1, "Name the tool"),
+  toolName: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name the tool") }),
   rejected: z.boolean(),
   params: z.string(),
   sourceProposalId: z.string(),
@@ -290,14 +313,20 @@ const expectedProposalSchema = z.object({
 export const evalCaseFormSchema = z
   .object({
     agentDefinitionId: z.string(),
-    title: z.string().trim().max(200, "Keep the title to 200 characters"),
+    title: z
+      .string()
+      .trim()
+      .max(200, { error: () => translate("Keep the title to 200 characters") }),
     trigger: z.enum(["Chat", "Continuous", "Event", "Manual", "Scheduled"]),
     input: z
       .string()
       .trim()
-      .min(1, "Write the question the agent is asked")
-      .max(20000, "Keep the question to 20,000 characters"),
-    rubric: z.string().trim().max(4000, "Keep the rubric to 4,000 characters"),
+      .min(1, { error: () => translate("Write the question the agent is asked") })
+      .max(20000, { error: () => translate("Keep the question to 20,000 characters") }),
+    rubric: z
+      .string()
+      .trim()
+      .max(4000, { error: () => translate("Keep the rubric to 4,000 characters") }),
     heldTools: z.array(z.string()),
     toolMode: z.enum(toolMatchModes),
     tools: z.array(expectedToolSchema),
@@ -315,7 +344,7 @@ export const evalCaseFormSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["tools", index, "name"],
-          message: "A tool cannot be both expected and forbidden",
+          message: translate("A tool cannot be both expected and forbidden"),
         });
       }
     });
@@ -326,7 +355,7 @@ export const evalCaseFormSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["proposals", index, "params"],
-          message: "The approved parameters are a JSON object",
+          message: translate("The approved parameters are a JSON object"),
         });
       }
     });
@@ -334,7 +363,7 @@ export const evalCaseFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["expectRefusal"],
-        message: "A case that expects a refusal cannot also expect tool calls",
+        message: translate("A case that expects a refusal cannot also expect tool calls"),
       });
     }
     const forbidden = values.mustNotMention.map((phrase) => phrase.toLowerCase());
@@ -342,7 +371,7 @@ export const evalCaseFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["mustNotMention"],
-        message: "A phrase cannot be both required and forbidden",
+        message: translate("A phrase cannot be both required and forbidden"),
       });
     }
   });

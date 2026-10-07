@@ -38,6 +38,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function buildDefaults(): IssuePayAdvanceFormValues {
   return {
@@ -199,7 +200,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       setWriteOffOpen(false);
       onClose();
     },
-    onError: (error: Error) => toast.error(error.message || "Write-off failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Write-off failed")),
   });
 
   const canWriteOff = row.status === "Outstanding" || row.status === "PartiallyRecovered";
@@ -220,17 +221,13 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Recovered")}
-          </p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Recovered")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.recoveredMinor} currency={row.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium">
-            {t("Outstanding")}
-          </p>
+          <p className="text-muted-foreground text-xs font-medium">{t("Outstanding")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={row.outstandingMinor}

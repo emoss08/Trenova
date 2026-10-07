@@ -6,6 +6,7 @@
   "Read {0}.": "Leído {0}.",
   "Review rows": "Revisar las filas",
   "Sync now": "Sincronizar ahora",
+  "The rows still waiting need their card assigned, or the unit they name added.": "Las filas que siguen en espera necesitan que se les asigne su tarjeta o que se agregue la unidad que indican.",
   "This run has nothing waiting": "Esta ejecución no tiene nada pendiente",
   "Work rows out again": "Volver a resolver las filas",
   "Working them out...": "Resolviéndolas...",

@@ -29,10 +29,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const KIND_OPTIONS = orgHolidayKindSchema.options.map((value) => ({
   value,
-  label: ORG_HOLIDAY_KIND_LABELS[value],
+  label: sourceLabels(ORG_HOLIDAY_KIND_LABELS)[value],
   color: value === "Blackout" ? "var(--danger)" : "var(--success)",
 }));
 

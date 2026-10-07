@@ -40,6 +40,7 @@
   "The GL date for this application. It must fall within an open fiscal period.": "此冲抵的总账日期。必须落在开放的财务期间内。",
   "The GL date. It must fall within an open fiscal period.": "总账日期。必须落在开放的财务期间内。",
   "The applied total exceeds the payment amount.": "冲抵总额超过付款金额。",
+  "The applied total exceeds the unapplied cash on this payment.": "冲抵总额超过此付款的未冲抵款项。",
   "The cash receipt and invoice applications were backed out.": "已回冲此笔收款与发票冲抵记录。",
   "The date the funds were received.": "收到款项的日期。",
   "This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.": "此操作会回冲 {0} 的款项、重新打开已冲抵的发票，并过账一笔冲销分录。此操作无法撤销。",

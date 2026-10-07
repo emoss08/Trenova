@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { equipmentTableGraphQLConfigs, type TractorRow } from "@/lib/graphql/equipment-table";
 import { getColumns } from "./tractor-columns";
 import { TractorPanel } from "./tractor-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function Table() {
   const t = useT();
@@ -28,9 +29,9 @@ export default function Table() {
           status: status as Tractor["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["tractor-list"],

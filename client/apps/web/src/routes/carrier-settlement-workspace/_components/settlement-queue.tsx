@@ -35,6 +35,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type QueueFilter = "all" | "Draft" | "PendingApproval" | "Approved" | "Posted" | "Paid";
 
@@ -310,7 +311,7 @@ function BulkActionBar({
       );
     },
     onSuccess: () => onComplete(),
-    onError: (error: Error) => toast.error(error.message || "Bulk action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Bulk action failed")),
   });
 
   const actionButton = (

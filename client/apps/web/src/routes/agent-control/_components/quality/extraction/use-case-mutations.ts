@@ -35,7 +35,7 @@ export function useCaseMutations() {
     onSuccess: async (updated, { input }) => {
       toast.success(
         input.status
-          ? t(CASE_STATUS_MOVED[input.status as ExtractionEvalCaseStatus])
+          ? CASE_STATUS_MOVED[input.status as ExtractionEvalCaseStatus]
           : t("Changes have been saved"),
       );
       await refresh(updated.id);

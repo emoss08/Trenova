@@ -21,6 +21,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** The column's length, so a long reason is a field error rather than a failed save. */
 const MAX_REASON_LENGTH = 2000;
@@ -32,11 +33,11 @@ export const linkMessageSchema = z
     reason: z
       .string()
       .trim()
-      .min(1, { error: "Say why this is the right record" })
+      .min(1, { error: () => translate("Say why this is the right record") })
       .max(MAX_REASON_LENGTH, { error: `At most ${MAX_REASON_LENGTH} characters` }),
   })
   .refine((value) => Boolean(value.shipmentId) || Boolean(value.customerId), {
-    error: "Choose a shipment, a customer, or both",
+    error: () => translate("Choose a shipment, a customer, or both"),
     path: ["shipmentId"],
   });
 

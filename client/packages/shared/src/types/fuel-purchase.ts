@@ -49,7 +49,9 @@ const optionalLastFour = z
   .pipe(
     z
       .string()
-      .regex(LAST_FOUR_PATTERN, { message: "Enter the last four digits of the card" })
+      .regex(LAST_FOUR_PATTERN, {
+        error: () => translate("Enter the last four digits of the card"),
+      })
       .nullable(),
   );
 
@@ -109,7 +111,7 @@ export const fuelPurchaseImportSetupSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .regex(CURRENCY_PATTERN, { message: "Use a three-letter currency code" }),
+    .regex(CURRENCY_PATTERN, { error: () => translate("Use a three-letter currency code") }),
 });
 
 export type FuelPurchaseImportSetupValues = z.infer<typeof fuelPurchaseImportSetupSchema>;

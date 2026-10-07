@@ -31,6 +31,7 @@ import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useLeaveInvalidation } from "./use-leave-invalidation";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const TYPE_OPTIONS = leaveTypeFormSchema.options.map((value) => ({
   value,
@@ -117,10 +118,12 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
         : openLeaveCase({ ...shared, workerId, requestedAt: values.requestedAt });
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Leave case updated" : "Leave case opened", {
+      toast.success(isEdit ? translate("Leave case updated") : translate("Leave case opened"), {
         description: isEdit
           ? undefined
-          : "Approving and designating are separate decisions — nothing is drawn down yet.",
+          : translate(
+              "Approving and designating are separate decisions — nothing is drawn down yet.",
+            ),
       });
       void invalidate();
       onOpenChange(false);

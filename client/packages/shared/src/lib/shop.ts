@@ -1,4 +1,5 @@
 import type { MarginVerdict, ShopOption, ShopResult, ShopStrategy } from "../types/rate";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Presenting a shopping result.
@@ -14,19 +15,19 @@ import type { MarginVerdict, ShopOption, ShopResult, ShopStrategy } from "../typ
  */
 
 /** How a strategy is described where somebody picks one. */
-const STRATEGY_LABEL: Record<ShopStrategy, string> = {
+const STRATEGY_LABEL: Record<ShopStrategy, string> = defineLabels({
   LeastCost: "Cheapest",
   BestMargin: "Best margin",
   GuideRank: "Routing guide order",
   FastestAccept: "Fastest to accept",
-};
+});
 
-const STRATEGY_EXPLANATION: Record<ShopStrategy, string> = {
+const STRATEGY_EXPLANATION: Record<ShopStrategy, string> = defineLabels({
   LeastCost: "Ranked by what the carrier charges.",
   BestMargin: "Ranked by what is left after paying them, which is not the same order as cheapest.",
   GuideRank: "Kept in the routing guide's own order, so a committed carrier is offered it first.",
   FastestAccept: "Ranked by the shortest offer window, for a load that has to move now.",
-};
+});
 
 export function shopStrategyLabel(strategy: ShopStrategy): string {
   return STRATEGY_LABEL[strategy] ?? strategy;

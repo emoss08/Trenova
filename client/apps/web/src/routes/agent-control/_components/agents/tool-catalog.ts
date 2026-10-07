@@ -2,26 +2,27 @@ import { describeToolCall } from "@/components/assistant/tool-presentation";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
 import { toTitleCase } from "@trenova/shared/lib/utils";
 import { tierWithin } from "./agent-form-schema";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const TIER_ORDER: readonly AutonomyTier[] = ["Propose", "ActWithApproval", "AutoExecute"];
 
-export const TIER_LABEL: Record<AutonomyTier, string> = {
+export const TIER_LABEL: Record<AutonomyTier, string> = defineLabels({
   Propose: "Propose",
   ActWithApproval: "Ask first",
   AutoExecute: "Automatic",
-};
+});
 
 /**
  * Resources whose title-cased name reads wrong. Title case turns an
  * abbreviation into a word — worker_pto becomes "Worker Pto" — and this is the
  * label an administrator reads while deciding what an agent may touch.
  */
-const RESOURCE_LABELS: Record<string, string> = {
+const RESOURCE_LABELS: Record<string, string> = defineLabels({
   worker_pto: "Worker time off",
   hazardous_material: "Hazardous materials",
   bqi: "Billing queue",
   home_layout_preset: "Home page",
-};
+});
 
 export function resourceLabel(resource: string): string {
   const key = resource || "general";

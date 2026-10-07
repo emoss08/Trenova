@@ -26,6 +26,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./document-packet-rule-columns";
 import { DocumentPacketRulePanel } from "./document-packet-rule-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const service = new DocumentPacketRuleService();
 
@@ -64,7 +65,8 @@ export default function DocumentPacketRuleTable() {
     },
     onError: (error) => {
       toast.error(t("Failed to delete document packet rule"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error ? error.message : translate("An unexpected error occurred"),
       });
     },
   });

@@ -17,6 +17,7 @@ import type { Cell, FilterVariant } from "@trenova/shared/types/data-table";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
@@ -98,7 +99,8 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
         await cell.commitEdit(value);
       } catch (error) {
         toast.error(t("Update failed"), {
-          description: error instanceof Error ? error.message : "The change could not be saved.",
+          description:
+            error instanceof Error ? error.message : translate("The change could not be saved."),
         });
         setIsPending(false);
       }

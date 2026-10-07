@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { DQFNextStep } from "@trenova/shared/lib/dqf";
 import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type DQFNextStepsProps = {
   steps: readonly DQFNextStep[];
@@ -9,14 +10,14 @@ type DQFNextStepsProps = {
   onStep: (step: DQFNextStep) => void;
 };
 
-const ACTION_HINTS: Record<string, string> = {
+const ACTION_HINTS: Record<string, string> = defineLabels({
   request: "Send request",
   chase: "Chase again",
   close: "Close as no response",
   drugAlcohol: "Record response",
   addEmployer: "Add employer",
   review: "Retention",
-};
+});
 
 /**
  * The work on the file, in order. Each row is the thing to do next and takes

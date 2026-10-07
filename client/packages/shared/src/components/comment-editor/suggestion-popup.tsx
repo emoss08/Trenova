@@ -15,6 +15,7 @@ import {
 import { useDebounce } from "../../hooks/use-debounce";
 import { cn } from "../../lib/utils";
 import { Spinner } from "../ui/spinner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export interface EditorSuggestionItem {
   id: string;
@@ -58,11 +59,11 @@ interface SuggestionListProps {
   command: (item: EditorSuggestionItem) => void;
 }
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<string, string> = defineLabels({
   shipment: "Shipment",
   worker: "Worker",
   customer: "Customer",
-};
+});
 
 const QUERY_DEBOUNCE_MS = 250;
 const SCROLL_BUFFER_PX = 50;
@@ -150,7 +151,9 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
 
     if (isError) {
       return (
-        <div className="p-2 text-sm text-danger-foreground">{translate("Failed to load suggestions")}</div>
+        <div className="p-2 text-sm text-danger-foreground">
+          {translate("Failed to load suggestions")}
+        </div>
       );
     }
 

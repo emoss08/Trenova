@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalStringSchema, timestampSchema } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const fieldSensitivitySchema = z.enum(["public", "internal", "restricted", "confidential"]);
 export type FieldSensitivity = z.infer<typeof fieldSensitivitySchema>;
@@ -42,7 +43,10 @@ export type CoreResponsibility = z.infer<typeof coreResponsibilitySchema>;
 export const roleSchema = z.object({
   id: optionalStringSchema,
   organizationId: optionalStringSchema,
-  name: z.string().min(1, "Name is required").max(255),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(255),
   description: optionalStringSchema,
   coreResponsibility: coreResponsibilitySchema.nullish(),
   parentRoleIds: z.array(z.string()).nullish(),
@@ -93,8 +97,10 @@ export const userRoleAssignmentSchema = z.object({
 export type UserRoleAssignment = z.infer<typeof userRoleAssignmentSchema>;
 
 export const addPermissionSchema = z.object({
-  resource: z.string().min(1, "Resource is required"),
-  operations: z.array(operationSchema).min(1, "At least one operation is required"),
+  resource: z.string().min(1, { error: () => translate("Resource is required") }),
+  operations: z
+    .array(operationSchema)
+    .min(1, { error: () => translate("At least one operation is required") }),
   dataScope: dataScopeSchema,
 });
 export type AddPermission = z.infer<typeof addPermissionSchema>;
@@ -113,7 +119,7 @@ export const createRoleSchema = roleSchema
 export type CreateRole = z.infer<typeof createRoleSchema>;
 
 export const assignRoleSchema = z.object({
-  userId: z.string().min(1, "User is required"),
+  userId: z.string().min(1, { error: () => translate("User is required") }),
   expiresAt: z.number().nullable().optional(),
 });
 export type AssignRole = z.infer<typeof assignRoleSchema>;
@@ -146,7 +152,7 @@ export const roleConstraintSchema = z.object({
   id: optionalStringSchema,
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
   description: optionalStringSchema,
   type: roleConstraintTypeSchema,
   maxRoles: z.number().int().min(1),
@@ -168,6 +174,6 @@ export const saveRoleConstraintSchema = roleConstraintSchema
     enabled: true,
   })
   .extend({
-    roleIds: z.array(z.string()).min(2, "Select at least two roles"),
+    roleIds: z.array(z.string()).min(2, { error: () => translate("Select at least two roles") }),
   });
 export type SaveRoleConstraint = z.infer<typeof saveRoleConstraintSchema>;

@@ -50,8 +50,8 @@ export function InsightFilterBar({
           }
           items={STATUS_FILTERS.map((status) => ({
             value: status,
-            label: t(STATUS_LABELS[status]),
-            caption: t(STATUS_DESCRIPTIONS[status]),
+            label: STATUS_LABELS[status],
+            caption: STATUS_DESCRIPTIONS[status],
           }))}
         />
 
@@ -77,8 +77,8 @@ export function InsightFilterBar({
         {CATEGORY_FILTERS.map((category) => (
           <FilterChip
             key={category}
-            label={t(CATEGORY_LABELS[category])}
-            tooltip={t(CATEGORY_DESCRIPTIONS[category])}
+            label={CATEGORY_LABELS[category]}
+            tooltip={CATEGORY_DESCRIPTIONS[category]}
             selected={filters.categories.includes(category)}
             onToggle={() => onChange(toggleFilter(filters, "categories", category))}
           />

@@ -6,7 +6,10 @@
   "Batch failures": "批次失败",
   "Charge detail": "费用明细",
   "Context": "上下文",
+  "Credit & Rebill": "贷记并重新开单",
+  "Credit Only": "仅贷记",
   "Financial impact": "财务影响",
+  "Full Reversal": "全额冲销",
   "Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.": "请从列表中选择一笔调整，以了解其需要批准的原因与变更内容，并进行批准或拒绝。",
   "Policy-controlled": "由政策管控",
   "Policy: {0}": "政策：{0}",
@@ -17,5 +20,6 @@
   "The approval queue could not be read. Check your connection and reload the page.": "无法读取审批队列。请检查网络连接并重新加载页面。",
   "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": "无法读取此调整。它可能已由其他人处理；请刷新队列查看仍在等待的项目。",
   "Unapplied credit": "未冲抵贷项",
-  "Why is this adjustment being rejected?": "为何拒绝这笔调整？"
+  "Why is this adjustment being rejected?": "为何拒绝这笔调整？",
+  "Write-Off": "冲销"
 }

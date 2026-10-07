@@ -4,11 +4,12 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const serviceTypeSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
-  code: z.string().min(1, { error: "Code is required" }),
+  code: z.string().min(1, { error: () => translate("Code is required") }),
   description: optionalStringSchema,
   color: optionalStringSchema,
 });

@@ -7,6 +7,7 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const segregationTypeSchema = z.enum(["Prohibited", "Separated", "Distance", "Barrier"]);
 
@@ -20,7 +21,7 @@ export const hazmatSegregationRuleSchema = z
   .object({
     ...tenantInfoSchema.shape,
     status: statusSchema,
-    name: z.string().min(1, { message: "Name is required" }),
+    name: z.string().min(1, { error: () => translate("Name is required") }),
     description: optionalStringSchema,
     classA: hazardousClassSchema,
     classB: hazardousClassSchema,
@@ -39,7 +40,7 @@ export const hazmatSegregationRuleSchema = z
       data.segregationType !== "Distance" ||
       (typeof data.minimumDistance === "number" && data.minimumDistance > 0),
     {
-      message: "Minimum distance is required when segregation type is Distance",
+      error: () => translate("Minimum distance is required when segregation type is Distance"),
       path: ["minimumDistance"],
     },
   )
@@ -48,7 +49,7 @@ export const hazmatSegregationRuleSchema = z
       data.segregationType !== "Distance" ||
       (typeof data.distanceUnit === "string" && data.distanceUnit.length > 0),
     {
-      message: "Distance unit is required when segregation type is Distance",
+      error: () => translate("Distance unit is required when segregation type is Distance"),
       path: ["distanceUnit"],
     },
   )
@@ -57,7 +58,7 @@ export const hazmatSegregationRuleSchema = z
       !data.hasExceptions ||
       (typeof data.exceptionNotes === "string" && data.exceptionNotes.length > 0),
     {
-      message: "Exception notes are required when has exceptions is true",
+      error: () => translate("Exception notes are required when has exceptions is true"),
       path: ["exceptionNotes"],
     },
   );

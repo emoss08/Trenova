@@ -1,12 +1,13 @@
 import { z } from "zod/v4";
 import { capabilityFlagSchema } from "./helpers";
 import { userSchema } from "./user";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const userOrganizationSchema = z.object({
-  id: z.string().min(1, { error: "Organization ID is required" }),
-  name: z.string().min(1, { error: "Organization name is required" }),
-  city: z.string().min(1, { error: "City is required" }),
-  state: z.string().min(1, { error: "State is required" }),
+  id: z.string().min(1, { error: () => translate("Organization ID is required") }),
+  name: z.string().min(1, { error: () => translate("Organization name is required") }),
+  city: z.string().min(1, { error: () => translate("City is required") }),
+  state: z.string().min(1, { error: () => translate("State is required") }),
   logoUrl: z.string().nullish(),
   isDefault: z.boolean(),
   isCurrent: z.boolean(),
@@ -27,7 +28,7 @@ export const switchOrganizationResponseSchema = userSchema;
 export type SwitchOrganizationResponse = z.infer<typeof switchOrganizationResponseSchema>;
 
 export const organizationSettingsSchema = z.object({
-  id: z.string().min(1, { error: "Organization ID is required" }),
+  id: z.string().min(1, { error: () => translate("Organization ID is required") }),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -35,16 +36,16 @@ export const organizationSettingsSchema = z.object({
   businessUnitId: z.string().nullish(),
   loginSlug: z.string().nullish(),
 
-  name: z.string().min(1, { error: "Name is required" }),
-  scacCode: z.string().min(1, { error: "SCAC code is required" }),
-  dotNumber: z.string().min(1, { error: "DOT number is required" }),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
+  scacCode: z.string().min(1, { error: () => translate("SCAC code is required") }),
+  dotNumber: z.string().min(1, { error: () => translate("DOT number is required") }),
   logoUrl: z.string().nullish(),
-  addressLine1: z.string().min(1, { error: "Address line 1 is required" }),
+  addressLine1: z.string().min(1, { error: () => translate("Address line 1 is required") }),
   addressLine2: z.string().nullish(),
-  city: z.string().min(1, { error: "City is required" }),
-  stateId: z.string().min(1, { error: "State is required" }),
-  postalCode: z.string().min(1, { error: "Postal code is required" }),
-  timezone: z.string().min(1, { error: "Timezone is required" }),
+  city: z.string().min(1, { error: () => translate("City is required") }),
+  stateId: z.string().min(1, { error: () => translate("State is required") }),
+  postalCode: z.string().min(1, { error: () => translate("Postal code is required") }),
+  timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   taxId: z.string().nullish(),
   brokerageEnabled: capabilityFlagSchema,
   assetOperationsEnabled: capabilityFlagSchema,

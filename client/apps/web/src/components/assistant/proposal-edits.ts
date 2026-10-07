@@ -1,18 +1,20 @@
 import type { ProposalField } from "@/types/assistant";
 import { translate } from "@trenova/shared/i18n/runtime";
 
+/**
+ * A record subset keeps at least one of its records: the server refuses an
+ * empty set whether the parameter is required or not.
+ */
+function subsetEmptyError(): string {
+  return translate("Keep at least one, or reject the proposal instead.");
+}
+
 /** The form's state: every field as the text a person edits. */
 export type ProposalDraft = Record<string, string>;
 
 export type DraftErrors = Record<string, string>;
 
 type Parsed = { value: unknown } | { error: string };
-
-/**
- * A record subset keeps at least one of its records: the server refuses an
- * empty set whether the parameter is required or not.
- */
-const SUBSET_EMPTY_ERROR = "Keep at least one, or reject the proposal instead.";
 
 /**
  * Starts the form from what the agent proposed. Every value becomes text in
@@ -63,10 +65,10 @@ function scalarText(value: unknown): string {
 export function parseDraftValue(field: ProposalField, raw: string): Parsed {
   const text = raw.trim();
   if (text === "" && field.kind === "RecordSubset") {
-    return { error: SUBSET_EMPTY_ERROR };
+    return { error: subsetEmptyError() };
   }
   if (text === "") {
-    return field.required ? { error: "This value is required" } : { value: undefined };
+    return field.required ? { error: translate("This value is required") } : { value: undefined };
   }
 
   switch (field.kind) {
@@ -85,11 +87,11 @@ export function parseDraftValue(field: ProposalField, raw: string): Parsed {
       const lower = text.toLowerCase();
       if (["true", "yes", "on", "1"].includes(lower)) return { value: true };
       if (["false", "no", "off", "0"].includes(lower)) return { value: false };
-      return { error: "Must be yes or no" };
+      return { error: translate("Must be yes or no") };
     }
     case "Choice":
       if (field.options.length > 0 && !field.options.includes(text)) {
-        return { error: "Choose one of the listed values" };
+        return { error: translate("Choose one of the listed values") };
       }
       return { value: text };
     case "List":
@@ -99,12 +101,12 @@ export function parseDraftValue(field: ProposalField, raw: string): Parsed {
         .map((item) => item.trim())
         .filter((item) => item !== "");
       if (field.kind === "RecordSubset" && items.length === 0) {
-        return { error: SUBSET_EMPTY_ERROR };
+        return { error: subsetEmptyError() };
       }
       if (field.options.length > 0) {
         const stray = items.find((item) => !field.options.includes(item));
         if (stray !== undefined) {
-          return { error: "Choose only from the listed values" };
+          return { error: translate("Choose only from the listed values") };
         }
       }
       return { value: items };
@@ -113,7 +115,7 @@ export function parseDraftValue(field: ProposalField, raw: string): Parsed {
       try {
         return { value: JSON.parse(text) };
       } catch {
-        return { error: "Must be valid JSON" };
+        return { error: translate("Must be valid JSON") };
       }
     default:
       if (field.maxLength && text.length > field.maxLength) {

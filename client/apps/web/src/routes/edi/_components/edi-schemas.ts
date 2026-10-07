@@ -158,8 +158,8 @@ export const communicationProfileFormSchema = z.object({
   ediConnectionId: z.string(),
   ediPartnerId: z.string(),
   method: ediConnectionMethodSchema,
-  status: z.string().min(1, { error: "Status is required" }),
-  name: z.string().min(1, { error: "Name is required" }),
+  status: z.string().min(1, { error: () => translate("Status is required") }),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
   description: z.string(),
   config: communicationProfileConfigSchema,
   secrets: communicationProfileSecretsSchema,
@@ -168,9 +168,11 @@ export const communicationProfileFormSchema = z.object({
 export type CommunicationProfileFormValues = z.infer<typeof communicationProfileFormSchema>;
 
 export const createInternalPartnerPairSchema = z.object({
-  targetOrganizationId: z.string().min(1, { error: "Target organization is required" }),
-  sourceCode: z.string().min(1, { error: "Source partner code is required" }),
-  sourceName: z.string().min(1, { error: "Source partner name is required" }),
+  targetOrganizationId: z
+    .string()
+    .min(1, { error: () => translate("Target organization is required") }),
+  sourceCode: z.string().min(1, { error: () => translate("Source partner code is required") }),
+  sourceName: z.string().min(1, { error: () => translate("Source partner name is required") }),
   sourceDescription: z.string(),
   sourceContactName: z.string(),
   sourceContactEmail: z.string(),
@@ -178,8 +180,8 @@ export const createInternalPartnerPairSchema = z.object({
   sourceEnabledForInbound: z.boolean(),
   sourceEnabledForOutbound: z.boolean(),
   sourceSettings: z.record(z.string(), z.unknown()),
-  targetCode: z.string().min(1, { error: "Target partner code is required" }),
-  targetName: z.string().min(1, { error: "Target partner name is required" }),
+  targetCode: z.string().min(1, { error: () => translate("Target partner code is required") }),
+  targetName: z.string().min(1, { error: () => translate("Target partner name is required") }),
   targetDescription: z.string(),
   targetContactName: z.string(),
   targetContactEmail: z.string(),
@@ -193,14 +195,17 @@ export type CreateInternalPartnerPairFormValues = z.infer<typeof createInternalP
 
 export const ediPartnerFormSchema = z.object({
   kind: ediPartnerKindSchema,
-  status: z.string().min(1, { error: "Status is required" }),
-  code: z.string().min(1, { error: "Partner code is required" }),
-  name: z.string().min(1, { error: "Partner name is required" }),
+  status: z.string().min(1, { error: () => translate("Status is required") }),
+  code: z.string().min(1, { error: () => translate("Partner code is required") }),
+  name: z.string().min(1, { error: () => translate("Partner name is required") }),
   description: z.string(),
   internalOrganizationId: z.string(),
   ediConnectionId: z.string(),
   customerId: z.string(),
-  country: z.string().min(2, { error: "Country is required" }).max(2),
+  country: z
+    .string()
+    .min(2, { error: () => translate("Country is required") })
+    .max(2),
   timezone: z.string(),
   contactName: z.string(),
   contactEmail: z.string(),
@@ -218,7 +223,7 @@ export const ediPartnerFormSchema = z.object({
         return false;
       }
     },
-    { error: "Settings must be a valid JSON object" },
+    { error: () => translate("Settings must be a valid JSON object") },
   ),
   version: z.number().optional(),
 });
@@ -284,13 +289,18 @@ export function emptyToUndefined(value: string) {
 }
 
 export const ediTestCaseFormSchema = z.object({
-  partnerDocumentProfileId: z.string().min(1, "Document profile is required"),
-  name: z.string().trim().min(1, "Name is required"),
+  partnerDocumentProfileId: z
+    .string()
+    .min(1, { error: () => translate("Document profile is required") }),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name is required") }),
   description: z.string(),
   payloadJson: z
     .string()
     .trim()
-    .min(1, "Payload is required")
+    .min(1, { error: () => translate("Payload is required") })
     .superRefine((value, ctx) => {
       let parsed: unknown;
       try {
@@ -324,8 +334,14 @@ export const ediTestCaseFormSchema = z.object({
         });
       }
     }),
-  expectedWarnings: z.number().int().min(0, "Expected warnings cannot be negative"),
-  expectedErrors: z.number().int().min(0, "Expected errors cannot be negative"),
+  expectedWarnings: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("Expected warnings cannot be negative") }),
+  expectedErrors: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("Expected errors cannot be negative") }),
   expectedWarningCodes: z.string(),
   expectedErrorCodes: z.string(),
   version: z.number(),

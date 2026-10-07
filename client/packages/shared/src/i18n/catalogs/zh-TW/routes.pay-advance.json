@@ -20,6 +20,7 @@
   "Write off advance": "沖銷預支款",
   "Write off remaining balance": "沖銷剩餘餘額",
   "Write off {0, plural, one {# advance} other {# advances}}": "沖銷 {0, plural, other {# 筆預支款}}",
+  "Write-off failed": "沖銷失敗",
   "Write-off reason: {0}": "沖銷原因：{0}",
   "e.g. Driver terminated — balance uncollectible": "例如：駕駛員已離職 — 餘額無法收回"
 }

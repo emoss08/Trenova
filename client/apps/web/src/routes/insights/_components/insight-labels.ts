@@ -1,5 +1,6 @@
 import type { InsightCategory, InsightSeverity } from "@/types/insight";
 import type { InsightStatusFilter } from "./insight-filters";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * What each category is called in the interface.
@@ -7,19 +8,19 @@ import type { InsightStatusFilter } from "./insight-filters";
  * The enum values are the server's vocabulary; these are the reader's. Nobody
  * scanning their morning findings thinks in terms of "CostLeakage".
  */
-export const CATEGORY_LABELS: Record<InsightCategory, string> = {
+export const CATEGORY_LABELS: Record<InsightCategory, string> = defineLabels({
   ServiceQuality: "Service",
   CashFlow: "Cash",
   CostLeakage: "Cost",
   Compliance: "Compliance",
-};
+});
 
-export const CATEGORY_DESCRIPTIONS: Record<InsightCategory, string> = {
+export const CATEGORY_DESCRIPTIONS: Record<InsightCategory, string> = defineLabels({
   ServiceQuality: "On-time performance and service the customer feels",
   CashFlow: "Money earned but not yet collected",
   CostLeakage: "Money the operation is losing quietly",
   Compliance: "Exposure that takes capacity off the road",
-};
+});
 
 export const SEVERITY_TONE: Record<InsightSeverity, "danger" | "warning" | "neutral"> = {
   Critical: "danger",
@@ -27,14 +28,14 @@ export const SEVERITY_TONE: Record<InsightSeverity, "danger" | "warning" | "neut
   Info: "neutral",
 };
 
-export const STATUS_LABELS: Record<InsightStatusFilter, string> = {
+export const STATUS_LABELS: Record<InsightStatusFilter, string> = defineLabels({
   active: "Open",
   dismissed: "Dismissed",
   closed: "Closed",
-};
+});
 
-export const STATUS_DESCRIPTIONS: Record<InsightStatusFilter, string> = {
+export const STATUS_DESCRIPTIONS: Record<InsightStatusFilter, string> = defineLabels({
   active: "Findings that were present at the last refresh",
   dismissed: "Findings someone judged not worth acting on",
   closed: "Findings a later refresh no longer makes",
-};
+});

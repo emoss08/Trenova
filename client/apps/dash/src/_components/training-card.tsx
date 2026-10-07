@@ -29,6 +29,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const DASH_TRAINING_KEY = "dash-training";
 
@@ -122,7 +123,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
       await queryClient.invalidateQueries({ queryKey: [DASH_TRAINING_KEY] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Could not confirm. Try again.");
+      toast.error(error.message || translate("Could not confirm. Try again."));
     },
   });
 

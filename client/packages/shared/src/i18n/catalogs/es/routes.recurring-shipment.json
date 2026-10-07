@@ -61,7 +61,6 @@
   "Whether the schedule books freight on its own or waits for a dispatcher": "Si la programación reserva carga por sí sola o espera a un despachador",
   "day has": "día tiene",
   "days have": "días tienen",
-  "in {0}": "en {0}",
   "{0, plural, one {Adds # day} other {Adds # days}}": "{0, plural, one {Agrega # día} other {Agrega # días}}",
   "{0} blocked": "{0} bloqueados",
   "{0} {1} already passed and no longer affect the schedule.": "{0} {1} ya pasaron y ya no afectan a la programación.",

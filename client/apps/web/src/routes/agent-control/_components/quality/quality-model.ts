@@ -8,6 +8,8 @@ import type { AiFeedbackTargetType } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** A section's figures move with the nightly sweep; a minute old is still true. */
 export const QUALITY_STALE_MS = 60_000;
@@ -47,14 +49,14 @@ export function suiteRunStatusChoices(t: TranslateFn): { value: string; label: s
 }
 
 /** What a rated answer was, in the words of the place a person rated it. */
-export const TARGET_TYPE_LABEL: Record<AiFeedbackTargetType, string> = {
+export const TARGET_TYPE_LABEL: Record<AiFeedbackTargetType, string> = defineLabels({
   AssistantMessage: "Assistant answer",
   DelegatedAnswer: "Answer from another agent",
   Briefing: "Briefing",
   BriefingSection: "Briefing section",
   Insight: "Insight",
   WatchtowerItem: "Watchtower item",
-};
+});
 
 export function targetTypeChoices(t: TranslateFn): { value: string; label: string }[] {
   return (Object.keys(TARGET_TYPE_LABEL) as AiFeedbackTargetType[]).map((type) => ({
@@ -118,7 +120,9 @@ export { centsToDecimal, decimalToCents };
 export const qualityControlSchema = z
   .object({
     enabled: z.boolean(),
-    runHour: z.string().regex(/^(?:[0-9]|1[0-9]|2[0-3])$/, "Pick an hour of the day"),
+    runHour: z
+      .string()
+      .regex(/^(?:[0-9]|1[0-9]|2[0-3])$/, { error: () => translate("Pick an hour of the day") }),
     timezone: z.string().max(100),
     maxCasesPerAgent: z.number().int().min(1).max(500),
     nightlyBudgetCents: z.number().int().min(0).max(10_000_000),
@@ -131,7 +135,7 @@ export const qualityControlSchema = z
   })
   .refine((values) => values.monthlyBudgetCents >= values.nightlyBudgetCents, {
     path: ["monthlyBudgetCents"],
-    message: "The monthly budget cannot be less than one night's budget",
+    error: () => translate("The monthly budget cannot be less than one night's budget"),
   });
 
 export type QualityControlFormValues = z.infer<typeof qualityControlSchema>;

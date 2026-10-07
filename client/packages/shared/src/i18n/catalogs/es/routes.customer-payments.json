@@ -40,6 +40,7 @@
   "The GL date for this application. It must fall within an open fiscal period.": "La fecha contable de esta aplicación. Debe estar dentro de un período fiscal abierto.",
   "The GL date. It must fall within an open fiscal period.": "La fecha contable. Debe estar dentro de un período fiscal abierto.",
   "The applied total exceeds the payment amount.": "El total aplicado supera el importe del pago.",
+  "The applied total exceeds the unapplied cash on this payment.": "El total aplicado supera el efectivo sin aplicar de este pago.",
   "The cash receipt and invoice applications were backed out.": "Se retiraron el recibo de efectivo y las aplicaciones a facturas.",
   "The date the funds were received.": "La fecha en que se recibieron los fondos.",
   "This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.": "Esto retira {0} de efectivo, reabre las facturas aplicadas y contabiliza un asiento contable de reversión. Esta acción no se puede deshacer.",

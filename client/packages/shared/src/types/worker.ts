@@ -14,6 +14,7 @@ import { usStateRelationSchema } from "./us-state";
 import { drugAlcoholStatusSchema, returnToDutyStatusSchema } from "./worker-drug-alcohol-status";
 import { safetyRatingSchema } from "./worker-safety";
 import { workerTrainingHealthSchema } from "./worker-training-health";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 // function validatePhoneNumber(value: string): string | undefined {
 //   try {
@@ -65,14 +66,14 @@ export const workerLeaveTypeSchema = z.enum([
 ]);
 export type WorkerLeaveType = z.infer<typeof workerLeaveTypeSchema>;
 
-export const WORKER_LEAVE_TYPE_LABELS: Record<WorkerLeaveType, string> = {
+export const WORKER_LEAVE_TYPE_LABELS: Record<WorkerLeaveType, string> = defineLabels({
   FMLA: "FMLA",
   Medical: "Medical",
   Military: "Military",
   Parental: "Parental",
   Personal: "Personal",
   Other: "Other",
-};
+});
 
 export const cdlClassSchema = z.enum(["A", "B", "C"]);
 export type CDLClass = z.infer<typeof cdlClassSchema>;
@@ -103,27 +104,36 @@ export const workerProfileSchema = z.object({
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
   licenseStateId: nullableStringSchema,
-  dob: z.number().int().positive({
-    message: "Date of birth is required",
-  }),
+  dob: z
+    .number()
+    .int()
+    .positive({
+      error: () => translate("Date of birth is required"),
+    }),
   licenseNumber: z.string().min(1, {
-    message: "License number is required",
+    error: () => translate("License number is required"),
   }),
   cdlClass: cdlClassSchema,
   cdlRestrictions: nullableStringSchema,
   endorsement: endorsementTypeSchema,
   hazmatExpiry: nullableIntegerSchema,
-  licenseExpiry: z.number().int().positive({
-    message: "License expiry is required",
-  }),
+  licenseExpiry: z
+    .number()
+    .int()
+    .positive({
+      error: () => translate("License expiry is required"),
+    }),
   medicalCardExpiry: nullableIntegerSchema,
   medicalExaminerName: nullableStringSchema,
   medicalExaminerNpi: nullableStringSchema,
   twicCardNumber: nullableStringSchema,
   twicExpiry: nullableIntegerSchema,
-  hireDate: z.number().int().positive({
-    message: "Hire date is required",
-  }),
+  hireDate: z
+    .number()
+    .int()
+    .positive({
+      error: () => translate("Hire date is required"),
+    }),
   terminationDate: nullableIntegerSchema,
   physicalDueDate: nullableIntegerSchema,
   mvrDueDate: nullableIntegerSchema,
@@ -175,14 +185,20 @@ export const workerPtoSchema = z.object({
   cancelledById: nullableStringSchema,
   status: ptoStatusSchema,
   type: ptoTypeSchema,
-  startDate: z.number().int().positive({
-    message: "Start date is required",
-  }),
-  endDate: z.number().int().positive({
-    message: "End date is required",
-  }),
+  startDate: z
+    .number()
+    .int()
+    .positive({
+      error: () => translate("Start date is required"),
+    }),
+  endDate: z
+    .number()
+    .int()
+    .positive({
+      error: () => translate("End date is required"),
+    }),
   reason: z.string().min(1, {
-    message: "Reason is required",
+    error: () => translate("Reason is required"),
   }),
   rejectionReason: nullableStringSchema,
   cancellationReason: nullableStringSchema,
@@ -205,7 +221,7 @@ export type WorkerPTO = z.infer<typeof workerPtoSchema>;
 export const workerSchema = z.object({
   ...tenantInfoSchema.shape,
   stateId: z.string().min(1, {
-    message: "State is required",
+    error: () => translate("State is required"),
   }),
   fleetCodeId: nullableStringSchema,
   managerId: nullableStringSchema,
@@ -216,30 +232,30 @@ export const workerSchema = z.object({
   leaveType: nullableEnumSchema(workerLeaveTypeSchema),
   profilePicUrl: nullableStringSchema,
   firstName: z.string().min(1, {
-    message: "First name is required",
+    error: () => translate("First name is required"),
   }),
   lastName: z.string().min(1, {
-    message: "Last name is required",
+    error: () => translate("Last name is required"),
   }),
   wholeName: optionalStringSchema,
   addressLine1: z.string().min(1, {
-    message: "Address is required",
+    error: () => translate("Address is required"),
   }),
   addressLine2: nullableStringSchema,
   city: z.string().min(1, {
-    message: "City is required",
+    error: () => translate("City is required"),
   }),
   postalCode: z
     .string()
     .min(1, {
-      message: "Postal code is required",
+      error: () => translate("Postal code is required"),
     })
     .regex(/^\d{5}(-\d{4})?$/, {
-      message: "Invalid US postal code (e.g., 12345 or 12345-6789)",
+      error: () => translate("Invalid US postal code (e.g., 12345 or 12345-6789)"),
     }),
   email: nullableStringSchema,
   phoneNumber: z.string().min(1, {
-    error: "Phone number is required",
+    error: () => translate("Phone number is required"),
   }),
   emergencyContactName: nullableStringSchema,
   emergencyContactPhone: z.string().nullish(),
@@ -297,13 +313,13 @@ export const PTO_FILTER_MAX_RANGE_DAYS = 120;
 export const ptoFilterSchema = z
   .object({
     type: z.string().optional(),
-    startDate: z.number().min(1, { error: "Start date is required" }),
-    endDate: z.number().min(1, { error: "End date is required" }),
+    startDate: z.number().min(1, { error: () => translate("Start date is required") }),
+    endDate: z.number().min(1, { error: () => translate("End date is required") }),
     workerId: z.string().optional(),
     fleetCodeId: z.string().optional(),
   })
   .refine((data) => data.startDate <= data.endDate, {
-    message: "Start date must be before end date",
+    error: () => translate("Start date must be before end date"),
     path: ["endDate"],
   })
   .refine(
@@ -336,18 +352,24 @@ export type ListUpcomingPTORequest = {
 
 export const ptoFormSchema = z
   .object({
-    workerId: z.string().min(1, { message: "Worker is required" }),
+    workerId: z.string().min(1, { error: () => translate("Worker is required") }),
     type: ptoTypeSchema,
-    startDate: z.number().int().positive({ message: "Start date is required" }),
-    endDate: z.number().int().positive({ message: "End date is required" }),
+    startDate: z
+      .number()
+      .int()
+      .positive({ error: () => translate("Start date is required") }),
+    endDate: z
+      .number()
+      .int()
+      .positive({ error: () => translate("End date is required") }),
     reason: z
       .string()
       .trim()
-      .min(1, { message: "Reason is required" })
-      .max(255, { message: "Reason must be 255 characters or fewer" }),
+      .min(1, { error: () => translate("Reason is required") })
+      .max(255, { error: () => translate("Reason must be 255 characters or fewer") }),
   })
   .refine((data) => data.endDate > data.startDate, {
-    message: "End date must be after start date",
+    error: () => translate("End date must be after start date"),
     path: ["endDate"],
   });
 
@@ -357,16 +379,25 @@ export const ptoBulkActionSchema = z.enum(["Approve", "Reject", "Cancel"]);
 export type PTOBulkAction = z.infer<typeof ptoBulkActionSchema>;
 
 export const ptoReasonRequestSchema = z.object({
-  ptoIds: z.array(z.string().min(1)).min(1, { message: "Select at least one PTO request" }),
-  reason: z.string().trim().min(1, { message: "Reason is required" }).max(255, {
-    message: "Reason must be 255 characters or fewer",
-  }),
+  ptoIds: z
+    .array(z.string().min(1))
+    .min(1, { error: () => translate("Select at least one PTO request") }),
+  reason: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Reason is required") })
+    .max(255, {
+      error: () => translate("Reason must be 255 characters or fewer"),
+    }),
 });
 
 export type PTOReasonRequest = z.infer<typeof ptoReasonRequestSchema>;
 
 export const ptoCancelRequestSchema = ptoReasonRequestSchema.extend({
-  reason: z.string().trim().max(255, { message: "Reason must be 255 characters or fewer" }),
+  reason: z
+    .string()
+    .trim()
+    .max(255, { error: () => translate("Reason must be 255 characters or fewer") }),
 });
 
 export type PTOCancelRequest = z.infer<typeof ptoCancelRequestSchema>;

@@ -32,6 +32,7 @@ import { CheckIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type ExtensionSettingsDialogProps = {
   extension: AgentExtensionCatalogItem | null;
@@ -40,11 +41,11 @@ type ExtensionSettingsDialogProps = {
   canUpdate: boolean;
 };
 
-const SEARCH_DEPTH_LABELS: Record<string, string> = {
+const SEARCH_DEPTH_LABELS: Record<string, string> = defineLabels({
   auto: "Auto",
   fast: "Fast",
   deep: "Deep",
-};
+});
 
 /**
  * Everything an administrator decides about one extension: whether it is on,
@@ -228,7 +229,7 @@ export function ExtensionSettingsDialog({
                   control={control}
                   storedByKey={storedByKey}
                   renderOptionLabel={(field, option) =>
-                    field.key === "searchType" ? t(SEARCH_DEPTH_LABELS[option] ?? option) : option
+                    field.key === "searchType" ? (SEARCH_DEPTH_LABELS[option] ?? option) : option
                   }
                 />
               )}

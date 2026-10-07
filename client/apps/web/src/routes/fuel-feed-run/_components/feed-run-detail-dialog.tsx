@@ -70,7 +70,9 @@ export function FeedRunDetailDialog({
       toast.success(describeResolve(result), {
         description:
           result.queued > 0
-            ? "The rows still waiting need their card assigned, or the unit they name added."
+            ? translate(
+                "The rows still waiting need their card assigned, or the unit they name added.",
+              )
             : undefined,
       });
       await Promise.all([

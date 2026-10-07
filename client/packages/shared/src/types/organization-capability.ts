@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Organization capabilities describe which halves of the product an
  * organization actually operates: brokered freight, its own assets, or both.
@@ -41,10 +42,10 @@ export const ORGANIZATION_CAPABILITIES_ENABLED: OrganizationCapabilities = {
   assetOperationsEnabled: true,
 };
 
-const ORGANIZATION_CAPABILITY_LABELS: Record<OrganizationCapabilityType, string> = {
+const ORGANIZATION_CAPABILITY_LABELS: Record<OrganizationCapabilityType, string> = defineLabels({
   [OrganizationCapability.Brokerage]: "Brokerage",
   [OrganizationCapability.AssetOperations]: "Asset Operations",
-};
+});
 
 export function organizationCapabilityLabel(capability: OrganizationCapabilityType): string {
   return ORGANIZATION_CAPABILITY_LABELS[capability];

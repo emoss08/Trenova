@@ -33,6 +33,7 @@ import { benefitPlanFormSchema, type BenefitPlanFormValues } from "@trenova/shar
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const TYPE_OPTIONS = BENEFIT_PLAN_TYPE_ORDER.map((value) => ({
   value,
@@ -131,7 +132,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
         : createBenefitPlan(shared);
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Plan updated" : "Plan added");
+      toast.success(isEdit ? translate("Plan updated") : translate("Plan added"));
       void queryClient.invalidateQueries({ queryKey: [BENEFIT_PLANS_KEY] });
       void queryClient.invalidateQueries(selectOptionsQueryFilter("BENEFIT_PLAN"));
       void queryClient.invalidateQueries({ queryKey: [BENEFIT_COSTS_KEY] });

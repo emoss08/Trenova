@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CashApplicationEditor } from "./cash-application-editor";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds: string[] }) {
   const t = useT();
@@ -91,7 +92,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
             control={control}
             name="paymentDate"
             label={t("Payment date")}
-            rules={{ required: "Payment date is required" }}
+            rules={{ required: translate("Payment date is required") }}
             placeholder={t("Select date")}
             description={t("The date the funds were received.")}
           />
@@ -101,7 +102,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
             control={control}
             name="accountingDate"
             label={t("Accounting date")}
-            rules={{ required: "Accounting date is required" }}
+            rules={{ required: translate("Accounting date is required") }}
             placeholder={t("Select date")}
             description={t("The GL date. It must fall within an open fiscal period.")}
           />

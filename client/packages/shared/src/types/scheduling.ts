@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const availabilityPreferenceSchema = z.enum(["Preferred", "Available", "Unavailable"]);
 export type AvailabilityPreferenceValue = z.infer<typeof availabilityPreferenceSchema>;
@@ -15,7 +16,9 @@ export type ShiftSwapStatusValue = z.infer<typeof shiftSwapStatusSchema>;
 
 const dayMaskSchema = z
   .string()
-  .regex(/^[01]{7}$/, "Days must be seven characters of 0 or 1, starting on Sunday");
+  .regex(/^[01]{7}$/, {
+    error: () => translate("Days must be seven characters of 0 or 1, starting on Sunday"),
+  });
 
 /**
  * A repeating working pattern. The mask is stored rather than an array of days
@@ -25,23 +28,35 @@ const dayMaskSchema = z
  */
 export const shiftTemplateFormSchema = z
   .object({
-    code: z.string().min(1, "A code is required").max(20),
-    name: z.string().min(1, "A name is required").max(100),
+    code: z
+      .string()
+      .min(1, { error: () => translate("A code is required") })
+      .max(20),
+    name: z
+      .string()
+      .min(1, { error: () => translate("A name is required") })
+      .max(100),
     description: z.string().max(500).nullable(),
     color: z.string().max(10).nullable(),
     daysOfWeek: dayMaskSchema,
     // A clock time and a length in hours: that is how a shift is described
     // out loud, and the minutes the server stores are derived from them.
-    startTime: z.string().regex(/^\d{2}:\d{2}$/, "A start time is required"),
+    startTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/, { error: () => translate("A start time is required") }),
     durationHours: z
       .number()
-      .min(0.25, "A shift is at least a quarter of an hour")
-      .max(24, "A shift is at most a day"),
-    cycleWeeks: z.number().int().min(1, "A rotation is 1 to 8 weeks").max(8),
+      .min(0.25, { error: () => translate("A shift is at least a quarter of an hour") })
+      .max(24, { error: () => translate("A shift is at most a day") }),
+    cycleWeeks: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("A rotation is 1 to 8 weeks") })
+      .max(8),
     status: z.enum(["Active", "Inactive"]),
   })
   .refine((values) => values.daysOfWeek.includes("1"), {
-    message: "A shift needs at least one working day",
+    error: () => translate("A shift needs at least one working day"),
     path: ["daysOfWeek"],
   });
 export type ShiftTemplateFormValues = z.infer<typeof shiftTemplateFormSchema>;
@@ -51,9 +66,12 @@ export type ShiftTemplateFormValues = z.infer<typeof shiftTemplateFormSchema>;
  * template and two assignments rather than two near-identical templates.
  */
 export const assignShiftFormSchema = z.object({
-  workerId: z.string().min(1, "Choose a worker"),
-  shiftTemplateId: z.string().min(1, "Choose a shift"),
-  effectiveFrom: z.number().int().positive("An effective date is required"),
+  workerId: z.string().min(1, { error: () => translate("Choose a worker") }),
+  shiftTemplateId: z.string().min(1, { error: () => translate("Choose a shift") }),
+  effectiveFrom: z
+    .number()
+    .int()
+    .positive({ error: () => translate("An effective date is required") }),
   cycleOffsetWeeks: z.number().int().min(0).max(7),
   notes: z.string().max(500).nullable(),
 });
@@ -66,9 +84,12 @@ export type AssignShiftFormValues = z.infer<typeof assignShiftFormSchema>;
  */
 export const proposeShiftSwapFormSchema = z
   .object({
-    requestingWorkerId: z.string().min(1, "Choose a worker"),
+    requestingWorkerId: z.string().min(1, { error: () => translate("Choose a worker") }),
     counterpartyWorkerId: z.string().nullable(),
-    shiftDate: z.number().int().positive("Choose the day being given up"),
+    shiftDate: z
+      .number()
+      .int()
+      .positive({ error: () => translate("Choose the day being given up") }),
     counterpartyShiftDate: z.number().int().positive().nullable(),
     reason: z.string().max(255).nullable(),
   })
@@ -78,7 +99,7 @@ export const proposeShiftSwapFormSchema = z
     (values) =>
       !values.counterpartyWorkerId || values.counterpartyWorkerId !== values.requestingWorkerId,
     {
-      message: "A swap has to be with somebody else",
+      error: () => translate("A swap has to be with somebody else"),
       path: ["counterpartyWorkerId"],
     },
   );

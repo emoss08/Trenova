@@ -50,6 +50,8 @@ import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function MoveCard({
   moveIndex,
@@ -166,9 +168,14 @@ export function MoveCard({
       if (move?.shipmentId) {
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
       }
-      toast.success(variables.action === "Arrive" ? "Arrival recorded" : "Departure recorded", {
-        description: t("The stop actuals and move status have been updated."),
-      });
+      toast.success(
+        variables.action === "Arrive"
+          ? translate("Arrival recorded")
+          : translate("Departure recorded"),
+        {
+          description: t("The stop actuals and move status have been updated."),
+        },
+      );
     },
     onError: (error: Error) => {
       toast.error(t("Failed to record stop actual"), { description: error.message });
@@ -429,12 +436,12 @@ const moveStatusConfig: Record<
   Canceled: { label: "Canceled", variant: "danger" },
 };
 
-const stopTypeLabels: Record<StopType, string> = {
+const stopTypeLabels: Record<StopType, string> = defineLabels({
   Pickup: "Pickup",
   Delivery: "Delivery",
   SplitPickup: "Split Pickup",
   SplitDelivery: "Split Delivery",
-};
+});
 
 const stopStatusBgColor: Record<StopStatus, string> = {
   New: "bg-accent-violet",

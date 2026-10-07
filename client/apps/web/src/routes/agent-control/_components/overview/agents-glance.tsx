@@ -71,7 +71,7 @@ export function AgentsGlance({ onOpenAgents, onOpenActivity }: AgentsGlanceProps
                       {agent.name}
                     </span>
                     <span className="text-muted-foreground truncate text-xs">
-                      {t(TRIGGER_LABELS[shelf.trigger])}
+                      {TRIGGER_LABELS[shelf.trigger]}
                       {touched > 0 ? ` · ${t("ran {0}", formatSecondsAgo(now - touched))}` : ""}
                     </span>
                   </span>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * A provider is identified by the wire protocol it speaks rather than the vendor
@@ -88,7 +89,7 @@ export const embeddingDimensionsSchema = z
   .number()
   .int()
   .refine((value) => (EMBEDDING_DIMENSIONS as readonly number[]).includes(value), {
-    message: "Embedding dimensions must be 768, 1024 or 1536",
+    error: () => translate("Embedding dimensions must be 768, 1024 or 1536"),
   });
 
 export const aiProviderTestOutcomeSchema = z.object({
@@ -134,11 +135,17 @@ export const aiProviderSchema = z.object({
 });
 
 export const saveAIProviderRequestSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name is required") }),
   description: z.string().optional().default(""),
   kind: aiProviderKindSchema,
   baseUrl: z.string().optional().default(""),
-  model: z.string().trim().min(1, "Model is required"),
+  model: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Model is required") }),
   /**
    * Omitted entirely when unchanged, so editing a provider never round-trips the
    * secret. An empty string clears the stored credential.

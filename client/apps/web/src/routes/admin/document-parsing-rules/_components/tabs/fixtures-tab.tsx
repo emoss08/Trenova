@@ -12,6 +12,7 @@ import { Beaker02Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { FixtureDetail } from "../fixture-detail/fixture-detail";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const REVIEW_STATUS_VARIANT = {
   Ready: "success",
@@ -84,7 +85,7 @@ function FixtureList({
       if (data.id) onSelectFixture(data.id);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create fixture");
+      toast.error(error instanceof Error ? error.message : translate("Failed to create fixture"));
     },
   });
 

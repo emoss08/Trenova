@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 export type CaseCheck = {
   name: string;
   kind: "hard" | "soft";
@@ -18,7 +19,7 @@ export type CaseChecks = {
   passed: boolean;
 };
 
-export const CHECK_LABEL: Record<string, string> = {
+export const CHECK_LABEL: Record<string, string> = defineLabels({
   heldTools: "Only tools it held",
   forbiddenTools: "No forbidden tool",
   refusal: "Refused when it should",
@@ -28,7 +29,7 @@ export const CHECK_LABEL: Record<string, string> = {
   proposals: "Proposals",
   factGuard: "Figures it can back up",
   mentions: "What the reply mentions",
-};
+});
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

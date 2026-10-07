@@ -161,7 +161,9 @@ export function DataTableDock<TData extends RowData>({
                             ) : (
                               ActionIcon && <ActionIcon className="size-4" />
                             )}
-                            {isLoading && action.loadingLabel ? action.loadingLabel : action.label}
+                            {isLoading && action.loadingLabel
+                              ? t(action.loadingLabel)
+                              : t(action.label)}
                             <ChevronDownIcon className="size-3 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                           </Button>
                         }
@@ -212,7 +214,7 @@ export function DataTableDock<TData extends RowData>({
                     onClick={() => handleSimpleActionClick(action)}
                   >
                     {isLoading ? <Spinner /> : ActionIcon && <ActionIcon className="size-4" />}
-                    {isLoading && action.loadingLabel ? action.loadingLabel : action.label}
+                    {isLoading && action.loadingLabel ? t(action.loadingLabel) : t(action.label)}
                   </Button>
                 );
               })}

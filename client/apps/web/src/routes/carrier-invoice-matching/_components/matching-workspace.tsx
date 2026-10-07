@@ -50,6 +50,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 import { LinkCarrierDialog } from "./link-carrier-dialog";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type QueueTab = "invoices" | "matches";
 
@@ -679,12 +680,12 @@ function InvoiceDetail({
     onSuccess: (match) => {
       toast.success(
         match.status === "Variance"
-          ? "Match created with a variance — resolve it from the Matches tab"
-          : "Match created",
+          ? translate("Match created with a variance — resolve it from the Matches tab")
+          : translate("Match created"),
       );
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to create match"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to create match")),
   });
 
   return (
@@ -816,7 +817,7 @@ function MatchDetail({
       toast.success(t("Match accepted — the invoice is reconciled"));
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to accept match"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to accept match")),
   });
 
   const acceptWithVarianceMutation = useMutation({
@@ -827,7 +828,8 @@ function MatchDetail({
       );
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to accept with variance"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Failed to accept with variance")),
   });
 
   return (
@@ -1058,7 +1060,7 @@ function RejectMatchDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to reject match"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to reject match")),
   });
 
   return (

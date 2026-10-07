@@ -21,6 +21,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { disputeCategoryLabels, SettlementDisputeStatusBadge } from "./dispute-columns";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -71,7 +72,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
       toast.success(t("Dispute moved to review"));
       await invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to start review"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to start review")),
   });
 
   if (detail.isPending) {
@@ -136,9 +137,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           {dispute.settlementLine ? (
             <>
               <Separator className="my-2" />
-              <p className="text-muted-foreground text-xs font-medium">
-                {t("Disputed line")}
-              </p>
+              <p className="text-muted-foreground text-xs font-medium">{t("Disputed line")}</p>
               <div className="mt-1 flex items-center justify-between text-sm">
                 <span>{t(dispute.settlementLine.description)}</span>
                 <AmountDisplay value={dispute.settlementLine.amountMinor} />
@@ -216,11 +215,11 @@ function ResolveForm({
             : undefined,
       }),
     onSuccess: async () => {
-      toast.success(approve ? "Dispute resolved" : "Dispute denied");
+      toast.success(approve ? translate("Dispute resolved") : translate("Dispute denied"));
       await onDone();
       onClose();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to resolve dispute"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to resolve dispute")),
   });
 
   return (

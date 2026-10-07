@@ -4,6 +4,7 @@ import {
   timestampSchema,
   versionSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const sequenceTypes = [
   "pro_number",
@@ -84,7 +85,7 @@ export const locationCodeStrategySchema = z
   )
   .refine((data) => !data.separator || ["-", "_", "/", "."].includes(data.separator), {
     path: ["separator"],
-    message: "Separator must be one of '-', '_', '/', '.', or blank",
+    error: () => translate("Separator must be one of '-', '_', '/', '.', or blank"),
   })
   .refine(
     (data) =>
@@ -94,7 +95,8 @@ export const locationCodeStrategySchema = z
       32,
     {
       path: ["sequenceDigits"],
-      message: "Components, separators, and sequence digits must fit within 32 characters",
+      error: () =>
+        translate("Components, separators, and sequence digits must fit within 32 characters"),
     },
   );
 
@@ -104,7 +106,10 @@ export const sequenceConfigSchema = z
     organizationId: optionalStringSchema,
     businessUnitId: optionalStringSchema,
     sequenceType: sequenceTypeSchema,
-    prefix: z.string().min(1, "Prefix is required").max(20),
+    prefix: z
+      .string()
+      .min(1, { error: () => translate("Prefix is required") })
+      .max(20),
     includeYear: z.boolean(),
     yearDigits: z.number().int().min(2).max(4),
     includeMonth: z.boolean(),
@@ -130,16 +135,19 @@ export const sequenceConfigSchema = z
       !data.includeRandomDigits || (data.randomDigitsCount >= 1 && data.randomDigitsCount <= 10),
     {
       path: ["randomDigitsCount"],
-      message: "Random digits count must be between 1 and 10 when include random digits is enabled",
+      error: () =>
+        translate(
+          "Random digits count must be between 1 and 10 when include random digits is enabled",
+        ),
     },
   )
   .refine((data) => !data.useSeparators || ["-", "_", "/", "."].includes(data.separatorChar), {
     path: ["separatorChar"],
-    message: "Separator must be one of '-', '_', '/', '.'",
+    error: () => translate("Separator must be one of '-', '_', '/', '.'"),
   })
   .refine((data) => !data.allowCustomFormat || data.customFormat.trim().length > 0, {
     path: ["customFormat"],
-    message: "Custom format is required when custom format is enabled",
+    error: () => translate("Custom format is required when custom format is enabled"),
   });
 
 export const sequenceConfigDocumentSchema = z.object({

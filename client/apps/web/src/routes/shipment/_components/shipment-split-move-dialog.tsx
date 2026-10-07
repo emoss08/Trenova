@@ -28,6 +28,7 @@ import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type SplitMoveDialogProps = {
   open: boolean;
@@ -47,12 +48,12 @@ type SplitMoveFormValues = {
   weight: number | null;
 };
 
-const stopTypeLabels: Record<StopType, string> = {
+const stopTypeLabels: Record<StopType, string> = defineLabels({
   Pickup: "Pickup",
   Delivery: "Delivery",
   SplitPickup: "Split Pickup",
   SplitDelivery: "Split Delivery",
-};
+});
 
 function MiniLocationDisplay({
   locationId,

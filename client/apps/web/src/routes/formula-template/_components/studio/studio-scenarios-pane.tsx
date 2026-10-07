@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { ScenarioDialog, type ScenarioPrefill } from "./scenario-dialog";
 import type { LivePreviewState } from "./use-live-preview";
 import type { LiveScenariosState } from "./use-live-scenarios";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type StudioScenariosPaneProps = {
   templateId: string | null;
@@ -182,7 +183,7 @@ export function StudioScenariosPane({
       return apiService.formulaTemplateService.createTestCase(templateId, input);
     },
     onSuccess: async () => {
-      toast.success(editing ? "Scenario updated" : "Scenario added");
+      toast.success(editing ? translate("Scenario updated") : translate("Scenario added"));
       setDialogOpen(false);
       setEditing(null);
       onPinConsumed();

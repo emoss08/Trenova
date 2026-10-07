@@ -24,6 +24,7 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./distance-profile-columns";
 import { DistanceProfilePanel } from "./distance-profile-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const distanceProfileService = new DistanceProfileService();
 
@@ -47,7 +48,8 @@ export default function DistanceProfileTable() {
     },
     onError: (error) => {
       toast.error(t("Failed to delete distance profile"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error ? error.message : translate("An unexpected error occurred"),
       });
     },
   });
@@ -60,7 +62,8 @@ export default function DistanceProfileTable() {
     },
     onError: (error) => {
       toast.error(t("Failed to set default profile"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error ? error.message : translate("An unexpected error occurred"),
       });
     },
   });

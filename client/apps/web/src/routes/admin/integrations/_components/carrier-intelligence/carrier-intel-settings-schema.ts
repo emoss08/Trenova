@@ -18,6 +18,7 @@ import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { isRecord, parseCommaSeparatedList } from "@trenova/shared/lib/utils";
 import { compareDecimalStrings, isDecimalString } from "@trenova/shared/types/decimal";
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const CARRIER_INTEL_RULE_ACTIONS = [
   "Block",
@@ -91,7 +92,7 @@ export const CARRIER_INTEL_SECTION_ORDER = [
   "Benchmarks",
 ] as const satisfies readonly CarrierIntelSection[];
 
-export const capabilityLabels: Record<string, string> = {
+export const capabilityLabels: Record<string, string> = defineLabels({
   LookupFull: "Full profile lookup",
   LookupLite: "Lite lookup",
   LookupFMCSA: "FMCSA lookup",
@@ -105,7 +106,7 @@ export const capabilityLabels: Record<string, string> = {
   BrokerAuthority: "Broker authority",
   InsuranceHistory: "Insurance history",
   RiskScore: "Risk score",
-};
+});
 
 export type CarrierIntelRuleFormValue = {
   code: string;

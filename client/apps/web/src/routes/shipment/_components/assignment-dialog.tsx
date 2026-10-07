@@ -59,6 +59,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { AssignmentHosFeasibility } from "./assignment-hos-feasibility";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type CoverageMode = "driver" | "carrier";
 
@@ -171,7 +172,9 @@ export function AssignmentDialog({
     onSuccess: (data: Assignment) => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onAssigned?.(data);
-      toast.success(isEditing ? "Reassigned successfully" : "Assigned successfully");
+      toast.success(
+        isEditing ? translate("Reassigned successfully") : translate("Assigned successfully"),
+      );
     },
     onError: (error: ApiRequestError) => {
       if (error.isBusinessError()) {
@@ -531,7 +534,11 @@ function CarrierAssignmentTab({
     onSuccess: (carrierAssignment: CarrierAssignment) => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onCarrierAssigned?.(carrierAssignment);
-      toast.success(isReplacing ? "Carrier assignment replaced" : "Move assigned to carrier");
+      toast.success(
+        isReplacing
+          ? translate("Carrier assignment replaced")
+          : translate("Move assigned to carrier"),
+      );
     },
     onError: (error: ApiRequestError) => {
       handleMutationError({ error, form, resourceName: "Carrier Assignment" });

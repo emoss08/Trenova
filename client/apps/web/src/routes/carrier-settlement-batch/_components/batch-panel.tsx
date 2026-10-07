@@ -31,6 +31,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { Download01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { formatSettlementDate } from "@trenova/shared/lib/date";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function CarrierBatchPanel({
   open,
@@ -163,7 +164,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
       URL.revokeObjectURL(url);
       toast.success(t("Remittance CSV downloaded"));
     },
-    onError: (error: Error) => toast.error(error.message || "Export failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Export failed")),
   });
 
   if (isLoading || !data) {

@@ -1,4 +1,5 @@
 {
+  "A limit changed, so this rule is unverified again and needs re-checking.": "Cambió un límite, por lo que esta regla vuelve a estar sin verificar y debe revisarse de nuevo.",
   "A load exceeding any of these needs a permit in this state": "Una carga que supere cualquiera de estos valores necesita un permiso en este estado",
   "Above these a load needs superload review rather than an ordinary permit. Leave blank if unknown.": "Por encima de estos valores, una carga requiere revisión de supercarga en lugar de un permiso ordinario. Déjelo en blanco si se desconoce.",
   "At least 10 characters. The next person reading this row follows your note.": "Al menos 10 caracteres. La siguiente persona que lea esta fila se guiará por su nota.",
@@ -10,6 +11,7 @@
   "How long a permit takes to obtain and how long it lasts": "Cuánto tarda en obtenerse un permiso y cuánto dura",
   "Inactive and draft rules are not used by the permit engine.": "El motor de permisos no usa las reglas inactivas ni en borrador.",
   "Jurisdiction rule": "Regla jurisdiccional",
+  "Jurisdiction rule updated successfully": "Regla de jurisdicción actualizada correctamente",
   "Leave blank if unknown": "Déjelo en blanco si se desconoce",
   "Legal limits": "Límites legales",
   "Loading jurisdiction rule...": "Cargando la regla jurisdiccional...",

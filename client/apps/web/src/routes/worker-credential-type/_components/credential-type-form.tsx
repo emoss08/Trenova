@@ -15,10 +15,11 @@ import {
 } from "@trenova/shared/types/worker-credential";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const CATEGORY_OPTIONS = credentialCategorySchema.options.map((value) => ({
   value,
-  label: CREDENTIAL_CATEGORY_LABELS[value],
+  label: sourceLabels(CREDENTIAL_CATEGORY_LABELS)[value],
 }));
 
 type CredentialTypeFormProps = {

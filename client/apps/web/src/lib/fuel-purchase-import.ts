@@ -2,6 +2,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import type { FuelPurchaseImportBatch } from "@/lib/graphql/fuel-purchase-import";
 import type { FuelPurchaseImportRowStatus } from "@trenova/graphql/generated/graphql";
 import { formatCurrency } from "@trenova/shared/lib/utils";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type ImportStep = "setup" | "review" | "done";
 
@@ -17,21 +18,21 @@ export const IMPORT_ROW_FILTER_STATUSES: Record<
   errors: ["Error"],
 };
 
-export const IMPORT_ROW_FILTER_LABELS: Record<ImportRowFilter, string> = {
+export const IMPORT_ROW_FILTER_LABELS: Record<ImportRowFilter, string> = defineLabels({
   all: "All",
   new: "New",
   duplicates: "Duplicates",
   errors: "Errors",
-};
+});
 
-export const IMPORT_ROW_STATUS_LABELS: Record<FuelPurchaseImportRowStatus, string> = {
+export const IMPORT_ROW_STATUS_LABELS: Record<FuelPurchaseImportRowStatus, string> = defineLabels({
   New: "New",
   DuplicateInFile: "Duplicate in file",
   AlreadyImported: "Already imported",
   Error: "Error",
   Committed: "Committed",
   Skipped: "Skipped",
-};
+});
 
 export function importStep(batch: FuelPurchaseImportBatch | undefined): ImportStep {
   if (!batch) return "setup";

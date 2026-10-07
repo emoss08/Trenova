@@ -28,6 +28,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type RuleSetListProps = {
   selectedId: string | null;
@@ -263,7 +264,7 @@ function CreateRuleSetDialog({
       toast.success(t("Rule set created"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create rule set");
+      toast.error(error instanceof Error ? error.message : translate("Failed to create rule set"));
     },
   });
 

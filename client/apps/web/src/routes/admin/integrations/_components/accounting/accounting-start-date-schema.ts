@@ -4,14 +4,15 @@ import {
   ACCOUNTING_SYNC_MODES,
 } from "@/lib/accounting-sync";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function accountingStartDateSchema(latestAllowed: number) {
   return z.object({
     startDate: z
-      .number({ error: "Choose the first day documents are sent from" })
+      .number({ error: () => translate("Choose the first day documents are sent from") })
       .int()
-      .positive({ error: "Choose the first day documents are sent from" })
-      .max(latestAllowed, { error: "The start date cannot be in the future" }),
+      .positive({ error: () => translate("Choose the first day documents are sent from") })
+      .max(latestAllowed, { error: () => translate("The start date cannot be in the future") }),
     autoSync: z.boolean(),
     driverSettlements: z.boolean(),
     backfill: z.boolean(),
@@ -22,12 +23,12 @@ export function accountingStartDateSchema(latestAllowed: number) {
 export function accountingModeSchema(ledgerAvailable: boolean) {
   return z.object({
     mode: z
-      .enum(ACCOUNTING_SYNC_MODES, { error: "Choose what is sent" })
+      .enum(ACCOUNTING_SYNC_MODES, { error: () => translate("Choose what is sent") })
       .refine((value) => ledgerAvailable || value !== "Ledger", {
-        error: "This accounting system cannot receive journal entries",
+        error: () => translate("This accounting system cannot receive journal entries"),
       }),
     granularity: z.enum(ACCOUNTING_LEDGER_GRANULARITIES, {
-      error: "Choose how journal entries are sent",
+      error: () => translate("Choose how journal entries are sent"),
     }),
   });
 }

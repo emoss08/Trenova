@@ -24,9 +24,10 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const assignRoleFormSchema = z.object({
-  roleId: z.string().min(1, "Role is required"),
+  roleId: z.string().min(1, { error: () => translate("Role is required") }),
   expiresAt: z.number().nullable().optional(),
 });
 

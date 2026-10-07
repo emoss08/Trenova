@@ -12,6 +12,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import type { RateScopeType } from "@trenova/shared/types/rate";
 import type { Control, FieldValues } from "react-hook-form";
 import { useWatch } from "react-hook-form";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type LaneSide = "origin" | "destination";
 
@@ -39,10 +40,10 @@ function fieldsFor(namePrefix: string, side: LaneSide) {
   };
 }
 
-const sideLabel: Record<LaneSide, string> = {
+const sideLabel: Record<LaneSide, string> = defineLabels({
   origin: "Origin",
   destination: "Destination",
-};
+});
 
 /**
  * The value fields for one end of a lane.

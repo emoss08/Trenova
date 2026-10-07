@@ -2,6 +2,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { SelectOption } from "@trenova/shared/types/fields";
+import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
 
 type AuditChangeType = "added" | "removed" | "changed";
 
@@ -74,7 +75,7 @@ export function normalizeAuditChanges(changes: Record<string, unknown>): Normali
     .sort((left, right) => left.path.localeCompare(right.path));
 }
 
-const operationLabels = {
+const operationLabels = defineLabels({
   read: "Read",
   create: "Create",
   update: "Update",
@@ -95,7 +96,7 @@ const operationLabels = {
   unlock: "Unlock",
   activate: "Activate",
   reopen: "Reopen",
-} as const;
+} as const);
 
 const operationFilterOrder: (keyof typeof operationLabels)[] = [
   "read",
@@ -122,7 +123,7 @@ const operationFilterOrder: (keyof typeof operationLabels)[] = [
 
 export const auditOperationFilterOptions: SelectOption[] = operationFilterOrder.map((value) => ({
   value,
-  label: operationLabels[value],
+  label: sourceLabels(operationLabels)[value],
 }));
 
 export function operationLabel(operation: string) {

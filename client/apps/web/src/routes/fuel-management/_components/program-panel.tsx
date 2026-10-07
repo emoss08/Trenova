@@ -20,6 +20,7 @@ import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { ProgramForm } from "./program-form";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const DEFAULT_VALUES: Partial<FuelSurchargeProgramFormValues> = {
   name: "",
@@ -147,7 +148,11 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
         ? updateFuelSurchargeProgram(programId, values)
         : createFuelSurchargeProgram(values),
     onSuccess: () => {
-      toast.success(isEdit ? "Fuel surcharge program updated" : "Fuel surcharge program created");
+      toast.success(
+        isEdit
+          ? translate("Fuel surcharge program updated")
+          : translate("Fuel surcharge program created"),
+      );
       invalidate();
       reset();
       onOpenChange(false);

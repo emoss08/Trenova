@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Labels and tones for injury and illness recordkeeping. The OSHA words are
  * used verbatim wherever the form uses them, because somebody reading the log
@@ -6,14 +7,14 @@
 
 export type InjuryTone = "success" | "danger" | "warning" | "neutral" | "info";
 
-export const CASE_CLASSIFICATION_LABELS: Record<string, string> = {
+export const CASE_CLASSIFICATION_LABELS: Record<string, string> = defineLabels({
   NotRecordable: "Not recordable",
   FirstAidOnly: "First aid only",
   OtherRecordable: "Other recordable case",
   JobTransferOrRestriction: "Job transfer or restriction",
   DaysAway: "Days away from work",
   Death: "Death",
-};
+});
 
 export function caseClassificationLabel(value: string): string {
   return CASE_CLASSIFICATION_LABELS[value] ?? value;
@@ -47,38 +48,38 @@ export function classificationTone(value: string): InjuryTone {
   }
 }
 
-export const ILLNESS_TYPE_LABELS: Record<string, string> = {
+export const ILLNESS_TYPE_LABELS: Record<string, string> = defineLabels({
   Injury: "Injury",
   SkinDisorder: "Skin disorder",
   RespiratoryCondition: "Respiratory condition",
   Poisoning: "Poisoning",
   HearingLoss: "Hearing loss",
   OtherIllness: "Other illness",
-};
+});
 
 export function illnessTypeLabel(value: string): string {
   return ILLNESS_TYPE_LABELS[value] ?? value;
 }
 
-export const INJURY_TREATMENT_LABELS: Record<string, string> = {
+export const INJURY_TREATMENT_LABELS: Record<string, string> = defineLabels({
   None: "None",
   FirstAid: "First aid",
   MedicalTreatment: "Medical treatment",
   EmergencyRoom: "Emergency room",
   Hospitalized: "Hospitalised",
-};
+});
 
 export function injuryTreatmentLabel(value: string): string {
   return INJURY_TREATMENT_LABELS[value] ?? value;
 }
 
-export const CLAIM_STATUS_LABELS: Record<string, string> = {
+export const CLAIM_STATUS_LABELS: Record<string, string> = defineLabels({
   NotFiled: "Not filed",
   Filed: "Filed",
   Accepted: "Accepted",
   Denied: "Denied",
   Closed: "Closed",
-};
+});
 
 export function claimStatusLabel(value: string): string {
   return CLAIM_STATUS_LABELS[value] ?? value;

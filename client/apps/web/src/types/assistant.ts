@@ -1,6 +1,7 @@
 import { optionalIdSchema } from "@trenova/shared/types/helpers";
 import { z } from "zod";
 import { pageDraftEditSchema, pageDraftSchema } from "./page-draft";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const agentTemplateKindSchema = z.enum([
   "DispatchAssistant",
@@ -423,14 +424,17 @@ export const MAX_DELEGATES = 8;
 export const MEMORY_TOKEN_BUDGET = { min: 1000, max: 16000, default: 6000 } as const;
 
 export const saveAgentDefinitionRequestSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name is required") }),
   description: z.string().optional().default(""),
   template: agentTemplateKindSchema.nullable().default(null),
   icon: z.string().optional().default(""),
   accent: z.string().optional().default(""),
   instructions: z
     .string()
-    .max(20000, "Instructions cannot be longer than 20000 characters")
+    .max(20000, { error: () => translate("Instructions cannot be longer than 20000 characters") })
     .optional()
     .default(""),
   guardrails: z.array(z.string()).default([]),
@@ -460,7 +464,7 @@ export const saveAgentDefinitionRequestSchema = z.object({
   /** Tokens of recorded memory one prompt may carry; null for the default. */
   memoryTokenBudget: z
     .number()
-    .int("Use a whole number of tokens")
+    .int({ error: () => translate("Use a whole number of tokens") })
     .min(
       MEMORY_TOKEN_BUDGET.min,
       `Memory in the prompt must be at least ${MEMORY_TOKEN_BUDGET.min} tokens`,

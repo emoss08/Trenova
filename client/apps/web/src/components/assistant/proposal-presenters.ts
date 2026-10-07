@@ -3,6 +3,7 @@ import type { AssistantProposal } from "@/types/assistant";
 import { formatList } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { argumentRows, humanizeToolName } from "./proposal-state";
+import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 export type ProposalFact = { label: string; value: string };
 
@@ -80,10 +81,12 @@ export function shortRef(value: string): string {
 
 /** Splits `MissingBOL` into `Missing BOL` without breaking the initialism. */
 function humanizeEnum(value: string): string {
-  return value
-    .replace(/([a-z0-9])([A-Z])/gu, "$1 $2")
-    .replace(/([A-Z]+)([A-Z][a-z])/gu, "$1 $2")
-    .trim();
+  return translateLabel(
+    value
+      .replace(/([a-z0-9])([A-Z])/gu, "$1 $2")
+      .replace(/([A-Z]+)([A-Z][a-z])/gu, "$1 $2")
+      .trim(),
+  );
 }
 
 /**
@@ -190,7 +193,7 @@ const REPORT_METADATA_KEYS = [
   "status",
 ] as const;
 
-const REPORT_METADATA_LABELS: Record<(typeof REPORT_METADATA_KEYS)[number], string> = {
+const REPORT_METADATA_LABELS: Record<(typeof REPORT_METADATA_KEYS)[number], string> = defineLabels({
   name: "Name",
   description: "Description",
   category: "Category",
@@ -198,7 +201,7 @@ const REPORT_METADATA_LABELS: Record<(typeof REPORT_METADATA_KEYS)[number], stri
   visibility: "Visibility",
   defaultFormat: "Format",
   status: "Status",
-};
+});
 
 function reportMetadataNoun(key: (typeof REPORT_METADATA_KEYS)[number]): string {
   switch (key) {

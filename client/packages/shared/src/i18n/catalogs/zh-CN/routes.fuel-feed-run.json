@@ -6,6 +6,7 @@
   "Read {0}.": "已阅读 {0}。",
   "Review rows": "审查数据行",
   "Sync now": "立即同步",
+  "The rows still waiting need their card assigned, or the unit they name added.": "仍在等待的行需要分配卡片，或添加其所指的车辆。",
   "This run has nothing waiting": "此运行没有等待处理的内容",
   "Work rows out again": "重新处理数据行",
   "Working them out...": "处理中...",

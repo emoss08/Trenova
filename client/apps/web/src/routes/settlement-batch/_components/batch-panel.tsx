@@ -34,6 +34,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { AlertTriangleIcon, Download01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -182,7 +183,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
       URL.revokeObjectURL(url);
       toast.success(t("Payroll CSV downloaded"));
     },
-    onError: (error: Error) => toast.error(error.message || "Export failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Export failed")),
   });
 
   if (isLoading || !data) {

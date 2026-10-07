@@ -31,10 +31,12 @@ import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const LEVEL_OPTIONS = disciplinaryLevelSchema.options.map((value) => ({
   value,
-  label: DISCIPLINARY_LEVEL_LABELS[value],
+  label: sourceLabels(DISCIPLINARY_LEVEL_LABELS)[value],
 }));
 
 export type IssueActionDialogProps = {
@@ -118,8 +120,8 @@ export function IssueActionDialog({
     onSuccess: (result) => {
       toast.success(`${meta.label} issued`, {
         description: result.employmentEvent
-          ? "The timeline was updated and the driver has been notified."
-          : "The driver has been notified and can acknowledge it in Dash.",
+          ? translate("The timeline was updated and the driver has been notified.")
+          : translate("The driver has been notified and can acknowledge it in Dash."),
       });
       void invalidate();
       onOpenChange(false);

@@ -26,6 +26,7 @@ import type {
 import type { ColumnPinningState, RowData } from "@tanstack/react-table";
 import type { CSSProperties } from "react";
 import { stableStringify } from "@/lib/stable-stringify";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type UrlFilterState = {
   fieldFilters: FieldFilter[];
@@ -91,10 +92,10 @@ export const FILTER_OPERATORS: Record<FilterVariant, FilterOperator[]> = {
   boolean: ["eq"],
 };
 
-export const CONNECTOR_LABELS: Record<FilterConnector, string> = {
+export const CONNECTOR_LABELS: Record<FilterConnector, string> = defineLabels({
   and: "And",
   or: "Or",
-};
+});
 
 export const OPERATOR_LABELS: Record<FilterOperator, string> = {
   eq: "equals",

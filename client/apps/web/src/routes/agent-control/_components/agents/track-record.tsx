@@ -137,7 +137,7 @@ export function TrackRecord({
                 <span className="text-muted-foreground text-xs">{t("No longer offered")}</span>
               )}
               <Badge variant="neutral" className="h-4 px-1.5 text-2xs">
-                {t(TIER_LABEL[current])}
+                {TIER_LABEL[current]}
               </Badge>
               {summary.state === "earned" && (
                 <Badge variant="success" className="h-4 gap-1 px-1.5 text-2xs">
@@ -159,7 +159,7 @@ export function TrackRecord({
                   {t(
                     "{0} more clean approvals to {1}",
                     summary.remaining,
-                    t(TIER_LABEL[summary.nextTier]),
+                    TIER_LABEL[summary.nextTier],
                   )}
                 </span>
               </div>

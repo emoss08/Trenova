@@ -17,12 +17,13 @@ import {
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const GREETINGS = {
+const GREETINGS = defineLabels({
   morning: "Good morning",
   afternoon: "Good afternoon",
   evening: "Good evening",
-} as const;
+} as const);
 
 function greeting(hour: number): string {
   return GREETINGS[partOfDay(hour)];

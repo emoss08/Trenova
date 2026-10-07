@@ -202,23 +202,23 @@ export const customerSchema = z
     status: statusSchema,
     code: z
       .string()
-      .min(1, { error: "Code is required" })
-      .max(10, { error: "Code must be 10 characters or less" }),
+      .min(1, { error: () => translate("Code is required") })
+      .max(10, { error: () => translate("Code must be 10 characters or less") }),
     name: z
       .string()
-      .min(1, { error: "Name is required" })
-      .max(255, { error: "Name must be 255 characters or less" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(255, { error: () => translate("Name must be 255 characters or less") }),
     addressLine1: z
       .string()
-      .min(1, { error: "Address line 1 is required" })
-      .max(150, { error: "Address line 1 must be 150 characters or less" }),
+      .min(1, { error: () => translate("Address line 1 is required") })
+      .max(150, { error: () => translate("Address line 1 must be 150 characters or less") }),
     addressLine2: nullableStringSchema,
     city: z
       .string()
-      .min(1, { error: "City is required" })
-      .max(100, { error: "City must be 100 characters or less" }),
-    stateId: z.string().min(1, { error: "State is required" }),
-    postalCode: z.string().min(1, { error: "Postal code is required" }),
+      .min(1, { error: () => translate("City is required") })
+      .max(100, { error: () => translate("City must be 100 characters or less") }),
+    stateId: z.string().min(1, { error: () => translate("State is required") }),
+    postalCode: z.string().min(1, { error: () => translate("Postal code is required") }),
     isGeocoded: z.boolean().default(false),
     longitude: z.number().nullable().optional(),
     latitude: z.number().nullable().optional(),
@@ -226,10 +226,10 @@ export const customerSchema = z
     externalId: nullableStringSchema,
     dotNumber: nullableStringSchema.refine(
       (value) => value == null || /^[0-9]{1,12}$/.test(value),
-      { error: "DOT number must contain only digits (12 max)" },
+      { error: () => translate("DOT number must contain only digits (12 max)") },
     ),
     mcNumber: nullableStringSchema.refine((value) => value == null || /^[0-9]{1,12}$/.test(value), {
-      error: "MC number must contain only digits (12 max)",
+      error: () => translate("MC number must contain only digits (12 max)"),
     }),
     brokerVettingEnabled: z.boolean().default(false),
     allowConsolidation: z.boolean().default(true),
@@ -250,7 +250,8 @@ export const customerSchema = z
     },
     {
       path: ["allowConsolidation"],
-      message: "Allow consolidation is required when exclusive consolidation is true",
+      error: () =>
+        translate("Allow consolidation is required when exclusive consolidation is true"),
     },
   )
   .refine(
@@ -258,12 +259,12 @@ export const customerSchema = z
       data.statusUpdatePreference === "None" || (data.statusUpdateRecipients ?? "").trim() !== "",
     {
       path: ["statusUpdateRecipients"],
-      message: "Name who receives these updates, or set the preference back to None",
+      error: () => translate("Name who receives these updates, or set the preference back to None"),
     },
   )
   .refine((data) => !data.brokerVettingEnabled || !!data.dotNumber, {
     path: ["dotNumber"],
-    message: "A DOT number is required to vet this customer as a broker",
+    error: () => translate("A DOT number is required to vet this customer as a broker"),
   });
 
 export type Customer = z.infer<typeof customerSchema>;

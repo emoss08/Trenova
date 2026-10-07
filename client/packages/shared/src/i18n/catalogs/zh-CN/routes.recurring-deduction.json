@@ -3,6 +3,7 @@
   "Contribute to escrow account": "提缴至履约保证账户",
   "Deducted / cap": "已扣款／上限",
   "Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.": "将此扣款分类的扣款代码；若该代码已映射总账科目，则导向该科目。",
+  "Deduction paused": "扣款已暂停",
   "Deduction stops automatically once this lifetime total is reached.": "累计达到此总额后，扣款会自动停止。",
   "Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.": "“每次结算”在每个周期皆扣款；“每月”则仅于每月第一笔结算扣款。",
   "Future settlements skip the deduction; history is kept.": "后续结算会跳过此扣款；历史记录仍保留。",

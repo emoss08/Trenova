@@ -17,7 +17,7 @@ export const verifyMFAChallengeRequestSchema = z
     recoveryCode: z.string().optional().default(""),
   })
   .refine((value) => value.code.trim() !== "" || value.recoveryCode.trim() !== "", {
-    error: "Enter the code from your authenticator app",
+    error: () => translate("Enter the code from your authenticator app"),
     path: ["code"],
   });
 
@@ -52,7 +52,9 @@ export type RecoveryCodes = z.infer<typeof recoveryCodesSchema>;
 export const totpCodeSchema = z
   .string()
   .trim()
-  .regex(/^\d{3}\s?\d{3}$/, { error: "Enter the six-digit code from your authenticator app" });
+  .regex(/^\d{3}\s?\d{3}$/, {
+    error: () => translate("Enter the six-digit code from your authenticator app"),
+  });
 
 export type DisableTOTPRequest = {
   password: string;

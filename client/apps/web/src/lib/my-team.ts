@@ -7,14 +7,15 @@ import {
   safetyRatingMeta,
   trainingHealthMetaOf,
 } from "@trenova/shared/lib/worker-health";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type TeamPath = "direct" | "terminal" | "covering";
 
-export const TEAM_PATH_LABELS: Record<TeamPath, string> = {
+export const TEAM_PATH_LABELS: Record<TeamPath, string> = defineLabels({
   direct: "Direct reports",
   terminal: "Through a terminal you run",
   covering: "Covering for",
-};
+});
 
 export type CoverSource = {
   id: string;

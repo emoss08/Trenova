@@ -4,6 +4,7 @@ import type {
   DocumentIntelligenceField,
   DocumentIntelligenceStop,
 } from "@trenova/shared/types/document";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type RequiredFieldsForm = {
   customerId: string;
@@ -79,7 +80,7 @@ export type ReconciliationState = {
 const HIGH_CONFIDENCE_THRESHOLD = 0.85;
 const LOW_CONFIDENCE_THRESHOLD = 0.5;
 
-const FIELD_LABELS: Record<string, string> = {
+const FIELD_LABELS: Record<string, string> = defineLabels({
   loadNumber: "Load Number",
   referenceNumber: "Reference Number",
   shipper: "Shipper",
@@ -109,7 +110,7 @@ const FIELD_LABELS: Record<string, string> = {
   serviceType: "Service Type",
   weight: "Weight",
   pieces: "Pieces",
-};
+});
 
 function computeFieldStatus(
   field: DocumentIntelligenceField,

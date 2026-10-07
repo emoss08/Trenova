@@ -36,11 +36,12 @@ import {
   type CarrierIntelSettingsFormValues,
 } from "./carrier-intel-settings-schema";
 import { SettingsSection } from "./settings-section";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const feedTypeLabels: Record<string, string> = {
+const feedTypeLabels: Record<string, string> = defineLabels({
   ChangeFeed: "Change feed",
   SnapshotRefresh: "Snapshot refresh",
-};
+});
 
 export function CarrierIntelMonitoringTab({
   open,
@@ -370,7 +371,7 @@ function FeedRow({ feed }: { feed: CarrierIntelFeedState }) {
       <TableCell>
         <div className="flex flex-col">
           <span className="text-sm font-medium">
-            {t(feedTypeLabels[feed.feedType] ?? feed.feedType)}
+            {feedTypeLabels[feed.feedType] ?? feed.feedType}
           </span>
           <span className="text-muted-foreground text-xs">
             {carrierIntelProviderLabel(feed.provider)}

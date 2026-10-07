@@ -16,20 +16,28 @@ import {
   type RefObject,
 } from "react";
 import { DeskIcon, type DeskIconName } from "../desk-icons";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /** How long typing has to settle before the records are searched. */
 const SEARCH_DEBOUNCE_MS = 140;
 
-const TABS: readonly MentionSearchType[] = ["all", "shipment", "customer", "invoice", "worker", "carrier"];
+const TABS: readonly MentionSearchType[] = [
+  "all",
+  "shipment",
+  "customer",
+  "invoice",
+  "worker",
+  "carrier",
+];
 
-const TAB_LABELS: Record<MentionSearchType, string> = {
+const TAB_LABELS: Record<MentionSearchType, string> = defineLabels({
   all: "All",
   shipment: "Shipments",
   customer: "Customers",
   invoice: "Invoices",
   worker: "Drivers",
   carrier: "Carriers",
-};
+});
 
 /** Which tab a record type sits under: a billing queue item is an invoice in waiting. */
 function tabOf(type: string): MentionSearchType {
@@ -296,7 +304,7 @@ function MentionTabs({
             className={tab === kind ? "dk-on" : undefined}
             onClick={() => onChange(kind)}
           >
-            {t(TAB_LABELS[kind])}
+            {TAB_LABELS[kind]}
           </button>
         ))}
       </div>
@@ -352,7 +360,7 @@ export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
               mentions.tab === "all" && (!previous || tabOf(previous.type) !== tabOf(record.type));
             return (
               <Fragment key={record.type + record.id}>
-                {heading && <div className="dk-mn-h">{t(TAB_LABELS[tabOf(record.type)])}</div>}
+                {heading && <div className="dk-mn-h">{TAB_LABELS[tabOf(record.type)]}</div>}
                 <button
                   type="button"
                   role="option"

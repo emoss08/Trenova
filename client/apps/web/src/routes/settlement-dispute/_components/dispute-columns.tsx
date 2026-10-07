@@ -5,6 +5,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import type { SettlementDisputeRow } from "@trenova/shared/lib/graphql/driver-portal";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 
@@ -16,13 +17,13 @@ export const disputeStatusMeta: Record<string, { label: string; variant: BadgeVa
   Withdrawn: { label: "Withdrawn", variant: "neutral" },
 };
 
-export const disputeCategoryLabels: Record<string, string> = {
+export const disputeCategoryLabels: Record<string, string> = defineLabels({
   MissingPay: "Missing Pay",
   IncorrectRate: "Incorrect Rate",
   IncorrectDeduction: "Incorrect Deduction",
   MissingReimbursement: "Missing Reimbursement",
   Other: "Other",
-};
+});
 
 export function SettlementDisputeStatusBadge({ status }: { status: string }) {
   const t = useT();
