@@ -1,0 +1,16 @@
+{
+  "Adjustment detail": "調整明細",
+  "Adjustment kind": "調整種類",
+  "Adjustment status": "調整狀態",
+  "Amount: {0}": "金額：{0}",
+  "Exception totals": "例外合計",
+  "Finance notes": "財務備註",
+  "Investigate adjustment-created finance exceptions and trace them back to source artifacts.": "調查由調整產生的財務例外，並回溯至來源產出物。",
+  "Jump directly into the related billing and invoice surfaces.": "直接前往相關的帳務與發票畫面。",
+  "Line-level credit and rebill values that created the exception.": "造成此例外的明細層級貸記與重新開單金額。",
+  "Open exceptions": "未結例外",
+  "Pick an exception from the list to trace it back to the adjustment and invoices it came from.": "請自清單中選擇一筆例外，以回溯其來源的調整與發票。",
+  "Rebill queue item": "重新開單佇列項目",
+  "Replacement invoice": "替代發票",
+  "Search invoice, customer, exception reason...": "搜尋發票、客戶、例外原因..."
+}

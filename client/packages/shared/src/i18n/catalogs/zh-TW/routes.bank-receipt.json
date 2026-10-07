@@ -1,0 +1,16 @@
+{
+  "Active work items": "進行中的工作項目",
+  "Bank receipt reconciliation": "銀行入帳核對",
+  "Failed to match receipt": "無法比對此入帳紀錄",
+  "Match imported bank receipts to customer payments and resolve exceptions.": "將匯入的銀行入帳與客戶付款比對，並處理例外。",
+  "Match suggestions": "比對建議",
+  "Matched At": "比對時間",
+  "Matched payment": "已比對的付款",
+  "No match suggestions available.": "沒有可用的比對建議。",
+  "Payment ID": "付款 ID",
+  "Pick a receipt from the list to see its details and the payments it could be matched to.": "請自清單中選擇一筆入帳紀錄，以檢視其明細與可比對的付款。",
+  "Receipt details": "入帳明細",
+  "Receipt matched to payment": "入帳紀錄已與付款比對",
+  "Search reference, memo...": "搜尋參考編號、備註...",
+  "{0} found": "找到 {0} 筆"
+}

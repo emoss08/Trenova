@@ -1,0 +1,7 @@
+{
+  "Current processing status of this accessorial charge (active, pending approval, etc.)": "Estado de procesamiento actual de este cargo accesorio (activo, pendiente de aprobación, etc.)",
+  "Detailed explanation of the accessorial service provided, including any special conditions or requirements for FMCSA compliance": "Explicación detallada del servicio accesorio prestado, incluidas las condiciones o requisitos especiales para el cumplimiento de la FMCSA",
+  "Manage and configure accessorial charges for your organization": "Gestione y configure los cargos accesorios de su organización",
+  "Standard industry or company-specific code identifying this accessorial service (e.g., LUM for lumper fee)": "Código estándar del sector o propio de la empresa que identifica este servicio accesorio (p. ej., LUM para la tarifa de estibador)",
+  "Unit of measure for this charge (mile, hour, day, stop)": "Unidad de medida de este cargo (milla, hora, día, parada)"
+}

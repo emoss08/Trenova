@@ -1,0 +1,19 @@
+{
+  "Add optional stops between origin and destination in travel order": "Agregue paradas opcionales entre el origen y el destino en orden de recorrido",
+  "Are you sure you want to delete this distance override? This action cannot be undone.": "¿Seguro que desea eliminar esta anulación de distancia? Esta acción no se puede deshacer.",
+  "Delete distance override": "Eliminar la anulación de distancia",
+  "Distance override": "Anulación de la distancia",
+  "Distance override deleted": "Anulación de distancia eliminada",
+  "Failed to delete distance override": "No se pudo eliminar la anulación de distancia",
+  "Intermediate stops": "Paradas intermedias",
+  "No intermediate stops configured.": "No hay paradas intermedias configuradas.",
+  "Optionally scope this override to a specific customer": "Opcionalmente, limite esta anulación a un cliente concreto",
+  "Override calculated distances between location pairs for routing and billing adjustments": "Anule las distancias calculadas entre pares de ubicaciones para ajustes de enrutamiento y facturación",
+  "Select customer (optional)": "Seleccione el cliente (opcional)",
+  "Select destination location": "Seleccione la ubicación de destino",
+  "Select origin location": "Seleccione la ubicación de origen",
+  "Select stop location": "Seleccione la ubicación de la parada",
+  "The destination location for this distance override": "La ubicación de destino de esta anulación de distancia",
+  "The origin location for this distance override": "La ubicación de origen de esta anulación de distancia",
+  "The override distance between the two locations": "La distancia anulada entre las dos ubicaciones"
+}

@@ -1,0 +1,16 @@
+{
+  "As of": "A la fecha",
+  "Assess late charges": "Aplicar recargos por mora",
+  "Assess late charges now?": "¿Aplicar los recargos por mora ahora?",
+  "Assess now": "Aplicar ahora",
+  "Failed to load the late charge preview. Try refreshing the page.": "No se pudo cargar la vista previa de recargos por mora. Intente actualizar la página.",
+  "Late charge assessment is disabled for this organization. You can still preview here; enable it in billing control to raise memos.": "La aplicación de recargos por mora está deshabilitada para esta organización. Aún puede ver una vista previa aquí; actívela en el control de facturación para generar notas.",
+  "Overdue invoices charged once per thirty-day period at each customer's rate, raised as one debit memo per customer.": "Facturas vencidas cargadas una vez por cada período de treinta días a la tasa de cada cliente, generadas como una nota de débito por cliente.",
+  "Period {0}": "Período {0}",
+  "Preview as of {0}": "Vista previa a la fecha de {0}",
+  "Raises {0, plural, one {# debit memo} other {# debit memos}} totalling {1}. Each invoice period is charged once; a rerun cannot double-charge.": "Genera {0, plural, one {# nota de débito} other {# notas de débito}} por un total de {1}. Cada período de factura se cobra una sola vez; una nueva ejecución no puede cobrar dos veces.",
+  "Run as of {0}: {1, plural, one {# memo} other {# memos}} raised, {2} skipped": "Ejecución al {0}: {1, plural, one {# nota generada} other {# notas generadas}}, {2} omitidas",
+  "The nightly run only previews: it computes what it would raise and writes nothing. Run it here to raise the memos, or switch the mode to Automatic in billing control.": "La ejecución nocturna solo genera una vista previa: calcula lo que generaría y no escribe nada. Ejecútela aquí para generar las notas, o cambie el modo a Automático en el control de facturación.",
+  "The nightly run raises and posts these debit memos automatically; running now assesses them ahead of it.": "La ejecución nocturna genera y contabiliza estas notas de débito automáticamente; ejecutarla ahora las aplica antes de tiempo.",
+  "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}": "{0, plural, one {# nota de débito generada} other {# notas de débito generadas}} para {1}"
+}

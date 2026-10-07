@@ -1,5 +1,14 @@
-import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18n/runtime";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  registerCatalogSource,
+  requireCatalog,
+  setLocale,
+  translate,
+} from "@trenova/shared/i18n/runtime";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+beforeAll(() => {
+  requireCatalog("core", "web");
+});
 
 afterEach(async () => {
   await setLocale("en");

@@ -1,0 +1,17 @@
+{
+  "Allows overnight": "允許過夜",
+  "Facility type": "場站類型",
+  "Has restroom": "設有洗手間",
+  "Manage and configure location categories for your organization": "管理並設定您組織的地點類別",
+  "Requires appointment": "須預約",
+  "Secure parking": "安全停車場",
+  "The color of the location category": "地點類別的顏色",
+  "The description of the location category": "地點類別的說明",
+  "The facility type of the location category": "地點類別的場站類型",
+  "The name of the location category": "地點類別的名稱",
+  "The type of location category": "地點類別的類型",
+  "Whether this location allows overnight stays": "此地點是否允許過夜",
+  "Whether this location has restroom facilities": "此地點是否設有洗手間",
+  "Whether this location has secure parking": "此地點是否設有安全停車場",
+  "Whether this location requires an appointment": "此地點是否須預約"
+}

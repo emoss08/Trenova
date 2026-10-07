@@ -1,0 +1,11 @@
+{
+  "Apply payment": "冲抵付款",
+  "Average age": "平均账龄",
+  "Failed to load open items. Try refreshing the page.": "无法加载未结项目。请尝试刷新页面。",
+  "Open item totals": "未结项目合计",
+  "Outstanding invoices and their payment status across all customers.": "所有客户的未结发票及其付款状态。",
+  "Select invoices from a single customer to apply a payment": "请选择同一客户的发票以冲抵付款",
+  "open invoices": "未结发票",
+  "weighted by open $": "依未结金额加权",
+  "{0} selected · {1}": "已选 {0} 笔 · {1}"
+}

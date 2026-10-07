@@ -1,0 +1,21 @@
+{
+  "Already confirmed": "已确认",
+  "By confirming, you agree to the rate and terms shown above on behalf of {0}.": "确认即表示您代表 {0} 同意上述费率与条件。",
+  "Confirm rate": "确认费率",
+  "Confirming...": "确认中...",
+  "Powered by Trenova. Questions about this rate confirmation? Reply to the email it arrived in.": "由 Trenova 提供技术支持。对此费率确认书有疑问吗？请回复发送此文件的邮件。",
+  "Rate confirmation for {0}": "{0} 的费率确认书",
+  "Rate confirmed": "费率已确认",
+  "Review and sign a rate confirmation": "审阅并签署费率确认书",
+  "Review and sign the agreement below": "请查看并签署下方协议",
+  "Sign link expires {0}": "签署链接于 {0} 到期",
+  "Thank you — your signature has been recorded and the broker has been notified.": "谢谢 — 您的签署已记录，并已通知货运经纪。",
+  "The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.": "此链接可能已过期、被撤销，或该费率确认书已更新。若您认为这是错误，请联系货运经纪。",
+  "The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment.": "因临时性问题，无法加载费率确认书。请稍后再试。",
+  "This rate confirmation has already been signed. Contact the broker if anything changed.": "此费率确认书已签署。若有任何变动，请联系货运经纪。",
+  "This rate confirmation link is no longer valid": "此费率确认书链接已失效",
+  "Title (optional)": "标题（选填）",
+  "Your name (required)": "您的姓名（必填）",
+  "Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.": "因临时性问题，无法记录您的签署。目前尚未提交任何内容 — 请稍后再试。",
+  "e.g., Operations Manager": "例如：运营经理"
+}

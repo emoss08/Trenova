@@ -8,6 +8,7 @@ import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { editionAlias } from "../../packages/edition/node/resolve-entry.ts";
 import { singletonPackages } from "../../singleton-packages.ts";
+import { routeCatalogs } from "./vite/route-catalogs.ts";
 
 const require = createRequire(import.meta.url);
 
@@ -29,6 +30,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    routeCatalogs({ routesDir: path.resolve(dirname, "src/routes") }),
     react(),
     // babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),

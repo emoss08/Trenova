@@ -1,0 +1,18 @@
+{
+  "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).": "批准后会立即在驾驶员未结算的结算单上添加一笔报销行（若不存在，则创建一份周期外草稿）。",
+  "Approve & reimburse": "批准并报销",
+  "Approve expense": "批准费用",
+  "Driver expense": "司机费用",
+  "Driver-submitted out-of-pocket expenses — review receipts, approve to reimburse on the driver's open settlement, or reject with an explanation.": "司机提交的自行垫付费用 — 审阅收据后可批准，于司机未结的结算中报销，或附说明拒绝。",
+  "Incurred": "已发生",
+  "Incurred {0} · Submitted {1}{2}": "发生于 {0} · 提交于 {1}{2}",
+  "No receipt attached — consider asking the driver for one before approving.": "未附收据 — 批准前建议先向司机索取。",
+  "Note (optional)": "备注（可选）",
+  "Pay code:": "薪酬代码：",
+  "Reject expense": "驳回费用",
+  "Required — shown to the driver verbatim.": "必填——将原文显示给驾驶员。",
+  "Review this expense": "审查此费用",
+  "This expense could not be loaded.": "无法加载此费用。",
+  "View receipt": "查看收据",
+  "· reimbursement applied to open settlement": "· 报销款已计入未结算的结算单"
+}

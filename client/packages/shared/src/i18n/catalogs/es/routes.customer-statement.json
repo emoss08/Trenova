@@ -1,0 +1,18 @@
+{
+  "1-30 Days": "1-30 días",
+  "31-60 Days": "31-60 días",
+  "61-90 Days": "61-90 días",
+  "90+ Days": "Más de 90 días",
+  "Aging summary": "Resumen de antigüedad",
+  "Back to open items": "Volver a las partidas abiertas",
+  "Could not load the statement. The customer may not exist or you may not have permission.": "No se pudo cargar el estado de cuenta. Puede que el cliente no exista o que no tenga permiso.",
+  "Customer statement": "Estado de cuenta del cliente",
+  "Ending balance": "Saldo final",
+  "Failed to load.": "No se pudo cargar.",
+  "No customer specified.": "No se especificó ningún cliente.",
+  "Nothing in this period": "Nada en este período",
+  "Opening balance": "Saldo inicial",
+  "Statement date": "Fecha del estado de cuenta",
+  "Statement totals": "Totales del estado de cuenta",
+  "Transaction history": "Historial de transacciones"
+}

@@ -1,0 +1,19 @@
+{
+  "Add any extra detail about this location": "Agregue cualquier detalle adicional sobre esta ubicación",
+  "Basic details": "Datos básicos",
+  "Configure Google maps": "Configurar Google Maps",
+  "Create new location": "Crear una ubicación nueva",
+  "Fill out the form below to create a new Location.": "Complete el formulario de abajo para crear una nueva ubicación.",
+  "Google Maps is not configured for this environment, so the geofence editor cannot be displayed.": "Google Maps no está configurado en este entorno, así que no se puede mostrar el editor de geovallas.",
+  "Google maps empty state": "Estado vacío de Google Maps",
+  "Identification, address, and operating boundary for this location.": "Identificación, dirección y límite operativo de esta ubicación.",
+  "Loading map editor...": "Cargando el editor de mapas...",
+  "Loading maps configuration..": "Cargando la configuración de mapas..",
+  "Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.": "Hora local de esta ubicación. Las fórmulas de tarificación leen las horas de recogida y entrega, los días de la semana y las fechas en esta zona; sin ella usan UTC.",
+  "Manage and configure locations for your organization": "Gestione y configure las ubicaciones de su organización",
+  "Not set (UTC)": "Sin definir (UTC)",
+  "Optional notes for dispatchers and drivers.": "Notas opcionales para despachadores y conductores.",
+  "The category this location belongs to.": "La categoría a la que pertenece esta ubicación.",
+  "The current status of the location.": "El estado actual de la ubicación.",
+  "The name of the location.": "El nombre de la ubicación."
+}

@@ -1,0 +1,13 @@
+{
+  "1-3 Days": "1-3 días",
+  "4-7 Days": "4-7 días",
+  "7+ Days": "7+ días",
+  "Exception aging": "Antigüedad de las excepciones",
+  "Import a bank receipt file and every receipt it carries is matched against open invoices; what matched, what did not, and how long the exceptions have waited are counted here.": "Importe un archivo de recibos bancarios y cada recibo que contenga se cotejará con las facturas abiertas; aquí se contabiliza qué se emparejó, qué no y cuánto llevan esperando las excepciones.",
+  "Loading the summary": "Cargando el resumen",
+  "Match rate": "Tasa de coincidencia",
+  "Nothing to reconcile yet": "Aún no hay nada que conciliar",
+  "Overview of bank receipt reconciliation status.": "Resumen del estado de conciliación de recibos bancarios.",
+  "Reconciliation summary": "Resumen de la conciliación",
+  "Work items": "Elementos de trabajo"
+}

@@ -1,0 +1,18 @@
+{
+  "Credits": "Haber",
+  "Debits": "Debe",
+  "Entry not found.": "Entrada no encontrada.",
+  "Fully reversed": "Totalmente revertido",
+  "Is reversal": "Es reversión",
+  "Ledger status": "Estado del libro",
+  "Loading entry details...": "Cargando los detalles de la entrada...",
+  "Net impact by account": "Impacto neto por cuenta",
+  "No line items available.": "No hay partidas disponibles.",
+  "Posting summary": "Resumen de contabilización",
+  "Reference type": "Tipo de referencia",
+  "Reversal Of": "Reversión de",
+  "Reversed By": "Revertido por",
+  "Total credit:": "Total del haber:",
+  "Total debit:": "Total del debe:",
+  "across {0} entries": "en {0} entradas"
+}

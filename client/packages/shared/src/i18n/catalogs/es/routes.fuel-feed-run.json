@@ -1,0 +1,11 @@
+{
+  "Every time a connected fuel card feed has read your transactions, and what became of the rows. Rows a run could not place wait here until the card they were on is assigned or the unit they name is added.": "Cada vez que una fuente conectada de tarjetas de combustible ha leído sus transacciones, y qué ocurrió con las filas. Las filas que una ejecución no pudo ubicar esperan aquí hasta que se asigne la tarjeta en la que estaban o se agregue la unidad que indican.",
+  "Read from the provider's API.": "Leído de la API del proveedor.",
+  "Read {0}.": "Leído {0}.",
+  "Review rows": "Revisar las filas",
+  "Sync now": "Sincronizar ahora",
+  "Work rows out again": "Volver a resolver las filas",
+  "Working them out...": "Resolviéndolas...",
+  "{0} run": "{0} ejecución",
+  "{0} {1} posted, {2} waiting.": "{0} {1} contabilizados, {2} pendientes."
+}

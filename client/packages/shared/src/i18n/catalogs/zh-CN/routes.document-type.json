@@ -1,0 +1,13 @@
+{
+  "A description of the document type": "此文档类型的说明",
+  "A unique code for this document type": "此文档类型的唯一代码",
+  "Document Type updated successfully": "文档类型已成功更新",
+  "Loading document type...": "正在加载文档类型...",
+  "Manage and configure document types for your organization": "管理并配置您组织的文档类型",
+  "System document type": "系统文档类型",
+  "The category of documents": "文档的类别",
+  "The classification level of documents": "文档的机密等级",
+  "The color associated with this document type": "与此文档类型关联的颜色",
+  "The name of the document type": "文档类型的名称",
+  "This is a system document type and cannot be modified.": "这是系统文档类型，无法修改。"
+}

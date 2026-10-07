@@ -1,6 +1,11 @@
 import { resolveInitialLocale } from "@trenova/shared/i18n/provider";
-import { getLocale, setLocale, translate } from "@trenova/shared/i18n/runtime";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getLocale, requireCatalog, setLocale, translate } from "@trenova/shared/i18n/runtime";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+
+// What the web app's provider requires before its first frame.
+beforeAll(() => {
+  requireCatalog("core", "web");
+});
 
 beforeEach(() => {
   window.localStorage.clear();

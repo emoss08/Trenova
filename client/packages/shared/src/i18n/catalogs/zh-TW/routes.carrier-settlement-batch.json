@@ -1,0 +1,13 @@
+{
+  "A label for this AP run; if left blank it is named after the period end date.": "此應付帳款批次的標籤；留空時會以期間結束日期命名。",
+  "Carrier settlement batch": "承運業者結算批次",
+  "Carrier settlement batches": "承運業者結算批次",
+  "Creates a draft settlement for every carrier with pending cost events in the current period.": "為本期有待處理成本事件的每個承運業者建立一份結算草稿。",
+  "Export remittance CSV": "匯出匯款 CSV",
+  "Generate pay-period AP runs, review totals, and export remittance files.": "產生薪資期間的應付帳款批次、檢視總額，並匯出匯款檔案。",
+  "Period start": "期間開始",
+  "Settlement count": "結算筆數",
+  "Settlements can auto-post on approval based on your carrier settlement control policy.": "依據您的承運業者結算控制政策，結算可於核准時自動過帳。",
+  "Total gross minor": "總毛額（最小幣值單位）",
+  "Total net minor": "總淨額（最小幣值單位）"
+}

@@ -1,0 +1,18 @@
+{
+  "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).": "La aprobación agrega de inmediato una línea de reembolso a la liquidación abierta del conductor (si no existe ninguna, se crea un borrador fuera de ciclo).",
+  "Approve & reimburse": "Aprobar y reembolsar",
+  "Approve expense": "Aprobar gasto",
+  "Driver expense": "Gasto del conductor",
+  "Driver-submitted out-of-pocket expenses — review receipts, approve to reimburse on the driver's open settlement, or reject with an explanation.": "Gastos de su bolsillo presentados por los conductores: revise los recibos, apruebe para reembolsar en la liquidación abierta del conductor, o rechace con una explicación.",
+  "Incurred": "Incurrido",
+  "Incurred {0} · Submitted {1}{2}": "Incurrido el {0} · Presentado el {1}{2}",
+  "No receipt attached — consider asking the driver for one before approving.": "No hay recibo adjunto: considere pedírselo al conductor antes de aprobar.",
+  "Note (optional)": "Nota (opcional)",
+  "Pay code:": "Código de pago:",
+  "Reject expense": "Rechazar gasto",
+  "Required — shown to the driver verbatim.": "Obligatorio: se muestra al conductor tal cual.",
+  "Review this expense": "Revisar este gasto",
+  "This expense could not be loaded.": "No se pudo cargar este gasto.",
+  "View receipt": "Ver el recibo",
+  "· reimbursement applied to open settlement": "· reembolso aplicado a la liquidación abierta"
+}

@@ -1,0 +1,21 @@
+{
+  "Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).": "在司机未结的结算上新增一笔明细（若无，则创建周期外草稿）。",
+  "Appears as the line item on the driver's statement.": "会以明细项目显示于司机的对账单上。",
+  "Apply a correcting adjustment": "套用更正调整",
+  "Deny dispute": "驳回争议",
+  "Description (e.g. Detention correction - PRO 12345)": "说明（例如：滞留费更正 - PRO 12345）",
+  "Dispute moved to review": "争议已转入审查",
+  "Disputed line": "争议明细",
+  "Driver-submitted questions and challenges against issued settlements — review, resolve with a correcting adjustment, or deny with an explanation.": "司机针对已发出结算提出的疑问与争议 — 可审查后以更正调整处理，或附说明驳回。",
+  "Explain the outcome — the driver sees this in Dash.": "请说明处理结果 — 司机会在 Dash 中看到。",
+  "Only open disputes can be moved to review.": "仅未结的争议可转入审查。",
+  "Optional — routes the adjustment to that code's GL account when posting.": "选填 — 过账时将此调整导向该代码的总账科目。",
+  "Resolution note": "处理备注",
+  "Resolve in driver's favor": "判定有利于司机",
+  "Resolve this dispute": "处理此争议",
+  "Settlement dispute": "结算争议",
+  "Shown to the driver verbatim; say what was checked and why the outcome is right.": "会原文显示给司机；请说明核查了哪些内容，以及该结果为何正确。",
+  "Submitted {0}{1}": "提交于 {0}{1}",
+  "This dispute could not be loaded.": "无法加载此争议。",
+  "· correcting adjustment applied": "· 已应用更正调整"
+}

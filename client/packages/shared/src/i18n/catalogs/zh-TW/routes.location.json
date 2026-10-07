@@ -1,0 +1,19 @@
+{
+  "Add any extra detail about this location": "新增關於此地點的其他細節",
+  "Basic details": "基本資料",
+  "Configure Google maps": "設定 Google 地圖",
+  "Create new location": "建立新地點",
+  "Fill out the form below to create a new Location.": "請填寫下方表單以建立新地點。",
+  "Google Maps is not configured for this environment, so the geofence editor cannot be displayed.": "此環境尚未設定 Google 地圖，因此無法顯示地理圍籬編輯器。",
+  "Google maps empty state": "Google 地圖空白狀態",
+  "Identification, address, and operating boundary for this location.": "此地點的識別資訊、地址與營運範圍。",
+  "Loading map editor...": "正在載入地圖編輯器...",
+  "Loading maps configuration..": "正在載入地圖設定..",
+  "Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.": "此地點的當地時間。計價公式會依此時區讀取取貨與交貨時間、星期與日期；未設定時則使用 UTC。",
+  "Manage and configure locations for your organization": "管理並設定您組織的地點",
+  "Not set (UTC)": "未設定（UTC）",
+  "Optional notes for dispatchers and drivers.": "供調度員與駕駛員參考的選填備註。",
+  "The category this location belongs to.": "此地點所屬的類別。",
+  "The current status of the location.": "此地點目前的狀態。",
+  "The name of the location.": "此地點的名稱。"
+}

@@ -1,0 +1,21 @@
+{
+  "0 low risk · 100 high risk": "0 低風險 · 100 高風險",
+  "Account details": "帳戶詳細資料",
+  "Billed trailing 91d": "過去 91 天已計費",
+  "Choose a customer above and their receivables profile, running ledger and payment history are laid out here.": "請於上方選擇客戶，其應收帳款概況、流水分類帳與付款歷程即會顯示於此。",
+  "Credit utilization": "信用使用率",
+  "DSO / days to pay": "應收帳款週轉天數 / 付款天數",
+  "Delinquency score": "逾期分數",
+  "Last payment": "上次付款",
+  "No payments received yet": "尚未收到任何付款",
+  "Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.": "此客戶的應收帳款尚無任何過帳。其首張發票或首筆付款將開啟分類帳。",
+  "Oldest open invoice": "最舊的未結發票",
+  "Payments — trailing 12 months": "付款 — 過去 12 個月",
+  "Select a customer...": "選擇客戶…",
+  "Statement": "對帳單",
+  "Statement-style transaction history with the customer's AR profile.": "以對帳單形式呈現的交易歷程，並附客戶的應收帳款概況。",
+  "d avg": "天平均",
+  "no credit limit set": "未設定信用額度",
+  "of {0} limit": "共 {0} 額度",
+  "{0} overdue · {1} open": "逾期 {0} · 未結 {1}"
+}

@@ -1,0 +1,21 @@
+{
+  "Already confirmed": "Ya confirmado",
+  "By confirming, you agree to the rate and terms shown above on behalf of {0}.": "Al confirmar, acepta la tarifa y las condiciones mostradas arriba en nombre de {0}.",
+  "Confirm rate": "Confirmar la tarifa",
+  "Confirming...": "Confirmando...",
+  "Powered by Trenova. Questions about this rate confirmation? Reply to the email it arrived in.": "Con tecnología de Trenova. ¿Preguntas sobre esta confirmación de tarifa? Responda al correo en el que llegó.",
+  "Rate confirmation for {0}": "Confirmación de tarifa para {0}",
+  "Rate confirmed": "Tarifa confirmada",
+  "Review and sign a rate confirmation": "Revise y firme una confirmación de tarifa",
+  "Review and sign the agreement below": "Revise y firme el acuerdo a continuación",
+  "Sign link expires {0}": "El enlace de firma caduca el {0}",
+  "Thank you — your signature has been recorded and the broker has been notified.": "Gracias: su firma se ha registrado y se ha notificado al corredor.",
+  "The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.": "El enlace puede haber caducado, haber sido revocado, o la confirmación de tarifa puede haberse actualizado. Contacte con el corredor si cree que se trata de un error.",
+  "The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment.": "No se pudo cargar la confirmación de tarifa por un problema temporal. Vuelva a intentarlo en un momento.",
+  "This rate confirmation has already been signed. Contact the broker if anything changed.": "Esta confirmación de tarifa ya se firmó. Contacte con el corredor si algo cambió.",
+  "This rate confirmation link is no longer valid": "Este enlace de confirmación de tarifa ya no es válido",
+  "Title (optional)": "Título (opcional)",
+  "Your name (required)": "Su nombre (obligatorio)",
+  "Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.": "No se pudo registrar su firma por un problema temporal. No se ha enviado nada; vuelva a intentarlo en un momento.",
+  "e.g., Operations Manager": "p. ej., Gerente de operaciones"
+}

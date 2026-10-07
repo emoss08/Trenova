@@ -76,18 +76,22 @@ function literalFromAttributeValue(value) {
 
 // featureArea buckets a file under its route or package folder so translation can be
 // reviewed a screen at a time instead of as one undifferentiated list.
-function featureArea(relPath) {
+//
+// The area also picks the runtime catalog a string ships in (bundles.mjs), so `routes/<dir>`
+// is reserved for a folder under client/apps/web/src/routes: that is the unit the web app
+// loads code, and therefore catalogs, by. A file sitting directly in that routes folder (the
+// app layout) is part of the shell, and the driver portal's flat route files are its own.
+export function featureArea(relPath) {
   const parts = relPath.split(sep);
-  const routesIdx = parts.indexOf("routes");
-  if (routesIdx !== -1 && parts.length > routesIdx + 1) {
-    return `routes/${parts[routesIdx + 1]}`;
-  }
   const srcIdx = parts.indexOf("src");
-  if (srcIdx !== -1 && parts.length > srcIdx + 1) {
-    const scope = parts.slice(1, 3).join("/");
-    return `${scope}/${parts[srcIdx + 1]}`;
+  if (srcIdx === -1 || parts.length <= srcIdx + 1) return relPath;
+
+  const scope = parts.slice(1, 3).join("/");
+  const top = parts[srcIdx + 1];
+  if (scope === "apps/web" && top === "routes" && parts.length > srcIdx + 3) {
+    return `routes/${parts[srcIdx + 2]}`;
   }
-  return relPath;
+  return `${scope}/${top}`;
 }
 
 export async function extractTypeScript(repoRoot, roots = SOURCE_ROOTS) {

@@ -1,0 +1,18 @@
+{
+  "Credits": "贷方",
+  "Debits": "借方",
+  "Entry not found.": "找不到该笔记录。",
+  "Fully reversed": "已全额冲销",
+  "Is reversal": "为冲销",
+  "Ledger status": "账册状态",
+  "Loading entry details...": "正在加载记录明细...",
+  "Net impact by account": "各科目的净影响",
+  "No line items available.": "没有可用的明细项目。",
+  "Posting summary": "过账摘要",
+  "Reference type": "引用类型",
+  "Reversal Of": "冲销对象",
+  "Reversed By": "冲销人",
+  "Total credit:": "贷方合计：",
+  "Total debit:": "借方合计：",
+  "across {0} entries": "涵盖 {0} 笔记录"
+}

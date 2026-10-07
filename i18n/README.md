@@ -33,10 +33,10 @@ There are no `shipment.header.title` keys to invent or keep in sync. Three thing
 
 | Command | Does |
 |---|---|
-| `task i18n` | Re-extract and refresh catalogs |
+| `task i18n` | Re-extract, refresh catalogs and emit the runtime catalogs |
 | `task i18n-report` | Inventory: totals, per-area breakdown, what the filter dropped |
 | `task i18n-report -- --rejected` | Audit *why* each literal was filtered out |
-| `task i18n-check` | CI gate — fails on missing or orphaned entries |
+| `task i18n-check` | CI gate — fails on missing or orphaned entries, or stale runtime catalogs |
 | `node i18n/tools/i18n.mjs pending es --area routes/shipment` | List what still needs translating |
 | `node i18n/tools/i18n.mjs merge es batch.json` | Merge a batch of translations |
 
@@ -59,6 +59,43 @@ messages.zh-TW.json
 messages.zh-CN.json
 tools/              extractors, codemod, catalog commands
 ```
+
+The runtime catalogs are generated from these by `task i18n` and are never edited either:
+`shared/i18n/catalogs/` (embedded in the Go binary) and
+`client/packages/shared/src/i18n/catalogs/<locale>/<bundle>.json` (the browser's).
+
+## How the browser loads catalogs
+
+One catalog per locale grew past a megabyte, and the web app could not draw its first frame
+in Spanish or Chinese until all of it had downloaded. The client strings are therefore split
+into bundles (`tools/bundles.mjs`), by where they are rendered:
+
+| Bundle | Holds strings used | Loaded |
+|---|---|---|
+| `core` | by `packages/shared`, or by both apps | at startup, by every app |
+| `web` | by the web app's shell, or by more than one of its route folders | at startup, by the web app |
+| `dash` | only by the driver portal | never by the web app |
+| `routes/<dir>` | only inside `client/apps/web/src/routes/<dir>/` | with that folder's code |
+
+An app names its startup bundles once (`<I18nProvider catalogs={...}>`). The web app's
+build appends `requireCatalog("routes/<dir>")` to every module in a route folder
+(`client/apps/web/vite/route-catalogs.ts`), and every lazy route waits for the bundles its
+module graph asked for before it resolves (`client/apps/web/src/lib/route-catalogs.ts`).
+So a page renders translated on its first frame, including components it borrows from
+another route folder, and a language switch brings every screen already visited with it.
+English loads nothing: the key is the text.
+
+Two consequences worth knowing:
+
+- **The route rule has two halves.** `featureArea` in `tools/extract-ts.mjs` labels a
+  string from `src/routes/<dir>/` as `routes/<dir>`, and the Vite plugin requires
+  `routes/<dir>` for a module in that folder. Change both or neither; `bundles.test.mjs`
+  fails if a route bundle has no folder behind it.
+- **A component outside the route folders renders in English until something requires its
+  bundle.** Shared code (`packages/shared`, `apps/web/src/components`) is in `core` or `web`
+  and always loaded. Code loaded by `React.lazy` from a *different* route folder is
+  required when it evaluates, so it renders in English for the moment its bundle takes to
+  arrive, then re-renders translated.
 
 ## How strings are found
 

@@ -1,0 +1,13 @@
+{
+  "A description of the document type": "Una descripción del tipo de documento",
+  "A unique code for this document type": "Un código único para este tipo de documento",
+  "Document Type updated successfully": "El tipo de documento se actualizó correctamente",
+  "Loading document type...": "Cargando el tipo de documento...",
+  "Manage and configure document types for your organization": "Gestione y configure los tipos de documento de su organización",
+  "System document type": "Tipo de documento del sistema",
+  "The category of documents": "La categoría de los documentos",
+  "The classification level of documents": "El nivel de clasificación de los documentos",
+  "The color associated with this document type": "El color asociado a este tipo de documento",
+  "The name of the document type": "El nombre del tipo de documento",
+  "This is a system document type and cannot be modified.": "Este es un tipo de documento del sistema y no puede modificarse."
+}

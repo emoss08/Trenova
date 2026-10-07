@@ -1,0 +1,21 @@
+{
+  "Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).": "Agrega una línea a la liquidación abierta del conductor (si no existe, se crea un borrador fuera de ciclo).",
+  "Appears as the line item on the driver's statement.": "Aparece como la partida en el estado de cuenta del conductor.",
+  "Apply a correcting adjustment": "Aplicar un ajuste correctivo",
+  "Deny dispute": "Denegar disputa",
+  "Description (e.g. Detention correction - PRO 12345)": "Descripción (p. ej., Corrección de demoras - PRO 12345)",
+  "Dispute moved to review": "Disputa pasada a revisión",
+  "Disputed line": "Línea en disputa",
+  "Driver-submitted questions and challenges against issued settlements — review, resolve with a correcting adjustment, or deny with an explanation.": "Preguntas e impugnaciones presentadas por los conductores contra liquidaciones emitidas: revise, resuelva con un ajuste correctivo o deniegue con una explicación.",
+  "Explain the outcome — the driver sees this in Dash.": "Explique el resultado: el conductor lo verá en Dash.",
+  "Only open disputes can be moved to review.": "Solo las disputas abiertas pueden pasar a revisión.",
+  "Optional — routes the adjustment to that code's GL account when posting.": "Opcional: dirige el ajuste a la cuenta del libro mayor de ese código al contabilizar.",
+  "Resolution note": "Nota de la resolución",
+  "Resolve in driver's favor": "Resolver a favor del conductor",
+  "Resolve this dispute": "Resolver esta disputa",
+  "Settlement dispute": "Disputa de liquidación",
+  "Shown to the driver verbatim; say what was checked and why the outcome is right.": "Se muestra al conductor literalmente; indique qué se comprobó y por qué el resultado es correcto.",
+  "Submitted {0}{1}": "Enviado el {0}{1}",
+  "This dispute could not be loaded.": "No se pudo cargar esta disputa.",
+  "· correcting adjustment applied": "· ajuste correctivo aplicado"
+}

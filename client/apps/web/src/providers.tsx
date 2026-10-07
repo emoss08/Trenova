@@ -1,5 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { APP_CATALOGS } from "@/lib/app-catalogs";
 import { edition } from "@/lib/edition";
 import { installPlanLimitHandler } from "@/lib/plan-limit-handler";
 import { queryClient } from "@/lib/query-client";
@@ -116,7 +117,11 @@ function useUserLocale(): string | null {
 }
 
 function LocalizedApp({ children }: { children: React.ReactNode }) {
-  return <I18nProvider userLocale={useUserLocale()}>{children}</I18nProvider>;
+  return (
+    <I18nProvider catalogs={APP_CATALOGS} userLocale={useUserLocale()}>
+      {children}
+    </I18nProvider>
+  );
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {

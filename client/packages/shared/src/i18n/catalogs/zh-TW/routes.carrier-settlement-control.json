@@ -1,0 +1,23 @@
+{
+  "A load's carrier cost stays out of settlements until its carrier invoice match is resolved, and a settlement with unmatched loads cannot be approved.": "在承運商發票比對解決之前，該貨載的承運成本不會納入結算，且含有未比對貨載的結算無法核准。",
+  "Accounts payable account": "應付帳款科目",
+  "Auto-accept within tolerance": "在容差範圍內自動接受",
+  "Auto-match inbound invoices": "自動比對收到的發票",
+  "Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match.": "差異在容差範圍內且已自動比對的發票，會直接納入承運業者的結算池而免經審查。需啟用自動比對。",
+  "Automate the routine AP run so reviewers focus on exceptions.": "將例行的應付帳款作業自動化，讓審查人員專注於例外情形。",
+  "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.": "承運業者發票會與議定採購運價比對；差距超出容差時會標示為差異。",
+  "Carrier settlement control updated": "承運業者結算控制項已更新",
+  "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "設定承運業者的薪資期間、成本計提觸發條件、批次自動化、發票比對容差，以及應付帳款過帳科目",
+  "Defines the carrier settlement cycle and when purchased-transportation cost accrues.": "定義承運業者的結算週期，以及外購運力成本的計提時點。",
+  "GL defaults for carrier settlement postings — posting debits purchased transportation and credits accounts payable; blank falls back to the accounting control defaults.": "承運業者結算過帳的總帳預設值 — 過帳時借記外購運力、貸記應付帳款；留空則沿用會計控制的預設值。",
+  "Generate a carrier settlement batch automatically when each pay period closes.": "每個薪資期間結束時自動產生一批承運業者結算。",
+  "Hold pay until the invoice is matched": "在發票比對完成前暫緩付款",
+  "How often carriers are settled — weekly is the industry norm for brokered freight.": "承運業者的結算頻率 — 經紀貨運的業界慣例為每週結算。",
+  "Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace.": "來自受託承運業者的 EDI 210 收件發票會自動與其派車比對；差距超出容差者仍會進入審查工作區。",
+  "Invoice totals within this amount of the buy rate auto-match; larger gaps flag a variance for review.": "發票總額與採購運價的差距在此金額內時自動比對；差距更大者會標示為差異並送審。",
+  "Posting accounts": "過帳科目",
+  "The AP account credited when a settlement posts and debited when it is paid.": "結算過帳時貸記、付款時借記的應付帳款科目。",
+  "The expense account debited for carrier cost when a settlement posts.": "結算過帳時就承運業者成本借記的費用科目。",
+  "The shipment milestone at which carrier cost accrues into the settlement pool.": "承運業者成本計入結算池的運單里程碑。",
+  "Variance tolerance": "差異容差"
+}

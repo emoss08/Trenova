@@ -1,0 +1,16 @@
+{
+  "Active work items": "进行中的工作项目",
+  "Bank receipt reconciliation": "银行入账核对",
+  "Failed to match receipt": "无法匹配此入账记录",
+  "Match imported bank receipts to customer payments and resolve exceptions.": "将导入的银行入账与客户付款比对，并处理例外。",
+  "Match suggestions": "比对建议",
+  "Matched At": "匹配时间",
+  "Matched payment": "已匹配的付款",
+  "No match suggestions available.": "没有可用的比对建议。",
+  "Payment ID": "付款 ID",
+  "Pick a receipt from the list to see its details and the payments it could be matched to.": "请从列表中选择一笔入账记录，以查看其明细与可匹配的付款。",
+  "Receipt details": "入账明细",
+  "Receipt matched to payment": "入账记录已与付款匹配",
+  "Search reference, memo...": "搜索引用编号、备注...",
+  "{0} found": "找到 {0} 笔"
+}

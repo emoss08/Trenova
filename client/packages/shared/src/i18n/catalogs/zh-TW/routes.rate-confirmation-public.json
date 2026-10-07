@@ -1,0 +1,21 @@
+{
+  "Already confirmed": "已確認",
+  "By confirming, you agree to the rate and terms shown above on behalf of {0}.": "確認即表示您代表 {0} 同意上述費率與條件。",
+  "Confirm rate": "確認費率",
+  "Confirming...": "確認中...",
+  "Powered by Trenova. Questions about this rate confirmation? Reply to the email it arrived in.": "由 Trenova 提供技術支援。對此費率確認書有疑問嗎？請回覆寄送此文件的郵件。",
+  "Rate confirmation for {0}": "{0} 的費率確認書",
+  "Rate confirmed": "費率已確認",
+  "Review and sign a rate confirmation": "審閱並簽署費率確認書",
+  "Review and sign the agreement below": "請檢視並簽署下方協議",
+  "Sign link expires {0}": "簽署連結於 {0} 到期",
+  "Thank you — your signature has been recorded and the broker has been notified.": "謝謝 — 您的簽署已記錄，並已通知貨運經紀。",
+  "The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.": "此連結可能已過期、遭撤銷，或該費率確認書已更新。若您認為這是錯誤，請聯絡貨運經紀。",
+  "The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment.": "因暫時性問題，無法載入費率確認書。請稍後再試。",
+  "This rate confirmation has already been signed. Contact the broker if anything changed.": "此費率確認書已簽署。若有任何變動，請聯絡貨運經紀。",
+  "This rate confirmation link is no longer valid": "此費率確認書連結已失效",
+  "Title (optional)": "標題（選填）",
+  "Your name (required)": "您的姓名（必填）",
+  "Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.": "因暫時性問題，無法記錄您的簽署。目前尚未送出任何內容 — 請稍後再試。",
+  "e.g., Operations Manager": "例如：營運經理"
+}

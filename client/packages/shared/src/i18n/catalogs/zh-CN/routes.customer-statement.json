@@ -1,0 +1,18 @@
+{
+  "1-30 Days": "1-30 天",
+  "31-60 Days": "31-60 天",
+  "61-90 Days": "61-90 天",
+  "90+ Days": "90 天以上",
+  "Aging summary": "账龄摘要",
+  "Back to open items": "返回未结项目",
+  "Could not load the statement. The customer may not exist or you may not have permission.": "无法加载对账单。该客户可能不存在，或您没有权限。",
+  "Customer statement": "客户对账单",
+  "Ending balance": "期末余额",
+  "Failed to load.": "加载失败。",
+  "No customer specified.": "未指定客户。",
+  "Nothing in this period": "此期间无任何项目",
+  "Opening balance": "期初余额",
+  "Statement date": "对账单日期",
+  "Statement totals": "对账单合计",
+  "Transaction history": "交易历史"
+}
