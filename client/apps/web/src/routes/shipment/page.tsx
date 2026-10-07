@@ -27,9 +27,6 @@ import {
 
 const loadPanelSearch = createLoader(panelSearchParamsParser);
 
-// What the first paint reads: the board's capabilities (every conditional on the
-// page waits on them), the saved default view, and the edit panel's record when the
-// link opens one.
 export const prefetch: RoutePrefetch = ({ request }) => {
   const list: RoutePrefetchQuery[] = [
     { ...queries.shipmentBoard.capabilities(), staleTime: 60_000 },
@@ -80,7 +77,7 @@ export function ShipmentsPage() {
   );
   const refreshing =
     useIsFetching({ queryKey: [SHIPMENT_LIST_KEY] }) +
-      useIsFetching({ queryKey: queries.shipmentBoard._def }) >
+    useIsFetching({ queryKey: queries.shipmentBoard._def }) >
     0;
 
   const handleCreateShipment = useCallback(() => {

@@ -31,6 +31,7 @@ import { ShipmentSendEDIDialog } from "../shipment-send-edi-dialog";
 import { ShipmentPanel } from "../shipment-panel";
 import { shipmentPanelDetailQuery } from "../shipment-queries";
 import { ShipmentTransferOwnershipDialog } from "../shipment-transfer-ownership-dialog";
+import { useOpenShipmentRecord } from "./use-open-shipment-record";
 
 export type ShipmentDocumentUploadContext = {
   documentTypeId: string;
@@ -265,10 +266,14 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
 
   const handleCopyLink = useCallback((row: Row<Shipment>) => copyLink(row.original), [copyLink]);
 
-  const handleOpenRecord = useCallback((row: Row<Shipment>) => {
-    if (!row.original.id) return;
-    window.open(recordPath("shipment", row.original.id), "_blank", "noopener");
-  }, []);
+  const openRecord = useOpenShipmentRecord();
+  const handleOpenRecord = useCallback(
+    (row: Row<Shipment>) => {
+      if (!row.original.id) return;
+      openRecord(row.original.id);
+    },
+    [openRecord],
+  );
 
   const addComment = useCallback(
     (shipment: Shipment) => {

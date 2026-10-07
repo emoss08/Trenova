@@ -10,7 +10,7 @@ import {
   Copy01Icon,
   Edit02Icon,
   FlipBackwardIcon,
-  LinkExternal01Icon,
+  Expand01Icon,
   Link01Icon,
   Send01Icon,
   SlashCircle01Icon,
@@ -75,7 +75,7 @@ export function buildShipmentRowActions(
     {
       id: "open-record",
       label: translate("Open full record"),
-      icon: LinkExternal01Icon,
+      icon: Expand01Icon,
       onClick: handlers.onOpenRecord,
     },
     {
