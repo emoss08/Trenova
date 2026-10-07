@@ -16,6 +16,7 @@ import {
   isTableConfigEqual,
   toColumnPinningState,
   updateSortField,
+  withRequiredPinning,
 } from "@/lib/data-table";
 import {
   buildCsv,
@@ -55,6 +56,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import type {
+  DataTableGroupKey,
   DataTableProps,
   FieldFilter,
   FilterItem,
@@ -88,6 +90,7 @@ type CursorState = {
 
 const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, totalCount: null };
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
+const EMPTY_GROUP_KEYS: DataTableGroupKey[] = [];
 const NO_ROW_ACTIONS: never[] = [];
 const NO_SCOPE_FILTERS: FieldFilter[] = [];
 const noop = () => {};
@@ -108,6 +111,7 @@ export function DataTable<TData extends Record<string, any>>({
   enableCreateAction = true,
   enableReadOnlyPanel = false,
   initialColumnVisibility,
+  initialColumnPinning,
   graphql,
   refetchIntervalMs,
   onCellEditCommit,
@@ -407,6 +411,21 @@ export function DataTable<TData extends Record<string, any>>({
     void setSearchParams({ pageIndex: 1 });
   }, [canFetchPage, pageIndex, setSearchParams]);
 
+  const collapsedGroupKeys = grouping?.collapsedKeys ?? EMPTY_GROUP_KEYS;
+  const [settledCollapsedKeys, setSettledCollapsedKeys] = useState(collapsedGroupKeys);
+  useEffect(() => {
+    if (dataQuery.data && !dataQuery.isPlaceholderData) {
+      setSettledCollapsedKeys(collapsedGroupKeys);
+    }
+  }, [collapsedGroupKeys, dataQuery.data, dataQuery.isPlaceholderData]);
+  const loadingGroupKeys = useMemo(
+    () =>
+      dataQuery.isPlaceholderData
+        ? settledCollapsedKeys.filter((key) => !collapsedGroupKeys.includes(key))
+        : EMPTY_GROUP_KEYS,
+    [collapsedGroupKeys, dataQuery.isPlaceholderData, settledCollapsedKeys],
+  );
+
   const cursorPageInfo = dataQuery.data?.pageInfo ?? null;
   const currentPageResults = dataQuery.data?.results;
   const currentPageRowCount = currentPageResults?.length ?? 0;
@@ -443,9 +462,12 @@ export function DataTable<TData extends Record<string, any>>({
     onCellEditCommit,
     onRowSelectionChange: setRowSelection,
     meta: getRowClassName ? { getRowClassName } : undefined,
-    initialState: initialColumnVisibility
-      ? { columnVisibility: initialColumnVisibility }
-      : undefined,
+    initialState: {
+      ...(initialColumnVisibility ? { columnVisibility: initialColumnVisibility } : {}),
+      ...(initialColumnPinning
+        ? { columnPinning: toColumnPinningState(initialColumnPinning) }
+        : {}),
+    },
     state: {
       pagination,
       rowSelection,
@@ -597,7 +619,10 @@ export function DataTable<TData extends Record<string, any>>({
       const newColumnVisibility = config.columnVisibility ?? {};
       const newColumnOrder = config.columnOrder ?? [];
       const newColumnSizing = config.columnSizing ?? {};
-      const newColumnPinning = config.columnPinning ?? EMPTY_PINNING;
+      const newColumnPinning = withRequiredPinning(
+        config.columnPinning ?? EMPTY_PINNING,
+        initialColumnPinning,
+      );
       const newDensity = config.density ?? "comfortable";
       const newFormatRules = config.formatRules ?? [];
 
@@ -643,7 +668,7 @@ export function DataTable<TData extends Record<string, any>>({
           : null,
       );
     },
-    [setSearchParams, applyFilterState, pageSize, table],
+    [setSearchParams, applyFilterState, pageSize, table, initialColumnPinning],
   );
 
   useEffect(() => {
@@ -864,6 +889,7 @@ export function DataTable<TData extends Record<string, any>>({
               onFiltersChange={handleFiltersChange}
               query={query}
               onClearQuery={() => handleSearchChange("")}
+              extraChips={toolbar?.chips}
             />
             {enableRowSelection && totalCount != null && (
               <DataTableSelectionBanner
@@ -952,6 +978,7 @@ export function DataTable<TData extends Record<string, any>>({
                       onRowClick={handleRowClick}
                       getFormatClass={compiledFormatRules}
                       grouping={grouping}
+                      loadingGroupKeys={loadingGroupKeys}
                       expansion={expansion}
                       cursorRowId={cursorRowId}
                       isFirstPage={zeroBasedPageIndex === 0}

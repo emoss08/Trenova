@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -54,12 +53,4 @@ type ShipmentQuickFilterCounter interface {
 		ctx context.Context,
 		req *ShipmentBoardScopeRequest,
 	) ([]*ShipmentQuickFilterCount, error)
-}
-
-type ShipmentFacetCounter interface {
-	FacetCounts(
-		ctx context.Context,
-		req *ShipmentBoardScopeRequest,
-		facets []repositories.ShipmentFacet,
-	) ([]*repositories.ShipmentFacetCounts, error)
 }

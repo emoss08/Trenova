@@ -18,7 +18,6 @@ type Deps struct {
 	BoardSuggestionDecider services.ShipmentSuggestionDecider
 	BoardBriefing          services.ShipmentBriefingReader
 	BoardWatchlist         services.ShipmentWatchlistReader
-	BoardFacetCounts       services.ShipmentFacetCounter
 	BoardQuickFilterCounts services.ShipmentQuickFilterCounter
 	BoardStageSummaries    services.ShipmentStageSummaryReader
 	BoardCapabilities      services.ShipmentBoardCapabilitiesReader

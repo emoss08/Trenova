@@ -7512,19 +7512,6 @@ type ShipmentEventsInput struct {
 	Before *int `json:"before,omitempty"`
 }
 
-type ShipmentFacetCounts struct {
-	Facet repositories.ShipmentFacet `json:"facet"`
-	// The field filter the values apply to.
-	Field  string                `json:"field"`
-	Values []*ShipmentFacetValue `json:"values"`
-}
-
-type ShipmentFacetValue struct {
-	Value string `json:"value"`
-	Label string `json:"label"`
-	Count int    `json:"count"`
-}
-
 type ShipmentFormulaTemplate struct {
 	ID                  string                               `json:"id"`
 	OrganizationID      string                               `json:"organizationId"`

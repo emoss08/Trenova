@@ -58,12 +58,14 @@ type DataTableFilterBuilderProps<TData extends RowData> = {
   columns: ColumnDef<TData>[];
   filters: FilterItem[];
   onFiltersChange: (filters: FilterItem[]) => void;
+  labelClassName?: string;
 };
 
 export default function DataTableFilterBuilder<TData extends RowData>({
   columns,
   filters,
   onFiltersChange,
+  labelClassName,
 }: DataTableFilterBuilderProps<TData>) {
   const t = useT();
 
@@ -268,7 +270,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
         render={
           <Button variant="outline" size="sm">
             <FilterFunnel01Icon className="size-3.5" />
-            {t("Filter")}
+            <span className={labelClassName}>{t("Filter")}</span>
             {totalFilters > 0 && (
               <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
                 {totalFilters}

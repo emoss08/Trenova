@@ -23,7 +23,6 @@ type stubBoardRepo struct {
 	counts      map[shipment.QuickFilter]int
 	lastScope   *repositories.ShipmentBoardScope
 	lastFilters []shipment.QuickFilterSpec
-	facets      []repositories.ShipmentFacet
 }
 
 func (s *stubBoardRepo) StageSummary(
@@ -45,14 +44,6 @@ func (s *stubBoardRepo) QuickFilterTotals(
 		totals[i].Count = s.counts[spec.Filter]
 	}
 	return totals, nil
-}
-
-func (s *stubBoardRepo) FacetCounts(
-	_ context.Context,
-	req *repositories.CountShipmentFacetRequest,
-) (*repositories.ShipmentFacetCounts, error) {
-	s.facets = append(s.facets, req.Facet)
-	return &repositories.ShipmentFacetCounts{Facet: req.Facet}, nil
 }
 
 type stubBasis struct {
@@ -211,33 +202,4 @@ func TestQuickFilterCountsCountsEveryCountableFilter(t *testing.T) {
 	assert.True(t, basis.last.Margin)
 	assert.True(t, basis.last.Detention)
 	assert.Len(t, repo.lastFilters, len(shipment.CountableQuickFilters()))
-}
-
-func TestFacetCountsValidates(t *testing.T) {
-	t.Parallel()
-
-	repo := &stubBoardRepo{}
-	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: &stubBasis{}})
-
-	_, err := svc.FacetCounts(t.Context(), scopeRequest(), []repositories.ShipmentFacet{"Bad"})
-	require.Error(t, err)
-
-	_, err = svc.FacetCounts(t.Context(), &services.ShipmentBoardScopeRequest{}, nil)
-	require.Error(t, err)
-
-	rows, err := svc.FacetCounts(t.Context(), scopeRequest(), []repositories.ShipmentFacet{
-		repositories.ShipmentFacetStatus,
-		repositories.ShipmentFacetCustomer,
-	})
-	require.NoError(t, err)
-	assert.Len(t, rows, 2)
-	assert.Equal(t, []repositories.ShipmentFacet{
-		repositories.ShipmentFacetStatus,
-		repositories.ShipmentFacetCustomer,
-	}, repo.facets)
-
-	_, err = svc.FacetCounts(t.Context(), scopeRequest(shipment.QuickFilterSpec{
-		Filter: shipment.QuickFilterDeliveryHour,
-	}), []repositories.ShipmentFacet{repositories.ShipmentFacetStatus})
-	require.Error(t, err)
 }

@@ -191,37 +191,6 @@ function quickFilterCounts(state, input) {
   }));
 }
 
-const STATUS_LABEL = {
-  New: "New",
-  Assigned: "Assigned",
-  InTransit: "In transit",
-  Delayed: "Delayed",
-  Completed: "Completed",
-  Canceled: "Canceled",
-};
-
-function facetCounts(state, input, facets) {
-  const list = scoped(state, input);
-  const tally = (field, valueOf, labelOf) => {
-    const counts = new Map();
-    for (const s of list) {
-      const value = valueOf(s);
-      if (value == null) continue;
-      const entry = counts.get(value) ?? { value, label: labelOf(s, value), count: 0 };
-      entry.count += 1;
-      counts.set(value, entry);
-    }
-    return { field, values: [...counts.values()].sort((a, b) => b.count - a.count) };
-  };
-  const defs = new Map(Object.entries({
-    Status: () => tally("status", (s) => s.status, (_s, v) => STATUS_LABEL[v] ?? v),
-    Equipment: () => tally("equipmentClass", (s) => (s.board.reefer ? "Reefer" : "DryVan"), (_s, v) => (v === "Reefer" ? "Reefer" : "Dry van")),
-    TenderStatus: () => tally("tenderStatus", (s) => s.tenderStatus, (_s, v) => v),
-    Customer: () => tally("customerId", (s) => s.customerId, (s) => s.customer.name),
-  }));
-  return facets.filter((facet) => defs.has(facet)).map((facet) => ({ facet, ...defs.get(facet)() }));
-}
-
 function coverageNoun(operationType, count) {
   if (operationType === "asset") return count === 1 ? "a driver" : "drivers";
   if (operationType === "brokerage") return count === 1 ? "a carrier" : "carriers";
@@ -829,7 +798,6 @@ const HANDLERS = {
   }),
   ShipmentStageSummary: (state, v) => ({ shipmentStageSummary: stageSummary(state, v.input) }),
   ShipmentQuickFilterCounts: (state, v) => ({ shipmentQuickFilterCounts: quickFilterCounts(state, v.input) }),
-  ShipmentFacetCounts: (state, v) => ({ shipmentFacetCounts: facetCounts(state, v.input, v.facets) }),
   ShipmentBriefing: (state) => ({ shipmentBriefing: briefing(state) }),
   ShipmentCapacity: (state, v) => ({ shipmentCapacity: capacity(state, v.kind) }),
   CapacityUnitMatches: (state, v) => ({ capacityUnitMatches: capacityMatches(state, v.kind, v.unitId, v.limit ?? 2) }),

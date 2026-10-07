@@ -19,7 +19,7 @@ const testGraphQLConfig = {
   operationName: "TestTable",
   connectionKey: "tests",
 };
-const { useDataTableQueryMock } = vi.hoisted(() => {
+const { defaultQueryResult, useDataTableQueryMock } = vi.hoisted(() => {
   const defaultQueryResult = {
     data: {
       results: [
@@ -180,6 +180,53 @@ describe("DataTable grouping", () => {
     expect(collapsed?.getAttribute("data-collapsed")).toBe("true");
   });
 
+  it("keeps a just-opened group's header in place while its rows load", () => {
+    const { rerender } = renderDataTable({ grouping: grouping({ collapsedKeys: [2] }) });
+    useDataTableQueryMock.mockImplementation(() => ({
+      data: {
+        results: [
+          { id: "1", name: "Alice", stage: 1 },
+          { id: "3", name: "Cara", stage: 3 },
+        ],
+        count: 2,
+      },
+      isLoading: false,
+      isPlaceholderData: true,
+      isError: false,
+      error: null,
+    }));
+
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={grouping({ collapsedKeys: [] })}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    const opened = document.querySelector('tr[data-group-key="2"]');
+    expect(opened).not.toBeNull();
+    expect(opened?.getAttribute("data-collapsed")).toBeNull();
+    expect(screen.getByText("Cara")).toBeTruthy();
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("folds a group's rows away the moment it collapses", () => {
+    renderDataTable({ grouping: grouping({ collapsedKeys: [1] }) });
+
+    expect(document.querySelector('tr[data-group-key="1"]')?.getAttribute("data-collapsed")).toBe(
+      "true",
+    );
+    expect(screen.queryByText("Alice")).toBeNull();
+    expect(screen.getByText("Cara")).toBeTruthy();
+  });
+
   it("toggles a group from its header", () => {
     const onToggleGroup = vi.fn<(key: DataTableGroupKey) => void>();
     renderDataTable({ grouping: grouping({ onToggleGroup }) });
@@ -315,8 +362,7 @@ describe("DataTable slots", () => {
   it("puts toolbar and footer slots where the table's own controls sit", () => {
     renderDataTable({
       toolbar: {
-        search: ({ query }) => <input aria-label="Board search" value={query} readOnly />,
-        filter: () => <button>Facets</button>,
+        chips: { items: [{ key: "late", label: "Late", onRemove: vi.fn() }], onClear: vi.fn() },
         trailing: <button>View switch</button>,
         end: <button>Panel toggle</button>,
       },
@@ -324,8 +370,7 @@ describe("DataTable slots", () => {
       pageSizeOptions: [10, 25, 50],
     });
 
-    expect(screen.getByLabelText("Board search")).toBeTruthy();
-    expect(screen.getByText("Facets")).toBeTruthy();
+    expect(screen.getByText("Late")).toBeTruthy();
     expect(screen.getByText("View switch")).toBeTruthy();
     expect(screen.getByText("Panel toggle")).toBeTruthy();
     expect(screen.getByText("Shortcuts")).toBeTruthy();
@@ -338,6 +383,8 @@ describe("DataTable slots", () => {
 
     const sortLabel = await screen.findByText("Sort");
     expect(sortLabel.className).toContain("label-narrow");
+    const filterLabel = await screen.findByText("Filter");
+    expect(filterLabel.className).toContain("label-narrow");
     const display = await screen.findByRole("button", { name: /Display/ });
     expect(display.closest(".secondary-narrow")).toBeTruthy();
   });
@@ -377,5 +424,26 @@ describe("DataTable slots", () => {
   it("starts at the density it is given", () => {
     renderDataTable({ initialDensity: "compact" });
     expect(document.querySelector('table[data-density="compact"]')).toBeTruthy();
+  });
+});
+
+describe("DataTable column pinning", () => {
+  beforeEach(() => {
+    useDataTableQueryMock.mockClear();
+  });
+
+  it("pins the columns the table asks for from the first paint", () => {
+    renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
+
+    const cell = screen.getByText("Alice").closest("td");
+    expect(cell?.className).toContain("sticky");
+  });
+
+  it("keeps a pinned head above the resize handles of the heads scrolling under it", () => {
+    renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
+
+    const head = screen.getByText("Name").closest("th");
+    expect(head?.className).toContain("z-20");
+    expect(head?.className).not.toContain("z-10");
   });
 });

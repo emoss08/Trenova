@@ -43,8 +43,9 @@ export function DataTableHeaderCell<TData extends RowData>({
         "group/head border-border relative border-b",
         pinnedCellClass(column) ?? undefined,
         // A pinned head needs to be opaque over the scrolling content, not a
-        // different colour from the heads beside it.
-        isPinned && "bg-sunken",
+        // different colour from the heads beside it, and above the resize
+        // handles of the heads that scroll under it.
+        isPinned && "bg-sunken z-20",
         isDragging && "z-20 opacity-80",
       )}
       style={{

@@ -12,6 +12,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type {
   DataTableBodyProps,
   DataTableExpansion,
+  DataTableGroupKey,
   DataTableGrouping,
   RowAction,
   Row,
@@ -193,6 +194,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   onRowClick,
   getFormatClass,
   grouping,
+  loadingGroupKeys,
   expansion,
   cursorRowId = null,
   isFirstPage = true,
@@ -201,6 +203,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   isLoading?: boolean;
   getFormatClass?: CompiledFormatRules<TData> | null;
   grouping?: DataTableGrouping<TData>;
+  loadingGroupKeys?: readonly DataTableGroupKey[];
   expansion?: DataTableExpansion<TData>;
   cursorRowId?: string | null;
   isFirstPage?: boolean;
@@ -314,6 +317,7 @@ export function DataTableBody<TData extends Record<string, any>>({
         groups: grouping.groups,
         getGroupKey: (row) => grouping.getGroupKey(row.original),
         collapsedKeys: grouping.collapsedKeys,
+        loadingKeys: loadingGroupKeys,
         isFirstPage,
         isLastPage,
       })

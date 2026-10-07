@@ -19674,7 +19674,6 @@ type Query {
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
-  shipmentFacetCounts(facets: [ShipmentFacet!]!, input: ShipmentBoardScopeInput!): [ShipmentFacetCounts!]!
   shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
   shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
@@ -23086,26 +23085,6 @@ input ShipmentEventsInput {
   limit: Int
   shipmentId: ID
   types: [ShipmentEventType!]
-}
-
-enum ShipmentFacet {
-  Customer
-  Equipment
-  Status
-  TenderStatus
-}
-
-type ShipmentFacetCounts {
-  facet: ShipmentFacet!
-  """The field filter the values apply to."""
-  field: String!
-  values: [ShipmentFacetValue!]!
-}
-
-type ShipmentFacetValue {
-  count: Int!
-  label: String!
-  value: String!
 }
 
 type ShipmentFormulaTemplate {

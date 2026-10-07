@@ -163,6 +163,8 @@ export type DataTableProps<TData extends Record<string, any>> = {
   enableCreateAction?: boolean;
   enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
+  /** Columns pinned from the first paint and kept pinned under any saved view. */
+  initialColumnPinning?: { left: string[]; right: string[] };
   onCellEditCommit?: CellEditCommitFn<TData>;
   /**
    * Draws the table's own empty state in place of the generic one. It is told
@@ -257,14 +259,38 @@ export type DataTableViewContext = {
   queryOptions: Omit<DataTableQueryOptions, "cursor">;
 };
 
+/** One entry the search field offers while it is focused and empty. */
+export type DataTableSearchSuggestion = {
+  key: string;
+  label: string;
+  count?: number;
+  /** A token class for the dot drawn ahead of the label. */
+  dotClassName?: string;
+  /** Already applied, so the entry reads as chosen. */
+  selected?: boolean;
+  onSelect: () => void;
+};
+
+export type DataTableSearchSuggestions = {
+  title: string;
+  items: DataTableSearchSuggestion[];
+  /** Told when the list opens and closes, so counts can be fetched only while it shows. */
+  onOpenChange?: (open: boolean) => void;
+};
+
+/** Filters a table applies outside the field filters, shown and cleared with the filter chips. */
+export type DataTableExtraChips = {
+  items: { key: string; label: string; onRemove: () => void }[];
+  onClear: () => void;
+};
+
 export type DataTableToolbarSlots = {
-  /** Replaces the plain search input; receives the table's search state. */
-  search?: (props: { query: string; onSearchChange: (query: string) => void }) => React.ReactNode;
-  /** Replaces the filter builder, for a table that filters by facets. */
-  filter?: (props: {
-    filters: FilterItem[];
-    onFiltersChange: (filters: FilterItem[]) => void;
-  }) => React.ReactNode;
+  /** Entries the search field offers while it is focused and empty. */
+  searchSuggestions?: DataTableSearchSuggestions;
+  /** A key that focuses the search field from anywhere on the page. */
+  searchShortcut?: string;
+  /** Filters the host applies itself, drawn as chips beside the table's own. */
+  chips?: DataTableExtraChips;
   /** Controls placed before the display menu. */
   trailing?: React.ReactNode;
   /** Controls placed after the saved views. */

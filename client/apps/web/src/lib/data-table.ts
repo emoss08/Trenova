@@ -400,6 +400,19 @@ export function fromColumnPinningState(
   return { left: pinning?.start ?? [], right: pinning?.end ?? [] };
 }
 
+export function withRequiredPinning(
+  pinning: TableColumnPinning,
+  required: TableColumnPinning | undefined,
+): TableColumnPinning {
+  if (!required) return pinning;
+  const requiredIds = new Set([...required.left, ...required.right]);
+  const unrequired = (ids: string[]) => ids.filter((id) => !requiredIds.has(id));
+  return {
+    left: [...required.left, ...unrequired(pinning.left)],
+    right: [...unrequired(pinning.right), ...required.right],
+  };
+}
+
 export function pinnedCellStyle<TData extends RowData>(
   column: Column<TData>,
 ): CSSProperties | undefined {

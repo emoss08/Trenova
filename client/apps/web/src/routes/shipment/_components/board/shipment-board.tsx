@@ -1,12 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { DataTableFacetFilter } from "@/components/data-table/data-table-facet-filter";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { shipmentBoardTableGraphQLConfig } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { STAGE_GROUP_FIELD, stageGroups, stageRankLookup } from "@/lib/shipment-board/stage";
-import type { DataTableFacet } from "@/lib/data-table-facets";
-import type { ShipmentFacet } from "@trenova/graphql/generated/graphql";
 import { Keyboard01Icon, Truck01Icon, User01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -25,55 +22,27 @@ import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { ShipmentExpandedRow } from "./expanded-row/shipment-expanded-row";
 import { useShipmentRecordActions } from "./record-actions";
 import { getColumns, SHIPMENT_HIDDEN_COLUMNS } from "./shipment-columns";
-import { BoardSearch } from "./toolbar/board-search";
 import {
   GroupToggle,
   PanelToggle,
-  TOOLBAR_LABEL_CLASS,
   TOOLBAR_RESPONSIVE,
   ViewSwitch,
 } from "./toolbar/board-controls";
 import { useBoardActions } from "./use-board-actions";
 import { useBoardScope } from "./use-board-scope";
+import { useQuickFilterSearch } from "./use-quick-filter-search";
 import { useShipmentBoardUrl } from "./url-state";
 
 const ShipmentTimeline = lazy(() => import("./views/shipment-timeline"));
 const ShipmentMapView = lazy(() => import("./views/shipment-map-view"));
 
-const BOARD_FACETS: ShipmentFacet[] = ["Status", "Equipment", "TenderStatus", "Customer"];
-const FACET_LABEL: Record<ShipmentFacet, string> = {
-  Status: "Status",
-  Equipment: "Equipment",
-  TenderStatus: "Tender",
-  Customer: "Customer",
-};
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+const PINNED_COLUMNS = { left: ["select", "lane"], right: [] };
 
 type ShipmentBoardProps = {
   panelOpen: boolean;
   onPanelOpenChange: (open: boolean) => void;
 };
-
-function useBoardFacets(enabled: boolean) {
-  const t = useT();
-  const scope = useBoardScope();
-  const query = useQuery({
-    ...queries.shipmentBoard.facetCounts(scope, BOARD_FACETS),
-    enabled,
-    staleTime: 15_000,
-  });
-  const facets = useMemo<DataTableFacet[]>(
-    () =>
-      (query.data ?? []).map((entry) => ({
-        key: entry.facet,
-        label: t(FACET_LABEL[entry.facet]),
-        field: entry.field,
-        values: entry.values,
-      })),
-    [query.data, t],
-  );
-  return { facets, isLoading: query.isLoading };
-}
 
 export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardProps) {
   const t = useT();
@@ -85,8 +54,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
   const actions = useBoardActions();
   const openShortcuts = useAppDialogsStore((state) => state.openDialog);
   const [cursorRowId, setCursorRowId] = useState<string | null>(null);
-  const [facetsOpen, setFacetsOpen] = useState(false);
-  const { facets, isLoading: facetsLoading } = useBoardFacets(facetsOpen);
+  const { searchSuggestions, chips } = useQuickFilterSearch();
 
   const { data: summary = [] } = useQuery({
     ...queries.shipmentBoard.stageSummary(scope),
@@ -185,6 +153,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
       graphql={graphql}
       columns={columns}
       initialColumnVisibility={SHIPMENT_HIDDEN_COLUMNS}
+      initialColumnPinning={PINNED_COLUMNS}
       initialDensity="compact"
       pageSizeOptions={PAGE_SIZE_OPTIONS}
       enableCreateAction={false}
@@ -206,17 +175,9 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
         rowShortcuts,
       }}
       toolbar={{
-        search: (props) => <BoardSearch {...props} />,
-        filter: ({ filters, onFiltersChange }) => (
-          <DataTableFacetFilter
-            facets={facets}
-            filters={filters}
-            onFiltersChange={onFiltersChange}
-            isLoading={facetsLoading}
-            onOpenChange={setFacetsOpen}
-            labelClassName={TOOLBAR_LABEL_CLASS}
-          />
-        ),
+        searchSuggestions,
+        searchShortcut: "/",
+        chips,
         trailing: (
           <>
             <ViewSwitch />

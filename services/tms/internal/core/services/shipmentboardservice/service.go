@@ -43,7 +43,6 @@ var (
 	_ services.ShipmentBoardCapabilitiesReader = (*Service)(nil)
 	_ services.ShipmentStageSummaryReader      = (*Service)(nil)
 	_ services.ShipmentQuickFilterCounter      = (*Service)(nil)
-	_ services.ShipmentFacetCounter            = (*Service)(nil)
 )
 
 type Dependencies struct {

@@ -6214,12 +6214,6 @@ export type ShipmentEventsInput = {
   types?: Array<ShipmentEventType> | null | undefined;
 };
 
-export type ShipmentFacet =
-  | 'Customer'
-  | 'Equipment'
-  | 'Status'
-  | 'TenderStatus';
-
 export type ShipmentHazmatInput = {
   commodityIds: Array<string | number>;
 };
@@ -13660,14 +13654,6 @@ export type ShipmentQuickFilterCountsQueryVariables = Exact<{
 
 
 export type ShipmentQuickFilterCountsQuery = { shipmentQuickFilterCounts: Array<{ filter: ShipmentQuickFilter, count: number }> };
-
-export type ShipmentFacetCountsQueryVariables = Exact<{
-  input: ShipmentBoardScopeInput;
-  facets: Array<ShipmentFacet> | ShipmentFacet;
-}>;
-
-
-export type ShipmentFacetCountsQuery = { shipmentFacetCounts: Array<{ facet: ShipmentFacet, field: string, values: Array<{ value: string, label: string, count: number }> }> };
 
 export type ShipmentBriefingQueryVariables = Exact<{
   timezone: string;
@@ -25600,7 +25586,6 @@ export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"Shi
 export const ShipmentBoardCapabilitiesDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardCapabilities","hash":"sha256:aa7e88780f37bb5a758b0290855c8d761b5bc1d418cf4c1766478e43c0787484"}} as unknown as TypedDocumentString<ShipmentBoardCapabilitiesQuery, ShipmentBoardCapabilitiesQueryVariables>;
 export const ShipmentStageSummaryDocument = {"__meta__":{"kind":"query","name":"ShipmentStageSummary","hash":"sha256:8bbb27b2f871a92d7144ecd277f764f615822a8680ff1f1342af69c3905becb3"}} as unknown as TypedDocumentString<ShipmentStageSummaryQuery, ShipmentStageSummaryQueryVariables>;
 export const ShipmentQuickFilterCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentQuickFilterCounts","hash":"sha256:0ec841b49e41c32139149b1d0a7e5c4faf08e719514173109c253ee88945f489"}} as unknown as TypedDocumentString<ShipmentQuickFilterCountsQuery, ShipmentQuickFilterCountsQueryVariables>;
-export const ShipmentFacetCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentFacetCounts","hash":"sha256:fff99efce34b6302db2c948cbfaafa3b48d8ed34fdc155ad987936b294905a49"}} as unknown as TypedDocumentString<ShipmentFacetCountsQuery, ShipmentFacetCountsQueryVariables>;
 export const ShipmentBriefingDocument = {"__meta__":{"kind":"query","name":"ShipmentBriefing","hash":"sha256:5c4146461b574cc8cc32724f790df893af458adf345b453316f3ae843e5fd74e"}} as unknown as TypedDocumentString<ShipmentBriefingQuery, ShipmentBriefingQueryVariables>;
 export const ShipmentCapacityDocument = {"__meta__":{"kind":"query","name":"ShipmentCapacity","hash":"sha256:3afe71c443b98e096c0542ad6ab51196c9178a529bd0dd4fa9360f78a10e7a1c"}} as unknown as TypedDocumentString<ShipmentCapacityQuery, ShipmentCapacityQueryVariables>;
 export const CapacityUnitMatchesDocument = {"__meta__":{"kind":"query","name":"CapacityUnitMatches","hash":"sha256:5a91bf1a9c3a15fd4d1f98288ccb7c2e968c6af30f8006b5210311a31911b6ef"}} as unknown as TypedDocumentString<CapacityUnitMatchesQuery, CapacityUnitMatchesQueryVariables>;

@@ -75,6 +75,7 @@ export function getColumns({
       minSize: 240,
       maxSize: 360,
       enableHiding: false,
+      enablePinning: false,
       meta: {
         label: t("Lane"),
         sortable: false,
@@ -330,7 +331,9 @@ export function getColumns({
         label: t("Revenue"),
         apiField: "totalChargeAmount",
         sortable: true,
-        filterable: false,
+        filterable: true,
+        filterType: "number",
+        defaultFilterOperator: "gte",
       },
     },
     {
