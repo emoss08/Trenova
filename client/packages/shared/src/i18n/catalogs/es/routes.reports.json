@@ -226,6 +226,7 @@
   "Track report generation, download artifacts, and cancel active runs": "Siga la generación de informes, descargue artefactos y cancele las ejecuciones activas",
   "Transform value": "Transformar el valor",
   "Transforms change the number this report returns — sorting and exported cells use the transformed value. Your records are never modified.": "Las transformaciones cambian la cifra que devuelve este informe: la ordenación y las celdas exportadas usan el valor transformado. Sus registros nunca se modifican.",
+  "Trigger": "Activador",
   "Untitled report": "Informe sin título",
   "Values shown as": "Los valores se muestran como",
   "View runs": "Ver las ejecuciones",
@@ -251,7 +252,6 @@
   "{0} for {1}": "{0} para {1}",
   "{0} of": "{0} de",
   "{0}% of {1}": "{0} % de {1}",
-  "{0}s": "{0} s",
   "· {0, plural, one {# filter} other {# filters}}": "· {0, plural, one {# filtro} other {# filtros}}",
   "— file attached": "— archivo adjunto"
 }

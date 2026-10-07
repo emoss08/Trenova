@@ -19,7 +19,6 @@
   "Optional context shown beside the date on the calendar.": "显示于日历上该日期旁的选填说明。",
   "Policies that skip weekends will start counting this date against requests.": "跳过周末的政策将自此日期起计入申请天数。",
   "Previous year": "上一年",
-  "Remove {0}?": "要移除 {0} 吗？",
   "Repeats every year": "每年重复",
   "The calendar could not be loaded. Try again in a moment.": "无法加载日历。请稍后再试。",
   "This applies to every year.": "此设置适用于每一年。",

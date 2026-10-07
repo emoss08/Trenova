@@ -2001,6 +2001,8 @@
 .aic .ovb-a{grid-column:1/-1;justify-content:flex-end}
 }
 .aic .shx{position:fixed;inset:0;z-index:50}
+.aic .ab{position:fixed;inset:0;z-index:50}
+.aic .tpk-x{position:fixed;inset:0;z-index:60}
 .aic .me{width:28px;height:28px;border-radius:50%;border:1px solid var(--b);display:grid;place-items:center;font-size:10px;font-weight:600;color:var(--muted)}
 .aic .me.sm{width:22px;height:22px;font-size:9px;flex:none}
 }

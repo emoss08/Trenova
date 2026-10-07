@@ -197,6 +197,12 @@ writes:
   "mutation restoreAIProviderFailure":
     exempt: user-preference
     reason: "Brings back a notice one person put away on their own overview."
+  "mutation draftAgentFromDescription":
+    exempt: read-only
+    reason: "Asks a model to draft an agent from a description and returns the draft; it saves nothing, and saving it is the agent builder's create."
+  "mutation tightenAgentInstructions":
+    exempt: read-only
+    reason: "Asks a model to shorten an agent's instructions and returns the text; it saves nothing."
   "mutation keepAgentTestPrompt":
     exempt: agent-administration
     reason: "Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself."

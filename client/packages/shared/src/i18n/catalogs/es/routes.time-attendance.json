@@ -107,6 +107,7 @@
   "{0} waiting for a run": "{0} a la espera de una ejecución",
   "{0} with OT": "{0} con horas extra",
   "{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.": "{0} – {1} · {2, plural, one {# hoja de horas} other {# hojas de horas}}.",
+  "{0}m": "{0} m",
   "· {0} OT": "· {0} de horas extra",
   "· {0}m break": "· descanso de {0} min",
   "– now": "– ahora"

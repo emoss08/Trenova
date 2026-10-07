@@ -11,6 +11,7 @@ type Deps struct {
 	*base.Core
 	AiControlSummaryService services.AIControlSummaryService
 	AiTuneUpService         services.AITuneUpService
+	AgentRosterService      services.AgentRosterService
 }
 
 type AIControlSegmentResolver struct{ *Deps }

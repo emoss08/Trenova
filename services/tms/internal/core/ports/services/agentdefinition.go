@@ -106,6 +106,7 @@ type ToolCatalogEntry struct {
 	Resource            permission.Resource  `json:"resource"`
 	Operation           permission.Operation `json:"operation"`
 	DefaultAutonomyTier agent.AutonomyTier   `json:"defaultAutonomyTier"`
+	MaxAutonomyTier     agent.AutonomyTier   `json:"maxAutonomyTier,omitempty"`
 	Reversible          bool                 `json:"reversible"`
 	Core                bool                 `json:"core"`
 	Effect              agent.ToolEffect     `json:"effect"`

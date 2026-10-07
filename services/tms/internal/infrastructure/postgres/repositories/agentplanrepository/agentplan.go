@@ -366,3 +366,45 @@ func (r *repository) ExpirePending(
 		return int(affected), nil
 	})
 }
+
+func (r *repository) ExpirePendingByDefinition(
+	ctx context.Context,
+	req repositories.ExpireAgentPlansByDefinitionRequest,
+) (int, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		db := r.db.DBForContext(ctx)
+		cols := buncolgen.AgentPlanColumns
+		runCols := buncolgen.AgentRunColumns
+
+		runs := buncolgen.AgentRunScopeTenant(
+			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
+			req.TenantInfo,
+		).Where(runCols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+
+		results, err := db.NewUpdate().
+			Model((*agent.AgentPlan)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.Status.Eq(), agent.PlanStatusPending).
+					Where(cols.RunID.In(), runs)
+			}).
+			Set(cols.Status.Set(), agent.PlanStatusExpired).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(cols.Version.Inc(1)).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to withdraw the pending plans of an agent",
+				zap.String("agentDefinitionId", req.AgentDefinitionID.String()),
+				zap.Error(err),
+			)
+			return 0, err
+		}
+
+		affected, err := results.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
+
+		return int(affected), nil
+	})
+}

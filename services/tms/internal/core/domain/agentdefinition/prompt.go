@@ -234,7 +234,7 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 	stable.WriteString(safetyPreamble)
 
 	stable.WriteString("\n\n## Organization instructions\n")
-	instructions := strings.TrimSpace(d.Instructions)
+	instructions := strings.TrimSpace(FillInstructionVariables(d.Instructions, rc))
 	if instructions == "" {
 		instructions = DefaultPersona
 	}

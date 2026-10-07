@@ -1,6 +1,7 @@
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Ic, type IcName } from "../kit/ic";
+import { Switch } from "../kit/layout";
 
 type FProps = {
   label: ReactNode;
@@ -56,6 +57,133 @@ export function Callout({ tone = "i", icon, action, children }: CalloutProps) {
       <Ic n={icon ?? CALLOUT_ICON[tone]} s={13} />
       <div>{children}</div>
       {action}
+    </div>
+  );
+}
+
+type TxtProps = {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  mono?: boolean;
+  prefix?: ReactNode;
+  suffix?: ReactNode;
+  width?: number;
+  id?: string;
+  label?: string;
+  type?: "text" | "date";
+};
+
+/** A one-line text box, with an optional unit before or after it. */
+export function Txt({
+  value,
+  onChange,
+  placeholder,
+  mono = false,
+  prefix,
+  suffix,
+  width,
+  id,
+  label,
+  type = "text",
+}: TxtProps) {
+  return (
+    <label className={cn("inx", mono && "mono")} style={width ? { width } : undefined}>
+      {prefix && <span className="inx-a">{prefix}</span>}
+      <input
+        id={id}
+        type={type}
+        aria-label={label}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {suffix && <span className="inx-a">{suffix}</span>}
+    </label>
+  );
+}
+
+type SelProps<T extends string | number> = {
+  value: T;
+  onChange: (value: T) => void;
+  options: readonly (readonly [T, string])[];
+  label: string;
+  width?: number;
+};
+
+/** A native select drawn as a field. */
+export function Sel<T extends string | number>({ value, onChange, options, label, width }: SelProps<T>) {
+  return (
+    <label className="inx sel" style={width ? { width } : undefined}>
+      <select
+        aria-label={label}
+        value={String(value)}
+        onChange={(event) => {
+          const picked = options.find(([key]) => String(key) === event.target.value);
+          if (picked) onChange(picked[0]);
+        }}
+      >
+        {options.map(([key, text]) => (
+          <option key={String(key)} value={String(key)}>
+            {text}
+          </option>
+        ))}
+      </select>
+      <Ic n="chevD" s={12} />
+    </label>
+  );
+}
+
+type ChipsProps<T extends string> = {
+  value: readonly T[];
+  onChange: (value: T[]) => void;
+  options: readonly (readonly [T, string])[];
+  label: string;
+};
+
+/** A set of choices, each a chip that toggles. */
+export function Chips<T extends string>({ value, onChange, options, label }: ChipsProps<T>) {
+  return (
+    <div className="tks" role="group" aria-label={label}>
+      {options.map(([key, text]) => {
+        const on = value.includes(key);
+        return (
+          <button
+            key={key}
+            type="button"
+            className={cn("tkb", on && "on")}
+            aria-pressed={on}
+            onClick={() => onChange(on ? value.filter((entry) => entry !== key) : [...value, key])}
+          >
+            <Ic n={on ? "check" : "plus"} s={11} w={2.2} />
+            {text}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+type SwRowProps = {
+  label: string;
+  note?: ReactNode;
+  on: boolean;
+  onChange: (on: boolean) => void;
+  disabled?: boolean;
+  /** Why it is disabled, shown in place of nothing. */
+  why?: string;
+};
+
+/** A setting that is a switch: what it is, a line on what it does, and the switch. */
+export function SwRow({ label, note, on, onChange, disabled = false, why }: SwRowProps) {
+  return (
+    <div className={cn("swr", disabled && "dis")}>
+      <span>
+        <b>{label}</b>
+        {note && <em>{note}</em>}
+        {disabled && why && <em className="t-w">{why}</em>}
+      </span>
+      <Switch on={on} label={label} disabled={disabled} onChange={onChange} />
     </div>
   );
 }

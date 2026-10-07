@@ -333,6 +333,48 @@ func (r *repository) ExpirePendingByRun(
 	})
 }
 
+func (r *repository) ExpirePendingByDefinition(
+	ctx context.Context,
+	req repositories.ExpireAgentProposalsByDefinitionRequest,
+) (int, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		db := r.db.DBForContext(ctx)
+		cols := buncolgen.AgentProposalColumns
+		runCols := buncolgen.AgentRunColumns
+
+		runs := buncolgen.AgentRunScopeTenant(
+			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
+			req.TenantInfo,
+		).Where(runCols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+
+		results, err := db.NewUpdate().
+			Model((*agent.AgentProposal)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.Status.Eq(), agent.ProposalStatusPending).
+					Where(cols.RunID.In(), runs)
+			}).
+			Set(cols.Status.Set(), agent.ProposalStatusExpired).
+			Set(cols.PendingModifications.SetNull()).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to withdraw the pending proposals of an agent",
+				zap.String("agentDefinitionId", req.AgentDefinitionID.String()),
+				zap.Error(err),
+			)
+			return 0, err
+		}
+
+		affected, err := results.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
+
+		return int(affected), nil
+	})
+}
+
 // ExpirePending closes the decision window on every pending proposal whose
 // expiry has passed, across all tenants. It is the sweeper's query and the
 // only unscoped write in this repository; the partial index on pending expiry

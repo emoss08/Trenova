@@ -3,6 +3,7 @@ import {
   EVENT_KINDS,
   EXTENSION_CATALOG,
   PROVIDER_CATALOG,
+  ROLES,
   SHADOW_RECORDED,
   TOOL_CATALOG,
 } from "../fixtures/aicontrol.mjs";
@@ -390,6 +391,86 @@ export const AI_HANDLERS = {
     }
     return { updateAgentControl: state.ai.control };
   },
+  AgentDraftingAvailable: (state) => ({
+    agentDraftingAvailable: state.ai.providers.some((provider) => provider.node.enabled),
+  }),
+  DraftAgentFromDescription: (state, v) => ({
+    draftAgentFromDescription: {
+      name: "Detention desk",
+      description: "Starts the detention clock when a truck waits too long and drafts the charge.",
+      icon: "gauge",
+      accent: "amber",
+      instructions:
+        "You are the detention desk for {{organization}}.\n\nWhen a truck has waited more than two hours past its appointment, check the arrival time on the shipment and the customer's detention terms.\nDraft a short note to the customer with the start time and the running total, and propose the detention charge.\nIf the arrival time is missing, flag the shipment for review instead of guessing.",
+      guardrails: ["Promise a customer a delivery date or a rate"],
+      triggerMode: "Event",
+      cronExpression: "",
+      cronTimezone: "",
+      eventKinds: EVENT_KINDS.events.slice(0, 1).map((event) => event.kind),
+      intervalSeconds: 0,
+      toolNames: TOOL_CATALOG.tools.filter((tool) => !tool.core && tool.resource.startsWith("shipment")).slice(0, 6).map((tool) => tool.name),
+      toolTiers: {},
+      autonomyCeiling: "ActWithApproval",
+      dataAccessCeiling: "Internal",
+      outputMode: "Conversational",
+      enabled: true,
+      shadowMode: true,
+      decisionTimeoutSeconds: DAY,
+      runTimeoutSeconds: 600,
+      maxToolCalls: 12,
+      maxConcurrentRuns: 1,
+      notes: v.description.length > 400 ? [{ field: "description", value: "", reason: "The description was shortened" }] : [],
+    },
+  }),
+  TightenAgentInstructions: (_state, v) => ({
+    tightenAgentInstructions: {
+      instructions: v.instructions.replace(/\n{3,}/g, "\n\n").trim(),
+      changed: /\n{3,}/.test(v.instructions),
+    },
+  }),
+  AIAgentRoster: (state) => ({
+    aiAgentRoster: state.ai.agents.map(rosterStat),
+  }),
+  AgentToolRuleTable: (state, v) => ({
+    agentToolRuleConnection: connection(TOOL_RULES, v.input, {
+      searchOf: (rule) => `${rule.name} ${rule.title}`,
+      includeTotalCount: v.includeTotalCount !== false,
+    }),
+  }),
+  AgentInstructionLint: (_state, v) => ({ agentInstructionLint: lintOf(v.input) }),
+  AgentShadowReport: (state, v) => {
+    const agent = agentOf(state, v.agentId);
+    const recorded = agent ? (SHADOW_RECORDED[agent.key] ?? 0) : 0;
+    return {
+      agentShadowReport: {
+        days: v.days ?? 30,
+        recorded,
+        matched: Math.round(recorded * 0.87),
+        matchRate: recorded ? 0.87 : null,
+        wouldReject: recorded ? 2 : 0,
+        wouldFail: 0,
+        unanswered: recorded ? 1 : 0,
+      },
+    };
+  },
+  AgentDefinitionVersions: (state, v) => {
+    const agent = agentOf(state, v.agentId);
+    return { agentDefinitionVersions: agent ? versionsOf(state, agent) : [] };
+  },
+  AgentDefinitionVersionDraft: (state, v) => {
+    const agent = agentOf(state, v.agentId);
+    return {
+      agentDefinitionVersionDraft: agent
+        ? { ...agent.node, autonomyCeiling: "ActWithApproval", guardrails: agent.node.guardrails.slice(0, 1) }
+        : null,
+    };
+  },
+  AgentDefinitionCard: (state, v) => ({ agentDefinition: agentOf(state, v.id)?.node ?? null }),
+  AgentAccessPreview: (state, v) => ({ agentAccessPreview: accessPreview(state, v.input) }),
+  AgentScorecard: (state, v) => {
+    const agent = agentOf(state, v.input.agentDefinitionId);
+    return { agentScorecard: agent ? scorecardOf(state, agent) : null };
+  },
   AgentDefinitionCards: (state, v) => ({
     agentDefinitions: connection(
       state.ai.agents.map((agent) => agent.node),
@@ -497,7 +578,317 @@ export const AI_HANDLERS = {
   }),
 };
 
+// ---------------------------------------------------------------- agents
+
+const TOOL_BY_NAME = new Map(TOOL_CATALOG.tools.map((tool) => [tool.name, tool]));
+
+function agentOf(state, id) {
+  return state.ai.agents.find((agent) => agent.node.id === id) ?? null;
+}
+
+function titleOf(name) {
+  const words = name.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function egressOf(tool) {
+  if (tool.kind === "query") return ["None"];
+  const name = tool.name;
+  if (/payment|settlement|write_off|refund|payout|charge_card/.test(name)) return ["Money"];
+  if (/customer_reply|send_customer|notify_customer|customer_update/.test(name)) return ["CustomerVisible"];
+  if (/driver_message|send_driver|notify_driver/.test(name)) return ["DriverVisible"];
+  if (/email|tender_to_carrier|send_|edi_/.test(name)) return ["ExternalRecipient"];
+  return ["Internal"];
+}
+
+function toolRule(tool) {
+  const egress = egressOf(tool);
+  const destructive = /delete|cancel|void|write_off|transfer|unassign/.test(tool.name);
+  const leaves = egress.some((entry) => ["CustomerVisible", "DriverVisible", "ExternalRecipient", "Money"].includes(entry));
+  const maxTier = tool.kind === "query" ? "AutoExecute" : destructive ? "Propose" : "AutoExecute";
+  return {
+    id: tool.name,
+    name: tool.name,
+    title: titleOf(tool.name),
+    kind: tool.kind === "query" ? "Query" : "Action",
+    needs: tool.resource ? { resource: tool.resource, operation: tool.operation || "read" } : null,
+    scope: "Tenant",
+    defaultTier: tool.defaultAutonomyTier || (tool.kind === "query" ? "AutoExecute" : "Propose"),
+    maxTier,
+    promotableTier: leaves && maxTier === "AutoExecute" ? "ActWithApproval" : maxTier,
+    egress,
+    leavesOrganization: leaves,
+    hasClassify: false,
+    hasCondition: false,
+    conditionDescription: null,
+    personalExemption: false,
+    effect: tool.kind === "query" ? "Lookup" : "Change",
+    artifact: "",
+    reversible: !destructive,
+    idempotent: false,
+    readsExternal: /inbound|document|email|edi/.test(tool.name) ? "Always" : "Never",
+    source: null,
+    carriesTaint: false,
+    rationale: "",
+    explanation: "",
+    runsWithoutPerson: null,
+  };
+}
+
+const TOOL_RULES = TOOL_CATALOG.tools.map(toolRule);
+
+function rosterStat(agent) {
+  const runsByDay = agent.runsPerDay.slice(-14);
+  const rec = agent.rec ?? { approved: 0, modified: 0, rejected: 0, failed: 0 };
+  const decided = rec.approved + rec.modified + rec.rejected;
+  return {
+    agentId: agent.node.id,
+    runsByDay,
+    runs: runsByDay.reduce((total, count) => total + count, 0),
+    approved: rec.approved,
+    modified: rec.modified,
+    rejected: rec.rejected,
+    failed: rec.failed,
+    shadowRecorded: agent.node.shadowMode ? (SHADOW_RECORDED[agent.key] ?? 0) : 0,
+    approvalRate: decided ? (rec.approved + rec.modified) / decided : null,
+  };
+}
+
+function streakTool(agent) {
+  return (
+    agent.node.toolNames.find((name) => agent.node.toolTiers[name] === "ActWithApproval") ??
+    agent.node.toolNames.find((name) => TOOL_BY_NAME.get(name)?.kind === "action") ??
+    null
+  );
+}
+
+function trustOf(state, agent) {
+  const tool = agent.rec ? streakTool(agent) : null;
+  if (!tool) return [];
+  return [
+    {
+      id: `tt_${agent.key}`,
+      organizationId: agent.node.organizationId,
+      businessUnitId: agent.node.businessUnitId,
+      agentDefinitionId: agent.node.id,
+      toolName: tool,
+      streak: agent.rec.streak,
+      approvals: agent.rec.approved,
+      modifications: agent.rec.modified,
+      rejections: agent.rec.rejected,
+      executionFailures: agent.rec.failed,
+      earnedTier: null,
+      lastDecisionAt: state.now() - 3600,
+      promotedAt: null,
+      demotedAt: null,
+      createdAt: state.now() - 60 * DAY,
+      updatedAt: state.now() - 3600,
+    },
+  ];
+}
+
+function versionsOf(state, agent) {
+  const node = agent.node;
+  const author = (id, name) => ({ id, name });
+  return [
+    { id: `agv_${agent.key}_3`, version: node.version, summary: "Raised a tool to Ask first", author: author("usr_sa", "Sarah Alvarez"), createdAt: state.now() - 1 * DAY },
+    { id: `agv_${agent.key}_2`, version: node.version - 1, summary: "Added a line to Never", author: author("usr_mr", "Marcus Reed"), createdAt: state.now() - 8 * DAY },
+    { id: `agv_${agent.key}_1`, version: node.version - 2, summary: "Created", author: null, createdAt: state.now() - 90 * DAY },
+  ].filter((version) => version.version > 0);
+}
+
+function accessPreview(state, input) {
+  const tools = input.toolNames ?? [];
+  const sensitive =
+    input.accessMode === "Everyone"
+      ? tools.filter((name) => {
+          const rule = TOOL_RULES.find((entry) => entry.name === name);
+          return rule && rule.kind === "Action" && rule.leavesOrganization;
+        })
+      : [];
+  const granted = new Set(agentOf(state, input.agentId)?.node.accessRoles.map((role) => role.id) ?? []);
+  return {
+    accessMode: input.accessMode,
+    sensitiveTools: sensitive,
+    roles: ROLES.map((role) => ({
+      role: { ...role, description: "", isSystem: role.name === "Owner" },
+      coverage: role.name === "Owner" ? "Full" : "Partial",
+      missingResources: [],
+      granted: granted.has(role.id),
+    })),
+  };
+}
+
+function scorecardOf(state, agent) {
+  const rec = agent.rec ?? { approved: 0, modified: 0, rejected: 0, failed: 0, streak: 0 };
+  const runs = agent.runsPerDay.reduce((total, count) => total + count, 0) * 2;
+  const decided = rec.approved + rec.modified + rec.rejected;
+  return {
+    agentDefinitionId: agent.node.id,
+    window: "Last30Days",
+    since: state.now() - 30 * DAY,
+    runs,
+    runsFailed: rec.failed,
+    exceptions: 0,
+    proposals: decided + agent.node.pendingProposals,
+    approved: rec.approved,
+    modified: rec.modified,
+    rejected: rec.rejected,
+    pending: agent.node.pendingProposals,
+    executed: rec.approved + rec.modified,
+    executionFailures: rec.failed,
+    autoExecuted: 0,
+    approvalRate: decided ? rec.approved / decided : null,
+    inputTokens: runs * 2100,
+    outputTokens: runs * 380,
+    costUsd: (runs * 0.0042).toFixed(2),
+    estimatedMinutesSaved: rec.approved * 18,
+    byTool: [],
+    trend: [],
+    toolTrust: trustOf(state, agent).map(({ toolName, streak, approvals, modifications, rejections, executionFailures, earnedTier, lastDecisionAt, promotedAt, demotedAt }) => ({ toolName, streak, approvals, modifications, rejections, executionFailures, earnedTier, lastDecisionAt, promotedAt, demotedAt })),
+  };
+}
+
+function lintOf(input) {
+  const text = input.instructions ?? "";
+  const held = new Set(input.toolNames ?? []);
+  const findings = [];
+  const email = /\bemail\b/i.exec(text);
+  if (email && !TOOL_CATALOG.tools.some((tool) => held.has(tool.name) && /email/.test(tool.name))) {
+    const tools = TOOL_CATALOG.tools.filter((tool) => /email/.test(tool.name)).map((tool) => tool.name);
+    findings.push({ start: email.index, end: email.index + 5, excerpt: email[0], resource: "report_schedule", resourceLabel: "Emails", operation: "send", tools });
+  }
+  return findings;
+}
+
+/** The node an agent's save request makes, merged over what it was. */
+function savedNode(state, base, request, id) {
+  const roleNames = new Map(ROLES.map((role) => [role.id, role.name]));
+  const accessMode = request.accessMode ?? base?.accessMode ?? "Everyone";
+  const roleIds = request.accessRoleIds ?? base?.accessRoles.map((role) => role.id) ?? [];
+  return {
+    ...(base ?? {}),
+    ...request,
+    id,
+    organizationId: "org_mock",
+    businessUnitId: "bu_mock",
+    template: request.template ?? base?.template ?? null,
+    learningOff: request.learningOff ?? false,
+    monthlyBudgetUsd: request.monthlyBudgetUsd == null ? null : String(request.monthlyBudgetUsd),
+    preferredProviderId: request.preferredProviderId || null,
+    systemKey: base?.systemKey ?? "",
+    starters: base?.starters ?? [],
+    delegates: (request.delegateIds ?? []).map((delegate) => agentOf(state, delegate)?.node).filter(Boolean).map((node) => ({ id: node.id, name: node.name, icon: node.icon, accent: node.accent, enabled: node.enabled, triggerMode: node.triggerMode })),
+    accessMode,
+    accessRoles: roleIds.map((roleId) => ({ id: roleId, name: roleNames.get(roleId) ?? roleId })),
+    lastRunAt: base?.lastRunAt ?? null,
+    nextRunAt: base?.nextRunAt ?? null,
+    pendingProposals: base?.pendingProposals ?? 0,
+    openRuns: base?.openRuns ?? 0,
+    version: (base?.version ?? 0) + 1,
+    createdAt: base?.createdAt ?? state.now(),
+    updatedAt: state.now(),
+  };
+}
+
+function dryRunFrames(state, body) {
+  const draft = body?.draft ?? {};
+  const held = draft.toolNames ?? [];
+  const reads = held.filter((name) => TOOL_BY_NAME.get(name)?.kind === "query").slice(0, 2);
+  const change = held.find((name) => TOOL_BY_NAME.get(name)?.kind === "action");
+  const calls = [...reads, ...(change ? [change] : [])];
+  const tier = (name) => (draft.toolTiers ?? {})[name] ?? draft.autonomyCeiling ?? "Propose";
+  const outcomeOf = (name) => {
+    if (TOOL_BY_NAME.get(name)?.kind !== "action") return "Runs";
+    if (draft.simulationMode) return "Simulated";
+    if (draft.shadowMode) return "Recorded";
+    const effective = tier(name) === "AutoExecute" && draft.autonomyCeiling === "AutoExecute" ? "AutoExecute" : tier(name) === "Propose" || draft.autonomyCeiling === "Propose" ? "Propose" : "ActWithApproval";
+    return effective === "AutoExecute" ? "Runs" : effective === "Propose" ? "Propose" : "AskFirst";
+  };
+  const reply = `Here is what I found for SHP-48302: it picks up tomorrow at 7:00 in Fort Worth and nobody is assigned yet. ${change ? `I would ${titleOf(change).toLowerCase()} next, and a person decides before it happens.` : "I can explain what to do next."}`;
+  const frames = [{ event: "accepted", data: { turnId: "turn_mock" }, delay: 200 }];
+  calls.forEach((name, index) => {
+    frames.push({ event: "tool_started", data: { callId: `c${index}`, name }, delay: 450 });
+    frames.push({ event: "tool_finished", data: { callId: `c${index}`, name, failed: false }, delay: 500 });
+  });
+  for (const word of reply.split(" ")) {
+    frames.push({ event: "delta", data: { text: `${word} ` }, delay: 35 });
+  }
+  frames.push({
+    event: "dry_run_steps",
+    data: { steps: calls.map((name, index) => ({ callId: `c${index}`, tool: name, outcome: outcomeOf(name) })), reply },
+    delay: 120,
+  });
+  frames.push({ event: "done", data: { reply }, delay: 40 });
+  return frames;
+}
+
 export const AI_ROUTES = [
+  ["GET", /^\/api\/v1\/agent-definitions\/templates\/?$/, () => ({ templates: [] })],
+  [
+    "POST",
+    /^\/api\/v1\/agent-definitions\/dry-run\/?$/,
+    (state, _path, body) => ({ __sse: dryRunFrames(state, body) }),
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/agent-definitions\/[^/]+\/trust\/?$/,
+    (state, path) => {
+      const agent = agentOf(state, path.split("/")[4]);
+      return { results: agent ? trustOf(state, agent) : [] };
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/agent-definitions\/[^/]+\/budget\/?$/,
+    (state, path) => {
+      const agent = agentOf(state, path.split("/")[4]);
+      return {
+        monthStart: state.now() - 6 * DAY,
+        dayStart: state.now() - (state.now() % DAY),
+        spentUsd: agent?.node.monthlyBudgetUsd ? "20.50" : "3.10",
+        monthlyBudgetUsd: agent?.node.monthlyBudgetUsd ?? null,
+        monthCalls: 412,
+        unpricedCalls: 0,
+        runsToday: 6,
+        dailyRunLimit: agent?.node.dailyRunLimit ?? 0,
+        tools: [],
+        simulationMode: agent?.node.simulationMode ?? false,
+      };
+    },
+  ],
+  [
+    "POST",
+    /^\/api\/v1\/agent-definitions\/?$/,
+    (state, _path, body) => {
+      const id = `agd_new${state.ai.agents.length}`;
+      const node = savedNode(state, null, body ?? {}, id);
+      state.ai.agents.push({ key: id, rec: null, runsPerDay: Array(14).fill(0), node });
+      return node;
+    },
+  ],
+  [
+    "PUT",
+    /^\/api\/v1\/agent-definitions\/[^/]+\/?$/,
+    (state, path, body) => {
+      const agent = agentOf(state, path.split("/")[4]);
+      if (!agent) return { __status: 404, body: { message: "Agent not found" } };
+      if (body?.version !== undefined && body.version !== agent.node.version) {
+        return { __status: 409, body: { type: "version_mismatch", message: "Someone else saved this agent" } };
+      }
+      agent.node = savedNode(state, agent.node, body ?? {}, agent.node.id);
+      return agent.node;
+    },
+  ],
+  [
+    "DELETE",
+    /^\/api\/v1\/agent-definitions\/[^/]+\/?$/,
+    (state, path) => {
+      const id = path.split("/")[4];
+      state.ai.agents = state.ai.agents.filter((agent) => agent.node.id !== id);
+      return {};
+    },
+  ],
   ["GET", /^\/api\/v1\/ai-providers\/catalog\/?$/, () => PROVIDER_CATALOG],
   ["GET", /^\/api\/v1\/agent-extensions\/catalog\/?$/, () => EXTENSION_CATALOG],
   ["GET", /^\/api\/v1\/agent-definitions\/tools\/?$/, () => TOOL_CATALOG],

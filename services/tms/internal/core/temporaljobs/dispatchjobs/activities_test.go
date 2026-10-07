@@ -33,6 +33,13 @@ func (m *stubProposalRepo) ExpirePendingByRun(
 	return args.Int(0), args.Error(1)
 }
 
+func (m *stubProposalRepo) ExpirePendingByDefinition(
+	context.Context,
+	repositories.ExpireAgentProposalsByDefinitionRequest,
+) (int, error) {
+	return 0, nil
+}
+
 func (m *stubProposalRepo) ExpirePending(
 	context.Context,
 	repositories.ExpireAgentProposalsRequest,

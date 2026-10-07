@@ -65,6 +65,11 @@ type ExpireAgentPlansRequest struct {
 	Before int64
 }
 
+type ExpireAgentPlansByDefinitionRequest struct {
+	AgentDefinitionID pulid.ID
+	TenantInfo        pagination.TenantInfo
+}
+
 type ListAgentPlansByIDsRequest struct {
 	IDs        []pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -85,4 +90,8 @@ type AgentPlanRepository interface {
 		req RecordAgentPlanProgressRequest,
 	) (*agent.AgentPlan, error)
 	ExpirePending(ctx context.Context, req ExpireAgentPlansRequest) (int, error)
+	ExpirePendingByDefinition(
+		ctx context.Context,
+		req ExpireAgentPlansByDefinitionRequest,
+	) (int, error)
 }

@@ -70,8 +70,29 @@ type AIControlSummary {
   visibleFailures: [AIProviderFailure!]!
 }
 
+"""
+What one agent has done lately, for its row on the Agents tab: runs on each of
+the last 14 days and the decisions people made on its proposals over 30.
+"""
+type AIAgentRosterStat {
+  agentId: ID!
+  "Runs started on each of the last 14 days, oldest first; the last is today."
+  runsByDay: [Int!]!
+  runs: Int!
+  approved: Int!
+  modified: Int!
+  rejected: Int!
+  failed: Int!
+  "Proposals it recorded in shadow, which nobody was offered."
+  shadowRecorded: Int!
+  "Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided."
+  approvalRate: Float
+}
+
 extend type Query {
   aiControlSummary(tab: AIControlTab!): AIControlSummary!
+  "Every agent that has run or proposed lately; an agent with neither is left out."
+  aiAgentRoster: [AIAgentRosterStat!]!
 }
 
 extend type Mutation {

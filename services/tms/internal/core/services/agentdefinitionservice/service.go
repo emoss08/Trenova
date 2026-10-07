@@ -2,6 +2,7 @@ package agentdefinitionservice
 
 import (
 	"context"
+	"fmt"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"slices"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,6 +33,8 @@ type Params struct {
 	DB           ports.DBConnection
 	Repo         repositories.AgentDefinitionRepository
 	Versions     repositories.AgentDefinitionVersionRepository
+	Proposals    repositories.AgentProposalRepository
+	AgentPlans   repositories.AgentPlanRepository
 	Tools        services.AgentToolRegistry
 	QueryTools   services.AgentQueryToolRegistry
 	Contexts     services.RuntimeContextBuilder
@@ -52,6 +56,8 @@ type Service struct {
 	db          ports.DBConnection
 	repo        repositories.AgentDefinitionRepository
 	versions    repositories.AgentDefinitionVersionRepository
+	proposals   repositories.AgentProposalRepository
+	agentPlans  repositories.AgentPlanRepository
 	tools       services.AgentToolRegistry
 	queryTools  services.AgentQueryToolRegistry
 	contexts    services.RuntimeContextBuilder
@@ -69,6 +75,8 @@ func New(p Params) services.AgentDefinitionService {
 		db:          p.DB,
 		repo:        p.Repo,
 		versions:    p.Versions,
+		proposals:   p.Proposals,
+		agentPlans:  p.AgentPlans,
 		tools:       p.Tools,
 		queryTools:  p.QueryTools,
 		contexts:    p.Contexts,
@@ -254,12 +262,53 @@ func (s *Service) Delete(
 		)
 	}
 
-	if err = s.repo.Delete(ctx, req); err != nil {
+	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		return s.withdrawAndDelete(txCtx, req)
+	}); err != nil {
 		return err
 	}
 
 	s.schedules.Remove(ctx, existing.ID)
 	s.logAudit(existing, existing, permission.OpDelete, actor, "Agent deleted")
+
+	return nil
+}
+
+func (s *Service) withdrawAndDelete(
+	ctx context.Context,
+	req repositories.DeleteAgentDefinitionRequest,
+) error {
+	proposals, err := s.proposals.ExpirePendingByDefinition(
+		ctx,
+		repositories.ExpireAgentProposalsByDefinitionRequest{
+			AgentDefinitionID: req.ID,
+			TenantInfo:        req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("withdraw the agent's open proposals: %w", err)
+	}
+
+	plans, err := s.agentPlans.ExpirePendingByDefinition(
+		ctx,
+		repositories.ExpireAgentPlansByDefinitionRequest{
+			AgentDefinitionID: req.ID,
+			TenantInfo:        req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("withdraw the agent's open plans: %w", err)
+	}
+
+	if err = s.repo.Delete(ctx, req); err != nil {
+		return err
+	}
+
+	s.l.Info("withdrew a removed agent's open work",
+		zap.String("agentDefinitionId", req.ID.String()),
+		zap.Int("proposals", proposals),
+		zap.Int("plans", plans),
+	)
 
 	return nil
 }

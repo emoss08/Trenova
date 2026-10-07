@@ -886,6 +886,14 @@ export type AgentExternalRead =
   | 'Marked'
   | 'Never';
 
+/** Instructions as the builder holds them, with the tools the draft holds. */
+export type AgentInstructionLintInput = {
+  disabledToolNames?: Array<string> | null | undefined;
+  /** At most 20000 characters. */
+  instructions: string;
+  toolNames: Array<string>;
+};
+
 export type AgentMemoryInput = {
   content: string;
   expiresAt?: number | null | undefined;
@@ -8326,6 +8334,11 @@ export type RestoreAiTuneUpMutationVariables = Exact<{
 
 export type RestoreAiTuneUpMutation = { restoreAITuneUp: { ' $fragmentRefs'?: { 'AiTuneUpFieldsFragment': AiTuneUpFieldsFragment } } };
 
+export type AiAgentRosterQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AiAgentRosterQuery = { aiAgentRoster: Array<{ agentId: string, runsByDay: Array<number>, runs: number, approved: number, modified: number, rejected: number, failed: number, shadowRecorded: number, approvalRate: number | null }> };
+
 export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
 
 export type AiAuditEventDetailFieldsFragment = (
@@ -8390,6 +8403,63 @@ export type VerifyAiAuditChainMutationVariables = Exact<{ [key: string]: never; 
 
 
 export type VerifyAiAuditChainMutation = { verifyAIAuditChain: { ' $fragmentRefs'?: { 'AiAuditChainStatusFieldsFragment': AiAuditChainStatusFieldsFragment } } };
+
+export type AgentInstructionLintQueryVariables = Exact<{
+  input: AgentInstructionLintInput;
+}>;
+
+
+export type AgentInstructionLintQuery = { agentInstructionLint: Array<{ start: number, end: number, excerpt: string, resource: string, resourceLabel: string, operation: string, tools: Array<string> }> };
+
+export type AgentShadowReportQueryVariables = Exact<{
+  agentId: string | number;
+  days?: number | null | undefined;
+}>;
+
+
+export type AgentShadowReportQuery = { agentShadowReport: { days: number, recorded: number, matched: number, matchRate: number | null, wouldReject: number, wouldFail: number, unanswered: number } };
+
+export type AgentDefinitionVersionsQueryVariables = Exact<{
+  agentId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type AgentDefinitionVersionsQuery = { agentDefinitionVersions: Array<{ id: string, version: number, summary: string, createdAt: number, author: { id: string, name: string } | null }> };
+
+export type AgentDefinitionVersionDraftQueryVariables = Exact<{
+  agentId: string | number;
+  version: number;
+}>;
+
+
+export type AgentDefinitionVersionDraftQuery = { agentDefinitionVersionDraft: { ' $fragmentRefs'?: { 'AgentDefinitionCardFieldsFragment': AgentDefinitionCardFieldsFragment } } };
+
+export type AgentDefinitionCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentDefinitionCardQuery = { agentDefinition: { ' $fragmentRefs'?: { 'AgentDefinitionCardFieldsFragment': AgentDefinitionCardFieldsFragment } } | null };
+
+export type AgentDraftingAvailableQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentDraftingAvailableQuery = { agentDraftingAvailable: boolean };
+
+export type DraftAgentFromDescriptionMutationVariables = Exact<{
+  description: string;
+}>;
+
+
+export type DraftAgentFromDescriptionMutation = { draftAgentFromDescription: { name: string, description: string, icon: string, accent: string, instructions: string, guardrails: Array<string>, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, outputMode: AgentOutputMode, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, runTimeoutSeconds: number, maxToolCalls: number, maxConcurrentRuns: number, notes: Array<{ field: string, value: string, reason: string }> } };
+
+export type TightenAgentInstructionsMutationVariables = Exact<{
+  instructions: string;
+}>;
+
+
+export type TightenAgentInstructionsMutation = { tightenAgentInstructions: { instructions: string, changed: boolean } };
 
 export type AgentCapabilityToolFieldsFragment = { key: string, label: string, write: boolean, mode: AgentCapabilityMode, allowedModes: Array<AgentCapabilityMode>, lockReason: string | null } & { ' $fragmentName'?: 'AgentCapabilityToolFieldsFragment' };
 
@@ -25089,6 +25159,7 @@ export const AiTuneUpsDocument = {"__meta__":{"kind":"query","name":"AITuneUps",
 export const ApplyAiTuneUpDocument = {"__meta__":{"kind":"mutation","name":"ApplyAITuneUp","hash":"sha256:87cf080ba618d07971911576fde04dd6b38791a4b7270e992ae7f673d0aca2f3"}} as unknown as TypedDocumentString<ApplyAiTuneUpMutation, ApplyAiTuneUpMutationVariables>;
 export const DismissAiTuneUpDocument = {"__meta__":{"kind":"mutation","name":"DismissAITuneUp","hash":"sha256:6dcc66f5635df70c112d57a2e7f9f900d92505ac60d33f1072defe9ccd551b76"}} as unknown as TypedDocumentString<DismissAiTuneUpMutation, DismissAiTuneUpMutationVariables>;
 export const RestoreAiTuneUpDocument = {"__meta__":{"kind":"mutation","name":"RestoreAITuneUp","hash":"sha256:985c605db4ee9fbffe3d945dd6dbaf902384c4a9e6ac7ec75e6e88e98f3ccce5"}} as unknown as TypedDocumentString<RestoreAiTuneUpMutation, RestoreAiTuneUpMutationVariables>;
+export const AiAgentRosterDocument = {"__meta__":{"kind":"query","name":"AIAgentRoster","hash":"sha256:8077e853903d8a344e67b861674f0a2fa06978bff3b0ea0ae2b24ac3fcbb81b5"}} as unknown as TypedDocumentString<AiAgentRosterQuery, AiAgentRosterQueryVariables>;
 export const AiAuditEventTableDocument = {"__meta__":{"kind":"query","name":"AIAuditEventTable","hash":"sha256:4df8553a5f6877364cf0f4bf0bf7fd0745b577dd89671d7f6ce85bda0bd5684e"}} as unknown as TypedDocumentString<AiAuditEventTableQuery, AiAuditEventTableQueryVariables>;
 export const AiAuditEventDetailDocument = {"__meta__":{"kind":"query","name":"AIAuditEventDetail","hash":"sha256:ed73402380199934972ba4aa4c9baba8179b23d14cb6e7463f76a9c34c8c89da"}} as unknown as TypedDocumentString<AiAuditEventDetailQuery, AiAuditEventDetailQueryVariables>;
 export const AiAuditChainStatusDocument = {"__meta__":{"kind":"query","name":"AIAuditChainStatus","hash":"sha256:189c7a9b735b0b8ec6b15f9d4a9ce6bc3cd25c26cd30f99b7dda9538c48b6820"}} as unknown as TypedDocumentString<AiAuditChainStatusQuery, AiAuditChainStatusQueryVariables>;
@@ -25097,6 +25168,14 @@ export const AiAuditExportDetailDocument = {"__meta__":{"kind":"query","name":"A
 export const RequestAiAuditExportDocument = {"__meta__":{"kind":"mutation","name":"RequestAIAuditExport","hash":"sha256:58b7441c924c34ef725b97617378507ee9fbc255c4807fa0a1c6728b3a686e3f"}} as unknown as TypedDocumentString<RequestAiAuditExportMutation, RequestAiAuditExportMutationVariables>;
 export const AiAuditExportDownloadDocument = {"__meta__":{"kind":"mutation","name":"AIAuditExportDownload","hash":"sha256:c2de785dfd66b796b3fe28d2540c3661146c4fb1ec351a765baa567758c6a80f"}} as unknown as TypedDocumentString<AiAuditExportDownloadMutation, AiAuditExportDownloadMutationVariables>;
 export const VerifyAiAuditChainDocument = {"__meta__":{"kind":"mutation","name":"VerifyAIAuditChain","hash":"sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5"}} as unknown as TypedDocumentString<VerifyAiAuditChainMutation, VerifyAiAuditChainMutationVariables>;
+export const AgentInstructionLintDocument = {"__meta__":{"kind":"query","name":"AgentInstructionLint","hash":"sha256:3c8c17d344fa92f49b4ca90ecdf78283d9b0e2d98010ab965afcbc1c626ae1d3"}} as unknown as TypedDocumentString<AgentInstructionLintQuery, AgentInstructionLintQueryVariables>;
+export const AgentShadowReportDocument = {"__meta__":{"kind":"query","name":"AgentShadowReport","hash":"sha256:368fe4c2dd6dddde06733bdaa72ee7fffdc59f62013817f19c86f24131ec1567"}} as unknown as TypedDocumentString<AgentShadowReportQuery, AgentShadowReportQueryVariables>;
+export const AgentDefinitionVersionsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionVersions","hash":"sha256:327732987b6126fc6e9d5a072b11c7b3e5fa23d89c2b789f0e7bfab18c23c7f6"}} as unknown as TypedDocumentString<AgentDefinitionVersionsQuery, AgentDefinitionVersionsQueryVariables>;
+export const AgentDefinitionVersionDraftDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionVersionDraft","hash":"sha256:b98d363e2a64c5809a1ed9842953065160bf5a7d16b9235173e15b5f444d447e"}} as unknown as TypedDocumentString<AgentDefinitionVersionDraftQuery, AgentDefinitionVersionDraftQueryVariables>;
+export const AgentDefinitionCardDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCard","hash":"sha256:20355b28bb9c6b560ede76e19abf5e671ba105ecd3aa5c8cb016c2250a8333fc"}} as unknown as TypedDocumentString<AgentDefinitionCardQuery, AgentDefinitionCardQueryVariables>;
+export const AgentDraftingAvailableDocument = {"__meta__":{"kind":"query","name":"AgentDraftingAvailable","hash":"sha256:a4f3279ac6171bed09a26156c7f40cf1d69d4ce9c0818d634e6008ed48b785e9"}} as unknown as TypedDocumentString<AgentDraftingAvailableQuery, AgentDraftingAvailableQueryVariables>;
+export const DraftAgentFromDescriptionDocument = {"__meta__":{"kind":"mutation","name":"DraftAgentFromDescription","hash":"sha256:f097742c64298994dcc8d05b48e9db01c52b5a54ee6329a8c819b69572974d82"}} as unknown as TypedDocumentString<DraftAgentFromDescriptionMutation, DraftAgentFromDescriptionMutationVariables>;
+export const TightenAgentInstructionsDocument = {"__meta__":{"kind":"mutation","name":"TightenAgentInstructions","hash":"sha256:342f667f65980d8814ef9880e8cf776b88426e4eba372505226938130b9de67d"}} as unknown as TypedDocumentString<TightenAgentInstructionsMutation, TightenAgentInstructionsMutationVariables>;
 export const AgentCapabilitiesDocument = {"__meta__":{"kind":"query","name":"AgentCapabilities","hash":"sha256:6f97bbb889d00e875d1c8ff495ac4845fb7f2f62b01781d09a9f93c96ac916cb"}} as unknown as TypedDocumentString<AgentCapabilitiesQuery, AgentCapabilitiesQueryVariables>;
 export const UpdateAgentCapabilitiesDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentCapabilities","hash":"sha256:3b7b2ebfc4e46941d7688ca51b50113dfb42b495c38fc637bc7e026dcd698a2b"}} as unknown as TypedDocumentString<UpdateAgentCapabilitiesMutation, UpdateAgentCapabilitiesMutationVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:91be4ca400cfd712b1e9fd6aed7deddf050f9909fa2845b6b132c299299b4d17"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;

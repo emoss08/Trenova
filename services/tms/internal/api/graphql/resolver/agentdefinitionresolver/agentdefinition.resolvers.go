@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -483,4 +484,62 @@ func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([
 		TenantInfo:        base.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 	})
+}
+
+func (r *AgentDraftResolver) EventKinds(ctx context.Context, obj *services.AgentDraft) ([]string, error) {
+	kinds := make([]string, 0, len(obj.EventKinds))
+	for _, kind := range obj.EventKinds {
+		kinds = append(kinds, string(kind))
+	}
+
+	return kinds, nil
+}
+
+func (r *AgentDraftResolver) ToolTiers(ctx context.Context, obj *services.AgentDraft) (map[string]any, error) {
+	tiers := make(map[string]any, len(obj.ToolTiers))
+	for tool, tier := range obj.ToolTiers {
+		tiers[tool] = string(tier)
+	}
+
+	return tiers, nil
+}
+
+func (r *MutationResolver) DraftAgentFromDescription(ctx context.Context, description string) (*services.AgentDraft, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentDraftingService.DraftFromDescription(ctx, &services.DraftAgentRequest{
+		TenantInfo:  base.TenantInfo(authCtx),
+		Description: description,
+	})
+}
+
+func (r *MutationResolver) TightenAgentInstructions(ctx context.Context, instructions string) (*services.TightenedAgentInstructions, error) {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceAgentDefinition, permission.OpUpdate) &&
+		!r.HasPermission(ctx, authCtx, permission.ResourceAgentDefinition, permission.OpCreate) {
+		return nil, errortypes.NewAuthorizationError(
+			"You don't have permission to perform this action: {0} {1}",
+			permission.ResourceAgentDefinition, permission.OpUpdate,
+		)
+	}
+
+	return r.AgentDraftingService.TightenInstructions(ctx, &services.TightenAgentInstructionsRequest{
+		TenantInfo:   base.TenantInfo(authCtx),
+		Instructions: instructions,
+	})
+}
+
+func (r *QueryResolver) AgentDraftingAvailable(ctx context.Context) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return false, err
+	}
+
+	return r.AgentDraftingService.Available(ctx, base.TenantInfo(authCtx))
 }

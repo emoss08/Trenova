@@ -153,6 +153,7 @@ type Resolver struct {
 	accountingSyncRecord               *accountingsyncresolver.AccountingSyncRecordResolver
 	agentDecision                      *agentDecisionResolver
 	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
+	agentDraft                         *agentdefinitionresolver.AgentDraftResolver
 	agentEvalCase                      *agentqualityresolver.AgentEvalCaseResolver
 	agentEvaluation                    *agentresolver.AgentEvaluationResolver
 	agentInstructionFinding            *agentdefinitionresolver.AgentInstructionFindingResolver
@@ -405,6 +406,7 @@ func FromServices(s *Services) *Resolver {
 		AgentCapabilityService: s.AgentCapabilityService,
 		AgentShadowService:     s.AgentShadowService,
 		AgentTestPromptService: s.AgentTestPromptService,
+		AgentDraftingService:   s.AgentDraftingService,
 		AgentAccessService:     s.AgentAccessService,
 	}
 	agentpreviewDeps := &agentpreviewresolver.Deps{
@@ -440,6 +442,7 @@ func FromServices(s *Services) *Resolver {
 		Core:                    s.Core,
 		AiControlSummaryService: s.AiControlSummaryService,
 		AiTuneUpService:         s.AiTuneUpService,
+		AgentRosterService:      s.AgentRosterService,
 	}
 	aifeedbackDeps := &aifeedbackresolver.Deps{
 		Core:              s.Core,
@@ -1013,6 +1016,7 @@ func FromServices(s *Services) *Resolver {
 			agentpreviewAgentDecision: &agentpreviewAgentDecision{Deps: agentpreviewDeps},
 		},
 		agentDefinition:          &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
+		agentDraft:               &agentdefinitionresolver.AgentDraftResolver{Deps: agentdefinitionDeps},
 		agentEvalCase:            &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
 		agentEvaluation:          &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
 		agentInstructionFinding:  &agentdefinitionresolver.AgentInstructionFindingResolver{Deps: agentdefinitionDeps},
@@ -1522,6 +1526,10 @@ type agentDecisionResolver struct {
 
 func (r *Resolver) AgentDefinition() generated.AgentDefinitionResolver {
 	return r.agentDefinition
+}
+
+func (r *Resolver) AgentDraft() generated.AgentDraftResolver {
+	return r.agentDraft
 }
 
 func (r *Resolver) AgentEvalCase() generated.AgentEvalCaseResolver {

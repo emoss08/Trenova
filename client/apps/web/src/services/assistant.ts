@@ -1,4 +1,4 @@
-import { api } from "@trenova/shared/lib/api";
+import { api, withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
@@ -678,6 +678,44 @@ export class AgentDefinitionService {
   public async eventKinds() {
     const response = await api.get("/agent-definitions/event-kinds/");
     return safeParse(agentEventListSchema, response, "Agent Event");
+  }
+
+  /**
+   * Tries a draft once against live records, every write simulated, and hands each
+   * server-sent event to `onMessage` as it arrives. Nothing is saved. Resolves when the
+   * stream ends; an abort ends it quietly.
+   */
+  public async dryRun(
+    payload: { agentId: string | null; draft: SaveAgentDefinitionRequest; prompt: string },
+    onMessage: (event: string, data: string) => void,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<void> {
+    const path = "/agent-definitions/dry-run/";
+    const headers = await withCsrfHeader(
+      "POST",
+      { Accept: "text/event-stream", "Content-Type": "application/json" },
+      path,
+    );
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      signal: options.signal,
+      body: JSON.stringify({
+        agentId: payload.agentId ?? "",
+        draft: saveAgentDefinitionRequestSchema.parse(payload.draft),
+        prompt: payload.prompt,
+      }),
+    });
+    if (!response.ok || !response.body) {
+      throw new AssistantStreamError(await streamFailureMessage(response), response.status);
+    }
+
+    await readEventStream(
+      response.body,
+      (message) => onMessage(message.event, message.data),
+      options.signal,
+    );
   }
 
   public async previewPrompt(payload: SaveAgentDefinitionRequest) {

@@ -1,6 +1,6 @@
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { describe, expect, it } from "vitest";
-import { filterAgents, groupAgentsByTrigger } from "../agent-roster";
+import { groupAgentsByTrigger } from "../agent-roster";
 
 function agent(overrides: Partial<AgentDefinitionRow>): AgentDefinitionRow {
   return {
@@ -31,25 +31,5 @@ describe("groupAgentsByTrigger", () => {
 
   it("is empty for no agents", () => {
     expect(groupAgentsByTrigger([])).toEqual([]);
-  });
-});
-
-describe("filterAgents", () => {
-  it("matches name, description or template, ignoring case", () => {
-    const agents = [
-      agent({ id: "a", name: "Dispatch desk" }),
-      agent({
-        id: "b",
-        name: "Help",
-        description: "Explains how to do things",
-        template: "GeneralAssistant",
-      }),
-      agent({ id: "c", name: "Compliance", template: "ComplianceAssistant" }),
-    ];
-
-    expect(filterAgents(agents, "DISPATCH").map((a) => a.id)).toEqual(["a"]);
-    expect(filterAgents(agents, "explains").map((a) => a.id)).toEqual(["b"]);
-    expect(filterAgents(agents, "complianceassistant").map((a) => a.id)).toEqual(["c"]);
-    expect(filterAgents(agents, "  ")).toHaveLength(3);
   });
 });

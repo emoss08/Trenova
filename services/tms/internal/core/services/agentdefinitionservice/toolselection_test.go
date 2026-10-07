@@ -397,3 +397,24 @@ func TestApply_StoresTheMemoryBudgetAsSent(t *testing.T) {
 	assert.Nil(t, d.MemoryTokenBudget, "clearing the field returns the agent to the default")
 	assert.Equal(t, agentdefinition.DefaultMemoryTokenBudget, d.EffectiveMemoryTokenBudget())
 }
+
+func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
+	t.Parallel()
+
+	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{
+		&agentruntimetest.StubActionTool{ToolName: "update_customer"},
+		&agentruntimetest.StubActionTool{ToolName: "pay_carrier", Egress: agent.EgressMoney},
+	}}
+	queries := &agentruntimetest.StubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+		&agentruntimetest.StubQueryTool{ToolName: "get_shipment"},
+	}}
+
+	byName := make(map[string]serviceports.ToolCatalogEntry)
+	for _, entry := range buildToolCatalog(actions, queries, nil) {
+		byName[entry.Name] = entry
+	}
+
+	assert.Equal(t, agent.TierAutoExecute, byName["update_customer"].MaxAutonomyTier)
+	assert.Equal(t, agent.EgressMoney.Ceiling(), byName["pay_carrier"].MaxAutonomyTier)
+	assert.Empty(t, byName["get_shipment"].MaxAutonomyTier)
+}

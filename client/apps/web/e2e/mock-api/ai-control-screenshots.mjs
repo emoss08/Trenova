@@ -61,6 +61,103 @@ const SHOTS = [
     },
   },
   { name: "overview-narrow-1000", scenario: {}, viewport: { width: 1000, height: 900 } },
+  { name: "agents", scenario: {}, query: "?tab=agents" },
+  { name: "agents-lower", scenario: {}, query: "?tab=agents", act: (page) => scrollDown(page, 900) },
+  { name: "agents-light", scenario: {}, query: "?tab=agents", colorScheme: "light" },
+  { name: "agents-shadow-filter", scenario: {}, query: "?tab=agents&agents=shadow" },
+  { name: "agents-no-provider", scenario: { aiProviders: "none" }, query: "?tab=agents" },
+  { name: "agents-paused", scenario: { aiPaused: true }, query: "?tab=agents" },
+  {
+    name: "agents-new-menu",
+    scenario: {},
+    query: "?tab=agents",
+    act: async (page) => {
+      await page.getByRole("button", { name: /New agent/ }).click();
+    },
+  },
+  {
+    name: "agents-sheet",
+    scenario: {},
+    query: "?tab=agents",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Billing exceptions/ }).first().click();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "agents-remove-confirm",
+    scenario: {},
+    query: "?tab=agents",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Report analyst/ }).first().click();
+      await page.waitForTimeout(400);
+      await page.getByRole("button", { name: "Remove", exact: true }).click();
+    },
+  },
+  { name: "builder", scenario: {}, query: "?tab=agents&panelType=edit&panelEntityId=agd_dispatch" },
+  {
+    name: "builder-tools",
+    scenario: {},
+    query: "?tab=agents&panelType=edit&panelEntityId=agd_dispatch",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Tools and autonomy/ }).click();
+      await page.waitForTimeout(900);
+    },
+  },
+  {
+    name: "builder-schedule",
+    scenario: {},
+    query: "?tab=agents&panelType=edit&panelEntityId=agd_digest",
+    act: async (page) => {
+      await page.getByRole("button", { name: /When it runs/ }).click();
+      await page.waitForTimeout(900);
+    },
+  },
+  {
+    name: "builder-try",
+    scenario: {},
+    query: "?tab=agents&panelType=edit&panelEntityId=agd_dispatch",
+    act: async (page) => {
+      await page.getByRole("button", { name: "Try it", exact: true }).first().click();
+      await page.waitForTimeout(400);
+      await page.getByRole("button", { name: /What can't you do/ }).click();
+      await page.waitForTimeout(5000);
+    },
+  },
+  {
+    name: "builder-unsaved",
+    scenario: {},
+    query: "?tab=agents&panelType=edit&panelEntityId=agd_dispatch",
+    act: async (page) => {
+      await page.getByRole("textbox", { name: "Name" }).fill("Dispatch desk (nights)");
+      await page.getByRole("button", { name: /unsaved change/ }).click();
+    },
+  },
+  {
+    name: "builder-tool-picker",
+    scenario: {},
+    query: "?tab=agents&panelType=edit&panelEntityId=agd_dispatch",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Tools and autonomy/ }).click();
+      await page.waitForTimeout(700);
+      await page.getByRole("button", { name: "Add tools" }).first().click();
+    },
+  },
+  { name: "builder-create", scenario: {}, query: "?tab=agents&panelType=create&panelEntityId=blank" },
+  {
+    name: "builder-create-started",
+    scenario: {},
+    query: "?tab=agents&panelType=create&panelEntityId=blank",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Scheduled report/ }).click();
+      await page.waitForTimeout(700);
+    },
+  },
+  {
+    name: "builder-create-no-provider",
+    scenario: { aiProviders: "none" },
+    query: "?tab=agents&panelType=create&panelEntityId=blank",
+  },
 ];
 
 async function setScenario(overrides) {

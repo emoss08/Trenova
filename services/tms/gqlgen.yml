@@ -2387,6 +2387,15 @@ models:
   AgentCapabilities:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilities
+  AgentDraft:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentDraft
+  AgentDraftNote:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentDraftNote
+  AgentInstructionsTightened:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.TightenedAgentInstructions
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AccessMode

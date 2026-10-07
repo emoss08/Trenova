@@ -20,7 +20,7 @@ Temporal returns succeeds.
 |---|---|---|
 | Assistant chat, Ask, decision follow-ups | `AssistantTurnWorkflow`, one per turn | `agent-chat-queue` |
 | Import and formula assistants | `AssistantTurnWorkflow`, one per turn, on the page's own thread | `agent-chat-queue` |
-| Table compose | `StructuredCompletionWorkflow` | `agent-chat-queue` |
+| Table compose, agent drafting and instruction tightening | `StructuredCompletionWorkflow` | `agent-chat-queue` |
 | Briefing regenerate | `WriteBriefingWorkflow` | `agent-chat-queue` |
 | AI provider test | `TestAIProviderWorkflow` | `agent-chat-queue` |
 | Agent builder dry run | `AgentDryRunWorkflow`, one per try | `agent-chat-queue` |
@@ -1019,7 +1019,8 @@ the workflow's budget is the request's own deadline less the margin the handler
 needs to answer, so a call never outlives the request waiting on it. A person who
 stops waiting cancels a call that was theirs alone.
 
-- `StructuredCompletionWorkflow` asks one structured question (table compose),
+- `StructuredCompletionWorkflow` asks one structured question (table compose,
+  and the agent builder's drafting and tightening, routed as `AssistantChat`),
   retried the `modelcall` way. Formula generate and explain no longer call it;
   they are turns of the formula assistant.
 - `TestAIProviderWorkflow` probes once and never retries: the administrator is

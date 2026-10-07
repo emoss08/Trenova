@@ -1,6 +1,7 @@
 import type { AgentRunRow } from "@/lib/graphql/agent-activity-tables";
 import {
   AgentPromotionPreviewDocument,
+  AiAgentRosterDocument,
   AgentRunTableDocument,
   AgentRunTableRowFieldsFragmentDoc,
   AiControlSummaryDocument,
@@ -14,6 +15,7 @@ import {
   DismissAiProviderFailureDocument,
   RestoreAiProviderFailureDocument,
   type AgentPromotionPreviewQuery,
+  type AiAgentRosterQuery,
   type AiControlSummaryQuery,
   type AiControlTab,
   type AiProviderFailureFieldsFragment,
@@ -148,6 +150,20 @@ export async function fetchWorkingRuns(options?: RequestOptions): Promise<Workin
       startedAt: row.startedAt,
     };
   });
+}
+
+export type AgentRosterStat = AiAgentRosterQuery["aiAgentRoster"][number];
+
+/** What each agent has done lately, by agent id. */
+export async function fetchAgentRoster(
+  options?: RequestOptions,
+): Promise<Map<string, AgentRosterStat>> {
+  const data = await requestGraphQL({
+    document: AiAgentRosterDocument,
+    operationName: "AIAgentRoster",
+    signal: options?.signal,
+  });
+  return new Map(data.aiAgentRoster.map((stat) => [stat.agentId, stat]));
 }
 
 export async function fetchAITuneUps(options?: RequestOptions): Promise<AITuneUps> {

@@ -171,3 +171,175 @@ export function buildCron(parts: CronParts): string {
     }
   }
 }
+
+/** A five-field expression read the way the server's parser reads it. */
+export type CronSchedule = {
+  minutes: ReadonlySet<number>;
+  hours: ReadonlySet<number>;
+  daysOfMonth: ReadonlySet<number>;
+  months: ReadonlySet<number>;
+  daysOfWeek: ReadonlySet<number>;
+  /** Day of month was "*": then only the day of week decides the day, and the other way round. */
+  anyDayOfMonth: boolean;
+  anyDayOfWeek: boolean;
+};
+
+const MONTH_NAMES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+function fieldValue(raw: string, min: number, names?: readonly string[]): number | null {
+  if (/^\d+$/.test(raw)) {
+    return Number(raw);
+  }
+  const at = names?.indexOf(raw.toUpperCase()) ?? -1;
+  return at < 0 ? null : at + min;
+}
+
+function parseField(
+  field: string,
+  min: number,
+  max: number,
+  names?: readonly string[],
+): Set<number> | null {
+  const values = new Set<number>();
+  for (const part of field.split(",")) {
+    const [range, stepText] = part.split("/");
+    const step = stepText === undefined ? 1 : Number(stepText);
+    if (!Number.isInteger(step) || step < 1 || range === undefined || range === "") {
+      return null;
+    }
+    let low: number | null;
+    let high: number | null;
+    if (range === "*" || range === "?") {
+      low = min;
+      high = max;
+    } else if (range.includes("-")) {
+      const [from, to] = range.split("-");
+      low = fieldValue(from ?? "", min, names);
+      high = fieldValue(to ?? "", min, names);
+    } else {
+      low = fieldValue(range, min, names);
+      high = stepText === undefined ? low : max;
+    }
+    if (low === null || high === null || low < min || high > max || low > high) {
+      return null;
+    }
+    for (let value = low; value <= high; value += step) {
+      values.add(value);
+    }
+  }
+  return values.size ? values : null;
+}
+
+/** Reads a standard five-field expression; null for anything the server would refuse. */
+export function parseCronSchedule(expression: string): CronSchedule | null {
+  const fields = expression.trim().split(/\s+/);
+  if (fields.length !== 5) return null;
+  const [minuteField, hourField, domField, monthField, dowField] = fields as [
+    string,
+    string,
+    string,
+    string,
+    string,
+  ];
+  const minutes = parseField(minuteField, 0, 59);
+  const hours = parseField(hourField, 0, 23);
+  const daysOfMonth = parseField(domField, 1, 31);
+  const months = parseField(monthField, 1, 12, MONTH_NAMES);
+  const rawDays = parseField(dowField, 0, 7, DAY_NAMES);
+  if (!minutes || !hours || !daysOfMonth || !months || !rawDays) return null;
+  const daysOfWeek = new Set([...rawDays].map((day) => day % 7));
+  return {
+    minutes,
+    hours,
+    daysOfMonth,
+    months,
+    daysOfWeek,
+    anyDayOfMonth: domField === "*" || domField === "?",
+    anyDayOfWeek: dowField === "*" || dowField === "?",
+  };
+}
+
+export type WallClock = {
+  year: number;
+  month: number;
+  day: number;
+  weekday: number;
+  hour: number;
+  minute: number;
+};
+
+/** Whether a wall-clock minute is one the schedule fires on. */
+export function cronFiresAt(schedule: CronSchedule, at: WallClock): boolean {
+  if (
+    !schedule.minutes.has(at.minute) ||
+    !schedule.hours.has(at.hour) ||
+    !schedule.months.has(at.month)
+  ) {
+    return false;
+  }
+  const dom = schedule.daysOfMonth.has(at.day);
+  const dow = schedule.daysOfWeek.has(at.weekday);
+  if (schedule.anyDayOfMonth || schedule.anyDayOfWeek) {
+    return dom && dow;
+  }
+  return dom || dow;
+}
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+const wallClockFormatters = new Map<string, Intl.DateTimeFormat>();
+
+/** The wall clock in a time zone at a Unix second. */
+export function wallClockAt(unix: number, timeZone: string): WallClock {
+  let formatter = wallClockFormatters.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      weekday: "short",
+      hour: "numeric",
+      minute: "numeric",
+    });
+    wallClockFormatters.set(timeZone, formatter);
+  }
+  const parts: Record<string, string> = {};
+  for (const part of formatter.formatToParts(new Date(unix * 1000))) {
+    parts[part.type] = part.value;
+  }
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    weekday: WEEKDAY_INDEX[parts.weekday ?? "Sun"] ?? 0,
+    hour: Number(parts.hour) % 24,
+    minute: Number(parts.minute),
+  };
+}
+
+/** Every minute in [from, until) the schedule fires on in a time zone, as Unix seconds. */
+export function cronRunsBetween(
+  schedule: CronSchedule,
+  timeZone: string,
+  from: number,
+  until: number,
+): number[] {
+  const runs: number[] = [];
+  for (let at = from - (from % 60); at < until; at += 60) {
+    if (at >= from && cronFiresAt(schedule, wallClockAt(at, timeZone))) {
+      runs.push(at);
+    }
+  }
+  return runs;
+}

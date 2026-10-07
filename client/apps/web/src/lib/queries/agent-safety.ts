@@ -1,7 +1,15 @@
-import { fetchAgentSafetyHeaders, fetchAgentSafetySummary } from "@/lib/graphql/agent-safety";
+import {
+  fetchAgentSafetyHeaders,
+  fetchAgentSafetySummary,
+  fetchToolRules,
+} from "@/lib/graphql/agent-safety";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const agentSafety = createQueryKeys("agentSafety", {
+  toolRules: () => ({
+    queryKey: ["tool-rules"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchToolRules({ signal }),
+  }),
   summary: () => ({
     queryKey: ["summary"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentSafetySummary({ signal }),

@@ -122,6 +122,23 @@ type ShipmentEvent interface {
 	GetShipment() *ShipmentEventShipmentReference
 }
 
+// What one agent has done lately, for its row on the Agents tab: runs on each of
+// the last 14 days and the decisions people made on its proposals over 30.
+type AIAgentRosterStat struct {
+	AgentID string `json:"agentId"`
+	// Runs started on each of the last 14 days, oldest first; the last is today.
+	RunsByDay []int `json:"runsByDay"`
+	Runs      int   `json:"runs"`
+	Approved  int   `json:"approved"`
+	Modified  int   `json:"modified"`
+	Rejected  int   `json:"rejected"`
+	Failed    int   `json:"failed"`
+	// Proposals it recorded in shadow, which nobody was offered.
+	ShadowRecorded int `json:"shadowRecorded"`
+	// Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided.
+	ApprovalRate *float64 `json:"approvalRate,omitempty"`
+}
+
 type AIAuditEventConnection struct {
 	Edges      []*AIAuditEventEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`

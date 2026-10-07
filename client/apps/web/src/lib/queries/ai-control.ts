@@ -3,6 +3,7 @@ import {
   fetchAITuneUps,
   fetchAIUsageDaily,
   fetchAgentPromotionPreview,
+  fetchAgentRoster,
   fetchWorkingRuns,
 } from "@/lib/graphql/ai-control";
 import type { AiControlTab } from "@trenova/graphql/generated/graphql";
@@ -21,6 +22,10 @@ export const aiControl = createQueryKeys("aiControl", {
   workingRuns: () => ({
     queryKey: ["working"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchWorkingRuns({ signal }),
+  }),
+  roster: () => ({
+    queryKey: ["roster"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentRoster({ signal }),
   }),
   tuneUps: () => ({
     queryKey: ["tune-ups"],

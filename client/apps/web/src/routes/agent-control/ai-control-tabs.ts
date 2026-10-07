@@ -20,6 +20,16 @@ export const aiControlTabParser = parseAsStringLiteral(aiControlTabValues)
   .withOptions({ history: "push", shallow: true })
   .withDefault("overview");
 
+/** The Agents tab's filter: every agent, those with proposals waiting, those in shadow, or those off. */
+export const agentFilters = ["all", "waiting", "shadow", "off"] as const;
+export type AgentFilter = (typeof agentFilters)[number];
+
+export const AGENT_FILTER_PARAM = "agents";
+
+export const agentFilterParser = parseAsStringLiteral(agentFilters)
+  .withOptions({ history: "replace", shallow: true })
+  .withDefault("all");
+
 export const activityViews = ["runs", "proposals", "plans", "evaluations", "exceptions"] as const;
 export type ActivityView = (typeof activityViews)[number];
 

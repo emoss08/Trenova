@@ -107,6 +107,7 @@
   "{0} waiting for a run": "{0} 筆等待執行",
   "{0} with OT": "{0}（含加班）",
   "{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.": "{0} – {1} · {2, plural, other {# 份工時表}}。",
+  "{0}m": "{0} 分鐘",
   "· {0} OT": "· 加班 {0}",
   "· {0}m break": "· 休息 {0} 分鐘",
   "– now": "– 現在"

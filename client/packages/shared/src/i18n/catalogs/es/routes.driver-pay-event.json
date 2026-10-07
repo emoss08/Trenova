@@ -1,4 +1,5 @@
 {
+  "Earned": "Devengado",
   "Gross pay": "Pago bruto",
   "Held pay skips settlement generation and auto-attach until released. One reason is recorded on every selected event.": "El pago retenido se omite en la generación de liquidaciones y en el adjunto automático hasta que se libere. Se registra un motivo en cada evento seleccionado.",
   "Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.": "El pago retenido se omite en la generación de liquidaciones y en el adjunto automático hasta que lo libere. El motivo se muestra a quien revise el pago del conductor.",

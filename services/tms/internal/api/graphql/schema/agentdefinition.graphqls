@@ -550,3 +550,76 @@ extend type Mutation {
     input: UpdateAgentCapabilitiesInput!
   ): AgentCapabilities!
 }
+
+"Something drafting changed or left out of what the model proposed."
+type AgentDraftNote {
+  "The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on."
+  field: String!
+  "What the model proposed; empty when it proposed nothing."
+  value: String!
+  "Why it was changed or left out."
+  reason: String!
+}
+
+"""
+An agent a model drafted from a description of its job, in the shape the
+builder saves. Nothing is saved. Its tools come from the registry, each change
+held at that tool's own maximum and the ceiling, and it runs in shadow.
+"""
+type AgentDraft {
+  name: String!
+  description: String!
+  "An icon the app offers, or empty."
+  icon: String!
+  "An accent the app offers, or empty."
+  accent: String!
+  instructions: String!
+  guardrails: [String!]!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  toolNames: [String!]!
+  "Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling."
+  toolTiers: JSON!
+  autonomyCeiling: AgentAutonomyTier!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  outputMode: AgentOutputMode!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  maxConcurrentRuns: Int!
+  "What was changed or left out of the model's draft, so the builder can say so."
+  notes: [AgentDraftNote!]!
+}
+
+"Instructions a model tightened: the same meaning, shorter, every {{placeholder}} kept."
+type AgentInstructionsTightened {
+  instructions: String!
+  "False when the model returned the instructions as they were."
+  changed: Boolean!
+}
+
+extend type Query {
+  """
+  Whether drafting an agent and tightening its instructions with AI are
+  offered: an enabled provider takes the AssistantChat task.
+  """
+  agentDraftingAvailable: Boolean!
+}
+
+extend type Mutation {
+  """
+  Drafts an agent from a sentence or two (at most 1000 characters) describing
+  its job. Saves nothing. Needs permission to create agents.
+  """
+  draftAgentFromDescription(description: String!): AgentDraft!
+  """
+  Tightens an agent's instructions (at most 20000 characters) without changing
+  what they ask for. Saves nothing. Needs permission to create or update agents.
+  """
+  tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
+}

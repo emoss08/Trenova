@@ -270,6 +270,7 @@ type ResolverRoot interface {
 	AccountingSyncRecord() AccountingSyncRecordResolver
 	AgentDecision() AgentDecisionResolver
 	AgentDefinition() AgentDefinitionResolver
+	AgentDraft() AgentDraftResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
 	AgentInstructionFinding() AgentInstructionFindingResolver
@@ -636,6 +637,11 @@ type AgentDefinitionResolver interface {
 	AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error)
 	PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
+}
+
+type AgentDraftResolver interface {
+	EventKinds(ctx context.Context, obj *services.AgentDraft) ([]string, error)
+	ToolTiers(ctx context.Context, obj *services.AgentDraft) (map[string]any, error)
 }
 
 type AgentEvalCaseResolver interface {
@@ -1504,6 +1510,8 @@ type MutationResolver interface {
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
 	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
+	DraftAgentFromDescription(ctx context.Context, description string) (*services.AgentDraft, error)
+	TightenAgentInstructions(ctx context.Context, instructions string) (*services.TightenedAgentInstructions, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
@@ -2170,6 +2178,7 @@ type QueryResolver interface {
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
 	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
+	AgentDraftingAvailable(ctx context.Context) (bool, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
 	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
@@ -2202,6 +2211,7 @@ type QueryResolver interface {
 	AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error)
 	AiAuditExport(ctx context.Context, id string) (*aiaudit.AIAuditExport, error)
 	AiControlSummary(ctx context.Context, tab aicontrolsummary.Tab) (*aicontrolsummary.Summary, error)
+	AiAgentRoster(ctx context.Context) ([]*gqlmodel.AIAgentRosterStat, error)
 	AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, error)
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
@@ -3209,6 +3219,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AccountingSyncRecord":               func() any { return r.AccountingSyncRecord() },
 			"AgentDecision":                      func() any { return r.AgentDecision() },
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
+			"AgentDraft":                         func() any { return r.AgentDraft() },
 			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
 			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
 			"AgentInstructionFinding":            func() any { return r.AgentInstructionFinding() },
@@ -6524,6 +6535,79 @@ extend type Mutation {
     input: UpdateAgentCapabilitiesInput!
   ): AgentCapabilities!
 }
+
+"Something drafting changed or left out of what the model proposed."
+type AgentDraftNote {
+  "The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on."
+  field: String!
+  "What the model proposed; empty when it proposed nothing."
+  value: String!
+  "Why it was changed or left out."
+  reason: String!
+}
+
+"""
+An agent a model drafted from a description of its job, in the shape the
+builder saves. Nothing is saved. Its tools come from the registry, each change
+held at that tool's own maximum and the ceiling, and it runs in shadow.
+"""
+type AgentDraft {
+  name: String!
+  description: String!
+  "An icon the app offers, or empty."
+  icon: String!
+  "An accent the app offers, or empty."
+  accent: String!
+  instructions: String!
+  guardrails: [String!]!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  toolNames: [String!]!
+  "Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling."
+  toolTiers: JSON!
+  autonomyCeiling: AgentAutonomyTier!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  outputMode: AgentOutputMode!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  maxConcurrentRuns: Int!
+  "What was changed or left out of the model's draft, so the builder can say so."
+  notes: [AgentDraftNote!]!
+}
+
+"Instructions a model tightened: the same meaning, shorter, every {{placeholder}} kept."
+type AgentInstructionsTightened {
+  instructions: String!
+  "False when the model returned the instructions as they were."
+  changed: Boolean!
+}
+
+extend type Query {
+  """
+  Whether drafting an agent and tightening its instructions with AI are
+  offered: an enabled provider takes the AssistantChat task.
+  """
+  agentDraftingAvailable: Boolean!
+}
+
+extend type Mutation {
+  """
+  Drafts an agent from a sentence or two (at most 1000 characters) describing
+  its job. Saves nothing. Needs permission to create agents.
+  """
+  draftAgentFromDescription(description: String!): AgentDraft!
+  """
+  Tightens an agent's instructions (at most 20000 characters) without changing
+  what they ask for. Saves nothing. Needs permission to create or update agents.
+  """
+  tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
+}
 `, BuiltIn: false},
 	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."
 enum AgentPreviewCoverage {
@@ -8104,8 +8188,29 @@ type AIControlSummary {
   visibleFailures: [AIProviderFailure!]!
 }
 
+"""
+What one agent has done lately, for its row on the Agents tab: runs on each of
+the last 14 days and the decisions people made on its proposals over 30.
+"""
+type AIAgentRosterStat {
+  agentId: ID!
+  "Runs started on each of the last 14 days, oldest first; the last is today."
+  runsByDay: [Int!]!
+  runs: Int!
+  approved: Int!
+  modified: Int!
+  rejected: Int!
+  failed: Int!
+  "Proposals it recorded in shadow, which nobody was offered."
+  shadowRecorded: Int!
+  "Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided."
+  approvalRate: Float
+}
+
 extend type Query {
   aiControlSummary(tab: AIControlTab!): AIControlSummary!
+  "Every agent that has run or proposed lately; an agent with neither is left out."
+  aiAgentRoster: [AIAgentRosterStat!]!
 }
 
 extend type Mutation {

@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentroster"
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,6 +13,12 @@ type AgentCountsRequest struct {
 	TenantInfo pagination.TenantInfo
 	// ShadowSince is the start of the window shadow recordings are counted in.
 	ShadowSince int64
+}
+
+type AgentRosterRequest struct {
+	TenantInfo     pagination.TenantInfo
+	RunsSince      int64
+	DecisionsSince int64
 }
 
 type ProviderFailuresRequest struct {
@@ -32,4 +39,5 @@ type ProviderFailureCount struct {
 type AIControlFactsRepository interface {
 	AgentCounts(ctx context.Context, req *AgentCountsRequest) (aicontrolsummary.AgentCounts, error)
 	ProviderFailures(ctx context.Context, req *ProviderFailuresRequest) ([]ProviderFailureCount, error)
+	AgentRoster(ctx context.Context, req *AgentRosterRequest) ([]*agentroster.Stat, error)
 }

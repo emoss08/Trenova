@@ -9,7 +9,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { CSSProperties } from "react";
 
 /** The hue token each accent draws its tile from; slate is the neutral tile. */
-const ACCENT_HUE: Record<AgentAccentName, string | null> = {
+export const ACCENT_HUE: Record<AgentAccentName, string | null> = {
   indigo: "var(--hue-brand)",
   teal: "var(--hue-teal)",
   amber: "var(--hue-amber)",

@@ -13,10 +13,13 @@ type Deps struct {
 	AgentCapabilityService services.AgentCapabilityService
 	AgentShadowService     services.AgentShadowService
 	AgentTestPromptService services.AgentTestPromptService
+	AgentDraftingService   services.AgentDraftingService
 	AgentAccessService     services.AgentAccessService
 }
 
 type AgentDefinitionResolver struct{ *Deps }
+
+type AgentDraftResolver struct{ *Deps }
 
 type AgentInstructionFindingResolver struct{ *Deps }
 

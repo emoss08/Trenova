@@ -124,6 +124,13 @@ func (f *fakeProposalRepo) ExpirePending(
 	return 0, nil
 }
 
+func (f *fakeProposalRepo) ExpirePendingByDefinition(
+	context.Context,
+	repositories.ExpireAgentProposalsByDefinitionRequest,
+) (int, error) {
+	return 0, nil
+}
+
 func (f *fakeProposalRepo) ExpirePendingByRun(
 	context.Context,
 	repositories.ExpireAgentProposalsByRunRequest,

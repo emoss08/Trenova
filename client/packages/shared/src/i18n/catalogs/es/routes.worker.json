@@ -1110,7 +1110,6 @@
   "{0} ({1} days)": "{0} ({1} días)",
   "{0} /period": "{0} /período",
   "{0} active, highest {1}": "{0} activos, el más alto {1}",
-  "{0} h": "{0} h",
   "{0} is {1}% through · {2}/{3} required settled{4}": "{0} lleva un {1}% · {2}/{3} requeridos liquidados{4}",
   "{0} leave": "Permiso {0}",
   "{0} of {1, plural, one {# event} other {# events}} shown.": "Mostrando {0} de {1, plural, one {# evento} other {# eventos}}.",

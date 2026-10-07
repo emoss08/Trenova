@@ -2,6 +2,7 @@ package aicontrolsummaryservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/agentroster"
 	"sync"
 	"testing"
 	"time"
@@ -28,6 +29,13 @@ func (f *factsRepo) AgentCounts(
 	*repositories.AgentCountsRequest,
 ) (aicontrolsummary.AgentCounts, error) {
 	return f.counts, nil
+}
+
+func (f *factsRepo) AgentRoster(
+	context.Context,
+	*repositories.AgentRosterRequest,
+) ([]*agentroster.Stat, error) {
+	return nil, nil
 }
 
 func (f *factsRepo) ProviderFailures(

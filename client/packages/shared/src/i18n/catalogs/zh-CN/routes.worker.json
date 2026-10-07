@@ -1110,7 +1110,6 @@
   "{0} ({1} days)": "{0} ({1} 天)",
   "{0} /period": "{0} /期",
   "{0} active, highest {1}": "{0} 项有效，最高为 {1}",
-  "{0} h": "{0} 小时",
   "{0} is {1}% through · {2}/{3} required settled{4}": "{0} 已完成 {1}% · 应结算 {3} 笔中已结 {2} 笔{4}",
   "{0} leave": "{0} 请假",
   "{0} of {1, plural, one {# event} other {# events}} shown.": "显示 {1, plural, other {# 个事件}}中的 {0} 个。",

@@ -233,8 +233,10 @@ type Params struct {
 	AgentShadowService           services.AgentShadowService
 	AgentTrustService            services.AgentTrustService
 	AgentTestPromptService       services.AgentTestPromptService
+	AgentDraftingService         services.AgentDraftingService
 	AIControlSummaryService      services.AIControlSummaryService
 	AITuneUpService              services.AITuneUpService
+	AgentRosterService           services.AgentRosterService
 	AIProviderService            services.AIProviderService
 	AIUsageService               services.AIUsageService
 	AIRetrievalStatusService     services.AIRetrievalStatusService
@@ -429,8 +431,10 @@ type Services struct {
 	AgentShadowService           services.AgentShadowService
 	AgentTrustService            services.AgentTrustService
 	AgentTestPromptService       services.AgentTestPromptService
+	AgentDraftingService         services.AgentDraftingService
 	AiControlSummaryService      services.AIControlSummaryService
 	AiTuneUpService              services.AITuneUpService
+	AgentRosterService           services.AgentRosterService
 	AiProviderService            services.AIProviderService
 	AiUsageService               services.AIUsageService
 	AiRetrievalStatusService     services.AIRetrievalStatusService
@@ -631,8 +635,10 @@ func newServices(p *Params) *Services {
 		AgentShadowService:           p.AgentShadowService,
 		AgentTrustService:            p.AgentTrustService,
 		AgentTestPromptService:       p.AgentTestPromptService,
+		AgentDraftingService:         p.AgentDraftingService,
 		AiControlSummaryService:      p.AIControlSummaryService,
 		AiTuneUpService:              p.AITuneUpService,
+		AgentRosterService:           p.AgentRosterService,
 		AiProviderService:            p.AIProviderService,
 		AiUsageService:               p.AIUsageService,
 		AiRetrievalStatusService:     p.AIRetrievalStatusService,

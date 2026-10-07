@@ -226,6 +226,7 @@
   "Track report generation, download artifacts, and cancel active runs": "追蹤報表產生進度、下載產出物，並取消進行中的執行",
   "Transform value": "轉換值",
   "Transforms change the number this report returns — sorting and exported cells use the transformed value. Your records are never modified.": "轉換會改變此報表傳回的數字 — 排序與匯出的儲存格皆使用轉換後的值。您的記錄絕不會被修改。",
+  "Trigger": "觸發條件",
   "Untitled report": "未命名報表",
   "Values shown as": "值顯示為",
   "View runs": "檢視執行記錄",
@@ -251,7 +252,6 @@
   "{0} for {1}": "{0}，適用 {1}",
   "{0} of": "{0} 之",
   "{0}% of {1}": "{1} 的 {0}%",
-  "{0}s": "{0} 秒",
   "· {0, plural, one {# filter} other {# filters}}": "· {0, plural, other {# 個篩選器}}",
   "— file attached": "— 已附檔案"
 }

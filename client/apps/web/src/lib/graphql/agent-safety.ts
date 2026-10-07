@@ -3,6 +3,8 @@ import {
   AgentSafetyDocument,
   AgentSafetyHeaderFieldsFragmentDoc,
   AgentSafetySummaryDocument,
+  AgentToolPolicyFieldsFragmentDoc,
+  DataTablePageInfoFieldsFragmentDoc,
   AgentToolRuleTableDocument,
   AgentToolSafetyTableDocument,
   type AgentAutonomyAnswer,
@@ -14,6 +16,7 @@ import {
   type AgentToolAutonomyFieldsFragment,
   type AgentToolKind,
   type AgentToolPolicyFieldsFragment,
+  type AgentToolRuleTableQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
@@ -100,4 +103,40 @@ export async function fetchAgentSafetyHeaders(
   return data.agentSafety.map((entry) =>
     getFragmentData(AgentSafetyHeaderFieldsFragmentDoc, entry),
   );
+}
+
+/** The most rows one page of the tool rules may hold. */
+const TOOL_RULE_PAGE = 100;
+
+/**
+ * Every tool's rule, by tool name, read a page at a time until the last: what it can
+ * reach, how far it may ever run on its own, and whether it reads outside text.
+ */
+export async function fetchToolRules(
+  options?: RequestOptions,
+): Promise<Map<string, AgentToolPolicy>> {
+  const rules = new Map<string, AgentToolPolicy>();
+  let after: string | null = null;
+  for (;;) {
+    const data: AgentToolRuleTableQuery = await requestGraphQL({
+      document: AgentToolRuleTableDocument,
+      operationName: "AgentToolRuleTable",
+      variables: {
+        input: { first: TOOL_RULE_PAGE, ...(after ? { after } : {}) },
+        includeTotalCount: false,
+      },
+      signal: options?.signal,
+    });
+    const page = data.agentToolRuleConnection;
+    for (const edge of page.edges) {
+      const rule = getFragmentData(AgentToolPolicyFieldsFragmentDoc, edge.node);
+      rules.set(rule.name, rule);
+    }
+    const pageInfo = getFragmentData(DataTablePageInfoFieldsFragmentDoc, page.pageInfo);
+    const next = pageInfo.endCursor;
+    if (!pageInfo.hasNextPage || !next || next === after) {
+      return rules;
+    }
+    after = next;
+  }
 }

@@ -21,7 +21,7 @@ export function useNovaTargets(): (target: NovaTarget) => void {
           go({ tab: "providers" });
           return;
         case "agents":
-          go({ tab: "agents" });
+          go({ tab: "agents", agentFilter: target.filter });
           return;
         case "provider":
           go({ tab: "providers", panel: { mode: "edit", entityId: target.providerId } });

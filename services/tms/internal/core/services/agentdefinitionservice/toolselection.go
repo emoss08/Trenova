@@ -160,6 +160,7 @@ func catalogEntry(
 	entry.Prerequisites = prerequisitesOf(tool)
 	if kind == serviceports.ToolCatalogKindAction {
 		entry.DefaultAutonomyTier = policy.DefaultTier
+		entry.MaxAutonomyTier = agenttoolpolicy.Promotable(policy)
 	}
 
 	return entry

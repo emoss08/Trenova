@@ -1,4 +1,5 @@
 {
+  "Earned": "已赚得",
   "Gross pay": "薪酬毛额",
   "Held pay skips settlement generation and auto-attach until released. One reason is recorded on every selected event.": "暂扣的薪酬在解除前不会纳入结算生成与自动附加。所选的每笔事件都会记录同一则原因。",
   "Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.": "暂扣的薪酬在您解除前不会纳入结算生成与自动附加。原因会显示给查看该司机薪酬的人。",

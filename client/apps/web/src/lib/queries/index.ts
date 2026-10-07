@@ -1,5 +1,6 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 import { accountingControl } from "./accounting-control";
+import { agentBuilder } from "./agent-builder";
 import { agentPreview } from "./agent-preview";
 import { agentRun } from "./agent-run";
 import { agentQuality } from "./agent-quality";
@@ -146,6 +147,7 @@ const workspaceQueries = mergeQueryKeys(
   carrierIntelSettings,
   agentQuality,
   agentSafety,
+  agentBuilder,
   agentScorecard,
   aiAudit,
   attention,

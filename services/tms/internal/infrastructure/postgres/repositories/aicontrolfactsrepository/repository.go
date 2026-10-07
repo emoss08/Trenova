@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentroster"
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -152,4 +153,115 @@ func (r *repository) ProviderFailures(
 		}
 		return out, nil
 	})
+}
+
+type rosterRunRow struct {
+	AgentID string `bun:"agent_id"`
+	Day     int    `bun:"day"`
+	Runs    int    `bun:"runs"`
+}
+
+type rosterDecisionRow struct {
+	AgentID  string `bun:"agent_id"`
+	Approved int    `bun:"approved"`
+	Modified int    `bun:"modified"`
+	Rejected int    `bun:"rejected"`
+	Failed   int    `bun:"failed"`
+	Shadow   int    `bun:"shadow"`
+}
+
+func (r *repository) AgentRoster(
+	ctx context.Context,
+	req *repositories.AgentRosterRequest,
+) ([]*agentroster.Stat, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentroster.Stat, error) {
+		db := r.db.DBForContext(ctx)
+		runCols := buncolgen.AgentRunColumns
+		propCols := buncolgen.AgentProposalColumns
+
+		var runs []rosterRunRow
+		err := db.NewSelect().
+			Model((*agent.AgentRun)(nil)).
+			ColumnExpr(runCols.AgentDefinitionID.Qualified()+" AS agent_id").
+			ColumnExpr("FLOOR(("+runCols.CreatedAt.Qualified()+" - ?) / 86400)::int AS day", req.RunsSince).
+			ColumnExpr(buncolgen.Count("runs")).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo)
+			}).
+			Where(runCols.AgentDefinitionID.IsNotNull()).
+			Where(runCols.CreatedAt.Gte(), req.RunsSince).
+			GroupExpr("1, 2").
+			Scan(ctx, &runs)
+		if err != nil {
+			return nil, fmt.Errorf("count agent runs by day: %w", err)
+		}
+
+		var decisions []rosterDecisionRow
+		err = db.NewSelect().
+			Model((*agent.AgentProposal)(nil)).
+			Join("JOIN agent_runs AS ar ON "+runCols.ID.Qualified()+" = "+propCols.RunID.Qualified()+
+				" AND "+runCols.OrganizationID.Qualified()+" = "+propCols.OrganizationID.Qualified()+
+				" AND "+runCols.BusinessUnitID.Qualified()+" = "+propCols.BusinessUnitID.Qualified()).
+			ColumnExpr(runCols.AgentDefinitionID.Qualified()+" AS agent_id").
+			ColumnExpr(buncolgen.CountFilter("approved", propCols.Status.Eq()), agent.ProposalStatusAccepted).
+			ColumnExpr(buncolgen.CountFilter("modified", propCols.Status.Eq()), agent.ProposalStatusModified).
+			ColumnExpr(buncolgen.CountFilter("rejected", propCols.Status.Eq()), agent.ProposalStatusRejected).
+			ColumnExpr(
+				buncolgen.CountFilter("failed", propCols.Status.Eq()),
+				agent.ProposalStatusExecutionFailed,
+			).
+			ColumnExpr(buncolgen.CountFilter("shadow", runCols.Status.Eq()), agent.RunStatusShadowCompleted).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo)
+			}).
+			Where(runCols.AgentDefinitionID.IsNotNull()).
+			Where(propCols.CreatedAt.Gte(), req.DecisionsSince).
+			GroupExpr(runCols.AgentDefinitionID.Qualified()).
+			Scan(ctx, &decisions)
+		if err != nil {
+			return nil, fmt.Errorf("count agent decisions: %w", err)
+		}
+
+		return assembleRoster(runs, decisions), nil
+	})
+}
+
+func assembleRoster(runs []rosterRunRow, decisions []rosterDecisionRow) []*agentroster.Stat {
+	byAgent := make(map[pulid.ID]*agentroster.Stat, len(decisions))
+	order := make([]pulid.ID, 0, len(decisions))
+	stat := func(raw string) *agentroster.Stat {
+		id, err := pulid.Parse(raw)
+		if err != nil {
+			return nil
+		}
+		found, ok := byAgent[id]
+		if !ok {
+			found = agentroster.NewStat(id)
+			byAgent[id] = found
+			order = append(order, id)
+		}
+		return found
+	}
+
+	for idx := range runs {
+		if found := stat(runs[idx].AgentID); found != nil {
+			found.AddRuns(runs[idx].Day, runs[idx].Runs)
+		}
+	}
+	for idx := range decisions {
+		row := &decisions[idx]
+		if found := stat(row.AgentID); found != nil {
+			found.Approved = row.Approved
+			found.Modified = row.Modified
+			found.Rejected = row.Rejected
+			found.Failed = row.Failed
+			found.ShadowRecorded = row.Shadow
+		}
+	}
+
+	out := make([]*agentroster.Stat, 0, len(order))
+	for _, id := range order {
+		out = append(out, byAgent[id])
+	}
+	return out
 }

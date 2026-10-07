@@ -22,15 +22,15 @@ import (
 )
 
 const (
-	maxNameLength        = 100
-	maxDescriptionLength = 500
+	MaxNameLength        = 100
+	MaxDescriptionLength = 500
 	MaxInstructionsRunes = 20000
-	maxGuardrails        = 20
-	maxGuardrailRunes    = 300
+	MaxGuardrails        = 20
+	MaxGuardrailRunes    = 300
 	MaxTools             = 64
 	maxSystemKeyLength   = 50
-	maxCronLength        = 100
-	minIntervalSeconds   = 60
+	MaxCronLength        = 100
+	MinIntervalSeconds   = 60
 	minDecisionTimeout   = 60
 	maxDecisionTimeout   = 30 * 24 * 60 * 60
 	minRunTimeoutSeconds = 60
@@ -316,7 +316,7 @@ func (d *Definition) ComputeNextRun(now int64) (int64, error) {
 
 		return cronutils.NextRun(d.CronExpression, timezone, now)
 	case TriggerContinuous:
-		if d.IntervalSeconds < minIntervalSeconds {
+		if d.IntervalSeconds < MinIntervalSeconds {
 			return 0, fmt.Errorf("interval of %d seconds is below the minimum", d.IntervalSeconds)
 		}
 
@@ -349,11 +349,11 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&d.Name,
 			validation.Required.Error("Name is required"),
-			validation.Length(1, maxNameLength).
+			validation.Length(1, MaxNameLength).
 				Error("Name cannot be longer than 100 characters"),
 		),
 		validation.Field(&d.Description,
-			validation.Length(0, maxDescriptionLength).
+			validation.Length(0, MaxDescriptionLength).
 				Error("Description cannot be longer than 500 characters"),
 		),
 		validation.Field(&d.Template,
@@ -557,7 +557,7 @@ func (d *Definition) ToolDailyLimit(tool string) int {
 }
 
 func (d *Definition) validateGuardrails(multiErr *errortypes.MultiError) {
-	if len(d.Guardrails) > maxGuardrails {
+	if len(d.Guardrails) > MaxGuardrails {
 		multiErr.Add(
 			"guardrails",
 			errortypes.ErrInvalid,
@@ -572,7 +572,7 @@ func (d *Definition) validateGuardrails(multiErr *errortypes.MultiError) {
 			multiErr.Add(field, errortypes.ErrInvalid, "A guardrail cannot be empty")
 			continue
 		}
-		if len([]rune(trimmed)) > maxGuardrailRunes {
+		if len([]rune(trimmed)) > MaxGuardrailRunes {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,
@@ -639,7 +639,7 @@ func (d *Definition) validateTrigger(multiErr *errortypes.MultiError) {
 				errortypes.ErrRequired,
 				"A scheduled agent needs a cron expression",
 			)
-		case len(expression) > maxCronLength:
+		case len(expression) > MaxCronLength:
 			multiErr.Add(
 				"cronExpression",
 				errortypes.ErrInvalid,
@@ -680,7 +680,7 @@ func (d *Definition) validateTrigger(multiErr *errortypes.MultiError) {
 			}
 		}
 	case TriggerContinuous:
-		if d.IntervalSeconds < minIntervalSeconds {
+		if d.IntervalSeconds < MinIntervalSeconds {
 			multiErr.Add(
 				"intervalSeconds",
 				errortypes.ErrInvalid,

@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdefinitionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentdraftservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevalcaseservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevaluationservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevents"
@@ -37,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentqualityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentreflectionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentrosterservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/agentscorecardservice"
@@ -46,12 +48,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttestpromptservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/aicontrolsummaryservice"
-	"github.com/emoss08/trenova/internal/core/services/aituneupservice"
 	"github.com/emoss08/trenova/internal/core/services/aicorrectionservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aifeedbackservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
 	"github.com/emoss08/trenova/internal/core/services/airetrievalstatusservice"
+	"github.com/emoss08/trenova/internal/core/services/aituneupservice"
 	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/approvalwindow"
@@ -333,6 +335,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	accessorialchargeservice.New,
 	agentcontrolservice.New,
 	agentdefinitionservice.New,
+	agentdraftservice.New,
+	func(s *agentdraftservice.Service) services.AgentDraftingService { return s },
 	agentcapabilityservice.New,
 	assistanthandoffservice.New,
 	func(s services.AgentDefinitionService) services.SystemAgentProvisioner { return s },
@@ -345,6 +349,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	func(s *agentshadowservice.Service) services.AgentShadowService { return s },
 	aicontrolsummaryservice.New,
 	func(s *aicontrolsummaryservice.Service) services.AIControlSummaryService { return s },
+	agentrosterservice.New,
+	func(s *agentrosterservice.Service) services.AgentRosterService { return s },
 	aituneupservice.New,
 	func(s *aituneupservice.Service) services.AITuneUpService { return s },
 	agenttestpromptservice.New,

@@ -1,0 +1,91 @@
+query AgentInstructionLint($input: AgentInstructionLintInput!) {
+  agentInstructionLint(input: $input) {
+    start
+    end
+    excerpt
+    resource
+    resourceLabel
+    operation
+    tools
+  }
+}
+
+query AgentShadowReport($agentId: ID!, $days: Int) {
+  agentShadowReport(agentId: $agentId, days: $days) {
+    days
+    recorded
+    matched
+    matchRate
+    wouldReject
+    wouldFail
+    unanswered
+  }
+}
+
+query AgentDefinitionVersions($agentId: ID!, $limit: Int) {
+  agentDefinitionVersions(agentId: $agentId, limit: $limit) {
+    id
+    version
+    summary
+    author {
+      id
+      name
+    }
+    createdAt
+  }
+}
+
+query AgentDefinitionVersionDraft($agentId: ID!, $version: Int!) {
+  agentDefinitionVersionDraft(agentId: $agentId, version: $version) {
+    ...AgentDefinitionCardFields
+  }
+}
+
+query AgentDefinitionCard($id: ID!) {
+  agentDefinition(id: $id) {
+    ...AgentDefinitionCardFields
+  }
+}
+
+query AgentDraftingAvailable {
+  agentDraftingAvailable
+}
+
+mutation DraftAgentFromDescription($description: String!) {
+  draftAgentFromDescription(description: $description) {
+    name
+    description
+    icon
+    accent
+    instructions
+    guardrails
+    triggerMode
+    cronExpression
+    cronTimezone
+    eventKinds
+    intervalSeconds
+    toolNames
+    toolTiers
+    autonomyCeiling
+    dataAccessCeiling
+    outputMode
+    enabled
+    shadowMode
+    decisionTimeoutSeconds
+    runTimeoutSeconds
+    maxToolCalls
+    maxConcurrentRuns
+    notes {
+      field
+      value
+      reason
+    }
+  }
+}
+
+mutation TightenAgentInstructions($instructions: String!) {
+  tightenAgentInstructions(instructions: $instructions) {
+    instructions
+    changed
+  }
+}

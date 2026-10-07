@@ -6,6 +6,29 @@ schema {
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 """
+What one agent has done lately, for its row on the Agents tab: runs on each of
+the last 14 days and the decisions people made on its proposals over 30.
+"""
+type AIAgentRosterStat {
+  agentId: ID!
+  """
+  Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided.
+  """
+  approvalRate: Float
+  approved: Int!
+  failed: Int!
+  modified: Int!
+  rejected: Int!
+  runs: Int!
+  """
+  Runs started on each of the last 14 days, oldest first; the last is today.
+  """
+  runsByDay: [Int!]!
+  """Proposals it recorded in shadow, which nobody was offered."""
+  shadowRecorded: Int!
+}
+
+"""
 A tenant's AI audit chain: where it runs, how far it is sealed, and what its
 last verification found.
 """
@@ -3102,6 +3125,57 @@ input AgentDelegateTopicInput {
   topic: String!
 }
 
+"""
+An agent a model drafted from a description of its job, in the shape the
+builder saves. Nothing is saved. Its tools come from the registry, each change
+held at that tool's own maximum and the ceiling, and it runs in shadow.
+"""
+type AgentDraft {
+  """An accent the app offers, or empty."""
+  accent: String!
+  autonomyCeiling: AgentAutonomyTier!
+  cronExpression: String!
+  cronTimezone: String!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  decisionTimeoutSeconds: Int!
+  description: String!
+  enabled: Boolean!
+  eventKinds: [String!]!
+  guardrails: [String!]!
+  """An icon the app offers, or empty."""
+  icon: String!
+  instructions: String!
+  intervalSeconds: Int!
+  maxConcurrentRuns: Int!
+  maxToolCalls: Int!
+  name: String!
+  """
+  What was changed or left out of the model's draft, so the builder can say so.
+  """
+  notes: [AgentDraftNote!]!
+  outputMode: AgentOutputMode!
+  runTimeoutSeconds: Int!
+  shadowMode: Boolean!
+  toolNames: [String!]!
+  """
+  Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling.
+  """
+  toolTiers: JSON!
+  triggerMode: AgentTriggerMode!
+}
+
+"""Something drafting changed or left out of what the model proposed."""
+type AgentDraftNote {
+  """
+  The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on.
+  """
+  field: String!
+  """Why it was changed or left out."""
+  reason: String!
+  """What the model proposed; empty when it proposed nothing."""
+  value: String!
+}
+
 """Where a tool's work can be seen or felt."""
 enum AgentEgressClass {
   """Changes something a customer can see."""
@@ -3467,6 +3541,15 @@ input AgentInstructionLintInput {
   """At most 20000 characters."""
   instructions: String!
   toolNames: [String!]!
+}
+
+"""
+Instructions a model tightened: the same meaning, shorter, every {{placeholder}} kept.
+"""
+type AgentInstructionsTightened {
+  """False when the model returned the instructions as they were."""
+  changed: Boolean!
+  instructions: String!
 }
 
 """
@@ -17001,6 +17084,11 @@ type Mutation {
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
   disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
+  """
+  Drafts an agent from a sentence or two (at most 1000 characters) describing
+  its job. Saves nothing. Needs permission to create agents.
+  """
+  draftAgentFromDescription(description: String!): AgentDraft!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   """
   Changes how a stack's open pages divide into documents: split, merge, reorder, drop, rotate.
@@ -17399,6 +17487,11 @@ type Mutation {
   """
   syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
+  """
+  Tightens an agent's instructions (at most 20000 characters) without changing
+  what they ask for. Saves nothing. Needs permission to create or update agents.
+  """
+  tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem! @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
   """Queues the shipment for billing, one item per payer."""
@@ -19350,6 +19443,11 @@ type Query {
   """An agent's saves, newest first. At most 50."""
   agentDefinitionVersions(agentId: ID!, limit: Int): [AgentDefinitionVersion!]!
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  """
+  Whether drafting an agent and tightening its instructions with AI are
+  offered: an enabled provider takes the AssistantChat task.
+  """
+  agentDraftingAvailable: Boolean!
   agentEvalCase(id: ID!): AgentEvalCase
   agentEvalCases(input: DataTableConnectionInput!): AgentEvalCaseConnection!
   agentEvaluation(id: ID!): AgentEvaluation
@@ -19461,6 +19559,10 @@ type Query {
   agentWorstRatedAnswerConnection(agentDefinitionId: ID, input: DataTableConnectionInput!, window: Int = 30): AgentWorstRatedAnswerConnection!
   """The answers people liked least, a page at a time."""
   agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection! @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
+  """
+  Every agent that has run or proposed lately; an agent with neither is left out.
+  """
+  aiAgentRoster: [AIAgentRosterStat!]!
   aiAuditChainStatus: AIAuditChainStatus!
   aiAuditEvent(id: ID!): AIAuditEvent
   aiAuditEvents(input: DataTableConnectionInput!): AIAuditEventConnection!

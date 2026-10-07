@@ -109,6 +109,11 @@ type ExpireAgentProposalsByRunRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+type ExpireAgentProposalsByDefinitionRequest struct {
+	AgentDefinitionID pulid.ID              `json:"agentDefinitionId"`
+	TenantInfo        pagination.TenantInfo `json:"-"`
+}
+
 // ExpireAgentProposalsRequest expires every pending proposal, in any tenant,
 // whose expiry has passed. It is deliberately unscoped: it is the sweeper's
 // request, and the sweeper runs for the whole system.
@@ -167,6 +172,10 @@ type AgentProposalRepository interface {
 	) (*agent.AgentProposal, error)
 	ExpirePendingByRun(ctx context.Context, req ExpireAgentProposalsByRunRequest) (int, error)
 	ExpirePending(ctx context.Context, req ExpireAgentProposalsRequest) (int, error)
+	ExpirePendingByDefinition(
+		ctx context.Context,
+		req ExpireAgentProposalsByDefinitionRequest,
+	) (int, error)
 	ListPendingForReminder(
 		ctx context.Context,
 		req ListPendingProposalsForReminderRequest,

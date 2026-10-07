@@ -71,8 +71,8 @@ Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of se
 4. Select **Test connection** to check the key works.
 5. Turn the extension on, and under **Available to** choose **Every agent** to give all agents,
    the assistant included, the web search tools, or **Agents you choose** to add them only to
-   the agents you pick under **Choose tools** on the **Agents** section. Then select **Save
-   changes**.
+   the agents you give them with **Add tools** under an agent's **Tools and autonomy**. Then
+   select **Save changes**.
 6. Optionally change the search depth, the results per search, the daily request limit and the
    sites agents never receive results from.
 
@@ -98,106 +98,66 @@ Keywords: semantic search, search by meaning, retrieval, vector search, embeddin
    a row to read the whole error.
 
 ### Create an agent
-Keywords: new agent, build agent, automation, scheduled agent, agent template, data access, agent sees amounts, agent pay access, restricted fields
-1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
-2. Select **New agent**.
-3. Optionally choose a starter in **Start from** to fill in instructions, tools and a trigger you
-   can change freely.
-4. Fill in **Name**, **Description** and **System instructions**. Add hard lines the agent must
-   not cross under **Never**, pressing Enter after each.
-5. Under **Tools**, select **Choose tools**, pick what the agent may look up and change, then
-   select **Done**. Set **Data access** to **Restricted** only for an agent that needs amounts and
-   pay, such as invoice totals, balances, rates or a driver's net pay; at **Internal** its tools
-   leave them out and say so. In chat it never sees more than the person asking, and only
-   someone whose own role reaches restricted fields can give an agent **Restricted**.
-6. Under **Autonomy**, set the **Ceiling**: **Propose only**, **Act with approval** or **Act
-   automatically**. Turn on **Shadow mode** or **Simulation** to try the agent without it
-   changing anything.
-7. Under **When it runs**, pick **Chat**, **Scheduled**, **Event** or **Continuous** and fill in
-   the schedule or events it asks for.
-8. Optionally set a **Monthly budget**, **Runs per day** and a **Preferred provider**, leave
-   **Enabled** on, and select **Save**.
-
-### Have an agent work each event as it happens
-Keywords: event agent, check new shipments, load entry check, duplicate shipment check, service failure agent, insight analyst, EDI quarantine agent, unassigned move agent, billing hold agent
-1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
-2. Select **New agent**.
-3. In **Start from**, choose the starter for the event: the load entry check reads each new
-   shipment for duplicates, a rate that disagrees with the lane and stops out of order; the
-   service failure desk works every open failure on a shipment and tells the customer when they
-   asked to be told; the insight analyst checks each new insight against its records; the EDI
-   desk says why a quarantined EDI file failed and what would fix it, and changes nothing. The
-   dispatch coverage agent also takes a move that loses its driver, and the billing exception
-   agent a billing item put on hold.
-4. Check the tools, the **Ceiling** and **Data access** the starter filled in. The insight
-   analyst also starts with a cap on **Runs per day**.
-5. Under **When it runs**, **Event** is already chosen with the events the starter listens for.
-6. Turn on **Shadow mode** to watch what it would do first, then select **Save**.
-
-### Set up an agent for settlements or receivables
-Keywords: settlements agent, driver pay agent, payroll agent, carrier settlement agent, carrier invoice matching agent, receivables agent, collections agent, accounts receivable agent, dispute agent, late charges agent, share invoice agent
-1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
-2. Select **New agent**.
-3. In **Start from**, choose the settlements clerk to draft driver and carrier settlements, sort
-   out pay that is missing or held, match carrier invoices and propose each payment, or the
-   receivables assistant to apply payments and credit, handle disputes and late charges, and
-   say which overdue invoices to chase first. Both are chat agents that act as the person
-   talking to them, and anything that moves money waits for that person to approve it. The
-   settlements clerk reads each driver's pay setup but never changes it: a pay rate, a standing
-   deduction or escrow terms stay with the people who set up driver pay.
-4. Leave **Data access** at **Restricted**, since both work with amounts and pay.
-5. Select **Save**. To let the billing assistant and the receivables assistant pass work to each
-   other, add each to the other's **Can ask** list as described below.
-
-### Set up an agent for master data, workforce records, fuel tax or reports
-Keywords: master data agent, carrier setup agent, customer setup agent, equipment agent, document filing agent, capture filing agent, HR agent, time off agent, leave agent, injury log agent, random drug test agent, permit agent, fuel agent, IFTA agent, fuel tax agent, fuel card agent, report agent, report builder agent, dashboard agent, scheduled report agent
-1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
-2. Select **New agent**.
-3. In **Start from**, choose the master data steward to keep carriers, customers, commodities,
-   hazardous materials, locations, tractors and trailers right, file scanned paperwork and clear
-   the watchtower feed; the workforce coordinator to handle time off, leave, injuries, reviews,
-   safety records, random testing rounds, checklists and shipment permits; or the fuel and IFTA
-   clerk to record fuel purchases and card statements, fill in state miles and draft the
-   quarter's IFTA return; or the report analyst to find, run, build and compare reports, keep
-   dashboards and set up the schedules that email a report. All four are chat agents that only
-   propose: every change waits for the person talking to them to approve it.
-4. Leave **Data access** as the starter set it: **Restricted** for the workforce coordinator,
-   **Internal** for the others. None of them changes pay, rate agreements or payroll.
-5. Select **Save**.
+Keywords: new agent, build agent, automation, scheduled agent, agent template, data access, agent sees amounts, agent pay access, restricted fields, draft agent with AI
+1. Open [AI control](/admin/agent-control) and select **Agents**.
+2. Select **New agent** (or press N) and pick where to start: **Desk agent**, **Scheduled report**,
+   **Event watcher** or **Start blank**. The builder opens on **What should it do?**.
+3. Describe the job in a sentence or two and select **Draft it** to have Nova fill in the name,
+   instructions, trigger and tools, or pick one of the starts under it to set it up yourself. Drafting is offered only while a provider takes the assistant's work.
+4. Under **Identity**, name the agent and say what it does in one line. Select its tile to change
+   the icon and color.
+5. Under **Instructions**, brief it the way you would a new hire. Add hard lines it must not cross
+   under **Never**, pressing Enter after each. A line under the editor says when the instructions
+   ask for something none of its tools can do, with a button to give it that tool.
+6. Under **Tools and autonomy**, select **Add tools**, tick what the agent may look up and change,
+   then select **Done**. Set each change to **Propose**, **Ask first** or **Automatic**, and the
+   **Ceiling** no tool goes past. Set **Data access** to **Restricted** only for an agent that
+   needs amounts and pay, such as invoice totals, balances, rates or a driver's net pay; at
+   **Internal** its tools leave them out and say so. In chat it never sees more than the person
+   asking, and only someone whose own role reaches restricted fields can give an agent
+   **Restricted**.
+7. Under **When it runs**, pick **Someone asks**, **On a schedule**, **Something happens** or
+   **Keeps watch** and fill in the schedule or events it asks for.
+8. Optionally set a **Monthly budget**, **Runs per day** and a **Preferred provider** under
+   **Budget and model**.
+9. Select **Try it** to ask the unsaved draft something against live records. Nothing is written,
+   sent or offered to anyone, and each step says what it would have come to.
+10. A new agent starts in **Shadow**. Select **Create in shadow**, or switch the mode beside its
+    name to **Live** first.
 
 ### Let an agent hand work to another agent
 Keywords: sub-agent, delegate, deploy a sub agent, ask another agent, report builder agent, agent can't reach another agent
-1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
-2. Select the pencil button on the agent that should be able to ask for help.
-3. In **Can ask**, select **Add an agent** and pick each agent it may hand a task to, such as the
-   Report Builder for an agent that builds dashboards. An agent can ask up to eight others.
+1. Open [AI control](/admin/agent-control) and select **Agents**.
+2. Select the agent that should be able to ask for help, then **Edit**.
+3. Under **Memory and handoffs**, in **Can ask**, select each agent it may hand a task to, such
+   as the report analyst for an agent that builds dashboards. Only agents people talk to can ask
+   others, and an agent can ask up to eight.
 4. Select **Save**. From its next reply the agent can hand those agents a task, and shows their
    work step by step in the conversation.
 
 ### Choose who can use an agent
 Keywords: agent access, restrict agent, agent permissions, give role an agent, who can see agent, limit agent to roles, agent missing from picker, sensitive tools
-1. Open [AI control](/admin/agent-control) and select **Agents** in the rail. Each agent's row
-   shows who can use it: **Everyone**, or how many roles it is limited to.
-2. Select the pencil button on the agent, or select **New agent** to set it while creating one.
-3. In **Who can use it**, choose **Everyone who can use the assistant** or **Specific roles**.
-4. For **Specific roles**, pick the roles in **Roles**. **Suggested roles** lists every role with
-   what it could make of the agent with the tools chosen on the form, saved or not: "Can use all
-   of its tools", the resources it is missing, or "Can't use the assistant". Select **Add** beside
-   one to choose it.
-5. Select **Save**. The agent and who can use it are saved together, so a new agent limited to
+1. Open [AI control](/admin/agent-control) and select **Agents**. An agent limited to roles names
+   them at the start of its row.
+2. Select the agent, then **Edit**, or select **New agent** to set it while creating one.
+3. Under **When it runs**, in **Who can ask it**, choose **Everyone** or **Specific roles**, and
+   pick the roles. While it is open to everyone and holds tools that reach outside the company
+   or into restricted records, a warning names them with **Limit to roles**.
+4. Select **Save**. The agent and who can use it are saved together, so a new agent limited to
    roles is limited from the moment it exists. From then on only people holding one of the chosen
    roles, or a role that inherits one, see the agent in the Desk and the assistant, and only they
    see and decide what it proposes.
 
 ### Turn an agent on or off, run it now, or remove it
-Keywords: disable agent, enable agent, start run, delete agent
-1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
-2. Use the switch at the end of an agent's row to enable or disable it.
-3. To start a run without waiting for its trigger, select the play button on the row. It is shown
-   for agents that are not chat agents, and only works while the agent is enabled.
-4. To change an agent, select the pencil button and edit it, then **Save**.
-5. To delete one, select the trash button and confirm with **Remove agent**. System agents cannot
-   be removed.
+Keywords: disable agent, enable agent, start run, delete agent, shadow mode, simulation mode
+1. Open [AI control](/admin/agent-control) and select **Agents**.
+2. Use the switch at the end of an agent's row to turn it on or off.
+3. To start a run without waiting for its trigger, select the play button on the row, or **Run
+   now** on the agent. It is offered for agents that are not chat agents, while they are on.
+4. Select an agent to read it. Its **Mode** is **Live**, **Shadow** or **Simulation**; **Edit**
+   opens the builder.
+5. To delete one, select **Remove**, type its name and confirm with **Remove agent**. Its runs and
+   audit trail are kept and its open proposals are withdrawn. System agents cannot be removed.
 
 ### Approve or reject what an agent proposed
 Keywords: agent decisions, pending proposals, review agent changes, approve plan, preview agent change

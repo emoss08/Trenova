@@ -50,14 +50,14 @@ function tiersFor(toolNames, [, propose, act]) {
 }
 
 const AGENT_SPECS = [
-  { key: "billing", name: "Billing exceptions", trig: "Chat", icon: "receipt", accent: "amber", template: "BillingAssistant", d: "Works blocked billing queue items and proposes what to do about them.", res: ["billing_queue", "invoice", "accessorial"], tools: 56, tiers: [38, 16, 2], pend: 3, open: 1, last: 12 * 60, runs: [3, 9] },
+  { key: "billing", name: "Billing exceptions", trig: "Chat", icon: "receipt", accent: "amber", template: "BillingAssistant", d: "Works blocked billing queue items and proposes what to do about them.", res: ["billing_queue", "invoice", "accessorial"], tools: 56, tiers: [38, 16, 2], pend: 3, open: 1, last: 12 * 60, runs: [3, 9], rec: { approved: 41, modified: 6, rejected: 2, failed: 1, streak: 7 } },
   { key: "compliance", name: "Compliance desk", trig: "Chat", icon: "shield", accent: "emerald", template: "ComplianceAssistant", d: "Answers questions about driver qualification and what is expiring.", res: ["worker_credential", "qualification", "worker_dot", "dot_random", "worker"], tools: 55, tiers: [49, 6, 0], last: HOUR, runs: [7, 4] },
-  { key: "dispatch", name: "Dispatch desk", trig: "Chat", icon: "truck", accent: "indigo", template: "DispatchAssistant", d: "Looks up shipments and drivers for the dispatch team.", res: ["shipment", "tractor", "trailer", "tender"], tools: 56, tiers: [40, 14, 2], pend: 4, open: 4, last: 3 * 60, runs: [11, 14] },
+  { key: "dispatch", name: "Dispatch desk", trig: "Chat", icon: "truck", accent: "indigo", template: "DispatchAssistant", d: "Looks up shipments and drivers for the dispatch team.", res: ["shipment", "tractor", "trailer", "tender"], tools: 56, tiers: [40, 14, 2], pend: 4, open: 4, last: 3 * 60, runs: [11, 14], rec: { approved: 88, modified: 11, rejected: 4, failed: 0, streak: 9 } },
   { key: "fuel", name: "Fuel and IFTA clerk", trig: "Chat", icon: "gauge", accent: "amber", d: "Keeps the fuel tax record: fuel purchases, card statements, state miles, and the quarter's IFTA return for a person to file.", res: ["fuel", "ifta"], tools: 33, tiers: [21, 12, 0], last: DAY, runs: [5, 2] },
   { key: "help", name: "Help", trig: "Chat", icon: "compass", accent: "slate", d: "Explains how to do things in Trenova. Cannot read or change records.", res: [], tools: 0, tiers: [0, 0, 0], last: 8 * 60, runs: [13, 6] },
   { key: "mds", name: "Master data steward", trig: "Chat", icon: "clipboard", accent: "slate", d: "Keeps carriers, customers, commodities, hazmat, locations and equipment right; files scanned paperwork and clears the attention feed.", res: ["carrier", "customer", "commodity", "hazardous", "location", "equipment"], tools: 55, tiers: [33, 22, 0], last: null, runs: [1, 0] },
   { key: "recv", name: "Receivables", trig: "Chat", icon: "banknote", accent: "teal", d: "Works what customers owe once an invoice is out: payments, credit, disputes, late charges, and who to chase first.", res: ["accounts_receivable", "customer_payment", "bank_receipt", "invoice_dispute"], tools: 27, tiers: [17, 10, 0], last: 2 * HOUR, runs: [17, 3] },
-  { key: "report", name: "Report analyst", trig: "Chat", icon: "search", accent: "violet", d: "Builds, runs and explains reports and dashboards, and proposes scheduled emails for a person to approve.", res: ["report", "dashboard"], tools: 23, tiers: [19, 4, 0], last: DAY, runs: [19, 2] },
+  { key: "report", name: "Report analyst", trig: "Chat", icon: "search", accent: "violet", d: "Builds, runs and explains reports and dashboards, and proposes scheduled emails for a person to approve.", res: ["report", "dashboard"], tools: 23, tiers: [19, 4, 0], last: DAY, runs: [19, 2], rec: { approved: 12, modified: 0, rejected: 0, failed: 0, streak: 12 } },
   { key: "settle", name: "Settlements clerk", trig: "Chat", icon: "wallet", accent: "emerald", d: "Runs driver and carrier settlements: drafts the period's pay, matches carrier invoices, and puts every payment in front of a person.", res: ["driver_settlement", "carrier_settlement", "carrier_invoice", "pay_"], tools: 56, tiers: [36, 20, 0], last: 2 * DAY, runs: [23, 2] },
   { key: "workforce", name: "Workforce coordinator", trig: "Chat", icon: "headset", accent: "violet", d: "Handles time off, leave, injuries, reviews, safety records, random testing and permits, and proposes each change.", res: ["worker_", "permit", "performance"], tools: 55, tiers: [30, 25, 0], last: null, runs: [2, 0], roles: ["Dispatch manager", "Safety", "HR"] },
   { key: "cs", name: "Customer service", trig: "Chat", icon: "headset", accent: "sky", template: "CustomerAssistant", d: "Shipment status for the customer-facing team. Off until reviewed.", res: ["shipment", "customer"], tools: 53, tiers: [50, 3, 0], off: true, last: null, runs: [4, 0] },
@@ -69,6 +69,22 @@ const AGENT_SPECS = [
 
 export const SHADOW_RECORDED = { billev: 18, coverage: 31, inbox: 12 };
 
+/** Every role in the organization, as the access preview lists them. */
+export const ROLES = [
+  "Owner",
+  "Dispatch lead",
+  "Dispatch manager",
+  "Dispatcher",
+  "Billing manager",
+  "Billing clerk",
+  "Safety",
+  "Customer service",
+  "Accounting",
+  "HR",
+].map((name, index) => ({ id: `rol_${index}`, name }));
+
+const ROLE_ID = new Map(ROLES.map((role) => [role.name, role.id]));
+
 function agentId(key) {
   return `agd_${key}`;
 }
@@ -79,6 +95,7 @@ function buildAgents(anchor, { paused }) {
     const knownEvents = new Set(EVENT_KINDS.events.map((event) => event.kind));
     return {
       key: spec.key,
+      rec: spec.rec ?? null,
       runsPerDay: spec.runs
         ? Array.from({ length: 14 }, (_, day) => {
             const random = seeded(spec.runs[0]);
@@ -126,7 +143,7 @@ function buildAgents(anchor, { paused }) {
         delegateIds: [],
         delegates: [],
         accessMode: spec.roles ? "Roles" : "Everyone",
-        accessRoles: (spec.roles ?? []).map((name, roleIndex) => ({ id: `rol_${roleIndex}`, name })),
+        accessRoles: (spec.roles ?? []).map((name) => ({ id: ROLE_ID.get(name), name })),
         lastRunAt: spec.last == null ? null : anchor - spec.last,
         nextRunAt: spec.cron ? anchor - (anchor % DAY) + DAY + 13 * HOUR : null,
         pendingProposals: spec.pend ?? 0,

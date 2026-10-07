@@ -174,3 +174,17 @@ mutation RestoreAITuneUp($id: ID!, $version: Int!) {
     ...AITuneUpFields
   }
 }
+
+query AIAgentRoster {
+  aiAgentRoster {
+    agentId
+    runsByDay
+    runs
+    approved
+    modified
+    rejected
+    failed
+    shadowRecorded
+    approvalRate
+  }
+}

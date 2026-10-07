@@ -75,6 +75,21 @@ const server = http.createServer(async (req, res) => {
   if (!result.known && LOG_UNKNOWN) {
     console.log(`[mock-api] unhandled ${req.method} ${url.pathname}`);
   }
+  if (result.sse) {
+    res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
+    let closed = false;
+    req.on("close", () => (closed = true));
+    let at = 0;
+    for (const [index, frame] of result.sse.entries()) {
+      at += frame.delay ?? 0;
+      setTimeout(() => {
+        if (closed) return;
+        res.write(`id: ${index + 1}\nevent: ${frame.event}\ndata: ${JSON.stringify(frame.data ?? {})}\n\n`);
+        if (index === result.sse.length - 1) res.end();
+      }, at);
+    }
+    return undefined;
+  }
   if (result.stream) {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",

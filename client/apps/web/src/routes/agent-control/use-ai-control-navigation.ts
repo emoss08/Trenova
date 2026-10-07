@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { AUDIT_SCOPE_PARAM, auditScopeParser } from "./_components/audit/audit-model";
 import {
   ACTIVITY_VIEW_PARAM,
+  AGENT_FILTER_PARAM,
   AI_CONTROL_TAB_PARAM,
   AUDIT_VIEW_PARAM,
   CLEARED_TABLE_STATE,
@@ -15,6 +16,7 @@ import {
   SAFETY_VIEW_PARAM,
   activityViewParser,
   activityViews,
+  agentFilterParser,
   aiControlTabParser,
   auditViewParser,
   auditViews,
@@ -26,6 +28,7 @@ import {
   safetyViewParser,
   safetyViews,
   type ActivityView,
+  type AgentFilter,
   type AIControlTab,
   type AuditView,
   type QualityView,
@@ -38,6 +41,7 @@ const navigationParsers = {
   ...searchParamsParser,
   [AI_CONTROL_TAB_PARAM]: aiControlTabParser,
   [ACTIVITY_VIEW_PARAM]: activityViewParser,
+  [AGENT_FILTER_PARAM]: agentFilterParser,
   [SAFETY_VIEW_PARAM]: safetyViewParser,
   [QUALITY_VIEW_PARAM]: qualityViewParser,
   [QUALITY_AGENT_PARAM]: qualityAgentParser,
@@ -50,6 +54,8 @@ const navigationParsers = {
 export type AIControlDestination = {
   tab: AIControlTab;
   view?: RailView;
+  /** Narrows the Agents tab to waiting, shadow or off agents. */
+  agentFilter?: AgentFilter;
   /** Narrows the quality views that take an agent to one agent. */
   qualityAgent?: string | null;
   /** Opens one suite run's cases. */
@@ -107,6 +113,8 @@ export function useAIControlNavigation() {
           [AUDIT_VIEW_PARAM]:
             destination.tab === "audit" && view && isAuditView(view) ? view : null,
           [AUDIT_SCOPE_PARAM]: null,
+          [AGENT_FILTER_PARAM]:
+            destination.tab === "agents" ? (destination.agentFilter ?? null) : null,
         },
         { history: "push" },
       );

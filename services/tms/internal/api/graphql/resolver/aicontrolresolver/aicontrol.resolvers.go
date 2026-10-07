@@ -230,3 +230,21 @@ func (r *AITuneUpEvidenceResolver) FromTier(ctx context.Context, obj *aituneup.E
 func (r *AITuneUpEvidenceResolver) ToTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error) {
 	return optionalTier(obj.ToTier), nil
 }
+
+func (r *QueryResolver) AiAgentRoster(ctx context.Context) ([]*gqlmodel.AIAgentRosterStat, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := r.AgentRosterService.Roster(ctx, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*gqlmodel.AIAgentRosterStat, 0, len(stats))
+	for _, stat := range stats {
+		out = append(out, rosterModel(stat))
+	}
+	return out, nil
+}

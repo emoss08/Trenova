@@ -19,7 +19,6 @@
   "Optional context shown beside the date on the calendar.": "Contexto opcional que se muestra junto a la fecha en el calendario.",
   "Policies that skip weekends will start counting this date against requests.": "Las políticas que omiten fines de semana empezarán a contar esta fecha en las solicitudes.",
   "Previous year": "El año anterior",
-  "Remove {0}?": "¿Quitar {0}?",
   "Repeats every year": "Se repite todos los años",
   "The calendar could not be loaded. Try again in a moment.": "No se pudo cargar el calendario. Vuelva a intentarlo en un momento.",
   "This applies to every year.": "Esto se aplica a todos los años.",
