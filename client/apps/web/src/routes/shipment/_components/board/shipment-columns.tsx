@@ -9,7 +9,7 @@ import {
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { Customer } from "@trenova/shared/types/customer";
-import type { RowAction, ColumnDef } from "@trenova/shared/types/data-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { Link } from "react-router";
 import { ActionsCell } from "./cells/actions-cell";
@@ -47,9 +47,7 @@ function getAppointmentStop(stop: Stop | null) {
 }
 
 export type ShipmentColumnsParams = {
-  rowActions: RowAction<Shipment>[];
   t: TranslateFn;
-  expandedRowId: string | null;
   onToggleExpanded: (rowId: string) => void;
 };
 
@@ -59,12 +57,7 @@ export const SHIPMENT_HIDDEN_COLUMNS: Record<string, boolean> = {
   deliveryAppointment: false,
 };
 
-export function getColumns({
-  rowActions,
-  t,
-  expandedRowId,
-  onToggleExpanded,
-}: ShipmentColumnsParams): ColumnDef<Shipment>[] {
+export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): ColumnDef<Shipment>[] {
   return [
     {
       id: "lane",
@@ -356,8 +349,6 @@ export function getColumns({
       cell: ({ row }) => (
         <ActionsCell
           row={row}
-          actions={rowActions}
-          expanded={expandedRowId === row.original.id}
           onToggleExpanded={() => row.original.id && onToggleExpanded(row.original.id)}
         />
       ),

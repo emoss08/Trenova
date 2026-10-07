@@ -1,5 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { intlLocale } from "@trenova/shared/i18n/format";
+import { dateTimeFormatter } from "@trenova/shared/i18n/format";
 import { TimeFormat, type TimeFormatType } from "@trenova/shared/types/user";
 import { parseDate } from "@trenova/shared/lib/chrono";
 import { endOfDay, startOfDay, startOfMonth } from "date-fns";
@@ -48,7 +48,7 @@ export function getUserDatePreferences(): UserDatePreferences {
 
 export function resolveUserTimezone(userTimezone?: string): string {
   const timezone = userTimezone || userDatePreferences.timezone;
-  return timezone === AUTO_TIMEZONE ? Intl.DateTimeFormat().resolvedOptions().timeZone : timezone;
+  return timezone === AUTO_TIMEZONE ? dateTimeFormatter().resolvedOptions().timeZone : timezone;
 }
 
 export function resolveUserTimeFormat(timeFormat?: TimeFormatType): TimeFormatType {
@@ -71,7 +71,7 @@ function zonedFormatter({ timezone, timeFormat, ...options }: ZonedFormatOptions
     options.second !== undefined ||
     options.timeStyle !== undefined;
 
-  return new Intl.DateTimeFormat(intlLocale(), {
+  return dateTimeFormatter({
     timeZone: resolveUserTimezone(timezone),
     ...(showsTime && options.hour12 === undefined ? { hour12: isHour12(timeFormat) } : {}),
     ...options,
@@ -266,7 +266,7 @@ export function generateDateOnlyString(date: Date): string {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     throw new Error("Invalid date provided to generateDateOnlyString");
   }
-  return new Intl.DateTimeFormat(intlLocale(), {
+  return dateTimeFormatter({
     month: "2-digit",
     day: "2-digit",
     year: "numeric",
@@ -336,7 +336,7 @@ export function formatISODateMedium(value: string, fallback = ""): string {
     return fallback;
   }
 
-  return new Intl.DateTimeFormat(intlLocale(), { dateStyle: "medium" }).format(date);
+  return dateTimeFormatter({ dateStyle: "medium" }).format(date);
 }
 
 export function isValidDateOnlyFormat(dateString: string): boolean {
@@ -363,7 +363,7 @@ export function generateDateTimeString(date: Date, options: DateFormatOptions = 
 
   const { timeFormat, showSeconds = false } = options;
 
-  return new Intl.DateTimeFormat(intlLocale(), {
+  return dateTimeFormatter({
     month: "2-digit",
     day: "2-digit",
     year: "numeric",

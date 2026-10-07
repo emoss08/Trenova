@@ -105,11 +105,14 @@ function createQueryClient() {
   });
 }
 
-function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>) {
+function renderDataTable(
+  props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>,
+  searchParams?: string,
+) {
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory>
+      <NuqsTestingAdapter hasMemory searchParams={searchParams}>
         <DataTable<TestRow>
           columns={testColumns}
           name="test-table"
@@ -128,6 +131,11 @@ function lastQueryOptions() {
     sort: { field: string; direction: string }[];
     fieldFilters: { field: string; operator: string; value: unknown }[];
   };
+}
+
+function lastPagination() {
+  const calls = useDataTableQueryMock.mock.calls as unknown[][];
+  return calls[calls.length - 1][2] as { pageIndex: number; pageSize: number };
 }
 
 function grouping(overrides: Partial<DataTableGrouping<TestRow>> = {}): DataTableGrouping<TestRow> {
@@ -315,6 +323,28 @@ describe("DataTable expansion", () => {
     expect(screen.queryByTestId("panel")).toBeNull();
   });
 
+  it("paints the open row and its panel in the field fill, not the selection tint", () => {
+    renderExpanding();
+    fireEvent.click(screen.getByText("Bob"));
+
+    const bobRow = document.getElementById("2")!;
+    const panelRow = bobRow.nextElementSibling!;
+    expect(bobRow.className).toContain("data-expanded:bg-field");
+    expect(bobRow.className).not.toContain("data-expanded:bg-surface-selected");
+    expect(bobRow.className).not.toContain("var(--brand)");
+    expect(panelRow.className.split(" ")).toContain("bg-field");
+    expect(panelRow.className.split(" ")).not.toContain("bg-surface-selected");
+  });
+
+  it("uses the same field fill for a hovered row and the keyboard cursor", () => {
+    renderExpanding();
+
+    const classes = document.getElementById("1")!.className.split(" ");
+    expect(classes).toContain("hover:bg-field");
+    expect(classes).toContain("data-cursor:bg-field");
+    expect(classes).not.toContain("hover:bg-surface-hover");
+  });
+
   it("moves a page-level cursor with J and opens the cursor row with Enter", () => {
     renderExpanding(true);
 
@@ -439,11 +469,58 @@ describe("DataTable column pinning", () => {
     expect(cell?.className).toContain("sticky");
   });
 
+  it("gives a pinned cell the row's field fill when the row is hovered, under the cursor or open", () => {
+    renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
+
+    const className = screen.getByText("Alice").closest("td")?.className ?? "";
+    expect(className).toContain("group-hover/row:bg-field");
+    expect(className).toContain("group-data-cursor/row:bg-field");
+    expect(className).toContain("group-data-expanded/row:bg-field");
+    expect(className).not.toContain("bg-muted");
+  });
+
   it("keeps a pinned head above the resize handles of the heads scrolling under it", () => {
     renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
 
     const head = screen.getByText("Name").closest("th");
     expect(head?.className).toContain("z-20");
     expect(head?.className).not.toContain("z-10");
+  });
+});
+
+describe("DataTable page sizes", () => {
+  beforeEach(() => {
+    useDataTableQueryMock.mockClear();
+  });
+
+  it("opens at the first size a table offers", () => {
+    renderDataTable({ pageSizeOptions: [25, 50, 100] });
+
+    expect(lastPagination()).toEqual({ pageIndex: 0, pageSize: 25 });
+    expect(screen.getByRole("combobox").textContent).toContain("25");
+  });
+
+  it("keeps a size from the link when the table offers it", () => {
+    renderDataTable({ pageSizeOptions: [25, 50, 100] }, "?pageSize=100");
+
+    expect(lastPagination().pageSize).toBe(100);
+  });
+
+  it("falls back to the first size for a link asking for one the table does not offer", () => {
+    renderDataTable({ pageSizeOptions: [25, 50, 100] }, "?pageSize=10");
+
+    expect(lastPagination().pageSize).toBe(25);
+  });
+
+  it("keeps ten rows for a table that does not name its sizes", () => {
+    renderDataTable();
+
+    expect(lastPagination().pageSize).toBe(10);
+  });
+
+  it("keeps any size from the link for a table that does not name its sizes", () => {
+    renderDataTable(undefined, "?pageSize=40");
+
+    expect(lastPagination().pageSize).toBe(40);
   });
 });

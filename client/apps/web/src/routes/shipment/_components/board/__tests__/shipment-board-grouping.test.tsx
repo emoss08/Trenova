@@ -37,7 +37,12 @@ vi.mock("@/lib/queries", () => ({
 
 vi.mock("../url-state", () => ({ useShipmentBoardUrl: () => [urlState, vi.fn()] }));
 vi.mock("../use-board-scope", () => ({ useBoardScope: () => ({}) }));
-vi.mock("../use-board-actions", () => ({ useBoardActions: () => ({}) }));
+vi.mock("../use-board-actions", () => ({
+  useBoardActions: () => ({
+    tender: { mutateAsync: vi.fn() },
+    autoAssign: { mutateAsync: vi.fn() },
+  }),
+}));
 vi.mock("../record-actions", () => ({
   useShipmentRecordActions: () => ({
     rowActions: [],

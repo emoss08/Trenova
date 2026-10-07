@@ -19,15 +19,75 @@ export function intlLocale(locale?: Locale): string {
   return INTL_TAGS[locale ?? getLocale()] ?? INTL_TAGS[DEFAULT_LOCALE];
 }
 
+// Building an Intl formatter costs far more than using one, and a table cell
+// formats on every render, so formatters are kept per locale and options. The
+// options are plain literals, so their JSON is a faithful key; an undefined
+// option is dropped from the key exactly as Intl ignores it.
+const FORMATTER_CACHE_LIMIT = 256;
+
+function cachedFormatter<T>(
+  cache: Map<string, T>,
+  locale: string,
+  options: object | undefined,
+  create: () => T,
+): T {
+  const key = `${locale}|${options ? JSON.stringify(options) : ""}`;
+  let formatter = cache.get(key);
+  if (formatter === undefined) {
+    if (cache.size >= FORMATTER_CACHE_LIMIT) {
+      cache.delete(cache.keys().next().value as string);
+    }
+    formatter = create();
+    cache.set(key, formatter);
+  }
+  return formatter;
+}
+
+const numberFormatters = new Map<string, Intl.NumberFormat>();
+const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
+const listFormatters = new Map<string, Intl.ListFormat>();
+const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();
+
+export function numberFormatter(
+  options?: Intl.NumberFormatOptions,
+  locale: string = intlLocale(),
+): Intl.NumberFormat {
+  return cachedFormatter(
+    numberFormatters,
+    locale,
+    options,
+    () => new Intl.NumberFormat(locale, options),
+  );
+}
+
+export function dateTimeFormatter(
+  options?: Intl.DateTimeFormatOptions,
+  locale: string = intlLocale(),
+): Intl.DateTimeFormat {
+  return cachedFormatter(
+    dateTimeFormatters,
+    locale,
+    options,
+    () => new Intl.DateTimeFormat(locale, options),
+  );
+}
+
 export function formatNumber(value: number, options?: Intl.NumberFormatOptions): string {
-  return new Intl.NumberFormat(intlLocale(), options).format(value);
+  return numberFormatter(options).format(value);
 }
 
 export function formatList(
   items: readonly string[],
   type: Intl.ListFormatType = "conjunction",
 ): string {
-  return new Intl.ListFormat(intlLocale(), { style: "long", type }).format(items);
+  const locale = intlLocale();
+  const options: Intl.ListFormatOptions = { style: "long", type };
+  return cachedFormatter(
+    listFormatters,
+    locale,
+    options,
+    () => new Intl.ListFormat(locale, options),
+  ).format(items);
 }
 
 const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -40,7 +100,14 @@ const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 ];
 
 export function formatRelativeTime(deltaSeconds: number): string {
-  const formatter = new Intl.RelativeTimeFormat(intlLocale(), { numeric: "auto" });
+  const locale = intlLocale();
+  const options: Intl.RelativeTimeFormatOptions = { numeric: "auto" };
+  const formatter = cachedFormatter(
+    relativeTimeFormatters,
+    locale,
+    options,
+    () => new Intl.RelativeTimeFormat(locale, options),
+  );
 
   for (const [unit, seconds] of RELATIVE_UNITS) {
     if (Math.abs(deltaSeconds) >= seconds) {

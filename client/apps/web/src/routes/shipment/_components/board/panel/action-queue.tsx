@@ -207,7 +207,6 @@ export function ActionQueue() {
               size="sm"
               onClick={() => approve(current)}
               disabled={pending}
-              className={cn(ai && "bg-accent-teal hover:bg-accent-teal/90 text-foreground-on-solid")}
             >
               {ai ? current.primary.label : current.manualLabel}
               <Kbd className="border-current/30 bg-transparent text-current">{formatShortcut("↵")}</Kbd>

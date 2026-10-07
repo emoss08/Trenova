@@ -134,7 +134,7 @@ func (s *DeskSeed) loadRefs(
 		Model(&refs.messages).
 		Where(cols.OrganizationID.Eq(), org.ID).
 		Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
-		Where(cols.Status.In(), bun.In([]inboundmessage.Status{
+		Where(cols.Status.In(), bun.List([]inboundmessage.Status{
 			inboundmessage.StatusInReview,
 			inboundmessage.StatusQuarantined,
 		})).

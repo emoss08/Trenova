@@ -9,8 +9,12 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import type {
+  DataTableAlternateView,
+  DataTableExpansion,
   DataTableGroupKey,
   DataTableGrouping,
+  DataTableKeyboard,
+  DataTableToolbarSlots,
   DockAction,
 } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
@@ -22,12 +26,7 @@ import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { ShipmentExpandedRow } from "./expanded-row/shipment-expanded-row";
 import { useShipmentRecordActions } from "./record-actions";
 import { getColumns, SHIPMENT_HIDDEN_COLUMNS } from "./shipment-columns";
-import {
-  GroupToggle,
-  PanelToggle,
-  TOOLBAR_RESPONSIVE,
-  ViewSwitch,
-} from "./toolbar/board-controls";
+import { GroupToggle, PanelToggle, TOOLBAR_RESPONSIVE, ViewSwitch } from "./toolbar/board-controls";
 import { useBoardActions } from "./use-board-actions";
 import { useBoardScope } from "./use-board-scope";
 import { useQuickFilterSearch } from "./use-quick-filter-search";
@@ -36,7 +35,7 @@ import { useShipmentBoardUrl } from "./url-state";
 const ShipmentTimeline = lazy(() => import("./views/shipment-timeline"));
 const ShipmentMapView = lazy(() => import("./views/shipment-map-view"));
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 const PINNED_COLUMNS = { left: ["select", "lane"], right: [] };
 
 type ShipmentBoardProps = {
@@ -74,8 +73,8 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
   );
 
   const columns = useMemo(
-    () => getColumns({ rowActions, t, expandedRowId: expanded, onToggleExpanded: toggleExpanded }),
-    [rowActions, t, expanded, toggleExpanded],
+    () => getColumns({ t, onToggleExpanded: toggleExpanded }),
+    [t, toggleExpanded],
   );
 
   const grouping = useMemo<DataTableGrouping<Shipment> | undefined>(() => {
@@ -97,6 +96,8 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
     };
   }, [group, summary, t, collapsed, setUrl]);
 
+  const tenderShipments = actions.tender.mutateAsync;
+  const autoAssignMoves = actions.autoAssign.mutateAsync;
   const dockActions = useMemo<DockAction<Shipment>[]>(() => {
     const ids = (rows: Shipment[]) => rows.map((row) => row.id).filter((id): id is string => !!id);
     const list: DockAction<Shipment>[] = [];
@@ -108,9 +109,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
         icon: Truck01Icon,
         clearSelectionOnSuccess: true,
         onClick: async (rows) => {
-          const result = await actions.tender.mutateAsync(
-            ids(rows).map((shipmentId) => ({ shipmentId })),
-          );
+          const result = await tenderShipments(ids(rows).map((shipmentId) => ({ shipmentId })));
           if (result.tendered.length > 0) {
             toast.success(t("Tendered {0} to best-match carriers", result.tendered.length));
           }
@@ -125,7 +124,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
         icon: User01Icon,
         clearSelectionOnSuccess: true,
         onClick: async (rows) => {
-          await actions.autoAssign.mutateAsync(
+          await autoAssignMoves(
             rows.flatMap(
               (row) => row.moves?.map((move) => move.id).filter(Boolean) ?? [],
             ) as string[],
@@ -134,7 +133,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
       });
     }
     return list;
-  }, [actions, capabilities, t]);
+  }, [autoAssignMoves, capabilities, t, tenderShipments]);
 
   const rowShortcuts = useMemo(
     () => [
@@ -143,6 +142,74 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
       { key: "l", mod: true, run: copyLink },
     ],
     [edit, copyProNumber, copyLink],
+  );
+
+  const expansion = useMemo<DataTableExpansion<Shipment>>(
+    () => ({
+      expandedRowId: expanded,
+      onExpandedRowIdChange: (rowId) => void setUrl({ expanded: rowId }),
+      renderExpandedRow: (row, { collapse }) => (
+        <ShipmentExpandedRow row={row} onCollapse={collapse} />
+      ),
+    }),
+    [expanded, setUrl],
+  );
+
+  const keyboard = useMemo<DataTableKeyboard<Shipment>>(
+    () => ({
+      enabled: view === "table",
+      cursorRowId,
+      onCursorRowIdChange: setCursorRowId,
+      rowShortcuts,
+    }),
+    [view, cursorRowId, rowShortcuts],
+  );
+
+  const toolbar = useMemo<DataTableToolbarSlots>(
+    () => ({
+      searchSuggestions,
+      searchShortcut: "/",
+      chips,
+      trailing: (
+        <>
+          <ViewSwitch />
+          <GroupToggle />
+        </>
+      ),
+      end: <PanelToggle open={panelOpen} onOpenChange={onPanelOpenChange} />,
+      responsive: TOOLBAR_RESPONSIVE,
+    }),
+    [searchSuggestions, chips, panelOpen, onPanelOpenChange],
+  );
+
+  const alternateView = useMemo<DataTableAlternateView>(
+    () => ({
+      active: view !== "table",
+      render: ({ queryOptions }) => (
+        <Suspense fallback={null}>
+          {view === "timeline" ? (
+            <ShipmentTimeline graphql={graphql} queryOptions={queryOptions} />
+          ) : (
+            <ShipmentMapView />
+          )}
+        </Suspense>
+      ),
+    }),
+    [view, graphql],
+  );
+
+  const footerLeading = useMemo(
+    () => (
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t("Keyboard shortcuts ({0})", formatShortcut("/"))}
+        onClick={() => openShortcuts("shortcuts")}
+      >
+        <Keyboard01Icon className="size-4" />
+      </Button>
+    ),
+    [t, openShortcuts],
   );
 
   return (
@@ -161,54 +228,11 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
       dockActions={dockActions}
       contextMenuActions={rowActions}
       grouping={grouping}
-      expansion={{
-        expandedRowId: expanded,
-        onExpandedRowIdChange: (rowId) => void setUrl({ expanded: rowId }),
-        renderExpandedRow: (row, { collapse }) => (
-          <ShipmentExpandedRow row={row} onCollapse={collapse} />
-        ),
-      }}
-      keyboard={{
-        enabled: view === "table",
-        cursorRowId,
-        onCursorRowIdChange: setCursorRowId,
-        rowShortcuts,
-      }}
-      toolbar={{
-        searchSuggestions,
-        searchShortcut: "/",
-        chips,
-        trailing: (
-          <>
-            <ViewSwitch />
-            <GroupToggle />
-          </>
-        ),
-        end: <PanelToggle open={panelOpen} onOpenChange={onPanelOpenChange} />,
-        responsive: TOOLBAR_RESPONSIVE,
-      }}
-      alternateView={{
-        active: view !== "table",
-        render: ({ queryOptions }) => (
-          <Suspense fallback={null}>
-            {view === "timeline" ? (
-              <ShipmentTimeline graphql={graphql} queryOptions={queryOptions} />
-            ) : (
-              <ShipmentMapView />
-            )}
-          </Suspense>
-        ),
-      }}
-      footerLeading={
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t("Keyboard shortcuts ({0})", formatShortcut("/"))}
-          onClick={() => openShortcuts("shortcuts")}
-        >
-          <Keyboard01Icon className="size-4" />
-        </Button>
-      }
+      expansion={expansion}
+      keyboard={keyboard}
+      toolbar={toolbar}
+      alternateView={alternateView}
+      footerLeading={footerLeading}
     />
   );
 }

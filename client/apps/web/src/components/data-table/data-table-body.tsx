@@ -3,6 +3,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { TableBody, TableCell, TableRow } from "@trenova/shared/components/ui/table";
 import { useDataTable } from "@/contexts/data-table-context";
 import {
+  DataTableRowActionsContext,
+  DataTableRowStateContext,
+} from "@/contexts/data-table-row-context";
+import {
   columnSizeVar,
   pinnedCellClass,
   pinnedCellStyle,
@@ -10,18 +14,17 @@ import {
 } from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
+  ColumnDef,
   DataTableBodyProps,
   DataTableExpansion,
   DataTableGroupKey,
   DataTableGrouping,
-  RowAction,
   Row,
-  Table,
 } from "@trenova/shared/types/data-table";
 import type { ColumnPinningState, RowData, RowSelectionState } from "@tanstack/react-table";
 import { flexRender } from "@tanstack/react-table";
 import { Edit02Icon } from "@trenova/shared/components/icons";
-import { Fragment, memo, useCallback, useRef } from "react";
+import { Fragment, memo, useCallback, useMemo, useRef } from "react";
 import { buildGroupedBody } from "@/lib/data-table-grouping";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { DataTableCellEditor } from "./data-table-cell-editor";
@@ -30,6 +33,7 @@ import { DataTableExpandedRow } from "./data-table-expanded-row";
 import { DataTableGroupHeader } from "./data-table-group-header";
 
 const ROW_STAGGER_MS = 18;
+const NO_ROW_ACTIONS: never[] = [];
 const ROW_STAGGER_CAP = 14;
 
 const INTERACTIVE_SELECTOR =
@@ -38,38 +42,55 @@ const INTERACTIVE_SELECTOR =
 type DataTableRowProps<TData extends RowData> = {
   row: Row<TData>;
   rowIndex: number;
-  selected?: boolean;
+  selected: boolean;
   isLastRow: boolean;
+  columns: ColumnDef<TData>[];
   columnVisibility: Record<string, boolean>;
   columnOrder: string[];
   columnPinning: ColumnPinningState;
+  canEditCells: boolean;
   formatClass?: string;
-  table: Table<TData>;
-  contextMenuActions?: RowAction<TData>[];
+  rowClassName?: string;
+  hasRowActions: boolean;
   onRowClick?: (row: Row<TData>) => void;
+  openPanelEdit: (row: Row<TData>) => void;
+  hasPanel: boolean;
+  canOpenPanel: boolean;
+  canUpdate: boolean;
   editingColumnId: string | null;
   isCursor: boolean;
   isExpanded: boolean;
 };
 
+/**
+ * One body row. It is memoized and takes only what it draws with, so a change
+ * that touches one row (the cursor, the open row, a checkbox) redraws that row
+ * alone. The table instance is deliberately not a prop: TanStack hands back a
+ * new wrapper every render, which would redraw every row every time.
+ */
 function DataTableRowInner<TData extends RowData>({
   row,
   rowIndex,
   selected,
   isLastRow,
   formatClass,
-  table,
-  contextMenuActions,
+  rowClassName,
+  hasRowActions,
   onRowClick,
+  openPanelEdit,
+  hasPanel,
+  canOpenPanel,
+  canUpdate,
   editingColumnId,
   isCursor,
   isExpanded,
 }: DataTableRowProps<TData>) {
-  const { openPanelEdit, hasPanel, canOpenPanel } = useDataTable<TData, unknown>();
-
   const isClickable = !!(onRowClick || (hasPanel && canOpenPanel));
-  const hasContextMenu =
-    (contextMenuActions && contextMenuActions.length > 0) || (hasPanel && canOpenPanel);
+  const hasContextMenu = hasRowActions || (hasPanel && canOpenPanel);
+  const rowState = useMemo(
+    () => ({ isExpanded, isCursor, isSelected: selected }),
+    [isExpanded, isCursor, selected],
+  );
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent<HTMLTableRowElement>) => {
@@ -77,13 +98,7 @@ function DataTableRowInner<TData extends RowData>({
       const target = e.target as HTMLElement;
 
       if (target.closest(INTERACTIVE_SELECTOR)) return;
-
-      const cell = target.closest("td");
-      if (cell) {
-        const cellIndex = cell.cellIndex;
-        const visibleColumns = table.getVisibleFlatColumns();
-        if (visibleColumns[cellIndex]?.id === "select") return;
-      }
+      if (target.closest<HTMLElement>("td")?.dataset.columnId === "select") return;
 
       const selection = window.getSelection();
       if (selection && selection.toString().length > 0) return;
@@ -94,7 +109,7 @@ function DataTableRowInner<TData extends RowData>({
         openPanelEdit(row);
       }
     },
-    [row, onRowClick, hasPanel, canOpenPanel, openPanelEdit, table],
+    [row, onRowClick, hasPanel, canOpenPanel, openPanelEdit],
   );
 
   const tableRow = (
@@ -102,7 +117,7 @@ function DataTableRowInner<TData extends RowData>({
       id={row.id}
       data-row-index={rowIndex}
       tabIndex={-1}
-      data-state={selected && "selected"}
+      data-state={selected ? "selected" : undefined}
       data-cursor={isCursor || undefined}
       data-expanded={isExpanded || undefined}
       aria-expanded={isExpanded ? true : undefined}
@@ -110,72 +125,82 @@ function DataTableRowInner<TData extends RowData>({
       style={{ animationDelay: `${Math.min(rowIndex, ROW_STAGGER_CAP) * ROW_STAGGER_MS}ms` }}
       className={cn(
         "ui-inset-focus-ring group/row outline-brand animate-row-rise -outline-offset-2 transition-colors data-[state=selected]:outline",
-        "data-cursor:bg-surface-hover data-expanded:bg-surface-selected data-expanded:[&>td:first-child]:shadow-[inset_2px_0_0_var(--brand)]",
+        "hover:bg-field data-cursor:bg-field data-expanded:bg-field data-expanded:[&>td:first-child]:shadow-[inset_2px_0_0_var(--border-strong)]",
         isClickable && "cursor-pointer",
         formatClass,
-        table.options.meta?.getRowClassName?.(row),
+        rowClassName,
       )}
     >
-      {row.getVisibleCells().map((cell) => {
-        const pinned = cell.column.getIsPinned();
-        const canEdit = cell.getCanEdit();
-        const isEditing = editingColumnId === cell.column.id;
-        return (
-          <TableCell
-            className={cn(
-              "border-border truncate border-b font-sans",
-              isLastRow && "border-b-0",
-              pinned && pinnedCellClass(cell.column),
-              pinned && "group-hover/row:bg-muted",
-              canEdit && "group/cell relative",
-              isEditing && "overflow-visible py-1",
-            )}
-            key={cell.id}
-            role="cell"
-            aria-label={`${cell.column.id} cell`}
-            onDoubleClick={
-              canEdit && !isEditing && !isClickable
-                ? (e) => {
-                    e.preventDefault();
-                    cell.startEditing();
-                  }
-                : undefined
-            }
-            style={{
-              width: `var(${columnSizeVar(cell.column.id)})`,
-              maxWidth: `var(${columnSizeVar(cell.column.id)})`,
-              ...pinnedCellStyle(cell.column),
-            }}
-          >
-            {isEditing ? (
-              <DataTableCellEditor cell={cell} />
-            ) : (
-              <>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                {canEdit && (
-                  <button
-                    type="button"
-                    aria-label={`Edit ${cell.column.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
+      <DataTableRowStateContext value={rowState}>
+        {row.getVisibleCells().map((cell) => {
+          const pinned = cell.column.getIsPinned();
+          const canEdit = cell.getCanEdit();
+          const isEditing = editingColumnId === cell.column.id;
+          return (
+            <TableCell
+              className={cn(
+                "border-border truncate border-b font-sans",
+                isLastRow && "border-b-0",
+                pinned && pinnedCellClass(cell.column),
+                pinned &&
+                  "group-hover/row:bg-field group-data-cursor/row:bg-field group-data-expanded/row:bg-field",
+                canEdit && "group/cell relative",
+                isEditing && "overflow-visible py-1",
+              )}
+              key={cell.id}
+              role="cell"
+              data-column-id={cell.column.id}
+              aria-label={`${cell.column.id} cell`}
+              onDoubleClick={
+                canEdit && !isEditing && !isClickable
+                  ? (e) => {
+                      e.preventDefault();
                       cell.startEditing();
-                    }}
-                    className="absolute top-1/2 right-1 -translate-y-1/2 rounded-sm border border-border bg-background p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover/cell:opacity-100"
-                  >
-                    <Edit02Icon className="size-3" />
-                  </button>
-                )}
-              </>
-            )}
-          </TableCell>
-        );
-      })}
+                    }
+                  : undefined
+              }
+              style={{
+                width: `var(${columnSizeVar(cell.column.id)})`,
+                maxWidth: `var(${columnSizeVar(cell.column.id)})`,
+                ...pinnedCellStyle(cell.column),
+              }}
+            >
+              {isEditing ? (
+                <DataTableCellEditor cell={cell} />
+              ) : (
+                <>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  {canEdit && (
+                    <button
+                      type="button"
+                      aria-label={`Edit ${cell.column.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        cell.startEditing();
+                      }}
+                      className="absolute top-1/2 right-1 -translate-y-1/2 rounded-sm border border-border bg-background p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover/cell:opacity-100"
+                    >
+                      <Edit02Icon className="size-3" />
+                    </button>
+                  )}
+                </>
+              )}
+            </TableCell>
+          );
+        })}
+      </DataTableRowStateContext>
     </TableRow>
   );
 
   if (hasContextMenu) {
     return (
-      <DataTableContextMenu row={row} actions={contextMenuActions}>
+      <DataTableContextMenu
+        row={row}
+        openPanelEdit={openPanelEdit}
+        hasPanel={hasPanel}
+        canOpenPanel={canOpenPanel}
+        canUpdate={canUpdate}
+      >
         {tableRow}
       </DataTableContextMenu>
     );
@@ -211,8 +236,13 @@ export function DataTableBody<TData extends Record<string, any>>({
 }) {
   const t = useT();
 
+  const { openPanelEdit, hasPanel, canOpenPanel, canUpdate } = useDataTable<TData, unknown>();
   const rows = table.getRowModel().rows;
   const { columnVisibility, columnOrder, columnPinning, cellEditing } = table.state;
+  const canEditCells = !!table.options.enableCellEditing;
+  const rowActions = contextMenuActions ?? NO_ROW_ACTIONS;
+  const hasRowActions = rowActions.length > 0;
+  const getRowClassName = table.options.meta?.getRowClassName;
   const enableSelection = table.options.enableRowSelection === true;
   const selectionAnchorRef = useRef<number | null>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -336,41 +366,49 @@ export function DataTableBody<TData extends Record<string, any>>({
       }}
     >
       {rows.length || (grouping && grouping.collapsedKeys.length > 0 && !isLoading) ? (
-        bodyItems.map((item) =>
-          item.kind === "group" ? (
-            <DataTableGroupHeader
-              key={`group:${item.group.key}`}
-              group={item.group}
-              collapsed={item.collapsed}
-              colSpan={colSpan}
-              onToggle={grouping!.onToggleGroup}
-            />
-          ) : (
-            <Fragment key={item.row.id}>
-              <DataTableRow
-                row={item.row}
-                rowIndex={item.index}
-                selected={item.row.getIsSelected()}
-                isLastRow={item.index === rows.length - 1 && expandedRowId !== item.row.id}
-                columnVisibility={columnVisibility}
-                columnOrder={columnOrder}
-                columnPinning={columnPinning}
-                formatClass={getFormatClass?.(item.row)}
-                table={table}
-                contextMenuActions={contextMenuActions}
-                onRowClick={onRowClick}
-                editingColumnId={cellEditing?.rowId === item.row.id ? cellEditing.columnId : null}
-                isCursor={cursorRowId === item.row.id}
-                isExpanded={expandedRowId === item.row.id}
+        <DataTableRowActionsContext value={rowActions}>
+          {bodyItems.map((item) =>
+            item.kind === "group" ? (
+              <DataTableGroupHeader
+                key={`group:${item.group.key}`}
+                group={item.group}
+                collapsed={item.collapsed}
+                colSpan={colSpan}
+                onToggle={grouping!.onToggleGroup}
               />
-              {expansion && expandedRowId === item.row.id ? (
-                <DataTableExpandedRow rowId={item.row.id} colSpan={colSpan}>
-                  {expansion.renderExpandedRow(item.row, { collapse: collapseExpanded })}
-                </DataTableExpandedRow>
-              ) : null}
-            </Fragment>
-          ),
-        )
+            ) : (
+              <Fragment key={item.row.id}>
+                <DataTableRow
+                  row={item.row}
+                  rowIndex={item.index}
+                  selected={item.row.getIsSelected()}
+                  isLastRow={item.index === rows.length - 1 && expandedRowId !== item.row.id}
+                  columns={columns}
+                  columnVisibility={columnVisibility}
+                  columnOrder={columnOrder}
+                  columnPinning={columnPinning}
+                  canEditCells={canEditCells}
+                  formatClass={getFormatClass?.(item.row)}
+                  rowClassName={getRowClassName?.(item.row)}
+                  hasRowActions={hasRowActions}
+                  onRowClick={onRowClick}
+                  openPanelEdit={openPanelEdit}
+                  hasPanel={hasPanel}
+                  canOpenPanel={canOpenPanel}
+                  canUpdate={canUpdate}
+                  editingColumnId={cellEditing?.rowId === item.row.id ? cellEditing.columnId : null}
+                  isCursor={cursorRowId === item.row.id}
+                  isExpanded={expandedRowId === item.row.id}
+                />
+                {expansion && expandedRowId === item.row.id ? (
+                  <DataTableExpandedRow rowId={item.row.id} colSpan={colSpan}>
+                    {expansion.renderExpandedRow(item.row, { collapse: collapseExpanded })}
+                  </DataTableExpandedRow>
+                ) : null}
+              </Fragment>
+            ),
+          )}
+        </DataTableRowActionsContext>
       ) : isLoading ? (
         <TableRow>
           <TableCell colSpan={columns.length} className="h-24 rounded-b-md border-b text-center">

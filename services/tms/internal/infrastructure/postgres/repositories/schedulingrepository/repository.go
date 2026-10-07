@@ -48,6 +48,7 @@ func limitOr(requested, fallback int) int {
 	if requested > 0 && requested <= fallback {
 		return requested
 	}
+
 	return fallback
 }
 
@@ -138,7 +139,11 @@ func (r *repository) UpdateTemplate(
 			r.l.Error("failed to update shift template", zap.Error(err))
 			return nil, fmt.Errorf("update shift template: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "ShiftTemplate", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"ShiftTemplate",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -186,7 +191,7 @@ func (r *repository) CountTemplateAssignmentsByIDs(
 			Model((*worker.WorkerShiftAssignment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.WorkerShiftAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShiftTemplateID.In(), bun.In(req.TemplateIDs)).
+					Where(cols.ShiftTemplateID.In(), bun.List(req.TemplateIDs)).
 					Where(cols.EffectiveTo.IsNull())
 			})
 
@@ -317,31 +322,35 @@ func (r *repository) ListPreferences(
 	ctx context.Context,
 	req *repositories.ListAvailabilityPreferencesRequest,
 ) ([]*worker.WorkerAvailabilityPreference, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerAvailabilityPreference, error) {
-		cols := buncolgen.WorkerAvailabilityPreferenceColumns
-		entities := make([]*worker.WorkerAvailabilityPreference, 0, 7)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*worker.WorkerAvailabilityPreference, error) {
+			cols := buncolgen.WorkerAvailabilityPreferenceColumns
+			entities := make([]*worker.WorkerAvailabilityPreference, 0, 7)
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerAvailabilityPreferenceScopeTenant(sq, req.TenantInfo)
-				// An empty worker reads the whole roster's stated availability,
-				// which is what the rota needs: seven rows a worker at most, so
-				// one read beats one per line on the board.
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				return sq
-			}).
-			Order(cols.WorkerID.OrderAsc(), cols.DayOfWeek.OrderAsc()).
-			Scan(ctx); err != nil {
-			r.l.Error("failed to list availability preferences", zap.Error(err))
-			return nil, fmt.Errorf("list availability preferences: %w", err)
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = buncolgen.WorkerAvailabilityPreferenceScopeTenant(sq, req.TenantInfo)
+					// An empty worker reads the whole roster's stated availability,
+					// which is what the rota needs: seven rows a worker at most, so
+					// one read beats one per line on the board.
+					if !req.WorkerID.IsNil() {
+						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+					}
+					return sq
+				}).
+				Order(cols.WorkerID.OrderAsc(), cols.DayOfWeek.OrderAsc()).
+				Scan(ctx); err != nil {
+				r.l.Error("failed to list availability preferences", zap.Error(err))
+				return nil, fmt.Errorf("list availability preferences: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 // UpsertPreference writes one weekday's statement, replacing whatever was
@@ -351,23 +360,27 @@ func (r *repository) UpsertPreference(
 	ctx context.Context,
 	entity *worker.WorkerAvailabilityPreference,
 ) (*worker.WorkerAvailabilityPreference, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerAvailabilityPreference, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, worker_id, day_of_week) DO UPDATE").
-			Set("preference = EXCLUDED.preference").
-			Set("note = EXCLUDED.note").
-			Set("updated_at = EXCLUDED.updated_at").
-			Set("version = worker_availability_preferences.version + 1").
-			Returning("*").
-			Exec(ctx); err != nil {
-			r.l.Error("failed to upsert availability preference", zap.Error(err))
-			return nil, fmt.Errorf("upsert availability preference: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerAvailabilityPreference, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				On("CONFLICT (organization_id, business_unit_id, worker_id, day_of_week) DO UPDATE").
+				Set("preference = EXCLUDED.preference").
+				Set("note = EXCLUDED.note").
+				Set("updated_at = EXCLUDED.updated_at").
+				Set("version = worker_availability_preferences.version + 1").
+				Returning("*").
+				Exec(ctx); err != nil {
+				r.l.Error("failed to upsert availability preference", zap.Error(err))
+				return nil, fmt.Errorf("upsert availability preference: %w", err)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListSwaps(
@@ -391,7 +404,7 @@ func (r *repository) ListSwaps(
 					})
 				}
 				if req.OpenOnly {
-					sq = sq.Where(cols.Status.In(), bun.In([]worker.ShiftSwapStatus{
+					sq = sq.Where(cols.Status.In(), bun.List([]worker.ShiftSwapStatus{
 						worker.SwapProposed,
 						worker.SwapAccepted,
 					}))
@@ -476,7 +489,11 @@ func (r *repository) UpdateSwap(
 			r.l.Error("failed to update shift swap", zap.Error(err))
 			return nil, fmt.Errorf("update shift swap: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "ShiftSwapRequest", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"ShiftSwapRequest",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

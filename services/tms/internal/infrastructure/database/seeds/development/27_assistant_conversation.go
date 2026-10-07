@@ -117,7 +117,7 @@ func (s *AssistantConversationSeed) loadRefs(
 		Model(&agents).
 		Where(agentCols.OrganizationID.Eq(), org.ID).
 		Where(agentCols.BusinessUnitID.Eq(), org.BusinessUnitID).
-		Where(agentCols.Name.In(), bun.In([]string{SeedAgentDispatchName, SeedAgentBillingName})).
+		Where(agentCols.Name.In(), bun.List([]string{SeedAgentDispatchName, SeedAgentBillingName})).
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("load seeded agents: %w", err)
 	}
@@ -167,10 +167,13 @@ func (s *AssistantConversationSeed) seedDispatchThread(
 	callID := "call_" + pulid.MustNew("").String()
 	messages := []*conversation.Message{
 		{
-			ThreadID:      thread.ID,
-			Sequence:      0,
-			Role:          conversation.RoleUser,
-			Content:       fmt.Sprintf("Where is %s right now and who is on it?", refs.shipment.ProNumber),
+			ThreadID: thread.ID,
+			Sequence: 0,
+			Role:     conversation.RoleUser,
+			Content: fmt.Sprintf(
+				"Where is %s right now and who is on it?",
+				refs.shipment.ProNumber,
+			),
 			ScopeStage:    "Deterministic",
 			ScopeCategory: "TransportationOperations",
 			CreatedAt:     startedAt,

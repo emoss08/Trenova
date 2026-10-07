@@ -3,7 +3,9 @@ import { getColumns } from "../shipment-columns";
 import { describe, expect, it } from "vitest";
 
 describe("shipment coverage column", () => {
-  const column = getColumns({ rowActions: [], t: translate, expandedRowId: null, onToggleExpanded: () => {} }).find((entry) => entry.id === "driver");
+  const column = getColumns({ t: translate, onToggleExpanded: () => {} }).find(
+    (entry) => entry.id === "driver",
+  );
 
   it("is registered", () => {
     expect(column).toBeDefined();
@@ -22,7 +24,7 @@ describe("shipment coverage column", () => {
 });
 
 describe("shipment board columns", () => {
-  const columns = getColumns({ rowActions: [], t: translate, expandedRowId: null, onToggleExpanded: () => {} });
+  const columns = getColumns({ t: translate, onToggleExpanded: () => {} });
 
   it("lays the columns out in the board's order, lane first and actions last", () => {
     expect(columns.map((column) => column.id)).toEqual([

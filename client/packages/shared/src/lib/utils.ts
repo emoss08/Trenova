@@ -1,4 +1,4 @@
-import { intlLocale } from "@trenova/shared/i18n/format";
+import { numberFormatter } from "@trenova/shared/i18n/format";
 import type { Location } from "@trenova/shared/types/location";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -150,14 +150,14 @@ export function clampUnit(value: number): number {
 }
 
 export function formatCurrency(num: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat(intlLocale(), {
+  return numberFormatter({
     style: "currency",
     currency: currency,
   }).format(num);
 }
 
 export function formatCompactCurrency(num: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat(intlLocale(), {
+  return numberFormatter({
     style: "currency",
     currency: currency,
     notation: "compact",
@@ -169,7 +169,7 @@ export function formatCompactCurrency(num: number, currency: string = "USD"): st
 // Intl re-applies the scale. That keeps every existing caller's contract while letting the
 // separator and sign placement follow the reader's language.
 export function formatPercent(value: number, digits: number = 1): string {
-  return new Intl.NumberFormat(intlLocale(), {
+  return numberFormatter({
     style: "percent",
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
@@ -183,7 +183,7 @@ export function metersToMiles(meters: number): number {
 }
 
 export function formatPerMile(value: number, digits: number = 2, currency: string = "USD"): string {
-  const formatted = new Intl.NumberFormat(intlLocale(), {
+  const formatted = numberFormatter({
     style: "currency",
     currency: currency,
     minimumFractionDigits: digits,

@@ -11,7 +11,7 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@trenova/shared/components/ui/context-menu";
-import { useDataTable } from "@/contexts/data-table-context";
+import { useDataTableRowActions } from "@/contexts/data-table-row-context";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Edit02Icon, EyeIcon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
@@ -19,7 +19,10 @@ import type { ReactNode } from "react";
 interface DataTableContextMenuProps<TData extends RowData> {
   children: ReactNode;
   row: Row<TData>;
-  actions?: RowAction<TData>[];
+  openPanelEdit: (row: Row<TData>) => void;
+  hasPanel: boolean;
+  canOpenPanel: boolean;
+  canUpdate: boolean;
 }
 
 type ActionGroup<TData extends RowData> = {
@@ -53,11 +56,13 @@ function groupActions<TData extends RowData>(actions: RowAction<TData>[]): Actio
 export function DataTableContextMenu<TData extends RowData>({
   children,
   row,
-  actions = [],
+  openPanelEdit,
+  hasPanel,
+  canOpenPanel,
+  canUpdate,
 }: DataTableContextMenuProps<TData>) {
   const t = useT();
-
-  const { openPanelEdit, hasPanel, canOpenPanel, canUpdate } = useDataTable<TData, unknown>();
+  const actions = useDataTableRowActions<TData>();
 
   const allActions: RowAction<TData>[] = [];
 
@@ -101,7 +106,9 @@ export function DataTableContextMenu<TData extends RowData>({
                 >
                   {Icon && <Icon className="size-4" />}
                   {t(action.label)}
-                  {action.shortcut ? <ContextMenuShortcut>{action.shortcut}</ContextMenuShortcut> : null}
+                  {action.shortcut ? (
+                    <ContextMenuShortcut>{action.shortcut}</ContextMenuShortcut>
+                  ) : null}
                 </ContextMenuItem>
               );
             })}

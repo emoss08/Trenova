@@ -14,10 +14,7 @@ type DataTableExpandedRowProps = {
  */
 export function DataTableExpandedRow({ rowId, colSpan, children }: DataTableExpandedRowProps) {
   return (
-    <TableRow
-      data-expanded-for={rowId}
-      className="bg-surface-selected hover:bg-surface-selected h-auto"
-    >
+    <TableRow data-expanded-for={rowId} className="bg-field hover:bg-field h-auto">
       <TableCell colSpan={colSpan} className="border-border border-b p-0 whitespace-normal">
         <div className="animate-expand-in sticky left-0 w-(--dt-viewport-w,100%) min-w-0">
           {children}

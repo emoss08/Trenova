@@ -4,7 +4,11 @@ import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
 import { useDataTableQuery } from "@/hooks/data-table/use-data-table-query";
 import { useDataTableRowCursor } from "@/hooks/data-table/use-data-table-row-cursor";
-import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import {
+  defaultPageSizeFor,
+  resolvePageSize,
+  searchParamsParser,
+} from "@/hooks/data-table/use-data-table-state";
 import { usePageViewRegistration } from "@/hooks/data-table/use-page-view-registration";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
 import { usePermissions } from "@/hooks/use-permission";
@@ -65,7 +69,8 @@ import type {
   SortDirection,
   SortField,
 } from "@trenova/shared/types/data-table";
-import { useQueryStates } from "nuqs";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import { parseAsInteger, useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DataTablePagination } from "./_components/data-table-pagination";
@@ -81,6 +86,7 @@ import { createSelectionColumn } from "./data-table-selection-column";
 import { DataTableToolbar } from "./data-table-toolbar";
 
 const BULK_SELECT_MAX = 1000;
+const COLUMN_DRAG_MODIFIERS = [restrictToHorizontalAxis];
 
 type CursorState = {
   scopeKey: string;
@@ -138,9 +144,15 @@ export function DataTable<TData extends Record<string, any>>({
   const canCreate = resource ? permissions.canCreate : true;
   const canUpdate = resource ? permissions.canUpdate : true;
   const canExport = enableExport && (resource ? permissions.canExport : true);
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
-  const { pageIndex, pageSize, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
+  const defaultPageSize = defaultPageSizeFor(pageSizeOptions);
+  const tableSearchParamsParser = useMemo(
+    () => ({ ...searchParamsParser, pageSize: parseAsInteger.withDefault(defaultPageSize) }),
+    [defaultPageSize],
+  );
+  const [searchParams, setSearchParams] = useQueryStates(tableSearchParamsParser);
+  const { pageIndex, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
     searchParams;
+  const pageSize = resolvePageSize(searchParams.pageSize, pageSizeOptions);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [cursorState, setCursorState] = useState<CursorState>(EMPTY_CURSOR_STATE);
   const [activeView, setActiveView] = useState<ActiveTableView | null>(null);
@@ -582,16 +594,25 @@ export function DataTable<TData extends Record<string, any>>({
     shortcuts: rowShortcuts,
   });
 
-  const viewportRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const element = viewportRef.current;
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const attachViewport = useCallback((element: HTMLDivElement | null) => {
+    viewportRef.current = element;
     if (!element || typeof ResizeObserver === "undefined") return;
-    const apply = () => element.style.setProperty("--dt-viewport-w", `${element.clientWidth}px`);
+    let width = -1;
+    const apply = () => {
+      const next = element.clientWidth;
+      if (next === width) return;
+      width = next;
+      element.style.setProperty("--dt-viewport-w", `${next}px`);
+    };
     apply();
     const observer = new ResizeObserver(apply);
     observer.observe(element);
-    return () => observer.disconnect();
-  });
+    return () => {
+      observer.disconnect();
+      if (viewportRef.current === element) viewportRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const focusId = cursorRowId ?? expansion?.expandedRowId ?? null;
@@ -602,13 +623,12 @@ export function DataTable<TData extends Record<string, any>>({
     row?.scrollIntoView?.({ block: "nearest" });
   }, [cursorRowId, expansion?.expandedRowId]);
 
-  const handleRowClick = useMemo(() => {
-    if (onRowClick || !expansion) return onRowClick;
-    return (row: Row<TData>) => {
-      expansion.onExpandedRowIdChange(expansion.expandedRowId === row.id ? null : row.id);
-      keyboard?.onCursorRowIdChange(row.id);
-    };
-  }, [onRowClick, expansion, keyboard]);
+  const toggleExpandedRow = useLatestCallback((row: Row<TData>) => {
+    if (!expansion) return;
+    expansion.onExpandedRowIdChange(expansion.expandedRowId === row.id ? null : row.id);
+    keyboard?.onCursorRowIdChange(row.id);
+  });
+  const handleRowClick = onRowClick ?? (expansion ? toggleExpandedRow : undefined);
 
   const handleApplyConfig = useCallback(
     (config: TableConfig, source?: TableViewSource) => {
@@ -803,7 +823,14 @@ export function DataTable<TData extends Record<string, any>>({
 
   const { vars: columnSizeVars, totalSize } = columnLayout(table.getFlatHeaders());
 
-  const reorderableIds = table.getVisibleLeafColumns().map((col) => col.id);
+  const reorderableIdsKey = table
+    .getVisibleLeafColumns()
+    .map((col) => col.id)
+    .join("\u0000");
+  const reorderableIds = useMemo(
+    () => (reorderableIdsKey ? reorderableIdsKey.split("\u0000") : []),
+    [reorderableIdsKey],
+  );
 
   // An empty page is drawn as the table it will become rather than as a
   // table with no rows, so the header row and the pager step aside for it.
@@ -927,7 +954,7 @@ export function DataTable<TData extends Record<string, any>>({
                 )}
               </div>
             ) : (
-              <div ref={viewportRef} className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
+              <div ref={attachViewport} className="bleed:min-h-0 bleed:flex-1 relative min-w-0">
                 <DataTableRefreshPill
                   visible={liveRefresh.hasPendingUpdate}
                   onRefresh={liveRefresh.applyStaged}
@@ -936,7 +963,7 @@ export function DataTable<TData extends Record<string, any>>({
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
-                  modifiers={[restrictToHorizontalAxis]}
+                  modifiers={COLUMN_DRAG_MODIFIERS}
                   onDragEnd={handleColumnDragEnd}
                 >
                   <Table
