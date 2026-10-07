@@ -29,7 +29,7 @@ import { getTodayDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { WORKER_LEAVE_TYPE_LABELS, type WorkerLeaveType } from "@trenova/shared/types/worker";
 import {
-  EMPLOYMENT_EVENT_LABELS,
+  employmentEventLabel,
   EMPLOYMENT_EVENT_REQUIRES_REASON,
   employmentEventAmendSchema,
   employmentEventFormSchema,
@@ -199,7 +199,7 @@ function RecordSheet({
         leaveType: values.kind === "LeaveStarted" ? (values.leaveType ?? undefined) : undefined,
       }),
     onSuccess: (result) => {
-      toast.success(`${EMPLOYMENT_EVENT_LABELS[kind] ?? "Event"} recorded`, {
+      toast.success(kind ? t("{0} recorded", employmentEventLabel(kind)) : t("Event recorded"), {
         description: describeCascade(result.cascade),
       });
       // The termination stands either way, so a portal failure is a follow-up
@@ -216,7 +216,7 @@ function RecordSheet({
   });
 
   const kindOptions = useMemo(
-    () => kinds.map((value) => ({ value, label: EMPLOYMENT_EVENT_LABELS[value] })),
+    () => kinds.map((value) => ({ value, label: employmentEventLabel(value) })),
     [kinds],
   );
 
@@ -390,7 +390,9 @@ function RecordSheet({
               >
                 {isPending
                   ? t("Saving...")
-                  : t("Record {0}", EMPLOYMENT_EVENT_LABELS[kind] ?? "event")}
+                  : kind
+                    ? t("Record {0}", employmentEventLabel(kind))
+                    : t("Record event")}
               </Button>
             </DialogFooter>
           </Form>
@@ -464,7 +466,7 @@ function AmendSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Amend {0}", meta.label.toLowerCase())}</DialogTitle>
+          <DialogTitle>{t("Amend {0}", t(meta.label))}</DialogTitle>
           <DialogDescription>
             {t(
               "Correct the date, reason or notes. What the event already did to the worker stays as it is — record a new event to change state again.",

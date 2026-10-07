@@ -111,9 +111,8 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
                     <Award01Icon className="size-3" aria-hidden />
                     {t(
-                      "{0} {1} on {2}",
+                      "{0, plural, one {# year} other {# years}} on {1}",
                       item.years,
-                      item.years === 1 ? "year" : "years",
                       formatUnixMonthDay(item.onDate),
                     )}
                   </span>

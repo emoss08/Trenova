@@ -95,7 +95,7 @@
   "{0, plural, one {# timesheet} other {# timesheets}} {1} {2}": "{0, plural, other {# 份工时表}} {1} {2}",
   "{0} + running": "{0} + 进行中",
   "{0} Every week in it goes back to approved so the period can be run again once whatever was wrong is fixed. The run itself is kept, not deleted.": "{0} 其中的每一周都会恢复为已批准，待问题修正后即可重新运行该期间。该次运行本身会保留，不会删除。",
-  "{0} across {1} {2}": "{0}，分布于 {1} 个{2}",
+  "{0} across {1, plural, one {# person} other {# people}}": "{1, plural, other {# 人}}共 {0}",
   "{0} before overtime": "距加班还有 {0}",
   "{0} from {1} comes off the week. The reason is kept.": "将从本周移除 {1} 的 {0}。原因会保留。",
   "{0} into overtime": "已进入加班 {0}",

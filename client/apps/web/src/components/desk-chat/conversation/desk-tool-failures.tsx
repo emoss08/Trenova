@@ -18,11 +18,12 @@ export type BulkItem = { id: string; name: string; reason: string };
 export function DeskBulkList({
   items,
   limit = 3,
-  noun,
+  of = "records",
 }: {
   items: readonly BulkItem[];
   limit?: number;
-  noun: string;
+  /** What the list holds, so its search box can name it whole in any language. */
+  of?: "records" | "steps";
 }) {
   const t = useT();
   const reasons = useMemo(() => {
@@ -65,8 +66,12 @@ export function DeskBulkList({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("Filter {0} {1}", rows.length, noun)}
-            aria-label={t("Filter {0}", noun)}
+            placeholder={
+              of === "steps"
+                ? t("Filter {0, plural, one {# step} other {# steps}}", rows.length)
+                : t("Filter {0, plural, one {# record} other {# records}}", rows.length)
+            }
+            aria-label={of === "steps" ? t("Filter the steps") : t("Filter the records")}
           />
         </label>
       )}
@@ -79,22 +84,18 @@ export function DeskBulkList({
           </div>
         ))}
         {shown.length === 0 && (
-          <div className="dk-bl-none">{t("No {0} match “{1}”", noun, query)}</div>
+          <div className="dk-bl-none">{t("Nothing matches “{0}”", query)}</div>
         )}
       </div>
       {rows.length > limit && (
         <div className="dk-bl-f">
           <button type="button" className="dk-ec-link" onClick={() => setAll((value) => !value)}>
-            {all ? t("Show fewer") : t("Show all {0} {1}", rows.length, noun)}
+            {all ? t("Show fewer") : t("Show all {0}", rows.length)}
           </button>
         </div>
       )}
     </div>
   );
-}
-
-function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /**
@@ -139,8 +140,6 @@ export function DeskWriteResultCard({
 
   const total = result.total ?? failed.length;
   const done = Math.max(0, total - failed.length);
-  const noun = result.kind || t("records");
-  const action = result.action || t("changed");
   // A failed record is named by its label, the way the app names it; the id
   // stands in only when the write could not name it.
   const items = failed.map((item) => ({
@@ -152,22 +151,14 @@ export function DeskWriteResultCard({
   return (
     <DeskErrorCard
       tone="err"
-      title={t(
-        "{0} {1} of {2} {3} · {4} didn't go through",
-        capitalize(action),
-        done,
-        total,
-        noun,
-        failed.length,
-      )}
+      title={t("{0} of {1} went through · {2} didn't", done, total, failed.length)}
       sub={t(
-        "The {0} stayed as they were. The {1} that {2} are final.",
+        "{0, plural, one {The one that didn't go through stayed as it was.} other {The # that didn't go through stayed as they were.}} {1, plural, one {The one that went through is final.} other {The # that went through are final.}}",
         failed.length,
         done,
-        action,
       )}
     >
-      <DeskBulkList items={items} noun={noun} />
+      <DeskBulkList items={items} />
       {onAsk && (
         <div className="dk-ec-acts">
           <DeskErrorButton
@@ -175,9 +166,8 @@ export function DeskWriteResultCard({
             onClick={() =>
               onAsk(
                 t(
-                  "{0} {1} didn't go through. Look at why and fix them: {2}",
+                  "{0, plural, one {# change didn't go through.} other {# changes didn't go through.}} Look at why and fix it: {1}",
                   failed.length,
-                  noun,
                   failed
                     .slice(0, 20)
                     .map((item) => `${item.label || item.id} (${item.reason})`)
@@ -334,7 +324,7 @@ export function DeskStepFailures({ steps }: { steps: readonly ToolStep[] }) {
                   <div className="dk-sf-items">
                     <DeskBulkList
                       limit={5}
-                      noun={t("steps")}
+                      of="steps"
                       items={group.steps.map((step) => ({
                         id: step.name,
                         name: humanizeToolName(step.name),

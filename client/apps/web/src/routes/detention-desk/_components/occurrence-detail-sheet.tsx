@@ -1,4 +1,5 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
+import type { NoticeDeliveryStatus, NoticeKind } from "@trenova/shared/types/detention";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -250,10 +251,11 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
                   NOTICE_DELIVERY_DOT[notice.deliveryStatus],
                 )}
               />
-              <span className="truncate">{t("{0} notice", toTitleCase(notice.kind))}</span>
+              <span className="truncate">{noticeKindLabel(notice.kind, t)}</span>
               <span className="text-muted-foreground shrink-0">
-                {toTitleCase(notice.deliveryStatus)}
-                {notice.satisfiesRequirement ? ` ${t("· in window")}` : ""}
+                {notice.satisfiesRequirement
+                  ? t("{0} · in window", deliveryStatusLabel(notice.deliveryStatus, t))
+                  : deliveryStatusLabel(notice.deliveryStatus, t)}
               </span>
             </span>
             <span className="text-2xs text-muted-foreground shrink-0 tabular-nums">
@@ -676,4 +678,34 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
       </SheetContent>
     </Sheet>
   );
+}
+
+function noticeKindLabel(kind: NoticeKind, t: TranslateFn): string {
+  switch (kind) {
+    case "Warning":
+      return t("Warning notice");
+    case "Started":
+      return t("Started notice");
+    case "Update":
+      return t("Update notice");
+    case "Final":
+      return t("Final notice");
+  }
+}
+
+function deliveryStatusLabel(status: NoticeDeliveryStatus, t: TranslateFn): string {
+  switch (status) {
+    case "Queued":
+      return t("Queued");
+    case "Sent":
+      return t("Sent");
+    case "Delivered":
+      return t("Delivered");
+    case "Opened":
+      return t("Opened");
+    case "Bounced":
+      return t("Bounced");
+    case "Failed":
+      return t("Failed");
+  }
 }

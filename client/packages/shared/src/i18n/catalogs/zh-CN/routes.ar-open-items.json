@@ -5,6 +5,7 @@
   "Open item totals": "未结项目合计",
   "Outstanding invoices and their payment status across all customers.": "所有客户的未结发票及其付款状态。",
   "Select invoices from a single customer to apply a payment": "请选择同一客户的发票以冲抵付款",
+  "Totals · {0, plural, one {# invoice} other {# invoices}}": "合计 · {0, plural, other {# 张发票}}",
   "open invoices": "未结发票",
   "weighted by open $": "依未结金额加权",
   "{0} selected · {1}": "已选 {0} 笔 · {1}"

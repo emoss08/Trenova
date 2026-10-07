@@ -5,6 +5,7 @@ import { StatTile } from "@/components/stat-tile";
 import type { CarrierSettlementWorkspaceSummary } from "@/lib/graphql/carrier-settlement";
 import type { ReactNode } from "react";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 function formatDate(unix: number): string {
   return formatUnixDateMedium(unix);
@@ -18,6 +19,7 @@ export function WorkspaceSummaryStrip({
   actions: ReactNode;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   const pipelineTotal =
     summary.draftCount +
@@ -30,12 +32,13 @@ export function WorkspaceSummaryStrip({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-muted-foreground text-xs">
-          {t("Pay period")}{" "}
-          <span className="text-foreground font-medium">
-            {formatDate(summary.periodStart)} – {formatDate(summary.periodEnd - 86400)}
-          </span>{" "}
-          {t("· pays")}{" "}
-          <span className="text-foreground font-medium">{formatDate(summary.payDate)}</span>
+          {rt(
+            "Pay period <b>{0} – {1}</b> · pays <b>{2}</b>",
+            { b: (c) => <span className="text-foreground font-medium">{c}</span> },
+            formatDate(summary.periodStart),
+            formatDate(summary.periodEnd - 86400),
+            formatDate(summary.payDate),
+          )}
         </p>
         {actions}
       </div>

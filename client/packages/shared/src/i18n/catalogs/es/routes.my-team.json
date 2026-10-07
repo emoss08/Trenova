@@ -42,7 +42,7 @@
   "Your team could not be loaded. {0}": "No se pudo cargar su equipo. {0}",
   "until called back": "hasta nuevo aviso",
   "until {0}": "hasta {0}",
+  "{0, plural, one {# year} other {# years}} on {1}": "{0, plural, one {# año} other {# años}} en {1}",
   "{0} to keep an eye on": "{0} que vigilar",
-  "{0} {1} on {2}": "{0} {1} el {2}",
   "· {0} flagged": "· {0} marcados"
 }

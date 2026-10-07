@@ -309,10 +309,19 @@ export function translateIn(
   // wrapped, and is far better than making every call site guard.
   if (message === null || message === undefined || message === "") return "";
 
+  return formatMessage(locale, lookupIn(locale, message), args);
+}
+
+/**
+ * lookupIn returns a message's translation in a locale without filling its placeholders,
+ * or the English source when there is none. Rich text needs the template itself: it splits
+ * the sentence at its tags first and formats each piece, so an argument can never be read
+ * as markup.
+ */
+export function lookupIn(locale: Locale, message: string): string {
   const messages =
     locale === activeLocale ? activeMessages : (catalogs.get(locale)?.messages ?? {});
-  const translated = messages[message] ?? message;
-  return formatMessage(locale, translated, args);
+  return messages[message] ?? message;
 }
 
 export function hasTranslation(message: string): boolean {

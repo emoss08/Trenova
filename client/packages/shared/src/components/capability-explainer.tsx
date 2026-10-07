@@ -4,6 +4,7 @@ import { describeMatch, enforcementLabel, enforcementTone, rulesForField } from 
 import { cn } from "../lib/utils";
 import type { ResolvedCapabilityRule, ResolvedModeProfile } from "../types/shipment";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 type CapabilityExplainerProps = {
   profile: ResolvedModeProfile | null | undefined;
@@ -13,6 +14,7 @@ type CapabilityExplainerProps = {
 
 export function CapabilityExplainer({ profile, field, className }: CapabilityExplainerProps) {
   const t = useT();
+  const rt = useRichT();
 
   const rules = rulesForField(profile, field);
 
@@ -38,10 +40,11 @@ export function CapabilityExplainer({ profile, field, className }: CapabilityExp
         <div className="border-b border-border px-4 py-3">
           <p className="text-xs font-medium">{t("Why this field behaves this way")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {t("Resolved from the")} <span className="font-medium">{profile.profileName}</span>{" "}
-            {t(
-              "profile, matched on {0}.",
-              describeMatch(profile.candidates?.find((c) => c.selected)?.matchedOn),
+            {rt(
+              "Resolved from the <b>{0}</b> profile, matched on {1}.",
+              { b: (c) => <span className="font-medium">{c}</span> },
+              profile.profileName,
+              describeMatch(profile.candidates?.find((c) => c.selected)?.matchedOn, t),
             )}
           </p>
         </div>

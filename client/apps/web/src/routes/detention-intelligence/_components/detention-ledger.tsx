@@ -86,15 +86,23 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           label={t("Net detention margin")}
           tone={signTone(netMargin)}
           value={<NumberFlow value={netMargin} format={CURRENCY_FORMAT} />}
-          sub={t(
-            "{0} settled {1} across {2} {3} · {4}% ran past free time {5}",
-            stopCount.toLocaleString(),
-            stopCount === 1 ? "stop" : "stops",
-            rollup.facilityCount,
-            rollup.facilityCount === 1 ? "facility" : "facilities",
-            Math.round(breachRate * 100),
-            rollup.truncated ? ` ${t("· top facilities only")}` : "",
-          )}
+          sub={
+            rollup.truncated
+              ? t(
+                  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time · top facilities only",
+                  stopCount.toLocaleString(),
+                  stopCount,
+                  rollup.facilityCount,
+                  Math.round(breachRate * 100),
+                )
+              : t(
+                  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time",
+                  stopCount.toLocaleString(),
+                  stopCount,
+                  rollup.facilityCount,
+                  Math.round(breachRate * 100),
+                )
+          }
         />
         <KpiStripItem
           label={t("Billed")}

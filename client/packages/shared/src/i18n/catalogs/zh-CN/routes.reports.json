@@ -243,15 +243,16 @@
   "more than": "多于",
   "revenue, weekly": "营收，每周",
   "row limit reached": "已达数据行上限",
+  "vs previous": "较上期",
   "vs {0}": "相对于 {0}",
   "{0, plural, one {# in-app recipient} other {# in-app recipients}}": "{0, plural, other {# 位应用内收件人}}",
+  "{0, plural, one {# report} other {# reports}}": "{0, plural, other {# 份报表}}",
   "{0, plural, one {# tile} other {# tiles}}": "{0, plural, other {# 个磁贴}}",
-  "{0} Fields": "{0} 字段",
   "{0} fields": "{0} 个字段",
   "{0} for {1}": "{0}，适用 {1}",
   "{0} of": "{0} 之",
+  "{0}% of target": "达成目标的 {0}%",
   "{0}% of {1}": "{1} 的 {0}%",
-  "{0}s": "{0} 秒",
   "· {0, plural, one {# filter} other {# filters}}": "· {0, plural, other {# 个筛选器}}",
   "— file attached": "— 已附文件"
 }

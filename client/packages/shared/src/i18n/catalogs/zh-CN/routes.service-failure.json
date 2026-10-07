@@ -2,11 +2,14 @@
   "Build EDI 214 payload": "创建 EDI 214 负载",
   "Clear reason code": "清除原因代码",
   "Customer-facing operational context": "面向客户的运营说明",
+  "Cutoff": "截止时间",
   "EDI 214 payload generated": "EDI 214 负载已生成",
   "EDI overrides": "EDI 覆盖",
+  "Grace {0}m": "宽限 {0} 分钟",
   "Internal notes": "内部备注",
   "Internal review notes": "内部审查备注",
   "Late minutes": "迟到分钟数",
+  "Late {0}m": "迟到 {0} 分钟",
   "Loading service failure...": "正在加载服务失误...",
   "Operations notes": "运营备注",
   "Overrides apply only to this failure.": "覆盖仅适用于此笔失误。",
@@ -15,6 +18,5 @@
   "Select reason code": "选择原因代码",
   "Service failure resolved": "服务失误已处理",
   "Service failure reviewed": "服务失误已审查",
-  "Service failure voided": "服务失误已作废",
-  "{0} {1}m": "{0} {1} 分钟"
+  "Service failure voided": "服务失误已作废"
 }

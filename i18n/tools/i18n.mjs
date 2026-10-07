@@ -5,9 +5,11 @@
 //   sync                   rebuild i18n/messages.en.json from source; create locale files;
 //                          refresh an edition overlay's own catalog when it is in the tree
 //   pending <locale>       print strings still needing translation (--area, --limit)
-//   merge <locale> <file>  merge a batch of translations into that locale's catalog
+//   merge <locale> <file>  merge a batch of translations into that locale's catalog, refusing
+//                          one whose placeholders, plurals or tags differ from the source
 //   emit                   write the per-scope, per-bundle runtime catalogs the apps load
-//   check                  CI gate: fail on missing or orphaned entries, or stale runtime catalogs
+//   check                  CI gate: fail on missing or orphaned entries, stale runtime catalogs,
+//                          or messages assembled from English pieces (fragments.mjs)
 //   codemod <dir> [--write]  wrap user-facing literals in t() under <dir>
 //
 // Both extractors feed one merged catalog keyed by the English source string, so a message
@@ -25,6 +27,8 @@ import {
   WEB_BUNDLE,
 } from "./bundles.mjs";
 import { runCodemod } from "./codemod.mjs";
+import { findFragments, formatFinding } from "./fragments.mjs";
+import { translationProblems } from "./validate.mjs";
 import { extractTemplates } from "./extract-templates.mjs";
 import { extractTypeScript } from "./extract-ts.mjs";
 import { reject } from "./filter.mjs";
@@ -445,18 +449,30 @@ async function merge(locale, file) {
   let added = 0;
   let updated = 0;
   const unknown = [];
+  const broken = [];
   for (const [key, value] of Object.entries(batch)) {
     if (!(key in source)) {
       unknown.push(key);
       continue;
     }
-    if (typeof value !== "string" || value.trim() === "") {
-      console.error(`i18n: refusing empty translation for ${JSON.stringify(key)}`);
-      process.exit(1);
+    const problems = translationProblems(key, value);
+    if (problems.length > 0) {
+      broken.push({ key, problems });
+      continue;
     }
     if (key in existing) updated += 1;
     else added += 1;
     existing[key] = value;
+  }
+
+  if (broken.length > 0) {
+    // Nothing is merged from a batch with a broken entry: a dropped placeholder or tag shows
+    // up only when someone reads that screen in that language.
+    console.error(`i18n: ${broken.length} translations do not match their source:`);
+    for (const { key, problems } of broken.slice(0, 10)) {
+      console.error(`  ${JSON.stringify(key)}: ${problems.join("; ")}`);
+    }
+    process.exit(1);
   }
 
   if (unknown.length > 0) {
@@ -501,6 +517,12 @@ async function check() {
     if (!(await checkEdition(edition, source, editionGo))) failed = true;
   }
   if (!(await checkRuntimeOutputs())) failed = true;
+  const fragments = await findFragments(repoRoot);
+  if (fragments.length > 0) {
+    failed = true;
+    console.error(`i18n: ${fragments.length} messages are assembled from English pieces:`);
+    for (const finding of fragments.slice(0, 20)) console.error(`  ${formatFinding(finding)}`);
+  }
   if (failed) process.exit(1);
   console.log("i18n: catalogs are complete and up to date");
 }

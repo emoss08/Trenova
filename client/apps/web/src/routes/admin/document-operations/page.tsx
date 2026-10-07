@@ -611,7 +611,7 @@ function ErrorsBanner({ errors }: { errors: string[] }) {
     <div className="border-danger-border bg-danger-subtle rounded-lg border p-3">
       <div className="text-destructive flex items-center gap-2 text-sm font-medium">
         <AlertTriangleIcon className="size-4" />
-        {t("{0} {1} detected", errors.length, errors.length === 1 ? "error" : "errors")}
+        {t("{0, plural, one {# error detected} other {# errors detected}}", errors.length)}
       </div>
       <div className="mt-2 space-y-1">
         {errors.map((err, i) => (

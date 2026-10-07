@@ -243,15 +243,16 @@
   "more than": "más de",
   "revenue, weekly": "ingresos, semanal",
   "row limit reached": "se alcanzó el límite de filas",
+  "vs previous": "vs. anterior",
   "vs {0}": "frente a {0}",
   "{0, plural, one {# in-app recipient} other {# in-app recipients}}": "{0, plural, one {# destinatario en la aplicación} other {# destinatarios en la aplicación}}",
+  "{0, plural, one {# report} other {# reports}}": "{0, plural, one {# informe} other {# informes}}",
   "{0, plural, one {# tile} other {# tiles}}": "{0, plural, one {# mosaico} other {# mosaicos}}",
-  "{0} Fields": "{0} campos",
   "{0} fields": "{0} campos",
   "{0} for {1}": "{0} para {1}",
   "{0} of": "{0} de",
+  "{0}% of target": "{0}% del objetivo",
   "{0}% of {1}": "{0} % de {1}",
-  "{0}s": "{0} s",
   "· {0, plural, one {# filter} other {# filters}}": "· {0, plural, one {# filtro} other {# filtros}}",
   "— file attached": "— archivo adjunto"
 }

@@ -147,7 +147,7 @@ describe("EmploymentEventSheet", () => {
     fireEvent.change(screen.getByLabelText("Event"), { target: { value: "Terminated" } });
     fireEvent.click(screen.getByRole("button", { name: "Record Terminated" }));
     expect(
-      await screen.findByText("A reason is required when recording terminated"),
+      await screen.findByText("A reason is required to record “Terminated”"),
     ).toBeInTheDocument();
     expect(recordWorkerEmploymentEvent).not.toHaveBeenCalled();
 

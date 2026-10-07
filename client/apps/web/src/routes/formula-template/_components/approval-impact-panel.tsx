@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -5,6 +6,7 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { BacktestResult } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 const TOP_MOVERS_SHOWN = 5;
 
@@ -34,6 +36,20 @@ function MoverRow({ result }: { result: BacktestResult }) {
 
 export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
   const t = useT();
+  const rt = useRichT();
+  const impactTags = {
+    delta: (c: ReactNode) => (
+      <span
+        className={cn(
+          "font-medium tabular-nums",
+          totalIncreased ? "text-success-foreground" : "text-destructive",
+        )}
+      >
+        {c}
+      </span>
+    ),
+    err: (c: ReactNode) => <span className="text-destructive">{c}</span>,
+  };
 
   const { data, isLoading, isError } = useQuery({
     ...queries.formulaTemplate.approvalImpact(templateId),
@@ -109,22 +125,22 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
           </span>
         ) : (
           <span className="text-xs">
-            {t("Re-rating would move totals by")}{" "}
-            <span
-              className={cn(
-                "font-medium tabular-nums",
-                totalIncreased ? "text-success-foreground" : "text-destructive",
-              )}
-            >
-              {formatSignedCurrency(summary.totalDelta)}
-            </span>{" "}
-            ({summary.changedCount} of {summary.evaluatedCount} {t("shipments change")}
-            {summary.errorCount > 0 && (
-              <span className="text-destructive">
-                {t(", {0} fail to evaluate", summary.errorCount)}
-              </span>
-            )}
-            ).
+            {summary.errorCount > 0
+              ? rt(
+                  "Re-rating would move totals by <delta>{0}</delta> ({1} of {2, plural, one {# shipment changes} other {# shipments change}}<err>, {3, plural, one {# fails to evaluate} other {# fail to evaluate}}</err>).",
+                  impactTags,
+                  formatSignedCurrency(summary.totalDelta),
+                  summary.changedCount,
+                  summary.evaluatedCount,
+                  summary.errorCount,
+                )
+              : rt(
+                  "Re-rating would move totals by <delta>{0}</delta> ({1} of {2, plural, one {# shipment changes} other {# shipments change}}).",
+                  impactTags,
+                  formatSignedCurrency(summary.totalDelta),
+                  summary.changedCount,
+                  summary.evaluatedCount,
+                )}
           </span>
         )}
       </div>

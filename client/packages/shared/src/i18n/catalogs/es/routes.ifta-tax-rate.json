@@ -17,8 +17,7 @@
   "Only for jurisdictions that publish one. Empty is stored as zero.": "Solo para las jurisdicciones que publican uno. Vacío se guarda como cero.",
   "Period & product": "Período y producto",
   "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.": "Publique la tasa de una jurisdicción para un trimestre y un tipo de combustible. Las tasas son globales, así que esto es lo que deberá la declaración de cada organización.",
-  "Publish {0} {1}": "Publicar {0} {1}",
-  "Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.": "Publicar establecería {0} {1} para el T{2} de {3}, reemplazando cualquiera ya publicado para la misma jurisdicción y combustible.",
+  "Publishing would set {0, plural, one {# rate} other {# rates}} for Q{1} {2}, replacing any already published for the same jurisdiction and fuel.": "Al publicar, {0, plural, one {se establecería # tasa} other {se establecerían # tasas}} para el T{1} {2}, reemplazando las ya publicadas para la misma jurisdicción y combustible.",
   "Q{0}": "T{0}",
   "Rate / gal": "Tarifa / gal",
   "Rate deleted": "Tarifa eliminada",
@@ -45,7 +44,8 @@
   "Up to four decimals. Zero is a published rate, not a missing one.": "Hasta cuatro decimales. Cero es una tasa publicada, no una tasa faltante.",
   "Where the figure came from, so a reviewer can check it against the published matrix.": "De dónde salió la cifra, para que un revisor pueda cotejarla con la matriz publicada.",
   "e.g. IFTA Inc. tax rate matrix, Q3 2026, downloaded 12 Jul": "p. ej., matriz de tasas de IFTA Inc., T3 2026, descargada el 12 de julio",
+  "{0, plural, one {# row will be left out.} other {# rows will be left out.}}": "{0, plural, one {Se omitirá # fila.} other {Se omitirán # filas.}}",
+  "{0, plural, one {Publish # rate} other {Publish # rates}}": "{0, plural, one {Publicar # tasa} other {Publicar # tasas}}",
   "{0} could not be read": "No se pudo leer {0}",
-  "{0} {1} will be left out.": "{0} {1} quedarán fuera.",
   "{0} · {1} · Q{2} {3}": "{0} · {1} · T{2} {3}"
 }

@@ -288,10 +288,7 @@ function RuleGroupRows({
   return (
     <>
       <TableRow className="bg-muted/40 hover:bg-muted/40">
-        <TableCell
-          colSpan={3}
-          className="text-muted-foreground py-1.5 text-xs font-semibold"
-        >
+        <TableCell colSpan={3} className="text-muted-foreground py-1.5 text-xs font-semibold">
           {labels.section[group.section] ?? group.section}
         </TableCell>
       </TableRow>
@@ -331,8 +328,12 @@ function RuleRow({
       <TableCell className="align-top whitespace-normal">
         <div className={cn("space-y-1", !supported && "opacity-70")}>
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-medium">{definition.label}</span>
-            {definition.gateRelevant ? <Badge variant="neutral" appearance="outline">{t("Gates tenders")}</Badge> : null}
+            <span className="text-sm font-medium">{t(definition.label)}</span>
+            {definition.gateRelevant ? (
+              <Badge variant="neutral" appearance="outline">
+                {t("Gates tenders")}
+              </Badge>
+            ) : null}
             {!supported ? (
               <Tooltip>
                 <TooltipTrigger
@@ -408,7 +409,7 @@ function RuleActionSelect({ index, label }: { index: number; label: string }) {
           >
             <SelectTrigger
               className="w-28"
-              aria-label={t("{0} action", label)}
+              aria-label={t("{0} action", t(label))}
               aria-invalid={fieldState.invalid || undefined}
             >
               <SelectValue>

@@ -112,12 +112,14 @@ export default function BenefitsConsole() {
             <span className="text-sm font-medium tabular-nums">{t("Plan year {0}", planYear)}</span>
           )}
           <p className="text-muted-foreground text-xs">
-            {t(
-              "Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0}",
-              empty.length > 0
-                ? ` ${t("{0} active plan{1} nobody on {2}.", empty.length, empty.length === 1 ? " has" : t("s have"), empty.length === 1 ? "it" : "them")}`
-                : "",
-            )}
+            {empty.length > 0
+              ? t(
+                  "Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0, plural, one {# active plan has nobody on it.} other {# active plans have nobody on them.}}",
+                  empty.length,
+                )
+              : t(
+                  "Each plan year is its own row, so repricing next year never restates what somebody was charged this year.",
+                )}
           </p>
         </div>
         {canCreate ? (

@@ -185,11 +185,7 @@ export function CannedGallery({
         <div className="space-y-6 p-4">
           {groups.map((group) => (
             <section key={group.key} className="space-y-3">
-              <CategoryGroupHeader
-                label={t(group.label)}
-                count={group.items.length}
-                noun="report"
-              />
+              <CategoryGroupHeader label={t(group.label)} count={group.items.length} />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {group.items.map((report) => (
                   <CannedReportCard

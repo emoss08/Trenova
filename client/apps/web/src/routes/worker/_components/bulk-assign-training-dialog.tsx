@@ -118,9 +118,8 @@ export function BulkAssignTrainingDialog({
           <DialogTitle>{t("Assign training")}</DialogTitle>
           <DialogDescription>
             {t(
-              "Opens the courses you choose for {0} selected {1}. Anyone who already has a course open keeps the assignment they have.",
+              "Opens the courses you choose for {0, plural, one {# selected worker} other {# selected workers}}. Anyone who already has a course open keeps the assignment they have.",
               workers.length,
-              workers.length === 1 ? "worker" : "workers",
             )}
           </DialogDescription>
         </DialogHeader>

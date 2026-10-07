@@ -89,12 +89,17 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
       <div className="hidden w-44 shrink-0 md:block">
         <DeskClockTrack entry={entry} nowSeconds={nowSeconds} />
         <p className="text-2xs text-muted-foreground mt-1.5 truncate leading-none tabular-nums">
-          {t(
-            "{0} on site · free {1} {2}",
-            formatDetentionMinutes(onSiteMinutes),
-            entry.minutesUntilFreeEnds > 0 ? "ends" : "ended",
-            formatUnixTime(occurrence.freeTimeExpiresAt),
-          )}
+          {entry.minutesUntilFreeEnds > 0
+            ? t(
+                "{0} on site · free time ends {1}",
+                formatDetentionMinutes(onSiteMinutes),
+                formatUnixTime(occurrence.freeTimeExpiresAt),
+              )
+            : t(
+                "{0} on site · free time ended {1}",
+                formatDetentionMinutes(onSiteMinutes),
+                formatUnixTime(occurrence.freeTimeExpiresAt),
+              )}
         </p>
       </div>
 

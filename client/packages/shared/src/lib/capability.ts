@@ -1,3 +1,5 @@
+import { formatList } from "@trenova/shared/i18n/format";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
   EnforcementLevel,
   ResolvedCapabilityRule,
@@ -183,16 +185,29 @@ export function enforcementTone(level: EnforcementLevel): string {
   return ENFORCEMENT_TONES[level];
 }
 
-const MATCH_LABELS: Record<string, string> = {
-  organizationDefault: "organization default",
-  customer: "customer",
-  serviceType: "service type",
-  shipmentType: "shipment type",
-  equipmentType: "equipment type",
-};
+function matchLabel(match: string, t: TranslateFn): string {
+  switch (match) {
+    case "organizationDefault":
+      return t("organization default");
+    case "customer":
+      return t("customer");
+    case "serviceType":
+      return t("service type");
+    case "shipmentType":
+      return t("shipment type");
+    case "equipmentType":
+      return t("equipment type");
+    default:
+      return match;
+  }
+}
 
-export function describeMatch(matchedOn: string[] | null | undefined): string {
-  if (!matchedOn?.length) return "no specific scope";
+/**
+ * describeMatch names what a mode profile was matched on, in the reader's language and
+ * joined the way that language lists things ("customer and service type", "客户和服务类型").
+ */
+export function describeMatch(matchedOn: string[] | null | undefined, t: TranslateFn): string {
+  if (!matchedOn?.length) return t("no specific scope");
 
-  return matchedOn.map((match) => MATCH_LABELS[match] ?? match).join(", ");
+  return formatList(matchedOn.map((match) => matchLabel(match, t)));
 }

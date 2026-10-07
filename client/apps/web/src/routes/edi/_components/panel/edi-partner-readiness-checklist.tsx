@@ -79,12 +79,17 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
         <Alert variant="warning" size="sm">
           <AlertTriangleIcon />
           <AlertDescription>
-            {t(
-              "This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
-              partner.enabledForInbound ? "inbound" : "",
-              partner.enabledForInbound && partner.enabledForOutbound ? " and " : "",
-              partner.enabledForOutbound ? "outbound" : "",
-            )}
+            {partner.enabledForInbound && partner.enabledForOutbound
+              ? t(
+                  "This partner is enabled for inbound and outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
+                )
+              : partner.enabledForInbound
+                ? t(
+                    "This partner is enabled for inbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
+                  )
+                : t(
+                    "This partner is enabled for outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
+                  )}
           </AlertDescription>
         </Alert>
       )}

@@ -95,7 +95,7 @@
   "{0, plural, one {# timesheet} other {# timesheets}} {1} {2}": "{0, plural, one {# hoja de horas} other {# hojas de horas}} {1} {2}",
   "{0} + running": "{0} + en curso",
   "{0} Every week in it goes back to approved so the period can be run again once whatever was wrong is fixed. The run itself is kept, not deleted.": "{0} Todas las semanas que contiene vuelven a estar aprobadas para que el período pueda ejecutarse de nuevo una vez corregido el problema. La corrida en sí se conserva, no se elimina.",
-  "{0} across {1} {2}": "{0} en {1} {2}",
+  "{0} across {1, plural, one {# person} other {# people}}": "{0} entre {1, plural, one {# persona} other {# personas}}",
   "{0} before overtime": "{0} antes de las horas extra",
   "{0} from {1} comes off the week. The reason is kept.": "Se retira {0} de {1} de la semana. Se conserva el motivo.",
   "{0} into overtime": "{0} en horas extra",

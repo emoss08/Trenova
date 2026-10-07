@@ -3,5 +3,6 @@
   "Current DSO": "DSO actual",
   "Distribution": "Distribución",
   "Receivables aging by customer with drill-down to the ledger.": "Antigüedad de las cuentas por cobrar por cliente, con desglose hasta el libro.",
+  "Totals · {0, plural, one {# customer} other {# customers}}": "Totales · {0, plural, one {# cliente} other {# clientes}}",
   "trailing 90 days": "últimos 90 días"
 }
