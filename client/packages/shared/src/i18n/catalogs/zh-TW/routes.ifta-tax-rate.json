@@ -44,6 +44,7 @@
   "Up to four decimals. Zero is a published rate, not a missing one.": "最多四位小數。零代表已公布的稅率，而非缺漏。",
   "Where the figure came from, so a reviewer can check it against the published matrix.": "此數字的來源，以便審查者對照已公布的矩陣核對。",
   "e.g. IFTA Inc. tax rate matrix, Q3 2026, downloaded 12 Jul": "例如：IFTA Inc. 稅率矩陣，2026 年第 3 季，7 月 12 日下載",
+  "{0, plural, one {# rate published} other {# rates published}} for Q{1} {2}.": "已公布 {2} 年第 {1} 季的 {0, plural, other {# 項稅率}}。",
   "{0, plural, one {# row will be left out.} other {# rows will be left out.}}": "{0, plural, other {# 列將被排除。}}",
   "{0, plural, one {Publish # rate} other {Publish # rates}}": "{0, plural, other {發布 # 項稅率}}",
   "{0} could not be read": "無法讀取 {0}",

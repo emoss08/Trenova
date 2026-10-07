@@ -134,7 +134,7 @@ export default function BenefitsConsole() {
         <div className="flex min-w-0 flex-col gap-4">
           {yearPlans.length === 0 ? (
             <BenefitsEmpty
-              title={`No plans for ${planYear}`}
+              title={t("No plans for {0}", planYear)}
               description={t(
                 "Every plan year is priced on its own, so a year with nothing on offer stays empty until a plan is added for it.",
               )}

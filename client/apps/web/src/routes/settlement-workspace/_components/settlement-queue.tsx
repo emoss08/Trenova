@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
@@ -47,7 +48,7 @@ const filterChips: Array<{ value: QueueFilter; label: string }> = [
 ];
 
 function workerName(settlement: DriverSettlementRow): string {
-  if (!settlement.worker) return "Unknown driver";
+  if (!settlement.worker) return translate("Unknown driver");
   return `${settlement.worker.firstName} ${settlement.worker.lastName}`.trim();
 }
 
@@ -222,7 +223,7 @@ export function SettlementQueue({
                     className="mt-0.5"
                     checked={checkedIds.has(settlement.id)}
                     onCheckedChange={() => toggleChecked(settlement.id)}
-                    aria-label={`Select settlement for ${workerName(settlement)}`}
+                    aria-label={t("Select settlement for {0}", workerName(settlement))}
                   />
                   <button
                     type="button"
@@ -338,7 +339,10 @@ function BulkActionBar({
         className="h-7 text-xs"
         disabled={mutation.isPending}
         onClick={onClick ?? (() => mutation.mutate({ action }))}
-        title={`Applies to the ${count} selected settlement${count === 1 ? "" : "s"} in an eligible status; others are skipped`}
+        title={t(
+          "{0, plural, one {Applies to the # selected settlement in an eligible status; others are skipped} other {Applies to the # selected settlements in an eligible status; others are skipped}}",
+          count,
+        )}
       >
         {icon}
         {label} ({count})

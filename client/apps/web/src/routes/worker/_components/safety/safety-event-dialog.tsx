@@ -192,11 +192,14 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
         : createWorkerSafetyEvent({ ...shared, workerId, points: values.points });
     },
     onSuccess: (saved) => {
-      toast.success(isEdit ? "Safety event updated" : "Safety event recorded", {
+      toast.success(isEdit ? t("Safety event updated") : t("Safety event recorded"), {
         description:
           saved.activePoints > 0
-            ? `${saved.activePoints} point${saved.activePoints === 1 ? "" : "s"} added to the scorecard.`
-            : "No points added to the scorecard.",
+            ? t(
+                "{0, plural, one {# point} other {# points}} added to the scorecard.",
+                saved.activePoints,
+              )
+            : t("No points added to the scorecard."),
       });
       void invalidate();
       onOpenChange(false);
@@ -350,8 +353,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   min={0}
                   description={
                     suggested.data == null
-                      ? "Points count for two years."
-                      : `Suggested ${suggested.data} for this kind and severity.`
+                      ? t("Points count for two years.")
+                      : t("Suggested {0} for this kind and severity.", suggested.data)
                   }
                 />
               </FormControl>

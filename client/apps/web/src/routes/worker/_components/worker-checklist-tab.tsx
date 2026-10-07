@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -349,10 +350,10 @@ function SectionHeading({
 function describeCycle(cycle: EmploymentCycle): string {
   const opened = cycle.openedBy ? formatUnixDateMedium(cycle.openedBy.effectiveAt) : null;
   const closed = cycle.closedBy ? formatUnixDateMedium(cycle.closedBy.effectiveAt) : null;
-  if (opened && closed) return `Employment ${opened} – ${closed}`;
-  if (opened) return `Employment from ${opened}`;
-  if (closed) return `Employment to ${closed}`;
-  return "Undated";
+  if (opened && closed) return translate("Employment {0} – {1}", opened, closed);
+  if (opened) return translate("Employment from {0}", opened);
+  if (closed) return translate("Employment to {0}", closed);
+  return translate("Undated");
 }
 
 /**

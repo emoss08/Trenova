@@ -128,7 +128,10 @@ function CommodityDialog({
     ) {
       setError(`commodities.${index}.weight`, {
         type: "manual",
-        message: `Total commodity weight cannot exceed ${maxShipmentWeightLimit.toLocaleString()} lbs`,
+        message: t(
+          "Total commodity weight cannot exceed {0} lbs",
+          maxShipmentWeightLimit.toLocaleString(),
+        ),
       });
       return;
     }

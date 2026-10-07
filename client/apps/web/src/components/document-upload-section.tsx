@@ -110,7 +110,7 @@ export function DocumentUploadSection({
       toast.success(t("Document uploaded successfully"));
     },
     onError: (error) => {
-      toast.error(`Upload failed: ${error.message}`);
+      toast.error(t("Upload failed: {0}", error.message));
     },
   });
 
@@ -122,7 +122,7 @@ export function DocumentUploadSection({
       setDeletingId(null);
     },
     onError: (error) => {
-      toast.error(`Delete failed: ${error.message}`);
+      toast.error(t("Delete failed: {0}", error.message));
       setDeletingId(null);
     },
   });

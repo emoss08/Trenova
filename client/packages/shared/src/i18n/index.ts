@@ -32,6 +32,7 @@ export {
   type RichTags,
   type RichTranslateFn,
   renderRich,
+  translateRich,
   useRichT,
 } from "@trenova/shared/i18n/rich";
 export { type TranslateFn, useLocale, useT } from "@trenova/shared/i18n/use-t";

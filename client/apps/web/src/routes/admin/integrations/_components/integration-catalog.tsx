@@ -199,7 +199,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
             <div className="flex items-center gap-2">
               <Switch
                 checked={item.enabled}
-                aria-label={`${item.name} integration enabled`}
+                aria-label={t("{0} integration enabled", item.name)}
                 onCheckedChange={() => onOpen(item.type)}
                 disabled={!canConfigure}
               />

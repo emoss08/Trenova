@@ -112,7 +112,7 @@ export function FormCreatePanel<
       },
       onSuccess: (_data, variables) => {
         toast.success(t("Changes have been saved."), {
-          description: `${title} created successfully`,
+          description: t("{0} created successfully", title),
         });
         void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
@@ -178,9 +178,9 @@ export function FormCreatePanel<
     <DataTablePanelContainer
       open={open}
       onOpenChange={handlePanelOpenChange}
-      title={`New ${toSentenceFragment(title)}`}
+      title={t("New {0}", toSentenceFragment(title))}
       description={
-        description ?? `Fill out the form below to create a new ${toSentenceFragment(title)}.`
+        description ?? t("Fill out the form below to create a new {0}.", toSentenceFragment(title))
       }
       size={size}
       footer={

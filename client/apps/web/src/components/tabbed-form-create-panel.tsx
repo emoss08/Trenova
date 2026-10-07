@@ -114,7 +114,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
     },
     onSuccess: () => {
       toast.success(t("Changes have been saved"), {
-        description: `${title} created successfully`,
+        description: t("{0} created successfully", title),
       });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 

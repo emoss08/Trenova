@@ -68,12 +68,16 @@ export function RateConfirmationActions({
     onSuccess: (rateCon) => {
       toast.success(
         rateCon.revision > 1
-          ? `Rate confirmation regenerated — revision ${rateCon.revision} filed, prior revision voided`
-          : "Rate confirmation generated and filed",
+          ? t(
+              "Rate confirmation regenerated — revision {0} filed, prior revision voided",
+              rateCon.revision,
+            )
+          : t("Rate confirmation generated and filed"),
       );
       invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to generate rate confirmation"),
+    onError: (error: Error) =>
+      toast.error(error.message || t("Failed to generate rate confirmation")),
   });
 
   const sendMutation = useMutation({
@@ -81,12 +85,12 @@ export function RateConfirmationActions({
     onSuccess: (rateCon) => {
       toast.success(
         rateCon.sentToEmails
-          ? `Rate confirmation sent to ${rateCon.sentToEmails}`
-          : "Rate confirmation sent",
+          ? t("Rate confirmation sent to {0}", rateCon.sentToEmails)
+          : t("Rate confirmation sent"),
       );
       invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to send rate confirmation"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to send rate confirmation")),
   });
 
   if (isLoading) {

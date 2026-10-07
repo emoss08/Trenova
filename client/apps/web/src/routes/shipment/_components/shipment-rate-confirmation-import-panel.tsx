@@ -206,7 +206,7 @@ export function ShipmentRateConfirmationImportPanel({
         setUploadedDocumentId(document.id);
       },
       onError: (error) => {
-        toast.error(`Rate confirmation upload failed: ${error.message}`);
+        toast.error(t("Rate confirmation upload failed: {0}", error.message));
       },
     });
 
@@ -285,7 +285,7 @@ export function ShipmentRateConfirmationImportPanel({
       toast.success(t("Re-extraction started"));
     },
     onError: (error) => {
-      toast.error(`Failed to restart extraction: ${error.message}`);
+      toast.error(t("Failed to restart extraction: {0}", error.message));
     },
   });
 
@@ -376,15 +376,18 @@ export function ShipmentRateConfirmationImportPanel({
     [uploadFiles],
   );
 
-  const handleRejectedFiles = useCallback((rejectedFiles: RejectedFile[]) => {
-    rejectedFiles.forEach(({ file, reason }) => {
-      if (reason === "size") {
-        toast.error(`${file.name} is too large. Upload files up to 50 MB.`);
-        return;
-      }
-      toast.error(`${file.name} is not a supported rate confirmation file.`);
-    });
-  }, []);
+  const handleRejectedFiles = useCallback(
+    (rejectedFiles: RejectedFile[]) => {
+      rejectedFiles.forEach(({ file, reason }) => {
+        if (reason === "size") {
+          toast.error(t("{0} is too large. Upload files up to 50 MB.", file.name));
+          return;
+        }
+        toast.error(t("{0} is not a supported rate confirmation file.", file.name));
+      });
+    },
+    [t],
+  );
 
   const handleReplaceFile = useCallback(() => {
     resetFlow();

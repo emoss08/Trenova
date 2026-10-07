@@ -154,6 +154,8 @@
   "Which freight this policy governs. An empty dimension is a wildcard, and the most specific matching policy wins: facility beats customer beats commodity beats type.": "此策略所适用的货物。空白维度视为通配，并以最明确的匹配策略为准：场所优于客户，客户优于商品，商品优于类型。",
   "Worked examples priced by the same engine that bills real shipments.": "由为实际运单计费的同一引擎所计价的示例。",
   "{0} billed of {1} dwell": "停留 {1} 中已计费 {0}",
+  "{0} forfeited to late arrival": "因迟到损失 {0}",
+  "{0} negative margin": "{0} 负毛利",
   "{0} of {1} stops matched": "{1} 个停靠点中有 {0} 个匹配",
   "{0} stops · {1} billable": "{0} 个停靠点 · {1} 可计费",
   "{0} would bill": "{0} 原本会收取"

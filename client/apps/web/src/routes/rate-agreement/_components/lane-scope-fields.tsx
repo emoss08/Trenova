@@ -155,7 +155,9 @@ export function LaneScopeFields<T extends FieldValues>({
             control={control}
             rules={{ required: true }}
             name={names.scopeValue as never}
-            label={scopeType === "Zip3" ? `${label} Postal Prefix` : `${label} Postal Code`}
+            label={
+              scopeType === "Zip3" ? t("{0} Postal Prefix", label) : t("{0} Postal Code", label)
+            }
             placeholder={scopeType === "Zip3" ? "606" : "60601"}
             description={
               scopeType === "Zip3"

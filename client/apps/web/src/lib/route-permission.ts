@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { getOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import {
@@ -72,9 +73,9 @@ export function createCapabilityLoader(capability: OrganizationCapabilityType): 
     }
 
     const label = organizationCapabilityLabel(capability);
-    throw new Response(`${label} is not enabled for this organization`, {
+    throw new Response(translate("{0} is not enabled for this organization", label), {
       status: 403,
-      statusText: `${label} not enabled`,
+      statusText: translate("{0} not enabled", label),
     });
   };
 }

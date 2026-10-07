@@ -256,8 +256,8 @@ function BackfillSession({
     onSuccess: (result) => {
       toast.success(t("Backfill started"), {
         description: result.workflowId
-          ? `Workflow ${result.workflowId}. Recompute the return once it finishes.`
-          : "Recompute the return once it finishes.",
+          ? t("Workflow {0}. Recompute the return once it finishes.", result.workflowId)
+          : t("Recompute the return once it finishes."),
       });
       onOpenChange(false);
     },

@@ -1,4 +1,5 @@
 import type { AgentTemplateKind, AssistantPageContext } from "@/types/assistant";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type Suggestion = {
   label: string;
@@ -181,11 +182,11 @@ export function pageSuggestions(page: AssistantPageContext | null | undefined): 
     const kind = page.entityType.replaceAll("_", " ");
     suggestions.push(
       {
-        label: `Why is this ${kind} flagged?`,
+        label: translate("Why is this {0} flagged?", kind),
         prompt: `Look at the ${kind} I have open and tell me whether anything about it needs attention, and why.`,
       },
       {
-        label: `Summarize this ${kind}`,
+        label: translate("Summarize this {0}", kind),
         prompt: `Summarize the ${kind} I have open: what it is, where it stands, and what happens next.`,
       },
     );

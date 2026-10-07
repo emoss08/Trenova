@@ -109,7 +109,7 @@ export const formulaTemplateSchema = z
       if (first !== undefined) {
         ctx.addIssue({
           code: "custom",
-          message: `Duplicate variable name; first declared as variable ${first + 1}`,
+          message: translate("Duplicate variable name; first declared as variable {0}", first + 1),
           path: ["variableDefinitions", index, "name"],
         });
       } else {
@@ -125,7 +125,7 @@ export const formulaTemplateSchema = z
       if (first !== undefined) {
         ctx.addIssue({
           code: "custom",
-          message: `Duplicate breakdown name; first used by item ${first + 1}`,
+          message: translate("Duplicate breakdown name; first used by item {0}", first + 1),
           path: ["breakdownDefinitions", index, "name"],
         });
       } else {

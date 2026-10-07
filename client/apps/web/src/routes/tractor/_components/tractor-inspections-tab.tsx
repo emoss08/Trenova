@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/collapsible";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn, metersToMiles, pluralize, toTitleCase } from "@trenova/shared/lib/utils";
+import { cn, metersToMiles, toTitleCase } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertOctagonIcon,
@@ -168,8 +168,13 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
           <span
             className={cn("text-xs", hasUnresolved ? "text-destructive" : "text-muted-foreground")}
           >
-            {inspection.defectCount} {pluralize("defect", inspection.defectCount)}
-            {hasUnresolved ? ` ${t("· {0} unresolved", inspection.unresolvedDefectCount)}` : ""}
+            {hasUnresolved
+              ? t(
+                  "{0, plural, one {# defect} other {# defects}} · {1} unresolved",
+                  inspection.defectCount,
+                  inspection.unresolvedDefectCount,
+                )
+              : t("{0, plural, one {# defect} other {# defects}}", inspection.defectCount)}
           </span>
         ) : (
           <span className="text-muted-foreground text-xs">{t("No defects")}</span>
@@ -180,7 +185,9 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
 }
 
 function InspectionRow({ inspection }: { inspection: VehicleInspection }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
+  const inspectionTypeLabel = toTitleCase(inspection.inspectionType);
   const defects = parseDefects(inspection.defects);
 
   if (defects.length === 0) {
@@ -195,7 +202,7 @@ function InspectionRow({ inspection }: { inspection: VehicleInspection }) {
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger
         className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
-        aria-label={`Toggle defects for ${toTitleCase(inspection.inspectionType)} inspection`}
+        aria-label={t("Toggle defects for {0} inspection", inspectionTypeLabel)}
       >
         <InspectionHeader inspection={inspection} />
         <ChevronDownIcon

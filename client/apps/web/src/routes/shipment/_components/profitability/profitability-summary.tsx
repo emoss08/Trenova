@@ -64,7 +64,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
         />
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCell label={`Est. cost (${formatPerMile(parseDecimal(data.profile.totalCpm))})`}>
+        <StatCell label={t("Est. cost ({0})", formatPerMile(parseDecimal(data.profile.totalCpm)))}>
           {formatCurrency(parseDecimal(data.estimatedCost))}
         </StatCell>
         <StatCell label={t("Est. profit")}>

@@ -220,9 +220,15 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
     setValue("tableRows", conversionRows, { shouldDirty: true });
     setValue("method", "TablePerMile", { shouldDirty: true });
     setConvertOpen(false);
-    toast.success(`${conversionRows.length} price bands created`, {
-      description: t("Adjust any band's range or rate, then save the program."),
-    });
+    toast.success(
+      t(
+        "{0, plural, one {# price band created} other {# price bands created}}",
+        conversionRows.length,
+      ),
+      {
+        description: t("Adjust any band's range or rate, then save the program."),
+      },
+    );
   }, [conversionRows, setValue, t]);
 
   if (rows.length === 0) {

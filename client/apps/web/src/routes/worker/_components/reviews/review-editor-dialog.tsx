@@ -120,7 +120,10 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
       }),
     onSuccess: (saved) => {
       toast.success(t("Review started"), {
-        description: `${saved.ratings.length} item${saved.ratings.length === 1 ? "" : "s"} to rate. It stays a draft until you submit it.`,
+        description: t(
+          "{0, plural, one {# item} other {# items}} to rate. It stays a draft until you submit it.",
+          saved.ratings.length,
+        ),
       });
       void invalidate();
       onOpenChange(false);
@@ -513,7 +516,7 @@ function GoalsSection() {
             size="sm"
             variant="ghost"
             className="mb-0.5 size-7"
-            aria-label={`Remove goal ${index + 1}`}
+            aria-label={t("Remove goal {0}", index + 1)}
             onClick={() => goals.remove(index)}
           >
             <Trash01Icon className="size-3.5" />

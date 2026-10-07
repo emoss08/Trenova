@@ -131,9 +131,10 @@ function GenerateBatchPanel({
           notes: values.notes || undefined,
         });
         toast.success(
-          `Batch generated: ${batch.settlementCount} settlement${
-            batch.settlementCount === 1 ? "" : "s"
-          }`,
+          t(
+            "{0, plural, one {Batch generated: # settlement} other {Batch generated: # settlements}}",
+            batch.settlementCount,
+          ),
         );
         void queryClient.invalidateQueries({ queryKey: ["carrier-settlement-list"] });
         return values;

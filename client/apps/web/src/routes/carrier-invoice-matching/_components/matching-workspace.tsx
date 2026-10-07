@@ -263,7 +263,7 @@ export default function MatchingWorkspace() {
             <div className="flex gap-1">
               <TabChip
                 active={tab === "invoices"}
-                label={`Carrier Invoices (${invoices.length})`}
+                label={t("Carrier Invoices ({0})", invoices.length)}
                 onClick={() => setTab("invoices")}
               />
               <TabChip
@@ -661,11 +661,17 @@ function InvoiceDetail({
       }
       setSuggestedCarrierId(carrier.id);
       toast.success(
-        `Suggested carrier: ${carrier.name}${carrier.scac ? ` (${carrier.scac})` : ""} — confirm the link to proceed`,
+        carrier.scac
+          ? t(
+              "Suggested carrier: {0} ({1}) — confirm the link to proceed",
+              carrier.name,
+              carrier.scac,
+            )
+          : t("Suggested carrier: {0} — confirm the link to proceed", carrier.name),
       );
       setLinkOpen(true);
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to suggest a carrier"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to suggest a carrier")),
   });
 
   const createMatchMutation = useMutation({

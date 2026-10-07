@@ -207,9 +207,9 @@ export function changeTypeVariant(type: AuditChangeType): BadgeVariant {
 }
 
 export function formatAuditValue(value: unknown): string {
-  if (value === undefined) return "Not set";
+  if (value === undefined) return translate("Not set");
   if (value === null) return "null";
-  if (typeof value === "string") return value.length === 0 ? "Empty string" : value;
+  if (typeof value === "string") return value.length === 0 ? translate("Empty string") : value;
   if (typeof value === "number" || typeof value === "bigint") {
     return String(value);
   }
@@ -218,14 +218,17 @@ export function formatAuditValue(value: unknown): string {
   }
   if (Array.isArray(value)) {
     return value.length === 0
-      ? "Empty array"
-      : `Array with ${value.length} item${value.length === 1 ? "" : "s"}`;
+      ? translate("Empty array")
+      : translate("{0, plural, one {Array with # item} other {Array with # items}}", value.length);
   }
   if (isRecord(value)) {
     const keys = Object.keys(value);
     return keys.length === 0
-      ? "Empty object"
-      : `Object with ${keys.length} field${keys.length === 1 ? "" : "s"}`;
+      ? translate("Empty object")
+      : translate(
+          "{0, plural, one {Object with # field} other {Object with # fields}}",
+          keys.length,
+        );
   }
   return JSON.stringify(value) ?? "";
 }

@@ -1,4 +1,6 @@
 {
+  "\"{0}\" copied to your reports": "\"{0}\" copiado a sus informes",
+  "\"{0}\" queued for generation": "\"{0}\" en cola para generación",
   "(truncated)": "(truncado)",
   "Add a measure column before plotting this report.": "Añada una columna de medida antes de representar este informe.",
   "Add a tile first — filters are drawn from the reports on this dashboard.": "Añada primero una ficha: los filtros se toman de los informes de este panel.",
@@ -48,6 +50,7 @@
   "Delete schedule": "Eliminar la programación",
   "Delete view": "Eliminar la vista",
   "Display as": "Mostrar como",
+  "Duplicated as \"{0}\"": "Duplicado como \"{0}\"",
   "Duration format": "Formato de duración",
   "Each pivot value becomes its own column — name them however the report should read.": "Cada valor dinámico se convierte en su propia columna: nómbrelos como deba leerse el informe.",
   "Each range has to start above the one before it.": "Cada rango tiene que empezar por encima del anterior.",
@@ -66,6 +69,8 @@
   "Explore": "Explorar",
   "Explore results": "Explorar los resultados",
   "Failed to cancel the run": "No se pudo cancelar la ejecución",
+  "Failed to customize the report": "No se pudo personalizar el informe",
+  "Failed to duplicate the report": "No se pudo duplicar el informe",
   "Fill in {0} above to load the results.": "Rellene {0} arriba para cargar los resultados.",
   "Filter by category": "Filtrar por categoría",
   "Filter by status": "Filtrar por estado",

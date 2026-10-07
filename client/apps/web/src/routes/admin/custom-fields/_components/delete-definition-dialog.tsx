@@ -53,7 +53,7 @@ export function DeleteDefinitionDialog({
     },
     onSuccess: () => {
       toast.success(t("Custom field deleted"), {
-        description: `"${definition?.label}" has been deleted successfully.`,
+        description: t('"{0}" has been deleted successfully.', definition?.label ?? ""),
       });
       void queryClient.invalidateQueries({
         queryKey: ["custom-field-definition-list"],
@@ -71,7 +71,7 @@ export function DeleteDefinitionDialog({
         }
       } else {
         toast.error(t("Failed to delete custom field"), {
-          description: error instanceof Error ? error.message : "An unexpected error occurred",
+          description: error instanceof Error ? error.message : t("An unexpected error occurred"),
         });
       }
     },

@@ -131,7 +131,7 @@ export function SafetyEventRow({
   if (permissions.canDiscipline) {
     actions.push({
       id: "discipline",
-      label: `Issue action for ${headline}`,
+      label: t("Issue action for {0}", headline),
       icon: GavelIcon,
       disabled: busy,
       onSelect: () => onDiscipline(event),
@@ -140,7 +140,7 @@ export function SafetyEventRow({
   if (permissions.canUpdate) {
     actions.push({
       id: "edit",
-      label: `Edit ${headline}`,
+      label: t("Edit {0}", headline),
       icon: Edit02Icon,
       disabled: busy,
       onSelect: () => onEdit(event),
@@ -149,7 +149,7 @@ export function SafetyEventRow({
   if (!isClosed && permissions.canDelete) {
     actions.push({
       id: "delete",
-      label: `Delete ${headline}`,
+      label: t("Delete {0}", headline),
       icon: Trash01Icon,
       disabled: busy,
       destructive: true,
@@ -195,7 +195,7 @@ export function SafetyEventRow({
               {event.recordedBy?.name ? ` ${t("· recorded by {0}", event.recordedBy.name)}` : ""}
             </p>
           </div>
-          <RowActionsMenu label={`Actions for ${headline}`} actions={actions} />
+          <RowActionsMenu label={t("Actions for {0}", headline)} actions={actions} />
         </div>
 
         <p className="text-sm">{t(event.description)}</p>

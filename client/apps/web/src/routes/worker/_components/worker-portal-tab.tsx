@@ -65,12 +65,12 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
       setInviteEmail("");
       toast.success(
         result.emailSent
-          ? `Invitation emailed to ${result.invitation.email}`
-          : "Invitation created — no email provider is configured, share the link below",
+          ? t("Invitation emailed to {0}", result.invitation.email)
+          : t("Invitation created — no email provider is configured, share the link below"),
       );
       await invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to send invitation"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to send invitation")),
   });
 
   const revoke = useMutation({

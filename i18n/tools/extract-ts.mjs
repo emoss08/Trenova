@@ -19,7 +19,7 @@ export const SOURCE_ROOTS = [
 const SKIP_DIR = new Set(["node_modules", "generated", "__tests__", "__snapshots__", "dist"]);
 const SKIP_FILE = /\.(test|spec|stories)\.[jt]sx?$/;
 
-const TRANSLATE_CALLEES = new Set(["t", "translate", "rt"]);
+const TRANSLATE_CALLEES = new Set(["t", "translate", "rt", "translateRich"]);
 
 const PARSER_PLUGINS = ["typescript", "jsx", "decorators-legacy", "explicitResourceManagement"];
 

@@ -29,6 +29,7 @@
   "Written by {0}": "Escrito por {0}",
   "e.g. Deadhead from Amarillo to the Dallas yard after the drop": "p. ej., Recorrido en vacío de Amarillo al patio de Dallas tras la descarga",
   "the quarter": "el trimestre",
+  "{0, plural, one {Up to # character.} other {Up to # characters.}}": "{0, plural, one {Hasta # carácter.} other {Hasta # caracteres.}}",
   "{0} miles in {1} on {2}{3} will be removed outright.": "Se eliminarán por completo {0} millas en {1} el {2}{3}.",
   "{0}{1} · {2} mi": "{0}{1} · {2} mi"
 }

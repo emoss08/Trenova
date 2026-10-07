@@ -91,8 +91,11 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               placeholder={t("Select a status")}
               description={
                 isEdit && openRecordCount > 0
-                  ? `${openRecordCount} worker${openRecordCount === 1 ? " has" : "s have"} this course open; finish or cancel those first to deactivate.`
-                  : "Inactive courses drop out of the required matrix and cannot be assigned."
+                  ? t(
+                      "{0, plural, one {# worker has} other {# workers have}} this course open; finish or cancel those first to deactivate.",
+                      openRecordCount,
+                    )
+                  : t("Inactive courses drop out of the required matrix and cannot be assigned.")
               }
             />
           </FormControl>

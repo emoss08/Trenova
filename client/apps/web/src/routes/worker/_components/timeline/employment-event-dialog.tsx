@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { FleetCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
@@ -80,33 +81,54 @@ function ptoDays(value: string): string {
 
 export function describeCascade(cascade: EmploymentCascade): string {
   const parts: string[] = [];
-  if (cascade.ptoAssignmentEnded) parts.push("Ended the PTO policy assignment");
-  if (cascade.payAssignmentEnded) parts.push("Ended the pay assignment");
+  if (cascade.ptoAssignmentEnded) parts.push(translate("Ended the PTO policy assignment"));
+  if (cascade.payAssignmentEnded) parts.push(translate("Ended the pay assignment"));
   if (cascade.upcomingPtoCancelled > 0) {
     parts.push(
-      `Cancelled ${cascade.upcomingPtoCancelled} upcoming PTO request${cascade.upcomingPtoCancelled === 1 ? "" : "s"}`,
+      translate(
+        "Cancelled {0, plural, one {# upcoming PTO request} other {# upcoming PTO requests}}",
+        cascade.upcomingPtoCancelled,
+      ),
     );
   }
-  if (cascade.defaultPolicyApplied) parts.push("Enrolled in the default PTO policy");
+  if (cascade.defaultPolicyApplied) parts.push(translate("Enrolled in the default PTO policy"));
   if (Number(cascade.ptoPaidOutDays) > 0) {
-    parts.push(`Paid out ${ptoDays(cascade.ptoPaidOutDays)} PTO days`);
+    parts.push(
+      translate(
+        "Paid out {0} PTO {1, plural, one {day} other {days}}",
+        ptoDays(cascade.ptoPaidOutDays),
+        Number(cascade.ptoPaidOutDays),
+      ),
+    );
   }
   if (Number(cascade.ptoForfeitedDays) > 0) {
-    parts.push(`Forfeited ${ptoDays(cascade.ptoForfeitedDays)} PTO days`);
+    parts.push(
+      translate(
+        "Forfeited {0} PTO {1, plural, one {day} other {days}}",
+        ptoDays(cascade.ptoForfeitedDays),
+        Number(cascade.ptoForfeitedDays),
+      ),
+    );
   }
-  if (cascade.portalAccessRevoked) parts.push("Revoked the driver portal sign-in");
+  if (cascade.portalAccessRevoked) parts.push(translate("Revoked the driver portal sign-in"));
   if (cascade.trainingAssigned > 0) {
     parts.push(
-      `Opened ${cascade.trainingAssigned} required course${cascade.trainingAssigned === 1 ? "" : "s"}`,
+      translate(
+        "Opened {0, plural, one {# required course} other {# required courses}}",
+        cascade.trainingAssigned,
+      ),
     );
   }
-  if (cascade.checklistStarted) parts.push("Started the matching checklist");
+  if (cascade.checklistStarted) parts.push(translate("Started the matching checklist"));
   if (cascade.checklistsClosed > 0) {
     parts.push(
-      `Closed ${cascade.checklistsClosed} checklist${cascade.checklistsClosed === 1 ? "" : "s"} the event made moot`,
+      translate(
+        "Closed {0, plural, one {# checklist} other {# checklists}} the event made moot",
+        cascade.checklistsClosed,
+      ),
     );
   }
-  return parts.length > 0 ? parts.join(" · ") : "The timeline has been updated.";
+  return parts.length > 0 ? parts.join(" · ") : translate("The timeline has been updated.");
 }
 
 export function EmploymentEventSheet(props: EmploymentEventSheetProps) {
@@ -206,7 +228,10 @@ function RecordSheet({
       // task for the recorder rather than a failed save.
       if (result.cascade.portalRevocationError) {
         toast.warning(t("Revoke the driver portal sign-in by hand"), {
-          description: `The worker is terminated but Dash access is still open: ${result.cascade.portalRevocationError}`,
+          description: t(
+            "The worker is terminated but Dash access is still open: {0}",
+            result.cascade.portalRevocationError,
+          ),
         });
       }
       void invalidate();

@@ -63,16 +63,6 @@ export const TRAINING_DELIVERY_HINTS: Record<TrainingDelivery, string> = {
   Document: "The driver reads a document from Dash and acknowledges it.",
 };
 
-export const WORKER_TRAINING_STATUS_LABELS: Record<WorkerTrainingStatus, string> = {
-  Assigned: "Assigned",
-  InProgress: "In progress",
-  Completed: "Completed",
-  Failed: "Failed",
-  Expired: "Expired",
-  Waived: "Waived",
-  Cancelled: "Cancelled",
-};
-
 const optionalTrimmed = (max: number, message: string) =>
   z
     .string()

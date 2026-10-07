@@ -3,7 +3,9 @@
   "Closing a review schedules the next one this far out. Leave empty for one-off reviews.": "結束考核後會依此間隔排定下一次。一次性考核請留空。",
   "Decide what a review rates, how much each item counts, and how often the review comes round.": "決定考核評的是什麼、各項目的權重，以及考核的循環頻率。",
   "Default template": "預設範本",
+  "Each item is scored 1–5. Weights decide the share of the overall score — currently {0} in total.": "每個項目以 1–5 分評分。權重決定其在總分中的占比 — 目前合計為 {0}。",
   "Hint": "提示",
+  "Inactive templates cannot be used for new reviews.": "停用的範本無法用於新的考核。",
   "Items are copied when a review starts": "考核開始時會複製這些項目",
   "Name and code identify the template when someone starts a review.": "名稱與代碼可在有人開始考核時識別此範本。",
   "One-off": "一次性",
@@ -26,5 +28,6 @@
   "e.g. Annual Driver Review": "例如：駕駛員年度考核",
   "e.g. DRIVER-ANNUAL": "例如：DRIVER-ANNUAL",
   "e.g. Safe driving": "例如：安全駕駛",
-  "e.g. safety": "例如：safety"
+  "e.g. safety": "例如：safety",
+  "{0, plural, one {# open review uses this template; close it first to deactivate.} other {# open reviews use this template; close those first to deactivate.}}": "{0, plural, other {有 # 項進行中的考核使用此範本；請先結束這些考核再停用。}}"
 }

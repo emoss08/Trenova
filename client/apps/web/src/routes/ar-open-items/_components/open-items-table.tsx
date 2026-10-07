@@ -69,7 +69,7 @@ export function OpenItemsTable({
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-            aria-label={`Select invoice ${row.original.invoiceNumber}`}
+            aria-label={t("Select invoice {0}", row.original.invoiceNumber)}
             onClick={(e) => e.stopPropagation()}
           />
         ),

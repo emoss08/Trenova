@@ -63,7 +63,7 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
     <div
       role="button"
       tabIndex={0}
-      aria-label={`Open the claim file for ${facility}`}
+      aria-label={t("Open the claim file for {0}", facility)}
       title={URGENCY_LABEL[entry.urgency]}
       onClick={() => onOpen(occurrence.id)}
       onKeyDown={(event) => {

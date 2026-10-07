@@ -60,5 +60,6 @@
   "Your new password is active. Any other sessions on this account have been signed out.": "您的新密碼已生效。此帳戶的其他工作階段皆已登出。",
   "{0, plural, one {# role} other {# roles}}{1}": "{0, plural, other {# 個角色}}{1}",
   "{0, plural, one {permission} other {permissions}}": "{0, plural, other {項權限}}",
+  "{0} of {1} selected": "已選取 {1} 中的 {0} 個",
   "· {0} {1, plural, one {permission} other {permissions}}": "· {0} {1, plural, other {項權限}}"
 }

@@ -24,5 +24,6 @@
   "The type of equipment the trailer is categorized under.": "此拖車所歸類的設備類型。",
   "The unique registration number assigned to the trailer.": "指派給此拖車的唯一註冊號碼。",
   "Trailer located successfully": "拖車位置已成功更新",
-  "Trailer status updated successfully": "拖車狀態已成功更新"
+  "Trailer status updated successfully": "拖車狀態已成功更新",
+  "Updated last inspection date to {0}": "已將上次稽查日期更新為 {0}"
 }

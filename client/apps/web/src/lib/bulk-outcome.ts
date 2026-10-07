@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { toast } from "sonner";
 
 export type BulkOutcomeFailure = {
@@ -10,25 +11,32 @@ export type BulkOutcome = {
   failed: BulkOutcomeFailure[];
 };
 
-export type BulkOutcomeLabels = {
-  entity: string;
-  verbPast: string;
+export type BulkOutcomeMessages = {
+  succeeded: (count: number) => string;
+  partial: (succeeded: number, failed: number) => string;
+  allFailed: (failed: number) => string;
   skipped?: number;
 };
 
 const MAX_ERRORS_IN_DESCRIPTION = 3;
 
-function pluralize(count: number, entity: string): string {
-  return `${count} ${entity}${count === 1 ? "" : "s"}`;
+function withSkipped(message: string, skipped: number): string {
+  if (skipped <= 0) {
+    return message;
+  }
+  return translate(
+    "{0} ({1, plural, one {# ineligible skipped} other {# ineligible skipped}})",
+    message,
+    skipped,
+  );
 }
 
 export function notifyBulkOutcome(
   result: BulkOutcome,
-  { entity, verbPast, skipped = 0 }: BulkOutcomeLabels,
+  { succeeded, partial, allFailed, skipped = 0 }: BulkOutcomeMessages,
 ) {
-  const skippedSuffix = skipped > 0 ? ` (${skipped} ineligible skipped)` : "";
   if (result.failed.length === 0) {
-    toast.success(`${verbPast} ${pluralize(result.succeeded.length, entity)}${skippedSuffix}`);
+    toast.success(withSkipped(succeeded(result.succeeded.length), skipped));
     return;
   }
 
@@ -37,16 +45,12 @@ export function notifyBulkOutcome(
     .map((failure) => failure.error)
     .join("; ");
   if (result.succeeded.length === 0) {
-    toast.error(
-      `All ${pluralize(result.failed.length, `selected ${entity}`)} failed${skippedSuffix}`,
-      { description },
-    );
+    toast.error(withSkipped(allFailed(result.failed.length), skipped), { description });
     return;
   }
-  toast.warning(
-    `${verbPast} ${pluralize(result.succeeded.length, entity)}; ${result.failed.length} failed${skippedSuffix}`,
-    { description },
-  );
+  toast.warning(withSkipped(partial(result.succeeded.length, result.failed.length), skipped), {
+    description,
+  });
 }
 
 /**

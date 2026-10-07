@@ -1,4 +1,6 @@
 {
+  "\"{0}\" copied to your reports": "已將「{0}」複製到您的報表",
+  "\"{0}\" queued for generation": "「{0}」已排入產生佇列",
   "(truncated)": "(已截斷)",
   "Add a measure column before plotting this report.": "在繪製此報表前，請先新增量值欄位。",
   "Add a tile first — filters are drawn from the reports on this dashboard.": "請先新增磚 — 篩選條件取自此儀表板上的報表。",
@@ -48,6 +50,7 @@
   "Delete schedule": "刪除排程",
   "Delete view": "刪除檢視",
   "Display as": "顯示為",
+  "Duplicated as \"{0}\"": "已複製為「{0}」",
   "Duration format": "時間長度格式",
   "Each pivot value becomes its own column — name them however the report should read.": "每個樞紐值都會成為獨立欄位 — 請依報表應呈現的方式為其命名。",
   "Each range has to start above the one before it.": "每個區間的起點必須高於前一個區間。",
@@ -66,6 +69,8 @@
   "Explore": "探索",
   "Explore results": "探索結果",
   "Failed to cancel the run": "無法取消執行",
+  "Failed to customize the report": "自訂報表失敗",
+  "Failed to duplicate the report": "複製報表失敗",
   "Fill in {0} above to load the results.": "請填入上方的 {0} 以載入結果。",
   "Filter by category": "依類別篩選",
   "Filter by status": "依狀態篩選",

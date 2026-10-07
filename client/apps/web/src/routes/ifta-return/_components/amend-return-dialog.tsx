@@ -67,7 +67,7 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
     resourceName: "IFTA Return",
     mutationFn: (values) => amendIftaReturn({ id: ret.id, reason: values.reason.trim() }),
     onSuccess: async (created) => {
-      toast.success(`Amendment ${created.amendmentNumber} opened`, {
+      toast.success(t("Amendment {0} opened", created.amendmentNumber), {
         description: t(
           "It is a fresh draft for the same quarter. The filed return is left exactly as it was.",
         ),

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { fleetCodeRelationSchema } from "./fleet-code";
 import {
@@ -311,7 +312,11 @@ export const ptoFilterSchema = z
       return diffInSeconds <= PTO_FILTER_MAX_RANGE_DAYS * 24 * 60 * 60;
     },
     {
-      message: `Date range cannot exceed ${PTO_FILTER_MAX_RANGE_DAYS} days`,
+      error: () =>
+        translate(
+          "Date range cannot exceed {0, plural, one {# day} other {# days}}",
+          PTO_FILTER_MAX_RANGE_DAYS,
+        ),
       path: ["endDate"],
     },
   );

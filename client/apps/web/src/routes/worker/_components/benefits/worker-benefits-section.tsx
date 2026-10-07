@@ -98,10 +98,10 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
           <Figure
             label={t("Total compensation")}
             value={formatMinor(total.totalCompensationMinor)}
-            detail={`${employerSharePercent(
-              total.employerBenefitMinor,
-              total.totalCompensationMinor,
-            )}% is benefits`}
+            detail={t(
+              "{0}% is benefits",
+              employerSharePercent(total.employerBenefitMinor, total.totalCompensationMinor),
+            )}
           />
         </div>
       ) : null}

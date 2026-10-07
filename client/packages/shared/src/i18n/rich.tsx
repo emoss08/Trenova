@@ -110,6 +110,15 @@ export function renderRich(
 }
 
 /**
+ * translateRich is the rich counterpart of `translate`: it renders in the active locale for
+ * code that builds React nodes outside a component — a renderer function, a column builder.
+ * Like `translate`, it must be called when the text is rendered, never at module load.
+ */
+export function translateRich(message: string, tags: RichTags, ...args: unknown[]): ReactNode {
+  return renderRich(getLocale(), message, tags, args);
+}
+
+/**
  * useRichT returns `rt`, the rich counterpart of `t`: it re-renders the component on a
  * language switch or a catalog bundle landing, exactly as useT does.
  */

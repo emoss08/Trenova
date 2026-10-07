@@ -4,6 +4,7 @@
   "Failed to load open items. Try refreshing the page.": "No se pudieron cargar los elementos abiertos. Intente actualizar la página.",
   "Open item totals": "Totales de elementos abiertos",
   "Outstanding invoices and their payment status across all customers.": "Facturas pendientes y su estado de pago en todos los clientes.",
+  "Select invoice {0}": "Seleccionar la factura {0}",
   "Select invoices from a single customer to apply a payment": "Seleccione facturas de un solo cliente para aplicar un pago",
   "Totals · {0, plural, one {# invoice} other {# invoices}}": "Totales · {0, plural, one {# factura} other {# facturas}}",
   "open invoices": "facturas abiertas",

@@ -14,7 +14,6 @@ import {
 import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
-import { pluralize } from "@trenova/shared/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,21 +76,25 @@ export default function FormulaTemplatesDataTable() {
       .then((result) => {
         if (result.installed.length === 0) {
           toast.info(t("Standard templates already installed"), {
-            description: `All ${result.skipped.length} standard templates exist in your organization.`,
+            description: t(
+              "All {0} standard templates exist in your organization.",
+              result.skipped.length,
+            ),
           });
         } else {
           toast.success(
-            `Installed ${result.installed.length} standard ${pluralize(
-              "template",
+            t(
+              "{0, plural, one {Installed # standard template} other {Installed # standard templates}}",
               result.installed.length,
-            )}`,
+            ),
             {
               description:
                 result.skipped.length > 0
-                  ? `${result.skipped.length} already existed and ${
-                      result.skipped.length === 1 ? "was" : "were"
-                    } skipped.`
-                  : "The standard rating library is ready to use.",
+                  ? t(
+                      "{0, plural, one {# already existed and was skipped.} other {# already existed and were skipped.}}",
+                      result.skipped.length,
+                    )
+                  : t("The standard rating library is ready to use."),
             },
           );
         }
@@ -227,9 +230,12 @@ export default function FormulaTemplatesDataTable() {
         const exportData = buildBulkExport(templates, testCasesByTemplateId);
         const filename = getBulkExportFilename();
         downloadJson(exportData, filename);
-        toast.success(`Exported ${rows.length} templates`, {
-          description: filename,
-        });
+        toast.success(
+          t("{0, plural, one {Exported # template} other {Exported # templates}}", rows.length),
+          {
+            description: filename,
+          },
+        );
       } catch {
         toast.error(t("Export failed"), {
           description: t("Could not export the selected templates. Please try again."),

@@ -22,8 +22,12 @@ t("{0, plural, one {# stop} other {# stops}} past free time", count)
 rt("Use <link>shared profiles</link> instead.", { link: (c) => <Link to="…">{c}</Link> })
 ```
 
-`task i18n-check` rejects a sentence split around markup and English handed to a message
-(`tools/fragments.mjs`); see the i18n section of
+Never assemble interface text in a template literal (`` `${count} selected` ``): only
+string literals passed to `t`, `translate`, `rt` or `translateRich` reach a catalog.
+
+`task i18n-check` rejects a sentence split around markup, English handed to a message, and
+English built in a template literal where a person reads it (`tools/fragments.mjs`; a
+template that is not interface text takes `// i18n-ignore: <reason>`); see the i18n section of
 [generated-artifacts.md](../docs/engineering/generated-artifacts.md) for the rules.
 
 Nobody edits a catalog by hand. `task i18n` finds every user-facing string in the Go

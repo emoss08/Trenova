@@ -425,7 +425,7 @@ function TreeRow({
                   size="icon-xs"
                   variant="ghost"
                   onClick={onAdd}
-                  aria-label={`Add a position under ${position.title}`}
+                  aria-label={t("Add a position under {0}", position.title)}
                   className="opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100"
                 />
               }
@@ -443,7 +443,7 @@ function TreeRow({
                   size="icon-xs"
                   variant="ghost"
                   isLoading={busy}
-                  aria-label={`More for ${position.title}`}
+                  aria-label={t("More for {0}", position.title)}
                 />
               }
             >

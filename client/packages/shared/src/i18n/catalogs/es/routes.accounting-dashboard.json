@@ -30,7 +30,9 @@
   "total open": "total abierto",
   "trailing 91 days": "últimos 91 días",
   "weekly, collected vs due": "semanal, cobrado frente a vencido",
+  "{0, plural, one {# open invoice} other {# open invoices}}": "{0, plural, one {# factura abierta} other {# facturas abiertas}}",
   "{0} applications in period": "{0} aplicaciones en el período",
   "{0} inv · oldest {1}d": "{0} facturas · la más antigua {1} d",
+  "{0} past due": "{0} vencido",
   "{0}d past due": "{0} d de vencimiento"
 }

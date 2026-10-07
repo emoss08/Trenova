@@ -12,6 +12,8 @@
   "Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.": "当政策仅计算平日时会跳过假日。封锁日期则使该日无法申请休假。",
   "How the calendar is used": "此日历的用途",
   "How the date is listed on the calendar.": "此日期在日历上的显示方式。",
+  "It no longer applies to any year.": "它不再适用于任何年份。",
+  "It no longer applies to {0}.": "它不再适用于 {0}。",
   "Keep": "保留",
   "Next year": "下一年",
   "Nothing on the calendar for {0}.": "{0} 的日历上没有任何项目。",

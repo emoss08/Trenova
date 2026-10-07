@@ -23,6 +23,8 @@
   "Needs your attention": "需要您處理",
   "No anniversaries in the next 30 days, and nobody started this quarter.": "未來 30 天內沒有週年紀念，本季也沒有新進人員。",
   "No hire dates on record": "無到職日紀錄",
+  "Nobody blocked, nobody on watch.": "沒有人受阻，也沒有人在觀察中。",
+  "Nobody blocked. {0} to keep an eye on.": "沒有人受阻。{0} 需要留意。",
   "Nobody has handed you their approvals right now.": "目前沒有人將其核准權交給您。",
   "Nobody in this view needs attention.": "此檢視中沒有人需要處理。",
   "Nobody is on your team.": "您的團隊中沒有人員。",
@@ -43,6 +45,9 @@
   "until called back": "直到另行通知",
   "until {0}": "直到 {0}",
   "{0, plural, one {# year} other {# years}} on {1}": "{1} 滿 {0, plural, other {# 年}}",
+  "{0} compliance": "{0} 合規",
+  "{0} safety": "{0} 安全",
   "{0} to keep an eye on": "{0} 項需留意",
+  "{0} training": "{0} 訓練",
   "· {0} flagged": "· 已標記 {0}"
 }

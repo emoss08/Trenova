@@ -282,7 +282,7 @@ export function ReportDefinitionGrid({
       },
       {
         onSuccess: (created) => {
-          toast.success(`Duplicated as "${created.name}"`, {
+          toast.success(t('Duplicated as "{0}"', created.name), {
             action: {
               label: t("Open"),
               onClick: () => void navigate(`/reports/builder/${created.id}`),
@@ -290,7 +290,7 @@ export function ReportDefinitionGrid({
           });
         },
         onError: (error) =>
-          toast.error(graphQLErrorMessage(error, "Failed to duplicate the report")),
+          toast.error(graphQLErrorMessage(error, t("Failed to duplicate the report"))),
       },
     );
   };

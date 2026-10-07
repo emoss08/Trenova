@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
-import { cn, pluralize } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { IftaTaxRateInput } from "@trenova/graphql/generated/graphql";
 import {
   IFTA_MAX_YEAR,
@@ -95,7 +95,12 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
     mutationFn: (rates: IftaTaxRateInput[]) => upsertIftaTaxRates(rates),
     onSuccess: async (saved) => {
       toast.success(t("Rates imported"), {
-        description: `${saved.length} ${pluralize("rate", saved.length)} published for Q${quarter} ${year}.`,
+        description: t(
+          "{0, plural, one {# rate published} other {# rates published}} for Q{1} {2}.",
+          saved.length,
+          quarter,
+          year,
+        ),
       });
       await queryClient.invalidateQueries({ queryKey: [IFTA_TAX_RATE_LIST_KEY] });
       onOpenChange(false);

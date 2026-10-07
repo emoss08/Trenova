@@ -4,6 +4,7 @@
   "Days after the checklist starts before this item counts as overdue.": "檢查清單開始後經過幾天，此項目才算逾期。",
   "Default for this trigger": "此觸發條件的預設值",
   "Each line has an owner and a due date counted from the day the checklist starts.": "每一行都有負責人與到期日，自檢查清單開始日起算。",
+  "Inactive templates cannot be started.": "停用的範本無法啟動。",
   "Items": "項目",
   "Items are copied when a checklist starts": "檢查清單開始時會複製項目",
   "Lay out the steps a worker goes through when they join or leave, and who owns each one.": "規劃駕駛員到職或離職時所經歷的步驟，以及各步驟的負責人。",
@@ -32,5 +33,6 @@
   "e.g. DRIVER-ONBOARDING": "例如：DRIVER-ONBOARDING",
   "e.g. Driver onboarding": "例如：駕駛員到職流程",
   "e.g. Fuel card issued": "例如：已核發加油卡",
+  "{0, plural, one {# checklist is in progress from this template; they keep their items either way.} other {# checklists are in progress from this template; they keep their items either way.}}": "{0, plural, other {有 # 份檢核表正以此範本進行中；無論如何，它們都會保留其項目。}}",
   "· {0} required": "· 必要 {0}"
 }

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 export const mfaChallengeSchema = z.object({
@@ -70,5 +71,5 @@ export function isMFAChallenge(value: unknown): value is MFAChallenge {
 
 /** Recovery codes as a plain-text file a person can keep somewhere safe. */
 export function recoveryCodesFileContents(codes: readonly string[], issuer: string): string {
-  return [`${issuer} recovery codes`, "", ...codes, ""].join("\n");
+  return [translate("{0} recovery codes", issuer), "", ...codes, ""].join("\n");
 }

@@ -1,7 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { FuelPurchaseImportBatch } from "@/lib/graphql/fuel-purchase-import";
 import type { FuelPurchaseImportRowStatus } from "@trenova/graphql/generated/graphql";
-import { formatCurrency, pluralize } from "@trenova/shared/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 
 export type ImportStep = "setup" | "review" | "done";
 
@@ -53,33 +53,41 @@ export function canCommitImport(batch: FuelPurchaseImportBatch | undefined): boo
   return batch?.status === "Parsed" && (batch.summary?.newCount ?? 0) > 0;
 }
 
-function count(n: number, noun: string): string {
-  return `${n} ${pluralize(noun, n)}`;
-}
-
 export function commitLabel(batch: FuelPurchaseImportBatch | undefined): string {
   const newCount = batch?.summary?.newCount ?? 0;
-  return newCount > 0 ? `Import ${count(newCount, "purchase")}` : "Import purchases";
+  return newCount > 0
+    ? translate("{0, plural, one {Import # purchase} other {Import # purchases}}", newCount)
+    : translate("Import purchases");
 }
 
 export function importHeadline(batch: FuelPurchaseImportBatch | undefined): string {
-  if (!batch) return "Waiting for the statement to be read.";
+  if (!batch) return translate("Waiting for the statement to be read.");
   switch (batch.status) {
     case "Pending":
-      return "Waiting for the statement to be read.";
+      return translate("Waiting for the statement to be read.");
     case "Failed":
-      return "The statement could not be read.";
+      return translate("The statement could not be read.");
     case "Committed":
-      return `Recorded ${count(batch.committedCount, "purchase")}.`;
+      return translate(
+        "{0, plural, one {Recorded # purchase.} other {Recorded # purchases.}}",
+        batch.committedCount,
+      );
     case "Discarded":
-      return "This import was discarded; nothing was recorded.";
+      return translate("This import was discarded; nothing was recorded.");
     case "Parsed": {
       const summary = batch.summary;
       if (!summary || summary.newCount === 0) {
-        return "Nothing in this statement is new: every row is a duplicate, already on file, or could not be read.";
+        return translate(
+          "Nothing in this statement is new: every row is a duplicate, already on file, or could not be read.",
+        );
       }
       const amount = formatCurrency(Number(summary.totalAmount), batch.defaultCurrency);
-      return `Importing would record ${count(summary.newCount, "purchase")} for ${summary.totalGallons} gallons and ${amount}.`;
+      return translate(
+        "Importing would record {0, plural, one {# purchase} other {# purchases}} for {1} gallons and {2}.",
+        summary.newCount,
+        summary.totalGallons,
+        amount,
+      );
     }
     default:
       return "";
@@ -90,24 +98,33 @@ export function importWarnings(batch: FuelPurchaseImportBatch | undefined): stri
   if (!batch) return [];
   const warnings: string[] = [];
   if (batch.unmappedHeaders.length > 0) {
-    warnings.push(`Columns ignored: ${batch.unmappedHeaders.join(", ")}.`);
+    warnings.push(translate("Columns ignored: {0}.", batch.unmappedHeaders.join(", ")));
   }
   const summary = batch.summary;
   if (!summary) return warnings;
   if (summary.duplicateInFileCount > 0) {
-    const n = summary.duplicateInFileCount;
     warnings.push(
-      `${count(n, "row")} ${n === 1 ? "repeats" : "repeat"} a reference earlier in this statement and will be skipped.`,
+      translate(
+        "{0, plural, one {# row repeats a reference earlier in this statement and will be skipped.} other {# rows repeat a reference earlier in this statement and will be skipped.}}",
+        summary.duplicateInFileCount,
+      ),
     );
   }
   if (summary.alreadyImportedCount > 0) {
-    const n = summary.alreadyImportedCount;
     warnings.push(
-      `${count(n, "row")} ${n === 1 ? "matches" : "match"} a purchase already on file and will be skipped.`,
+      translate(
+        "{0, plural, one {# row matches a purchase already on file and will be skipped.} other {# rows match a purchase already on file and will be skipped.}}",
+        summary.alreadyImportedCount,
+      ),
     );
   }
   if (summary.errorCount > 0) {
-    warnings.push(`${count(summary.errorCount, "row")} could not be read and will be skipped.`);
+    warnings.push(
+      translate(
+        "{0, plural, one {# row could not be read and will be skipped.} other {# rows could not be read and will be skipped.}}",
+        summary.errorCount,
+      ),
+    );
   }
   return warnings;
 }
@@ -120,9 +137,17 @@ export function discardImportNotice(batch: FuelPurchaseImportBatch): {
   title: string;
   description: string;
 } {
-  const source = batch.fileName ? ` from ${batch.fileName}` : "";
   return {
     title: translate("Discard this import?"),
-    description: `The ${count(batch.rowCount, "row")} read${source} will be thrown away. Nothing has been recorded, and the statement can be uploaded again.`,
+    description: batch.fileName
+      ? translate(
+          "The {0, plural, one {# row} other {# rows}} read from {1} will be thrown away. Nothing has been recorded, and the statement can be uploaded again.",
+          batch.rowCount,
+          batch.fileName,
+        )
+      : translate(
+          "The {0, plural, one {# row} other {# rows}} read will be thrown away. Nothing has been recorded, and the statement can be uploaded again.",
+          batch.rowCount,
+        ),
   };
 }

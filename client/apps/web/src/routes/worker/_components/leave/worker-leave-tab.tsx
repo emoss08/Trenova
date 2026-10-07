@@ -67,10 +67,18 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
       designate: boolean;
     }) => decideLeaveCase({ caseId, approve, designate }),
     onSuccess: (saved) => {
-      toast.success(`Leave case ${leaveCaseStatusLabel(saved.status).toLowerCase()}`, {
+      const title =
+        saved.status === "Approved"
+          ? t("Leave case approved")
+          : saved.status === "Denied"
+            ? t("Leave case denied")
+            : saved.status === "Closed"
+              ? t("Leave case closed")
+              : t("Leave case awaiting a decision");
+      toast.success(title, {
         description: saved.fmlaDesignated
-          ? "Designated as FMLA, so days recorded against it draw the entitlement down."
-          : "Not designated as FMLA, so days recorded against it draw nothing down.",
+          ? t("Designated as FMLA, so days recorded against it draw the entitlement down.")
+          : t("Not designated as FMLA, so days recorded against it draw nothing down."),
       });
       void invalidate();
     },

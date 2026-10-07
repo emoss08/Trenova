@@ -229,7 +229,11 @@ export function BlackoutDatesField() {
                   <DropdownMenuItem
                     key={year}
                     title={String(year)}
-                    description={missing > 0 ? `Adds ${missing} days` : "Already blocked"}
+                    description={
+                      missing > 0
+                        ? t("{0, plural, one {Adds # day} other {Adds # days}}", missing)
+                        : t("Already blocked")
+                    }
                     disabled={missing === 0}
                     onClick={() => addHolidays(year)}
                   />

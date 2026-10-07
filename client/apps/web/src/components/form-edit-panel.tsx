@@ -126,7 +126,7 @@ export function FormEditPanel<
     },
     onSuccess: (_data, variables) => {
       toast.success(t("Changes have been saved"), {
-        description: `${title} updated successfully`,
+        description: t("{0} updated successfully", title),
       });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 

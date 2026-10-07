@@ -51,8 +51,19 @@ export default function CredentialTypeTable() {
         archiveWorkerCredentialType(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "credential type",
-        verbPast: t("Deactivated"),
+        succeeded: (count) =>
+          t("Deactivated {0, plural, one {# credential type} other {# credential types}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Deactivated {0, plural, one {# credential type} other {# credential types}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected credential type failed} other {All # selected credential types failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -71,8 +82,19 @@ export default function CredentialTypeTable() {
         restoreWorkerCredentialType(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "credential type",
-        verbPast: t("Restored"),
+        succeeded: (count) =>
+          t("Restored {0, plural, one {# credential type} other {# credential types}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Restored {0, plural, one {# credential type} other {# credential types}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected credential type failed} other {All # selected credential types failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();

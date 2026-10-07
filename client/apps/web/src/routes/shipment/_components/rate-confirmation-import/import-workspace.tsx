@@ -51,7 +51,7 @@ export function ImportWorkspace() {
         setUploadedDocumentId(document.id);
       },
       onError: (error) => {
-        toast.error(`Upload failed: ${error.message}`);
+        toast.error(t("Upload failed: {0}", error.message));
       },
     });
 
@@ -121,7 +121,7 @@ export function ImportWorkspace() {
       toast.success(t("Re-extraction started"));
     },
     onError: (error) => {
-      toast.error(`Failed to restart extraction: ${error.message}`);
+      toast.error(t("Failed to restart extraction: {0}", error.message));
     },
   });
 
@@ -233,7 +233,7 @@ export function ImportWorkspace() {
       }
     },
     onError: (error) => {
-      toast.error(`Failed to create shipment: ${error.message}`);
+      toast.error(t("Failed to create shipment: {0}", error.message));
       setLastCreateError(error.message);
     },
   });

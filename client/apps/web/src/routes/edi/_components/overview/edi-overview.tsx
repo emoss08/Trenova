@@ -30,12 +30,6 @@ const TIME_RANGE_OPTIONS: { label: string; sinceHours?: number }[] = [
 
 const HOURS_PER_DAY = 24;
 
-function windowInWords(sinceHours: number): string {
-  if (sinceHours < HOURS_PER_DAY) return `last ${sinceHours} hours`;
-  if (sinceHours === HOURS_PER_DAY) return "last 24 hours";
-  return `last ${sinceHours / HOURS_PER_DAY} days`;
-}
-
 export function EDIOverview() {
   const t = useT();
 
@@ -90,11 +84,21 @@ export function EDIOverview() {
       </div>
       {quiet ? (
         <EDIOverviewEmpty
-          title={sinceHours === undefined ? "Nothing yet" : "Nothing in this window"}
+          title={sinceHours === undefined ? t("Nothing yet") : t("Nothing in this window")}
           description={
             sinceHours === undefined
-              ? "No document has moved through EDI for this organization. Set up a trading partner and the first tender, invoice or acknowledgment fills this in."
-              : `No document moved through EDI in the ${windowInWords(sinceHours)}. Look at everything to see older traffic, or wait for the next document to arrive.`
+              ? t(
+                  "No document has moved through EDI for this organization. Set up a trading partner and the first tender, invoice or acknowledgment fills this in.",
+                )
+              : sinceHours <= HOURS_PER_DAY
+                ? t(
+                    "{0, plural, one {No document moved through EDI in the last hour. Look at everything to see older traffic, or wait for the next document to arrive.} other {No document moved through EDI in the last # hours. Look at everything to see older traffic, or wait for the next document to arrive.}}",
+                    sinceHours,
+                  )
+                : t(
+                    "{0, plural, one {No document moved through EDI in the last day. Look at everything to see older traffic, or wait for the next document to arrive.} other {No document moved through EDI in the last # days. Look at everything to see older traffic, or wait for the next document to arrive.}}",
+                    sinceHours / HOURS_PER_DAY,
+                  )
           }
           onWiden={sinceHours === undefined ? undefined : () => setSinceHours(undefined)}
         />

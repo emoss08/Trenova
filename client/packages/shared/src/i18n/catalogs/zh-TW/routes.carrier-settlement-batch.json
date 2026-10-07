@@ -9,5 +9,6 @@
   "Settlement count": "結算筆數",
   "Settlements can auto-post on approval based on your carrier settlement control policy.": "依據您的承運業者結算控制政策，結算可於核准時自動過帳。",
   "Total gross minor": "總毛額（最小幣值單位）",
-  "Total net minor": "總淨額（最小幣值單位）"
+  "Total net minor": "總淨額（最小幣值單位）",
+  "{0, plural, one {Batch generated: # settlement} other {Batch generated: # settlements}}": "{0, plural, other {已產生批次：# 筆結算}}"
 }

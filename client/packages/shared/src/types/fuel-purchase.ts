@@ -18,10 +18,25 @@ export const FUEL_AMOUNT_SCALE = 2;
 
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
 
-const optionalText = (max: number, what: string) =>
+type OptionalTextField = "vendor" | "city" | "reference" | "notes";
+
+function optionalTextLimitMessage(field: OptionalTextField, max: number): string {
+  switch (field) {
+    case "vendor":
+      return translate("Keep the vendor under {0} characters", max);
+    case "city":
+      return translate("Keep the city under {0} characters", max);
+    case "reference":
+      return translate("Keep the reference under {0} characters", max);
+    case "notes":
+      return translate("Keep notes under {0} characters", max);
+  }
+}
+
+const optionalText = (max: number, field: OptionalTextField) =>
   z
     .string()
-    .max(max, { message: `Keep ${what} under ${max} characters` })
+    .max(max, { message: optionalTextLimitMessage(field, max) })
     .nullable();
 
 const optionalLastFour = z
@@ -50,8 +65,8 @@ export function createFuelPurchaseFormSchema(now: number) {
       .int()
       .positive({ message: translate("Enter when the fuel was bought") })
       .max(now, { message: translate("A purchase cannot be in the future") }),
-    vendor: optionalText(200, "the vendor"),
-    vendorCity: optionalText(100, "the city"),
+    vendor: optionalText(200, "vendor"),
+    vendorCity: optionalText(100, "city"),
     fuelType: iftaFuelTypeSchema,
     quantity: positiveDecimalString(
       FUEL_QUANTITY_SCALE,
@@ -78,7 +93,7 @@ export function createFuelPurchaseFormSchema(now: number) {
       .nullable(),
     fuelCardId: z.string().nullable(),
     cardLastFour: optionalLastFour,
-    transactionReference: optionalText(100, "the reference"),
+    transactionReference: optionalText(100, "reference"),
     taxPaid: z.boolean(),
     notes: optionalText(2000, "notes"),
   });

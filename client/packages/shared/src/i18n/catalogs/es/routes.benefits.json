@@ -25,6 +25,7 @@
   "Loading benefits": "Cargando las prestaciones",
   "Medical": "Médico",
   "No cover is waiting to begin.": "No hay ninguna cobertura pendiente de comenzar.",
+  "No plans for {0}": "No hay planes para {0}",
   "No plans yet": "Aún no hay planes",
   "Nobody has been put on this plan yet.": "Todavía no se ha inscrito a nadie en este plan.",
   "Nobody has declined cover.": "Nadie ha rechazado la cobertura.",
@@ -67,6 +68,7 @@
   "{0} covered · {1} on record": "{0} cubiertos · {1} registrados",
   "{0} on it{1}": "{0} en él{1}",
   "{0} · {1} · {2} employee, {3} employer per period": "{0} · {1} · {2} empleado, {3} empleador por periodo",
+  "{0}: {1} of {2, plural, one {# covered person} other {# covered people}}": "{0}: {1} de {2, plural, one {# persona cubierta} other {# personas cubiertas}}",
   "· {0} declined": "· {0} rechazados",
   "· {0} employer": "· {0} empleador"
 }

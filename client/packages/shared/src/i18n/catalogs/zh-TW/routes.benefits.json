@@ -25,6 +25,7 @@
   "Loading benefits": "正在載入福利",
   "Medical": "醫療",
   "No cover is waiting to begin.": "沒有等待開始的代理。",
+  "No plans for {0}": "{0} 沒有計畫",
   "No plans yet": "尚無方案",
   "Nobody has been put on this plan yet.": "尚未有人加入此方案。",
   "Nobody has declined cover.": "沒有人放棄投保。",
@@ -67,6 +68,7 @@
   "{0} covered · {1} on record": "已涵蓋 {0} 人 · 共 {1} 筆紀錄",
   "{0} on it{1}": "{0} 人在此{1}",
   "{0} · {1} · {2} employee, {3} employer per period": "{0} · {1} · 每期員工負擔 {2}、雇主負擔 {3}",
+  "{0}: {1} of {2, plural, one {# covered person} other {# covered people}}": "{0}：{2, plural, other {# 位受保障人員}}中的 {1} 位",
   "· {0} declined": "· {0} 人婉拒",
   "· {0} employer": "· 雇主負擔 {0}"
 }

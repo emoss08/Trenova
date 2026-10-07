@@ -89,7 +89,7 @@ export function ViolationProgressDialog({
     },
     onSuccess: (saved) => {
       toast.success(t("Return-to-duty record updated"), {
-        description: `Now at: ${dotViolationStatusLabel(saved.status).toLowerCase()}.`,
+        description: t("Now at: {0}.", t(dotViolationStatusLabel(saved.status))),
       });
       void invalidate();
       onOpenChange(false);

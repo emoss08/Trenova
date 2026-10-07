@@ -112,7 +112,7 @@ export function RoleSelection({
         left={stepLabel}
         right={
           permissionTotal === undefined ? (
-            `${selectedCount} of ${roles.length} selected`
+            t("{0} of {1} selected", selectedCount, roles.length)
           ) : (
             <>
               <Tally value={permissionTotal} />{" "}

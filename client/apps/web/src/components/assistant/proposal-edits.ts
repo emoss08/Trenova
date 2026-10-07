@@ -1,4 +1,5 @@
 import type { ProposalField } from "@/types/assistant";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** The form's state: every field as the text a person edits. */
 export type ProposalDraft = Record<string, string>;
@@ -116,7 +117,12 @@ export function parseDraftValue(field: ProposalField, raw: string): Parsed {
       }
     default:
       if (field.maxLength && text.length > field.maxLength) {
-        return { error: `At most ${field.maxLength} characters` };
+        return {
+          error: translate(
+            "{0, plural, one {At most # character} other {At most # characters}}",
+            field.maxLength,
+          ),
+        };
       }
       return { value: text };
   }
@@ -131,9 +137,9 @@ function outOfBounds(field: ProposalField, number: number): boolean {
 function boundsMessage(field: ProposalField): string {
   const min = field.minimum ?? null;
   const max = field.maximum ?? null;
-  if (min !== null && max !== null) return `Must be between ${min} and ${max}`;
-  if (min !== null) return `Must be at least ${min}`;
-  return `Must be at most ${max}`;
+  if (min !== null && max !== null) return translate("Must be between {0} and {1}", min, max);
+  if (min !== null) return translate("Must be at least {0}", min);
+  return translate("Must be at most {0}", max);
 }
 
 /** Every field's problem, keyed by name. Empty when the draft would be accepted. */

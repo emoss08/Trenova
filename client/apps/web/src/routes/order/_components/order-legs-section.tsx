@@ -99,7 +99,7 @@ export function OrderLegsSection() {
         return;
       }
       toast.success(t("Invoice created"), {
-        description: `Invoice ${result.primary.number} was created from this order.`,
+        description: t("Invoice {0} was created from this order.", result.primary.number),
       });
     },
     onError: (error) => {
@@ -218,7 +218,7 @@ export function OrderLegsSection() {
                           <Checkbox
                             checked={checkedLegIds.has(leg.id)}
                             onCheckedChange={() => toggleLeg(leg.id)}
-                            aria-label={`Select leg ${leg.proNumber}`}
+                            aria-label={t("Select leg {0}", leg.proNumber)}
                           />
                         ) : (
                           <Tooltip>
@@ -228,7 +228,7 @@ export function OrderLegsSection() {
                                   <Checkbox
                                     disabled
                                     checked={false}
-                                    aria-label={`Leg ${leg.proNumber} cannot be invoiced`}
+                                    aria-label={t("Leg {0} cannot be invoiced", leg.proNumber)}
                                   />
                                 </span>
                               }

@@ -97,11 +97,14 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
         });
       } else {
         const names = records
-          .map((record) => record.course?.name ?? courseNames.get(record.courseId) ?? "Course")
+          .map((record) => record.course?.name ?? courseNames.get(record.courseId) ?? t("Course"))
           .join(", ");
-        toast.success(`${records.length} course${records.length === 1 ? "" : "s"} assigned`, {
-          description: names,
-        });
+        toast.success(
+          t("{0, plural, one {# course assigned} other {# courses assigned}}", records.length),
+          {
+            description: names,
+          },
+        );
       }
       void invalidate();
     },

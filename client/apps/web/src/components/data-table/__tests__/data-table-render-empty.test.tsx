@@ -95,7 +95,7 @@ describe("DataTable empty state", () => {
   it("replaces the table with a sketch named after the record when nothing is recorded", () => {
     renderTable();
 
-    expect(screen.getByRole("heading", { name: "No test records yet" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "No records yet" })).toBeInTheDocument();
     expect(screen.queryByRole("columnheader")).not.toBeInTheDocument();
     expect(screen.queryByText(/Rows per page/)).not.toBeInTheDocument();
     expect(screen.queryByText("No data available")).not.toBeInTheDocument();
@@ -106,7 +106,7 @@ describe("DataTable empty state", () => {
     const user = userEvent.setup();
     renderTable({ onAddRecord });
 
-    const sheet = screen.getByRole("region", { name: "No test records yet" });
+    const sheet = screen.getByRole("region", { name: "No records yet" });
     await user.click(within(sheet).getByRole("button", { name: "New test record" }));
     expect(onAddRecord).toHaveBeenCalledTimes(1);
   });
@@ -140,7 +140,7 @@ describe("DataTable empty state", () => {
     });
 
     expect(screen.getByText("custom empty")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "No test records yet" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
   });
 
   it("keeps the table once there are rows", () => {
@@ -152,6 +152,6 @@ describe("DataTable empty state", () => {
     renderTable();
 
     expect(screen.getByText("Alice")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "No test records yet" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
   });
 });

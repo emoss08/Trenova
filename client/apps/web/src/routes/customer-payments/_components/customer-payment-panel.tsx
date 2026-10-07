@@ -126,9 +126,12 @@ function RecordPaymentPanel({
     },
     onSuccess: (created) => {
       toast.success(t("Payment posted"), {
-        description: `${formatCurrency(created.amountMinor / 100)} received — ${formatCurrency(
-          created.appliedAmountMinor / 100,
-        )} applied, ${formatCurrency(created.unappliedAmountMinor / 100)} unapplied.`,
+        description: t(
+          "{0} received — {1} applied, {2} unapplied.",
+          formatCurrency(created.amountMinor / 100),
+          formatCurrency(created.appliedAmountMinor / 100),
+          formatCurrency(created.unappliedAmountMinor / 100),
+        ),
       });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
       void queryClient.invalidateQueries({ queryKey: queries.ar._def });

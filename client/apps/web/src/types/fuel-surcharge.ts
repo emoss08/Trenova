@@ -122,13 +122,13 @@ export const fuelSurchargeProgramSchema = z
     tableRows: z.array(fuelSurchargeTableRowSchema).default([]),
   })
   .superRefine((data, ctx) => {
-    const requirePositive = (field: keyof typeof data, label: string) => {
+    const requirePositive = (field: keyof typeof data, message: () => string) => {
       const value = data[field];
       if (value === null || value === undefined || Number(value) <= 0) {
         ctx.addIssue({
           code: "custom",
           path: [field],
-          message: `${label} is required and must be greater than zero`,
+          message: message(),
         });
       }
     };
@@ -141,8 +141,12 @@ export const fuelSurchargeProgramSchema = z
           message: translate("Peg price is required and must not be negative"),
         });
       }
-      requirePositive("increment", "Increment");
-      requirePositive("incrementRate", "Rate per increment");
+      requirePositive("increment", () =>
+        translate("Increment is required and must be greater than zero"),
+      );
+      requirePositive("incrementRate", () =>
+        translate("Rate per increment is required and must be greater than zero"),
+      );
     }
 
     if (data.method === "PerMileMPG") {
@@ -153,7 +157,9 @@ export const fuelSurchargeProgramSchema = z
           message: translate("Peg price is required and must not be negative"),
         });
       }
-      requirePositive("milesPerGallon", "Miles per gallon");
+      requirePositive("milesPerGallon", () =>
+        translate("Miles per gallon is required and must be greater than zero"),
+      );
     }
 
     if (TABLE_METHODS.has(data.method)) {

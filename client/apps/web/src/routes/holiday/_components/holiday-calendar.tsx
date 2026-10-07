@@ -102,10 +102,10 @@ export function HolidayCalendar() {
   const removeMutation = useMutation({
     mutationFn: (entry: OrgHolidayRow) => deleteOrgHoliday(entry.id),
     onSuccess: async (_, entry) => {
-      toast.success(`${entry.name} removed`, {
+      toast.success(t("{0} removed", entry.name), {
         description: entry.recursAnnually
-          ? "It no longer applies to any year."
-          : `It no longer applies to ${formatUtcDate(entry.holidayDate)}.`,
+          ? t("It no longer applies to any year.")
+          : t("It no longer applies to {0}.", formatUtcDate(entry.holidayDate)),
       });
       setPendingDelete(null);
       await invalidate();

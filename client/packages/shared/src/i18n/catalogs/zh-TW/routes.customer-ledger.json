@@ -18,5 +18,6 @@
   "d avg": "天平均",
   "no credit limit set": "未設定信用額度",
   "of {0} limit": "共 {0} 額度",
-  "{0} overdue · {1} open": "逾期 {0} · 未結 {1}"
+  "{0} overdue · {1} open": "逾期 {0} · 未結 {1}",
+  "{0} · {1}d past due": "{0} · 逾期 {1} 天"
 }

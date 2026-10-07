@@ -4,6 +4,7 @@
   "Days after the checklist starts before this item counts as overdue.": "Días desde el inicio de la lista de comprobación antes de que este elemento se considere atrasado.",
   "Default for this trigger": "Predeterminado para este activador",
   "Each line has an owner and a due date counted from the day the checklist starts.": "Cada línea tiene un responsable y una fecha de vencimiento contada desde el día en que se inicia la lista de comprobación.",
+  "Inactive templates cannot be started.": "Las plantillas inactivas no se pueden iniciar.",
   "Items": "Elementos",
   "Items are copied when a checklist starts": "Los elementos se copian cuando se inicia una lista de comprobación",
   "Lay out the steps a worker goes through when they join or leave, and who owns each one.": "Establezca los pasos por los que pasa un trabajador cuando se incorpora o se marcha, y quién es responsable de cada uno.",
@@ -32,5 +33,6 @@
   "e.g. DRIVER-ONBOARDING": "p. ej., DRIVER-ONBOARDING",
   "e.g. Driver onboarding": "p. ej., Incorporación de conductores",
   "e.g. Fuel card issued": "p. ej., Tarjeta de combustible emitida",
+  "{0, plural, one {# checklist is in progress from this template; they keep their items either way.} other {# checklists are in progress from this template; they keep their items either way.}}": "{0, plural, one {# lista de comprobación está en curso a partir de esta plantilla; conserva sus elementos en cualquier caso.} other {# listas de comprobación están en curso a partir de esta plantilla; conservan sus elementos en cualquier caso.}}",
   "· {0} required": "· {0} obligatorios"
 }

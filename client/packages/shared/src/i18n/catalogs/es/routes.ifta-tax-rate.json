@@ -44,6 +44,7 @@
   "Up to four decimals. Zero is a published rate, not a missing one.": "Hasta cuatro decimales. Cero es una tasa publicada, no una tasa faltante.",
   "Where the figure came from, so a reviewer can check it against the published matrix.": "De dónde salió la cifra, para que un revisor pueda cotejarla con la matriz publicada.",
   "e.g. IFTA Inc. tax rate matrix, Q3 2026, downloaded 12 Jul": "p. ej., matriz de tasas de IFTA Inc., T3 2026, descargada el 12 de julio",
+  "{0, plural, one {# rate published} other {# rates published}} for Q{1} {2}.": "{0, plural, one {# tasa publicada} other {# tasas publicadas}} para el T{1} de {2}.",
   "{0, plural, one {# row will be left out.} other {# rows will be left out.}}": "{0, plural, one {Se omitirá # fila.} other {Se omitirán # filas.}}",
   "{0, plural, one {Publish # rate} other {Publish # rates}}": "{0, plural, one {Publicar # tasa} other {Publicar # tasas}}",
   "{0} could not be read": "No se pudo leer {0}",

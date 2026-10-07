@@ -3,7 +3,9 @@
   "Closing a review schedules the next one this far out. Leave empty for one-off reviews.": "Cerrar una evaluación programa la siguiente con esta antelación. Déjelo vacío para evaluaciones puntuales.",
   "Decide what a review rates, how much each item counts, and how often the review comes round.": "Decida qué evalúa una revisión, cuánto cuenta cada elemento y con qué frecuencia se repite.",
   "Default template": "Plantilla predeterminada",
+  "Each item is scored 1–5. Weights decide the share of the overall score — currently {0} in total.": "Cada elemento se califica de 1 a 5. Los pesos deciden la proporción de la calificación general; actualmente suman {0} en total.",
   "Hint": "Sugerencia",
+  "Inactive templates cannot be used for new reviews.": "Las plantillas inactivas no se pueden usar para nuevas evaluaciones.",
   "Items are copied when a review starts": "Los elementos se copian al iniciarse una evaluación",
   "Name and code identify the template when someone starts a review.": "El nombre y el código identifican la plantilla cuando alguien inicia una evaluación.",
   "One-off": "Puntual",
@@ -26,5 +28,6 @@
   "e.g. Annual Driver Review": "p. ej., Evaluación anual del conductor",
   "e.g. DRIVER-ANNUAL": "p. ej., DRIVER-ANNUAL",
   "e.g. Safe driving": "p. ej., Conducción segura",
-  "e.g. safety": "p. ej., safety"
+  "e.g. safety": "p. ej., safety",
+  "{0, plural, one {# open review uses this template; close it first to deactivate.} other {# open reviews use this template; close those first to deactivate.}}": "{0, plural, one {# evaluación abierta usa esta plantilla; ciérrela primero para desactivarla.} other {# evaluaciones abiertas usan esta plantilla; ciérrelas primero para desactivarla.}}"
 }

@@ -19,6 +19,7 @@
   "Reversal approved": "沖銷已核准",
   "Reversal cancelled": "沖銷已取消",
   "Reversal entry": "沖銷分錄",
+  "Reversal for entry {0}": "分錄 {0} 的沖銷",
   "Reversal posted": "沖銷已過帳",
   "Reversal rejected": "沖銷已拒絕",
   "Reversal request created": "沖銷申請已建立",

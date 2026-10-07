@@ -4,6 +4,7 @@
   "Failed to load open items. Try refreshing the page.": "无法加载未结项目。请尝试刷新页面。",
   "Open item totals": "未结项目合计",
   "Outstanding invoices and their payment status across all customers.": "所有客户的未结发票及其付款状态。",
+  "Select invoice {0}": "选择发票 {0}",
   "Select invoices from a single customer to apply a payment": "请选择同一客户的发票以冲抵付款",
   "Totals · {0, plural, one {# invoice} other {# invoices}}": "合计 · {0, plural, other {# 张发票}}",
   "open invoices": "未结发票",

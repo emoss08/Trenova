@@ -1295,6 +1295,7 @@
   "{0} automatic": "{0} automáticas",
   "{0} better, {1} worse": "{0} mejor, {1} peor",
   "{0} calls unpriced": "{0} llamadas sin precio",
+  "{0} cannot act above the agent's ceiling": "{0} no puede actuar por encima del límite del agente",
   "{0} down, {1} up · {2}": "{0} negativas, {1} positivas · {2}",
   "{0} evaluation": "Evaluación de {0}",
   "{0} failed, {1} skipped": "{0} con error, {1} omitidos",

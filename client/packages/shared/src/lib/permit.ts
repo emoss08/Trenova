@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   AssessedJurisdiction,
   EscortRole,
@@ -221,10 +222,14 @@ export function describeRequirement(requirement: PermitRequirement): string {
   const exceedances = requirement.exceedances ?? [];
 
   if (exceedances.length === 0) {
-    return `${code} permit required`;
+    return translate("{0} permit required", code);
   }
 
-  return `${code} permit required (${exceedances.map(describeExceedance).join(", ")})`;
+  return translate(
+    "{0} permit required ({1})",
+    code,
+    exceedances.map(describeExceedance).join(", "),
+  );
 }
 
 export type EscortSummaryEntry = {

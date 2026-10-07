@@ -1,13 +1,16 @@
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AnimatePresence, m } from "motion/react";
 import type { TypingUser } from "@/hooks/shipment-comments/use-shipment-typing";
 
-function typingLabel(users: TypingUser[]): string {
-  if (users.length === 1) return `${users[0].name} is typing…`;
-  if (users.length === 2) return `${users[0].name} and ${users[1].name} are typing…`;
-  return "Several people are typing…";
+function typingLabel(users: TypingUser[], t: TranslateFn): string {
+  if (users.length === 1) return t("{0} is typing…", users[0].name);
+  if (users.length === 2) return t("{0} and {1} are typing…", users[0].name, users[1].name);
+  return t("Several people are typing…");
 }
 
 export function TypingIndicator({ typingUsers }: { typingUsers: TypingUser[] }) {
+  const t = useT();
+
   return (
     <div className="flex h-5 items-center px-4" aria-live="polite">
       <AnimatePresence>
@@ -34,7 +37,7 @@ export function TypingIndicator({ typingUsers }: { typingUsers: TypingUser[] }) 
                 />
               ))}
             </span>
-            {typingLabel(typingUsers)}
+            {typingLabel(typingUsers, t)}
           </m.div>
         )}
       </AnimatePresence>

@@ -1,3 +1,5 @@
+import { intlLocale } from "@trenova/shared/i18n/format";
+import { getLocale, translate } from "@trenova/shared/i18n/runtime";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { LoadingOptimizationResult } from "@/types/loading-optimization";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -53,7 +55,7 @@ function formatStopAddress(stop: any): string {
 }
 
 function formatDate() {
-  return new Date().toLocaleString("en-US", {
+  return new Date().toLocaleString(intlLocale(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -66,14 +68,21 @@ function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// The printed plan is built when it is printed, so it reads in the language the person is
+// using then; every translation is escaped, since it is placed into raw HTML.
+function L(message: string, ...args: unknown[]): string {
+  return esc(translate(message, ...args));
+}
+
 function buildHandlingNotes(p: LoadingOptimizationResult["placements"][0]): string {
   const notes: string[] = [];
   if (p.isHazmat)
     notes.push(
-      `<span style="color:#b45309;font-weight:700">\u2623 HAZMAT (${esc(p.hazmatClass ?? "")})</span>`,
+      `<span style="color:#b45309;font-weight:700">\u2623 ${L("HAZMAT ({0})", p.hazmatClass ?? "")}</span>`,
     );
-  if (p.fragile) notes.push('<span style="color:#dc2626;font-weight:600">\u26a0 FRAGILE</span>');
-  if (p.stackable) notes.push("Stackable");
+  if (p.fragile)
+    notes.push(`<span style="color:#dc2626;font-weight:600">\u26a0 ${L("FRAGILE")}</span>`);
+  if (p.stackable) notes.push(L("Stackable"));
   if (p.minTemp != null && p.maxTemp != null)
     notes.push(`\u2744 ${p.minTemp}\u2013${p.maxTemp}\u00b0F`);
   if (p.loadingInstructions) notes.push(esc(p.loadingInstructions));
@@ -115,10 +124,10 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
   const axleRows = axles
     .map(
       (a) => `<tr>
-        <td style="text-transform:capitalize;font-weight:500">${a.axle} axle</td>
+        <td style="text-transform:capitalize;font-weight:500">${L("{0} axle", a.axle)}</td>
         <td style="text-align:right;font-variant-numeric:tabular-nums;${!a.compliant ? "color:#dc2626;font-weight:700" : ""}">${a.weight.toLocaleString()}</td>
         <td style="text-align:right;font-variant-numeric:tabular-nums;color:#6b7280">${a.limit.toLocaleString()}</td>
-        <td style="text-align:center"><span style="display:inline-block;padding:1px 8px;border-radius:99px;font-size:10px;font-weight:600;${a.compliant ? "background:#dcfce7;color:#166534" : "background:#fee2e2;color:#991b1b"}">${a.compliant ? "PASS" : "FAIL"}</span></td>
+        <td style="text-align:center"><span style="display:inline-block;padding:1px 8px;border-radius:99px;font-size:10px;font-weight:600;${a.compliant ? "background:#dcfce7;color:#166534" : "background:#fee2e2;color:#991b1b"}">${a.compliant ? L("PASS") : L("FAIL")}</span></td>
       </tr>`,
     )
     .join("");
@@ -134,9 +143,9 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
   const hasOriginDest = meta.originName || meta.destinationName;
 
   return `<!DOCTYPE html>
-<html>
+<html lang="${getLocale()}">
 <head>
-  <title>Load Plan \u2014 ${esc(meta.proNumber)}</title>
+  <title>${L("Load Plan \u2014 {0}", meta.proNumber)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 12px; color: #111827; padding: 20px 28px; line-height: 1.4; }
@@ -190,12 +199,12 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
 <body>
   <div class="header">
     <div class="header-left">
-      <h1>Load Plan</h1>
-      <div class="subtitle">Trenova Transportation Management</div>
+      <h1>${L("Load Plan")}</h1>
+      <div class="subtitle">${L("Trenova Transportation Management")}</div>
     </div>
     <div class="header-right">
       <div class="pro">${esc(meta.proNumber)}</div>
-      <div>BOL: ${esc(meta.bol)}</div>
+      <div>${L("BOL: {0}", meta.bol)}</div>
       ${meta.customerName ? `<div>${esc(meta.customerName)}</div>` : ""}
     </div>
   </div>
@@ -205,13 +214,13 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
       ? `
   <div class="route-bar">
     <div class="route-point">
-      <div class="label">Origin</div>
+      <div class="label">${L("Origin")}</div>
       <div class="name">${esc(meta.originName)}</div>
       ${meta.originAddress ? `<div class="addr">${esc(meta.originAddress)}</div>` : ""}
     </div>
     <div class="route-arrow">\u2192</div>
     <div class="route-point">
-      <div class="label">Destination</div>
+      <div class="label">${L("Destination")}</div>
       <div class="name">${esc(meta.destinationName)}</div>
       ${meta.destinationAddress ? `<div class="addr">${esc(meta.destinationAddress)}</div>` : ""}
     </div>
@@ -219,8 +228,8 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
       meta.trailerCode || meta.driverName
         ? `
     <div class="route-info">
-      ${meta.trailerCode ? `<div><strong>Trailer:</strong> ${esc(meta.trailerCode)}</div>` : ""}
-      ${meta.driverName ? `<div><strong>Driver:</strong> ${esc(meta.driverName)}</div>` : ""}
+      ${meta.trailerCode ? `<div><strong>${L("Trailer:")}</strong> ${esc(meta.trailerCode)}</div>` : ""}
+      ${meta.driverName ? `<div><strong>${L("Driver:")}</strong> ${esc(meta.driverName)}</div>` : ""}
     </div>`
         : ""
     }
@@ -231,34 +240,34 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
   <div class="metrics">
     <div class="metric${data.linearFeetUtil > 100 ? " alert" : ""}">
       <div class="value">${data.totalLinearFeet.toFixed(1)}ft</div>
-      <div class="label">of ${data.trailerLengthFeet}ft (${data.linearFeetUtil.toFixed(0)}%)</div>
+      <div class="label">${L("of {0}ft ({1}%)", data.trailerLengthFeet, data.linearFeetUtil.toFixed(0))}</div>
     </div>
     <div class="metric${data.weightUtil > 100 ? " alert" : ""}">
       <div class="value">${data.totalWeight.toLocaleString()}</div>
-      <div class="label">of ${data.maxWeight.toLocaleString()} lbs (${data.weightUtil.toFixed(0)}%)</div>
+      <div class="label">${L("of {0} lbs ({1}%)", data.maxWeight.toLocaleString(), data.weightUtil.toFixed(0))}</div>
     </div>
     <div class="metric">
       <div class="value">${data.utilizationScore}%</div>
-      <div class="label">${data.utilizationGrade} utilization</div>
+      <div class="label">${L("{0} utilization", data.utilizationGrade)}</div>
     </div>
     <div class="metric">
       <div class="value">${placements.length}</div>
-      <div class="label">Commodities</div>
+      <div class="label">${L("Commodities")}</div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Loading Sequence (Load #1 first, near nose \u2192 last item near doors)</div>
+    <div class="section-title">${L("Loading Sequence (Load #1 first, near nose \u2192 last item near doors)")}</div>
     <table>
       <thead>
         <tr>
           <th style="width:32px;text-align:center">#</th>
-          <th>Commodity</th>
-          <th style="text-align:right">Weight (lbs)</th>
-          <th style="text-align:right">Pcs</th>
-          <th style="text-align:right">Position</th>
-          <th style="text-align:right">Length</th>
-          <th>Handling &amp; Notes</th>
+          <th>${L("Commodity")}</th>
+          <th style="text-align:right">${L("Weight (lbs)")}</th>
+          <th style="text-align:right">${L("Pcs")}</th>
+          <th style="text-align:right">${L("Position")}</th>
+          <th style="text-align:right">${L("Length")}</th>
+          <th>${L("Handling & Notes")}</th>
         </tr>
       </thead>
       <tbody>${commodityRows}</tbody>
@@ -269,15 +278,15 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     recs.length > 0
       ? `
   <div class="section">
-    <div class="section-title">Recommendations</div>
+    <div class="section-title">${L("Recommendations")}</div>
     ${recs
       .map((r) => {
         const priorityLabel =
           r.priority === "critical"
-            ? "\u26d4 CRITICAL"
+            ? `\u26d4 ${L("CRITICAL")}`
             : r.priority === "suggested"
-              ? "\u26a0 SUGGESTED"
-              : "\u2139 TIP";
+              ? `\u26a0 ${L("SUGGESTED")}`
+              : `\u2139 ${L("TIP")}`;
         const priorityStyle =
           r.priority === "critical"
             ? "color:#991b1b;background:#fee2e2;border:1px solid #fecaca"
@@ -303,21 +312,21 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
       ${
         warningItems
           ? `
-      <div class="section-title">Compliance Alerts</div>
+      <div class="section-title">${L("Compliance Alerts")}</div>
       <div class="warnings-box">${warningItems}</div>
       `
           : `
       <div style="display:flex;align-items:center;gap:6px;color:#166534;font-size:11px;margin-top:4px">
-        <span style="font-size:14px">\u2705</span> No compliance issues detected
+        <span style="font-size:14px">\u2705</span> ${L("No compliance issues detected")}
       </div>
       `
       }
     </div>
     <div class="section">
-      <div class="section-title">Axle Weights</div>
+      <div class="section-title">${L("Axle Weights")}</div>
       <table class="axle-table">
         <thead>
-          <tr><th>Axle</th><th style="text-align:right">Weight</th><th style="text-align:right">Limit</th><th style="text-align:center">Status</th></tr>
+          <tr><th>${L("Axle")}</th><th style="text-align:right">${L("Weight")}</th><th style="text-align:right">${L("Limit")}</th><th style="text-align:center">${L("Status")}</th></tr>
         </thead>
         <tbody>${axleRows}</tbody>
       </table>
@@ -327,13 +336,13 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
   ${
     placements.some((p) => p.estimatedLength)
       ? `
-  <div style="font-size:9px;color:#9ca3af;margin-top:8px">* Length estimated from weight \u2014 configure linear feet per unit in commodity settings for accuracy.</div>
+  <div style="font-size:9px;color:#9ca3af;margin-top:8px">${L("* Length estimated from weight \u2014 configure linear feet per unit in commodity settings for accuracy.")}</div>
   `
       : ""
   }
 
   <div class="footer">
-    <span>Generated by Trenova Load Planner</span>
+    <span>${L("Generated by Trenova Load Planner")}</span>
     <span>${formatDate()}</span>
   </div>
 

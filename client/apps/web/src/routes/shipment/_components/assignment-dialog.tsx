@@ -560,9 +560,13 @@ function CarrierAssignmentTab({
       form.setValue("carrierId", option.carrierId, { shouldDirty: true });
       form.setValue("rateMethod", "Flat", { shouldDirty: true });
       form.setValue("baseRate", option.cost, { shouldDirty: true });
-      toast.success(`Rate from ${option.carrierName || "the contract"} applied`);
+      toast.success(
+        option.carrierName
+          ? t("Rate from {0} applied", option.carrierName)
+          : t("Rate from the contract applied"),
+      );
     },
-    [form],
+    [form, t],
   );
 
   const submitBlocked =

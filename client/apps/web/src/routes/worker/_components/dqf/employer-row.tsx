@@ -210,7 +210,7 @@ export function EmployerRow({
           <p className="text-muted-foreground text-xs">{verification.findings}</p>
         ) : null}
       </div>
-      <RowActionsMenu label={`Actions for ${verification.employerName}`} actions={actions} />
+      <RowActionsMenu label={t("Actions for {0}", verification.employerName)} actions={actions} />
     </li>
   );
 }

@@ -166,7 +166,10 @@ export function IftaJurisdictionMileageForm({
               placeholder={t("e.g. Deadhead from Amarillo to the Dallas yard after the drop")}
               maxLength={IFTA_MILEAGE_NOTES_MAX}
               readOnly={computed}
-              description={`Up to ${IFTA_MILEAGE_NOTES_MAX} characters.`}
+              description={t(
+                "{0, plural, one {Up to # character.} other {Up to # characters.}}",
+                IFTA_MILEAGE_NOTES_MAX,
+              )}
             />
           </FormControl>
         </FormGroup>

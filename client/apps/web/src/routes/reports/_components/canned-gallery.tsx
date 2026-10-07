@@ -154,11 +154,11 @@ export function CannedGallery({
       { cannedKey: report.key },
       {
         onSuccess: (definition) => {
-          toast.success(`"${report.name}" copied to your reports`);
+          toast.success(t('"{0}" copied to your reports', report.name));
           void navigate(`/reports/builder/${definition.id}`);
         },
         onError: (error) =>
-          toast.error(graphQLErrorMessage(error, "Failed to customize the report")),
+          toast.error(graphQLErrorMessage(error, t("Failed to customize the report"))),
         onSettled: () => setCustomizingKey(null),
       },
     );

@@ -107,15 +107,15 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
         <KpiStripItem
           label={t("Billed")}
           value={formatCurrency(billed)}
-          sub={`${formatCurrency(exposure)} put in play`}
+          sub={t("{0} put in play", formatCurrency(exposure))}
         />
         <KpiStripItem
           label={t("Driver pay")}
           value={formatCurrency(driverPay)}
           sub={
             billed > 0
-              ? `${Math.round((driverPay / billed) * 100)}% of billed`
-              : "no billed detention"
+              ? t("{0}% of billed", Math.round((driverPay / billed) * 100))
+              : t("no billed detention")
           }
         />
         <KpiStripItem
@@ -124,8 +124,8 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           value={formatCurrency(waived)}
           sub={
             exposure > 0
-              ? `${Math.round((waived / exposure) * 100)}% of exposure`
-              : "nothing waived"
+              ? t("{0}% of exposure", Math.round((waived / exposure) * 100))
+              : t("nothing waived")
           }
         />
         <KpiStripItem
@@ -134,8 +134,8 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           value={formatCurrency(marginPerStop)}
           sub={
             rollup.suppressedCount > 0
-              ? `${rollup.suppressedCount} lost to no notice`
-              : `${rollup.disputeCount} disputed`
+              ? t("{0} lost to no notice", rollup.suppressedCount)
+              : t("{0} disputed", rollup.disputeCount)
           }
         />
       </KpiStrip>

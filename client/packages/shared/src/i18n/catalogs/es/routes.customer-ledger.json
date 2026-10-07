@@ -18,5 +18,6 @@
   "d avg": "d de media",
   "no credit limit set": "sin límite de crédito establecido",
   "of {0} limit": "de un límite de {0}",
-  "{0} overdue · {1} open": "{0} vencido · {1} abierto"
+  "{0} overdue · {1} open": "{0} vencido · {1} abierto",
+  "{0} · {1}d past due": "{0} · {1} d de retraso"
 }

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EDIDocumentProfileAutocompleteField } from "@/components/autocomplete-fields";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
@@ -301,11 +302,15 @@ function CodeDiffLine({ label, codes }: { label: string; codes: string[] }) {
   );
 }
 
-function verdictCountLine(label: string, actual: number, expected: number) {
-  if (actual === expected) {
-    return `${label}: ${actual} (matches expected)`;
+function verdictCountLine(kind: "warnings" | "errors", actual: number, expected: number) {
+  if (kind === "warnings") {
+    return actual === expected
+      ? translate("Warnings: {0} (matches expected)", actual)
+      : translate("Warnings: {0}, expected {1}", actual, expected);
   }
-  return `${label}: ${actual}, expected ${expected}`;
+  return actual === expected
+    ? translate("Errors: {0} (matches expected)", actual)
+    : translate("Errors: {0}, expected {1}", actual, expected);
 }
 
 function diffCodes(expected: string[], actual: string[]) {
@@ -360,8 +365,8 @@ function TestCaseVerdict({
         <EDITestCaseVerdictBadge passed={passed} />
         <div className="text-sm">
           <p className={passed ? "text-muted-foreground" : "font-medium"}>
-            {verdictCountLine("Warnings", actualWarnings, expectedWarnings)} ·{" "}
-            {verdictCountLine("Errors", actualErrors, expectedErrors)}
+            {verdictCountLine("warnings", actualWarnings, expectedWarnings)} ·{" "}
+            {verdictCountLine("errors", actualErrors, expectedErrors)}
           </p>
           {!passed && (
             <p className="text-muted-foreground text-xs">

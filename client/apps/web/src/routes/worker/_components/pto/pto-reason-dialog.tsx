@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { TextareaField, type TextareaPreset } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { notifyBulkOutcome } from "@/lib/bulk-outcome";
@@ -25,10 +26,10 @@ import {
   type PTOReasonRequest,
 } from "@trenova/shared/types/worker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { PTO_ACTION_LABELS, bulkPayloadToOutcome } from "./pto-actions";
+import { bulkPayloadToOutcome } from "./pto-actions";
 import { usePTOInvalidation } from "./use-pto-invalidation";
 
 export type PTOReasonDialogMode = "reject" | "cancel";
@@ -88,8 +89,11 @@ const MODE_COPY: Record<PTOReasonDialogMode, ModeCopy> = {
     title: "Reject PTO",
     description: (count) =>
       count === 1
-        ? "Reject this PTO request and let the worker know why."
-        : `Reject ${count} PTO requests and let the workers know why.`,
+        ? translate("Reject this PTO request and let the worker know why.")
+        : translate(
+            "Reject {0, plural, one {# PTO request} other {# PTO requests}} and let the workers know why.",
+            count,
+          ),
     confirm: "Confirm Rejection",
     loading: "Rejecting PTO...",
     presets: REJECTION_PRESETS,
@@ -99,8 +103,13 @@ const MODE_COPY: Record<PTOReasonDialogMode, ModeCopy> = {
     title: "Cancel PTO",
     description: (count) =>
       count === 1
-        ? "Withdraw this PTO request. Approved time off is released back to the schedule."
-        : `Withdraw ${count} PTO requests. Approved time off is released back to the schedule.`,
+        ? translate(
+            "Withdraw this PTO request. Approved time off is released back to the schedule.",
+          )
+        : translate(
+            "Withdraw {0, plural, one {# PTO request} other {# PTO requests}}. Approved time off is released back to the schedule.",
+            count,
+          ),
     confirm: "Confirm Cancellation",
     loading: "Cancelling PTO...",
     presets: CANCELLATION_PRESETS,
@@ -145,8 +154,6 @@ export function PTOReasonDialog({
     reset({ ptoIds, reason: "" });
   }, [ptoIds, reset]);
 
-  const labels = useMemo(() => PTO_ACTION_LABELS[mode === "reject" ? "Reject" : "Cancel"], [mode]);
-
   const { mutateAsync } = useApiMutation<
     PTOBulkActionPayload | null,
     PTOReasonRequest,
@@ -174,14 +181,51 @@ export function PTOReasonDialog({
     },
     onSuccess: (payload) => {
       if (payload) {
-        notifyBulkOutcome(bulkPayloadToOutcome(payload), {
-          entity: "PTO request",
-          verbPast: labels.verbPast,
-          skipped,
-        });
+        notifyBulkOutcome(
+          bulkPayloadToOutcome(payload),
+          mode === "reject"
+            ? {
+                succeeded: (count) =>
+                  t("Rejected {0, plural, one {# PTO request} other {# PTO requests}}", count),
+                partial: (succeeded, failed) =>
+                  t(
+                    "Rejected {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed",
+                    succeeded,
+                    failed,
+                  ),
+                allFailed: (failed) =>
+                  t(
+                    "All {0, plural, one {# selected PTO request} other {# selected PTO requests}} failed",
+                    failed,
+                  ),
+                skipped,
+              }
+            : {
+                succeeded: (count) =>
+                  t("Cancelled {0, plural, one {# PTO request} other {# PTO requests}}", count),
+                partial: (succeeded, failed) =>
+                  t(
+                    "Cancelled {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed",
+                    succeeded,
+                    failed,
+                  ),
+                allFailed: (failed) =>
+                  t(
+                    "All {0, plural, one {# selected PTO request} other {# selected PTO requests}} failed",
+                    failed,
+                  ),
+                skipped,
+              },
+        );
       } else {
-        toast.success(`PTO ${labels.verbPast.toLowerCase()}`, {
-          description: `The worker has been notified.${skipped > 0 ? ` ${skipped} ineligible skipped.` : ""}`,
+        toast.success(mode === "reject" ? t("PTO rejected") : t("PTO cancelled"), {
+          description:
+            skipped > 0
+              ? t(
+                  "The worker has been notified. {0, plural, one {# ineligible skipped.} other {# ineligible skipped.}}",
+                  skipped,
+                )
+              : t("The worker has been notified."),
         });
       }
       void invalidate();
@@ -227,7 +271,7 @@ export function PTOReasonDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. No coverage for those dates")}
-                  description={copy.reasonDescription}
+                  description={t(copy.reasonDescription)}
                   presets={copy.presets}
                   maxLength={255}
                 />
@@ -242,9 +286,9 @@ export function PTOReasonDialog({
                 onClick={() => void handleSubmit(onSubmit)()}
                 variant="destructive"
                 isLoading={isSubmitting}
-                loadingText={copy.loading}
+                loadingText={t(copy.loading)}
               >
-                {copy.confirm}
+                {t(copy.confirm)}
               </Button>
             </DialogFooter>
           </Form>
