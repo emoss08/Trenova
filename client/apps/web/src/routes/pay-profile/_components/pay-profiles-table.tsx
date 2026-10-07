@@ -109,6 +109,7 @@ export default function PayProfilesTable() {
   return (
     <DataTable<PayProfileRow>
       name="Pay Profile"
+      emptyTitle={t("No pay profiles yet")}
       queryKey="pay-profile-list"
       graphql={payProfileTableGraphQLConfig}
       resource={Resource.DriverPayProfile}

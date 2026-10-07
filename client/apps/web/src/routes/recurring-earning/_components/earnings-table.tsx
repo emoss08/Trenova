@@ -104,6 +104,7 @@ export default function EarningsTable() {
   return (
     <DataTable<RecurringEarningRow>
       name="Recurring Earning"
+      emptyTitle={t("No recurring earnings yet")}
       queryKey="recurring-earning-list"
       graphql={recurringEarningTableGraphQLConfig}
       resource={Resource.RecurringEarning}

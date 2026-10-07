@@ -100,6 +100,7 @@ export default function AgentExceptionTable() {
     <>
       <DataTable<AgentExceptionRow>
         name="Agent Exception"
+        emptyTitle={t("No agent exceptions yet")}
         queryKey="agent-exception-list"
         graphql={agentExceptionTableGraphQLConfig}
         resource={Resource.AgentException}

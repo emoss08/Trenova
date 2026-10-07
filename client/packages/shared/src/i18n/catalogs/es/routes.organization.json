@@ -38,6 +38,7 @@
   "Manage verified sender identities and route email purposes to the right provider profile.": "Gestione las identidades de remitente verificadas y dirija cada propósito de correo al perfil de proveedor adecuado.",
   "No active email profiles found.": "No se encontraron perfiles de correo activos.",
   "No email logs yet.": "Aún no hay registros de correo.",
+  "No email profiles yet": "Aún no hay perfiles de correo electrónico",
   "Operational notes for admins choosing sender identities.": "Notas operativas para los administradores que eligen identidades de remitente.",
   "Optional reply destination. Blank uses the sender email.": "Destino de respuesta opcional. En blanco se usa el correo del remitente.",
   "Purpose assignments": "Asignaciones de propósito",

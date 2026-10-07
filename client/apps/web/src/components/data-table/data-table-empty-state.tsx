@@ -7,6 +7,8 @@ type DataTableEmptyStateProps = {
   /** The table's own visible columns, so the sketch is that table with nothing in it. */
   columns: readonly EmptyTableColumn[];
   hasActiveFilters: boolean;
+  /** The translated title naming the table's records, shown when no filter is on. */
+  title?: string;
   onClearFilters: () => void;
   /** The table's default create action, when the viewer may add a record. */
   addRecord?: {
@@ -24,6 +26,7 @@ type DataTableEmptyStateProps = {
 export function DataTableEmptyState({
   columns,
   hasActiveFilters,
+  title,
   onClearFilters,
   addRecord,
 }: DataTableEmptyStateProps) {
@@ -32,7 +35,7 @@ export function DataTableEmptyState({
   return (
     <EmptyTable
       className="py-10"
-      title={hasActiveFilters ? t("Nothing matches") : t("No records yet")}
+      title={hasActiveFilters ? t("Nothing matches") : (title ?? t("No records yet"))}
       description={
         hasActiveFilters
           ? t("No record fits the search and filters. Widen them, or clear them to see every one.")

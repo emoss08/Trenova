@@ -63,6 +63,7 @@ export default function Table() {
   return (
     <DataTable<TractorRow>
       name="Tractor"
+      emptyTitle={t("No tractors yet")}
       queryKey="tractor-list"
       graphql={equipmentTableGraphQLConfigs.tractor}
       resource={Resource.Tractor}

@@ -68,6 +68,7 @@ export default function APIKeyTable() {
     <>
       <DataTable<ApiKeyRow>
         name="API Key"
+        emptyTitle={t("No API keys yet")}
         queryKey="api-key-list"
         graphql={apiKeyTableGraphQLConfig}
         resource={Resource.Integration}

@@ -5,6 +5,7 @@
   "Creates a draft settlement for every carrier with pending cost events in the current period.": "为本期有待处理成本事件的每个承运商创建一份结算草稿。",
   "Export remittance CSV": "导出汇款 CSV",
   "Generate pay-period AP runs, review totals, and export remittance files.": "生成薪资期间的应付账款批次、查看总额，并导出汇款文件。",
+  "No carrier settlement batches yet": "尚无承运商结算批次",
   "Period start": "期间开始",
   "Settlement count": "结算笔数",
   "Settlements can auto-post on approval based on your carrier settlement control policy.": "依据您的承运商结算控制政策，结算可于批准时自动过账。",

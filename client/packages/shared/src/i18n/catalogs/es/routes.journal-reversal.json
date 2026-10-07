@@ -7,6 +7,7 @@
   "Enter the journal entry ID to reverse": "Introduzca el ID del asiento que se va a revertir",
   "Explain why this journal entry needs to be reversed": "Explique por qué es necesario revertir este asiento",
   "New journal reversal": "Nueva reversión de asiento",
+  "No journal reversals yet": "Aún no hay reversiones de asientos",
   "Original entry": "Asiento original",
   "Original journal entry": "Asiento original",
   "Original journal entry ID": "ID del asiento original",

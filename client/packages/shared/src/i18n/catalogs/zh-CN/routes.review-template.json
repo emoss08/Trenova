@@ -8,6 +8,7 @@
   "Inactive templates cannot be used for new reviews.": "停用的模板无法用于新的考核。",
   "Items are copied when a review starts": "考核开始时会复制这些项目",
   "Name and code identify the template when someone starts a review.": "名称与代码可在有人开始考核时标识此模板。",
+  "No review templates yet": "尚无审核模板",
   "One-off": "一次性",
   "Only active templates with no open reviews can be deactivated.": "只有没有未结考核的生效模板才能停用。",
   "Open reviews": "未结考核",

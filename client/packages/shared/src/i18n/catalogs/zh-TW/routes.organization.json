@@ -38,6 +38,7 @@
   "Manage verified sender identities and route email purposes to the right provider profile.": "管理已驗證的寄件者身分，並將各郵件用途導向正確的供應商設定檔。",
   "No active email profiles found.": "找不到啟用中的郵件設定檔。",
   "No email logs yet.": "尚無郵件記錄。",
+  "No email profiles yet": "尚無電子郵件設定檔",
   "Operational notes for admins choosing sender identities.": "供管理員選擇寄件者身分時參考的作業備註。",
   "Optional reply destination. Blank uses the sender email.": "選填的回覆地址。留空則使用寄件者的電子郵件。",
   "Purpose assignments": "用途指派",

@@ -18,6 +18,7 @@
   "Loading rates": "Cargando las tarifas",
   "Match mode": "Modo de coincidencia",
   "No axes yet. A matrix with no axes can never be looked up, so every lane pointing at it would quietly price nothing.": "Aún no hay ejes. Una matriz sin ejes nunca puede consultarse, así que toda ruta que apunte a ella tarificaría en silencio a cero.",
+  "No rate matrices yet": "Aún no hay matrices de tarifas",
   "Nothing prices this coordinate — a lane landing here rates at nothing": "Nada tarifica esta coordenada: una ruta que caiga aquí no obtiene tarifa",
   "Origin zone": "Zona de origen",
   "Outside every band": "Fuera de todos los tramos",

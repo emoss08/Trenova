@@ -15,6 +15,7 @@
   "Failed to delete document packet rule": "No se pudo eliminar la regla del paquete de documentos",
   "Lower numbers appear first in the packet": "Los números más bajos aparecen primero en el paquete",
   "Mark this document as mandatory for compliance": "Marque este documento como obligatorio para el cumplimiento",
+  "No document packet rules yet": "Aún no hay reglas de paquetes de documentos",
   "Optionally require an expiration date and configure early warnings": "Exija opcionalmente una fecha de vencimiento y configure avisos anticipados",
   "Rule behavior": "Comportamiento de la regla",
   "Rule target": "Objetivo de la regla",

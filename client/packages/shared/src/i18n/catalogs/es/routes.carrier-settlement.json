@@ -15,6 +15,7 @@
   "Net payable": "Neto a pagar",
   "Net payable minor": "Neto a pagar en unidades menores",
   "Net {0} days": "Neto a {0} días",
+  "No carrier settlements yet": "Aún no hay liquidaciones de transportistas",
   "No rate confirmations on the covered moves.": "No hay confirmaciones de tarifa en los tramos cubiertos.",
   "No remit-to address on file — set it on the carrier record.": "No hay dirección de envío de pagos registrada; configúrela en la ficha del transportista.",
   "Positive amounts add cost owed to the carrier (detention, lumper); negative amounts deduct (damage claim, advance recovery).": "Los importes positivos suman costo adeudado al transportista (demoras, estibador); los negativos lo restan (reclamo por daños, recuperación de anticipos).",

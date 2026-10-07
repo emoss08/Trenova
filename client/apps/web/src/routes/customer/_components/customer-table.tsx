@@ -63,6 +63,7 @@ export default function CustomerTable() {
   return (
     <DataTable<CustomerRow>
       name="Customer"
+      emptyTitle={t("No customers yet")}
       queryKey="customer-list"
       resource={Resource.Customer}
       columns={columns}

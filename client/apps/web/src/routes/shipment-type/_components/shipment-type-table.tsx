@@ -88,6 +88,7 @@ export default function ShipmentTypeTable() {
   return (
     <DataTable<ShipmentTypeRow>
       name="Shipment Type"
+      emptyTitle={t("No shipment types yet")}
       queryKey="shipment-type-list"
       graphql={shipmentTypeTableGraphQLConfig}
       resource={Resource.ShipmentType}

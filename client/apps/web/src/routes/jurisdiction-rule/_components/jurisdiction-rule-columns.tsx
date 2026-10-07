@@ -1,3 +1,4 @@
+import { JURISDICTION_VERIFICATION_LABELS } from "@/lib/jurisdiction-verification";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -36,7 +37,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
       // is a research baseline, and requirements derived from it say so.
       cell: ({ row }) => (
         <Badge variant={VERIFICATION_VARIANT[row.original.verificationState]}>
-          {row.original.verificationState}
+          {JURISDICTION_VERIFICATION_LABELS[row.original.verificationState]}
         </Badge>
       ),
       size: 130,

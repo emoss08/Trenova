@@ -152,6 +152,7 @@ export default function WorkerTable() {
     <>
       <DataTable<WorkerRow>
         name="Worker"
+        emptyTitle={t("No workers yet")}
         queryKey="worker-list"
         resource={Resource.Worker}
         columns={columns}

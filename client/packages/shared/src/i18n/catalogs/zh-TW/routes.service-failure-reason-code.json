@@ -9,6 +9,7 @@
   "Lower sort values appear first.": "排序值較小者顯示在前。",
   "Manage operational exception reasons and EDI 214 defaults": "管理營運例外原因與 EDI 214 預設值",
   "Name shown to operations and billing users.": "顯示給營運與帳務使用者的名稱。",
+  "No service failure reason codes yet": "尚無服務缺失原因代碼",
   "Ordering": "排序",
   "Reactivate": "重新啟用",
   "Reason code activated": "原因代碼已啟用",

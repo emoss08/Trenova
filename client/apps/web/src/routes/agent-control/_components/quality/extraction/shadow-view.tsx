@@ -155,6 +155,7 @@ export function ShadowView() {
 
       <DataTable<ExtractionShadowResultRow>
         name="Extraction Shadow Result"
+        emptyTitle={t("No extraction shadow results yet")}
         queryKey={EXTRACTION_SHADOW_RESULT_LIST_KEY}
         graphql={extractionShadowResultTableGraphQLConfig}
         resource={Resource.AgentEvalSuite}

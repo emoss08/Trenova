@@ -63,6 +63,7 @@ export default function EquipmentManufacturerTable() {
   return (
     <DataTable<EquipmentManufacturer>
       name="Equipment Manufacturer"
+      emptyTitle={t("No equipment manufacturers yet")}
       queryKey="equipment-manufacturer-list"
       graphql={equipmentManufacturerTableGraphQLConfig}
       resource={Resource.EquipmentManufacturer}

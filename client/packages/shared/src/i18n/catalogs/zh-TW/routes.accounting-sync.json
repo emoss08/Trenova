@@ -11,6 +11,7 @@
   "Loading tries...": "正在載入嘗試紀錄…",
   "Month-end close in progress": "月結作業進行中",
   "Next try": "下次嘗試",
+  "No sync records yet": "尚無同步紀錄",
   "Not tried yet.": "尚未嘗試。",
   "Nothing is sent to {0} until setup is finished: confirm the mappings, then choose a start date.": "完成設定前不會傳送任何內容至 {0}：請確認對應，再選擇開始日期。",
   "Open an example": "開啟範例",

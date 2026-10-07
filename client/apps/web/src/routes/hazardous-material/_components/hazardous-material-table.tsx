@@ -63,6 +63,7 @@ export default function HazardousMaterialTable() {
   return (
     <DataTable<HazardousMaterial>
       name="Hazardous Material"
+      emptyTitle={t("No hazardous materials yet")}
       queryKey="hazardous-material-list"
       graphql={hazardousMaterialTableGraphQLConfig}
       resource={Resource.HazardousMaterial}

@@ -24,6 +24,7 @@
   "Interest": "Intereses",
   "Interest rate": "Tasa de interés",
   "Last interest": "Últimos intereses",
+  "No escrow accounts yet": "Aún no hay cuentas de depósito en garantía",
   "No transactions yet": "Aún no hay transacciones",
   "One active escrow account per driver; contributions flow in from settlements via a recurring deduction.": "Una cuenta de depósito en garantía activa por conductor; las aportaciones entran desde las liquidaciones mediante una deducción recurrente.",
   "Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.": "Solo se listan los transportistas propietarios: contratistas y conductores con un perfil de pago de transportista propietario.",

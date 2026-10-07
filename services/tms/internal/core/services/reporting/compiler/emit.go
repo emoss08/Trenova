@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/shared/i18n"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,12 +23,13 @@ type sqlExpr struct {
 }
 
 type emitter struct {
-	c    *Compiler
-	v    *validatedDef
-	plan *joinPlan
-	az   *authzResult
-	req  *services.ReportCompileRequest
-	loc  *time.Location
+	c      *Compiler
+	v      *validatedDef
+	plan   *joinPlan
+	az     *authzResult
+	req    *services.ReportCompileRequest
+	loc    *time.Location
+	labels labeler
 }
 
 type outputColumn struct {
@@ -52,6 +54,7 @@ func requestLocation(orgTimezone string) (*time.Location, error) {
 }
 
 func (c *Compiler) emit(
+	locale i18n.Locale,
 	req *services.ReportCompileRequest,
 	v *validatedDef,
 	plan *joinPlan,
@@ -62,7 +65,15 @@ func (c *Compiler) emit(
 		return nil, err
 	}
 
-	e := &emitter{c: c, v: v, plan: plan, az: az, req: req, loc: loc}
+	e := &emitter{
+		c:      c,
+		v:      v,
+		plan:   plan,
+		az:     az,
+		req:    req,
+		loc:    loc,
+		labels: labeler{locale: locale},
+	}
 
 	if err = e.checkOwnScopeSupport(); err != nil {
 		return nil, err

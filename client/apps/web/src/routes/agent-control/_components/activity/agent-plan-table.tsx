@@ -98,6 +98,7 @@ export default function AgentPlanTable() {
     <>
       <DataTable<AgentPlanRow>
         name="Agent Plan"
+        emptyTitle={t("No agent plans yet")}
         queryKey="agent-plan-list"
         graphql={agentPlanTableGraphQLConfig}
         resource={Resource.AgentProposal}

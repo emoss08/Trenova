@@ -50,6 +50,7 @@ export default function AgentsTable() {
   return (
     <DataTable<AgentQualityRow>
       name="Agent Score"
+      emptyTitle={t("No agent scores yet")}
       queryKey={AGENT_QUALITY_LIST_KEY}
       graphql={agentQualityTableGraphQLConfig}
       resource={Resource.AgentEvalSuite}

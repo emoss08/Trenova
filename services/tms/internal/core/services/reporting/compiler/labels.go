@@ -5,48 +5,56 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/shared/i18n"
 )
+
+const labelSlot = "\uE000"
+
+type labeler struct {
+	locale i18n.Locale
+}
+
+func (l labeler) text(message string, args ...any) string {
+	return i18n.Translate(l.locale, message, args...)
+}
 
 // defaultLabel derives a self-describing header for a column that carries no
 // author-supplied label. Related fields reached through different edges — two
 // `code` fields, say — are qualified by the edge that reached them so the
 // header identifies which one it is.
-func defaultLabel(col *validatedColumn) string {
+func (l labeler) defaultLabel(col *validatedColumn) string {
 	if col.spec.Label != "" {
 		return col.spec.Label
 	}
 	if col.ref == nil {
-		return "Calculation"
+		return i18n.Translate(l.locale, "Calculation")
 	}
 
-	base := qualifiedFieldLabel(col.ref, 1)
+	base := l.qualifiedFieldLabel(col.ref, 1)
 	if col.spec.Kind == report.ColumnKindMeasure {
-		return aggregatedLabel(col.spec.Agg, col.ref, base)
+		return l.aggregatedLabel(col.spec.Agg, col.ref, base)
 	}
 	if col.spec.Kind == report.ColumnKindDimension {
-		return groupedLabel(col.spec, base)
+		return l.groupedLabel(col.spec, base)
 	}
 	return base
 }
 
 // qualifiedFieldLabel joins the last `depth` edge labels of the path with the
 // field label, dropping segments that already repeat one another.
-func qualifiedFieldLabel(ref *resolvedRef, depth int) string {
+func (l labeler) qualifiedFieldLabel(ref *resolvedRef, depth int) string {
 	steps := ref.path.Steps
 	if len(steps) == 0 || depth <= 0 {
-		return ref.field.Label
+		return l.text(ref.field.Label)
 	}
 
-	start := len(steps) - depth
-	if start < 0 {
-		start = 0
-	}
+	start := max(len(steps)-depth, 0)
 
 	segments := make([]string, 0, len(steps)-start+1)
 	for i := start; i < len(steps); i++ {
-		segments = append(segments, edgeLabel(steps[i].Edge))
+		segments = append(segments, l.text(edgeLabel(steps[i].Edge)))
 	}
-	segments = append(segments, ref.field.Label)
+	segments = append(segments, l.text(ref.field.Label))
 
 	return joinLabelSegments(segments)
 }
@@ -92,7 +100,7 @@ func absorbs(outer, inner string) bool {
 		strings.HasPrefix(lowerOuter, lowerInner+" ")
 }
 
-func aggregatedLabel(
+func (l labeler) aggregatedLabel(
 	agg reportcatalog.Aggregation,
 	ref *resolvedRef,
 	base string,
@@ -101,44 +109,87 @@ func aggregatedLabel(
 
 	switch agg {
 	case reportcatalog.AggSum:
-		return prefixed("Total", base)
+		return l.unlessRepeated(
+			base,
+			i18n.Translate(l.locale, "Total {0}", base),
+			i18n.Translate(l.locale, "Total {0}", labelSlot),
+		)
 	case reportcatalog.AggAvg:
-		return prefixed("Average", base)
+		return l.unlessRepeated(
+			base,
+			i18n.Translate(l.locale, "Average {0}", base),
+			i18n.Translate(l.locale, "Average {0}", labelSlot),
+		)
 	case reportcatalog.AggMin:
 		if chronological {
-			return prefixed("Earliest", base)
+			return l.unlessRepeated(
+				base,
+				i18n.Translate(l.locale, "Earliest {0}", base),
+				i18n.Translate(l.locale, "Earliest {0}", labelSlot),
+			)
 		}
-		return prefixed("Minimum", base)
+		return l.unlessRepeated(
+			base,
+			i18n.Translate(l.locale, "Minimum {0}", base),
+			i18n.Translate(l.locale, "Minimum {0}", labelSlot),
+		)
 	case reportcatalog.AggMax:
 		if chronological {
-			return prefixed("Latest", base)
+			return l.unlessRepeated(
+				base,
+				i18n.Translate(l.locale, "Latest {0}", base),
+				i18n.Translate(l.locale, "Latest {0}", labelSlot),
+			)
 		}
-		return prefixed("Maximum", base)
+		return l.unlessRepeated(
+			base,
+			i18n.Translate(l.locale, "Maximum {0}", base),
+			i18n.Translate(l.locale, "Maximum {0}", labelSlot),
+		)
 	case reportcatalog.AggCount:
-		return countLabel(ref, base, false)
+		return l.countLabel(ref, base, false)
 	case reportcatalog.AggCountDistinct:
-		return countLabel(ref, base, true)
+		return l.countLabel(ref, base, true)
 	default:
 		return base
 	}
 }
 
-func prefixed(prefix, base string) string {
-	if strings.HasPrefix(strings.ToLower(base), strings.ToLower(prefix)) {
+func (l labeler) unlessRepeated(base, rendered, shape string) string {
+	before, after, found := strings.Cut(shape, labelSlot)
+	if !found {
+		return rendered
+	}
+	before = strings.ToLower(strings.TrimSpace(before))
+	after = strings.ToLower(strings.TrimSpace(after))
+	words := before
+	if words == "" {
+		words = after
+	} else if after != "" {
+		return rendered
+	}
+	if words != "" && containsWords(strings.ToLower(base), words) {
 		return base
 	}
-	return prefix + " " + base
+	return rendered
 }
 
-func countLabel(ref *resolvedRef, base string, distinct bool) string {
+func containsWords(label, words string) bool {
+	return label == words ||
+		strings.HasPrefix(label, words+" ") ||
+		strings.HasSuffix(label, " "+words) ||
+		strings.Contains(label, " "+words+" ")
+}
+
+func (l labeler) countLabel(ref *resolvedRef, base string, distinct bool) string {
 	subject := base
 	if isIdentityField(ref) {
-		subject = ref.entity.PluralLabel
+		subject = l.text(ref.entity.PluralLabel)
 	}
 	if distinct {
-		return "Distinct " + subject
+		return i18n.Translate(l.locale, "Distinct {0}", subject)
 	}
-	return subject + " Count"
+	return i18n.Translate(l.locale, "{0} Count", subject)
 }
 
 func isIdentityField(ref *resolvedRef) bool {
@@ -152,25 +203,25 @@ func isIdentityField(ref *resolvedRef) bool {
 
 // groupedLabel names the collapsing a dimension carries, so a header says what
 // its rows stand for rather than naming the raw field they came from.
-func groupedLabel(spec *report.ColumnSpec, base string) string {
+func (l labeler) groupedLabel(spec *report.ColumnSpec, base string) string {
 	if !spec.Band.IsEmpty() {
-		return base + " (Range)"
+		return i18n.Translate(l.locale, "{0} (Range)", base)
 	}
-	return bucketedLabel(spec.Bucket, base)
+	return l.bucketedLabel(spec.Bucket, base)
 }
 
-func bucketedLabel(bucket report.DateBucket, base string) string {
+func (l labeler) bucketedLabel(bucket report.DateBucket, base string) string {
 	switch bucket {
 	case report.DateBucketDay:
-		return base + " (Day)"
+		return i18n.Translate(l.locale, "{0} (Day)", base)
 	case report.DateBucketWeek:
-		return base + " (Week)"
+		return i18n.Translate(l.locale, "{0} (Week)", base)
 	case report.DateBucketMonth:
-		return base + " (Month)"
+		return i18n.Translate(l.locale, "{0} (Month)", base)
 	case report.DateBucketQuarter:
-		return base + " (Quarter)"
+		return i18n.Translate(l.locale, "{0} (Quarter)", base)
 	case report.DateBucketYear:
-		return base + " (Year)"
+		return i18n.Translate(l.locale, "{0} (Year)", base)
 	case report.DateBucketNone:
 		return base
 	default:
@@ -178,10 +229,14 @@ func bucketedLabel(bucket report.DateBucket, base string) string {
 	}
 }
 
+func (l labeler) pivotLabel(base, value string) string {
+	return i18n.Translate(l.locale, "{0} ({1})", base, value)
+}
+
 // disambiguateLabels guarantees every exported header is unique: colliding
 // columns are re-qualified with more of their path, then fall back to the
 // column id so a spreadsheet never carries two identically named columns.
-func disambiguateLabels(v *validatedDef, outputs []outputColumn) {
+func (l labeler) disambiguateLabels(v *validatedDef, outputs []outputColumn) {
 	counts := make(map[string]int, len(outputs))
 	for i := range outputs {
 		counts[outputs[i].column.Label]++
@@ -197,7 +252,7 @@ func disambiguateLabels(v *validatedDef, outputs []outputColumn) {
 			continue
 		}
 		for depth := 2; depth <= len(col.ref.path.Steps); depth++ {
-			candidate := requalify(col, out, depth)
+			candidate := l.requalify(col, out, depth)
 			if counts[candidate] == 0 {
 				counts[out.column.Label]--
 				out.column.Label = candidate
@@ -214,22 +269,22 @@ func disambiguateLabels(v *validatedDef, outputs []outputColumn) {
 			seen[label] = true
 			continue
 		}
-		outputs[i].column.Label = label + " (" + outputs[i].id + ")"
+		outputs[i].column.Label = l.pivotLabel(label, outputs[i].id)
 		seen[outputs[i].column.Label] = true
 	}
 }
 
-func requalify(col *validatedColumn, out *outputColumn, depth int) string {
-	base := qualifiedFieldLabel(col.ref, depth)
+func (l labeler) requalify(col *validatedColumn, out *outputColumn, depth int) string {
+	base := l.qualifiedFieldLabel(col.ref, depth)
 	switch col.spec.Kind {
 	case report.ColumnKindMeasure:
-		base = aggregatedLabel(col.spec.Agg, col.ref, base)
+		base = l.aggregatedLabel(col.spec.Agg, col.ref, base)
 	case report.ColumnKindDimension:
-		base = groupedLabel(col.spec, base)
+		base = l.groupedLabel(col.spec, base)
 	case report.ColumnKindComputed:
 	}
 	if out.pivotSuffix != "" {
-		return base + " (" + out.pivotSuffix + ")"
+		return l.pivotLabel(base, out.pivotSuffix)
 	}
 	return base
 }

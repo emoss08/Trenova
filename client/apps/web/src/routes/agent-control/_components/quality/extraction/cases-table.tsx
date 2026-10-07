@@ -60,6 +60,7 @@ export function CasesTable() {
   return (
     <DataTable<ExtractionEvalCaseRow>
       name="Extraction Evaluation Case"
+      emptyTitle={t("No extraction evaluation cases yet")}
       queryKey={EXTRACTION_EVAL_CASE_LIST_KEY}
       graphql={extractionEvalCaseTableGraphQLConfig}
       resource={Resource.AgentEvalSuite}

@@ -23,6 +23,7 @@
   "Mileage bands": "里程級距",
   "Minimum per move": "每個運程下限",
   "No drivers assigned yet. Assign drivers here, or from the Pay tab on the worker.": "尚未指派任何駕駛員。可在此指派，或自駕駛員的「薪酬」分頁指派。",
+  "No pay profiles yet": "尚無薪酬設定檔",
   "Pay components": "薪酬組成",
   "Pay profile activated": "薪酬設定檔已啟用",
   "Pay profile deactivated — existing assignments keep paying until reassigned": "薪酬設定檔已停用 — 現有指派會持續支付，直到重新指派",

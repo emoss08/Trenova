@@ -17,6 +17,7 @@ export default function SubscriptionTable() {
   return (
     <DataTable<TCASubscriptionRow>
       name="Subscription"
+      emptyTitle={t("No subscriptions yet")}
       queryKey="tca-subscription-list"
       graphql={tcaSubscriptionTableGraphQLConfig}
       resource={Resource.TableChangeAlert}

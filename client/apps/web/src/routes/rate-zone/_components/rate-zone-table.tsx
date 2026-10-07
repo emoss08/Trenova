@@ -14,6 +14,7 @@ export default function RateZoneTable() {
   return (
     <DataTable<RateZoneRow>
       name="Rate Zone"
+      emptyTitle={t("No rate zones yet")}
       queryKey="rate-zone-list"
       graphql={rateZoneTableGraphQLConfig}
       resource={Resource.RateZone}

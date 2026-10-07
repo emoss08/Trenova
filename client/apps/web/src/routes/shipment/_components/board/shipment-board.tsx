@@ -186,6 +186,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
   return (
     <DataTable<Shipment>
       name="Shipment"
+      emptyTitle={t("No shipments yet")}
       resource={Resource.Shipment}
       queryKey="shipment-list"
       graphql={graphql}

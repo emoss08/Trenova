@@ -147,6 +147,7 @@ export default function PTOPolicyTable() {
   return (
     <DataTable<PTOPolicyRow>
       name="PTO Policy"
+      emptyTitle={t("No PTO policies yet")}
       queryKey={PTO_POLICY_LIST_KEY}
       graphql={ptoPolicyTableGraphQLConfig}
       resource={Resource.PTOPolicy}

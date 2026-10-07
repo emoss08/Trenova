@@ -166,7 +166,6 @@ export function DeskUndoBar({
   onNow: () => void;
 }) {
   const t = useT();
-  const title = held.title.charAt(0).toLowerCase() + held.title.slice(1);
 
   return (
     <div className="dk-udo" role="status" aria-live="polite">
@@ -184,7 +183,7 @@ export function DeskUndoBar({
         </text>
       </svg>
       <span className="dk-udo-t">
-        <b>{t("Approved {0}", title)}</b>
+        <b>{t("Approved: {0}", held.title)}</b>
         {/* The seconds tick every second; a screen reader is told what will
             happen once, not each tick. */}
         <span aria-hidden>{t("{0} in {1}s", held.what, left)}</span>

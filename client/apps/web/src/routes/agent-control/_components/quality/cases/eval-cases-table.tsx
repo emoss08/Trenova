@@ -108,6 +108,7 @@ export function EvalCasesTable() {
   return (
     <DataTable<AgentEvalCaseRow>
       name="Evaluation Case"
+      emptyTitle={t("No evaluation cases yet")}
       queryKey={AGENT_EVAL_CASE_LIST_KEY}
       graphql={agentEvalCaseTableGraphQLConfig}
       resource={Resource.AgentEvalSuite}

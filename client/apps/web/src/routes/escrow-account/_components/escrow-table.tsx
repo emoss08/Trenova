@@ -92,6 +92,7 @@ export default function EscrowTable() {
     <>
       <DataTable<EscrowAccountRow>
         name="Escrow Account"
+        emptyTitle={t("No escrow accounts yet")}
         queryKey="escrow-account-list"
         graphql={escrowAccountTableGraphQLConfig}
         resource={Resource.EscrowAccount}

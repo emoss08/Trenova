@@ -10,6 +10,7 @@
   "Leave blank to defer to the state. A value above the state limit is rejected.": "留空即依州法規定。高於州法上限的數值會被拒絕。",
   "Loading carrier override...": "正在載入承運業者覆寫...",
   "Narrows": "更嚴格",
+  "No carrier overrides yet": "尚無承運業者覆寫",
   "Our trailer fleet and insurance terms are narrower than this state allows": "我方的拖車車隊與保險條件較此州所允許者更為嚴格",
   "Override removed": "覆寫已移除",
   "Permit lead time": "許可申請前置時間",

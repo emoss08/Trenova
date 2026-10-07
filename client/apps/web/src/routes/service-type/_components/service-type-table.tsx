@@ -87,6 +87,7 @@ export default function EquipmentTypeTable() {
   return (
     <DataTable<ServiceTypeRow>
       name="Service Type"
+      emptyTitle={t("No service types yet")}
       queryKey="service-type-list"
       graphql={serviceTypeTableGraphQLConfig}
       resource={Resource.ServiceType}

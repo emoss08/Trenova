@@ -90,6 +90,7 @@
   "Never auto-approve": "永不自动批准",
   "Never convert": "永不转换",
   "Never require": "永不要求",
+  "No detention policies yet": "尚无滞留费政策",
   "No start date": "无开始日期",
   "No stops matched this policy in the selected window.": "在所选期间内，没有停靠点符合此策略。",
   "No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously; the final rung may be open-ended.": "尚无档位。档位阶梯必须自可计费滞留的第 0 分钟起算且连续不间断；最后一阶可为无上限。",

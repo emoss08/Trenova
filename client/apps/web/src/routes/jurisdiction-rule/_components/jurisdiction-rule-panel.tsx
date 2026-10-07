@@ -1,3 +1,4 @@
+import { describeJurisdictionVerification } from "@/lib/jurisdiction-verification";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
@@ -147,16 +148,15 @@ function JurisdictionRuleEditPanel({
     resourceName: "Jurisdiction Rule",
   });
 
-  const verificationLabel = row?.verifiedAt
-    ? t(
-        "{0} on {1}",
-        row.verificationState,
-        formatToUserTimezone(row.verifiedAt, {
+  const verificationLabel = describeJurisdictionVerification(
+    row?.verificationState ?? "Unverified",
+    row?.verifiedAt
+      ? formatToUserTimezone(row.verifiedAt, {
           showTime: false,
           showTimeZone: false,
-        }),
-      )
-    : (row?.verificationState ?? "Unverified");
+        })
+      : null,
+  );
 
   return (
     <>

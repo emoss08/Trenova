@@ -12,6 +12,7 @@
   "Items are copied when a checklist starts": "檢查清單開始時會複製項目",
   "Lay out the steps a worker goes through when they join or leave, and who owns each one.": "規劃駕駛員到職或離職時所經歷的步驟，以及各步驟的負責人。",
   "Name and code identify the checklist; the trigger decides when it starts on its own.": "名稱與代碼用於識別檢查清單；觸發條件則決定其何時自動開始。",
+  "No checklist templates yet": "尚無檢查清單範本",
   "Onboarding and offboarding checklists that start automatically from a hire, rehire or termination — with who owns each step and when it is due.": "由到職、再次僱用或終止僱傭自動啟動的到職與離職檢查清單 — 包含各步驟的負責人與到期日。",
   "Onboarding completion marks the worker DQF-ready.": "完成到職流程後，駕駛員即標示為 DQF 就緒。",
   "Only active templates can be deactivated.": "只有有效的範本才能停用。",

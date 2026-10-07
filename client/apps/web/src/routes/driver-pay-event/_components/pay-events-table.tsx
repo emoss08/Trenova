@@ -130,6 +130,7 @@ export default function PayEventsTable() {
     <>
       <DataTable<DriverPayEventRow>
         name="Pay Event"
+        emptyTitle={t("No pay events yet")}
         queryKey="driver-pay-event-list"
         graphql={driverPayEventTableGraphQLConfig}
         resource={Resource.DriverSettlement}

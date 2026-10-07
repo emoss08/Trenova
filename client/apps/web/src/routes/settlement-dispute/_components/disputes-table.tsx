@@ -69,6 +69,7 @@ export default function DisputesTable() {
   return (
     <DataTable<SettlementDisputeRow>
       name="Settlement Dispute"
+      emptyTitle={t("No settlement disputes yet")}
       queryKey="settlement-dispute-list"
       graphql={settlementDisputeTableGraphQLConfig}
       resource={Resource.SettlementDispute}

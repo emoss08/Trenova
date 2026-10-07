@@ -63,6 +63,7 @@ export default function CarrierTable() {
   return (
     <DataTable<CarrierRow>
       name="Carrier"
+      emptyTitle={t("No carriers yet")}
       queryKey="carrier-list"
       resource={Resource.Carrier}
       columns={columns}

@@ -1,3 +1,4 @@
+import { STOP_TYPE_LABELS } from "@trenova/shared/lib/stop-type";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -50,7 +51,6 @@ import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
-import { defineLabels } from "@trenova/shared/i18n/labels";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export function MoveCard({
@@ -436,13 +436,6 @@ const moveStatusConfig: Record<
   Canceled: { label: "Canceled", variant: "danger" },
 };
 
-const stopTypeLabels: Record<StopType, string> = defineLabels({
-  Pickup: "Pickup",
-  Delivery: "Delivery",
-  SplitPickup: "Split Pickup",
-  SplitDelivery: "Split Delivery",
-});
-
 const stopStatusBgColor: Record<StopStatus, string> = {
   New: "bg-accent-violet",
   InTransit: "bg-info",
@@ -512,7 +505,7 @@ function LocationDisplay({ locationId, stopType }: { locationId: string; stopTyp
       <div className="flex items-center gap-1.5">
         {location.addressLine1 && <span className="truncate text-xs">{location.addressLine1}</span>}
         <span className="text-muted-foreground text-xs whitespace-nowrap">
-          ({stopTypeLabels[stopType]})
+          ({STOP_TYPE_LABELS[stopType]})
         </span>
       </div>
       <p className="text-muted-foreground truncate text-xs">
@@ -539,7 +532,7 @@ function stopCheckCallAction(stop: Stop, enabled: boolean): StopActualAction | n
 }
 
 function stopDescription(stop: Stop): string {
-  const label = stopTypeLabels[stop.type];
+  const label = STOP_TYPE_LABELS[stop.type];
   const place = stop.location?.name || stop.addressLine;
   return place ? `${label} · ${place}` : label;
 }
@@ -650,20 +643,20 @@ function StopTimelineItem({
                 <div className="flex items-center gap-1.5">
                   <span className="truncate text-xs">{stop.addressLine}</span>
                   <span className="text-muted-foreground text-xs whitespace-nowrap">
-                    ({stopTypeLabels[stop.type]})
+                    ({STOP_TYPE_LABELS[stop.type]})
                   </span>
                 </div>
               </>
             ) : (
               <span className="text-muted-foreground text-xs whitespace-nowrap">
-                ({stopTypeLabels[stop.type]})
+                ({STOP_TYPE_LABELS[stop.type]})
               </span>
             )}
           </>
         ) : hasErrors ? (
           <div className="flex flex-col gap-0.5">
             <span className="text-destructive text-xs">
-              {t("Error in {0} stop", stopTypeLabels[stop.type])}
+              {t("Error in {0} stop", STOP_TYPE_LABELS[stop.type])}
             </span>
             <span className="text-muted-foreground text-xs">
               {t("Click to edit and fix errors")}
@@ -671,7 +664,7 @@ function StopTimelineItem({
           </div>
         ) : (
           <span className="text-muted-foreground text-xs">
-            {t("Enter {0} information", stopTypeLabels[stop.type])}
+            {t("Enter {0} information", STOP_TYPE_LABELS[stop.type])}
           </span>
         )}
       </div>

@@ -13,6 +13,7 @@
   "Inactive courses drop out of the required matrix and cannot be assigned.": "停用的课程将从必修矩阵中移除，且无法被指派。",
   "Name and code identify the course on worker records and in Dash.": "名称与代码可于司机记录及 Dash 中标识此课程。",
   "No score": "无分数",
+  "No training courses yet": "尚无培训课程",
   "One-time": "一次性",
   "Only active courses with no open assignments can be deactivated.": "只有没有未结指派的生效课程才能停用。",
   "Only inactive courses can be restored.": "只有已停用的课程才能恢复。",

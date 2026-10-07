@@ -63,6 +63,7 @@ export default function FleetCodeTable() {
   return (
     <DataTable<FleetCodeRow>
       name="Fleet Code"
+      emptyTitle={t("No fleet codes yet")}
       queryKey="fleet-code-list"
       graphql={fleetCodeTableGraphQLConfig}
       resource={Resource.FleetCode}

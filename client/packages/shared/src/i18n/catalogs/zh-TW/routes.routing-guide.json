@@ -22,6 +22,7 @@
   "Matches a regional lane": "比對到區域路線",
   "Matches one facility pair": "比對到單一場站配對",
   "No carriers yet. Add carriers in the order they should be offered the freight — rank 1 goes first.": "尚無承運業者。請依應提供貨載的先後順序新增承運業者 — 排序 1 最先。",
+  "No routing guides yet": "尚無路由指南",
   "Offer order — rank 1 is tendered first.": "要約順序 — 排序 1 最先發出。",
   "Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers.": "依此承運業者現行合約所載內容提出要約。上方的費率保留給沒有合約涵蓋的路線使用。",
   "Only Active guides are matched when a move is tendered.": "運程發出要約時，僅比對生效中的指引。",

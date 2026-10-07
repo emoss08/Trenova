@@ -15,6 +15,7 @@
   "Failed to delete document packet rule": "無法刪除文件封包規則",
   "Lower numbers appear first in the packet": "數字較小者在封包中排在前面",
   "Mark this document as mandatory for compliance": "將此文件標示為合規必備",
+  "No document packet rules yet": "尚無文件包規則",
   "Optionally require an expiration date and configure early warnings": "可選擇是否要求填寫到期日，並設定提前預警",
   "Rule behavior": "規則行為",
   "Rule target": "規則目標",

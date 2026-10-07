@@ -8,6 +8,7 @@
   "Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.": "“每次结算”在每个周期皆扣款；“每月”则仅于每月第一笔结算扣款。",
   "Future settlements skip the deduction; history is kept.": "后续结算会跳过此扣款；历史记录仍保留。",
   "Future settlements withhold the deduction again.": "后续结算将恢复此扣款。",
+  "No recurring deductions yet": "尚无周期性扣款",
   "No selected deductions can move to that status.": "所选的扣款皆无法转为该状态。",
   "Optional last day the deduction applies; leave blank for open-ended.": "选填的扣款最后适用日；留空即为无期限。",
   "Pause to skip upcoming settlements without losing history; completed deductions stop permanently.": "暂停即可跳过接下来的结算而不失去历史记录；已完成的扣款则永久停止。",

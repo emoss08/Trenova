@@ -16,6 +16,7 @@
   "Invoice balances and the GL were updated.": "已更新发票余额与总账。",
   "Loading open invoices…": "正在加载未结发票…",
   "NSF check, posted to wrong customer, ...": "存款不足支票、过账至错误客户等等",
+  "No customer payments yet": "尚无客户付款",
   "Nothing applied — the full amount is unapplied cash": "未冲抵任何项目 — 全额均为未冲抵款项",
   "Nothing has been posted to the ledger yet": "尚未有任何项目过账至分类账",
   "Nothing to apply": "没有可冲抵的项目",

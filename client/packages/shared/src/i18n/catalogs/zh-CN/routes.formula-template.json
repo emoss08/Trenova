@@ -163,6 +163,7 @@
   "No changes between versions": "版本之间没有差异",
   "No description available.": "没有可用的说明。",
   "No formula templates selected": "未选择任何公式模板",
+  "No formula templates yet": "尚无公式模板",
   "No maximum": "无上限",
   "No minimum": "无下限",
   "No scenarios yet. Add one to pin what this formula must produce — approval requires every scenario to pass. A green preview can be pinned in one click.": "尚无场景。请添加场景以固定此公式必须生成的结果 — 批准须所有场景均通过。绿色的预览结果可一键固定。",

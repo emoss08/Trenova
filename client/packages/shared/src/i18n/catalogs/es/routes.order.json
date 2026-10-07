@@ -51,6 +51,7 @@
   "No leg is ready to invoice yet. A leg must be completed or ready to invoice before it can be billed.": "Todavía no hay ningún tramo listo para facturar. Un tramo debe estar completado o listo para facturar antes de poder cobrarse.",
   "No legs": "Sin tramos",
   "No order charges": "Sin cargos de pedido",
+  "No orders yet": "Aún no hay pedidos",
   "One leg produces a standalone invoice rather than a grouped one covering the order. The order's remaining legs will have to be billed separately.": "Un tramo genera una factura independiente en lugar de una agrupada que cubra el pedido. Los tramos restantes del pedido deberán facturarse por separado.",
   "Order canceled": "Pedido cancelado",
   "Order closed": "Pedido cerrado",

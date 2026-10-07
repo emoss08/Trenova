@@ -66,6 +66,7 @@ export default function AccountTypeTable() {
   return (
     <DataTable<AccountTypeRow>
       name="Account Type"
+      emptyTitle={t("No account types yet")}
       queryKey="account-type-list"
       graphql={accountTypeTableGraphQLConfig}
       resource={Resource.AccountType}

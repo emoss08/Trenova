@@ -6,6 +6,7 @@
   "Distance override deleted": "Anulación de distancia eliminada",
   "Failed to delete distance override": "No se pudo eliminar la anulación de distancia",
   "Intermediate stops": "Paradas intermedias",
+  "No distance overrides yet": "Aún no hay anulaciones de distancia",
   "No intermediate stops configured.": "No hay paradas intermedias configuradas.",
   "Optionally scope this override to a specific customer": "Opcionalmente, limite esta anulación a un cliente concreto",
   "Override calculated distances between location pairs for routing and billing adjustments": "Anule las distancias calculadas entre pares de ubicaciones para ajustes de enrutamiento y facturación",

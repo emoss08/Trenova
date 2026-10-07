@@ -47,6 +47,7 @@ export default function AgentRunTable() {
   return (
     <DataTable<AgentRunRow>
       name="Agent Run"
+      emptyTitle={t("No agent runs yet")}
       queryKey="agent-run-list"
       graphql={agentRunTableGraphQLConfig}
       resource={Resource.AgentRun}

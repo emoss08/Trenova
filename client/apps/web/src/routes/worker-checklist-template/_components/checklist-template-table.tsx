@@ -161,6 +161,7 @@ export default function ChecklistTemplateTable() {
   return (
     <DataTable<WorkerChecklistTemplateRow>
       name="Checklist Template"
+      emptyTitle={t("No checklist templates yet")}
       queryKey={WORKER_CHECKLIST_TEMPLATE_LIST_KEY}
       graphql={workerChecklistTemplateTableGraphQLConfig}
       resource={Resource.WorkerChecklistTemplate}

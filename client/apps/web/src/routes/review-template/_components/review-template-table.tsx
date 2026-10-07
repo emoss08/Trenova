@@ -161,6 +161,7 @@ export default function ReviewTemplateTable() {
   return (
     <DataTable<ReviewTemplateRow>
       name="Review Template"
+      emptyTitle={t("No review templates yet")}
       queryKey={REVIEW_TEMPLATE_LIST_KEY}
       graphql={reviewTemplateTableGraphQLConfig}
       resource={Resource.PerformanceReviewTemplate}

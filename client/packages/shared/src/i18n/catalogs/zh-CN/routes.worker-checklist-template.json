@@ -12,6 +12,7 @@
   "Items are copied when a checklist starts": "检查清单开始时会复制项目",
   "Lay out the steps a worker goes through when they join or leave, and who owns each one.": "规划司机入职或离职时所经历的步骤，以及各步骤的负责人。",
   "Name and code identify the checklist; the trigger decides when it starts on its own.": "名称与代码用于识别检查清单；触发条件则决定其何时自动开始。",
+  "No checklist templates yet": "尚无检查清单模板",
   "Onboarding and offboarding checklists that start automatically from a hire, rehire or termination — with who owns each step and when it is due.": "由入职、再次雇用或终止雇佣自动启动的入职与离职检查清单 — 包含各步骤的负责人与到期日。",
   "Onboarding completion marks the worker DQF-ready.": "完成入职流程后，司机即标示为 DQF 就绪。",
   "Only active templates can be deactivated.": "只有有效的模板才能停用。",

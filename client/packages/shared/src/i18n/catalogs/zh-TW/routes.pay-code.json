@@ -9,6 +9,7 @@
   "Every selected pay code already has that status.": "所選的薪酬代碼皆已處於該狀態。",
   "Human-readable label displayed next to the code throughout the app.": "在應用程式各處顯示於代碼旁的易讀標籤。",
   "Inactive codes stay on historical records but disappear from new-entry dropdowns.": "已停用的代碼會保留在歷史紀錄上，但不再出現於新增項目的下拉選單中。",
+  "No pay codes yet": "尚無薪酬代碼",
   "Optional internal note explaining when and how the code should be used.": "選填的內部備註，說明此代碼的使用時機與方式。",
   "Optional note about when this code applies": "關於此代碼適用時機的選填備註",
   "Pay code activated — it appears in dropdowns again": "薪酬代碼已啟用 — 將再次出現在下拉選單中",

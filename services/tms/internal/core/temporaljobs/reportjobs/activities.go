@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/shared/i18n"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
@@ -208,7 +209,7 @@ func (a *Activities) PrepareRunActivity(
 		return nil, classifyCompileError(err)
 	}
 
-	requestedBy, title, description := a.runDisplayMetadata(ctx, run, runnerTenant)
+	requestedBy, locale, title, description := a.runDisplayMetadata(ctx, run, runnerTenant)
 
 	return &PreparedRun{
 		RunID:          run.ID,
@@ -224,6 +225,7 @@ func (a *Activities) PrepareRunActivity(
 		Params:         run.Params,
 		OrgTimezone:    org.Timezone,
 		RequestedBy:    requestedBy,
+		Locale:         locale,
 		MaxRunSeconds:  int64(a.cfg.GetMaxRunDuration().Seconds()),
 		WantDigest:     a.scheduleWantsDigest(ctx, runnerTenant, run.ScheduleID),
 	}, nil
@@ -285,21 +287,31 @@ func (a *Activities) resolveDefinition(
 	return entry.Definition, nil
 }
 
+func withRunLocale(ctx context.Context, prepared *PreparedRun) context.Context {
+	if locale, ok := i18n.Parse(prepared.Locale); ok {
+		return i18n.WithLocale(ctx, locale)
+	}
+	return ctx
+}
+
 func (a *Activities) runDisplayMetadata(
 	ctx context.Context,
 	run *report.ReportRun,
 	runnerTenant pagination.TenantInfo,
-) (requestedBy, title, description string) {
+) (requestedBy, locale, title, description string) {
 	if user, userErr := a.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
 		TenantInfo:   runnerTenant,
 		LookupUserID: run.RequestedByID,
 	}); userErr == nil {
 		requestedBy = user.Name
+		if parsed, ok := i18n.Parse(user.Locale); ok {
+			locale = parsed.String()
+		}
 	}
 
 	title, description = a.reportTitle(ctx, run)
 
-	return requestedBy, title, description
+	return requestedBy, locale, title, description
 }
 
 func (a *Activities) reportTitle(
@@ -344,6 +356,8 @@ func (a *Activities) ExecuteAndRenderActivity(
 	if err != nil {
 		return nil, err
 	}
+
+	ctx = withRunLocale(ctx, prepared)
 
 	compiled, err := a.compiler.Compile(ctx, &services.ReportCompileRequest{
 		Definition:  definition,

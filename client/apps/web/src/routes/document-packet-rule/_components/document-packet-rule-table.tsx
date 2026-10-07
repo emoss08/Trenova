@@ -95,6 +95,7 @@ export default function DocumentPacketRuleTable() {
     <>
       <DataTable<DocumentPacketRuleRow>
         name="Document Packet Rule"
+        emptyTitle={t("No document packet rules yet")}
         queryKey="document-packet-rule-list"
         graphql={documentPacketRuleTableGraphQLConfig}
         resource={Resource.DocumentType}

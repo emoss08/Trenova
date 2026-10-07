@@ -70,6 +70,7 @@ export default function InvoiceRegisterTable() {
     <>
       <DataTable<InvoiceRegisterRow>
         name="Invoice"
+        emptyTitle={t("No invoices yet")}
         queryKey="invoice-register"
         graphql={invoiceRegisterTableGraphQLConfig}
         resource={Resource.Invoice}

@@ -95,6 +95,7 @@ export default function UserTable() {
   return (
     <DataTable<UserRow>
       name="User"
+      emptyTitle={t("No users yet")}
       queryKey="user-list"
       graphql={userTableGraphQLConfig}
       resource={Resource.User}

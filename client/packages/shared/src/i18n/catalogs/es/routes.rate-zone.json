@@ -8,6 +8,7 @@
   "How this zone is identified and whether it is live.": "Cómo se identifica esta zona y si está activa.",
   "Name a market area once and price against it, instead of listing every postal prefix it covers": "Nombre un área de mercado una vez y tarifique contra ella, en lugar de listar cada prefijo postal que abarca",
   "No places yet. A zone with no members matches nothing, so every lane written against it would quietly never apply.": "Aún no hay lugares. Una zona sin miembros no coincide con nada, así que toda ruta escrita contra ella nunca se aplicaría.",
+  "No rate zones yet": "Aún no hay zonas de tarifas",
   "Place type": "Tipo de lugar",
   "Place {0}": "Lugar {0}",
   "Rate zone": "Zona tarifaria",

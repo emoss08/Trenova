@@ -51,7 +51,6 @@
   "No carrier in the master matches this invoice's SCAC or DOT number.": "Ningún transportista del maestro coincide con el SCAC o el número DOT de esta factura.",
   "No carrier invoice fits that search. Clear it to see the list again.": "Ninguna factura de transportista coincide con esa búsqueda. Bórrela para volver a ver la lista.",
   "No carrier link": "Sin vínculo de transportista",
-  "No invoices yet": "Aún no hay facturas",
   "No match fits the search and chips. Widen them, or clear them to see everything open.": "Ninguna coincidencia se ajusta a la búsqueda y a los filtros. Amplíelos o bórrelos para ver todo lo abierto.",
   "No matches yet": "Aún no hay coincidencias",
   "Nothing needs attention": "No hay nada que requiera atención",

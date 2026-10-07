@@ -110,6 +110,7 @@ export default function DeductionsTable() {
   return (
     <DataTable<RecurringDeductionRow>
       name="Recurring Deduction"
+      emptyTitle={t("No recurring deductions yet")}
       queryKey="recurring-deduction-list"
       graphql={recurringDeductionTableGraphQLConfig}
       resource={Resource.RecurringDeduction}

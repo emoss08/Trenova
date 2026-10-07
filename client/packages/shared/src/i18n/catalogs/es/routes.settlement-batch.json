@@ -6,6 +6,7 @@
   "Creates a draft settlement for every driver with accrued pay in the current period.": "Crea una liquidación en borrador para cada conductor con pago devengado en el período actual.",
   "Export payroll CSV": "Exportar el CSV de nómina",
   "Generate pay-period batches, monitor exceptions, and export payroll files.": "Genere lotes por período de pago, controle las excepciones y exporte los archivos de nómina.",
+  "No settlement batches yet": "Aún no hay lotes de liquidación",
   "Payroll CSV downloaded": "Se descargó el CSV de nómina",
   "Settlement batch": "Lote de liquidación"
 }

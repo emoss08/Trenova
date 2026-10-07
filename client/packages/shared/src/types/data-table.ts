@@ -173,6 +173,11 @@ export type DataTableProps<TData extends Record<string, any>> = {
    */
   renderEmptyState?: (state: DataTableEmptyStateRenderProps) => React.ReactNode;
   /**
+   * The translated title shown when the table has no records and no filter is
+   * on. A whole message naming the records, such as t("No shipments yet").
+   */
+  emptyTitle?: string;
+  /**
    * Filters the table's surroundings put on it: a range or a record chosen
    * beside the table rather than in its filter builder. They are ANDed ahead
    * of the person's own filters in every query the table makes, and are not

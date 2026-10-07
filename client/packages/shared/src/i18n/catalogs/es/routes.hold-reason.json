@@ -16,6 +16,7 @@
   "Loading hold reason...": "Cargando el motivo de retención...",
   "Makes this reason visible to customers in the portal.": "Hace visible este motivo para los clientes en el portal.",
   "Manage and configure hold reasons for your organization": "Gestione y configure los motivos de retención de su organización",
+  "No hold reasons yet": "Aún no hay motivos de retención",
   "Prevents assigning or dispatching power/trailer until this hold is cleared.": "Impide asignar o despachar tractor/remolque hasta que se levante esta retención.",
   "Prevents invoicing or moving to billable states while the hold is active.": "Impide facturar o pasar a estados facturables mientras la retención esté activa.",
   "Prevents marking stops delivered or closing freight until this hold clears.": "Impide marcar paradas como entregadas o cerrar la carga hasta que se levante esta retención.",

@@ -6,6 +6,7 @@
   "Creates a draft settlement for every driver with accrued pay in the current period.": "為本期有已計提薪酬的每位駕駛員建立結算草稿。",
   "Export payroll CSV": "匯出薪資 CSV",
   "Generate pay-period batches, monitor exceptions, and export payroll files.": "產生薪資期間批次、監控例外，並匯出薪資檔案。",
+  "No settlement batches yet": "尚無結算批次",
   "Payroll CSV downloaded": "薪資 CSV 已下載",
   "Settlement batch": "結算批次"
 }

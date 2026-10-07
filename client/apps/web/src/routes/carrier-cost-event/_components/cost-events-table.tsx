@@ -17,6 +17,7 @@ export default function CostEventsTable() {
   return (
     <DataTable<CarrierCostEventRow>
       name="Carrier Cost Event"
+      emptyTitle={t("No carrier cost events yet")}
       queryKey="carrier-cost-event-list"
       graphql={carrierCostEventTableGraphQLConfig}
       resource={Resource.CarrierSettlement}

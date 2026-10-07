@@ -15,6 +15,7 @@
   "Net payable": "应付净额",
   "Net payable minor": "应付净额（最小币值单位）",
   "Net {0} days": "净 {0} 天",
+  "No carrier settlements yet": "尚无承运商结算",
   "No rate confirmations on the covered moves.": "已承运的运程上没有费率确认书。",
   "No remit-to address on file — set it on the carrier record.": "尚未登录汇款地址 — 请于承运商资料中设置。",
   "Positive amounts add cost owed to the carrier (detention, lumper); negative amounts deduct (damage claim, advance recovery).": "正值会增加应付给承运商的成本（滞留费、装卸工费）；负值则会扣除（损害索赔、预付款回收）。",
