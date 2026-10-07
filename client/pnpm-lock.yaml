@@ -582,6 +582,9 @@ importers:
       lint-staged:
         specifier: ^17.5.0
         version: 17.5.0
+      magic-string:
+        specifier: 0.30.21
+        version: 0.30.21
       oxc-parser:
         specifier: 0.148.0
         version: 0.148.0

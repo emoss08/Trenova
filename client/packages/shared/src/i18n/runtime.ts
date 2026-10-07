@@ -219,6 +219,19 @@ export async function whenCatalogsReady(): Promise<void> {
 }
 
 /**
+ * afterCatalogs passes a value through once the catalogs are ready. Chained onto a dynamic
+ * import (`import("./panel").then(afterCatalogs)`), the module's code has evaluated and
+ * required its bundles before this runs, so whatever renders it — a lazy route, a
+ * React.lazy component behind its Suspense skeleton — shows the page translated on its
+ * first frame instead of in English and then again. A bundle that fails to download does
+ * not fail the import: the component renders in English and the bundle is retried later.
+ */
+export async function afterCatalogs<T>(value: T): Promise<T> {
+  await whenCatalogsReady().catch(() => undefined);
+  return value;
+}
+
+/**
  * registerCatalogSource adds a package's own catalog (an edition's strings) on top of the
  * app catalog. Its entries win over the app's for the same key, so a package can carry the
  * strings that exist only in its code. Catalogs already loaded are dropped and the active

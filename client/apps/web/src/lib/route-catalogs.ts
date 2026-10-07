@@ -1,4 +1,4 @@
-import { whenCatalogsReady } from "@trenova/shared/i18n/runtime";
+import { afterCatalogs } from "@trenova/shared/i18n/runtime";
 import type { RouteObject } from "react-router";
 
 // A route's strings ship in its folder's catalog bundle, which every module in the folder
@@ -7,26 +7,17 @@ import type { RouteObject } from "react-router";
 // page can render from has been asked for — including those of other route folders it
 // borrows components from. Waiting for them here is what lets the page's first frame render
 // translated instead of in English and then again.
-//
-// A bundle that fails to download must not fail the navigation: the page renders in
-// English, and the bundle is retried on the next navigation.
-async function afterCatalogs<T>(loaded: Promise<T>): Promise<T> {
-  const value = await loaded;
-  await whenCatalogsReady().catch(() => undefined);
-  return value;
-}
-
 function withCatalogs(route: RouteObject): RouteObject {
   const { lazy, children } = route;
   const next: RouteObject = { ...route };
 
   if (typeof lazy === "function") {
-    next.lazy = () => afterCatalogs(lazy());
+    next.lazy = () => lazy().then(afterCatalogs);
   } else if (lazy !== undefined) {
     next.lazy = Object.fromEntries(
       Object.entries(lazy).map(([key, load]) => [
         key,
-        typeof load === "function" ? () => afterCatalogs(load()) : load,
+        typeof load === "function" ? () => load().then(afterCatalogs) : load,
       ]),
     );
   }

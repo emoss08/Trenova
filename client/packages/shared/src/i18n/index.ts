@@ -15,6 +15,7 @@ export {
 } from "@trenova/shared/i18n/format";
 export { I18nProvider } from "@trenova/shared/i18n/provider";
 export {
+  afterCatalogs,
   getLocale,
   hasTranslation,
   loadCatalog,

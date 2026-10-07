@@ -30,7 +30,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    routeCatalogs({ routesDir: path.resolve(dirname, "src/routes") }),
+    routeCatalogs({ srcDir: path.resolve(dirname, "src") }),
     react(),
     // babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),

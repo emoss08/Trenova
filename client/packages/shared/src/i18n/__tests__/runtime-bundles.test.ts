@@ -186,6 +186,56 @@ describe("requireCatalog", () => {
   });
 });
 
+describe("afterCatalogs", () => {
+  it("passes a lazily loaded module on only once the bundles it required have landed", async () => {
+    await runtime.setLocale("es");
+    autoResolve = false;
+    const module = { Comments: () => null };
+
+    // What a lazy import does: the module evaluates (requiring its folder's bundle), then
+    // the import resolves.
+    const loading = Promise.resolve()
+      .then(() => {
+        runtime.requireCatalog("routes/shipment");
+        return module;
+      })
+      .then(runtime.afterCatalogs);
+
+    let resolved = false;
+    void loading.then(() => {
+      resolved = true;
+    });
+    await vi.waitFor(() => expect(pendingBundles("es")).toEqual(["routes/shipment"]));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(resolved).toBe(false);
+
+    settleLoad("es", "routes/shipment");
+    await expect(loading).resolves.toBe(module);
+    expect(runtime.translate("New shipment")).toBe("Nuevo envío");
+  });
+
+  it("does not wait at all in English", async () => {
+    autoResolve = false;
+    runtime.requireCatalog("routes/shipment");
+
+    await expect(runtime.afterCatalogs("module")).resolves.toBe("module");
+    expect(loads).toHaveLength(0);
+  });
+
+  it("lets the component render in English when its bundle fails to download", async () => {
+    await runtime.setLocale("es");
+    autoResolve = false;
+    runtime.requireCatalog("routes/customer");
+
+    const loading = runtime.afterCatalogs("module");
+    await vi.waitFor(() => expect(pendingBundles("es")).toEqual(["routes/customer"]));
+    loads.splice(0, 1)[0].reject(new Error("chunk failed to load"));
+
+    await expect(loading).resolves.toBe("module");
+    expect(runtime.translate("New customer")).toBe("New customer");
+  });
+});
+
 describe("setLocale", () => {
   it("gives translate a new identity per language and keeps it for the same one", async () => {
     const english = runtime.getTranslator();

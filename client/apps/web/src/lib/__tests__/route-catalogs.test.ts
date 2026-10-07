@@ -18,8 +18,13 @@ const catalogs = vi.hoisted(() => {
   };
 });
 
+// afterCatalogs as the runtime defines it, over a whenCatalogsReady the test controls; the
+// runtime's own behaviour is pinned in packages/shared (runtime-bundles.test.ts).
 vi.mock("@trenova/shared/i18n/runtime", () => ({
-  whenCatalogsReady: catalogs.whenCatalogsReady,
+  afterCatalogs: async <T>(value: T): Promise<T> => {
+    await catalogs.whenCatalogsReady().catch(() => undefined);
+    return value;
+  },
 }));
 
 function Page() {

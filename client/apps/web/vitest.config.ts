@@ -20,7 +20,7 @@ export default defineConfig({
   test: {
     projects: [
       {
-        plugins: [routeCatalogs({ routesDir: path.join(srcAlias, "routes") })],
+        plugins: [routeCatalogs({ srcDir: srcAlias })],
         resolve: {
           alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
           dedupe: ["react-router"],

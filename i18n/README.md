@@ -78,49 +78,26 @@ into bundles (`tools/bundles.mjs`), by where they are rendered:
 | `routes/<dir>` | only inside `client/apps/web/src/routes/<dir>/` | with that folder's code |
 
 An app names its startup bundles once (`<I18nProvider catalogs={...}>`). The web app's
-build appends `requireCatalog("routes/<dir>")` to every module in a route folder
-(`client/apps/web/vite/route-catalogs.ts`), and every lazy route waits for the bundles its
-module graph asked for before it resolves (`client/apps/web/src/lib/route-catalogs.ts`).
-So a page renders translated on its first frame, including components it borrows from
-another route folder, and a language switch brings every screen already visited with it.
-English loads nothing: the key is the text.
+build (`client/apps/web/vite/route-catalogs.ts`) then does two things to its source:
 
-Two consequences worth knowing:
+- it appends `requireCatalog("routes/<dir>")` to every module in a route folder, so any
+  code that loads the module has asked for the strings it renders;
+- it chains `.then(afterCatalogs)` onto every dynamic import of app code, so the import
+  resolves only once the bundles its module graph required have landed.
 
-- **The route rule has two halves.** `featureArea` in `tools/extract-ts.mjs` labels a
-  string from `src/routes/<dir>/` as `routes/<dir>`, and the Vite plugin requires
-  `routes/<dir>` for a module in that folder. Change both or neither; `bundles.test.mjs`
-  fails if a route bundle has no folder behind it.
-- **A component outside the route folders renders in English until something requires its
-  bundle.** Shared code (`packages/shared`, `apps/web/src/components`) is in `core` or `web`
-  and always loaded. Code loaded by `React.lazy` from a *different* route folder is
-  required when it evaluates, so it renders in English for the moment its bundle takes to
-  arrive, then re-renders translated.
+Lazy routes wait the same way (`client/apps/web/src/lib/route-catalogs.ts`). The result is
+that nothing ever renders in English and then again: a page, or a `React.lazy` panel
+borrowed from another route folder, keeps showing its loading skeleton until its strings
+are in, and its first frame is translated. A language switch brings every screen already
+visited with it. English loads nothing and never waits: the key is the text.
 
-## How strings are found
+If a bundle fails to download, the screen renders in English rather than not at all, and
+the bundle is retried on the next navigation.
 
-Both extractors key on *syntactic position*, never on the look of the string, because a
-regex cannot tell `label="Save"` from `name="save"` or skip an SVG `d="M12 2L2 7"`.
-
-- **Go** (`shared/cmd/i18n-extract`) reads message literals from known constructors —
-  `MultiError.Add`, `errortypes.New*Error`, ozzo `.Error(...)`. An unrecognised
-  `New*Error` constructor **fails the build** rather than being skipped, so a whole class
-  of messages can never go missing quietly.
-- **Go templates** (`tools/extract-templates.mjs`) collects every `{{ t "..." }}` and nested
-  `(t "...")` call in the built-in document templates (area `template/*`) and, when the
-  Cloud edition is overlaid, the Trenova Cloud emails the platform sends (area
-  `platform-email/*`, from `services/tms/internal/cloud/platformemailservice/templates`).
-- **TypeScript** (`tools/extract-ts.mjs`) parses with Babel and collects JSX text, an
-  allowlist of prose-bearing props, and `toast.*` calls.
-
-A sentence split by an interpolation is captured whole, with placeholders:
-
-```tsx
-<p>Delete "{name}"? This cannot be undone.</p>   ->   'Delete "{0}"? This cannot be undone.'
-```
-
-Recording the two halves separately would be untranslatable — Spanish and Chinese order
-that sentence differently, and half a clause gives a translator nothing to work with.
+**The route rule has two halves.** `featureArea` in `tools/extract-ts.mjs` labels a string
+from `src/routes/<dir>/` as `routes/<dir>`, and the Vite plugin requires `routes/<dir>` for
+a module in that folder. Change both or neither; `bundles.test.mjs` fails if a route
+bundle has no folder behind it.
 
 ## Maintaining the Go extractor
 
