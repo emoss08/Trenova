@@ -206,6 +206,8 @@ export type DataTableGroup = {
   count?: number;
   /** Right-aligned summary for the whole group, such as its revenue. */
   aggregate?: React.ReactNode;
+  /** What the summary measures, shown beside it ("Revenue"). */
+  aggregateLabel?: string;
 };
 
 /**

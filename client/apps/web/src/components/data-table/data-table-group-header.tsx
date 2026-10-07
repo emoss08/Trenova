@@ -33,7 +33,7 @@ export function DataTableGroupHeader({
     >
       <TableCell
         colSpan={colSpan}
-        className="bg-canvas border-border sticky top-(--row-head-h) h-9 cursor-pointer border-b p-0"
+        className="bg-canvas border-border sticky top-(--row-head-h) z-15 h-9 cursor-pointer border-b p-0"
         onClick={toggle}
       >
         <div className="sticky left-0 flex w-(--dt-viewport-w,100%) items-center gap-2 px-3">
@@ -65,8 +65,13 @@ export function DataTableGroupHeader({
           ) : null}
           <span className="flex-1" />
           {group.aggregate != null ? (
-            <span className="text-muted-foreground font-mono text-xs tabular-nums">
-              {group.aggregate}
+            <span className="flex items-baseline gap-1">
+              {group.aggregateLabel ? (
+                <span className="text-muted-foreground text-xs">{group.aggregateLabel}:</span>
+              ) : null}
+              <span className="text-foreground font-sans text-sm font-medium tabular-nums">
+                {group.aggregate}
+              </span>
             </span>
           ) : null}
         </div>

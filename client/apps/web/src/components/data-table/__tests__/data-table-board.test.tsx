@@ -143,7 +143,7 @@ function grouping(overrides: Partial<DataTableGrouping<TestRow>> = {}): DataTabl
   return {
     field: "stage",
     groups: [
-      { key: 1, label: "Late", count: 12, aggregate: "$9,400" },
+      { key: 1, label: "Late", count: 12, aggregate: "$9,400", aggregateLabel: "Revenue" },
       { key: 2, label: "Needs coverage", count: 4 },
       { key: 3, label: "Moving", count: 30 },
     ],
@@ -175,6 +175,50 @@ describe("DataTable grouping", () => {
     expect(late?.textContent).toContain("$9,400");
     expect(document.querySelector('tr[data-group-key="3"]')?.textContent).toContain("Moving");
     expect(document.querySelector('tr[data-group-key="2"]')).toBeNull();
+  });
+
+  it("floats a stuck group header over pinned cells and under the column header, with the scrollbar beside the rows", () => {
+    renderDataTable({
+      grouping: grouping(),
+      initialColumnPinning: { left: ["name"], right: [] },
+    });
+
+    const zOf = (element: Element | null | undefined) =>
+      Number(/(?:^|\s)z-(\d+)(?:\s|$)/.exec(element?.className ?? "")?.[1] ?? 0);
+    const groupHeader = document.querySelector('tr[data-group-key="1"] > td');
+    const pinnedCell = screen.getByText("Alice").closest("td");
+    const columnHeader = document.querySelector("thead");
+    const container = document.querySelector('[data-slot="table-container"]');
+
+    expect(groupHeader?.className).toContain("sticky");
+    expect(zOf(groupHeader)).toBeGreaterThan(zOf(pinnedCell));
+    expect(zOf(groupHeader)).toBeLessThan(zOf(columnHeader));
+    expect(container?.className).toContain("[&>[data-slot=scroll-area-scrollbar]]:z-30");
+    expect(container?.className).toContain(
+      "[&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)!",
+    );
+    expect(30).toBeGreaterThan(zOf(columnHeader));
+  });
+
+  it("names a group's total and sets it in the foreground colour", () => {
+    renderDataTable({ grouping: grouping() });
+
+    const late = document.querySelector('tr[data-group-key="1"]')!;
+    const total = Array.from(late.querySelectorAll("span")).find(
+      (span) => span.textContent === "$9,400",
+    )!;
+    expect(total.className).toContain("text-foreground");
+    expect(total.className).toContain("font-sans");
+    expect(total.className).toContain("text-sm");
+    expect(total.className).not.toContain("bg-");
+    expect(total.previousElementSibling?.textContent).toBe("Revenue:");
+  });
+
+  it("shows a group's total without a label when it has none", () => {
+    renderDataTable({ grouping: grouping() });
+
+    const moving = document.querySelector('tr[data-group-key="3"]')!;
+    expect(moving.textContent).not.toContain("Revenue");
   });
 
   it("asks the server to leave out collapsed groups and still shows their headers", () => {

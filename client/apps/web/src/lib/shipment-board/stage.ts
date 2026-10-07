@@ -74,6 +74,7 @@ export function stageGroups(
       swatchClassName: STAGE_META[entry.stage].swatchClassName,
       count: entry.count,
       aggregate: wholeDollars(entry.revenue),
+      aggregateLabel: t("Revenue"),
     }));
 }
 
