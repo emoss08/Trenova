@@ -58,6 +58,7 @@ var noMessage = map[string]struct{}{
 	"NewMultiErrorWithLimit":          {},
 	"NewError":                        {},
 	"NewRequestTimeoutError":          {},
+	"NewEditConflictError":            {},
 	"NewRequestTooLargeError":         {},
 	"NewResolveError":                 {},
 	"NewTransformError":               {},

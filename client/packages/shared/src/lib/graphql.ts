@@ -8,10 +8,12 @@ import type {
   TypedGraphQLDocument,
 } from "@trenova/shared/types/graphql";
 import {
+  type EditConflict,
   type NormalizedApiError,
   type ProblemType,
   type ValidationError,
   apiProblem,
+  editConflictSchema,
   parseFieldErrors,
   parseProblemType,
 } from "@trenova/shared/types/errors";
@@ -266,6 +268,11 @@ export class GraphQLRequestError extends Error {
 
   public isTimeoutError(): boolean {
     return apiProblem.isTimeoutError(this.normalize());
+  }
+
+  public getConflict(): EditConflict | null {
+    const parsed = editConflictSchema.safeParse(this.extensions?.conflict);
+    return parsed.success ? parsed.data : null;
   }
 }
 

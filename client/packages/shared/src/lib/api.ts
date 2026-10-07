@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import {
   type ApiErrorResponse,
+  type EditConflict,
   type NormalizedApiError,
   type ProblemType,
   type ValidationError,
@@ -118,6 +119,10 @@ export class ApiRequestError extends Error {
 
   getParams(): Record<string, string> {
     return this.data.params ?? {};
+  }
+
+  getConflict(): EditConflict | null {
+    return this.data.conflict ?? null;
   }
 }
 

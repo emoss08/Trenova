@@ -1,8 +1,12 @@
+import type { Hotkey } from "@tanstack/react-hotkeys";
+
 export interface Keybind {
   id: string;
   label: string;
   keys: string[];
   description: string;
+  /** The binding as `useHotkey` takes it, for a keybind bound from this config. */
+  hotkey?: Hotkey;
 }
 
 export interface KeybindGroup {
@@ -164,6 +168,59 @@ export const keybindGroups: KeybindGroup[] = [
     ],
   },
   {
+    id: "edit-sheet",
+    label: "Editing",
+    keybinds: [
+      {
+        id: "save",
+        label: "Save changes",
+        keys: ["Ctrl", "S"],
+        description: "Save the editor you are in",
+        hotkey: "Mod+S",
+      },
+      {
+        id: "close",
+        label: "Close editor",
+        keys: ["Esc"],
+        description: "Close the editor, asking first when there are unsaved changes",
+        hotkey: "Escape",
+      },
+    ],
+  },
+  {
+    id: "ai-control",
+    label: "AI control",
+    keybinds: [
+      {
+        id: "tab",
+        label: "Go to a tab",
+        keys: ["1–9"],
+        description: "Open the first nine tabs of AI control in order",
+      },
+      {
+        id: "search",
+        label: "Search",
+        keys: ["/"],
+        description: "Search the list on the current tab",
+        hotkey: "/",
+      },
+      {
+        id: "new",
+        label: "New",
+        keys: ["N"],
+        description: "Create a new agent or provider on its tab",
+        hotkey: "N",
+      },
+      {
+        id: "edit",
+        label: "Edit",
+        keys: ["E"],
+        description: "Open the selected row's editor",
+        hotkey: "E",
+      },
+    ],
+  },
+  {
     id: "navigation",
     label: "Record navigation",
     keybinds: [
@@ -302,3 +359,18 @@ export const keybindGroups: KeybindGroup[] = [
     ],
   },
 ];
+
+/**
+ * The `useHotkey` binding of a keybind, so the key a shortcut sheet shows and the key that
+ * is bound are the same entry. Throws for a keybind that is not bound from config, which is
+ * a mistake in the caller rather than something to recover from.
+ */
+export function hotkeyOf(groupId: string, keybindId: string): Hotkey {
+  const hotkey = keybindGroups
+    .find((group) => group.id === groupId)
+    ?.keybinds.find((keybind) => keybind.id === keybindId)?.hotkey;
+  if (!hotkey) {
+    throw new Error(`No hotkey is configured for ${groupId}.${keybindId}`);
+  }
+  return hotkey;
+}
