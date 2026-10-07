@@ -6,7 +6,6 @@ import {
   ShipmentBriefingDocument,
   ShipmentCapacityDocument,
   ShipmentCoverageSuggestionsDocument,
-  ShipmentFacetCountsDocument,
   ShipmentQuickFilterCountsDocument,
   ShipmentStageSummaryDocument,
   ShipmentSuggestionsDocument,
@@ -22,8 +21,6 @@ import {
   type ShipmentBriefingQuery,
   type ShipmentCapacityQuery,
   type ShipmentCoverageSuggestionsQuery,
-  type ShipmentFacet,
-  type ShipmentFacetCountsQuery,
   type ShipmentQuickFilterCountsQuery,
   type ShipmentStageSummaryQuery,
   type ShipmentSuggestionsQuery,
@@ -39,7 +36,6 @@ export type ShipmentBoardCapabilities = ShipmentBoardCapabilitiesQuery["shipment
 export type ShipmentStageSummary = ShipmentStageSummaryQuery["shipmentStageSummary"][number];
 export type ShipmentQuickFilterCount =
   ShipmentQuickFilterCountsQuery["shipmentQuickFilterCounts"][number];
-export type ShipmentFacetCounts = ShipmentFacetCountsQuery["shipmentFacetCounts"][number];
 export type ShipmentBriefing = ShipmentBriefingQuery["shipmentBriefing"];
 export type ShipmentCapacity = ShipmentCapacityQuery["shipmentCapacity"];
 export type CapacityUnit = ShipmentCapacity["units"][number];
@@ -86,20 +82,6 @@ export async function getShipmentQuickFilterCountsGraphQL(
     signal: options?.signal,
   });
   return data.shipmentQuickFilterCounts;
-}
-
-export async function getShipmentFacetCountsGraphQL(
-  input: ShipmentBoardScopeInput,
-  facets: ShipmentFacet[],
-  options?: RequestOptions,
-) {
-  const data = await requestGraphQL({
-    document: ShipmentFacetCountsDocument,
-    operationName: "ShipmentFacetCounts",
-    variables: { input, facets },
-    signal: options?.signal,
-  });
-  return data.shipmentFacetCounts;
 }
 
 export async function getShipmentBriefingGraphQL(timezone: string, options?: RequestOptions) {

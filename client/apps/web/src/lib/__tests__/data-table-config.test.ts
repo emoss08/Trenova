@@ -7,6 +7,7 @@ import {
   isTableConfigEqual,
   stringifyUnknown,
   toColumnPinningState,
+  withRequiredPinning,
 } from "../data-table";
 
 function makeConfig(overrides: Partial<TableConfig> = {}): TableConfig {
@@ -187,5 +188,33 @@ describe("column pinning wire <-> table state", () => {
     expect(toColumnPinningState(undefined)).toEqual({ start: [], end: [] });
     expect(toColumnPinningState(null)).toEqual({ start: [], end: [] });
     expect(fromColumnPinningState(undefined)).toEqual({ left: [], right: [] });
+  });
+});
+
+describe("withRequiredPinning", () => {
+  it("keeps a table's required columns pinned under a saved view that pins nothing", () => {
+    expect(
+      withRequiredPinning({ left: [], right: [] }, { left: ["select", "lane"], right: [] }),
+    ).toEqual({ left: ["select", "lane"], right: [] });
+  });
+
+  it("puts the required columns first and keeps the view's own pins after them", () => {
+    expect(
+      withRequiredPinning(
+        { left: ["pro", "lane"], right: ["actions"] },
+        { left: ["select", "lane"], right: [] },
+      ),
+    ).toEqual({ left: ["select", "lane", "pro"], right: ["actions"] });
+  });
+
+  it("moves a required column off the side the view pinned it to", () => {
+    expect(
+      withRequiredPinning({ left: [], right: ["lane"] }, { left: ["lane"], right: [] }),
+    ).toEqual({ left: ["lane"], right: [] });
+  });
+
+  it("returns the view's pinning when the table requires none", () => {
+    const pinning = { left: ["pro"], right: [] };
+    expect(withRequiredPinning(pinning, undefined)).toEqual(pinning);
   });
 });

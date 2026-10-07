@@ -2538,7 +2538,6 @@ type QueryResolver interface {
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
 	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
-	ShipmentFacetCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, facets []repositories.ShipmentFacet) ([]*gqlmodel.ShipmentFacetCounts, error)
 	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
 	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
 	CapacityUnitMatches(ctx context.Context, kind gqlmodel.CapacityUnitKind, unitID string, limit *int) ([]*gqlmodel.CapacityMatch, error)
@@ -26169,26 +26168,6 @@ type ShipmentQuickFilterCount {
   count: Int!
 }
 
-enum ShipmentFacet {
-  Status
-  Equipment
-  TenderStatus
-  Customer
-}
-
-type ShipmentFacetValue {
-  value: String!
-  label: String!
-  count: Int!
-}
-
-type ShipmentFacetCounts {
-  facet: ShipmentFacet!
-  "The field filter the values apply to."
-  field: String!
-  values: [ShipmentFacetValue!]!
-}
-
 type ShipmentBriefingSegment {
   text: String!
   "The quick filter the segment links to, when it names a set of shipments."
@@ -26506,7 +26485,6 @@ extend type Query {
   shipmentBoardCapabilities: ShipmentBoardCapabilities!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
-  shipmentFacetCounts(input: ShipmentBoardScopeInput!, facets: [ShipmentFacet!]!): [ShipmentFacetCounts!]!
   shipmentBriefing(timezone: String!): ShipmentBriefing!
   shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
   capacityUnitMatches(kind: CapacityUnitKind!, unitId: ID!, limit: Int = 2): [CapacityMatch!]!

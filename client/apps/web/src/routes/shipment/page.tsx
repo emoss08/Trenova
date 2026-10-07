@@ -12,13 +12,13 @@ import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { cn } from "@trenova/shared/lib/utils";
 import { createLoader, useQueryStates } from "nuqs";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { ShipmentBriefing } from "./_components/board/briefing/shipment-briefing";
 import { CapacityStrip } from "./_components/board/capacity/capacity-strip";
 import { ShipmentSidePanel } from "./_components/board/panel/side-panel";
 import { ShipmentRecordActionsProvider } from "./_components/board/record-actions";
 import { ShipmentBoard } from "./_components/board/shipment-board";
-import { useShipmentBoardUrl } from "./_components/board/url-state";
+import { useBoardPanel } from "./_components/board/use-board-panel";
 import {
   SHIPMENT_LIST_KEY,
   SHIPMENT_TABLE_RESOURCE_NAME,
@@ -26,7 +26,6 @@ import {
 } from "./_components/shipment-queries";
 
 const loadPanelSearch = createLoader(panelSearchParamsParser);
-const PANEL_DEFAULT_MIN_WIDTH = 900;
 
 // What the first paint reads: the board's capabilities (every conditional on the
 // page waits on them), the saved default view, and the edit panel's record when the
@@ -46,10 +45,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
 };
 
 function ShipmentWorkspace() {
-  const [{ panel }, setUrl] = useShipmentBoardUrl();
-  const [defaultPanelOpen] = useState(() => window.innerWidth >= PANEL_DEFAULT_MIN_WIDTH);
-  const panelOpen = panel ?? defaultPanelOpen;
-  const setPanelOpen = useCallback((open: boolean) => void setUrl({ panel: open }), [setUrl]);
+  const [panelOpen, setPanelOpen] = useBoardPanel();
 
   return (
     <div className="@container/board relative grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">

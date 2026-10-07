@@ -3,7 +3,6 @@ package shipmentboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -56,28 +55,6 @@ func quickFilterCountsToModel(
 	out := make([]*gqlmodel.ShipmentQuickFilterCount, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, &gqlmodel.ShipmentQuickFilterCount{Filter: row.Filter, Count: row.Count})
-	}
-	return out
-}
-
-func facetCountsToModel(
-	rows []*repositories.ShipmentFacetCounts,
-) []*gqlmodel.ShipmentFacetCounts {
-	out := make([]*gqlmodel.ShipmentFacetCounts, 0, len(rows))
-	for _, row := range rows {
-		values := make([]*gqlmodel.ShipmentFacetValue, 0, len(row.Values))
-		for _, value := range row.Values {
-			values = append(values, &gqlmodel.ShipmentFacetValue{
-				Value: value.Value,
-				Label: value.Label,
-				Count: value.Count,
-			})
-		}
-		out = append(out, &gqlmodel.ShipmentFacetCounts{
-			Facet:  row.Facet,
-			Field:  row.Field,
-			Values: values,
-		})
 	}
 	return out
 }

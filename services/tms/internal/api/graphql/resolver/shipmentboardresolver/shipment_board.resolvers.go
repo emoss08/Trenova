@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -217,29 +216,6 @@ func (r *QueryResolver) ShipmentQuickFilterCounts(
 	}
 
 	return quickFilterCountsToModel(rows), nil
-}
-
-//nolint:gocritic // gqlgen resolver signature is generated with a value input parameter
-func (r *QueryResolver) ShipmentFacetCounts(
-	ctx context.Context,
-	input gqlmodel.ShipmentBoardScopeInput,
-	facets []repositories.ShipmentFacet,
-) ([]*gqlmodel.ShipmentFacetCounts, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := r.BoardFacetCounts.FacetCounts(
-		ctx,
-		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
-		facets,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return facetCountsToModel(rows), nil
 }
 
 func (r *QueryResolver) ShipmentBriefing(

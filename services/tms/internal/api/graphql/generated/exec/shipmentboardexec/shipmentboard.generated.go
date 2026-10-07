@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -40,8 +39,6 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentDeliveryWatch", Implementors: []string{"ShipmentDeliveryWatch"}},
 		{Name: "ShipmentDetentionWatch", Implementors: []string{"ShipmentDetentionWatch"}},
 		{Name: "ShipmentEta", Implementors: []string{"ShipmentEta"}},
-		{Name: "ShipmentFacetCounts", Implementors: []string{"ShipmentFacetCounts"}},
-		{Name: "ShipmentFacetValue", Implementors: []string{"ShipmentFacetValue"}},
 		{Name: "ShipmentQuickFilterCount", Implementors: []string{"ShipmentQuickFilterCount"}},
 		{Name: "ShipmentStageSummary", Implementors: []string{"ShipmentStageSummary"}},
 		{Name: "ShipmentSuggestion", Implementors: []string{"ShipmentSuggestion"}},
@@ -895,20 +892,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNShipmentQuickFilterCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilterCountᚄ),
 			},
 			{
-				Name:       "shipmentFacetCounts",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "ShipmentFacetCounts",
-				Args:       field_Query_shipmentFacetCounts_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentFacetCounts(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput), fc.Args["facets"].([]repositories.ShipmentFacet))
-				},
-				Marshal: gqlexec.Marshal(marshalNShipmentFacetCounts2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetCountsᚄ),
-			},
-			{
 				Name:       "shipmentBriefing",
 				NonNull:    true,
 				IsResolver: true,
@@ -1387,71 +1370,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 		}},
-		{Object: "ShipmentFacetCounts", Fields: []*gqlexec.Field{
-			{
-				Name:     "facet",
-				NonNull:  true,
-				ChildErr: errNoChild12,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFacetCounts)
-					return obj.Facet, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNShipmentFacet2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentFacet),
-			},
-			{
-				Name:     "field",
-				NonNull:  true,
-				ChildErr: errNoChild1,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFacetCounts)
-					return obj.Field, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:      "values",
-				NonNull:   true,
-				HasChild:  true,
-				ChildType: "ShipmentFacetValue",
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFacetCounts)
-					return obj.Values, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNShipmentFacetValue2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetValueᚄ),
-			},
-		}},
-		{Object: "ShipmentFacetValue", Fields: []*gqlexec.Field{
-			{
-				Name:     "value",
-				NonNull:  true,
-				ChildErr: errNoChild1,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFacetValue)
-					return obj.Value, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "label",
-				NonNull:  true,
-				ChildErr: errNoChild1,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFacetValue)
-					return obj.Label, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "count",
-				NonNull:  true,
-				ChildErr: errNoChild8,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFacetValue)
-					return obj.Count, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-		}},
 		{Object: "ShipmentQuickFilterCount", Fields: []*gqlexec.Field{
 			{
 				Name:     "filter",
@@ -1478,7 +1396,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stage",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStageSummary)
 					return obj.Stage, nil
@@ -1530,7 +1448,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSuggestion)
 					return obj.Kind, nil
@@ -1540,7 +1458,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tone",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSuggestion)
 					return obj.Tone, nil
@@ -1640,7 +1558,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSuggestionAction)
 					return obj.Type, nil
@@ -1924,7 +1842,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "window",
 				NonNull:  true,
-				ChildErr: errNoChild17,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UncoveredWindowSummary)
 					return obj.Window, nil
@@ -1997,7 +1915,6 @@ type resolverQuery interface {
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
 	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
-	ShipmentFacetCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, facets []repositories.ShipmentFacet) ([]*gqlmodel.ShipmentFacetCounts, error)
 	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
 	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
 	CapacityUnitMatches(ctx context.Context, kind gqlmodel.CapacityUnitKind, unitID string, limit *int) ([]*gqlmodel.CapacityMatch, error)
@@ -2019,12 +1936,11 @@ var (
 	errNoChild9  = errors.New("field of type OperationType does not have child fields")
 	errNoChild10 = errors.New("field of type ShipmentQuickFilter does not have child fields")
 	errNoChild11 = errors.New("field of type EtaVerdict does not have child fields")
-	errNoChild12 = errors.New("field of type ShipmentFacet does not have child fields")
-	errNoChild13 = errors.New("field of type ShipmentStage does not have child fields")
-	errNoChild14 = errors.New("field of type ShipmentSuggestionKind does not have child fields")
-	errNoChild15 = errors.New("field of type ShipmentSuggestionTone does not have child fields")
-	errNoChild16 = errors.New("field of type ShipmentSuggestionActionType does not have child fields")
-	errNoChild17 = errors.New("field of type UncoveredPickupWindow does not have child fields")
+	errNoChild12 = errors.New("field of type ShipmentStage does not have child fields")
+	errNoChild13 = errors.New("field of type ShipmentSuggestionKind does not have child fields")
+	errNoChild14 = errors.New("field of type ShipmentSuggestionTone does not have child fields")
+	errNoChild15 = errors.New("field of type ShipmentSuggestionActionType does not have child fields")
+	errNoChild16 = errors.New("field of type UncoveredPickupWindow does not have child fields")
 )
 
 func field_Mutation_tenderShipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2102,27 +2018,6 @@ func field_Query_shipmentQuickFilterCounts_args(ctx context.Context, ec *gqlexec
 		return nil, err
 	}
 	args["input"] = arg0
-	return args, nil
-}
-
-func field_Query_shipmentFacetCounts_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.ShipmentBoardScopeInput, error) {
-			return unmarshalNShipmentBoardScopeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardScopeInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "facets",
-		func(ctx context.Context, v any) ([]repositories.ShipmentFacet, error) {
-			return unmarshalNShipmentFacet2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentFacetᚄ(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["facets"] = arg1
 	return args, nil
 }
 
@@ -2514,16 +2409,6 @@ func unmarshalNShipmentBoardScopeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNShipmentFacet2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentFacet(ctx context.Context, ec *gqlexec.Exec, v any) (repositories.ShipmentFacet, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := repositories.ShipmentFacet(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNShipmentFacet2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentFacetᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]repositories.ShipmentFacet, error) {
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNShipmentFacet2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentFacet)
-}
-
 func unmarshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter(ctx context.Context, ec *gqlexec.Exec, v any) (shipment.QuickFilter, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := shipment.QuickFilter(tmp)
@@ -2867,46 +2752,6 @@ func marshalNShipmentDetentionWatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentDetentionWatch", v)
-}
-
-func marshalNShipmentFacet2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentFacet(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v repositories.ShipmentFacet) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
-func marshalNShipmentFacetCounts2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetCountsᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentFacetCounts) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.ShipmentFacetCounts]{
-		Elem:        marshalNShipmentFacetCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetCounts,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
-func marshalNShipmentFacetCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentFacetCounts) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "ShipmentFacetCounts", v)
-}
-
-func marshalNShipmentFacetValue2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetValueᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentFacetValue) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.ShipmentFacetValue]{
-		Elem:        marshalNShipmentFacetValue2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetValue,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
-func marshalNShipmentFacetValue2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFacetValue(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentFacetValue) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "ShipmentFacetValue", v)
 }
 
 func marshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐQuickFilter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.QuickFilter) graphql.Marshaler {

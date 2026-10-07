@@ -23,18 +23,6 @@ query ShipmentQuickFilterCounts($input: ShipmentBoardScopeInput!) {
   }
 }
 
-query ShipmentFacetCounts($input: ShipmentBoardScopeInput!, $facets: [ShipmentFacet!]!) {
-  shipmentFacetCounts(input: $input, facets: $facets) {
-    facet
-    field
-    values {
-      value
-      label
-      count
-    }
-  }
-}
-
 query ShipmentBriefing($timezone: String!) {
   shipmentBriefing(timezone: $timezone) {
     segments {

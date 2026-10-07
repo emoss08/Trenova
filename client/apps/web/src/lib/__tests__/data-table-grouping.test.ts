@@ -161,3 +161,30 @@ describe("buildGroupedBody", () => {
     expect(shape(items)).toEqual(["group:1", "row:a@0", "group:9", "row:z@1"]);
   });
 });
+
+describe("buildGroupedBody while the next page loads", () => {
+  it("folds a group the moment it collapses, even with its rows still on screen", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 1), row("c", 3)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      collapsedKeys: [1],
+      isFirstPage: true,
+      isLastPage: true,
+    });
+    expect(shape(items)).toEqual(["group:1:collapsed", "group:3", "row:c@2"]);
+  });
+
+  it("keeps the header of a group that just opened while its rows load", () => {
+    const items = buildGroupedBody({
+      rows: [row("c", 3)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      collapsedKeys: [],
+      loadingKeys: [2],
+      isFirstPage: true,
+      isLastPage: true,
+    });
+    expect(shape(items)).toEqual(["group:2", "group:3", "row:c@0"]);
+  });
+});

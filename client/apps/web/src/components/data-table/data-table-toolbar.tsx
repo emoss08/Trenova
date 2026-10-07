@@ -147,24 +147,22 @@ export function DataTableToolbar<TData extends Record<string, any>>({
     <>
       <div className="bleed:border-border bleed:border-b bleed:px-3 bleed:py-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {slots?.search ? (
-            slots.search({ query, onSearchChange })
-          ) : (
-            <Suspense fallback={<SearchSkeleton />}>
-              <DataTableSearch value={query} onChange={onSearchChange} />
-            </Suspense>
-          )}
-          {slots?.filter ? (
-            slots.filter({ filters, onFiltersChange })
-          ) : (
-            <Suspense fallback={<ToolbarButtonSkeleton />}>
-              <DataTableFilterBuilder
-                columns={columns as unknown as ColumnDef<RowData>[]}
-                filters={filters}
-                onFiltersChange={onFiltersChange}
-              />
-            </Suspense>
-          )}
+          <Suspense fallback={<SearchSkeleton />}>
+            <DataTableSearch
+              value={query}
+              onChange={onSearchChange}
+              suggestions={slots?.searchSuggestions}
+              shortcut={slots?.searchShortcut}
+            />
+          </Suspense>
+          <Suspense fallback={<ToolbarButtonSkeleton />}>
+            <DataTableFilterBuilder
+              columns={columns as unknown as ColumnDef<RowData>[]}
+              filters={filters}
+              onFiltersChange={onFiltersChange}
+              labelClassName={slots?.responsive?.label}
+            />
+          </Suspense>
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableSortBuilder
               columns={columns as unknown as ColumnDef<RowData>[]}

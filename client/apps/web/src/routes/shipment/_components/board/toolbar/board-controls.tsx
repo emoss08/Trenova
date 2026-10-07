@@ -13,7 +13,7 @@ import type { ComponentType } from "react";
 import { type BoardView, useShipmentBoardUrl } from "../url-state";
 
 /* Labels give way to icons when the board is narrow; the buttons never shrink. */
-export const TOOLBAR_LABEL_CLASS = "hidden @[1180px]/board:inline";
+const TOOLBAR_LABEL_CLASS = "hidden @[1180px]/board:inline";
 
 /* The display menu and saved views are the first to go on a narrow board. */
 export const TOOLBAR_RESPONSIVE = {

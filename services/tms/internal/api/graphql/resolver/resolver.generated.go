@@ -863,7 +863,6 @@ func FromServices(s *Services) *Resolver {
 		BoardSuggestionDecider: s.BoardSuggestionDecider,
 		BoardBriefing:          s.BoardBriefing,
 		BoardWatchlist:         s.BoardWatchlist,
-		BoardFacetCounts:       s.BoardFacetCounts,
 		BoardQuickFilterCounts: s.BoardQuickFilterCounts,
 		BoardStageSummaries:    s.BoardStageSummaries,
 		BoardCapabilities:      s.BoardCapabilities,

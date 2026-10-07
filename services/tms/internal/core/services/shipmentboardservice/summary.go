@@ -10,8 +10,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const maxFacetsPerRequest = 8
-
 func (s *Service) scope(
 	ctx context.Context,
 	req *services.ShipmentBoardScopeRequest,
@@ -120,49 +118,6 @@ func (s *Service) QuickFilterCounts(
 			out,
 			&services.ShipmentQuickFilterCount{Filter: filter, Count: totals[i].Count},
 		)
-	}
-
-	return out, nil
-}
-
-func (s *Service) FacetCounts(
-	ctx context.Context,
-	req *services.ShipmentBoardScopeRequest,
-	facets []repositories.ShipmentFacet,
-) ([]*repositories.ShipmentFacetCounts, error) {
-	if len(facets) > maxFacetsPerRequest {
-		return nil, errortypes.NewValidationError(
-			"facets",
-			errortypes.ErrInvalid,
-			"Too many facets requested",
-		)
-	}
-	for i, facet := range facets {
-		if !facet.IsValid() {
-			return nil, errortypes.NewValidationError(
-				"facets",
-				errortypes.ErrInvalid,
-				"Unknown facet at position {0}",
-				i,
-			)
-		}
-	}
-
-	scope, err := s.scope(ctx, req, false)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]*repositories.ShipmentFacetCounts, 0, len(facets))
-	for _, facet := range facets {
-		counts, fErr := s.repo.FacetCounts(ctx, &repositories.CountShipmentFacetRequest{
-			Scope: scope,
-			Facet: facet,
-		})
-		if fErr != nil {
-			return nil, fErr
-		}
-		out = append(out, counts)
 	}
 
 	return out, nil

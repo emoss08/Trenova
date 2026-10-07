@@ -619,7 +619,6 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	func(s *shipmentboardservice.Service) services.ShipmentBoardCapabilitiesReader { return s },
 	func(s *shipmentboardservice.Service) services.ShipmentStageSummaryReader { return s },
 	func(s *shipmentboardservice.Service) services.ShipmentQuickFilterCounter { return s },
-	func(s *shipmentboardservice.Service) services.ShipmentFacetCounter { return s },
 	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
 	billingqueueservice.NewReview,

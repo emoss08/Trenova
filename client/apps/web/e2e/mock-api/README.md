@@ -65,7 +65,8 @@ node e2e/mock-api/screenshots.mjs [outDir] [name,name,...]
 
 The script freezes the browser clock at the scenario anchor, walks through every scenario
 and interaction in `SHOTS` (dark and light, expanded row, activity tab, quick filters,
-capacity popover, carriers tab, timeline, map, panel closed, asset without AI, brokerage,
+capacity popover, carriers tab, timeline, map, panel open, the Filter builder, a quick
+filter chip, Lane pinned while scrolled, a collapsed group, asset without AI, brokerage,
 no HOS, quiet board, 1000px and 800px widths) and writes one PNG per entry to `outDir`
 (default `e2e/mock-api/screenshots`). Pass a comma-separated list of names to capture only
 those. Any page error, console error or failed interaction is printed under its shot and

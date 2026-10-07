@@ -7,7 +7,10 @@ import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 import type { GraphQLExecutableDocument } from "@trenova/shared/types/graphql";
 import type { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { fetchDataTablePage, fetchGraphQLData } from "../use-data-table-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { fetchDataTablePage, fetchGraphQLData, useDataTableQuery } from "../use-data-table-query";
 
 type EquipmentTypeRow = DataTableConfigRow<typeof equipmentTableGraphQLConfigs.equipmentType>;
 
@@ -427,3 +430,55 @@ function requestBody() {
 function fetchMockCall(): [string, RequestInit] {
   return fetchMock.mock.calls[0] as [string, RequestInit];
 }
+
+describe("useDataTableQuery while a new scope loads", () => {
+  afterEach(() => {
+    clearCsrfToken();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps showing the rows it has until the new scope's page arrives", async () => {
+    setCsrfToken("table-token");
+    let release: (response: Response) => void = () => {};
+    const page = (code: string) =>
+      createJSONResponse({
+        data: {
+          equipmentTypes: {
+            edges: [{ node: { id: code, code, class: "Trailer" } }],
+            pageInfo: { hasNextPage: false, endCursor: null },
+            totalCount: 1,
+          },
+        },
+      });
+    const fetchStub = vi
+      .fn()
+      .mockResolvedValueOnce(page("VAN"))
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => (release = resolve)));
+    vi.stubGlobal("fetch", fetchStub);
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client }, children);
+    const pagination = { pageIndex: 0, pageSize: 10 };
+    const { result, rerender } = renderHook(
+      ({ query }: { query: string }) =>
+        useDataTableQuery(
+          "equipment-types",
+          equipmentTableGraphQLConfigs.equipmentType,
+          pagination,
+          { query },
+        ),
+      { wrapper, initialProps: { query: "" } },
+    );
+    await waitFor(() => expect(result.current.data?.results).toHaveLength(1));
+
+    rerender({ query: "reefer" });
+
+    expect(result.current.data?.results[0]).toMatchObject({ code: "VAN" });
+    expect(result.current.isPlaceholderData).toBe(true);
+    await waitFor(() => expect(fetchStub).toHaveBeenCalledTimes(2));
+    expect(result.current.data?.results[0]).toMatchObject({ code: "VAN" });
+    release(page("RF"));
+    await waitFor(() => expect(result.current.data?.results[0]).toMatchObject({ code: "RF" }));
+  });
+});

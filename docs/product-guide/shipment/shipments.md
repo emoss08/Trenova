@@ -29,8 +29,8 @@ Keywords: new load, enter a load, book a shipment, add shipment
 ### Find a shipment
 Keywords: search loads, look up pro number, filter shipments, quick filters
 1. Open [Shipments](/shipment-management/shipments).
-2. Type in **Search shipments…**. Focusing the search (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count.
-3. Narrow further with **Filter** (status, equipment, tender and customer), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** turns the stage groups on or off; a group's header collapses it.
+2. Type in the search field. Focusing it while it is empty (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count; a chosen quick filter shows as a chip under the toolbar, beside the other filters.
+3. Narrow further with **Filter** (status, tender, billing, PRO number, customer, pickup and delivery dates, and revenue), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** turns the stage groups on or off; a group's header collapses it. The **Lane** column stays pinned while the table scrolls sideways.
 4. Select a row (or move to it with J and K and press Enter) to expand it, or choose **Edit** from its row menu to open the full shipment.
 
 ### Cover loads from the capacity strip
@@ -41,7 +41,7 @@ Keywords: available drivers, ready drivers, carrier capacity, posted trucks, bes
 
 ### Work the suggested actions
 Keywords: brief, action queue, exceptions, approve suggestion, notify customer of delay
-1. Open [Shipments](/shipment-management/shipments) and open the panel's **Brief** (shown as **Overview** when no AI provider is connected).
+1. Open [Shipments](/shipment-management/shipments) and open the panel with **Toggle side panel** (it stays open on later visits once opened), then its **Brief** (shown as **Overview** when no AI provider is connected).
 2. Read the action at the top, then approve it with its button (Ctrl+Enter), open the shipment with **Review**, or push it to the back with **Later** (Alt+L).
 3. If you approved something by mistake, select **Undo** on the line that confirms it.
 

@@ -3,6 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { getOperatorLabel, operatorRequiresValue, stringifyUnknown } from "@/lib/data-table";
 import type {
+  DataTableExtraChips,
   FilterGroupItem,
   FilterItem,
   SingleFilterItem,
@@ -14,6 +15,7 @@ type DataTableFilterChipsProps = {
   onFiltersChange: (filters: FilterItem[]) => void;
   query: string;
   onClearQuery: () => void;
+  extraChips?: DataTableExtraChips;
 };
 
 function formatFilterValue(filter: SingleFilterItem): string {
@@ -64,11 +66,14 @@ export default function DataTableFilterChips({
   onFiltersChange,
   query,
   onClearQuery,
+  extraChips,
 }: DataTableFilterChipsProps) {
   const t = useT();
 
   const hasQuery = query !== "";
-  if (filters.length === 0 && !hasQuery) return null;
+  const extraItems = extraChips?.items ?? [];
+  const chipCount = filters.length + extraItems.length + (hasQuery ? 1 : 0);
+  if (chipCount === 0) return null;
 
   const removeFilter = (id: string) => {
     onFiltersChange(filters.filter((f) => f.id !== id));
@@ -77,6 +82,7 @@ export default function DataTableFilterChips({
   const clearAll = () => {
     onFiltersChange([]);
     if (hasQuery) onClearQuery();
+    if (extraItems.length > 0) extraChips?.onClear();
   };
 
   return (
@@ -92,6 +98,13 @@ export default function DataTableFilterChips({
           onRemove={onClearQuery}
         />
       )}
+      {extraItems.map((chip) => (
+        <FilterChip
+          key={chip.key}
+          label={<span className="max-w-64 truncate font-medium">{chip.label}</span>}
+          onRemove={chip.onRemove}
+        />
+      ))}
       {filters.map((filter) => {
         if (filter.type === "group") {
           const group = filter as FilterGroupItem;
@@ -125,7 +138,7 @@ export default function DataTableFilterChips({
           />
         );
       })}
-      {(filters.length > 1 || (filters.length > 0 && hasQuery)) && (
+      {chipCount > 1 && (
         <Button
           type="button"
           variant="ghost"

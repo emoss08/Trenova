@@ -4,17 +4,12 @@ import {
   getShipmentBriefingGraphQL,
   getShipmentCapacityGraphQL,
   getShipmentCoverageSuggestionsGraphQL,
-  getShipmentFacetCountsGraphQL,
   getShipmentQuickFilterCountsGraphQL,
   getShipmentStageSummaryGraphQL,
   getShipmentSuggestionsGraphQL,
   getShipmentWatchlistGraphQL,
 } from "@/lib/graphql/shipment-board";
-import type {
-  CapacityUnitKind,
-  ShipmentBoardScopeInput,
-  ShipmentFacet,
-} from "@trenova/graphql/generated/graphql";
+import type { CapacityUnitKind, ShipmentBoardScopeInput } from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const shipmentBoard = createQueryKeys("shipmentBoard", {
@@ -29,10 +24,6 @@ export const shipmentBoard = createQueryKeys("shipmentBoard", {
   quickFilterCounts: (input: ShipmentBoardScopeInput) => ({
     queryKey: ["quick-filter-counts", input],
     queryFn: ({ signal }) => getShipmentQuickFilterCountsGraphQL(input, { signal }),
-  }),
-  facetCounts: (input: ShipmentBoardScopeInput, facets: ShipmentFacet[]) => ({
-    queryKey: ["facet-counts", input, facets],
-    queryFn: ({ signal }) => getShipmentFacetCountsGraphQL(input, facets, { signal }),
   }),
   briefing: (timezone: string) => ({
     queryKey: ["briefing", timezone],

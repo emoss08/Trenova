@@ -30,7 +30,7 @@ vi.mock("@/lib/queries", () => ({
   queries: {
     shipmentBoard: {
       stageSummary: () => ({ queryKey: ["summary"] }),
-      facetCounts: () => ({ queryKey: ["facets"] }),
+      quickFilterCounts: () => ({ queryKey: ["quick-filter-counts"] }),
     },
   },
 }));

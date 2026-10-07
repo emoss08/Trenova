@@ -120,7 +120,6 @@ type Params struct {
 	BoardSuggestionDecider       services.ShipmentSuggestionDecider
 	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
-	BoardFacetCounts             services.ShipmentFacetCounter
 	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
 	BoardStageSummaries          services.ShipmentStageSummaryReader
 	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
@@ -313,7 +312,6 @@ type Services struct {
 	BoardSuggestionDecider       services.ShipmentSuggestionDecider
 	BoardBriefing                services.ShipmentBriefingReader
 	BoardWatchlist               services.ShipmentWatchlistReader
-	BoardFacetCounts             services.ShipmentFacetCounter
 	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
 	BoardStageSummaries          services.ShipmentStageSummaryReader
 	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
@@ -510,7 +508,6 @@ func newServices(p *Params) *Services {
 		BoardSuggestionDecider:       p.BoardSuggestionDecider,
 		BoardBriefing:                p.BoardBriefing,
 		BoardWatchlist:               p.BoardWatchlist,
-		BoardFacetCounts:             p.BoardFacetCounts,
 		BoardQuickFilterCounts:       p.BoardQuickFilterCounts,
 		BoardStageSummaries:          p.BoardStageSummaries,
 		BoardCapabilities:            p.BoardCapabilities,

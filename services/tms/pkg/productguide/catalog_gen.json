@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f1088b53185f59b395f2fec6d09360332b18d238422e9b5fe931e38d605fe32b",
+  "version": "sha256:1e4aae839f9c2ab8db64717f152e46bef4221943533f1d0dedeb72ec77247108",
   "modules": [
     {
       "id": "home",
@@ -15570,8 +15570,8 @@
           ],
           "steps": [
             "Open [Shipments](/shipment-management/shipments).",
-            "Type in **Search shipments…**. Focusing the search (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count.",
-            "Narrow further with **Filter** (status, equipment, tender and customer), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** turns the stage groups on or off; a group's header collapses it.",
+            "Type in the search field. Focusing it while it is empty (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count; a chosen quick filter shows as a chip under the toolbar, beside the other filters.",
+            "Narrow further with **Filter** (status, tender, billing, PRO number, customer, pickup and delivery dates, and revenue), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** turns the stage groups on or off; a group's header collapses it. The **Lane** column stays pinned while the table scrolls sideways.",
             "Select a row (or move to it with J and K and press Enter) to expand it, or choose **Edit** from its row menu to open the full shipment."
           ]
         },
@@ -15601,7 +15601,7 @@
             "notify customer of delay"
           ],
           "steps": [
-            "Open [Shipments](/shipment-management/shipments) and open the panel's **Brief** (shown as **Overview** when no AI provider is connected).",
+            "Open [Shipments](/shipment-management/shipments) and open the panel with **Toggle side panel** (it stays open on later visits once opened), then its **Brief** (shown as **Overview** when no AI provider is connected).",
             "Read the action at the top, then approve it with its button (Ctrl+Enter), open the shipment with **Review**, or push it to the back with **Later** (Alt+L).",
             "If you approved something by mistake, select **Undo** on the line that confirms it."
           ]
