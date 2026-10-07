@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   RateImportBatch,
   RateImportChange,
@@ -75,8 +76,8 @@ export function describeFieldChange(change: {
   before: string;
   after: string;
 }): string {
-  if (!change.before) return `${change.field} set to ${change.after}`;
-  if (!change.after) return `${change.field} removed (was ${change.before})`;
+  if (!change.before) return translate("{0} set to {1}", change.field, change.after);
+  if (!change.after) return translate("{0} removed (was {1})", change.field, change.before);
 
   return `${change.field} ${change.before} → ${change.after}`;
 }
@@ -92,28 +93,30 @@ export function importHeadline(batch: RateImportBatch | undefined): string {
   if (!batch) return "";
 
   if (batch.status === "Failed") {
-    return batch.error || "This file could not be read.";
+    return batch.error || translate("This file could not be read.");
   }
 
   if (batch.status === "Committed") {
-    return "This sheet has been applied to the agreement.";
+    return translate("This sheet has been applied to the agreement.");
   }
 
   if (batch.status === "Discarded") {
-    return "This sheet was reviewed and not applied.";
+    return translate("This sheet was reviewed and not applied.");
   }
 
   const summary = batch.summary;
   if (!summary || !changesAnything(summary)) {
-    return "This sheet would not change anything. It may be a file that has already been imported.";
+    return translate(
+      "This sheet would not change anything. It may be a file that has already been imported.",
+    );
   }
 
   const parts: string[] = [];
-  if (summary.added > 0) parts.push(`${summary.added} new`);
-  if (summary.changed > 0) parts.push(`${summary.changed} changed`);
-  if (summary.removed > 0) parts.push(`${summary.removed} would stop pricing`);
+  if (summary.added > 0) parts.push(translate("{0} new", summary.added));
+  if (summary.changed > 0) parts.push(translate("{0} changed", summary.changed));
+  if (summary.removed > 0) parts.push(translate("{0} would stop pricing", summary.removed));
 
-  return `Committing this would leave the agreement with ${parts.join(", ")}.`;
+  return translate("Committing this would leave the agreement with {0}.", parts.join(", "));
 }
 
 export function changesAnything(summary: RateImportSummary | null | undefined): boolean {

@@ -23,11 +23,10 @@ import type {
   DispatchAssignMoveToCarrierInput,
   DispatchPlanInput,
 } from "@trenova/graphql/generated/graphql";
-import {
-  TENDER_MODE_LABEL,
-  type RecordTenderResponsePayload,
-  type SpotTenderPayload,
-  type WaterfallTenderPayload,
+import type {
+  RecordTenderResponsePayload,
+  SpotTenderPayload,
+  WaterfallTenderPayload,
 } from "@trenova/shared/types/tender";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
@@ -183,7 +182,10 @@ export function useDispatchActions() {
       const skipped = result.screening?.skipped.length ?? 0;
       if (skipped > 0) {
         toast.warning(t("Waterfall tender started with skipped carriers"), {
-          description: `${skipped} routing-guide carrier(s) were skipped for eligibility.`,
+          description: t(
+            "{0, plural, one {# routing-guide carrier was skipped for eligibility.} other {# routing-guide carriers were skipped for eligibility.}}",
+            skipped,
+          ),
         });
       } else {
         toast.success(t("Waterfall tender started"), {
@@ -198,12 +200,19 @@ export function useDispatchActions() {
   const spotTenderMutation = useMutation({
     mutationFn: (payload: SpotTenderPayload) => apiService.tenderService.createSpot(payload),
     onSuccess: (tender) => {
-      toast.success(`${TENDER_MODE_LABEL[tender.mode]} tender sent`, {
-        description:
-          tender.mode === "SpotBroadcast"
-            ? "Every carrier on the tender has been offered the move."
-            : "The first carrier on the tender has been offered the move.",
-      });
+      toast.success(
+        tender.mode === "SpotBroadcast"
+          ? t("Spot broadcast tender sent")
+          : tender.mode === "SpotSequential"
+            ? t("Spot sequential tender sent")
+            : t("Waterfall tender sent"),
+        {
+          description:
+            tender.mode === "SpotBroadcast"
+              ? t("Every carrier on the tender has been offered the move.")
+              : t("The first carrier on the tender has been offered the move."),
+        },
+      );
       invalidateTenders();
     },
     onError: (error: unknown) => {
@@ -243,7 +252,10 @@ export function useDispatchActions() {
     onSuccess: (plan: DispatchPlan) => {
       if (plan.shadowMode) {
         toast.info(t("Shadow mode: nothing was assigned"), {
-          description: `${plan.assignments.length} pairing(s) would have been proposed.`,
+          description: t(
+            "{0, plural, one {# pairing would have been proposed.} other {# pairings would have been proposed.}}",
+            plan.assignments.length,
+          ),
         });
         return;
       }

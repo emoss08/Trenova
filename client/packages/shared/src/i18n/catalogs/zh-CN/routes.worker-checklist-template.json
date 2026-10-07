@@ -4,6 +4,7 @@
   "Days after the checklist starts before this item counts as overdue.": "检查清单开始后经过几天，此项目才算逾期。",
   "Default for this trigger": "此触发条件的默认值",
   "Each line has an owner and a due date counted from the day the checklist starts.": "每一行都有负责人与到期日，自检查清单开始日起算。",
+  "Inactive templates cannot be started.": "停用的模板无法启动。",
   "Items": "项目",
   "Items are copied when a checklist starts": "检查清单开始时会复制项目",
   "Lay out the steps a worker goes through when they join or leave, and who owns each one.": "规划司机入职或离职时所经历的步骤，以及各步骤的负责人。",
@@ -32,5 +33,6 @@
   "e.g. DRIVER-ONBOARDING": "例如：DRIVER-ONBOARDING",
   "e.g. Driver onboarding": "例如：司机入职流程",
   "e.g. Fuel card issued": "例如：已核发加油卡",
+  "{0, plural, one {# checklist is in progress from this template; they keep their items either way.} other {# checklists are in progress from this template; they keep their items either way.}}": "{0, plural, other {有 # 个检查表正在使用此模板；无论如何，它们都会保留各自的项目。}}",
   "· {0} required": "· 必需 {0}"
 }

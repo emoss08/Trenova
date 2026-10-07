@@ -42,13 +42,18 @@ export function AttentionCountBadge({
   attention: ModuleAttention | undefined;
   className?: string;
 }) {
+  const t = useT();
+
   if (!attention || attention.count <= 0) {
     return null;
   }
 
   return (
     <span
-      aria-label={`${attention.count} items need attention`}
+      aria-label={t(
+        "{0, plural, one {# item needs attention} other {# items need attention}}",
+        attention.count,
+      )}
       className={cn(
         "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-2xs leading-none font-semibold tabular-nums",
         ATTENTION_PILL_CLASSES[attention.tone],

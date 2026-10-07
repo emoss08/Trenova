@@ -281,7 +281,7 @@ export function DocumentShipmentDraftReviewDialog({
       }
     },
     onError: (error) => {
-      toast.error(`Failed to create shipment: ${error.message}`);
+      toast.error(t("Failed to create shipment: {0}", error.message));
     },
   });
 

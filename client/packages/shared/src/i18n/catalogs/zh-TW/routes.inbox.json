@@ -1,7 +1,6 @@
 {
   "(no subject)": "（無主旨）",
   "About an inbound message": "關於收件訊息",
-  "Arrived": "抵達",
   "Arrived at {0}": "已抵達 {0}",
   "Ask the desk": "詢問工作檯",
   "Ask the desk to answer": "請工作檯回答",
@@ -74,7 +73,6 @@
   "What the desk made of it": "工作檯的判讀結果",
   "What the desk read": "工作檯讀取的內容",
   "Why this is the right record": "為何這是正確的記錄",
-  "{0, plural, one {# attachment} other {# attachments}}": "{0, plural, other {# 個附件}}",
   "{0, plural, one {# message is waiting on you} other {# messages are waiting on you}}": "{0, plural, other {# 則訊息等待您處理}}",
   "{0, plural, one {# message} other {# messages}}": "{0, plural, other {# 則訊息}}",
   "{0, plural, one {#+ message} other {#+ messages}}": "{0, plural, other {#+ 則訊息}}",

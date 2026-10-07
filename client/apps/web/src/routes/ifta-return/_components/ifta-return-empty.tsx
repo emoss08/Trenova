@@ -32,11 +32,15 @@ export function IftaReturnEmpty({
   return (
     <EmptySheet
       sketchClassName="max-w-2xl"
-      title={`No return for ${quarterLabel(period)} yet`}
+      title={t("No return for {0} yet", quarterLabel(period))}
       description={
         canCreate
-          ? "Generating reads every completed move's jurisdiction miles and every fuel purchase placed in the quarter, then applies the rates published for it. The draft can be recomputed as late miles and receipts land, and nothing is locked until you finalize it."
-          : "Generating reads every completed move's jurisdiction miles and every fuel purchase placed in the quarter, then applies the rates published for it. You do not have permission to generate returns for this organization; ask an administrator to grant it, or ask whoever prepares the filing to generate the quarter."
+          ? t(
+              "Generating reads every completed move's jurisdiction miles and every fuel purchase placed in the quarter, then applies the rates published for it. The draft can be recomputed as late miles and receipts land, and nothing is locked until you finalize it.",
+            )
+          : t(
+              "Generating reads every completed move's jurisdiction miles and every fuel purchase placed in the quarter, then applies the rates published for it. You do not have permission to generate returns for this organization; ask an administrator to grant it, or ask whoever prepares the filing to generate the quarter.",
+            )
       }
       action={
         canCreate ? (

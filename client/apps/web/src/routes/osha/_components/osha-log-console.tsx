@@ -137,7 +137,7 @@ export default function OshaLogConsole() {
   const deleteMutation = useMutation({
     mutationFn: (entry: OshaLogCase) => deleteWorkerInjury(entry.id),
     onSuccess: (_, entry) => {
-      toast.success(`Case ${caseLabel(entry)} deleted`, {
+      toast.success(t("Case {0} deleted", caseLabel(entry)), {
         description: t("The case number is not reused, so two cases can never share one."),
       });
       setDeleting(null);
@@ -185,14 +185,14 @@ export default function OshaLogConsole() {
           <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
             <MilestoneIcon className="text-muted-foreground size-3.5" />
             <h2 className="text-sm font-semibold">{t("Where {0} stands", log.year)}</h2>
-            <InfoPopover title={`Where ${log.year} stands`}>
+            <InfoPopover title={t("Where {0} stands", log.year)}>
               {t(
                 "The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).",
               )}
             </InfoPopover>
           </header>
           <div className="p-3">
-            <Stepper key={log.year} steps={track} aria-label={`Where ${log.year} stands`} />
+            <Stepper key={log.year} steps={track} aria-label={t("Where {0} stands", log.year)} />
           </div>
         </aside>
       </div>

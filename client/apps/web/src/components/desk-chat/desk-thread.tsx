@@ -86,6 +86,7 @@ import { DeskTermsNote } from "./desk-terms-note";
 import { turnTime } from "./turn-time";
 import "./desk-chat.css";
 import "./desk-chat-compact.css";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 /** How the thread is set: the Desk's room, or the assistant's 400px panel. */
 export type DeskThreadDensity = "regular" | "compact";
@@ -241,6 +242,7 @@ export function DeskThread({
   onOpenInDesk,
 }: DeskThreadProps) {
   const t = useT();
+  const rt = useRichT();
   const reduceMotion = useReducedMotion();
   const queryClient = useQueryClient();
   const celebrate = useDeskSetting("celebrate");
@@ -1461,7 +1463,9 @@ export function DeskThread({
                       <div className="dk-hint">
                         {showCard ? (
                           <span>
-                            {t("Press")} <span className="dk-kbd">⌘↵</span> {t("to approve")}
+                            {rt("Press <kbd/> to approve", {
+                              kbd: () => <span className="dk-kbd">⌘↵</span>,
+                            })}
                           </span>
                         ) : (
                           <span>

@@ -1,7 +1,9 @@
 {
+  "Applied amount for {0}": "Importe aplicado a {0}",
   "Applied exceeds {0} by {1}": "Lo aplicado supera {0} en {1}",
   "Applied · {0}": "Aplicado · {0}",
   "Apply cash": "Aplicar el efectivo",
+  "Apply to invoice {0}": "Aplicar a la factura {0}",
   "Apply to open invoices": "Aplicar a las facturas abiertas",
   "Apply unapplied": "Aplicar lo no aplicado",
   "Auto-apply oldest first": "Aplicar automáticamente lo más antiguo primero",
@@ -33,6 +35,7 @@
   "Reversed — 30 days": "Revertido — 30 días",
   "Select a customer to see their open invoices": "Seleccione un cliente para ver sus facturas abiertas",
   "Short-pay": "Pago parcial",
+  "Short-pay amount for {0}": "Importe de pago parcial para {0}",
   "Short-pay written off · {0}": "Pago parcial dado de baja · {0}",
   "The GL date for this application. It must fall within an open fiscal period.": "La fecha contable de esta aplicación. Debe estar dentro de un período fiscal abierto.",
   "The GL date. It must fall within an open fiscal period.": "La fecha contable. Debe estar dentro de un período fiscal abierto.",
@@ -45,5 +48,7 @@
   "Unapplied cash applied": "Efectivo sin aplicar ya aplicado",
   "Unapplied cash available:": "Efectivo sin aplicar disponible:",
   "Unapplied · {0}": "Sin aplicar · {0}",
-  "exceeds open amount": "supera el importe abierto"
+  "exceeds open amount": "supera el importe abierto",
+  "{0, plural, one {# payment} other {# payments}} with remainder": "{0, plural, one {# pago} other {# pagos}} con remanente",
+  "{0} received — {1} applied, {2} unapplied.": "{0} recibido: {1} aplicado, {2} sin aplicar."
 }

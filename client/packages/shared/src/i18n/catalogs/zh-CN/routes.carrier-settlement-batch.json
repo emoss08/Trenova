@@ -9,5 +9,6 @@
   "Settlement count": "结算笔数",
   "Settlements can auto-post on approval based on your carrier settlement control policy.": "依据您的承运商结算控制政策，结算可于批准时自动过账。",
   "Total gross minor": "总毛额（最小币值单位）",
-  "Total net minor": "总净额（最小币值单位）"
+  "Total net minor": "总净额（最小币值单位）",
+  "{0, plural, one {Batch generated: # settlement} other {Batch generated: # settlements}}": "{0, plural, other {批次已生成：# 笔结算}}"
 }

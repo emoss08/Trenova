@@ -22,7 +22,7 @@ import {
 } from "@trenova/shared/components/ui/tooltip";
 import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
 import { queries } from "@/lib/queries";
-import { cn, findDuplicateIds, pluralize, truncateText } from "@trenova/shared/lib/utils";
+import { cn, findDuplicateIds, truncateText } from "@trenova/shared/lib/utils";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import {
   CAPABILITIES,
@@ -128,7 +128,10 @@ function CommodityDialog({
     ) {
       setError(`commodities.${index}.weight`, {
         type: "manual",
-        message: `Total commodity weight cannot exceed ${maxShipmentWeightLimit.toLocaleString()} lbs`,
+        message: t(
+          "Total commodity weight cannot exceed {0} lbs",
+          maxShipmentWeightLimit.toLocaleString(),
+        ),
       });
       return;
     }
@@ -459,9 +462,9 @@ export default function CommoditiesSection() {
             <div className="border-border bg-muted flex flex-row items-center justify-end gap-3 rounded-b-lg border-t px-4 py-2">
               <span className="text-muted-foreground text-xs">
                 {t(
-                  "{0} total {1}",
+                  "{0} total {1, plural, one {piece} other {pieces}}",
                   truncateText(totalPieces.toLocaleString(), 10),
-                  pluralize("piece", totalPieces),
+                  totalPieces,
                 )}
               </span>
               <div className="flex flex-row items-center gap-0.5">

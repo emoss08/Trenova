@@ -158,7 +158,7 @@ export function CredentialSlotRow({
 
       <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 sm:col-start-3">
         <CredentialHealthBadge health={health} daysUntilExpiry={item.daysUntilExpiry} />
-        <RowActionsMenu label={`Actions for ${type.name}`} actions={actions} />
+        <RowActionsMenu label={t("Actions for {0}", type.name)} actions={actions} />
       </div>
     </div>
   );

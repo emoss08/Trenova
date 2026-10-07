@@ -109,23 +109,28 @@ export function CommentComposer({
       const accepted: File[] = [];
       for (const file of files) {
         if (!isAllowedAttachment(file)) {
-          toast.error(`"${file.name}" is not a supported attachment type`);
+          toast.error(t('"{0}" is not a supported attachment type', file.name));
           continue;
         }
         if (file.size > MAX_ATTACHMENT_BYTES) {
-          toast.error(`"${file.name}" exceeds the 25 MB attachment limit`);
+          toast.error(t('"{0}" exceeds the 25 MB attachment limit', file.name));
           continue;
         }
         accepted.push(file);
       }
       if (accepted.length === 0) return;
       if (uploads.length + accepted.length > MAX_ATTACHMENTS) {
-        toast.error(`Comments support up to ${MAX_ATTACHMENTS} attachments`);
+        toast.error(
+          t(
+            "Comments support up to {0, plural, one {# attachment} other {# attachments}}",
+            MAX_ATTACHMENTS,
+          ),
+        );
         return;
       }
       uploadFiles(accepted);
     },
-    [uploads.length, uploadFiles],
+    [uploads.length, uploadFiles, t],
   );
 
   const handleRemoveUpload = useCallback(

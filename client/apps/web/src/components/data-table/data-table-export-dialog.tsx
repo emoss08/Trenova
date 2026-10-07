@@ -85,7 +85,11 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
               graphql,
               options: queryOptions,
               onProgress: ({ fetched, total }) =>
-                setProgress(total != null ? `${fetched} of ${total} rows` : `${fetched} rows`),
+                setProgress(
+                  total != null
+                    ? t("{0} of {1, plural, one {# row} other {# rows}}", fetched, total)
+                    : t("{0, plural, one {# row} other {# rows}}", fetched),
+                ),
               isCancelled: () => cancelledRef.current,
             });
 
@@ -93,12 +97,15 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
 
       downloadCsv(buildCsv(rows, exportColumns), exportFilename(resource));
       toast.success(t("Export complete"), {
-        description: `Exported ${rows.length} ${rows.length === 1 ? "row" : "rows"} to CSV.`,
+        description: t(
+          "{0, plural, one {Exported # row to CSV.} other {Exported # rows to CSV.}}",
+          rows.length,
+        ),
       });
       onOpenChange(false);
     } catch (error) {
       toast.error(t("Export failed"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description: error instanceof Error ? error.message : t("An unexpected error occurred."),
       });
     } finally {
       setIsExporting(false);

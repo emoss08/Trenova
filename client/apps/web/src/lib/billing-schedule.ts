@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type { OpenStatement } from "@trenova/shared/types/statement";
 import type {
@@ -7,6 +8,7 @@ import type {
   InvoiceSectionKey,
   InvoiceSplitKey,
 } from "@trenova/shared/types/customer";
+import { weekdayName } from "@/lib/cron";
 
 export type BillingSchedule = {
   invoiceDelivery: InvoiceDelivery;
@@ -57,24 +59,28 @@ function ordinal(day: number): string {
   return `${day}${suffix}`;
 }
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+function anchorWeekday(anchorDay: number): string {
+  return weekdayName(
+    Number.isInteger(anchorDay) && anchorDay >= 0 && anchorDay <= 6 ? anchorDay : 1,
+  );
+}
 
 function cadenceClause(cycle: BillingCycle, anchorDay: number): string {
   switch (cycle) {
     case "Daily":
-      return "Bills every day.";
+      return translate("Bills every day.");
     case "Weekly":
-      return `Bills every week on ${WEEKDAYS[anchorDay] ?? "Monday"}.`;
+      return translate("Bills every week on {0}.", anchorWeekday(anchorDay));
     case "BiWeekly":
-      return `Bills every other week on ${WEEKDAYS[anchorDay] ?? "Monday"}.`;
+      return translate("Bills every other week on {0}.", anchorWeekday(anchorDay));
     case "SemiMonthly":
-      return `Bills twice a month, on the 1st and the ${ordinal(anchorDay)}.`;
+      return translate("Bills twice a month, on the 1st and the {0}.", ordinal(anchorDay));
     case "Monthly":
-      return `Bills every month on the ${ordinal(anchorDay)}.`;
+      return translate("Bills every month on the {0}.", ordinal(anchorDay));
     case "Quarterly":
-      return `Bills every quarter on the ${ordinal(anchorDay)}.`;
+      return translate("Bills every quarter on the {0}.", ordinal(anchorDay));
     default:
-      return "Bills as soon as a shipment is approved.";
+      return translate("Bills as soon as a shipment is approved.");
   }
 }
 
@@ -126,7 +132,12 @@ export function describeBillingSchedule(schedule: BillingSchedule): string {
   );
 
   if (schedule.maxShipmentsPerInvoice > 0) {
-    parts.push(`Up to ${schedule.maxShipmentsPerInvoice} shipments per invoice.`);
+    parts.push(
+      translate(
+        "{0, plural, one {Up to # shipment per invoice.} other {Up to # shipments per invoice.}}",
+        schedule.maxShipmentsPerInvoice,
+      ),
+    );
   }
 
   return parts.join(" ");
@@ -179,13 +190,16 @@ export function periodRange(periodStart: number, periodEnd: number): string {
  */
 export function billsInLabel(periodEnd: number, nowSeconds: number): string {
   const seconds = periodEnd - nowSeconds;
-  if (seconds <= 0) return "Due now";
+  if (seconds <= 0) return translate("Due now");
 
   const days = Math.floor(seconds / 86_400);
-  if (days >= 2) return `Bills in ${days} days`;
-  if (days === 1) return "Bills tomorrow";
+  if (days >= 2)
+    return translate("{0, plural, one {Bills in # day} other {Bills in # days}}", days);
+  if (days === 1) return translate("Bills tomorrow");
 
   const hours = Math.floor(seconds / 3_600);
-  if (hours >= 2) return `Bills in ${hours} hours`;
-  return "Bills within the hour";
+  if (hours >= 2) {
+    return translate("{0, plural, one {Bills in # hour} other {Bills in # hours}}", hours);
+  }
+  return translate("Bills within the hour");
 }

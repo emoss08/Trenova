@@ -106,7 +106,7 @@ function ScenarioRow({
                 variant="ghost"
                 size="icon-xs"
                 onClick={onEdit}
-                aria-label={`Edit scenario ${scenario.name}`}
+                aria-label={t("Edit scenario {0}", scenario.name)}
               >
                 <Edit02Icon className="size-3" />
               </Button>
@@ -123,7 +123,7 @@ function ScenarioRow({
                 size="icon-xs"
                 onClick={onDelete}
                 className="hover:text-destructive"
-                aria-label={`Delete scenario ${scenario.name}`}
+                aria-label={t("Delete scenario {0}", scenario.name)}
               >
                 <Trash01Icon className="size-3" />
               </Button>

@@ -178,7 +178,7 @@ function MappingItemRow({
           className="text-muted-foreground hover:text-destructive size-6 p-0"
           onClick={onRemove}
           disabled={!canRemove}
-          aria-label={`Remove field ${index + 1}`}
+          aria-label={t("Remove field {0}", index + 1)}
         >
           <Trash01Icon className="size-3.5" />
         </Button>

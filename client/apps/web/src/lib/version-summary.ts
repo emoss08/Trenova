@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { RateAgreementVersion } from "@trenova/shared/types/rate";
 
 /**
@@ -64,8 +65,10 @@ function accessorialPhrase(
   if (!field) {
     // A whole term appearing or vanishing is the schedule itself changing.
     const added = change.to != null;
-    if (added) return name ? `Added ${name} accessorial` : "Added accessorial";
-    return name ? `Removed ${name} accessorial` : "Removed accessorial";
+    if (added) {
+      return name ? translate("Added {0} accessorial", name) : translate("Added accessorial");
+    }
+    return name ? translate("Removed {0} accessorial", name) : translate("Removed accessorial");
   }
 
   const fieldLabel = ACCESSORIAL_FIELD_LABELS[field] ?? field;

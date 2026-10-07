@@ -28,6 +28,7 @@
   "Loading scheduling": "Cargando la programación",
   "Loading the board": "Cargando el cuadro",
   "Next week": "La próxima semana",
+  "No cover": "Sin cobertura",
   "No shifts yet": "Aún no hay turnos",
   "Nobody matches that": "Nadie coincide con eso",
   "Nobody on the board": "Nadie en el cuadro",
@@ -81,6 +82,7 @@
   "{0} on it": "{0} asignados",
   "{0} waiting on you.": "{0} pendiente(s) de usted.",
   "{0}-week rotation": "Rotación de {0} semanas",
+  "{0}: {1} of {2} rostered can work": "{0}: {1} de {2} en el cuadro de turnos pueden trabajar",
   "· taking {0}": "· tomando {0}",
   "· {0} a week": "· {0} por semana",
   "· {0} retired": "· {0} retirados"

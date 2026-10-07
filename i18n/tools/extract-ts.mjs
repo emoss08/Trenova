@@ -19,6 +19,8 @@ export const SOURCE_ROOTS = [
 const SKIP_DIR = new Set(["node_modules", "generated", "__tests__", "__snapshots__", "dist"]);
 const SKIP_FILE = /\.(test|spec|stories)\.[jt]sx?$/;
 
+const TRANSLATE_CALLEES = new Set(["t", "translate", "rt", "translateRich"]);
+
 const PARSER_PLUGINS = ["typescript", "jsx", "decorators-legacy", "explicitResourceManagement"];
 
 async function* walkFiles(dir) {
@@ -207,10 +209,11 @@ export async function extractTypeScript(repoRoot, roots = SOURCE_ROOTS) {
               return;
             }
 
-            // Already-migrated call sites: t("...") and translate("...").
+            // Already-migrated call sites: t("..."), translate("...") and rich text,
+            // rt("... <b>{0}</b> ...", tags), whose whole sentence is one message.
             if (
               callee.type === "Identifier" &&
-              (callee.name === "t" || callee.name === "translate") &&
+              TRANSLATE_CALLEES.has(callee.name) &&
               node.arguments.length > 0 &&
               node.arguments[0].type === "StringLiteral"
             ) {

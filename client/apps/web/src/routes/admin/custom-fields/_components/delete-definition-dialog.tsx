@@ -18,6 +18,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 type DeleteDefinitionDialogProps = {
   open: boolean;
@@ -33,6 +34,7 @@ export function DeleteDefinitionDialog({
   definition,
 }: DeleteDefinitionDialogProps) {
   const t = useT();
+  const rt = useRichT();
 
   const queryClient = useQueryClient();
   const [usageStatsState, setUsageStatsState] = useState<{
@@ -51,7 +53,7 @@ export function DeleteDefinitionDialog({
     },
     onSuccess: () => {
       toast.success(t("Custom field deleted"), {
-        description: `"${definition?.label}" has been deleted successfully.`,
+        description: t('"{0}" has been deleted successfully.', definition?.label ?? ""),
       });
       void queryClient.invalidateQueries({
         queryKey: ["custom-field-definition-list"],
@@ -69,7 +71,7 @@ export function DeleteDefinitionDialog({
         }
       } else {
         toast.error(t("Failed to delete custom field"), {
-          description: error instanceof Error ? error.message : "An unexpected error occurred",
+          description: error instanceof Error ? error.message : t("An unexpected error occurred"),
         });
       }
     },
@@ -104,9 +106,12 @@ export function DeleteDefinitionDialog({
             {hasExistingValues ? (
               <span className="space-y-2">
                 <span className="block">
-                  {t("This custom field has")}{" "}
-                  <strong>{t("{0} values", usageStats.totalValueCount)}</strong> across{" "}
-                  <strong>{t("{0} resources", usageStats.resourceCount)}</strong>.
+                  {rt(
+                    "This custom field has <b>{0, plural, one {# value} other {# values}}</b> across <b>{1, plural, one {# resource} other {# resources}}</b>.",
+                    { b: (c) => <strong>{c}</strong> },
+                    usageStats.totalValueCount,
+                    usageStats.resourceCount,
+                  )}
                 </span>
                 <span className="block font-medium">
                   {t(
@@ -116,9 +121,11 @@ export function DeleteDefinitionDialog({
               </span>
             ) : (
               <span>
-                {t('Are you sure you want to delete the custom field "')}
-                <strong>{t(definition.label)}</strong>
-                {t('"? This action cannot be undone.')}
+                {rt(
+                  'Are you sure you want to delete the custom field "<b>{0}</b>"? This action cannot be undone.',
+                  { b: (c) => <strong>{c}</strong> },
+                  t(definition.label),
+                )}
               </span>
             )}
           </AlertDialogDescription>

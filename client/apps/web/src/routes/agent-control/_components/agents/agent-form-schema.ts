@@ -7,6 +7,7 @@ import {
   type AutonomyTier,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { canDelegate, savedDelegates, type DelegateSummary } from "./delegates";
 
@@ -93,7 +94,7 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
         ctx.addIssue({
           code: "custom",
           path: ["toolTiers"],
-          message: `${tool} cannot act above the agent's ceiling`,
+          message: translate("{0} cannot act above the agent's ceiling", tool),
         });
         break;
       }

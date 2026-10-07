@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
 import {
   CAPABILITIES,
@@ -350,9 +351,14 @@ describe("parameter accessors", () => {
 
 describe("describeMatch and enforcementLabel", () => {
   it("renders scope matches in human terms", () => {
-    expect(describeMatch(["customer", "serviceType"])).toBe("customer, service type");
-    expect(describeMatch([])).toBe("no specific scope");
-    expect(describeMatch(null)).toBe("no specific scope");
+    expect(describeMatch(["customer", "serviceType"], translate)).toBe(
+      "customer and service type",
+    );
+    expect(describeMatch(["customer", "serviceType", "equipmentType"], translate)).toBe(
+      "customer, service type, and equipment type",
+    );
+    expect(describeMatch([], translate)).toBe("no specific scope");
+    expect(describeMatch(null, translate)).toBe("no specific scope");
   });
 
   it("labels every enforcement level", () => {

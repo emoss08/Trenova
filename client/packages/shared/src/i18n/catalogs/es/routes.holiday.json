@@ -12,6 +12,8 @@
   "Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.": "Los días festivos se omiten cuando una política cuenta solo días entre semana. Los bloqueos impiden solicitar tiempo libre ese día.",
   "How the calendar is used": "Cómo se usa el calendario",
   "How the date is listed on the calendar.": "Cómo aparece la fecha en el calendario.",
+  "It no longer applies to any year.": "Ya no se aplica a ningún año.",
+  "It no longer applies to {0}.": "Ya no se aplica a {0}.",
   "Keep": "Conservar",
   "Next year": "El próximo año",
   "Nothing on the calendar for {0}.": "No hay nada en el calendario para {0}.",

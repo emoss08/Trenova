@@ -358,7 +358,7 @@ function FieldAssertionsEditorInner({
                   variant="ghost"
                   size="icon"
                   onClick={() => removeField(fieldKey)}
-                  aria-label={`Remove ${fieldKey} assertions`}
+                  aria-label={t("Remove {0} assertions", fieldKey)}
                 >
                   <XCloseIcon className="size-4" />
                 </Button>

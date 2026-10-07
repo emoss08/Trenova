@@ -38,9 +38,15 @@ export function DetentionIntelligence({
     return (
       <DetentionIntelligenceEmpty
         title={t("No detention in this window")}
-        description={`No stop settled detention at any facility in the last ${days} days. Look back further, or check that the detention engine is switched on for this organization.`}
+        description={t(
+          "{0, plural, one {No stop settled detention at any facility in the last # day. Look back further, or check that the detention engine is switched on for this organization.} other {No stop settled detention at any facility in the last # days. Look back further, or check that the detention engine is switched on for this organization.}}",
+          days,
+        )}
         onWiden={windowValue === WIDEST_WINDOW.value ? undefined : onWiden}
-        widenLabel={`Look back ${WIDEST_WINDOW.days} days`}
+        widenLabel={t(
+          "{0, plural, one {Look back # day} other {Look back # days}}",
+          WIDEST_WINDOW.days,
+        )}
       />
     );
   }

@@ -88,7 +88,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
         setEvaluationSummary(summary);
       } else {
         toast.success(t("Service failure evaluation complete"), {
-          description: `${summary.created} created, ${summary.updated} updated, 0 skipped.`,
+          description: t("{0} created, {1} updated, 0 skipped.", summary.created, summary.updated),
         });
       }
       void queryClient.invalidateQueries(queries.serviceFailure.listByShipment(shipmentId));

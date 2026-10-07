@@ -70,9 +70,12 @@ export function StatementCard({
         }
         subtitle={
           empty
-            ? `${cadenceLabel(statement.cycle)} · no shipments this period`
-            : `${statement.shipmentCount} shipment${statement.shipmentCount === 1 ? "" : "s"} · ` +
-              `${statement.invoiceCount} invoice${statement.invoiceCount === 1 ? "" : "s"} when it bills`
+            ? t("{0} · no shipments this period", cadenceLabel(statement.cycle))
+            : t(
+                "{0, plural, one {# shipment} other {# shipments}} · {1, plural, one {# invoice} other {# invoices}} when it bills",
+                statement.shipmentCount,
+                statement.invoiceCount,
+              )
         }
         meta={
           <div className="flex flex-col gap-1.5">

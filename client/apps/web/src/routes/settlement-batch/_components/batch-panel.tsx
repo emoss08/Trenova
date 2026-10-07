@@ -136,9 +136,16 @@ function GenerateBatchPanel({
           notes: values.notes || undefined,
         });
         toast.success(
-          `Batch generated: ${batch.settlementCount} settlement${
-            batch.settlementCount === 1 ? "" : "s"
-          }${batch.exceptionCount > 0 ? `, ${batch.exceptionCount} need review` : ""}`,
+          batch.exceptionCount > 0
+            ? t(
+                "Batch generated: {0, plural, one {# settlement} other {# settlements}}, {1, plural, one {# needs review} other {# need review}}",
+                batch.settlementCount,
+                batch.exceptionCount,
+              )
+            : t(
+                "Batch generated: {0, plural, one {# settlement} other {# settlements}}",
+                batch.settlementCount,
+              ),
         );
         void queryClient.invalidateQueries({ queryKey: ["driver-settlement-list"] });
         return values;

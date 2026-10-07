@@ -166,7 +166,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
                   <button
                     type="button"
                     disabled={switchMutation.isPending}
-                    aria-label={`Switch organization (current: ${orgName})`}
+                    aria-label={t("Switch organization (current: {0})", orgName)}
                     className="hover:ring-ring/40 inline-flex rounded-md transition-shadow hover:ring-2 disabled:opacity-60"
                   />
                 }

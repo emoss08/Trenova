@@ -44,6 +44,8 @@ const ACTION_CONFIG: Record<
     confirmLabel: string;
     loadingLabel: string;
     successMessage: string;
+    failureTitle: string;
+    failureFallback: string;
     commentLabel: string;
     commentPlaceholder: string;
     icon: React.ComponentType<{ className?: string }>;
@@ -56,6 +58,8 @@ const ACTION_CONFIG: Record<
     confirmLabel: "Submit for review",
     loadingLabel: "Submitting...",
     successMessage: "Template submitted for review",
+    failureTitle: "Could not submit template",
+    failureFallback: "Failed to submit the template.",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Describe what changed and why it needs review",
     icon: Send01Icon,
@@ -67,6 +71,8 @@ const ACTION_CONFIG: Record<
     confirmLabel: "Approve",
     loadingLabel: "Approving...",
     successMessage: "Template approved and activated",
+    failureTitle: "Could not approve template",
+    failureFallback: "Failed to approve the template.",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Add an approval note",
     icon: CheckIcon,
@@ -79,6 +85,8 @@ const ACTION_CONFIG: Record<
     confirmLabel: "Reject",
     loadingLabel: "Rejecting...",
     successMessage: "Template rejected and archived",
+    failureTitle: "Could not reject template",
+    failureFallback: "Failed to reject the template.",
     commentLabel: "Comment (required)",
     commentPlaceholder: "Explain why this template is being rejected",
     icon: XCloseIcon,
@@ -91,6 +99,8 @@ const ACTION_CONFIG: Record<
     confirmLabel: "Request changes",
     loadingLabel: "Sending...",
     successMessage: "Changes requested; the author has been notified",
+    failureTitle: "Could not request changes on template",
+    failureFallback: "Failed to request changes on the template.",
     commentLabel: "What needs to change (required)",
     commentPlaceholder: "e.g. Guard totalWeight with coalesce; the hazmat surcharge should be $200",
     icon: MessageAlertSquareIcon,
@@ -149,7 +159,7 @@ export function ApprovalActionDialog({
       }
     },
     onSuccess: () => {
-      toast.success(config.successMessage);
+      toast.success(t(config.successMessage));
       void invalidateFormulaTemplate(queryClient);
       onOpenChange(false);
     },
@@ -157,9 +167,9 @@ export function ApprovalActionDialog({
       // The server says exactly why a review step was refused: a self
       // approval, a failing scenario, an invalid expression. That reason is
       // the whole point of the dialog, so it stays on screen.
-      const reason = describeApiError(error, `Failed to ${action} the template.`);
+      const reason = describeApiError(error, t(config.failureFallback));
       setServerError(reason);
-      toast.error(`Could not ${action} template`, { description: reason });
+      toast.error(t(config.failureTitle), { description: reason });
     },
   });
 
@@ -209,7 +219,7 @@ export function ApprovalActionDialog({
 
         <div className="space-y-1.5 py-2">
           <label htmlFor="approval-comment" className="text-xs font-medium">
-            {config.commentLabel}
+            {t(config.commentLabel)}
           </label>
           <Textarea
             id="approval-comment"
@@ -218,7 +228,7 @@ export function ApprovalActionDialog({
               setComment(e.target.value);
               setShowCommentError(false);
             }}
-            placeholder={config.commentPlaceholder}
+            placeholder={t(config.commentPlaceholder)}
             minRows={3}
             maxRows={6}
             isInvalid={commentInvalid}
@@ -250,10 +260,10 @@ export function ApprovalActionDialog({
             variant={config.destructive ? "destructive" : "default"}
             onClick={handleConfirm}
             isLoading={mutation.isPending}
-            loadingText={config.loadingLabel}
+            loadingText={t(config.loadingLabel)}
             disabled={gated && ready === false}
           >
-            {config.confirmLabel}
+            {t(config.confirmLabel)}
           </Button>
         </DialogFooter>
       </DialogContent>

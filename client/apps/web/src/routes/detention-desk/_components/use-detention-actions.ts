@@ -3,7 +3,6 @@ import { handleMutationError, useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { pluralize } from "@trenova/shared/lib/utils";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import { useCallback } from "react";
 import { toast } from "sonner";
@@ -67,11 +66,14 @@ export function useSendDetentionNotices() {
     },
     onSuccess: ({ sent, failed }) => {
       if (sent > 0) {
-        toast.success(`${sent} ${pluralize("notice", sent)} sent`, {
+        toast.success(t("{0, plural, one {# notice sent} other {# notices sent}}", sent), {
           description:
             failed > 0
-              ? `${failed} could not be sent and ${failed === 1 ? "is" : "are"} still in the queue.`
-              : "Every stop in the notice window is now on record.",
+              ? t(
+                  "{0, plural, one {# could not be sent and is still in the queue.} other {# could not be sent and are still in the queue.}}",
+                  failed,
+                )
+              : t("Every stop in the notice window is now on record."),
         });
       }
 

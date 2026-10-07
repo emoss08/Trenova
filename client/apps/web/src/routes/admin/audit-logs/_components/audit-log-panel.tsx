@@ -160,7 +160,10 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
       open={open}
       onOpenChange={onOpenChange}
       title={row.comment || `${operationLabel(row.operation)} ${resourceLabel(row.resource)}`}
-      description={`Recorded on ${formatToUserTimezone(row.timestamp, { showTimeZone: true })}`}
+      description={t(
+        "Recorded on {0}",
+        formatToUserTimezone(row.timestamp, { showTimeZone: true }),
+      )}
       size="xl"
     >
       <div className="space-y-5">

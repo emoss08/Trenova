@@ -1295,6 +1295,7 @@
   "{0} automatic": "{0} 項自動",
   "{0} better, {1} worse": "{0} 份較佳，{1} 份較差",
   "{0} calls unpriced": "{0} 次呼叫未計價",
+  "{0} cannot act above the agent's ceiling": "{0} 無法超出代理的上限執行操作",
   "{0} down, {1} up · {2}": "{0} 倒讚，{1} 讚 · {2}",
   "{0} evaluation": "{0} 評估",
   "{0} failed, {1} skipped": "{0} 個失敗，{1} 個已略過",

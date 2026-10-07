@@ -213,6 +213,7 @@ function HosClockCard({
   baseTone?: RingGaugeTone;
   extra?: string;
 }) {
+  const t = useT();
   const clamped = Math.max(remainingMs, 0);
 
   return (
@@ -222,7 +223,7 @@ function HosClockCard({
         size={104}
         strokeWidth={7}
         tone={clockTone(clamped, baseTone)}
-        aria-label={`${label} time remaining`}
+        aria-label={t("{0} time remaining", label)}
       >
         <span className={KPI_VALUE_LG_CLASS}>{formatClockDurationMs(clamped)}</span>
       </RingGauge>
@@ -852,7 +853,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
       <CollapsibleTrigger
         className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors disabled:cursor-default disabled:hover:bg-transparent"
         disabled={!hasFields}
-        aria-label={`Toggle fields for ${submission.templateName}`}
+        aria-label={t("Toggle fields for {0}", submission.templateName)}
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{submission.templateName}</p>

@@ -78,8 +78,8 @@ export default function OrgStructureConsole() {
         : null;
       toast.success(
         parent
-          ? `${position.title} now reports to ${parent}`
-          : `${position.title} is now top level`,
+          ? t("{0} now reports to {1}", position.title, parent)
+          : t("{0} is now top level", position.title),
       );
       void queryClient.invalidateQueries({ queryKey: [JOB_POSITIONS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [HEADCOUNT_KEY] });

@@ -110,10 +110,12 @@ export function ServiceFailureStopContext({
             <span className="text-muted-foreground truncate">{formatLocation(normalized)}</span>
           </div>
           <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-            {renderTimestamp("Cutoff", normalized.scheduledCutoff)}
-            {renderTimestamp("Arrived", normalized.actualArrival)}
-            {renderMinutes("Grace", normalized.gracePeriodMinutes)}
-            {renderMinutes("Late", normalized.lateMinutes)}
+            {renderTimestamp(translate("Cutoff"), normalized.scheduledCutoff)}
+            {renderTimestamp(translate("Arrived"), normalized.actualArrival)}
+            {renderMinutes(normalized.gracePeriodMinutes, (minutes) =>
+              translate("Grace {0}m", minutes),
+            )}
+            {renderMinutes(normalized.lateMinutes, (minutes) => translate("Late {0}m", minutes))}
           </div>
         </div>
         {trailing && (
@@ -171,10 +173,10 @@ function renderTimestamp(label: string, timestamp?: number | null) {
   );
 }
 
-function renderMinutes(label: string, value?: number | null) {
+function renderMinutes(value: number | null | undefined, text: (minutes: number) => string) {
   if (value === undefined || value === null) return null;
 
-  return <span>{translate("{0} {1}m", label, value)}</span>;
+  return <span>{text(value)}</span>;
 }
 
 function textOrUndefined(value?: string | null) {

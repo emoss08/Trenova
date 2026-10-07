@@ -123,7 +123,7 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
     mutationFn: async ({ values }) => api.post<Location>(URL, values),
     onSuccess: (_data, variables) => {
       toast.success(t("Changes have been saved."), {
-        description: `${TITLE} created successfully`,
+        description: t("Location created successfully"),
       });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
 
@@ -253,7 +253,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
     },
     onSuccess: (_data, variables) => {
       toast.success(t("Changes have been saved"), {
-        description: `${TITLE} updated successfully`,
+        description: t("Location updated successfully"),
       });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
 

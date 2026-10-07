@@ -83,8 +83,11 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     const diagnostics = result.diagnostics.length;
     toast.success(t("EDI 214 payload generated"), {
       description: diagnostics
-        ? `${diagnostics} diagnostic item(s); payload copied.`
-        : "Payload copied to clipboard.",
+        ? t(
+            "{0, plural, one {# diagnostic item; payload copied.} other {# diagnostic items; payload copied.}}",
+            diagnostics,
+          )
+        : t("Payload copied to clipboard."),
     });
   };
 

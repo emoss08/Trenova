@@ -1,7 +1,9 @@
 {
+  "Applied amount for {0}": "{0} 的沖抵金額",
   "Applied exceeds {0} by {1}": "沖抵金額超出 {0} 共 {1}",
   "Applied · {0}": "已沖抵 · {0}",
   "Apply cash": "沖抵款項",
+  "Apply to invoice {0}": "套用至發票 {0}",
   "Apply to open invoices": "沖抵未結發票",
   "Apply unapplied": "沖抵未沖抵款項",
   "Auto-apply oldest first": "自動優先沖抵最舊項目",
@@ -33,6 +35,7 @@
   "Reversed — 30 days": "已沖銷 — 30 天",
   "Select a customer to see their open invoices": "選擇客戶以查看其未結發票",
   "Short-pay": "短付",
+  "Short-pay amount for {0}": "{0} 的短付金額",
   "Short-pay written off · {0}": "短付已沖銷 · {0}",
   "The GL date for this application. It must fall within an open fiscal period.": "此沖抵的總帳日期。必須落在開放的財務期間內。",
   "The GL date. It must fall within an open fiscal period.": "總帳日期。必須落在開放的財務期間內。",
@@ -45,5 +48,7 @@
   "Unapplied cash applied": "已沖抵未沖抵款項",
   "Unapplied cash available:": "可用的未沖抵款項：",
   "Unapplied · {0}": "未沖抵 · {0}",
-  "exceeds open amount": "超過未結金額"
+  "exceeds open amount": "超過未結金額",
+  "{0, plural, one {# payment} other {# payments}} with remainder": "{0, plural, other {# 筆付款}}有餘額",
+  "{0} received — {1} applied, {2} unapplied.": "已收到 {0} — 已沖抵 {1}，未沖抵 {2}。"
 }

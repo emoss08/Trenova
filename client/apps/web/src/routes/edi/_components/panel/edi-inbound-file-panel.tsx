@@ -61,7 +61,11 @@ export function InboundFilePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={detail.fileName}
-      description={`Received via ${detail.method} · ${formatToUserTimezone(detail.receivedAt)}`}
+      description={t(
+        "Received via {0} · {1}",
+        detail.method,
+        formatToUserTimezone(detail.receivedAt),
+      )}
       size="lg"
       footer={
         <>

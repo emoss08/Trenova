@@ -760,7 +760,7 @@ export function DocumentIntelligenceDialog({
       toast.success(t("Document re-extraction started"));
     },
     onError: (error) => {
-      toast.error(`Failed to re-extract document: ${error.message}`);
+      toast.error(t("Failed to re-extract document: {0}", error.message));
     },
   });
 

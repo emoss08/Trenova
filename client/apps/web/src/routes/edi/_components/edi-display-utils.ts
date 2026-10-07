@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type {
   EDIMappingEntityType,
@@ -76,12 +77,12 @@ export function formatAccessorialName(charge: LoadTenderCharge, mapping?: EDIMap
 
 export function formatMappingDetail(mapping?: EDIMappingResolution) {
   if (mapping?.targetLabel) {
-    return `Local record: ${mapping.targetLabel}`;
+    return translate("Local record: {0}", mapping.targetLabel);
   }
   if (mapping?.resolved) {
-    return "Mapped local record";
+    return translate("Mapped local record");
   }
-  return "No mapping saved";
+  return translate("No mapping saved");
 }
 
 export function sourceValueLabel(label: string | null | undefined, id: string | null | undefined) {

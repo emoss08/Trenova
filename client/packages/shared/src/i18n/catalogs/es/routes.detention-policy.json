@@ -154,6 +154,8 @@
   "Which freight this policy governs. An empty dimension is a wildcard, and the most specific matching policy wins: facility beats customer beats commodity beats type.": "Qué carga rige esta política. Una dimensión vacía es un comodín, y prevalece la política coincidente más específica: instalación vence a cliente, cliente vence a mercancía y mercancía vence a tipo.",
   "Worked examples priced by the same engine that bills real shipments.": "Ejemplos resueltos tarificados por el mismo motor que factura los envíos reales.",
   "{0} billed of {1} dwell": "{0} facturado de {1} de permanencia",
+  "{0} forfeited to late arrival": "{0} perdido por llegada tardía",
+  "{0} negative margin": "{0} de margen negativo",
   "{0} of {1} stops matched": "{0} de {1} paradas coincidieron",
   "{0} stops · {1} billable": "{0} paradas · {1} facturables",
   "{0} would bill": "{0} facturaría"

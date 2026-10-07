@@ -30,7 +30,7 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
         render={
           <button
             type="button"
-            aria-label={`${title} calculation details`}
+            aria-label={t("{0} calculation details", title)}
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
               "text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors",

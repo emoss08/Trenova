@@ -31,15 +31,18 @@ export function UploadPhase({
 }: UploadPhaseProps) {
   const t = useT();
 
-  const handleRejected = useCallback((rejectedFiles: RejectedFile[]) => {
-    for (const { file, reason } of rejectedFiles) {
-      toast.error(
-        reason === "size"
-          ? `${file.name} exceeds 50 MB limit.`
-          : `${file.name} is not a supported format.`,
-      );
-    }
-  }, []);
+  const handleRejected = useCallback(
+    (rejectedFiles: RejectedFile[]) => {
+      for (const { file, reason } of rejectedFiles) {
+        toast.error(
+          reason === "size"
+            ? t("{0} exceeds 50 MB limit.", file.name)
+            : t("{0} is not a supported format.", file.name),
+        );
+      }
+    },
+    [t],
+  );
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-8">

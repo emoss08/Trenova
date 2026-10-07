@@ -169,7 +169,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     },
     onSuccess: () => {
       toast.success(t("Changes have been saved"), {
-        description: `${title} updated successfully`,
+        description: t("{0} updated successfully", title),
       });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
@@ -320,7 +320,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
           {!row || isRecordLoading ? (
             <div className="flex-1 p-4">
-              <ComponentLoader message={`Loading ${title}...`} />
+              <ComponentLoader message={t("Loading {0}...", title)} />
             </div>
           ) : recordFailed ? (
             <div className="flex-1 p-4">

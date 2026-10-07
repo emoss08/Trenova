@@ -3,5 +3,6 @@
   "Current DSO": "当前 DSO",
   "Distribution": "分配",
   "Receivables aging by customer with drill-down to the ledger.": "按客户区分的应收账龄分析，并可下钻至账册。",
+  "Totals · {0, plural, one {# customer} other {# customers}}": "合计 · {0, plural, other {# 个客户}}",
   "trailing 90 days": "过去 90 天"
 }

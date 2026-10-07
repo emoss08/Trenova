@@ -33,6 +33,7 @@ import { CheckCircleIcon, RouteIcon, Settings01Icon } from "@trenova/shared/comp
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 export const DISTANCE_CONTROLS_PATH = "/admin/distance-controls";
 
@@ -91,6 +92,7 @@ type ReturnDiagnosticsProps = {
 
 export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) {
   const t = useT();
+  const rt = useRichT();
 
   const [backfillOpen, setBackfillOpen] = useState(false);
   const mismatch = problemTotals(ret.problems, "MileageMismatch");
@@ -170,13 +172,20 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
             <Settings01Icon className="size-4" />
             <AlertTitle>{t("Some moves were never broken down by jurisdiction")}</AlertTitle>
             <AlertDescription>
-              {t("Routed miles are only split state by state while")}{" "}
-              <span className="font-medium">{t("Capture jurisdiction miles")}</span> {t("is on in")}{" "}
-              <Link to={DISTANCE_CONTROLS_PATH} className="text-brand font-medium hover:underline">
-                {t("distance controls")}
-              </Link>
-              {t(
-                ". Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.",
+              {rt(
+                "Routed miles are only split state by state while <b>{0}</b> is on in <link>distance controls</link>. Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.",
+                {
+                  b: (c) => <span className="font-medium">{c}</span>,
+                  link: (c) => (
+                    <Link
+                      to={DISTANCE_CONTROLS_PATH}
+                      className="text-brand font-medium hover:underline"
+                    >
+                      {c}
+                    </Link>
+                  ),
+                },
+                t("Capture jurisdiction miles"),
               )}
             </AlertDescription>
           </Alert>
@@ -247,8 +256,8 @@ function BackfillSession({
     onSuccess: (result) => {
       toast.success(t("Backfill started"), {
         description: result.workflowId
-          ? `Workflow ${result.workflowId}. Recompute the return once it finishes.`
-          : "Recompute the return once it finishes.",
+          ? t("Workflow {0}. Recompute the return once it finishes.", result.workflowId)
+          : t("Recompute the return once it finishes."),
       });
       onOpenChange(false);
     },

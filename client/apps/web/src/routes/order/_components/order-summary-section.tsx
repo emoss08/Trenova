@@ -130,7 +130,11 @@ export function OrderSummarySection() {
         </div>
         <SummaryStat label={t("Quoted")} value={formatAmount(order.quotedAmount)} />
         <SummaryStat
-          label={`Total (${activeLegCount} of ${legCount} active leg${legCount === 1 ? "" : "s"})`}
+          label={t(
+            "Total ({0} of {1, plural, one {# active leg} other {# active legs}})",
+            activeLegCount,
+            legCount,
+          )}
           value={formatAmount(order.totalAmount)}
         />
         <SummaryStat

@@ -128,7 +128,12 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
         <div className="flex items-center gap-2">
           <span
             role="img"
-            aria-label={`${plan.name}: ${enrolled} of ${totalEnrolled} covered people`}
+            aria-label={t(
+              "{0}: {1} of {2, plural, one {# covered person} other {# covered people}}",
+              plan.name,
+              enrolled,
+              totalEnrolled,
+            )}
             className="bg-muted flex h-1 w-32 overflow-hidden rounded-full"
           >
             <span

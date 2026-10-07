@@ -39,25 +39,30 @@ export function SecurityOverview({
         <KpiStripItem
           label={t("Providers")}
           value={String(providerCount)}
-          sub={providerCount === 1 ? "Enabled provider" : "Enabled providers"}
+          sub={t("{0, plural, one {Enabled provider} other {Enabled providers}}", providerCount)}
           tone={providerCount > 0 ? "success" : "muted"}
         />
         <KpiStripItem
           label={t("SSO enforcement")}
-          value={enforcedProviderName || "Optional"}
-          sub={enforcedProviderName ? "Password fallback restricted" : "Password sign-in allowed"}
+          value={enforcedProviderName || t("Optional")}
+          sub={
+            enforcedProviderName ? t("Password fallback restricted") : t("Password sign-in allowed")
+          }
           tone={enforcedProviderName ? "warning" : "muted"}
         />
         <KpiStripItem
           label={t("SCIM directory")}
-          value={directoryStatus || "Not connected"}
-          sub={directoryStatus ? "Provisioning enabled" : "Directory sync inactive"}
+          value={directoryStatus || t("Not connected")}
+          sub={directoryStatus ? t("Provisioning enabled") : t("Directory sync inactive")}
           tone={directoryStatus ? "success" : "muted"}
         />
         <KpiStripItem
           label={t("Active policies")}
           value={String(activePolicyCount)}
-          sub={activePolicyCount === 1 ? "Policy evaluating" : "Policies evaluating"}
+          sub={t(
+            "{0, plural, one {Policy evaluating} other {Policies evaluating}}",
+            activePolicyCount,
+          )}
           tone={activePolicyCount > 0 ? "info" : "muted"}
         />
       </KpiStrip>
@@ -76,7 +81,7 @@ export function SecurityOverview({
             recentActivity.map((activity) => (
               <ActivityItem
                 key={activity.id}
-                title={t(activity.label)}
+                title={activity.label}
                 detail={activity.detail}
                 badge={activity.status}
                 when={formatUnixDateTimeOrDash(activity.occurredAt)}

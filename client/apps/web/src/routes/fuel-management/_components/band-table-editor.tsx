@@ -1,5 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { queries } from "@/lib/queries";
@@ -37,7 +37,9 @@ type BandValueMeta = {
   prefix?: string;
   suffix?: string;
   decimalScale: number;
-  readingHint: string;
+  reading: string;
+  startLabel: string;
+  stepHelper: string;
 };
 
 function valueMetaForMethod(method: string): BandValueMeta {
@@ -47,21 +49,33 @@ function valueMetaForMethod(method: string): BandValueMeta {
         header: translate("% of charge"),
         suffix: "%",
         decimalScale: 2,
-        readingHint: "add that percentage of the freight charge",
+        reading: translate(
+          "Read each row as: when fuel costs at least “from” and less than “up to”, add that percentage of the freight charge.",
+        ),
+        startLabel: translate("Starting % of charge"),
+        stepHelper: translate("How much the % of charge goes up from one band to the next."),
       };
     case "TableFlat":
       return {
         header: translate("Flat amount"),
         prefix: "$",
         decimalScale: 2,
-        readingHint: "add that flat dollar amount",
+        reading: translate(
+          "Read each row as: when fuel costs at least “from” and less than “up to”, add that flat dollar amount.",
+        ),
+        startLabel: translate("Starting flat amount"),
+        stepHelper: translate("How much the flat amount goes up from one band to the next."),
       };
     default:
       return {
         header: translate("Rate per mile"),
         prefix: "$",
         decimalScale: 4,
-        readingHint: "charge that rate for every mile",
+        reading: translate(
+          "Read each row as: when fuel costs at least “from” and less than “up to”, charge that rate for every mile.",
+        ),
+        startLabel: translate("Starting rate per mile"),
+        stepHelper: translate("How much the rate per mile goes up from one band to the next."),
       };
   }
 }
@@ -90,7 +104,7 @@ type BandIssue = {
   fillGap?: { afterIndex: number; from: number; to: number };
 };
 
-function computeBandIssues(rows: WatchedRow[]): BandIssue[] {
+function computeBandIssues(rows: WatchedRow[], t: TranslateFn): BandIssue[] {
   const issues: BandIssue[] = [];
 
   rows.forEach((row, index) => {
@@ -99,7 +113,7 @@ function computeBandIssues(rows: WatchedRow[]): BandIssue[] {
     if (min !== null && max !== null && max <= min) {
       issues.push({
         severity: "error",
-        message: `Band ${index + 1}: the "up to" price must be higher than the "from" price.`,
+        message: t('Band {0}: the "up to" price must be higher than the "from" price.', index + 1),
       });
     }
   });
@@ -121,13 +135,26 @@ function computeBandIssues(rows: WatchedRow[]): BandIssue[] {
         severity: "error",
         message:
           prevMax === null
-            ? `Bands ${prev.index + 1} and ${curr.index + 1} overlap — band ${prev.index + 1} has no upper limit.`
-            : `Bands ${prev.index + 1} and ${curr.index + 1} overlap — a price like ${money(currMin)} would match both.`,
+            ? t(
+                "Bands {0} and {1} overlap — band {0} has no upper limit.",
+                prev.index + 1,
+                curr.index + 1,
+              )
+            : t(
+                "Bands {0} and {1} overlap — a price like {2} would match both.",
+                prev.index + 1,
+                curr.index + 1,
+                money(currMin),
+              ),
       });
     } else if (currMin > prevMax) {
       issues.push({
         severity: "warning",
-        message: `Prices from ${money(prevMax)} to ${money(currMin)} aren't covered — no surcharge would apply there.`,
+        message: t(
+          "Prices from {0} to {1} aren't covered — no surcharge would apply there.",
+          money(prevMax),
+          money(currMin),
+        ),
         fillGap: { afterIndex: prev.index, from: prevMax, to: currMin },
       });
     }
@@ -256,7 +283,7 @@ const BandRow = memo(function BandRow({
           control={control}
           name={`tableRows.${index}.priceMin`}
           placeholder={t("Any price")}
-          ariaLabel={`Band ${index + 1} price from`}
+          ariaLabel={t("Band {0} price from", index + 1)}
           prefix="$"
           decimalScale={4}
           disabled={disabled}
@@ -267,7 +294,7 @@ const BandRow = memo(function BandRow({
           control={control}
           name={`tableRows.${index}.priceMax`}
           placeholder={t("No limit")}
-          ariaLabel={`Band ${index + 1} price up to`}
+          ariaLabel={t("Band {0} price up to", index + 1)}
           prefix="$"
           decimalScale={4}
           disabled={disabled}
@@ -278,7 +305,7 @@ const BandRow = memo(function BandRow({
           control={control}
           name={`tableRows.${index}.value`}
           placeholder="0.00"
-          ariaLabel={`Band ${index + 1} ${meta.header}`}
+          ariaLabel={t("Band {0} {1}", index + 1, meta.header)}
           prefix={meta.prefix}
           suffix={meta.suffix}
           decimalScale={meta.decimalScale}
@@ -374,7 +401,7 @@ function IssuesStrip({
 
   const watched = useWatch({ control, name: "tableRows" });
   const rows = useDeferredValue(watched);
-  const issues = useMemo(() => computeBandIssues(rows ?? []), [rows]);
+  const issues = useMemo(() => computeBandIssues(rows ?? [], t), [rows, t]);
 
   return (
     <AnimatePresence initial={false}>
@@ -445,11 +472,11 @@ function FooterSummary({
     const finiteMaxes = maxes.filter((value): value is number => value !== null);
     const low = openBottom ? null : finiteMins.length ? Math.min(...finiteMins) : null;
     const high = openTop ? null : finiteMaxes.length ? Math.max(...finiteMaxes) : null;
-    if (low === null && high === null) return "covers every fuel price";
-    if (low === null) return `covers every price up to ${money(high as number)}`;
-    if (high === null) return `covers ${money(low)} and up`;
-    return `covers ${money(low)} to ${money(high)}`;
-  }, [rows]);
+    if (low === null && high === null) return t("covers every fuel price");
+    if (low === null) return t("covers every price up to {0}", money(high as number));
+    if (high === null) return t("covers {0} and up", money(low));
+    return t("covers {0} to {1}", money(low), money(high));
+  }, [rows, t]);
 
   const uncovered = useMemo(() => {
     if (currentPrice === null || rows.length === 0) return false;
@@ -628,12 +655,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
         <div className="flex items-center gap-2">
           <div>
             <CardTitle className="text-sm font-semibold">{t("Price band table")}</CardTitle>
-            <p className="text-muted-foreground text-xs">
-              {t(
-                "Read each row as: when fuel costs at least “from” and less than “up to”, {0}.",
-                meta.readingHint,
-              )}
-            </p>
+            <p className="text-muted-foreground text-xs">{meta.reading}</p>
           </div>
         </div>
         {fields.length > 0 && (
@@ -742,6 +764,8 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
         onOpenChange={setWizardOpen}
         valueMeta={{
           label: meta.header,
+          startLabel: meta.startLabel,
+          stepHelper: meta.stepHelper,
           prefix: meta.prefix,
           suffix: meta.suffix,
           decimalScale: meta.decimalScale,

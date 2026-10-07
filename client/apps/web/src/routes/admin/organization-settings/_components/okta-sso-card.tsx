@@ -33,6 +33,7 @@ import {
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 type OktaSSOFormValues = OktaSSOConfig & {
   allowedDomainsText: string;
@@ -74,6 +75,7 @@ function CopyableInput({ value, label }: { value: string; label: string }) {
 
 export function OktaSSOCard({ organizationId }: { organizationId: string }) {
   const t = useT();
+  const rt = useRichT();
 
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -194,17 +196,20 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                     <InfoCircleIcon />
                     <AlertDescription>
                       <p>
-                        {t("To configure SSO, create an OIDC application in the")}{" "}
-                        <a
-                          href="https://login.okta.com/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium underline underline-offset-2"
-                        >
-                          {t("Okta admin console")}
-                        </a>
-                        {t(
-                          ", copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.",
+                        {rt(
+                          "To configure SSO, create an OIDC application in the <a>Okta admin console</a>, copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.",
+                          {
+                            a: (c) => (
+                              <a
+                                href="https://login.okta.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium underline underline-offset-2"
+                              >
+                                {c}
+                              </a>
+                            ),
+                          },
                         )}
                       </p>
                     </AlertDescription>
@@ -355,11 +360,17 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                       >
                         <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">
-                          {t("Replace")}{" "}
-                          <code className="bg-muted rounded-md px-1 py-0.5 font-mono text-xs">
-                            {t("{loginSlug}")}
-                          </code>{" "}
-                          {t("with your organization's login slug from General settings.")}
+                          {rt(
+                            "Replace <code>{0}</code> with your organization's login slug from General settings.",
+                            {
+                              code: (c) => (
+                                <code className="bg-muted rounded-md px-1 py-0.5 font-mono text-xs">
+                                  {c}
+                                </code>
+                              ),
+                            },
+                            "{loginSlug}",
+                          )}
                         </p>
                       </FormSection>
                     </>

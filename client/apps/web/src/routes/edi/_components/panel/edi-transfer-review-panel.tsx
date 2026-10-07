@@ -180,8 +180,8 @@ export function EDITransferReviewPanel({
         title={t("Reject load tender")}
         description={
           transfer?.tenderPayload.bol
-            ? `Reject the load tender for BOL ${transfer.tenderPayload.bol}.`
-            : "Reject this load tender."
+            ? t("Reject the load tender for BOL {0}.", transfer.tenderPayload.bol)
+            : t("Reject this load tender.")
         }
         placeholder={t("Reason shared with the submitting partner")}
         confirmLabel={t("Reject transfer")}

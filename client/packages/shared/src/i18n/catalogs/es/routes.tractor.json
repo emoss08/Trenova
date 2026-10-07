@@ -32,7 +32,9 @@
   "The specific model of the tractor.": "El modelo específico del tractocamión.",
   "The type of equipment the tractor is categorized under.": "El tipo de equipo bajo el que se clasifica el tractocamión.",
   "The unique registration number assigned to the tractor.": "El número de matrícula único asignado al tractocamión.",
+  "Toggle defects for {0} inspection": "Mostrar u ocultar los defectos de la inspección {0}",
   "Tractor status updated successfully": "El estado del tractocamión se actualizó correctamente",
   "Worker assignment": "Asignación de trabajador",
-  "· {0} unresolved": "· {0} sin resolver"
+  "{0, plural, one {# defect} other {# defects}}": "{0, plural, one {# defecto} other {# defectos}}",
+  "{0, plural, one {# defect} other {# defects}} · {1} unresolved": "{0, plural, one {# defecto} other {# defectos}} · {1} sin resolver"
 }

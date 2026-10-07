@@ -1,5 +1,6 @@
 {
   "Carrier cost events": "承運業者成本事件",
+  "Cost Event — {0}": "成本事件 — {0}",
   "Cost events accrue automatically when a carrier-covered shipment reaches your configured pay trigger and are locked once attached to a settlement.": "當由承運業者承運的運單達到您設定的付款觸發條件時，成本事件會自動計提，並在附加至結算後鎖定。",
   "Event date": "事件日期",
   "Event type": "事件類型",

@@ -218,7 +218,7 @@ export function SettlementQueue({
                     className="mt-0.5"
                     checked={checkedIds.has(settlement.id)}
                     onCheckedChange={() => toggleChecked(settlement.id)}
-                    aria-label={`Select settlement for ${carrierName(settlement)}`}
+                    aria-label={t("Select settlement for {0}", carrierName(settlement))}
                   />
                   <button
                     type="button"
@@ -328,7 +328,10 @@ function BulkActionBar({
         className="h-7 text-xs"
         disabled={mutation.isPending}
         onClick={onClick ?? (() => mutation.mutate({ action }))}
-        title={`Applies to the ${count} selected settlement${count === 1 ? "" : "s"} in an eligible status; others are skipped`}
+        title={t(
+          "Applies to the {0, plural, one {# selected settlement} other {# selected settlements}} in an eligible status; others are skipped",
+          count,
+        )}
       >
         {icon}
         {label} ({count})

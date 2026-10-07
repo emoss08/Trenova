@@ -22,7 +22,6 @@
   "No transactions yet": "尚無交易",
   "One active escrow account per driver; contributions flow in from settlements via a recurring deduction.": "每位駕駛員一個生效中的履約保證帳戶；提撥透過週期性扣款自結算流入。",
   "Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.": "僅列出自營車主 — 即採用自營車主薪酬設定檔的承攬人與駕駛員。",
-  "Opened": "已開立",
   "Opened {0}{1}": "開立於 {0}{1}",
   "Owner-operator maintenance escrow with a full transaction ledger and quarterly interest per 49 CFR 376.12(k).": "自營車主的維修履約保證，附完整交易帳冊，並依 49 CFR 376.12(k) 按季計息。",
   "Positive amounts add to the balance; negative amounts apply funds (e.g. a repair paid from escrow).": "正值增加餘額；負值則動支款項（例如以履約保證支付維修費）。",

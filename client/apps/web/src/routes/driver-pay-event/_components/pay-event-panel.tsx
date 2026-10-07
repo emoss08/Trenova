@@ -20,7 +20,7 @@ export function PayEventPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={`Pay Event — ${row.proNumber || row.shipmentId}`}
+      title={t("Pay Event — {0}", row.proNumber || row.shipmentId)}
       description={row.worker ? `${row.worker.firstName} ${row.worker.lastName}`.trim() : undefined}
       size="md"
     >

@@ -86,12 +86,18 @@ export function ImportTemplateDialog({
       onSuccess: async (response) => {
         const renamedCount = Object.keys(response.renamed ?? {}).length;
         toast.success(
-          `Imported ${response.created.length} template${response.created.length === 1 ? "" : "s"}`,
+          t(
+            "{0, plural, one {Imported # template} other {Imported # templates}}",
+            response.created.length,
+          ),
           {
             description:
               renamedCount > 0
-                ? `${renamedCount} renamed to avoid name conflicts. Imported templates start as drafts.`
-                : "Imported templates start as drafts.",
+                ? t(
+                    "{0} renamed to avoid name conflicts. Imported templates start as drafts.",
+                    renamedCount,
+                  )
+                : t("Imported templates start as drafts."),
           },
         );
         await invalidateFormulaTemplate(queryClient);

@@ -28,6 +28,7 @@
   "Loading scheduling": "正在加载排班",
   "Loading the board": "正在加载班表",
   "Next week": "下周",
+  "No cover": "无承保",
   "No shifts yet": "尚无班次",
   "Nobody matches that": "没有匹配的人员",
   "Nobody on the board": "班表上没有任何人",
@@ -81,6 +82,7 @@
   "{0} on it": "{0} 人在此班次",
   "{0} waiting on you.": "{0} 项待您处理。",
   "{0}-week rotation": "{0} 周轮班",
+  "{0}: {1} of {2} rostered can work": "{0}：{2} 名排班人员中有 {1} 名可以工作",
   "· taking {0}": "· 取用 {0}",
   "· {0} a week": "· 每周 {0}",
   "· {0} retired": "· {0} 个已停用"

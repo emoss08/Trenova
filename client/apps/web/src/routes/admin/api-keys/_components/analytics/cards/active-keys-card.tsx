@@ -17,7 +17,7 @@ export function ActiveKeysCard({ data }: Props) {
       label={t("Active keys")}
       value={count.toLocaleString()}
       icon={ShieldTickIcon}
-      detail={`${percentOfTotal}% of total`}
+      detail={t("{0}% of total", percentOfTotal)}
     />
   );
 }

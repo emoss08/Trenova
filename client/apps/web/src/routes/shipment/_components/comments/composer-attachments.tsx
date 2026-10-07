@@ -110,7 +110,7 @@ function UploadChip({
           size="icon-xs"
           className="size-5 shrink-0"
           onClick={onRetry}
-          aria-label={`Retry uploading ${upload.file.name}`}
+          aria-label={t("Retry uploading {0}", upload.file.name)}
         >
           <RefreshCcw01Icon className="size-3" />
         </Button>

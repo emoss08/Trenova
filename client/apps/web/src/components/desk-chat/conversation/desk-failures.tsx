@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { DeskBrandMark, VENDOR_NAMES } from "../composer/desk-brand-mark";
 import { DeskErrorButton, DeskErrorCard } from "../desk-error-card";
 import { DeskIcon } from "../desk-icons";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 /**
  * Every model the organization set up was asked and none answered. Each one
@@ -172,7 +173,7 @@ export function DeskFallbackLine({
   answeredVendor: string;
   answeredModel: string;
 }) {
-  const t = useT();
+  const rt = useRichT();
   return (
     <div className="dk-ec-fb">
       <span className="dk-ec-fbm dk-off">
@@ -183,7 +184,12 @@ export function DeskFallbackLine({
         <DeskBrandMark vendor={answeredVendor} size={11} />
       </span>
       <span>
-        {t("Answered by")} <b>{answeredModel}</b> · {t("{0} didn't respond", fromModel)}
+        {rt(
+          "Answered by <b>{0}</b> · {1} didn't respond",
+          { b: (c) => <b>{c}</b> },
+          answeredModel,
+          fromModel,
+        )}
       </span>
     </div>
   );

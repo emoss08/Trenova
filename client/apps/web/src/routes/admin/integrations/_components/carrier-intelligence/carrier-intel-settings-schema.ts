@@ -239,9 +239,11 @@ export function validateRuleParam(
   raw: string,
 ): string | null {
   const value = raw.trim();
+  // The rule catalog's labels are English from the server and are in the catalog as keys.
+  const label = translate(param.label);
   if (value === "") {
     return param.type === "MultiSelect"
-      ? translate("Select at least one option for {0}", param.label)
+      ? translate("Select at least one option for {0}", label)
       : null;
   }
 
@@ -249,41 +251,41 @@ export function validateRuleParam(
   switch (param.type) {
     case "Integer":
       if (!INTEGER_PATTERN.test(value)) {
-        return translate("{0} must be a whole number", param.label);
+        return translate("{0} must be a whole number", label);
       }
       numeric = Number(value);
       break;
     case "Decimal":
       if (!isDecimalString(value)) {
-        return translate("{0} must be a number", param.label);
+        return translate("{0} must be a number", label);
       }
       numeric = Number(value);
       break;
     case "Number":
       numeric = Number(value);
       if (!Number.isFinite(numeric)) {
-        return translate("{0} must be a number", param.label);
+        return translate("{0} must be a number", label);
       }
       break;
     case "Select":
       return (param.options ?? []).includes(value)
         ? null
-        : translate("{0} has an invalid option", param.label);
+        : translate("{0} has an invalid option", label);
     case "MultiSelect": {
       const options = param.options ?? [];
       return parseCommaSeparatedList(value).every((item) => options.includes(item))
         ? null
-        : translate("{0} has an invalid option", param.label);
+        : translate("{0} has an invalid option", label);
     }
     default:
       return null;
   }
 
   if (param.min !== null && numeric < param.min) {
-    return translate("{0} must be at least {1}", param.label, param.min);
+    return translate("{0} must be at least {1}", label, param.min);
   }
   if (param.max !== null && numeric > param.max) {
-    return translate("{0} cannot exceed {1}", param.label, param.max);
+    return translate("{0} cannot exceed {1}", label, param.max);
   }
   return null;
 }
@@ -303,17 +305,17 @@ export function buildSettingsSchema(catalog: readonly CarrierIntelRuleDefinition
     .object({
       version: z.number(),
       enrollmentPolicy: z.enum(CARRIER_INTEL_ENROLLMENT_POLICIES),
-      recentUsageDays: boundedInt("Recent usage window", 7, 365),
+      recentUsageDays: boundedInt(translate("Recent usage window"), 7, 365),
       includeOpenTenders: z.boolean(),
       autoEnrollOnCreate: z.boolean(),
       autoUnenrollOnInactive: z.boolean(),
       exclusiveWatchlist: z.boolean(),
-      pollIntervalMinutes: boundedInt("Poll interval", 60, 1440),
-      snapshotTtlHours: boundedInt("Snapshot freshness", 1, 720),
-      fullProfileTtlDays: boundedInt("Full profile freshness", 1, 365),
+      pollIntervalMinutes: boundedInt(translate("Poll interval"), 60, 1440),
+      snapshotTtlHours: boundedInt(translate("Snapshot freshness"), 1, 720),
+      fullProfileTtlDays: boundedInt(translate("Full profile freshness"), 1, 365),
       preTenderRefreshEnabled: z.boolean(),
-      preTenderMaxAgeHours: boundedInt("Pre-tender freshness", 1, 720),
-      hardMaxAgeHours: boundedInt("Maximum intelligence age", 1, 8760),
+      preTenderMaxAgeHours: boundedInt(translate("Pre-tender freshness"), 1, 720),
+      hardMaxAgeHours: boundedInt(translate("Maximum intelligence age"), 1, 8760),
       confirmBlockingChanges: z.boolean(),
       outagePolicy: z.enum(CARRIER_INTEL_OUTAGE_POLICIES),
       autoDisqualifyOnBlock: z.boolean(),
@@ -329,14 +331,14 @@ export function buildSettingsSchema(catalog: readonly CarrierIntelRuleDefinition
             (isDecimalString(value) && compareDecimalStrings(value, "0") >= 0),
           translate("Monthly spend cap must be a non-negative amount"),
         ),
-      softCapPercent: boundedInt("Soft cap percent", 1, 100),
+      softCapPercent: boundedInt(translate("Soft cap percent"), 1, 100),
       dailyFullProfileCap: z
         .number()
         .int(translate("Daily full profile cap must be a whole number"))
         .min(0, translate("Daily full profile cap cannot be negative"))
         .nullable(),
-      rawRetentionDays: boundedInt("Raw payload retention", 7, 730),
-      snapshotHistoryLimit: boundedInt("Snapshot history", 1, 100),
+      rawRetentionDays: boundedInt(translate("Raw payload retention"), 7, 730),
+      snapshotHistoryLimit: boundedInt(translate("Snapshot history"), 1, 100),
       selfMonitoringEnabled: z.boolean(),
       rules: z.array(
         z.object({

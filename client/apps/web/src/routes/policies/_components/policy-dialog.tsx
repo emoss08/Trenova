@@ -161,6 +161,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
         file,
         resourceType: POLICY_RESOURCE_TYPE,
         resourceId: policy?.id ?? PENDING_RESOURCE_ID,
+        // i18n-ignore: stored on the document as metadata, not shown as interface text
         description: `Policy document: ${file.name}`,
       }),
     onSuccess: (document, file) => {

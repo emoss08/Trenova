@@ -32,7 +32,9 @@
   "The specific model of the tractor.": "此牵引车的具体型号。",
   "The type of equipment the tractor is categorized under.": "此牵引车所归类的设备类型。",
   "The unique registration number assigned to the tractor.": "分配给此牵引车的唯一注册号码。",
+  "Toggle defects for {0} inspection": "切换 {0} 检查的缺陷",
   "Tractor status updated successfully": "牵引车状态已成功更新",
   "Worker assignment": "司机指派",
-  "· {0} unresolved": "· {0} 项未解决"
+  "{0, plural, one {# defect} other {# defects}}": "{0, plural, other {# 个缺陷}}",
+  "{0, plural, one {# defect} other {# defects}} · {1} unresolved": "{0, plural, other {# 个缺陷}} · {1} 个未解决"
 }

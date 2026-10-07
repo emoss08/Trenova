@@ -37,9 +37,12 @@ export default function WorkerTable() {
       );
 
       toast.promise(Promise.all(updatePromises), {
-        loading: "Updating status...",
-        success: `Updated ${rows.length} worker(s) successfully`,
-        error: "Failed to update status",
+        loading: t("Updating status..."),
+        success: t(
+          "{0, plural, one {Updated # worker successfully} other {Updated # workers successfully}}",
+          rows.length,
+        ),
+        error: t("Failed to update status"),
         finally: async () => {
           await queryClient.invalidateQueries({
             queryKey: ["worker-list"],
@@ -48,7 +51,7 @@ export default function WorkerTable() {
         },
       });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const handleBulkTypeUpdate = useCallback(
@@ -60,9 +63,12 @@ export default function WorkerTable() {
       );
 
       toast.promise(Promise.all(updatePromises), {
-        loading: "Updating worker type...",
-        success: `Updated ${rows.length} worker(s) successfully`,
-        error: "Failed to update worker type",
+        loading: t("Updating worker type..."),
+        success: t(
+          "{0, plural, one {Updated # worker successfully} other {Updated # workers successfully}}",
+          rows.length,
+        ),
+        error: t("Failed to update worker type"),
         finally: async () => {
           await queryClient.invalidateQueries({
             queryKey: ["worker-list"],
@@ -71,7 +77,7 @@ export default function WorkerTable() {
         },
       });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const handleBulkDriverTypeUpdate = useCallback(
@@ -83,9 +89,12 @@ export default function WorkerTable() {
       );
 
       toast.promise(Promise.all(updatePromises), {
-        loading: "Updating driver type...",
-        success: `Updated ${rows.length} worker(s) successfully`,
-        error: "Failed to update driver type",
+        loading: t("Updating driver type..."),
+        success: t(
+          "{0, plural, one {Updated # worker successfully} other {Updated # workers successfully}}",
+          rows.length,
+        ),
+        error: t("Failed to update driver type"),
         finally: async () => {
           await queryClient.invalidateQueries({
             queryKey: ["worker-list"],
@@ -94,7 +103,7 @@ export default function WorkerTable() {
         },
       });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<WorkerRow>[]>(

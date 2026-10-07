@@ -23,6 +23,8 @@
   "Needs your attention": "Requiere su atención",
   "No anniversaries in the next 30 days, and nobody started this quarter.": "No hay aniversarios en los próximos 30 días y nadie comenzó este trimestre.",
   "No hire dates on record": "No hay fechas de contratación registradas",
+  "Nobody blocked, nobody on watch.": "Nadie bloqueado, nadie en vigilancia.",
+  "Nobody blocked. {0} to keep an eye on.": "Nadie bloqueado. {0} en vigilancia.",
   "Nobody has handed you their approvals right now.": "Ahora mismo nadie le ha entregado sus aprobaciones.",
   "Nobody in this view needs attention.": "Nadie en esta vista requiere atención.",
   "Nobody is on your team.": "No hay nadie en su equipo.",
@@ -42,7 +44,10 @@
   "Your team could not be loaded. {0}": "No se pudo cargar su equipo. {0}",
   "until called back": "hasta nuevo aviso",
   "until {0}": "hasta {0}",
+  "{0, plural, one {# year} other {# years}} on {1}": "{0, plural, one {# año} other {# años}} en {1}",
+  "{0} compliance": "Cumplimiento de {0}",
+  "{0} safety": "Seguridad de {0}",
   "{0} to keep an eye on": "{0} que vigilar",
-  "{0} {1} on {2}": "{0} {1} el {2}",
+  "{0} training": "Capacitación de {0}",
   "· {0} flagged": "· {0} marcados"
 }

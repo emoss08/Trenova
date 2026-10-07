@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { formatUnixWeekday, toDateFromUnixSeconds } from "@trenova/shared/lib/date";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
 
@@ -220,12 +221,24 @@ export function ptoTiming(
 
   if (start > today) {
     const days = start - today;
-    return { tone: "upcoming", label: days === 1 ? "Starts tomorrow" : `Starts in ${days} days` };
+    return {
+      tone: "upcoming",
+      label:
+        days === 1
+          ? translate("Starts tomorrow")
+          : translate("{0, plural, one {Starts in # day} other {Starts in # days}}", days),
+    };
   }
   if (end >= today) {
     const back = formatUnixWeekday(span.endDate + DAY_SECONDS);
-    return { tone: "active", label: `Out now · back ${back}` };
+    return { tone: "active", label: translate("Out now · back {0}", back) };
   }
   const days = today - end;
-  return { tone: "past", label: days === 1 ? "Ended yesterday" : `Ended ${days} days ago` };
+  return {
+    tone: "past",
+    label:
+      days === 1
+        ? translate("Ended yesterday")
+        : translate("{0, plural, one {Ended # day ago} other {Ended # days ago}}", days),
+  };
 }

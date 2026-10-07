@@ -302,8 +302,8 @@ export function MappingProfileTablePanel({
         title={row.name}
         description={
           row.partner
-            ? `Source value mappings for ${row.partner.code} — ${row.partner.name}`
-            : "Source value mappings for this trading partner"
+            ? t("Source value mappings for {0} — {1}", row.partner.code, row.partner.name)
+            : t("Source value mappings for this trading partner")
         }
         size="xl"
       >

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { benefitPlanTypeLabel } from "@trenova/shared/lib/benefits";
 import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
@@ -2625,9 +2626,13 @@ export function PerformanceReviewTemplateAutocompleteField<T extends FieldValues
 function reviewTemplateOptionSummary(option: GraphQLSelectOption) {
   const itemCount = selectOptionMetaNumber(option, "itemCount") ?? 0;
   const cadenceMonths = selectOptionMetaNumber(option, "cadenceMonths");
-  const items = `${itemCount} item${itemCount === 1 ? "" : "s"}`;
-
-  return cadenceMonths ? `${items} · every ${cadenceMonths} months` : items;
+  return cadenceMonths
+    ? translate(
+        "{0, plural, one {# item} other {# items}} · {1, plural, one {every # month} other {every # months}}",
+        itemCount,
+        cadenceMonths,
+      )
+    : translate("{0, plural, one {# item} other {# items}}", itemCount);
 }
 
 export function PtoPolicyAutocompleteField<T extends FieldValues>({

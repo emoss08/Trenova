@@ -1,7 +1,6 @@
 {
   "(no subject)": "(sin asunto)",
   "About an inbound message": "Acerca de un mensaje entrante",
-  "Arrived": "Llegada",
   "Arrived at {0}": "Llegó a {0}",
   "Ask the desk": "Preguntar al escritorio",
   "Ask the desk to answer": "Pedir al escritorio que responda",
@@ -74,7 +73,6 @@
   "What the desk made of it": "Lo que el escritorio hizo con él",
   "What the desk read": "Lo que leyó el escritorio",
   "Why this is the right record": "Por qué este es el registro correcto",
-  "{0, plural, one {# attachment} other {# attachments}}": "{0, plural, one {# adjunto} other {# adjuntos}}",
   "{0, plural, one {# message is waiting on you} other {# messages are waiting on you}}": "{0, plural, one {# mensaje espera su atención} other {# mensajes esperan su atención}}",
   "{0, plural, one {# message} other {# messages}}": "{0, plural, one {# mensaje} other {# mensajes}}",
   "{0, plural, one {#+ message} other {#+ messages}}": "{0, plural, one {#+ mensaje} other {#+ mensajes}}",

@@ -451,8 +451,8 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
   const trackName = day.entries
     .map((row) =>
       row.clockedOutAt
-        ? `${formatPunchTime(row.clockedInAt)} to ${formatPunchTime(row.clockedOutAt)}`
-        : `${formatPunchTime(row.clockedInAt)} still running`,
+        ? t("{0} to {1}", formatPunchTime(row.clockedInAt), formatPunchTime(row.clockedOutAt))
+        : t("{0} still running", formatPunchTime(row.clockedInAt)),
     )
     .join(", ");
 
@@ -474,7 +474,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
       <div className="px-3 pb-2">
         <div
           role="img"
-          aria-label={`Punches on ${heading}: ${trackName}`}
+          aria-label={t("Punches on {0}: {1}", heading, trackName)}
           className="bg-muted relative h-2 w-full overflow-hidden rounded-full"
         >
           {TRACK_TICKS.map((hour) => (

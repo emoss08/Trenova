@@ -92,7 +92,13 @@ export function AdjustBalanceDialog({
       }),
     onSuccess: (entry) => {
       toast.success(t("Balance adjusted"), {
-        description: `${entry.ptoType} balance is now ${entry.balanceAfterDays} days.`,
+        description: t(
+          "{0} balance is now {1, plural, one {# day} other {# days}}.",
+          t(
+            ptoTypeChoices.find((choice) => choice.value === entry.ptoType)?.label ?? entry.ptoType,
+          ),
+          entry.balanceAfterDays,
+        ),
       });
       onAdjusted?.();
       onOpenChange(false);

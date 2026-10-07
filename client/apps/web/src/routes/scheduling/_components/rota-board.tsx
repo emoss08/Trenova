@@ -279,6 +279,7 @@ function CoverageCell({
   peak: number;
   compact: boolean;
 }) {
+  const t = useT();
   const covered = coverage?.covered ?? 0;
   const expected = coverage?.expected ?? 0;
   const tone = coverageTone(covered, peak);
@@ -288,8 +289,13 @@ function CoverageCell({
       role="img"
       aria-label={
         coverage
-          ? `${formatShiftDate(coverage.date)}: ${covered} of ${expected} rostered can work`
-          : "No cover"
+          ? t(
+              "{0}: {1} of {2} rostered can work",
+              formatShiftDate(coverage.date),
+              covered,
+              expected,
+            )
+          : t("No cover")
       }
       className={cn("flex flex-col items-center", compact ? "gap-0.5" : "gap-1")}
     >

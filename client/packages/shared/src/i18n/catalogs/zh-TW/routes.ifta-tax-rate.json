@@ -17,8 +17,7 @@
   "Only for jurisdictions that publish one. Empty is stored as zero.": "僅適用於有公布的管轄區。留空會以零儲存。",
   "Period & product": "期間與產品",
   "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.": "為某一管轄區發布特定季別與燃油類型的稅率。稅率為全域共用，因此這即是每個組織申報時應繳的依據。",
-  "Publish {0} {1}": "發布 {0} {1}",
-  "Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.": "發布後將為 {3} 年第 {2} 季設定 {0} {1}，並取代同一轄區與燃料別下任何已發布的資料。",
+  "Publishing would set {0, plural, one {# rate} other {# rates}} for Q{1} {2}, replacing any already published for the same jurisdiction and fuel.": "發布後將設定 {2} 年第 {1} 季的 {0, plural, other {# 項稅率}}，並取代相同轄區與燃油已發布的稅率。",
   "Q{0}": "第 {0} 季",
   "Rate / gal": "費率／加侖",
   "Rate deleted": "費率已刪除",
@@ -45,7 +44,9 @@
   "Up to four decimals. Zero is a published rate, not a missing one.": "最多四位小數。零代表已公布的稅率，而非缺漏。",
   "Where the figure came from, so a reviewer can check it against the published matrix.": "此數字的來源，以便審查者對照已公布的矩陣核對。",
   "e.g. IFTA Inc. tax rate matrix, Q3 2026, downloaded 12 Jul": "例如：IFTA Inc. 稅率矩陣，2026 年第 3 季，7 月 12 日下載",
+  "{0, plural, one {# rate published} other {# rates published}} for Q{1} {2}.": "已公布 {2} 年第 {1} 季的 {0, plural, other {# 項稅率}}。",
+  "{0, plural, one {# row will be left out.} other {# rows will be left out.}}": "{0, plural, other {# 列將被排除。}}",
+  "{0, plural, one {Publish # rate} other {Publish # rates}}": "{0, plural, other {發布 # 項稅率}}",
   "{0} could not be read": "無法讀取 {0}",
-  "{0} {1} will be left out.": "{0} {1}將被排除在外。",
   "{0} · {1} · Q{2} {3}": "{0} · {1} · {3} 年第 {2} 季"
 }

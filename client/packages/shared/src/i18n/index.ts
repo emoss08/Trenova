@@ -19,6 +19,7 @@ export {
   getLocale,
   hasTranslation,
   loadCatalog,
+  lookupIn,
   requireCatalog,
   setLocale,
   subscribe,
@@ -26,4 +27,12 @@ export {
   translateIn,
   whenCatalogsReady,
 } from "@trenova/shared/i18n/runtime";
+export {
+  type RichTag,
+  type RichTags,
+  type RichTranslateFn,
+  renderRich,
+  translateRich,
+  useRichT,
+} from "@trenova/shared/i18n/rich";
 export { type TranslateFn, useLocale, useT } from "@trenova/shared/i18n/use-t";

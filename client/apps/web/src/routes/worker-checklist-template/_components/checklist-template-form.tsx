@@ -134,8 +134,11 @@ export function ChecklistTemplateForm({
               placeholder={t("Select a status")}
               description={
                 isEdit && openChecklistCount > 0
-                  ? `${openChecklistCount} checklist${openChecklistCount === 1 ? " is" : "s are"} in progress from this template; they keep their items either way.`
-                  : "Inactive templates cannot be started."
+                  ? t(
+                      "{0, plural, one {# checklist is in progress from this template; they keep their items either way.} other {# checklists are in progress from this template; they keep their items either way.}}",
+                      openChecklistCount,
+                    )
+                  : t("Inactive templates cannot be started.")
               }
             />
           </FormControl>
@@ -270,7 +273,7 @@ function ItemRow({
               size="icon"
               variant="ghost"
               className="text-muted-foreground hover:text-destructive size-7"
-              aria-label={`Remove item ${index + 1}`}
+              aria-label={t("Remove item {0}", index + 1)}
               onClick={onRemove}
             >
               <Trash01Icon className="size-3.5" />

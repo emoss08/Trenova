@@ -184,8 +184,8 @@ export function DataTable<TData extends Record<string, any>>({
     if (defaultOnClick && !actions.some((action) => action.id === "default-create")) {
       actions.unshift({
         id: "default-create",
-        label: `New ${toSentenceFragment(name)}`,
-        description: `Create a new ${toSentenceFragment(name)} from scratch.`,
+        label: t("New {0}", toSentenceFragment(name)),
+        description: t("Create a new record from scratch."),
         onClick: defaultOnClick,
       });
     }
@@ -199,6 +199,7 @@ export function DataTable<TData extends Record<string, any>>({
     name,
     onAddRecordProp,
     openPanelCreate,
+    t,
   ]);
 
   const openPanelEdit = useCallback(
@@ -961,11 +962,10 @@ export function DataTable<TData extends Record<string, any>>({
                   renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
                 ) : (
                   <DataTableEmptyState
-                    name={name}
                     columns={emptyColumns}
                     hasActiveFilters={hasActiveFilters}
                     onClearFilters={handleClearFilters}
-                    onAddRecord={hasActiveFilters ? undefined : defaultCreate?.onClick}
+                    addRecord={hasActiveFilters ? undefined : defaultCreate}
                   />
                 )}
               </div>

@@ -189,9 +189,8 @@ export function PositionTree({
           {tree.unplaced > 0 ? (
             <span className="text-muted-foreground text-xs tabular-nums">
               {t(
-                "{0} {1} with no position",
+                "{0, plural, one {# person with no position} other {# people with no position}}",
                 tree.unplaced,
-                tree.unplaced === 1 ? "person" : "people",
               )}
             </span>
           ) : null}
@@ -426,7 +425,7 @@ function TreeRow({
                   size="icon-xs"
                   variant="ghost"
                   onClick={onAdd}
-                  aria-label={`Add a position under ${position.title}`}
+                  aria-label={t("Add a position under {0}", position.title)}
                   className="opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100"
                 />
               }
@@ -444,7 +443,7 @@ function TreeRow({
                   size="icon-xs"
                   variant="ghost"
                   isLoading={busy}
-                  aria-label={`More for ${position.title}`}
+                  aria-label={t("More for {0}", position.title)}
                 />
               }
             >

@@ -5,6 +5,7 @@ import { formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 import { useCallback, type ReactNode } from "react";
 import { toast } from "sonner";
 import { DeskIcon } from "./desk-icons";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 /** What the composer shows instead of its text box, and the quiet line under it. */
 export type DeskComposerLock = { lock: ReactNode; note?: ReactNode };
@@ -248,7 +249,7 @@ export function deskComposerLock({
  * The person's own allowance gets the same meter from eight tenths.
  */
 export function DeskUsageMeter({ budget }: { budget: ThreadBudget }) {
-  const t = useT();
+  const rt = useRichT();
   const person = budget.person;
   if (person && person.limit > 0) {
     const share = person.used / person.limit;
@@ -258,7 +259,11 @@ export function DeskUsageMeter({ budget }: { budget: ThreadBudget }) {
           share={share}
           figure={`${person.used.toLocaleString()} / ${person.limit.toLocaleString()}`}
         >
-          {t("You've used")} <b>{Math.floor(share * 100)}%</b> {t("of this month's AI allowance")}
+          {rt(
+            "You've used <b>{0}%</b> of this month's AI allowance",
+            { b: (c) => <b>{c}</b> },
+            Math.floor(share * 100),
+          )}
         </Meter>
       );
     }
@@ -269,8 +274,13 @@ export function DeskUsageMeter({ budget }: { budget: ThreadBudget }) {
         share={budget.share}
         figure={`${dollars(budget.spentUsd)} / ${dollars(budget.limitUsd)}`}
       >
-        {t("{0} has used", budget.agentName)} <b>{Math.floor(budget.share * 100)}%</b>{" "}
-        {t("of {0}'s budget", monthName(budget.monthStart))}
+        {rt(
+          "{0} has used <b>{1}%</b> of {2}'s budget",
+          { b: (c) => <b>{c}</b> },
+          budget.agentName,
+          Math.floor(budget.share * 100),
+          monthName(budget.monthStart),
+        )}
       </Meter>
     );
   }

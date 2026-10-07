@@ -70,7 +70,12 @@ export function getColumns(t: TranslateFn): ColumnDef<ReviewTemplateRow>[] {
       cell: ({ row }) => (
         <span className="flex flex-wrap gap-1">
           {row.original.items.slice(0, 3).map((item) => (
-            <Badge key={item.key} variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
+            <Badge
+              key={item.key}
+              variant="neutral"
+              appearance="outline"
+              className="px-1.5 py-0 text-2xs"
+            >
               {t(item.label)} ×{item.weight}
             </Badge>
           ))}
@@ -86,7 +91,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ReviewTemplateRow>[] {
       header: t("Repeats"),
       cell: ({ row }) =>
         row.original.cadenceMonths ? (
-          `Every ${row.original.cadenceMonths} mo`
+          t("Every {0} mo", row.original.cadenceMonths)
         ) : (
           <span className="text-muted-foreground">{t("One-off")}</span>
         ),

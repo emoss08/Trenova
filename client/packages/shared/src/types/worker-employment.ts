@@ -31,6 +31,37 @@ export const EMPLOYMENT_EVENT_LABELS: Record<EmploymentEventKind, string> = {
   RateChanged: "Rate changed",
 };
 
+/**
+ * employmentEventLabel names an event kind in the reader's language. The label map above
+ * is data the extractor cannot see, so the translated names come from here.
+ */
+export function employmentEventLabel(kind: EmploymentEventKind): string {
+  switch (kind) {
+    case "Hired":
+      return translate("Hired");
+    case "ProbationEnded":
+      return translate("Probation ended");
+    case "Promoted":
+      return translate("Promoted");
+    case "Transferred":
+      return translate("Transferred");
+    case "LeaveStarted":
+      return translate("Leave started");
+    case "LeaveEnded":
+      return translate("Leave ended");
+    case "Suspended":
+      return translate("Suspended");
+    case "Reinstated":
+      return translate("Reinstated");
+    case "Terminated":
+      return translate("Terminated");
+    case "Rehired":
+      return translate("Rehired");
+    case "RateChanged":
+      return translate("Rate changed");
+  }
+}
+
 /** Kinds that need a written reason before they can be recorded. */
 export const EMPLOYMENT_EVENT_REQUIRES_REASON: ReadonlySet<EmploymentEventKind> = new Set([
   "Terminated",
@@ -99,7 +130,10 @@ export const employmentEventFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["reason"],
-        message: `A reason is required when recording ${EMPLOYMENT_EVENT_LABELS[values.kind].toLowerCase()}`,
+        message: translate(
+          "A reason is required to record “{0}”",
+          employmentEventLabel(values.kind),
+        ),
       });
     }
     if (values.kind === "Transferred" && !values.fleetCodeId && !values.managerId) {

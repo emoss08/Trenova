@@ -60,5 +60,6 @@
   "Your new password is active. Any other sessions on this account have been signed out.": "Su nueva contraseña está activa. Se cerraron todas las demás sesiones de esta cuenta.",
   "{0, plural, one {# role} other {# roles}}{1}": "{0, plural, one {# rol} other {# roles}}{1}",
   "{0, plural, one {permission} other {permissions}}": "{0, plural, one {permiso} other {permisos}}",
+  "{0} of {1} selected": "{0} de {1} seleccionados",
   "· {0} {1, plural, one {permission} other {permissions}}": "· {0} {1, plural, one {permiso} other {permisos}}"
 }

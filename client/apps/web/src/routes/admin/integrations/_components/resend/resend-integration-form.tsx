@@ -143,7 +143,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
             <SensitiveField
               name="configuration.apiKey"
               control={control}
-              label={`API Key ${hasApiKey ? "(leave blank to keep existing key)" : ""}`}
+              label={hasApiKey ? t("API Key (leave blank to keep existing key)") : t("API Key")}
               autoComplete="off"
               placeholder={hasApiKey ? "********" : "re_..."}
               description={t("Used by the server for Resend REST API calls.")}

@@ -176,7 +176,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
               variant="outline"
               size="sm"
               className="h-8"
-              aria-label={`Upload renewed ${item.name}`}
+              aria-label={t("Upload renewed {0}", item.name)}
               disabled={upload.isPending}
               onClick={() => fileInputRef.current?.click()}
             >

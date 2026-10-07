@@ -221,7 +221,10 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="drugRatePercent"
                   label={t("Drug rate (% a year)")}
                   placeholder="50"
-                  description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_DRUG_RATE}% for drugs (49 CFR 382.305).`}
+                  description={t(
+                    "Annual rate as a percentage of the pool; FMCSA requires at least {0}% for drugs (49 CFR 382.305).",
+                    DOT_MINIMUM_DRUG_RATE,
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -231,7 +234,10 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="alcoholRatePercent"
                   label={t("Alcohol rate (% a year)")}
                   placeholder="10"
-                  description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_ALCOHOL_RATE}% for alcohol (49 CFR 382.305).`}
+                  description={t(
+                    "Annual rate as a percentage of the pool; FMCSA requires at least {0}% for alcohol (49 CFR 382.305).",
+                    DOT_MINIMUM_ALCOHOL_RATE,
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>

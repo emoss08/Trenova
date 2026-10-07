@@ -72,7 +72,7 @@ export default function FleetSafetyConsole() {
             <Button
               size="xs"
               variant="outline"
-              aria-label={`Clear terminal ${selectedTerminal.code}`}
+              aria-label={t("Clear terminal {0}", selectedTerminal.code)}
               onClick={() => setFleetCodeId("")}
             >
               <span

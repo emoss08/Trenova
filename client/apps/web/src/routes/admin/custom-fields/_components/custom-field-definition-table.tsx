@@ -37,17 +37,22 @@ export default function CustomFieldDefinitionTable() {
       return customFieldService.patch(id, { isActive });
     },
     onSuccess: (_, variables) => {
-      const action = variables.isActive ? "activated" : "deactivated";
-      toast.success(`Custom field ${action}`, {
-        description: `The custom field has been ${action} successfully.`,
-      });
+      if (variables.isActive) {
+        toast.success(t("Custom field activated"), {
+          description: t("The custom field has been activated successfully."),
+        });
+      } else {
+        toast.success(t("Custom field deactivated"), {
+          description: t("The custom field has been deactivated successfully."),
+        });
+      }
       void queryClient.invalidateQueries({
         queryKey: ["custom-field-definition-list"],
       });
     },
     onError: (error) => {
       toast.error(t("Failed to update custom field"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: error instanceof Error ? error.message : t("An unexpected error occurred"),
       });
     },
   });

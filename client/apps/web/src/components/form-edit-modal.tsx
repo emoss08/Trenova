@@ -274,7 +274,7 @@ export function FormEditModal<T extends FieldValues>({
     },
     onSuccess: async (newValues, values) => {
       toast.success(t("Changes have been saved"), {
-        description: `${title} updated successfully`,
+        description: t("{0} updated successfully", title),
       });
 
       if (isFetchedRecord) {
@@ -433,7 +433,7 @@ export function FormEditModal<T extends FieldValues>({
           <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
             <div>
               {isLoadingRecord ? (
-                <ComponentLoader message={`Loading ${title}...`} />
+                <ComponentLoader message={t("Loading {0}...", title)} />
               ) : fetchError ? (
                 <div className="flex flex-col items-center justify-center space-y-3 py-8">
                   <p className="text-muted-foreground text-sm">

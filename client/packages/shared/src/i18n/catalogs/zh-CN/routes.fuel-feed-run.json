@@ -1,11 +1,18 @@
 {
   "Every time a connected fuel card feed has read your transactions, and what became of the rows. Rows a run could not place wait here until the card they were on is assigned or the unit they name is added.": "已连接的油卡数据源每次读取您交易的记录，以及各数据行的处理结果。无法归位的数据行会留在此处，直到其所属卡片获指派，或其所指的车辆被新增为止。",
+  "Nothing new from {0}": "{0} 无新内容",
+  "Posted {0} of {1, plural, one {# held row} other {# held rows}}": "已过账 {0} 条，共{1, plural, other { # 条暂挂行}}",
   "Read from the provider's API.": "从服务商 API 读取。",
   "Read {0}.": "已阅读 {0}。",
   "Review rows": "审查数据行",
   "Sync now": "立即同步",
+  "This run has nothing waiting": "此运行没有等待处理的内容",
   "Work rows out again": "重新处理数据行",
   "Working them out...": "处理中...",
+  "{0, plural, one {# row is} other {# rows are}} waiting on a card assignment or a missing unit.": "{0, plural, other {有 # 行}}正在等待卡片分配或缺失的车辆。",
+  "{0, plural, one {The # held row could not be worked out yet} other {None of the # held rows could be worked out yet}}": "{0, plural, other {# 条暂挂行均尚无法处理}}",
+  "{0} of {1, plural, one {# row is} other {# rows are}} ready to commit": "{1, plural, other { # 行}}中有 {0} 行可提交",
   "{0} run": "{0} 次运行",
-  "{0} {1} posted, {2} waiting.": "{0} {1} 已过账，{2} 待处理。"
+  "{0} {1} posted, {2} waiting.": "{0} {1} 已过账，{2} 待处理。",
+  "{0}: {1} posted of {2} read": "{0}：已读取 {2} 条，已过账 {1} 条"
 }

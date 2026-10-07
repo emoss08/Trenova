@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   DISCIPLINARY_LEVEL_LABELS,
   INSPECTION_RESULT_LABELS,
@@ -149,7 +150,12 @@ export function summariseInspections(counts: {
   inspections: number;
   inspectionsPassed: number;
 }): string {
-  if (counts.inspections <= 0) return "No inspections in the last year";
+  if (counts.inspections <= 0) return translate("No inspections in the last year");
   const percent = Math.round((counts.inspectionsPassed / counts.inspections) * 100);
-  return `${counts.inspectionsPassed} of ${counts.inspections} clean (${percent}%)`;
+  return translate(
+    "{0} of {1} clean ({2}%)",
+    counts.inspectionsPassed,
+    counts.inspections,
+    percent,
+  );
 }

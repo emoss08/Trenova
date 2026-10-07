@@ -99,7 +99,22 @@ export function TerminalsPanel({
                   </span>
                   <span
                     role="img"
-                    aria-label={`${terminal.code || "No terminal"}: ${terminal.workers} of ${totalWorkers} drivers, ${flagged} flagged`}
+                    aria-label={
+                      terminal.code
+                        ? t(
+                            "{0}: {1} of {2, plural, one {# driver} other {# drivers}}, {3} flagged",
+                            terminal.code,
+                            terminal.workers,
+                            totalWorkers,
+                            flagged,
+                          )
+                        : t(
+                            "No terminal: {0} of {1, plural, one {# driver} other {# drivers}}, {2} flagged",
+                            terminal.workers,
+                            totalWorkers,
+                            flagged,
+                          )
+                    }
                     className="bg-muted flex h-1 w-full overflow-hidden rounded-full"
                   >
                     <span

@@ -120,7 +120,7 @@ export function DataTableSaveConfigDialog({
       onSaved?.(created);
 
       toast.success(t("View saved"), {
-        description: `"${created.name}" has been saved.`,
+        description: t('"{0}" has been saved.', created.name),
       });
     },
   });

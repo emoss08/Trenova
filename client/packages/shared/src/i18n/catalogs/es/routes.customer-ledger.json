@@ -14,8 +14,10 @@
   "Select a customer...": "Seleccione un cliente...",
   "Statement": "Estado de cuenta",
   "Statement-style transaction history with the customer's AR profile.": "Historial de transacciones en formato de estado de cuenta con el perfil de cuentas por cobrar del cliente.",
+  "Totals · {0, plural, one {# entry} other {# entries}}": "Totales · {0, plural, one {# asiento} other {# asientos}}",
   "d avg": "d de media",
   "no credit limit set": "sin límite de crédito establecido",
   "of {0} limit": "de un límite de {0}",
-  "{0} overdue · {1} open": "{0} vencido · {1} abierto"
+  "{0} overdue · {1} open": "{0} vencido · {1} abierto",
+  "{0} · {1}d past due": "{0} · {1} d de retraso"
 }

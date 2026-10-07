@@ -180,7 +180,11 @@ export function RateIncreaseDialog({
       apiService.rateAgreementService.applyRateIncrease(payload),
     onSuccess: (applied) => {
       toast.success(
-        `Rates raised on ${applied.lines?.length ?? 0} lanes across ${applied.agreementCount} agreements`,
+        t(
+          "Rates raised on {0, plural, one {# lane} other {# lanes}} across {1, plural, one {# agreement} other {# agreements}}",
+          applied.lines?.length ?? 0,
+          applied.agreementCount,
+        ),
       );
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement"] });
@@ -210,7 +214,7 @@ export function RateIncreaseDialog({
       ? [
           {
             value: "selected" as const,
-            label: `Selected Agreements (${selectedAgreements.length})`,
+            label: t("Selected Agreements ({0})", selectedAgreements.length),
             description: t("Only the agreements picked in the table"),
           },
         ]

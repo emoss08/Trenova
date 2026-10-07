@@ -156,8 +156,19 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
       );
       await invalidateEDITransfers(queryClient);
       notifyEDIBulkOutcome(result, {
-        entity: "transfer",
-        verbPast: t("Queued approval for"),
+        succeeded: (count) =>
+          t("Queued approval for {0, plural, one {# transfer} other {# transfers}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Queued approval for {0, plural, one {# transfer} other {# transfers}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected transfer failed} other {All # selected transfers failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
     },
@@ -187,8 +198,19 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         );
         await invalidateEDITransfers(queryClient);
         notifyEDIBulkOutcome(result, {
-          entity: "transfer",
-          verbPast: t("Rejected"),
+          succeeded: (count) =>
+            t("Rejected {0, plural, one {# transfer} other {# transfers}}", count),
+          partial: (succeeded, failed) =>
+            t(
+              "Rejected {0, plural, one {# transfer} other {# transfers}}; {1} failed",
+              succeeded,
+              failed,
+            ),
+          allFailed: (failed) =>
+            t(
+              "{0, plural, one {The selected transfer failed} other {All # selected transfers failed}}",
+              failed,
+            ),
         });
         setRejectOpen(false);
         setRejectRows([]);
@@ -245,7 +267,10 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
       <EDIReasonDialog
         open={rejectOpen}
         onOpenChange={setRejectOpen}
-        title={`Reject ${rejectRows.length} Load Tender(s)`}
+        title={t(
+          "{0, plural, one {Reject # Load Tender} other {Reject # Load Tenders}}",
+          rejectRows.length,
+        )}
         description={t(
           "The rejection reason is sent back to the trading partner on the outbound 990 response.",
         )}
@@ -284,8 +309,19 @@ function MessagesWorkspace() {
       );
       await invalidateEDIMessages(queryClient);
       notifyEDIBulkOutcome(result, {
-        entity: "message",
-        verbPast: t("Queued delivery retry for"),
+        succeeded: (count) =>
+          t("Queued delivery retry for {0, plural, one {# message} other {# messages}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Queued delivery retry for {0, plural, one {# message} other {# messages}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected message failed} other {All # selected messages failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
     },
@@ -346,8 +382,14 @@ function InboundFilesWorkspace() {
       );
       await invalidateEDIInboundFiles(queryClient);
       notifyEDIBulkOutcome(result, {
-        entity: "file",
-        verbPast: t("Reprocessed"),
+        succeeded: (count) => t("Reprocessed {0, plural, one {# file} other {# files}}", count),
+        partial: (succeeded, failed) =>
+          t("Reprocessed {0, plural, one {# file} other {# files}}; {1} failed", succeeded, failed),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected file failed} other {All # selected files failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
     },

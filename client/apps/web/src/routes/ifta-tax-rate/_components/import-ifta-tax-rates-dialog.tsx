@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
-import { cn, pluralize } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { IftaTaxRateInput } from "@trenova/graphql/generated/graphql";
 import {
   IFTA_MAX_YEAR,
@@ -95,7 +95,12 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
     mutationFn: (rates: IftaTaxRateInput[]) => upsertIftaTaxRates(rates),
     onSuccess: async (saved) => {
       toast.success(t("Rates imported"), {
-        description: `${saved.length} ${pluralize("rate", saved.length)} published for Q${quarter} ${year}.`,
+        description: t(
+          "{0, plural, one {# rate published} other {# rates published}} for Q{1} {2}.",
+          saved.length,
+          quarter,
+          year,
+        ),
       });
       await queryClient.invalidateQueries({ queryKey: [IFTA_TAX_RATE_LIST_KEY] });
       onOpenChange(false);
@@ -222,21 +227,20 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 </Badge>
                 {fileName ? <span className="font-mono text-xs">{fileName}</span> : null}
                 <span className="text-muted-foreground text-xs">
-                  {result.rows.length} {pluralize("row", result.rows.length)}
+                  {t("{0, plural, one {# row} other {# rows}}", result.rows.length)}
                 </span>
               </div>
               <p className="text-sm">
                 {validCount > 0
                   ? t(
-                      "Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.",
+                      "Publishing would set {0, plural, one {# rate} other {# rates}} for Q{1} {2}, replacing any already published for the same jurisdiction and fuel.",
                       validCount,
-                      pluralize("rate", validCount),
                       quarter,
                       year,
                     )
                   : t("No row in this file can be published as it stands.")}
                 {errorCount > 0
-                  ? ` ${t("{0} {1} will be left out.", errorCount, pluralize("row", errorCount))}`
+                  ? ` ${t("{0, plural, one {# row will be left out.} other {# rows will be left out.}}", errorCount)}`
                   : ""}
               </p>
             </div>
@@ -324,7 +328,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 disabled={validCount === 0}
                 onClick={() => result && importRates(result.valid)}
               >
-                {t("Publish {0} {1}", validCount, pluralize("rate", validCount))}
+                {t("{0, plural, one {Publish # rate} other {Publish # rates}}", validCount)}
               </Button>
             </>
           ) : (

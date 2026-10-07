@@ -22,7 +22,6 @@
   "No transactions yet": "Aún no hay transacciones",
   "One active escrow account per driver; contributions flow in from settlements via a recurring deduction.": "Una cuenta de depósito en garantía activa por conductor; las aportaciones entran desde las liquidaciones mediante una deducción recurrente.",
   "Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.": "Solo se listan los transportistas propietarios: contratistas y conductores con un perfil de pago de transportista propietario.",
-  "Opened": "Abierto",
   "Opened {0}{1}": "Abierto el {0}{1}",
   "Owner-operator maintenance escrow with a full transaction ledger and quarterly interest per 49 CFR 376.12(k).": "Depósito en garantía de mantenimiento para transportistas propietarios, con libro de transacciones completo e intereses trimestrales conforme a 49 CFR 376.12(k).",
   "Positive amounts add to the balance; negative amounts apply funds (e.g. a repair paid from escrow).": "Los importes positivos aumentan el saldo; los negativos aplican fondos (p. ej., una reparación pagada desde el depósito en garantía).",

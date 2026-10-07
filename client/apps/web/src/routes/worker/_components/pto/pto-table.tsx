@@ -86,8 +86,19 @@ export default function PTODataTable() {
         action: "Approve",
       });
       notifyBulkOutcome(bulkPayloadToOutcome(payload), {
-        entity: "PTO request",
-        verbPast: PTO_ACTION_LABELS.Approve.verbPast,
+        succeeded: (count) =>
+          t("Approved {0, plural, one {# PTO request} other {# PTO requests}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Approved {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected PTO request failed} other {All # selected PTO requests failed}}",
+            failed,
+          ),
         skipped: pendingApproval.skipped,
       });
       await invalidate();

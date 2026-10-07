@@ -14,6 +14,22 @@ t("Create Shipment")
 multiErr.Add("email", errortypes.ErrRequired, "Email is required")
 ```
 
+Write the **whole sentence** as one message. A count is a plural, not an English word
+passed in, and a sentence with a link or bold part in it is one rich message:
+
+```tsx
+t("{0, plural, one {# stop} other {# stops}} past free time", count)
+rt("Use <link>shared profiles</link> instead.", { link: (c) => <Link to="…">{c}</Link> })
+```
+
+Never assemble interface text in a template literal (`` `${count} selected` ``): only
+string literals passed to `t`, `translate`, `rt` or `translateRich` reach a catalog.
+
+`task i18n-check` rejects a sentence split around markup, English handed to a message, and
+English built in a template literal where a person reads it (`tools/fragments.mjs`; a
+template that is not interface text takes `// i18n-ignore: <reason>`); see the i18n section of
+[generated-artifacts.md](../docs/engineering/generated-artifacts.md) for the rules.
+
 Nobody edits a catalog by hand. `task i18n` finds every user-facing string in the Go
 services and the React apps and writes them to `messages.en.json`; the per-locale files
 hold the translations.

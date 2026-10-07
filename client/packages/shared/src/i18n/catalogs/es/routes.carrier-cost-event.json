@@ -1,5 +1,6 @@
 {
   "Carrier cost events": "Eventos de costo del transportista",
+  "Cost Event — {0}": "Evento de costo — {0}",
   "Cost events accrue automatically when a carrier-covered shipment reaches your configured pay trigger and are locked once attached to a settlement.": "Los eventos de costo se devengan automáticamente cuando un envío cubierto por un transportista alcanza el activador de pago configurado y quedan bloqueados al adjuntarse a una liquidación.",
   "Event date": "Fecha del evento",
   "Event type": "Tipo de evento",

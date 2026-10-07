@@ -823,10 +823,10 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
     { label: t("Posted"), at: settlement.postedAt },
     {
       label: settlement.paymentMethod
-        ? `Paid via ${settlement.paymentMethod}${
-            settlement.paymentReference ? ` (${settlement.paymentReference})` : ""
-          }`
-        : "Paid",
+        ? settlement.paymentReference
+          ? t("Paid via {0} ({1})", settlement.paymentMethod, settlement.paymentReference)
+          : t("Paid via {0}", settlement.paymentMethod)
+        : t("Paid"),
       at: settlement.paidAt,
     },
     { label: t("Voided"), at: settlement.voidedAt },

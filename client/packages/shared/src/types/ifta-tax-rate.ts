@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { nonNegativeDecimalString, optionalNonNegativeDecimalString } from "./decimal";
 import { iftaFuelTypeSchema, iftaQuarterSchema } from "./fuel-ifta-enums";
@@ -11,8 +12,8 @@ const RATE_MESSAGE = "Enter a rate with up to four decimals";
 export const iftaYearSchema = z
   .number()
   .int({ message: "Year is a whole number" })
-  .min(IFTA_MIN_YEAR, { message: `Year must be ${IFTA_MIN_YEAR} or later` })
-  .max(IFTA_MAX_YEAR, { message: `Year must be ${IFTA_MAX_YEAR} or earlier` });
+  .min(IFTA_MIN_YEAR, { error: () => translate("Year must be {0} or later", IFTA_MIN_YEAR) })
+  .max(IFTA_MAX_YEAR, { error: () => translate("Year must be {0} or earlier", IFTA_MAX_YEAR) });
 
 export const iftaPeriodFormSchema = z.object({
   year: iftaYearSchema,

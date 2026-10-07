@@ -154,11 +154,11 @@ export function CannedGallery({
       { cannedKey: report.key },
       {
         onSuccess: (definition) => {
-          toast.success(`"${report.name}" copied to your reports`);
+          toast.success(t('"{0}" copied to your reports', report.name));
           void navigate(`/reports/builder/${definition.id}`);
         },
         onError: (error) =>
-          toast.error(graphQLErrorMessage(error, "Failed to customize the report")),
+          toast.error(graphQLErrorMessage(error, t("Failed to customize the report"))),
         onSettled: () => setCustomizingKey(null),
       },
     );
@@ -185,11 +185,7 @@ export function CannedGallery({
         <div className="space-y-6 p-4">
           {groups.map((group) => (
             <section key={group.key} className="space-y-3">
-              <CategoryGroupHeader
-                label={t(group.label)}
-                count={group.items.length}
-                noun="report"
-              />
+              <CategoryGroupHeader label={t(group.label)} count={group.items.length} />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {group.items.map((report) => (
                   <CannedReportCard

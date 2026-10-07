@@ -47,6 +47,7 @@ function StatusCell({ row }: { row: TrailerRow }) {
 }
 
 function LastInspectionDateCell({ row }: { row: TrailerRow }) {
+  const t = useT();
   const queryClient = useQueryClient();
 
   const handleDateChange = useCallback(
@@ -61,10 +62,13 @@ function LastInspectionDateCell({ row }: { row: TrailerRow }) {
       });
 
       toast.success(
-        `Updated last inspection data to ${generateDateOnlyString(toDateFromUnixSeconds(newDate))}`,
+        t(
+          "Updated last inspection date to {0}",
+          generateDateOnlyString(toDateFromUnixSeconds(newDate)),
+        ),
       );
     },
-    [row.id, queryClient],
+    [row.id, queryClient, t],
   );
 
   return <EditableDateField date={row.lastInspectionDate} onDateChange={handleDateChange} />;

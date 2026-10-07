@@ -82,6 +82,7 @@ const EntityRefLink = memo(
     color?: string;
     basePath?: string;
   }) => {
+    const t = useT();
     const to = `${basePath ?? ""}?panelEntityId=${id}&panelType=edit`;
 
     return (
@@ -89,7 +90,7 @@ const EntityRefLink = memo(
         to={to}
         target="_blank"
         className={`${className || ""} cursor-pointer`}
-        title={`Click to view ${displayText}`}
+        title={t("Click to view {0}", displayText)}
       >
         {color ? (
           <EntityRefLinkColor color={color} displayText={displayText} />
@@ -129,6 +130,7 @@ const SecondaryInfoLink = memo(
     clickable: boolean;
     basePath?: string;
   }) => {
+    const t = useT();
     if (!clickable) {
       return <p>{displayText}</p>;
     }
@@ -140,7 +142,7 @@ const SecondaryInfoLink = memo(
         to={to}
         target="_blank"
         className="text-2xs text-foreground hover:text-foreground/70 cursor-pointer underline"
-        title={`Click to view ${displayText}`}
+        title={t("Click to view {0}", displayText)}
       >
         {displayText}
       </Link>

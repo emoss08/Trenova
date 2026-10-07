@@ -1,7 +1,6 @@
 {
   "(no subject)": "（无主题）",
   "About an inbound message": "关于一封收到的邮件",
-  "Arrived": "到达",
   "Arrived at {0}": "已到达 {0}",
   "Ask the desk": "询问工作台",
   "Ask the desk to answer": "让工作台来回答",
@@ -74,7 +73,6 @@
   "What the desk made of it": "工作台的判断",
   "What the desk read": "工作台读取的内容",
   "Why this is the right record": "为什么这是正确的记录",
-  "{0, plural, one {# attachment} other {# attachments}}": "{0, plural, other {# 个附件}}",
   "{0, plural, one {# message is waiting on you} other {# messages are waiting on you}}": "{0, plural, other {# 封邮件等待您处理}}",
   "{0, plural, one {# message} other {# messages}}": "{0, plural, other {# 封邮件}}",
   "{0, plural, one {#+ message} other {#+ messages}}": "{0, plural, other {# 封以上邮件}}",
