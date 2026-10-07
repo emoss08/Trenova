@@ -317,9 +317,12 @@ function BatchCard({
 
 /** What an approval will do when its undo window closes, e.g. "Assign biller on 11 items". */
 function approvedWhat(title: string, facts: ApprovalFacts, t: TranslateFn): string {
+  // A presenter's title is English source text from the catalog; translate it here, where
+  // it is put into the sentence.
+  const shown = t(title);
   return facts.count > 0
-    ? t("{0} on {1}", title, recordCount(facts.resource, facts.count, t))
-    : title;
+    ? t("{0} on {1}", shown, recordCount(facts.resource, facts.count, t))
+    : shown;
 }
 
 function CardRow({

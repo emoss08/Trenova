@@ -122,11 +122,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
             />
           </dl>
           <p className="text-muted-foreground mt-1.5 px-1.5 text-xs">
-            {t(
-              "{0} active {1}",
-              data.activeWorkers,
-              data.activeWorkers === 1 ? "worker" : "workers",
-            )}
+            {t("{0, plural, one {# active worker} other {# active workers}}", data.activeWorkers)}
           </p>
         </>
       ) : null}

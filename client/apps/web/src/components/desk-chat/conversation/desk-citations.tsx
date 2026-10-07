@@ -274,9 +274,7 @@ function CitationNumber({
         type="button"
         className={cn("dk-fn", place && "dk-hot")}
         aria-label={
-          group.citations.length > 1
-            ? t("Steps {0}", group.label)
-            : t("Step {0}: {1}", first.n, first.step.name)
+          group.citations.length > 1 ? t("Steps {0}", group.label) : t("Step {0}", first.n)
         }
         onClick={() => artifact && onOpenArtifact(artifact.id)}
       >

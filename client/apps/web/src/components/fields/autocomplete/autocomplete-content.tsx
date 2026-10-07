@@ -17,7 +17,7 @@ import {
   selectOptionFiltersFromSearchParams,
   type GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
-import { cn, pluralize, toTitleCase } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { CheckIcon } from "@trenova/shared/components/icons";
@@ -276,14 +276,12 @@ export function AutocompleteCommandContent<TOption>({
         {!isError && !isFetching && data && options.length === 0 && (
           <div className="flex size-full flex-col items-center justify-center gap-2 p-4">
             <CommandEmpty className="p-0 text-center">
-              {noResultsMessage ??
-                t("No {0} found.", pluralize(toTitleCase(label ?? ""), options.length))}
+              {noResultsMessage ?? t("No results found.")}
             </CommandEmpty>
             <span className="text-2xs text-muted-foreground text-center">
-              {t(
-                "We can't find any {0} in your organization.",
-                label ? label.toLowerCase() : "results",
-              )}
+              {label
+                ? t("We can't find any {0} in your organization.", label.toLowerCase())
+                : t("We can't find any results in your organization.")}
             </span>
             {popoutLink && (
               <Button size="sm" onClick={(event) => openPopoutWindow(popoutLink, event)}>

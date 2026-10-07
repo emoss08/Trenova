@@ -243,15 +243,16 @@
   "more than": "多於",
   "revenue, weekly": "營收，每週",
   "row limit reached": "已達資料列上限",
+  "vs previous": "與前期相比",
   "vs {0}": "相對於 {0}",
   "{0, plural, one {# in-app recipient} other {# in-app recipients}}": "{0, plural, other {# 位應用程式內收件者}}",
+  "{0, plural, one {# report} other {# reports}}": "{0, plural, other {# 份報表}}",
   "{0, plural, one {# tile} other {# tiles}}": "{0, plural, other {# 個磚塊}}",
-  "{0} Fields": "{0} 欄位",
   "{0} fields": "{0} 個欄位",
   "{0} for {1}": "{0}，適用 {1}",
   "{0} of": "{0} 之",
+  "{0}% of target": "目標的 {0}%",
   "{0}% of {1}": "{1} 的 {0}%",
-  "{0}s": "{0} 秒",
   "· {0, plural, one {# filter} other {# filters}}": "· {0, plural, other {# 個篩選器}}",
   "— file attached": "— 已附檔案"
 }

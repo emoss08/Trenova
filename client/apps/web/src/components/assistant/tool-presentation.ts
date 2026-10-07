@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { humanizeToolName } from "./proposal-state";
 import {
   classifyValues,
@@ -225,9 +226,11 @@ function describeFilter(filter: ToolFilter): string {
 
   const operator = typeof filter.operator === "string" ? filter.operator : "";
 
+  // Each shape is one message, so a language can put the field after its condition.
   if (typeof filter.days === "number") {
-    const span = operator === "lastndays" ? "last" : "next";
-    return `${field} ${span} ${filter.days}d`;
+    return operator === "lastndays"
+      ? translate("{0} last {1}d", field, filter.days)
+      : translate("{0} next {1}d", field, filter.days);
   }
   if (Array.isArray(filter.values)) {
     return `${field} ${filter.values.join("/")}`;
@@ -236,10 +239,10 @@ function describeFilter(filter: ToolFilter): string {
     return `${field} ${filter.value}`;
   }
   if (operator === "isnull") {
-    return `${field} empty`;
+    return translate("{0} empty", field);
   }
   if (operator === "isnotnull") {
-    return `${field} set`;
+    return translate("{0} set", field);
   }
 
   return `${field} ${operator}`.trim();

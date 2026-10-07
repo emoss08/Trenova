@@ -43,6 +43,7 @@ import {
   type PendingPlanNode,
   type PendingProposalNode,
 } from "./use-pending-decisions";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 /** The most record rows the card lists before it says how many more there are. */
 const SHOWN_ROWS = 5;
@@ -89,6 +90,7 @@ export function DecisionCard(props: CardProps) {
 
 function Who({ node }: { node: PendingDecisionNode }) {
   const t = useT();
+  const rt = useRichT();
   const run = node.run;
   const definition = run?.definition ?? null;
   const conversationId = run?.subjectType === "AssistantThread" ? run.subjectId : null;
@@ -97,7 +99,7 @@ function Who({ node }: { node: PendingDecisionNode }) {
     <div className="dk-dc2-who">
       <DeskAgentTile agent={definition} size="sm" />
       <span>
-        <b>{definition?.name ?? t("An agent")}</b> {t("wants to")}
+        {rt("<b>{0}</b> wants to:", { b: (c) => <b>{c}</b> }, definition?.name ?? t("An agent"))}
       </span>
       <span className="dk-dc2-ago">{formatTimeAgo(node.createdAt * 1000)}</span>
       {conversationId ? (

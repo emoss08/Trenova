@@ -6,6 +6,7 @@ import type { WaiverLeakageStat } from "@trenova/shared/types/detention";
 import { CoinsHandIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Panel, PanelEmpty, PanelError, PanelRowsSkeleton } from "./intelligence-panel";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 /**
  * A fixed ramp rather than a per-reason mapping: the reasons that matter are
@@ -79,11 +80,9 @@ function LeakageRow({
         />
         <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
           {t(
-            "{0} {1} · {2} {3} · {4} each",
+            "{0, plural, one {# waiver} other {# waivers}} · {1, plural, one {# approver} other {# approvers}} · {2} each",
             row.waiverCount,
-            row.waiverCount === 1 ? "waiver" : "waivers",
             row.approverCount,
-            row.approverCount === 1 ? "approver" : "approvers",
             formatCurrency(perWaiver),
           )}
         </p>
@@ -104,6 +103,7 @@ export function WaiverLeakage({
   onRetry: () => void;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   const sorted = useMemo(() => [...rows].sort((a, b) => b.waivedAmount - a.waivedAmount), [rows]);
 
@@ -135,13 +135,13 @@ export function WaiverLeakage({
       footer={
         leader ? (
           <p className="text-2xs text-muted-foreground">
-            <span className="text-foreground font-medium">{reasonLabel(leader.reason)}</span>
-            {t(
-              "accounts for {0}% of everything forgiven — {1} across {2} {3}.",
+            {rt(
+              "<b>{0}</b> accounts for {1}% of everything forgiven — {2} across {3, plural, one {# waiver} other {# waivers}}.",
+              { b: (c) => <span className="text-foreground font-medium">{c}</span> },
+              reasonLabel(leader.reason),
               Math.round(leaderShare * 100),
               formatCurrency(leader.waivedAmount),
               leader.waiverCount,
-              leader.waiverCount === 1 ? "waiver" : "waivers",
             )}
           </p>
         ) : null

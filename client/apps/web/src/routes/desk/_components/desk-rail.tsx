@@ -20,6 +20,7 @@ import {
   stateLabel,
   useRailKnob,
 } from "@/components/desk-chat/rail/rail-parts";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
 export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "thread" | "agent";
@@ -73,6 +74,7 @@ export function DeskRail({
   onRename,
 }: DeskRailProps) {
   const t = useT();
+  const rt = useRichT();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
@@ -310,8 +312,9 @@ export function DeskRail({
           <>
             <div className="dk-sb-gh">{t("Conversations")}</div>
             <div className="dk-sb-empty">
-              {t("Your chats will show up here. Press")} <span className="dk-kbd">⌘N</span>{" "}
-              {t("to start one.")}
+              {rt("Your chats will show up here. Press <kbd/> to start one.", {
+                kbd: () => <span className="dk-kbd">⌘N</span>,
+              })}
             </div>
           </>
         )}

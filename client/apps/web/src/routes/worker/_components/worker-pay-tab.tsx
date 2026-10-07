@@ -32,6 +32,7 @@ function formatDate(unix?: number | null): string {
 }
 
 import { WorkerBenefitsSection } from "./benefits/worker-benefits-section";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 export default function WorkerPayTab({ workerId }: { workerId: string }) {
   const t = useT();
@@ -200,6 +201,7 @@ function CurrentAssignmentCard({
   onEnd: () => void;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   const profile = assignment.payProfile;
   const overrideMap = new Map(
@@ -290,11 +292,16 @@ function CurrentAssignmentCard({
         </p>
       )}
       <p className="text-muted-foreground mt-2 text-xs">
-        {t("Need different rates for this driver? Use")}{" "}
-        <Link to="/payroll/pay-profiles" className="underline">
-          {t("shared profiles")}
-        </Link>{" "}
-        {t("with per-driver overrides instead of creating one profile per driver.")}
+        {rt(
+          "Need different rates for this driver? Use <link>shared profiles</link> with per-driver overrides instead of creating one profile per driver.",
+          {
+            link: (c) => (
+              <Link to="/payroll/pay-profiles" className="underline">
+                {c}
+              </Link>
+            ),
+          },
+        )}
       </p>
     </div>
   );

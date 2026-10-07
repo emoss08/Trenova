@@ -17,6 +17,7 @@ import { RulerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 type MatrixRow = {
   from: number;
@@ -309,6 +310,7 @@ function ConvertToTableDialog({
   onConfirm: () => void;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   const shown = conversionRows.slice(0, CONVERSION_PREVIEW_LIMIT);
   const hidden = conversionRows.length - shown.length;
@@ -332,11 +334,11 @@ function ConvertToTableDialog({
                 1
               </span>
               <span className="text-muted-foreground">
-                {t("Your formula's full schedule is copied into the table on the right —")}{" "}
-                <span className="text-foreground font-medium">
-                  {t("{0} bands", conversionRows.length)}
-                </span>{" "}
-                {t("covering every fuel price.")}
+                {rt(
+                  "Your formula's full schedule is copied into the table on the right — <b>{0, plural, one {# band} other {# bands}}</b> covering every fuel price.",
+                  { b: (c) => <span className="text-foreground font-medium">{c}</span> },
+                  conversionRows.length,
+                )}
               </span>
             </li>
             <li className="flex gap-2.5">

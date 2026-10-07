@@ -146,7 +146,7 @@ function TimelineItem({
             variant="ghost"
             size="icon"
             className="ml-auto size-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-            aria-label={`Amend ${meta.label}`}
+            aria-label={t("Amend {0}", t(meta.label))}
             title={t("Amend")}
             onClick={() => onAmend(event)}
           >
@@ -189,11 +189,13 @@ function TimelineItem({
         ) : null}
         {event.amendedAt ? (
           <span>
-            {t(
-              "· Amended by {0}{1}",
-              event.amendedBy?.name ?? "someone",
-              event.amendmentNote ? ` — ${event.amendmentNote}` : "",
-            )}
+            {event.amendedBy?.name
+              ? event.amendmentNote
+                ? t("· Amended by {0} — {1}", event.amendedBy.name, event.amendmentNote)
+                : t("· Amended by {0}", event.amendedBy.name)
+              : event.amendmentNote
+                ? t("· Amended — {0}", event.amendmentNote)
+                : t("· Amended")}
           </span>
         ) : null}
       </p>

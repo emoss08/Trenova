@@ -1,13 +1,4 @@
 {
-  "\"? This action cannot be undone.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "\"{0}\" ({1}) will be removed and the order total recalculated.": {
     "sites": 1,
     "scope": [
@@ -346,33 +337,6 @@
       "routes/agent-control"
     ]
   },
-  ", along with {0} automatic {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  ", copy the redirect URL below into the app's authentication settings, then paste the credentials here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  ", copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   ", reference {0}": {
     "sites": 1,
     "scope": [
@@ -409,15 +373,6 @@
       "routes/fiscal-year"
     ]
   },
-  ", {0} fail to evaluate": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "-----BEGIN CERTIFICATE-----": {
     "sites": 1,
     "scope": [
@@ -434,24 +389,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  ". Only one fuel surcharge line is kept — choose which amount to bill.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  ". Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/ifta-return"
     ]
   },
   ". Voided: {0}": {
@@ -1358,6 +1295,33 @@
       "apps/web/components"
     ]
   },
+  "<b>{0}</b> accounts for {1}% of everything forgiven — {2} across {3, plural, one {# waiver} other {# waivers}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "<b>{0}</b> reaches {1, plural, one {# person} other {# people}}. They will fall back to the next home screen that matches them. This cannot be undone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "<b>{0}</b> wants to:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   ">24h": {
     "sites": 1,
     "scope": [
@@ -2205,7 +2169,7 @@
       "apps/web/components"
     ]
   },
-  "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from": {
+  "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from <b>{0}</b> to <b>{1}</b>. Only one fuel surcharge line is kept — choose which amount to bill.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -2323,6 +2287,24 @@
       "service/reporting"
     ]
   },
+  "A comment is required to approve this agreement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "A comment is required to archive this agreement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
   "A comment is required to reject": {
     "sites": 1,
     "scope": [
@@ -2332,7 +2314,34 @@
       "routes/formula-template"
     ]
   },
-  "A comment is required to {0}": {
+  "A comment is required to reject this agreement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "A comment is required to resume this agreement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "A comment is required to submit this agreement for review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "A comment is required to suspend this agreement": {
     "sites": 1,
     "scope": [
       "ts"
@@ -5348,6 +5357,15 @@
     ],
     "areas": [
       "domain/carrierintel"
+    ]
+  },
+  "A reason is required to record “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "A reason is required to reject PTO requests": {
@@ -14855,7 +14873,7 @@
     ]
   },
   "All": {
-    "sites": 20,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -14873,6 +14891,15 @@
       "routes/random-testing",
       "routes/reports",
       "routes/settlement-workspace"
+    ]
+  },
+  "All <b>{0}</b> {0, plural, one {row on this page is selected.} other {rows on this page are selected.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "All active carriers": {
@@ -16184,7 +16211,7 @@
     ]
   },
   "Amend {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -18521,7 +18548,7 @@
       "routes/agent-control"
     ]
   },
-  "Answered by": {
+  "Answered by <b>{0}</b> · {1} didn't respond": {
     "sites": 1,
     "scope": [
       "ts"
@@ -19331,15 +19358,6 @@
       "routes/fuel-purchase"
     ]
   },
-  "Applied {0} {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Applied · {0}": {
     "sites": 1,
     "scope": [
@@ -19723,7 +19741,7 @@
       "routes/accounting-inbound"
     ]
   },
-  "Applying replaces your {0} existing {1}.": {
+  "Applying replaces your {0, plural, one {# existing band} other {# existing bands}}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -20866,15 +20884,6 @@
       "routes/worker"
     ]
   },
-  "Archive {0} formula {1}?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Archived": {
     "sites": 7,
     "scope": [
@@ -21034,7 +21043,7 @@
       "routes/shipment"
     ]
   },
-  "Are you sure you want to delete the custom field \"": {
+  "Are you sure you want to delete the custom field \"<b>{0}</b>\"? This action cannot be undone.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -21068,15 +21077,6 @@
     ],
     "areas": [
       "routes/document-packet-rule"
-    ]
-  },
-  "Are you sure you want to duplicate {0} {1}? This action cannot be undone.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Area": {
@@ -21253,13 +21253,14 @@
     ]
   },
   "Arrived": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "routes/inbox",
+      "routes/service-failure",
       "template/detention.notice.email",
       "template/detention.notice.pdf"
     ]
@@ -29387,6 +29388,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Bounced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
     ]
   },
   "Branding": {
@@ -50259,6 +50269,15 @@
       "routes/home"
     ]
   },
+  "Cutoff": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/service-failure"
+    ]
+  },
   "Cycle": {
     "sites": 3,
     "scope": [
@@ -54927,7 +54946,7 @@
     ]
   },
   "Delivered": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -54936,6 +54955,7 @@
       "apps/web/lib",
       "domain/documenttemplate",
       "routes/billing-queue",
+      "routes/detention-desk",
       "routes/home",
       "routes/shipment"
     ]
@@ -62691,15 +62711,6 @@
       "domain/homelayout"
     ]
   },
-  "Duplicate {0} {1}?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Duplicates in file": {
     "sites": 1,
     "scope": [
@@ -63950,7 +63961,16 @@
       "routes/reports"
     ]
   },
-  "Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0}": {
+  "Each plan year is its own row, so repricing next year never restates what somebody was charged this year.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/benefits"
+    ]
+  },
+  "Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0, plural, one {# active plan has nobody on it.} other {# active plans have nobody on them.}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -68966,6 +68986,15 @@
       "domain/worker"
     ]
   },
+  "Event recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Event reopened": {
     "sites": 1,
     "scope": [
@@ -70207,7 +70236,16 @@
       "routes/fuel-feed-run"
     ]
   },
-  "Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left {0}.": {
+  "Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left on {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left today.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -73727,7 +73765,7 @@
     ]
   },
   "Failed": {
-    "sites": 40,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -73741,6 +73779,7 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
+      "routes/detention-desk",
       "routes/edi",
       "routes/formula-template",
       "routes/invoice-adjustment-batch"
@@ -75995,14 +76034,15 @@
     ]
   },
   "Fields": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/reports"
     ]
   },
   "Fields ({0})": {
@@ -76737,6 +76777,24 @@
       "routes/desk"
     ]
   },
+  "Filter the records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Filter the steps": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Filter these rows...": {
     "sites": 1,
     "scope": [
@@ -76773,6 +76831,15 @@
       "domain/agent"
     ]
   },
+  "Filter {0, plural, one {# record} other {# records}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Filter {0, plural, one {# row} other {# rows}}": {
     "sites": 1,
     "scope": [
@@ -76782,8 +76849,8 @@
       "routes/desk"
     ]
   },
-  "Filter {0}": {
-    "sites": 2,
+  "Filter {0, plural, one {# step} other {# steps}}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -76791,7 +76858,7 @@
       "apps/web/components"
     ]
   },
-  "Filter {0} {1}": {
+  "Filter {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -76854,6 +76921,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Final notice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
     ]
   },
   "Finalise": {
@@ -80462,7 +80538,7 @@
     ]
   },
   "Full profile freshness": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -82241,6 +82317,15 @@
       "go/other"
     ]
   },
+  "Grace {0}m": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/service-failure"
+    ]
+  },
   "Gradual rollout": {
     "sites": 2,
     "scope": [
@@ -83112,7 +83197,7 @@
       "routes/desk"
     ]
   },
-  "Hang tight!": {
+  "Hang tight! <u>{0}</u> is gearing up for you.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -84209,12 +84294,13 @@
     ]
   },
   "Hired": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "packages/shared/types",
       "routes/desk"
     ]
   },
@@ -90810,7 +90896,7 @@
       "routes/worker"
     ]
   },
-  "Invitation sent to": {
+  "Invitation sent to <b>{0}</b> — expires {1}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -95989,6 +96075,15 @@
       "apps/web/lib"
     ]
   },
+  "Late {0}m": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/service-failure"
+    ]
+  },
   "Latency": {
     "sites": 4,
     "scope": [
@@ -96045,7 +96140,7 @@
       "routes/fuel-management"
     ]
   },
-  "Latest DOE price week:": {
+  "Latest DOE price week: <b>Mon {0}</b> · surcharge rates roll forward on each program's effective day": {
     "sites": 1,
     "scope": [
       "ts"
@@ -96716,6 +96811,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Leave ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "Leave every box clear to include all safety-sensitive drivers.": {
     "sites": 1,
     "scope": [
@@ -96787,6 +96891,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Leave started": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "Leave them out of Trenova": {
@@ -96888,7 +97001,7 @@
       "routes/agent-control"
     ]
   },
-  "Left out": {
+  "Left out <b>“{0}”</b>.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -103676,7 +103789,7 @@
     ]
   },
   "Maximum intelligence age": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -104973,7 +105086,7 @@
     ]
   },
   "Microsoft Entra ID": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -106599,15 +106712,6 @@
     "areas": [
       "apps/web/components",
       "routes/reports"
-    ]
-  },
-  "Mon {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fuel-management"
     ]
   },
   "Monday": {
@@ -108990,7 +109094,7 @@
       "apps/dash/_components"
     ]
   },
-  "Need different rates for this driver? Use": {
+  "Need different rates for this driver? Use <link>shared profiles</link> with per-driver overrides instead of creating one profile per driver.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -114865,6 +114969,15 @@
       "routes/admin"
     ]
   },
+  "No results found.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No results on this page": {
     "sites": 1,
     "scope": [
@@ -115027,7 +115140,7 @@
       "service/tenderservice"
     ]
   },
-  "No routing guide matches this lane. Pick one explicitly below, or": {
+  "No routing guide matches this lane. Pick one explicitly below, or <link>create a routing guide</link> for it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115977,7 +116090,7 @@
     ]
   },
   "No {0} found.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -115992,15 +116105,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "No {0} match “{1}”": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Nobody": {
@@ -117279,7 +117383,7 @@
       "routes/desk"
     ]
   },
-  "Not ready to": {
+  "Not ready to approve": {
     "sites": 1,
     "scope": [
       "ts"
@@ -117304,6 +117408,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Not ready to submit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Not recordable": {
@@ -118340,7 +118453,7 @@
     ]
   },
   "Nothing matches “{0}”": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -120414,15 +120527,6 @@
     ]
   },
   "Okta SSO settings updated": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Okta admin console": {
     "sites": 1,
     "scope": [
       "ts"
@@ -125016,11 +125120,12 @@
     ]
   },
   "Opened": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/detention-desk",
       "routes/escrow-account"
     ]
   },
@@ -125208,7 +125313,7 @@
       "apps/web/components"
     ]
   },
-  "Opens the courses you choose for {0} selected {1}. Anyone who already has a course open keeps the assignment they have.": {
+  "Opens the courses you choose for {0, plural, one {# selected worker} other {# selected workers}}. Anyone who already has a course open keeps the assignment they have.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -131526,14 +131631,22 @@
     ]
   },
   "Pay period": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-settlement-control",
+      "routes/settlement-control"
+    ]
+  },
+  "Pay period <b>{0} – {1}</b> · pays <b>{2}</b>": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/carrier-settlement-workspace",
-      "routes/settlement-control",
       "routes/settlement-workspace"
     ]
   },
@@ -134673,6 +134786,15 @@
       "routes/shipment"
     ]
   },
+  "Pickup unscheduled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Pickup window already open": {
     "sites": 1,
     "scope": [
@@ -136048,7 +136170,7 @@
     ]
   },
   "Poll interval": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -137119,7 +137241,7 @@
     ]
   },
   "Pre-tender freshness": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -137452,7 +137574,7 @@
       "routes/worker"
     ]
   },
-  "Press": {
+  "Press <kbd/> to approve": {
     "sites": 1,
     "scope": [
       "ts"
@@ -138770,6 +138892,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Probation ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "Probe an AI provider once and record whether it answered": {
     "sites": 1,
     "scope": [
@@ -139329,6 +139460,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Promoted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "Promotion threshold": {
@@ -140462,15 +140602,6 @@
       "routes/admin"
     ]
   },
-  "Publish {0} {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/ifta-tax-rate"
-    ]
-  },
   "Published": {
     "sites": 3,
     "scope": [
@@ -140535,7 +140666,7 @@
       "routes/admin"
     ]
   },
-  "Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.": {
+  "Publishing would set {0, plural, one {# rate} other {# rates}} for Q{1} {2}, replacing any already published for the same jurisdiction and fuel.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -141601,7 +141732,7 @@
     ]
   },
   "Queued": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -141611,6 +141742,7 @@
       "packages/shared/components",
       "routes/accounting-sync",
       "routes/agent-control",
+      "routes/detention-desk",
       "routes/invoice-adjustment-batch"
     ]
   },
@@ -142454,6 +142586,15 @@
       "domain/rateagreement",
       "domain/tender",
       "service/tenderservice"
+    ]
+  },
+  "Rate changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "Rate con": {
@@ -143550,7 +143691,7 @@
     ]
   },
   "Raw payload retention": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -143766,7 +143907,16 @@
       "routes/formula-template"
     ]
   },
-  "Re-rating would move totals by": {
+  "Re-rating would move totals by <delta>{0}</delta> ({1} of {2, plural, one {# shipment changes} other {# shipments change}}).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Re-rating would move totals by <delta>{0}</delta> ({1} of {2, plural, one {# shipment changes} other {# shipments change}}<err>, {3, plural, one {# fails to evaluate} other {# fail to evaluate}}</err>).": {
     "sites": 1,
     "scope": [
       "ts"
@@ -144595,15 +144745,6 @@
       "apps/web/lib"
     ]
   },
-  "Ready to": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Ready to accept": {
     "sites": 1,
     "scope": [
@@ -144614,12 +144755,13 @@
     ]
   },
   "Ready to approve": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/formula-template"
     ]
   },
   "Ready to bill": {
@@ -144696,6 +144838,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Ready to submit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Ready-to-bill assignment mode": {
@@ -145817,7 +145968,7 @@
     ]
   },
   "Recent usage window": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -146676,7 +146827,7 @@
     ]
   },
   "Record event": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -148762,6 +148913,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Rehired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "Reimbursed": {
     "sites": 2,
     "scope": [
@@ -148790,6 +148950,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Reinstated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "Reject": {
@@ -150709,16 +150878,24 @@
     ]
   },
   "Replace": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/billing-queue",
       "routes/edi",
       "routes/policies"
+    ]
+  },
+  "Replace <code>{0}</code> with your organization's login slug from General settings.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Replace API key": {
@@ -152923,7 +153100,61 @@
       "domain/permission"
     ]
   },
-  "Rescind this {0}": {
+  "Rescind this action": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Rescind this coaching": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Rescind this final warning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Rescind this suspension": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Rescind this termination": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Rescind this verbal warning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Rescind this written warning": {
     "sites": 1,
     "scope": [
       "ts"
@@ -153634,7 +153865,7 @@
       "domain/journalreversal"
     ]
   },
-  "Resolved from the": {
+  "Resolved from the <b>{0}</b> profile, matched on {1}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -157355,7 +157586,7 @@
       "routes/ifta-jurisdiction-mileage"
     ]
   },
-  "Routed miles are only split state by state while": {
+  "Routed miles are only split state by state while <b>{0}</b> is on in <link>distance controls</link>. Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -166866,33 +167097,6 @@
       "routes/desk"
     ]
   },
-  "Send {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-desk"
-    ]
-  },
-  "Send {0} detention {1}?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-desk"
-    ]
-  },
-  "Send {0} {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-desk"
-    ]
-  },
   "Send, confirm, and void rate confirmations": {
     "sites": 1,
     "scope": [
@@ -167198,7 +167402,7 @@
     ]
   },
   "Sent": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -167207,6 +167411,7 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/desk",
+      "routes/detention-desk",
       "routes/edi",
       "routes/time-attendance"
     ]
@@ -167656,7 +167861,16 @@
       "domain/tenant"
     ]
   },
-  "Sequence {0}{1}": {
+  "Sequence {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Sequence {0} / repeats {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -171948,6 +172162,15 @@
       "apps/web/components"
     ]
   },
+  "Show all {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Show all {0} on the board": {
     "sites": 1,
     "scope": [
@@ -171955,15 +172178,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Show all {0} {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Show an estimated payout on active loads before pay accrues, based on the driver's pay plan.": {
@@ -172310,15 +172524,6 @@
       "routes/scheduling"
     ]
   },
-  "Show {0} more {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "Showing": {
     "sites": 1,
     "scope": [
@@ -172355,6 +172560,24 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Showing {0, plural, one {# row} other {# rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-purchase"
+    ]
+  },
+  "Showing {0} of {1, plural, one {# row} other {# rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-purchase"
+    ]
+  },
   "Showing {0} of {1}": {
     "sites": 1,
     "scope": [
@@ -172362,15 +172585,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Showing {0} of {1} {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fuel-purchase"
     ]
   },
   "Showing {0} of {1}. Ask for the rest, or open it as a view.": {
@@ -172389,15 +172603,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Showing {0} rows": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fuel-purchase"
     ]
   },
   "Shown as": {
@@ -173558,7 +173763,7 @@
     ]
   },
   "Snapshot freshness": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -173585,7 +173790,7 @@
     ]
   },
   "Snapshot history": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -173709,6 +173914,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Soft cap percent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Soft cap percent cannot exceed 100": {
@@ -176241,6 +176455,15 @@
       "routes/agent-control"
     ]
   },
+  "Started notice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "Started {0}": {
     "sites": 2,
     "scope": [
@@ -177247,7 +177470,7 @@
     ]
   },
   "Step {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -177256,15 +177479,6 @@
     ]
   },
   "Step {0} changes this record first; it is shown as it would be after that step.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Step {0}: {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -179388,7 +179602,7 @@
     ]
   },
   "Suspended": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -179396,7 +179610,8 @@
     "areas": [
       "apps/web/lib",
       "domain/fuelpurchase",
-      "packages/shared/components"
+      "packages/shared/components",
+      "packages/shared/types"
     ]
   },
   "Suspending...": {
@@ -182164,6 +182379,15 @@
       "routes/org-structure"
     ]
   },
+  "Terminated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "Termination date": {
     "sites": 1,
     "scope": [
@@ -183584,7 +183808,61 @@
       "domain/documenttemplate"
     ]
   },
+  "The agreement could not be approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "The agreement could not be archived": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
   "The agreement could not be duplicated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "The agreement could not be rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "The agreement could not be resumed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "The agreement could not be submitted for review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "The agreement could not be suspended": {
     "sites": 1,
     "scope": [
       "ts"
@@ -190422,7 +190700,16 @@
       "service/agentevalcaseservice"
     ]
   },
-  "The rating method and base rate below came from the contract {0} . Change any of them and this shipment is priced by hand instead.": {
+  "The rating method and base rate below came from the contract, along with {0, plural, one {# automatic charge} other {# automatic charges}}. Change any of them and this shipment is priced by hand instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "The rating method and base rate below came from the contract. Change any of them and this shipment is priced by hand instead.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -193582,15 +193869,6 @@
       "service/billingqueueservice"
     ]
   },
-  "The {0} stayed as they were. The {1} that {2} are final.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Their claim, verbatim where possible — it decides which evidence matters.": {
     "sites": 1,
     "scope": [
@@ -195058,7 +195336,7 @@
       "service/customerpaymentservice"
     ]
   },
-  "This custom field has": {
+  "This custom field has <b>{0, plural, one {# value} other {# values}}</b> across <b>{1, plural, one {# resource} other {# resources}}</b>.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -196802,7 +197080,25 @@
       "routes/edi"
     ]
   },
-  "This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
+  "This partner is enabled for inbound and outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "This partner is enabled for inbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "This partner is enabled for outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -199426,7 +199722,7 @@
       "routes/fuel-management"
     ]
   },
-  "To configure SSO, create an OIDC application in the": {
+  "To configure SSO, create an OIDC application in the <a>Okta admin console</a>, copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -199435,7 +199731,7 @@
       "routes/admin"
     ]
   },
-  "To configure SSO, register an app in": {
+  "To configure SSO, register an app in <a>Microsoft Entra ID</a>, copy the redirect URL below into the app's authentication settings, then paste the credentials here.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -201037,15 +201333,31 @@
       "routes/reports"
     ]
   },
-  "Totals · {0} {1}": {
-    "sites": 3,
+  "Totals · {0, plural, one {# customer} other {# customers}}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ar-aging",
-      "routes/ar-open-items",
+      "routes/ar-aging"
+    ]
+  },
+  "Totals · {0, plural, one {# entry} other {# entries}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/customer-ledger"
+    ]
+  },
+  "Totals · {0, plural, one {# invoice} other {# invoices}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/ar-open-items"
     ]
   },
   "Tow-away": {
@@ -202283,11 +202595,12 @@
     ]
   },
   "Transferred": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/types",
       "routes/billing-queue"
     ]
   },
@@ -203860,7 +204173,7 @@
       "routes/desk"
     ]
   },
-  "Type a page name in": {
+  "Type a page name in <kbd/> to jump anywhere": {
     "sites": 1,
     "scope": [
       "ts"
@@ -206538,6 +206851,15 @@
       "routes/shipment"
     ]
   },
+  "Update notice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "Update password": {
     "sites": 1,
     "scope": [
@@ -207361,12 +207683,20 @@
     ]
   },
   "Use": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "apps/web/components"
+    ]
+  },
+  "Use <down/> to reach the cards and <enter/> to add one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/home"
     ]
   },
@@ -212210,6 +212540,15 @@
       "routes/document-packet-rule"
     ]
   },
+  "Warning notice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "Warnings": {
     "sites": 2,
     "scope": [
@@ -212402,6 +212741,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "We can't find any results in your organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "We can't find any {0} in your organization.": {
@@ -219996,7 +220344,7 @@
       "routes/home"
     ]
   },
-  "You're clear — {0} {1} moving, nothing flagged.": {
+  "You're clear — {0, plural, one {# load} other {# loads}} moving, nothing flagged.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -220068,7 +220416,7 @@
       "packages/shared/components"
     ]
   },
-  "You've used": {
+  "You've used <b>{0}%</b> of this month's AI allowance": {
     "sites": 1,
     "scope": [
       "ts"
@@ -220347,7 +220695,7 @@
       "routes/pay-code"
     ]
   },
-  "Your chats will show up here. Press": {
+  "Your chats will show up here. Press <kbd/> to start one.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -220510,7 +220858,7 @@
       "apps/dash/_components"
     ]
   },
-  "Your formula's full schedule is copied into the table on the right —": {
+  "Your formula's full schedule is copied into the table on the right — <b>{0, plural, one {# band} other {# bands}}</b> covering every fuel price.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -221356,15 +221704,6 @@
       "routes/journal-review"
     ]
   },
-  "accounts for {0}% of everything forgiven — {1} across {2} {3}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "across all tracked balances": {
     "sites": 1,
     "scope": [
@@ -221849,24 +222188,6 @@
       "service/reporting"
     ]
   },
-  "covering every fuel price.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fuel-management"
-    ]
-  },
-  "create a routing guide": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "created {0}": {
     "sites": 1,
     "scope": [
@@ -222009,15 +222330,6 @@
     ],
     "areas": [
       "service/shipmentservice"
-    ]
-  },
-  "distance controls": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/ifta-return"
     ]
   },
   "document not found": {
@@ -224078,6 +224390,15 @@
       "service/tablequeryservice"
     ]
   },
+  "equipment type": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "every Monday at 8am": {
     "sites": 1,
     "scope": [
@@ -224259,24 +224580,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "for approval by the receiving organization.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "for it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "for tractor {0}": {
@@ -224531,24 +224834,6 @@
     ],
     "areas": [
       "service/invoiceadjustmentservice"
-    ]
-  },
-  "is gearing up for you.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/components"
-    ]
-  },
-  "is on in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/ifta-return"
     ]
   },
   "issued {0}": {
@@ -224975,6 +225260,15 @@
       "routes/agent-control"
     ]
   },
+  "no specific scope": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "no telematics provider is enabled for this organization": {
     "sites": 1,
     "scope": [
@@ -225027,15 +225321,6 @@
     ],
     "areas": [
       "routes/detention-intelligence"
-    ]
-  },
-  "of this month's AI allowance": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "of {0}": {
@@ -225124,15 +225409,6 @@
     ]
   },
   "of {0} · warns at {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "of {0}'s budget": {
     "sites": 1,
     "scope": [
       "ts"
@@ -225313,6 +225589,15 @@
       "apps/web/components"
     ]
   },
+  "organization default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "organizations must belong to the current business unit": {
     "sites": 1,
     "scope": [
@@ -225478,15 +225763,6 @@
       "routes/settlement-workspace"
     ]
   },
-  "profile, matched on {0}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/components"
-    ]
-  },
   "profile: {0}{1}": {
     "sites": 1,
     "scope": [
@@ -225566,15 +225842,6 @@
     ],
     "areas": [
       "service/rateagreementservice"
-    ]
-  },
-  "reaches {0} {1}. They will fall back to the next home screen that matches them. This cannot be undone.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "read content written outside the organization": {
@@ -225749,15 +226016,6 @@
       "routes/reports"
     ]
   },
-  "rows on this page are selected.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "run records": {
     "sites": 1,
     "scope": [
@@ -225783,15 +226041,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "s have": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/benefits"
     ]
   },
   "s still hold": {
@@ -225839,6 +226088,15 @@
       "service/ediinboundservice"
     ]
   },
+  "service type": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "set up by {0}": {
     "sites": 1,
     "scope": [
@@ -225864,15 +226122,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "shared profiles": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "shipment duplication is not configured": {
@@ -225911,13 +226160,13 @@
       "service/distancecalculationservice"
     ]
   },
-  "shipments change": {
+  "shipment type": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-template"
+      "packages/shared/lib"
     ]
   },
   "showing the {0} most recent": {
@@ -226018,15 +226267,6 @@
     ],
     "areas": [
       "routes/escrow-account"
-    ]
-  },
-  "surcharge rates roll forward on each program's effective day": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fuel-management"
     ]
   },
   "suspension": {
@@ -226293,15 +226533,6 @@
       "routes/agent-control"
     ]
   },
-  "to add one.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
-    ]
-  },
   "to answer": {
     "sites": 1,
     "scope": [
@@ -226309,15 +226540,6 @@
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "to approve": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "to ask": {
@@ -226347,15 +226569,6 @@
       "routes/desk"
     ]
   },
-  "to jump anywhere": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "to move": {
     "sites": 1,
     "scope": [
@@ -226374,15 +226587,6 @@
       "routes/desk"
     ]
   },
-  "to reach the cards and": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
-    ]
-  },
   "to skip": {
     "sites": 1,
     "scope": [
@@ -226390,15 +226594,6 @@
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "to start one.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "to use": {
@@ -226657,6 +226852,15 @@
       "routes/carrier"
     ]
   },
+  "vs previous": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "vs rate con {0}": {
     "sites": 1,
     "scope": [
@@ -226759,15 +226963,6 @@
       "routes/agent-control"
     ]
   },
-  "wants to": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "weather alerts": {
     "sites": 1,
     "scope": [
@@ -226847,24 +227042,6 @@
     ],
     "areas": [
       "routes/osha"
-    ]
-  },
-  "with per-driver overrides instead of creating one profile per driver.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "with your organization's login slug from General settings.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "within tolerance": {
@@ -227075,6 +227252,15 @@
       "routes/random-testing"
     ]
   },
+  "{0, plural, one {# active worker} other {# active workers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "{0, plural, one {# active} other {# active}}": {
     "sites": 1,
     "scope": [
@@ -227221,6 +227407,15 @@
       "routes/carrier"
     ]
   },
+  "{0, plural, one {# blocking issue} other {# blocking issues}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0, plural, one {# call had no price} other {# calls had no price}}": {
     "sites": 1,
     "scope": [
@@ -227300,6 +227495,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "{0, plural, one {# change didn't go through.} other {# changes didn't go through.}} Look at why and fix it: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# change ran without being asked} other {# changes ran without being asked}}": {
@@ -227600,6 +227804,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# error detected} other {# errors detected}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {# error} other {# errors}}": {
     "sites": 1,
     "scope": [
@@ -227774,6 +227987,15 @@
       "routes/reports"
     ]
   },
+  "{0, plural, one {# invoice under the customer's minimum is skipped, and its shipments roll into next period.} other {# invoices under the customer's minimum are skipped, and their shipments roll into next period.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {# invoice wasn't approved} other {# invoices weren't approved}} — open it to see why": {
     "sites": 1,
     "scope": [
@@ -227790,15 +228012,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# invoice} other {# invoices}} under the customer's minimum {1} skipped, and {2} shipments roll into next period.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
     ]
   },
   "{0, plural, one {# issue blocks tendering} other {# issues block tendering}}": {
@@ -227899,6 +228112,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0, plural, one {# member line has no published rate, so finalizing is refused.} other {# member lines have no published rate, so finalizing is refused.}} Publish the missing rates, recompute, then finalize.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/ifta-return"
     ]
   },
   "{0, plural, one {# mention rule} other {# mention rules}}": {
@@ -228054,6 +228276,15 @@
       "routes/dispatch-console"
     ]
   },
+  "{0, plural, one {# move} other {# moves}} · drag onto a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {# mo} other {# mos}}": {
     "sites": 1,
     "scope": [
@@ -228162,6 +228393,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0, plural, one {# person with no position} other {# people with no position}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/org-structure"
     ]
   },
   "{0, plural, one {# person} other {# people}}": {
@@ -228354,6 +228594,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# report} other {# reports}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0, plural, one {# required document} other {# required documents}} missing": {
     "sites": 1,
     "scope": [
@@ -228444,8 +228693,17 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# row will be left out.} other {# rows will be left out.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/ifta-tax-rate"
+    ]
+  },
   "{0, plural, one {# row} other {# rows}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -228453,6 +228711,7 @@
     "areas": [
       "apps/web/components",
       "routes/desk",
+      "routes/ifta-tax-rate",
       "routes/reports",
       "template/report.delivery.email",
       "template/report.pdf"
@@ -228662,6 +228921,15 @@
       "routes/shipment"
     ]
   },
+  "{0, plural, one {# stop} other {# stops}} · {1} past free time {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0, plural, one {# swap} other {# swaps}} to decide": {
     "sites": 1,
     "scope": [
@@ -228825,6 +229093,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# waiver} other {# waivers}} · {1, plural, one {# approver} other {# approvers}} · {2} each": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0, plural, one {# warning} other {# warnings}}": {
     "sites": 1,
     "scope": [
@@ -228850,6 +229127,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# year} other {# years}} on {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/my-team"
     ]
   },
   "{0, plural, one {# yr} other {# yrs}}": {
@@ -228879,6 +229165,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Applied # field} other {Applied # fields}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "{0, plural, one {Approve # change} other {Approve # changes}}": {
     "sites": 1,
     "scope": [
@@ -228895,6 +229190,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {Archive # formula template?} other {Archive # formula templates?}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "{0, plural, one {Are you sure you want to duplicate # row? This action cannot be undone.} other {Are you sure you want to duplicate # rows? This action cannot be undone.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Asked # admin} other {Asked # admins}}": {
@@ -228943,6 +229256,15 @@
     ]
   },
   "{0, plural, one {Drop to attach # file} other {Drop to attach # files}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Duplicate # row?} other {Duplicate # rows?}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -229041,6 +229363,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {Publish # rate} other {Publish # rates}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/ifta-tax-rate"
+    ]
+  },
   "{0, plural, one {Ran # lookup} other {Ran # lookups}}": {
     "sites": 1,
     "scope": [
@@ -229095,6 +229426,51 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Send # detention notice?} other {Send # detention notices?}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
+  "{0, plural, one {Send # notice} other {Send # notices}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
+  "{0, plural, one {Send notice} other {Send notices}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
+  "{0, plural, one {Show # more customer} other {Show # more customers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0, plural, one {Show # more facility} other {Show # more facilities}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.": {
     "sites": 1,
     "scope": [
@@ -229120,6 +229496,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0, plural, one {The one that didn't go through stayed as it was.} other {The # that didn't go through stayed as they were.}} {1, plural, one {The one that went through is final.} other {The # that went through are final.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Transfer all # shipment that matches the current search and status?} other {Transfer all # shipments that match the current search and status?}}": {
@@ -229428,15 +229813,6 @@
       "routes/time-attendance"
     ]
   },
-  "{0} Fields": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/reports"
-    ]
-  },
   "{0} HOS": {
     "sites": 3,
     "scope": [
@@ -229555,7 +229931,7 @@
       "routes/shipment"
     ]
   },
-  "{0} across {1} {2}": {
+  "{0} across {1, plural, one {# person} other {# people}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -229574,24 +229950,6 @@
     ]
   },
   "{0} active loads": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
-    ]
-  },
-  "{0} active plan{1} nobody on {2}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/benefits"
-    ]
-  },
-  "{0} active {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -229863,7 +230221,7 @@
     ]
   },
   "{0} bands": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -229925,7 +230283,7 @@
       "routes/detention-policy"
     ]
   },
-  "{0} billed · {1} paid out · {2} {3}": {
+  "{0} billed · {1} paid out · {2, plural, one {# stop} other {# stops}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -229959,15 +230317,6 @@
     ],
     "areas": [
       "routes/recurring-shipment"
-    ]
-  },
-  "{0} blocking {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "{0} budget": {
@@ -230471,15 +230820,6 @@
       "apps/web/components"
     ]
   },
-  "{0} didn't respond": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "{0} disconnected": {
     "sites": 1,
     "scope": [
@@ -230661,6 +231001,15 @@
       "routes/invoice"
     ]
   },
+  "{0} empty": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} enabled": {
     "sites": 1,
     "scope": [
@@ -230792,7 +231141,7 @@
     ]
   },
   "{0} fields": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -231171,7 +231520,7 @@
       "routes/shipment"
     ]
   },
-  "{0} has used": {
+  "{0} has used <b>{1}%</b> of {2}'s budget": {
     "sites": 1,
     "scope": [
       "ts"
@@ -232200,6 +232549,15 @@
       "routes/rate-agreement"
     ]
   },
+  "{0} last {1}d": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} lb": {
     "sites": 2,
     "scope": [
@@ -232362,15 +232720,6 @@
     ],
     "areas": [
       "routes/detention-intelligence"
-    ]
-  },
-  "{0} member {1} has no published rate, so finalizing is refused. Publish the missing rates, recompute, then finalize.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/ifta-return"
     ]
   },
   "{0} mentioned you": {
@@ -232744,6 +233093,15 @@
       "routes/shipment"
     ]
   },
+  "{0} next {1}d": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} no longer accepts Trenova's access": {
     "sites": 1,
     "scope": [
@@ -232814,15 +233172,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "{0} notice": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-desk"
     ]
   },
   "{0} now only runs on its own.": {
@@ -232922,6 +233271,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0} of {1, plural, one {# stop} other {# stops}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
     ]
   },
   "{0} of {1}": {
@@ -233215,13 +233573,13 @@
       "routes/desk"
     ]
   },
-  "{0} of {1} {2}": {
+  "{0} of {1} went through · {2} didn't": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "{0} of {1} · resets {2}": {
@@ -233269,7 +233627,16 @@
       "routes/benefits"
     ]
   },
-  "{0} on site · free {1} {2}": {
+  "{0} on site · free time ended {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
+  "{0} on site · free time ends {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -233658,6 +234025,15 @@
       "apps/web/components"
     ]
   },
+  "{0} recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "{0} records are kept by the bookkeeper and are not created from Trenova": {
     "sites": 2,
     "scope": [
@@ -233830,15 +234206,6 @@
       "service/carriersettlementservice",
       "service/driverpayservice",
       "service/driversettlementservice"
-    ]
-  },
-  "{0} resources": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.": {
@@ -234038,6 +234405,15 @@
       "routes/admin"
     ]
   },
+  "{0} set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} settings saved": {
     "sites": 1,
     "scope": [
@@ -234047,7 +234423,16 @@
       "routes/agent-control"
     ]
   },
-  "{0} settled {1} across {2} {3} · {4}% ran past free time {5}": {
+  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time · top facilities only": {
     "sites": 1,
     "scope": [
       "ts"
@@ -234291,7 +234676,7 @@
       "routes/edi"
     ]
   },
-  "{0} total {1}": {
+  "{0} total {1, plural, one {piece} other {pieces}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -234406,15 +234791,6 @@
     ],
     "areas": [
       "domain/rateagreement"
-    ]
-  },
-  "{0} values": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} values changed": {
@@ -234608,7 +234984,7 @@
       "apps/web/components"
     ]
   },
-  "{0} will be tendered to": {
+  "{0} will be tendered to <b>{1}</b> for approval by the receiving organization.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -234806,42 +235182,6 @@
       "routes/worker"
     ]
   },
-  "{0} {1} detected": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "{0} {1} didn't go through. Look at why and fix them: {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "{0} {1} of {2} {3} · {4} didn't go through": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "{0} {1} on {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/my-team"
-    ]
-  },
   "{0} {1} posted, {2} waiting.": {
     "sites": 1,
     "scope": [
@@ -234851,15 +235191,6 @@
       "routes/fuel-feed-run"
     ]
   },
-  "{0} {1} will be left out.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/ifta-tax-rate"
-    ]
-  },
   "{0} {1} will be notified in Dash and by SMS that their time off ({2}) is approved.": {
     "sites": 1,
     "scope": [
@@ -234867,15 +235198,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "{0} {1} with no position": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/org-structure"
     ]
   },
   "{0} {1} you": {
@@ -234896,15 +235218,6 @@
       "routes/formula-template"
     ]
   },
-  "{0} {1} · drag onto a driver": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "{0} {1} · {2} h taken {3}": {
     "sites": 1,
     "scope": [
@@ -234912,33 +235225,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "{0} {1} · {2} past free time {3}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0} {1} · {2} {3} · {4} each": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0} {1}m": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/service-failure"
     ]
   },
   "{0} · OpenID connect": {
@@ -234993,6 +235279,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "{0} · in window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
     ]
   },
   "{0} · just now": {
@@ -235349,6 +235644,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0}% of target": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0}% of the way": {
@@ -235745,15 +236049,6 @@
       "routes/desk"
     ]
   },
-  "{0}s": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/reports"
-    ]
-  },
   "{0}{1} (override)": {
     "sites": 1,
     "scope": [
@@ -235819,15 +236114,6 @@
   },
   "{P}-{Y}{M}-{S}": {
     "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "{loginSlug}": {
-    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -235908,7 +236194,34 @@
       "routes/agent-control"
     ]
   },
-  "· Amended by {0}{1}": {
+  "· Amended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "· Amended by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "· Amended by {0} — {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "· Amended — {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -236090,15 +236403,6 @@
       "apps/dash/_components"
     ]
   },
-  "· in window": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-desk"
-    ]
-  },
   "· in {0}": {
     "sites": 1,
     "scope": [
@@ -236141,16 +236445,6 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement-workspace"
-    ]
-  },
-  "· pays": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/carrier-settlement-workspace",
       "routes/settlement-workspace"
     ]
   },
@@ -236251,15 +236545,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "· top facilities only": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "· until {0}": {
@@ -236776,15 +237061,6 @@
     ],
     "areas": [
       "template/notification.dash.obligations_digest"
-    ]
-  },
-  "— expires {0}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "— file attached": {

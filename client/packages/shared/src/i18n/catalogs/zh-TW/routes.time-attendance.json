@@ -95,7 +95,7 @@
   "{0, plural, one {# timesheet} other {# timesheets}} {1} {2}": "{0, plural, other {# 份工時表}} {1} {2}",
   "{0} + running": "{0} + 進行中",
   "{0} Every week in it goes back to approved so the period can be run again once whatever was wrong is fixed. The run itself is kept, not deleted.": "{0} 其中的每一週都會回復為已核准，待問題修正後即可重新執行該期間。該次執行本身會保留，不會刪除。",
-  "{0} across {1} {2}": "{0}，分布於 {1} 個{2}",
+  "{0} across {1, plural, one {# person} other {# people}}": "{0}，共 {1, plural, other {# 人}}",
   "{0} before overtime": "距加班還有 {0}",
   "{0} from {1} comes off the week. The reason is kept.": "將自本週移除 {1} 的 {0}。原因會保留。",
   "{0} into overtime": "已進入加班 {0}",

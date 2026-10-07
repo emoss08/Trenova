@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { PolicyAcknowledgements } from "./portal/policy-acknowledgements";
 import { ProfileChangeRequests } from "./portal/profile-change-requests";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -40,6 +41,7 @@ const invitationStatusVariants: Record<string, React.ComponentProps<typeof Badge
 
 export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const t = useT();
+  const rt = useRichT();
 
   const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState("");
@@ -145,9 +147,12 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
         ) : hasPending && data.pendingInvitation ? (
           <div className="mt-3 flex flex-col gap-1 text-sm">
             <p className="text-muted-foreground text-xs">
-              {t("Invitation sent to")}{" "}
-              <span className="text-foreground font-medium">{data.pendingInvitation.email}</span>{" "}
-              {t("— expires {0}.", formatDate(data.pendingInvitation.expiresAt))}
+              {rt(
+                "Invitation sent to <b>{0}</b> — expires {1}.",
+                { b: (c) => <span className="text-foreground font-medium">{c}</span> },
+                data.pendingInvitation.email,
+                formatDate(data.pendingInvitation.expiresAt),
+              )}
             </p>
             <Button
               variant="outline"

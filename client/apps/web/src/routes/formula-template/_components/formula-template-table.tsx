@@ -370,7 +370,10 @@ export default function FormulaTemplatesDataTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              {t("Archive {0} formula {1}?", archiveCount, pluralize("template", archiveCount))}
+              {t(
+                "{0, plural, one {Archive # formula template?} other {Archive # formula templates?}}",
+                archiveCount,
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(

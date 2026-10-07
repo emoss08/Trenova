@@ -92,10 +92,9 @@ export function TimeAttendanceOverview({
           awaitingSummary.count === 0
             ? t("Nothing waiting on you")
             : t(
-                "{0} across {1} {2}",
+                "{0} across {1, plural, one {# person} other {# people}}",
                 formatHours(awaitingSummary.totalMinutes),
                 awaitingSummary.workers,
-                awaitingSummary.workers === 1 ? "person" : "people",
               )
         }
       />

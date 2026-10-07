@@ -28,6 +28,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState, type ReactElement } from "react";
 import { Link, useLocation } from "react-router";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 const PINNED_LIMIT = 5;
 const RECENT_LIMIT = 5;
@@ -234,6 +235,7 @@ export function ModulesMenu({
   sideOffset?: number;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -297,7 +299,9 @@ export function ModulesMenu({
             }
           />
           <span className="ml-auto hidden items-center gap-1.5 sm:flex">
-            {t("Type a page name in")} <Kbd>{formatShortcut("K")}</Kbd> {t("to jump anywhere")}
+            {rt("Type a page name in <kbd/> to jump anywhere", {
+              kbd: () => <Kbd>{formatShortcut("K")}</Kbd>,
+            })}
           </span>
         </div>
       </PopoverContent>

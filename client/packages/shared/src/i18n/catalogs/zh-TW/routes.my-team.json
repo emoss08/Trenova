@@ -42,7 +42,7 @@
   "Your team could not be loaded. {0}": "無法載入您的團隊。{0}",
   "until called back": "直到另行通知",
   "until {0}": "直到 {0}",
+  "{0, plural, one {# year} other {# years}} on {1}": "{1} 滿 {0, plural, other {# 年}}",
   "{0} to keep an eye on": "{0} 項需留意",
-  "{0} {1} on {2}": "{2} 的 {0} {1}",
   "· {0} flagged": "· 已標記 {0}"
 }

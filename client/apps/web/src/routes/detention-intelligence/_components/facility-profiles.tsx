@@ -93,9 +93,8 @@ function FacilityRow({
           </p>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
             {t(
-              "{0} {1} · {2} past free time {3}",
+              "{0, plural, one {# stop} other {# stops}} · {1} past free time {2}",
               row.stopCount,
-              row.stopCount === 1 ? "stop" : "stops",
               row.breachCount,
               row.disputeCount > 0 ? ` ${t("· {0} disputed", row.disputeCount)}` : "",
             )}
@@ -251,7 +250,7 @@ export function FacilityProfiles({
               <PanelExpandToggle
                 expanded={expanded}
                 hiddenCount={hidden}
-                noun="facilities"
+                of="facilities"
                 onToggle={() => setExpanded((current) => !current)}
               />
             ) : (

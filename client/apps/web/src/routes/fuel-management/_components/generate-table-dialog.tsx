@@ -320,9 +320,8 @@ export function GenerateTableDialog({
           <span className="text-muted-foreground text-xs">
             {replaceCount > 0
               ? t(
-                  "Applying replaces your {0} existing {1}.",
+                  "Applying replaces your {0, plural, one {# existing band} other {# existing bands}}.",
                   replaceCount,
-                  replaceCount === 1 ? "band" : "bands",
                 )
               : ""}
           </span>

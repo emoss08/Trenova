@@ -178,9 +178,8 @@ export function BriefingBar({
                 <CheckIcon className="text-success size-3.5" />
                 {analyticsReady
                   ? t(
-                      "You're clear — {0} {1} moving, nothing flagged.",
+                      "You're clear — {0, plural, one {# load} other {# loads}} moving, nothing flagged.",
                       analytics.activeShipments.count,
-                      analytics.activeShipments.count === 1 ? "load" : "loads",
                     )
                   : t("You're clear — nothing flagged.")}
               </span>

@@ -2,11 +2,14 @@
   "Build EDI 214 payload": "建立 EDI 214 酬載",
   "Clear reason code": "清除原因代碼",
   "Customer-facing operational context": "面向客戶的營運說明",
+  "Cutoff": "截止時間",
   "EDI 214 payload generated": "EDI 214 酬載已產生",
   "EDI overrides": "EDI 覆寫",
+  "Grace {0}m": "寬限 {0} 分鐘",
   "Internal notes": "內部備註",
   "Internal review notes": "內部審查備註",
   "Late minutes": "遲到分鐘數",
+  "Late {0}m": "延誤 {0} 分鐘",
   "Loading service failure...": "正在載入服務失誤...",
   "Operations notes": "營運備註",
   "Overrides apply only to this failure.": "覆寫僅適用於此筆失誤。",
@@ -15,6 +18,5 @@
   "Select reason code": "選擇原因代碼",
   "Service failure resolved": "服務失誤已處理",
   "Service failure reviewed": "服務失誤已審查",
-  "Service failure voided": "服務失誤已作廢",
-  "{0} {1}m": "{0} {1} 分鐘"
+  "Service failure voided": "服務失誤已作廢"
 }
