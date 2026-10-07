@@ -3,6 +3,7 @@
   "Bounced": "已退回",
   "Charge approved": "已批准费用",
   "Collectable now": "当前可收款",
+  "Connecting": "连接中",
   "Context the next person reviewing this waiver will need.": "下一位审查此豁免的人员所需的背景资料。",
   "Customer claims the driver arrived 40 minutes later than our records show": "客户主张司机的到达时间比我方记录晚了 40 分钟",
   "Defensibility": "可主张性",
@@ -28,6 +29,7 @@
   "No notices could be sent": "无法发送任何通知",
   "No notices have been sent for this stop.": "此停靠点尚未发送任何通知。",
   "No stops match this view": "没有停靠点符合此视图",
+  "Not refreshing": "未刷新",
   "Nothing on a dock": "月台上无车辆",
   "Nothing on the floor matches the lane and search you are in. Clearing them brings the whole desk back.": "当前没有任何项目符合您所在的栏位与搜索条件。清除后即可显示整个工作台。",
   "Notice window": "通知期间",
@@ -46,6 +48,7 @@
   "Send the customer notice before this deadline or the charge stops being collectable": "请在此期限前发送客户通知，否则此费用将无法收取",
   "Started notice": "开始通知",
   "Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.": "一旦记录到达，停靠点就会显示于此，且免费时间计时与通知期限均已开始运行。",
+  "Syncing": "同步中",
   "The charge was forgiven and the reason recorded as evidence.": "此费用已获免除，原因也已记录为佐证。",
   "The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now.": "计时在服务器上仍持续进行，并未丢失任何数据 — 只是此界面当前无法读取。",
   "The coded reason waiver leakage is reported against.": "豁免流失所归属的代码化原因。",
@@ -69,6 +72,7 @@
   "What is the customer disputing?": "客户争议的内容为何？",
   "engine {0}": "引擎 {0}",
   "free time": "免费等候时间",
+  "late {0}": "逾期 {0}",
   "{0, plural, one {# could not be sent and is still in the queue.} other {# could not be sent and are still in the queue.}}": "{0, plural, other {# 项无法发送，仍在队列中。}}",
   "{0, plural, one {# notice sent} other {# notices sent}}": "{0, plural, other {已发送 # 份通知}}",
   "{0, plural, one {# stop} other {# stops}} past the notice deadline": "{0, plural, other {# 个停靠点}}已超过通知截止时间",
@@ -80,5 +84,6 @@
   "{0} of {1, plural, one {# stop} other {# stops}}": "{0} / {1, plural, other {# 个停靠点}}",
   "{0} on site · free time ended {1}": "在场 {0} · 免费等候时间已于 {1} 结束",
   "{0} on site · free time ends {1}": "在场 {0} · 免费等候时间将于 {1} 结束",
+  "{0} payable": "{0} 应付",
   "{0} · in window": "{0} · 在窗口内"
 }

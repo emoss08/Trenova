@@ -1,3 +1,4 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { VehicleInspection } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
@@ -129,7 +130,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
   if (inspection.odometerMeters != null) {
     metaParts.push({
       key: "odometer",
-      label: `${Math.round(metersToMiles(inspection.odometerMeters)).toLocaleString()} mi`,
+      label: t("{0} mi", formatNumber(Math.round(metersToMiles(inspection.odometerMeters)))),
       isLocation: false,
     });
   }

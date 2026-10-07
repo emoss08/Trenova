@@ -391,6 +391,7 @@ function recordEntityOf(kind: string): RecordEntityType | null {
 }
 
 function camelKey(entity: RecordEntityType): string {
+  // i18n-ignore: record field key
   return `${entity.replaceAll(/_([a-z])/gu, (_match, letter: string) => letter.toUpperCase())}Id`;
 }
 

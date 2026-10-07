@@ -174,7 +174,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
               {logoURL ? (
                 <LazyImage
                   src={logoURL}
-                  alt={`${item.name} logo`}
+                  alt={t("{0} logo", item.name)}
                   className={cn("size-24 object-contain", logoSize?.imageClassName)}
                 />
               ) : (

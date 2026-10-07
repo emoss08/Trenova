@@ -110,9 +110,9 @@ export function HolidayDialog({
       return entry ? updateOrgHoliday(entry.id, input) : createOrgHoliday(input);
     },
     onSuccess: (saved) => {
-      toast.success(isEdit ? `${saved.name} updated` : `${saved.name} added`, {
+      toast.success(isEdit ? t("{0} updated", saved.name) : t("{0} added", saved.name), {
         description: saved.recursAnnually
-          ? `Every ${formatUtcDate(saved.holidayDate, { year: undefined })}.`
+          ? t("Every {0}.", formatUtcDate(saved.holidayDate, { year: undefined }))
           : formatUtcDate(saved.holidayDate, { weekday: "short" }),
       });
       onSaved?.(saved);
@@ -162,9 +162,9 @@ export function HolidayDialog({
                   description={
                     storedDate
                       ? recursAnnually
-                        ? `Every ${formatUtcDate(storedDate, { year: undefined })}`
+                        ? t("Every {0}", formatUtcDate(storedDate, { year: undefined }))
                         : formatUtcDate(storedDate, { weekday: "short" })
-                      : "The day the holiday or blackout falls on."
+                      : t("The day the holiday or blackout falls on.")
                   }
                 />
               </FormControl>

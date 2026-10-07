@@ -247,9 +247,12 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
 
   const panelTitle = row?.wholeName || `${row?.firstName} ${row?.lastName}` || "Worker";
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(row.updatedAt as number, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(row.updatedAt as number, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
     : undefined;
 
   return (

@@ -89,7 +89,7 @@ export function ChecklistCard({
               size="sm"
               variant="ghost"
               className="text-muted-foreground hover:text-destructive"
-              aria-label={`Cancel ${checklist.name}`}
+              aria-label={t("Cancel {0}", checklist.name)}
               onClick={() => onCancel(checklist)}
             >
               <XCloseIcon className="size-3.5" />

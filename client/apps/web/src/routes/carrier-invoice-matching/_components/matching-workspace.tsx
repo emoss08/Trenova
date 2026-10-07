@@ -269,7 +269,7 @@ export default function MatchingWorkspace() {
               />
               <TabChip
                 active={tab === "matches"}
-                label={`Matches (${matches.length})`}
+                label={t("Matches ({0})", matches.length)}
                 onClick={() => setTab("matches")}
               />
             </div>

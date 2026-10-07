@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { AssistantMessageAttachment } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -37,8 +38,8 @@ const FILE_KINDS: Record<string, [string, "pdf" | "img" | "sheet" | "doc"]> = {
 
 export function formatFileSize(bytes: number): string {
   return bytes < 1024 * 1024
-    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
-    : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    ? translate("{0} KB", Math.max(1, Math.round(bytes / 1024)))
+    : translate("{0} MB", (bytes / 1024 / 1024).toFixed(1));
 }
 
 /** An object URL for an image file, revoked when the file goes. */

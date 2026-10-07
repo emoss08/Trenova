@@ -259,13 +259,16 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       : title;
 
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(
-        row.updatedAt as number,
-        {
-          timeFormat: user?.timeFormat || "24-hour",
-        },
-        user?.timezone,
-      )}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(
+          row.updatedAt as number,
+          {
+            timeFormat: user?.timeFormat || "24-hour",
+          },
+          user?.timezone,
+        ),
+      )
     : undefined;
 
   const rowId = row !== null && row !== undefined ? String(row.id) : "unable to retrieve ID";

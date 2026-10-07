@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Popover,
   PopoverContent,
@@ -23,13 +24,14 @@ type InfoPopoverProps = {
  * of labelled figures use KpiInfoPopover.
  */
 export function InfoPopover({ title, children, className }: InfoPopoverProps) {
+  const t = useT();
   return (
     <Popover>
       <PopoverTrigger
         render={
           <button
             type="button"
-            aria-label={`About ${title}`}
+            aria-label={t("About {0}", title)}
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
               "text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors",

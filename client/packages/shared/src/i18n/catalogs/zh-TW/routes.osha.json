@@ -30,6 +30,7 @@
   "Edit figures": "編輯數字",
   "Electronically submitted": "已電子申報",
   "Establishment information": "營業場所資訊",
+  "Every case is closed": "所有案件皆已結案",
   "Form 300": "表格 300",
   "Form 300. One case recorded; case numbers restart each January. A case is recorded from the worker's safety tab.": "表格 300。已登錄 1 件案件；案件編號每年一月重新起算。案件從員工的安全頁籤登錄。",
   "Form 300. {0} cases recorded; case numbers restart each January. A case is recorded from the worker's safety tab.": "表格 300。已登錄 {0} 件案件；案件編號每年一月重新起算。案件從員工的安全頁籤登錄。",
@@ -54,6 +55,7 @@
   "Not yet submitted electronically": "尚未以電子方式送出",
   "Nothing in the log fits that search and filter together.": "紀錄中沒有同時符合該搜尋條件與篩選條件的項目。",
   "Nothing recorded for {0}": "{0} 沒有任何紀錄",
+  "Nothing recorded this year": "今年尚無紀錄",
   "Number of cases": "案件數",
   "Number of days": "天數",
   "Occurred {0}{1}": "發生於 {0}{1}",
@@ -106,5 +108,7 @@
   "e.g. Mar 2": "例如：3 月 2 日",
   "e.g. Vice President of Operations": "例如：營運副總裁",
   "will sign": "將簽署",
-  "{0} away from work, {1} restricted or transferred": "{0} 天缺勤，{1} 天限制工作或調職"
+  "{0} away from work, {1} restricted or transferred": "{0} 天缺勤，{1} 天限制工作或調職",
+  "{0} kept off the log": "{0} 未列入日誌",
+  "{0} still accruing days": "{0} 仍在累積天數"
 }

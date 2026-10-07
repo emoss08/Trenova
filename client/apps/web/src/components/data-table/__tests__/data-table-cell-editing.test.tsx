@@ -105,21 +105,21 @@ describe("DataTable cell editing", () => {
 
   it("shows edit affordances only on opted-in columns when a commit handler is provided", () => {
     renderTable(vi.fn());
-    expect(screen.getAllByLabelText("Edit name")).toHaveLength(2);
-    expect(screen.queryByLabelText("Edit status")).not.toBeInTheDocument();
+    expect(screen.getAllByLabelText("Edit Name")).toHaveLength(2);
+    expect(screen.queryByLabelText("Edit Status")).not.toBeInTheDocument();
   });
 
   it("shows no edit affordances without a commit handler", () => {
     renderTable();
-    expect(screen.queryByLabelText("Edit name")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Edit Name")).not.toBeInTheDocument();
   });
 
   it("commits an edited value with full cell context on Enter", async () => {
     const onCellEditCommit = vi.fn().mockResolvedValue(undefined);
     renderTable(onCellEditCommit);
 
-    fireEvent.click(screen.getAllByLabelText("Edit name")[0]);
-    const input = await screen.findByRole("textbox", { name: "Edit name" });
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
+    const input = await screen.findByRole("textbox", { name: "Edit Name" });
     expect(input).toHaveValue("Alice");
 
     fireEvent.change(input, { target: { value: "Alice Prime" } });
@@ -135,7 +135,7 @@ describe("DataTable cell editing", () => {
       });
     });
     await waitFor(() => {
-      expect(screen.queryByRole("textbox", { name: "Edit name" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("textbox", { name: "Edit Name" })).not.toBeInTheDocument();
     });
   });
 
@@ -143,13 +143,13 @@ describe("DataTable cell editing", () => {
     const onCellEditCommit = vi.fn();
     renderTable(onCellEditCommit);
 
-    fireEvent.click(screen.getAllByLabelText("Edit name")[0]);
-    const input = await screen.findByRole("textbox", { name: "Edit name" });
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
+    const input = await screen.findByRole("textbox", { name: "Edit Name" });
     fireEvent.change(input, { target: { value: "discarded" } });
     fireEvent.keyDown(input, { key: "Escape" });
 
     await waitFor(() => {
-      expect(screen.queryByRole("textbox", { name: "Edit name" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("textbox", { name: "Edit Name" })).not.toBeInTheDocument();
     });
     expect(onCellEditCommit).not.toHaveBeenCalled();
     expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -159,12 +159,12 @@ describe("DataTable cell editing", () => {
     const onCellEditCommit = vi.fn();
     renderTable(onCellEditCommit);
 
-    fireEvent.click(screen.getAllByLabelText("Edit name")[0]);
-    const input = await screen.findByRole("textbox", { name: "Edit name" });
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
+    const input = await screen.findByRole("textbox", { name: "Edit Name" });
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => {
-      expect(screen.queryByRole("textbox", { name: "Edit name" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("textbox", { name: "Edit Name" })).not.toBeInTheDocument();
     });
     expect(onCellEditCommit).not.toHaveBeenCalled();
   });
@@ -173,26 +173,26 @@ describe("DataTable cell editing", () => {
     const onCellEditCommit = vi.fn().mockRejectedValue(new Error("validation failed"));
     renderTable(onCellEditCommit);
 
-    fireEvent.click(screen.getAllByLabelText("Edit name")[0]);
-    const input = await screen.findByRole("textbox", { name: "Edit name" });
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
+    const input = await screen.findByRole("textbox", { name: "Edit Name" });
     fireEvent.change(input, { target: { value: "bad" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => {
       expect(onCellEditCommit).toHaveBeenCalledOnce();
     });
-    expect(screen.getByRole("textbox", { name: "Edit name" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Edit Name" })).toBeInTheDocument();
   });
 
   it("only one cell edits at a time", async () => {
     renderTable(vi.fn());
 
-    fireEvent.click(screen.getAllByLabelText("Edit name")[0]);
-    await screen.findByRole("textbox", { name: "Edit name" });
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
+    await screen.findByRole("textbox", { name: "Edit Name" });
 
-    fireEvent.click(screen.getAllByLabelText("Edit name")[0]);
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
     await waitFor(() => {
-      expect(screen.getAllByRole("textbox", { name: "Edit name" })).toHaveLength(1);
+      expect(screen.getAllByRole("textbox", { name: "Edit Name" })).toHaveLength(1);
     });
   });
 });

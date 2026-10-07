@@ -52,7 +52,7 @@ export function HomeLayoutsPage() {
   const remove = async (preset: HomeLayoutPreset) => {
     try {
       await deletePreset.mutateAsync(preset.id);
-      toast.success(`Deleted ${preset.name}`);
+      toast.success(t("Deleted {0}", preset.name));
       setConfirming(null);
     } catch (error) {
       toast.error(graphQLErrorMessage(error, "Could not delete that home screen"));
@@ -201,7 +201,7 @@ function PresetRow({
             variant="ghost"
             size="icon"
             className="text-destructive"
-            aria-label={`Delete ${preset.name}`}
+            aria-label={t("Delete {0}", preset.name)}
             onClick={onDelete}
           >
             <Trash01Icon className="size-4" />

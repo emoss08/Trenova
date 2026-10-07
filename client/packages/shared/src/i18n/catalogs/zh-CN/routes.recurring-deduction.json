@@ -18,5 +18,10 @@
   "The deduction begins applying to settlements whose period ends after this date.": "此扣款自期间结束日晚于此日期的结算开始套用。",
   "The deduction links to the driver's active escrow account when saved. Open an escrow account for the driver first if one doesn't exist.": "保存时，此扣款会关联至司机生效中的履约保证账户。若尚无账户，请先为该司机开立。",
   "The driver whose settlements this deduction is withheld from.": "此扣款所扣除的对象司机。",
-  "e.g. Occupational accident insurance": "例如：职业伤害保险"
+  "e.g. Occupational accident insurance": "例如：职业伤害保险",
+  "{0, plural, one {# deduction paused} other {# deductions paused}}": "{0, plural, other {已暂停 # 笔扣款}}",
+  "{0, plural, one {# deduction paused} other {# deductions paused}}, {1} failed": "{0, plural, other {已暂停 # 笔扣款}}，{1} 笔失败",
+  "{0, plural, one {# deduction resumed} other {# deductions resumed}}": "{0, plural, other {已恢复 # 笔扣款}}",
+  "{0, plural, one {# deduction resumed} other {# deductions resumed}}, {1} failed": "{0, plural, other {已恢复 # 笔扣款}}，{1} 笔失败",
+  "{0, plural, one {The selected deduction failed} other {All # selected deductions failed}}": "{0, plural, other {所选的 # 笔扣款均失败}}"
 }

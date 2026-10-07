@@ -56,10 +56,14 @@ const RESULT_OPTIONS = inspectionResultSchema.options.map((value) => ({
   value,
   label: sourceLabels(INSPECTION_RESULT_LABELS)[value],
 }));
-const LEVEL_OPTIONS = [1, 2, 3, 4, 5, 6].map((level) => ({
-  value: String(level),
-  label: `Level ${level}`,
-}));
+const LEVEL_OPTIONS = [
+  { value: "1", label: "Level 1" },
+  { value: "2", label: "Level 2" },
+  { value: "3", label: "Level 3" },
+  { value: "4", label: "Level 4" },
+  { value: "5", label: "Level 5" },
+  { value: "6", label: "Level 6" },
+];
 
 export type SafetyEventDialogProps = {
   open: boolean;

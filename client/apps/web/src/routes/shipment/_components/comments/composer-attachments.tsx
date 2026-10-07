@@ -121,7 +121,7 @@ function UploadChip({
         size="icon-xs"
         className="text-muted-foreground size-5 shrink-0"
         onClick={isActive ? onCancel : onRemove}
-        aria-label={`Remove ${upload.file.name}`}
+        aria-label={t("Remove {0}", upload.file.name)}
       >
         <XCloseIcon className="size-3" />
       </Button>

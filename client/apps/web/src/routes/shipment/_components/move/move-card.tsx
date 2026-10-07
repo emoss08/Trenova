@@ -100,8 +100,8 @@ export function MoveCard({
   // operator who reads "shipment control" while the profile is what denied it
   // goes looking in the wrong settings page.
   const removalBlockedReason = moveRemovalRule
-    ? `Move removal is blocked by the ${moveRemovalRule.provenance.profileName} profile`
-    : "Move removal is disabled by shipment control";
+    ? t("Move removal is blocked by the {0} profile", moveRemovalRule.provenance.profileName)
+    : t("Move removal is disabled by shipment control");
   const canUnassign =
     hasDriverAssignment && move?.status === "Assigned" && move?.assignment?.status === "New";
   const canCancelCarrier = hasCarrierAssignment && move?.status === "Assigned";
@@ -285,7 +285,7 @@ export function MoveCard({
               title={t("Delete")}
               label={t("Delete")}
               description={
-                canRemove ? "Delete this move and all associated stops" : removalBlockedReason
+                canRemove ? t("Delete this move and all associated stops") : removalBlockedReason
               }
               color="danger"
               disabled={!canRemove}

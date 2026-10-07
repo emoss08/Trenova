@@ -24,12 +24,27 @@ const SCAN_POLL_MS = 1500;
 
 type StartedScan = { requestId: string; device: string; startedAt: number };
 
-function scanName(startedAt: number, pages: number, index: number, of: number): string {
+type ScanNameParams = {
+  startedAt: number;
+  pages: number;
+  index: number;
+  of: number;
+  t: ReturnType<typeof useT>;
+};
+
+function scanName({ startedAt, pages, index, of, t }: ScanNameParams): string {
   const time = new Date(startedAt)
     .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
     .replace(/\s/g, "");
-  const part = of > 1 ? ` (${index + 1} of ${of})` : "";
-  return `Scan ${time}${part} · ${pages} page${pages === 1 ? "" : "s"}.pdf`;
+  return of > 1
+    ? t(
+        "Scan {0} ({1} of {2}) · {3, plural, one {# page} other {# pages}}.pdf",
+        time,
+        index + 1,
+        of,
+        pages,
+      )
+    : t("Scan {0} · {1, plural, one {# page} other {# pages}}.pdf", time, pages);
 }
 
 /** Turns one scan's request and batch into the chips it shows on the message. */
@@ -63,14 +78,26 @@ function scanAttachments(
     items.length > 0 &&
     items.every((item) => item.status === "Filed" || item.status === "Failed");
   if (!settled) {
-    return [{ ...base, status: "uploading", scan: { device: scan.device, pages: batch?.receivedPageCount ?? 0 } }];
+    return [
+      {
+        ...base,
+        status: "uploading",
+        scan: { device: scan.device, pages: batch?.receivedPageCount ?? 0 },
+      },
+    ];
   }
   if (filed.length === 0) {
     return [{ ...base, status: "error", refused: true, error: t("No pages came through") }];
   }
   return filed.map((item, index) => ({
     id: `${scan.requestId}:${item.id}`,
-    name: scanName(scan.startedAt, item.pageCount, index, filed.length),
+    name: scanName({
+      startedAt: scan.startedAt,
+      pages: item.pageCount,
+      index,
+      of: filed.length,
+      t,
+    }),
     size: item.pageCount * 180_000,
     status: "ready",
     progress: 1,
@@ -172,7 +199,13 @@ export function useDeskScans(threadId: string | null) {
     setDropped(new Set());
   }, []);
 
-  return { items, start, remove, clear, owns: (id: string) => items.some((item) => item.id === id) };
+  return {
+    items,
+    start,
+    remove,
+    clear,
+    owns: (id: string) => items.some((item) => item.id === id),
+  };
 }
 
 type DocumentTypeOption = { id: string; name: string };
@@ -251,7 +284,13 @@ export function DeskCapturePanel({
   return (
     <div className="dk-cap">
       <div className="dk-cap-h">
-        <button type="button" className="dk-ib" title={t("Back")} aria-label={t("Back")} onClick={onBack}>
+        <button
+          type="button"
+          className="dk-ib"
+          title={t("Back")}
+          aria-label={t("Back")}
+          onClick={onBack}
+        >
           <DeskIcon name="chevL" size={13} />
         </button>
         <span>
@@ -270,7 +309,9 @@ export function DeskCapturePanel({
           </span>
           <b>{t("No computer is set up to scan for you")}</b>
           <span>
-            {t("Install Trenova Capture, sign in from its tray icon, and approve the code it shows.")}
+            {t(
+              "Install Trenova Capture, sign in from its tray icon, and approve the code it shows.",
+            )}
           </span>
           <div className="dk-cap-acts">
             <Link className="dk-ec-btn dk-ink" to="/capture/devices">
@@ -306,7 +347,10 @@ export function DeskCapturePanel({
             {device && !device.isOnline && (
               <div className="dk-cap-warn">
                 <DeskIcon name="alert" size={12} stroke={2} />
-                {t("{0} isn't connected. The scan waits a few minutes for it to come online.", device.name)}
+                {t(
+                  "{0} isn't connected. The scan waits a few minutes for it to come online.",
+                  device.name,
+                )}
               </div>
             )}
           </div>
@@ -338,7 +382,10 @@ export function DeskCapturePanel({
             </label>
             <label className="dk-cap-sel dk-wide">
               <span>{t("Document type")}</span>
-              <select value={documentTypeId} onChange={(event) => setDocumentTypeId(event.target.value)}>
+              <select
+                value={documentTypeId}
+                onChange={(event) => setDocumentTypeId(event.target.value)}
+              >
                 <option value="">{t("Let Desk decide")}</option>
                 {(typesQuery.data ?? []).map((candidate) => (
                   <option key={candidate.id} value={candidate.id}>

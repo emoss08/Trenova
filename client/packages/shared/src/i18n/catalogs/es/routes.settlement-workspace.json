@@ -58,6 +58,7 @@
   "Pay events deliberately deferred — they skip generation until released.": "Eventos de pago aplazados deliberadamente: se omiten en la generación hasta que se liberen.",
   "Pay now": "Pagar ahora",
   "Pay this driver immediately — approve, post, and mark paid in one pass": "Pague a este conductor de inmediato: aprobar, contabilizar y marcar como pagado de una sola vez",
+  "Pay {0}": "Pagar {0}",
   "Paying...": "Pagando...",
   "Payment reference": "Referencia del pago",
   "Period net pay": "Pago neto del período",
@@ -92,5 +93,6 @@
   "{0} events · {1} drivers": "{0} eventos · {1} conductores",
   "{0} held (": "{0} retenido(s) (",
   "{0} held events": "{0} eventos retenidos",
+  "{0} paid": "{0} pagado",
   "· paused": "· en pausa"
 }

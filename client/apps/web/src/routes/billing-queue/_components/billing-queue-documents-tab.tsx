@@ -6,7 +6,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { queries } from "@/lib/queries";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
 import type { Document } from "@trenova/shared/types/document";
@@ -33,12 +33,6 @@ function getFileIcon(fileType: string) {
   if (fileType.startsWith("image/")) return Image01Icon;
   if (fileType === "application/pdf") return File06Icon;
   return File04Icon;
-}
-
-function formatSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function BillingQueueDocumentsTab({
@@ -251,7 +245,7 @@ export function BillingQueueDocumentsTab({
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm">{doc.originalName}</span>
                     <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                      <span>{formatSize(doc.fileSize)}</span>
+                      <span>{formatFileSize(doc.fileSize)}</span>
                       <span>&middot;</span>
                       <span>
                         {formatDistanceToNowStrict(fromUnixTime(doc.createdAt), {

@@ -8,13 +8,6 @@ export const bulkActionEligibility: Record<BulkSettlementActionType, DriverSettl
   MarkPaid: ["Posted"],
 };
 
-export const bulkActionVerbs: Record<BulkSettlementActionType, string> = {
-  Submit: "submitted",
-  Approve: "approved",
-  Post: "posted",
-  MarkPaid: "marked paid",
-};
-
 export const settlementLifecycleChoices = [
   {
     value: "Submit",

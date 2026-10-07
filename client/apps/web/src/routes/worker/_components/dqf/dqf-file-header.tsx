@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import type { DQFFile } from "@/lib/graphql/worker-dqf";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -96,7 +96,7 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
                   type="button"
                   className={cn(className, "hover:border-border hover:bg-muted/30")}
                   onClick={() => onOpenTab(tab)}
-                  aria-label={`Open ${SPINE_LABELS[section.section].toLowerCase()}`}
+                  aria-label={openSectionLabel(t, section.section)}
                 >
                   {body}
                 </button>
@@ -136,6 +136,19 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
       </dl>
     </div>
   );
+}
+
+function openSectionLabel(t: TranslateFn, section: DQFSectionValue): string {
+  switch (section) {
+    case "Credentials":
+      return t("Open licences & reviews");
+    case "Documents":
+      return t("Open documents");
+    case "SafetyHistory":
+      return t("Open employers");
+    case "DrugAlcohol":
+      return t("Open drug & alcohol");
+  }
 }
 
 function SpineBar({

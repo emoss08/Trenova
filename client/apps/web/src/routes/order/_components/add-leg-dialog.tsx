@@ -118,7 +118,7 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
                     onClick={() =>
                       setSelected((current) => current.filter((item) => item.id !== leg.id))
                     }
-                    aria-label={`Remove ${leg.label}`}
+                    aria-label={t("Remove {0}", leg.label)}
                   >
                     <XCloseIcon className="size-3" />
                   </Button>

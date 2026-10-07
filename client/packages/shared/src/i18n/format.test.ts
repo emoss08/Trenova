@@ -92,6 +92,21 @@ describe("cached Intl formatters", () => {
   });
 });
 
+describe("formatRelativeTime", () => {
+  afterEach(async () => {
+    await setLocale("en");
+  });
+
+  it("writes the compact form a dense row uses, in the reader's language", async () => {
+    expect(formatRelativeTime(-31, "narrow")).toBe("31s ago");
+    expect(formatRelativeTime(-3 * 86_400, "narrow")).toBe("3d ago");
+    expect(formatRelativeTime(-3 * 86_400)).toBe("3 days ago");
+
+    await setLocale("es");
+    expect(formatRelativeTime(-3 * 86_400, "narrow")).toBe("hace 3 días");
+  });
+});
+
 describe("formatOrdinal", () => {
   afterEach(async () => {
     await setLocale("en");

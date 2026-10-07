@@ -21,5 +21,8 @@
   "Shown to the driver verbatim; say what was checked and why the outcome is right.": "会原文显示给司机；请说明核查了哪些内容，以及该结果为何正确。",
   "Submitted {0}{1}": "提交于 {0}{1}",
   "This dispute could not be loaded.": "无法加载此争议。",
+  "{0, plural, one {# dispute moved to review} other {# disputes moved to review}}": "{0, plural, other {已将 # 项争议转入审核}}",
+  "{0, plural, one {# dispute moved to review} other {# disputes moved to review}}, {1} failed": "{0, plural, other {已将 # 项争议转入审核}}，{1} 项失败",
+  "{0, plural, one {The selected dispute failed} other {All # selected disputes failed}}": "{0, plural, other {所选的 # 项争议均失败}}",
   "· correcting adjustment applied": "· 已应用更正调整"
 }

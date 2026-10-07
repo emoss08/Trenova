@@ -3,6 +3,7 @@
   "Bounced": "遭退回",
   "Charge approved": "已核准費用",
   "Collectable now": "目前可收款",
+  "Connecting": "正在連線",
   "Context the next person reviewing this waiver will need.": "下一位審查此豁免的人員所需的背景資料。",
   "Customer claims the driver arrived 40 minutes later than our records show": "客戶主張駕駛員的到達時間比我方記錄晚了 40 分鐘",
   "Defensibility": "可主張性",
@@ -28,6 +29,7 @@
   "No notices could be sent": "無法寄送任何通知",
   "No notices have been sent for this stop.": "此停靠點尚未寄送任何通知。",
   "No stops match this view": "沒有停靠點符合此檢視",
+  "Not refreshing": "未自動重新整理",
   "Nothing on a dock": "碼頭上沒有任何車輛",
   "Nothing on the floor matches the lane and search you are in. Clearing them brings the whole desk back.": "目前沒有任何項目符合您所在的欄位與搜尋條件。清除後即可顯示整個作業台。",
   "Notice window": "通知期間",
@@ -46,6 +48,7 @@
   "Send the customer notice before this deadline or the charge stops being collectable": "請在此期限前寄送客戶通知，否則此費用將無法收取",
   "Started notice": "開始通知",
   "Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.": "一旦記錄到達，停靠點就會顯示於此，且免費時間計時與通知期限皆已開始運行。",
+  "Syncing": "正在同步",
   "The charge was forgiven and the reason recorded as evidence.": "此費用已獲免除，原因也已記錄為佐證。",
   "The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now.": "計時在伺服器上仍持續進行，並未遺失任何資料 — 只是此畫面目前無法讀取。",
   "The coded reason waiver leakage is reported against.": "豁免流失所歸屬的代碼化原因。",
@@ -69,6 +72,7 @@
   "What is the customer disputing?": "客戶爭議的內容為何？",
   "engine {0}": "引擎 {0}",
   "free time": "免費等候時間",
+  "late {0}": "逾期 {0}",
   "{0, plural, one {# could not be sent and is still in the queue.} other {# could not be sent and are still in the queue.}}": "{0, plural, other {# 則無法傳送，仍在佇列中。}}",
   "{0, plural, one {# notice sent} other {# notices sent}}": "{0, plural, other {已傳送 # 則通知}}",
   "{0, plural, one {# stop} other {# stops}} past the notice deadline": "{0, plural, other {# 個停靠點}}已超過通知期限",
@@ -80,5 +84,6 @@
   "{0} of {1, plural, one {# stop} other {# stops}}": "{1, plural, other {# 個停靠點}}中的 {0} 個",
   "{0} on site · free time ended {1}": "在場 {0} · 免費時間已於 {1} 結束",
   "{0} on site · free time ends {1}": "在場 {0} · 免費時間將於 {1} 結束",
+  "{0} payable": "應付 {0}",
   "{0} · in window": "{0} · 在時段內"
 }

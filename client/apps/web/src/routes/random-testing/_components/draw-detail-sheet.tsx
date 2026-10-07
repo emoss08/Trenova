@@ -121,17 +121,19 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                     <span className="cc-label text-foreground">{tally.substance}</span>
                     <span className="font-mono tabular-nums">
                       {tally.collected}
-                      <span className="text-muted-foreground">/{tally.total} collected</span>
+                      <span className="text-muted-foreground">
+                        {t("/{0} collected", tally.total)}
+                      </span>
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-1 tabular-nums">
                     {tally.total === 0
                       ? t("Nobody selected")
                       : [
-                          tally.outstanding > 0 ? `${tally.outstanding} to collect` : null,
-                          tally.notified > 0 ? `${tally.notified} notified` : null,
-                          tally.excused > 0 ? `${tally.excused} excused` : null,
-                          tally.missed > 0 ? `${tally.missed} missed` : null,
+                          tally.outstanding > 0 ? t("{0} to collect", tally.outstanding) : null,
+                          tally.notified > 0 ? t("{0} notified", tally.notified) : null,
+                          tally.excused > 0 ? t("{0} excused", tally.excused) : null,
+                          tally.missed > 0 ? t("{0} missed", tally.missed) : null,
                         ]
                           .filter(Boolean)
                           .join(" · ") || t("All collected")}

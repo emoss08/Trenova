@@ -61,7 +61,7 @@ export function WaiveTrainingDialog({
       return waiveWorkerTraining({ id: record.id, reason: values.reason, version: record.version });
     },
     onSuccess: (saved) => {
-      toast.success(`${saved.course?.name ?? "Course"} waived`, {
+      toast.success(saved.course?.name ? t("{0} waived", saved.course.name) : t("Course waived"), {
         description: t("It counts as satisfied; the reason stays on the record."),
       });
       void invalidate();

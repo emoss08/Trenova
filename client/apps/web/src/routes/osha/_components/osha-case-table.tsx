@@ -218,7 +218,7 @@ export function OshaCaseTable({
                     key={entry.id}
                     data-slot="table-row"
                     data-recordable={entry.recordable}
-                    aria-label={`Case ${label}`}
+                    aria-label={t("Case {0}", label)}
                     onClick={() => onOpen(entry)}
                     className={cn(
                       "hover:bg-muted/50 cursor-pointer border-b text-xs transition-colors last:border-0",

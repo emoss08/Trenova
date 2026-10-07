@@ -92,7 +92,9 @@ function PartnerSideFields({
 }) {
   const t = useT();
 
+  // i18n-ignore: form field path
   const codeName = `${prefix}Code` as const;
+  // i18n-ignore: form field path
   const partnerName = `${prefix}Name` as const;
   const contactName = `${prefix}ContactName` as const;
   const contactEmail = `${prefix}ContactEmail` as const;

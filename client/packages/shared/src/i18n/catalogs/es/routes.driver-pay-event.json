@@ -14,5 +14,11 @@
   "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.": "Percepciones de los conductores devengadas en tiempo real a medida que se entregan los envíos: el libro de origen detrás de cada liquidación.",
   "Release holds": "Liberar las retenciones",
   "e.g. Awaiting signed BOL from the shipper": "p. ej., A la espera del conocimiento de embarque firmado por el expedidor",
-  "e.g. Awaiting signed BOLs for this batch": "p. ej., A la espera de los conocimientos de embarque firmados de este lote"
+  "e.g. Awaiting signed BOLs for this batch": "p. ej., A la espera de los conocimientos de embarque firmados de este lote",
+  "{0, plural, one {# hold released} other {# holds released}}": "{0, plural, one {# retención liberada} other {# retenciones liberadas}}",
+  "{0, plural, one {# hold released} other {# holds released}}, {1} failed": "{0, plural, one {# retención liberada} other {# retenciones liberadas}}, {1} fallaron",
+  "{0, plural, one {# pay event held} other {# pay events held}}": "{0, plural, one {# evento de pago retenido} other {# eventos de pago retenidos}}",
+  "{0, plural, one {# pay event held} other {# pay events held}}, {1} failed": "{0, plural, one {# evento de pago retenido} other {# eventos de pago retenidos}}, {1} fallaron",
+  "{0, plural, one {The selected hold failed} other {All # selected holds failed}}": "{0, plural, one {Falló la retención seleccionada} other {Fallaron las # retenciones seleccionadas}}",
+  "{0, plural, one {The selected pay event failed} other {All # selected pay events failed}}": "{0, plural, one {Falló el evento de pago seleccionado} other {Fallaron los # eventos de pago seleccionados}}"
 }

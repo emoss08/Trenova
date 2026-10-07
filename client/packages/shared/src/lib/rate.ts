@@ -339,5 +339,5 @@ export function findCoverageIssues(rules: RateAgreementRule[]): LaneCoverageIssu
 
 /** The label a lane shows when nobody has named it. */
 export function laneDisplayLabel(rule: RateAgreementRule, index: number): string {
-  return rule.label || `Lane ${index + 1}`;
+  return rule.label || translate("Lane {0}", index + 1);
 }

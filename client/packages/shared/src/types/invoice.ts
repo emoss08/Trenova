@@ -483,7 +483,9 @@ export const voidInvoiceFormSchema = z.object({
     .string()
     .trim()
     .min(1, { error: () => translate("Say why the invoice is being voided") })
-    .max(MAX_VOID_REASON_LENGTH, `Reason must be at most ${MAX_VOID_REASON_LENGTH} characters`),
+    .max(MAX_VOID_REASON_LENGTH, {
+      error: () => translate("Reason must be at most {0} characters", MAX_VOID_REASON_LENGTH),
+    }),
   disposition: invoiceVoidDispositionSchema,
 });
 export type VoidInvoiceFormValues = z.infer<typeof voidInvoiceFormSchema>;
@@ -532,7 +534,9 @@ export const memoFormSchema = z.object({
     .string()
     .trim()
     .min(1, { error: () => translate("Say why the memo is being raised") })
-    .max(MAX_MEMO_REASON_LENGTH, `Reason must be at most ${MAX_MEMO_REASON_LENGTH} characters`),
+    .max(MAX_MEMO_REASON_LENGTH, {
+      error: () => translate("Reason must be at most {0} characters", MAX_MEMO_REASON_LENGTH),
+    }),
   invoiceDate: z.number().int().nullish(),
   memo: z.string().optional().default(""),
   autoPost: z.boolean().default(false),
@@ -557,7 +561,9 @@ export const openDisputeFormSchema = z.object({
     .positive({ error: () => translate("Disputed amount must be greater than zero") }),
   notes: z
     .string()
-    .max(MAX_DISPUTE_NOTES_LENGTH, `Notes must be at most ${MAX_DISPUTE_NOTES_LENGTH} characters`)
+    .max(MAX_DISPUTE_NOTES_LENGTH, {
+      error: () => translate("Notes must be at most {0} characters", MAX_DISPUTE_NOTES_LENGTH),
+    })
     .optional()
     .default(""),
 });
@@ -569,7 +575,9 @@ export const resolveDisputeFormSchema = z
     resolutionAdjustmentId: z.string().nullish(),
     resolutionNotes: z
       .string()
-      .max(MAX_DISPUTE_NOTES_LENGTH, `Notes must be at most ${MAX_DISPUTE_NOTES_LENGTH} characters`)
+      .max(MAX_DISPUTE_NOTES_LENGTH, {
+        error: () => translate("Notes must be at most {0} characters", MAX_DISPUTE_NOTES_LENGTH),
+      })
       .optional()
       .default(""),
   })

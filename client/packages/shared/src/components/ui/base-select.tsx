@@ -127,21 +127,25 @@ const selectTriggerVariants = cva(
   {
     variants: {
       size: {
+        // i18n-ignore: Tailwind class list
         xs: `
 					h-7 gap-1 rounded-md px-2 text-xs
 					[&_[data-slot=select-clear]]:end-6 [&_[data-slot=select-clear]>svg]:size-3
 					[&_[data-slot=select-icon]]:-me-0.75 [&_[data-slot=select-icon]]:size-3.5
 				`,
+        // i18n-ignore: Tailwind class list
         sm: `
 					h-8 gap-1 rounded-md px-2.5 text-xs
 					[&_[data-slot=select-clear]]:end-6 [&_[data-slot=select-clear]>svg]:size-3
 					[&_[data-slot=select-icon]]:-me-0.75 [&_[data-slot=select-icon]]:size-3.5
 				`,
+        // i18n-ignore: Tailwind class list
         md: `
 					h-9 gap-1 rounded-md px-3 text-sm
 					[&_[data-slot=select-clear]]:end-7 [&_[data-slot=select-clear]>svg]:size-3.5
 					[&_[data-slot=select-icon]]:-me-1 [&_[data-slot=select-icon]]:size-4
 				`,
+        // i18n-ignore: Tailwind class list
         lg: `
 					h-10 gap-1.5 rounded-md px-4 text-sm
 					[&_[data-slot=select-clear]]:end-8 [&_[data-slot=select-clear]>svg]:size-3.5

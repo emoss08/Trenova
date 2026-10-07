@@ -165,7 +165,22 @@ function columnText(column: DefinitionColumn): string {
   if (agg === "") {
     return field;
   }
-  return `${agg.replaceAll("_", " ")} of ${field}`;
+  switch (agg) {
+    case "count":
+      return translate("count of {0}", field);
+    case "count_distinct":
+      return translate("count distinct of {0}", field);
+    case "sum":
+      return translate("sum of {0}", field);
+    case "avg":
+      return translate("avg of {0}", field);
+    case "min":
+      return translate("min of {0}", field);
+    case "max":
+      return translate("max of {0}", field);
+    default:
+      return translate("{0} of {1}", agg.replaceAll("_", " "), field);
+  }
 }
 
 function countFilters(group: { filters?: unknown; groups?: unknown } | undefined): number {
@@ -598,7 +613,7 @@ const PRESENTERS: Record<string, Presenter> = {
         fact("Customer", shortRef(text(draft.customerId))),
         fact("Service type", shortRef(text(draft.serviceTypeId))),
         fact("Pieces", text(draft.pieces)),
-        fact("Weight", text(draft.weight) ? `${text(draft.weight)} lb` : ""),
+        fact("Weight", text(draft.weight) ? translate("{0} lb", text(draft.weight)) : ""),
         fact("Freight charge", text(draft.freightChargeAmount)),
         fact("Source document", shortRef(text(args.sourceDocumentId))),
       ),
@@ -625,7 +640,7 @@ const PRESENTERS: Record<string, Presenter> = {
         fact("Shipment type", shortRef(text(args.shipmentTypeId))),
         fact("BOL", text(args.bol)),
         fact("Pieces", text(args.pieces)),
-        fact("Weight", text(args.weight) ? `${text(args.weight)} lb` : ""),
+        fact("Weight", text(args.weight) ? translate("{0} lb", text(args.weight)) : ""),
         fact(
           "Temperature",
           [text(args.temperatureMin), text(args.temperatureMax)].filter(Boolean).join(" to "),

@@ -64,5 +64,8 @@
   "e.g. STD-DRIVER": "例如：STD-DRIVER",
   "e.g. Standard Driver": "例如：標準駕駛員",
   "{0, plural, one {# worker is assigned; reassign them before deactivating.} other {# workers are assigned; reassign them before deactivating.}}": "{0, plural, other {有 # 名員工已受指派；請先重新指派他們再停用。}}",
-  "{0, plural, one {The selected policy failed} other {All # selected policies failed}}": "{0, plural, other {所選的 # 項政策全部失敗}}"
+  "{0, plural, one {The selected policy failed} other {All # selected policies failed}}": "{0, plural, other {所選的 # 項政策全部失敗}}",
+  "{0}: tracked": "{0}：已追蹤",
+  "{0}: {1}/mo": "{0}：{1}/月",
+  "{0}: {1}/yr": "{0}：{1}/年"
 }

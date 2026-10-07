@@ -61,5 +61,6 @@
   "e.g. Jan 1": "p. ej., 1 de enero",
   "{0} of {1} signed": "{0} de {1} firmados",
   "{0} still to sign.": "Quedan {0} por firmar.",
-  "{0} · from {1}": "{0} · desde {1}"
+  "{0} · read": "{0} · leído",
+  "{0} · signed “{1}”": "{0} · firmó “{1}”"
 }

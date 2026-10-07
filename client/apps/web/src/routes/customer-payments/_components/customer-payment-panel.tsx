@@ -47,12 +47,14 @@ export function CustomerPaymentPanel({
   mode,
   row,
 }: DataTablePanelProps<CustomerPaymentRow>) {
+  const t = useT();
+
   if (mode === "edit" && row) {
     const title = row.referenceNumber
-      ? `Payment ${row.referenceNumber}`
-      : `${formatCurrency(row.amountMinor / 100)} payment${
-          row.customer ? ` from ${row.customer.name}` : ""
-        }`;
+      ? t("Payment {0}", row.referenceNumber)
+      : row.customer
+        ? t("{0} payment from {1}", formatCurrency(row.amountMinor / 100), row.customer.name)
+        : t("{0} payment", formatCurrency(row.amountMinor / 100));
     return (
       <DataTablePanelContainer open={open} onOpenChange={onOpenChange} title={title} size="xl">
         <PaymentDetail paymentId={row.id} onClose={() => onOpenChange(false)} />

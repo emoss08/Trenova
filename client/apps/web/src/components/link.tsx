@@ -100,6 +100,7 @@ export function EntityRedirectLink({
   className,
   ...rest
 }: EntityRedirectLinkProps) {
+  const t = useT();
   const url = React.useMemo(() => {
     let computedUrl = `${baseUrl}`;
 
@@ -143,8 +144,8 @@ export function EntityRedirectLink({
       to={url}
       target={panelOpen ? "_blank" : undefined}
       className={linkClassName}
-      title={`View ${entityId}`}
-      aria-label={`View ${entityId}`}
+      title={t("View {0}", entityId)}
+      aria-label={t("View {0}", entityId)}
       style={internalLinkStyle}
       {...rest}
     >

@@ -16,5 +16,10 @@
   "The driver whose settlements this earning is added to.": "El conductor a cuyas liquidaciones se suma esta percepción.",
   "The earning begins applying to settlements whose period ends after this date.": "La percepción empieza a aplicarse a las liquidaciones cuyo período termina después de esta fecha.",
   "This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.": "Este código no es gravable: los importes se contabilizan en la liquidación como reembolsos, quedan excluidos de las comprobaciones del mínimo garantizado y se contabilizan en la cuenta del libro mayor del código (o en la cuenta de reembolsos a conductores) en lugar de en gastos salariales.",
-  "e.g. OTR per diem — IRS substantiated M&IE": "p. ej., Viáticos de larga distancia — M&IE justificados ante el IRS"
+  "e.g. OTR per diem — IRS substantiated M&IE": "p. ej., Viáticos de larga distancia — M&IE justificados ante el IRS",
+  "{0, plural, one {# earning paused} other {# earnings paused}}": "{0, plural, one {# percepción pausada} other {# percepciones pausadas}}",
+  "{0, plural, one {# earning paused} other {# earnings paused}}, {1} failed": "{0, plural, one {# percepción pausada} other {# percepciones pausadas}}, {1} fallaron",
+  "{0, plural, one {# earning resumed} other {# earnings resumed}}": "{0, plural, one {# percepción reanudada} other {# percepciones reanudadas}}",
+  "{0, plural, one {# earning resumed} other {# earnings resumed}}, {1} failed": "{0, plural, one {# percepción reanudada} other {# percepciones reanudadas}}, {1} fallaron",
+  "{0, plural, one {The selected earning failed} other {All # selected earnings failed}}": "{0, plural, one {Falló la percepción seleccionada} other {Fallaron las # percepciones seleccionadas}}"
 }

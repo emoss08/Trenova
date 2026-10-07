@@ -368,22 +368,22 @@ export function overriddenLimits(override: {
   const applied: string[] = [];
 
   if (override.maxWidthFeet != null) {
-    applied.push(`Width ${formatFeetInches(override.maxWidthFeet)}`);
+    applied.push(translate("Width {0}", formatFeetInches(override.maxWidthFeet)));
   }
   if (override.maxHeightFeet != null) {
-    applied.push(`Height ${formatFeetInches(override.maxHeightFeet)}`);
+    applied.push(translate("Height {0}", formatFeetInches(override.maxHeightFeet)));
   }
   if (override.maxLengthFeet != null) {
-    applied.push(`Length ${formatFeetInches(override.maxLengthFeet)}`);
+    applied.push(translate("Length {0}", formatFeetInches(override.maxLengthFeet)));
   }
   if (override.maxWeightPounds != null) {
     applied.push(formatPounds(override.maxWeightPounds));
   }
   if (override.permitLeadTimeDays != null) {
-    applied.push(`${override.permitLeadTimeDays}d lead`);
+    applied.push(translate("{0}d lead", override.permitLeadTimeDays));
   }
-  if (override.daylightOnly) applied.push("Daylight only");
-  if (override.holidayRestricted) applied.push("No holidays");
+  if (override.daylightOnly) applied.push(translate("Daylight only"));
+  if (override.holidayRestricted) applied.push(translate("No holidays"));
 
   return applied;
 }

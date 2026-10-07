@@ -14,5 +14,11 @@
   "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.": "運單完成交貨時即時計提的駕駛員薪酬 — 每筆結算背後的來源帳冊。",
   "Release holds": "解除暫扣",
   "e.g. Awaiting signed BOL from the shipper": "例如：等待託運人簽署的提單",
-  "e.g. Awaiting signed BOLs for this batch": "例如：等待此批次已簽署的提單"
+  "e.g. Awaiting signed BOLs for this batch": "例如：等待此批次已簽署的提單",
+  "{0, plural, one {# hold released} other {# holds released}}": "{0, plural, other {已解除 # 筆扣留}}",
+  "{0, plural, one {# hold released} other {# holds released}}, {1} failed": "{0, plural, other {已解除 # 筆扣留}}，{1} 筆失敗",
+  "{0, plural, one {# pay event held} other {# pay events held}}": "{0, plural, other {已扣留 # 筆薪酬事件}}",
+  "{0, plural, one {# pay event held} other {# pay events held}}, {1} failed": "{0, plural, other {已扣留 # 筆薪酬事件}}，{1} 筆失敗",
+  "{0, plural, one {The selected hold failed} other {All # selected holds failed}}": "{0, plural, other {所選的 # 筆扣留皆失敗}}",
+  "{0, plural, one {The selected pay event failed} other {All # selected pay events failed}}": "{0, plural, other {所選的 # 筆薪酬事件皆失敗}}"
 }

@@ -43,7 +43,9 @@ export const memoryFormSchema = z
       .string()
       .trim()
       .min(1, { error: () => translate("Say what the agents should know") })
-      .max(MEMORY_CONTENT_LIMIT, `Keep it to ${MEMORY_CONTENT_LIMIT} characters`),
+      .max(MEMORY_CONTENT_LIMIT, {
+        error: () => translate("Keep it to {0} characters", MEMORY_CONTENT_LIMIT),
+      }),
     subjectType: z.preprocess(
       (value) => (value === "" || value === undefined ? null : value),
       z.enum(memorySubjectTypeValues).nullable(),

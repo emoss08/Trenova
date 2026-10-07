@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import type { CarrierSettlementRow } from "@/lib/graphql/carrier-settlement";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -9,6 +10,8 @@ export function CarrierSettlementPanel({
   mode,
   row,
 }: DataTablePanelProps<CarrierSettlementRow>) {
+  const t = useT();
+
   if (mode !== "edit" || !row) {
     return null;
   }
@@ -17,7 +20,7 @@ export function CarrierSettlementPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={`Settlement ${row.settlementNumber}`}
+      title={t("Settlement {0}", row.settlementNumber)}
       description={row.carrier?.name}
       size="xl"
     >

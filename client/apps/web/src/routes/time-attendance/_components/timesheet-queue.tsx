@@ -308,11 +308,11 @@ function QueueRow({
     sheet.status === "Submitted" && sheet.submittedAt ? waitingDays(sheet.submittedAt, now) : null;
 
   const meta = [
-    `${sheet.entryCount} punch${sheet.entryCount === 1 ? "" : "es"}`,
+    t("{0, plural, one {# punch} other {# punches}}", sheet.entryCount),
     sheet.status !== "Submitted" && sheet.submittedAt
-      ? `handed over ${formatShiftDate(sheet.submittedAt)}`
+      ? t("handed over {0}", formatShiftDate(sheet.submittedAt))
       : null,
-    sheet.approvedAt ? `approved ${formatShiftDate(sheet.approvedAt)}` : null,
+    sheet.approvedAt ? t("approved {0}", formatShiftDate(sheet.approvedAt)) : null,
     sheet.status === "Rejected" && sheet.decisionNote ? sheet.decisionNote : null,
   ].filter(Boolean);
 
@@ -354,7 +354,7 @@ function QueueRow({
           size="sm"
           showLegend={false}
           className="min-w-0 flex-1"
-          aria-label={`${name}'s hours`}
+          aria-label={t("{0}'s hours", name)}
           formatValue={formatHours}
           segments={hourSegments(sheet)}
         />

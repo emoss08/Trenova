@@ -1,3 +1,5 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   fetchMyLoads,
   type PortalLoad,
@@ -59,15 +61,15 @@ export function directionsUrl(stop: PortalStop): string {
 
 export function formatMiles(miles?: number | null): string | null {
   if (miles == null || miles <= 0) return null;
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(miles)} mi`;
+  return translate("{0} mi", formatNumber(miles, { maximumFractionDigits: 0 }));
 }
 
 export function formatWeight(weight?: number | null): string | null {
   if (weight == null || weight <= 0) return null;
-  return `${new Intl.NumberFormat("en-US").format(weight)} lbs`;
+  return translate("{0} lbs", formatNumber(weight));
 }
 
 export function formatPieces(pieces?: number | null): string | null {
   if (pieces == null || pieces <= 0) return null;
-  return `${new Intl.NumberFormat("en-US").format(pieces)} pcs`;
+  return translate("{0} pcs", formatNumber(pieces));
 }

@@ -14,7 +14,6 @@ import {
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 
-
 type RoundsTableProps = {
   rows: readonly RandomDrawListRow[];
   canDraw: boolean;
@@ -60,10 +59,7 @@ export function RoundsTable({
           const short = draw.status !== "Cancelled" && drawShortOfTarget(draw);
           const busy = busyId === draw.id;
           return (
-            <tr
-              key={draw.id}
-              className="hover:bg-muted/50 border-b transition-colors"
-            >
+            <tr key={draw.id} className="hover:bg-muted/50 border-b transition-colors">
               <TableCell className="px-3 py-2">
                 <button
                   type="button"
@@ -119,7 +115,7 @@ export function RoundsTable({
                   <Button
                     size="xs"
                     variant="ghost"
-                    aria-label={`Open ${draw.periodKey}`}
+                    aria-label={t("Open {0}", draw.periodKey)}
                     onClick={() => onOpen(draw.id)}
                   >
                     {t("Open")}
@@ -130,7 +126,7 @@ export function RoundsTable({
                         size="xs"
                         variant="outline"
                         isLoading={busy}
-                        aria-label={`Finalise ${draw.periodKey}`}
+                        aria-label={t("Finalise {0}", draw.periodKey)}
                         onClick={() => onFinalise(draw)}
                       >
                         {t("Finalise")}
@@ -139,7 +135,7 @@ export function RoundsTable({
                         size="xs"
                         variant="ghost"
                         disabled={busy}
-                        aria-label={`Void ${draw.periodKey}`}
+                        aria-label={t("Void {0}", draw.periodKey)}
                         onClick={() => onVoid(draw)}
                       >
                         {t("Void")}
@@ -164,11 +160,12 @@ type FillProps = {
 };
 
 function Fill({ label, selected, target, muted }: FillProps) {
+  const t = useT();
   const share = target > 0 ? Math.min(100, Math.round((selected / target) * 100)) : 0;
   return (
     <span
       role="img"
-      aria-label={`${label}: ${selected} of ${target}`}
+      aria-label={t("{0}: {1} of {2}", label, selected, target)}
       className="flex min-w-24 items-center gap-2"
     >
       <span className="font-mono tabular-nums">

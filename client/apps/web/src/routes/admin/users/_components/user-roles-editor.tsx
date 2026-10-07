@@ -142,15 +142,21 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
   const role = assignment.role;
 
   const expiresText = assignment.expiresAt
-    ? `Expires: ${formatToUserTimezone(assignment.expiresAt, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
-    : "Never expires";
+    ? t(
+        "Expires: {0}",
+        formatToUserTimezone(assignment.expiresAt, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
+    : t("Never expires");
 
   const assignedText = assignment.assignedAt
-    ? `Assigned: ${formatToUserTimezone(assignment.assignedAt, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
+    ? t(
+        "Assigned: {0}",
+        formatToUserTimezone(assignment.assignedAt, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
     : "";
 
   return (

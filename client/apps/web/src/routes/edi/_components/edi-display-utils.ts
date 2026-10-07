@@ -158,7 +158,7 @@ export function formatNumber(value: number | null | undefined) {
 }
 
 export function formatWeight(value: number | null | undefined) {
-  return typeof value === "number" ? `${value.toLocaleString()} lb` : "-";
+  return typeof value === "number" ? translate("{0} lb", value.toLocaleString()) : "-";
 }
 
 export function formatUnix(value: number | null | undefined) {

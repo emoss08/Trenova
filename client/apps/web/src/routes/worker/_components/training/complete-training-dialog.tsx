@@ -118,8 +118,12 @@ export function CompleteTrainingDialog({
       const passed = saved.status === "Completed";
       toast[passed ? "success" : "warning"](
         passed
-          ? `${saved.course?.name ?? "Course"} completed`
-          : `${saved.course?.name ?? "Course"} failed`,
+          ? saved.course?.name
+            ? translate("{0} completed", saved.course.name)
+            : translate("Course completed")
+          : saved.course?.name
+            ? translate("{0} failed", saved.course.name)
+            : translate("Course failed"),
         {
           description: passed
             ? saved.expiresAt

@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   recurringEarningTableGraphQLConfig,
   updateRecurringEarning,
@@ -15,6 +15,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { earningStatusInput, getColumns } from "./earning-columns";
 import { EarningPanel } from "./earning-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function EarningsTable() {
   const t = useT();
@@ -29,10 +30,42 @@ export default function EarningsTable() {
         toast.info(t("No selected earnings can move to that status."));
         return;
       }
-      await runBulkAction(
-        eligible,
-        (row) => updateRecurringEarning(earningStatusInput(row, status as RecurringEarningStatus)),
-        { noun: "earning", verb: status === "Paused" ? "paused" : "resumed" },
+      const outcome = await settleAll(eligible, (row) =>
+        updateRecurringEarning(earningStatusInput(row, status as RecurringEarningStatus)),
+      );
+      notifyBulkOutcome(
+        outcome,
+        status === "Paused"
+          ? {
+              succeeded: (count) =>
+                translate("{0, plural, one {# earning paused} other {# earnings paused}}", count),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# earning paused} other {# earnings paused}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected earning failed} other {All # selected earnings failed}}",
+                  failed,
+                ),
+            }
+          : {
+              succeeded: (count) =>
+                translate("{0, plural, one {# earning resumed} other {# earnings resumed}}", count),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# earning resumed} other {# earnings resumed}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected earning failed} other {All # selected earnings failed}}",
+                  failed,
+                ),
+            },
       );
       await queryClient.invalidateQueries({ queryKey: ["recurring-earning-list"] });
     },

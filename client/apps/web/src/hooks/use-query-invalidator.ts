@@ -50,6 +50,7 @@ export const useQueryInvalidationListener = () => {
   const handleInvalidation: MessageHandler = useCallback(
     async (message) => {
       try {
+        // i18n-ignore: debug log line
         logDebug(`Processing invalidation for keys: ${message.queryKeys.join(", ")}`, "#87f542");
 
         const queryKeys = Array.isArray(message.queryKeys)
@@ -82,6 +83,7 @@ export const useQueryInvalidationListener = () => {
           );
         }
 
+        // i18n-ignore: debug log line
         logDebug(`Successfully invalidated queries`, "#4caf50");
       } catch (error) {
         console.error("[Trenova] Query invalidation failed:", error);
@@ -95,6 +97,7 @@ export const useQueryInvalidationListener = () => {
       try {
         if (!isInvalidationMessage(event.data)) return;
 
+        // i18n-ignore: debug log line
         logDebug(`Received invalidation message: ${event.data.queryKeys.join(", ")}`);
         await handleInvalidation(event.data);
       } catch (error) {
@@ -123,6 +126,7 @@ export const useQueryInvalidationListener = () => {
         const delay = calculateDelay(retryAttemptRef.current);
         retryAttemptRef.current += 1;
 
+        // i18n-ignore: debug log line
         logDebug(`Retrying channel initialization (attempt ${retryAttemptRef.current})`);
         retryTimeoutRef.current = window.setTimeout(
           () => void initializeChannelRef.current?.(),
@@ -175,6 +179,7 @@ export const broadcastQueryInvalidation = async ({
     };
 
     channel.postMessage(message);
+    // i18n-ignore: debug log line
     logDebug(`Broadcasted invalidation for keys: ${queryKey.join(", ")}`);
     cleanup();
   } catch (error) {

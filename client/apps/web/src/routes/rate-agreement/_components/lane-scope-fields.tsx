@@ -12,7 +12,6 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import type { RateScopeType } from "@trenova/shared/types/rate";
 import type { Control, FieldValues } from "react-hook-form";
 import { useWatch } from "react-hook-form";
-import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type LaneSide = "origin" | "destination";
 
@@ -33,17 +32,15 @@ function fieldsFor(namePrefix: string, side: LaneSide) {
   return {
     scopeType: `${prefix}ScopeType`,
     scopeValue: `${prefix}ScopeValue`,
+    // i18n-ignore: form field name
     city: `${prefix}City`,
     radiusMeters: `${prefix}RadiusMeters`,
+    // i18n-ignore: form field name
     latitude: `${prefix}Latitude`,
+    // i18n-ignore: form field name
     longitude: `${prefix}Longitude`,
   };
 }
-
-const sideLabel: Record<LaneSide, string> = defineLabels({
-  origin: "Origin",
-  destination: "Destination",
-});
 
 /**
  * The value fields for one end of a lane.
@@ -66,7 +63,7 @@ export function LaneScopeFields<T extends FieldValues>({
     control,
     name: names.scopeType as never,
   }) as unknown as RateScopeType;
-  const label = sideLabel[side];
+  const isOrigin = side === "origin";
 
   return (
     <FormGroup cols={2}>
@@ -75,7 +72,7 @@ export function LaneScopeFields<T extends FieldValues>({
           control={control}
           rules={{ required: true }}
           name={names.scopeType as never}
-          label={`${label} Scope`}
+          label={isOrigin ? t("Origin Scope") : t("Destination Scope")}
           placeholder={t("Select scope")}
           description={t(
             "How narrowly this end of the lane is written. A narrower scope beats a wider one covering the same load.",
@@ -90,7 +87,7 @@ export function LaneScopeFields<T extends FieldValues>({
             control={control}
             rules={{ required: true }}
             name={names.scopeValue as never}
-            label={`${label} Zone`}
+            label={isOrigin ? t("Origin Zone") : t("Destination Zone")}
             placeholder={t("Select zone")}
             description={t("The market area this end covers")}
           />
@@ -103,7 +100,7 @@ export function LaneScopeFields<T extends FieldValues>({
             control={control}
             rules={{ required: true }}
             name={names.scopeValue as never}
-            label={`${label} State`}
+            label={isOrigin ? t("Origin State") : t("Destination State")}
             placeholder={t("Select state")}
             description={t("The state this end covers")}
           />
@@ -116,7 +113,7 @@ export function LaneScopeFields<T extends FieldValues>({
             control={control}
             rules={{ required: true }}
             name={names.scopeValue as never}
-            label={`${label} Location`}
+            label={isOrigin ? t("Origin Location") : t("Destination Location")}
             placeholder={t("Select location")}
             description={t("The single facility this end covers")}
           />
@@ -130,7 +127,7 @@ export function LaneScopeFields<T extends FieldValues>({
               control={control}
               rules={{ required: true }}
               name={names.scopeValue as never}
-              label={`${label} State`}
+              label={isOrigin ? t("Origin State") : t("Destination State")}
               placeholder={t("Select state")}
               description={t("The state the city sits in")}
             />
@@ -140,7 +137,7 @@ export function LaneScopeFields<T extends FieldValues>({
               control={control}
               rules={{ required: true }}
               name={names.city as never}
-              label={`${label} City`}
+              label={isOrigin ? t("Origin City") : t("Destination City")}
               placeholder={t("City")}
               description={t(
                 "Spelling and case do not matter — the city is folded before it is matched",
@@ -157,13 +154,19 @@ export function LaneScopeFields<T extends FieldValues>({
             rules={{ required: true }}
             name={names.scopeValue as never}
             label={
-              scopeType === "Zip3" ? t("{0} Postal Prefix", label) : t("{0} Postal Code", label)
+              scopeType === "Zip3"
+                ? isOrigin
+                  ? t("Origin Postal Prefix")
+                  : t("Destination Postal Prefix")
+                : isOrigin
+                  ? t("Origin Postal Code")
+                  : t("Destination Postal Code")
             }
             placeholder={scopeType === "Zip3" ? "606" : "60601"}
             description={
               scopeType === "Zip3"
-                ? "The first three digits, which is how most tariffs are written"
-                : "The full postal code"
+                ? t("The first three digits, which is how most tariffs are written")
+                : t("The full postal code")
             }
           />
         </FormControl>
@@ -175,7 +178,7 @@ export function LaneScopeFields<T extends FieldValues>({
             control={control}
             rules={{ required: true }}
             name={names.scopeValue as never}
-            label={`${label} Country`}
+            label={isOrigin ? t("Origin Country") : t("Destination Country")}
             placeholder={t("USA")}
             description={t("Three letter country code")}
           />
@@ -189,7 +192,7 @@ export function LaneScopeFields<T extends FieldValues>({
               control={control}
               rules={{ required: true }}
               name={names.radiusMeters as never}
-              label={`${label} Radius`}
+              label={isOrigin ? t("Origin Radius") : t("Destination Radius")}
               placeholder="80000"
               sideText="m"
               description={t("How far from the centre point this end reaches")}
@@ -200,7 +203,7 @@ export function LaneScopeFields<T extends FieldValues>({
               control={control}
               rules={{ required: true }}
               name={names.latitude as never}
-              label={`${label} Latitude`}
+              label={isOrigin ? t("Origin Latitude") : t("Destination Latitude")}
               placeholder="32.7767"
               description={t("The centre point this end measures from")}
             />
@@ -210,7 +213,7 @@ export function LaneScopeFields<T extends FieldValues>({
               control={control}
               rules={{ required: true }}
               name={names.longitude as never}
-              label={`${label} Longitude`}
+              label={isOrigin ? t("Origin Longitude") : t("Destination Longitude")}
               placeholder="-96.7970"
               description={t("The centre point this end measures from")}
             />

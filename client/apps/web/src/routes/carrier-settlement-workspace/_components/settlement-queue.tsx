@@ -11,9 +11,9 @@ import {
   BulkMarkPaidDialog,
   CARRIER_MARK_PAID_METHODS,
 } from "@/components/settlements/bulk-mark-paid-dialog";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
-  carrierLifecycleVerbs,
+  carrierLifecycleMessages,
   eligibleCarrierSettlements,
   type CarrierSettlementLifecycleAction,
 } from "@/lib/carrier-settlement-lifecycle";
@@ -289,26 +289,23 @@ function BulkActionBar({
       paymentReference?: string;
     }) => {
       const eligible = eligibleRows(input.action);
-      await runBulkAction(
-        eligible,
-        (settlement) => {
-          switch (input.action) {
-            case "Submit":
-              return submitCarrierSettlement({ settlementId: settlement.id });
-            case "Approve":
-              return approveCarrierSettlement({ settlementId: settlement.id });
-            case "Post":
-              return postCarrierSettlement({ settlementId: settlement.id });
-            case "MarkPaid":
-              return markCarrierSettlementPaid({
-                settlementId: settlement.id,
-                paymentMethod: input.paymentMethod ?? "Check",
-                paymentReference: input.paymentReference || undefined,
-              });
-          }
-        },
-        { noun: "settlement", verb: carrierLifecycleVerbs[input.action] },
-      );
+      const outcome = await settleAll(eligible, (settlement) => {
+        switch (input.action) {
+          case "Submit":
+            return submitCarrierSettlement({ settlementId: settlement.id });
+          case "Approve":
+            return approveCarrierSettlement({ settlementId: settlement.id });
+          case "Post":
+            return postCarrierSettlement({ settlementId: settlement.id });
+          case "MarkPaid":
+            return markCarrierSettlementPaid({
+              settlementId: settlement.id,
+              paymentMethod: input.paymentMethod ?? "Check",
+              paymentReference: input.paymentReference || undefined,
+            });
+        }
+      });
+      notifyBulkOutcome(outcome, carrierLifecycleMessages(input.action));
     },
     onSuccess: () => onComplete(),
     onError: (error: Error) => toast.error(error.message || translate("Bulk action failed")),

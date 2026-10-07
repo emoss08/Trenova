@@ -68,7 +68,7 @@ function Breakdown({ rows, total, labelOf }: BreakdownProps) {
             </div>
             <div
               role="img"
-              aria-label={`${label}: ${row.workers + row.staff} of ${total}`}
+              aria-label={t("{0}: {1} of {2}", label, row.workers + row.staff, total)}
               className="bg-muted h-1 w-full overflow-hidden rounded-full"
             >
               <div
@@ -112,7 +112,7 @@ export function OrgAside({
       <SectionPanel
         title={t("By terminal")}
         icon={<Building07Icon />}
-        hint={`${total} active`}
+        hint={t("{0} active", total)}
         help={t(
           "Active workers by the terminal they are assigned to, biggest first. Front-office users are not on this roster.",
         )}

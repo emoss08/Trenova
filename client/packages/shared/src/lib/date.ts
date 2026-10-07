@@ -1,5 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { dateTimeFormatter } from "@trenova/shared/i18n/format";
+import { dateTimeFormatter, formatRelativeTime } from "@trenova/shared/i18n/format";
 import { TimeFormat, type TimeFormatType } from "@trenova/shared/types/user";
 import { parseDate } from "@trenova/shared/lib/chrono";
 import { endOfDay, startOfDay, startOfMonth } from "date-fns";
@@ -497,18 +497,18 @@ export function skyPhase(hour: number): SkyPhase {
 
 export function formatSecondsAgo(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 5) {
-    return "just now";
+    return translate("just now");
   }
 
   if (seconds < 60) {
-    return `${Math.floor(seconds)}s ago`;
+    return formatRelativeTime(-Math.floor(seconds), "narrow");
   }
 
   if (seconds < 3600) {
-    return `${Math.floor(seconds / 60)}m ago`;
+    return formatRelativeTime(-Math.floor(seconds / 60) * 60, "narrow");
   }
 
-  return `${Math.floor(seconds / 3600)}h ago`;
+  return formatRelativeTime(-Math.floor(seconds / 3600) * 3600, "narrow");
 }
 
 /**

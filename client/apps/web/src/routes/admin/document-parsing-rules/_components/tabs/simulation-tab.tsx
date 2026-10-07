@@ -130,7 +130,7 @@ function VersionSelect({
                     onChange(val === value ? "" : val);
                     setOpen(false);
                   }}
-                  keywords={[`Version ${v.versionNumber}`, v.status, v.label ?? ""]}
+                  keywords={[t("Version {0}", v.versionNumber), v.status, v.label ?? ""]}
                 >
                   {value === v.id && <CheckIcon className="size-3.5 shrink-0" />}
                   <Badge variant={VERSION_STATUS_BADGE[v.status]} className="shrink-0">

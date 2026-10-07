@@ -64,5 +64,8 @@
   "e.g. STD-DRIVER": "p. ej., STD-DRIVER",
   "e.g. Standard Driver": "p. ej., Conductor estándar",
   "{0, plural, one {# worker is assigned; reassign them before deactivating.} other {# workers are assigned; reassign them before deactivating.}}": "{0, plural, one {# trabajador está asignado; reasígnelo antes de desactivar.} other {# trabajadores están asignados; reasígnelos antes de desactivar.}}",
-  "{0, plural, one {The selected policy failed} other {All # selected policies failed}}": "{0, plural, one {Falló la política seleccionada} other {Fallaron las # políticas seleccionadas}}"
+  "{0, plural, one {The selected policy failed} other {All # selected policies failed}}": "{0, plural, one {Falló la política seleccionada} other {Fallaron las # políticas seleccionadas}}",
+  "{0}: tracked": "{0}: con seguimiento",
+  "{0}: {1}/mo": "{0}: {1}/mes",
+  "{0}: {1}/yr": "{0}: {1}/año"
 }

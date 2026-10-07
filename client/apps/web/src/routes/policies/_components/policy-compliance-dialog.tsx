@@ -178,8 +178,14 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                         <span className="text-muted-foreground truncate tabular-nums">
                           {row.workerType}
                           {row.acknowledgedAt
-                            ? ` · ${formatShiftDate(row.acknowledgedAt)}${
-                                row.signatureName ? ` · signed “${row.signatureName}”` : " · read"
+                            ? ` · ${
+                                row.signatureName
+                                  ? t(
+                                      "{0} · signed “{1}”",
+                                      formatShiftDate(row.acknowledgedAt),
+                                      row.signatureName,
+                                    )
+                                  : t("{0} · read", formatShiftDate(row.acknowledgedAt))
                               }`
                             : ""}
                         </span>

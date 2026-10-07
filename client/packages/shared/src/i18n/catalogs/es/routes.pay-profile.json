@@ -40,5 +40,11 @@
   "What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.": "Qué se está pagando: transporte de línea, pago por parada, demoras, prima por materiales peligrosos, etc.",
   "When to use this pay package": "Cuándo usar este paquete de pago",
   "Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.": "A qué ingresos se aplica el porcentaje: solo transporte de línea, transporte de línea más recargo por combustible, o el total.",
-  "e.g. OTR Company Driver - Standard": "p. ej., Conductor de larga distancia de la empresa - Estándar"
+  "e.g. OTR Company Driver - Standard": "p. ej., Conductor de larga distancia de la empresa - Estándar",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}": "{0, plural, one {# perfil de pago activado} other {# perfiles de pago activados}}",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}, {1} failed": "{0, plural, one {# perfil de pago activado} other {# perfiles de pago activados}}, {1} fallaron",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}": "{0, plural, one {# perfil de pago desactivado} other {# perfiles de pago desactivados}}",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}, {1} failed": "{0, plural, one {# perfil de pago desactivado} other {# perfiles de pago desactivados}}, {1} fallaron",
+  "{0, plural, one {The selected pay profile failed} other {All # selected pay profiles failed}}": "{0, plural, one {Falló el perfil de pago seleccionado} other {Fallaron los # perfiles de pago seleccionados}}",
+  "{0} ({1, plural, one {# band} other {# bands}})": "{0} ({1, plural, one {# banda} other {# bandas}})"
 }

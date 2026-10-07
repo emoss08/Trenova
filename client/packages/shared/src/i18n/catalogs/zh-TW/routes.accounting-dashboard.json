@@ -27,6 +27,7 @@
   "awaiting application": "待沖抵",
   "not yet due": "尚未到期",
   "target < {0}d · vs 4 weeks ago": "目標 < {0} 天 · 與四週前相比",
+  "target {0}d": "目標 {0} 天",
   "total open": "未結總額",
   "trailing 91 days": "過去 91 天",
   "weekly, collected vs due": "每週，已收款與應收對比",

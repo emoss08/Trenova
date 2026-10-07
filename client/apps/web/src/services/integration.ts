@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
@@ -25,23 +26,31 @@ export class IntegrationService {
 
   public async getConfig(type: string) {
     const response = await api.get(`/integrations/${type}/config/`);
-    return safeParse(integrationConfigResponseSchema, response, `${type} Config`);
+    return safeParse(integrationConfigResponseSchema, response, translate("{0} Config", type));
   }
 
   public async updateConfig(type: string, payload: UpdateIntegrationConfigRequest) {
     const request = updateIntegrationConfigRequestSchema.parse(payload);
     const response = await api.put(`/integrations/${type}/config/`, request);
-    return safeParse(integrationConfigResponseSchema, response, `${type} Config`);
+    return safeParse(integrationConfigResponseSchema, response, translate("{0} Config", type));
   }
 
   public async testConnection(type: string) {
     const response = await api.post(`/integrations/${type}/test-connection/`);
-    return safeParse(testSamsaraConnectionResponse, response, `${type} Connection Test`);
+    return safeParse(
+      testSamsaraConnectionResponse,
+      response,
+      translate("{0} Connection Test", type),
+    );
   }
 
   public async getRuntimeConfig(type: string) {
     const response = await api.get(`/integrations/${type}/runtime-config/`);
-    return safeParse(integrationRuntimeConfigResponseSchema, response, `${type} Runtime Config`);
+    return safeParse(
+      integrationRuntimeConfigResponseSchema,
+      response,
+      translate("{0} Runtime Config", type),
+    );
   }
 
   public async getSamsaraWorkerSyncReadiness() {

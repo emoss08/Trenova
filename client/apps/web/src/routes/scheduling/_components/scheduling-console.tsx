@@ -466,7 +466,7 @@ function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: 
             variant="ghost"
             className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
             onClick={onEdit}
-            aria-label={`Edit ${template.name}`}
+            aria-label={t("Edit {0}", template.name)}
           >
             {t("Edit")}
           </Button>

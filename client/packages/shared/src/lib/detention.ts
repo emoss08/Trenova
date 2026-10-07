@@ -10,6 +10,7 @@ import {
 } from "../types/detention";
 import { formatCurrency } from "./utils";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** Plain-language names for the ceiling that stopped a charge from growing. */
 export const CAP_KIND_LABEL: Record<CapKind, string> = defineLabels({
@@ -73,10 +74,10 @@ export function formatCountdown(minutes: number | null | undefined): string {
   }
 
   if (minutes <= 0) {
-    return `${formatDetentionMinutes(minutes)} overdue`;
+    return translate("{0} overdue", formatDetentionMinutes(minutes));
   }
 
-  return `in ${formatDetentionMinutes(minutes)}`;
+  return translate("in {0}", formatDetentionMinutes(minutes));
 }
 
 export const URGENCY_LABEL: Record<DeskUrgency, string> = defineLabels({

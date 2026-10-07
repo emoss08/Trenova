@@ -157,7 +157,11 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
                     variant="ghost"
                     isLoading={endMutation.isPending}
                     onClick={() => endMutation.mutate(enrollment.id)}
-                    aria-label={`End ${enrollment.benefitPlan?.name ?? "cover"}`}
+                    aria-label={
+                      enrollment.benefitPlan?.name
+                        ? t("End {0}", enrollment.benefitPlan.name)
+                        : t("End cover")
+                    }
                   >
                     {t("End cover")}
                   </Button>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { IconComponent } from "@trenova/shared/components/icons";
 
@@ -17,6 +18,7 @@ export type SizeStepperProps = {
  * repeatedly.
  */
 export function SizeStepper({ icon: Icon, label, value, min, max, onChange }: SizeStepperProps) {
+  const t = useT();
   return (
     <div className="flex items-center gap-2">
       <Icon className="text-muted-foreground size-3.5 shrink-0" />
@@ -25,7 +27,7 @@ export function SizeStepper({ icon: Icon, label, value, min, max, onChange }: Si
         variant="outline"
         size="icon"
         className="size-6"
-        aria-label={`Decrease ${label.toLowerCase()}`}
+        aria-label={t("Decrease {0}", label.toLowerCase())}
         disabled={value <= min}
         onClick={() => onChange(value - 1)}
       >
@@ -36,7 +38,7 @@ export function SizeStepper({ icon: Icon, label, value, min, max, onChange }: Si
         variant="outline"
         size="icon"
         className="size-6"
-        aria-label={`Increase ${label.toLowerCase()}`}
+        aria-label={t("Increase {0}", label.toLowerCase())}
         disabled={value >= max}
         onClick={() => onChange(value + 1)}
       >

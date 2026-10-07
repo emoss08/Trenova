@@ -57,6 +57,8 @@ export function EscrowPanel({
   mode,
   row,
 }: DataTablePanelProps<EscrowAccountRow>) {
+  const t = useT();
+
   if (mode === "edit" && row) {
     return (
       <DataTablePanelContainer
@@ -64,8 +66,8 @@ export function EscrowPanel({
         onOpenChange={onOpenChange}
         title={
           row.worker
-            ? `Escrow — ${row.worker.firstName} ${row.worker.lastName}`.trim()
-            : "Escrow Account"
+            ? t("Escrow — {0}", `${row.worker.firstName} ${row.worker.lastName}`.trim())
+            : t("Escrow Account")
         }
         size="lg"
       >

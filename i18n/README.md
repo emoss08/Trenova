@@ -33,7 +33,8 @@ export const DELIVERY_LABELS = defineLabels({ Online: "Online", OnTheJob: "On th
 ```
 
 `task i18n-check` rejects a sentence split around markup, English handed to a message,
-English built in a template literal where a person reads it, an undeclared label map, and a
+English built in a template literal (anywhere but CSS, keys, paths, logs and thrown
+errors), an undeclared label map, and a
 literal validation message or toast (`tools/fragments.mjs`; a
 template that is not interface text takes `// i18n-ignore: <reason>`); see the i18n section of
 [generated-artifacts.md](../docs/engineering/generated-artifacts.md) for the rules.

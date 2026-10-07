@@ -35,7 +35,9 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
     /** The agents this one may hand work to; the form always sends the whole list. */
     delegateIds: z
       .array(z.string())
-      .max(MAX_DELEGATES, `An agent can ask at most ${MAX_DELEGATES} other agents`)
+      .max(MAX_DELEGATES, {
+        error: () => translate("An agent can ask at most {0} other agents", MAX_DELEGATES),
+      })
       .default([]),
     /**
      * Who may use it. Saved with the agent, but only when asked:
@@ -45,7 +47,10 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
     /** The roles granted it, kept whatever the mode. */
     accessRoleIds: z
       .array(z.string())
-      .max(MAX_ACCESS_ROLES, `An agent can be granted to at most ${MAX_ACCESS_ROLES} roles at once`)
+      .max(MAX_ACCESS_ROLES, {
+        error: () =>
+          translate("An agent can be granted to at most {0} roles at once", MAX_ACCESS_ROLES),
+      })
       .default([]),
     /** The agent looks back over its work and keeps what it learned; saved as its opposite, learningOff. */
     learnsFromWork: z.boolean().default(true),

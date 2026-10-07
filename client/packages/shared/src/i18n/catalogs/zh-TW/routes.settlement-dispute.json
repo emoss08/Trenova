@@ -21,5 +21,8 @@
   "Shown to the driver verbatim; say what was checked and why the outcome is right.": "會原文顯示給駕駛員；請說明查核了哪些內容，以及該結果為何正確。",
   "Submitted {0}{1}": "提交於 {0}{1}",
   "This dispute could not be loaded.": "無法載入此爭議。",
+  "{0, plural, one {# dispute moved to review} other {# disputes moved to review}}": "{0, plural, other {已將 # 筆爭議移至審核}}",
+  "{0, plural, one {# dispute moved to review} other {# disputes moved to review}}, {1} failed": "{0, plural, other {已將 # 筆爭議移至審核}}，{1} 筆失敗",
+  "{0, plural, one {The selected dispute failed} other {All # selected disputes failed}}": "{0, plural, other {所選的 # 筆爭議皆失敗}}",
   "· correcting adjustment applied": "· 已套用更正調整"
 }

@@ -1,5 +1,7 @@
 import type { MarginVerdict, ShopOption, ShopResult, ShopStrategy } from "../types/rate";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { formatNumber } from "@trenova/shared/i18n/format";
 
 /**
  * Presenting a shopping result.
@@ -133,13 +135,13 @@ export function offerWindowLabel(seconds: number): string {
   if (seconds < 3600) {
     const minutes = Math.round(seconds / 60);
 
-    return `${minutes} min`;
+    return translate("{0} min", minutes);
   }
 
   const hours = seconds / 3600;
   const rounded = Math.round(hours * 10) / 10;
 
-  return `${rounded} hr`;
+  return translate("{0} hr", formatNumber(rounded));
 }
 
 /**

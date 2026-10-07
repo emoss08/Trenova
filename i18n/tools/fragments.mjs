@@ -406,6 +406,110 @@ function toastLiterals(call) {
   return call.arguments.flatMap(literals);
 }
 
+// Words a template writes for the browser or the code rather than for a person: CSS units
+// and functions, and the handful of code words that show up beside an interpolation.
+const CODE_WORDS = new Set([
+  "px", "rem", "em", "ms", "deg", "vh", "vw", "fr", "ch", "pt", "dvh", "svh", "turn",
+  "calc", "min", "max", "clamp", "var", "translate", "translatex", "translatey", "translate3d",
+  "scale", "scalex", "scaley", "rotate", "repeat", "minmax", "span", "auto", "rgb", "rgba",
+  "hsl", "hsla", "oklch", "url", "solid", "dashed", "inset", "ease", "linear", "infinite",
+  "cubic", "bezier", "steps", "to", "from", "top", "bottom", "left", "right", "center",
+  "transparent", "currentcolor", "important", "inherit", "none",
+]);
+
+// Contexts whose templates are not interface text: class lists, styles, keys, paths, logs,
+// thrown errors (read by engineers; a person sees a translated fallback), and messages
+// already handed to a translator.
+const CODE_ATTRIBUTES = /^(className|class|style|key|id|href|src|to|d|role|name|type|value|htmlFor|form|target|rel|testId|viewBox|transform|points|fill|stroke|path|data-[\w-]+|aria-(controls|describedby|labelledby|owns|activedescendant))$/;
+const CODE_KEYS = new Set([
+  "className", "key", "id", "queryKey", "mutationKey", "path", "url", "href", "to", "src",
+  "transform", "gridTemplateColumns", "gridTemplateRows", "gridTemplateAreas", "gridColumn",
+  "gridRow", "width", "height", "minWidth", "maxWidth", "minHeight", "maxHeight", "top",
+  "left", "right", "bottom", "inset", "margin", "padding", "transition", "animation",
+  "background", "backgroundImage", "boxShadow", "filter", "clipPath", "fontFamily",
+  "fontVariationSettings", "translate", "scale", "rotate", "cursor", "border", "outline",
+  "flex", "flexBasis", "gap", "zIndex", "opacity", "color", "fill", "stroke",
+  "strokeDasharray", "strokeDashoffset", "d", "viewBox", "cacheKey", "storageKey", "name",
+  "fileName", "filename", "download", "accept", "pattern", "endpoint", "channel", "topic",
+  "event", "scope", "resource", "operationName", "query", "sql", "expression", "selector",
+]);
+const CODE_CALLS = /^(cn|clsx|cva|twMerge|log|warn|error|info|debug|trace|assert|group|groupCollapsed|setAttribute|setProperty|querySelector|querySelectorAll|getElementById|matchMedia|fetch|get|post|put|patch|delete|request|open|replace|replaceState|pushState|navigate|redirect|encodeURIComponent|encodeURI|RegExp|Intl|Date|parseDate|parse|format|split|startsWith|endsWith|includes|indexOf|localeCompare|createElement|setItem|getItem|removeItem|writeText|postMessage|send|emit|subscribe|publish|invalidateQueries|setQueryData|getQueryData|removeQueries|refetchQueries|prefetchQuery|cancelQueries|useQuery|useSuspenseQuery|queryOptions|mutationOptions|Blob|File|URL|URLSearchParams|requestAnimationFrame|setTimeout|keyframes|animate|scrollTo|scrollIntoView|focus|dispatchEvent|addEventListener|removeEventListener|Symbol|require|import|describe|it|test|expect)$/;
+
+/**
+ * codeContext says whether a template sits where its text is for the browser, the network or
+ * an engineer rather than a person.
+ */
+function codeContext(chain) {
+  for (const node of chain) {
+    switch (node.type) {
+      case "TaggedTemplateExpression":
+        return true;
+      case "JSXAttribute": {
+        const name = node.name.type === "JSXIdentifier" ? node.name.name : node.name.name?.name;
+        return typeof name === "string" && CODE_ATTRIBUTES.test(name);
+      }
+      case "ObjectProperty":
+        if (CODE_KEYS.has(keyName(node.key))) return true;
+        break;
+      case "NewExpression":
+        if (node.callee.type === "Identifier" && /(Error|RegExp|URL|URLSearchParams|Date|Blob|File|Intl\w*)$/.test(node.callee.name)) {
+          return true;
+        }
+        break;
+      case "ThrowStatement":
+        return true;
+      case "CallExpression": {
+        const callee = node.callee;
+        const name =
+          callee.type === "Identifier"
+            ? callee.name
+            : callee.type === "MemberExpression" && !callee.computed
+              ? callee.property.name
+              : null;
+        if (TRANSLATORS.has(name)) return true;
+        if (callee.type === "MemberExpression" && callee.object.type === "Identifier" && callee.object.name === "console") {
+          return true;
+        }
+        if (name !== null && CODE_CALLS.test(name)) return true;
+        break;
+      }
+      case "BinaryExpression":
+        if (["===", "!==", "==", "!="].includes(node.operator)) return true;
+        break;
+      case "ImportExpression":
+        return true;
+      default:
+    }
+  }
+  return false;
+}
+
+/**
+ * writtenWords returns the words a template writes for a person — two letters or more, not
+ * CSS or a key — or null when it writes none. "Edit {col}", "{n} days" and "{n}m ago" write
+ * words; "{x}px {y}px", "repeat({n}, minmax(0, 1fr))", "/shipments/{id}" and "row-{id}" do not.
+ */
+function writtenWords(template) {
+  const text = template.quasis.map((q) => q.value.cooked ?? "").join("\u0000");
+  if (/^[\s\u0000]*$/u.test(text)) return null;
+  // Paths, URLs, selectors, query strings and hyphenated keys.
+  if (/^(https?:|mailto:|tel:|\/|\.\/|#|\?|&)/u.test(text.trim())) return null;
+  if (!/\s/u.test(text.replaceAll("\u0000", "")) && /[/?=&#.:_-]/u.test(text)) return null;
+  const words = (text.match(/\p{L}[\p{L}'’]+/gu) ?? []).filter((word) => {
+    const lower = word.toLowerCase();
+    if (CODE_WORDS.has(lower)) return false;
+    // camelCase, PascalCase compounds and SCREAMING_CASE are identifiers.
+    if (/\p{Ll}\p{Lu}/u.test(word) || /^\p{Lu}{2,}$/u.test(word) && word.length > 4) return false;
+    return true;
+  });
+  if (words.length === 0) return null;
+  // A hyphenated lowercase key ("row-", "shipment-panel-") with no sentence around it.
+  if (!/\s/u.test(text.replaceAll("\u0000", " ").trim()) && /^[a-z0-9-]+$/u.test(text.replaceAll("\u0000", ""))) {
+    return null;
+  }
+  return text.replaceAll("\u0000", "{…}").replace(/\s+/g, " ").trim();
+}
+
 function ignored(node, lines) {
   const line = node.loc.start.line;
   return IGNORE.test(lines[line - 1] ?? "") || IGNORE.test(lines[line - 2] ?? "");
@@ -448,6 +552,13 @@ export async function findFragments(repoRoot, roots = SOURCE_ROOTS) {
         const where = readPosition(chain);
         if (where === null || ignored(node, lines)) return;
         findings.push({ file: rel, line: node.loc.start.line, kind: "untranslated-template", detail: `${where} \`${text}\`` });
+      });
+      visitWithParents(ast.program, [], (node, chain) => {
+        if (node.type !== "TemplateLiteral") return;
+        if (prose(node) !== null && readPosition(chain) !== null) return;
+        const text = writtenWords(node);
+        if (text === null || codeContext(chain) || ignored(node, lines)) return;
+        findings.push({ file: rel, line: node.loc.start.line, kind: "english-template", detail: text });
       });
       visit(ast.program, (node) => {
         if (node.type === "JSXElement" && splitSentence(node)) {
@@ -493,6 +604,8 @@ export function formatFinding({ file, line, kind, detail }) {
       return `${file}:${line}  ${JSON.stringify(detail)} is a validation message the form shows as written; use { error: () => translate(…) }`;
     case "untranslated-label-map":
       return `${file}:${line}  ${detail} is a label map the catalog never sees; declare it with defineLabels()`;
+    case "english-template":
+      return `${file}:${line}  \`${detail}\` builds English in a template; use t()/translate() with placeholders, or mark it i18n-ignore: <reason>`;
     case "untranslated-template":
       return `${file}:${line}  ${detail} builds English outside the catalog; use t()/translate() with placeholders`;
     default:

@@ -46,6 +46,7 @@
   "Match created": "已创建匹配",
   "Match created with a variance — resolve it from the Matches tab": "已创建匹配但存在差异——请在“匹配”选项卡中处理",
   "Match rejected": "比对已拒绝",
+  "Matches ({0})": "匹配项（{0}）",
   "Negotiated buy rate": "议定采购运价",
   "No carrier in the master matches this invoice's SCAC or DOT number.": "主档中没有承运商匹配此发票的 SCAC 或 DOT 号码。",
   "No carrier invoice fits that search. Clear it to see the list again.": "没有承运商发票匹配该搜索条件。清除后即可重新查看列表。",

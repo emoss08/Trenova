@@ -156,7 +156,7 @@ export function DataTableConfigItem({
       <button
         type="button"
         onClick={handleApply}
-        title={config.description || `Apply "${config.name}"`}
+        title={config.description || t('Apply "{0}"', config.name)}
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
       >
         {config.visibility === "Private" ? (

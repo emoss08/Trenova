@@ -84,7 +84,7 @@ export function OrganizationSelection({
 
   return (
     <AuthCardBody>
-      <StepCrumbs left={stepLabel} right={`${organizations.length} available`} />
+      <StepCrumbs left={stepLabel} right={t("{0} available", organizations.length)} />
       <StepHeading title={t("Select organization")}>
         {t("Choose the workspace for this session.")}
       </StepHeading>

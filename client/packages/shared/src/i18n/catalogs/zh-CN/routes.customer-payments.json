@@ -25,6 +25,7 @@
   "Over-applied": "超额冲抵",
   "Payment amount": "付款金额",
   "Payment date": "付款日期",
+  "Payment {0}": "付款 {0}",
   "Post a customer payment and apply it across open invoices in one step.": "一次完成客户付款过账并冲抵各未结发票。",
   "Post payment": "过账付款",
   "Posted today": "今日已过账",
@@ -51,5 +52,7 @@
   "Unapplied · {0}": "未冲抵 · {0}",
   "exceeds open amount": "超过未结金额",
   "{0, plural, one {# payment} other {# payments}} with remainder": "{0, plural, other {# 笔付款}}有余额",
+  "{0} payment": "{0} 付款",
+  "{0} payment from {1}": "来自 {1} 的 {0} 付款",
   "{0} received — {1} applied, {2} unapplied.": "已收到 {0} — 已核销 {1}，未核销 {2}。"
 }

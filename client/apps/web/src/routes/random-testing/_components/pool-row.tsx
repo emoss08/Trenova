@@ -161,7 +161,7 @@ export function PoolRow({
           <Button
             size="xs"
             variant="outline"
-            aria-label={`Edit ${pool.code}`}
+            aria-label={t("Edit {0}", pool.code)}
             onClick={() => onEdit(pool)}
           >
             <Edit02Icon className="size-3" />

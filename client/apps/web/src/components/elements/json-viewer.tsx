@@ -35,6 +35,7 @@ function getValueType(value: JsonValue): string {
 }
 
 function getPreview(value: JsonValue): string {
+  // i18n-ignore: code-style value preview, as a browser console prints it
   if (Array.isArray(value)) return `Array(${value.length})`;
   if (typeof value === "object" && value !== null) {
     const keys = Object.keys(value);

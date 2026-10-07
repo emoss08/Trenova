@@ -89,7 +89,7 @@ export function DistanceOverrideForm() {
                     control={control}
                     rules={{ required: true }}
                     name={`intermediateStops.${index}.locationId`}
-                    label={`Stop ${index + 1}`}
+                    label={t("Stop {0}", index + 1)}
                     placeholder={t("Select stop location")}
                   />
                   <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>

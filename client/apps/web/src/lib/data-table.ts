@@ -26,7 +26,7 @@ import type {
 import type { ColumnPinningState, RowData } from "@tanstack/react-table";
 import type { CSSProperties } from "react";
 import { stableStringify } from "@/lib/stable-stringify";
-import { defineLabels } from "@trenova/shared/i18n/labels";
+import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 export type UrlFilterState = {
   fieldFilters: FieldFilter[];
@@ -641,8 +641,8 @@ type LabelledColumn = {
  */
 export function columnHeaderLabel(column: LabelledColumn): string {
   const { header, meta } = column.columnDef;
-  if (typeof header === "string") return header;
-  return meta?.label || toTitleCase(column.id);
+  if (typeof header === "string") return translateLabel(header);
+  return translateLabel(meta?.label || toTitleCase(column.id));
 }
 
 /**

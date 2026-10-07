@@ -176,13 +176,16 @@ export function FormEditPanel<
   const resolvedSubtitle = subtitle && row ? subtitle(row) : undefined;
 
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(
-        row.updatedAt as number,
-        {
-          timeFormat: user?.timeFormat || "24-hour",
-        },
-        user?.timezone,
-      )}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(
+          row.updatedAt as number,
+          {
+            timeFormat: user?.timeFormat || "24-hour",
+          },
+          user?.timezone,
+        ),
+      )
     : undefined;
 
   const splitButtonConfig = {
@@ -221,7 +224,7 @@ export function FormEditPanel<
       }
     >
       {!row ? (
-        <ComponentLoader message={`Loading ${title}...`} />
+        <ComponentLoader message={t("Loading {0}...", title)} />
       ) : (
         <FormProvider {...form}>
           <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>

@@ -46,6 +46,7 @@
   "Match created": "已建立比對",
   "Match created with a variance — resolve it from the Matches tab": "已建立有差異的比對 — 請在「比對」分頁處理",
   "Match rejected": "比對已拒絕",
+  "Matches ({0})": "比對結果（{0}）",
   "Negotiated buy rate": "議定採購運價",
   "No carrier in the master matches this invoice's SCAC or DOT number.": "主檔中沒有承運業者符合此發票的 SCAC 或 DOT 號碼。",
   "No carrier invoice fits that search. Clear it to see the list again.": "沒有承運業者發票符合該搜尋條件。清除後即可重新檢視清單。",

@@ -78,12 +78,12 @@ export function JsonEditor() {
       const position = e instanceof Error ? parseJsonErrorPosition(msg) : null;
       if (position !== null) {
         const line = getLineFromPosition(localValue, position);
-        setParseError(`Invalid JSON at line ${line}: ${msg}`);
+        setParseError(t("Invalid JSON at line {0}: {1}", line, msg));
       } else {
-        setParseError(`Invalid JSON: ${msg}`);
+        setParseError(t("Invalid JSON: {0}", msg));
       }
     }
-  }, [localValue, setValue]);
+  }, [localValue, setValue, t]);
 
   const handleRefresh = useCallback(() => {
     setLocalValue(JSON.stringify(getValues("ruleDocument"), null, 2));

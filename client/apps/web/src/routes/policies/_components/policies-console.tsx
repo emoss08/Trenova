@@ -190,7 +190,7 @@ function PolicyCard({
             variant="ghost"
             className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
             onClick={onEdit}
-            aria-label={`Edit ${policy.title}`}
+            aria-label={t("Edit {0}", policy.title)}
           >
             {t("Edit")}
           </Button>

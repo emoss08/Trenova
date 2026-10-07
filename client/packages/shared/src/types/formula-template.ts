@@ -43,10 +43,10 @@ export const MAX_BREAKDOWN_DEFINITIONS = 20;
 
 export const breakdownDefinitionsSchema = z
   .array(breakdownDefinitionSchema)
-  .max(
-    MAX_BREAKDOWN_DEFINITIONS,
-    `A maximum of ${MAX_BREAKDOWN_DEFINITIONS} breakdown items is allowed`,
-  )
+  .max(MAX_BREAKDOWN_DEFINITIONS, {
+    error: () =>
+      translate("A maximum of {0} breakdown items is allowed", MAX_BREAKDOWN_DEFINITIONS),
+  })
   .default([]);
 
 export const formulaTemplateStatusSchema = z.enum(["Active", "Inactive", "Draft", "InReview"]);
@@ -66,7 +66,9 @@ const roundingPrecisionSchema = z
   .number()
   .int({ error: () => translate("Rounding precision must be a whole number") })
   .min(0, { error: () => translate("Rounding precision cannot be negative") })
-  .max(MAX_ROUNDING_PRECISION, `Rounding precision cannot exceed ${MAX_ROUNDING_PRECISION}`);
+  .max(MAX_ROUNDING_PRECISION, {
+    error: () => translate("Rounding precision cannot exceed {0}", MAX_ROUNDING_PRECISION),
+  });
 
 export const formulaTemplateSchema = z
   .object({

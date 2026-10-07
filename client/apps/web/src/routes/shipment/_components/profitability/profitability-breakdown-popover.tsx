@@ -154,8 +154,12 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
           </DescriptionItem>
         )}
         {fuel && fuel.source === "LiveIndex" && fuel.pricePerGallon && (
-          <DescriptionItem label={`Diesel (${fuel.priceDate})`} numeric>
-            {`${formatCurrency(parseDecimal(fuel.pricePerGallon))}/gal ÷ ${parseDecimal(fuel.milesPerGallon)} MPG`}
+          <DescriptionItem label={t("Diesel ({0})", fuel.priceDate)} numeric>
+            {t(
+              "{0}/gal ÷ {1} MPG",
+              formatCurrency(parseDecimal(fuel.pricePerGallon)),
+              parseDecimal(fuel.milesPerGallon),
+            )}
           </DescriptionItem>
         )}
       </DescriptionList>

@@ -40,7 +40,11 @@ export const mailboxFormSchema = z
     (value) =>
       value.reviewPolicy !== "ReviewBelowConfidence" || value.minConfidence >= MIN_CONFIDENCE_FLOOR,
     {
-      error: `A confidence bar below ${MIN_CONFIDENCE_FLOOR} is auto-handling with a number in front of it`,
+      error: () =>
+        translate(
+          "A confidence bar below {0} is auto-handling with a number in front of it",
+          MIN_CONFIDENCE_FLOOR,
+        ),
       path: ["minConfidence"],
     },
   );

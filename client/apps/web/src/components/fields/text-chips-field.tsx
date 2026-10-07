@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { cn } from "@trenova/shared/lib/utils";
 import { XCloseIcon } from "@trenova/shared/components/icons";
@@ -40,6 +41,7 @@ export function TextChipsField<T extends FieldValues>({
   maxLength = 300,
   maxItems,
 }: TextChipsFieldProps<T>) {
+  const t = useT();
   const [draft, setDraft] = useState("");
   const [draftError, setDraftError] = useState<string | null>(null);
   const inputId = useId();
@@ -57,11 +59,11 @@ export function TextChipsField<T extends FieldValues>({
           const value = draft.trim();
           if (value === "") return true;
           if (value.length > maxLength) {
-            setDraftError(`Keep each entry under ${maxLength} characters`);
+            setDraftError(t("Keep each entry under {0} characters", maxLength));
             return false;
           }
           if (full) {
-            setDraftError(`At most ${maxItems} entries`);
+            setDraftError(t("At most {0} entries", maxItems));
             return false;
           }
           if (!items.some((existing) => existing.toLowerCase() === value.toLowerCase())) {
@@ -99,7 +101,7 @@ export function TextChipsField<T extends FieldValues>({
                   <span className="truncate">{item}</span>
                   <button
                     type="button"
-                    aria-label={`Remove ${item}`}
+                    aria-label={t("Remove {0}", item)}
                     className="ui-focus-ring text-muted-foreground hover:text-foreground rounded-xs transition-colors"
                     onClick={(event) => {
                       event.preventDefault();

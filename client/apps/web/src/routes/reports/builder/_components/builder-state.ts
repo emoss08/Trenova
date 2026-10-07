@@ -104,6 +104,7 @@ export function preferReferenceField(
   const edge = owner?.edges.find((candidate) => candidate.name === lastEdge);
   if (!owner || !edge || edge.cardinality !== "one") return ref;
 
+  // i18n-ignore: catalog field key
   const foreignKey = `${lastEdge}Id`;
   const field = owner.fields.find(
     (candidate) =>
@@ -268,8 +269,10 @@ export function defaultColumnLabel(
       case "max":
         return prefixed(field?.type === "epoch" ? "Latest" : "Maximum", base);
       case "count":
+        // i18n-ignore: mirrors the column header the report server writes, which is English
         return identity ? `${entity?.pluralLabel ?? base} Count` : `${base} Count`;
       case "count_distinct":
+        // i18n-ignore: mirrors the column header the report server writes, which is English
         return `Distinct ${identity ? (entity?.pluralLabel ?? base) : base}`;
       default:
         return base;
@@ -280,6 +283,7 @@ export function defaultColumnLabel(
     return `${base} (${BUCKET_SUFFIXES[column.bucket]})`;
   }
   if (column.kind === "dimension" && bandIsSet(column.band)) {
+    // i18n-ignore: mirrors the column header the report server writes, which is English
     return `${base} (Range)`;
   }
 
