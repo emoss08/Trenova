@@ -369,6 +369,7 @@
   "Light": "Claro",
   "Like lookup, with a fallback when the key has no entry (a missing table still errors)": "Como lookup, con un valor alternativo cuando la clave no tiene entrada (una tabla inexistente sigue dando error)",
   "Like lookup2, with a fallback when the intersection has no cell (a missing table still errors)": "Como lookup2, con un valor alternativo cuando la intersección no tiene celda (una tabla inexistente sigue dando error)",
+  "Limit must be a number": "El límite debe ser un número",
   "Linear interpolation between the floors of a banded single-axis rate matrix": "Interpolación lineal entre los mínimos de una matriz de tarifas de un solo eje con bandas",
   "Link must be a full http(s) address": "El enlace debe ser una dirección http(s) completa",
   "Live": "En vivo",

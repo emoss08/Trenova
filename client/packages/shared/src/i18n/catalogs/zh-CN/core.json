@@ -369,6 +369,7 @@
   "Light": "浅色",
   "Like lookup, with a fallback when the key has no entry (a missing table still errors)": "与 lookup 相同，但键无对应项目时会使用回退值 (表格不存在时仍会报错)",
   "Like lookup2, with a fallback when the intersection has no cell (a missing table still errors)": "与 lookup2 相同，但交叉处无单元格时会使用回退值 (表格不存在时仍会报错)",
+  "Limit must be a number": "上限必须为数字",
   "Linear interpolation between the floors of a banded single-axis rate matrix": "在分级单轴费率矩阵的各下限之间进行线性插值",
   "Link must be a full http(s) address": "链接必须是完整的 http(s) 网址",
   "Live": "实时",

@@ -47,6 +47,7 @@
   "Setting password": "正在设置密码",
   "Sign In": "登录",
   "Sign in to your Trenova account": "登录您的 Trenova 账户",
+  "Sign in with the account your organization set up for you.": "请使用您的组织为您设置的账户登录。",
   "The reset link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or request a new one.": "重置链接缺少令牌。部分邮件客户端会将长链接折行 — 请完整复制整个链接，或重新申请一个。",
   "This link is incomplete": "此链接不完整",
   "This link works once. Pick a password you have not used here before.": "此链接仅能使用一次。请选择您先前未在此使用过的密码。",

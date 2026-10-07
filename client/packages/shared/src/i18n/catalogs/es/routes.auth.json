@@ -47,6 +47,7 @@
   "Setting password": "Estableciendo la contraseña",
   "Sign In": "Iniciar sesión",
   "Sign in to your Trenova account": "Inicie sesión en su cuenta de Trenova",
+  "Sign in with the account your organization set up for you.": "Inicie sesión con la cuenta que su organización configuró para usted.",
   "The reset link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or request a new one.": "Al enlace de restablecimiento le falta el token. Algunos clientes de correo cortan los enlaces largos en varias líneas: copie el enlace completo o solicite uno nuevo.",
   "This link is incomplete": "Este enlace está incompleto",
   "This link works once. Pick a password you have not used here before.": "Este enlace funciona una sola vez. Elija una contraseña que no haya usado aquí antes.",
