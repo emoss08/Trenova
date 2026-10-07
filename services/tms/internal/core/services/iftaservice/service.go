@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -39,7 +41,7 @@ type Params struct {
 	Repo          repositories.IFTARepository
 	Fuel          repositories.FuelPurchaseRepository
 	TractorRepo   repositories.TractorRepository
-	OrgCacheRepo  repositories.OrganizationCacheRepository
+	Organizations repositories.OrganizationRepository
 	AuditService  services.AuditService
 	ReferenceData *referencedataguard.Guard
 	Realtime      services.RealtimeService `optional:"true"`
@@ -50,7 +52,7 @@ type Service struct {
 	repo          repositories.IFTARepository
 	fuel          FuelAccumulator
 	tractorRepo   repositories.TractorRepository
-	orgCacheRepo  repositories.OrganizationCacheRepository
+	organizations repositories.OrganizationRepository
 	auditService  services.AuditService
 	referenceData *referencedataguard.Guard
 	realtime      services.RealtimeService
@@ -63,7 +65,7 @@ func New(p Params) *Service {
 		repo:          p.Repo,
 		fuel:          p.Fuel,
 		tractorRepo:   p.TractorRepo,
-		orgCacheRepo:  p.OrgCacheRepo,
+		organizations: p.Organizations,
 		auditService:  p.AuditService,
 		referenceData: p.ReferenceData,
 		realtime:      p.Realtime,
@@ -76,7 +78,7 @@ type Deps struct {
 	Repo          repositories.IFTARepository
 	Fuel          FuelAccumulator
 	TractorRepo   repositories.TractorRepository
-	OrgCacheRepo  repositories.OrganizationCacheRepository
+	Organizations repositories.OrganizationRepository
 	AuditService  services.AuditService
 	ReferenceData *referencedataguard.Guard
 	Realtime      services.RealtimeService
@@ -97,7 +99,7 @@ func NewWithDeps(d Deps) *Service {
 		repo:          d.Repo,
 		fuel:          d.Fuel,
 		tractorRepo:   d.TractorRepo,
-		orgCacheRepo:  d.OrgCacheRepo,
+		organizations: d.Organizations,
 		auditService:  d.AuditService,
 		referenceData: d.ReferenceData,
 		realtime:      d.Realtime,
@@ -166,21 +168,11 @@ func (s *Service) publish(
 	}
 }
 
-func (s *Service) tenantLocation(ctx context.Context, orgID pulid.ID) *time.Location {
-	if s.orgCacheRepo == nil {
-		return time.UTC
-	}
-	org, err := s.orgCacheRepo.GetByID(ctx, orgID)
-	if err != nil || org == nil {
-		return time.UTC
-	}
-
-	loc, err := time.LoadLocation(timeutils.NormalizeTimezone(org.Timezone))
-	if err != nil {
-		return time.UTC
-	}
-
-	return loc
+func (s *Service) tenantLocation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*time.Location, error) {
+	return orgzone.Location(ctx, s.organizations, tenantInfo)
 }
 
 func versionMismatch(entity string) error {

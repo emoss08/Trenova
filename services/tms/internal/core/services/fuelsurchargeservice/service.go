@@ -30,7 +30,7 @@ type Params struct {
 	PriceRepo           repositories.FuelIndexPriceRepository
 	ProgramRepo         repositories.FuelSurchargeProgramRepository
 	CustomerRepo        repositories.CustomerRepository
-	OrgCacheRepo        repositories.OrganizationCacheRepository
+	Organizations       repositories.OrganizationRepository
 	IntegrationService  *integrationservice.Service
 	NotificationService *notificationservice.Service
 	AuditService        services.AuditService
@@ -43,7 +43,7 @@ type Service struct {
 	priceRepo           repositories.FuelIndexPriceRepository
 	programRepo         repositories.FuelSurchargeProgramRepository
 	customerRepo        repositories.CustomerRepository
-	orgCacheRepo        repositories.OrganizationCacheRepository
+	organizations       repositories.OrganizationRepository
 	integrationService  *integrationservice.Service
 	notificationService *notificationservice.Service
 	auditService        services.AuditService
@@ -63,7 +63,7 @@ func New(p Params) *Service {
 		priceRepo:           p.PriceRepo,
 		programRepo:         p.ProgramRepo,
 		customerRepo:        p.CustomerRepo,
-		orgCacheRepo:        p.OrgCacheRepo,
+		organizations:       p.Organizations,
 		integrationService:  p.IntegrationService,
 		notificationService: p.NotificationService,
 		auditService:        p.AuditService,

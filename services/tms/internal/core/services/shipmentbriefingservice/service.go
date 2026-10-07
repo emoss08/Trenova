@@ -48,7 +48,6 @@ type Params struct {
 	Briefs        repositories.ShipmentBriefRepository
 	QuickFilters  services.ShipmentQuickFilterBasisResolver
 	Organizations repositories.OrganizationRepository
-	OrgCache      repositories.OrganizationCacheRepository
 	Suggestions   services.ShipmentSuggestionCandidates
 	Completion    services.CompletionService
 	Cache         repositories.ShipmentBoardCache
@@ -61,7 +60,6 @@ type Dependencies struct {
 	Briefs        repositories.ShipmentBriefRepository
 	QuickFilters  services.ShipmentQuickFilterBasisResolver
 	Organizations repositories.OrganizationRepository
-	OrgCache      repositories.OrganizationCacheRepository
 	Suggestions   services.ShipmentSuggestionCandidates
 	Completion    services.CompletionService
 	Cache         repositories.ShipmentBoardCache
@@ -75,7 +73,6 @@ type Service struct {
 	briefs        repositories.ShipmentBriefRepository
 	quickFilters  services.ShipmentQuickFilterBasisResolver
 	organizations repositories.OrganizationRepository
-	orgCache      repositories.OrganizationCacheRepository
 	suggestions   services.ShipmentSuggestionCandidates
 	completion    services.CompletionService
 	cache         repositories.ShipmentBoardCache
@@ -96,7 +93,6 @@ func New(p Params) *Service {
 		Briefs:        p.Briefs,
 		QuickFilters:  p.QuickFilters,
 		Organizations: p.Organizations,
-		OrgCache:      p.OrgCache,
 		Suggestions:   p.Suggestions,
 		Completion:    p.Completion,
 		Cache:         p.Cache,
@@ -112,7 +108,6 @@ func NewWithDependencies(d *Dependencies) *Service {
 		briefs:        d.Briefs,
 		quickFilters:  d.QuickFilters,
 		organizations: d.Organizations,
-		orgCache:      d.OrgCache,
 		suggestions:   d.Suggestions,
 		completion:    d.Completion,
 		cache:         d.Cache,
@@ -130,7 +125,7 @@ func (s *Service) Briefing(
 	tenantInfo pagination.TenantInfo,
 	_ string,
 ) (*services.ShipmentBriefing, error) {
-	day, err := shipmentboardbrief.Today(ctx, s.orgCache, tenantInfo)
+	day, err := shipmentboardbrief.Today(ctx, s.organizations, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +151,7 @@ func (s *Service) WriteBrief(
 	ctx context.Context,
 	req *services.WriteShipmentBriefRequest,
 ) (*shipmentbrief.Brief, error) {
-	day, err := shipmentboardbrief.Today(ctx, s.orgCache, req.TenantInfo)
+	day, err := shipmentboardbrief.Today(ctx, s.organizations, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -323,17 +318,20 @@ func (s *Service) Facts(
 	tenantInfo pagination.TenantInfo,
 	timezone string,
 ) (*Facts, error) {
-	basis, err := s.quickFilters.Resolve(ctx, &services.ResolveShipmentQuickFilterBasisRequest{
-		TenantInfo: tenantInfo,
-		Timezone:   timezone,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	specs := make([]shipment.QuickFilterSpec, 0, len(factFilters))
 	for _, filter := range factFilters {
 		specs = append(specs, shipment.Quick(filter))
+	}
+
+	margin, detention := shipment.QuickFiltersNeed(specs)
+	basis, err := s.quickFilters.Resolve(ctx, &services.ResolveShipmentQuickFilterBasisRequest{
+		TenantInfo: tenantInfo,
+		Timezone:   timezone,
+		Margin:     margin,
+		Detention:  detention,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	facts := new(Facts)

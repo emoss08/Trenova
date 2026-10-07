@@ -265,12 +265,20 @@ func (s *Service) renderScheduledNotice(
 	ctx context.Context,
 	p *ScheduleNoticeParams,
 ) (NoticeContent, error) {
+	location, err := s.tenantLocation(ctx, pagination.TenantInfo{
+		OrgID: p.Occurrence.OrganizationID,
+		BuID:  p.Occurrence.BusinessUnitID,
+	})
+	if err != nil {
+		return NoticeContent{}, err
+	}
+
 	return s.BuildNotice(ctx, &BuildNoticeParams{
 		Occurrence:   p.Occurrence,
 		Kind:         p.Kind,
 		FacilityName: p.FacilityName,
 		ShipmentRef:  p.ShipmentRef,
-		Location:     s.tenantLocation(ctx, p.Occurrence.OrganizationID),
+		Location:     location,
 		AttachPDF:    p.AttachPDF,
 	})
 }

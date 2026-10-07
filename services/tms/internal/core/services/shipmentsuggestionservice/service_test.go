@@ -9,14 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,7 +47,9 @@ func (f *console) GetMoveCandidates(
 	return f.candidates[req.MoveID], nil
 }
 
-type capabilities struct{ caps services.ShipmentBoardCapabilities }
+type capabilities struct {
+	caps services.ShipmentBoardCapabilities
+}
 
 func (f *capabilities) Capabilities(
 	context.Context,
@@ -235,7 +237,7 @@ func newHarness(operation tenant.OperationType) *harness {
 		Assignments:     h.assigner,
 		AssignmentReads: h.reads,
 		Briefs:          h.briefs,
-		Organizations:   orgCache{timezone: "America/Chicago"},
+		Organizations:   orgs{timezone: "America/Chicago"},
 		Now:             func() time.Time { return fixedNow },
 	})
 
@@ -567,9 +569,15 @@ func (b *briefStore) DeleteBefore(
 	return 0, nil
 }
 
-type orgCache struct{ timezone string }
+type orgs struct {
+	repositories.OrganizationRepository
+	timezone string
+}
 
-func (o orgCache) GetByID(context.Context, pulid.ID) (*tenant.Organization, error) {
+func (o orgs) GetByID(
+	context.Context,
+	repositories.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
 	return &tenant.Organization{Timezone: o.timezone}, nil
 }
 

@@ -2,10 +2,10 @@ package shipmentboardbrief
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -17,15 +17,15 @@ type Day struct {
 
 func Today(
 	ctx context.Context,
-	organizations repositories.OrganizationCacheRepository,
+	organizations orgzone.OrganizationReader,
 	tenantInfo pagination.TenantInfo,
 ) (Day, error) {
-	organization, err := organizations.GetByID(ctx, tenantInfo.OrgID)
+	location, err := orgzone.Location(ctx, organizations, tenantInfo)
 	if err != nil {
-		return Day{}, fmt.Errorf("load organization: %w", err)
+		return Day{}, err
 	}
 
-	timezone := timeutils.NormalizeTimezone(organization.Timezone)
+	timezone := location.String()
 
 	return Day{Date: timeutils.CurrentDateInTimezone(timezone), Timezone: timezone}, nil
 }

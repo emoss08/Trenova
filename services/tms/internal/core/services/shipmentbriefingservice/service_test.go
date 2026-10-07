@@ -134,16 +134,19 @@ func TestAcceptNarration(t *testing.T) {
 	assert.False(t, ok)
 }
 
-type stubBasis struct{}
+type stubBasis struct {
+	requests []services.ResolveShipmentQuickFilterBasisRequest
+}
 
-func (stubBasis) Resolve(
-	context.Context,
-	*services.ResolveShipmentQuickFilterBasisRequest,
+func (b *stubBasis) Resolve(
+	_ context.Context,
+	req *services.ResolveShipmentQuickFilterBasisRequest,
 ) (*repositories.ShipmentQuickFilterBasis, error) {
+	b.requests = append(b.requests, *req)
 	return &repositories.ShipmentQuickFilterBasis{Now: time.Unix(0, 0), Location: time.UTC}, nil
 }
 
-func (stubBasis) Prepare(
+func (*stubBasis) Prepare(
 	context.Context,
 	pagination.TenantInfo,
 	*repositories.ShipmentOptions,
@@ -178,6 +181,14 @@ func (stubReasons) LeadingLateReason(
 
 type stubOrgs struct {
 	repositories.OrganizationRepository
+	timezone string
+}
+
+func (o stubOrgs) GetByID(
+	context.Context,
+	repositories.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	return &tenant.Organization{Timezone: o.timezone}, nil
 }
 
 func (stubOrgs) GetCapabilities(
@@ -185,12 +196,6 @@ func (stubOrgs) GetCapabilities(
 	repositories.GetOrganizationCapabilitiesRequest,
 ) (*repositories.OrganizationCapabilities, error) {
 	return &repositories.OrganizationCapabilities{AssetOperationsEnabled: true}, nil
-}
-
-type stubOrgCache struct{ timezone string }
-
-func (c stubOrgCache) GetByID(context.Context, pulid.ID) (*tenant.Organization, error) {
-	return &tenant.Organization{Timezone: c.timezone}, nil
 }
 
 type stubCandidates struct {
@@ -280,6 +285,7 @@ func (s stubCompletion) CompleteStructured(
 type fixture struct {
 	service    *Service
 	board      *stubBoard
+	basis      *stubBasis
 	briefs     *memoryBriefs
 	candidates *stubCandidates
 }
@@ -296,6 +302,7 @@ func defaultCounts() map[shipment.QuickFilter]int {
 func newFixture(completion services.CompletionService) *fixture {
 	f := &fixture{
 		board:      &stubBoard{counts: defaultCounts()},
+		basis:      &stubBasis{},
 		briefs:     &memoryBriefs{},
 		candidates: &stubCandidates{},
 	}
@@ -303,9 +310,8 @@ func newFixture(completion services.CompletionService) *fixture {
 		Board:         f.board,
 		Briefing:      stubReasons{},
 		Briefs:        f.briefs,
-		QuickFilters:  stubBasis{},
-		Organizations: stubOrgs{},
-		OrgCache:      stubOrgCache{timezone: "America/Chicago"},
+		QuickFilters:  f.basis,
+		Organizations: stubOrgs{timezone: "America/Chicago"},
 		Suggestions:   f.candidates,
 		Completion:    completion,
 		Logger:        zap.NewNop(),
@@ -320,6 +326,20 @@ func newService(completion services.CompletionService) *Service {
 
 func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.ID("org_a"), BuID: pulid.ID("bu_a")}
+}
+
+func TestFactsResolveTheBasisEveryFactFilterNeeds(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(stubCompletion{err: services.ErrNoProviderConfigured})
+	_, err := f.service.Facts(t.Context(), testTenant(), "America/Chicago")
+	require.NoError(t, err)
+
+	require.Len(t, f.basis.requests, 1)
+	req := f.basis.requests[0]
+	assert.Equal(t, "America/Chicago", req.Timezone)
+	assert.True(t, req.Margin)
+	assert.True(t, req.Detention)
 }
 
 func TestBriefingFallsBackWithoutAModel(t *testing.T) {

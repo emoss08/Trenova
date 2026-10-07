@@ -103,6 +103,11 @@ func (s *Service) PreviewPolicy(
 		CapturedAt:      now,
 	})
 
+	location, err := s.tenantLocation(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	computed := Compute(ComputeInput{
 		Snapshot:         snapshot,
 		StopType:         scenario.StopType,
@@ -113,7 +118,7 @@ func (s *Service) PreviewPolicy(
 		AppointmentEnd:   scenario.AppointmentEnd,
 		NoticeSentAt:     scenario.NoticeSentAt,
 		Now:              now,
-		Location:         s.tenantLocation(ctx, tenantInfo.OrgID),
+		Location:         location,
 		DriverPayRate:    parsePayRate(scenario.DriverPayRate),
 		ShipmentAccrued:  decimal.Zero,
 	})

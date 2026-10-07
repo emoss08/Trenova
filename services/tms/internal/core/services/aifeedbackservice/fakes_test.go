@@ -248,7 +248,10 @@ func (f *fakeRetention) Get(
 
 type fakeOrganizations struct{}
 
-func (fakeOrganizations) GetByID(context.Context, pulid.ID) (*tenant.Organization, error) {
+func (fakeOrganizations) GetByID(
+	context.Context,
+	repositories.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
 	return &tenant.Organization{Timezone: "America/Chicago"}, nil
 }
 

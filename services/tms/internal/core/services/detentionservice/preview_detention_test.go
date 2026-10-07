@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -89,10 +90,22 @@ func pendingCharge() detention.DetentionOccurrence {
 	}
 }
 
+type previewOrganizations struct {
+	repositories.OrganizationRepository
+}
+
+func (previewOrganizations) GetByID(
+	context.Context,
+	repositories.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	return &tenant.Organization{Timezone: "America/Chicago"}, nil
+}
+
 func previewService(repo *previewOccurrenceRepo) *Service {
 	return &Service{
 		l:              zap.NewNop(),
 		occurrenceRepo: repo,
+		organizations:  previewOrganizations{},
 		now:            func() int64 { return 1_767_230_000 },
 	}
 }

@@ -7,17 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
-
-type organizationReader interface {
-	GetByID(
-		ctx context.Context,
-		req repositories.GetOrganizationByIDRequest,
-	) (*tenant.Organization, error)
-}
 
 type userReader interface {
 	GetByID(ctx context.Context, req repositories.GetUserByIDRequest) (*tenant.User, error)
@@ -31,7 +25,7 @@ type Params struct {
 }
 
 type Reader struct {
-	organizations organizationReader
+	organizations orgzone.OrganizationReader
 	users         userReader
 }
 
