@@ -18,10 +18,19 @@ export type StreamedSegment = {
   label?: string;
   /** Shown in a hover card on an actionable segment; mounted only while open. */
   preview?: ReactNode;
+  /** A figure or name the eye should land on, set in the foreground. */
+  emphasis?: boolean;
+  /** Colours an actionable segment for a warning or a failure. */
+  tone?: "warning" | "danger";
 };
 
 const SEGMENT_ACTION_CLASS =
   "ui-focus-ring decoration-border-strong hover:bg-brand/20 rounded-sm underline decoration-1 underline-offset-4 transition-colors";
+
+const SEGMENT_TONE_CLASS = {
+  warning: "text-warning decoration-warning/60 hover:bg-warning/20",
+  danger: "text-danger decoration-danger/60 hover:bg-danger/20",
+} as const;
 
 type Word = { text: string; start: number };
 
@@ -41,7 +50,11 @@ function SegmentAction({ segment, children }: { segment: StreamedSegment; childr
       type="button"
       aria-label={segment.label}
       onClick={segment.onActivate}
-      className={SEGMENT_ACTION_CLASS}
+      className={cn(
+        SEGMENT_ACTION_CLASS,
+        segment.emphasis && "text-foreground font-medium",
+        segment.tone && SEGMENT_TONE_CLASS[segment.tone],
+      )}
     >
       {children}
     </button>
@@ -121,7 +134,15 @@ export function StreamedText({
             </span>
           ));
         if (visible.length === 0) return null;
-        if (!segment.onActivate) return <Fragment key={index}>{visible}</Fragment>;
+        if (!segment.onActivate) {
+          return segment.emphasis ? (
+            <b key={index} className="text-foreground font-semibold">
+              {visible}
+            </b>
+          ) : (
+            <Fragment key={index}>{visible}</Fragment>
+          );
+        }
         return (
           <SegmentAction key={index} segment={segment}>
             {visible}

@@ -7,7 +7,7 @@ import {
   setAgentMemoryStatus,
   type AgentMemoryRow,
 } from "@/lib/graphql/agent-memories";
-import { aiControlStatsQueryKey } from "../overview/use-ai-control-stats";
+import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,7 +38,7 @@ export default function MemoryTab() {
     toast.success(status === "Retired" ? t("Memory retired") : t("Memory restored"));
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),
-      queryClient.invalidateQueries({ queryKey: aiControlStatsQueryKey }),
+      invalidateAIControlCounts(queryClient),
     ]);
   };
 

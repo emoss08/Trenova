@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CheckIcon } from "@trenova/shared/components/icons";
+import { CheckIcon, type IconComponent } from "@trenova/shared/components/icons";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -12,7 +12,12 @@ type HoldButtonProps = {
   disabled?: boolean;
   holdMs?: number;
   onConfirm: () => void;
+  /** What the fill warns of: success for something done, warning for a stop. */
+  tone?: "success" | "warning";
+  icon?: IconComponent;
 };
+
+const FILL_TONE = { success: "bg-success/25", warning: "bg-warning/25" } as const;
 
 /**
  * A button for an action too consequential for a click: the press has to be
@@ -26,6 +31,8 @@ export function HoldButton({
   disabled = false,
   holdMs = DEFAULT_HOLD_MS,
   onConfirm,
+  tone = "success",
+  icon: Icon,
 }: HoldButtonProps) {
   const t = useT();
   const [progress, setProgress] = useState(0);
@@ -83,7 +90,7 @@ export function HoldButton({
     >
       <span
         aria-hidden
-        className="bg-success/25 absolute inset-y-0 left-0"
+        className={cn("absolute inset-y-0 left-0", FILL_TONE[tone])}
         style={{ width: `${(done ? 1 : progress) * 100}%` }}
       />
       <span className="relative inline-flex items-center gap-1.5">
@@ -94,6 +101,7 @@ export function HoldButton({
           </>
         ) : (
           <>
+            {Icon && <Icon className="size-3.5" />}
             {label}
             <em className="text-muted-foreground text-xs not-italic">
               {progress > 0 ? t("keep holding") : t("hold")}

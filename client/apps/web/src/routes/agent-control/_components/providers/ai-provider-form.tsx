@@ -18,7 +18,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import type { ProviderFormValues } from "./build-save-payload";
 import { kindMark } from "./kind-marks";
 import { PresetPicker } from "./preset-picker";
-import { kindSupportsEmbedding } from "./provider-form-schema";
+import { PRESET_FIELDS, kindSupportsEmbedding, presetValues } from "./provider-form-schema";
 
 type AIProviderFormProps = {
   mode: "create" | "edit";
@@ -47,28 +47,6 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
     [catalog?.presets, preset],
   );
 
-  // An embedding preset brings the task, the vector size and the input style
-  // with it; picking a text preset afterwards takes them away again, since an
-  // embedding model serves nothing else.
-  const applyEmbeddingPreset = useCallback(
-    (picked: AIProviderPreset) => {
-      if (picked.tasks.length > 0) {
-        setValue("tasks", [...picked.tasks], { shouldDirty: true });
-      } else if ((getValues("tasks") ?? []).includes("Embedding")) {
-        setValue("tasks", null, { shouldDirty: true });
-      }
-      setValue(
-        "embeddingDimensionsChoice",
-        picked.embeddingDimensions > 0 ? String(picked.embeddingDimensions) : "",
-        { shouldDirty: true },
-      );
-      setValue("embeddingInputStyle", picked.embeddingInputStyle ?? "None", {
-        shouldDirty: true,
-      });
-    },
-    [getValues, setValue],
-  );
-
   const applyPreset = useCallback(
     (picked: AIProviderPreset | null) => {
       if (!picked) {
@@ -76,20 +54,12 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
         return;
       }
 
-      setValue("preset", picked.key, { shouldDirty: true });
-      setValue("kind", picked.kind, { shouldDirty: true });
-      setValue("baseUrl", picked.baseUrl, { shouldDirty: true });
-      setValue("structuredOutputMode", picked.structuredOutputMode, { shouldDirty: true });
-      setValue("allowPrivateNetwork", picked.allowPrivateNetwork, { shouldDirty: true });
-      if (picked.exampleModel) {
-        setValue("model", picked.exampleModel, { shouldDirty: true });
+      const next = presetValues(picked, getValues());
+      for (const field of PRESET_FIELDS) {
+        setValue(field, next[field], { shouldDirty: true });
       }
-      if (getValues("name").trim() === "") {
-        setValue("name", picked.label.replace(/\s*\(self-hosted\)$/i, ""), { shouldDirty: true });
-      }
-      applyEmbeddingPreset(picked);
     },
-    [applyEmbeddingPreset, getValues, setValue],
+    [getValues, setValue],
   );
 
   const embeddingSupported = kindDescriptor?.supportsEmbedding ?? kindSupportsEmbedding(kind);

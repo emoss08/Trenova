@@ -5,6 +5,7 @@ import {
   type AIProviderKind,
 } from "@/types/ai-provider";
 import type { AIProviderRow } from "@/lib/graphql/ai-provider";
+import type { AIProviderPreset } from "@/types/ai-provider";
 import { z } from "zod";
 import type { ProviderFormValues } from "./build-save-payload";
 
@@ -205,4 +206,52 @@ function decimalToNumber(value: string | null | undefined): number | null {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** The fields a preset sets, in the order the form applies them. */
+export const PRESET_FIELDS = [
+  "preset",
+  "kind",
+  "baseUrl",
+  "structuredOutputMode",
+  "allowPrivateNetwork",
+  "model",
+  "name",
+  "tasks",
+  "embeddingDimensionsChoice",
+  "embeddingInputStyle",
+] as const satisfies readonly (keyof ProviderFormValues)[];
+
+/**
+ * The form as it reads after picking a preset: its endpoint, protocol and example model,
+ * a name when there is none yet, and an embedding preset's task, vector size and input
+ * style. Picking a text preset takes an embedding preset's task away again, since an
+ * embedding model serves nothing else.
+ */
+export function presetValues(
+  preset: AIProviderPreset,
+  current: ProviderFormValues,
+): ProviderFormValues {
+  const tasks =
+    preset.tasks.length > 0
+      ? [...preset.tasks]
+      : (current.tasks ?? []).includes("Embedding")
+        ? null
+        : current.tasks;
+
+  return {
+    ...current,
+    preset: preset.key,
+    kind: preset.kind,
+    baseUrl: preset.baseUrl,
+    structuredOutputMode: preset.structuredOutputMode,
+    allowPrivateNetwork: preset.allowPrivateNetwork,
+    model: preset.exampleModel || current.model,
+    name:
+      current.name.trim() === "" ? preset.label.replace(/\s*\(self-hosted\)$/i, "") : current.name,
+    tasks,
+    embeddingDimensionsChoice:
+      preset.embeddingDimensions > 0 ? String(preset.embeddingDimensions) : "",
+    embeddingInputStyle: preset.embeddingInputStyle ?? "None",
+  };
 }

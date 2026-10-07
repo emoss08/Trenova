@@ -1,151 +1,135 @@
+import { usePermission } from "@/hooks/use-permission";
+import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
+import { queries } from "@/lib/queries";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
-import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
-import { SectionPanel } from "@/components/section-panel";
-import { formatLatency, formatTokens, formatUsd } from "@/lib/ai-usage-format";
-import { lazy } from "react";
-import type { ActivityView } from "../rail-items";
-import { AIReadinessBanner } from "../ai-readiness-banner";
-import { AgentsGlance } from "./agents-glance";
-import { RecentFailures } from "./recent-failures";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { useAIControlNavigation } from "../../use-ai-control-navigation";
+import { NovaSummary } from "../nova/nova-summary";
+import { useNovaSegments } from "../nova/use-nova-segments";
+import { useNovaTargets } from "../nova/use-nova-targets";
+import { PolicyEditor } from "../policy/policy-editor";
+import { AgentsAtWork } from "./agents-at-work";
+import { OrganizationWide } from "./organization-wide";
+import { OVERVIEW_WINDOW_DAYS, OverviewFigures } from "./overview-figures";
+import { OverviewControl } from "./overview-control";
+import { ProviderFailureStrip } from "./provider-failure-strip";
+import { SetupSteps } from "./setup-steps";
 import { UsageByFeature } from "./usage-by-feature";
-import { useAIControlStats } from "./use-ai-control-stats";
 
-const AgentControlForm = lazy(() => import("../agent-control-form"));
+/** The sentence is reread a few seconds after a read that left a model rewording it. */
+const PENDING_REFRESH_MS = 3_000;
+/** Navigating back within this long shows the sentence already read, without a request. */
+const SUMMARY_STALE_MS = 30_000;
 
 type OverviewTabProps = {
   onOpenProviders: () => void;
   onOpenAgents: () => void;
-  onOpenActivity: (view: ActivityView) => void;
 };
 
 /**
- * The state of AI in the organization on one screen: whether it can work at
- * all, the figures for the week in one strip, then the switch that pauses
- * everything and the agents at a glance.
+ * AI in the organization on one screen: Nova's sentence and the one control beside it, the
+ * week in figures, a provider that is failing, where the calls went, and the agents and
+ * organization-wide settings in a side column. With no provider, the way to connect one.
  */
-export default function OverviewTab({
-  onOpenProviders,
-  onOpenAgents,
-  onOpenActivity,
-}: OverviewTabProps) {
+export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewTabProps) {
   const t = useT();
-  const stats = useAIControlStats();
-  const counts = stats.counts;
-  const usage = stats.usage;
-  const days = stats.usageWindowDays;
+  const go = useAIControlNavigation();
+  const onTarget = useNovaTargets();
+  const [editingPolicy, setEditingPolicy] = useState(false);
+  const { allowed: canUpdateControl } = usePermission(Resource.AgentControl, Operation.Update);
 
-  const unpriced = usage ? usage.calls - usage.pricedCalls : 0;
-  const spend = usage && usage.pricedCalls > 0 ? (formatUsd(usage.costUsd) ?? "—") : "—";
-  const spendSub =
-    usage === undefined || usage.calls === 0
-      ? undefined
-      : usage.pricedCalls === 0
-        ? t("No provider has a price yet")
-        : unpriced > 0
-          ? t("Partial: {0} of {1} calls unpriced", unpriced, usage.calls)
-          : t("Every call priced");
+  const summaryQuery = useQuery({
+    ...queries.aiControl.summary("Overview"),
+    staleTime: SUMMARY_STALE_MS,
+    refetchInterval: (query) => (query.state.data?.pending ? PENDING_REFRESH_MS : false),
+  });
+  const controlQuery = useQuery(agentControlQueryOptions());
+  const providersQuery = useQuery(queries.aiProvider.list());
+  const catalogQuery = useQuery(queries.aiProvider.catalog());
+  const usageQuery = useQuery(queries.aiProvider.usage(OVERVIEW_WINDOW_DAYS));
+
+  const summary = summaryQuery.data;
+  const facts = summary?.facts;
+  const noProvider = facts ? facts.providersOn === 0 : false;
+  const segments = useNovaSegments(summary?.segments, onTarget);
+
+  const editProvider = useCallback(
+    (providerId: string) => go({ tab: "providers", panel: { mode: "edit", entityId: providerId } }),
+    [go],
+  );
+  const firstEnabled = providersQuery.data?.find((provider) => provider.enabled);
+  const taskCount = catalogQuery.data?.tasks.length ?? 0;
+  const busiest = Math.max(0, ...(usageQuery.data?.byFeature ?? []).map((slice) => slice.calls));
 
   return (
-    <div className="flex flex-col gap-4">
-      <AIReadinessBanner onOpenProviders={onOpenProviders} />
+    <div className="flex flex-col gap-6">
+      <NovaSummary
+        context={t("AI control")}
+        segments={segments}
+        streamKey={summary ? `${summary.factsHash}:${summary.narrated}` : "loading"}
+        loading={summaryQuery.isLoading}
+        working={Boolean(facts && facts.agents.working > 0 && !facts.paused && !noProvider)}
+        control={
+          <OverviewControl
+            control={controlQuery.data}
+            noProvider={noProvider}
+            canUpdate={canUpdateControl}
+            onConnectProvider={() => go({ tab: "providers", panel: { mode: "create" } })}
+          />
+        }
+      />
 
-      <KpiStrip minItemWidth="9.5rem">
-        <KpiStripItem
-          label={t("Providers on")}
-          value={stats.isLoading ? "…" : `${stats.providersEnabled} / ${stats.providersTotal}`}
-          tone={stats.providersEnabled > 0 ? "success" : "warning"}
-          onClick={onOpenProviders}
-        />
-        <KpiStripItem
-          label={t("Agents on")}
-          value={
-            stats.isLoading ? "…" : `${counts?.agentsEnabled ?? 0} / ${counts?.agentsTotal ?? 0}`
-          }
-          tone={counts && counts.agentsEnabled > 0 ? "success" : "muted"}
-          onClick={onOpenAgents}
-        />
-        <KpiStripItem
-          label={t("Awaiting a decision")}
-          value={stats.isLoading ? "…" : (counts?.pendingProposals ?? 0)}
-          tone={counts && counts.pendingProposals > 0 ? "warning" : "muted"}
-          sub={t("Proposals a person has to decide")}
-          onClick={() => onOpenActivity("proposals")}
-        />
-        <KpiStripItem
-          label={t("Runs, last 24 hours")}
-          value={stats.isLoading ? "…" : (counts?.runsLast24h ?? 0)}
-          onClick={() => onOpenActivity("runs")}
-        />
-        <KpiStripItem
-          label={t("Model calls, {0} days", days)}
-          value={stats.usageLoading ? "…" : (usage?.calls ?? 0)}
-          tone={usage && usage.failed > 0 ? "warning" : undefined}
-          sub={usage && usage.failed > 0 ? t("{0} failed", usage.failed) : undefined}
-        />
-        <KpiStripItem
-          label={t("Spend, {0} days", days)}
-          value={stats.usageLoading ? "…" : spend}
-          tone={usage && usage.calls > 0 && usage.pricedCalls < usage.calls ? "warning" : undefined}
-          sub={spendSub}
-          onClick={onOpenProviders}
-        />
-        <KpiStripItem
-          label={t("Median response")}
-          value={
-            stats.usageLoading
-              ? "…"
-              : usage && usage.calls > 0
-                ? formatLatency(usage.latencyP50Ms)
-                : "—"
-          }
-          sub={
-            usage && usage.calls > 0
-              ? t("Slowest 5% took {0}+", formatLatency(usage.latencyP95Ms))
-              : undefined
+      {noProvider ? (
+        <SetupSteps
+          agentCount={facts?.agents.total ?? 0}
+          onPickPreset={(preset) =>
+            go({ tab: "providers", panel: { mode: "create", preset: preset ?? undefined } })
           }
         />
-        <KpiStripItem
-          label={t("Tokens, {0} days", days)}
-          value={
-            stats.usageLoading
-              ? "…"
-              : usage
-                ? formatTokens(usage.inputTokens + usage.outputTokens)
-                : "0"
-          }
-          sub={
-            usage
-              ? t(
-                  "{0} in, {1} out",
-                  formatTokens(usage.inputTokens),
-                  formatTokens(usage.outputTokens),
-                )
-              : undefined
-          }
+      ) : (
+        <OverviewFigures
+          onSetPrices={firstEnabled ? () => editProvider(firstEnabled.id) : undefined}
         />
-      </KpiStrip>
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-        <SectionPanel
-          title={t("Organization-wide")}
-          help={t(
-            "Applies to every agent in the organization, whatever its own configuration says.",
+      {!noProvider && summary && (
+        <ProviderFailureStrip failures={summary.visibleFailures} onEditProvider={editProvider} />
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {!noProvider && <UsageByFeature days={OVERVIEW_WINDOW_DAYS} busiest={busiest} />}
+        </div>
+        <aside className="flex min-w-0 flex-col gap-6">
+          <AgentsAtWork
+            idleReason={noProvider ? "no-provider" : facts?.paused ? "paused" : null}
+            onOpenAgents={onOpenAgents}
+          />
+          {controlQuery.data && (
+            <OrganizationWide
+              control={controlQuery.data}
+              routing={
+                noProvider || !facts || taskCount === 0
+                  ? null
+                  : { covered: Math.max(0, taskCount - facts.uncovered), total: taskCount }
+              }
+              canEdit={canUpdateControl}
+              onEdit={() => setEditingPolicy(true)}
+              onOpenRouting={onOpenProviders}
+            />
           )}
-        >
-          <div className="p-3">
-            <SuspenseLoader>
-              <AgentControlForm />
-            </SuspenseLoader>
-          </div>
-        </SectionPanel>
-
-        <AgentsGlance onOpenAgents={onOpenAgents} onOpenActivity={onOpenActivity} />
+        </aside>
       </div>
 
-      <UsageByFeature slices={usage?.byFeature ?? []} days={days} />
-
-      <RecentFailures failures={usage?.recentFailures ?? []} />
+      {controlQuery.data && (
+        <PolicyEditor
+          open={editingPolicy}
+          control={controlQuery.data}
+          onClose={() => setEditingPolicy(false)}
+        />
+      )}
     </div>
   );
 }

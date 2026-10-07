@@ -1,0 +1,102 @@
+fragment AIProviderFailureFields on AIProviderFailure {
+  providerId
+  name
+  failedCalls
+  lastFailureAt
+}
+
+query AIControlSummary($tab: AIControlTab!) {
+  aiControlSummary(tab: $tab) {
+    tab
+    narrated
+    pending
+    factsHash
+    generatedAt
+    segments {
+      text
+      strong
+      target
+      providerId
+      tone
+    }
+    facts {
+      providersOn
+      uncovered
+      paused
+      agents {
+        total
+        on
+        working
+        waiting
+        shadow
+        shadowRecorded
+      }
+      failing {
+        ...AIProviderFailureFields
+      }
+    }
+    visibleFailures {
+      ...AIProviderFailureFields
+    }
+  }
+}
+
+mutation DismissAIProviderFailure($providerId: ID!, $lastFailureAt: Timestamp!) {
+  dismissAIProviderFailure(providerId: $providerId, lastFailureAt: $lastFailureAt)
+}
+
+mutation RestoreAIProviderFailure($providerId: ID!) {
+  restoreAIProviderFailure(providerId: $providerId)
+}
+
+query AgentPromotionPreview($threshold: Int!) {
+  agentPromotionPreview(threshold: $threshold) {
+    agentDefinitionId
+    agentName
+    toolName
+    streak
+    from
+    to
+  }
+}
+
+query AIUsageDaily($days: Int, $timezone: String) {
+  aiUsageDaily(days: $days, timezone: $timezone) {
+    day
+    calls
+    failed
+    inputTokens
+    outputTokens
+    costUsd
+    pricedCalls
+    latencyP50Ms
+    latencyP95Ms
+  }
+}
+
+query AIUsageFeatures(
+  $input: DataTableConnectionInput!
+  $days: Int
+  $includeTotalCount: Boolean = true
+) {
+  aiUsageFeatures(input: $input, days: $days) {
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+    edges {
+      cursor
+      node {
+        feature
+        calls
+        failed
+        inputTokens
+        outputTokens
+        costUsd
+        pricedCalls
+        latencyP50Ms
+        latencyP95Ms
+      }
+    }
+  }
+}

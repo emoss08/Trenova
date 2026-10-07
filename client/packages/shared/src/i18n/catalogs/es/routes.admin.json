@@ -1497,7 +1497,6 @@
   "{0} KB": "{0} KB",
   "{0} accepted the client ID and secret.": "{0} aceptó el ID y el secreto de cliente.",
   "{0} action": "Acción de {0}",
-  "{0} answered": "{0} respondió",
   "{0} calls in a row have failed": "Fallaron {0} llamadas seguidas",
   "{0} can only receive documents.": "{0} solo puede recibir documentos.",
   "{0} cannot exceed {1}": "{0} no puede superar {1}",

@@ -32,6 +32,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useAddressedPanel, type AddressedPanel } from "../../use-addressed-panel";
 import { AIProviderPanel } from "./ai-provider-panel";
 import { filterProviders, sortProvidersByRouting } from "./provider-roster";
 import { ProviderRows } from "./provider-rows";
@@ -41,6 +42,8 @@ type PanelState = {
   open: boolean;
   mode: PanelMode;
   row: ProviderPanelRow | null;
+  /** The preset a new provider starts from. */
+  preset?: string | null;
 };
 
 export default function ProvidersTab() {
@@ -95,6 +98,24 @@ export default function ProvidersTab() {
   });
 
   const openCreate = useCallback(() => setPanel({ open: true, mode: "create", row: null }), []);
+
+  useAddressedPanel(
+    useCallback(
+      (request: AddressedPanel) => {
+        if (request.mode === "create") {
+          setPanel({ open: true, mode: "create", row: null, preset: request.preset });
+          return true;
+        }
+        const provider = providers.find((candidate) => candidate.id === request.entityId);
+        if (!provider) {
+          return !listQuery.isLoading;
+        }
+        setPanel({ open: true, mode: "edit", row: toProviderPanelRow(provider) });
+        return true;
+      },
+      [listQuery.isLoading, providers],
+    ),
+  );
   const openEdit = useCallback(
     (provider: AIProviderRow) =>
       setPanel({ open: true, mode: "edit", row: toProviderPanelRow(provider) }),
@@ -185,6 +206,7 @@ export default function ProvidersTab() {
         onOpenChange={(open) => setPanel((current) => ({ ...current, open }))}
         mode={panel.mode}
         row={panel.row}
+        preset={panel.preset}
       />
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>

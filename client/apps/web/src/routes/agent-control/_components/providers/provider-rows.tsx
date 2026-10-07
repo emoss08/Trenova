@@ -1,6 +1,5 @@
 import type { AIProviderRow } from "@/lib/graphql/ai-provider";
 import type { AIProviderCatalog } from "@/types/ai-provider";
-import { BrandLogo } from "@trenova/shared/components/brand-logo";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -15,7 +14,7 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { providerBrandDomain } from "./provider-brand";
+import { ProviderMark } from "./provider-mark";
 import { ProviderTestSummary } from "./provider-test-summary";
 
 export type ProviderRowActions = {
@@ -70,10 +69,6 @@ export function ProviderRow({
 }) {
   const t = useT();
 
-  const domain = useMemo(
-    () => providerBrandDomain(provider, catalog?.presets ?? []),
-    [provider, catalog?.presets],
-  );
   const kindLabel =
     catalog?.kinds.find((kind) => kind.kind === provider.kind)?.label ?? provider.kind;
   const taskLabels = useMemo(() => {
@@ -94,12 +89,7 @@ export function ProviderRow({
       >
         {position}
       </span>
-      <BrandLogo
-        domain={domain}
-        name={provider.name}
-        size={28}
-        className={cn(!provider.enabled && "opacity-60 grayscale")}
-      />
+      <ProviderMark provider={provider} presets={catalog?.presets ?? []} />
       <div className="flex min-w-0 flex-col gap-0.5">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
           <button

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:13cece50e4d080f89c1ee9cd071df170a982560219e98ecc921b47a7e0f7b64a",
+  "version": "sha256:df7442eacac915ed37632a68f6140ec088f28f6c5e0b060a686f588fb9a329fc",
   "modules": [
     {
       "id": "home",
@@ -2282,7 +2282,7 @@
         "AI control"
       ],
       "description": "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, activity shows what it did, and the audit trail keeps a signed record of it.",
-      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds ten sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**, **Retrieval**, **Safety**, **Quality**, **Activity** and **Audit trail**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), extensions add abilities that work only for agents, such as searching the web, using the organization's own account with the vendor, memory holds the standing instructions and facts agents read, retrieval shows whether agents find memories, documents and inbound email by meaning and what indexing them costs, safety shows what each tool and agent can do without a person, quality says how well each agent does its work, activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions, and the audit trail keeps a signed record of every run, model call, tool call and decision for compliance to read, check and export.\n\n**Overview** shows whether AI can work at all (a banner warns when no provider is connected or a task has no provider), a strip of figures for providers and agents that are on, proposals awaiting a decision, runs in the last 24 hours, model calls, spend, response time and tokens, the **Organization-wide** switches, and every agent at a glance. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
+      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds ten sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**, **Retrieval**, **Safety**, **Quality**, **Activity** and **Audit trail**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), extensions add abilities that work only for agents, such as searching the web, using the organization's own account with the vendor, memory holds the standing instructions and facts agents read, retrieval shows whether agents find memories, documents and inbound email by meaning and what indexing them costs, safety shows what each tool and agent can do without a person, quality says how well each agent does its work, activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions, and the audit trail keeps a signed record of every run, model call, tool call and decision for compliance to read, check and export.\n\n**Overview** opens with one sentence from Nova saying what is true now: how many agents are on and working, how many proposals wait on a person, a provider that can't connect and any task with no provider, each linked to where to act on it. Below it are the week's figures (model calls with the days they failed, median response, tokens and spend), a notice for a provider that is failing, **Usage by feature**, the agents at work and every agent at a glance, and the **Organization-wide** settings. With no provider connected, it walks through connecting one. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
       "requires": [
         {
           "resource": "agent_control",
@@ -2607,8 +2607,8 @@
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) on **Overview**.",
-            "In **Organization-wide**, turn on **Pause all agents**. Agents keep running and recording what they would do, but nothing they propose is offered for a decision or executed.",
-            "In the same panel, turn **Earned autonomy** on or off and choose the **Promotion threshold** (clean approvals in a row before a tool moves up a tier on that agent)."
+            "Press and hold **Hold to pause all agents** beside Nova's sentence until it fills. Agents keep running and recording what they would do, but nothing they propose is offered for a decision or executed. Select **Resume agents** to let them surface their work again.",
+            "In **Organization-wide**, select **Edit** to turn **Earned autonomy** on or off and choose the **Clean approvals** in a row before a tool moves up a tier on that agent. Before you save, it lists the tools that have already earned it; they move up when you save."
           ]
         },
         {
@@ -2838,7 +2838,7 @@
             "what the agent learned"
           ],
           "steps": [
-            "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, turn **Learn from their work** on or off for every agent. It is on unless someone turned it off.",
+            "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select **Edit** and turn **Learn from their work** on or off for every agent, then save. It is on unless someone turned it off.",
             "To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on or off, then select **Save**.",
             "Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it kept, offered or turned down, with the reason.",
             "A lesson shared beyond one person waits under **Suggested memories**, with the memory it would retire. Select **Review and approve** to edit and keep it, or **Dismiss**.",

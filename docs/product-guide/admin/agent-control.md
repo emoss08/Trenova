@@ -22,10 +22,12 @@ their runs, the changes they proposed, multi-step plans, replays and exceptions,
 trail keeps a signed record of every run, model call, tool call and decision for compliance to
 read, check and export.
 
-**Overview** shows whether AI can work at all (a banner warns when no provider is connected or a
-task has no provider), a strip of figures for providers and agents that are on, proposals
-awaiting a decision, runs in the last 24 hours, model calls, spend, response time and tokens, the
-**Organization-wide** switches, and every agent at a glance. Administrators use this page to set
+**Overview** opens with one sentence from Nova saying what is true now: how many agents are on and
+working, how many proposals wait on a person, a provider that can't connect and any task with no
+provider, each linked to where to act on it. Below it are the week's figures (model calls with the
+days they failed, median response, tokens and spend), a notice for a provider that is failing,
+**Usage by feature**, the agents at work and every agent at a glance, and the **Organization-wide**
+settings. With no provider connected, it walks through connecting one. Administrators use this page to set
 up providers and agents; reviewers use **Activity** to approve or reject what agents propose.
 
 ## Tasks
@@ -217,10 +219,12 @@ Keywords: agent decisions, pending proposals, review agent changes, approve plan
 ### Pause every agent at once
 Keywords: kill switch, stop AI, shadow mode, earned autonomy
 1. Open [AI control](/admin/agent-control) on **Overview**.
-2. In **Organization-wide**, turn on **Pause all agents**. Agents keep running and recording what
-   they would do, but nothing they propose is offered for a decision or executed.
-3. In the same panel, turn **Earned autonomy** on or off and choose the **Promotion threshold**
-   (clean approvals in a row before a tool moves up a tier on that agent).
+2. Press and hold **Hold to pause all agents** beside Nova's sentence until it fills. Agents keep
+   running and recording what they would do, but nothing they propose is offered for a decision or
+   executed. Select **Resume agents** to let them surface their work again.
+3. In **Organization-wide**, select **Edit** to turn **Earned autonomy** on or off and choose the
+   **Clean approvals** in a row before a tool moves up a tier on that agent. Before you save, it
+   lists the tools that have already earned it; they move up when you save.
 
 ### See what agents can do without a person
 Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents
@@ -421,8 +425,8 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
 
 ### Let agents learn from their work
 Keywords: self-improving agents, learning, reflection, look back, lessons, procedures, what the agent learned
-1. Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, turn
-   **Learn from their work** on or off for every agent. It is on unless someone turned it off.
+1. Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select
+   **Edit** and turn **Learn from their work** on or off for every agent, then save. It is on unless someone turned it off.
 2. To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on
    or off, then select **Save**.
 3. Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked

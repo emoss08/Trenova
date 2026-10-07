@@ -58,6 +58,8 @@ export type AIControlDestination = {
   retrievalSource?: RetrievalSource | null;
   /** Filters the destination's table starts with, in its own field names. */
   fieldFilters?: FieldFilter[];
+  /** Opens the destination's editor: a record's, or a new one. */
+  panel?: { mode: "edit"; entityId: string } | { mode: "create"; preset?: string };
 };
 
 const isActivityView = (view: RailView): view is ActivityView =>
@@ -86,6 +88,11 @@ export function useAIControlNavigation() {
         {
           ...CLEARED_TABLE_STATE,
           fieldFilters: destination.fieldFilters ?? null,
+          panelType: destination.panel?.mode ?? null,
+          panelEntityId:
+            destination.panel?.mode === "edit"
+              ? destination.panel.entityId
+              : (destination.panel?.preset ?? null),
           [AI_CONTROL_TAB_PARAM]: destination.tab,
           [ACTIVITY_VIEW_PARAM]:
             destination.tab === "activity" && view && isActivityView(view) ? view : null,

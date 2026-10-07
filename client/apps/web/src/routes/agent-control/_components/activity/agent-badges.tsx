@@ -188,6 +188,10 @@ export const ResolutionBadge = ({ value, t }: { value: AgentResolutionState; t: 
   <Labelled entry={RESOLUTION[value]} t={t} />
 );
 
+export function runStatusLabel(value: AgentRunStatus, t: TranslateFn): string {
+  return t(RUN_STATUS[value].label);
+}
+
 export function agentTypeLabel(value: AgentType, t: TranslateFn): string {
   return t(AGENT_TYPE[value] ?? value);
 }

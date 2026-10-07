@@ -23,7 +23,7 @@ import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { toast } from "sonner";
-import { aiControlStatsQueryKey } from "../overview/use-ai-control-stats";
+import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import { MEMORY_CONTENT_LIMIT } from "./memory-form-schema";
 
 export const agentMemorySuggestionsQueryKey = [AGENT_MEMORY_SUGGESTIONS_KEY] as const;
@@ -114,7 +114,7 @@ function useSettleSuggestion() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: agentMemorySuggestionsQueryKey }),
         queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),
-        queryClient.invalidateQueries({ queryKey: aiControlStatsQueryKey }),
+        invalidateAIControlCounts(queryClient),
       ]);
     },
     onError: () => {

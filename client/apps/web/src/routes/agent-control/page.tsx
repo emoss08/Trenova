@@ -188,10 +188,6 @@ export function AgentControlPage() {
   );
   const openProviders = useCallback(() => select("providers"), [select]);
   const openAgents = useCallback(() => select("agents"), [select]);
-  const openActivity = useCallback(
-    (nextView: ActivityView) => select("activity", nextView),
-    [select],
-  );
   const openAuditExports = useCallback(() => select("audit", "exports"), [select]);
 
   return (
@@ -212,7 +208,6 @@ export function AgentControlPage() {
               <OverviewTab
                 onOpenProviders={openProviders}
                 onOpenAgents={openAgents}
-                onOpenActivity={openActivity}
               />
             )}
             {activeTab === "agents" && <AgentsTab />}

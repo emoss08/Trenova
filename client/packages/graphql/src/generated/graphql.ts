@@ -68,6 +68,12 @@ export type AiAuditVerificationStatus =
   | 'Mismatch'
   | 'Verified';
 
+/** A tab of AI control that opens with a sentence. */
+export type AiControlTab =
+  | 'Agents'
+  | 'Overview'
+  | 'Providers';
+
 export type AiCorrectionOutcome =
   | 'Correct'
   | 'Corrected'
@@ -8222,6 +8228,54 @@ export type CommitMyDecisionNowMutationVariables = Exact<{
 
 export type CommitMyDecisionNowMutation = { commitMyDecisionNow: boolean };
 
+export type AiProviderFailureFieldsFragment = { providerId: string, name: string, failedCalls: number, lastFailureAt: number } & { ' $fragmentName'?: 'AiProviderFailureFieldsFragment' };
+
+export type AiControlSummaryQueryVariables = Exact<{
+  tab: AiControlTab;
+}>;
+
+
+export type AiControlSummaryQuery = { aiControlSummary: { tab: AiControlTab, narrated: boolean, pending: boolean, factsHash: string, generatedAt: number, segments: Array<{ text: string, strong: boolean, target: string | null, providerId: string | null, tone: string | null }>, facts: { providersOn: number, uncovered: number, paused: boolean, agents: { total: number, on: number, working: number, waiting: number, shadow: number, shadowRecorded: number }, failing: Array<{ ' $fragmentRefs'?: { 'AiProviderFailureFieldsFragment': AiProviderFailureFieldsFragment } }> }, visibleFailures: Array<{ ' $fragmentRefs'?: { 'AiProviderFailureFieldsFragment': AiProviderFailureFieldsFragment } }> } };
+
+export type DismissAiProviderFailureMutationVariables = Exact<{
+  providerId: string | number;
+  lastFailureAt: number;
+}>;
+
+
+export type DismissAiProviderFailureMutation = { dismissAIProviderFailure: boolean };
+
+export type RestoreAiProviderFailureMutationVariables = Exact<{
+  providerId: string | number;
+}>;
+
+
+export type RestoreAiProviderFailureMutation = { restoreAIProviderFailure: boolean };
+
+export type AgentPromotionPreviewQueryVariables = Exact<{
+  threshold: number;
+}>;
+
+
+export type AgentPromotionPreviewQuery = { agentPromotionPreview: Array<{ agentDefinitionId: string, agentName: string, toolName: string, streak: number, from: AgentAutonomyTier, to: AgentAutonomyTier }> };
+
+export type AiUsageDailyQueryVariables = Exact<{
+  days?: number | null | undefined;
+  timezone?: string | null | undefined;
+}>;
+
+
+export type AiUsageDailyQuery = { aiUsageDaily: Array<{ day: string, calls: number, failed: number, inputTokens: number, outputTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }> };
+
+export type AiUsageFeaturesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  days?: number | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AiUsageFeaturesQuery = { aiUsageFeatures: { totalCount?: number | null, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } }, edges: Array<{ cursor: string, node: { feature: AiUsageFeature | null, calls: number, failed: number, inputTokens: number, outputTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number } }> } };
+
 export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
 
 export type AiAuditEventDetailFieldsFragment = (
@@ -15975,6 +16029,14 @@ export const RoleAgentAccessFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"RoleAgentAccessFields"}) as unknown as TypedDocumentString<RoleAgentAccessFieldsFragment, unknown>;
+export const AiProviderFailureFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIProviderFailureFields on AIProviderFailure {
+  providerId
+  name
+  failedCalls
+  lastFailureAt
+}
+    `, {"fragmentName":"AIProviderFailureFields"}) as unknown as TypedDocumentString<AiProviderFailureFieldsFragment, unknown>;
 export const AiAuditEventRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AIAuditEventRowFields on AIAuditEvent {
   id
@@ -24920,6 +24982,12 @@ export const SuggestedAgentAudienceDocument = {"__meta__":{"kind":"query","name"
 export const DecideMyProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposals","hash":"sha256:43aaeb7e935e724d9714b2248cc2cb5ba10715eb0336f6dbee971c95bd25677d"}} as unknown as TypedDocumentString<DecideMyProposalsMutation, DecideMyProposalsMutationVariables>;
 export const UndoMyDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoMyDecision","hash":"sha256:530fd6518732d5522e0973029600faef0101edb322bbbe1be80defa0b9f77592"}} as unknown as TypedDocumentString<UndoMyDecisionMutation, UndoMyDecisionMutationVariables>;
 export const CommitMyDecisionNowDocument = {"__meta__":{"kind":"mutation","name":"CommitMyDecisionNow","hash":"sha256:b9db4e8528fdfc8d69c46c8b5be4b04ceaea396b4815f12e841aa6d0f8f3eeca"}} as unknown as TypedDocumentString<CommitMyDecisionNowMutation, CommitMyDecisionNowMutationVariables>;
+export const AiControlSummaryDocument = {"__meta__":{"kind":"query","name":"AIControlSummary","hash":"sha256:01dddd2ba4ce11406da6e25abe48515958da426d6b066a3880b33c1c6fb39f93"}} as unknown as TypedDocumentString<AiControlSummaryQuery, AiControlSummaryQueryVariables>;
+export const DismissAiProviderFailureDocument = {"__meta__":{"kind":"mutation","name":"DismissAIProviderFailure","hash":"sha256:d193a4462a4f226e69e2b98068091404f7e0880bbdeac33d93c50002f18ca47d"}} as unknown as TypedDocumentString<DismissAiProviderFailureMutation, DismissAiProviderFailureMutationVariables>;
+export const RestoreAiProviderFailureDocument = {"__meta__":{"kind":"mutation","name":"RestoreAIProviderFailure","hash":"sha256:dbe0f5c29e0e853c9a2e19c0a48393681372ac764e995b6db49e1b9844de758b"}} as unknown as TypedDocumentString<RestoreAiProviderFailureMutation, RestoreAiProviderFailureMutationVariables>;
+export const AgentPromotionPreviewDocument = {"__meta__":{"kind":"query","name":"AgentPromotionPreview","hash":"sha256:1daff193b9e70efc56967b151efe7ee2734e15e8bb6954747afc4a0d5f2a13b7"}} as unknown as TypedDocumentString<AgentPromotionPreviewQuery, AgentPromotionPreviewQueryVariables>;
+export const AiUsageDailyDocument = {"__meta__":{"kind":"query","name":"AIUsageDaily","hash":"sha256:8a25bb95732146b810a9ddcda70ad305a7c71a630956d731c332daa25cb079d8"}} as unknown as TypedDocumentString<AiUsageDailyQuery, AiUsageDailyQueryVariables>;
+export const AiUsageFeaturesDocument = {"__meta__":{"kind":"query","name":"AIUsageFeatures","hash":"sha256:82b8f23419bfa37f02a9135d1983186add0f0552535f6dbec00070ab02732e83"}} as unknown as TypedDocumentString<AiUsageFeaturesQuery, AiUsageFeaturesQueryVariables>;
 export const AiAuditEventTableDocument = {"__meta__":{"kind":"query","name":"AIAuditEventTable","hash":"sha256:4df8553a5f6877364cf0f4bf0bf7fd0745b577dd89671d7f6ce85bda0bd5684e"}} as unknown as TypedDocumentString<AiAuditEventTableQuery, AiAuditEventTableQueryVariables>;
 export const AiAuditEventDetailDocument = {"__meta__":{"kind":"query","name":"AIAuditEventDetail","hash":"sha256:ed73402380199934972ba4aa4c9baba8179b23d14cb6e7463f76a9c34c8c89da"}} as unknown as TypedDocumentString<AiAuditEventDetailQuery, AiAuditEventDetailQueryVariables>;
 export const AiAuditChainStatusDocument = {"__meta__":{"kind":"query","name":"AIAuditChainStatus","hash":"sha256:189c7a9b735b0b8ec6b15f9d4a9ce6bc3cd25c26cd30f99b7dda9538c48b6820"}} as unknown as TypedDocumentString<AiAuditChainStatusQuery, AiAuditChainStatusQueryVariables>;

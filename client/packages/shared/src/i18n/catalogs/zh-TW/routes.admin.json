@@ -1497,7 +1497,6 @@
   "{0} KB": "{0} KB",
   "{0} accepted the client ID and secret.": "{0} 已接受用戶端 ID 與密鑰。",
   "{0} action": "{0} 動作",
-  "{0} answered": "{0} 已回應",
   "{0} calls in a row have failed": "已連續 {0} 次呼叫失敗",
   "{0} can only receive documents.": "{0} 只能接收單據。",
   "{0} cannot exceed {1}": "{0} 不得超過 {1}",
