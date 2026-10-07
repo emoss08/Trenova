@@ -120,8 +120,33 @@ type AIUsageFailure struct {
 	At           int64    `json:"at"`
 }
 
+// AIUsageDay is one calendar day of model usage. Day is YYYY-MM-DD in the
+// timezone it was asked for.
+type AIUsageDay struct {
+	Day          string `json:"day"`
+	Calls        int    `json:"calls"`
+	Failed       int    `json:"failed"`
+	InputTokens  int64  `json:"inputTokens"`
+	OutputTokens int64  `json:"outputTokens"`
+	CostUSD      string `json:"costUsd"`
+	PricedCalls  int    `json:"pricedCalls"`
+	LatencyP50Ms int64  `json:"latencyP50Ms"`
+	LatencyP95Ms int64  `json:"latencyP95Ms"`
+}
+
+type AIUsageDailyRequest struct {
+	TenantInfo pagination.TenantInfo
+	// Days is how many calendar days, ending today. Defaults to seven.
+	Days int
+	// Timezone is the IANA zone a day is read in. Defaults to UTC.
+	Timezone string
+}
+
 type AIUsageService interface {
 	Summary(ctx context.Context, tenant pagination.TenantInfo, since int64) (*AIUsageSummary, error)
+	// Daily is one entry per calendar day, oldest first, including the days
+	// with no usage.
+	Daily(ctx context.Context, req *AIUsageDailyRequest) ([]AIUsageDay, error)
 }
 
 // SummaryFromRepository shapes a repository summary for the API.

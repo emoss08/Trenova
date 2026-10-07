@@ -4239,6 +4239,9 @@ models:
   AIUsageSummary:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AIUsageSummary
+  AIUsageDay:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageDay
   AIUsageProviderSlice:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AIUsageProviderSlice

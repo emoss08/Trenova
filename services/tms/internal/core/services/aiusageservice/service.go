@@ -2,6 +2,7 @@ package aiusageservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -18,10 +19,11 @@ type Params struct {
 
 type Service struct {
 	usage repositories.AIUsageRepository
+	clock func() time.Time
 }
 
 func New(p Params) services.AIUsageService {
-	return &Service{usage: p.Usage}
+	return &Service{usage: p.Usage, clock: time.Now}
 }
 
 // maxWindow bounds a summary to a year: the table has no other index than

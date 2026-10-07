@@ -98,7 +98,23 @@ type AIUsageSurfaceCostRequest struct {
 	Since      int64
 }
 
+// AIUsageDailyRequest reads a window day by day, each day as a calendar day
+// in Timezone.
+type AIUsageDailyRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+	Timezone   string
+}
+
+// AIUsageDayTotals is one calendar day's usage. Day is YYYY-MM-DD.
+type AIUsageDayTotals struct {
+	Day string
+	AIUsageTotals
+}
+
 type AIUsageRepository interface {
+	// Daily lists the days of a window that had any usage, oldest first.
+	Daily(ctx context.Context, req AIUsageDailyRequest) ([]AIUsageDayTotals, error)
 	SurfaceCost(ctx context.Context, req AIUsageSurfaceCostRequest) (*AIUsageCost, error)
 	EvaluationCost(ctx context.Context, req AIUsageEvaluationCostRequest) (*AIUsageCost, error)
 	Create(ctx context.Context, record *aiusage.AIUsageRecord) error

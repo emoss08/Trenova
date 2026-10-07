@@ -17,17 +17,110 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "aiusage",
 	Objects: []*gqlexec.Object{
+		{Name: "AIUsageDay", Implementors: []string{"AIUsageDay"}},
 		{Name: "AIUsageFailure", Implementors: []string{"AIUsageFailure"}},
 		{Name: "AIUsageFeatureSlice", Implementors: []string{"AIUsageFeatureSlice"}},
 		{Name: "AIUsageProviderSlice", Implementors: []string{"AIUsageProviderSlice"}},
 		{Name: "AIUsageSummary", Implementors: []string{"AIUsageSummary"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "AIUsageDay", Fields: []*gqlexec.Field{
+			{
+				Name:     "day",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.Day, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "calls",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.Calls, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "failed",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.Failed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "inputTokens",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.InputTokens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "outputTokens",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.OutputTokens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "costUsd",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.CostUSD, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "pricedCalls",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.PricedCalls, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "latencyP50Ms",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.LatencyP50Ms, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "latencyP95Ms",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AIUsageDay)
+					return obj.LatencyP95Ms, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+		}},
 		{Object: "AIUsageFailure", Fields: []*gqlexec.Field{
 			{
 				Name:     "providerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFailure)
 					return obj.ProviderID, nil
@@ -37,7 +130,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "providerName",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFailure)
 					return obj.ProviderName, nil
@@ -47,7 +140,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "model",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFailure)
 					return obj.Model, nil
@@ -57,7 +150,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "task",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFailure)
 					return obj.Task, nil
@@ -67,7 +160,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "errorClass",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFailure)
 					return obj.ErrorClass, nil
@@ -77,7 +170,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "message",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFailure)
 					return obj.Message, nil
@@ -87,7 +180,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "at",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFailure)
 					return obj.At, nil
@@ -98,7 +191,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "AIUsageFeatureSlice", Fields: []*gqlexec.Field{
 			{
 				Name:     "feature",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.Feature, nil
@@ -108,7 +201,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.Calls, nil
@@ -118,7 +211,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.Failed, nil
@@ -128,7 +221,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inputTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.InputTokens, nil
@@ -138,7 +231,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outputTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.OutputTokens, nil
@@ -148,7 +241,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reasoningTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.ReasoningTokens, nil
@@ -158,7 +251,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "costUsd",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.CostUSD, nil
@@ -168,7 +261,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pricedCalls",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.PricedCalls, nil
@@ -178,7 +271,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latencyP50Ms",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.LatencyP50Ms, nil
@@ -188,7 +281,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latencyP95Ms",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageFeatureSlice)
 					return obj.LatencyP95Ms, nil
@@ -200,7 +293,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "providerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.ProviderID, nil
@@ -210,7 +303,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "providerName",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.ProviderName, nil
@@ -220,7 +313,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "model",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.Model, nil
@@ -230,7 +323,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.Calls, nil
@@ -240,7 +333,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.Failed, nil
@@ -250,7 +343,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inputTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.InputTokens, nil
@@ -260,7 +353,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outputTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.OutputTokens, nil
@@ -270,7 +363,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reasoningTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.ReasoningTokens, nil
@@ -280,7 +373,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "costUsd",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.CostUSD, nil
@@ -290,7 +383,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pricedCalls",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.PricedCalls, nil
@@ -300,7 +393,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latencyP50Ms",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.LatencyP50Ms, nil
@@ -310,7 +403,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latencyP95Ms",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageProviderSlice)
 					return obj.LatencyP95Ms, nil
@@ -322,7 +415,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "since",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.Since, nil
@@ -332,7 +425,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.Calls, nil
@@ -342,7 +435,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.Failed, nil
@@ -352,7 +445,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inputTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.InputTokens, nil
@@ -362,7 +455,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outputTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.OutputTokens, nil
@@ -372,7 +465,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reasoningTokens",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.ReasoningTokens, nil
@@ -382,7 +475,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "costUsd",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.CostUSD, nil
@@ -392,7 +485,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pricedCalls",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.PricedCalls, nil
@@ -402,7 +495,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latencyP50Ms",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.LatencyP50Ms, nil
@@ -412,7 +505,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latencyP95Ms",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*services.AIUsageSummary)
 					return obj.LatencyP95Ms, nil
@@ -468,6 +561,20 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageSummary),
 			},
+			{
+				Name:       "aiUsageDaily",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AIUsageDay",
+				Args:       field_Query_aiUsageDaily_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageDaily(ctx, fc.Args["days"].(*int), fc.Args["timezone"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDayᚄ),
+			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
@@ -477,15 +584,16 @@ var Shard = &gqlexec.Shard{
 
 type resolverQuery interface {
 	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild3 = errors.New("field of type AIUsageFeature does not have child fields")
-	errNoChild4 = errors.New("field of type Int does not have child fields")
-	errNoChild5 = errors.New("field of type Decimal does not have child fields")
+	errNoChild0 = errors.New("field of type String does not have child fields")
+	errNoChild1 = errors.New("field of type Int does not have child fields")
+	errNoChild2 = errors.New("field of type Decimal does not have child fields")
+	errNoChild3 = errors.New("field of type ID does not have child fields")
+	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild5 = errors.New("field of type AIUsageFeature does not have child fields")
 )
 
 func field_Query_aiUsageSummary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -501,12 +609,65 @@ func field_Query_aiUsageSummary_args(ctx context.Context, ec *gqlexec.Exec, rawA
 	return args, nil
 }
 
+func field_Query_aiUsageDaily_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "days",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["days"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "timezone",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["timezone"] = arg1
+	return args, nil
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalInt(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AIUsageDay) graphql.Marshaler {
+	return gqlexec.List[*services.AIUsageDay]{
+		Elem:        marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDay,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIUsageDay) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIUsageDay", v)
 }
 
 func marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AIUsageFailure) graphql.Marshaler {

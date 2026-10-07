@@ -175,6 +175,43 @@ func (r *repository) Summary(
 	})
 }
 
+func (r *repository) Daily(
+	ctx context.Context,
+	req repositories.AIUsageDailyRequest,
+) ([]repositories.AIUsageDayTotals, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AIUsageDayTotals, error) {
+		cols := buncolgen.AIUsageRecordColumns
+
+		var rows []dayRow
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*aiusage.AIUsageRecord)(nil)).
+			ColumnExpr("to_char(to_timestamp("+cols.CreatedAt.Qualified()+") AT TIME ZONE ?, 'YYYY-MM-DD') AS day", req.Timezone).
+			ColumnExpr(aggregateColumns).
+			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Where(cols.CreatedAt.Gte(), req.Since).
+			GroupExpr("day").
+			OrderExpr("day ASC").
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("summarise ai usage by day: %w", err)
+		}
+
+		days := make([]repositories.AIUsageDayTotals, 0, len(rows))
+		for idx := range rows {
+			days = append(days, repositories.AIUsageDayTotals{
+				Day:           rows[idx].Day,
+				AIUsageTotals: rows[idx].totals(),
+			})
+		}
+		return days, nil
+	})
+}
+
+type dayRow struct {
+	Day string `bun:"day"`
+	totalsRow
+}
+
 // RecentFailures lists the newest failed attempts in a window, with the
 // provider's own message, so the reason behind a failure count is readable
 // where the count is shown.

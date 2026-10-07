@@ -2185,6 +2185,7 @@ type QueryResolver interface {
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
 	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
@@ -8657,9 +8658,30 @@ type AIUsageFailure {
   at: Timestamp!
 }
 
+"One calendar day of model usage, in the timezone it was asked for."
+type AIUsageDay {
+  "The day, YYYY-MM-DD."
+  day: String!
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  "Sum over the calls that carried a price; see pricedCalls."
+  costUsd: Decimal!
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+}
+
 extend type Query {
   "Model usage since the given instant, defaulting to the last seven days."
   aiUsageSummary(since: Timestamp): AIUsageSummary!
+  """
+  Model usage day by day for the last days (default 7, at most 90), ending
+  today, oldest first. A day with no calls is listed with zeros. Days are read
+  in the IANA timezone given, UTC when absent.
+  """
+  aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/api_key.graphqls", Input: `type ApiKey {

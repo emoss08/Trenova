@@ -23,3 +23,29 @@ func (r *QueryResolver) AiUsageSummary(ctx context.Context, since *int) (*servic
 
 	return r.AiUsageService.Summary(ctx, base.TenantInfo(authCtx), int64(base.DerefInt(since)))
 }
+
+func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &services.AIUsageDailyRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Days:       base.DerefInt(days),
+	}
+	if timezone != nil {
+		req.Timezone = *timezone
+	}
+
+	usage, err := r.AiUsageService.Daily(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*services.AIUsageDay, len(usage))
+	for idx := range usage {
+		out[idx] = &usage[idx]
+	}
+	return out, nil
+}

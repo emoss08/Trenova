@@ -884,6 +884,21 @@ type AITrainingExportHistoryEntry {
   validationExamples: Int!
 }
 
+"""One calendar day of model usage, in the timezone it was asked for."""
+type AIUsageDay {
+  calls: Int!
+  """Sum over the calls that carried a price; see pricedCalls."""
+  costUsd: Decimal!
+  """The day, YYYY-MM-DD."""
+  day: String!
+  failed: Int!
+  inputTokens: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  outputTokens: Int!
+  pricedCalls: Int!
+}
+
 """
 One failed model call: which provider and model, what kind of failure, and
 what the provider said. The class is one of a handful of words; the message
@@ -19251,6 +19266,12 @@ type Query {
   Training exports that included this organization's AI corrections, newest first.
   """
   aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
+  """
+  Model usage day by day for the last days (default 7, at most 90), ending
+  today, oldest first. A day with no calls is listed with zeros. Days are read
+  in the IANA timezone given, UTC when absent.
+  """
+  aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
   """
   Model usage since the given instant, defaulting to the last seven days.
   """
