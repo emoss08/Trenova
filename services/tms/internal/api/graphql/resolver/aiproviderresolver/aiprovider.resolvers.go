@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -65,4 +66,43 @@ func (r *QueryResolver) AiProvider(ctx context.Context, id string) (*aiprovider.
 		ID:         providerID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
+}
+
+func (r *AIRouteChoiceResolver) ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error) {
+	return base.IDPtr(obj.ProviderID), nil
+}
+
+func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	providerID, err := base.OptionalID(draft.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	routes, err := r.AiProviderService.RoutePreview(ctx, &services.AIProviderRoutePreviewRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Draft: services.AIProviderRoutingDraft{
+			ID:                  providerID,
+			Name:                draft.Name,
+			Kind:                draft.Kind,
+			Tasks:               draft.Tasks,
+			Priority:            draft.Priority,
+			EmbeddingDimensions: draft.EmbeddingDimensions,
+			Trusted:             draft.Trusted,
+			Enabled:             draft.Enabled,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*aiprovider.TaskRoute, len(routes))
+	for idx := range routes {
+		out[idx] = &routes[idx]
+	}
+	return out, nil
 }

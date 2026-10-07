@@ -17,6 +17,8 @@ type Deps struct {
 
 type AgentDefinitionResolver struct{ *Deps }
 
+type AgentInstructionFindingResolver struct{ *Deps }
+
 type MutationResolver struct{ *Deps }
 
 type MyAgentResolver struct{ *Deps }

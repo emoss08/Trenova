@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentlint"
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -390,4 +391,35 @@ func (r *QueryResolver) AgentShadowReport(ctx context.Context, agentID string, d
 	}
 
 	return r.AgentShadowService.Report(ctx, req)
+}
+
+func (r *AgentInstructionFindingResolver) Resource(ctx context.Context, obj *agentlint.Finding) (string, error) {
+	return obj.Resource.String(), nil
+}
+
+func (r *AgentInstructionFindingResolver) Operation(ctx context.Context, obj *agentlint.Finding) (string, error) {
+	return string(obj.Operation), nil
+}
+
+func (r *QueryResolver) AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	findings, err := r.AgentDefinitionService.LintInstructions(ctx, &services.LintAgentInstructionsRequest{
+		TenantInfo:        base.TenantInfo(authCtx),
+		Instructions:      input.Instructions,
+		ToolNames:         input.ToolNames,
+		DisabledToolNames: input.DisabledToolNames,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*agentlint.Finding, len(findings))
+	for idx := range findings {
+		out[idx] = &findings[idx]
+	}
+	return out, nil
 }

@@ -561,6 +561,21 @@ enum AIProviderKind {
   OpenAIResponses
 }
 
+"""
+A provider as its editor holds it, reduced to what decides where tasks go.
+"""
+input AIProviderRoutingDraftInput {
+  embeddingDimensions: Int
+  enabled: Boolean!
+  """The provider being edited. Absent for a new one."""
+  id: ID
+  kind: AIProviderKind!
+  name: String!
+  priority: Int!
+  tasks: [AITask!]!
+  trusted: Boolean!
+}
+
 """What the most recent live probe of the endpoint revealed."""
 type AIProviderTestOutcome {
   detail: String!
@@ -799,6 +814,15 @@ enum AIRetrievalUnavailableReason {
   TooOld
 }
 
+"""
+The provider a task goes to. Draft is the provider being edited, which has no ID until it is first saved.
+"""
+type AIRouteChoice {
+  draft: Boolean!
+  name: String!
+  providerId: ID
+}
+
 enum AIStructuredOutputMode {
   JSONMode
   JSONSchema
@@ -820,6 +844,18 @@ enum AITask {
   OperationalInsights
   QueryCompose
   ScopeClassification
+}
+
+"""
+Where one task goes now and where it would go with a draft saved. An absent
+choice is a task no provider serves. Providers resting after repeated failures
+are skipped at run time and are not reflected here.
+"""
+type AITaskRoute {
+  after: AIRouteChoice
+  before: AIRouteChoice
+  changed: Boolean!
+  task: AITask!
 }
 
 """
@@ -3187,6 +3223,39 @@ type AgentFingerprintChange {
   field: String!
   from: String!
   to: String!
+}
+
+"""
+A sentence of an agent's instructions asking for something none of its tools
+can do, read from the tool registry: the record it names and the operation it
+asks for.
+"""
+type AgentInstructionFinding {
+  """Byte offset just past the sentence."""
+  end: Int!
+  excerpt: String!
+  """
+  What the sentence asks to do to it: read, create, update, cancel and so on.
+  """
+  operation: String!
+  """The record the sentence names, as the permission registry knows it."""
+  resource: String!
+  """The record's name for a person."""
+  resourceLabel: String!
+  """Byte offset of the sentence in the instructions."""
+  start: Int!
+  """The tools in the registry that would do it. Empty when none does."""
+  tools: [String!]!
+}
+
+"""
+Instructions as the builder holds them, with the tools the draft holds.
+"""
+input AgentInstructionLintInput {
+  disabledToolNames: [String!]
+  """At most 20000 characters."""
+  instructions: String!
+  toolNames: [String!]!
 }
 
 """
@@ -19043,6 +19112,10 @@ type Query {
   How people rated one agent over the last window days (30 by default, at most 365).
   """
   agentFeedbackSummary(agentDefinitionId: ID!, window: Int = 30): AgentFeedbackSummary!
+  """
+  What a draft's instructions ask for that none of its tools can do. Saves nothing.
+  """
+  agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
   agentMemory(id: ID!): AgentMemory
   """How many active memories the organization keeps, against its soft cap."""
@@ -19155,6 +19228,10 @@ type Query {
   Whether search by meaning works, what is indexed, and what it has cost this month.
   """
   aiRetrievalStatus: AIRetrievalStatus!
+  """
+  Where each task goes now and where it would go with the draft saved. Saves nothing.
+  """
+  aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
   """
   Training exports that included this organization's AI corrections, newest first.
   """

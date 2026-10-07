@@ -78,6 +78,25 @@ type AIProviderTester interface {
 	) (*TestAIProviderResult, error)
 }
 
+// AIProviderRoutingDraft is a provider as its editor holds it, reduced to
+// what decides where tasks go. An ID is a provider being edited; the stored
+// provider supplies everything the draft does not set.
+type AIProviderRoutingDraft struct {
+	ID                  pulid.ID
+	Name                string
+	Kind                aiprovider.Kind
+	Tasks               []aiprovider.Task
+	Priority            int
+	EmbeddingDimensions *int
+	Trusted             bool
+	Enabled             bool
+}
+
+type AIProviderRoutePreviewRequest struct {
+	TenantInfo pagination.TenantInfo
+	Draft      AIProviderRoutingDraft
+}
+
 type AIProviderService interface {
 	List(
 		ctx context.Context,
@@ -106,6 +125,12 @@ type AIProviderService interface {
 		req repositories.DeleteAIProviderRequest,
 		actor *RequestActor,
 	) error
+	// RoutePreview says where each task goes now and where it would go with
+	// the draft saved. It saves nothing.
+	RoutePreview(
+		ctx context.Context,
+		req *AIProviderRoutePreviewRequest,
+	) ([]aiprovider.TaskRoute, error)
 	// Test issues a live probe against a saved provider and records its outcome
 	// on the provider.
 	Test(

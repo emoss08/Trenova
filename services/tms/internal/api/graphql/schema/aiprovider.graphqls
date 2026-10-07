@@ -133,7 +133,41 @@ type AIProviderConnection {
   totalCount: Int
 }
 
+"A provider as its editor holds it, reduced to what decides where tasks go."
+input AIProviderRoutingDraftInput {
+  "The provider being edited. Absent for a new one."
+  id: ID
+  name: String!
+  kind: AIProviderKind!
+  tasks: [AITask!]!
+  priority: Int!
+  embeddingDimensions: Int
+  trusted: Boolean!
+  enabled: Boolean!
+}
+
+"The provider a task goes to. Draft is the provider being edited, which has no ID until it is first saved."
+type AIRouteChoice {
+  providerId: ID
+  name: String!
+  draft: Boolean!
+}
+
+"""
+Where one task goes now and where it would go with a draft saved. An absent
+choice is a task no provider serves. Providers resting after repeated failures
+are skipped at run time and are not reflected here.
+"""
+type AITaskRoute {
+  task: AITask!
+  before: AIRouteChoice
+  after: AIRouteChoice
+  changed: Boolean!
+}
+
 extend type Query {
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   aiProvider(id: ID!): AIProvider
+  "Where each task goes now and where it would go with the draft saved. Saves nothing."
+  aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
 }

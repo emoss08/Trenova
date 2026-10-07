@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
+	"github.com/emoss08/trenova/internal/core/domain/agentlint"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -119,6 +120,13 @@ type ToolCatalogEntry struct {
 	GrantedToEveryAgent bool `json:"grantedToEveryAgent"`
 }
 
+type LintAgentInstructionsRequest struct {
+	TenantInfo        pagination.TenantInfo
+	Instructions      string
+	ToolNames         []string
+	DisabledToolNames []string
+}
+
 type PreviewPromptRequest struct {
 	Definition *SaveAgentDefinitionRequest
 	Actor      *RequestActor
@@ -177,6 +185,10 @@ type AgentDefinitionService interface {
 		ctx context.Context,
 		req *repositories.GetAgentDefinitionVersionRequest,
 	) (*agentdefinition.Definition, error)
+	LintInstructions(
+		ctx context.Context,
+		req *LintAgentInstructionsRequest,
+	) ([]agentlint.Finding, error)
 	Templates() []AgentTemplateDescriptor
 	ToolCatalog(ctx context.Context, tenantInfo pagination.TenantInfo) ([]ToolCatalogEntry, error)
 	EventKinds() []agent.EventDescriptor

@@ -14,4 +14,6 @@ type Deps struct {
 
 type AIProviderResolver struct{ *Deps }
 
+type AIRouteChoiceResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

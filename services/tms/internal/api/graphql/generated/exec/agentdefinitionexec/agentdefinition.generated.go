@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentlint"
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -33,6 +34,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentDefinitionConnection", Implementors: []string{"AgentDefinitionConnection"}},
 		{Name: "AgentDefinitionEdge", Implementors: []string{"AgentDefinitionEdge"}},
 		{Name: "AgentDefinitionVersion", Implementors: []string{"AgentDefinitionVersion"}},
+		{Name: "AgentInstructionFinding", Implementors: []string{"AgentInstructionFinding"}},
 		{Name: "AgentShadowReport", Implementors: []string{"AgentShadowReport"}},
 		{Name: "AgentStarter", Implementors: []string{"AgentStarter"}},
 		{Name: "MyAgent", Implementors: []string{"MyAgent"}},
@@ -1185,6 +1187,82 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "AgentInstructionFinding", Fields: []*gqlexec.Field{
+			{
+				Name:     "start",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentlint.Finding)
+					return obj.Start, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "end",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentlint.Finding)
+					return obj.End, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "excerpt",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentlint.Finding)
+					return obj.Excerpt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "resource",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentlint.Finding)
+					return gqlexec.Resolver[resolverAgentInstructionFinding](ec, "AgentInstructionFinding").Resource(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "resourceLabel",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentlint.Finding)
+					return obj.ResourceLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "operation",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentlint.Finding)
+					return gqlexec.Resolver[resolverAgentInstructionFinding](ec, "AgentInstructionFinding").Operation(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "tools",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentlint.Finding)
+					return obj.Tools, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
 		{Object: "AgentShadowReport", Fields: []*gqlexec.Field{
 			{
 				Name:     "days",
@@ -1500,6 +1578,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentDefinitionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentDefinitionConnection),
 			},
 			{
+				Name:       "agentInstructionLint",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentInstructionFinding",
+				Args:       field_Query_agentInstructionLint_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentInstructionLint(ctx, fc.Args["input"].(gqlmodel.AgentInstructionLintInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentInstructionFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentlintᚐFindingᚄ),
+			},
+			{
 				Name:       "agentShadowReport",
 				NonNull:    true,
 				IsResolver: true,
@@ -1616,12 +1708,14 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentAccessPreviewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentAccessPreviewInput)},
 		{Name: "AgentCapabilityToolInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentCapabilityToolInput)},
 		{Name: "AgentDelegateTopicInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentDelegateTopicInput)},
+		{Name: "AgentInstructionLintInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentInstructionLintInput)},
 		{Name: "MyAgentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentsInput)},
 		{Name: "SetAgentAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetAgentAccessInput)},
 		{Name: "UpdateAgentCapabilitiesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateAgentCapabilitiesInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "AgentDefinition", Check: func(r any) bool { _, ok := r.(resolverAgentDefinition); return ok }},
+		{Root: "AgentInstructionFinding", Check: func(r any) bool { _, ok := r.(resolverAgentInstructionFinding); return ok }},
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "MyAgent", Check: func(r any) bool { _, ok := r.(resolverMyAgent); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
@@ -1640,6 +1734,11 @@ type resolverAgentDefinition interface {
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 }
 
+type resolverAgentInstructionFinding interface {
+	Resource(ctx context.Context, obj *agentlint.Finding) (string, error)
+	Operation(ctx context.Context, obj *agentlint.Finding) (string, error)
+}
+
 type resolverMutation interface {
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
@@ -1653,6 +1752,7 @@ type resolverMyAgent interface {
 
 type resolverQuery interface {
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
+	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
 	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
@@ -1751,6 +1851,19 @@ func field_Query_agentDefinitions_args(ctx context.Context, ec *gqlexec.Exec, ra
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_agentInstructionLint_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AgentInstructionLintInput, error) {
+			return unmarshalNAgentInstructionLintInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentInstructionLintInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2005,6 +2118,50 @@ func unmarshalInputAgentDelegateTopicInput(ctx context.Context, ec *gqlexec.Exec
 	return it, nil
 }
 
+func unmarshalInputAgentInstructionLintInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentInstructionLintInput, error) {
+	var it gqlmodel.AgentInstructionLintInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"instructions", "toolNames", "disabledToolNames"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "instructions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instructions"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Instructions = data
+		case "toolNames":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toolNames"))
+			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToolNames = data
+		case "disabledToolNames":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disabledToolNames"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisabledToolNames = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputMyAgentsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.MyAgentsInput, error) {
 	var it gqlmodel.MyAgentsInput
 	if obj == nil {
@@ -2251,6 +2408,11 @@ func unmarshalNAgentDelegateTopicInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNAgentInstructionLintInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentInstructionLintInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AgentInstructionLintInput, error) {
+	res, err := unmarshalInputAgentInstructionLintInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2354,6 +2516,13 @@ func unmarshalOMyAgentOrigin2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	var res = new(gqlmodel.MyAgentOrigin)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
 }
 
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -2550,6 +2719,22 @@ func marshalNAgentDefinitionVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentDefinitionVersion", v)
+}
+
+func marshalNAgentInstructionFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentlintᚐFindingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentlint.Finding) graphql.Marshaler {
+	return gqlexec.List[*agentlint.Finding]{
+		Elem:        marshalNAgentInstructionFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentlintᚐFinding,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentInstructionFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentlintᚐFinding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentlint.Finding) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentInstructionFinding", v)
 }
 
 func marshalNAgentOutputMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐOutputMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.OutputMode) graphql.Marshaler {

@@ -24,7 +24,7 @@ import (
 const (
 	maxNameLength        = 100
 	maxDescriptionLength = 500
-	maxInstructionsRunes = 20000
+	MaxInstructionsRunes = 20000
 	maxGuardrails        = 20
 	maxGuardrailRunes    = 300
 	MaxTools             = 64
@@ -362,7 +362,7 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 			),
 		),
 		validation.Field(&d.Instructions,
-			validation.RuneLength(0, maxInstructionsRunes).
+			validation.RuneLength(0, MaxInstructionsRunes).
 				Error("Instructions cannot be longer than 20000 characters"),
 		),
 		validation.Field(&d.AutonomyCeiling,

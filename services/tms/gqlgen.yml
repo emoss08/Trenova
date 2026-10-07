@@ -2280,6 +2280,15 @@ models:
   AITask:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Task
+  AIRouteChoice:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.RouteChoice
+    fields:
+      providerId:
+        resolver: true
+  AITaskRoute:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.TaskRoute
   AIEmbeddingInputStyle:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.EmbeddingInputStyle
@@ -2354,6 +2363,9 @@ models:
   AgentShadowReport:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentshadow.Report
+  AgentInstructionFinding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentlint.Finding
   AgentCapabilityMode:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityMode

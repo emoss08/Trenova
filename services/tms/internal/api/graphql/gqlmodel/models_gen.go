@@ -183,6 +183,19 @@ type AIProviderEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+// A provider as its editor holds it, reduced to what decides where tasks go.
+type AIProviderRoutingDraftInput struct {
+	// The provider being edited. Absent for a new one.
+	ID                  *string           `json:"id,omitempty"`
+	Name                string            `json:"name"`
+	Kind                aiprovider.Kind   `json:"kind"`
+	Tasks               []aiprovider.Task `json:"tasks"`
+	Priority            int               `json:"priority"`
+	EmbeddingDimensions *int              `json:"embeddingDimensions,omitempty"`
+	Trusted             bool              `json:"trusted"`
+	Enabled             bool              `json:"enabled"`
+}
+
 type AIRetrievalFailedEntryConnection struct {
 	Edges      []*AIRetrievalFailedEntryEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
@@ -499,6 +512,14 @@ type AgentFingerprintChange struct {
 	Field string `json:"field"`
 	From  string `json:"from"`
 	To    string `json:"to"`
+}
+
+// Instructions as the builder holds them, with the tools the draft holds.
+type AgentInstructionLintInput struct {
+	// At most 20000 characters.
+	Instructions      string   `json:"instructions"`
+	ToolNames         []string `json:"toolNames"`
+	DisabledToolNames []string `json:"disabledToolNames,omitempty"`
 }
 
 type AgentMemoryConnection struct {

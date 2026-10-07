@@ -133,6 +133,7 @@ type Resolver struct {
 	aICorrection                       *extractionevalresolver.AICorrectionResolver
 	aIFeedback                         *aifeedbackresolver.AIFeedbackResolver
 	aIProvider                         *aiproviderresolver.AIProviderResolver
+	aIRouteChoice                      *aiproviderresolver.AIRouteChoiceResolver
 	accessorialCharge                  *accessorialchargeresolver.AccessorialChargeResolver
 	accountingAppCredential            *accountingsyncresolver.AccountingAppCredentialResolver
 	accountingAppSettings              *accountingsyncresolver.AccountingAppSettingsResolver
@@ -150,6 +151,7 @@ type Resolver struct {
 	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
 	agentEvalCase                      *agentqualityresolver.AgentEvalCaseResolver
 	agentEvaluation                    *agentresolver.AgentEvaluationResolver
+	agentInstructionFinding            *agentdefinitionresolver.AgentInstructionFindingResolver
 	agentMemory                        *agentresolver.AgentMemoryResolver
 	agentPlan                          *decisionsresolver.AgentPlanResolver
 	agentPreviewFieldChange            *agentpreviewresolver.AgentPreviewFieldChangeResolver
@@ -978,6 +980,7 @@ func FromServices(s *Services) *Resolver {
 		aICorrection:                 &extractionevalresolver.AICorrectionResolver{Deps: extractionevalDeps},
 		aIFeedback:                   &aifeedbackresolver.AIFeedbackResolver{Deps: aifeedbackDeps},
 		aIProvider:                   &aiproviderresolver.AIProviderResolver{Deps: aiproviderDeps},
+		aIRouteChoice:                &aiproviderresolver.AIRouteChoiceResolver{Deps: aiproviderDeps},
 		accessorialCharge:            &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps},
 		accountingAppCredential:      &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps},
 		accountingAppSettings:        &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps},
@@ -998,6 +1001,7 @@ func FromServices(s *Services) *Resolver {
 		agentDefinition:          &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
 		agentEvalCase:            &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
 		agentEvaluation:          &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
+		agentInstructionFinding:  &agentdefinitionresolver.AgentInstructionFindingResolver{Deps: agentdefinitionDeps},
 		agentMemory:              &agentresolver.AgentMemoryResolver{Deps: agentDeps},
 		agentPlan:                &decisionsresolver.AgentPlanResolver{Deps: decisionsDeps},
 		agentPreviewFieldChange:  &agentpreviewresolver.AgentPreviewFieldChangeResolver{Deps: agentpreviewDeps},
@@ -1423,6 +1427,10 @@ func (r *Resolver) AIProvider() generated.AIProviderResolver {
 	return r.aIProvider
 }
 
+func (r *Resolver) AIRouteChoice() generated.AIRouteChoiceResolver {
+	return r.aIRouteChoice
+}
+
 func (r *Resolver) AccessorialCharge() generated.AccessorialChargeResolver {
 	return r.accessorialCharge
 }
@@ -1494,6 +1502,10 @@ func (r *Resolver) AgentEvalCase() generated.AgentEvalCaseResolver {
 
 func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
 	return r.agentEvaluation
+}
+
+func (r *Resolver) AgentInstructionFinding() generated.AgentInstructionFindingResolver {
+	return r.agentInstructionFinding
 }
 
 func (r *Resolver) AgentMemory() generated.AgentMemoryResolver {

@@ -137,6 +137,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentlint"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
@@ -247,6 +248,7 @@ type ResolverRoot interface {
 	AICorrection() AICorrectionResolver
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
+	AIRouteChoice() AIRouteChoiceResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AccountingAppCredential() AccountingAppCredentialResolver
 	AccountingAppSettings() AccountingAppSettingsResolver
@@ -264,6 +266,7 @@ type ResolverRoot interface {
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
+	AgentInstructionFinding() AgentInstructionFindingResolver
 	AgentMemory() AgentMemoryResolver
 	AgentPlan() AgentPlanResolver
 	AgentPreviewFieldChange() AgentPreviewFieldChangeResolver
@@ -509,6 +512,10 @@ type AIProviderResolver interface {
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 }
 
+type AIRouteChoiceResolver interface {
+	ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error)
+}
+
 type AccessorialChargeResolver interface {
 	RateUnit(ctx context.Context, obj *accessorialcharge.AccessorialCharge) (*accessorialcharge.RateUnit, error)
 	Amount(ctx context.Context, obj *accessorialcharge.AccessorialCharge) (float64, error)
@@ -628,6 +635,11 @@ type AgentEvaluationResolver interface {
 	Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+}
+
+type AgentInstructionFindingResolver interface {
+	Resource(ctx context.Context, obj *agentlint.Finding) (string, error)
+	Operation(ctx context.Context, obj *agentlint.Finding) (string, error)
 }
 
 type AgentMemoryResolver interface {
@@ -2119,6 +2131,7 @@ type QueryResolver interface {
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
+	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
 	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
@@ -2163,6 +2176,7 @@ type QueryResolver interface {
 	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
+	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
 	AiRetrievalStatus(ctx context.Context) (*services.AIRetrievalStatus, error)
 	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
@@ -3141,6 +3155,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AICorrection":                       func() any { return r.AICorrection() },
 			"AIFeedback":                         func() any { return r.AIFeedback() },
 			"AIProvider":                         func() any { return r.AIProvider() },
+			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
 			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
 			"AccountingAppCredential":            func() any { return r.AccountingAppCredential() },
 			"AccountingAppSettings":              func() any { return r.AccountingAppSettings() },
@@ -3158,6 +3173,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
 			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
 			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
+			"AgentInstructionFinding":            func() any { return r.AgentInstructionFinding() },
 			"AgentMemory":                        func() any { return r.AgentMemory() },
 			"AgentPlan":                          func() any { return r.AgentPlan() },
 			"AgentPreviewFieldChange":            func() any { return r.AgentPreviewFieldChange() },
@@ -6247,8 +6263,39 @@ type AgentShadowReport {
   unanswered: Int!
 }
 
+"Instructions as the builder holds them, with the tools the draft holds."
+input AgentInstructionLintInput {
+  "At most 20000 characters."
+  instructions: String!
+  toolNames: [String!]!
+  disabledToolNames: [String!]
+}
+
+"""
+A sentence of an agent's instructions asking for something none of its tools
+can do, read from the tool registry: the record it names and the operation it
+asks for.
+"""
+type AgentInstructionFinding {
+  "Byte offset of the sentence in the instructions."
+  start: Int!
+  "Byte offset just past the sentence."
+  end: Int!
+  excerpt: String!
+  "The record the sentence names, as the permission registry knows it."
+  resource: String!
+  "The record's name for a person."
+  resourceLabel: String!
+  "What the sentence asks to do to it: read, create, update, cancel and so on."
+  operation: String!
+  "The tools in the registry that would do it. Empty when none does."
+  tools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  "What a draft's instructions ask for that none of its tools can do. Saves nothing."
+  agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
   "An agent's shadow period over the last days (default 30, at most 90)."
   agentShadowReport(agentId: ID!, days: Int): AgentShadowReport!
   agentDefinition(id: ID!): AgentDefinition
@@ -8233,9 +8280,43 @@ type AIProviderConnection {
   totalCount: Int
 }
 
+"A provider as its editor holds it, reduced to what decides where tasks go."
+input AIProviderRoutingDraftInput {
+  "The provider being edited. Absent for a new one."
+  id: ID
+  name: String!
+  kind: AIProviderKind!
+  tasks: [AITask!]!
+  priority: Int!
+  embeddingDimensions: Int
+  trusted: Boolean!
+  enabled: Boolean!
+}
+
+"The provider a task goes to. Draft is the provider being edited, which has no ID until it is first saved."
+type AIRouteChoice {
+  providerId: ID
+  name: String!
+  draft: Boolean!
+}
+
+"""
+Where one task goes now and where it would go with a draft saved. An absent
+choice is a task no provider serves. Providers resting after repeated failures
+are skipped at run time and are not reflected here.
+"""
+type AITaskRoute {
+  task: AITask!
+  before: AIRouteChoice
+  after: AIRouteChoice
+  changed: Boolean!
+}
+
 extend type Query {
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   aiProvider(id: ID!): AIProvider
+  "Where each task goes now and where it would go with the draft saved. Saves nothing."
+  aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/airetrieval.graphqls", Input: `"What retrieval indexes by meaning."

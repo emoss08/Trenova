@@ -344,8 +344,39 @@ type AgentShadowReport {
   unanswered: Int!
 }
 
+"Instructions as the builder holds them, with the tools the draft holds."
+input AgentInstructionLintInput {
+  "At most 20000 characters."
+  instructions: String!
+  toolNames: [String!]!
+  disabledToolNames: [String!]
+}
+
+"""
+A sentence of an agent's instructions asking for something none of its tools
+can do, read from the tool registry: the record it names and the operation it
+asks for.
+"""
+type AgentInstructionFinding {
+  "Byte offset of the sentence in the instructions."
+  start: Int!
+  "Byte offset just past the sentence."
+  end: Int!
+  excerpt: String!
+  "The record the sentence names, as the permission registry knows it."
+  resource: String!
+  "The record's name for a person."
+  resourceLabel: String!
+  "What the sentence asks to do to it: read, create, update, cancel and so on."
+  operation: String!
+  "The tools in the registry that would do it. Empty when none does."
+  tools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  "What a draft's instructions ask for that none of its tools can do. Saves nothing."
+  agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
   "An agent's shadow period over the last days (default 30, at most 90)."
   agentShadowReport(agentId: ID!, days: Int): AgentShadowReport!
   agentDefinition(id: ID!): AgentDefinition
