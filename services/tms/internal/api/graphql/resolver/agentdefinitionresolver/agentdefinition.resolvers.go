@@ -423,3 +423,64 @@ func (r *QueryResolver) AgentInstructionLint(ctx context.Context, input gqlmodel
 	}
 	return out, nil
 }
+
+func (r *MutationResolver) KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentTestPromptService.Keep(ctx, &services.KeepAgentTestPromptRequest{
+		TenantInfo:        base.TenantInfo(authCtx),
+		AgentDefinitionID: definitionID,
+		Prompt:            prompt,
+		CreatedByID:       authCtx.UserID,
+	})
+}
+
+func (r *MutationResolver) DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return false, err
+	}
+	promptID, err := pulid.MustParse(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.AgentTestPromptService.Delete(ctx, &repositories.DeleteAgentTestPromptRequest{
+		TenantInfo:        base.TenantInfo(authCtx),
+		AgentDefinitionID: definitionID,
+		ID:                promptID,
+	}); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentTestPromptService.List(ctx, &repositories.ListAgentTestPromptsRequest{
+		TenantInfo:        base.TenantInfo(authCtx),
+		AgentDefinitionID: definitionID,
+	})
+}

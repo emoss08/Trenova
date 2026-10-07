@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/agentshadowservice"
 	"github.com/emoss08/trenova/internal/core/services/agentsubjectservice"
+	"github.com/emoss08/trenova/internal/core/services/agenttestpromptservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/aicorrectionservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
@@ -340,6 +341,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	func(s *aiproviderservice.Service) services.AIProviderService { return s },
 	agentshadowservice.New,
 	func(s *agentshadowservice.Service) services.AgentShadowService { return s },
+	agenttestpromptservice.New,
+	func(s *agenttestpromptservice.Service) services.AgentTestPromptService { return s },
 	func(s *aiproviderservice.Service) services.AIProviderProbe { return s },
 	aiusageservice.New,
 	agentrunservice.New,

@@ -17,3 +17,10 @@ func (e *Definition) GetStaticFieldMap() map[string]string {
 func (e *DefinitionVersion) GetStaticFieldMap() map[string]string {
 	return buncolgen.DefinitionVersionFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TestPrompt].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TestPromptFieldMap] instead of parsing struct tags via reflection.
+func (e *TestPrompt) GetStaticFieldMap() map[string]string {
+	return buncolgen.TestPromptFieldMap
+}

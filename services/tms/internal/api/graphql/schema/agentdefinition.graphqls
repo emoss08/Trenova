@@ -400,6 +400,25 @@ extend type Query {
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
 }
 
+"A prompt kept with an agent for trying it again after an edit."
+type AgentTestPrompt {
+  id: ID!
+  prompt: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  "The prompts kept with an agent, oldest first. At most 20."
+  agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
+}
+
+extend type Mutation {
+  "Keeps a prompt with an agent. At most 2000 characters, and 20 prompts an agent."
+  keepAgentTestPrompt(agentId: ID!, prompt: String!): AgentTestPrompt!
+  "Removes a kept prompt."
+  deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
+}
+
 extend type Mutation {
   "Sets who may use an agent. Needs permission to update agents and roles."
   setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!

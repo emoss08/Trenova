@@ -37,6 +37,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentInstructionFinding", Implementors: []string{"AgentInstructionFinding"}},
 		{Name: "AgentShadowReport", Implementors: []string{"AgentShadowReport"}},
 		{Name: "AgentStarter", Implementors: []string{"AgentStarter"}},
+		{Name: "AgentTestPrompt", Implementors: []string{"AgentTestPrompt"}},
 		{Name: "MyAgent", Implementors: []string{"MyAgent"}},
 		{Name: "MyAgentConnection", Implementors: []string{"MyAgentConnection"}},
 		{Name: "MyAgentEdge", Implementors: []string{"MyAgentEdge"}},
@@ -1357,7 +1358,64 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "AgentTestPrompt", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.TestPrompt)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "prompt",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.TestPrompt)
+					return obj.Prompt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.TestPrompt)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "keepAgentTestPrompt",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AgentTestPrompt",
+				Args:       field_Mutation_keepAgentTestPrompt_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").KeepAgentTestPrompt(ctx, fc.Args["agentId"].(string), fc.Args["prompt"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentTestPrompt2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐTestPrompt),
+			},
+			{
+				Name:       "deleteAgentTestPrompt",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild3,
+				Args:       field_Mutation_deleteAgentTestPrompt_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteAgentTestPrompt(ctx, fc.Args["agentId"].(string), fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 			{
 				Name:       "setAgentAccess",
 				NonNull:    true,
@@ -1689,6 +1747,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentAccessPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAccessPreview),
 			},
 			{
+				Name:       "agentTestPrompts",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentTestPrompt",
+				Args:       field_Query_agentTestPrompts_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentTestPrompts(ctx, fc.Args["agentId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentTestPrompt2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐTestPromptᚄ),
+			},
+			{
 				Name:       "agentCapabilities",
 				NonNull:    true,
 				IsResolver: true,
@@ -1740,6 +1812,8 @@ type resolverAgentInstructionFinding interface {
 }
 
 type resolverMutation interface {
+	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
+	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
 	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
@@ -1760,6 +1834,7 @@ type resolverQuery interface {
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
+	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
 	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
 }
 
@@ -1782,6 +1857,48 @@ var (
 	errNoChild15 = errors.New("field of type AgentOutputMode does not have child fields")
 	errNoChild16 = errors.New("field of type Float does not have child fields")
 )
+
+func field_Mutation_keepAgentTestPrompt_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "prompt",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["prompt"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteAgentTestPrompt_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg1
+	return args, nil
+}
 
 func field_Mutation_setAgentAccess_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)
@@ -1984,6 +2101,19 @@ func field_Query_agentAccessPreview_args(ctx context.Context, ec *gqlexec.Exec, 
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_agentTestPrompts_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agentId"] = arg0
 	return args, nil
 }
 
@@ -2763,6 +2893,22 @@ func marshalNAgentStarter2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentTestPrompt2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐTestPromptᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.TestPrompt) graphql.Marshaler {
+	return gqlexec.List[*agentdefinition.TestPrompt]{
+		Elem:        marshalNAgentTestPrompt2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐTestPrompt,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentTestPrompt2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐTestPrompt(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.TestPrompt) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentTestPrompt", v)
 }
 
 func marshalNAgentTriggerMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐTriggerMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.TriggerMode) graphql.Marshaler {

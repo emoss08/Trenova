@@ -12,6 +12,7 @@ type Deps struct {
 	AgentDefinitionService services.AgentDefinitionService
 	AgentCapabilityService services.AgentCapabilityService
 	AgentShadowService     services.AgentShadowService
+	AgentTestPromptService services.AgentTestPromptService
 	AgentAccessService     services.AgentAccessService
 }
 

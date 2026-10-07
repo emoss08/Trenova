@@ -730,3 +730,153 @@ var DefinitionVersionFilter = struct {
 		return NewFieldFilter("createdAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// TestPrompt — table "agent_test_prompts", alias "agtp"
+// ---------------------------------------------------------------------------
+
+// TestPromptTable holds the table name, alias, and primary key columns
+// for the "agent_test_prompts" table. The alias "agtp" is used in all generated
+// SQL fragments (e.g. "agtp.id = ?").
+var TestPromptTable = TableInfo{
+	Name:       "agent_test_prompts",
+	Alias:      "agtp",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// TestPromptColumns provides type-safe column references for the "agent_test_prompts" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(TestPromptColumns.ID.String())
+//	// SELECT agtp.id FROM agent_test_prompts AS agtp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(TestPromptColumns.ID.Eq(), id)           // WHERE agtp.id = ?
+//	q.Order(TestPromptColumns.CreatedAt.OrderDesc())  // ORDER BY agtp.created_at DESC
+var TestPromptColumns = struct {
+	ID                Column // "id" → qualified: "agtp.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "agtp.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "agtp.organization_id"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "agtp.agent_definition_id"
+	Prompt            Column // "prompt" → qualified: "agtp.prompt"
+	CreatedByID       Column // "created_by_id" → qualified: "agtp.created_by_id"
+	CreatedAt         Column // "created_at" → qualified: "agtp.created_at"
+}{
+	ID:                NewColumn("id", "agtp"),
+	BusinessUnitID:    NewColumn("business_unit_id", "agtp"),
+	OrganizationID:    NewColumn("organization_id", "agtp"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "agtp"),
+	Prompt:            NewColumn("prompt", "agtp"),
+	CreatedByID:       NewColumn("created_by_id", "agtp"),
+	CreatedAt:         NewColumn("created_at", "agtp"),
+}
+
+// TestPromptFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by TestPrompt.GetStaticFieldMap().
+var TestPromptFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"agentDefinitionId": "agent_definition_id",
+	"prompt":            "prompt",
+	"createdById":       "created_by_id",
+	"createdAt":         "created_at",
+}
+
+// TestPromptInsertableColumns lists column names suitable for INSERT statements on the "agent_test_prompts" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var TestPromptInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"agent_definition_id",
+	"prompt",
+	"created_by_id",
+	"created_at",
+}
+
+// TestPromptScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE agtp.organization_id = ? AND agtp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.TestPromptScopeTenant(sq, ti).
+//		Where(buncolgen.TestPromptColumns.ID.Eq(), id)
+func TestPromptScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, TestPromptColumns.OrganizationID, TestPromptColumns.BusinessUnitID, ti)
+}
+
+// TestPromptScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.TestPromptScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.TestPromptColumns.ID.In(), bun.List(ids))
+//	})
+func TestPromptScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, TestPromptColumns.OrganizationID, TestPromptColumns.BusinessUnitID, ti)
+}
+
+// TestPromptScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.TestPromptScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.TestPromptColumns.ID.Eq(), id)
+//	})
+func TestPromptScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, TestPromptColumns.OrganizationID, TestPromptColumns.BusinessUnitID, ti)
+}
+
+// TestPromptApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.TestPromptApplyTenant(tenantInfo))
+func TestPromptApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(TestPromptColumns.OrganizationID, TestPromptColumns.BusinessUnitID, ti)
+}
+
+// TestPromptFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_test_prompts" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	TestPromptFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var TestPromptFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	Prompt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "prompt" → DB: "prompt"
+	CreatedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	Prompt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("prompt", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}

@@ -2363,6 +2363,9 @@ models:
   AgentShadowReport:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentshadow.Report
+  AgentTestPrompt:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.TestPrompt
   AgentInstructionFinding:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentlint.Finding

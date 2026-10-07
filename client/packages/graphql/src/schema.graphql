@@ -4815,6 +4815,13 @@ enum AgentTemplate {
   WorkforceCoordinator
 }
 
+"""A prompt kept with an agent for trying it again after an edit."""
+type AgentTestPrompt {
+  createdAt: Timestamp!
+  id: ID!
+  prompt: String!
+}
+
 """What one tool does on one agent for a representative call."""
 type AgentToolAutonomy {
   answer: AgentAutonomyAnswer!
@@ -16692,6 +16699,8 @@ type Mutation {
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
   decideShipmentSuggestion(input: DecideShipmentSuggestionInput!): Boolean!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
+  """Removes a kept prompt."""
+  deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
   deleteCaptureProfile(id: ID!): Boolean!
   deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
   deleteDetentionPolicy(id: ID!): Boolean!
@@ -16816,6 +16825,10 @@ type Mutation {
   inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
   issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
+  """
+  Keeps a prompt with an agent. At most 2000 characters, and 20 prompts an agent.
+  """
+  keepAgentTestPrompt(agentId: ID!, prompt: String!): AgentTestPrompt!
   """Links an inbound EDI carrier invoice to a carrier in the master."""
   linkEdiCarrierInvoiceToCarrier(carrierId: ID!, invoiceId: ID!): EdiCarrierInvoice!
   """
@@ -19178,6 +19191,8 @@ type Query {
   """
   agentSuiteRunConnection(agentDefinitionId: ID, input: DataTableConnectionInput!): AgentSuiteRunConnection!
   agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection! @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
+  """The prompts kept with an agent, oldest first. At most 20."""
+  agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
   """Every tool's safety policy, by name."""
   agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
   """The tool rules a page at a time, searched and filtered on the server."""

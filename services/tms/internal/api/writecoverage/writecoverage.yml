@@ -179,6 +179,12 @@ writes:
   "PUT /api/v1/agent-definitions/:agentID/":
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation keepAgentTestPrompt":
+    exempt: agent-administration
+    reason: "Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself."
+  "mutation deleteAgentTestPrompt":
+    exempt: agent-administration
+    reason: "Removes a prompt a person kept in an agent's builder."
   "mutation setAgentAccess":
     exempt: security
     reason: "Decides which people may use which agents."

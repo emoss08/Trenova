@@ -1478,6 +1478,8 @@ type MutationResolver interface {
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
+	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
+	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
 	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
@@ -2139,6 +2141,7 @@ type QueryResolver interface {
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
+	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
 	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
@@ -6317,6 +6320,25 @@ extend type Query {
   and changes nothing.
   """
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+}
+
+"A prompt kept with an agent for trying it again after an edit."
+type AgentTestPrompt {
+  id: ID!
+  prompt: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  "The prompts kept with an agent, oldest first. At most 20."
+  agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
+}
+
+extend type Mutation {
+  "Keeps a prompt with an agent. At most 2000 characters, and 20 prompts an agent."
+  keepAgentTestPrompt(agentId: ID!, prompt: String!): AgentTestPrompt!
+  "Removes a kept prompt."
+  deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
 }
 
 extend type Mutation {
