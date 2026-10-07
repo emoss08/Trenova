@@ -1,0 +1,13 @@
+{
+  "A label for this AP run; if left blank it is named after the period end date.": "Una etiqueta para esta corrida de cuentas por pagar; si se deja en blanco, se nombra con la fecha de fin del período.",
+  "Carrier settlement batch": "Lote de liquidación de transportistas",
+  "Carrier settlement batches": "Lotes de liquidación de transportistas",
+  "Creates a draft settlement for every carrier with pending cost events in the current period.": "Crea una liquidación en borrador para cada transportista con eventos de costo pendientes en el período actual.",
+  "Export remittance CSV": "Exportar el CSV de remesa",
+  "Generate pay-period AP runs, review totals, and export remittance files.": "Genere corridas de cuentas por pagar por período, revise los totales y exporte los archivos de remesa.",
+  "Period start": "Inicio del período",
+  "Settlement count": "Cantidad de liquidaciones",
+  "Settlements can auto-post on approval based on your carrier settlement control policy.": "Las liquidaciones pueden contabilizarse automáticamente al aprobarse, según su política de control de liquidación de transportistas.",
+  "Total gross minor": "Total bruto en unidades menores",
+  "Total net minor": "Total neto en unidades menores"
+}

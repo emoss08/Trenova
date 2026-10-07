@@ -1,0 +1,18 @@
+{
+  "Credits": "貸方",
+  "Debits": "借方",
+  "Entry not found.": "找不到該筆記錄。",
+  "Fully reversed": "已全額沖銷",
+  "Is reversal": "為沖銷",
+  "Ledger status": "帳冊狀態",
+  "Loading entry details...": "正在載入記錄明細...",
+  "Net impact by account": "各科目的淨影響",
+  "No line items available.": "沒有可用的明細項目。",
+  "Posting summary": "過帳摘要",
+  "Reference type": "參照類型",
+  "Reversal Of": "沖銷對象",
+  "Reversed By": "沖銷人",
+  "Total credit:": "貸方合計：",
+  "Total debit:": "借方合計：",
+  "across {0} entries": "涵蓋 {0} 筆記錄"
+}

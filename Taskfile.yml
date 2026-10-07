@@ -31,10 +31,11 @@ tasks:
       - echo '  task tms:test'
 
   i18n:
-    desc: Extract user-facing strings and refresh the translation catalogs
+    desc: Extract user-facing strings, refresh the translation catalogs and emit the runtime catalogs
     dir: '{{.ROOT_DIR}}'
     cmds:
       - node i18n/tools/i18n.mjs sync
+      - node i18n/tools/i18n.mjs emit
 
   i18n-report:
     desc: Show the translation inventory (add --rejected to audit the string filter)

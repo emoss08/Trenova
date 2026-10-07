@@ -1,0 +1,16 @@
+{
+  "Accounting mappings": "Asignaciones contables",
+  "Choose a mapping": "Elija una asignación",
+  "Connect it from the integrations page. Trenova reads its records and proposes the matches here.": "Conéctelo desde la página de integraciones. Trenova lee sus registros y propone las correspondencias aquí.",
+  "Every kind": "Todos los tipos",
+  "Mapping totals": "Totales de asignaciones",
+  "Mappings appear once {0}'s records have been read.": "Las asignaciones aparecen cuando se hayan leído los registros de {0}.",
+  "No mappings match": "Ninguna asignación coincide",
+  "Nothing to map yet": "Todavía no hay nada que asignar",
+  "Pick one on the left to see what Trenova proposed, the records it considered, and to choose another.": "Elija una a la izquierda para ver lo que propuso Trenova, los registros que consideró y para elegir otro.",
+  "Required confirmed": "Obligatorias confirmadas",
+  "Search mappings": "Buscar asignaciones",
+  "Try another kind or search.": "Pruebe con otro tipo u otra búsqueda.",
+  "Which accounting system account, item, customer and vendor each Trenova record is sent as. Only confirmed mappings are used when syncing.": "Como qué cuenta, artículo, cliente y proveedor del sistema contable se envía cada registro de Trenova. Al sincronizar solo se usan las asignaciones confirmadas.",
+  "{0} is not connected": "{0} no está conectado"
+}

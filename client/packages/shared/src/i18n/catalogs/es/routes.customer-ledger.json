@@ -1,0 +1,21 @@
+{
+  "0 low risk · 100 high risk": "0 riesgo bajo · 100 riesgo alto",
+  "Account details": "Datos de la cuenta",
+  "Billed trailing 91d": "Facturado en los últimos 91 días",
+  "Choose a customer above and their receivables profile, running ledger and payment history are laid out here.": "Elija un cliente arriba y aquí se mostrarán su perfil de cuentas por cobrar, el libro mayor corriente y el historial de pagos.",
+  "Credit utilization": "Utilización del crédito",
+  "DSO / days to pay": "DSO / días de cobro",
+  "Delinquency score": "Puntuación de morosidad",
+  "Last payment": "Último pago",
+  "No payments received yet": "Todavía no se han recibido pagos",
+  "Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.": "No se ha contabilizado nada en las cuentas por cobrar de este cliente. Su primera factura o pago inicia el libro mayor.",
+  "Oldest open invoice": "Factura abierta más antigua",
+  "Payments — trailing 12 months": "Pagos: últimos 12 meses",
+  "Select a customer...": "Seleccione un cliente...",
+  "Statement": "Estado de cuenta",
+  "Statement-style transaction history with the customer's AR profile.": "Historial de transacciones en formato de estado de cuenta con el perfil de cuentas por cobrar del cliente.",
+  "d avg": "d de media",
+  "no credit limit set": "sin límite de crédito establecido",
+  "of {0} limit": "de un límite de {0}",
+  "{0} overdue · {1} open": "{0} vencido · {1} abierto"
+}

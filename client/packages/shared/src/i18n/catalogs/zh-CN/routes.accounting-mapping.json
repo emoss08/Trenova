@@ -1,0 +1,16 @@
+{
+  "Accounting mappings": "会计映射",
+  "Choose a mapping": "选择一项映射",
+  "Connect it from the integrations page. Trenova reads its records and proposes the matches here.": "请从集成页面连接。Trenova 会读取其记录，并在此提出映射建议。",
+  "Every kind": "所有种类",
+  "Mapping totals": "映射总计",
+  "Mappings appear once {0}'s records have been read.": "读取 {0} 的记录后，映射就会显示。",
+  "No mappings match": "没有相符的映射",
+  "Nothing to map yet": "目前没有需要映射的项目",
+  "Pick one on the left to see what Trenova proposed, the records it considered, and to choose another.": "从左侧选择一项，即可查看 Trenova 的建议、考虑过的记录，并改选其他记录。",
+  "Required confirmed": "已确认的必需项",
+  "Search mappings": "搜索映射",
+  "Try another kind or search.": "请尝试其他种类或搜索条件。",
+  "Which accounting system account, item, customer and vendor each Trenova record is sent as. Only confirmed mappings are used when syncing.": "每条 Trenova 记录要以哪个会计系统账户、条目、客户和供应商发送。同步时只会使用已确认的映射。",
+  "{0} is not connected": "{0} 尚未连接"
+}

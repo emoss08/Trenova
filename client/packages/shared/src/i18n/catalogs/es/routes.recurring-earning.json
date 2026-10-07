@@ -1,0 +1,19 @@
+{
+  "Added automatically to each qualifying settlement until its end date or cap.": "Se agrega automáticamente a cada liquidación que califique hasta su fecha de fin o su tope.",
+  "Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.": "Código de percepción que clasifica el pago y lo dirige a la cuenta del libro mayor del código cuando hay una asignada.",
+  "Earning stops automatically once this lifetime total is reached.": "La percepción se detiene automáticamente cuando se alcanza este total acumulado.",
+  "Every settlement pays each cycle; monthly pays only on the first settlement of each month.": "Cada liquidación paga en cada ciclo; la opción mensual paga solo en la primera liquidación de cada mes.",
+  "Future settlements include the earning again.": "Las liquidaciones futuras vuelven a incluir la percepción.",
+  "Future settlements skip the earning; history is kept.": "Las liquidaciones futuras omiten la percepción; se conserva el historial.",
+  "No selected earnings can move to that status.": "Ninguna de las percepciones seleccionadas puede pasar a ese estado.",
+  "Optional last day the earning applies; leave blank for open-ended.": "Último día opcional en que se aplica la percepción; déjelo en blanco para que sea indefinida.",
+  "Paid / cap": "Pagado / tope",
+  "Pause to skip upcoming settlements without losing history; completed earnings stop permanently.": "Haga una pausa para omitir las próximas liquidaciones sin perder el historial; las percepciones completadas se detienen de forma permanente.",
+  "Recurring earning": "Percepción recurrente",
+  "Standing per-settlement earnings: per diem, safety and performance bonuses, stipends, and equipment rental payments with caps.": "Percepciones permanentes por liquidación: viáticos, bonificaciones de seguridad y desempeño, estipendios y pagos de alquiler de equipos con topes.",
+  "The amount added each time the earning applies to a settlement.": "El importe que se suma cada vez que la percepción se aplica a una liquidación.",
+  "The driver whose settlements this earning is added to.": "El conductor a cuyas liquidaciones se suma esta percepción.",
+  "The earning begins applying to settlements whose period ends after this date.": "La percepción empieza a aplicarse a las liquidaciones cuyo período termina después de esta fecha.",
+  "This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.": "Este código no es gravable: los importes se contabilizan en la liquidación como reembolsos, quedan excluidos de las comprobaciones del mínimo garantizado y se contabilizan en la cuenta del libro mayor del código (o en la cuenta de reembolsos a conductores) en lugar de en gastos salariales.",
+  "e.g. OTR per diem — IRS substantiated M&IE": "p. ej., Viáticos de larga distancia — M&IE justificados ante el IRS"
+}

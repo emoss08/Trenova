@@ -1,0 +1,13 @@
+{
+  "Approvals pending": "Aprobaciones pendientes",
+  "Failed items": "Elementos fallidos",
+  "Idempotency key": "Clave de idempotencia",
+  "Item results": "Resultados de los elementos",
+  "Last failure count": "Recuento del último fallo",
+  "No failure recorded": "Sin fallos registrados",
+  "Per-item outcome, failure reason, and created artifacts.": "Resultado por elemento, motivo del fallo y artefactos creados.",
+  "Pick a batch from the list to see how each item ran and what it created.": "Elija un lote de la lista para ver cómo se ejecutó cada elemento y qué creó.",
+  "Search batch id, submitter, idempotency key...": "Buscar ID de lote, remitente, clave de idempotencia...",
+  "System batch": "Lote del sistema",
+  "Track bulk adjustment submission progress, failures, and created artifacts.": "Siga el progreso del envío masivo de ajustes, los fallos y los artefactos creados."
+}

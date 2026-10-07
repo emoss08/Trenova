@@ -1,0 +1,20 @@
+{
+  "Build EDI 214 payload": "Construir la carga útil EDI 214",
+  "Clear reason code": "Borrar el código de motivo",
+  "Customer-facing operational context": "Contexto operativo orientado al cliente",
+  "EDI 214 payload generated": "Carga útil EDI 214 generada",
+  "EDI overrides": "Anulaciones de EDI",
+  "Internal notes": "Notas internas",
+  "Internal review notes": "Notas internas de la revisión",
+  "Late minutes": "Minutos de retraso",
+  "Loading service failure...": "Cargando el fallo de servicio...",
+  "Operations notes": "Notas de operaciones",
+  "Overrides apply only to this failure.": "Las anulaciones se aplican solo a este fallo.",
+  "Removes the assigned reason code while preserving the service failure record.": "Quita el código de motivo asignado y conserva el registro del fallo de servicio.",
+  "Review unresolved pickup and delivery service failures": "Revise los fallos de servicio de recogida y entrega sin resolver",
+  "Select reason code": "Seleccione el código de motivo",
+  "Service failure resolved": "Fallo de servicio resuelto",
+  "Service failure reviewed": "Fallo de servicio revisado",
+  "Service failure voided": "Fallo de servicio anulado",
+  "{0} {1}m": "{0} {1} min"
+}

@@ -1,0 +1,9 @@
+{
+  "A label for this payroll run; if left blank it is named after the period end date.": "此次薪资作业的标签；留空时会以期间结束日期命名。",
+  "Clean settlements can auto-approve based on your settlement control policy; anything with exceptions stays in review.": "依您的结算控制政策，无异常的结算可自动批准；有例外者则留在审查中。",
+  "Creates a draft settlement for every driver with accrued pay in the current period.": "为本期有已计提薪酬的每位司机创建结算草稿。",
+  "Export payroll CSV": "导出薪资 CSV",
+  "Generate pay-period batches, monitor exceptions, and export payroll files.": "生成薪资期间批次、监控例外，并导出薪资文件。",
+  "Payroll CSV downloaded": "薪资 CSV 已下载",
+  "Settlement batch": "结算批次"
+}

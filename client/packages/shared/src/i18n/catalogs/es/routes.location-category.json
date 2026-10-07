@@ -1,0 +1,17 @@
+{
+  "Allows overnight": "Permite pernoctar",
+  "Facility type": "Tipo de instalación",
+  "Has restroom": "Tiene baño",
+  "Manage and configure location categories for your organization": "Gestione y configure las categorías de ubicación de su organización",
+  "Requires appointment": "Requiere cita",
+  "Secure parking": "Estacionamiento seguro",
+  "The color of the location category": "El color de la categoría de ubicación",
+  "The description of the location category": "La descripción de la categoría de ubicación",
+  "The facility type of the location category": "El tipo de instalación de la categoría de ubicación",
+  "The name of the location category": "El nombre de la categoría de ubicación",
+  "The type of location category": "El tipo de categoría de ubicación",
+  "Whether this location allows overnight stays": "Si esta ubicación permite pernoctar",
+  "Whether this location has restroom facilities": "Si esta ubicación tiene servicios sanitarios",
+  "Whether this location has secure parking": "Si esta ubicación tiene estacionamiento seguro",
+  "Whether this location requires an appointment": "Si esta ubicación requiere cita"
+}

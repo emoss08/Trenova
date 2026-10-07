@@ -10491,6 +10491,7 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/lib",
       "domain/fuelpurchase",
@@ -10505,7 +10506,6 @@
       "routes/fuel-management",
       "routes/hold-reason",
       "routes/jurisdiction-rule",
-      "routes/loads.tsx",
       "routes/org-structure",
       "routes/organization",
       "routes/pay-profile",
@@ -13739,7 +13739,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx",
+      "apps/dash/routes",
       "routes/settlement-workspace"
     ]
   },
@@ -18936,9 +18936,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/desk",
-      "routes/profile.tsx"
+      "routes/desk"
     ]
   },
   "Appears as the line item on the carrier's statement — say what and when.": {
@@ -22954,7 +22954,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx",
+      "apps/dash/routes",
       "routes/auth"
     ]
   },
@@ -24105,8 +24105,8 @@
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/login.tsx"
+      "apps/dash/routes",
+      "routes/auth"
     ]
   },
   "Authentication events could not be loaded.": {
@@ -24335,10 +24335,10 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/lib",
       "routes/carrier-invoice-matching",
-      "routes/profile.tsx",
       "routes/shipment",
       "routes/worker"
     ]
@@ -25715,6 +25715,7 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/lib",
       "domain/aicorrection",
       "domain/documenttemplate",
@@ -25723,7 +25724,6 @@
       "routes/carrier-invoice-matching",
       "routes/desk",
       "routes/invoice",
-      "routes/load-detail.tsx",
       "routes/order",
       "routes/shipment"
     ]
@@ -25927,7 +25927,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Back to payment": {
@@ -26795,7 +26795,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "Baseline analysis JSON": {
@@ -32565,7 +32565,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Carried over": {
@@ -32583,7 +32583,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Carrier": {
@@ -33285,7 +33285,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "Carrier risk desk": {
@@ -34336,7 +34336,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx",
+      "apps/dash/routes",
       "routes/osha",
       "routes/worker"
     ]
@@ -34586,7 +34586,7 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/app-layout.tsx"
+      "apps/web/routes"
     ]
   },
   "Change payer for {0}": {
@@ -36274,7 +36274,7 @@
       "ts"
     ],
     "areas": [
-      "routes/app-layout.tsx"
+      "apps/web/routes"
     ]
   },
   "Choose a new password:": {
@@ -36292,7 +36292,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "Choose a password you are not already using": {
@@ -37002,7 +37002,7 @@
       "ts"
     ],
     "areas": [
-      "routes/app-layout.tsx"
+      "apps/web/routes"
     ]
   },
   "Choose the state that issued the plate": {
@@ -38035,12 +38035,12 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/commodity",
       "routes/document-type",
       "routes/driver-settlement",
-      "routes/pay-profile",
-      "routes/profile.tsx"
+      "routes/pay-profile"
     ]
   },
   "Classification and extraction": {
@@ -42296,8 +42296,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/accept.tsx"
+      "apps/dash/routes",
+      "apps/web/components"
     ]
   },
   "Confirm rate": {
@@ -43329,7 +43329,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "Contact email": {
@@ -47248,7 +47248,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "Create an API key and webhook in": {
@@ -49141,7 +49141,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Current location is required": {
@@ -50265,8 +50265,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/hos.tsx",
       "routes/worker"
     ]
   },
@@ -50831,9 +50831,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/desk",
-      "routes/profile.tsx",
       "routes/worker"
     ]
   },
@@ -50844,7 +50844,7 @@
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "Dash access": {
@@ -52765,8 +52765,8 @@
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/driver-settlement",
-      "routes/settlement.tsx"
+      "apps/dash/routes",
+      "routes/driver-settlement"
     ]
   },
   "Deductions exceeded earnings.": {
@@ -58491,7 +58491,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "Disputed": {
@@ -58636,11 +58636,11 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/lib",
       "apps/web/types",
       "routes/admin",
       "routes/distance-override",
-      "routes/load-detail.tsx",
       "routes/worker"
     ]
   },
@@ -61102,8 +61102,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/hos.tsx",
       "routes/worker"
     ]
   },
@@ -61113,8 +61113,8 @@
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console",
-      "routes/home.tsx"
+      "apps/dash/routes",
+      "routes/dispatch-console"
     ]
   },
   "Drive one carrier tender through dispatch, expiry, and response": {
@@ -61746,7 +61746,7 @@
       "ts"
     ],
     "areas": [
-      "routes/profile.tsx",
+      "apps/dash/routes",
       "routes/worker"
     ]
   },
@@ -64173,7 +64173,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Earned — lands on your next settlement.": {
@@ -64182,7 +64182,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "Earning": {
@@ -65078,11 +65078,10 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/lib",
       "routes/carrier",
-      "routes/login.tsx",
-      "routes/profile.tsx",
       "routes/worker"
     ]
   },
@@ -67522,7 +67521,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "Enter the day the miles were run": {
@@ -67659,7 +67658,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "Enter your full name": {
@@ -68392,7 +68391,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx",
+      "apps/dash/routes",
       "routes/settlement-workspace"
     ]
   },
@@ -68637,7 +68636,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "Estimated permit fees": {
@@ -71632,7 +71631,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "Expiration": {
@@ -78112,12 +78111,12 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/types",
       "routes/carrier-sourcing",
       "routes/desk",
-      "routes/fleet-safety",
-      "routes/profile.tsx"
+      "routes/fleet-safety"
     ]
   },
   "Fleet MPG": {
@@ -82410,8 +82409,8 @@
       "ts"
     ],
     "areas": [
-      "routes/driver-settlement",
-      "routes/settlement.tsx"
+      "apps/dash/routes",
+      "routes/driver-settlement"
     ]
   },
   "Gross earnings minor": {
@@ -83592,12 +83591,12 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/hooks",
       "routes/agent-control",
       "routes/driver-pay-event",
       "routes/fuel-feed-run",
-      "routes/home.tsx",
       "routes/osha"
     ]
   },
@@ -83843,7 +83842,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Hi {0},": {
@@ -84271,11 +84270,11 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/carrier",
       "routes/carrier-settlement",
       "routes/driver-settlement",
-      "routes/loads.tsx",
       "routes/order",
       "routes/rate-agreement",
       "routes/shipment",
@@ -84959,9 +84958,8 @@
       "ts"
     ],
     "areas": [
-      "domain/watchtower",
-      "routes/home.tsx",
-      "routes/hos.tsx"
+      "apps/dash/routes",
+      "domain/watchtower"
     ]
   },
   "Hours of service alert": {
@@ -84979,7 +84977,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "Hours rather than days, so intermittent leave can be taken in the increment the organisation actually uses.": {
@@ -86762,7 +86760,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "If that address has an account, a reset link is on its way. The link works once and expires shortly, so use it soon.": {
@@ -92273,7 +92271,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "Issued {0}{1}{2}{3}{4}": {
@@ -95227,8 +95225,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "routes/agent-control",
-      "routes/hos.tsx",
       "routes/intake"
     ]
   },
@@ -97415,9 +97413,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/desk",
-      "routes/profile.tsx",
       "routes/worker"
     ]
   },
@@ -98515,7 +98513,7 @@
       "ts"
     ],
     "areas": [
-      "routes/profile.tsx"
+      "apps/dash/routes"
     ]
   },
   "Load balance": {
@@ -98587,6 +98585,7 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/billing-queue",
       "routes/carrier",
@@ -98596,7 +98595,6 @@
       "routes/fuel-purchase",
       "routes/inbox",
       "routes/intake",
-      "routes/notifications.tsx",
       "routes/worker"
     ]
   },
@@ -99659,13 +99657,13 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "packages/shared/components",
       "routes/admin",
       "routes/bank-receipt-batch",
       "routes/billing-queue",
       "routes/customer-statement",
-      "routes/notifications.tsx",
       "routes/shipment",
       "routes/worker"
     ]
@@ -99688,11 +99686,10 @@
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/dash/routes",
       "apps/web/components",
       "routes/carrier-settlement",
-      "routes/driver-settlement",
-      "routes/load-detail.tsx",
-      "routes/loads.tsx"
+      "routes/driver-settlement"
     ]
   },
   "Loads observed": {
@@ -102364,8 +102361,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/notifications.tsx",
       "routes/table-change-alert"
     ]
   },
@@ -106638,9 +106635,9 @@
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/dash/routes",
       "apps/web/types",
-      "routes/agent-control",
-      "routes/money.tsx"
+      "routes/agent-control"
     ]
   },
   "Money code / check number": {
@@ -109461,7 +109458,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Net pay minor": {
@@ -110879,7 +110876,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "Next try": {
@@ -111221,7 +111218,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "No accrued pay events remain for this settlement's period": {
@@ -111311,7 +111308,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "No active or upcoming loads.": {
@@ -111320,7 +111317,7 @@
       "ts"
     ],
     "areas": [
-      "routes/loads.tsx"
+      "apps/dash/routes"
     ]
   },
   "No active organization found for this session.": {
@@ -112140,7 +112137,7 @@
       "ts"
     ],
     "areas": [
-      "routes/loads.tsx"
+      "apps/dash/routes"
     ]
   },
   "No computer is set up to scan for you": {
@@ -112411,7 +112408,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "No daily summary reported for this day.": {
@@ -114176,7 +114173,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "No overdue balances — nice work": {
@@ -115949,7 +115946,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "No widget matches “{0}”.": {
@@ -117489,7 +117486,7 @@
       "ts"
     ],
     "areas": [
-      "routes/profile.tsx"
+      "apps/dash/routes"
     ]
   },
   "Not sure how to lay out the file? Start from the template.": {
@@ -117599,7 +117596,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "Not yet requested": {
@@ -119266,9 +119263,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "domain/homelayout",
-      "routes/notifications.tsx",
       "routes/table-change-alert"
     ]
   },
@@ -120295,7 +120292,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "Office rent": {
@@ -121033,7 +121030,7 @@
       "ts"
     ],
     "areas": [
-      "routes/pay.tsx"
+      "apps/dash/routes"
     ]
   },
   "One Of": {
@@ -128856,8 +128853,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "routes/billing-queue",
-      "routes/load-detail.tsx",
       "service/invoiceservice"
     ]
   },
@@ -129596,7 +129593,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "Paid out to the driver; the settlement is final.": {
@@ -129641,7 +129638,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Paid-out balances count toward the PTO liability report; forfeited ones are written off on the termination date.": {
@@ -130514,11 +130511,10 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "domain/integration",
-      "routes/accept.tsx",
       "routes/auth",
-      "routes/edi",
-      "routes/login.tsx"
+      "routes/edi"
     ]
   },
   "Password changed": {
@@ -131087,8 +131083,8 @@
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/dash/routes",
       "routes/admin",
-      "routes/pay.tsx",
       "routes/worker"
     ]
   },
@@ -131307,7 +131303,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Pay delay days must be between 0 and 30": {
@@ -131325,7 +131321,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "Pay distance profile is required": {
@@ -131372,7 +131368,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Pay event added to the settlement": {
@@ -131508,7 +131504,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Pay now": {
@@ -132392,7 +132388,7 @@
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "Pending requests": {
@@ -133779,12 +133775,12 @@
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/dash/routes",
       "apps/web/components",
       "domain/documenttemplate",
       "domain/worker",
       "routes/carrier",
-      "routes/osha",
-      "routes/profile.tsx"
+      "routes/osha"
     ]
   },
   "Phone number": {
@@ -134756,10 +134752,10 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/admin",
       "routes/edi",
-      "routes/load-detail.tsx",
       "routes/shipment"
     ]
   },
@@ -138979,13 +138975,13 @@
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/lib",
       "routes/carrier",
       "routes/edi",
       "routes/organization",
       "routes/pay-profile",
-      "routes/profile.tsx",
       "routes/worker"
     ]
   },
@@ -140909,7 +140905,7 @@
       "ts"
     ],
     "areas": [
-      "routes/profile.tsx"
+      "apps/dash/routes"
     ]
   },
   "Pushes the pickup later — the common choice for holiday closures.": {
@@ -141493,7 +141489,7 @@
       "ts"
     ],
     "areas": [
-      "routes/profile.tsx"
+      "apps/dash/routes"
     ]
   },
   "Questions outside its work go to these agents": {
@@ -145772,7 +145768,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Recent records": {
@@ -147729,8 +147725,8 @@
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/login.tsx"
+      "apps/dash/routes",
+      "routes/auth"
     ]
   },
   "Recovery codes": {
@@ -148793,7 +148789,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Reject": {
@@ -150645,7 +150641,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "Repeated": {
@@ -154669,8 +154665,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/accept.tsx",
       "routes/admin",
       "routes/ifta-return",
       "routes/rate-confirmation-public",
@@ -156490,9 +156486,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "domain/integration",
-      "routes/admin",
-      "routes/load-detail.tsx"
+      "routes/admin"
     ]
   },
   "Role and permission management": {
@@ -157250,13 +157246,13 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
       "routes/edi",
       "routes/invoice",
-      "routes/load-detail.tsx",
       "routes/shipment"
     ]
   },
@@ -165532,8 +165528,8 @@
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/app-layout.tsx"
+      "apps/web/routes",
+      "routes/admin"
     ]
   },
   "Select rounding": {
@@ -168730,7 +168726,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "Settings": {
@@ -169257,7 +169253,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Settles today": {
@@ -169266,7 +169262,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Setup": {
@@ -169889,8 +169885,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/hos.tsx",
       "routes/worker"
     ]
   },
@@ -169918,7 +169914,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "Shift preview": {
@@ -172720,8 +172716,8 @@
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/login.tsx"
+      "apps/dash/routes",
+      "routes/auth"
     ]
   },
   "Sign in again": {
@@ -172757,7 +172753,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "Sign in to your Trenova account": {
@@ -172812,7 +172808,7 @@
       "ts"
     ],
     "areas": [
-      "routes/profile.tsx"
+      "apps/dash/routes"
     ]
   },
   "Sign-in": {
@@ -172964,7 +172960,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "Signing key missing": {
@@ -174004,7 +174000,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Something outside the billing policy stopped the transfer. Try it again.": {
@@ -175966,8 +175962,8 @@
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/login.tsx"
+      "apps/dash/routes",
+      "routes/auth"
     ]
   },
   "Start review": {
@@ -182582,7 +182578,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "That code is not valid or has expired": {
@@ -188284,7 +188280,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.": {
@@ -195979,7 +195975,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "This invoice bills {0, plural, one {# shipment} other {# shipments}}. Their documents stay on each shipment; the Charges tab lists every shipment it covers.": {
@@ -196758,7 +196754,7 @@
       "ts"
     ],
     "areas": [
-      "routes/placeholder-page.tsx"
+      "apps/web/routes"
     ]
   },
   "This page was opened without everything {0} sends back. Start the connection again from Integrations.": {
@@ -196830,7 +196826,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "This payer no longer has a share of shipment {0}": {
@@ -201467,12 +201463,12 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/config",
       "apps/web/lib",
       "routes/admin",
       "routes/desk",
-      "routes/load-detail.tsx",
       "routes/reports",
       "routes/shipment",
       "routes/trailer",
@@ -203029,8 +203025,8 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
-      "routes/load-detail.tsx"
+      "apps/dash/routes",
+      "routes/agent-control"
     ]
   },
   "Truck arrived at a stop": {
@@ -203319,9 +203315,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "packages/shared/components",
-      "routes/accept.tsx",
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
@@ -203329,7 +203325,6 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
-      "routes/hos.tsx",
       "routes/inbox",
       "routes/intake",
       "routes/onboarding",
@@ -204676,7 +204671,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx",
+      "apps/dash/routes",
       "routes/worker"
     ]
   },
@@ -206237,7 +206232,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx",
+      "apps/dash/routes",
       "routes/worker"
     ]
   },
@@ -206676,9 +206671,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/admin",
-      "routes/hos.tsx"
+      "routes/admin"
     ]
   },
   "Updated {0}{1}": {
@@ -207444,8 +207439,8 @@
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/login.tsx"
+      "apps/dash/routes",
+      "routes/auth"
     ]
   },
   "Use a three-letter currency code": {
@@ -207833,8 +207828,8 @@
       "ts"
     ],
     "areas": [
-      "routes/auth",
-      "routes/login.tsx"
+      "apps/dash/routes",
+      "routes/auth"
     ]
   },
   "Use your own app": {
@@ -209189,10 +209184,10 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "routes/auth",
-      "routes/jurisdiction-rule",
-      "routes/login.tsx"
+      "routes/jurisdiction-rule"
     ]
   },
   "Verify a VIN, plate or unit number": {
@@ -209274,8 +209269,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/login.tsx"
+      "apps/dash/routes",
+      "apps/web/components"
     ]
   },
   "Verifying…": {
@@ -211113,7 +211108,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "Violations cited {0}": {
@@ -212442,7 +212437,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't find that settlement.": {
@@ -212451,7 +212446,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't load this tenant login page.": {
@@ -212469,7 +212464,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't load your hours of service.": {
@@ -212478,7 +212473,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't load your invitation": {
@@ -212487,7 +212482,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't load your pay period right now.": {
@@ -212496,7 +212491,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't load your profile.": {
@@ -212505,7 +212500,7 @@
       "ts"
     ],
     "areas": [
-      "routes/profile.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't load your violations.": {
@@ -212514,7 +212509,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "We couldn't sign you in. Check your email and password and try again.": {
@@ -212523,7 +212518,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "We do not run oversize at night in this state": {
@@ -212966,6 +212961,7 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
       "apps/web/types",
       "go/other",
@@ -212973,7 +212969,6 @@
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
-      "routes/load-detail.tsx",
       "routes/review-template",
       "routes/shipment",
       "routes/tender-offer-public",
@@ -213179,7 +213174,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "Well length must be greater than zero": {
@@ -216743,7 +216738,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Whose records this change is for is set when it is proposed and cannot be changed": {
@@ -217449,8 +217444,8 @@
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/invoice",
-      "routes/money.tsx"
+      "apps/dash/routes",
+      "routes/invoice"
     ]
   },
   "Withdraw a swap on a driver's behalf": {
@@ -217522,7 +217517,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "Withdrawn": {
@@ -219732,7 +219727,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "You don't have permission to import carriers.": {
@@ -219806,7 +219801,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "You have been assigned a load.": {
@@ -219980,7 +219975,7 @@
       "ts"
     ],
     "areas": [
-      "routes/notifications.tsx"
+      "apps/dash/routes"
     ]
   },
   "You're all set, {0}": {
@@ -220214,7 +220209,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your carrier checks contact changes before they land on your record. Only the fields you change are sent.": {
@@ -220277,7 +220272,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your carrier is waiting on a medical certification.": {
@@ -220367,7 +220362,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your comment": {
@@ -220440,7 +220435,7 @@
       "ts"
     ],
     "areas": [
-      "routes/settlement.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your draft is preserved — retry or discard it from the comment.": {
@@ -220548,7 +220543,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your loads, settlements, and pay — in one place.": {
@@ -220557,7 +220552,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your manager has finished \"{0}\".": {
@@ -220773,7 +220768,7 @@
       "ts"
     ],
     "areas": [
-      "routes/load-detail.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your pinned table views and report views": {
@@ -220919,7 +220914,7 @@
       "ts"
     ],
     "areas": [
-      "routes/pay.tsx"
+      "apps/dash/routes"
     ]
   },
   "Your sign-in has expired. Sign in again.": {
@@ -226630,9 +226625,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "routes/desk",
-      "routes/dispatch-console",
-      "routes/settlement.tsx"
+      "routes/dispatch-console"
     ]
   },
   "via {0} and {1, plural, one {# more stop} other {# more stops}}": {
@@ -226978,7 +226973,7 @@
       "ts"
     ],
     "areas": [
-      "routes/login.tsx"
+      "apps/dash/routes"
     ]
   },
   "your access to {0} is limited to your own records, but {1} does not support per-user scoping in reports": {
@@ -227885,7 +227880,7 @@
       "ts"
     ],
     "areas": [
-      "routes/home.tsx"
+      "apps/dash/routes"
     ]
   },
   "{0, plural, one {# load} other {# loads}} already assigned": {
@@ -228661,9 +228656,9 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "packages/shared/lib",
       "routes/admin",
-      "routes/load-detail.tsx",
       "routes/shipment"
     ]
   },
@@ -229639,7 +229634,7 @@
       "ts"
     ],
     "areas": [
-      "routes/money.tsx"
+      "apps/dash/routes"
     ]
   },
   "{0} agreed": {
@@ -230636,7 +230631,7 @@
       "ts"
     ],
     "areas": [
-      "routes/hos.tsx"
+      "apps/dash/routes"
     ]
   },
   "{0} drivers for drug testing and {1} for alcohol become the record for this period. Correcting a name afterwards means voiding the whole round.": {
@@ -231390,7 +231385,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accept.tsx",
+      "apps/dash/routes",
       "template/driverportal.invitation.email"
     ]
   },
@@ -234961,7 +234956,7 @@
       "ts"
     ],
     "areas": [
-      "routes/pay.tsx"
+      "apps/dash/routes"
     ]
   },
   "{0} · avg {1}": {
@@ -236508,8 +236503,8 @@
       "ts"
     ],
     "areas": [
+      "apps/dash/routes",
       "apps/web/components",
-      "routes/home.tsx",
       "routes/settlement-workspace"
     ]
   },

@@ -1,0 +1,21 @@
+{
+  "Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).": "在駕駛員未結的結算上新增一筆明細（若無，則建立週期外草稿）。",
+  "Appears as the line item on the driver's statement.": "會以明細項目顯示於駕駛員的對帳單上。",
+  "Apply a correcting adjustment": "套用更正調整",
+  "Deny dispute": "駁回爭議",
+  "Description (e.g. Detention correction - PRO 12345)": "說明（例如：滯留費更正 - PRO 12345）",
+  "Dispute moved to review": "爭議已轉入審查",
+  "Disputed line": "爭議明細",
+  "Driver-submitted questions and challenges against issued settlements — review, resolve with a correcting adjustment, or deny with an explanation.": "駕駛員針對已發出結算提出的疑問與爭議 — 可審查後以更正調整處理，或附說明駁回。",
+  "Explain the outcome — the driver sees this in Dash.": "請說明處理結果 — 駕駛員會在 Dash 中看到。",
+  "Only open disputes can be moved to review.": "僅未結的爭議可轉入審查。",
+  "Optional — routes the adjustment to that code's GL account when posting.": "選填 — 過帳時將此調整導向該代碼的總帳科目。",
+  "Resolution note": "處理備註",
+  "Resolve in driver's favor": "判定有利於駕駛員",
+  "Resolve this dispute": "處理此爭議",
+  "Settlement dispute": "結算爭議",
+  "Shown to the driver verbatim; say what was checked and why the outcome is right.": "會原文顯示給駕駛員；請說明查核了哪些內容，以及該結果為何正確。",
+  "Submitted {0}{1}": "提交於 {0}{1}",
+  "This dispute could not be loaded.": "無法載入此爭議。",
+  "· correcting adjustment applied": "· 已套用更正調整"
+}

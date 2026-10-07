@@ -1,4 +1,5 @@
 export {
+  type CatalogBundle,
   DEFAULT_LOCALE,
   isLocale,
   LOCALE_NAMES,
@@ -14,12 +15,15 @@ export {
 } from "@trenova/shared/i18n/format";
 export { I18nProvider } from "@trenova/shared/i18n/provider";
 export {
+  afterCatalogs,
   getLocale,
   hasTranslation,
   loadCatalog,
+  requireCatalog,
   setLocale,
   subscribe,
   translate,
   translateIn,
+  whenCatalogsReady,
 } from "@trenova/shared/i18n/runtime";
 export { type TranslateFn, useLocale, useT } from "@trenova/shared/i18n/use-t";

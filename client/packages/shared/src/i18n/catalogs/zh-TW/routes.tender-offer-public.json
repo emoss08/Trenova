@@ -1,0 +1,20 @@
+{
+  "A response has already been recorded for this offer. Contact the broker if anything changed.": "此要約已記錄過回覆。若有任何變動，請聯絡貨運經紀。",
+  "Accept load": "接受貨載",
+  "Accepting...": "接受中...",
+  "Already answered": "已回覆",
+  "Confirm decline": "確認婉拒",
+  "Declining...": "拒絕中...",
+  "Load offer": "貨載要約",
+  "Load offer for {0}": "{0} 的貨載要約",
+  "Offer expires {0}": "要約於 {0} 到期",
+  "PRO {0} · respond before the offer expires": "PRO {0} · 請在要約到期前回覆",
+  "Powered by Trenova. Questions about this load? Reply to the offer email.": "由 Trenova 提供技術支援。對此貨載有疑問嗎？請回覆要約郵件。",
+  "Response recorded": "回覆已記錄",
+  "Review and respond to a load offer": "審閱並回覆貨載要約",
+  "Thank you — the dispatcher has been notified of your response.": "謝謝 — 您的回覆已通知調度員。",
+  "The offer could not be loaded because of a temporary problem. Please try again in a moment.": "因暫時性問題，無法載入此要約。請稍後再試。",
+  "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.": "此要約可能已過期、被撤回，或已有人回覆。若您認為這是錯誤，請聯絡貨運經紀。",
+  "This offer link is no longer valid": "此要約連結已失效",
+  "Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.": "因暫時性問題，無法記錄您的回覆。目前尚未送出任何內容 — 請稍後再試。"
+}

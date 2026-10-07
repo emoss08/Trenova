@@ -236,8 +236,15 @@ it. See [product-guide.md](product-guide.md).
 ## i18n
 
 - **The English source string is the catalog key.** Editing English text creates a new key
-  and orphans the old one. Run `task i18n` (extract + sync) and `task i18n-check` (the gate)
-  after any change to user-facing text.
+  and orphans the old one. Run `task i18n` (extract, sync and emit) and `task i18n-check`
+  (the gate) after any change to user-facing text, and commit the runtime catalogs it
+  rewrites. `check` fails when a file under `client/packages/shared/src/i18n/catalogs/` or
+  `shared/i18n/catalogs/` differs from what `emit` would write, or when one is left over.
+- **Client catalogs are split by bundle** (`core`, `web`, `dash`, one per web route folder)
+  and the web app loads a route folder's bundle with its code. Moving a component between
+  route folders, or into `apps/web/src/components`, moves its strings to a different bundle,
+  so it is a `task i18n` change like editing text. See "How the browser loads catalogs" in
+  [i18n/README.md](../../i18n/README.md).
 - The codemod wraps a string literal only when its object key is in `TEXT_PROPS`
   (`i18n/tools/filter.mjs`) and only **inside a function**. A module-level
   `const NAV = [{ label: "Shipments" }]` evaluates once at import, so wrapping there would

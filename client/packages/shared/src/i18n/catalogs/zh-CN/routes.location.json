@@ -1,0 +1,19 @@
+{
+  "Add any extra detail about this location": "新增关于此地点的其他细节",
+  "Basic details": "基本资料",
+  "Configure Google maps": "配置 Google 地图",
+  "Create new location": "创建新地点",
+  "Fill out the form below to create a new Location.": "请填写下方表单以创建新地点。",
+  "Google Maps is not configured for this environment, so the geofence editor cannot be displayed.": "此环境尚未配置 Google 地图，因此无法显示地理围栏编辑器。",
+  "Google maps empty state": "Google 地图空白状态",
+  "Identification, address, and operating boundary for this location.": "此地点的标识信息、地址与运营范围。",
+  "Loading map editor...": "正在加载地图编辑器...",
+  "Loading maps configuration..": "正在加载地图配置..",
+  "Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.": "此地点的当地时间。计价公式会依此时区读取取货与交货时间、星期与日期；未设置时则使用 UTC。",
+  "Manage and configure locations for your organization": "管理并配置您组织的地点",
+  "Not set (UTC)": "未设置（UTC）",
+  "Optional notes for dispatchers and drivers.": "供调度员与司机参考的选填备注。",
+  "The category this location belongs to.": "此地点所属的类别。",
+  "The current status of the location.": "此地点目前的状态。",
+  "The name of the location.": "此地点的名称。"
+}

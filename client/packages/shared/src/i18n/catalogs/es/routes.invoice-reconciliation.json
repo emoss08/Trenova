@@ -1,0 +1,16 @@
+{
+  "Adjustment detail": "Detalle del ajuste",
+  "Adjustment kind": "Clase de ajuste",
+  "Adjustment status": "Estado del ajuste",
+  "Amount: {0}": "Importe: {0}",
+  "Exception totals": "Totales de excepciones",
+  "Finance notes": "Notas de finanzas",
+  "Investigate adjustment-created finance exceptions and trace them back to source artifacts.": "Investigue las excepciones financieras creadas por ajustes y rastréelas hasta los artefactos de origen.",
+  "Jump directly into the related billing and invoice surfaces.": "Vaya directamente a las pantallas de facturación y facturas relacionadas.",
+  "Line-level credit and rebill values that created the exception.": "Valores de abono y refacturación a nivel de línea que originaron la excepción.",
+  "Open exceptions": "Excepciones abiertas",
+  "Pick an exception from the list to trace it back to the adjustment and invoices it came from.": "Elija una excepción de la lista para rastrearla hasta el ajuste y las facturas de las que proviene.",
+  "Rebill queue item": "Refacturar el elemento de la cola",
+  "Replacement invoice": "Factura sustitutiva",
+  "Search invoice, customer, exception reason...": "Buscar factura, cliente, motivo de la excepción..."
+}

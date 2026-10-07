@@ -1,0 +1,16 @@
+{
+  "Gross pay": "Pago bruto",
+  "Held pay skips settlement generation and auto-attach until released. One reason is recorded on every selected event.": "El pago retenido se omite en la generación de liquidaciones y en el adjunto automático hasta que se libere. Se registra un motivo en cada evento seleccionado.",
+  "Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.": "El pago retenido se omite en la generación de liquidaciones y en el adjunto automático hasta que lo libere. El motivo se muestra a quien revise el pago del conductor.",
+  "Hold this pay event — it skips settlement generation until released": "Retener este evento de pago: se omite en la generación de liquidaciones hasta que se libere",
+  "Hold {0, plural, one {# pay event} other {# pay events}}": "Retener {0, plural, one {# evento de pago} other {# eventos de pago}}",
+  "None of the selected pay events are on hold.": "Ninguno de los eventos de pago seleccionados está retenido.",
+  "Only accrued, unheld pay events can be held.": "Solo pueden retenerse los eventos de pago devengados y no retenidos.",
+  "Pay event held — it will skip settlement generation until released": "Evento de pago retenido: se omitirá en la generación de liquidaciones hasta que se libere",
+  "Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.": "Los eventos de pago se devengan automáticamente cuando un envío alcanza el activador de pago configurado y quedan bloqueados una vez liquidados.",
+  "Qty × rate": "Cant. × tarifa",
+  "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.": "Percepciones de los conductores devengadas en tiempo real a medida que se entregan los envíos: el libro de origen detrás de cada liquidación.",
+  "Release holds": "Liberar las retenciones",
+  "e.g. Awaiting signed BOL from the shipper": "p. ej., A la espera del conocimiento de embarque firmado por el expedidor",
+  "e.g. Awaiting signed BOLs for this batch": "p. ej., A la espera de los conocimientos de embarque firmados de este lote"
+}

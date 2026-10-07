@@ -33,10 +33,10 @@ There are no `shipment.header.title` keys to invent or keep in sync. Three thing
 
 | Command | Does |
 |---|---|
-| `task i18n` | Re-extract and refresh catalogs |
+| `task i18n` | Re-extract, refresh catalogs and emit the runtime catalogs |
 | `task i18n-report` | Inventory: totals, per-area breakdown, what the filter dropped |
 | `task i18n-report -- --rejected` | Audit *why* each literal was filtered out |
-| `task i18n-check` | CI gate — fails on missing or orphaned entries |
+| `task i18n-check` | CI gate — fails on missing or orphaned entries, or stale runtime catalogs |
 | `node i18n/tools/i18n.mjs pending es --area routes/shipment` | List what still needs translating |
 | `node i18n/tools/i18n.mjs merge es batch.json` | Merge a batch of translations |
 
@@ -60,30 +60,44 @@ messages.zh-CN.json
 tools/              extractors, codemod, catalog commands
 ```
 
-## How strings are found
+The runtime catalogs are generated from these by `task i18n` and are never edited either:
+`shared/i18n/catalogs/` (embedded in the Go binary) and
+`client/packages/shared/src/i18n/catalogs/<locale>/<bundle>.json` (the browser's).
 
-Both extractors key on *syntactic position*, never on the look of the string, because a
-regex cannot tell `label="Save"` from `name="save"` or skip an SVG `d="M12 2L2 7"`.
+## How the browser loads catalogs
 
-- **Go** (`shared/cmd/i18n-extract`) reads message literals from known constructors —
-  `MultiError.Add`, `errortypes.New*Error`, ozzo `.Error(...)`. An unrecognised
-  `New*Error` constructor **fails the build** rather than being skipped, so a whole class
-  of messages can never go missing quietly.
-- **Go templates** (`tools/extract-templates.mjs`) collects every `{{ t "..." }}` and nested
-  `(t "...")` call in the built-in document templates (area `template/*`) and, when the
-  Cloud edition is overlaid, the Trenova Cloud emails the platform sends (area
-  `platform-email/*`, from `services/tms/internal/cloud/platformemailservice/templates`).
-- **TypeScript** (`tools/extract-ts.mjs`) parses with Babel and collects JSX text, an
-  allowlist of prose-bearing props, and `toast.*` calls.
+One catalog per locale grew past a megabyte, and the web app could not draw its first frame
+in Spanish or Chinese until all of it had downloaded. The client strings are therefore split
+into bundles (`tools/bundles.mjs`), by where they are rendered:
 
-A sentence split by an interpolation is captured whole, with placeholders:
+| Bundle | Holds strings used | Loaded |
+|---|---|---|
+| `core` | by `packages/shared`, or by both apps | at startup, by every app |
+| `web` | by the web app's shell, or by more than one of its route folders | at startup, by the web app |
+| `dash` | only by the driver portal | never by the web app |
+| `routes/<dir>` | only inside `client/apps/web/src/routes/<dir>/` | with that folder's code |
 
-```tsx
-<p>Delete "{name}"? This cannot be undone.</p>   ->   'Delete "{0}"? This cannot be undone.'
-```
+An app names its startup bundles once (`<I18nProvider catalogs={...}>`). The web app's
+build (`client/apps/web/vite/route-catalogs.ts`) then does two things to its source:
 
-Recording the two halves separately would be untranslatable — Spanish and Chinese order
-that sentence differently, and half a clause gives a translator nothing to work with.
+- it appends `requireCatalog("routes/<dir>")` to every module in a route folder, so any
+  code that loads the module has asked for the strings it renders;
+- it chains `.then(afterCatalogs)` onto every dynamic import of app code, so the import
+  resolves only once the bundles its module graph required have landed.
+
+Lazy routes wait the same way (`client/apps/web/src/lib/route-catalogs.ts`). The result is
+that nothing ever renders in English and then again: a page, or a `React.lazy` panel
+borrowed from another route folder, keeps showing its loading skeleton until its strings
+are in, and its first frame is translated. A language switch brings every screen already
+visited with it. English loads nothing and never waits: the key is the text.
+
+If a bundle fails to download, the screen renders in English rather than not at all, and
+the bundle is retried on the next navigation.
+
+**The route rule has two halves.** `featureArea` in `tools/extract-ts.mjs` labels a string
+from `src/routes/<dir>/` as `routes/<dir>`, and the Vite plugin requires `routes/<dir>` for
+a module in that folder. Change both or neither; `bundles.test.mjs` fails if a route
+bundle has no folder behind it.
 
 ## Maintaining the Go extractor
 

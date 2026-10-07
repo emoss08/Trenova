@@ -11,6 +11,7 @@ import {
   resolveOnboardingRedirect,
 } from "@/lib/onboarding-gate";
 import { edition } from "@/lib/edition";
+import { withRouteCatalogs } from "@/lib/route-catalogs";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
 import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
@@ -2250,4 +2251,4 @@ export const routes: RouteObject[] = [
   },
 ];
 
-export const router = createBrowserRouter(routes);
+export const router = createBrowserRouter(withRouteCatalogs(routes));

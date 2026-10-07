@@ -1,5 +1,16 @@
-import { DEFAULT_LOCALE, isLocale, type Locale } from "@trenova/shared/i18n/generated/locales";
-import { getLocale, loadCatalog, setLocale, subscribe } from "@trenova/shared/i18n/runtime";
+import {
+  type CatalogBundle,
+  DEFAULT_LOCALE,
+  isLocale,
+  type Locale,
+} from "@trenova/shared/i18n/generated/locales";
+import {
+  getLocale,
+  loadCatalog,
+  requireCatalog,
+  setLocale,
+  subscribe,
+} from "@trenova/shared/i18n/runtime";
 import { type ReactNode, useEffect, useState, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "trenova.locale";
@@ -54,15 +65,29 @@ export function resolveInitialLocale(userLocale?: string | null): Locale {
 
 type I18nProviderProps = {
   children: ReactNode;
+  /**
+   * The bundles this app's shell renders from, loaded before its first translated frame:
+   * "core" plus the app's own. Route bundles are not listed here; they load with their
+   * route's code. Pass a module-level constant so the array keeps its identity.
+   */
+  catalogs: readonly CatalogBundle[];
   userLocale?: string | null;
   fallback?: ReactNode;
 };
 
-export function I18nProvider({ children, userLocale, fallback = null }: I18nProviderProps) {
+export function I18nProvider({
+  children,
+  catalogs,
+  userLocale,
+  fallback = null,
+}: I18nProviderProps) {
   const active = useSyncExternalStore(subscribe, getLocale, getLocale);
   const [ready, setReady] = useState(() => resolveInitialLocale(userLocale) === DEFAULT_LOCALE);
 
   useEffect(() => {
+    // Required even while English is showing, so a later switch loads them with the rest.
+    requireCatalog(...catalogs);
+
     const target = resolveInitialLocale(userLocale);
     if (target === active && ready) return;
 
@@ -85,7 +110,7 @@ export function I18nProvider({ children, userLocale, fallback = null }: I18nProv
     return () => {
       cancelled = true;
     };
-  }, [userLocale, active, ready]);
+  }, [catalogs, userLocale, active, ready]);
 
   if (!ready) return <>{fallback}</>;
 

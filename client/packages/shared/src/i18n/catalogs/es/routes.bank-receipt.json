@@ -1,0 +1,16 @@
+{
+  "Active work items": "Elementos de trabajo activos",
+  "Bank receipt reconciliation": "Conciliación de recibos bancarios",
+  "Failed to match receipt": "No se pudo emparejar el recibo",
+  "Match imported bank receipts to customer payments and resolve exceptions.": "Empareje los recibos bancarios importados con los pagos de clientes y resuelva las excepciones.",
+  "Match suggestions": "Coincidencias sugeridas",
+  "Matched At": "Emparejado el",
+  "Matched payment": "Pago emparejado",
+  "No match suggestions available.": "No hay coincidencias sugeridas disponibles.",
+  "Payment ID": "ID del pago",
+  "Pick a receipt from the list to see its details and the payments it could be matched to.": "Elija un recibo de la lista para ver sus detalles y los pagos con los que podría emparejarse.",
+  "Receipt details": "Detalles del recibo",
+  "Receipt matched to payment": "Recibo emparejado con el pago",
+  "Search reference, memo...": "Buscar referencia, memo...",
+  "{0} found": "{0} encontrados"
+}

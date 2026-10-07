@@ -1,0 +1,19 @@
+{
+  "Add optional stops between origin and destination in travel order": "依行駛順序在起點與目的地之間新增選填的停靠點",
+  "Are you sure you want to delete this distance override? This action cannot be undone.": "確定要刪除此距離覆寫嗎？此操作無法復原。",
+  "Delete distance override": "刪除距離覆寫",
+  "Distance override": "距離覆寫",
+  "Distance override deleted": "距離覆寫已刪除",
+  "Failed to delete distance override": "無法刪除距離覆寫",
+  "Intermediate stops": "中途停靠點",
+  "No intermediate stops configured.": "尚未設定中途停靠點。",
+  "Optionally scope this override to a specific customer": "可選擇將此覆寫限定於特定客戶",
+  "Override calculated distances between location pairs for routing and billing adjustments": "覆寫地點配對之間的計算距離，供路徑規劃與帳務調整使用",
+  "Select customer (optional)": "選擇客戶（選填）",
+  "Select destination location": "選擇目的地地點",
+  "Select origin location": "選擇起點地點",
+  "Select stop location": "選擇停靠點地點",
+  "The destination location for this distance override": "此距離覆寫的目的地地點",
+  "The origin location for this distance override": "此距離覆寫的起點地點",
+  "The override distance between the two locations": "兩個地點之間的覆寫距離"
+}
