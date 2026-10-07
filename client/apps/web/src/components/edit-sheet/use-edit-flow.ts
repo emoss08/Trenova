@@ -56,6 +56,7 @@ export type EditFlow = {
   close: () => void;
   keepEditing: () => void;
   toggleReview: () => void;
+  setReviewing: (open: boolean) => void;
   discard: () => void;
   undo: (field: string) => void;
   loadTheirs: () => Promise<void>;
@@ -225,6 +226,7 @@ export function useEditFlow<T extends FieldValues>({
     close,
     keepEditing: () => setConfirmingClose(false),
     toggleReview: () => setReviewing((open) => !open),
+    setReviewing,
     discard,
     undo,
     loadTheirs,

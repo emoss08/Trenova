@@ -1,4 +1,5 @@
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import {
   AlertCircleIcon,
@@ -13,6 +14,8 @@ import type { EditFlow } from "./use-edit-flow";
 
 type SaveBarProps = {
   flow: EditFlow;
+  /** The list of changes the "unsaved changes" control opens. */
+  review?: ReactNode;
   saveLabel?: string;
   /** Anything the editor shows beside the state, such as a test button. */
   leading?: ReactNode;
@@ -22,7 +25,7 @@ type SaveBarProps = {
  * The foot of every editor: what is unsaved, why it cannot be saved, and the save. While
  * closing would lose changes it asks first, in place.
  */
-export function SaveBar({ flow, saveLabel, leading }: SaveBarProps) {
+export function SaveBar({ flow, review, saveLabel, leading }: SaveBarProps) {
   const t = useT();
   const count = flow.changed.length;
 
@@ -49,21 +52,30 @@ export function SaveBar({ flow, saveLabel, leading }: SaveBarProps) {
   return (
     <div className="flex items-center gap-2">
       {flow.dirty ? (
-        <button
-          type="button"
-          onClick={flow.toggleReview}
-          aria-expanded={flow.reviewing}
-          className={cn(
-            "ui-focus-ring inline-flex items-center gap-1.5 rounded-control px-2 py-1 text-xs font-medium",
-            flow.reviewing ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted",
+        <Popover open={flow.reviewing && Boolean(review)} onOpenChange={flow.setReviewing}>
+          <PopoverTrigger
+            render={
+              <button
+                type="button"
+                className={cn(
+                  "ui-focus-ring inline-flex items-center gap-1.5 rounded-control px-2 py-1 text-xs font-medium",
+                  flow.reviewing ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted",
+                )}
+              />
+            }
+          >
+            <span className="size-1.5 rounded-full bg-brand" />
+            {count === 1 ? t("1 unsaved change") : t("{0} unsaved changes", count)}
+            <ChevronDownIcon
+              className={cn("size-3 transition-transform", flow.reviewing && "rotate-180")}
+            />
+          </PopoverTrigger>
+          {review && (
+            <PopoverContent side="top" align="start" className="w-[28rem] p-0">
+              {review}
+            </PopoverContent>
           )}
-        >
-          <span className="size-1.5 rounded-full bg-warning" />
-          {count === 1 ? t("1 unsaved change") : t("{0} unsaved changes", count)}
-          <ChevronDownIcon
-            className={cn("size-3 transition-transform", flow.reviewing && "rotate-180")}
-          />
-        </button>
+        </Popover>
       ) : flow.saved ? (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
           <CheckIcon className="size-3" />
@@ -75,7 +87,7 @@ export function SaveBar({ flow, saveLabel, leading }: SaveBarProps) {
         </span>
       )}
       {flow.invalid && (
-        <span className="inline-flex items-center gap-1 text-xs text-danger">
+        <span className="inline-flex items-center gap-1 text-xs text-warning">
           <AlertCircleIcon className="size-3" />
           {flow.invalid}
         </span>

@@ -29,7 +29,7 @@ export function ChangeReview<T extends FieldValues>({ form, flow, fields }: Chan
   const count = flow.changed.length;
 
   return (
-    <div className="flex max-h-72 flex-col gap-1 overflow-y-auto border-b border-border px-4 py-3">
+    <div className="flex max-h-80 flex-col gap-1 overflow-y-auto p-3">
       <div className="flex items-baseline gap-2 pb-1">
         <span className="font-medium">
           {count === 1 ? t("Review 1 change") : t("Review {0} changes", count)}
