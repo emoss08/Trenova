@@ -8,8 +8,8 @@ const { dataTableProps, urlState, setUrl } = vi.hoisted(() => ({
   setUrl: vi.fn(),
   urlState: {
     view: "table",
-    group: true,
-    collapsed: [] as number[],
+    group: "stage",
+    collapsed: [] as string[],
     expanded: null,
     qf: [] as { filter: string }[],
   },
@@ -36,6 +36,7 @@ vi.mock("@/lib/queries", () => ({
   queries: {
     shipmentBoard: {
       stageSummary: () => ({ queryKey: ["summary"] }),
+      groups: () => ({ queryKey: ["groups"] }),
       quickFilterCounts: () => ({ queryKey: ["quick-filter-counts"] }),
     },
   },

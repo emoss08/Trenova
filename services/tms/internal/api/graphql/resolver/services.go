@@ -122,6 +122,7 @@ type Params struct {
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
 	BoardStageSummaries          services.ShipmentStageSummaryReader
+	BoardGroups                  services.ShipmentBoardGroupSummarizer
 	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant      services.ShipmentImportAssistantService `optional:"true"`
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
@@ -314,6 +315,7 @@ type Services struct {
 	BoardWatchlist               services.ShipmentWatchlistReader
 	BoardQuickFilterCounts       services.ShipmentQuickFilterCounter
 	BoardStageSummaries          services.ShipmentStageSummaryReader
+	BoardGroups                  services.ShipmentBoardGroupSummarizer
 	BoardCapabilities            services.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant      services.ShipmentImportAssistantService
 	EdiService                   *ediservice.Service
@@ -510,6 +512,7 @@ func newServices(p *Params) *Services {
 		BoardWatchlist:               p.BoardWatchlist,
 		BoardQuickFilterCounts:       p.BoardQuickFilterCounts,
 		BoardStageSummaries:          p.BoardStageSummaries,
+		BoardGroups:                  p.BoardGroups,
 		BoardCapabilities:            p.BoardCapabilities,
 		ShipmentImportAssistant:      p.ShipmentImportAssistant,
 		EdiService:                   p.EDIService,

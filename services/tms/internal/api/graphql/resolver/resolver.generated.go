@@ -865,6 +865,7 @@ func FromServices(s *Services) *Resolver {
 		BoardWatchlist:         s.BoardWatchlist,
 		BoardQuickFilterCounts: s.BoardQuickFilterCounts,
 		BoardStageSummaries:    s.BoardStageSummaries,
+		BoardGroups:            s.BoardGroups,
 		BoardCapabilities:      s.BoardCapabilities,
 	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{

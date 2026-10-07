@@ -1,13 +1,18 @@
 import type {
   DataTableGroup,
   DataTableGroupKey,
+  DataTableGroupScope,
   DataTableGrouping,
-  FieldFilter,
   SortField,
 } from "@trenova/shared/types/data-table";
 
-type GroupSortSource = Pick<DataTableGrouping<unknown>, "field" | "direction">;
-type GroupScopeSource = Pick<DataTableGrouping<unknown>, "field" | "collapsedKeys">;
+type GroupSortSource = Pick<DataTableGrouping<unknown>, "field" | "direction" | "tieBreakers">;
+type GroupScopeSource = Pick<
+  DataTableGrouping<unknown>,
+  "field" | "collapsedKeys" | "collapsedScope"
+>;
+
+const NO_GROUP_SCOPE: DataTableGroupScope = { fieldFilters: [], filterGroups: [] };
 
 /**
  * The sort a grouped table sends: the group field first, so the server pages
@@ -19,18 +24,29 @@ export function groupedSort(grouping: GroupSortSource | undefined, sort: SortFie
     return sort;
   }
   const own = sort.find((entry) => entry.field === grouping.field);
+  const tieBreakers = grouping.tieBreakers ?? [];
+  const leading = new Set([grouping.field, ...tieBreakers.map((entry) => entry.field)]);
   return [
     { field: grouping.field, direction: own?.direction ?? grouping.direction ?? "asc" },
-    ...sort.filter((entry) => entry.field !== grouping.field),
+    ...tieBreakers,
+    ...sort.filter((entry) => !leading.has(entry.field)),
   ];
 }
 
 /** Collapsed groups are dropped by the server, so they never take a page's rows. */
-export function groupedScopeFilters(grouping: GroupScopeSource | undefined): FieldFilter[] {
+export function groupedScope(grouping: GroupScopeSource | undefined): DataTableGroupScope {
   if (!grouping || grouping.collapsedKeys.length === 0) {
-    return [];
+    return NO_GROUP_SCOPE;
   }
-  return [{ field: grouping.field, operator: "notin", value: [...grouping.collapsedKeys] }];
+  if (grouping.collapsedScope) {
+    return grouping.collapsedScope(grouping.collapsedKeys);
+  }
+  return {
+    fieldFilters: [
+      { field: grouping.field, operator: "notin", value: [...grouping.collapsedKeys] },
+    ],
+    filterGroups: [],
+  };
 }
 
 export type GroupedBodyItem<TRow> =

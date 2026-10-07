@@ -450,6 +450,8 @@ var ShipmentAssignmentSpec TypeSpec
 
 var ShipmentAssignmentEventSpec TypeSpec
 
+var ShipmentBriefingSpec TypeSpec
+
 var ShipmentCarrierEventSpec TypeSpec
 
 var ShipmentCommentSpec TypeSpec
@@ -21583,6 +21585,33 @@ func init() {
 			{
 				Name:        "driverName",
 				FieldMapKey: "metadata",
+			},
+		},
+	}
+
+	ShipmentBriefingSpec = TypeSpec{
+		TypeName: "ShipmentBriefing",
+		FieldMap: buncolgen.BriefFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "segments",
+				FieldMapKey: "segments",
+			},
+			{
+				Name:        "narrated",
+				FieldMapKey: "narrated",
+			},
+			{
+				Name:        "generatedAt",
+				FieldMapKey: "generatedAt",
+			},
+			{
+				Name:        "generation",
+				FieldMapKey: "generation",
 			},
 		},
 	}

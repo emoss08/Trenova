@@ -32,6 +32,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReadyToBillCustomer", Implementors: []string{"ReadyToBillCustomer"}},
 		{Name: "ShipmentBillingWatch", Implementors: []string{"ShipmentBillingWatch"}},
 		{Name: "ShipmentBoardCapabilities", Implementors: []string{"ShipmentBoardCapabilities"}},
+		{Name: "ShipmentBoardGroup", Implementors: []string{"ShipmentBoardGroup"}},
 		{Name: "ShipmentBriefing", Implementors: []string{"ShipmentBriefing"}},
 		{Name: "ShipmentBriefingSegment", Implementors: []string{"ShipmentBriefingSegment"}},
 		{Name: "ShipmentCapacity", Implementors: []string{"ShipmentCapacity"}},
@@ -878,6 +879,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNShipmentStageSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentStageSummaryᚄ),
 			},
 			{
+				Name:       "shipmentBoardGroups",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ShipmentBoardGroup",
+				Args:       field_Query_shipmentBoardGroups_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentBoardGroups(ctx, fc.Args["input"].(gqlmodel.ShipmentBoardScopeInput), fc.Args["groupBy"].(shipment.BoardGrouping))
+				},
+				Marshal: gqlexec.Marshal(marshalNShipmentBoardGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardGroupᚄ),
+			},
+			{
 				Name:       "shipmentQuickFilterCounts",
 				NonNull:    true,
 				IsResolver: true,
@@ -1101,6 +1116,48 @@ var Shard = &gqlexec.Shard{
 					return obj.Maps, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "ShipmentBoardGroup", Fields: []*gqlexec.Field{
+			{
+				Name:     "key",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBoardGroup)
+					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBoardGroup)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBoardGroup)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "revenue",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBoardGroup)
+					return obj.Revenue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 		}},
 		{Object: "ShipmentBriefing", Fields: []*gqlexec.Field{
@@ -1924,6 +1981,7 @@ type resolverMutation interface {
 type resolverQuery interface {
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
+	ShipmentBoardGroups(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, groupBy shipment.BoardGrouping) ([]*gqlmodel.ShipmentBoardGroup, error)
 	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
 	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
 	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
@@ -2015,6 +2073,27 @@ func field_Query_shipmentStageSummary_args(ctx context.Context, ec *gqlexec.Exec
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_shipmentBoardGroups_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ShipmentBoardScopeInput, error) {
+			return unmarshalNShipmentBoardScopeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardScopeInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "groupBy",
+		func(ctx context.Context, v any) (shipment.BoardGrouping, error) {
+			return unmarshalNShipmentBoardGrouping2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐBoardGrouping(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["groupBy"] = arg1
 	return args, nil
 }
 
@@ -2414,6 +2493,12 @@ func unmarshalNNotifyShipmentDelayInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNShipmentBoardGrouping2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐBoardGrouping(ctx context.Context, ec *gqlexec.Exec, v any) (shipment.BoardGrouping, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := shipment.BoardGrouping(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNShipmentBoardScopeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardScopeInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ShipmentBoardScopeInput, error) {
 	res, err := unmarshalInputShipmentBoardScopeInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2706,6 +2791,22 @@ func marshalNShipmentBoardCapabilities2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentBoardCapabilities", v)
+}
+
+func marshalNShipmentBoardGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentBoardGroup) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ShipmentBoardGroup]{
+		Elem:        marshalNShipmentBoardGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardGroup,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNShipmentBoardGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBoardGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentBoardGroup) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentBoardGroup", v)
 }
 
 func marshalNShipmentBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBriefing(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentBriefing) graphql.Marshaler {

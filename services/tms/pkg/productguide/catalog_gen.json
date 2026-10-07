@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8f13433ed921f714c019262b752ce2665eac72cea8c13abc73f57567f45b8fe5",
+  "version": "sha256:13cece50e4d080f89c1ee9cd071df170a982560219e98ecc921b47a7e0f7b64a",
   "modules": [
     {
       "id": "home",
@@ -15521,7 +15521,7 @@
         "Shipments"
       ],
       "description": "Every load on the board, what needs a hand, and who can take it.",
-      "summary": "Shipments is the dispatcher's board. The table comes first, grouped by stage, from loads that need attention or coverage down to delivered ones. Above it is a short briefing of the day that greets you by name (when an AI provider is connected); it is written once for the organization's day before work starts and again when every issue it named has been cleared, and hovering a linked phrase such as late loads lists the first few of them and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.\n\nSelecting a row expands it in place, showing the route, the money, the documents, the next step and quick actions. Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.",
+      "summary": "Shipments is the dispatcher's board. The table comes first, grouped by stage unless you pick another grouping, from loads that need attention or coverage down to delivered ones. Above it is a short briefing of the day that greets you by name (when an AI provider is connected); it is written once for the organization's day before work starts and again when every issue it named has been cleared, and hovering a linked phrase such as late loads lists the first few of them and a capacity strip showing the drivers ready now or within two hours, or the carriers posting trucks, depending on whether the organization runs its own trucks, brokers freight, or both. A floating panel holds the **Brief**: one suggested action at a time, plus a watchlist of today's deliveries, uncovered pickups, accruing detention and freight ready to bill. Its **Activity** tab is a live feed of shipment events. Dispatchers, customer service and billing staff work loads from here.\n\nSelecting a row expands it in place, showing the route, the money, the documents, the next step and quick actions. Opening a shipment shows its full record in a side panel: **Details** (general information, service and classification, billing and rating, commodities and moves), plus service failures, **Documents**, **Comments** and **History**.",
       "requires": [
         {
           "resource": "shipment",
@@ -15571,7 +15571,7 @@
           "steps": [
             "Open [Shipments](/shipment-management/shipments).",
             "Type in the search field. Focusing it while it is empty (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count; a chosen quick filter shows as a chip under the toolbar, beside the other filters.",
-            "Narrow further with **Filter** (status, tender, billing, PRO number, customer, pickup and delivery dates, and revenue), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** turns the stage groups on or off; a group's header collapses it. The **Lane** column stays pinned while the table scrolls sideways.",
+            "Narrow further with **Filter** (status, tender, billing, PRO number, customer, pickup and delivery dates, and revenue), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** opens a menu to group the table by status, ship date, delivery date, customer or owner, or not at all; dates are the day of the first pickup or last delivery, and each group's header shows its loads and revenue and collapses it. The **Lane** column stays pinned while the table scrolls sideways.",
             "Select a row (or move to it with J and K and press Enter) to expand it, or choose **Edit** from its row menu to open the full shipment."
           ]
         },

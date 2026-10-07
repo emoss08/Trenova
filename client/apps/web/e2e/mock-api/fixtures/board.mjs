@@ -159,6 +159,31 @@ function customer(name) {
 
 const STATUS = { new: "New", assigned: "Assigned", transit: "InTransit", delayed: "Delayed", done: "Completed" };
 
+/* Dispatchers who own loads; every fifth load has no owner, so "No owner" shows. */
+const OWNERS = [
+  { id: "usr_dispatch_ava", name: "Ava Lindqvist" },
+  { id: "usr_dispatch_marcus", name: "Marcus Bell" },
+  { id: "usr_dispatch_priya", name: "Priya Raman" },
+];
+
+function ownerOf(index) {
+  return index % 5 === 4 ? null : OWNERS[index % OWNERS.length];
+}
+
+function ownerUser({ id, name }) {
+  const username = name.toLowerCase().replace(/\s+/g, ".");
+  return {
+    id,
+    name,
+    username,
+    emailAddress: `${username}@mock.trenova.test`,
+    timezone: "America/Chicago",
+    status: "Active",
+    profilePicUrl: null,
+    thumbnailUrl: null,
+  };
+}
+
 function splitName(name) {
   const [firstName, ...rest] = name.split(" ");
   return { firstName, lastName: rest.join(" ") };
@@ -205,6 +230,8 @@ function buildShipment(raw, index, anchor) {
     tenderStatus: tender,
     customerId: customer(cust).id,
     customer: customer(cust),
+    ownerId: ownerOf(index)?.id ?? null,
+    owner: ownerOf(index) ? ownerUser(ownerOf(index)) : null,
     billToCustomer: null,
     totalChargeAmount: String(revenue),
     freightChargeAmount: String(Math.round(revenue * 0.8)),

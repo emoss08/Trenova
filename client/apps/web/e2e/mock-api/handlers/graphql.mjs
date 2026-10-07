@@ -67,6 +67,10 @@ const FIELD_GETTERS = new Map(Object.entries({
   createdAt: (s) => s.createdAt,
   totalChargeAmount: (s) => s.board.revenue,
   "customer.name": (s) => s.customer.name,
+  ownerId: (s) => s.ownerId ?? null,
+  "owner.name": (s) => s.owner?.name ?? null,
+  "shipperStop.scheduledWindowStart": (s) => pickupOf(s).scheduledWindowStart,
+  "consigneeStop.scheduledWindowStart": (s) => deliveryOf(s).scheduledWindowStart,
   bol: (s) => s.bol,
   billingTransferStatus: (s) => s.billingTransferStatus ?? "",
 }));
@@ -88,9 +92,17 @@ function fieldFilterMatches(s, filter) {
     case "in":
       return list.map(String).includes(String(value));
     case "notin":
-      return !list.map(String).includes(String(value));
+      return value !== null && value !== undefined && !list.map(String).includes(String(value));
     case "contains":
       return String(value ?? "").toLowerCase().includes(String(filter.value).toLowerCase());
+    case "lt":
+      return value !== null && value !== undefined && value < filter.value;
+    case "gte":
+      return value !== null && value !== undefined && value >= filter.value;
+    case "isnull":
+      return value === null || value === undefined;
+    case "isnotnull":
+      return value !== null && value !== undefined;
     default:
       return true;
   }
@@ -126,6 +138,8 @@ function sorted(list, sort = []) {
       const x = get(a);
       const y = get(b);
       if (x === y) continue;
+      if (x === null || x === undefined) return 1;
+      if (y === null || y === undefined) return -1;
       const order = x > y ? 1 : -1;
       return term.direction === "desc" ? -order : order;
     }
@@ -181,6 +195,41 @@ function stageSummary(state, input) {
     const rows = list.filter((s) => stageOf(s) === stage);
     return { stage, rank, count: rows.length, revenue: money(rows.reduce((t, s) => t + s.board.revenue, 0)) };
   });
+}
+
+/* Mirrors the server: groups in the order the board sorts their rows, days
+   in the board's zone, and an empty key for no date or no owner. */
+const GROUP_KEYS = {
+  ShipDate: (s, tz) => dayKey(pickupOf(s).scheduledWindowStart, tz),
+  DeliveryDate: (s, tz) => dayKey(deliveryOf(s).scheduledWindowStart, tz),
+  Customer: (s) => s.customerId,
+  Owner: (s) => s.ownerId ?? "",
+};
+
+function dayKey(unix, timezone) {
+  if (unix === null || unix === undefined) return "";
+  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date(unix * 1000));
+}
+
+function boardGroups(state, input, groupBy) {
+  const keyOf = GROUP_KEYS[groupBy];
+  if (!keyOf) throw new Error(`unknown grouping ${groupBy}`);
+  const groups = new Map();
+  for (const s of scoped(state, input)) {
+    const key = keyOf(s, input.timezone ?? "UTC");
+    const label = groupBy === "Customer" ? s.customer.name : groupBy === "Owner" ? (s.owner?.name ?? "") : "";
+    const entry = groups.get(key) ?? { key, label, count: 0, total: 0 };
+    entry.count += 1;
+    entry.total += s.board.revenue;
+    groups.set(key, entry);
+  }
+  const blankLast = (a, b) => (a.key === "") - (b.key === "");
+  const byName = (a, b) => blankLast(a, b) || a.label.localeCompare(b.label) || (a.key < b.key ? -1 : 1);
+  const byKey = (a, b) => blankLast(a, b) || (a.key < b.key ? -1 : 1);
+  return [...groups.values()]
+    .sort(groupBy === "Customer" || groupBy === "Owner" ? byName : byKey)
+    .map(({ key, label, count, total }) => ({ key, label, count, revenue: money(total) }));
 }
 
 function quickFilterCounts(state, input) {
@@ -842,6 +891,7 @@ const HANDLERS = {
     },
   }),
   ShipmentStageSummary: (state, v) => ({ shipmentStageSummary: stageSummary(state, v.input) }),
+  ShipmentBoardGroups: (state, v) => ({ shipmentBoardGroups: boardGroups(state, v.input, v.groupBy) }),
   ShipmentQuickFilterCounts: (state, v) => ({ shipmentQuickFilterCounts: quickFilterCounts(state, v.input) }),
   ShipmentBriefing: (state) => ({ shipmentBriefing: briefing(state) }),
   ShipmentCapacity: (state, v) => ({ shipmentCapacity: capacity(state, v.kind) }),
